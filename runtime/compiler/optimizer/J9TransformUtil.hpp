@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -203,6 +203,18 @@ public:
     *   \return True if specialization succeeds, false otherwise
     */
    static bool specializeInvokeExactSymbol(TR::Compilation *comp, TR::Node *callNode, uintptr_t *methodHandleLocation);
+
+   /*
+    * \brief
+    *    Refine `MethodHandle.invokeBasic` with a known receiver handle
+    */
+   static bool refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mhIndex, bool trace = false);
+   /*
+    * \brief
+    *    Refine `MethodHandle.linkTo*` with a known MemberName argument (the last argument)
+    *    Doesn't support `MethodHandle.linkToInterface` right now
+    */
+   static bool refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mnIndex, bool trace = false);
 protected:
    /**
     * \brief

@@ -2356,3 +2356,186 @@ J9::TransformUtil::specializeInvokeExactSymbol(TR::Compilation *comp, TR::Node *
       }
       return false;
    }
+
+bool
+J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mhIndex, bool trace)
+   {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   auto knot = comp->getKnownObjectTable();
+   if (mhIndex == TR::KnownObjectTable::UNKNOWN ||
+       !knot ||
+       knot->isNull(mhIndex))
+      {
+      if (trace)
+         traceMsg(comp, "MethodHandle for invokeBasic n%dn %p is unknown or null\n", node->getGlobalIndex(), node);
+      return false;
+      }
+
+   TR_J9VMBase* fej9 = comp->fej9();
+   auto targetMethod = fej9->targetMethodFromMethodHandle(comp, mhIndex);
+
+   TR_ASSERT(targetMethod, "Can't get target method from MethodHandle obj%d\n", mhIndex);
+
+   auto symRef = node->getSymbolReference();
+   // Refine the call
+   auto refinedMethod = fej9->createResolvedMethod(comp->trMemory(), targetMethod, symRef->getOwningMethod(comp));
+   if (!performTransformation(comp, "O^O Refine invokeBasic n%dn %p with known MH object\n", node->getGlobalIndex(), node))
+      return false;
+
+   // Preserve NULLCHK
+   TR::TransformUtil::separateNullCheck(comp, treetop, trace);
+
+   TR::SymbolReference *newSymRef =
+       comp->getSymRefTab()->findOrCreateMethodSymbol
+       (symRef->getOwningMethodIndex(), -1, refinedMethod, TR::MethodSymbol::Static);
+
+   TR::Node::recreateWithSymRef(node, refinedMethod->directCallOpCode(), newSymRef);
+   return true;
+#else
+   return false;
+#endif
+   }
+
+TR::MethodSymbol::Kinds getTargetMethodCallKind(TR::RecognizedMethod rm)
+   {
+   TR::MethodSymbol::Kinds callKind;
+   switch (rm)
+      {
+      case TR::java_lang_invoke_MethodHandle_invokeBasic:
+      case TR::java_lang_invoke_MethodHandle_linkToStatic:
+         callKind = TR::MethodSymbol::Static; break;
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+         callKind = TR::MethodSymbol::Special; break;
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         callKind = TR::MethodSymbol::Virtual; break;
+      case TR::java_lang_invoke_MethodHandle_linkToInterface:
+         callKind = TR::MethodSymbol::Interface; break;
+      default:
+         TR_ASSERT_FATAL(0, "Unsupported method");
+      }
+   return callKind;
+   }
+
+// Use getIndirectCall(datatype), pass in return type
+TR::ILOpCodes getTargetMethodCallOpCode(TR::RecognizedMethod rm, TR::DataType type)
+   {
+   switch (rm)
+      {
+      case TR::java_lang_invoke_MethodHandle_invokeBasic:
+      case TR::java_lang_invoke_MethodHandle_linkToStatic:
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+         return TR::ILOpCode::getDirectCall(type);
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+      case TR::java_lang_invoke_MethodHandle_linkToInterface:
+         return TR::ILOpCode::getIndirectCall(type);
+      default:
+         TR_ASSERT_FATAL(0, "Unsupported method");
+      }
+   return TR::BadILOp;
+   }
+
+bool
+J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mnIndex, bool trace)
+   {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   auto symRef = node->getSymbolReference();
+   auto rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
+   switch (rm)
+      {
+      case TR::java_lang_invoke_MethodHandle_linkToStatic:
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         break;
+      default:
+        TR_ASSERT_FATAL(false, "Unsupported method %s", symRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signature(comp->trMemory()));
+      }
+
+   auto knot = comp->getKnownObjectTable();
+   if (mnIndex == TR::KnownObjectTable::UNKNOWN ||
+       !knot ||
+       knot->isNull(mnIndex))
+      {
+      if (trace)
+         traceMsg(comp, "MethodName for linkToXXX n%dn %p is unknown or null\n", node->getGlobalIndex(), node);
+      return false;
+      }
+
+   TR_J9VMBase* fej9 = comp->fej9();
+   auto targetMethod = fej9->targetMethodFromMemberName(comp, mnIndex);
+
+   TR_ASSERT(targetMethod, "Can't get target method from MethodName obj%d\n", mnIndex);
+
+   if (!performTransformation(comp, "O^O Refine linkToXXX n%dn [%p] with known MemberName object\n", node->getGlobalIndex(), node))
+      return false;
+
+   TR::MethodSymbol::Kinds callKind = getTargetMethodCallKind(rm);
+   TR::ILOpCodes callOpCode = getTargetMethodCallOpCode(rm, node->getDataType());
+
+   TR::SymbolReference* newSymRef = NULL;
+   if (rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
+      {
+      uint32_t vTableSlot = fej9->vTableOrITableIndexFromMemberName(comp, mnIndex);
+      auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));
+      newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
+      newSymRef->setOffset(fej9->vTableSlotToVirtualCallOffset(vTableSlot));
+      }
+   else
+      {
+      uint32_t vTableSlot = 0;
+      auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));
+      newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
+      }
+
+   bool needNullChk, needVftChild, needResolveChk;
+   needNullChk = needVftChild = false;
+   switch (rm)
+      {
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         needVftChild = true;
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+         needNullChk = true;
+      }
+
+  if (needNullChk)
+      {
+      TR::Node::recreateWithSymRef(treetop->getNode(), TR::NULLCHK, comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(symRef->getOwningMethodSymbol(comp)));
+      }
+
+   if (needVftChild)
+      {
+      auto vftLoad = TR::Node::createWithSymRef(node, TR::aloadi, 1, node->getFirstArgument(), comp->getSymRefTab()->findOrCreateVftSymbolRef());
+      // Save all arguments of linkTo* to an array
+      int32_t numArgs = node->getNumArguments();
+      TR::Node **args= new (comp->trStackMemory()) TR::Node*[numArgs];
+      for (int32_t i = 0; i < numArgs; i++)
+         args[i] = node->getArgument(i);
+
+      node->removeLastChild();
+      // Anchor all children to a treetop before transmuting the call node
+      for (int i = 0; i <node->getNumChildren(); i++)
+         {
+         TR::TreeTop *tt = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, node->getChild(i)));
+         treetop->insertBefore(tt);
+         }
+
+      node->removeAllChildren();
+      // Recreate the node to a indirect call node
+      TR::Node::recreateWithoutProperties(node, callOpCode, numArgs, vftLoad, newSymRef);
+
+      for (int32_t i = 0; i < numArgs - 1; i++)
+         node->setAndIncChild(i + 1, args[i]);
+      }
+   else
+      {
+      // VFT child is not needed, the call is direct, just need to change the symref and remove MemberName arg
+      node->setSymbolReference(newSymRef);
+      // Remove MemberName arg
+      node->removeLastChild();
+      }
+
+   return true;
+#else
+   return false;
+#endif
+   }
+
