@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,10 +129,11 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 	/* acquires access internally */
 	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL, bytecodes, 0, length, protectionDomainLocalRef, &defineClassOptions, hostClazz, &cpPatchMap, FALSE);
 	if (env->ExceptionCheck()) {
-		return NULL;
+		anonClass = NULL;
+		goto exit;
 	} else if (NULL == anonClass) {
 		throwNewInternalError(env, NULL);
-		return NULL;
+		goto exit;
 	}
 
 	if (constPatches != NULL) {
@@ -170,11 +171,13 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 			}
 		}
 
-		if (cpPatchMap.size > BUFFER_SIZE) {
-			j9mem_free_memory(cpPatchMap.indexMap);
-			cpPatchMap.indexMap = NULL;
-		}
 		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+
+exit:
+	if (cpPatchMap.size > BUFFER_SIZE) {
+		j9mem_free_memory(cpPatchMap.indexMap);
+		cpPatchMap.indexMap = NULL;
 	}
 
 	return anonClass;
