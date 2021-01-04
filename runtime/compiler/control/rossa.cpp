@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -207,8 +207,10 @@ char *compilationErrorNames[]={
    "compilationAotPatchedCPConstant", //55
    "compilationAotHasInvokeSpecialInterface", //56
    "compilationAotValidateExceptionHookFailure", //57
+   "compilationAotBlockFrequencyReloFailure", //58
+   "compilationAotRecompQueuedFlagReloFailure", //59
 #if defined(J9VM_OPT_JITSERVER)
-   "compilationStreamFailure", //compilationFirstJITServerFailure=58
+   "compilationStreamFailure", //compilationFirstJITServerFailure=60
    "compilationStreamLostMessage", // compilationFirstJITServerFailure+1
    "compilationStreamMessageTypeMismatch", //compilationFirstJITServerFailure+2
    "compilationStreamVersionIncompatible", //compilationFirstJITServerFailure+3

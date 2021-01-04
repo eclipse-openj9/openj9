@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -683,6 +683,7 @@ class TR_BlockFrequencyInfo
    static inline TR_BlockFrequencyInfo * get(TR::Compilation *comp);
    static inline TR_BlockFrequencyInfo * getCurrent(TR::Compilation *comp);
 
+   void   *getFrequencyArrayBase() const { return _frequencies; }
    void   *getFrequencyForBlock(int32_t blockNum) {return &_frequencies[blockNum];}
    int32_t getFrequencyInfo(TR::Block *block, TR::Compilation *comp);
    int32_t getFrequencyInfo(TR_ByteCodeInfo &bci, TR::Compilation *comp, bool normalizeForCallers = true, bool trace = true);

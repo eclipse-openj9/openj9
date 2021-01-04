@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -260,4 +260,6 @@ uint32_t J9::ARM64::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_
    0,                                                                  // TR_MethodCallAddress                   = 99,
    sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),         // TR_DiscontiguousSymbolFromManager      = 100,
    sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate),       // TR_ResolvedTrampolines                 = 101,
+   sizeof(TR_RelocationRecordBlockFrequencyBinaryTemplate),            // TR_BlockFrequency                      = 102,
+   sizeof(TR_RelocationRecordBinaryTemplate),                          // TR_RecompQueuedFlag                    = 103,
    };

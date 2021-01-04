@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,6 +220,8 @@ TR_JProfilingRecompLoopTest::addRecompilationTests(TR::Compilation *comp, Recomp
          {
          TR::Block *calculateLoopRawFreq  = TR::Block::createEmptyBlock(node, comp, remainingCodeBlock->getFrequency());
          TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(bfi->getIsQueuedForRecompilation(), TR::Int32);
+         symRef->getSymbol()->setIsRecompQueuedFlag();
+         symRef->getSymbol()->setNotDataAddress();
          TR::Node *loadIsQueuedForRecompilation = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
          TR::Node *checkIfQueueForRecompilation = TR::Node::createif(TR::ificmpeq, loadIsQueuedForRecompilation, TR::Node::iconst(node, -1), remainingCodeBlock->getEntry());
          TR::TreeTop *checkIfNeededRecompilationTestTT = TR::TreeTop::create(comp, originalBlock->getLastRealTreeTop(), checkIfQueueForRecompilation);
