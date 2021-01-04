@@ -191,6 +191,10 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_isInnerClass(false),
 	_needsStaticConstantInit(false),
 	_isRecord(false),
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	_isIdentityInterfaceNeeded(false),
+	_isValueType(false),
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
 	_isSealed(false),
@@ -665,6 +669,9 @@ public:
 	InterfaceVisitor(ClassFileOracle *classFileOracle, ConstantPoolMap *constantPoolMap) :
 		_classFileOracle(classFileOracle),
 		_constantPoolMap(constantPoolMap),
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		_wasIdentityInterfaceSeen(false),
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		_wasCloneableSeen(false),
 		_wasSerializableSeen(false)
 	{
@@ -684,16 +691,28 @@ public:
 			_wasSerializableSeen = true;
 		}
 #undef SERIALIZABLE_NAME
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if( _classFileOracle->isUTF8AtIndexEqualToString(cpIndex, IDENTITY_OBJECT_NAME, sizeof(IDENTITY_OBJECT_NAME)) ) {
+			_wasIdentityInterfaceSeen = true;
+		}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	}
 
 	bool wasCloneableSeen() const { return _wasCloneableSeen; }
 	bool wasSerializableSeen() const { return _wasSerializableSeen; }
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool wasIdentityInterfaceSeen() const { return _wasIdentityInterfaceSeen; }
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 private:
 	ClassFileOracle *_classFileOracle;
 	ConstantPoolMap *_constantPoolMap;
 	bool _wasCloneableSeen;
 	bool _wasSerializableSeen;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool _wasIdentityInterfaceSeen;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 };
 
 void
@@ -702,9 +721,25 @@ ClassFileOracle::walkInterfaces()
 	ROMClassVerbosePhase v(_context, ClassFileInterfacesAnalysis);
 
 	InterfaceVisitor interfaceVisitor(this, _constantPoolMap);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	interfacesDo(&interfaceVisitor, 0);
+#else
 	interfacesDo(&interfaceVisitor);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_isCloneable = interfaceVisitor.wasCloneableSeen();
 	_isSerializable = interfaceVisitor.wasSerializableSeen();
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_VALUE_TYPE)) {
+		_isValueType = true;
+	}
+	if (!isValueType()
+		&& !interfaceVisitor.wasIdentityInterfaceSeen()
+		&& (getSuperClassNameIndex() != 0) /* j.l.Object has no superClass */
+		&& (J9_ARE_NO_BITS_SET(_classFile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE))
+	) {
+		_isIdentityInterfaceNeeded = true;
+	}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 }
 
 void

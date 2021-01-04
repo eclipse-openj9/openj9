@@ -446,8 +446,10 @@ public void test_getMethods_subtest6() throws Exception {
 	ClzImpl clzImpl = new ClzImpl();
 	for (Method method : clzImpl.getClass().getMethods()) {
 		for (Class<?> anInterface : method.getDeclaringClass().getInterfaces()) {
-			Method intfMethod = anInterface.getMethod(method.getName(), method.getParameterTypes());
-			Assert.assertEquals(intfMethod.toString(), "public abstract org.openj9.test.java.lang.Test_Class$ClzParent org.openj9.test.java.lang.Test_Class$InterfaceLayerThreeB.getType()");
+			if (IdentityInterface.class != anInterface) {
+				Method intfMethod = anInterface.getMethod(method.getName(), method.getParameterTypes());
+				Assert.assertEquals(intfMethod.toString(), "public abstract org.openj9.test.java.lang.Test_Class$ClzParent org.openj9.test.java.lang.Test_Class$InterfaceLayerThreeB.getType()");	
+			}
 		}
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,9 @@ private:
 	bool _isAnon;
 	J9UTF8* _anonClassName;
 	J9UTF8* _originalClassName;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	U_32 _numOfInjectedInterfaces;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	
 protected:
 
@@ -336,6 +339,9 @@ public:
 		, _isAnon(FALSE)
 		, _anonClassName(NULL)
 		, _originalClassName(NULL)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		, _numOfInjectedInterfaces(0)
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	{
 		/* anonClasses have the following name format: '[originalName]/[ROMSegmentAddress]' */
 		if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden)) {

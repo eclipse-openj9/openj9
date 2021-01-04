@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -947,6 +947,8 @@ typedef struct J9CfrClassFile {
 
 #define CFR_FOUND_CHARS_IN_EXTENDED_MUE_FORM 0x1
 #define CFR_FOUND_SEPARATOR_IN_MUE_FORM 0x2
+
+#define IDENTITY_OBJECT_NAME "java/lang/IdentityInterface"
 
 #ifdef __cplusplus
 }

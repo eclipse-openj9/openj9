@@ -1312,6 +1312,16 @@ getNumberOfPermittedSubclassesPtr(J9ROMClass *romClass);
 J9UTF8*
 permittedSubclassesNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+ * Retrieves number of interfaces injected into a class.
+ * @param J9ROMClass class with injected interfaces
+ * @return U_32 number of injected interfaces in optionalinfo
+ */
+U_32
+getNumberOfInjectedInterfaces(J9ROMClass *romClass);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 /**
  * Retrieves number of record components in this record. Assumes that 
  * ROM class parameter references a record class.
