@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2020 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -502,9 +502,9 @@ The following instructions guide you through the process of building a macOS **O
 
 ### 1. Prepare your system
 :apple:
-You must install a number of software dependencies to create a suitable build environment on your system:
+You must install a number of software dependencies to create a suitable build environment on your system (the specified versions are minimums):
 
-- [Xcode >= 11.4](https://developer.apple.com/download/more/) (requires an Apple account to log in).
+- [Xcode 10.3, use >= 11.4.1 to support code signing](https://developer.apple.com/download/more/) (requires an Apple account to log in).
 - [macOS OpenJDK 11](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
 The following dependencies can be installed by using [Homebrew](https://brew.sh/) (the specified versions are minimums):
