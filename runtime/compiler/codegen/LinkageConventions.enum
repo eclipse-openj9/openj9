@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,19 +28,11 @@
 #include "codegen/OMRLinkageConventions.enum"
 
    TR_CHelper,
-   TR_S390LinkageDefault,   //= 0,     ///< reserved for default construction
-
-   // Java specific linkages
-   TR_JavaPrivate ,//         = 0x1,   ///< Java private linkage
-   TR_JavaHelper    ,//       = 0x2,   ///< Java helper linkage
-
-   TR_SystemXPLink  ,//       = 0x20,  ///< (Java) zOS XPLink convention
+   TR_SystemXPLink,                     // (Java) zOS XPLink convention
 
    // zOS Type 1 linkages (non-Java) - all have bit 0x40 set
-   //#define TR_SystemOS_MASK  0x40
-
    // zOS Type 1 linkage - C++ Fastlink
-   TR_SystemFastLink       = 0x4D,  ///< (non-Java) zOS (C++) FastLink convention
+   TR_SystemFastLink          = 0x4D,  // (non-Java) zOS (C++) FastLink convention
 
    // Linux Platform Linkages
-   TR_SystemLinux,//          = 60     ///< (Java) Linux convention
+   TR_SystemLinux,//          = 60     // (Java) zLinux convention
