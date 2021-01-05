@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2020, 2020 IBM Corp. and others
+  Copyright (c) 2020, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 			<variation>Mode601</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump -DJ9JAR=$(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(Q) \
-	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -Xint -jar $(CMDLINETESTER_JAR) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)forceLazySymbolResolution.xml$(Q) \
 	-xids all,$(PLATFORM) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>

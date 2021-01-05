@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2019, 2020 IBM Corp. and others
+  Copyright (c) 2019, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@
 		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<exec command="rm -f $DUMPFILE$" />
 		<exec command="rm -f core*" />
-		<command showMatch="yes">$EXE$ $ARGS$ $JARS$ $PROGRAM$</command>
+		<command showMatch="yes">$EXE$ -Xmx24m $ARGS$ $JARS$ $PROGRAM$</command>
 		<output regex="no" type="success" showMatch="yes">System dump written</output>
 		<saveoutput regex="no" type="required" saveName="DUMPFILE" splitIndex="1" splitBy="System dump written to ">System dump written to </saveoutput>
 		<output regex="no" type="failure">Exception caught!</output>

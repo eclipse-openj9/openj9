@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2018, 2018 IBM Corp. and others
+  Copyright (c) 2018, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@
   <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE$" />
-  <command>$EXE$ -Xaot:forceaot,count=0 -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ $PROGRAM$</command>
+  <command>$EXE$ -Xmx4m -Xaot:forceaot,count=0 -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ $PROGRAM$</command>
   <output regex="no" type="success">Moved disk 0 to 1</output>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps -->
