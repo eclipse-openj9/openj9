@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2020 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,6 +55,7 @@ class Test {
 	private List<String> _commandArgs;
 	private List<String> _commandInputLines;
 	private static final long _JAVACORE_TIMEOUT_MILLIS = 5 * 60 * 1000; // 5 minute timeout
+	private static final long SHORT_TIMEOUT_MILLIS = 30 * 1000; // 30 second timeout
 
 	/**
 	 * The number of core files to capture may be specified via
@@ -216,8 +217,17 @@ class Test {
 
 			new ProcessKiller(proc, _timeout, exeToDebug).start();
 
-			stdout.join(_timeout * 1000);
-			stderr.join(_timeout * 1000);
+			// Wait for the ProcessKiller. Timeout should never occur here when ProcessKiller is working.
+			long killerTimeout = _JAVACORE_TIMEOUT_MILLIS;
+			if (isLinux()) {
+				if (CORE_COUNT > 0) {
+					// Wait for the core files to be produced.
+					killerTimeout += (_JAVACORE_TIMEOUT_MILLIS * CORE_COUNT) + (CORE_SPACING_MILLIS * (CORE_COUNT - 1));
+				}
+			}
+			stdout.join(_timeout + killerTimeout);
+			// Don't wait long for stderr after waiting for stdout.
+			stderr.join(SHORT_TIMEOUT_MILLIS);
 
 			if (stdout.isAlive()) {
 				TestSuite.printErrorMessage("stdout timed out");
@@ -226,10 +236,12 @@ class Test {
 				TestSuite.printErrorMessage("stderr timed out");
 			}
 
-			// Wait an additional 10 min after the regular timeout for the process to finish.
-			// It should finish because the ProcessKiller terminates it, but if it doesn't
-			// then don't wait forever.
-			proc.waitFor(_timeout + (10 * 60 * 1000), TimeUnit.MILLISECONDS);
+			// Don't wait long for the process to timeout after waiting on stdout/stderr.
+			proc.waitFor(SHORT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			if (proc.isAlive()) {
+				TestSuite.printErrorMessage("destroy test process after timeout");
+				proc.destroy();
+			}
 
 			testTimer.stop();
 			timer = testTimer.getTimeSpent();
@@ -415,7 +427,13 @@ class Test {
 		}
 	}
 
-	public static int getUnixPID(Process process) throws Exception {
+	public static boolean isLinux() {
+		String osName = System.getProperty("os.name", "<unknown>");
+
+		return osName.toLowerCase().indexOf("linux") >= 0;
+	}
+
+	public static int getPID(Process process) throws Exception {
 		if (isRiscv) {
 			return 0;
 		}
@@ -593,19 +611,17 @@ class Test {
 			}
 
 			try {
-				// Make sure we are on linux, otherwise there is no gdb.
-				int pid = getUnixPID(_proc);
+				int pid = getPID(_proc);
 
 				if ((0 == pid) && !isRiscv) {
-					System.out.print("INFO: getUnixPID() has failed indicating this is not a UNIX System.");
+					System.out.print("INFO: getPID() has failed. ");
 					System.out.println("'Debug on timeout' is currently only supported on Linux.");
 					return;
 				}
 
-				String osName = System.getProperty("os.name", "<unknown>");
-
-				if (osName.toLowerCase().indexOf("linux") < 0) {
-					System.out.print("INFO: The current OS is '" + osName + "'. ");
+				// Make sure we are on linux, otherwise there is no gdb.
+				if (!isLinux()) {
+					System.out.print("INFO: The current OS is '" + System.getProperty("os.name") + "'. ");
 					System.out.println("'Debug on timeout' is currently only supported on Linux.");
 					return;
 				}
@@ -624,20 +640,22 @@ class Test {
 
 				commandFile.deleteOnExit();
 
+				int count = 1;
 				// Capture all but the last core, without terminating the process.
 				for (int i = CORE_COUNT; i > 1; --i) {
-					captureCoreForProcess(gdbExe, pid, commandFile, false);
+					captureCoreForProcess(gdbExe, pid, count++, commandFile, false);
+					System.out.println("INFO: Sleep for " + CORE_SPACING_MILLIS + " millis before next capture.");
 					Thread.sleep(CORE_SPACING_MILLIS);
 				}
 
 				// Capture the final core and then terminate the process.
-				captureCoreForProcess(gdbExe, pid, commandFile, true);
+				captureCoreForProcess(gdbExe, pid, count, commandFile, true);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 
-		private void captureCoreForProcess(String gdbexe, int pid,
+		private void captureCoreForProcess(String gdbexe, int pid, int count,
 				File commandFile, boolean terminate)
 				throws InterruptedException, IOException {
 			// For gdb the commands must be streamed to the debugger
@@ -648,7 +666,8 @@ class Test {
 				writer.write("info registers\n");
 				writer.write("info thread\n");
 				writer.write("thread apply all where full\n");
-				writer.write("generate-core-file\n");
+				// Must specify a different name, otherwise the cores are overwritten.
+				writer.write("generate-core-file core." + pid + "." + count + "\n");
 
 				if (!terminate) {
 					writer.write("detach inferior\n");
@@ -685,7 +704,8 @@ class Test {
 			 * Wait for a few minutes for gdb to grab the core on a busy system.
 			 */
 			stdout.join(_JAVACORE_TIMEOUT_MILLIS);
-			stderr.join(_JAVACORE_TIMEOUT_MILLIS);
+			// Don't wait long for stderr after waiting for stdout.
+			stderr.join(SHORT_TIMEOUT_MILLIS);
 
 			/* Call destroy to ensure the process is really dead. At
 			 * this point stdout&err are closed, or _JAVACORE_TIMEOUT_MILLIS
@@ -693,11 +713,19 @@ class Test {
 			 * has exited cleanly.
 			 */
 			proc.destroy();
-			int rc = proc.waitFor();
+			// Don't wait forever if something went wrong.
+			proc.waitFor(SHORT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
-			if (rc != 0) {
-				System.out.println("INFO: Running '" + gdbexe + "' failed with rc = " + rc);
-				// Print the error stream only if gdb failed
+			try {
+				int rc = proc.exitValue();
+				if (rc != 0) {
+					System.out.println("INFO: Running '" + gdbexe + "' failed with rc = " + rc);
+					// Print the error stream only if gdb failed.
+					System.out.println(stderr.getString());
+				}
+			} catch (IllegalThreadStateException e) {
+				System.out.println("INFO: Running '" + gdbexe + "' failed to complete.");
+				// Print the error stream only if gdb failed.
 				System.out.println(stderr.getString());
 			}
 		}
@@ -705,7 +733,7 @@ class Test {
 		private synchronized void killTimedOutProcess() {
 			// If we can send a -QUIT signal to the process, send one
 			try {
-				int pid = getUnixPID(_proc);
+				int pid = getPID(_proc);
 				if (0 != pid) {
 					TestSuite.printErrorMessage("executing kill -ABRT " + pid);
 					Process proc = Runtime.getRuntime().exec("kill -ABRT " + pid);
@@ -732,6 +760,10 @@ class Test {
 					Process procKill9 = Runtime.getRuntime().exec("kill -9 " + pid);
 					procKill9.waitFor();
 					TestSuite.printErrorMessage("kill -9 signal sent");
+				}
+				if (_proc.isAlive()) {
+					TestSuite.printErrorMessage("ProcessKiller destroy test process after timeout");
+					_proc.destroy();
 				}
 			} catch (IOException e) {
 				// FIXME
