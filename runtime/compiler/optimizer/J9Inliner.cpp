@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -451,8 +451,17 @@ bool TR_InlinerBase::inlineCallTarget(TR_CallStack *callStack, TR_CallTarget *ca
 
    // Last chance to improve our prex info
    //
-   calltarget->_prexArgInfo = TR_PrexArgInfo::enhance(calltarget->_prexArgInfo, argInfo, comp());
-   argInfo = getUtil()->computePrexInfo(calltarget);
+   if (!calltarget->_prexArgInfo)
+      calltarget->_prexArgInfo = getUtil()->computePrexInfo(calltarget);
+
+   argInfo = TR_PrexArgInfo::enhance(calltarget->_prexArgInfo, argInfo, comp());
+   calltarget->_prexArgInfo = argInfo;
+   bool tracePrex = comp()->trace(OMR::inlining) || comp()->trace(OMR::invariantArgumentPreexistence);
+   if (tracePrex && argInfo)
+      {
+      traceMsg(comp(), "Final prex argInfo:\n");
+      argInfo->dumpTrace();
+      }
 
    if (!comp()->incInlineDepth(calltarget->_calleeSymbol, calltarget->_myCallSite->_callNode->getByteCodeInfo(), calltarget->_myCallSite->_callNode->getSymbolReference()->getCPIndex(), calltarget->_myCallSite->_callNode->getSymbolReference(), !calltarget->_myCallSite->_isIndirectCall, argInfo))
 		{
