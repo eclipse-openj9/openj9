@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,11 +24,11 @@ package com.ibm.java.lang.management.internal;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.management.ObjectName;
 
@@ -218,11 +218,9 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	public final Map<String, String> getSystemProperties() {
 		Map<String, String> result = new HashMap<>();
 		Properties props = System.getProperties();
-		Enumeration<?> propNames = props.propertyNames();
-		while (propNames.hasMoreElements()) {
-			String propName = (String) propNames.nextElement();
-			String propValue = props.getProperty(propName);
-			result.put(propName, propValue);
+		Set<String> propNames = props.stringPropertyNames();
+		for (String key : propNames) {
+			result.put(key, props.getProperty(key));
 		}
 		return result;
 	}
