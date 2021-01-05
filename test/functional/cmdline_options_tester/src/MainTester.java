@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,6 +54,8 @@ public class MainTester {
 				verbose = true;
 			} else if (args[i].equalsIgnoreCase("-nonZeroExitWhenError")) {
 				nonZeroExitCodeWhenError = true;
+			} else if (args[i].equalsIgnoreCase("-disableDebugOnTimeout")) {
+				debugCmdOnTimeout = false;
 			} else if (i < args.length - 1) {
 				if (args[i].equalsIgnoreCase("-config")) {
 					configFile = args[++i];
@@ -65,8 +67,6 @@ public class MainTester {
 					platforms = args[++i];
 				} else if (args[i].equalsIgnoreCase("-outputLimit")) {
 					outputLimitString = args[++i];
-				} else if (args[i].equalsIgnoreCase("-disableDebugOnTimeout")) {
-					debugCmdOnTimeout = false;
 				}
 			}
 		}
