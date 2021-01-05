@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,8 +35,6 @@
 struct J9JavaVM;
 struct J9VMThread;
 
-#define THIS_DLL_NAME J9_GC_DLL_NAME
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,7 +48,6 @@ void gcCleanupHeapStructures(J9JavaVM* vm);
 jint triggerGCInitialized(J9VMThread* vmThread);
 
 void gcExpandHeapOnStartup(J9JavaVM *javaVM);
-
 
 #ifdef __cplusplus
 } /* extern "C" { */

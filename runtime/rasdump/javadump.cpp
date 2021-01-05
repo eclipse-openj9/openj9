@@ -1029,6 +1029,15 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters("1CIJCLVERSION  " OPENJDK_SHA " based on " OPENJDK_TAG "\n");
 #endif
 
+	/* Write the vendor, product name, and extension version */
+	_OutputStream.writeCharacters("1CIVENDOR      " JAVA_VENDOR "\n");
+#if defined(J9PRODUCT_NAME)
+	_OutputStream.writeCharacters("1CIPRODUCT     " J9PRODUCT_NAME "\n");
+#endif /* defined(J9PRODUCT_NAME) */
+#if defined(J9JDK_EXT_VERSION)
+	_OutputStream.writeCharacters("1CIEXTVERSION  " J9JDK_EXT_VERSION "\n");
+#endif /* defined(J9JDK_EXT_VERSION) */
+
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	_OutputStream.writeCharacters("1CIJITMODES    ");
 
@@ -5253,10 +5262,10 @@ JavaCoreDumpWriter::writeJavaLangThreadInfo (J9VMThread* vmThread)
 void
 JavaCoreDumpWriter::writeCPUinfo(void)
 {
-	PORT_ACCESS_FROM_PORT(_PortLibrary);
+	OMRPORT_ACCESS_FROM_J9PORT(_PortLibrary);
 
-	UDATA bound = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND);
-	UDATA target = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+	UDATA bound = omrsysinfo_get_number_CPUs_by_type(J9PORT_CPU_BOUND);
+	UDATA target = omrsysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
 
 	_OutputStream.writeCharacters(
 			"NULL\n");
@@ -5264,10 +5273,10 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 			"1CICPUINFO     CPU Information\n"
 			"NULL           ------------------------------------------------------------------------\n"
 			"2CIPHYSCPU     Physical CPUs: ");
-	_OutputStream.writeInteger(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_PHYSICAL), "%i\n");
+	_OutputStream.writeInteger(omrsysinfo_get_number_CPUs_by_type(J9PORT_CPU_PHYSICAL), "%i\n");
 	_OutputStream.writeCharacters(
 			"2CIONLNCPU     Online CPUs: ");
-	_OutputStream.writeInteger(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE), "%i\n");
+	_OutputStream.writeInteger(omrsysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE), "%i\n");
 	_OutputStream.writeCharacters(
 			"2CIBOUNDCPU    Bound CPUs: ");
 	_OutputStream.writeInteger(bound, "%i\n");
@@ -5282,7 +5291,37 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 	_OutputStream.writeCharacters(
 			"2CITARGETCPU   Target CPUs: ");
 	_OutputStream.writeInteger(target, "%i\n");
+	
+	char buff[400];
+	intptr_t rc = -1;
+	if (_VirtualMachine->jitConfig) {
+		rc = omrsysinfo_get_processor_feature_string(&_VirtualMachine->jitConfig->targetProcessor, buff, sizeof(buff));
+		if (rc != -1) {
+			_OutputStream.writeCharacters(
+				"2CIJITFEATURE  CPU features (JIT): ");
+			_OutputStream.writeCharacters(buff);
+			_OutputStream.writeCharacters("\n");
+		}
 
+		rc = omrsysinfo_get_processor_feature_string(&_VirtualMachine->jitConfig->relocatableTargetProcessor, buff, sizeof(buff));
+		if (rc != -1) {
+			_OutputStream.writeCharacters(
+	   			"2CIAOTFEATURE  CPU features (AOT): ");
+			_OutputStream.writeCharacters(buff);
+			_OutputStream.writeCharacters("\n");
+		}
+	}
+	else {
+		OMRProcessorDesc processorDescription;
+		omrsysinfo_get_processor_description(&processorDescription);
+		rc = omrsysinfo_get_processor_feature_string(&processorDescription, buff, sizeof(buff));
+		if (rc != -1) {
+			_OutputStream.writeCharacters(
+				"2CIINTFEATURE  CPU features (INT): ");
+			_OutputStream.writeCharacters(buff);
+			_OutputStream.writeCharacters("\n");
+		}
+	}
 	return;
 }
 

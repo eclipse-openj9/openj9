@@ -2675,7 +2675,7 @@ destoreHelper(TR::Node * node, TR::CodeGenerator * cg)
       valueChild = node->getFirstChild();
       }
   // source returns a reg pair, so... TODO
-  TR::Register * srcReg = cg->evaluate(valueChild);
+   TR::Register * srcReg = cg->evaluate(valueChild);
 
    TR::MemoryReference * loMR = TR::MemoryReference::create(cg, node);
    TR::MemoryReference * hiMR = generateS390MemoryReference(*loMR, 8, cg);

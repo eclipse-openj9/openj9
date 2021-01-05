@@ -166,13 +166,13 @@ final class MethodTypeHelper {
 			}
 		}
 		String name = c.getName().replace('.', '/');
-		/*[IF Java15]*/
+		/*[IF JAVA_SPEC_VERSION >= 15]*/
 		if (clazz.isHidden()) {
 			/* keep the last "." before romaddress for hidden classes */
 			int index = name.lastIndexOf('/');
 			name = name.substring(0, index) + '.' + name.substring(index + 1,name.length());
 		}
-		/*[ENDIF] Java15 */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 		if (c.isArray()) {
 			return name;

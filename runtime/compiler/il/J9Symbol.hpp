@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -152,7 +152,7 @@ public:
       Java_lang_invoke_MutableCallSiteDynamicInvokerHandle_mutableSite,
       Java_lang_invoke_MethodHandle_thunks,
       Java_lang_invoke_MethodHandle_type,
-      Java_lang_invoke_MethodType_arguments,
+      Java_lang_invoke_MethodType_ptypes,
       Java_lang_invoke_PrimitiveHandle_rawModifiers,
       Java_lang_invoke_PrimitiveHandle_defc,
       Java_lang_invoke_ThunkTuple_invokeExactThunk,

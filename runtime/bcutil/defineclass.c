@@ -549,7 +549,9 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
-	if (J2SE_VERSION(vm) >= J2SE_V16) {
+	if (J2SE_VERSION(vm) >= J2SE_V17) {
+		translationFlags |= BCT_Java17MajorVersionShifted;
+	} else if (J2SE_VERSION(vm) >= J2SE_V16) {
 		translationFlags |= BCT_Java16MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_V15) {
 		translationFlags |= BCT_Java15MajorVersionShifted;

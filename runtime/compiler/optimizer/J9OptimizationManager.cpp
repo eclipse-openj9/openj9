@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,6 +117,9 @@ J9::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFacto
          break;
       case OMR::jProfilingRecompLoopTest:
          _flags.set(requiresStructure);
+         break;
+      case OMR::handleRecompilationOps:
+         _flags.set(doesNotRequireAliasSets | supportsIlGenOptLevel);
          break;
       default:
          // do nothing

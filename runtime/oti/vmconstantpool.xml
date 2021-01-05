@@ -135,12 +135,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/invoke/WrongMethodTypeException" flags="opt_methodHandleCommon"/>
 	<classref name="java/lang/invoke/MethodTypeHelper" flags="opt_methodHandleCommon"/>
 	<classref name="java/lang/invoke/MethodHandleResolver" flags="opt_methodHandleCommon"/>
-	
+
 	<!-- Class references needed to support OpenJDK MethodHandles. -->
 	<classref name="java/lang/invoke/MemberName" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/MethodTypeForm" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/LambdaForm" flags="opt_openjdkMethodhandle"/>
-	
+
+	<classref name="jdk/internal/loader/NativeLibraries" versions="15-"/>
+	<classref name="jdk/internal/loader/NativeLibraries$NativeLibraryImpl" versions="15-"/>
+
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
 	whether or not to attempt the class load.  The flags sepcified on the fields are ignored.
@@ -277,7 +280,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/ThreadGroup" name="childrenThreads" signature="[Ljava/lang/Thread;"/>
 	<fieldref class="java/lang/ThreadGroup" name="childrenGroups" signature="[Ljava/lang/ThreadGroup;"/>
 	<fieldref class="java/lang/ThreadGroup" name="isDaemon" signature="Z"/>
-	<fieldref class="java/lang/ThreadGroup" name="memorySpace" signature="J" cast="void *"/>
 	<fieldref class="java/lang/ThreadGroup" name="childrenGroupsLock" signature="Ljava/lang/Object;"/>
 	<fieldref class="java/lang/ThreadGroup" name="childrenThreadsLock" signature="Ljava/lang/Object;"/>
 	<fieldref class="java/lang/ref/Reference" name="referent" signature="Ljava/lang/Object;"/>
@@ -312,8 +314,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/SpreadHandle" name="arrayClass" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/SpreadHandle" name="spreadCount" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/SpreadHandle" name="spreadPosition" signature="I" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="arguments" signature="[Ljava/lang/Class;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="returnType" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/MethodType" name="argSlots" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/MethodType" name="stackDescriptionBits" signature="[I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/DynamicInvokerHandle" name="site" signature="Ljava/lang/invoke/CallSite;" flags="opt_methodHandle"/>
@@ -359,22 +359,24 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<!-- Common field references shared between OpenJ9 and OpenJDK MethodHandles. -->
 	<fieldref class="java/lang/invoke/MethodType" name="methodDescriptor" signature="Ljava/lang/String;" flags="opt_methodHandleCommon"/>
 	<fieldref class="java/lang/invoke/MethodHandle" name="type" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandleCommon"/>
-	
+	<fieldref class="java/lang/invoke/MethodType" name="ptypes" signature="[Ljava/lang/Class;" flags="opt_methodHandleCommon"/>
+	<fieldref class="java/lang/invoke/MethodType" name="rtype" signature="Ljava/lang/Class;" flags="opt_methodHandleCommon"/>
+
 	<!-- Field references needed to support OpenJDK MethodHandles. -->
 	<fieldref class="java/lang/invoke/MemberName" name="clazz" signature="Ljava/lang/Class;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MemberName" name="name" signature="Ljava/lang/String;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MemberName" name="type" signature="Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MemberName" name="flags" signature="I" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MemberName" name="resolution" signature="Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="ptypes" signature="[Ljava/lang/Class;" flags="opt_openjdkMethodhandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="rtype" signature="Ljava/lang/Class;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MethodType" name="form" signature="Ljava/lang/invoke/MethodTypeForm;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MethodTypeForm" name="parameterSlotCount" signature="S" versions="14-" flags="opt_openjdkMethodhandle">
 		<fieldalias name="argCounts" signature="J" versions="8-11"  flags="opt_openjdkMethodhandle"/>
 	</fieldref>
 	<fieldref class="java/lang/invoke/LambdaForm" name="vmentry" signature="Ljava/lang/invoke/MemberName;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MethodHandle" name="form" signature="Ljava/lang/invoke/LambdaForm;" flags="opt_openjdkMethodhandle"/>
-		
+
+	<fieldref class="jdk/internal/loader/NativeLibraries$NativeLibraryImpl" name="fromClass" signature="Ljava/lang/Class;" versions="15-"/>
+
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
 	whether or not to attempt the class load.  The flags sepcified on the methods are ignored.
@@ -415,6 +417,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<!-- Static method references needed to support OpenJDK MethodHandles. -->
 	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="linkCallerMethod" signature="(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
+
+	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z" versions="15-"/>
 
 	<!-- Security manager check -->
 	<staticfieldref class="java/lang/System" name="security" signature="Ljava/lang/SecurityManager;"/>

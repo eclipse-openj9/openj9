@@ -1804,6 +1804,17 @@ _illegalPrimitiveReturn:
 			switch (bc) {
 			case JBnew:
 			case JBnewdup:
+				index = PARAM_16(bcIndex, 1);
+				info = &constantPool[index];
+				utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);
+				stackTop = pushClassType(verifyData, utf8string, stackTop);
+				type = POP;
+				if (J9_ARE_ANY_BITS_SET(type, BCV_ARITY_MASK)) {
+					errorType = J9NLS_BCV_ERR_BC_NEW_ARRAY__ID;
+					verboseErrorCode = BCV_ERR_NEW_OJBECT_MISMATCH;
+					errorTempData = ((type & BCV_ARITY_MASK) >> BCV_ARITY_SHIFT);
+					goto _miscError;
+				}
 				/* put a uninitialized object of the correct type on the stack */
 				PUSH(BCV_SPECIAL_NEW | (start << BCV_CLASS_INDEX_SHIFT));
 				break;

@@ -115,8 +115,7 @@ bool TR_AnnotationBase::scanForKnownAnnotationsAndRecord(TR::CompilationInfo *co
       }
 
    TR_PersistentClassInfo *classInfo=NULL;
-   if(TR::Options::getCmdLineOptions()->allowRecompilation() &&
-      !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) &&
+   if(!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) &&
       compInfo->getPersistentInfo()->getPersistentCHTable())
       {
       TR_OpaqueClassBlock *cl=J9JitMemory::convertClassPtrToClassOffset(clazz);

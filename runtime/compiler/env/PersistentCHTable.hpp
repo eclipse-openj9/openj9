@@ -48,15 +48,15 @@ namespace TR { class CompilationInfo; }
 class TR_PersistentCHTable
    {
    private:
-
    /**
     * @brief Enum to denote the state of the CH Table:
     *
-    *        active: Data in the CH Table can be used and updated.
-    *        activating: CH Table is in the process of being activated;
-    *                    this state is used when the CH Table is
-    *                    being populated in the restore run.
-    *        reset: CH Table is not active.
+    *        reset:            CH Table is not active.
+    *        active:           Data in the CH Table can be used and updated.
+    *        activating:       CH Table is in the process of being activated;
+    *                          this state is used when the CH Table is
+    *                          being populated in the restore run.
+    *        activationFailed: CH Table failed activation.
     */
    enum Status
       {
@@ -168,7 +168,6 @@ class TR_PersistentCHTable
    void dumpStats(TR_FrontEnd *);
 #endif
 
-
    bool isActive() { return _status == Status::active; }
    bool isActivating() { return _status == Status::activating; }
    bool isAccessible() { return (isActive() || isActivating()); }
@@ -180,6 +179,7 @@ class TR_PersistentCHTable
 
    private:
    Status _status;
+
    /**
     * @brief Collects all subclasses of a given class into the ClassList container passed in; assumes
     *        that the class hierarchy mutex has been acquired

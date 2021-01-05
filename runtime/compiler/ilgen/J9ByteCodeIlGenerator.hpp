@@ -187,6 +187,8 @@ private:
    void         loadMonitorArg();
 
    void         storeInstance(int32_t);
+   void         storeInstance(TR::SymbolReference *);
+   void         storeFlattenableInstance(int32_t);
    void         storeFlattenableInstanceWithHelper(int32_t);
    void         storeStatic(int32_t);
    void         storeAuto(TR::DataType type, int32_t slot, bool isAdjunct = false);
@@ -234,7 +236,9 @@ private:
    void         genDefaultValue(uint16_t classCpIndex);
    void         genDefaultValue(TR_OpaqueClassBlock *valueTypeClass);
    void         genWithField(uint16_t fieldCpIndex);
-   void         genFlattenableWithFieldWithHelper(uint16_t fieldCpIndex, TR::Node * newFieldValue, TR::Node * originalObject);
+   void         genWithField(TR::SymbolReference *, TR_OpaqueClassBlock *);
+   void         genFlattenableWithField(uint16_t, TR_OpaqueClassBlock *);
+   void         genFlattenableWithFieldWithHelper(uint16_t fieldCpIndex);
    void         genFlush(int32_t nargs);
    void         genFullFence(TR::Node *node);
    void         handlePendingPushSaveSideEffects(TR::Node *, int32_t stackSize = -1);

@@ -223,16 +223,16 @@ initializeMutatorModelJava(J9VMThread* vmThread)
 void
 cleanupMutatorModelJava(J9VMThread* vmThread)
 {
-	J9VMDllLoadInfo* loadInfo;
-	J9JavaVM* vm = vmThread->javaVM;
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 
 	if (NULL != env) {
+		J9JavaVM *vm = vmThread->javaVM;
+		J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
+
 		/* cleanupMutatorModelJava is called as part of the main vmThread shutdown, which happens after
 		 * gcCleanupHeapStructures has been called. We should therefore only flush allocation caches
 		 * if there is still a heap.
 		 */
-		loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
 		if (!IS_STAGE_COMPLETED(loadInfo->completedBits, HEAP_STRUCTURES_FREED)) {
 			/* this can only be called if the heap still exists since it will ask the TLH chunk to be abandoned with crashes if the heap is deallocated */
 			GC_OMRVMThreadInterface::flushCachesForGC(env);
@@ -323,7 +323,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	MM_EnvironmentBase env(vm->omrVM);
 	MM_GlobalCollector *globalCollector;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
+	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	J9MemoryRegion heapSnapshotMemoryRegion;
 	J9GCSnapshotProperties gcSnapshotProperties;
@@ -557,7 +557,7 @@ gcInitializeHeapStructures(J9JavaVM *vm)
 
 	MM_MemorySpace *defaultMemorySpace;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
-	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
+	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 	/* if this is a restore run memory segments are already set */
@@ -2887,8 +2887,7 @@ configurateGCWithPolicyAndOptions(OMR_VM* omrVM)
 jint
 gcInitializeDefaults(J9JavaVM* vm)
 {
-	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
-
+	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 	UDATA tableSize = (opt_none + 1) * sizeof(IDATA);
 	UDATA realtimeSizeClassesAllocationSize = ROUND_TO(sizeof(UDATA), sizeof(J9VMGCSizeClasses));
 	IDATA *memoryParameterTable;

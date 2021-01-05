@@ -41,10 +41,9 @@ import sun.reflect.CallerSensitive;
  */
 @SuppressWarnings("javadoc")
 public final class VM {
-
-	private static final int J9_EXTENDED_RUNTIME2_RAMSTATE_SNAPSHOT_RUN = 0x1000;
-	private static final int J9_EXTENDED_RUNTIME2_RAMSTATE_RESTORE_RUN = 0x2000;
-	private static final int J9_EXTENDED_RUNTIME2_SNAPSHOT_STATE_IS_RESTORED = 0x4000;
+	private static final int J9_EXTENDED_RUNTIME2_RAMSTATE_SNAPSHOT_RUN = 0x4000;
+	private static final int J9_EXTENDED_RUNTIME2_RAMSTATE_RESTORE_RUN = 0x8000;
+	private static final int J9_EXTENDED_RUNTIME2_SNAPSHOT_STATE_IS_RESTORED = 0x10000;
 	private static int EXTENDED_RUNTIME_FLAGS2;
 	
 	public static final boolean PACKED_SUPPORT_ENABLED = false;  /* TODO delete this when ARM JCL is updated */

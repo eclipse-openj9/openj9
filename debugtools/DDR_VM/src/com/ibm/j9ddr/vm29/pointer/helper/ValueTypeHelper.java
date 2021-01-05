@@ -60,6 +60,7 @@ public class ValueTypeHelper {
 		private static final long J9ClassLargestAlignmentConstraintDouble = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassLargestAlignmentConstraintDouble", 0);
 		private static final long J9ClassLargestAlignmentConstraintReference = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassLargestAlignmentConstraintReference", 0);
 		private static final long J9ClassIsFlattened = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassIsFlattened", 0);
+		private static final long J9ClassRequiresPrePadding = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassRequiresPrePadding", 0);
 		private static final UDATA J9ClassFlagsMask = new UDATA(0xFF);
 		private static final UDATA J9ClazzInEntryMask = new UDATA(J9ClassFlagsMask.bitNot());
 		private MethodHandle getFlattenedClassCachePointer = null;
@@ -280,6 +281,14 @@ public class ValueTypeHelper {
 			}
 			return false;
 		}
+		
+		@Override
+		public boolean classRequires4BytePrePadding(J9ClassPointer clazz) throws CorruptDataException {
+			if (J9ClassRequiresPrePadding != 0) {
+				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9ClassRequiresPrePadding);
+			}
+			return false;
+		}
 
 		@Override
 		public boolean isFlattenableFieldSignature(String signature) {
@@ -440,6 +449,15 @@ public class ValueTypeHelper {
 	 * @return true if clazz is flattened, false otherwise
 	 */
 	public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
+		return false;
+	}
+	
+	/**
+	 * Queries if class is has 4byte pre-padding in the stand-alone case
+	 * @param clazz J9Class
+	 * @return true if clazz is requires pre-padding, false otherwise
+	 */
+	public boolean classRequires4BytePrePadding(J9ClassPointer clazz) throws CorruptDataException {
 		return false;
 	}
 }

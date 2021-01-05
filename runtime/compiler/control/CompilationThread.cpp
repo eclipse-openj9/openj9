@@ -506,7 +506,16 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
 #ifdef J9VM_OPT_JITSERVER
    // Always activate in JITServer server mode
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
       return TR_yes;
+      }
+   else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT &&
+            JITServerHelpers::isServerAvailable() &&
+            serverHasLowPhysicalMemory())
+      {
+      // If the available memory on the server is low, do not activate more client threads
+      return TR_no;
+      }
 #endif
 
    // Do not activate if we already exceed the CPU enablement for compilation threads
@@ -551,6 +560,7 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
 #if defined(J9VM_OPT_JITSERVER)
       else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && JITServerHelpers::isServerAvailable())
          {
+         
          // For JITClient let's be more agressive with compilation thread activation
          // because the latencies are larger. Beyond 'numProc-1' we will use the
          // 'starvation activation schedule', but accelerated (divide those thresholds by 2)
@@ -1166,6 +1176,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _compReqSeqNo = 0;
    _chTableUpdateFlags = 0;
    _localGCCounter = 0;
+   _serverHasLowPhysicalMemory = false;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
@@ -2153,6 +2164,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotThunkReloFailure:
             case compilationAotHasInvokehandle:
             case compilationAotHasInvokeVarHandle:
+            case compilationAotPatchedCPConstant:
             case compilationAotHasInvokeSpecialInterface:
             case compilationAotValidateMethodExitFailure:
             case compilationAotValidateMethodEnterFailure:
@@ -2186,6 +2198,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                   }
             case compilationStreamMessageTypeMismatch:
             case compilationStreamVersionIncompatible:
+            case compilationStreamLostMessage:
 #endif
             case compilationInterrupted:
             case compilationCodeReservationFailure:
@@ -3555,7 +3568,7 @@ void TR::CompilationInfo::stopCompilationThreads()
          }
       catch (const JITServer::StreamFailure &e)
          {
-         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary));
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary), this);
          // catch the stream failure exception if the server dies before the dummy message is send for termination.
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamFailure (server unreachable before the termination message was sent): %s", e.what());
@@ -4416,6 +4429,10 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
             && TR::Options::getCmdLineOptions()->getOption(TR_SuspendEarly)
             && compInfo->getQueueWeight() < TR::CompilationInfo::getCompThreadSuspensionThreshold(compInfo->getNumCompThreadsActive())
             )
+#if defined(J9VM_OPT_JITSERVER)
+         || (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT
+            && compInfo->serverHasLowPhysicalMemory()) // keep suspending threads until server space frees up
+#endif
          )
       )
       {
@@ -4424,13 +4441,18 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       compInfo->decNumCompThreadsActive();
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Suspend compThread %d Qweight=%d active=%d %s %s",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Suspend compThread %d Qweight=%d active=%d %s %s %s",
             (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
             getCompThreadId(),
             compInfo->getQueueWeight(),
             compInfo->getNumCompThreadsActive(),
             compInfo->getRampDownMCT() ? "RampDownMCT" : "",
-            compInfo->getSuspendThreadDueToLowPhysicalMemory() ? "LowPhysicalMem" : "");
+            compInfo->getSuspendThreadDueToLowPhysicalMemory() ? "LowPhysicalMem" : "",
+#if defined(J9VM_OPT_JITSERVER)
+            compInfo->serverHasLowPhysicalMemory() ? "ServerLowPhysicalMem" :
+#endif
+            ""
+            );
          }
       // If the other remaining active thread(s) are sleeping (maybe because
       // we wanted to avoid two concurrent hot requests) we need to wake them
@@ -8585,6 +8607,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             compiler->setOutOfProcessCompilation();
             // Create the KOT by default at the server as long as it is not disabled at the client.
             compiler->getOrCreateKnownObjectTable();
+            compiler->setClientData(that->getClientData());
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -8791,7 +8814,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          // startup and with hints we move this expensive compilation during startup
          // thus affecting startup time
          // To minimize risk, add hot/scorching hints only if we are in startup mode
-         if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP)
+         if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
             {
             TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
             if (hotness == hot)
@@ -8815,7 +8838,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       // Look only during startup to avoid creating too many hints.
       // If SCC is larger we could store hints for more methods
       //
-      if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP)
+      if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
          {
          if (scratchSegmentProvider.regionBytesAllocated() > TR::Options::_memExpensiveCompThreshold)
             {
@@ -11002,6 +11025,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::FSDHasInvokeHandle &e)
       {
       _methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
+      }
+   catch (const J9::AOTHasPatchedCPConstant &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationAotPatchedCPConstant;
       }
    catch (const TR::NoRecompilationRecoverableILGenException &e)
       {

@@ -957,15 +957,15 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
          case 8: op = TR::lstorei; byteswapOp = TR::lbyteswap; break;
          }
 
-      if (requiresByteSwap)
-         {
-         valueNode = TR::Node::create(byteswapOp, 1, valueNode);
-         }
-
       // Create the proper conversion if the source and target sizes are different
       if (sourceDataType != targetDataType)
          {
          valueNode = TR::Node::create(TR::ILOpCode::getProperConversion(sourceDataType, targetDataType, false), 1, valueNode);
+         }
+
+      if (requiresByteSwap)
+         {
+         valueNode = TR::Node::create(byteswapOp, 1, valueNode);
          }
 
       return TR::Node::createWithSymRef(op, 2, 2, createByteArrayElementAddress(callTreeTop, callNode, byteArrayNode, offsetNode), valueNode, comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));

@@ -772,6 +772,14 @@ TR_J9ServerVM::getObjectClass(uintptr_t objectPointer)
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getObjectClassAt(uintptr_t objectAddress)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getObjectClassAt, objectAddress);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
+
 uintptr_t
 TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
@@ -863,18 +871,13 @@ TR_J9ServerVM::sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_
    // in the superclass it would be null if it was not needed, but here we always need it.
    // so we just get it out of the compilation.
    TR_Memory *trMemory = _compInfoPT->getCompilation()->trMemory();
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getClassNameSignatureFromMethod, (J9Method*) aMethod);
-   auto recv = stream->read<std::string, std::string, std::string>();
-   const std::string str_className = std::get<0>(recv);
-   const std::string str_name = std::get<1>(recv);
-   const std::string str_signature = std::get<2>(recv);
-   J9UTF8 * className = str2utf8((char*)&str_className[0], str_className.length(), trMemory, heapAlloc);
-   J9UTF8 * name = str2utf8((char*)&str_name[0], str_name.length(), trMemory, heapAlloc);
-   J9UTF8 * signature = str2utf8((char*)&str_signature[0], str_signature.length(), trMemory, heapAlloc);
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf(getClassOfMethod(aMethod)));
+   J9ROMMethod *romMethod = JITServerHelpers::romMethodOfRamMethod(reinterpret_cast<J9Method *>(aMethod));
+   J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
+   J9UTF8 *signature = J9ROMMETHOD_SIGNATURE(romMethod);
 
-   int32_t len = J9UTF8_LENGTH(className)+J9UTF8_LENGTH(name)+J9UTF8_LENGTH(signature)+3;
-   char * s = len <= bufLen ? buf : (trMemory ? (char*)trMemory->allocateHeapMemory(len) : NULL);
+   int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
+   char *s = len <= bufLen ? buf : (trMemory ? (char *)trMemory->allocateHeapMemory(len) : NULL);
    if (s)
       sprintf(s, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
    return s;
@@ -1566,9 +1569,6 @@ TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *com
       && (method->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
          || method->isArchetypeSpecimen()))
       {
-      if (isAOT_DEPRECATED_DO_NOT_USE()) // While we're here... we need an AOT relocation for this call
-         comp->cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *) callNode, (uint8_t *) methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
-
       char terseSignature[260]; // 256 args + 1 return type + null terminator
       TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
       thunkTable->getTerseSignature(terseSignature, sizeof(terseSignature), methodSymbol->getMethod()->signatureChars());

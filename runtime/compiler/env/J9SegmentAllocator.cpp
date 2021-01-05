@@ -26,6 +26,7 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "env/VerboseLog.hpp"
 #include "OMR/Bytes.hpp"
 #include "j9.h"
 #undef min
@@ -68,7 +69,7 @@ SegmentAllocator::allocate(const size_t segmentSize, const std::nothrow_t &tag) 
             //
             // We allow a small race condition: it is possible that between the test
             // for available physical memory and setting of the flag below, another
-            // compilation thread has suspended itself and reset the flag. The code 
+            // compilation thread has suspended itself and reset the flag. The code
             // below is going to set the flag again, possibly resulting into two
             // compilation threads being suspended. This is still fine, because, if
             // needed, a new compilation thread will be activated when a compilation

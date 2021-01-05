@@ -94,7 +94,7 @@ misc:
   sdk_filename_template:
     default: "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}${SDK_FILE_EXT}"
 credentials:
-  github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
+  github: 'github-bot'
 test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins'
 build_discarder:
@@ -124,6 +124,11 @@ debuginfo:
 largeheap:
   extra_configure_options: '--with-noncompressedrefs'
 #========================================#
+# Mixed references build
+#========================================#
+mixedrefs:
+  extra_configure_options: '--with-mixedrefs'
+#========================================#
 # Build with cmake
 #========================================#
 cmake:
@@ -148,7 +153,7 @@ jitserver:
 # OpenSSL
 #========================================#
 openssl:
-  extra_getsource_options: '--openssl-version=1.1.1h'
+  extra_getsource_options: '--openssl-version=1.1.1i'
   extra_configure_options: '--with-openssl=fetched'
 #========================================#
 # OpenSSL Bundling
@@ -197,6 +202,11 @@ valhalla:
   extra_configure_options: '--enable-inline-types'
   test_build_list: 'functional/Valhalla,functional/cmdline_options_tester,functional/cmdLineTests/valuetypeddrtests'
 #========================================#
+# OpenJDK JSR292
+#========================================#
+ojdk292:
+  extra_configure_options: '--enable-openjdk-methodhandles'
+#========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
 ppc64le_linux:
@@ -244,6 +254,21 @@ ppc64le_linux_xl_cm:
 #========================================#
 ppc64le_linux_xl_uma:
   extends: ['ppc64le_linux_xl', 'uma']
+#========================================#
+# Linux PPCLE 64bits Mixed References
+#========================================#
+ppc64le_linux_mixed:
+  extends: ['ppc64le_linux', 'mixedrefs']
+  excluded_tests:
+    8:
+      - special.system
+    11:
+      - special.system
+#========================================#
+# Linux PPCLE 64bits Mixed References /w CMake
+#========================================#
+ppc64le_linux_mixed_cm:
+  extends: ['ppc64le_linux_mixed', 'cmake']
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -298,6 +323,19 @@ s390x_linux_xl_cm:
 s390x_linux_xl_uma:
   extends: ['s390x_linux_xl', 'uma']
 #========================================#
+# Linux S390 64bits Mixed References
+#========================================#
+s390x_linux_mixed:
+  extends: ['s390x_linux', 'mixedrefs']
+  excluded_tests:
+     11:
+      - special.system
+#========================================#
+# Linux S390 64bits Mixed References /w CMake
+#========================================#
+s390x_linux_mixed_cm:
+  extends: ['s390x_linux_mixed', 'cmake']
+#========================================#
 # Linux S390 64bits Compressed Pointers /w JITSERVER
 #========================================#
 s390x_linux_jit:
@@ -346,6 +384,11 @@ ppc64_aix_uma:
 #========================================#
 ppc64_aix_xl:
   extends: ['ppc64_aix', 'largeheap']
+  excluded_tests:
+    8:
+      - special.system
+    11:
+      - special.system
 #========================================#
 # AIX PPC 64bits Large Heap /w CMake
 #========================================#
@@ -356,6 +399,16 @@ ppc64_aix_xl_cm:
 #========================================#
 ppc64_aix_xl_uma:
   extends: ['ppc64_aix_xl', 'uma']
+#========================================#
+# AIX PPC 64bits Mixed References
+#========================================#
+ppc64_aix_mixed:
+  extends: ['ppc64_aix', 'mixedrefs']
+#========================================#
+# AIX PPC 64bits Mixed References /w CMake
+#========================================#
+ppc64_aix_mixed_cm:
+  extends: ['ppc64_aix_mixed', 'cmake']
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
@@ -427,6 +480,21 @@ x86-64_linux_xl:
     8:
       - special.system
 #========================================#
+# Linux x86 64bits Mixed References
+#========================================#
+x86-64_linux_mixed:
+  extends: ['x86-64_linux', 'mixedrefs']
+  excluded_tests:
+    - extended.functional
+    - sanity.system
+    - extended.system
+    - special.system
+#========================================#
+# Linux x86 64bits Mixed References /w CMake
+#========================================#
+x86-64_linux_mixed_cm:
+  extends: ['x86-64_linux_mixed', 'cmake']
+#========================================#
 # Linux x86 64bits Compressed Pointers / Valhalla
 #========================================#
 x86-64_linux_valhalla:
@@ -472,6 +540,16 @@ aarch64_linux_xl_cm:
 aarch64_linux_xl_uma:
   extends: ['aarch64_linux_xl', 'uma']
 #========================================#
+# Linux Aarch 64bits Mixed References
+#========================================#
+aarch64_linux_mixed:
+  extends: ['aarch64_linux', 'mixedrefs']
+#========================================#
+# Linux Aarch 64bits Mixed References /w CMake
+#========================================#
+aarch64_linux_mixed_cm:
+  extends: ['aarch64_linux_mixed', 'cmake']
+#========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
 x86-64_windows:
@@ -488,7 +566,7 @@ x86-64_windows:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   extra_configure_options:
     all: '--disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1h-x86_64-VS2013'
+    8: '--with-toolchain-version=2013 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1h-x86_64-VS2013'
     11: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1h-x86_64-VS2017'
     14: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1h-x86_64-VS2017'
     15: '--with-toolchain-version=2019 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1h-x86_64-VS2019'
@@ -526,6 +604,16 @@ x86-64_windows_xl_cm:
 x86-64_windows_xl_uma:
   extends: ['x86-64_windows_xl', 'uma']
 #========================================#
+# Windows x86 64bits Mixed References
+#========================================#
+x86-64_windows_mixed:
+  extends: ['x86-64_windows', 'mixedrefs']
+#========================================#
+# Windows x86 64bits Mixed References /w CMake
+#========================================#
+x86-64_windows_mixed_cm:
+  extends: ['x86-64_windows_mixed', 'cmake']
+#========================================#
 # Windows x86 32bits
 #========================================#
 x86-32_windows:
@@ -538,7 +626,7 @@ x86-32_windows:
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1h-x86_32-VS2013'
+    8: '--with-toolchain-version=2013 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1h-x86_32-VS2013'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   node_labels:
     build:
@@ -593,6 +681,14 @@ x86-64_mac_xl:
     8:
       - special.system
 #========================================#
+# OSX x86 64bits Mixed References
+#========================================#
+x86-64_mac_mixed:
+  extends: ['x86-64_mac', 'mixedrefs']
+  excluded_tests:
+    8:
+      - special.system
+#========================================#
 # OSX x86 64bits Compressed Pointers /w CMake
 #========================================#
 x86-64_mac_cm:
@@ -603,6 +699,11 @@ x86-64_mac_cm:
 x86-64_mac_xl_cm:
   extends: ['x86-64_mac_xl', 'cmake']
 #========================================#
+# OSX x86 64bits Mixed References /w CMake
+#========================================#
+x86-64_mac_mixed_cm:
+  extends: ['x86-64_mac_mixed', 'cmake']
+#========================================#
 # OSX x86 64bits Compressed Pointers /w UMA
 #========================================#
 x86-64_mac_uma:
@@ -612,3 +713,68 @@ x86-64_mac_uma:
 #========================================#
 x86-64_mac_xl_uma:
   extends: ['x86-64_mac_xl', 'uma']
+#========================================#
+# Linux PPCLE 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+ppc64le_linux_ojdk292:
+  extends: ['ppc64le_linux', 'ojdk292']
+#========================================#
+# Linux PPCLE 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+ppc64le_linux_xl_ojdk292:
+  extends: ['ppc64le_linux_xl', 'ojdk292']
+#========================================#
+# Linux S390 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+s390x_linux_ojdk292:
+  extends: ['s390x_linux', 'ojdk292']
+#========================================#
+# Linux S390 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+s390x_linux_xl_ojdk292:
+  extends: ['s390x_linux_xl', 'ojdk292']
+#========================================#
+# AIX PPC 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+ppc64_aix_ojdk292:
+  extends: ['ppc64_aix', 'ojdk292']
+#========================================#
+# AIX PPC 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+ppc64_aix_xl_ojdk292:
+  extends: ['ppc64_aix_xl', 'ojdk292']
+#========================================#
+# Linux x86 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+x86-64_linux_ojdk292:
+  extends: ['x86-64_linux', 'ojdk292']
+#========================================#
+# Linux x86 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+x86-64_linux_xl_ojdk292:
+  extends: ['x86-64_linux_xl', 'ojdk292']
+#========================================#
+# Windows x86 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+x86-64_windows_ojdk292:
+   extends: ['x86-64_windows', 'ojdk292']
+#========================================#
+# Windows x86 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+x86-64_windows_xl_ojdk292:
+  extends: ['x86-64_windows_xl', 'ojdk292']
+#========================================#
+# Windows x86 32bits /w OpenJDK JSR292
+#========================================#
+x86-32_windows_ojdk292:
+   extends: ['x86-32_windows', 'ojdk292']
+#========================================#
+# OSX x86 64bits Compressed Pointers /w OpenJDK JSR292
+#========================================#
+x86-64_mac_ojdk292:
+  extends: ['x86-64_mac', 'ojdk292']
+#========================================#
+# OSX x86 64bits Large Heap /w OpenJDK JSR292
+#========================================#
+x86-64_mac_xl_ojdk292:
+  extends: ['x86-64_mac_xl', 'ojdk292']

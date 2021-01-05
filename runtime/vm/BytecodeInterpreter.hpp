@@ -530,6 +530,7 @@ done:
 	VMINLINE VM_BytecodeAction
 	i2jMHTransition(REGISTER_ARGS_LIST)
 	{
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		/* VMThread->tempSlot will hold the MethodHandle.
 		 * VMThread->floatTemp1 will hold the compiledEntryPoint
 		 */
@@ -541,6 +542,10 @@ done:
 		Assert_VM_false(jitConfig->fsdEnabled);
 		/* Add one to MethodType->argSlots to account for the MethodHandle receiver */
 		return jitTransition(REGISTER_ARGS, J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, methodType) + 1, jitStartAddress);
+#else /* defined(J9VM_OPT_METHOD_HANDLE) */
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	}
 
 	VMINLINE VM_BytecodeAction
@@ -937,12 +942,13 @@ obj:
 	VMINLINE VM_BytecodeAction
 	j2iInvokeExact(REGISTER_ARGS_LIST, j9object_t methodHandle)
 	{
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		VM_JITInterface::disableRuntimeInstrumentation(_currentThread);
 		VM_BytecodeAction rc = GOTO_RUN_METHODHANDLE;
 		static U_8 const bcReturnFromJ2I[] = { JBinvokestatic, 0, 0, JBreturnFromJ2I };
 		void* const jitReturnAddress = VM_JITInterface::fetchJITReturnAddress(_currentThread, _sp);
 		j9object_t methodType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
-		j9object_t returnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(_currentThread, methodType);
+		j9object_t returnType = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(_currentThread, methodType);
 		void* const exitPoint = j2iReturnPoint(J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, returnType));
 		/* Get the argument count from the MethodHandle */
 		UDATA argCount = J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, methodType) + 1; /* argSlots does not include the receiver of the invokeExact */
@@ -1009,6 +1015,10 @@ obj:
 			}
 		}
 		return rc;
+#else /* defined(J9VM_OPT_METHOD_HANDLE) */
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	}
 
 	/**
@@ -1557,12 +1567,12 @@ obj:
 					} else {
 						((UDATA*)(((J9SFStackFrame*)_sp) + 1))[-1] |= J9SF_A0_INVISIBLE_TAG;
 					}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 						_currentThread->tempSlot = (UDATA) syncObject;
 						rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 					} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 					{
 						rc = THROW_MONITOR_ALLOC_FAIL;
 					}
@@ -1625,12 +1635,12 @@ done:
 
 		if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 			*bp |= J9SF_A0_INVISIBLE_TAG;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 			if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 				_currentThread->tempSlot = (UDATA) syncObject;
 				rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 			} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 			{
 				/* Monitor was not entered - hide the frame to prevent exception throw from processing it.
 				 * Note that BP can not have changed during a failed enter.
@@ -1751,12 +1761,12 @@ throwStackOverflow:
 				if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 					/* Monitor was not entered - hide the frame to prevent exception throw from processing it */
 					*(_arg0EA + relativeBP) |= J9SF_A0_INVISIBLE_TAG;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 						_currentThread->tempSlot = (UDATA) syncObject;
 						rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 					} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 					{
 						rc = THROW_MONITOR_ALLOC_FAIL;
 					}
@@ -2115,12 +2125,12 @@ done:
 			// No immediate async possible due to the current frame being for a native method.
 			bp = _arg0EA - relativeBP;
 			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 					_currentThread->tempSlot = (UDATA) receiver;
 					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 				} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 				{
 					rc = THROW_MONITOR_ALLOC_FAIL;
 				}
@@ -7674,12 +7684,12 @@ done:
 			 * mutually exclusive.
 			 */
 			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
 					_currentThread->tempSlot = (UDATA) obj;
 					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
 				} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 				{
 					rc = THROW_MONITOR_ALLOC_FAIL;
 				}
@@ -8017,23 +8027,34 @@ retry:
 		U_16 index = *(U_16 *)(_pc + 1);
 
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
-		J9InvokeCacheEntry *invokeCache = ((J9InvokeCacheEntry *)ramConstantPool->ramClass->callSites) + index;
+		j9object_t invokeCacheArray = (ramConstantPool->ramClass->callSites)[index];
 
-		j9object_t memberName = invokeCache->target;
-
-		if (J9_EXPECTED(NULL != memberName)) {
-			if (J9OBJECT_CLAZZ(_currentThread, memberName) == J9VMJAVALANGINVOKEMEMBERNAME_OR_NULL(_vm)) {
+		if (J9_EXPECTED(NULL != invokeCacheArray)) {
+			J9Class *clazz = J9OBJECT_CLAZZ(_currentThread, invokeCacheArray);
+			if (J9CLASS_IS_ARRAY(clazz)) {
+				/* Fetch target method and appendix from invokeCacheArray (2 element array)
+				 * Stack transitions from:
+				 * 		args <- SP
+				 * 		MH
+				 * To:
+				 * 		invokeCacheArray[1] "appendix" <- SP
+				 * 		args
+				 * 		MH
+				 *
+				 * and sendMethod is ((J9Method *)((j.l.MemberName)invokeCacheArray[0]) + vmtargetOffset)
+				 */
+				j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
 				_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
-				*--_sp = (UDATA)invokeCache->appendix;
+				*--_sp = (UDATA)(j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
 			} else {
-				VM_VMHelpers::setExceptionPending(_currentThread, memberName);
+				VM_VMHelpers::setExceptionPending(_currentThread, invokeCacheArray);
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 			}
 		} else {
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
 			/* The resolution is performed by MethodHandleNatives.linkCallSite(*).
-			 * The resolved values consist of a MemberName object and a MethodHandle object.
+			 * The resolved values consist of a MemberName object and a MethodHandle object in a Java Object array.
 			 * The resolved values are stored in callSites[index].
 			 */
 			resolveInvokeDynamic(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
@@ -8120,21 +8141,20 @@ retry:
 		J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef *)ramConstantPool) + index;
 
 		UDATA invokeCacheIndex = ramMethodRef->methodIndexAndArgCount >> 8;
-		J9InvokeCacheEntry *resultEntry = ((J9InvokeCacheEntry *)J9_CLASS_FROM_CP(ramConstantPool)->invokeCache) + invokeCacheIndex;
+		j9object_t invokeCacheArray = (J9_CLASS_FROM_CP(ramConstantPool)->invokeCache)[invokeCacheIndex];
 
-		j9object_t memberNameObject = resultEntry->target;
-
-		if (J9_EXPECTED(NULL != memberNameObject)) {
-			*--_sp = (UDATA)resultEntry->appendix;
-			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		if (J9_EXPECTED(NULL != invokeCacheArray)) {
+			j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
+			*--_sp = (UDATA)(j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
+			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
 		} else {
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
 			/* The resolution is performed by MethodHandleNatives.linkMethod(*).
-			 * The resolved values consist of a MemberName object and a MethodHandle object.
+			 * The resolved values consist of a MemberName object and a MethodHandle object in a Java Object array.
 			 * The resolved values are stored in invokeCache[invokeCacheIndex].
 			 */
-			resolveMethodHandle(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
+			resolveOpenJDKInvokeHandle(_currentThread, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
@@ -8654,12 +8674,12 @@ retry:
 		 * a field ref as resolved if only one of the two values has been set (by
 		 * another thread that is in the middle of a resolve).
 		 */
-		if (J9_UNEXPECTED((flags <= valueOffset) || J9_ARE_NO_BITS_SET(flags, J9FieldFlagPutResolved))) {
+		if (!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset)) {
 			/* Field is unresolved */
 			J9Method *method = _literals;
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
-			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_WITH_FIELD, NULL);
+			resolveInstanceFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_WITH_FIELD, NULL);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
 				rc = GOTO_ASYNC_CHECK;
@@ -9227,13 +9247,13 @@ public:
 #define DEBUG_ACTIONS
 #endif
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 #define PERFORM_ACTION_VALUE_TYPE_IMSE \
 	case THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE: \
 	goto valueTypeIllegalMonitorState;
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#else /* JAVA_SPEC_VERSION >= 16 */
 #define PERFORM_ACTION_VALUE_TYPE_IMSE
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 #define PERFORM_ACTION(functionCall) \
 	do { \
@@ -9899,16 +9919,22 @@ illegalMonitorState:
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 valueTypeIllegalMonitorState:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
 #define badClassName J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, (j9object_t)_currentThread->tempSlot)->romClass)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	Assert_VM_true(J9_ARE_ALL_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
+	setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#undef badClassName
 	_currentThread->tempSlot = 0;
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 incompatibleClassChange:
 	updateVMStruct(REGISTER_ARGS);

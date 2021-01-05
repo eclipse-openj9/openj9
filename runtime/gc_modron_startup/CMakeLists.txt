@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9modronstartup STATIC
+set(gc_modron_startup_sources
 	arrayCopy.cpp
 	gcmspace.cpp
 	GCVerboseInterface.cpp
@@ -33,16 +33,22 @@ j9vm_add_library(j9modronstartup STATIC
 	mmparseXXgc.cpp
 )
 
+j9vm_add_library(j9modronstartup STATIC
+	${gc_modron_startup_sources}
+)
+
 target_include_directories(j9modronstartup
 	PUBLIC
 		.
 )
+
 if(OMR_OS_ZOS)
 	target_include_directories(j9modronstartup
 		PRIVATE
 			"${omr_SOURCE_DIR}/port/zos390"
 	)
 endif()
+
 target_link_libraries(j9modronstartup
 	PRIVATE
 		j9vm_interface
@@ -52,3 +58,31 @@ target_link_libraries(j9modronstartup
 		j9gcbase
 		j9utilcore
 )
+
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9modronstartup_full STATIC
+		${gc_modron_startup_sources}
+	)
+
+	target_include_directories(j9modronstartup_full
+		PUBLIC
+			.
+	)
+
+	if(OMR_OS_ZOS)
+		target_include_directories(j9modronstartup_full
+			PRIVATE
+				"${omr_SOURCE_DIR}/port/zos390"
+		)
+	endif()
+
+	target_link_libraries(j9modronstartup_full
+		PRIVATE
+			j9vm_interface
+
+			omrgc_full
+			j9gcstats_full
+			j9gcbase_full
+			j9utilcore
+	)
+endif()

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -190,8 +190,11 @@ typedef struct J9LineNumber {
 } J9LineNumber;
 
 typedef struct J9VariableInfoValues {
+    J9SRP* nameSrp;
     struct J9UTF8* name;
+    J9SRP* signatureSrp;
     struct J9UTF8* signature;
+    J9SRP* genericSignatureSrp;
     struct J9UTF8* genericSignature;
     U_32 startVisibility;
     U_32 visibilityLength;

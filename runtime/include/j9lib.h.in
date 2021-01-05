@@ -42,14 +42,16 @@ extern"C"{
 #define J9_CUDA4J_DLL_NAME "cuda4j29"
 #define J9_ZOS_IFA_SWITCH_TESTING_DLL_NAME "zostesting"
 #define J9_MANAGEMENT_DLL_NAME "management"
-#define J9_GC_DLL_NAME "j9gc29"
+#define J9_GC_DLL_NAME "j9gc29" /* Compressed references GC DLL */
+#define J9_GC_FULL_DLL_NAME "j9gc_full29" /* Full references GC DLL */
 #define J9_RAS_DUMP_DLL_NAME "j9dmp29"
 #define J9_DYNLOAD_DLL_NAME "j9dyn29"
 #define J9_VERIFIER_TEST_NATIVES_DLL_NAME "bcvwhite"
 #define J9_IFA_DLL_NAME "j9ifa29"
 #define J9_CHECK_JNI_DLL_NAME "j9jnichk29"
 #define J9_CHECK_VM_DLL_NAME "j9vmchk29"
-#define J9_CHECK_GC_DLL_NAME "j9gcchk29"
+#define J9_CHECK_GC_DLL_NAME "j9gcchk29" /* Compressed references GC CHECK DLL */
+#define J9_CHECK_GC_FULL_DLL_NAME "j9gcchk_full29" /* Full references GC CHECK DLL */
 #define J9_JSIG_DLL_NAME "jsig"
 #define J9_JVMTI_DLL_NAME "j9jvmti29"
 #define J9_JLM_GENERATOR_DLL_NAME "jlmagent29"
@@ -87,6 +89,9 @@ extern"C"{
 #endif
 #ifndef J9_GC_DLL_NAME
 #define J9_GC_DLL_NAME "j9gc29"
+#endif
+#ifndef J9_GC_FULL_DLL_NAME
+#define J9_GC_FULL_DLL_NAME "j9gc_full29"
 #endif
 #ifndef J9_HOOKABLE_DLL_NAME
 #define J9_HOOKABLE_DLL_NAME "j9hookable29"

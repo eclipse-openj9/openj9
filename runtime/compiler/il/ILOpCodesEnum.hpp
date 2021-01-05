@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,10 @@
 #ifndef ILOPCODES_ENUM_INCL
 #define ILOPCODES_ENUM_INCL
 
-#include "il/J9ILOpCodesEnum.hpp"
+#include "compiler/il/OMRILOpCodesEnum.hpp" 
 
+   FirstJ9Op = LastOMROp + 1,
+   LastJ9Op = BCDCHK,
    FirstTROp = FirstOMROp,
    LastTROp = LastJ9Op,
 

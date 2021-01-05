@@ -1703,6 +1703,7 @@ j9vmem_test_reserveExecutableMemory(struct J9PortLibrary *portLibrary)
 				outputComment(PORTLIB, "function length = %d\n",length);
 
 				memcpy(memPtr, (void *)&myFunction1, length);
+				j9cpu_flush_icache(memPtr, length);
 
 				outputComment(PORTLIB, "*memPtr: 0x%zx\n",*memPtr);
 

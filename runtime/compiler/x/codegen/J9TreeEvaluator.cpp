@@ -6984,6 +6984,7 @@ static void genInitArrayHeader(
       TR::Register *tempReg,
       bool isZeroInitialized,
       bool isDynamicAllocation,
+      bool shouldInitZeroSizedArrayHeader,
       TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
@@ -6995,6 +6996,20 @@ static void genInitArrayHeader(
    int32_t arraySizeOffset = fej9->getOffsetOfContiguousArraySizeField();
 
    TR::MemoryReference *arraySizeMR = generateX86MemoryReference(objectReg, arraySizeOffset, cg);
+   // Special handling of zero sized arrays.
+   // Zero length arrays are discontiguous (i.e. they also need the discontiguous length field to be 0) because
+   // they are indistinguishable from non-zero length discontiguous arrays. But instead of explicitly checking
+   // for zero sized arrays we unconditionally store 0 in the third dword of the array object header. That is
+   // safe because the 3rd dword is either array size of a zero sized array or will contain the first elements
+   // of an array:
+   // - Zero sized arrays have the following layout:
+   // - The smallest array possible is a byte array with 1 element which would have a layout:
+   //   #bits per section (compressed refs): | 32 bits |  32 bits   |     32 bits      | 32 bits |
+   //   zero sized arrays:                   |  class  | mustBeZero |       size       | padding |
+   //   smallest contiguous array:           |  class  |    size    | 1 byte + padding | padding |
+   //   This also reflects the minimum object size which is 16 bytes.
+   int32_t arrayDiscontiguousSizeOffset = fej9->getOffsetOfDiscontiguousArraySizeField();
+   TR::MemoryReference *arrayDiscontiguousSizeMR = generateX86MemoryReference(objectReg, arrayDiscontiguousSizeOffset, cg);
 
    TR::Compilation *comp = cg->comp();
 
@@ -7019,6 +7034,11 @@ static void genInitArrayHeader(
          {
          generateMemRegInstruction(S4MemReg, node, arraySizeMR, sizeReg, cg);
          }
+      // Take care of zero sized arrays as they are discontiguous and not contiguous
+      if (shouldInitZeroSizedArrayHeader)
+         {
+         generateMemImmInstruction(S4MemImm4, node, arrayDiscontiguousSizeMR, 0, cg);
+         }
       }
    else
       {
@@ -7030,13 +7050,18 @@ static void genInitArrayHeader(
          // Native 64-bit needs to cover the discontiguous size field
          //
          TR_X86OpCodes storeOp = (comp->target().is64Bit() && !comp->useCompressedPointers()) ? S8MemImm4 : S4MemImm4;
-         int32_t instanceSize = node->getFirstChild()->getInt();
+         instanceSize = node->getFirstChild()->getInt();
          generateMemImmInstruction(storeOp, node, arraySizeMR, instanceSize, cg);
          }
       else
          {
-         int32_t instanceSize = node->getFirstChild()->getInt();
+         instanceSize = node->getFirstChild()->getInt();
          generateMemImmInstruction(S4MemImm4, node, arraySizeMR, instanceSize, cg);
+         }
+      // Take care of zero sized arrays as they are discontiguous and not contiguous
+      if (shouldInitZeroSizedArrayHeader && (instanceSize == 0))
+         {
+         generateMemImmInstruction(S4MemImm4, node, arrayDiscontiguousSizeMR, 0, cg);
          }
       }
 
@@ -7094,8 +7119,15 @@ static bool genZeroInitObject2(
 
    // set up clazz value here
    TR_OpaqueClassBlock *clazz = NULL;
+   bool isArrayNew = (node->getOpCodeValue() != TR::New);
    comp->canAllocateInline(node, clazz);
-   auto headerSize = node->getOpCodeValue() != TR::New ? TR::Compiler->om.contiguousArrayHeaderSizeInBytes() : TR::Compiler->om.objectHeaderSizeInBytes();
+   auto headerSize = isArrayNew ? TR::Compiler->om.contiguousArrayHeaderSizeInBytes() : TR::Compiler->om.objectHeaderSizeInBytes();
+   // If we are using full refs both contiguous and discontiguous array header have the same size, in which case we must adjust header size
+   // slightly so that rep stosb can initialize the size field of zero sized arrays appropriately
+   if (!cg->comp()->target().is32Bit() && !TR::Compiler->om.compressObjectReferences() && isArrayNew)
+      {
+      headerSize -= 8;
+      }
    TR_ASSERT(headerSize >= 4, "Object/Array header must be >= 4.");
    objectSize -= headerSize;
 
@@ -7849,6 +7881,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    // --------------------------------------------------------------------------------
 
    TR::Register *scratchReg = NULL;
+   bool shouldInitZeroSizedArrayHeader = true;
 
 #ifdef J9VM_GC_NON_ZERO_TLH
    if (comp->getOption(TR_DisableDualTLH) || comp->getOptions()->realTimeGC())
@@ -7965,6 +7998,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          if (canUseFastInlineAllocation)
             {
             useRepInstruction = genZeroInitObject2(node, objectSize, elementSize, sizeReg, targetReg, tempReg, segmentReg, scratchReg, cg);
+            shouldInitZeroSizedArrayHeader = false;
             }
          else
             {
@@ -7995,6 +8029,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
                generateMemImmInstruction(SMemImm4(), node,
                   generateX86MemoryReference(targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg),
                   0, cg);
+               shouldInitZeroSizedArrayHeader = false;
                }
             }
 
@@ -8027,6 +8062,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             tempReg,
             monitorSlotIsInitialized,
             true,
+            shouldInitZeroSizedArrayHeader,
             cg);
       }
    else if (isArrayNew)
@@ -8046,6 +8082,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             tempReg,
             monitorSlotIsInitialized,
             false,
+            shouldInitZeroSizedArrayHeader,
             cg);
       }
    else
@@ -10132,16 +10169,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             }
             break;
 
-         case TR::java_lang_Long_reverseBytes:
-         case TR::java_lang_Integer_reverseBytes:
-         case TR::java_lang_Short_reverseBytes:
-            {
-            if(comp->getOption(TR_EnableJCLInline)
-               && performTransformation(comp, "O^O Enable JCL Integer/Long methods inline for: %s\n", cg->getDebug()->getName(node)) )
-               return TR::TreeEvaluator::sbyteswapEvaluator(node, cg) != NULL;
-            break;
-            }
-
          case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
             {
             cg->decReferenceCount(node->getChild(0));
@@ -11846,9 +11873,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
-      case TR::java_lang_Long_reverseBytes:
-      case TR::java_lang_Integer_reverseBytes:
-      case TR::java_lang_Short_reverseBytes:
       case TR::java_lang_System_nanoTime:
       case TR::java_util_concurrent_atomic_Fences_orderAccesses:
       case TR::java_util_concurrent_atomic_Fences_orderReads:

@@ -715,8 +715,8 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-#if defined(J9VM_GC_MODRON_SCAVENGER)
-		/* Start of options relating to dynamicBreadthFirstScanOrdering */
+/* Start of options relating to dynamicBreadthFirstScanOrdering */
+#if defined(J9VM_GC_MODRON_SCAVENGER) || defined (J9VM_GC_VLHGC)	
 		if(try_scan(&scan_start, "dbfGcCountBetweenHotFieldSort=")) {
 			UDATA value;
 			if(!scan_udata_helper(vm, &scan_start, &value, "dbfGcCountBetweenHotFieldSort=")) {
@@ -851,8 +851,10 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->minCpuUtil = value;
 			continue;
 		}
-		/* End of options relating to dynamicBreadthFirstScanOrdering */
-		
+#endif /* defined(J9VM_GC_MODRON_SCAVENGER) || defined (J9VM_GC_VLHGC) */
+/* End of options relating to dynamicBreadthFirstScanOrdering */
+
+#if defined(J9VM_GC_MODRON_SCAVENGER)	
 		if (try_scan(&scan_start, "scanCacheMinimumSize=")) {
 			/* Read in restricted scan cache size */
 			if(!scan_udata_helper(vm, &scan_start, &extensions->scavengerScanCacheMinimumSize, "scanCacheMinimumSize=")) {

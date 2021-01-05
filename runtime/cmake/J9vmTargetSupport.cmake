@@ -22,6 +22,40 @@
 
 include(OmrTargetSupport)
 
+# Adds copyright metadata on windows. On other platforms its a no-op.
+function(j9vm_add_copyright_data target_name)
+	omr_assert(FATAL_ERROR TEST TARGET ${target_name} MESSAGE "Expected a target name, got ${target_name}")
+
+	if(NOT OMR_OS_WINDOWS)
+		return()
+	endif()
+
+	get_target_property(target_type "${target_name}" TYPE)
+	if(NOT target_type STREQUAL "SHARED_LIBRARY")
+		return()
+	endif()
+
+	omr_assert(SEND_ERROR TEST OPENJDK_VERSION_NUMBER_FOUR_POSITIONS MESSAGE "Required variable OPENJDK_VERSION_NUMBER_FOUR_POSITIONS is not set")
+	set(VERSION_STRING "${OPENJDK_VERSION_NUMBER_FOUR_POSITIONS}")
+	string(REPLACE "." "," VERSION_COMMA "${VERSION_STRING}")
+
+	string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
+	# Create an ordered list of property names to search.
+	set(name_properties
+		"RUNTIME_OUTPUT_NAME_${build_type}"
+		"RUNTIME_OUTPUT_NAME"
+		"OUTPUT_NAME_${build_type}"
+		"OUTPUT_NAME"
+	)
+
+	# Create a generator expression to search possible output names.
+	omr_genex_property_chain(MODULE_NAME "${target_name}" ${name_properties} "${target_name}")
+	set(MODULE_FILE_NAME "${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+	set(resource_output_file "${CMAKE_CURRENT_BINARY_DIR}/${target_name}.rc")
+	omr_process_template("${j9vm_SOURCE_DIR}/cmake/shared_lib.rc.in" "${resource_output_file}")
+	target_sources("${target_name}" PRIVATE "${resource_output_file}")
+endfunction()
+
 # Currently j9vm_add_library and j9vm_add_executable just call
 # omr_add_library and omr_add_executable, but have them so that we can add
 # functionality in the future, without having to hunt down all the 
@@ -29,6 +63,10 @@ include(OmrTargetSupport)
 
 function(j9vm_add_library name)
 	omr_add_library("${name}" ${ARGN})
+	get_target_property(target_type "${name}" TYPE)
+	if(target_type STREQUAL "SHARED_LIBRARY")
+		j9vm_add_copyright_data("${name}")
+	endif()
 endfunction()
 
 function(j9vm_add_executable name)

@@ -1,5 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
-
 /*******************************************************************************
  * Copyright (c) 2017, 2020 IBM Corp. and others
  *
@@ -21,17 +20,15 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package java.lang.invoke;
 
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
-
 class InvokerBytecodeGenerator {
-/*[IF Java13]*/
+/*[IF JAVA_SPEC_VERSION >= 13]*/
 	static final String HIDDEN_SIG = null;
-/*[ENDIF] Java13 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 13 */
 	static boolean isStaticallyInvocable(MemberName mn) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}

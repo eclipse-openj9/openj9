@@ -117,14 +117,17 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 				return NULL;
 			}
 		}
+
+		/* initialize the indexMap to 0 to represent unmapped entry */
+		memset(cpPatchMap.indexMap, 0, cpPatchMap.size * sizeof(U_16));
 	}
+
+	jsize length = (jsize)J9INDEXABLEOBJECT_SIZE(currentThread, J9_JNI_UNWRAP_REFERENCE(bytecodes));
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
-	jsize length = env->GetArrayLength(bytecodes);
-
 	/* acquires access internally */
-	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL,bytecodes, 0, length, protectionDomainLocalRef, &defineClassOptions, hostClazz, &cpPatchMap, FALSE);
+	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL, bytecodes, 0, length, protectionDomainLocalRef, &defineClassOptions, hostClazz, &cpPatchMap, FALSE);
 	if (env->ExceptionCheck()) {
 		return NULL;
 	} else if (NULL == anonClass) {
@@ -142,24 +145,27 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 
 		/* Get J9 constantpool mapped item for patch item, only support patching STRING entries has been added */
 		for (U_16 i = 0; i < cpPatchMap.size; i++) {
-			j9object_t item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, patchArray, i);
-			if (item != NULL) {
-				if (J9_CP_TYPE(cpShapeDescription, cpPatchMap.indexMap[i]) == J9CPTYPE_STRING) {
+			/* Check if a valid mapping exist for cp entry */
+			if (cpPatchMap.indexMap[i] != 0) {
+				j9object_t item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, patchArray, i);
+				if (item != NULL) {
+					if (J9_CP_TYPE(cpShapeDescription, cpPatchMap.indexMap[i]) == J9CPTYPE_STRING) {
 
-					J9UTF8 *romString = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[cpPatchMap.indexMap[i]]);
+						J9UTF8 *romString = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[cpPatchMap.indexMap[i]]);
 
-					/* For each patch object, search the RAM constantpool for identical string entries */
-					for (U_16 j = 1; j < clazz->romClass->ramConstantPoolCount; j++) {
-						if ((J9_CP_TYPE(cpShapeDescription, j) == J9CPTYPE_STRING)
-							&& J9UTF8_EQUALS(romString, J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[j]))
-						) {
-							J9RAMStringRef *ramStringRef = ((J9RAMStringRef *)ramCP) + j;
-							J9STATIC_OBJECT_STORE(currentThread, clazz, &ramStringRef->stringObject, item);
+						/* For each patch object, search the RAM constantpool for identical string entries */
+						for (U_16 j = 1; j < clazz->romClass->ramConstantPoolCount; j++) {
+							if ((J9_CP_TYPE(cpShapeDescription, j) == J9CPTYPE_STRING)
+								&& J9UTF8_EQUALS(romString, J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[j]))
+							) {
+								J9RAMStringRef *ramStringRef = ((J9RAMStringRef *)ramCP) + j;
+								J9STATIC_OBJECT_STORE(currentThread, clazz, &ramStringRef->stringObject, item);
+							}
 						}
+					} else {
+						/* Only J9CPTYPE_STRING is patched, other CP types are not supported */
+						Assert_JCL_unreachable();
 					}
-				} else {
-					/* Only J9CPTYPE_STRING is patched, other CP types are not supported */
-					Assert_JCL_unreachable();
 				}
 			}
 		}

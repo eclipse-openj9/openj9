@@ -140,6 +140,70 @@ public class ValueTypeTests {
 	static MethodHandle[][] assortedValueWithSingleAlignmentGetterAndWither = null;
 	static Class classWithOnlyStaticFieldsWithSingleAlignment = null;
 	static MethodHandle[][] staticFieldsWithSingleAlignmentGenericGetterAndSetter = null;
+	/* LayoutsWithPrimitives classes */
+	static Class<?> singleBackfillClass = null;
+	static MethodHandle makeSingleBackfillClass = null;
+	static MethodHandle getSingleI = null;
+	static MethodHandle getSingleO = null;
+	static MethodHandle getSingleL = null;
+	static Class<?> objectBackfillClass = null;
+	static MethodHandle makeObjectBackfillClass = null;
+	static MethodHandle getObjectO = null;
+	static MethodHandle getObjectL = null;
+	/* LayoutsWithValueTypes classes */
+	static Class<?> flatSingleBackfillClass = null;
+	static MethodHandle makeFlatSingleBackfillClass = null;
+	static MethodHandle getVTSingleI = null;
+	static MethodHandle getVTSingleO = null;
+	static MethodHandle getVTSingleL = null;
+	static Class<?> flatObjectBackfillClass = null;
+	static MethodHandle makeFlatObjectBackfillClass = null;
+	static MethodHandle getVTObjectO = null;
+	static MethodHandle getVTObjectL = null;
+	static Class<?> flatUnAlignedSingleClass = null;
+	static MethodHandle makeFlatUnAlignedSingleClass = null;
+	static MethodHandle getUnAlignedSingleI = null;
+	static MethodHandle getUnAlignedSingleI2 = null;
+	static Class<?> flatUnAlignedSingleBackfillClass = null;
+	static MethodHandle makeFlatUnAlignedSingleBackfillClass = null;
+	static MethodHandle getUnAlignedSingleflatSingleBackfillInstanceO = null;
+	static MethodHandle getUnAlignedSingleflatSingleBackfillInstanceSingles = null;
+	static MethodHandle getUnAlignedSingleflatSingleBackfillInstanceL = null;
+	static Class<?> flatUnAlignedSingleBackfillClass2 = null;
+	static MethodHandle makeFlatUnAlignedSingleBackfillClass2 = null;
+	static MethodHandle getUnAlignedSingleflatSingleBackfill2InstanceSingles = null;
+	static MethodHandle getUnAlignedSingleflatSingleBackfill2InstanceSingles2 = null;
+	static MethodHandle getUnAlignedSingleflatSingleBackfill2InstanceL = null;
+	static Class<?> flatUnAlignedObjectClass = null;
+	static MethodHandle makeFlatUnAlignedObjectClass = null;
+	static MethodHandle getUnAlignedObjectO = null;
+	static MethodHandle getUnAlignedObjectO2 = null;
+	static Class<?> flatUnAlignedObjectBackfillClass = null;
+	static MethodHandle makeFlatUnAlignedObjectBackfillClass = null;
+	static MethodHandle getUnAlignedObjectflatObjectBackfillInstanceObjects = null;
+	static MethodHandle getUnAlignedObjectflatObjectBackfillInstanceObjects2 = null;
+	static MethodHandle getUnAlignedObjectflatObjectBackfillInstanceL = null;
+	static Class<?> flatUnAlignedObjectBackfillClass2 = null;
+	static MethodHandle makeFlatUnAlignedObjectBackfillClass2 = null;
+	static MethodHandle getUnAlignedObjectflatObjectBackfill2InstanceO = null;
+	static MethodHandle getUnAlignedObjectflatObjectBackfill2InstanceObjects = null;
+	static MethodHandle getUnAlignedObjectflatObjectBackfill2InstanceL = null;
+	/* LayoutsWithRecursiveLongs classes */
+	static Class<?> doubleLongClass = null;
+	static MethodHandle makeDoubleLongClass = null;
+	static MethodHandle getDoubleLongL = null;
+	static MethodHandle getDoubleLongL2 = null;
+	static Class<?> quadLongClass = null;
+	static MethodHandle makeQuadLongClass = null;
+	static MethodHandle getQuadLongL = null;
+	static MethodHandle getQuadLongL2 = null;
+	static MethodHandle getQuadLongL3 = null;
+	static Class<?> doubleQuadLongClass = null;
+	static MethodHandle makeDoubleQuadLongClass = null;
+	static MethodHandle getDoubleQuadLongL = null;
+	static MethodHandle getDoubleQuadLongL2 = null;
+	static MethodHandle getDoubleQuadLongL3 = null;
+	static MethodHandle getDoubleQuadLongL4 = null;
 	
 	/* fields */
 	static String typeWithSingleAlignmentFields[] = {
@@ -179,8 +243,8 @@ public class ValueTypeTests {
 	static int[][] defaultLinePositions3 = {defaultPointPositions1, defaultPointPositions3};
 	static int[][] defaultLinePositionsEmpty = {defaultPointPositionsEmpty, defaultPointPositionsEmpty};
 	static int[][][] defaultTrianglePositions = {defaultLinePositions1, defaultLinePositions2, defaultLinePositions3};
-	static long defaultLong = Long.MAX_VALUE;
-	static int defaultInt = Integer.MAX_VALUE;
+	static long defaultLong = 0xFAFBFCFD11223344L;
+	static int defaultInt = 0x12123434;
 	static double defaultDouble = Double.MAX_VALUE;
 	static float defaultFloat = Float.MAX_VALUE;
 	static Object defaultObject = (Object)0xEEFFEEFF;
@@ -188,14 +252,18 @@ public class ValueTypeTests {
 	static int[][] defaultLinePositionsNew = {defaultPointPositionsNew, defaultPointPositions1};
 	static int[][][] defaultTrianglePositionsNew = {defaultLinePositionsNew, defaultLinePositions3, defaultLinePositions1};
 	static int[][][] defaultTrianglePositionsEmpty = {defaultLinePositionsEmpty, defaultLinePositionsEmpty, defaultLinePositionsEmpty};
-	static long defaultLongNew = -1234123L;
-	static int defaultIntNew = -1234123234;
+	static long defaultLongNew = 0x11551155AAEEAAEEL;
+	static long defaultLongNew2 = 0x22662266BBFFBBFFL;
+	static long defaultLongNew3 = 0x33773377CC00CC00L;
+	static long defaultLongNew4 = 0x44884488DD11DD11L;
+	static long defaultLongNew5 = 0x55995599EE22EE22L;
+	static int defaultIntNew = 0x45456767;
 	static double defaultDoubleNew = -123412341.21341234d;
 	static float defaultFloatNew = -123423.12341234f;
 	static Object defaultObjectNew = (Object)0xFFEEFFEE;
 	/* miscellaneous constants */
 	static final int genericArraySize = 10;
-	static final int objectGCScanningIterationCount = 10000;
+	static final int objectGCScanningIterationCount = 1000;
 
 	@BeforeClass
 	static public void testSetUp() throws RuntimeException {
@@ -323,9 +391,9 @@ public class ValueTypeTests {
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithLongAlignment() throws Throwable {
-		Object array = Array.newInstance(assortedValueWithLongAlignmentClass, 4);
+		Object array = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
 		
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < genericArraySize; i++) {
 			Object object = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
 			Array.set(array, i, object);
 		}
@@ -333,7 +401,7 @@ public class ValueTypeTests {
 		System.gc();
 		System.gc();
 
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < genericArraySize; i++) {
 			checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, Array.get(array, i), typeWithLongAlignmentFields, true);
 		}
 	}
@@ -1276,7 +1344,7 @@ public class ValueTypeTests {
 	
 	@Test(priority=4, invocationCount=2)
 	static public void testCreateArrayTriangle2D() throws Throwable {
-		Object arrayObject = Array.newInstance(triangle2DClass, genericArraySize);
+		Object arrayObject = Array.newInstance(triangle2DClass, 10);
 		Object triangle1 = createTriangle2D(defaultTrianglePositions);
 		Object triangle2 = createTriangle2D(defaultTrianglePositionsNew);
 		Object triangleEmpty = createTriangle2D(defaultTrianglePositionsEmpty);
@@ -1511,6 +1579,175 @@ public class ValueTypeTests {
 		checkFieldAccessMHOfAssortedType(assortedRefWithLongAlignmentGetterAndSetter, assortedRefWithLongAlignment, typeWithLongAlignmentFields, false);
 	}
 
+	@Test(priority=2)
+	static public void testCreateLayoutsWithPrimitives() throws Throwable {
+		String singleBackfill[] = {"l:J", "o:Ljava/lang/Object;", "i:I"};
+		singleBackfillClass = ValueTypeGenerator.generateValueClass("SingleBackfill", singleBackfill);
+		makeSingleBackfillClass = lookup.findStatic(singleBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
+		getSingleI = generateGenericGetter(singleBackfillClass, "i");
+		getSingleO = generateGenericGetter(singleBackfillClass, "o");
+		getSingleL = generateGenericGetter(singleBackfillClass, "l");
+		
+		String objectBackfill[] = {"l:J", "o:Ljava/lang/Object;"};
+		objectBackfillClass = ValueTypeGenerator.generateValueClass("ObjectBackfill", objectBackfill);
+		makeObjectBackfillClass = lookup.findStatic(objectBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
+		getObjectO = generateGenericGetter(objectBackfillClass, "o");
+		getObjectL = generateGenericGetter(objectBackfillClass, "l");
+	}
+	
+	@Test(priority=3, invocationCount=2)
+	static public void testLayoutsWithPrimitives() throws Throwable {
+		Object singleBackfillInstance = makeSingleBackfillClass.invoke(defaultLong, defaultObject, defaultInt);
+		assertEquals(getSingleI.invoke(singleBackfillInstance), defaultInt);
+		assertEquals(getSingleO.invoke(singleBackfillInstance), defaultObject);
+		assertEquals(getSingleL.invoke(singleBackfillInstance), defaultLong);
+		
+		Object objectBackfillInstance = makeObjectBackfillClass.invoke(defaultLong, defaultObject);
+		assertEquals(getObjectO.invoke(objectBackfillInstance), defaultObject);
+		assertEquals(getObjectL.invoke(objectBackfillInstance), defaultLong);
+	}
+	
+	@Test(priority=4)
+	static public void testCreateFlatLayoutsWithValueTypes() throws Throwable {
+		String flatSingleBackfill[] = {"l:QValueLong;", "o:QValueObject;", "i:QValueInt;"};
+		flatSingleBackfillClass = ValueTypeGenerator.generateValueClass("FlatSingleBackfill", flatSingleBackfill);
+		makeFlatSingleBackfillClass = lookup.findStatic(flatSingleBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
+		getVTSingleI = generateGenericGetter(flatSingleBackfillClass, "i");
+		getVTSingleO = generateGenericGetter(flatSingleBackfillClass, "o");
+		getVTSingleL = generateGenericGetter(flatSingleBackfillClass, "l");
+		
+		String flatObjectBackfill[] = {"l:QValueLong;", "o:QValueObject;"};
+		flatObjectBackfillClass = ValueTypeGenerator.generateValueClass("FlatObjectBackfill", flatObjectBackfill);
+		makeFlatObjectBackfillClass = lookup.findStatic(flatObjectBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
+		getVTObjectO = generateGenericGetter(flatObjectBackfillClass, "o");
+		getVTObjectL = generateGenericGetter(flatObjectBackfillClass, "l");
+		
+		String flatUnAlignedSingle[] = {"i:QValueInt;", "i2:QValueInt;"};
+		flatUnAlignedSingleClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedSingle", flatUnAlignedSingle);
+		makeFlatUnAlignedSingleClass = lookup.findStatic(flatUnAlignedSingleClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
+		getUnAlignedSingleI = generateGenericGetter(flatUnAlignedSingleClass, "i");
+		getUnAlignedSingleI2 = generateGenericGetter(flatUnAlignedSingleClass, "i2");
+		
+		String flatUnAlignedSingleBackfill[] = {"l:QValueLong;","singles:QFlatUnAlignedSingle;", "o:QValueObject;"};
+		flatUnAlignedSingleBackfillClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedSingleBackfill", flatUnAlignedSingleBackfill);
+		makeFlatUnAlignedSingleBackfillClass = lookup.findStatic(flatUnAlignedSingleBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
+		getUnAlignedSingleflatSingleBackfillInstanceO = generateGenericGetter(flatUnAlignedSingleBackfillClass, "o");
+		getUnAlignedSingleflatSingleBackfillInstanceSingles = generateGenericGetter(flatUnAlignedSingleBackfillClass, "singles");
+		getUnAlignedSingleflatSingleBackfillInstanceL = generateGenericGetter(flatUnAlignedSingleBackfillClass, "l");
+		
+		String flatUnAlignedSingleBackfill2[] = {"l:QValueLong;","singles:QFlatUnAlignedSingle;", "singles2:QFlatUnAlignedSingle;"};
+		flatUnAlignedSingleBackfillClass2 = ValueTypeGenerator.generateValueClass("FlatUnAlignedSingleBackfill2", flatUnAlignedSingleBackfill2);
+		makeFlatUnAlignedSingleBackfillClass2 = lookup.findStatic(flatUnAlignedSingleBackfillClass2, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
+		getUnAlignedSingleflatSingleBackfill2InstanceSingles = generateGenericGetter(flatUnAlignedSingleBackfillClass2, "singles");
+		getUnAlignedSingleflatSingleBackfill2InstanceSingles2 = generateGenericGetter(flatUnAlignedSingleBackfillClass2, "singles2");
+		getUnAlignedSingleflatSingleBackfill2InstanceL = generateGenericGetter(flatUnAlignedSingleBackfillClass2, "l");
+		
+		String flatUnAlignedObject[] = {"o:QValueObject;", "o2:QValueObject;"};
+		flatUnAlignedObjectClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedObject", flatUnAlignedObject);
+		makeFlatUnAlignedObjectClass = lookup.findStatic(flatUnAlignedObjectClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
+		getUnAlignedObjectO = generateGenericGetter(flatUnAlignedObjectClass, "o");
+		getUnAlignedObjectO2 = generateGenericGetter(flatUnAlignedObjectClass, "o2");
+		
+		String flatUnAlignedObjectBackfill[] = {"objects:QFlatUnAlignedObject;", "objects2:QFlatUnAlignedObject;", "l:QValueLong;"};
+		flatUnAlignedObjectBackfillClass = ValueTypeGenerator.generateValueClass("FlatUnAlignedObjectBackfill", flatUnAlignedObjectBackfill);
+		makeFlatUnAlignedObjectBackfillClass = lookup.findStatic(flatUnAlignedObjectBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
+		getUnAlignedObjectflatObjectBackfillInstanceObjects = generateGenericGetter(flatUnAlignedObjectBackfillClass, "objects");
+		getUnAlignedObjectflatObjectBackfillInstanceObjects2 = generateGenericGetter(flatUnAlignedObjectBackfillClass, "objects2");
+		getUnAlignedObjectflatObjectBackfillInstanceL = generateGenericGetter(flatUnAlignedObjectBackfillClass, "l");
+		
+		String flatUnAlignedObjectBackfill2[] = {"o:QValueObject;", "objects:QFlatUnAlignedObject;", "l:QValueLong;"};
+		flatUnAlignedObjectBackfillClass2 = ValueTypeGenerator.generateValueClass("FlatUnAlignedObjectBackfill2", flatUnAlignedObjectBackfill2);
+		makeFlatUnAlignedObjectBackfillClass2 = lookup.findStatic(flatUnAlignedObjectBackfillClass2, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
+		getUnAlignedObjectflatObjectBackfill2InstanceO = generateGenericGetter(flatUnAlignedObjectBackfillClass2, "o");
+		getUnAlignedObjectflatObjectBackfill2InstanceObjects = generateGenericGetter(flatUnAlignedObjectBackfillClass2, "objects");
+		getUnAlignedObjectflatObjectBackfill2InstanceL = generateGenericGetter(flatUnAlignedObjectBackfillClass2, "l");
+	}
+	
+	@Test(priority=5, invocationCount=2)
+	static public void testFlatLayoutsWithValueTypes() throws Throwable {	
+		Object flatSingleBackfillInstance = makeFlatSingleBackfillClass.invoke(makeValueLong.invoke(defaultLong), makeValueObject.invoke(defaultObject), makeValueInt.invoke(defaultInt));
+		assertEquals(getInt.invoke(getVTSingleI.invoke(flatSingleBackfillInstance)), defaultInt);
+		assertEquals(getObject.invoke(getVTSingleO.invoke(flatSingleBackfillInstance)), defaultObject);
+		assertEquals(getLong.invoke(getVTSingleL.invoke(flatSingleBackfillInstance)), defaultLong);
+		
+		Object objectBackfillInstance = makeFlatObjectBackfillClass.invoke(makeValueLong.invoke(defaultLong), makeValueObject.invoke(defaultObject));
+		assertEquals(getObject.invoke(getVTObjectO.invoke(objectBackfillInstance)), defaultObject);
+		assertEquals(getLong.invoke(getVTObjectL.invoke(objectBackfillInstance)), defaultLong);
+		
+		Object flatUnAlignedSingleBackfillInstance = makeFlatUnAlignedSingleBackfillClass.invoke(makeValueLong.invoke(defaultLong), makeFlatUnAlignedSingleClass.invoke(makeValueInt.invoke(defaultInt), makeValueInt.invoke(defaultIntNew)), makeValueObject.invoke(defaultObject));
+		assertEquals(getLong.invoke(getUnAlignedSingleflatSingleBackfillInstanceL.invoke(flatUnAlignedSingleBackfillInstance)), defaultLong);
+		assertEquals(getObject.invoke(getUnAlignedSingleflatSingleBackfillInstanceO.invoke(flatUnAlignedSingleBackfillInstance)), defaultObject);
+		assertEquals(getInt.invoke(getUnAlignedSingleI.invoke(getUnAlignedSingleflatSingleBackfillInstanceSingles.invoke(flatUnAlignedSingleBackfillInstance))), defaultInt);
+		assertEquals(getInt.invoke(getUnAlignedSingleI2.invoke(getUnAlignedSingleflatSingleBackfillInstanceSingles.invoke(flatUnAlignedSingleBackfillInstance))), defaultIntNew);
+		
+		Object flatUnAlignedSingleBackfill2Instance = makeFlatUnAlignedSingleBackfillClass2.invoke(makeValueLong.invoke(defaultLong), makeFlatUnAlignedSingleClass.invoke(makeValueInt.invoke(defaultInt), makeValueInt.invoke(defaultIntNew)), makeFlatUnAlignedSingleClass.invoke(makeValueInt.invoke(defaultInt), makeValueInt.invoke(defaultIntNew)));
+		assertEquals(getLong.invoke(getUnAlignedSingleflatSingleBackfill2InstanceL.invoke(flatUnAlignedSingleBackfill2Instance)), defaultLong);
+		assertEquals(getInt.invoke(getUnAlignedSingleI.invoke(getUnAlignedSingleflatSingleBackfill2InstanceSingles.invoke(flatUnAlignedSingleBackfill2Instance))), defaultInt);
+		assertEquals(getInt.invoke(getUnAlignedSingleI2.invoke(getUnAlignedSingleflatSingleBackfill2InstanceSingles.invoke(flatUnAlignedSingleBackfill2Instance))), defaultIntNew);
+		assertEquals(getInt.invoke(getUnAlignedSingleI.invoke(getUnAlignedSingleflatSingleBackfill2InstanceSingles2.invoke(flatUnAlignedSingleBackfill2Instance))), defaultInt);
+		assertEquals(getInt.invoke(getUnAlignedSingleI2.invoke(getUnAlignedSingleflatSingleBackfill2InstanceSingles2.invoke(flatUnAlignedSingleBackfill2Instance))), defaultIntNew);
+		
+		Object flatUnAlignedObjectBackfillInstance = makeFlatUnAlignedObjectBackfillClass.invoke(makeFlatUnAlignedObjectClass.invoke(makeValueObject.invoke(defaultObject), makeValueObject.invoke(defaultObjectNew)), makeFlatUnAlignedObjectClass.invoke(makeValueObject.invoke(defaultObject), makeValueObject.invoke(defaultObjectNew)), makeValueLong.invoke(defaultLong));
+		assertEquals(getLong.invoke(getUnAlignedObjectflatObjectBackfillInstanceL.invoke(flatUnAlignedObjectBackfillInstance)), defaultLong);
+		assertEquals(getObject.invoke(getUnAlignedObjectO.invoke(getUnAlignedObjectflatObjectBackfillInstanceObjects.invoke(flatUnAlignedObjectBackfillInstance))), defaultObject);
+		assertEquals(getObject.invoke(getUnAlignedObjectO2.invoke(getUnAlignedObjectflatObjectBackfillInstanceObjects.invoke(flatUnAlignedObjectBackfillInstance))), defaultObjectNew);
+		assertEquals(getObject.invoke(getUnAlignedObjectO.invoke(getUnAlignedObjectflatObjectBackfillInstanceObjects2.invoke(flatUnAlignedObjectBackfillInstance))), defaultObject);
+		assertEquals(getObject.invoke(getUnAlignedObjectO2.invoke(getUnAlignedObjectflatObjectBackfillInstanceObjects2.invoke(flatUnAlignedObjectBackfillInstance))), defaultObjectNew);
+		
+		Object flatUnAlignedObjectBackfill2Instance = makeFlatUnAlignedObjectBackfillClass2.invoke(makeValueObject.invoke(defaultObject), makeFlatUnAlignedObjectClass.invoke(makeValueObject.invoke(defaultObject), makeValueObject.invoke(defaultObjectNew)), makeValueLong.invoke(defaultLong));
+		assertEquals(getLong.invoke(getUnAlignedObjectflatObjectBackfill2InstanceL.invoke(flatUnAlignedObjectBackfill2Instance)), defaultLong);
+		assertEquals(getObject.invoke(getUnAlignedObjectO.invoke(getUnAlignedObjectflatObjectBackfill2InstanceObjects.invoke(flatUnAlignedObjectBackfill2Instance))), defaultObject);
+		assertEquals(getObject.invoke(getUnAlignedObjectO2.invoke(getUnAlignedObjectflatObjectBackfill2InstanceObjects.invoke(flatUnAlignedObjectBackfill2Instance))), defaultObjectNew);
+		assertEquals(getObject.invoke(getUnAlignedObjectflatObjectBackfill2InstanceO.invoke(flatUnAlignedObjectBackfill2Instance)), defaultObject);		
+	}
+	
+	@Test(priority=3)
+	static public void testCreateFlatLayoutsWithRecursiveLongs() throws Throwable {
+		String doubleLongFields[] = {"l:QValueLong;", "l2:J"};
+		doubleLongClass = ValueTypeGenerator.generateValueClass("DoubleLong", doubleLongFields);
+		makeDoubleLongClass = lookup.findStatic(doubleLongClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
+		getDoubleLongL = generateGenericGetter(doubleLongClass, "l");
+		getDoubleLongL2 = generateGenericGetter(doubleLongClass, "l2");
+		
+		String quadLongFields[] = {"l:QDoubleLong;", "l2:QValueLong;", "l3:J"};
+		quadLongClass = ValueTypeGenerator.generateValueClass("QuadLong", quadLongFields);
+		makeQuadLongClass = lookup.findStatic(quadLongClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
+		getQuadLongL = generateGenericGetter(quadLongClass, "l");
+		getQuadLongL2 = generateGenericGetter(quadLongClass, "l2");
+		getQuadLongL3 = generateGenericGetter(quadLongClass, "l3");
+		
+		String doubleQuadLongFields[] = {"l:QQuadLong;", "l2:QDoubleLong;", "l3:QValueLong;", "l4:J"};
+		doubleQuadLongClass = ValueTypeGenerator.generateValueClass("DoubleQuadLong", doubleQuadLongFields);
+		makeDoubleQuadLongClass = lookup.findStatic(doubleQuadLongClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
+		getDoubleQuadLongL = generateGenericGetter(doubleQuadLongClass, "l");
+		getDoubleQuadLongL2 = generateGenericGetter(doubleQuadLongClass, "l2");
+		getDoubleQuadLongL3 = generateGenericGetter(doubleQuadLongClass, "l3");
+		getDoubleQuadLongL4 = generateGenericGetter(doubleQuadLongClass, "l4");
+	}
+	
+	@Test(priority=4, invocationCount=2)
+	static public void testFlatLayoutsWithRecursiveLongs() throws Throwable {
+		Object doubleLongInstance = makeDoubleLongClass.invoke(makeValueLong.invoke(defaultLong), defaultLongNew);
+		assertEquals(getLong.invoke(getDoubleLongL.invoke(doubleLongInstance)), defaultLong);
+		assertEquals(getDoubleLongL2.invoke(doubleLongInstance), defaultLongNew);
+		
+		Object quadLongInstance = makeQuadLongClass.invoke(doubleLongInstance, makeValueLong.invoke(defaultLongNew2), defaultLongNew3);
+		assertEquals(getLong.invoke(getDoubleLongL.invoke(getQuadLongL.invoke(quadLongInstance))), defaultLong);
+		assertEquals(getDoubleLongL2.invoke(getQuadLongL.invoke(quadLongInstance)), defaultLongNew);
+		assertEquals(getLong.invoke(getQuadLongL2.invoke(quadLongInstance)), defaultLongNew2);
+		assertEquals(getQuadLongL3.invoke(quadLongInstance), defaultLongNew3);
+		
+		Object doubleQuadLongInstance = makeDoubleQuadLongClass.invoke(quadLongInstance, doubleLongInstance, makeValueLong.invoke(defaultLongNew4), defaultLongNew5);
+		assertEquals(getLong.invoke(getDoubleLongL.invoke(getQuadLongL.invoke(getDoubleQuadLongL.invoke(doubleQuadLongInstance)))), defaultLong);
+		assertEquals(getDoubleLongL2.invoke(getQuadLongL.invoke(getDoubleQuadLongL.invoke(doubleQuadLongInstance))), defaultLongNew);
+		assertEquals(getLong.invoke(getQuadLongL2.invoke(getDoubleQuadLongL.invoke(doubleQuadLongInstance))), defaultLongNew2);
+		assertEquals(getQuadLongL3.invoke(getDoubleQuadLongL.invoke(doubleQuadLongInstance)), defaultLongNew3);
+		assertEquals(getLong.invoke(getDoubleLongL.invoke(getDoubleQuadLongL2.invoke(doubleQuadLongInstance))), defaultLong);
+		assertEquals(getDoubleLongL2.invoke(getDoubleQuadLongL2.invoke(doubleQuadLongInstance)), defaultLongNew);
+		assertEquals(getLong.invoke(getDoubleQuadLongL3.invoke(doubleQuadLongInstance)), defaultLongNew4);
+		assertEquals(getDoubleQuadLongL4.invoke(doubleQuadLongInstance), defaultLongNew5);
+	}
+	
 	/*
 	 * Create an assorted value type with object alignment 
 	 * 
@@ -1994,15 +2231,18 @@ public class ValueTypeTests {
 	 * 	int y;
 	 * }
 	 */
-	@Test(enabled = false, priority=1)
+	@Test(priority=1)
 	static public void testCreateLargeNumberOfPoint2D() throws Throwable {
 		String fields[] = {"x:I", "y:I"};
-		String className = "Point2D";
-		for (int valueIndex = 0; valueIndex < 200000; valueIndex++) {
-			className =  "Point2D" + valueIndex;		
-			point2DClass = ValueTypeGenerator.generateValueClass(className, fields);
+		for (int valueIndex = 0; valueIndex < objectGCScanningIterationCount; valueIndex++) {
+			String className = "Point2D" + valueIndex;		
+			Class point2DXClass = ValueTypeGenerator.generateValueClass(className, fields);
 			/* findStatic will trigger class resolution */
-			makePoint2D = lookup.findStatic(point2DClass, "makeValue", MethodType.methodType(point2DClass, int.class, int.class));
+			MethodHandle makePoint2DX = lookup.findStatic(point2DXClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
+			if (0 == (valueIndex % 100)) {
+				System.gc();
+				System.gc();
+			}
 		}
 	}
 
@@ -2216,7 +2456,7 @@ public class ValueTypeTests {
 	 *
 	 * Fails tests with array flattening enabled
 	 */
-	@Test(enabled = false, priority=5)
+	@Test(priority=5)
 	static public void testDefaultValueInAssortedValueWithLongAlignmenInstanceMultiArray() throws Throwable {
 		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, new int[]{genericArraySize, genericArraySize});
 		for (int i = 0; i < genericArraySize; i++) {
@@ -2240,7 +2480,7 @@ public class ValueTypeTests {
 	 *
 	 * Fails tests with array flattening enabled
 	 */
-	@Test(enabled = false, priority=5)
+	@Test(priority=5)
 	static public void testDefaultValueInAssortedValueWithLongAlignmentByteCodeMultiArray() throws Throwable {
 		MethodHandle makeAssortedValueWithLongAlignmentArray = lookup.findStatic(assortedValueWithLongAlignmentClass, "generate2DMultiANewArray", MethodType.methodType(Object.class, int.class, int.class));
 		Object assortedValueWithLongAlignmentArray = makeAssortedValueWithLongAlignmentArray.invoke(genericArraySize, genericArraySize);
@@ -2350,14 +2590,11 @@ public class ValueTypeTests {
 		checkCastRefClassOnNull.invoke();
 	}
 
-
-	// The three following tests can be used to verify that flattened value types in arrays are handled properly by the GC. In the
-	// current state, these tests should pass when flattened is disabled but failed when it is enabled.
 	/*
 	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any 
 	 * single time. This forces the GC to unload the classes.
 	 */
-	@Test(enabled = false, priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> longAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
@@ -2383,7 +2620,7 @@ public class ValueTypeTests {
 	 * Maintain a buffer of flattened arrays with object-aligned valuetypes while keeping a certain amount of classes alive at any 
 	 * single time. This forces the GC to unload the classes.
 	 */
-	@Test(enabled = false, priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> objectAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
@@ -2409,7 +2646,7 @@ public class ValueTypeTests {
 	 * Maintain a buffer of flattened arrays with single-aligned valuetypes while keeping a certain amount of classes alive at any 
 	 * single time. This forces the GC to unload the classes.
 	 */
-	@Test(enabled = false, priority=5)
+	@Test(priority=5, invocationCount=2)
 	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> singleAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
@@ -2460,6 +2697,338 @@ public class ValueTypeTests {
 		assertNotNull(getB.invoke(getD.invoke(containerC)));
 	}
 	
+	/*
+	 * Test use of DEFAULTVALUE for a value type class that has not been resolved.
+	 * The method is first called so that the DEFAULTVALUE will not be executed,
+	 * and the class not resolved, and then called so that the DEFAULTVALUE
+	 * and class resolution is triggered.
+	 */
+	@Test(priority=1)
+	static public void testUnresolvedDefaultValueUse() throws Throwable {
+		/*
+		 * Set up classes that look roughly like this:
+		 *
+		 * public inline class UnresolvedA {
+		 *     public final int x;
+		 *     public final int y;
+		 *     public Object getGenericX(int x) {return Integer.valueOf(x);}
+		 *     public Object getGenericY(int x) {return Integer.valueOf(y);}
+		 * }
+		 *
+		 * public class UsingUnresolvedA {
+		 *     public Object testUnresolvedValueTypeDefaultValue(int doDefaultValue) {
+		 *         // Passing in non-zero triggers execution of DEFAULTVALUE and
+		 *         // resolution of UnresolvedA class
+		 *         //
+		 *         return (doDefaultValue != 0) ? (DEFAULTVALUE UnresolvedA) : null;
+		 *     }
+		 * }
+		 */
+		String fields[] = {"x:I", "y:I"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("UnresolvedA", fields);
+		String fields2[] = {};
+		Class usingClass = ValueTypeGenerator.generateRefClass("UsingUnresolvedA", fields2, "UnresolvedA");
+
+		MethodHandle defaultValueUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypeDefaultValue", MethodType.methodType(Object.class, int.class));
+
+		for (int i = 0; i < 10; i++) {
+			/*
+			 * Pass zero to avoid execution of DEFAULTVALUE and resolution of value type class
+			 */
+			assertNull(defaultValueUnresolved.invoke(0));
+		}
+
+		MethodHandle getX = generateGenericGetter(valueClass, "x");
+		MethodHandle getY = generateGenericGetter(valueClass, "y");
+
+		for (int i = 0; i < 10; i++) {
+			/*
+			 * Pass one to force execution of DEFAULTVALUE and resolution of value type class
+			 */
+			Object defaultValue = defaultValueUnresolved.invoke(1);
+			assertNotNull(defaultValue);
+			assertEquals(getX.invoke(defaultValue), Integer.valueOf(0));
+			assertEquals(getY.invoke(defaultValue), Integer.valueOf(0));
+		}
+	}
+
+	@Test(priority=1)
+	static public void testUnresolvedWithFieldUse() throws Throwable {
+		/*
+		 * Set up classes that look roughly like this:
+		 *
+		 * public inline class UnresolvedD {
+		 *     public final int x;
+		 *     public final int y;
+		 *     public Object getGenericX(int x) {return Integer.valueOf(x);}
+		 *     public Object getGenericY(int x) {return Integer.valueOf(y);}
+		 * }
+		 *
+		 * public class UsingUnresolvedD {
+		 *     public Object testUnresolvedValueTypeDefaultValue(int doDefaultValue, Object val) {
+		 *         // Passing in non-zero triggers execution of WITHFIELD operations and
+		 *         // resolution of UnresolvedD class
+		 *         //
+		 *         return (doDefaultValue != 0)
+		 *                    ? (((((UnresolvedD) val) <WITHFIELD-UnresolvedD.X> (1))
+		 *                                             <WITHFIELD-UnresolvedD.Y> (2)))
+		 *                    : null;
+		 *     }
+		 * }
+		 */
+		String fields[] = {"x:I", "y:I"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("UnresolvedD", fields, "UsingUnresolvedD");
+		String fields2[] = {};
+		Class usingClass = ValueTypeGenerator.generateHostRefClass("UsingUnresolvedD", fields2, "UnresolvedD", fields);
+
+		MethodHandle withFieldUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypeWithField", MethodType.methodType(Object.class, new Class[] {int.class, Object.class}));
+
+		for (int i = 0; i < 10; i++) {
+			/*
+			 * Pass zero to avoid execution of WITHFIELD and resolution of value type class
+			 */
+			assertNull(withFieldUnresolved.invoke(0, null));
+		}
+
+		MethodHandle makeDefaultValue = lookup.findStatic(valueClass, "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
+		Object defaultValue = makeDefaultValue.invoke();
+
+		MethodHandle getX = generateGenericGetter(valueClass, "x");
+		MethodHandle getY = generateGenericGetter(valueClass, "y");
+
+		for (int i = 0; i < 10; i++) {
+			/*
+			 * Pass one to force execution of WITHFIELD and resolution of value type class
+			 */
+			Object withFieldValue = (withFieldUnresolved.invoke(1, defaultValue));
+			assertEquals(getX.invoke(withFieldValue), Integer.valueOf(1));
+			assertEquals(getY.invoke(withFieldValue), Integer.valueOf(2));
+		}
+	}
+
+	private static class UnresolvedClassDesc {
+		public String name;
+		public String[] fields;
+		public UnresolvedClassDesc(String name, String[] fields) {
+			this.name = name;
+			this.fields = fields;
+		}
+	}
+
+	/*
+	 * Test use of GETFIELD operations on the fields of a container class, where
+	 * the fields are of value type classes that have not been resolved.
+	 *
+	 * The method is first called so that the GETFIELD will not be executed, and
+	 * the class not resolved, and then called so that the GETFIELD and class
+	 * resolution is triggered.
+	 */
+	@Test(priority=1)
+	static public void testUnresolvedGetFieldUse() throws Throwable {
+		/*
+		 * Set up classes that look roughly like this:
+		 *
+		 * public inline class UnresolvedB1 {
+		 *     public final int a;
+		 *     public final int b;
+		 * }
+		 *
+		 * public inline class UnresolvedB2 {
+		 *     public final int c;
+		 *     public final int d;
+		 * }
+		 *
+		 * public inline class UnresolvedB3 {
+		 *     public final int e;
+		 *     public final int f;
+		 * }
+		 *
+		 * public class ContainerForUnresolvedB {
+		 *     public UnresolvedB1 v1;
+		 *     public UnresolvedB2 v2;
+		 *     public UnresolvedB3 v3;
+		 * }
+		 *
+		 * public class UsingUnresolvedB {
+		 *     public Object testUnresolvedValueTypeGetField(int fieldNum, ContainerForUnresolvedB container) {
+		 *         // Passing in a value in the range [0..2] triggers execution of a GETFIELD
+		 *         // operation on the corresponding field of "container", triggering
+		 *         // resolution of the field.  Passing in a value outside that range, delays
+		 *         // triggering resolution of the field
+		 *         //
+		 *         switch (fieldNum) {
+		 *         case 0: return container.v1;
+		 *         case 1: return container.v2;
+		 *         case 2: return container.v3;
+		 *         default: return null;
+		 *         }
+		 *     }
+		 * }
+		 */
+		UnresolvedClassDesc[] uclassDescArr = new UnresolvedClassDesc[] {
+								new UnresolvedClassDesc("UnresolvedB1", new String[] {"a:I", "b:I"}),
+								new UnresolvedClassDesc("UnresolvedB2", new String[] {"c:I", "d:I"}),
+								new UnresolvedClassDesc("UnresolvedB3", new String[] {"e:I", "f:I"})};
+
+		Class[] valueClassArr = new Class[uclassDescArr.length];
+		String containerFields[] = new String[uclassDescArr.length];
+		MethodHandle[][] valueFieldGetters = new MethodHandle[uclassDescArr.length][];
+
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			UnresolvedClassDesc desc = uclassDescArr[i];
+			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
+			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
+			containerFields[i] = "v"+(i+1)+":Q"+desc.name+";";
+
+			for (int j = 0; j < desc.fields.length; j++) {
+				String[] nameAndSig = desc.fields[j].split(":");
+				valueFieldGetters[i][j] = generateGenericGetter(valueClassArr[i], nameAndSig[0]);
+			}
+		}
+
+		Class containerClass = ValueTypeGenerator.generateRefClass("ContainerForUnresolvedB", containerFields);
+
+		String fieldsUsing[] = {};
+		Class usingClass = ValueTypeGenerator.generateRefClass("UsingUnresolvedB", fieldsUsing, "ContainerForUnresolvedB", containerFields);
+
+		MethodHandle getFieldUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypeGetField",
+															MethodType.methodType(Object.class, new Class[] {int.class, containerClass}));
+
+		for (int i = 0; i < 10; i++) {
+			/*
+			 * Pass -1 to avoid execution of GETFIELD against field that has a value type class
+			 * In turn that delays the resolution of the value type class
+			 */
+			assertNull(getFieldUnresolved.invoke(-1, null));
+		}
+
+		Object containerObject = containerClass.newInstance();
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			/*
+			 * Pass 0 or more to trigger execution of GETFIELD against field that has a value type class
+			 * In turn that triggers the resolution of the associated value type classes
+			 */
+			Object fieldVal = getFieldUnresolved.invoke(i, containerObject);
+			assertNotNull(fieldVal);
+
+			for (int j = 0; j < valueFieldGetters[i].length; j++) {
+				assertEquals(valueFieldGetters[i][j].invoke(fieldVal), Integer.valueOf(0));
+			}
+		}
+	}
+
+	/*
+	 * Test use of PUTFIELD operations on the fields of a container class, where
+	 * the fields are of value type classes that have not been resolved.
+	 *
+	 * The method is first called so that the PUTFIELD will not be executed, and
+	 * the class not resolved, and then called so that the PUTFIELD and class
+	 * resolution is triggered.
+	 */
+	@Test(priority=1)
+	static public void testUnresolvedPutFieldUse() throws Throwable {
+		/*
+		 * Set up classes that look roughly like this:
+		 *
+		 * public inline class UnresolvedC1 {
+		 *     public final int a;
+		 *     public final int b;
+		 * }
+		 *
+		 * public inline class UnresolvedC2 {
+		 *     public final int c;
+		 *     public final int d;
+		 * }
+		 *
+		 * public inline class UnresolvedC3 {
+		 *     public final int e;
+		 *     public final int f;
+		 * }
+		 *
+		 * public class ContainerForUnresolvedC {
+		 *     public UnresolvedC1 v1;
+		 *     public UnresolvedC2 v2;
+		 *     public UnresolvedC3 v3;
+		 * }
+		 *
+		 * public class UsingUnresolvedC {
+		 *     public Object testUnresolvedValueTypePutField(int fieldNum, ContainerForUnresolvedC container, Object val) {
+		 *         // Passing in a value in the range [0..2] triggers execution of a PUTFIELD
+		 *         // operation on the corresponding field of "container", triggering
+		 *         // resolution of the class and field.  Passing in a value outside that range,
+		 *         // delays triggering that resolution
+		 *         //
+		 *         switch (fieldNum) {
+		 *         case 0: container.v1 = (UnresolvedC3) val; break;
+		 *         case 1: container.v2 = (UnresolvedC2) val; break;
+		 *         case 2: container.v3 = (UnresolvedC3) val; break;
+		 *         default: break;
+		 *         }
+		 *     }
+		 * }
+		 */
+		UnresolvedClassDesc[] uclassDescArr = new UnresolvedClassDesc[] {
+								new UnresolvedClassDesc("UnresolvedC1", new String[] {"a:I", "b:I"}),
+								new UnresolvedClassDesc("UnresolvedC2", new String[] {"c:I", "d:I"}),
+								new UnresolvedClassDesc("UnresolvedC3", new String[] {"e:I", "f:I"})};
+
+		Class[] valueClassArr = new Class[uclassDescArr.length];
+		String containerFields[] = new String[uclassDescArr.length];
+		MethodHandle[][] valueFieldGetters = new MethodHandle[uclassDescArr.length][];
+		MethodHandle[] containerFieldGetters = new MethodHandle[uclassDescArr.length];
+
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			UnresolvedClassDesc desc = uclassDescArr[i];
+			valueClassArr[i] = ValueTypeGenerator.generateValueClass(desc.name, desc.fields);
+			valueFieldGetters[i] = new MethodHandle[desc.fields.length];
+			containerFields[i] = "v"+(i+1)+":Q"+desc.name+";";
+
+			for (int j = 0; j < desc.fields.length; j++) {
+				String[] nameAndSig = desc.fields[j].split(":");
+				valueFieldGetters[i][j] = generateGenericGetter(valueClassArr[i], nameAndSig[0]);
+			}
+		}
+
+		Class containerClass = ValueTypeGenerator.generateRefClass("ContainerForUnresolvedC", containerFields);
+
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			String[] nameAndSig = containerFields[i].split(":");
+			containerFieldGetters[i] = generateGenericGetter(containerClass, nameAndSig[0]);
+		}
+
+		String fieldsUsing[] = {};
+		Class usingClass = ValueTypeGenerator.generateRefClass("UsingUnresolvedC", fieldsUsing, "ContainerForUnresolvedC", containerFields);
+
+		MethodHandle putFieldUnresolved = lookup.findStatic(usingClass, "testUnresolvedValueTypePutField",
+												MethodType.methodType(void.class, new Class[] {int.class, containerClass, Object.class}));
+
+		for (int i = 0; i < 10; i++) {
+			/*
+			 * Pass -1 to avoid execution of PUTFIELD into field that has a value type class
+			 * In turn that delays the resolution of the value type class
+			 */
+			putFieldUnresolved.invoke(-1, null, null);
+		}
+
+		Object containerObject = containerClass.newInstance();
+		for (int i = 0; i < uclassDescArr.length; i++) {
+			MethodHandle makeDefaultValue = lookup.findStatic(valueClassArr[i], "makeValueTypeDefaultValue", MethodType.methodType(Object.class));
+			Object valueObject = makeDefaultValue.invoke();
+			/*
+			 * Pass 0 or more to trigger execution of PUTFIELD against field that has a value type class
+			 * In turn that triggers the resolution of the associated value type classes
+			 */
+			putFieldUnresolved.invoke(i, containerObject, valueObject);
+		}
+
+		for (int i = 0; i < containerFieldGetters.length; i++) {
+			Object containerFieldValue = containerFieldGetters[i].invoke(containerObject);
+
+			for (int j = 0; j < valueFieldGetters[i].length; j++) {
+				assertEquals(valueFieldGetters[i][j].invoke(containerFieldValue), Integer.valueOf(0));
+			}
+		}
+	}
 	
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
@@ -2532,7 +3101,7 @@ public class ValueTypeTests {
 		}
 		return null;
 	}
-
+		
 	static long getFieldOffset(Class clazz, String field) {
 		try {
 			Field f = clazz.getDeclaredField(field);

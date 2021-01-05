@@ -25,8 +25,8 @@
 	<test>
 		<testCaseName>ValueTypeTests</testCaseName>
 		<variations>
-			<variation>NoOptions</variation>
-			<variation>-Xgcpolicy:nogc -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xgcpolicy:optthruput</variation>
+			<variation> -XX:ValueTypeFlatteningThreshold=99999 -Xgcpolicy:optthruput -XX:-EnableArrayFlattening</variation>
 			<variation>-Xgcpolicy:optthruput -Xnocompactgc -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -34,7 +34,7 @@
 		-Xint \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 		-XX:+EnableValhalla \
-		-cp $(Q)$(LIB_DIR)$(D)asm-all.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
+		-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
 		org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames ValueTypeTests \
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \
@@ -61,15 +61,14 @@
 			  -
 			  -	<variation>-Xjit:count=0</variation>
 			  -->
-			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:nogc -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -Xnocompactgc -XX:ValueTypeFlatteningThreshold=99999</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xverify:none \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 		-XX:+EnableValhalla \
-		-cp $(Q)$(LIB_DIR)$(D)asm-all.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
+		-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
 		org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames ValueTypeTestsJIT \
 		-groups $(TEST_GROUP) \
 		-excludegroups $(DEFAULT_EXCLUDE); \

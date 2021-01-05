@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1847,6 +1847,87 @@ UDATA jitAMD64Handler(J9VMThread* vmThread, U_32 sigType, void *sigInfo)
 		}
 	}
 
+	return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
+}
+
+#elif defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
+
+#define NUMBEROFBYTESINACCESSIBLE 4096
+extern void jitHandleNullPointerExceptionTrap(void);
+extern void jitHandleInternalErrorTrap(void);
+
+UDATA jitARM64Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
+{
+	PORT_ACCESS_FROM_VMC(vmThread);
+
+	J9JITExceptionTable *exceptionTable = NULL;
+	J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
+
+	if (jitConfig) {
+		const char *infoName;
+		UDATA *pcPtr;
+		void *infoValue;
+		U_32 infoType;
+		J9JITExceptionTable *exceptionTable;
+
+		infoType = j9sig_info(sigInfo, J9PORT_SIG_CONTROL, J9PORT_SIG_CONTROL_PC, &infoName, &infoValue);
+		if (infoType != J9PORT_SIG_VALUE_ADDRESS) {
+			return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
+		}
+		pcPtr = (UDATA *) infoValue;
+
+		exceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, *pcPtr);
+
+		if (!exceptionTable && J9PORT_SIG_FLAG_SIGBUS == sigType) {
+		   // We might be in a jit helper routine (like arraycopy) so look at the link register as well...
+		   UDATA *lrPtr;
+		   /* R30 is LR for aarch64 */
+		   infoType = j9sig_info(sigInfo, J9PORT_SIG_GPR, 30, &infoName, &infoValue);
+		   if (infoType != J9PORT_SIG_VALUE_ADDRESS) {
+		      return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
+		   }
+		   lrPtr = (UDATA *) infoValue;
+		   exceptionTable = jitConfig->jitGetExceptionTableFromPC(vmThread, *lrPtr);
+		   if (exceptionTable) {
+				vmThread->jitException = (J9Object *) (*lrPtr);  /* the lr points at the instruction after the helper call */
+				*pcPtr = (UDATA) ((void *) &jitHandleInternalErrorTrap);
+				return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
+		   }
+		}
+
+		if (exceptionTable) {
+			switch (sigType) {
+			case J9PORT_SIG_FLAG_SIGBUS:
+			case J9PORT_SIG_FLAG_SIGSEGV:
+				infoType = j9sig_info(sigInfo, J9PORT_SIG_SIGNAL, J9PORT_SIG_SIGNAL_INACCESSIBLE_ADDRESS, &infoName, &infoValue);
+				if (sigType == J9PORT_SIG_FLAG_SIGSEGV && infoType == J9PORT_SIG_VALUE_ADDRESS) {
+					if ( *(UDATA*)infoValue >= NUMBEROFBYTESINACCESSIBLE) {
+						/* we know where the fault occurred, and it wasn't within the first page. This is an unexpected error */
+						break;
+					}
+				}
+				vmThread->jitException = (J9Object *) (*pcPtr + 1);  /* add one for symmetry with IA32, handler check subs one */
+				*pcPtr = (UDATA)(void*)(sigType == J9PORT_SIG_FLAG_SIGSEGV ? jitHandleNullPointerExceptionTrap : jitHandleInternalErrorTrap);
+				return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
+
+			default:
+				break;
+			}
+
+			/*
+			 * if we reached here, then this is an unexpected error. Build a resolve
+			 * frame so that the stack is walkable and allow normal fault handling
+			 * to continue
+			 */
+
+			/* the Java SP is r20 on aarch64 */
+			infoType = j9sig_info(sigInfo, J9PORT_SIG_GPR, 20, &infoName, &infoValue);
+			if (infoType == J9PORT_SIG_VALUE_ADDRESS) {
+				UDATA **javaSPPtr = (UDATA **) infoValue;
+				jitPushResolveFrame(vmThread, *javaSPPtr, (U_8 *) *pcPtr);
+			}
+		}
+	}
 	return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
 }
 

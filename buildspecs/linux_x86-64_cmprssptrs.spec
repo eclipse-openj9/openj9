@@ -39,10 +39,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="complianceTestingSupported" value="true"/>
 		<property name="directoryDelimiter" value="/"/>
 		<property name="graph_arch.cpu" value="{$spec.arch.cpuISA$}"/>
-		<property name="graph_commands.chroot" value=""/>
+		<property name="graph_commands.chroot" value="{$commands.docker.rhel6.x86_64$}"/>
 		<property name="graph_commands.unix.remote_host" value=""/>
 		<property name="graph_datamines" value="commands.unix.datamine,site-ottawa.datamine,use.local.datamine"/>
-		<property name="graph_enable_gcc7_cmd" value="source {$buildinfo.fsroot.unixBin$}/platform/linux_hammer/set_gcc7.5_env &amp;&amp;"/>
+		<property name="graph_enable_gcc7_cmd" value=""/>
 		<property name="graph_label.classlib" value="150"/>
 		<property name="graph_label.java5" value="j9vmxa64cmprssptrs24"/>
 		<property name="graph_label.java6" value="pxa64cmprssptrs60"/>
@@ -57,7 +57,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_make_parallel_arg" value="-j `numberOfCPUs`"/>
 		<property name="graph_req.arch0" value="arch:x86"/>
 		<property name="graph_req.arch1" value="arch:64bit"/>
-		<property name="graph_req.aux0" value="{$common.req.build.cuda$}"/>
+		<property name="graph_req.aux0" value="docker"/>
 		<property name="graph_req.aux1" value=""/>
 		<property name="graph_req.build" value="{$common.req.build.java9$}"/>
 		<property name="graph_req.build2" value="{$common.req.build.java8$}"/>

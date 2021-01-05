@@ -93,7 +93,7 @@ final class J9VMInternals {
 									"sun.nio.ch.IOUtil", //$NON-NLS-1$
 									"sun.nio.ch.FileChannelImpl", //$NON-NLS-1$
 									"sun.nio.ch.ServerSocketChannelImpl", //$NON-NLS-1$
-	/*[IF !Java11]*/
+	/*[IF JAVA_SPEC_VERSION < 11]*/
 									"java.util.zip.ZipFile", //$NON-NLS-1$
 									"java.util.zip.Inflater", //$NON-NLS-1$
 									"java.util.zip.Deflater", //$NON-NLS-1$
@@ -106,7 +106,7 @@ final class J9VMInternals {
 			SnapshotControlAPI.registerHighPriorityPostRestoreHooks(() -> {
 				System.loadLibrary("net"); //$NON-NLS-1$
 				System.loadLibrary("nio"); //$NON-NLS-1$
-			});
+			}, "LoadLibrary: net+nio");
 			
 			
 			for (String className : listOfClassesThatRequireJNIIDInit) {
@@ -119,7 +119,7 @@ final class J9VMInternals {
 					} catch (Throwable t) {
 						throw new InternalError(t);
 					}
-				});
+				}, "initIDs:" + clazz.getSimpleName());
 			}
 		} catch (ReflectiveOperationException e) {
 			throw new InternalError(e);

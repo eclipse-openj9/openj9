@@ -24,14 +24,14 @@ package java.lang.invoke;
 
 import java.lang.reflect.Modifier;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import com.ibm.oti.vm.VMLangAccess;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /* ReceiverBoundHandle is a DirectHandle subclass used to call methods 
  * that have an exact known address and a bound first parameter.
@@ -110,7 +110,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 		return result;
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		VMLangAccess vma = Lookup.getVMLangAccess();
@@ -149,7 +149,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 		
 		return false;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// {{{ JIT support
 	private static final ThunkTable _thunkTable = new ThunkTable();
@@ -245,4 +245,3 @@ final class ReceiverBoundHandle extends DirectHandle {
 		super.compareWithDirect(left, c);
 	}
 }
-

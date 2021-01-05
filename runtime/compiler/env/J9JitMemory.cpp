@@ -24,6 +24,7 @@
 #include "jilconsts.h"
 #include "compile/Compilation.hpp"
 #include "env/jittypes.h"
+#include "env/VerboseLog.hpp"
 #include "infra/Monitor.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "control/CompilationRuntime.hpp"

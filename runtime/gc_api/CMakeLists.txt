@@ -20,12 +20,16 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gcapi STATIC
+set(gc_api_sources
 	GuaranteedNurseryRange.cpp
 	HeapIteratorAPI.cpp
 	HeapIteratorAPIBufferedIterator.cpp
 	HeapIteratorAPIRootIterator.cpp
 	HeapRootScanner.cpp
+)
+
+j9vm_add_library(j9gcapi STATIC
+	${gc_api_sources}
 )
 
 target_link_libraries(j9gcapi
@@ -35,3 +39,17 @@ target_link_libraries(j9gcapi
 
 		omrgc
 )
+
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9gcapi_full STATIC
+		${gc_api_sources}
+	)
+
+	target_link_libraries(j9gcapi_full
+		PRIVATE
+			j9vm_interface
+			j9vm_gc_includes
+
+			omrgc_full
+	)
+endif()

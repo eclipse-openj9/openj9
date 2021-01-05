@@ -48,7 +48,7 @@ def clone_branch_push(REPO, NEW_BRANCH, SPLIT_SHA) {
             // branch from sha/tag/branch
             sh "git checkout -b '${NEW_BRANCH}' '${SPLIT_SHA}'"
 
-            withCredentials([usernamePassword(credentialsId: 'b6987280-6402-458f-bdd6-7affc2e360d4', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+            withCredentials([usernamePassword(credentialsId: 'github-bot', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                 sh "git push ${HTTP}${USERNAME}:${PASSWORD}@${REPO} '${NEW_BRANCH}'"
             }
 

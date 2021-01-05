@@ -881,19 +881,18 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 void
 setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newClassNameUTF, J9ClassLoader *loader1, J9UTF8 *class1NameUTF, J9ClassLoader *loader2, J9UTF8 *class2NameUTF, J9UTF8 *exceptionClassNameUTF, U_8 *methodName, UDATA methodNameLength, U_8 *signature, UDATA signatureLength);
 
+/* ---------------- extendedMessageNPE.cpp ---------------- */
+
 /**
-* Return an extended NPE message.
-*
-* Note: the caller is responsible for freeing the returned string if it is not NULL.
-*
-* @param vmThread The current J9VMThread
-* @param bcCurrentPtr The pointer to the bytecode being executed and caused the NPE
-* @param romClass The romClass of the bytecode
-* @param npeCauseMsg The cause of NPE, reserved for future use.
-* @return char* An extended NPE message or NULL if such a message can't be generated
-*/
+ * Return an extended NPE message.
+ *
+ * Note: the caller is responsible for freeing the returned string if it is not NULL.
+ *
+ * @param npeMsgData - the J9NPEMessageData structure holding romClass/romMethod/npePC
+ * @return char* An extended NPE message or NULL if such a message can't be generated
+ */
 char*
-getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, const char *npeCauseMsg);
+getNPEMessage(J9NPEMessageData *npeMsgData);
 
 /* ---------------- gphandle.c ---------------- */
 
@@ -1499,6 +1498,17 @@ printBytecodePairs(J9JavaVM *vm);
  */
 BOOLEAN
 areValueTypesEnabled(J9JavaVM *vm);
+
+
+/**
+ * @brief Queries if -XX:DiagnoseSyncOnValuedBasedClasses=1 or -XX:DiagnoseSyncOnValuedBasedClasses=2 are found in the CML
+ * @param[in] vm pointer to the J9JavaVM
+ * @return FALSE if neither of -XX:DiagnoseSyncOnValuedBasedClasses=1/-XX:DiagnoseSyncOnValuedBasedClasses=2 are found in the CML.
+ * 			(i.e. neither J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION/J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING are set in 
+ * 			vm->extendedRuntimeFlags2)
+ * 			Otherwise, return TRUE.
+ */
+BOOLEAN areValueBasedMonitorChecksEnabled(J9JavaVM *vm);
 
 /**
 * @brief
@@ -4277,6 +4287,16 @@ typedef struct J9ObjectMonitorInfo {
 	IDATA depth;
 	UDATA count;
 } J9ObjectMonitorInfo;
+
+/**
+ * @brief See if an object is being waited on by targetThread
+ * @param currentThread
+ * @param targetThread
+ * @param obj
+ * @return BOOLEAN
+ */
+BOOLEAN
+objectIsBeingWaitedOn(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t obj);
 
 /**
  * @brief Get the object monitors locked by a thread

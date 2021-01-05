@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,4 +63,39 @@ Java_java_lang_ref_Reference_waitForReferenceProcessingImpl(JNIEnv *env, jclass 
 	return result;
 }
 
+#if JAVA_SPEC_VERSION >= 16
+jboolean JNICALL
+Java_java_lang_ref_Reference_refersTo(JNIEnv *env, jobject reference, jobject target)
+{
+	J9VMThread * const currentThread = (J9VMThread *)env;
+	J9JavaVM * const vm = currentThread->javaVM;
+	J9InternalVMFunctions * const vmFuncs = vm->internalVMFunctions;
+	jboolean result = JNI_FALSE;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	if (NULL == reference) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		j9object_t j9reference = J9_JNI_UNWRAP_REFERENCE(reference);
+		j9object_t j9target = (NULL != target) ? J9_JNI_UNWRAP_REFERENCE(target) : NULL;
+		j9object_t referent = NULL;
+
+		if (J9_GC_POLICY_METRONOME == ((OMR_VM *)vm->omrVM)->gcPolicy) {
+			referent = vm->memoryManagerFunctions->j9gc_objaccess_referenceGet(currentThread, j9reference);
+		} else {
+			referent = J9VMJAVALANGREFREFERENCE_REFERENT_VM(vm, j9reference);
+		}
+
+		if (referent == j9target) {
+			result = JNI_TRUE;
+		}
+	}
+
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return result;
 }
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
+} /* extern "C" */

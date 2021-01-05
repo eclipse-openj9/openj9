@@ -64,7 +64,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,7 +71,6 @@ import java.util.regex.Pattern;
 import com.ibm.j9ddr.BytecodeGenerator;
 import com.ibm.j9ddr.CTypeParser;
 import com.ibm.j9ddr.StructureReader;
-import com.ibm.j9ddr.StructureReader.ConstantDescriptor;
 import com.ibm.j9ddr.StructureReader.FieldDescriptor;
 import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 import com.ibm.j9ddr.StructureTypeManager;
@@ -97,6 +95,7 @@ public class PointerGenerator {
 	File outputDirHelpers;
 	private boolean cacheClass = false;
 	private boolean cacheFields = false;
+	private boolean generalizeSimpleTypes = false;
 	private Properties cacheProperties = null;
 
 	private StructureTypeManager typeManager;
@@ -1122,27 +1121,29 @@ public class PointerGenerator {
 	 * the pointer stubs generated from this code so that incompatibilities will
 	 * be discovered at build time, rather than at run time.
 	 */
-	private static String generalizeSimpleType(String type) {
-		if ("I32".equals(type) || "I64".equals(type)) {
-			return "IDATA";
-		} else if ("U32".equals(type) || "U64".equals(type)) {
-			return "UDATA";
-		} else {
-			return type;
+	private String generalizeSimpleType(String type) {
+		if (generalizeSimpleTypes) {
+			if ("I32".equals(type) || "I64".equals(type)) {
+				return "IDATA";
+			} else if ("U32".equals(type) || "U64".equals(type)) {
+				return "UDATA";
+			}
 		}
+		return type;
 	}
 
 	/*
 	 * Like generalizeSimpleType() above, but for pointer types.
 	 */
-	private static String generalizeSimplePointer(String type) {
-		if ("I32Pointer".equals(type) || "I64Pointer".equals(type)) {
-			return "IDATAPointer";
-		} else if ("U32Pointer".equals(type) || "U64Pointer".equals(type)) {
-			return "UDATAPointer";
-		} else {
-			return type;
+	private String generalizeSimplePointer(String type) {
+		if (generalizeSimpleTypes) {
+			if ("I32Pointer".equals(type) || "I64Pointer".equals(type)) {
+				return "IDATAPointer";
+			} else if ("U32Pointer".equals(type) || "U64Pointer".equals(type)) {
+				return "UDATAPointer";
+			}
 		}
+		return type;
 	}
 
 	private void writeSimpleTypeMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor, int type) {
@@ -1572,11 +1573,13 @@ public class PointerGenerator {
 		for (String key : opts.keySet()) {
 			String value = opts.get(key);
 			if (value == null && !key.equals("-s") && !key.equals("-h")) {
-				System.err.println("The option " + key + " has not been set.\n");
+				System.err.println("The option " + key + " has not been set.");
 				printHelp();
 				System.exit(1);
 			}
 		}
+
+		generalizeSimpleTypes = "29".equals(opts.get("-v"));
 	}
 
 	/**

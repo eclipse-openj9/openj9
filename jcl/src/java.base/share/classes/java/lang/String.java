@@ -33,10 +33,10 @@ import java.util.Formatter;
 import java.util.StringJoiner;
 import java.util.Iterator;
 import java.nio.charset.Charset;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.function.Function;
 import java.util.Optional;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 /*[IF Sidecar19-SE]*/
 import java.util.Spliterator;
 import java.util.stream.StreamSupport;
@@ -47,16 +47,16 @@ import java.util.stream.IntStream;
 import sun.misc.Unsafe;
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.util.stream.Stream;
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 /**
  * Strings are objects which represent immutable arrays of characters.
@@ -67,9 +67,9 @@ import java.lang.invoke.MethodHandles.Lookup;
  * @see StringBuffer
  */
 public final class String implements Serializable, Comparable<String>, CharSequence
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	, Constable, ConstantDesc
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 
 	/*
@@ -113,6 +113,31 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+	/**
+	 * Copy bytes from value starting at srcIndex into the bytes array starting at
+	 * destIndex. No range checking is needed. Caller ensures bytes is in UTF16.
+	 * 
+	 * @param bytes copy destination
+	 * @param srcIndex index into value
+	 * @param destIndex index into bytes
+	 * @param coder LATIN1 or UTF16
+	 * @param length the number of elements to copy
+	 */
+	void getBytes(byte[] bytes, int srcIndex, int destIndex, byte coder, int length) {
+		// Check if the String is compressed
+		if (enableCompression && (null == compressionFlag || this.coder == LATIN1)) {
+			if (String.LATIN1 == coder) {
+				compressedArrayCopy(value, srcIndex, bytes, destIndex, length);
+			} else {
+				decompress(value, srcIndex, bytes, destIndex, length);
+			}
+		} else {
+			decompressedArrayCopy(value, srcIndex, bytes, destIndex, length);
+		}
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+	
 	// no range checking, caller ensures bytes is in UTF16
 	// coder is one of LATIN1 or UTF16
 	void getBytes(byte[] bytes, int offset, byte coder) {
@@ -1429,11 +1454,17 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return s1len - s2len;
 	}
 
+	private int compareValue(int codepoint) {
+		if ('A' <= codepoint && codepoint <= 'Z') {
+			return codepoint + ('a' - 'A');
+		}
+
+		return Character.toLowerCase(Character.toUpperCase(codepoint));
+	}
+
 	private char compareValue(char c) {
-		if (c < 128) {
-			if ('A' <= c && c <= 'Z') {
-				return (char) (c + ('a' - 'A'));
-			}
+		if ('A' <= c && c <= 'Z') {
+			return (char) (c + ('a' - 'A'));
 		}
 
 		return Character.toLowerCase(Character.toUpperCase(c));
@@ -1488,12 +1519,26 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			while (o1 < end) {
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
+				int codepointAtO1 = charAtO1;
+				int codepointAtO2 = charAtO2;
 
 				if (charAtO1 == charAtO2) {
+					/*[IF JAVA_SPEC_VERSION >= 16]*/
+					if (Character.isHighSurrogate(charAtO1) && (o1 < end)) {
+						codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
+						codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
+						if (codepointAtO1 == codepointAtO2) {
+							continue;
+						}
+					} else {
+						continue;
+					}
+					/*[ELSE]*/
 					continue;
+					/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				}
 
-				int result = compareValue(charAtO1) - compareValue(charAtO2);
+				int result = compareValue(codepointAtO1) - compareValue(codepointAtO2);
 
 				if (result != 0) {
 					return result;
@@ -1769,15 +1814,35 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char charAtO1Last = s1.charAtInternal(s1len - 1, s1Value);
 			char charAtO2Last = s2.charAtInternal(s1len - 1, s2Value);
 
-			if (charAtO1Last != charAtO2Last &&
-					toUpperCase(charAtO1Last) != toUpperCase(charAtO2Last) &&
-					((charAtO1Last <= 255 && charAtO2Last <= 255) || Character.toLowerCase(charAtO1Last) != Character.toLowerCase(charAtO2Last))) {
+			if (charAtO1Last != charAtO2Last
+					&& toUpperCase(charAtO1Last) != toUpperCase(charAtO2Last)
+					&& ((charAtO1Last <= 255 && charAtO2Last <= 255) || Character.toLowerCase(charAtO1Last) != Character.toLowerCase(charAtO2Last))
+					/*[IF JAVA_SPEC_VERSION >= 16]*/
+					&& (!Character.isLowSurrogate(charAtO1Last) || !Character.isLowSurrogate(charAtO2Last))
+					/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+			) {
 				return false;
 			}
 
+			/*[IF JAVA_SPEC_VERSION >= 16]*/
+			while (o1 < end) {
+			/*[ELSE]*/
 			while (o1 < end - 1) {
+			/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
+
+				/*[IF JAVA_SPEC_VERSION >= 16]*/
+				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
+					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
+					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
+					if ((codepointAtO1 != codepointAtO2) && (compareValue(codepointAtO1) != compareValue(codepointAtO2))) {
+						return false;
+					} else {
+						continue;
+					}
+				}
+				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 				if (charAtO1 != charAtO2 &&
 						toUpperCase(charAtO1) != toUpperCase(charAtO2) &&
@@ -2416,6 +2481,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
 
+				/*[IF JAVA_SPEC_VERSION >= 16]*/
+				if (Character.isHighSurrogate(charAtO1) && Character.isHighSurrogate(charAtO2) && (o1 < end)) {
+					int codepointAtO1 = Character.toCodePoint(charAtO1, s1.charAtInternal(o1++, s1Value));
+					int codepointAtO2 = Character.toCodePoint(charAtO2, s2.charAtInternal(o2++, s2Value));
+					if ((codepointAtO1 != codepointAtO2) && (compareValue(codepointAtO1) != compareValue(codepointAtO2))) {
+						return false;
+					}
+				}
+				/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+
 				if (charAtO1 != charAtO2 &&
 						toUpperCase(charAtO1) != toUpperCase(charAtO2) &&
 						toLowerCase(charAtO1) != toLowerCase(charAtO2)) {
@@ -2517,7 +2592,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return regionMatches(start, prefix, 0, prefix.lengthInternal());
 	}
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	/**
 	 * Strip leading and trailing white space from a string.
 	 *
@@ -2615,7 +2690,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return StringUTF16.lines(value);
 		}
 	}
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/**
 	 * Copies a range of characters into a new String.
@@ -3909,7 +3984,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		return value;
 	}
 
-	/*[IF Java11]*/
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	/**
 	 * Returns a string object containing the character (Unicode code point)
 	 * specified.
@@ -3990,7 +4065,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return new String(buffer, UTF16);
 		}
 	}
-	/*[ENDIF] Java11 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[ELSE] Sidecar19-SE*/
 	// DO NOT CHANGE OR MOVE THIS LINE
@@ -5408,10 +5483,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	}
 
 	private static char compareValue(char c) {
-		if (c < 128) {
-			if ('A' <= c && c <= 'Z') {
-				return (char) (c + ('a' - 'A'));
-			}
+		if ('A' <= c && c <= 'Z') {
+			return (char) (c + ('a' - 'A'));
 		}
 
 		return Character.toLowerCase(Character.toUpperCase(c));
@@ -8334,7 +8407,7 @@ written authorization of the copyright holder.
 
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Apply a function to this string. The function expects a single String input
 	 * and returns an R.
@@ -8425,9 +8498,9 @@ written authorization of the copyright holder.
 
 		return builder.toString();
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
-/*[IF Java13]*/
+/*[IF JAVA_SPEC_VERSION >= 13]*/
 	/**
 	 * Determine if current String object is LATIN1.
 	 *
@@ -8620,5 +8693,5 @@ written authorization of the copyright holder.
 		}
 		return builder.toString();
 	}
-/*[ENDIF] Java13 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 13 */
 }

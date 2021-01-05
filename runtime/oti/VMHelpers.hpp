@@ -1484,12 +1484,12 @@ done:
 	doMethodTypesMatchIgnoringLastArgument(J9VMThread *currentThread, j9object_t shorterMT, j9object_t longerMT)
 	{
 		bool matched = false;
-		j9object_t shorterMTReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(currentThread, shorterMT);
-		j9object_t longerMTReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(currentThread, longerMT);
+		j9object_t shorterMTReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, shorterMT);
+		j9object_t longerMTReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, longerMT);
 
 		if (shorterMTReturnType == longerMTReturnType) {
-			j9object_t shorterMTArguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(currentThread, shorterMT);
-			j9object_t longerMTArguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(currentThread, longerMT);
+			j9object_t shorterMTArguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, shorterMT);
+			j9object_t longerMTArguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, longerMT);
 			I_32 longerMTArgumentsLength = (I_32)J9INDEXABLEOBJECT_SIZE(currentThread, longerMTArguments);
 
 			if ((longerMTArgumentsLength - 1) == (I_32)J9INDEXABLEOBJECT_SIZE(currentThread, shorterMTArguments)) {

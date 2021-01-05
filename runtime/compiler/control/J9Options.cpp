@@ -122,6 +122,11 @@ int32_t J9::Options::_bigAppSampleThresholdAdjust = 3; //amount to shift the hot
 int32_t J9::Options::_availableCPUPercentage = 100;
 int32_t J9::Options::_cpuCompTimeExpensiveThreshold = 4000;
 uintptr_t J9::Options::_compThreadAffinityMask = 0;
+#if defined(J9VM_OPT_JITSERVER)
+int64_t J9::Options::_oldAge = 1000*60*1000; // 1000 minutes
+int64_t J9::Options::_oldAgeUnderLowMemory = 1000*60*5; // 5 minute
+int64_t J9::Options::_timeBetweenPurges = 1000*60*1; // 1 minute
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 int32_t J9::Options::_interpreterSamplingThreshold = 300;
 int32_t J9::Options::_interpreterSamplingDivisor = TR_DEFAULT_INTERPRETER_SAMPLING_DIVISOR;
@@ -903,6 +908,12 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numDLTBufferMatchesToEagerlyIssueCompReq, 0, "F%d", NOT_IN_SUBSET},
    {"numInterpCompReqToExitIdleMode=", "M<nnn>\tNumber of first time comp. req. that takes the JIT out of idle mode",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numFirstTimeCompilationsToExitIdleMode, 0, "F%d", NOT_IN_SUBSET },
+#if defined(J9VM_OPT_JITSERVER)
+   {"oldAge=", " \tDefines what an old JITServer cache entry means", 
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAge,  0, " %d"},
+   {"oldAgeUnderLowMemory=", " \tDefines what an old JITServer cache entry means when memory is low",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAgeUnderLowMemory,  0, " %d" },
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"profileAllTheTime=",    "R<nnn>\tInterpreter profiling will be on all the time",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_profileAllTheTime, 0, " %d", NOT_IN_SUBSET},
    {"queuedInvReqThresholdToDowngradeOptLevel=", "M<nnn>\tDowngrade opt level if too many inv req",
@@ -962,6 +973,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_statisticsFrequency, 0, "F%d", NOT_IN_SUBSET},
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"testMode",           "D\tcompile but do not run the compiled code",  SET_JITCONFIG_RUNTIME_FLAG(J9JIT_TESTMODE) },
+#if defined(J9VM_OPT_JITSERVER)
+   {"timeBetweenPurges=", " \tDefines how often we are willing to scan for old entries to be purged", 
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_timeBetweenPurges,  0, " %d"},
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
    {"tlhPrefetchBoundaryLineCount=",    "O<nnn>\tallocation prefetch boundary line for allocation prefetch",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_TLHPrefetchBoundaryLineCount, 0, "P%d", NOT_IN_SUBSET},

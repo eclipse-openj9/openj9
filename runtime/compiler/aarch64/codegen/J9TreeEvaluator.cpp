@@ -684,21 +684,7 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
 TR::Register *
 J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Compilation *comp = cg->comp();
-
-   if (comp->getOption(TR_DisableInlineInstanceOf))
-      {
-      // Call helper
-      TR::ILOpCodes opCode = node->getOpCodeValue();
-      TR::Node::recreate(node, TR::icall);
-      TR::Register *targetRegister = directCallEvaluator(node, cg);
-      TR::Node::recreate(node, opCode);
-      return targetRegister;
-      }
-   else
-      {
-      return VMinstanceofEvaluator(node, cg);
-      }
+   return VMinstanceofEvaluator(node, cg);
    }
 
 /**
@@ -825,10 +811,13 @@ void genInstanceOfOrCheckCastArbitraryClassTest(TR::Node *node, TR::Register *in
  *    testerReg = load (objectClassReg + offset_romClass)
  *    testerReg = load (objectClassReg + offset_modifiers)
  *    tstImmediate with J9AccClassInternalPrimitiveType(0x20000)
+ *    // if branchOnPrimitiveTypeCheck is true
+ *    If arrays of primitive -> Branch to Fail Label
+ *    // else
  *    if not arrays of primitive set condition code to Zero indicating true result
  */
 static
-void genInstanceOfOrCheckCastObjectArrayTest(TR::Node *node, TR::Register *instanceClassReg, TR::LabelSymbol *falseLabel,
+void genInstanceOfOrCheckCastObjectArrayTest(TR::Node *node, TR::Register *instanceClassReg, TR::LabelSymbol *falseLabel, bool useTBZ,
                                              TR_ARM64ScratchRegisterManager *srm, TR::CodeGenerator *cg)
    {
    // Load the object ROM class and test the modifiers to see if this is an array.
@@ -838,7 +827,15 @@ void genInstanceOfOrCheckCastObjectArrayTest(TR::Node *node, TR::Register *insta
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, scratchReg, new (cg->trHeapMemory()) TR::MemoryReference(scratchReg, offsetof(J9ROMClass, modifiers), cg));
    static_assert(J9AccClassArray == 0x10000, "J9AccClassArray must be 0x10000");
    // If not array, branch to falseLabel
-   generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, scratchReg, 16, falseLabel);
+   if (useTBZ)
+      {
+      generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, scratchReg, 16, falseLabel);
+      }
+   else
+      {
+      generateTestImmInstruction(cg, node, scratchReg, 0x400); // 0x400 is immr:imms for 0x10000
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, falseLabel, TR::CC_EQ);
+      }
 
    // If it's an array, load the component ROM class and test the modifiers to see if this is a primitive array.
    //
@@ -918,10 +915,10 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
    // initial result is false
    generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 0);
 
-   auto it = std::begin(sequences);
-   const auto itEnd = std::next(it, numSequencesRemaining);
+   auto itBegin = std::begin(sequences);
+   const auto itEnd = std::next(itBegin, numSequencesRemaining);
    
-   while (it != itEnd)
+   for (auto it = itBegin; it != itEnd; it++)
       {
       auto current = *it;
       switch (current)
@@ -947,8 +944,9 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
                }
             else
                {
-               // branching to doneLabel to return false
-               generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, objectReg, doneLabel);
+               auto nullLabel = isNextItemHelperCall(it, itEnd) ? callHelperLabel : doneLabel;
+               // branch to doneLabel to return false
+               generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, objectReg, nullLabel);
                }
             break;
          case GoToTrue:
@@ -976,8 +974,8 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
             auto falseLabel = isNextItemGoToFalse(it, itEnd) ? doneLabel : (isNextItemHelperCall(it, itEnd) ? callHelperLabel : nextSequenceLabel);
             genInstanceOfOrCheckCastSuperClassTest(node, objectClassReg, castClassReg, castClassDepth, falseLabel, srm, cg);
             generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
-            break;
             }
+            break;
          case ProfiledClassTest:
             {
             if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ProfiledClassTest\n", node->getOpCode().getName());
@@ -1043,11 +1041,10 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
             break;
          case ArrayOfJavaLangObjectTest:
             {
+            TR_ASSERT_FATAL(isNextItemGoToFalse(it, itEnd), "ArrayOfJavaLangObjectTest is always followed by GoToFalse");
             if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/ArrayTest", comp->signature()),1,TR::DebugCounter::Undetermined);
-
-            auto falseLabel = isNextItemGoToFalse(it, itEnd) ? doneLabel : (isNextItemHelperCall(it, itEnd) ? callHelperLabel : nextSequenceLabel);
-            genInstanceOfOrCheckCastObjectArrayTest(node, objectClassReg, nextSequenceLabel, srm, cg);
+            genInstanceOfOrCheckCastObjectArrayTest(node, objectClassReg, doneLabel, true, srm, cg);
             generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
             }
             break;
@@ -1064,6 +1061,12 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
             TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::icall, resultReg, callHelperLabel, doneLabel, cg);
 
             cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+            if (it == itBegin)
+               {
+               // If HelperCall is only the item in the sequence, branch to OOL
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
             }
             break;
          }
@@ -1098,6 +1101,14 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
                generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_LE);
                } 
             break;
+         case NullTest:
+            break;
+         default:
+            if (isNextItemHelperCall(it, itEnd))
+               {
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
+            break;
          }
 
       if (!isTerminalSequence(it, itEnd))
@@ -1106,7 +1117,6 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
          nextSequenceLabel = generateLabelSymbol(cg);
          }
 
-      it++;
       }
 
    if (objectClassReg)
@@ -1146,21 +1156,313 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
    return resultReg;
    }
 
+/**
+ * @brief Generates null test instructions
+ * 
+ * @param[in]         cg: code generator
+ * @param[in]     objReg: register holding object
+ * @param[in]       node: null check node
+ * @param[in] nullSymRef: symbol reference of null check
+ * 
+ */
+static
+void generateNullTest(TR::CodeGenerator *cg, TR::Register *objReg, TR::Node *node, TR::SymbolReference *nullSymRef = NULL)
+   {
+   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+   TR::Compilation *comp = cg->comp();
+   if (nullSymRef == NULL)
+      {
+      nullSymRef = comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol());
+      }
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, nullSymRef, NULL);
+   cg->addSnippet(snippet);
+
+   TR::Instruction *cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, objReg, snippetLabel);
+   cbzInstruction->setNeedsGCMap(0xffffffff);
+   snippet->gcMap().setGCRegisterMask(0xffffffff);
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation                      *comp = cg->comp();
+   TR_OpaqueClassBlock                  *compileTimeGuessClass;
+   int32_t                               maxProfiledClasses = comp->getOptions()->getCheckcastMaxProfiledClassTests();
+   traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
+   TR_ASSERT_FATAL(maxProfiledClasses <= 4, "Maximum 4 profiled classes per site allowed because we use a fixed stack allocated buffer for profiled classes\n");
+   InstanceOfOrCheckCastSequences        sequences[InstanceOfOrCheckCastMaxSequences];
+   bool                                  topClassWasCastClass = false;
+   float                                 topClassProbability = 0.0;
+
+   bool                                  profiledClassIsInstanceOf;
+   InstanceOfOrCheckCastProfiledClasses  profiledClassesList[4];
+   uint32_t                              numberOfProfiledClass;
+   uint32_t                              numSequencesRemaining = calculateInstanceOfOrCheckCastSequences(node, sequences, &compileTimeGuessClass, cg, profiledClassesList, &numberOfProfiledClass, maxProfiledClasses, &topClassProbability, &topClassWasCastClass);
+
+
+   TR::Node                       *objectNode = node->getFirstChild();
+   TR::Node                       *castClassNode = node->getSecondChild();
+   TR::Register                   *objectReg = cg->evaluate(objectNode);
+   TR::Register                   *castClassReg = NULL;
+
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *callHelperLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *nextSequenceLabel = generateLabelSymbol(cg);
+
+   TR::Instruction *gcPoint;
+
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+   TR::Register                 *objectClassReg = NULL;
+
+   auto itBegin = std::begin(sequences);
+   const auto itEnd = std::next(itBegin, numSequencesRemaining);
+   
+   for (auto it = itBegin; it != itEnd; it++)
+      {
+      auto current = *it;
+      switch (current)
+         {
+         case EvaluateCastClass:
+            TR_ASSERT(!castClassReg, "Cast class already evaluated");
+            castClassReg = cg->gprClobberEvaluate(castClassNode);
+            break;
+         case LoadObjectClass:
+            TR_ASSERT(!objectClassReg, "Object class already loaded");
+            objectClassReg = srm->findOrCreateScratchRegister();
+            generateLoadJ9Class(node, objectClassReg, objectReg, cg);
+            break;
+         case NullTest:
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
+            TR_ASSERT(!objectNode->isNonNull(), "Object is known to be non-null, no need for a null test");
+            if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
+               {
+               TR::Node *nullChkInfo = comp->findNullChkInfo(node);
+               generateNullTest(cg, objectReg, nullChkInfo);
+               }
+            else
+               {
+               if (isNextItemHelperCall(it, itEnd) || isNextItemGoToFalse(it, itEnd))
+                  {
+                  generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, objectReg, callHelperLabel);
+                  }
+               else
+                  {
+                  // branch to doneLabel if object is null
+                  generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, objectReg, doneLabel);
+                  }
+               }
+            break;
+         case GoToTrue:
+            TR_ASSERT_FATAL(isTerminalSequence(it, itEnd), "GoToTrue should be the terminal sequence");
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting GoToTrue\n", node->getOpCode().getName());
+            break;
+         case ClassEqualityTest:
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ClassEqualityTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/Equality", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            generateCompareInstruction(cg, node, objectClassReg, castClassReg, true);
+            break;
+         case SuperClassTest:
+            {
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting SuperClassTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/SuperClassTest", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
+            auto falseLabel = (isNextItemGoToFalse(it, itEnd) || isNextItemHelperCall(it, itEnd)) ? callHelperLabel : nextSequenceLabel;
+            genInstanceOfOrCheckCastSuperClassTest(node, objectClassReg, castClassReg, castClassDepth, falseLabel, srm, cg);
+            }
+            break;
+         /**
+          *    Following switch case generates sequence of instructions for profiled class test for this checkCast node
+          *    arbitraryClassReg1 <= profiledClass
+          *    if (arbitraryClassReg1 == objClassReg)
+          *       JMP DoneLabel
+          *    else
+          *       continue to NextTest
+          */
+         case ProfiledClassTest:
+            {
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ProfiledClassTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/Profile", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            auto profiledClassesIt = std::begin(profiledClassesList);
+            auto profiledClassesItEnd = std::next(profiledClassesIt, numberOfProfiledClass);
+            while (profiledClassesIt != profiledClassesItEnd)
+               {
+               if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: ProfiledClassTest: profiledClass = %p, isProfiledClassInstanceOfCastClass = %s\n",
+                                                         node->getOpCode().getName(), profiledClassesIt->profiledClass,
+                                                         (profiledClassesIt->isProfiledClassInstanceOfCastClass) ? "true" : "false");
+
+               genInstanceOfOrCheckCastArbitraryClassTest(node, objectClassReg, profiledClassesIt->profiledClass, srm, cg);
+               /**
+                *  At this point EQ flag will be set if the profiledClass matches the cast class.
+                */ 
+               profiledClassesIt++;
+               if (profiledClassesIt != profiledClassesItEnd)
+                  {
+                  generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+                  }
+               }
+            }
+            break;
+         case CompileTimeGuessClassTest:
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CompileTimeGuessClassTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/compTimeGuess", comp->signature()),1,TR::DebugCounter::Undetermined);
+ 
+            genInstanceOfOrCheckCastArbitraryClassTest(node, objectClassReg, compileTimeGuessClass, srm, cg);
+            break;
+         /**
+          *    Following switch case generates sequence of instructions for cast class cache test for this checkCast node
+          *    Load castClassCacheReg, offsetOf(J9Class,castClassCache)
+          *    if castClassCacheReg == castClassReg
+          *       JMP DoneLabel
+          *    else
+          *       continue to NextTest
+          */
+         case CastClassCacheTest:
+            {
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CastClassCacheTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/CastClassCache", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            /**
+             * Compare the cast class against the cache on the instance class.
+             * If they are the same the cast is successful.
+             * If not it's either because the cache class does not match the cast class, 
+             * or it does match except the cache class has the low bit set, which means the cast is not successful.
+             * In those cases, we need to call out to helper.
+             */
+            TR::Register *castClassCacheReg = srm->findOrCreateScratchRegister();
+            generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, castClassCacheReg,
+                              new (cg->trHeapMemory()) TR::MemoryReference(objectClassReg, offsetof(J9Class, castClassCache), cg));
+            generateCompareInstruction(cg, node, castClassCacheReg, castClassReg, true);
+            /**
+             *  At this point, EQ flag will be set if the cast is successful.
+             */ 
+            srm->reclaimScratchRegister(castClassCacheReg);
+            }
+            break;
+         case ArrayOfJavaLangObjectTest:
+            {
+            TR_ASSERT_FATAL(isNextItemGoToFalse(it, itEnd), "ArrayOfJavaLangObjectTest is always followed by GoToFalse");
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/ArrayTest", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            /*
+             * In this case, the false label is in the OOLCodeSection, and it can be placed far away from here.
+             * The offset of tbz/tbnz instruction must be within +-32KB range, so we do not use tbz/tbnz.
+             */
+            genInstanceOfOrCheckCastObjectArrayTest(node, objectClassReg, callHelperLabel, false, srm, cg);
+            }
+            break;
+         case DynamicCacheObjectClassTest:
+            TR_ASSERT_FATAL(false, "%s: DynamicCacheObjectClassTest is not implemented on aarch64\n", node->getOpCode().getName());
+            break;
+         case DynamicCacheDynamicCastClassTest:
+            TR_ASSERT_FATAL(false, "%s: DynamicCacheDynamicCastClassTest is not implemented on aarch64\n", node->getOpCode().getName());
+            break;
+         case GoToFalse:
+         case HelperCall:
+            {
+            auto seq = (current == GoToFalse) ? "GoToFalse" : "HelperCall";
+            TR_ASSERT_FATAL(isTerminalSequence(it, itEnd), "%s should be the terminal sequence", seq);
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting %s\n", node->getOpCode().getName(), seq);
+            TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, callHelperLabel, doneLabel, cg);
+
+            cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+            if (it == itBegin)
+               {
+               // If HelperCall or GoToFalse is the only item in the sequence, branch to OOL
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
+            }
+            break;
+         }
+
+      switch (current)
+         {
+         case ClassEqualityTest:
+         case SuperClassTest:
+         case ProfiledClassTest:
+         case CompileTimeGuessClassTest:
+         case CastClassCacheTest:
+         case ArrayOfJavaLangObjectTest:
+            /**
+             * For those tests, EQ flag is set if the cast is successful
+             */
+            if (isNextItemHelperCall(it, itEnd) || isNextItemGoToFalse(it, itEnd))
+               {
+               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callHelperLabel, TR::CC_NE);
+               }
+            else
+               {
+               // When other tests follow, branch to doneLabel if EQ flag is set
+               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+               }
+            break;
+         case NullTest:
+            break;
+         default:
+            if (isNextItemHelperCall(it, itEnd) || isNextItemGoToFalse(it, itEnd))
+               {
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
+         }
+
+      if (!isTerminalSequence(it, itEnd))
+         {
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, nextSequenceLabel);
+         nextSequenceLabel = generateLabelSymbol(cg);
+         }
+
+      }
+
+   if (objectClassReg)
+      srm->reclaimScratchRegister(objectClassReg);
+   
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3 + srm->numAvailableRegisters(), cg->trMemory());
+   srm->addScratchRegistersToDependencyList(deps);
+
+   deps->addPostCondition(objectReg, TR::RealRegister::NoReg);
+
+   if (castClassReg)
+      {
+      deps->addPostCondition(castClassReg, TR::RealRegister::NoReg);
+      }
+   
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast/%s/fastPath",
+                                                               node->getOpCode().getName()),
+                            *srm);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast.perMethod/%s/(%s)/%d/%d/fastPath",
+                                                               node->getOpCode().getName(), comp->signature(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeInfo().getByteCodeIndex()),
+                            *srm);
+
+
+   cg->decReferenceCount(objectNode);
+   cg->decReferenceCount(castClassNode);
+   // Stop using every reg in the deps except objectReg
+   //
+   deps->stopUsingDepRegs(cg, objectReg);
+
+   node->setRegister(NULL);
+
+   return NULL;
+   }
+
 TR::Register *
 J9::ARM64::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return checkcastEvaluator(node, cg);
+   return VMcheckcastEvaluator(node, cg);
    }
 
 TR::Register *
 J9::ARM64::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::ILOpCodes opCode = node->getOpCodeValue();
-   TR::Node::recreate(node, TR::call);
-   TR::Register *targetRegister = directCallEvaluator(node, cg);
-   TR::Node::recreate(node, opCode);
-
-   return targetRegister;
+   return VMcheckcastEvaluator(node, cg);
    }
 
 TR::Register *

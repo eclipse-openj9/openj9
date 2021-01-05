@@ -1037,6 +1037,9 @@ public:
    TR::Monitor *getSequencingMonitor() const { return _sequencingMonitor; }
    uint32_t getCompReqSeqNo() const { return _compReqSeqNo; }
    uint32_t incCompReqSeqNo() { return ++_compReqSeqNo; }
+   uint32_t getLastCriticalSeqNo() const { return _lastCriticalCompReqSeqNo; }
+   void setLastCriticalSeqNo(uint32_t seqNo) { _lastCriticalCompReqSeqNo = seqNo; }
+
    void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= (1 << threadId); }
    void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
    uint8_t getCHTableUpdateDone() const { return _chTableUpdateFlags; }
@@ -1048,6 +1051,9 @@ public:
    void  addJITServerSslCert(const std::string &cert) { _sslCerts.push_back(cert); }
    const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
    void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
+
+   bool serverHasLowPhysicalMemory() const { return _serverHasLowPhysicalMemory; }
+   void setServerHasLowPhysicalMemory(bool isLowMemory) { _serverHasLowPhysicalMemory = isLowMemory; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
@@ -1259,12 +1265,14 @@ private:
    PersistentVector<TR_OpaqueClassBlock*> *_illegalFinalFieldModificationList; // JITServer list of classes that have J9ClassHasIllegalFinalFieldModifications is set
    TR::Monitor                   *_sequencingMonitor; // Used for ordering outgoing messages at the client
    uint32_t                      _compReqSeqNo; // seqNo for outgoing messages at the client
+   uint32_t                      _lastCriticalCompReqSeqNo; // seqNo for last request that carried information that needs to be processed in order
    PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *_newlyExtendedClasses; // JITServer table of newly extended classes
    uint8_t                       _chTableUpdateFlags;
    uint32_t                      _localGCCounter; // Number of local gc cycles done
    std::string                   _sslRootCerts;
    PersistentVector<std::string> _sslKeys;
    PersistentVector<std::string> _sslCerts;
+   bool _serverHasLowPhysicalMemory;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // CompilationInfo
 }

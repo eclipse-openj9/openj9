@@ -48,9 +48,9 @@ class GC_PointerArrayletIterator
 private:
 	J9IndexableObject *_arrayPtr;	/**< pointer to the array object being iterated */
 	GC_SlotObject _slotObject;		/**< Create own SlotObject class to provide output */
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 	bool const _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 
 	UDATA const _arrayletLeafSize; 		/* The size of an arraylet leaf */
 	UDATA const _fobjectsPerLeaf; 		/* The number of fj9object_t's per leaf */
@@ -148,9 +148,9 @@ public:
 	GC_PointerArrayletIterator(J9JavaVM *javaVM)
 		: _arrayPtr(NULL)
 		, _slotObject(GC_SlotObject(javaVM->omrVM, NULL))
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		, _arrayletLeafSize(javaVM->arrayletLeafSize)
 		, _fobjectsPerLeaf(_arrayletLeafSize / J9JAVAVM_REFERENCE_SIZE(javaVM))
 		, _index(0)
@@ -167,9 +167,9 @@ public:
 	GC_PointerArrayletIterator(J9JavaVM *javaVM, J9Object *objectPtr)
 		: _arrayPtr(NULL)
 		, _slotObject(GC_SlotObject(javaVM->omrVM, NULL))
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
 		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		, _arrayletLeafSize(javaVM->arrayletLeafSize)
 		, _fobjectsPerLeaf(_arrayletLeafSize / J9JAVAVM_REFERENCE_SIZE(javaVM))
 		, _index(0)

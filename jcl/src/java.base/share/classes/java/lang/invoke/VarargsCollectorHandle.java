@@ -23,15 +23,15 @@
 package java.lang.invoke;
 
 import java.lang.invoke.MethodHandles.Lookup;
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Objects;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 import com.ibm.oti.util.Msg;
 
@@ -113,7 +113,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 		if (args != null) {
 			argsLength = args.length;
 		}
-		/*[IF Java11]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		/*
 		 * If argument count exceeds the parameter count of the MethodHandle, special handling is required to
 		 * store the additional arguments in the trailing array.
@@ -140,7 +140,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 
 			return this.asFixedArity().invokeWithArguments(newArgs);
 		} else
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		{
 			if (argsLength < 253) {
 				MethodHandle mh = IWAContainer.getMH(argsLength);
@@ -227,15 +227,15 @@ final class VarargsCollectorHandle extends MethodHandle {
 	boolean canRevealDirect() {
 		return isPrimitiveVarargs;
 	}
-	
-/*[IF Java15]*/
+
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		return true;
 	}
-/*[ENDIF] Java15 */
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
 	// {{{ JIT support
 
 	private static final ThunkTable _thunkTable = new ThunkTable();
@@ -272,4 +272,3 @@ final class VarargsCollectorHandle extends MethodHandle {
 		c.compareChildHandle(left.next, this.next);
 	}
 }
-
