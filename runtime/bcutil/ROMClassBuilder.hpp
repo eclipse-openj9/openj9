@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,10 +104,7 @@ private:
 		UDATA variableInfoSize;
 		UDATA utf8sSize;
 		UDATA rawClassDataSize;
-		UDATA varHandleMethodTypeLookupTableSize;
 	};
-
-	
 
 	/* NOTE: Be sure to update J9DbgROMClassBuilder in j9nonbuilder.h when changing the state variables below. */
 	J9JavaVM *_javaVM;

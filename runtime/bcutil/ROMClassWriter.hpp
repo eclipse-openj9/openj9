@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,9 +104,6 @@ public:
 
 	bool isOK() const { return OK == _buildResult; }
 	BuildResult getBuildResult() const { return _buildResult; }
-	U_32 getVarHandleMethodTypePaddedSize() { return _constantPoolMap->getVarHandleMethodTypePaddedCount() * sizeof(U_16); }
-
-
 
 private:
 	class AnnotationWriter;
