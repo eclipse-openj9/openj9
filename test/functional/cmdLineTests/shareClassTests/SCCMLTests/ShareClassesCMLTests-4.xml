@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2018 IBM Corp. and others
+  Copyright (c) 2012, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -120,7 +120,7 @@
 	<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 	
 	<test id="Test 180-a: Create a system dump by using a shared cache with enableBCI option and with a JVMTI agent" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $SYSDUMP$,events=vmstop $currentMode$,reset,enableBCI $AGENT_NOCLASSMODIFICATION$ $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<command>$JAVA_EXE$ -Xmx4m $SYSDUMP$,events=vmstop $currentMode$,reset,enableBCI $AGENT_NOCLASSMODIFICATION$ $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" regex="no">Moved disk 0 to 1</output>
 		<output type="required" regex="no" >System dump written</output>
 		<!-- check for unexpected core dumps -->
@@ -177,7 +177,7 @@
 	<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 	
 	<test id="Test 180-e: Create a system dump by using a shared cache with enableBCI option and without a JVMTI agent" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $SYSDUMP$,events=vmstop $currentMode$,reset,enableBCI $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<command>$JAVA_EXE$ -Xmx4m $SYSDUMP$,events=vmstop $currentMode$,reset,enableBCI $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" regex="no">Moved disk 0 to 1</output>
 		<output type="required" regex="no">System dump written</output>
 		<!-- check for unexpected core dumps -->
@@ -248,7 +248,7 @@
 	<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 	
 	<test id="Test 181-b: Create a system dump by using previously created cache in read only mode with a JVMTI agent that has retransformation enabled" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $SYSDUMP$,events=vmstop $currentMode$,enableBCI,readonly $AGENT_RETRANSFORM$ $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<command>$JAVA_EXE$ -Xmx4m $SYSDUMP$,events=vmstop $currentMode$,enableBCI,readonly $AGENT_RETRANSFORM$ $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" regex="no">Moved disk 0 to 1</output>
 		<output type="required" regex="no">System dump written</output>
 		<!-- check for unexpected core dumps -->
@@ -305,7 +305,7 @@
 	<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 	
 	<test id="Test 182-b: Create a system dump using previously created cache in read only mode with a JVMTI agent that has retransformation disabled" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $SYSDUMP$,events=vmstop $currentMode$,enableBCI,readonly $AGENT_NOCLASSMODIFICATION$ $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<command>$JAVA_EXE$ -Xmx4m $SYSDUMP$,events=vmstop $currentMode$,enableBCI,readonly $AGENT_NOCLASSMODIFICATION$ $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" regex="no">Moved disk 0 to 1</output>
 		<output type="required" regex="no">System dump written</output>
 		<!-- check for unexpected core dumps -->
