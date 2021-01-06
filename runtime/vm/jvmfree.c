@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -305,6 +305,8 @@ freeJ9Module(J9JavaVM *javaVM, J9Module *j9module) {
 	if (TrcEnabled_Trc_MODULE_freeJ9ModuleV2_entry) {
 		trcModulesFreeJ9ModuleEntry(javaVM, j9module);
 	}
+
+	TRIGGER_J9HOOK_VM_MODULE_UNLOAD(javaVM->hookInterface, javaVM->mainThread, j9module);
 
 	if (NULL != j9module->removeAccessHashTable) {
 		J9Module **modulePtr = (J9Module**)hashTableStartDo(j9module->removeAccessHashTable, &walkState);
