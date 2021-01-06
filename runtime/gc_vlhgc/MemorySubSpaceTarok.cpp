@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1120,14 +1120,11 @@ MM_MemorySubSpaceTarok::timeForHeapContract(MM_EnvironmentBase *env, MM_Allocate
 			return false;
 		}
 	}
-
-	MM_Heap * heap = MM_GCExtensions::getExtensions(_extensions)->getHeap();
-	UDATA actualSoftMx = heap->getActualSoftMxSize(env);
-
-	if(0 != actualSoftMx) {
-		if(actualSoftMx < getActiveMemorySize()) {
+	
+	if (0 != _extensions->softMx) {
+		if (_extensions->softMx < _extensions->heap->getActiveMemorySize()) {
 			/* the softmx is less than the currentsize so we're going to attempt an aggressive contract */
-			_contractionSize = getActiveMemorySize() - actualSoftMx;
+			_contractionSize = _extensions->heap->getActiveMemorySize() - _extensions->softMx;
 			_extensions->heap->getResizeStats()->setLastContractReason(HEAP_RESIZE);
 			return true;
 		}
@@ -1505,34 +1502,4 @@ MM_MemorySubSpaceTarok::adjustExpansionWithinFreeLimits(MM_EnvironmentBase *env,
 	}
 	return result;
 }
-
-/**
- * Compare the specified expand amount with -XsoftMX value
- * @return Updated expand size
- */		
-MMINLINE UDATA		
-MM_MemorySubSpaceTarok::adjustExpansionWithinSoftMax(MM_EnvironmentBase *env, UDATA expandSize, UDATA minimumBytesRequired)
-{
-	MM_Heap * heap = env->getExtensions()->getHeap();
-	UDATA actualSoftMx = heap->getActualSoftMxSize(env);
-	UDATA activeMemorySize = getActiveMemorySize();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	
-	if (0 != actualSoftMx) {
-		if ((minimumBytesRequired != 0) && ((activeMemorySize + minimumBytesRequired) > actualSoftMx)) {
-			if (J9_EVENT_IS_HOOKED(MM_GCExtensions::getExtensions(env)->omrHookInterface, J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX)){
-				ALWAYS_TRIGGER_J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX(MM_GCExtensions::getExtensions(env)->omrHookInterface, env->getOmrVMThread(),
-						j9time_hires_clock(), heap->getMaximumMemorySize(), heap->getActiveMemorySize(), MM_GCExtensions::getExtensions(env)->softMx, minimumBytesRequired);
-				actualSoftMx = heap->getActualSoftMxSize(env);
-			}
-		}
-		if (actualSoftMx < activeMemorySize) {
-			/* if our softmx is smaller than our currentsize, we should be contracting not expanding */
-			expandSize = 0;
-		} else if((activeMemorySize + expandSize) > actualSoftMx) {
-			/* we would go past our -XsoftMx so just expand up to it instead */
-			expandSize = actualSoftMx - activeMemorySize;
-		}
-	}
-	return expandSize;
-}	
