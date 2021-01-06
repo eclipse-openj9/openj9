@@ -31,6 +31,9 @@ import java.net.URL;
 import java.lang.annotation.*;
 import java.util.Collection;
 import java.util.HashMap;
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+import java.util.HashSet;
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -282,6 +285,11 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	private transient Object classData;
 /*[ENDIF] JAVA_SPEC_VERSION >= 15*/
+
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+	private transient Class<?>[] cachedPermittedSubclasses;
+	private static long cachedPermittedSubclassesOffset = -1;
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 /**
  * Prevents this class from being instantiated. Instances
@@ -5069,30 +5077,6 @@ SecurityException {
 	 */
 	public native boolean isSealed();
 
-	/**
-	 * Returns an array of permitted subclasses as ClassDesc objects related to the calling class.
-	 * 
-	 * @return array of ClassDesc objects.
-	 * For a class that is not sealed, an empty array is returned.
-	 */
-	@CallerSensitive
-	public ClassDesc[] permittedSubclasses() {
-		if (!isSealed()) {
-			return new ClassDesc[0];
-		}
-
-		String[] permittedSubclassesNames = permittedSubclassesImpl();
-		ClassDesc[] permittedSubclasses = new ClassDesc[permittedSubclassesNames.length];
-
-		for (int i = 0; i < permittedSubclassesNames.length; i++) {
-			String subclassName = permittedSubclassesNames[i];
-			permittedSubclasses[i] = ClassDesc.of(permittedSubclassesNames[i]);
-		}
-		return permittedSubclasses;
-	}
-
-	private native String[] permittedSubclassesImpl();
-
 	private native boolean isHiddenImpl();
 	/**
 	 * Returns true if the class is a hidden class.
@@ -5111,5 +5095,73 @@ SecurityException {
 	Object getClassData() {
 		return classData;
 	}
+
+	private native String[] permittedSubclassesImpl();
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+	/**
+	 * Returns the permitted subclasses related to the calling sealed class as an array
+	 * of Class objects. If the calling class is not a sealed class, is an array class,
+	 * or is primitive, then this method returns null instead.
+	 * The order of any classes returned in the array is unspecified, and any classes
+	 * that cannot be loaded are not included in the returned array. The returned array
+	 * may be empty if there are no permitted subclasses.
+	 * 
+	 * @return array of Class objects if permitted subclasses exist or null if not a sealed class.
+	 * 
+	 * @throws SecurityException if access to any of the classes returned in the array is denied
+	 * 
+	 * @since 16
+	 */
+	@CallerSensitive
+	public Class<?>[] getPermittedSubclasses() throws SecurityException {
+		if (!isSealed()) {
+			return null;
+		}
+		Class<?>[] localPermittedSubclasses = cachedPermittedSubclasses;
+		if (null == localPermittedSubclasses) {
+			String[] permittedSubclassesNames = permittedSubclassesImpl();
+			ArrayList<Class<?>> permittedSubclasses = new ArrayList<>(permittedSubclassesNames.length);
+
+			for (int i = 0; i < permittedSubclassesNames.length; i++) {
+				String subclassName = permittedSubclassesNames[i];
+				try {
+					Class<?> permitted = forNameImpl(subclassName, false, this.classLoader);
+					permittedSubclasses.add(permitted);
+				} catch (ClassNotFoundException e) {
+					// do nothing if class not found
+				}
+			}
+			localPermittedSubclasses = permittedSubclasses.toArray(new Class<?>[0]);
+
+			long localPermittedSubclassesCacheOffset = cachedPermittedSubclassesOffset;
+			if (-1 == localPermittedSubclassesCacheOffset) {
+				localPermittedSubclassesCacheOffset = getUnsafe().objectFieldOffset(Class.class, "cachedPermittedSubclasses");
+				cachedPermittedSubclassesOffset = localPermittedSubclassesCacheOffset;
+			}
+			getUnsafe().putObjectRelease(this, localPermittedSubclassesCacheOffset, localPermittedSubclasses);
+		}
+
+		SecurityManager sm = System.getSecurityManager();
+		if (null != sm) {
+			HashSet<String> packages = new HashSet<>();
+			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
+			for (int i = 0; i < localPermittedSubclasses.length; i++) {
+				ClassLoader subClassLoader = localPermittedSubclasses[i].internalGetClassLoader();
+				if (sun.reflect.misc.ReflectUtil.needsPackageAccessCheck(callerClassLoader, subClassLoader)) {
+					String pkgName = localPermittedSubclasses[i].getPackageName();
+					if ((pkgName != null) && (pkgName != "")) {
+						packages.add(pkgName);
+					}
+				}
+			}
+			for (String pkgName : packages) {
+				sm.checkPackageAccess(pkgName);
+			}
+		}
+
+		return localPermittedSubclasses;
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 }

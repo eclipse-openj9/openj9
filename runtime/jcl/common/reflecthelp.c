@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2011,7 +2011,7 @@ permittedSubclassesHelper(JNIEnv *env, jobject cls)
 		j9object_t nameString = NULL;
 
 		nameUTF = permittedSubclassesNameAtIndex(permittedSubclassesCountPtr, index);
-		/* Translates string to a dot seperated name which is needed for ClassDesc.of in Java code. */
+		/* Translates string to a dot seperated name which is needed in Java code to get the class object. */
 		nameString = mmFuncs->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(nameUTF), (U_32) J9UTF8_LENGTH(nameUTF), J9_STR_INTERN | J9_STR_XLAT);
 		if (NULL == nameString) {
 			goto heapoutofmemory;
