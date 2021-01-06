@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2011, 2018 IBM Corp. and others
+  Copyright (c) 2011, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@
   <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE$" />
-  <command>$EXE$ $AGENTLIB$ $CP_HANOI$ $XDUMP$ $PROGRAM_HANOI$</command>
+  <command>$EXE$ -Xmx4m $AGENTLIB$ $CP_HANOI$ $XDUMP$ $PROGRAM_HANOI$</command>
   <output regex="no" type="success">Moved disk 0 to 1</output>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps -->
@@ -77,7 +77,7 @@
   <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE$" />
-  <command>$EXE$ $AGENTLIB$ $CP_GENERALTEST$ $XDUMP$ $PROGRAM_TATC$</command>
+  <command>$EXE$ -Xmx4m $AGENTLIB$ $CP_GENERALTEST$ $XDUMP$ $PROGRAM_TATC$</command>
   <output regex="no" type="success">@com.ibm.tests.typeAnnotation.TestAnn(site=classAnnotation)</output>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps -->

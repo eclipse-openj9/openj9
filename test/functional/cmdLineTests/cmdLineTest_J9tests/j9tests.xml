@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-Copyright (c) 2019, 2020 IBM Corp. and others
+Copyright (c) 2019, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
     <variable name="READIPINFOFORRAS_MESSAGE" value="enabled network query to determine host name and IP address for RAS."/>
     <variable name="NOREADIPINFOFORRAS_MESSAGE" value="disabled network query to determine host name and IP address for RAS."/>
 
-    <variable name="JVM_HEAP_LIMIT" value="-Xmx512m"/>
+    <variable name="JVM_HEAP_LIMIT" value="-Xmx64m"/>
     <variable name="ONOUTOFMEMORYERROR_EQUALS" value="-XX:OnOutOfMemoryError="/>
     <variable name="ONOUTOFMEMORYERROR_JAR" value="-cp $Q$$JARPATH$$Q$ OnOutOfMemoryErrorTest"/>
     <variable name="JAVALANGOUTOFMEMORYERROR" value="java.lang.OutOfMemoryError:"/>
