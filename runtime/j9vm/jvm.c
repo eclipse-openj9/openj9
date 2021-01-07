@@ -3692,7 +3692,7 @@ JVM_LoadLibrary(const char *libName)
 		} else {
 			PORT_ACCESS_FROM_JAVAVM(javaVM);
 			UDATA handle = 0;
-			UDATA flags = 0;
+			UDATA flags = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION) ? J9PORT_SLOPEN_LAZY : 0;
 			UDATA slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags);
 
 			Trc_SC_LoadLibrary_OpenShared(libName);
