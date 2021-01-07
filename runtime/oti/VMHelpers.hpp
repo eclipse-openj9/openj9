@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1843,6 +1843,23 @@ exit:
 
 		return result;
 	}
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/**
+	 * Determine if a J9Method belongs to a class generated for OpenJDK MethodHandles.
+	 *
+	 * @param method the J9Method to be checked
+	 *
+	 * @return true if the method belongs to an OJDK MH generated class. Otherwise,
+	 * return false.
+	 */
+	static VMINLINE bool
+	methodFromOJDKMHGeneratedClass(J9Method *method)
+	{
+		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+		return J9_ARE_ALL_BITS_SET(methodClass->classFlags, J9ClassIsGeneratedForOJDKMethodHandle);
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 };
 
 #endif /* VMHELPERS_HPP_ */

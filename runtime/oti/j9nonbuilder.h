@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,6 +84,7 @@
 #define J9ClassHasReferences 0x10000
 #define J9ClassRequiresPrePadding 0x20000
 #define J9ClassIsValueBased 0x40000
+#define J9ClassIsGeneratedForOJDKMethodHandle 0x80000
 
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */

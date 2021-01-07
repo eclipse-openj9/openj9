@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,9 @@
 static void checkForDecompile(J9VMThread *currentThread, J9ROMMethodRef *romMethodRef, bool jitCompileTimeResolve);
 static bool finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method, J9Class *fieldClass, J9Class *callerClass, J9ROMFieldShape *field, bool canRunJavaCode);
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+static void tagOJDKMHGeneratedClasses(J9VMThread *vmThread, j9object_t array);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /**
  * @brief See if the thread has an exception or immediate async pending
@@ -2115,6 +2118,8 @@ resolveOpenJDKInvokeHandle(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 				if (0 == gcFuncs->j9gc_objaccess_staticCompareAndSwapObject(vmThread, ramClass, invokeCache, NULL, result)) {
 					/* Another thread beat this thread to updating the call site, ensure both threads return the same method handle. */
 					result = *invokeCache;
+				} else {
+					tagOJDKMHGeneratedClasses(vmThread, result);
 				}
 			}
 		}
@@ -2295,6 +2300,8 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 			if (0 == gcFuncs->j9gc_objaccess_staticCompareAndSwapObject(vmThread, j9class, callSite, NULL, result)) {
 				/* Another thread beat this thread to updating the call site, ensure both threads return the same method handle. */
 				result = *callSite;
+			} else {
+				tagOJDKMHGeneratedClasses(vmThread, result);
 			}
 		}
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
@@ -2327,3 +2334,26 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 	Trc_VM_resolveInvokeDynamic_Exit(vmThread, result);
 	return result;
 }
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+/**
+ * Tag classes generated for OpenJDK MethodHandles so that the JIT can identify them.
+ * The classes are found using the generated method, and they are tagged using the
+ * J9ClassIsGeneratedForOJDKMethodHandle flag.
+ *
+ * @param currentThread the current thread
+ * @param array an array object which contains a MemberName instance at index 0
+ *
+ * @return void
+ */
+static void
+tagOJDKMHGeneratedClasses(J9VMThread *currentThread, j9object_t array)
+{
+	j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(currentThread, array, 0);
+	J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(currentThread, memberName, currentThread->javaVM->vmtargetOffset);
+	J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+	methodClass->classFlags |= J9ClassIsGeneratedForOJDKMethodHandle;
+}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+
