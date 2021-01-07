@@ -26,6 +26,10 @@ import java.io.InputStream;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.security.Permissions;
+/*[IF JAVA_SPEC_VERSION >= 12]*/
+import java.lang.constant.ClassDesc;
+import jdk.internal.reflect.ReflectionFactory;
+/*[ENDIF] JAVA_SPEC_VERSION >= 12*/
 import java.lang.reflect.*;
 import java.net.URL;
 import java.lang.annotation.*;
@@ -207,6 +211,10 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	
 	/*[PR Jazz 85476] Address locking contention on classRepository in getGeneric*() methods */
 	private transient ClassRepositoryHolder classRepoHolder;
+
+/*[IF JAVA_SPEC_VERSION >= 12]*/
+	private static ReflectionFactory reflectionFactory = null;
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 	
 	/* Helper class to hold the ClassRepository. We use a Class with a final 
 	 * field to ensure that we have both safe initialization and safe publication.
@@ -2381,7 +2389,32 @@ public T newInstance() throws IllegalAccessException, InstantiationException {
 		checkNonSunProxyMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
 
+/*[IF JAVA_SPEC_VERSION >= 12]*/
+	Class<?> callerClazz = getStackClass(1);
+	if (callerClazz.classLoader == ClassLoader.bootstrapClassLoader) {
+		/* newInstanceImpl() is required for all bootstrap classes to avoid an infinite loop
+		 * when calling copyConstructor.invoke() in cacheConstructor() at the bootstrap stage
+		 * as the constructors of bootstrap classes are not yet cached for use at that time.
+		 */
+		return (T)J9VMInternals.newInstanceImpl(this);
+	} else {
+		try {
+			Constructor<?> ctr = getDeclaredConstructor();
+			if (reflectionFactory == null) {
+				reflectionFactory = AccessController.doPrivileged(new ReflectionFactory.GetReflectionFactoryAction());
+			}
+			return (T)reflectionFactory.newInstance(ctr, null, callerClazz);
+		} catch (NoSuchMethodException  e) {
+			InstantiationException instantiationEx = new InstantiationException();
+			throw (InstantiationException)instantiationEx.initCause(e);
+		} catch (InvocationTargetException e) {
+			getUnsafe().throwException(e.getCause());
+			return null;  //unreachable but required in compilation
+		}
+	}
+/*[ELSE] JAVA_SPEC_VERSION >= 12*/
 	return (T)J9VMInternals.newInstanceImpl(this);
+/*[ENDIF] JAVA_SPEC_VERSION >= 12*/
 }
 
 /**

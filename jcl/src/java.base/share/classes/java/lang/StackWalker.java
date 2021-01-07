@@ -405,6 +405,12 @@ public final class StackWalker {
 
 			return element;
 		}
+		
+		@Override
+		public String toString() {
+			StackTraceElement stackTraceElement = toStackTraceElement();
+			return stackTraceElement.toString();
+		}
 
 		/*[IF JAVA_SPEC_VERSION >= 10]*/
 		/**
