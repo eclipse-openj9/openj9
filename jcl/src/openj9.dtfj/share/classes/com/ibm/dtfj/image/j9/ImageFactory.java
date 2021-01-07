@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2020 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -87,6 +86,7 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 			Module thisModule = ImageFactory.class.getModule();
 
 			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.dtfj.image.j9"); //$NON-NLS-1$
+			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.dtfj.utils"); //$NON-NLS-1$
 			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.dtfj.utils.file"); //$NON-NLS-1$
 			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.java.diagnostics.utils"); //$NON-NLS-1$
 			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.java.diagnostics.utils.commands"); //$NON-NLS-1$
