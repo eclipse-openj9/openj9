@@ -587,8 +587,14 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_InlinedStaticMethodWithNopGuard:
          reloRecord = new (storage) TR_RelocationRecordInlinedStaticMethodWithNopGuard(reloRuntime, record);
          break;
+      case TR_InlinedStaticMethod:
+         reloRecord = new (storage) TR_RelocationRecordInlinedStaticMethod(reloRuntime, record);
+         break;
       case TR_InlinedSpecialMethodWithNopGuard:
          reloRecord = new (storage) TR_RelocationRecordInlinedSpecialMethodWithNopGuard(reloRuntime, record);
+         break;
+      case TR_InlinedSpecialMethod:
+         reloRecord = new (storage) TR_RelocationRecordInlinedSpecialMethod(reloRuntime, record);
          break;
       case TR_InlinedVirtualMethodWithNopGuard:
          reloRecord = new (storage) TR_RelocationRecordInlinedVirtualMethodWithNopGuard(reloRuntime, record);
@@ -604,6 +610,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_InlinedAbstractMethodWithNopGuard:
          reloRecord = new (storage) TR_RelocationRecordInlinedAbstractMethodWithNopGuard(reloRuntime, record);
+         break;
+      case TR_InlinedAbstractMethod:
+         reloRecord = new (storage) TR_RelocationRecordInlinedAbstractMethod(reloRuntime, record);
          break;
       case TR_ProfiledInlinedMethodRelocation:
          reloRecord = new (storage) TR_RelocationRecordProfiledInlinedMethod(reloRuntime, record);
@@ -2907,6 +2916,20 @@ TR_RelocationRecordInlinedStaticMethodWithNopGuard::updateSucceededStats(TR_AOTS
    aotStats->staticMethods.numSucceededValidations++;
    }
 
+
+// TR_RelocationRecordInlinedStaticMethod
+char *
+TR_RelocationRecordInlinedStaticMethod::name()
+   {
+   return "TR_InlinedStaticMethod";
+   }
+
+TR_OpaqueMethodBlock *
+TR_RelocationRecordInlinedStaticMethod::getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod)
+   {
+   return getStaticMethodFromCP(reloRuntime, void_cp, cpIndex);
+   }
+
 // TR_InlinedSpecialMethodWithNopGuard
 char *
 TR_RelocationRecordInlinedSpecialMethodWithNopGuard::name()
@@ -2930,6 +2953,19 @@ void
 TR_RelocationRecordInlinedSpecialMethodWithNopGuard::updateSucceededStats(TR_AOTStats *aotStats)
    {
    aotStats->specialMethods.numSucceededValidations++;
+   }
+
+// TR_RelocationRecordInlinedSpecialMethod
+char *
+TR_RelocationRecordInlinedSpecialMethod::name()
+   {
+   return "TR_InlinedSpecialMethod";
+   }
+
+TR_OpaqueMethodBlock *
+TR_RelocationRecordInlinedSpecialMethod::getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod)
+   {
+   return getSpecialMethodFromCP(reloRuntime, void_cp, cpIndex);
    }
 
 // TR_InlinedVirtualMethodWithNopGuard
@@ -2971,18 +3007,6 @@ char *
 TR_RelocationRecordInlinedVirtualMethod::name()
    {
    return "TR_InlinedVirtualMethod";
-   }
-
-void
-TR_RelocationRecordInlinedVirtualMethod::print(TR_RelocationRuntime *reloRuntime)
-   {
-   Base::print(reloRuntime);
-   }
-
-void
-TR_RelocationRecordInlinedVirtualMethod::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
-   {
-   Base::preparePrivateData(reloRuntime, reloTarget);
    }
 
 TR_OpaqueMethodBlock *
@@ -3038,18 +3062,6 @@ TR_RelocationRecordInlinedInterfaceMethod::name()
    return "TR_InlinedInterfaceMethod";
    }
 
-void
-TR_RelocationRecordInlinedInterfaceMethod::print(TR_RelocationRuntime *reloRuntime)
-   {
-   TR_RelocationRecordInlinedMethod::print(reloRuntime);
-   }
-
-void
-TR_RelocationRecordInlinedInterfaceMethod::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
-   {
-   TR_RelocationRecordInlinedMethod::preparePrivateData(reloRuntime, reloTarget);
-   }
-
 TR_OpaqueMethodBlock *
 TR_RelocationRecordInlinedInterfaceMethod::getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod)
    {
@@ -3092,6 +3104,19 @@ void
 TR_RelocationRecordInlinedAbstractMethodWithNopGuard::updateSucceededStats(TR_AOTStats *aotStats)
    {
    aotStats->abstractMethods.numSucceededValidations++;
+   }
+
+// TR_RelocationRecordInlinedAbstractMethod
+char *
+TR_RelocationRecordInlinedAbstractMethod::name()
+   {
+   return "TR_InlinedAbstractMethod";
+   }
+
+TR_OpaqueMethodBlock *
+TR_RelocationRecordInlinedAbstractMethod::getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod)
+   {
+   return getAbstractMethodFromCP(reloRuntime, void_cp, cpIndex, callerMethod);
    }
 
 // TR_ProfiledInlinedMethod
@@ -6049,4 +6074,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate),                     // TR_ResolvedTrampolines                          = 101
    sizeof(TR_RelocationRecordBlockFrequencyBinaryTemplate),                          // TR_BlockFrequency                               = 102
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_RecompQueuedFlag                             = 103
+   sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedStaticMethod                          = 104
+   sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedSpecialMethod                         = 105
+   sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedAbstractMethod                        = 106
    };

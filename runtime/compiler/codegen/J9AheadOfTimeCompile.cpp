@@ -379,6 +379,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
       case TR_InlinedAbstractMethodWithNopGuard:
       case TR_InlinedInterfaceMethod:
       case TR_InlinedVirtualMethod:
+      case TR_InlinedStaticMethod:
+      case TR_InlinedSpecialMethod:
+      case TR_InlinedAbstractMethod:
          {
          TR_RelocationRecordInlinedMethod *imRecord = reinterpret_cast<TR_RelocationRecordInlinedMethod *>(reloRecord);
          uintptr_t destinationAddress = reinterpret_cast<uintptr_t>(relocation->getTargetAddress());
@@ -399,7 +402,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_ResolvedMethod *resolvedMethod;
          if (kind == TR_InlinedInterfaceMethodWithNopGuard ||
              kind == TR_InlinedInterfaceMethod ||
-             kind == TR_InlinedAbstractMethodWithNopGuard)
+             kind == TR_InlinedAbstractMethodWithNopGuard ||
+             kind == TR_InlinedAbstractMethod)
             {
             TR_InlinedCallSite *inlinedCallSite = &comp->getInlinedCallSite(inlinedSiteIndex);
             TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)inlinedCallSite->_methodInfo;
@@ -436,7 +440,11 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          imRecord->setCpIndex(reloTarget, cpIndexOrData);
          imRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache);
 
-         if (kind != TR_InlinedInterfaceMethod && kind != TR_InlinedVirtualMethod)
+         if (kind != TR_InlinedInterfaceMethod
+             && kind != TR_InlinedVirtualMethod
+             && kind != TR_InlinedSpecialMethod
+             && kind != TR_InlinedStaticMethod
+             && kind != TR_InlinedAbstractMethod)
             {
             reinterpret_cast<TR_RelocationRecordNopGuard *>(imRecord)->setDestinationAddress(reloTarget, destinationAddress);
             }
