@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2020, 2021 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="Test -verbose parsing" timeout="900">
+	<variable name="PROGRAM" value="-cp $Q$$RESOURCES_DIR$$CPDL$$TESTNG$$CPDL$$JVM_TEST_ROOT$/functional/JIT_Test/jitt.jar$Q$ org.testng.TestNG -d $Q$$REPORTDIR$$Q$ $Q$$JVM_TEST_ROOT$/functional/JIT_Test/testng.xml$Q$ -testnames AllocationTest -groups $TEST_GROUP$" />
+    <variable name="VGC" value="<verbosegc" />
+	<variable name="VCLASS" value="class load: java/lang/Object" />
+	<variable name="VJNI" value="<JNI FindClass: java/lang/Class>" />
+    <variable name="VMODULE" value="module load: java.base from: jrt:/java.base" />
+	<variable name="EXP_OP" value="100000 x ObjectAllocation.allocArrays" />
+
+    <!-- test with isolated options -->
+    <test id="-verbose:module">
+        <command>$EXE$ -verbose:module $PROGRAM$</command>
+        <output regex="no" type="failure">$VGC$</output>
+        <output regex="no" type="failure">$VCLASS$</output>
+        <output regex="no" type="failure">$VJNI$</output>
+        <output regex="no" type="required">$VMODULE$</output>
+        <output regex="no" type="success">$EXP_OP$</output>
+    </test>
+
+    <test id="-verbose:nomodule">
+        <command>$EXE$ -verbose:nomodule $PROGRAM$</command>
+        <output regex="no" type="failure">$VGC$</output>
+        <output regex="no" type="failure">$VCLASS$</output>
+        <output regex="no" type="failure">$VJNI$</output>
+        <output regex="no" type="failure">$VMODULE$</output>
+        <output regex="no" type="success">$EXP_OP$</output>
+    </test>
+
+    <!-- test with option combinations-->
+    <test id="-verbose:module -verbose:class">
+        <command>$EXE$ -verbose:module -verbose:class $PROGRAM$</command>
+        <output regex="no" type="failure">$VGC$</output>
+        <output regex="no" type="success">$VCLASS$</output>
+        <output regex="no" type="failure">$VJNI$</output>
+        <output regex="no" type="success">$VMODULE$</output>
+        <output regex="no" type="success">$EXP_OP$</output>
+    </test>
+
+    <test id="-verbose:module,class">
+        <command>$EXE$ -verbose:module,class $PROGRAM$</command>
+        <output regex="no" type="failure">$VGC$</output>
+        <output regex="no" type="success">$VCLASS$</output>
+        <output regex="no" type="failure">$VJNI$</output>
+        <output regex="no" type="success">$VMODULE$</output>
+        <output regex="no" type="success">$EXP_OP$</output>
+    </test>
+    
+    <test id="-verbose:module -verbose:nomodule">
+        <command>$EXE$ -verbose:module -verbose:nomodule $PROGRAM$</command>
+        <output regex="no" type="failure">$VGC$</output>
+        <output regex="no" type="failure">$VCLASS$</output>
+        <output regex="no" type="failure">$VJNI$</output>
+        <output regex="no" type="failure">$VMODULE$</output>
+        <output regex="no" type="success">$EXP_OP$</output>
+    </test>
+
+    <test id="-verbose:nomodule -verbose:module">
+        <command>$EXE$ -verbose:nomodule -verbose:module $PROGRAM$</command>
+        <output regex="no" type="failure">$VGC$</output>
+        <output regex="no" type="failure">$VCLASS$</output>
+        <output regex="no" type="failure">$VJNI$</output>
+        <output regex="no" type="success">$VMODULE$</output>
+        <output regex="no" type="success">$EXP_OP$</output>
+    </test>
+ </suite>

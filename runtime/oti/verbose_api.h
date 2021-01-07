@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2015 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,6 +105,9 @@ typedef struct J9VerboseSettings {
 	U_8 shutdown;
 	U_8 verification;
 	U_8 verifyErrorDetails;
+#if (JAVA_SPEC_VERSION >= 11)
+	U_8 module;
+#endif /* (JAVA_SPEC_VERSION >= 11) */
 } J9VerboseSettings;
 
 /**
