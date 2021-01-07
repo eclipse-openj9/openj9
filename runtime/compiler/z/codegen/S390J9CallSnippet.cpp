@@ -278,7 +278,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
 
    // data area start address
-   uintptr_t dataStartAddr = (uintptr_t) (getPICBinaryLength(cg()) + cursor);
+   uintptr_t dataStartAddr = (uintptr_t) (getPICBinaryLength() + cursor);
 
    // calculate pad bytes to get the data area aligned
    int32_t pad_bytes = (dataStartAddr + (sizeof(uintptr_t) - 1)) / sizeof(uintptr_t) * sizeof(uintptr_t) - dataStartAddr;
@@ -291,7 +291,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
    //  5840 4006   L     rEP,6(,rEP)   LG   rEP, 8(rEP) for 64bit
    //  0de4        BASR  r14,rEP
 
-   cursor = generatePICBinary(cg(), cursor, glueRef);
+   cursor = generatePICBinary(cursor, glueRef);
 
    // add NOPs to make sure the data area is aligned
    if (pad_bytes == 2)
@@ -386,6 +386,233 @@ TR::S390J9CallSnippet::emitSnippetBody()
       }
 
    return cursor + sizeof(uintptr_t);
+   }
+
+TR_RuntimeHelper TR::S390J9CallSnippet::getInterpretedDispatchHelper(TR::SymbolReference *methodSymRef, TR::DataType type)
+   {
+   TR::Compilation *comp = cg()->comp();
+   TR::MethodSymbol * methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+   bool isJitInduceOSRCall = false;
+   if (methodSymbol->isHelper() &&
+       methodSymRef->isOSRInductionHelper())
+      {
+      isJitInduceOSRCall = true;
+      }
+
+   if (methodSymRef->isUnresolved() || (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager)))
+      {
+      TR_ASSERT(!isJitInduceOSRCall || !comp->compileRelocatableCode(), "calling jitInduceOSR is not supported yet under AOT\n");
+      if (methodSymbol->isStatic())
+         return TR_S390interpreterUnresolvedStaticGlue;
+      else
+         return TR_S390interpreterUnresolvedSpecialGlue;
+      }
+   else if (isJitInduceOSRCall)
+      {
+      return (TR_RuntimeHelper) methodSymRef->getReferenceNumber();
+      }
+   else if (methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative())
+      {
+      return TR_S390nativeStaticHelper;
+      }
+   else
+      {
+      return TR_S390interpreterStaticSpecialCallGlue;
+      }
+   }
+
+uint32_t
+TR::S390J9CallSnippet::getPICBinaryLength()
+   {
+   if (self()->getKind() == TR::Snippet::IsUnresolvedCall)
+      return 14; /* LARL + LG/LGF + BCR */
+   else
+      return 6;
+   }
+
+uint8_t *
+TR::S390J9CallSnippet::generatePICBinary(uint8_t * cursor, TR::SymbolReference* glueRef)
+   {
+   // Branch to the dispatcher.
+   // Since N3 instructions are supported, we can use relative long instructions.
+   // i.e.:
+   //              BRASL r14, <target Addr>.
+   //  - or -
+   //              LARL   r14, <target Addr>.   // Unresolved Calls only.
+   //              LG/LGF rEP, 0(r14).
+   //              BCR    rEP
+   uint32_t rEP = (uint32_t) cg()->getEntryPointRegister() - 1;
+
+   if (self()->getKind() == TR::Snippet::IsUnresolvedCall)
+      {
+      // Generate LARL r14, <Start of Data Const>
+      *(int16_t *) cursor = 0xC0E0;
+      cursor += sizeof(int16_t);
+      intptr_t destAddr = (intptr_t)(cursor + getPICBinaryLength() + self()->getPadBytes() - 2);
+      *(int32_t *) cursor = (int32_t)((destAddr - (intptr_t)(cursor - 2)) / 2);
+      cursor += sizeof(int32_t);
+
+      *(int32_t *) cursor = 0xe300e000 + (rEP << 20);           // LG/F  rEP, 0(r14)
+      cursor += sizeof(int32_t);
+      *(int16_t *) cursor = cg()->comp()->target().is64Bit() ? 0x0004 : 0x0014;
+      cursor += sizeof(int16_t);
+
+      // BCR   rEP
+      *(int16_t *) cursor = 0x07F0 + rEP;
+      cursor += sizeof(int16_t);
+      }
+   else
+      {
+      // Generate BRASL instruction.
+      intptr_t instructionStartAddress = (intptr_t)cursor;
+      *(int16_t *) cursor = 0xC0E5;
+      cursor += sizeof(int16_t);
+
+      // Calculate the relative offset to get to helper method.
+      // If MCC is not supported, everything should be reachable.
+      // If MCC is supported, we will look up the appropriate trampoline, if
+      //     necessary.
+      intptr_t destAddr = (intptr_t)(glueRef->getSymbol()->castToMethodSymbol()->getMethodAddress());
+
+#if defined(TR_TARGET_64BIT)
+#if defined(J9ZOS390)
+      if (cg()->comp()->getOption(TR_EnableRMODE64))
+#endif
+         {
+         if (cg()->directCallRequiresTrampoline(destAddr, instructionStartAddress))
+            {
+            // Destination is beyond our reachable jump distance, we'll find the
+            // trampoline.
+            destAddr = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
+            self()->setUsedTrampoline(true);
+            }
+         }
+#endif
+
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinBranchRelativeRILRange(destAddr, instructionStartAddress),
+                      "Helper Call is not reachable.");
+      self()->setSnippetDestAddr(destAddr);
+
+      *(int32_t *) cursor = (int32_t)((destAddr - instructionStartAddress) / 2);
+      AOTcgDiag1(cg()->comp(), "add TR_AbsoluteHelperAddress cursor=%x\n", cursor);
+      cg()->addProjectSpecializedRelocation(cursor, (uint8_t*) glueRef, NULL, TR_HelperAddress,
+                                      __FILE__, __LINE__, self()->getNode());
+      cursor += sizeof(int32_t);
+      }
+   return cursor;
+   }
+
+uint32_t
+TR::S390J9CallSnippet::getLength(int32_t  estimatedSnippetStart)
+   {
+   // *this   swipeable for debugger
+   // length = instructionCountForArgsInBytes + (BASR + L(or LG) + BASR +3*sizeof(uintptr_t)) + NOPs
+   // number of pad bytes has not been set when this method is called to
+   // estimate codebuffer size, so -- i'll put an conservative number here...
+   return (instructionCountForArguments(getNode(), cg()) +
+      getPICBinaryLength() +
+      3 * sizeof(uintptr_t) +
+      getRuntimeInstrumentationOnOffInstructionLength(cg()) +
+      sizeof(uintptr_t));  // the last item is for padding
+   }
+
+void
+TR::S390J9CallSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
+   {
+   uint8_t * bufferPos = getSnippetLabel()->getCodeLocation();
+   TR::Node * callNode = getNode();
+   TR::SymbolReference * methodSymRef = getRealMethodSymbolReference();
+   if(!methodSymRef)
+      methodSymRef = callNode->getSymbolReference();
+
+   TR::MethodSymbol * methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+   TR::SymbolReference * glueRef;
+   int8_t padbytes = getPadBytes();
+
+   debug->printSnippetLabel(pOutFile, getSnippetLabel(), bufferPos,
+      methodSymRef->isUnresolved() ? "Unresolved Call Snippet" : "Call Snippet");
+
+   bufferPos = debug->printS390ArgumentsFlush(pOutFile, callNode, bufferPos, getSizeOfArguments());
+
+   if (methodSymRef->isUnresolved() || (cg()->comp()->compileRelocatableCode() && !cg()->comp()->getOption(TR_UseSymbolValidationManager)))
+      {
+      if (methodSymbol->isStatic())
+         glueRef = cg()->getSymRef(TR_S390interpreterUnresolvedStaticGlue);
+      else
+         glueRef = cg()->getSymRef(TR_S390interpreterUnresolvedSpecialGlue);
+      }
+   else if ((methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative()))
+      {
+      glueRef = cg()->getSymRef(TR_S390nativeStaticHelper);
+      }
+   else
+      {
+      glueRef = cg()->getSymRef(TR_S390interpreterStaticSpecialCallGlue);
+      }
+
+   bufferPos = debug->printRuntimeInstrumentationOnOffInstruction(pOutFile, bufferPos, false); // RIOFF
+
+   if (getKind() == TR::Snippet::IsUnresolvedCall)
+      {
+      debug->printPrefix(pOutFile, NULL, bufferPos, 6);
+      trfprintf(pOutFile, "LARL \tGPR14, *+%d <%p>\t# Start of Data Const.",
+                        8 + 6 + padbytes,
+                        bufferPos + 8 + 6 + padbytes);
+      bufferPos += 6;
+      debug->printPrefix(pOutFile, NULL, bufferPos, 6);
+      trfprintf(pOutFile, cg()->comp()->target().is64Bit() ? "LG   \tGPR_EP, 0(,GPR14)" : "LGF   \tGPR_EP, 0(,GPR14");
+      bufferPos += 6;
+
+      debug->printPrefix(pOutFile, NULL, bufferPos, 2);
+      trfprintf(pOutFile, "BCR    \tGPR_EP");
+      bufferPos += 2;
+      }
+   else
+      {
+      debug->printPrefix(pOutFile, NULL, bufferPos, 6);
+      trfprintf(pOutFile, "BRASL \tGPR14, <%p>\t# Branch to Helper Method %s",
+                    getSnippetDestAddr(),
+                    usedTrampoline() ? "- Trampoline Used.":"");
+      bufferPos += 6;
+      }
+
+   if (padbytes == 2)
+      {
+      debug->printPrefix(pOutFile, NULL, bufferPos, 2);
+      trfprintf(pOutFile, "DC   \t0x0000 \t\t\t# 2-bytes padding for alignment");
+      bufferPos += 2;
+      }
+   else if (padbytes == 4)
+      {
+      debug->printPrefix(pOutFile, NULL, bufferPos, 4) ;
+      trfprintf(pOutFile, "DC   \t0x00000000 \t\t# 4-bytes padding for alignment");
+      bufferPos += 4;
+      }
+   else if (padbytes == 6)
+      {
+      debug->printPrefix(pOutFile, NULL, bufferPos, 6) ;
+      trfprintf(pOutFile, "DC   \t0x000000000000 \t\t# 6-bytes padding for alignment");
+      bufferPos += 6;
+      }
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# Method Address", glueRef->getMethodAddress());
+   bufferPos += sizeof(intptr_t);
+
+
+   debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, "DC   \t%p \t\t# Call Site RA", getCallRA());
+   bufferPos += sizeof(intptr_t);
+
+   if (methodSymRef->isUnresolved())
+      {
+      debug->printPrefix(pOutFile, NULL, bufferPos, 0);
+      }
+   else
+      {
+      debug->printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+      }
+   trfprintf(pOutFile, "DC   \t%p \t\t# Method Pointer", methodSymRef->isUnresolved() ? 0 : methodSymbol->getMethodAddress());
    }
 
 uint8_t *
@@ -484,7 +711,7 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
 uint32_t
 TR::S390UnresolvedCallSnippet::getLength(int32_t  estimatedSnippetStart)
    {
-   return TR::S390CallSnippet::getLength(estimatedSnippetStart) + sizeof(uintptr_t) + sizeof(int32_t);
+   return TR::S390J9CallSnippet::getLength(estimatedSnippetStart) + sizeof(uintptr_t) + sizeof(int32_t);
    }
 
 uint8_t *
@@ -512,7 +739,7 @@ TR::S390VirtualUnresolvedSnippet::emitSnippetBody()
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
 
-   cursor = generatePICBinary(cg(), cursor, glueRef);
+   cursor = generatePICBinary(cursor, glueRef);
 
 
    // Method address
@@ -587,7 +814,7 @@ uint32_t
 TR::S390VirtualUnresolvedSnippet::getLength(int32_t  estimatedSnippetStart)
    {
    TR::Compilation* comp = cg()->comp();
-   uint32_t length = getPICBinaryLength(cg()) + 7 * sizeof(uintptr_t) + TR::Compiler->om.sizeofReferenceAddress();
+   uint32_t length = getPICBinaryLength() + 7 * sizeof(uintptr_t) + TR::Compiler->om.sizeofReferenceAddress();
    length += getRuntimeInstrumentationOnOffInstructionLength(cg());
    return length;
    }
