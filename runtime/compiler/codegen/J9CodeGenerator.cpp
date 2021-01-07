@@ -3010,6 +3010,11 @@ static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerato
             TR_ASSERT(false, "unexpected profiled guard test type");
          break;
 
+      case TR_BreakpointGuard:
+         traceMsg(cg->comp(), "TR_Breakpoint\n");
+         type = TR_Breakpoint;
+         break;
+
       default:
          TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
          cg->comp()->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown/non-AOT guard at AOT site");
@@ -3067,6 +3072,14 @@ static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize
          case TR_CheckMethodExit:
          case TR_HCR:
             cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
+                                                                             (uint8_t *)(*it)->getDestination(),
+                                                                             type, cg),
+                             __FILE__, __LINE__, NULL);
+            break;
+
+         case TR_Breakpoint:
+            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
+                                                                             (uint8_t *)(*it)->getGuard()->getCurrentInlinedSiteIndex(),
                                                                              (uint8_t *)(*it)->getDestination(),
                                                                              type, cg),
                              __FILE__, __LINE__, NULL);

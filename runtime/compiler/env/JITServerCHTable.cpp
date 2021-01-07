@@ -468,11 +468,16 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
       TR_ResolvedMethod *breakpointedMethod = info->_inlinedResolvedMethod;
       TR_OpaqueMethodBlock *method = breakpointedMethod->getPersistentIdentifier();
       if (comp->fej9()->isMethodBreakpointed(method))
-         nopAssumptionIsValid = false;
-      for (TR_VirtualGuardSite &site : sites)
          {
-         TR_PatchNOPedGuardSiteOnMethodBreakPoint
-            ::make(comp->fe(), comp->trPersistentMemory(), method, site.getLocation(), site.getDestination(), comp->getMetadataAssumptionList());
+         nopAssumptionIsValid = false;
+         }
+      else
+         {
+         for (TR_VirtualGuardSite &site : sites)
+            {
+            TR_PatchNOPedGuardSiteOnMethodBreakPoint
+               ::make(comp->fe(), comp->trPersistentMemory(), method, site.getLocation(), site.getDestination(), comp->getMetadataAssumptionList());
+            }
          }
       }
    else if (info->_kind == TR_ArrayStoreCheckGuard)

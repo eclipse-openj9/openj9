@@ -412,6 +412,11 @@ struct TR_RelocationRecordBlockFrequencyBinaryTemplate: public TR_RelocationReco
    uintptr_t _frequencyOffset;
    };
 
+struct TR_RelocationRecordBreapointGuardBinaryTemplate : public TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate
+   {
+   UDATA _destinationAddress;
+   };
+
 // END OF BINARY TEMPLATES
 
 uint8_t
@@ -820,6 +825,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_ResolvedTrampolines:
          reloRecord = new (storage) TR_RelocationRecordResolvedTrampolines(reloRuntime, record);
+         break;
+      case TR_Breakpoint:
+         reloRecord = new (storage) TR_RelocationRecordBreakpointGuard(reloRuntime, record);
          break;
       default:
          // TODO: error condition
@@ -5968,6 +5976,62 @@ int32_t TR_RelocationRecordMethodCallAddress::applyRelocation(TR_RelocationRunti
    return 0;
    }
 
+void
+TR_RelocationRecordBreakpointGuard::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecordWithInlinedSiteIndex::print(reloRuntime);
+   reloLogger->printf("\tdestinationAddress %p\n", destinationAddress(reloTarget));
+   }
+
+void
+TR_RelocationRecordBreakpointGuard::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordBreakpointGuardPrivateData *reloPrivateData = &(privateData()->breakpointGuard);
+
+   TR_OpaqueMethodBlock *inlinedMethod = getInlinedSiteMethod(reloRuntime);
+   uint8_t *destination = reinterpret_cast<uint8_t *>(destinationAddress(reloTarget)
+                                                      - reloRuntime->aotMethodHeaderEntry()->compileMethodCodeStartPC
+                                                      + reinterpret_cast<uintptr_t>(reloRuntime->newMethodCodeStart()));
+
+   reloPrivateData->_method = inlinedMethod;
+   reloPrivateData->_destinationAddress = destination;
+   reloPrivateData->_compensateGuard = reloRuntime->fej9()->isMethodBreakpointed(inlinedMethod);
+   }
+
+void
+TR_RelocationRecordBreakpointGuard::setDestinationAddress(TR_RelocationTarget *reloTarget, uintptr_t destinationAddress)
+   {
+   reloTarget->storeRelocationRecordValue(destinationAddress, (uintptr_t *) &((TR_RelocationRecordBreapointGuardBinaryTemplate *)_record)->_destinationAddress);
+   }
+
+uintptr_t
+TR_RelocationRecordBreakpointGuard::destinationAddress(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordBreapointGuardBinaryTemplate *)_record)->_destinationAddress);
+   }
+
+int32_t
+TR_RelocationRecordBreakpointGuard::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordBreakpointGuardPrivateData *reloPrivateData = &(privateData()->breakpointGuard);
+
+   if (reloPrivateData->_compensateGuard)
+      {
+      TR::PatchNOPedGuardSite::compensate(0, reloLocation, reloPrivateData->_destinationAddress);
+      }
+   else
+      {
+      TR_PatchNOPedGuardSiteOnMethodBreakPoint
+         ::make(reloRuntime->fej9(), reloRuntime->trMemory()->trPersistentMemory(),
+                reloPrivateData->_method, reloLocation, reloPrivateData->_destinationAddress,
+                getMetadataAssumptionList(reloRuntime->exceptionTable()));
+      }
+
+   return 0;
+   }
+
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
    sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_ConstantPool                                 = 0
@@ -6077,4 +6141,5 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedStaticMethod                          = 104
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedSpecialMethod                         = 105
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedAbstractMethod                        = 106
+   sizeof(TR_RelocationRecordBreapointGuardBinaryTemplate),                          // TR_Breakpoint                                   = 107
    };

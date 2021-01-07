@@ -618,12 +618,17 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
       TR_ResolvedMethod *breakpointedMethod = comp->getInlinedResolvedMethod(info->getCalleeIndex());
       TR_OpaqueMethodBlock *method = breakpointedMethod->getPersistentIdentifier();
       if (comp->fej9()->isMethodBreakpointed(method))
-         nopAssumptionIsValid = false;
-      ListIterator<TR_VirtualGuardSite> it(&sites);
-      for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
          {
-         TR_PatchNOPedGuardSiteOnMethodBreakPoint
-            ::make(comp->fe(), comp->trPersistentMemory(), method, site->getLocation(), site->getDestination(), comp->getMetadataAssumptionList());
+         nopAssumptionIsValid = false;
+         }
+      else
+         {
+         ListIterator<TR_VirtualGuardSite> it(&sites);
+         for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
+            {
+            TR_PatchNOPedGuardSiteOnMethodBreakPoint
+               ::make(comp->fe(), comp->trPersistentMemory(), method, site->getLocation(), site->getDestination(), comp->getMetadataAssumptionList());
+            }
          }
       }
    else if (info->getKind() == TR_ArrayStoreCheckGuard)

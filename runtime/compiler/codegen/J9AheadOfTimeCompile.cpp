@@ -1150,6 +1150,18 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_Breakpoint:
+         {
+         TR_RelocationRecordBreakpointGuard *bpgRecord = reinterpret_cast<TR_RelocationRecordBreakpointGuard *>(reloRecord);
+
+         int32_t inlinedSiteIndex     = static_cast<int32_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
+         uintptr_t destinationAddress = reinterpret_cast<uintptr_t>(relocation->getTargetAddress2());
+
+         bpgRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         bpgRecord->setDestinationAddress(reloTarget, destinationAddress);
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -1992,6 +2004,20 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          if (isVerbose)
             {
             traceMsg(self()->comp(), "\n Frequency offset %lld", bfRecord->frequencyOffset(reloTarget));
+            }
+         }
+         break;
+
+      case TR_Breakpoint:
+         {
+         TR_RelocationRecordBreakpointGuard *bpgRecord = reinterpret_cast<TR_RelocationRecordBreakpointGuard *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Breakpoint Guard: Inlined site index = %d, destinationAddress = %p",
+                     bpgRecord->inlinedSiteIndex(reloTarget),
+                     bpgRecord->destinationAddress(reloTarget));
             }
          }
          break;

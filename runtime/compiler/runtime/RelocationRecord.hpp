@@ -163,6 +163,13 @@ struct TR_RelocationRecordRecompQueuedFlagPrivateData
    uint8_t *_addressToPatch;
    };
 
+struct TR_RelocationRecordBreakpointGuardPrivateData
+   {
+   bool _compensateGuard;
+   TR_OpaqueMethodBlock *_method;
+   uint8_t *_destinationAddress;
+   };
+
 union TR_RelocationRecordPrivateData
    {
    TR_RelocationRecordHelperAddressPrivateData helperAddress;
@@ -180,6 +187,7 @@ union TR_RelocationRecordPrivateData
    TR_RelocationRecordResolvedTrampolinesPrivateData resolvedTrampolines;
    TR_RelocationRecordBlockFrequencyPrivateData blockFrequency;
    TR_RelocationRecordRecompQueuedFlagPrivateData recompQueuedFlag;
+   TR_RelocationRecordBreakpointGuardPrivateData breakpointGuard;
    };
 
 enum TR_RelocationRecordAction
@@ -1829,6 +1837,23 @@ class TR_RelocationRecordMethodCallAddress : public TR_RelocationRecord
 
    private:
       uint8_t *computeTargetMethodAddress(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *baseLocation);
+   };
+
+class TR_RelocationRecordBreakpointGuard : public TR_RelocationRecordWithInlinedSiteIndex
+   {
+   public:
+      TR_RelocationRecordBreakpointGuard() {}
+      TR_RelocationRecordBreakpointGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record)
+         : TR_RelocationRecordWithInlinedSiteIndex(reloRuntime, record) {}
+
+      virtual char *name() { return "TR_Breakpoint"; }
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      void setDestinationAddress(TR_RelocationTarget *reloTarget, uintptr_t destinationAddress);
+      uintptr_t destinationAddress(TR_RelocationTarget *reloTarget);
    };
 
 #endif   // RELOCATION_RECORD_INCL
