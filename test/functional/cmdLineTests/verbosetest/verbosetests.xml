@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2010, 2018 IBM Corp. and others
+  Copyright (c) 2010, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@
 	<variable name="VGC" value="<verbosegc" />
 	<variable name="VCLASS" value="class load: java/lang/Object" />
 	<variable name="VJNI" value="<JNI FindClass: java/lang/Class>" />
-	<variable name="OLDOUPUT" value="$EXP_OP$" />
 	<variable name="EXP_OP" value="100000 x ObjectAllocation.allocArrays" />
 
  <echo value="Test options alone" />
