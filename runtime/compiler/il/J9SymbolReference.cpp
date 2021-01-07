@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -323,6 +323,15 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
             char *returnType = symbol->getConstantDynamicClassSignature(condySigLength);
             len = condySigLength;
             return returnType;
+            }
+         if (_symbol->isNonSpecificConstObject())
+            {
+            TR::StaticSymbol * symbol = _symbol->castToStaticSymbol();
+            uintptr_t objectLocation = (uintptr_t)symbol->getStaticAddress();
+            TR_OpaqueClassBlock *clazz = comp->fej9()->getObjectClassAt(objectLocation);
+            char *type = comp->fej9()->getClassSignature(clazz, comp->trMemory());
+            len = strlen(type);
+            return type;
             }
          if (_symbol->isConst())
             {
