@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2020 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,8 @@ There are currently 2 supported test procedures. Select the one that best suits 
 
 These are the steps to run the tests on your machine.
 
-1. Compile a debug build of openj9 from scratch. To do this pass the flag `--with-debug-level=slowdebug` to `configure`.
+1. Compile a build of openj9 from scratch. (Optional: compile a debug build if you need it. To do this pass the flag `--with-debug-level=slowdebug` to `configure`.
+   Please note that debug build is much slower and the tests will take very long time to finish).
 
 2. Install [prerequisites](https://github.com/eclipse/openj9/blob/master/test/docs/Prerequisites.md)
 
@@ -53,6 +54,11 @@ These are the steps to run the tests on your machine.
    ```
    NOTE: It's important to put spaces before and after `-XX:+UseJITServer`, otherwise
    some tests will not run properly.
+
+   Set the path to native test libraries, otherwise some tests will not run properly
+   ```
+   export NATIVE_TEST_LIBS=/root/buildname/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/test/openj9 
+   ```
 
    Compile the test
    ```
