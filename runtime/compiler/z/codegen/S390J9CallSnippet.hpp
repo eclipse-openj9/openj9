@@ -57,6 +57,15 @@ class S390J9CallSnippet : public TR::S390CallSnippet
 
    static uint8_t *generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg);
    static TR_J2IThunk *generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, char* signature, TR::CodeGenerator *cg);
+
+   TR_RuntimeHelper getInterpretedDispatchHelper(TR::SymbolReference *methodSymRef, TR::DataType type);
+
+   uint8_t *generatePICBinary(uint8_t *cursor, TR::SymbolReference *glueRef);
+   uint32_t getPICBinaryLength();
+   virtual uint32_t getLength(int32_t estimatedSnippetStart);
+
+   virtual void print(TR::FILE *pOutFile, TR_Debug *debug);
+                                                 
    virtual uint8_t *emitSnippetBody();
    };
 
