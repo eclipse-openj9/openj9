@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2020, 2020 IBM Corp. and others
+  Copyright (c) 2020, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@
  </test>
 
  <test id="-XX:-HandleSIGABRT" platforms="$NON_WINDOWS_PLATFORMS$">
-  <command>bash -c $Q$ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT $CP$ abort$Q$</command>
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT $CP$ abort'</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
@@ -74,7 +74,7 @@
  </test>
 
  <test id="-XX:+HandleSIGABRT -XX:-HandleSIGABRT" platforms="$NON_WINDOWS_PLATFORMS$">
-  <command>bash -c $Q$ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:+HandleSIGABRT -XX:-HandleSIGABRT $CP$ abort$Q$</command>
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:+HandleSIGABRT -XX:-HandleSIGABRT $CP$ abort'</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
@@ -100,7 +100,7 @@
  </test>
 
  <test id="-Xrs" platforms="$NON_WINDOWS_PLATFORMS$">
-  <command>bash -c $Q$ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -Xrs $CP$ abort$Q$</command>
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -Xrs $CP$ abort'</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
@@ -112,7 +112,7 @@
  </test>
 
  <test id="-XX:-HandleSIGABRT -Xrs" platforms="$NON_WINDOWS_PLATFORMS$">
-  <command>bash -c $Q$ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT -Xrs $CP$ abort$Q$</command>
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT -Xrs $CP$ abort'</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
@@ -124,12 +124,12 @@
  </test>
 
  <test id="-XX:-HandleSIGABRT -Xrs:sync" platforms="$NON_WINDOWS_PLATFORMS$">
-  <command>bash -c $Q$ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT -Xrs:sync $CP$ abort$Q$</command>
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT -Xrs:sync $CP$ abort'</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
 
  <!-- Remove any core file created by the OS -->
- <exec command="bash -c $Q$rm core.*$Q$" />
+ <exec command="bash -c 'rm core.*'" />
 
 </suite>
