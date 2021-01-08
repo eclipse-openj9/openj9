@@ -5167,7 +5167,7 @@ TR_J9VMBase::reportOptimizationPhase(OMR::Optimizations opts)
    if (!_vmThread)
       return;
 
-   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT | ((((int32_t) opts & 0xFF) << 8)|0xFF);
+   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT_OPTIMIZER | ((static_cast<int32_t>(opts) & 0xFF) << 8);
    }
 
 void
@@ -5196,7 +5196,7 @@ TR_J9VMBase::reportCodeGeneratorPhase(TR::CodeGenPhase::PhaseValue phase)
    if (!_vmThread)
       return;
 
-   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT | phase | 0xFF00;
+   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN | phase;
 
    if (TrcEnabled_Trc_JIT_codeGeneratorPhase)
       Trc_JIT_codeGeneratorPhase(vmThread(), TR::CodeGenPhase::getName(phase));

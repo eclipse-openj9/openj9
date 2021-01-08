@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -529,9 +529,9 @@ Options::vmStateOption(char * option, void * base, TR::OptionTable *entry)
                   {
                   j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {ILGeneration}\n", state, vmStateArray[index]._xname);
                   }
-               else if ((state & 0xFF) == 0xFF) // optimizationPhase
+               else if ((state & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
                   {
-                  OMR::Optimizations opts = (OMR::Optimizations)((state >> 8) & 0xFF);
+                  OMR::Optimizations opts = static_cast<OMR::Optimizations>((state & 0xFF00) >> 8);
                   if (opts < OMR::numOpts)
                      {
                       j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {%s}\n", state, vmStateArray[index]._xname, OMR::Optimizer::getOptimizationName(opts));
@@ -539,9 +539,9 @@ Options::vmStateOption(char * option, void * base, TR::OptionTable *entry)
                   else
                      j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {Illegal optimization number}\n", state, vmStateArray[index]._xname);
                   }
-               else if ((state & 0xFF00) == 0xFF00) //codegenPhase
+               else if ((state & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
                   {
-                  TR::CodeGenPhase::PhaseValue phase = (TR::CodeGenPhase::PhaseValue)(state & 0xFF);
+                  TR::CodeGenPhase::PhaseValue phase = static_cast<TR::CodeGenPhase::PhaseValue>(state & 0xFF);
                   if ( phase < TR::CodeGenPhase::getNumPhases())
                      j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {%s}\n", state, vmStateArray[index]._xname, TR::CodeGenPhase::getName(phase));
                   else
