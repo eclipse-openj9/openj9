@@ -509,10 +509,8 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
       return TR_yes;
       }
    else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT &&
-            JITServerHelpers::isServerAvailable() &&
-            serverHasLowPhysicalMemory())
+            getCompThreadActivationPolicy() <= JITServer::CompThreadActivationPolicy::MAINTAIN)
       {
-      // If the available memory on the server is low, do not activate more client threads
       return TR_no;
       }
 #endif
@@ -551,6 +549,16 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    // to activate additional comp threads irrespective of the CPU entitlement
    if (TR::Options::_useCPUsToDetermineMaxNumberOfCompThreadsToActivate)
       {
+#if defined (J9VM_OPT_JITSERVER)
+      if (getCompThreadActivationPolicy() == JITServer::CompThreadActivationPolicy::SUBDUE)
+         {
+         // If the server reached low memory and then recovered to normal,
+         // subdue activation of new compilation threads on the client
+         if (_queueWeight > _compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()] << 1)
+            return TR_yes;
+         return TR_no;
+         }
+#endif /* defined(J9VM_OPT_JITSERVER) */
       if (getNumCompThreadsActive() < getNumTargetCPUs() - 1)
          {
          if (_queueWeight > _compThreadActivationThresholds[getNumCompThreadsActive()])
@@ -563,6 +571,7 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
          // For JITClient let's be more agressive with compilation thread activation
          // because the latencies are larger. Beyond 'numProc-1' we will use the
          // 'starvation activation schedule', but accelerated (divide those thresholds by 2)
+         // NOTE: compilation thread activation policy is AGGRESSIVE if we reached this point
          if (_queueWeight > (_compThreadActivationThresholdsonStarvation[getNumCompThreadsActive()] >> 1))
             return TR_yes;
          }
@@ -1175,7 +1184,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _compReqSeqNo = 0;
    _chTableUpdateFlags = 0;
    _localGCCounter = 0;
-   _serverHasLowPhysicalMemory = false;
+   _activationPolicy = JITServer::CompThreadActivationPolicy::AGGRESSIVE;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
@@ -4410,7 +4419,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
             )
 #if defined(J9VM_OPT_JITSERVER)
          || (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT
-            && compInfo->serverHasLowPhysicalMemory()) // keep suspending threads until server space frees up
+            && compInfo->getCompThreadActivationPolicy() == JITServer::CompThreadActivationPolicy::SUSPEND) // keep suspending threads until server space frees up
 #endif
          )
       )
@@ -4428,7 +4437,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
             compInfo->getRampDownMCT() ? "RampDownMCT" : "",
             compInfo->getSuspendThreadDueToLowPhysicalMemory() ? "LowPhysicalMem" : "",
 #if defined(J9VM_OPT_JITSERVER)
-            compInfo->serverHasLowPhysicalMemory() ? "ServerLowPhysicalMem" :
+            compInfo->getCompThreadActivationPolicy() == JITServer::CompThreadActivationPolicy::SUSPEND ? "ServerLowPhysicalMem" :
 #endif
             ""
             );
