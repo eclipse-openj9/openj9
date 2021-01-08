@@ -1043,7 +1043,7 @@ writeJITInfo(J9VMThread* vmThread, char* s, UDATA length, void* gpInfo)
 		return numBytesWritten;
 	}
 
-	if((vmThread->omrVMThread->vmState & J9VMSTATE_MAJOR) == J9VMSTATE_JIT_CODEGEN) {
+	if((vmThread->omrVMThread->vmState & J9VMSTATE_MAJOR) == J9VMSTATE_JIT) {
 		if(vmThread->jitMethodToBeCompiled) {
 			J9Method *ramMethod = vmThread->jitMethodToBeCompiled;
 			J9Class *clazz = J9_CLASS_FROM_METHOD(ramMethod);

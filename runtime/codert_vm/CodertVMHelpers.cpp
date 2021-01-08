@@ -270,7 +270,7 @@ UDATA
 jitTranslateMethod(J9VMThread *currentThread, J9Method *method)
 {
 	UDATA oldState = currentThread->omrVMThread->vmState;
-	currentThread->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN;
+	currentThread->omrVMThread->vmState = J9VMSTATE_JIT;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9JITConfig *jitConfig = vm->jitConfig;
 	UDATA jitStartPC = jitConfig->entryPoint(jitConfig, currentThread, method, 0);

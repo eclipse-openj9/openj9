@@ -601,7 +601,7 @@ done:
 					UDATA *bp = buildMethodFrame(REGISTER_ARGS, _sendMethod, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
 					updateVMStruct(REGISTER_ARGS);
 					/* this call cannot change bp as no java code is run */
-					UDATA oldState = pushVMState(REGISTER_ARGS, J9VMSTATE_JIT_CODEGEN);
+					UDATA oldState = pushVMState(REGISTER_ARGS, J9VMSTATE_JIT);
 					J9JITConfig *jitConfig = _vm->jitConfig;
 					jitConfig->entryPoint(jitConfig, _currentThread, _sendMethod, 0);
 					popVMState(REGISTER_ARGS, oldState);
@@ -1889,7 +1889,7 @@ done:
 				UDATA *bp = buildMethodFrame(REGISTER_ARGS, _sendMethod, 0);
 				updateVMStruct(REGISTER_ARGS);
 				/* this call cannot change bp as no java code is run */
-				UDATA oldState = pushVMState(REGISTER_ARGS, J9VMSTATE_JIT_CODEGEN);
+				UDATA oldState = pushVMState(REGISTER_ARGS, J9VMSTATE_JIT);
 				J9JITConfig *jitConfig = _vm->jitConfig;
 				jitConfig->entryPoint(jitConfig, _currentThread, _sendMethod, 0);
 				popVMState(REGISTER_ARGS, oldState);
@@ -2062,7 +2062,7 @@ done:
 		UDATA *bp = buildMethodFrame(REGISTER_ARGS, _sendMethod, jitStackFrameFlags(REGISTER_ARGS, 0));
 		updateVMStruct(REGISTER_ARGS);
 		/* this call cannot change bp as no java code is run */
-		UDATA oldState = pushVMState(REGISTER_ARGS, J9VMSTATE_JIT_CODEGEN);
+		UDATA oldState = pushVMState(REGISTER_ARGS, J9VMSTATE_JIT);
 		J9JITConfig *jitConfig = _vm->jitConfig;
 		jitConfig->entryPoint(jitConfig, _currentThread, _sendMethod, 0);
 		popVMState(REGISTER_ARGS, oldState);

@@ -5158,7 +5158,7 @@ TR_J9VMBase::reportILGeneratorPhase()
 
    enum { DEFAULT_LOW_BYTE=0x80 };
 
-   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN | (DEFAULT_LOW_BYTE & 0xFF);
+   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT | (DEFAULT_LOW_BYTE & 0xFF);
    }
 
 void
@@ -5167,7 +5167,7 @@ TR_J9VMBase::reportOptimizationPhase(OMR::Optimizations opts)
    if (!_vmThread)
       return;
 
-   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN | ((((int32_t) opts & 0xFF) << 8)|0xFF);
+   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT | ((((int32_t) opts & 0xFF) << 8)|0xFF);
    }
 
 void
@@ -5196,7 +5196,7 @@ TR_J9VMBase::reportCodeGeneratorPhase(TR::CodeGenPhase::PhaseValue phase)
    if (!_vmThread)
       return;
 
-   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN | phase | 0xFF00;
+   vmThread()->omrVMThread->vmState = J9VMSTATE_JIT | phase | 0xFF00;
 
    if (TrcEnabled_Trc_JIT_codeGeneratorPhase)
       Trc_JIT_codeGeneratorPhase(vmThread(), TR::CodeGenPhase::getName(phase));

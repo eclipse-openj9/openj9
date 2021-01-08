@@ -125,7 +125,7 @@ static UDATA dumpCurrentILProtected(J9PortLibrary *portLib, void * opaqueParamet
       comp->dumpMethodTrees("Trees");
       dbg->print(logFile, comp->getSymRefTab());
 
-      int bitMask = J9VMSTATE_JIT_CODEGEN | 0x0000FF00; // 0xFF?? is Codegen Phase
+      int bitMask = J9VMSTATE_JIT | 0x0000FF00; // 0xFF?? is Codegen Phase
       if ( ((vmThread->omrVMThread->vmState) & bitMask) == bitMask )  // if we are in the Codegen Phase
          {
          dbg->dumpMethodInstrs(logFile, "Post Binary Instructions", false, true);

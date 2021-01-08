@@ -451,7 +451,7 @@ static const struct vmX vmStateArray[] =
       {J9VMSTATE_GC, "J9VMSTATE_GC", 0},                                                  //2  0x20000
       {J9VMSTATE_GROW_STACK, "J9VMSTATE_GROW_STACK", 0},                                  //3  0x30000
       {J9VMSTATE_JNI, "special", 2},                                                      //4  0x40000
-      {J9VMSTATE_JIT_CODEGEN, "J9VMSTATE_JIT_CODEGEN", 0},                                //5  0x50000
+      {J9VMSTATE_JIT, "J9VMSTATE_JIT", 0},                                                //5  0x50000
       {J9VMSTATE_BCVERIFY, "J9VMSTATE_BCVERIFY", 0},                                      //6  0x60000
       {J9VMSTATE_RTVERIFY, "J9VMSTATE_RTVERIFY", 0},                                      //7  0x70000
       {J9VMSTATE_SHAREDCLASS_FIND, "special", 12},                                        //8  0x80000
@@ -523,7 +523,7 @@ Options::vmStateOption(char * option, void * base, TR::OptionTable *entry)
                      }
                   }
                break;
-            case ((J9VMSTATE_JIT_CODEGEN>>16) & 0xF):
+            case ((J9VMSTATE_JIT >> 16) & 0xF):
                {
                if ((state & 0xFF00) == 0) // ILGeneratorPhase
                   {

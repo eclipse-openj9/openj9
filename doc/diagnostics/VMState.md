@@ -57,7 +57,7 @@ leading zeros are required.
 
 ```
 > java -Xjit:vmstate=0x000501ff
-vmState [0x501ff]: {J9VMSTATE_JIT_CODEGEN} {inlining}
+vmState [0x501ff]: {J9VMSTATE_JIT} {inlining}
 ```
 
 ### JIT compiler
