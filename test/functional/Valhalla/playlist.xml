@@ -28,6 +28,7 @@
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation> -XX:ValueTypeFlatteningThreshold=99999 -Xgcpolicy:optthruput -XX:-EnableArrayFlattening</variation>
 			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xverify:none \
@@ -63,6 +64,7 @@
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xverify:none \
