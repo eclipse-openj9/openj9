@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1659,9 +1659,6 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
    bool isVolatile, isFinal, isPrivate, isUnresolvedInCP;
    bool resolved = owningMethod->staticAttributes(comp(), cpIndex, &dataAddress, &type, &isVolatile, &isFinal, &isPrivate, isStore, &isUnresolvedInCP);
 
-   if (  isUnresolvedInCP && (type != TR::Address && _compilation->cg()->getAccessStaticsIndirectly()))
-      resolved = false;
-
    bool sharesSymbol = false;
 
    TR::StaticSymbol * sym = 0;
@@ -1779,12 +1776,6 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
    if (resolved)
       {
       sym->setStaticAddress(dataAddress);
-      if (type != TR::Address && _compilation->cg()->getAccessStaticsIndirectly() && !_compilation->compileRelocatableCode())
-         {
-         TR_OpaqueClassBlock * feClass = owningMethod->classOfStatic(cpIndex, true);
-         TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-         symRef->setOffset((char *)dataAddress - (char *)fej9->addressOfFirstClassStatic(feClass));
-         }
       }
    else
       {

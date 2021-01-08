@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,12 +192,6 @@ J9::Z::CodeGenerator::initialize()
       }
 
    cg->getS390Linkage()->initS390RealRegisterLinkage();
-
-   const bool accessStaticsIndirectly =
-         comp->getOption(TR_DisableDirectStaticAccessOnZ) ||
-         (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager));
-
-   cg->setAccessStaticsIndirectly(accessStaticsIndirectly);
 
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       {
