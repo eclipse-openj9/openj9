@@ -55,7 +55,7 @@ define({CALL_DIRECT},{jal BRANCH_SYMBOL($1)})
 
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+(($1)*ALen))})
 define({GPR_SAVE_SLOT},{M(sp, GPR_SAVE_OFFSET($1))})
-define({FPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedFPRs+(($1-8)*8))})
+define({FPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedFPRs+(($1)*8))})
 define({FPR_SAVE_SLOT},{M(sp, FPR_SAVE_OFFSET($1))})
 
 define({JIT_GPR_SAVE_OFFSET},{eval(J9TR_cframe_jitGPRs+(($1)*ALen))})
