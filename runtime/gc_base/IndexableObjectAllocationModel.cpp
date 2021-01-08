@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,14 +119,21 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 {
 	/* Set array object header and size (in elements) and set  description spine pointer */
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
 	J9IndexableObject *spine = (J9IndexableObject*)initializeJavaObject(env, allocatedBytes);
 	_allocateDescription.setSpine(spine);
 	if (NULL != spine) {
 		/* Set the array size */
 		if (getAllocateDescription()->isChunkedArray()) {
-			extensions->indexableObjectModel.setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
+			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
+#if defined(J9VM_ENV_DATA64)
+			indexableObjectModel->setDataAddrForDiscontiguous(spine, NULL);
+#endif /* J9VM_ENV_DATA64 */
 		} else {
-			extensions->indexableObjectModel.setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
+			indexableObjectModel->setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
+#if defined(J9VM_ENV_DATA64)
+			indexableObjectModel->setDataAddrForContiguous(spine);
+#endif /* J9VM_ENV_DATA64 */
 		}
 	}
 
