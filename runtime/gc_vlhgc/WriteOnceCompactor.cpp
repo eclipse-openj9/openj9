@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -728,28 +728,13 @@ MM_WriteOnceCompactor::evacuatePage(MM_EnvironmentVLHGC *env, void *page, J9MM_F
 			UDATA objectSize = _extensions->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
 			J9Object *nextLocation = (J9Object *)((UDATA)newLocation + objectSize);
 			if (newLocation != objectPtr) {
-				UDATA objectSizeAfterMove = _extensions->objectModel.getConsumedSizeInBytesWithHeaderForMove(objectPtr);
-				bool hasBeenHashed = _extensions->objectModel.hasBeenHashed(objectPtr);
-				bool hasBeenMoved = _extensions->objectModel.hasBeenMoved(objectPtr);
-				I_32 hashCode = 0;
-				if (hasBeenHashed && !hasBeenMoved) {
-					hashCode = computeObjectAddressToHash(_javaVM, objectPtr);
-				}
+				UDATA objectSizeAfterMove = 0;
+				preObjectMove(env, objectPtr, &objectSizeAfterMove);
+
 				/* copy objectPtr to newLocation */
 				memmove(newLocation, objectPtr, objectSize);
-				/* the object has just moved so we can't trust the remembered bit.  Clear it and it will be re-added, during fixup, if required */
-				if (_extensions->objectModel.isRemembered(newLocation)) {
-					_extensions->objectModel.clearRemembered(newLocation);
-				}
-				if(_extensions->objectModel.isIndexable(newLocation)) {
-					updateInternalLeafPointersAfterCopy((J9IndexableObject*) newLocation, (J9IndexableObject*) objectPtr);
-				}
-				if (hasBeenHashed && !hasBeenMoved) {
-					/* add the hash */
-					UDATA hashOffset = _extensions->objectModel.getHashcodeOffset(newLocation);
-					*(I_32*)((U_8*)newLocation + hashOffset) = hashCode;
-					_extensions->objectModel.setObjectHasBeenMoved(newLocation);
-				}
+
+				postObjectMove(env, newLocation, objectPtr);
 				nextLocation = (J9Object *)((UDATA)newLocation + objectSizeAfterMove);
 			}
 			/* fixup this object's fields, whether it moved or not */
@@ -1180,6 +1165,36 @@ MM_WriteOnceCompactor::fixupObjectsInRange(MM_EnvironmentVLHGC *env, void *lowAd
 			}
 		}
 	}
+}
+
+MMINLINE void
+MM_WriteOnceCompactor::preObjectMove(MM_EnvironmentVLHGC* env, J9Object *objectPtr, UDATA *objectSizeAfterMove)
+{
+	*objectSizeAfterMove = _extensions->objectModel.getConsumedSizeInBytesWithHeaderForMove(objectPtr);
+	_extensions->objectModel.preMove(env->getOmrVMThread(), objectPtr); // To be deprecated
+	//env->preObjectMoveForCompact(objectPtr); // Will substitute line above
+}
+
+MMINLINE void
+MM_WriteOnceCompactor::postObjectMove(MM_EnvironmentVLHGC* env, J9Object *newLocation, J9Object *objectPtr)
+{
+	/* the object has just moved so we can't trust the remembered bit.  Clear it and it will be re-added, during fixup, if required */
+	if (_extensions->objectModel.isRemembered(newLocation)) {
+		_extensions->objectModel.clearRemembered(newLocation);
+	}
+	if(_extensions->objectModel.isIndexable(newLocation)) {
+		updateInternalLeafPointersAfterCopy((J9IndexableObject*) newLocation, (J9IndexableObject*) objectPtr);
+
+		/* Updates internal data address of indexable objects. Every indexable object have a void *dataAddr
+		 * that always points to the array data. It will always point to the address right after the header,
+		 * in case of contiguous data it will point to the data itself, and in case of discontiguous
+		 * arraylet it will point to the first arrayiod. dataAddr is only updated if dataAddr points to data
+		 * within heap. */
+		_extensions->indexableObjectModel.fixupDataAddr(newLocation);
+	}
+
+	_extensions->objectModel.postMove(env->getOmrVMThread(), newLocation); // To be deprecated
+	//env->postObjectMoveForCompact(newLocation); // Will substitute line above
 }
 
 void
