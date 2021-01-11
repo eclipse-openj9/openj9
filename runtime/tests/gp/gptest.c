@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -455,7 +455,7 @@ Java_VMBench_GPTests_GPTest_gpIll(JNIEnv *env, jclass clazz, jobject arg1) {
 
 #ifdef WIN32
 
-	/* SIGILL test needs to use an an invalid opcode. 0x0b0f is the invalid opcode "UD2" reserved for testing on IA32 and AMD64.
+	/* SIGILL test needs to use an invalid opcode. 0x0b0f is the invalid opcode "UD2" reserved for testing on IA32 and AMD64.
 	 * 		and is guaranteed not to become legal. 
      * On AMD64, however, we get an "ACCESS_VIOLATION" when we execute it instead of an "ILLEGAL_INSTRUCTION",
 	 * 		which is likely a bug in the AMD64 Windows OS.

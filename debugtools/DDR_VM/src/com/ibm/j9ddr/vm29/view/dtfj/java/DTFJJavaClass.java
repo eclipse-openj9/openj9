@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,7 +104,7 @@ public class DTFJJavaClass implements JavaClass {
 	private DTFJJavaClass componentType;
 	public JavaClass getComponentType() throws CorruptDataException {	
 		if (!isArray()) {
-			// This exception is required in in this circumstance by DTFJ API
+			// This exception is required in this circumstance by DTFJ API
 			throw new IllegalArgumentException("Class is not an array");
 		}
 

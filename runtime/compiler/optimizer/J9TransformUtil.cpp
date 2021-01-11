@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1581,7 +1581,7 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
  *  actual data structure being walked matches the nodes closely enough to
  *  prevent the jit from doing something wrong.
  *
- *  This function must must verify that the structure we're loading from is
+ *  This function must verify that the structure we're loading from is
  *  of the correct type before the dereference.
  *
  *  In this narrow usage, "correct type" really means that subsequent

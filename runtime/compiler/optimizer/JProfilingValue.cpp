@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -588,7 +588,7 @@ TR_JProfilingValue::addProfilingTrees(
          }
       lastBranchToMainlineReturnTT = nullTestTree;
       if (trace)
-         traceMsg(comp, "\t\t\tNull test performed in in block_%d\n", iter->getNumber());
+         traceMsg(comp, "\t\t\tNull test performed in block_%d\n", iter->getNumber());
       }
 
    /********************* quickTest Block *********************/

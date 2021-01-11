@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3049,7 +3049,7 @@ fail:
 					/* For arrays of valueType elements (where componentType is a valuetype), the arrays themselves are not
 					 * valuetypes but they should inherit the layout characteristics (ie. flattenable, etc.)
 					 * of the valuetype elements. A 2D (or more) array of valuetype elements (where leafComponentType is a Valuetype but
-					 * componentType is not) is not direct array array of valuetype elements, therefore it should not inherit any layout
+					 * componentType is not) is not direct array of valuetype elements, therefore it should not inherit any layout
 					 * properties from the leafComponentType. A 2D array is an array of references so it can never be flattened, however, its
 					 * elements may be flattened arrays.
 					 */

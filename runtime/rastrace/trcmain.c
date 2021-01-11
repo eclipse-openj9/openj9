@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -415,7 +415,7 @@ internalTraceSnapWithPriority(UtThreadData **thr, char *label, int32_t snapPrior
 					UT_DBGOUT(1, ("<UT thr="UT_POINTER_SPEC"> Starting Snap write thread, start: " UT_POINTER_SPEC ", stop: " UT_POINTER_SPEC "\n", thr, start, stop));
 
 					/* Spawn a snap writer with it's subscription as its userData*/
-					/* TODO: if a crash occurs during registration/deregistration the the trace lock is already held and this
+					/* TODO: if a crash occurs during registration/deregistration the trace lock is already held and this
 					 * can hang. We need to check to see if this thread is already the owner of the trace lock before trying
 					 * to snap dump in this fashion.
 					 */
@@ -1903,7 +1903,7 @@ trcGetTraceMetadata(void **data, int32_t *length)
  * description - Disables tracepoints for all threads, or for the current thread.
  * 	             Trace disable/enable is the internal mechanism that the trace,
  * 	             dump and memcheck use to switch trace off and on. Suspend/resume
- * 	             is the the external user facility available via -Xtrace and JVMTI.
+ * 	             is the external user facility available via -Xtrace and JVMTI.
  * parameters  - type (UT_DISABLE_GLOBAL or UT_DISABLE_THREAD)
  * returns     - void
  ******************************************************************************/

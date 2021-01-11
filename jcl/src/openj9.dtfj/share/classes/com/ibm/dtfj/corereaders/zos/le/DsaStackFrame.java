@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2019 IBM Corp. and others
+ * Copyright (c) 2006, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -300,7 +300,7 @@ public class DsaStackFrame {
                 cel_enabled = false;
             } else {
                 /* Have an Entry Point Address. Obtain the entry point vector.
-                 * If the name offset ='00X or '01'X and the  the eyecatcher is
+                 * If the name offset ='00X or '01'X and the eyecatcher is
                  * 'CEE' then the entry point vector is valid */
                 int signature = 0;  // default is invalid
                 try {

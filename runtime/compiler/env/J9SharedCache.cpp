@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1302,7 +1302,7 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
        * assert and conveniently, updates the location referred to by the cacheOffset
        * pointer passed in as a parameter.
        *
-       * If the ptr isn't in the the SCC, then the current method will abort the
+       * If the ptr isn't in the SCC, then the current method will abort the
        * compilation. If the ptr is in the SCC, then the cacheOffset will be updated.
        */
       if (!isPointerInSharedCache(classChainIdentifyingLoaderForClazz, &classChainOffsetInSharedCache))

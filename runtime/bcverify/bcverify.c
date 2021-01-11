@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2701,7 +2701,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 			xVerifyIndex = FIND_ARG_IN_VMARGS( EXACT_MATCH, OPT_XVERIFY, NULL);
 			xVerifyColonIndex = FIND_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, OPT_XVERIFY_COLON, NULL);
 			while (xVerifyColonIndex >= 0) {
-				/* Ignore -Xverify:<opt>'s prior to the the last -Xverify */
+				/* Ignore -Xverify:<opt>'s prior to the last -Xverify */
 				if (xVerifyColonIndex > xVerifyIndex) {
 					/* Deal with possible -Xverify:<opt>,<opt> case */
 					GET_OPTION_VALUES( xVerifyColonIndex, ':', ',', &optionValuesBufferPtr, 128 );

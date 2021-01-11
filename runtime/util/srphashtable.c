@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -829,7 +829,7 @@ srpHashTableVerify(
 
 	Trc_srpHashTableVerify_Entry(srptable, memorySize, entrySize);
 
-	/* Verify entry size against the the specified value */
+	/* Verify entry size against the specified value */
 	if (entrySize != srptableInternal->entrySize) {
 		Trc_srpHashTableVerify_entrySizeIncorrect(srptable, srptableInternal->entrySize, entrySize);
 	/* Verify the nodeSize against the specified value */

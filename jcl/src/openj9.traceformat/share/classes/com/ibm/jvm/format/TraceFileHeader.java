@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -168,7 +168,7 @@ final public class TraceFileHeader implements com.ibm.jvm.trace.TraceFileHeader 
         processorSection.summary(out);
     }
 
-    /** returns the the length of this file header
+    /** returns the length of this file header
      *
      * @return  a long
      */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1703,7 +1703,7 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 				}/*Any other error and we will terminate*/
 
 				/*If sXmctl fails our checks below will also fail (they use the same function) ... so we terminate with an error*/
-				Trc_PRT_shmem_j9shmem_openSharedMemory_MsgWithError("Error: shmctl failed. Can not open shared shared memory, portable errorCode = ", lastError);
+				Trc_PRT_shmem_j9shmem_openSharedMemory_MsgWithError("Error: shmctl failed. Can not open shared memory, portable errorCode = ", lastError);
 				goto failDontUnlink;
 			}
 		} else {
@@ -1750,7 +1750,7 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 					}/*Any other error and we will terminate*/
 
 					/*If sXmctl fails our checks below will also fail (they use the same function) ... so we terminate with an error*/
-					Trc_PRT_shmem_j9shmem_openSharedMemory_MsgWithError("Error: __getipc(): failed. Can not open shared shared memory, portable errorCode = ", lastError);
+					Trc_PRT_shmem_j9shmem_openSharedMemory_MsgWithError("Error: __getipc(): failed. Can not open shared memory, portable errorCode = ", lastError);
 					goto failDontUnlink;
 				}
 			} else {
@@ -1837,7 +1837,7 @@ failDontUnlink:
  * @param[in] fd of file to write info to ...
  * @param[in] isReadOnlyFD set to TRUE if control file is read-only, FALSE otherwise
  * @param[in] baseFile file being used for control file
- * @param[in] size size of the the shared memory
+ * @param[in] size size of the shared memory
  * @param[in] perm permission for the region
  * @param[in] controlinfo control file info (copy of data last written to control file)
  * @param[in] groupPerm group permission of the shared memory

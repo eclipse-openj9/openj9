@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,8 +40,8 @@ private:
 	
 	UDATA _heapFree;
 	
-	UDATA _classLoadersUnloaded; /**< Number of classLoaders unloaded just just before SyncGC started, but only for the current GC cycle */
-	UDATA _classesUnloaded;      /**< Number of classes unloaded just just before SyncGC started, but only for the current GC cycle */
+	UDATA _classLoadersUnloaded; /**< Number of classLoaders unloaded just before SyncGC started, but only for the current GC cycle */
+	UDATA _classesUnloaded;      /**< Number of classes unloaded just before SyncGC started, but only for the current GC cycle */
 	
 	void initialize(MM_MetronomeSynchronousGCStartEvent *event);
 	

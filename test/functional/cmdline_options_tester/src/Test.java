@@ -340,7 +340,7 @@ class Test {
 				 * 2. None of the success conditions are found.
 				 * 3. At least one failure condition is found.
 				 *
-				 * In the first two cases, just print the the beginning and end of the output
+				 * In the first two cases, just print the beginning and end of the output
 				 * depending on user specified outputLimit option.
 				 * For every occurrence of the third case, print the output where failure condition is found.
 				 */

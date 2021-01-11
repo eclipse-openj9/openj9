@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -714,7 +714,7 @@ SH_OSCachemmap::acquireWriteLock(UDATA lockID)
 			 *  - Current thread owns the RW monitor, and gets EDEADLK on RW lock
 			 *
 			 * Note:
-			 *  - Deadlock might caused by the order in which threads have taken taken locks, when compared to another JVM.
+			 *  - Deadlock might caused by the order in which threads have taken locks, when compared to another JVM.
 			 *  - In the recovery code below the first release of the RW Monitor is to ensure SCStoreTransactions
 			 *    can complete.
 			 *

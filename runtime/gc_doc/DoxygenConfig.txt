@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 1991, 2020 IBM Corp. and others
+# Copyright (c) 1991, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -276,7 +276,7 @@ MARKDOWN_SUPPORT       = YES
 
 # When enabled doxygen tries to link words that correspond to documented classes, 
 # or namespaces to their corresponding documentation. Such a link can be 
-# prevented in individual cases by by putting a % sign in front of the word or 
+# prevented in individual cases by putting a % sign in front of the word or 
 # globally by setting AUTOLINK_SUPPORT to NO.
 
 AUTOLINK_SUPPORT       = YES

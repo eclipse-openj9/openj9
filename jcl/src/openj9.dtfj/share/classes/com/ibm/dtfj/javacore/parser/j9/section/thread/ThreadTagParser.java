@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ public class ThreadTagParser extends TagParser {
 	}
 
 	private void initCPUTimeTag() {
-		// 3XMCPUTIME               CPU usage total: 9.656250000 secs, user: 4.781250000 secs secs, system: 4.875000000 secs
+		// 3XMCPUTIME               CPU usage total: 9.656250000 secs, user: 4.781250000 secs, system: 4.875000000 secs
 		ILineRule lineRule = new LineRule() {
 			public void processLine(String source, int startingOffset) {
 				

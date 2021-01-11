@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2502,7 +2502,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
    vtableIndexRegDeps->addPreCondition(vtableIndexReg, getProperties().getVTableIndexArgumentRegister(), cg());
    // Now things get weird.
    //
-   // We're going to generate the lastITable sequence sequence upside-down.
+   // We're going to generate the lastITable sequence upside-down.
    // We'll generate the dispatch sequence first, and THEN we'll generate
    // the test that guards that dispatch.
    //

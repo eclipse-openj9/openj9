@@ -1,6 +1,6 @@
 /*[INCLUDE-IF DAA]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2020 IBM Corp. and others
+ * Copyright (c) 2013, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -242,7 +242,7 @@ public final class PackedDecimal {
     }
 
     /**
-     * Add two Packed Decimals in byte arrays. The sign of an input Packed Decimal is assumed to to be positive unless
+     * Add two Packed Decimals in byte arrays. The sign of an input Packed Decimal is assumed to be positive unless
      * the sign nibble contains one of the negative sign codes, in which case the sign of the respective input Packed
      * Decimal is interpreted as negative.
      * 
@@ -312,7 +312,7 @@ public final class PackedDecimal {
     }
 
     /**
-     * Subtracts two Packed Decimals in byte arrays. The sign of an input Packed Decimal is assumed to to be positive
+     * Subtracts two Packed Decimals in byte arrays. The sign of an input Packed Decimal is assumed to be positive
      * unless the sign nibble contains one of the negative sign codes, in which case the sign of the respective input
      * Packed Decimal is interpreted as negative.
      * 
@@ -606,7 +606,7 @@ public final class PackedDecimal {
     private static final int MULTIPLY = 1, DIVIDE = 2, REMAINDER = 3;
 
     /**
-     * Multiplies two Packed Decimals in byte arrays. The sign of an input Packed Decimal is assumed to to be positive
+     * Multiplies two Packed Decimals in byte arrays. The sign of an input Packed Decimal is assumed to be positive
      * unless the sign nibble contains one of the negative sign codes, in which case the sign of the respective input
      * Packed Decimal is interpreted as negative.
      * 
@@ -677,7 +677,7 @@ public final class PackedDecimal {
     }
 
     /**
-     * Divides two Packed Decimals is byte arrays. The sign of an input Packed Decimal is assumed to to be positive
+     * Divides two Packed Decimals is byte arrays. The sign of an input Packed Decimal is assumed to be positive
      * unless the sign nibble contains one of the negative sign codes, in which case the sign of the respective input
      * Packed Decimal is interpreted as negative.
      * 
@@ -748,7 +748,7 @@ public final class PackedDecimal {
 
     /**
      * Calculates the remainder resulting from the division of two Packed Decimals in byte arrays. The sign of an input
-     * Packed Decimal is assumed to to be positive unless the sign nibble contains one of the negative sign codes, in
+     * Packed Decimal is assumed to be positive unless the sign nibble contains one of the negative sign codes, in
      * which case the sign of the respective input Packed Decimal is interpreted as negative.
      * 
      * @param result

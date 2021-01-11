@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,7 +107,7 @@ UDATA ownableSynchronizerObjectCreated(J9VMThread *vmThread, j9object_t object);
  * This function must be called under exclusive access only
  * @param vmThread
  * @param originalClass The class being redifined
- * @param replacementClass The result of the the class redefinition
+ * @param replacementClass The result of the class redefinition
  * @param isFastHCR Flag to indicate wether it replacement was done via fastHCR or not
  */
 void j9gc_notifyGCOfClassReplacement(J9VMThread *vmThread, J9Class *originalClass, J9Class *replacementClass, UDATA isFastHCR);

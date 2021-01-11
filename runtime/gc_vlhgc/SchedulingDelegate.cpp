@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -783,7 +783,7 @@ MM_SchedulingDelegate::calculatePGCCompactionRate(MM_EnvironmentVLHGC *env, UDAT
 			Assert_MM_true(region->_sweepData._alreadySwept);
 			UDATA freeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
 			if (!region->getRememberedSetCardList()->isAccurate()) {
-				/* Overflowed regions or those that RSCL is being rebuilt will not be be compacted */
+				/* Overflowed regions or those that RSCL is being rebuilt will not be compacted */
 				nonCollectibleRegions += 1;
 				freeMemoryInNonCollectibleRegions += freeMemory;
 				totalLiveDataInNonCollectibleRegions += (regionSize - freeMemory);

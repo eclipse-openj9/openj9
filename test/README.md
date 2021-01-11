@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2020 IBM Corp. and others
+Copyright (c) 2016, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ By default, `make compile` compiles all tests. This is the safest way
 to ensure all the test code needed has been compiled. However, there is a
 way to shortcut the compilation process to reduce compilation time. If
 `BUILD_LIST` is set, `make compile` will only compile the folder names
-names that match within `BUILD_LIST`.
+that match within `BUILD_LIST`.
 
 ```
     export BUILD_LIST=functional/TestUtilities,functional/Java8andUp

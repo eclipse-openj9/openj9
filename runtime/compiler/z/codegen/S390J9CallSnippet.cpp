@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1189,7 +1189,7 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
    {
 
 /*
- * 4-slot Layout (example showing 64-bit fields). 4-slot is the the default case.
+ * 4-slot Layout (example showing 64-bit fields). 4-slot is the default case.
  *
  * Note: some fields and PIC slots will be unused if interface call turns out to be a direct dispatch.
  *

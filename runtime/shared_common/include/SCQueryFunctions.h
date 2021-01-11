@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,13 +92,13 @@ j9shr_Query_IsAddressInCache(J9JavaVM *vm, void *address, UDATA length)
 }
 
 /**
- * Check if an address range in in the readWrite (top layer) shared cache
+ * Check if an address range in the readWrite (top layer) shared cache
  *
  * @param[in] vm  The Java VM.
  * @param[in] address The start of the address range
  * @param[in] length The length of the address range
  *
- * @return TRUE if the the address range is in the readWrite cache. False otherwise.
+ * @return TRUE if the address range is in the readWrite cache. False otherwise.
  **/
 
 static VMINLINE BOOLEAN

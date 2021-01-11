@@ -1980,7 +1980,7 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
       TR::CodeCache *codeCache = reloRuntime->codeCache();
 
       // Changed the code so that we fail this relocation/compilation if we cannot
-      // allocate in the current code cache. The reason is that, when a a new code cache is needed
+      // allocate in the current code cache. The reason is that, when a new code cache is needed
       // the reservation of the old cache is cancelled and further allocation attempts from
       // the old cache (which is not switched) will fail
       U_8 *thunkStart = TR::CodeCacheManager::instance()->allocateCodeMemory(firstDescriptor.length, 0, &codeCache, &coldCode, true);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1229,7 +1229,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
        * AddrNode1 and AddrNode2 were the same node, the LocalCSE would not consider AddrNode1 an alternative replacement
        * of AddrNode3 because the BCDCHK's symbol canGCAndReturn().
        *
-       * With AddrNode2 and AddrNode3 commoned up, the LocalCSE is able to copy propagate pdshlOverflow to the the pd2zd
+       * With AddrNode2 and AddrNode3 commoned up, the LocalCSE is able to copy propagate pdshlOverflow to the pd2zd
        * tree and replace its pdloadi.
        */
       TR::Node * outOfLineCopyBackAddr = constructAddressNode(callNode, pdNode, offsetNode);

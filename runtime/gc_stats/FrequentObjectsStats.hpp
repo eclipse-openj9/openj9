@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,7 +99,7 @@ public:
 	{}
 
 
-	/* Merges a FrequentObjectStats structures together together with this one*/
+	/* Merges a FrequentObjectStats structures together with this one*/
 	void merge(MM_FrequentObjectsStats* frequentObjectsStats);
 
 	void traceStats(MM_EnvironmentBase *env);

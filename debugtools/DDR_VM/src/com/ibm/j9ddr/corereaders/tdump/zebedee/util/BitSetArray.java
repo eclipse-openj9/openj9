@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,7 +153,7 @@ public class BitSetArray {
      * the implementation of IntEnumeration that is returned has an important limitation: for
      * performance reasons, these objects are reused and once you have reached the end of the
      * enumeration (ie hasMoreElements returned false) the object may be recycled. For that
-     * reason you cannot call hasMoreElements more than once once it has returned false. I
+     * reason you cannot call hasMoreElements more than once it has returned false. I
      * can't think why you would want to do that but I just thought I'd mention it!
      */
     public IntEnumeration elements(int index) {

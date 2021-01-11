@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corp. and others
+ * Copyright (c) 2011, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,7 +128,7 @@ jint RuntimeToolsAgentBase::setup(char * options)
 	}
 
 	/*
-	 * this this object instance as part of the local storage so that we have access to it on
+	 * this object instance as part of the local storage so that we have access to it on
 	 * later calls
 	 */
 	RuntimeToolsAgentBase* agent = this;
@@ -138,7 +138,7 @@ jint RuntimeToolsAgentBase::setup(char * options)
 		return AGENT_ERROR_COULD_NOT_SET_LOCAL_STORAGE;
 	}
 
-	/* set and enable the the vmstart and stop callbacks */
+	/* set and enable the vmstart and stop callbacks */
 	memset(&_callbacks,0,sizeof(jvmtiEventCallbacks));
 	_callbacks.VMStart = vmStartWrapper;
 	_callbacks.VMDeath = vmStopWrapper;

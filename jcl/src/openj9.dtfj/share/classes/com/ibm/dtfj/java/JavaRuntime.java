@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2020 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,7 +149,7 @@ public interface JavaRuntime extends ManagedRuntime {
      * @param	address the <code>ImagePointer</code> instance representing the start address of object in the heap;
      * @return	the <code>JavaObject</code> instance representing the located object.
      * @throws 	IllegalArgumentException	if  <code>address</code> is outside the heap's boundaries, or if it doesn't point to the start location of an object;
-     * @throws 	MemoryAccessException 		if  <code>address</code> is is in the heap but it's not accessible from the dump;
+     * @throws 	MemoryAccessException 		if  <code>address</code> is in the heap but it's not accessible from the dump;
      * @throws 	CorruptDataException 		if any data needed to build the returned instance of <code>JavaObject</code> is corrupt.
      * @throws 	DataUnavailable	 			if any data needed to build the returned instance of <code>JavaObject</code> is not available.
      * @see 	com.ibm.dtfj.java.JavaObject

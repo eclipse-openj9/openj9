@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -293,7 +293,7 @@ public class TestGarbageCollectorMXBean {
 
 		AssertJUnit.assertEquals(1, notifications.length);
 
-		// Print out both, the description as well as the the class name.
+		// Print out both, the description as well as the class name.
 		logger.debug("MBean description for " + gcb.getClass().getName() + ": " + mbi.getDescription());
 
 		// 10 attributes (5 standard, 6 IBM) - none is writable.

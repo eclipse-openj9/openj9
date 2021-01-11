@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,7 +79,7 @@ namespace  {
             ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_UNLOAD
                (vm->hookInterface, vmThread, metaData->ramMethod,
                 (U_8*)metaData->startColdPC);
-         // At this point the the bodyInfo may have already been reclaimed
+         // At this point the bodyInfo may have already been reclaimed
          // The bodyInfo is reclaimed only for class unloading, not for recompilation
          if (ccMethodHeader && (metaData->bodyInfo != NULL))
             {

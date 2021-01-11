@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,7 +86,7 @@ protected:
 
 	/**
 	 * Once the region size is calculated each configuration needs to verify that
-	 * is is valid.
+	 * it is valid.
 	 *
 	 * @param env[in] - the current environment
 	 * @param regionSize[in] - the current regionSize to verify

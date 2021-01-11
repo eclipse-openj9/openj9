@@ -4,7 +4,7 @@ package com.ibm.oti.jvmtests;
 import junit.framework.TestCase;
 
 /*******************************************************************************
- * Copyright (c) 2016, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ public class GetNanoTimeAdjustment extends TestCase {
 	 * A positive offset subtracts the amount (in seconds) to the current nano time
 	 */
 	public void test_PositiveOffset() {
-		/* pick an offset difference larger than than the amount of time between the two method invocations */
+		/* pick an offset difference larger than the amount of time between the two method invocations */
 		long time1 = SupportJVM.GetNanoTimeAdjustment(0);
 		long time2 = SupportJVM.GetNanoTimeAdjustment(10);
 		
@@ -96,7 +96,7 @@ public class GetNanoTimeAdjustment extends TestCase {
 	 * A negative offset adds the amount (in seconds) to the current nano time
 	 */
 	public void test_NegativeOffset() {
-		/* pick an offset difference larger than than the amount of time between the two method invocations */
+		/* pick an offset difference larger than the amount of time between the two method invocations */
 		long time1 = SupportJVM.GetNanoTimeAdjustment(0);
 		long time2 = SupportJVM.GetNanoTimeAdjustment(-10);
 		

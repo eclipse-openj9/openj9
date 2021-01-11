@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,7 +103,7 @@ public class MethodHandles {
 	 * <p>
 	 * This class provides the lookup authentication necessary when creating MethodHandles.  Any
 	 * number of MethodHandles can be lookup using this token, and the token can be shared to provide
-	 * others with the the "owner's" authentication level.  
+	 * others with the "owner's" authentication level.  
 	 * <p>
 	 * Sharing {@link Lookup} objects should be done with care, as they may allow access to private
 	 * methods. 
@@ -442,7 +442,7 @@ public class MethodHandles {
 		 * Equivalent of visible.c checkVisibility();
 		 * 
 		 * @param definingClass The {@link Class} that defines the member being accessed.
-		 * @param referenceClass The {@link Class} class through which the the member is accessed, 
+		 * @param referenceClass The {@link Class} class through which the member is accessed, 
 		 * which must be the defining class or a subtype.  May be null.
 		 * @param name The name of member being accessed.
 		 * @param memberModifiers The modifiers of the member being accessed.
@@ -2817,7 +2817,7 @@ public class MethodHandles {
 	 * @param classType - the type to use for the return and parameter types
 	 * @return an identity MethodHandle that returns its argument
 	 * @throws NullPointerException - if the classType is null
-	 * @throws IllegalArgumentException - if the the classType is void.
+	 * @throws IllegalArgumentException - if the classType is void.
 	 */
 	public static MethodHandle identity(Class<?> classType) throws NullPointerException, IllegalArgumentException {
 		if (classType == void.class) {
@@ -2909,7 +2909,7 @@ public class MethodHandles {
 	/**
 	 * Return a MethodHandle able to read from the array.  The MethodHandle's return type will be the same as 
 	 * the elements of the array.  The MethodHandle will also accept two arguments - the first being the array, typed correctly, 
-	 * and the second will be the the <code>int</code> index into the array.
+	 * and the second will be the <code>int</code> index into the array.
 	 * 
 	 * @param arrayType - the type of the array
 	 * @return a MethodHandle able to return values from the array
@@ -2941,7 +2941,7 @@ public class MethodHandles {
 	
 	/**
 	 * Return a MethodHandle able to write to the array.  The MethodHandle will have a void return type and take three
-	 * arguments: the first being the array, typed correctly, the second will be the the <code>int</code> index into the array,
+	 * arguments: the first being the array, typed correctly, the second will be the <code>int</code> index into the array,
 	 * and the third will be the item to write into the array
 	 * 
 	 * @param arrayType - the type of the array
@@ -3359,7 +3359,7 @@ public class MethodHandles {
 	 * @throws IllegalArgumentException - if the preprocessor's return type differs from the first argument type of the handle,
 	 *                      or if the arguments taken by the preprocessor isn't a subset of the arguments to the handle
 	 *                      or if the element of argumentIndices is outside of the range of the handle's argument list
-	 *                      or if the arguments specified by argumentIndices from the handle doesn't exactly match the the arguments taken by the preprocessor
+	 *                      or if the arguments specified by argumentIndices from the handle doesn't exactly match the arguments taken by the preprocessor
 	 */
 	static MethodHandle filterArgumentsWithCombiner(MethodHandle handle, int filterPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
 
@@ -3435,7 +3435,7 @@ public class MethodHandles {
 	 * @throws IllegalArgumentException - if the preprocessor's return type is not void and it differs from the first argument type of the handle,
 	 * 			or if the arguments taken by the preprocessor isn't a subset of the arguments to the handle
 	 * 			or if the element of argumentIndices is outside of the range of the handle's argument list
-	 * 			or if the arguments specified by argumentIndices from the handle doesn't exactly match the the arguments taken by the preprocessor
+	 * 			or if the arguments specified by argumentIndices from the handle doesn't exactly match the arguments taken by the preprocessor
 	 */
 	static MethodHandle foldArgumentsWithCombiner(MethodHandle handle, int foldPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
 		return foldArguments(handle, foldPosition, preprocessor, argumentIndices);
@@ -3496,7 +3496,7 @@ public class MethodHandles {
 	 * @throws IllegalArgumentException - if the preprocessor's return type is not void and it differs from the first argument type of the handle,
 	 * 			or if the arguments taken by the preprocessor isn't a subset of the arguments to the handle
 	 * 			or if the element of argumentIndices is outside of the range of the handle's argument list
-	 * 			or if the arguments specified by argumentIndices from the handle doesn't exactly match the the arguments taken by the preprocessor
+	 * 			or if the arguments specified by argumentIndices from the handle doesn't exactly match the arguments taken by the preprocessor
 	 */
 	static MethodHandle foldArguments(MethodHandle handle, int foldPosition, MethodHandle preprocessor, int... argumentIndices) throws NullPointerException, IllegalArgumentException {
 		int[] passedInargumentIndices = EMPTY_ARG_POSITIONS;
@@ -3535,7 +3535,7 @@ public class MethodHandles {
 							Integer.toString(preprocessorTypeParamCount)}));
 		}
 		
-		/* We need to check one case that the the argument indices of the array are entirely equal
+		/* We need to check one case that the argument indices of the array are entirely equal
 		 * to the argument indices starting from the fold position, which means it can be 
 		 * treated as the same case as an empty array.
 		 * The reason for doing this is to ensure it can share the same thunk in JIT during compilation
@@ -4546,7 +4546,7 @@ public class MethodHandles {
 		}
 		
 		/* Method handles to Iterator.hasNext(), Iterator.next() and Iterable.iterator() are required
-		 * to construct a clause array in the the generic loop.
+		 * to construct a clause array in the generic loop.
 		 */
 		MethodHandle iteratorNextElement = null;
 		MethodHandle iteratorHasNextElement = null;
@@ -4817,7 +4817,7 @@ public class MethodHandles {
 		 */
 		private ArrayList<Class<?>> iterationVarTypesOfAllClauses = null;
 		
-		/* Only initialize the the internal clause array and the iteration type list as
+		/* Only initialize the internal clause array and the iteration type list as
 		 * the passed-in clauses need to be validated at first to guarantee
 		 * they don't violate any constraint of loop before use.
 		 */
@@ -5305,7 +5305,7 @@ public class MethodHandles {
 				if (void.class == currentClause[0].type.returnType()){
 					currentClause[0].invokeWithArguments(arguments);
 				} else {
-					/* Update the the corresponding iteration variable in the internal parameter list
+					/* Update the corresponding iteration variable in the internal parameter list
 					 * if the init handle returns non-void value.
 					 */
 					loopParamTypes[loopParamTypeIndex] = currentClause[0].invokeWithArguments(arguments);

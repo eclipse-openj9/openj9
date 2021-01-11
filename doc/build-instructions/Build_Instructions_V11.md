@@ -392,7 +392,7 @@ wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemark
 - Install Visual Studio by running the file `vs2013.exe` (There is no special step required for downloading/installing VS2017. Please follow the guide of the downloaded installer to install all required components, especially for VC compiler).
 
 Not all of the shared libraries that are included with Visual Studio are registered during installation.
-In particular, the `msdia120.dll`(VS2013) or `msdia140.dll`(VS2017) libraries must must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
+In particular, the `msdia120.dll`(VS2013) or `msdia140.dll`(VS2017) libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
 
 **VS2013**
 ```

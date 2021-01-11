@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1663,10 +1663,10 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
  * @param[in] cpEntry pointer to J9ClassPathEntry to be initialized
  *
  * @return IDATA type of the entry which is one of the following
- * 		CPE_TYPE_DIRECTORY if its a a directory
- * 		CPE_TYPE_JAR if its a ZIP file, extraInfo contains the J9ZipFile
- * 		CPE_TYPE_JIMAGE if its a jimage file
- * 		CPE_TYPE_USUSABLE if its a bad entry, don't try to use it anymore
+ * 		CPE_TYPE_DIRECTORY if it's a directory
+ * 		CPE_TYPE_JAR if it's a ZIP file, extraInfo contains the J9ZipFile
+ * 		CPE_TYPE_JIMAGE if it's a jimage file
+ * 		CPE_TYPE_USUSABLE if it's a bad entry, don't try to use it anymore
  */
 IDATA
 initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -664,7 +664,7 @@ unsigned char value, int level, const char *groupName, BOOLEAN suppressMessages,
 	return rc;
 }
 
-/* valid ranges passed in in componentName are of one of the following forms:
+/* valid ranges passed in componentName are of one of the following forms:
  * tpnid{j9vm.10}
  * tpnid{j9vm.10-20}
  * j9vm.10

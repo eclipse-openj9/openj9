@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1533,7 +1533,7 @@ VM_MHInterpreter::foldForFoldArguments(j9object_t methodHandle)
 			 * 1) if the argument index < the fold position, there is no change for the argument index;
 			 * 2) if the argument index == the fold position, throw out InvocationTargetException;
 			 * 3) if the argument index > the fold position, the argument index decreases 1 to exclude
-			 *    the the fold position (placeholder) so as to fetch the required argument.
+			 *    the fold position (placeholder) so as to fetch the required argument.
 			 * e.g. if the fold position is 2 (index2), the passed-in argument indices are {index1, index3, index5}.
 			 * Given that the fold position will reserved as placeholder,
 			 * the argument sequence is {arg0,   arg1, [placeholder], arg2,   arg3,   arg4,  arg5}

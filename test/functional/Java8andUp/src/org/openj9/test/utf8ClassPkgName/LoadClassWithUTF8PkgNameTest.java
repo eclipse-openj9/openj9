@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@ import org.openj9.test.util.VersionCheck;
 
 /**
  * Verify whether VM successfully loads a class with a Chinese UTF8 package name from a jar file
- * Note: The specified jar file to to be loaded in this test is automatically generated so as to
+ * Note: The specified jar file to be loaded in this test is automatically generated so as to
  * avoid any issue with platform dependencies.
  * 
  */
