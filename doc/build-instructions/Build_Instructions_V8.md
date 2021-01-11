@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2017, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -351,10 +351,9 @@ You must install a number of software dependencies to create a suitable build en
 - [Cygwin for 64-bit versions of Windows](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 8](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Windows SDK 7 Debugging tools](https://www.microsoft.com/download/confirmation.aspx?id=8279).
-- [Microsoft Visual Studio 2010 Professional](https://www.visualstudio.com/vs/older-downloads/).
-- [Microsoft Visual Studio 2010 Service Pack 1](https://support.microsoft.com/en-us/help/983509/description-of-visual-studio-2010-service-pack-1)
+- [Microsoft Visual Studio 2013 Professional](https://www.visualstudio.com/vs/older-downloads/).
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
-- [Freetype2 V2.3 or newer](https://www.freetype.org/)
+- [Freetype2 V2.5.3](https://www.freetype.org/)
 - [LLVM/Clang 64bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [LLVM/Clang 32bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
@@ -378,12 +377,11 @@ set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
 set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%
 ```
 
-Not all of the shared libraries that are included with Visual Studio 2010 are registered during installation.
-In particular, the `msdia100.dll` libraries must be registered manually.
-To do so, execute the following from a command prompt:
+Not all of the shared libraries that are included with Visual Studio 2013 are registered during installation.
+In particular, the `msdia120.dll` libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
 ```
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 10.0\DIA SDK\bin\msdia100.dll"
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 10.0\DIA SDK\bin\amd64\msdia100.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\msdia120.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\amd64\msdia120.dll"
 ```
 
 You can download Freemarker and Freetype manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
@@ -404,25 +402,6 @@ wget http://download.savannah.gnu.org/releases/freetype/freetype-2.5.3.tar.gz
 tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 tar --one-top-level=/cygdrive/c/temp/freetype --strip-components=1 -xzf freetype-2.5.3.tar.gz
 ```
-
-Note:
-In order to build Windows 32-bit, Please enure the freetype version supports win 32-bit application (e.g. freetype-2.4.7 which includes the "win32" folder)
-
-- To build the Freetype dynamic and static libraries, open the Visual Studio Command Prompt (VS2010) (see C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Microsoft Visual Studio 2010\Visual Studio Tools) and run:
-1) Win 64-bit
-```
-cd c:\temp
-msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:Platform=x64 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib64/" /p:IntDir="C:/temp/freetype/obj64/" > freetype.log
-msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:Platform=x64 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib64/" /p:IntDir="C:/temp/freetype/obj64/" >> freetype.log
-```
-
-2) Win 32-bit
-```
-cd c:\temp
-msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" > freetype.log
-msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" >> freetype.log
-```
-:pencil: Check the `freetype.log` for errors.
 
 ### 2. Get the source
 :ledger:
@@ -451,8 +430,7 @@ When you have all the source files that you need, run the configure script, whic
 bash configure --disable-ccache \
                --with-boot-jdk=/cygdrive/c/<path to_jdk8> \
                --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
-               --with-freetype-include=/cygdrive/c/temp/freetype/include \
-               --with-freetype-lib=/cygdrive/c/temp/freetype/lib64
+               --with-freetype-src=/cygdrive/c/temp/freetype
 ```
 
 2) Win 32-bit
@@ -460,8 +438,7 @@ bash configure --disable-ccache \
 bash configure --disable-ccache \
                --with-boot-jdk=/cygdrive/c/<path_to_jdk8> \
                --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
-               --with-freetype-include=/cygdrive/c/temp/freetype/include \
-               --with-freetype-lib=/cygdrive/c/temp/freetype/lib32  \
+               --with-freetype-src=/cygdrive/c/temp/freetype
                --with-target-bits=32
 ```
 :pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories.
