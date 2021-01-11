@@ -1180,6 +1180,15 @@ class TR_RelocationRecordValidateClassFromCP : public TR_RelocationRecord
       uint32_t cpIndex(TR_RelocationTarget *reloTarget);
    };
 
+class TR_RelocationRecordValidateArbitraryObjectClassFromCP : public TR_RelocationRecordValidateClassFromCP
+   {
+   public:
+      TR_RelocationRecordValidateArbitraryObjectClassFromCP() {}
+      TR_RelocationRecordValidateArbitraryObjectClassFromCP(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordValidateClassFromCP(reloRuntime, record) {}
+      virtual char *name() { return "TR_RelocationRecordValidateArbitraryObjectClassFromCP"; }
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+   };
+
 class TR_RelocationRecordValidateDefiningClassFromCP : public TR_RelocationRecord
    {
    public:

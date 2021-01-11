@@ -743,6 +743,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_ValidateClassFromCP:
          reloRecord = new (storage) TR_RelocationRecordValidateClassFromCP(reloRuntime, record);
          break;
+      case TR_ValidateArbitraryObjectClassFromCP:
+         reloRecord = new (storage) TR_RelocationRecordValidateArbitraryObjectClassFromCP(reloRuntime, record);
+         break;
       case TR_ValidateDefiningClassFromCP:
          reloRecord = new (storage) TR_RelocationRecordValidateDefiningClassFromCP(reloRuntime, record);
          break;
@@ -3607,6 +3610,8 @@ TR_RelocationRecordValidateArbitraryObjectClass::applyRelocation(TR_RelocationRu
 
    int32_t returnCode = 0;
    bool verified = false;
+
+   // check definingClass shape against the class chain in the SCC
    if (definingClass)
       {
       void *classChainOrROMClass;
@@ -3618,6 +3623,8 @@ TR_RelocationRecordValidateArbitraryObjectClass::applyRelocation(TR_RelocationRu
       verified = validateClass(reloRuntime, definingClass, classChainOrROMClass);
       }
 
+   // check visibility. take out the class name from the SCC
+   // then do a getClassFromSignature to find the class and check that class against the materilized class we have
    if (verified)
       {
       uintptr_t *classChain = reinterpret_cast<uintptr_t*>(reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffsetInSharedCache(reloTarget)));
@@ -4054,6 +4061,19 @@ uint32_t
 TR_RelocationRecordValidateDefiningClassFromCP::cpIndex(TR_RelocationTarget *reloTarget)
    {
    return reloTarget->loadUnsigned32b((uint8_t *) &((TR_RelocationRecordValidateDefiningClassFromCPBinaryTemplate *)_record)->_cpIndex);
+   }
+
+int32_t
+TR_RelocationRecordValidateArbitraryObjectClassFromCP::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   uint16_t classID = this->classID(reloTarget);
+   uint16_t beholderID = this->beholderID(reloTarget);
+   uint32_t cpIndex = this->cpIndex(reloTarget);
+
+   if (reloRuntime->comp()->getSymbolValidationManager()->validateArbitraryObjectClassFromCPRecord(classID, beholderID, cpIndex))
+      return 0;
+   else
+      return compilationAotClassReloFailure;
    }
 
 int32_t

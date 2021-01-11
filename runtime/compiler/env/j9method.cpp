@@ -1576,11 +1576,11 @@ TR_ResolvedRelocatableJ9Method::validateArbitraryObjectClassFromConstantPool(TR:
       clazz = comp->fej9()->getObjectClassAt((uintptr_t)arbitraryObject); 
       }
 
-   // if (comp->getOption(TR_UseSymbolValidationManager))
-   //    {
-   //    return comp->getSymbolValidationManager()->addArbitraryObjectClassFromCPRecord(clazz, cp(), cpIndex);
-   //    }
-   // else
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      return comp->getSymbolValidationManager()->addArbitraryObjectClassFromCPRecord(clazz, cp(), cpIndex);
+      }
+   else
       {
       return storeValidationRecordIfNecessary(comp, cp(), cpIndex, reloKind, ramMethod(), reinterpret_cast<J9Class *>(clazz));
       }

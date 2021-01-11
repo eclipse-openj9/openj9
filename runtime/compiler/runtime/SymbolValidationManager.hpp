@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -226,6 +226,23 @@ struct DefiningClassFromCPRecord : public ClassValidationRecord
    TR_OpaqueClassBlock * _beholder;
    uint32_t  _cpIndex;
    bool      _isStatic;
+   };
+
+struct ArbitraryObjectClassFromCPRecord : public ClassValidationRecordWithChain
+   {
+   ArbitraryObjectClassFromCPRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder, uint32_t cpIndex)
+      : ClassValidationRecordWithChain(TR_ValidateArbitraryObjectClassFromCP, clazz),
+        _class(clazz),
+        _beholder(beholder),
+        _cpIndex(cpIndex)
+      {}
+
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
+   virtual void printFields();
+
+   TR_OpaqueClassBlock * _class;
+   TR_OpaqueClassBlock * _beholder;
+   uint32_t  _cpIndex;
    };
 
 struct StaticClassFromCPRecord : public ClassValidationRecord
@@ -677,6 +694,7 @@ public:
    bool addClassByNameRecord(TR_OpaqueClassBlock *clazz, TR_OpaqueClassBlock *beholder);
    bool addProfiledClassRecord(TR_OpaqueClassBlock *clazz);
    bool addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
+   bool addArbitraryObjectClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
    bool addDefiningClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex, bool isStatic = false);
    bool addStaticClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9ConstantPool *constantPoolOfBeholder, uint32_t cpIndex);
    bool addArrayClassFromComponentClassRecord(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass);
@@ -726,7 +744,7 @@ public:
    bool validateClassFromITableIndexCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateDeclaringClassFromFieldOrStaticRecord(uint16_t definingClassID, uint16_t beholderID, int32_t cpIndex);
    bool validateConcreteSubClassFromClassRecord(uint16_t childClassID, uint16_t superClassID);
-
+   bool validateArbitraryObjectClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex);
    bool validateClassChainRecord(uint16_t classID, void *classChain);
 
    bool validateMethodFromClassRecord(uint16_t methodID, uint16_t beholderID, uint32_t index);
