@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2406,6 +2406,19 @@ done:
 }
 
 void* J9FASTCALL
+old_slow_jitResolveFlattenableField(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
+	DECLARE_JIT_PARM(J9Method*, method, 1);
+	DECLARE_JIT_INT_PARM(cpIndex, 2);
+	DECLARE_JIT_INT_PARM(resolveType, 3);
+	void *addr = NULL;
+
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
+void* J9FASTCALL
 old_slow_jitRetranslateCaller(J9VMThread *currentThread)
 {
 	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(2);
@@ -3796,6 +3809,7 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_slow_jitResolveInvokeDynamic = (void*)old_slow_jitResolveInvokeDynamic;
 	jitConfig->old_slow_jitResolveConstantDynamic = (void*)old_slow_jitResolveConstantDynamic;
 	jitConfig->old_slow_jitResolveHandleMethod = (void*)old_slow_jitResolveHandleMethod;
+	jitConfig->old_slow_jitResolveFlattenableField = (void*)old_slow_jitResolveFlattenableField;
 	jitConfig->old_slow_jitRetranslateCaller = (void*)old_slow_jitRetranslateCaller;
 	jitConfig->old_slow_jitRetranslateCallerWithPreparation = (void*)old_slow_jitRetranslateCallerWithPreparation;
 	jitConfig->old_slow_jitRetranslateMethod = (void*)old_slow_jitRetranslateMethod;
