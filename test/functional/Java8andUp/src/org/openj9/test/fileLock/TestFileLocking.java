@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.openj9.test.util.VersionCheck;
 
 import org.testng.Assert;
 import org.testng.AssertJUnit;
@@ -216,6 +218,10 @@ public class TestFileLocking {
 		}
 		cmdElements.add("-classpath");
 		cmdElements.add(classpath);
+		if (VersionCheck.major() >= 16) {
+			cmdElements.add("--add-opens");
+			cmdElements.add("java.base/openj9.internal.tools.attach.target=ALL-UNNAMED");
+		}
 		cmdElements.add(LOCKER_CMD);
 		cmdElements.add(lockFileName);
 		cmdElements.add(lockType);
