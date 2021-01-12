@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -6396,13 +6396,14 @@ done:
 		void* volatile valueAddress = NULL;
 		void *resolveResult = NULL;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset))) {
+		if (J9_UNEXPECTED(!(
+			VM_VMHelpers::staticFieldRefIsResolved(flagsAndClass, valueOffset) &&
+			VM_VMHelpers::resolvedStaticFieldRefIsPutResolved(flagsAndClass, _literals, ramConstantPool)
+		))) {
 			/* Unresolved */
-resolve:
-			J9Method *method = _literals;
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
-			resolveResult = resolveStaticFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
+			resolveResult = resolveStaticFieldRef(_currentThread, _literals, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
@@ -6417,26 +6418,6 @@ resolve:
 			}
 			valueOffset = ramStaticFieldRef->valueOffset;
 			flagsAndClass = ramStaticFieldRef->flagsAndClass;
-		} else {
-			/* Ref is resolved, see if it's fully resolved for put (put resolved and not a final field) */
-			UDATA const resolvedBit = (UDATA)J9StaticFieldRefPutResolved << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT);
-			UDATA const finalBit = (UDATA)J9StaticFieldRefFinal << (8 * sizeof(UDATA) - J9_REQUIRED_CLASS_SHIFT);
-			UDATA const testBits = resolvedBit | finalBit;
-			UDATA const bits = flagsAndClass & testBits;
-			/* Put resolved for a non-final field means fully resolved */
-			if (J9_UNEXPECTED(resolvedBit != bits)) {
-				/* If not put resolved for a final field, resolve is necessary */
-				if (J9_UNEXPECTED(testBits != bits)) {
-					goto resolve;
-				}
-				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), J9AccStatic))) {
-					if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass))) {
-						/* Store not allowed - run the resolve code to throw the exception */
-						goto resolve;
-					}
-				}
-			}
 		}
 		/* Swap flags and class subfield order. */
 		classAndFlags = J9CLASSANDFLAGS_FROM_FLAGSANDCLASS(flagsAndClass);
@@ -6595,9 +6576,11 @@ done:
 		UDATA flags = ramFieldRef->flags;
 		UDATA valueOffset = ramFieldRef->valueOffset;
 
-		if (J9_UNEXPECTED(!VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset))) {
+		if (J9_UNEXPECTED(!(
+			VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset) &&
+			VM_VMHelpers::resolvedInstanceFieldRefIsPutResolved(flags, _literals, ramConstantPool)
+		))) {
 			/* Unresolved */
-resolve:
 			J9Method *method = _literals;
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
@@ -6613,26 +6596,6 @@ resolve:
 			}
 			flags = ramFieldRef->flags;
 			valueOffset = ramFieldRef->valueOffset;
-		} else {
-			/* Ref is resolved, see if it's fully resolved for put (put resolved and not a final field) */
-			UDATA const resolvedBit = J9FieldFlagPutResolved;
-			UDATA const finalBit = J9AccFinal;
-			UDATA const testBits = resolvedBit | finalBit;
-			UDATA const bits = flags & testBits;
-			/* Put resolved for a non-final field means fully resolved */
-			if (J9_UNEXPECTED(resolvedBit != bits)) {
-				/* If not put resolved for a final field, resolve is necessary */
-				if (J9_UNEXPECTED(testBits != bits)) {
-					goto resolve;
-				}
-				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), 0))) {
-					if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass))) {
-						/* Store not allowed - run the resolve code to throw the exception */
-						goto resolve;
-					}
-				}
-			}
 		}
 #if defined(DO_HOOKS)
 		if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_PUT_FIELD)) {

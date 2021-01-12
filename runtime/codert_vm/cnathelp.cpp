@@ -2408,13 +2408,43 @@ done:
 void* J9FASTCALL
 old_slow_jitResolveFlattenableField(J9VMThread *currentThread)
 {
+	void *addr = NULL;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
 	DECLARE_JIT_PARM(J9Method*, method, 1);
 	DECLARE_JIT_INT_PARM(cpIndex, 2);
 	DECLARE_JIT_INT_PARM(resolveType, 3);
-	void *addr = NULL;
-
+	J9ConstantPool * const ramConstantPool = J9_CP_FROM_METHOD(method);
+	J9RAMFieldRef * const ramFieldRef = ((J9RAMFieldRef *)ramConstantPool) + cpIndex;
+	UDATA const flags = ramFieldRef->flags;
+	UDATA const valueOffset = ramFieldRef->valueOffset;
+	bool resolved = VM_VMHelpers::instanceFieldRefIsResolved(flags, valueOffset);
+	if (resolved && (J9TR_FLAT_RESOLVE_PUTFIELD == resolveType)) {
+		resolved = VM_VMHelpers::resolvedInstanceFieldRefIsPutResolved(flags, method, ramConstantPool);
+	}
+	if (!resolved) {
+		UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE;
+		switch(resolveType) {
+		case J9TR_FLAT_RESOLVE_WITHFIELD:
+			resolveFlags |= J9_RESOLVE_FLAG_WITH_FIELD;
+			break;
+		case J9TR_FLAT_RESOLVE_GETFIELD:
+			break;
+		case J9TR_FLAT_RESOLVE_PUTFIELD:
+			resolveFlags |= J9_RESOLVE_FLAG_FIELD_SETTER;
+			break;
+		default:
+			Assert_CodertVM_unreachable();
+			break;
+		}
+		void *oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+		currentThread->javaVM->internalVMFunctions->resolveInstanceFieldRef(currentThread, method, ramConstantPool, cpIndex, resolveFlags, NULL);
+		addr = restoreJITResolveFrame(currentThread, oldPC);
+	}
 	SLOW_JIT_HELPER_EPILOGUE();
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	return addr;
 }
 
