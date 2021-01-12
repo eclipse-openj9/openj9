@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -152,6 +152,7 @@
 			<variation>Mode107</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--illegal-access=permit \
 	--add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED  --add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-exports=java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
@@ -181,6 +182,7 @@
 			<variation>Mode109</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xgc:scvTenureAge=14,scvNoAdaptiveTenure \
+	--illegal-access=permit \
 	--add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED  --add-opens=java.base/java.lang=ALL-UNNAMED \
 	--add-exports=java.base/jdk.internal.org.objectweb.asm.commons=ALL-UNNAMED --add-exports=java.base/com.ibm.oti.vm=ALL-UNNAMED \
 	-javaagent:$(Q)$(TEST_RESROOT)$(D)javaagenttest.jar$(Q) \
