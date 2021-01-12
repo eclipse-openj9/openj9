@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,23 +186,18 @@ _end:
 static UDATA
 addPropertyForOptionWithEqualsArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *propName)
 {
-	IDATA argIndex = -1;
 	UDATA rc = J9SYSPROP_ERROR_NONE;
+	IDATA argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, optionName, NULL);
 
-	argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, optionName, NULL);
 	if (argIndex >= 0) {
 		/* option name includes the '=' so go back one to get the option arg */
 		char *optionArg = getOptionArg(vm, argIndex, optionNameLen - 1);
 
 		if (NULL != optionArg) {
 			rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_VALUE_ALLOCATED);
-			if (J9SYSPROP_ERROR_NONE != rc) {
-				goto _end;
-			}
 		}
 	}
 
-_end:
 	return rc;
 }
 
@@ -479,7 +474,7 @@ addModularitySystemProperties(J9JavaVM * vm)
 	} else {
 		/* check if SYSPROP_JDK_MODULE_PATCH has been set */
 		J9VMSystemProperty *property = NULL;
-		const char* propName = SYSPROP_JDK_MODULE_PATCH"0";
+		const char *propName = SYSPROP_JDK_MODULE_PATCH "0";
 
 		if (J9SYSPROP_ERROR_NOT_FOUND != getSystemProperty(vm, propName, &property)) {
 			vm->jclFlags |= J9_JCL_FLAG_JDK_MODULE_PATCH_PROP;
@@ -488,19 +483,6 @@ addModularitySystemProperties(J9JavaVM * vm)
 
 	/* Find last --illegal-access */
 	rc = addPropertyForOptionWithEqualsArg(vm, VMOPT_ILLEGAL_ACCESS, LITERAL_STRLEN(VMOPT_ILLEGAL_ACCESS), SYSPROP_JDK_MODULE_ILLEGALACCESS);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto _end;
-	} else {
-		/* check if SYSPROP_JDK_MODULE_ILLEGALACCESS has been set */
-		J9VMSystemProperty *property = NULL;
-
-		if (J9SYSPROP_ERROR_NOT_FOUND != getSystemProperty(vm, SYSPROP_JDK_MODULE_ILLEGALACCESS, &property)) {
-
-			if (0 == strcmp(property->value, "deny")) {
-				vm->runtimeFlags |= J9_RUNTIME_DENY_ILLEGAL_ACCESS;
-			}
-		}
-	}
 
 _end:
 	return rc;
