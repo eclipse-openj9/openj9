@@ -352,6 +352,7 @@ public:
 
    virtual char *                  getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length);
    virtual char *                  getMethodSignatureFromConstantPool(int32_t cpIndex, int32_t & len);
+   virtual char *                  getMethodNameFromConstantPool(int32_t cpIndex, int32_t & len);
    virtual TR::DataType            getLDCType(int32_t cpIndex);
    virtual bool                    isClassConstant(int32_t cpIndex);
    virtual bool                    isStringConstant(int32_t cpIndex);
