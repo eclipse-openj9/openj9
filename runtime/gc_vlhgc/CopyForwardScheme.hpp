@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -509,7 +508,7 @@ private:
 	 * Insert the specified tail candidate into the tail candidate list.  The implementation assumes that the calling thread can modify 
 	 * regionList without locking it so the callsite either needs to have locked the list or be single-threaded.
 	 * @param env[in] The GC thread
-	 * @param regionList[in] The region list to which tailRegion should be added as a a tail candidate
+	 * @param regionList[in] The region list to which tailRegion should be added as a tail candidate
 	 * @param tailRegion[in] The region to add
 	 */
 	void insertTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC *tailRegion);
@@ -873,7 +872,7 @@ private:
 	 */ 
 	MMINLINE void depthCopyHotFields(MM_EnvironmentVLHGC *env, J9Class *clazz, J9Object *destinationObjectPtr, MM_AllocationContextTarok *reservingContext);
 	
-	/* Copy the the hot field of an object.
+	/* Copy the hot field of an object.
 	 * Valid if scavenger dynamicBreadthScanOrdering is enabled.
 	 * @param destinationObjectPtr - the object who's hot field will be copied
 	 * @param offset  - the object field offset of the hot field to be copied 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -947,7 +947,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          }
 
       //SD: for jitInduceOSR we don't need to set the RAM method (the method that the VM needs to start executing)
-      //because VM is going to figure what method to execute by looking up the the jitPC in the GC map and finding
+      //because VM is going to figure what method to execute by looking up the jitPC in the GC map and finding
       //the desired invoke bytecode.
       if (!isJitInduceOSRCall)
          {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2020 IBM Corp. and others
+  Copyright (c) 2012, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1170,7 +1170,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 60-b: Make sure that the classes are used from the cache when the the program is being run again" timeout="600" runPath=".">
+	<test id="Test 60-b: Make sure that the classes are used from the cache when the program is being run again" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 4</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>

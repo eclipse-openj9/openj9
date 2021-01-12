@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -421,7 +421,7 @@ j9sock_getaddrinfo(struct J9PortLibrary *portLibrary, char *name, j9addrinfo_t h
  *
  * @return	
  * \arg 0, if no errors occurred, otherwise the (negative) error code
- * \arg J9PORT_ERROR_SOCKET_VALUE_NULL when we have have the old IPv4 gethostbyname call and the address indexed is out
+ * \arg J9PORT_ERROR_SOCKET_VALUE_NULL when we have the old IPv4 gethostbyname call and the address indexed is out
  * of range.  This is because the address list and the host alias list are not the same length.  Just skip this entry.
  *
  * @note Added for IPv6 support.
@@ -623,7 +623,7 @@ j9sock_getaddrinfo_length(struct J9PortLibrary *portLibrary, j9addrinfo_t handle
  *
  * @return
  * \arg 0, if no errors occurred, otherwise the (negative) error code.
- * \arg J9PORT_ERROR_SOCKET_VALUE_NULL when we have have the old IPv4 gethostbyname call and the name indexed is out
+ * \arg J9PORT_ERROR_SOCKET_VALUE_NULL when we have the old IPv4 gethostbyname call and the name indexed is out
  * of range.  This is because the address list and the host alias list are not the same length.  Just skip this entry.
  *
  * @note Added for IPv6 support.

@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2019, 2020 IBM Corp. and others
+Copyright (c) 2019, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ left shifted 1 bit; the low bit is used to determine whether the offset
 is relative to the start of the ROM Class section or the start of the
 metadata section.
 
-The APIs in in `TR_J9SharedCache` provide an abstraction layer so that
+The APIs in `TR_J9SharedCache` provide an abstraction layer so that
 other parts of the compiler do not need to worry about the details. 
 However, it is important that one does not use the offsets directly, but
 only via the `TR_J9SharedCache` class.

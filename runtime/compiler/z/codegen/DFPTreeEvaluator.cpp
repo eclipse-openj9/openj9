@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1384,7 +1384,7 @@ inlineBigDecimalFromPackedConverter(
       cg->stopUsingRegister(valRegister);
       }
 
-   // load and sign extend the the exponent
+   // load and sign extend the exponent
    TR::Register * expRegister = NULL;
    clobbered = false;
    if (node->getChild(2)->getReferenceCount() > 1)

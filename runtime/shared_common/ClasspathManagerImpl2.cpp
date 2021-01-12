@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -757,7 +757,7 @@ SH_ClasspathManagerImpl2::localUpdate_CheckManually(J9VMThread* currentThread, C
  * @warning Must always be called with write mutex held
  * param[in] currentThread The current thread
  * param[in] localCP The ClasspathItem from the caller classloader
- * param[in] cpeIndex The index in localCP that that ROMClass was loaded from
+ * param[in] cpeIndex The index in localCP that ROMClass was loaded from
  * param[out] foundCP A ClasspathItem in the cache that exactly matches localCP and has been proved non-stale
  *
  * @return 0 for success, non-zero for failure

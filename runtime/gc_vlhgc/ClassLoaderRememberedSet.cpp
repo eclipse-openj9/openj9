@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -262,7 +262,7 @@ MM_ClassLoaderRememberedSet::isRememberedInternal(MM_EnvironmentBase *env, UDATA
 		/* this class loader is overflowed */
 		isRemembered = true;
 	} else if (isTaggedRegionIndex(gcRememberedSet)) {
-		/* some region is remembered using the the immediate encoding */
+		/* some region is remembered using the immediate encoding */
 		isRemembered = true;
 	} else {
 		/* a bit vector is installed. Check to see if it's all zero */
@@ -401,7 +401,7 @@ MM_ClassLoaderRememberedSet::clearRememberedSetsInternal(MM_EnvironmentBase *env
 	} else if (isOverflowedRemememberedSet(gcRememberedSet)) {
 		/* this class loader is overflowed  - do nothing */
 	} else if (isTaggedRegionIndex(gcRememberedSet)) {
-		/* some region is remembered using the the immediate encoding */
+		/* some region is remembered using the immediate encoding */
 		UDATA regionIndex = asUntaggedRegionIndex(gcRememberedSet);
 		if (isBitSet(env, _bitsToClear, regionIndex)) {
 			/* the region is not preserved - clear it */

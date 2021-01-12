@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2020 IBM Corp. and others
+// Copyright (c) 2006, 2021 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -242,7 +242,7 @@ TraceExit=Trc_SHR_RMI_findExisting_ExitOK Overhead=1 Level=3 Template="RMI findE
 TraceEntry=Trc_SHR_RMI_reuniteOrphan_Entry Overhead=1 Level=3 Template="RMI reuniteOrphan: trying reuniteOrphan for romclass %.*s"
 TraceEvent=Trc_SHR_RMI_reuniteOrphan_Event1 Overhead=1 Level=4 Template="RMI reuniteOrphan: reuniting orphaned romclass %.*s (at address 0x%p) with item 0x%p"
 TraceExit=Trc_SHR_RMI_reuniteOrphan_ExitTrue Overhead=1 Level=3 Template="RMI reuniteOrphan: reuniteOrphan returning true"
-TraceExit=Trc_SHR_RMI_reuniteOrphan_ExitFalse Overhead=1 Level=3 Template="RMI reuniteOrphan reuniteOrphan returning false"
+TraceExit=Trc_SHR_RMI_reuniteOrphan_ExitFalse Overhead=1 Level=3 Template="RMI reuniteOrphan: reuniteOrphan returning false"
 
 TraceEntry=Trc_SHR_RMI_redeemStale_Entry Overhead=1 Level=3 Template="RMI redeemStale: trying redeemStale for %.*s from ClasspathWrapper 0x%p and cpeIndex %d"
 TraceExit=Trc_SHR_RMI_redeemStale_ExitFound Overhead=1 Level=3 Template="RMI redeemStale: found stale ROMClass to redeem. Returning ROMClassWrapper 0x%p"
@@ -1683,7 +1683,7 @@ TraceExit=Trc_SHR_CC_enterWriteMutex_ExitError Noenv Overhead=1 Level=1 Template
 TraceExit=Trc_SHR_CC_enterReadWriteAreaMutex_ExitError Overhead=1 Level=1 Template="CC enterReadWriteAreaMutex (ERROR): POST enter readWrite mutex, rc=%d"
 
 TraceEvent=Trc_SHR_OSC_Mmap_acquireWriteLockDeadlockMsg NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireWriteLock EDEADLK : %s"
-TraceEvent=Trc_SHR_OSC_Mmap_acquireWriteLock_retryLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireWriteLock: Deadlock was detected and we are are going to retry file lock."
+TraceEvent=Trc_SHR_OSC_Mmap_acquireWriteLock_retryLock NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachemmap::acquireWriteLock: Deadlock was detected and we are going to retry file lock."
 TraceEvent=Trc_SHR_OSC_Mmap_acquireWriteLock_errorTakingReadWriteMonitor NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireWriteLock: Deadlock was detected, and we failed to take the READWRITELOCK monitor."
 TraceEvent=Trc_SHR_OSC_Mmap_acquireWriteLock_errorTakingWriteMonitor NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::acquireWriteLock: Deadlock was detected, and we failed to take the WRITELOCK monitor."
 

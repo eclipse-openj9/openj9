@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2710,7 +2710,7 @@ configurateGCWithPolicyAndOptionsStandard(MM_EnvironmentBase *env)
 				uintptr_t nurserySize = extensions->memoryMax / 4;
 
 				/*
-				 * correctness of -Xmn* values will be analyzed later on with with initialization error in case of bad combination
+				 * correctness of -Xmn* values will be analyzed later on with initialization error in case of bad combination
 				 * so assume here all of them are correct, just check none of them is larger then entire heap size
 				 */
 				if (extensions->userSpecifiedParameters._Xmn._wasSpecified) {

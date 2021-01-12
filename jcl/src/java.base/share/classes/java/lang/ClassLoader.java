@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -817,7 +817,7 @@ private native Class<?> findLoadedClassImpl(String className);
 
 /**
  * Attempts to load a class using the system class loader.
- * Note that the class has already been been linked.
+ * Note that the class has already been linked.
  *
  * @return 		java.lang.Class
  *					the class which was loaded.
@@ -1376,7 +1376,7 @@ Class<?> loadClassHelper(final String className, boolean resolveClass, boolean d
 }
 
 /**
- * Attempts to register the  the ClassLoader as being capable of 
+ * Attempts to register the ClassLoader as being capable of 
  * parallel class loading.  This requires that all superclasses must
  * also be parallel capable.
  *

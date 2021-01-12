@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -710,7 +710,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                   // sampled; (2) EDO; (3) PIC miss; (4) megamorphic interface call profile.
                   // EDO will have its own recompilation snippet, but in cases (3) and (4)
                   // the counter just reaches 0, and only the next sample will trigger
-                  // recompilation. These cases can be identified by the the negative counter
+                  // recompilation. These cases can be identified by the negative counter
                   // (we decrement the counter above in sampleMethod()). In contrast, if the
                   // counter is decremented through sampling, only the first thread that sees
                   // the counter 0 will recompile the method, and all the others will be

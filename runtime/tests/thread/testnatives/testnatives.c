@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corp. and others
+ * Copyright (c) 2008, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -179,7 +179,7 @@ getSchedulingPolicy(J9VMThread *targetVMThread)
 
 /**
  * Helper function used by Java_j9vm_test_thread_TestNatives_* JNI functions
- * to get the the scheduling priority in use by a J9VMThread
+ * to get the scheduling priority in use by a J9VMThread
  * 
  * @param targetVMThread[in]  A pointer to the J9VMThread for which we'll
  * 							  retrieve the scheduling priority

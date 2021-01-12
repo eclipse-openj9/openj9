@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright (c) 1999, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -98,7 +98,7 @@ public class SimpleCopy {
 	}
 
 	/**
-	 * Sets the output path of of this simplecopy task.  This can either be
+	 * Sets the output path of this simplecopy task.  This can either be
 	 * an absolute path or one relative to the configuration output path.
 	 *
 	 * @param       simpleOutput    the simplecopy output path

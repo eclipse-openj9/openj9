@@ -915,7 +915,7 @@ ClassFileOracle::walkTypeAnnotations(U_16 annotationsCount, J9CfrTypeAnnotation 
 			 *
 			 * In this case, force the typeIndex to a null value.
 			 * This will cause the parser to throw
-			 * an error if the the VM or application tries to retrieve the annotation.
+			 * an error if the VM or application tries to retrieve the annotation.
 			 */
 			annotation->typeIndex = 0;
 		}

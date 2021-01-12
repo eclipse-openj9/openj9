@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,7 +67,7 @@ public class LibraryResolverFactory
 	/**
 	 * This property sets a path that can be used to re-map library paths on the system
 	 * the core was generated to paths on the local machine. For example allowing you to
-	 * use a core generated on AIX with the the same build downloaded to a Windows machine
+	 * use a core generated on AIX with the same build downloaded to a Windows machine
 	 * from Espresso. You can get the exact build id from core files in jdmpview
 	 * by running "info system"
 	 *  

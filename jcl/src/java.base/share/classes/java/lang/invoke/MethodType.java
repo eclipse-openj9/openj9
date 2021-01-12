@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -526,7 +526,7 @@ public final class MethodType implements Serializable
 	 * @param position - the position to insert into 
 	 * @param types - zero or mores types for the new parameters
 	 * @return a new MethodType with the additional parameters at position
-	 * @throws IndexOutOfBoundsException if position is less than 0 or greater than than the number of arguments
+	 * @throws IndexOutOfBoundsException if position is less than 0 or greater than the number of arguments
 	 */
 	public MethodType insertParameterTypes(int position, Class<?>... types) throws IndexOutOfBoundsException {
 		if (position < 0 || position > ptypes.length) {
@@ -555,7 +555,7 @@ public final class MethodType implements Serializable
 	 * @param position - the position to insert into 
 	 * @param types - zero or mores types for the new parameters
 	 * @return a new MethodType with the additional parameters at position
-	 * @throws IllegalArgumentException if position is less than 0 or greater than than the number of arguments
+	 * @throws IllegalArgumentException if position is less than 0 or greater than the number of arguments
 	 */
 	public MethodType insertParameterTypes(int position, List<Class<?>> types) {
 		return insertParameterTypes(position, types.toArray(new Class[types.size()]));

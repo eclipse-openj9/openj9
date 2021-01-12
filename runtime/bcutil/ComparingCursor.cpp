@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -627,14 +627,14 @@ ComparingCursor::getCountingCursor(DataType dataType) {
 				return &_lineNumberHelper;
 
 			}
-			/*If the debug data is is inline return _mainHelper*/
+			/*If the debug data is inline return _mainHelper*/
 			break;
 		case LOCAL_VARIABLE_DATA_SRP_TO_UTF8:
 		case LOCAL_VARIABLE_DATA:
 			if (!(_context->shouldWriteDebugDataInline())) {
 				return &_varInfoHelper;				
 			}
-			/*If the debug data is is inline return _mainHelper*/
+			/*If the debug data is inline return _mainHelper*/
 			break;
 		default:
 			break;

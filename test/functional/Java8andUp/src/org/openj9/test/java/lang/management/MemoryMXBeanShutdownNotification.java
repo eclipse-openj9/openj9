@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ import org.testng.log4testng.Logger;
  * the first thread to terminate. If MemoryMXBean is first used after the VM
  * has started to shutdown, attempting to register a shutdown hook throws
  * an IllegalStateException which was not being caught (see [1]). This test
- * verifies that that IllegalStateException is now caught and the VM shuts
+ * verifies that IllegalStateException is now caught and the VM shuts
  * down properly.
  *
  * [1] https://github.com/eclipse/openj9/issues/932

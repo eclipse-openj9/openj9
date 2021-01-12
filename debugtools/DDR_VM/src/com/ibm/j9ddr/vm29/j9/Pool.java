@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,7 +79,7 @@ public abstract class Pool<StructType extends DataType>
 	/**
 	 * Returns the total capacity of a pool
 	 *
-	 * @return the capacity of the the pool
+	 * @return the capacity of the pool
 	 */
 	public abstract long capacity();
 	

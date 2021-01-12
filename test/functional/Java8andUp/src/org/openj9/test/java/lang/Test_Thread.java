@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -379,7 +379,7 @@ public class Test_Thread {
 	 */
 	@Test
 	public void test_currentThread() {
-		// Test for method java.lang.Thread java.lang.Thread.currentThread()
+		// Test for method java.lang.Thread.currentThread()
 		AssertJUnit.assertTrue("Current thread was not main thread: " + Thread.currentThread().getName(),
 				Thread.currentThread().getName().equals("main"));
 	}
