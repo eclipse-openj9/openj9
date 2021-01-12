@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2017 IBM Corp. and others
+ * Copyright (c) 2006, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ import com.ibm.dtfj.corereaders.zos.util.CompressedRecordArray;
 import com.ibm.dtfj.corereaders.zos.util.ObjectMap;
 
 /**
- * This class represents an svcdump. It is is the main class in the dumpreader package and
+ * This class represents an svcdump. It is the main class in the dumpreader package and
  * provides low-level access to the contents of an svcdump (eg the ability to read the contents
  * of an address in a given address space).
  * <p>

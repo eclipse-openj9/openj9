@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -971,7 +971,7 @@ createSemaphore(struct J9PortLibrary *portLibrary, intptr_t fd, BOOLEAN isReadOn
 			
 		sem_union.val = SEMMARKER_INITIALIZED;
 		if (semctlWrapper(portLibrary, TRUE, semid, setSize, SETVAL, sem_union) == -1) {
-			Trc_PRT_shsem_j9shsem_createsemaphore_ExitWithMessage("Could not mark semaphore as initialized initialized.");
+			Trc_PRT_shsem_j9shsem_createsemaphore_ExitWithMessage("Could not mark semaphore as initialized.");
 			/* The code should never ever fail here b/c we just created, and obviously own the new semaphore.
 			 * If semctl call below fails we are already in an error condition, so 
 			 * don't worry about failure here.
@@ -1123,7 +1123,7 @@ openSemaphore(struct J9PortLibrary *portLibrary, intptr_t fd, char *baseFile, j9
 					}/*Any other error and we will terminate*/
 
 					/*If sXmctl fails our checks below will also fail (they use the same function) ... so we terminate with an error*/
-					Trc_PRT_shsem_j9shsem_opensemaphore_MsgWithError("Error: __getipc() failed. Can not open shared shared semaphore, portable errorCode = ", lastError);
+					Trc_PRT_shsem_j9shsem_opensemaphore_MsgWithError("Error: __getipc() failed. Can not open shared semaphore, portable errorCode = ", lastError);
 					goto failDontUnlink;
 				}
 			} else {

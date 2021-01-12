@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ public class TestTenants extends DDRExtTesterBase {
 			
 			if (currentLine.contains("Tenant")) {
 				
-				// Grab the the details for that table.
+				// Grab the details for that table.
 				String tableAddr = getAddressFor(currentLine, null, "j9monitortablelistentry", "\t");
 				tableAddr = tableAddr.substring(0, tableAddr.indexOf('>')); // getAddressFor(...) has some issues.
 				String tableOutput = exec(Constants.MONITORS_CMD, new String[] { "table", tableAddr });

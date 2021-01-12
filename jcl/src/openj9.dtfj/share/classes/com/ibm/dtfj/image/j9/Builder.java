@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,7 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 	 * @param core The abstraction over the core file
 	 * @param openCoreFile The open file which 
 	 * @param environmentAddress The address of the environment structure in the core
-	 * @param resolvingAgent The agent we can delegate to to locate files for us
+	 * @param resolvingAgent The agent we can delegate to locate files for us
 	 */
 	public Builder(ICoreFileReader core, ClosingFileReader openCoreFile, long environmentAddress, IFileLocationResolver resolvingAgent)
 	{
@@ -82,7 +82,7 @@ public class Builder implements com.ibm.dtfj.corereaders.Builder
 	 * @param core The abstraction over the core file
 	 * @param stream The stream for the core file 
 	 * @param environmentAddress The address of the environment structure in the core
-	 * @param resolvingAgent The agent we can delegate to to locate files for us
+	 * @param resolvingAgent The agent we can delegate to locate files for us
 	 */
 	public Builder(ICoreFileReader core, ImageInputStream stream, long environmentAddress, IFileLocationResolver resolvingAgent)
 	{

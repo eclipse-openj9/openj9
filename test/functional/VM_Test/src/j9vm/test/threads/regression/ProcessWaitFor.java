@@ -1,7 +1,7 @@
 package j9vm.test.threads.regression;
 
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corp. and others
+ * Copyright (c) 2008, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -225,7 +225,7 @@ public class ProcessWaitFor extends TestCase {
 		 * interrupted exception and the exception is cleared */
 		try {
 			interruptor.join();
-			/* is is possible that the interrupter thread will finish before we do the join in this case 
+			/* it is possible that the interrupter thread will finish before we do the join in this case 
 			 * the test is invalid
 			 */
 			System.out.println("WaitForAfterJoin - invalid, assuming pass");
@@ -253,7 +253,7 @@ public class ProcessWaitFor extends TestCase {
 		 * interrupted exception and the exception is cleared */
 		try {
 			interruptor.join(5000);
-			/* is is possible that the interrupter thread will finish before we do the join in this case 
+			/* it is possible that the interrupter thread will finish before we do the join in this case 
 			 * the test is invalid
 			 */
 			System.out.println("WaitForAfterJoinWithTimeout - invalid, assuming pass");

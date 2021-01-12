@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1306,7 +1306,7 @@ genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
          {
         cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, notInterfaceLabel, cursor);
          // classObjectClazzSnippet and instanceOfClazzSnippet stores values of currentObject and cast Object when
-        // the the helper call returns success.
+         // the helper call returns success.
          // test if class is interface of not.
          // if interface, we do the following.
          //
@@ -2511,7 +2511,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
    {
    TR::Compilation *comp = cg->comp();
 
-   // TODO: This is not the place to make such such checks. If we really want to optimize for space or disable inlining
+   // TODO: This is not the place to make such checks. If we really want to optimize for space or disable inlining
    // of instanceof/checkcast we should still go through the else path to the common infrastructure and it should just
    // generate a call to the helper (along with any null tests if needed for checkcastAndNULLCHK). This should be
    // handled at the common level.
@@ -3248,7 +3248,7 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    bool disableS390CompareAndTrap = comp->getOption(TR_DisableTraps);
 
-   // Try to compare directly to memory if if the child is a field access (load with no index reg)
+   // Try to compare directly to memory if the child is a field access (load with no index reg)
    if (divisorIsFieldAccess &&
        !willUseIndexAndBaseReg &&
        (node->getFirstChild()->getOpCodeValue() == TR::idiv ||

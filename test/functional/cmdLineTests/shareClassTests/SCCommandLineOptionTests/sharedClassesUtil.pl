@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2019 IBM Corp. and others
+# Copyright (c) 2009, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,7 +108,7 @@ sub get_group_name {
 	my $pos = index($search_line,"gid=");
 
 	#search for gid string and then '(' char and then ')'.
-	#Then return return the string enclosed the string in braces.
+	#Then return the string enclosed the string in braces.
 
 	if( $pos <  0) {
 		die "unable to get group name ";

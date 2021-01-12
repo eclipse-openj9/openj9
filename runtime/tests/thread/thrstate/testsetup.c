@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corp. and others
+ * Copyright (c) 2008, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,7 +123,7 @@ cleanupOSThread(omrthread_t *osthread, volatile IDATA *doneflag)
 /**
  * Allocate an object using JNI.  Must be called without VM access.
  * @param env Java environment
- * @param objectRef (out) Pointer to jobject to receive the the result.
+ * @param objectRef (out) Pointer to jobject to receive the result.
  * @return 0 on success, non-zero otherwise.
  */
 static IDATA

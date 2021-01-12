@@ -855,7 +855,7 @@ ROMClassBuilder::checkDebugInfoCompression(J9ROMClass *romClass, ClassFileOracle
 					Trc_BCU_Assert_Compression_OutOfMemory();
 				}
 			}
-			/* 2) Test local variable table table compression */
+			/* 2) Test local variable table compression */
 			U_32 localVariablesCount = methodIterator.getLocalVariablesCount();
 			if (0 != localVariablesCount) {
 				J9MethodDebugInfo *methodDebugInfo = getMethodDebugInfoFromROMMethod(currentMethod);

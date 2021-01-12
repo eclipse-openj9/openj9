@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,7 @@ public class FindInMemoryCommand extends Command
 
 	/**
 	 * Search for next occurrence of byte pattern in process memory.
-	 * @return false if previous search did not find a pattern or or no pattern was found. 
+	 * @return false if previous search did not find a pattern or no pattern was found. 
 	 * True if pattern byte was found.
 	 */
 	private boolean findNext(PrintStream out, IProcess process) {

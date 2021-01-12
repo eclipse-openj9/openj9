@@ -4058,7 +4058,7 @@ TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol
          // Sadly, it's common for deserialization-like code to strip final
          // specifiers off instance fields so they can be filled in during
          // deserialization.  To support these shenanigans, we must restrict
-         // ourselves to fold instance fields only in classes classes where
+         // ourselves to fold instance fields only in classes where
          // this is known to be safe.
 
          const char* name;
@@ -5335,7 +5335,7 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
          }
 #endif
 
-      // AOT compiles create a relocation at the snippet do do the trampoline reservation
+      // AOT compiles create a relocation at the snippet to do the trampoline reservation
       // would be better to implement this code via a virtual function that's empty for TR_J9SharedCacheVM
       if (!isAOT_DEPRECATED_DO_NOT_USE())
          {

@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2020 IBM Corp. and others
+; Copyright (c) 2000, 2021 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1197,7 +1197,7 @@ patchOverMfence:
 patchWith3ByteNOP:
       mov         ecx, dword [rax]                             ; load existing double word containing mfence
       and         ecx, 0ff000000h                              ; insert trailing byte of 3 word nop
-      or          ecx, 000001f0fh                              ; load the the first 2 bytes of the 3 word nop
+      or          ecx, 000001f0fh                              ; load the first 2 bytes of the 3 word nop
       mov         dword [rax], ecx                             ; write the nop
 
       pop         r9

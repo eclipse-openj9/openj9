@@ -7369,7 +7369,7 @@ static bool genZeroInitObject(
 
       // We just pushed targetReg on the stack and zeroed it out. targetReg contained the address of the
       // beginning of the header. We want to use the 0-reg to initialize the monitor slot, so we use
-      // segmentReg, which points to to targetReg+startOfZeroInits and subtract the extra offset.
+      // segmentReg, which points to targetReg+startOfZeroInits and subtract the extra offset.
 
       bool initLw = (node->getOpCodeValue() != TR::New);
       int lwOffset = fej9->getByteOffsetToLockword(clazz);

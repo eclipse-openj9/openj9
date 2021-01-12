@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1129,7 +1129,7 @@ addJavaPropertiesOptions(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumen
 			atBeginning = FALSE;
 		}
 	}
-	if (NULL == optArg) { /* no valid options in the the buffer */
+	if (NULL == optArg) { /* no valid options in the buffer */
 		j9mem_free_memory(msgBuffer);
 	}
 	return 0;

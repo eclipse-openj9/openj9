@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1345,8 +1345,8 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
    if (hint)
       {
       TR_ASSERT( !childReg->isInitialized() || hint != childReg->getStorageReference(),"bcd conversion operands will overlap\n");
-      destSize = hint->getSymbolSize(); // may be be larger than the node->getSize() so take this opportunity to widen as part of the PACK
-      destPrecision = TR::DataType::getBCDPrecisionFromSize(node->getDataType(), destSize); // may be be larger than the node->getSize() so take this opportunity to widen as part of the PACK
+      destSize = hint->getSymbolSize(); // may be larger than the node->getSize() so take this opportunity to widen as part of the PACK
+      destPrecision = TR::DataType::getBCDPrecisionFromSize(node->getDataType(), destSize); // may be larger than the node->getSize() so take this opportunity to widen as part of the PACK
       targetStorageReference = hint;
       }
    else
@@ -1711,7 +1711,7 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
    if (hint)
       {
       TR_ASSERT( !childReg->isInitialized() || hint != childReg->getStorageReference(),"bcd conversion operands will overlap\n");
-      destSize = hint->getSymbolSize(); // may be be larger than the node->getSize() so take this opportunity to widen as part of the UNPK
+      destSize = hint->getSymbolSize(); // may be larger than the node->getSize() so take this opportunity to widen as part of the UNPK
       targetStorageReference = hint;
       }
    else

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1418,7 +1418,7 @@ checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 
 			}
 		}
 
-		/* A value of type long or double must occupy two consecutive local variables. Ensure that if there is is a long or double entry in 
+		/* A value of type long or double must occupy two consecutive local variables. Ensure that if there is a long or double entry in
 		 * an append frame maxLocals reflects the correct number of slots. An incorrect maxLocals value in all other cases will be handled 
 		 * in bcverify.c */
 		if (checkAppendArraySize) {

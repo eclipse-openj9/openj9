@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2020 IBM Corp. and others
+// Copyright (c) 2006, 2021 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -500,7 +500,7 @@ TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_verifyCurrentThreadAttached_Exit Ob
 TraceEntry=Trc_JNIinv_protectedDestroyJavaVM_Entry NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_StartingThreadWait NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM waiting for Java threads to stop"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_FinishedThreadWait NoEnv Overhead=1 Level=3 Template="protectedDestoryJavaVM all Java threads have stopped"
-TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmCleanupDone NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM protectedDestroyJavaVM vmCleanup complete"
+TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmCleanupDone NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM vmCleanup complete"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmShutdownHookFired NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM VM Shutting Down Hook Fired"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_HeapManagementShutdown NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM GC HeapManagement Shutdown"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmShutdownDone NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM vmShutdown returned"

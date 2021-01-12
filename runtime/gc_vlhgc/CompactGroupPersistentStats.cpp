@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -431,7 +430,7 @@ MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(MM_EnvironmentVLHGC 
 			if (region->getLowerAgeBound() < boundary) {
 				/* not a whole region is above boundary */
 
-				/* first calculated the the fraction of objects below average age */
+				/* first calculated the fraction of objects below average age */
 				UDATA liveBytesBelowAverageAge = (UDATA)(region->_projectedLiveBytesPreviousPGC
 														* (region->getUpperAgeBound() - region->getAllocationAge())
 														/ (region->getUpperAgeBound() - region->getLowerAgeBound()));
@@ -449,7 +448,7 @@ MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(MM_EnvironmentVLHGC 
 			if (region->getUpperAgeBound() > boundary) {
 				/* at least a fraction of the region is above boundary */
 
-				/* first calculated the the fraction of objects above average age */
+				/* first calculated the fraction of objects above average age */
 				UDATA liveBytesAboveAverageAge = (UDATA)(region->_projectedLiveBytesPreviousPGC
 														* (region->getAllocationAge() - region->getLowerAgeBound())
 														/ (region->getUpperAgeBound() - region->getLowerAgeBound()));

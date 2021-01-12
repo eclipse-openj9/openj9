@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -567,7 +566,7 @@ MM_ReclaimDelegate::deriveCompactScore(MM_EnvironmentVLHGC *env)
 				region->_compactData._compactScore = 0.0;
 				notDefragmentationTarget += 1;
 			} else if (!region->getRememberedSetCardList()->isAccurate()) {
-				/* Overflowed regions or those that RSCL is being rebuilt will not be be compacted (not even put into the sorted list) */
+				/* Overflowed regions or those that RSCL is being rebuilt will not be compacted (not even put into the sorted list) */
 				region->_compactData._compactScore = 0.0;
 				overflowedRegionCount += 1;
 			} else if(!region->_sweepData._alreadySwept) {

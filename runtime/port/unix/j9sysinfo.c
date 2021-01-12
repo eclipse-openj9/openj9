@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1356,7 +1356,7 @@ char const *indexPattern = "index%d/";
 /**
  * Scan the /sys filesystem for the correct descriptor and read it.
  * Stop when a descriptor matching the CPU, level, and one of the types in cacheType matches.
- * Note that if if the cache is unified, it will match a query for any type.
+ * Note that if the cache is unified, it will match a query for any type.
  * @param [in]  portLibrary port library
  * @param [in]  cpu which CPU to query
  * @param [in]  level which cache level to query. Must be >= 1

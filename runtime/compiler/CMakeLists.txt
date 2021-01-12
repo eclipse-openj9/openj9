@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -196,7 +196,7 @@ set(TARGET_DEFINES
 # though that would also involve teaching MASM2GAS and
 # PASM2ASM about target includes.
 #
-# In the mean time, like the makefiles, this is is using
+# In the mean time, like the makefiles, this is using
 # the includes from the SDK
 set(J9_INCLUDES
 	# From jitinclude.mk

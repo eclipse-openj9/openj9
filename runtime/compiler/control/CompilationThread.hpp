@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -197,7 +197,7 @@ class CompilationInfoPerThreadBase
 
    /*
     * LdTM: This should, pedantically speaking, be an 'extern "C"' friend function rather than a static member function (with C++ linkage).
-    * However a brief search reveals that such an approach approach is fraught with its own set of compiler-bug-related risk.
+    * However a brief search reveals that such an approach is fraught with its own set of compiler-bug-related risk.
     */
    static TR_MethodMetaData *wrappedCompile(J9PortLibrary *portLib, void * opaqueParameters);
 

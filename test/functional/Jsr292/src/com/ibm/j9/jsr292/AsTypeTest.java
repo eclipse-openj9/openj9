@@ -2,7 +2,7 @@ package com.ibm.j9.jsr292;
 
 
 /*******************************************************************************
- * Copyright (c) 2011, 2020 IBM Corp. and others
+ * Copyright (c) 2011, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ import junit.framework.TestListener;
 import junit.framework.TestResult;
 
 /**
- * Testing of the various aspects of the the MethodHandle.asType() method,
+ * Testing of the various aspects of the MethodHandle.asType() method,
  * both explicitly and as exposed by various APIs.
  */
 public class AsTypeTest {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -577,7 +577,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             // When I receive an empty string I need to check whether the server had the class caches
             // It could be a renewed connection, so that's a new server because old one was shutdown
             // When the server receives an empty ROM class it would check if it actually has this class cached,
-            // And if it it's not cached, send a request to the client
+            // And if it's not cached, send a request to the client
             romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, compInfo->persistentMemory(), &classInfoTuple);
             }
          JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);

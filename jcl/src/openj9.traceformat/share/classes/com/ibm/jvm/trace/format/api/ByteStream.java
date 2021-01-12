@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -471,7 +471,7 @@ public class ByteStream {
 	 * This allows you to strip off the last n bytes from the stream so long
 	 * as they've not been reached. This will remove data until it hits the
 	 * beginning of the stream, then will throw an exception. If an
-	 * exception is thrown the the stream will be completely empty, all data
+	 * exception is thrown the stream will be completely empty, all data
 	 * discarded.
 	 * 
 	 * @param bytes

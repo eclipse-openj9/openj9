@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1310,7 +1310,7 @@ class CheckEngine
 	}
 
 	/**
-	 * Advance the the next stage of checking.
+	 * Advance to the next stage of checking.
 	 * Sets the context for the next stage of checking.  Called every time verification
 	 * moves to a new structure.
 	 *

@@ -1947,7 +1947,7 @@ TR_BlockFrequencyInfo::getRawCount(TR::ResolvedMethodSymbol *resolvedMethod, TR_
  *    \param bci TR_ByteCodeInfo for which original block number is searched for
  *    \param comp Current compilation object
  *    \return block number of the original block bci belongs to.
- *            WARNING: If consumer of this API uses this to to get the profiled data in later compilation and
+ *            WARNING: If consumer of this API uses this to get the profiled data in later compilation and
  *            requested BCI was not inlined before, it returns -1.
  */
 int32_t

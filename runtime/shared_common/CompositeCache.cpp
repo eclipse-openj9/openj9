@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2537,7 +2537,7 @@ SH_CompositeCacheImpl::allocateWithSegment(J9VMThread* currentThread, ShcItem* i
 }
 
 /**
- * Allocate a block of memory in the shared classes cache with a a readWrite area.
+ * Allocate a block of memory in the shared classes cache with a readWrite area.
  *
  * Allocates a block of memory in the cache. Memory is of len size
  * and memory is allocated backwards from end of the cache.

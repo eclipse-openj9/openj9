@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -793,7 +793,7 @@ _inconsistentStack2:
 			}
 			POP_TOS_TYPE( type, type1 );
 			if (inconsistentStack) {
-				/* Jazz 82615: Set the the 2nd slot of long/double type (already in type1) and
+				/* Jazz 82615: Set the 2nd slot of long/double type (already in type1) and
 				 * the location of wrong data type on stack when the verification error occurs.
 				 */
 				errorTargetType = BCV_BASE_TYPE_TOP;
@@ -1434,7 +1434,7 @@ _illegalPrimitiveReturn:
 					 * The stackTop pointer doesn't get updated after calling pushFieldType() to store the return type, so *stackTop stores
 					 * the expected data type rather than the wrong data type which has already been popped up from stack.
 					 *
-					 * According to the output format of error message framework, only the the wrong data type is expected to occur at *stackTop on stack
+					 * According to the output format of error message framework, only the wrong data type is expected to occur at *stackTop on stack
 					 * rather than the expected data type. Thus, the wrong data type must be pushed back to *stackTop after saving the expected data type
 					 * somewhere else.
 					 */

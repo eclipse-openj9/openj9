@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2010, 2020 IBM Corp. and others
+ * Copyright (c) 2010, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -156,7 +156,7 @@ public class TraceFormat
 			}
 		} catch (IllegalArgumentException e) {
 			System.err.println("Problem reading the trace file header: "+e.getMessage());
-			System.err.println("Please check that that the input file is a binary trace file");
+			System.err.println("Please check that the input file is a binary trace file");
 			return;
 		}
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -629,7 +629,7 @@ internalSetCurrentExceptionWithCause(J9VMThread *currentThread, UDATA exceptionN
 			/* The caller might have specified OOM exception type bits */
 			resourceTypes = exceptionNumber & J9_EX_OOM_TYPE_MASK;
 
-			/* No bits specified, we are dealing with with a regular Java Heap OOM */
+			/* No bits specified, we are dealing with a regular Java Heap OOM */
 			if (resourceTypes == 0) {
 				resourceTypes = J9_EX_OOM_JAVA_HEAP;  	
 			}

@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +49,7 @@ public:
 protected:
 private:
 	MM_HeapRegionDescriptorVLHGC *_region;
-	J9IndexableObject *_spine; /**< If this region contains an arraylet leaf, this points to the the spine which owns the leaf */
+	J9IndexableObject *_spine; /**< If this region contains an arraylet leaf, this points to the spine which owns the leaf */
 	MM_HeapRegionDescriptorVLHGC *_nextArrayletLeafRegion; /**< If this region has a spine in it, this is a list of regions which represent the leaves of the region.  If this is a leaf region, it is the next leaf region in the list */
 	MM_HeapRegionDescriptorVLHGC *_previousArrayletLeafRegion; /**< If this region has a spine in it, this is NULL.  If this is a leaf region, it is the previous leaf region in the list */
 	UDATA _backingStore[((sizeof(MM_MemoryPoolBumpPointer) - 1)/sizeof(UDATA)) + 1]; /**< Allocate space for Memory Pool List */

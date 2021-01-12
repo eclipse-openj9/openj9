@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -834,7 +834,7 @@ public class DTFJJavaRuntime implements JavaRuntime {
 	 * know is part of the heap.
 	 * (Heap sections are usually contiguous so we can merge them down to
 	 * just a few ranges. This is important in balanced mode where there
-	 * may be thousands. See See PR 103197)
+	 * may be thousands. See PR 103197)
 	 */
 	private boolean validHeapAddress(ImagePointer address) {
 

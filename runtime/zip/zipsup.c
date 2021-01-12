@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1810,7 +1810,7 @@ getZipEntryUsingDirectory(J9PortLibrary *portLib, J9ZipFile *zipFile, J9ZipEntry
 }
 
 /** 
- *	Attempt to read and uncompress the data for the zip entry entry.
+ *	Attempt to read and uncompress the data for the zip entry.
  * 
  *	If buffer is non-NULL it is used, but not explicitly held onto by the entry.
  *	If buffer is NULL, memory is allocated and held onto by the entry, and thus
@@ -1953,7 +1953,7 @@ finished:
 }
 
 /** 
- *	Attempt to read the raw data for the zip entry entry.
+ *	Attempt to read the raw data for the zip entry.
  * 
  * @param[in] portLib the port library
  * @param[in] zipFile the zip file being read from.

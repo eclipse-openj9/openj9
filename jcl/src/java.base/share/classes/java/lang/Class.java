@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1937,7 +1937,7 @@ private native boolean getStaticMethodsImpl(Method[] array, int start, int count
 private native Object[] allocateAndFillArray(int size);
 
 /**
- * Answers an integer which which is the receiver's modifiers. 
+ * Answers an integer which is the receiver's modifiers. 
  * Note that the constants which describe the bits which are
  * returned are implemented in class java.lang.reflect.Modifier
  * which may not be available on the target.

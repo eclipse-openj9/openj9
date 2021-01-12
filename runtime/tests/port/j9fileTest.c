@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4630,7 +4630,7 @@ j9file_test38(struct J9PortLibrary *portLibrary)
 }
 
 /**
- * Test file file permission bits using j9file_fstat()
+ * Test file permission bits using j9file_fstat()
  * Similar to j9file_test32 for j9file_stat().
  */
 int

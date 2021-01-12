@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2350,7 +2350,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
    else
       {
       // Don't know what got replaced, so get pessimistic and clear the whole compilation queue
-      reportHookDetail(currentThread, "jitClassesRedefined", "  Invalidate all all compilation requests");
+      reportHookDetail(currentThread, "jitClassesRedefined", "  Invalidate all compilation requests");
       fe->invalidateCompilationRequestsForUnloadedMethods(NULL, true);
 
       //clean up the trampolines
@@ -2460,7 +2460,7 @@ void jitFlushCompilationQueue(J9VMThread * currentThread, J9JITFlushCompilationQ
    // need to get the compilation lock before updating the queue
    fe->acquireCompilationLock();
    compInfo->setAllCompilationsShouldBeInterrupted();
-   reportHookDetail(currentThread, "jitFlushCompilationQueue", "  Invalidate all all compilation requests");
+   reportHookDetail(currentThread, "jitFlushCompilationQueue", "  Invalidate all compilation requests");
    fe->invalidateCompilationRequestsForUnloadedMethods(NULL, true);
    //clean up the trampolines
    TR::CodeCacheManager::instance()->onFSDDecompile();
@@ -5400,7 +5400,7 @@ void getOutOfIdleStatesUnlocked(TR::CompilationInfo::TR_SamplerStates expectedSt
 ///
 /// In Balanced, once a mutator thread hits AF it will (only) trigger GC, but will not act as main thread.
 /// However, it is still the one that will request (and wait while the request is completed) exclusive VM access.
-/// Once it acquires it it will notify main GC thread (which is sleeping). Main GC wakes up and takes control
+/// Once it acquires it will notify main GC thread (which is sleeping). Main GC wakes up and takes control
 /// driving GC till completion. The mutator thread will just wait on 'control mutex' for notification back
 /// from GC main thread that GC has completed. When resumed, the mutator thread will
 /// release the exclusive VM access and proceed with allocation, and program execution.

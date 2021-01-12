@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1217,7 +1217,7 @@ public abstract class ELFDumpReader implements ILibraryDependentCore {
 					}
 					// dumpRegisters(registers);
 					unwindTable = unwinder.getUnwindTableForInstructionAddress(instructionPointer);
-					// If we couldn't find any unwind data, the the ip and base pointer are valid.
+					// If we couldn't find any unwind data, the ip and base pointer are valid.
 					Map<String, Number> nextRegisters = registers;
 					if (unwindTable != null) {
 						// Apply the unwind data based on this ip to generate the first frame.

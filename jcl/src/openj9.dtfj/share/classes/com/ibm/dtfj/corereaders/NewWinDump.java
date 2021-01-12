@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -454,7 +454,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					//we should now be at the data directory
 					
 					//note that it is this first directory which we are interested in since it is the export dir
-					//read that pointer and size and calculate where to seek to to begin work again
+					//read that pointer and size and calculate where to seek to begin work again
 					int exportRVA = memory.getIntAt(0, nextRead);
 					nextRead+=4;
 					if (0 == exportRVA) {
@@ -678,7 +678,7 @@ public abstract class NewWinDump extends CoreReaderSupport {
 
 			private List readStackFrames(MiniDump dump, Builder builder, Object addressSpace, long stackStart, long stackEnd, long stackRva, List registers, IAbstractAddressSpace memory, boolean is64Bit)
 			{
-				// Windows stack frames can be read by following the ebp to the base of the stack: old ebp is at ebp(0) and and return address to parent context is ebp(sizeof(void*))
+				// Windows stack frames can be read by following the ebp to the base of the stack: old ebp is at ebp(0) and return address to parent context is ebp(sizeof(void*))
 				// 1) find the ebp in the register file
 				long ebp = builder.getValueOfNamedRegister(registers, "ebp");
 				long eip = builder.getValueOfNamedRegister(registers, "eip");

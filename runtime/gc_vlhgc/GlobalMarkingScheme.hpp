@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -464,7 +463,7 @@ public:
 	 *  Scan (complete)
 	 *  Process all work packets from queue, including classes and work generated during this phase.
 	 *  On return, all live objects will be marked, although some unreachable objects (such as finalizable 
-	 *  objects) may still be revived by by subsequent stages.   
+	 *  objects) may still be revived by subsequent stages.
 	 *  @param[in] env - passed Environment 
 	 */
 	void markLiveObjectsScan(MM_EnvironmentVLHGC *env);
@@ -533,4 +532,3 @@ public:
 };
 
 #endif /* GLOBALMARKINGSCHEME_HPP_ */
-

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1825,7 +1825,7 @@ j9sysinfo_test_get_cwd2(struct J9PortLibrary *portLibrary)
 
 /*
  * Test j9sysinfo_get_cwd in not ascii directory.
- * Expected result: Successfully create not ascii directory, change current current directory, verify that j9sysinfo_get_cwd returns valid value.
+ * Expected result: Successfully create not ascii directory, change current directory, verify that j9sysinfo_get_cwd returns valid value.
  */
 I_32
 j9sysinfo_test_get_cwd3(struct J9PortLibrary *portLibrary)

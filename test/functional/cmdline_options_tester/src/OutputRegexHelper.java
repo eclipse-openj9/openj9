@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /* CMVC 163891:
- * This class is only exists to to ensure 'java.util.regex.Matcher', and 'java.util.regex.Pattern'
+ * This class is only exists to ensure 'java.util.regex.Matcher', and 'java.util.regex.Pattern'
  * do not encounter errors with the verifier when using the embedded class library.
  */
 public class OutputRegexHelper {

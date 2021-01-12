@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1157,7 +1157,7 @@ done:
 			}
 		}
 
-		/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to to fix up the name
+		/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to fix up the name
 		 * because the previous loops have converted '/' to '.' already.
 		 */
 		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
@@ -1171,7 +1171,7 @@ done:
 	}
 
 	/**
-	 * Copies a UTF8 string into into a backing array containing ASCII characters at a specific index.
+	 * Copies a UTF8 string into a backing array containing ASCII characters at a specific index.
 	 *
 	 * @param vmThread[in] the current J9VMThread
 	 * @param data[in] points to raw UTF8 bytes, all of which are within the ASCII subset ord. [0, 127]
@@ -1196,7 +1196,7 @@ done:
 			}
 		}
 
-		/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to to fix up the name
+		/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to fix up the name
 		 * because the previous loops have converted '/' to '.' already.
 		 */
 		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {

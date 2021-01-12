@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2015 IBM Corp. and others
+ * Copyright (c) 2006, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ import com.ibm.j9ddr.corereaders.tdump.zebedee.util.FileFormatException;
 import com.ibm.j9ddr.corereaders.tdump.zebedee.util.ObjectMap;
 
 /**
- * This class represents an svcdump. It is is the main class in the dumpreader package and
+ * This class represents an svcdump. It is the main class in the dumpreader package and
  * provides low-level access to the contents of an svcdump (eg the ability to read the contents
  * of an address in a given address space).
  * <p>
