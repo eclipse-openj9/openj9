@@ -861,6 +861,12 @@ extern "C" {
 #define J9_JAVA_NATIVE 0x100
 #define J9_JAVA_STATIC 0x8
 
+/* Constants for JIT flattened field resolution */
+
+#define J9TR_FLAT_RESOLVE_WITHFIELD 0
+#define J9TR_FLAT_RESOLVE_GETFIELD 1
+#define J9TR_FLAT_RESOLVE_PUTFIELD 2
+
 #ifdef __cplusplus
 }
 #endif

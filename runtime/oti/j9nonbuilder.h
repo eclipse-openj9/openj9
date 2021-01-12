@@ -3686,6 +3686,7 @@ typedef struct J9JITConfig {
 	void *old_slow_jitResolveInvokeDynamic;
 	void *old_slow_jitResolveConstantDynamic;
 	void *old_slow_jitResolveHandleMethod;
+	void *old_slow_jitResolveFlattenableField;
 	void *old_slow_jitRetranslateCaller;
 	void *old_slow_jitRetranslateCallerWithPreparation;
 	void *old_slow_jitRetranslateMethod;

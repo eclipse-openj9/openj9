@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2020 IBM Corp. and others
+dnl Copyright (c) 2017, 2021 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -395,6 +395,7 @@ OLD_DUAL_MODE_HELPER(jitGetFlattenableStaticField,2)
 OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitPutFlattenableStaticField,3)
 OLD_DUAL_MODE_HELPER(jitLoadFlattenableArrayElement,2)
 OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitStoreFlattenableArrayElement,3)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitResolveFlattenableField,3)
 
 dnl Trap handlers
 
