@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,6 +111,7 @@ JIT_HELPER(jitResolveFieldSetter);  // asm calling-convention helper
 JIT_HELPER(jitResolveFieldDirect);  // asm calling-convention helper
 JIT_HELPER(jitResolveFieldSetterDirect);  // asm calling-convention helper
 JIT_HELPER(jitResolveHandleMethod);  // asm calling-convention helper
+JIT_HELPER(jitResolveFlattenableField);  // asm calling-convention helper
 JIT_HELPER(jitResolveInterfaceMethod);  // asm calling-convention helper
 JIT_HELPER(jitResolveInvokeDynamic);  // asm calling-convention helper
 JIT_HELPER(jitResolveMethodHandle);  // asm calling-convention helper
