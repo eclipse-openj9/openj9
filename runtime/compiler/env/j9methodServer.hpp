@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -193,7 +193,7 @@ public:
    virtual char * getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length) override;
    virtual char * classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
    virtual char * classSignatureOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
-   virtual char * getMethodNameAndSignatureFromConstantPool(int32_t cpIndex, int32_t & len) override;
+   virtual char * getMethodSignatureFromConstantPool(int32_t cpIndex, int32_t & len) override;
    virtual char * fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
    virtual bool isSubjectToPhaseChange(TR::Compilation *comp) override;
    virtual void * stringConstant(int32_t cpIndex) override;
