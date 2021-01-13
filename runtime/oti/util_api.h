@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -235,6 +235,23 @@ I_64 helperCLongMultiplyLong(I_64 a, I_64 b);
 */
 I_64 helperCLongRemainderLong(I_64 a, I_64 b);
 
+/* ---------------- dllloadinfo.c ---------------- */
+
+/**
+* @brief Retrieves the load info for the appropriate
+*        GC DLL based on reference mode.
+* @param[in] vm The Java VM.
+* @return J9VMDllLoadInfo for the GC DLL selected.
+*/
+J9VMDllLoadInfo *getGCDllLoadInfo(J9JavaVM *vm);
+
+/**
+* @brief Retrieves the load info for the appropriate
+*        VERBOSE DLL based on reference mode.
+* @param[in] vm The Java VM.
+* @return J9VMDllLoadInfo for the VERBOSE DLL selected.
+*/
+J9VMDllLoadInfo *getVerboseDllLoadInfo(J9JavaVM *vm);
 
 /* ---------------- eventframe.c ---------------- */
 
@@ -1106,14 +1123,6 @@ jfloat helperCFloatRemainderFloat(jfloat a, jfloat b);
 
 
 #endif /* J9VM_INTERP_FLOAT_SUPPORT */ /* End File Level Build Flags */
-
-/**
-* @brief Retrieves the load info for the appropriate
-*        GC DLL based on reference mode.
-* @param[in] vm The Java VM.
-* @return J9VMDllLoadInfo for the GC DLL selected.
-*/
-J9VMDllLoadInfo *getGCDllLoadInfo(J9JavaVM *vm);
 
 /* ---------------- j9crc32.c ---------------- */
 
