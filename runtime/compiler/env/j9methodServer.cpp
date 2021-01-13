@@ -1156,6 +1156,20 @@ TR_ResolvedJ9JITServerMethod::getMethodSignatureFromConstantPool(I_32 cpIndex, i
    }
 
 char *
+TR_ResolvedJ9JITServerMethod::getMethodNameFromConstantPool(I_32 cpIndex, int32_t & len)
+   {
+   I_32 realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), cpIndex);
+   if (realCPIndex == -1)
+      return 0;
+   char *name = getROMString(len, &romCPBase()[realCPIndex],
+                        {
+                        offsetof(J9ROMMethodRef, nameAndSignature),
+                        offsetof(J9ROMNameAndSignature, name)
+                        });
+   return name;
+   }
+
+char *
 TR_ResolvedJ9JITServerMethod::fieldOrStaticNameChars(I_32 cpIndex, int32_t & len)
    {
    if (cpIndex < 0)
