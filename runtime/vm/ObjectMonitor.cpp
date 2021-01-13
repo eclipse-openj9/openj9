@@ -483,9 +483,14 @@ restart:
 							result = J9_OBJECT_MONITOR_OOM;
 							goto done;
 						}
-						/* monitor count may be wrong since objectMonitorInflate sets it to J9_FLATLOCK_COUNT(lock).
-						* notes for this macro indicate that the value may be incorrect for an inflated monitor.
-						* this monitor has been previously inflated during snapshot run */
+						/* The omrthread_monitor_t:count may be wrong since objectMonitorInflate sets it to J9_FLATLOCK_COUNT(lock).
+						 * J9_FLATLOCK_COUNT is only valid if the lock is flat and since this monitor was recorded
+						 * to have been in an inflated state at the snapshot point this count is innacurate.
+						 *
+						 * Since this monitor was not acquired at the snapshot point we can assume the count at
+						 * snapshot was 0. After being initialized and acquired during objectMonitorInflate
+						 * the count should be 1.
+						 */
 						((J9ThreadAbstractMonitor*)objectMonitor->monitor)->count = 1;
 					}
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */

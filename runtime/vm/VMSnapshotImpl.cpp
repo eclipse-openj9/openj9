@@ -1575,12 +1575,20 @@ VMSnapshotImpl::restoreAcquiredObjectMonitor(J9AcquiredMonitor** monitor, UDATA*
 
 		omrthread_monitor_t omrMonitor = objectMonitor->monitor;
 
-		/* monitor count may be wrong since objectMonitorInflate sets it to J9_FLATLOCK_COUNT(lock).
-		 * notes for this macro indicate that the value may be incorrect for an inflated monitor.
-		 * this monitor has been previously inflated during snapshot run */
+		/* The omrthread_monitor_t:count may be wrong since objectMonitorInflate sets it to J9_FLATLOCK_COUNT(lock).
+		 * J9_FLATLOCK_COUNT is only valid if the lock is flat and since this monitor was recorded
+		 * to have been in an inflated state at the snapshot point this count is innacurate.
+		 * 
+		 * The correct count was persisted as J9AcquiredMonitor:ownerCount. Since inflated monitors
+		 * are only restored if they are acquired at the snapshot point ownerCount must be >= 1.
+		 * It is initially set to 1 here because the monitor has already been acquired once during
+		 * the call to objectMonitorInflate.
+		 * 
+		 * If ownerCount is more than one the owner thread should acquire the monitor multiple
+		 * times. This state is restored during the for loop and will update the count to be correct
+		 */
 		((J9ThreadAbstractMonitor*)omrMonitor)->count = 1;
 
-		/* objectMonitorInflate has already acquired the monitor once. Acquire additional times to restore proper count. */
 		for (U_32 i = 1; i < (*monitor)->ownerCount; i++) {
 			if (0 != omrthread_monitor_try_enter_using_threadId(omrMonitor, omrThread)) {
 				rc = false;
