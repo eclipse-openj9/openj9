@@ -2459,7 +2459,7 @@ old_slow_jitRetranslateCaller(J9VMThread *currentThread)
 	void *oldPC = currentThread->jitReturnAddress;
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_RUNTIME_HELPER, parmCount, false, 0, oldPC);
 	UDATA oldState = currentThread->omrVMThread->vmState;
-	currentThread->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN;
+	currentThread->omrVMThread->vmState = J9VMSTATE_JIT;
 	UDATA jitStartPC = jitConfig->entryPoint(jitConfig, currentThread, method, oldJITStartAddr);
 	currentThread->omrVMThread->vmState = oldState;
 	void *addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
@@ -2482,7 +2482,7 @@ old_slow_jitRetranslateCallerWithPreparation(J9VMThread *currentThread)
 	void *oldPC = currentThread->jitReturnAddress;
 	buildJITResolveFrameWithPC(currentThread, J9_SSF_JIT_RESOLVE_RUNTIME_HELPER, parmCount, false, 0, oldPC);
 	UDATA oldState = currentThread->omrVMThread->vmState;
-	currentThread->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN;
+	currentThread->omrVMThread->vmState = J9VMSTATE_JIT;
 	UDATA jitStartPC = jitConfig->retranslateWithPreparation(jitConfig, currentThread, method, oldJITStartAddr, reason);
 	currentThread->omrVMThread->vmState = oldState;
 	void *addr = restoreJITResolveFrame(currentThread, oldPC, true, false);
@@ -2548,7 +2548,7 @@ old_slow_jitRetranslateMethod(J9VMThread *currentThread)
 		currentThread->decompilationStack->pcAddress = savedPCAddress;
 	} else {
 		UDATA oldState = currentThread->omrVMThread->vmState;
-		currentThread->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN;
+		currentThread->omrVMThread->vmState = J9VMSTATE_JIT;
 		jitStartPC = jitConfig->entryPoint(jitConfig, currentThread, method, oldJITStartAddr);
 		currentThread->omrVMThread->vmState = oldState;
 	}
@@ -3152,7 +3152,7 @@ redo:
 			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, objectClassObject);
 			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, callerClassObject);
 			UDATA oldState = currentThread->omrVMThread->vmState;
-			currentThread->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN;
+			currentThread->omrVMThread->vmState = J9VMSTATE_JIT;
 			J9JavaVM *vm = currentThread->javaVM;
 			J9JITConfig *jitConfig = vm->jitConfig;
 			jitConfig->entryPointForNewInstance(jitConfig, currentThread, objectClass);

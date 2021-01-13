@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -451,7 +451,7 @@ static const struct vmX vmStateArray[] =
       {J9VMSTATE_GC, "J9VMSTATE_GC", 0},                                                  //2  0x20000
       {J9VMSTATE_GROW_STACK, "J9VMSTATE_GROW_STACK", 0},                                  //3  0x30000
       {J9VMSTATE_JNI, "special", 2},                                                      //4  0x40000
-      {J9VMSTATE_JIT_CODEGEN, "J9VMSTATE_JIT_CODEGEN", 0},                                //5  0x50000
+      {J9VMSTATE_JIT, "J9VMSTATE_JIT", 0},                                                //5  0x50000
       {J9VMSTATE_BCVERIFY, "J9VMSTATE_BCVERIFY", 0},                                      //6  0x60000
       {J9VMSTATE_RTVERIFY, "J9VMSTATE_RTVERIFY", 0},                                      //7  0x70000
       {J9VMSTATE_SHAREDCLASS_FIND, "special", 12},                                        //8  0x80000
@@ -523,15 +523,15 @@ Options::vmStateOption(char * option, void * base, TR::OptionTable *entry)
                      }
                   }
                break;
-            case ((J9VMSTATE_JIT_CODEGEN>>16) & 0xF):
+            case ((J9VMSTATE_JIT >> 16) & 0xF):
                {
                if ((state & 0xFF00) == 0) // ILGeneratorPhase
                   {
                   j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {ILGeneration}\n", state, vmStateArray[index]._xname);
                   }
-               else if ((state & 0xFF) == 0xFF) // optimizationPhase
+               else if ((state & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
                   {
-                  OMR::Optimizations opts = (OMR::Optimizations)((state >> 8) & 0xFF);
+                  OMR::Optimizations opts = static_cast<OMR::Optimizations>((state & 0xFF00) >> 8);
                   if (opts < OMR::numOpts)
                      {
                       j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {%s}\n", state, vmStateArray[index]._xname, OMR::Optimizer::getOptimizationName(opts));
@@ -539,9 +539,9 @@ Options::vmStateOption(char * option, void * base, TR::OptionTable *entry)
                   else
                      j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {Illegal optimization number}\n", state, vmStateArray[index]._xname);
                   }
-               else if ((state & 0xFF00) == 0xFF00) //codegenPhase
+               else if ((state & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
                   {
-                  TR::CodeGenPhase::PhaseValue phase = (TR::CodeGenPhase::PhaseValue)(state & 0xFF);
+                  TR::CodeGenPhase::PhaseValue phase = static_cast<TR::CodeGenPhase::PhaseValue>(state & 0xFF);
                   if ( phase < TR::CodeGenPhase::getNumPhases())
                      j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {%s}\n", state, vmStateArray[index]._xname, TR::CodeGenPhase::getName(phase));
                   else

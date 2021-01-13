@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -270,7 +270,7 @@ UDATA
 jitTranslateMethod(J9VMThread *currentThread, J9Method *method)
 {
 	UDATA oldState = currentThread->omrVMThread->vmState;
-	currentThread->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN;
+	currentThread->omrVMThread->vmState = J9VMSTATE_JIT;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9JITConfig *jitConfig = vm->jitConfig;
 	UDATA jitStartPC = jitConfig->entryPoint(jitConfig, currentThread, method, 0);
