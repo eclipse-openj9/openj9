@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -512,6 +512,7 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 		case JBinvokeinterface2: /* FALLTHROUGH */
 		case JBinvokeinterface: /* FALLTHROUGH */
 		case JBinvokespecial: /* FALLTHROUGH */
+		case JBinvokestatic: /* FALLTHROUGH */
 		case JBinvokevirtual: {
 			U_16 index = 0;
 			J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
