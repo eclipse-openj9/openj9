@@ -3529,7 +3529,7 @@ JavaCoreDumpWriter::writeJitMethod(J9VMThread* vmThread)
 		bool      insideJitMethod = false;
 		bool      isCompiling     = false;
 
-		if ((vmThread->omrVMThread->vmState & J9VMSTATE_MAJOR) == J9VMSTATE_JIT_CODEGEN) {
+		if ((vmThread->omrVMThread->vmState & J9VMSTATE_MAJOR) == J9VMSTATE_JIT) {
 			ramMethod = vmThread->jitMethodToBeCompiled;
 			isCompiling = true;
 

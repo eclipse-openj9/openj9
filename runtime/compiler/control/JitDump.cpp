@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,14 +125,13 @@ static UDATA dumpCurrentILProtected(J9PortLibrary *portLib, void * opaqueParamet
       comp->dumpMethodTrees("Trees");
       dbg->print(logFile, comp->getSymRefTab());
 
-      int bitMask = J9VMSTATE_JIT_CODEGEN | 0x0000FF00; // 0xFF?? is Codegen Phase
-      if ( ((vmThread->omrVMThread->vmState) & bitMask) == bitMask )  // if we are in the Codegen Phase
+      if ((vmThread->omrVMThread->vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
          {
          dbg->dumpMethodInstrs(logFile, "Post Binary Instructions", false, true);
          dbg->print(logFile,comp->cg()->getSnippetList());
          dbg->dumpMixedModeDisassembly();
          }
-      else
+      else if ((vmThread->omrVMThread->vmState & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
          {
          // Tree verification is only valid during optimizations as it relies on consistent node counts which are only
          // valid before codegen, since the codegen will decrement the node counts as part of instruction selection

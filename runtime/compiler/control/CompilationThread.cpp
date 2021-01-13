@@ -7758,7 +7758,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 #endif
 
    UDATA oldState = vmThread->omrVMThread->vmState;
-   vmThread->omrVMThread->vmState = J9VMSTATE_JIT_CODEGEN | 0x0000FFFF;
+   vmThread->omrVMThread->vmState = J9VMSTATE_JIT | J9VMSTATE_MINOR;
    vmThread->jitMethodToBeCompiled = method;
 
    try
@@ -8135,26 +8135,27 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_UseSymbolValidationManager, false);
                }
 
-            // Set jitDump specific options
+            // Set jitdump specific options
             TR::CompilationInfoPerThread *threadCompInfo = compInfo ? compInfo->getCompInfoForThread(vmThread) : NULL;
-            if (threadCompInfo &&
+            if (threadCompInfo != NULL &&
                 threadCompInfo->isDiagnosticThread() &&
                 options->getDebug())
                {
-               // Trace All
                options->setOption(TR_TraceAll);
+               options->setOption(TR_EnableParanoidOptCheck);
 
-               // Trace crashing optimization
-               UDATA state = compInfo->getVMStateOfCrashedThread();
-               uint32_t index = (state >> 16) & 0xFF;
-
-               if ((isValidVmStateIndex(index)) &&
-                   (index == ((J9VMSTATE_JIT_CODEGEN>>16) & 0xF)))
+               // Trace crashing optimization or the codegen depending on where we crashed
+               UDATA vmState = compInfo->getVMStateOfCrashedThread();
+               if ((vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
                   {
-                  OMR::Optimizations opt = (OMR::Optimizations)((state >> 8) & 0xFF);
+                  options->setOption(TR_TraceCG);
+                  options->setOption(TR_TraceRA);
+                  }
+               else if ((vmState & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
+                  {
+                  OMR::Optimizations opt = static_cast<OMR::Optimizations>((vmState & 0xFF00) >> 8);
                   if (0 < opt && opt < OMR::numOpts)
                      {
-                     // Trace the optimization that the crash happened in
                      options->enableTracing(opt);
                      }
                   }
