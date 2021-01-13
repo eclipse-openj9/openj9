@@ -315,6 +315,21 @@ class CompilationInfoPerThreadBase
 
    void                     setClientStream(JITServer::ClientStream *stream) { _clientStream = stream; }
    JITServer::ClientStream *getClientStream() const { return _clientStream; }
+
+   /**
+      @brief After this method runs, all subsequent persistent allocations
+      on the current thread for a given client will use a per-client allocator,
+      instead of the global one.
+    */
+   void                     enterPerClientAllocationRegion();
+
+   /**
+      @brief Ends per-client allocation on this thread. After this method returns,
+      all allocations will use the global persistent allocator.
+   */
+   void                     exitPerClientAllocationRegion();
+   TR_PersistentMemory *getPerClientPersistentMemory() { return _perClientPersistentMemory; }
+
    /**
       @brief Heuristic that returns true if compiling a method of given size
              and at given optimization level less is likely to consume little
@@ -370,6 +385,7 @@ class CompilationInfoPerThreadBase
 #if defined(J9VM_OPT_JITSERVER)
    ClientSessionData * _cachedClientDataPtr;
    JITServer::ClientStream * _clientStream;
+   TR_PersistentMemory * _perClientPersistentMemory;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 private:

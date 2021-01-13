@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1033,6 +1033,12 @@ TR_CISCGraph::makePreparedCISCGraphs(TR::Compilation *c)
    else
       graphsInitialized = true;
 
+#if defined(J9VM_OPT_JITSERVER)
+   // Prepared CISC graphs are static, i.e. initialized only once.
+   // Need to use the global allocator here.
+   if (c->isOutOfProcessCompilation())
+      c->fej9()->_compInfoPT->exitPerClientAllocationRegion();
+#endif
    int32_t num = 0;
    bool genTRxx = c->cg()->getSupportsArrayTranslateTRxx();
    bool genSIMD = c->cg()->getSupportsVectorRegisters() && !c->getOption(TR_DisableSIMDArrayTranslate);
@@ -1205,6 +1211,12 @@ TR_CISCGraph::makePreparedCISCGraphs(TR::Compilation *c)
       if (minimumHotnessPrepared > hotness)
          minimumHotnessPrepared = hotness;
       }
+
+#if defined(J9VM_OPT_JITSERVER)
+   // Return to per-client allocation
+   if (c->isOutOfProcessCompilation())
+      c->fej9()->_compInfoPT->enterPerClientAllocationRegion();
+#endif
    }
 
 void

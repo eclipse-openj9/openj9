@@ -212,7 +212,7 @@ class ClientSessionData
    struct ClassInfo
       {
       ClassInfo();
-      void freeClassInfo(); // this method is in place of a destructor. We can't have destructor
+      void freeClassInfo(TR_PersistentMemory *persistentMemory); // this method is in place of a destructor. We can't have destructor
       // because it would be called after inserting ClassInfo into the ROM map, freeing romClass
 
       J9ROMClass *_romClass; // romClass content exists in persistentMemory at the server
@@ -337,10 +337,12 @@ class ClientSessionData
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
-   ClientSessionData(uint64_t clientUID, uint32_t seqNo);
+   ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_PersistentMemory *persistentMemory, bool usesPerClientMemory);
    ~ClientSessionData();
    static void destroy(ClientSessionData *clientSession);
 
+   TR_PersistentMemory *persistentMemory() { return _persistentMemory; }
+   bool usesPerClientMemory() { return _usesPerClientMemory; }
    void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
    TR_OpaqueClassBlock * getJavaLangClassPtr() const { return _javaLangClassPtr; }
    TR_PersistentCHTable *getCHTable();
@@ -437,6 +439,8 @@ class ClientSessionData
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
+   TR_PersistentMemory *_persistentMemory;
+   bool _usesPerClientMemory;
    TR_OpaqueClassBlock *_javaLangClassPtr; // NULL means not set
    // Server side CHTable
    JITServerPersistentCHTable *_chTable;
@@ -525,7 +529,7 @@ class ClientSessionHT
    ClientSessionHT();
    ~ClientSessionHT();
    static ClientSessionHT* allocate(); // allocates a new instance of this class
-   ClientSessionData * findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, bool *newSessionWasCreated);
+   ClientSessionData * findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, bool *newSessionWasCreated, J9JITConfig *jitConfig);
    bool deleteClientSession(uint64_t clientUID, bool forDeletion);
    ClientSessionData * findClientSession(uint64_t clientUID);
    void purgeOldDataIfNeeded();

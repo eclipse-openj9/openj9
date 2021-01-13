@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,14 @@ namespace J9 {
 
 PersistentAllocator::PersistentAllocator(const PersistentAllocatorKit &creationKit) :
    _minimumSegmentSize(creationKit.minimumSegmentSize),
-   _segmentAllocator(MEMORY_TYPE_JIT_PERSISTENT, creationKit.javaVM),
+   _segmentAllocator(
+#if defined(J9VM_OPT_JITSERVER)
+                     creationKit.javaVM.internalVMFunctions->isJITServerEnabled(&creationKit.javaVM) ?
+                     MEMORY_TYPE_VIRTUAL | MEMORY_TYPE_JIT_PERSISTENT : // use virtual memory for JITServer because we need to release memory
+                                                                        // back into the system once allocator is destroyed, which is not 
+                                                                        // guaranteed with regular malloc
+#endif
+                     MEMORY_TYPE_JIT_PERSISTENT, creationKit.javaVM),
    _freeBlocks(),
 #if defined(J9VM_OPT_JITSERVER)
    _isJITServer(creationKit.javaVM.internalVMFunctions->isJITServerEnabled(&creationKit.javaVM)),
@@ -272,6 +279,14 @@ PersistentAllocator::allocateInternal(size_t requestedSize)
             ::memoryAllocMonitor->exit();
          }
       }
+#if defined(J9VM_OPT_JITSERVER)
+   if (_isJITServer && allocation)
+      {
+      // keep track of which allocator this block belongs to (global/per client)
+      Block *block = reinterpret_cast<Block *>(allocation) - 1;
+      block->setNext(reinterpret_cast<Block *>(this));
+      }
+#endif
    return allocation;
    }
 
@@ -595,7 +610,19 @@ void
 PersistentAllocator::deallocate(void * mem, size_t) throw()
    {
    Block * block = static_cast<Block *>(mem) - 1;
+#if defined(J9VM_OPT_JITSERVER)
+   if (_isJITServer)
+      {
+      TR_ASSERT_FATAL(block->next() == reinterpret_cast<Block *>(this), "Freeing a block that was created by another allocator or is already on the free list. mem=%p block=%p next=%p this=%p", mem, block, block->next(), reinterpret_cast<Block *>(this));
+      block->setNext(NULL);
+      }
+   else
+      {
+      TR_ASSERT_FATAL(block->next() == NULL, "Freeing a block that is already on the free list. block=%p next=%p", block, block->next());
+      }
+#else
    TR_ASSERT_FATAL(block->next() == NULL, "Freeing a block that is already on the free list. block=%p next=%p", block, block->next());
+#endif
    freeBlock(block);
    }
 

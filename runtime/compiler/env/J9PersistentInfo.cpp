@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,9 @@
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
+
+
+JITServer::RemoteCompilationModes J9::PersistentInfo::_remoteCompilationMode = JITServer::NONE;
 #endif
 
 TR_PersistentCHTable *
