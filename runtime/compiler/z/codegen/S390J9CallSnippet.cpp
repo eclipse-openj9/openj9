@@ -952,7 +952,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390UnresolvedCallSnippet * snippet)
       }
    helperLookupOffset <<= 24;
 
-   print(pOutFile, (TR::S390CallSnippet *) snippet);
+   snippet->print(pOutFile, this);
 
    printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptr_t));
    trfprintf(pOutFile, "DC   \t%p \t\t# Address Of Constant Pool", getOwningMethod(methodSymRef)->constantPool());
