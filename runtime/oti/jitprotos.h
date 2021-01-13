@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,9 +113,6 @@ void * j9ThunkInvokeExactHelperFromSignature(void * jitConfig, UDATA signatureLe
 
 /* prototypes from CodertVMHelpers.cpp */
 void initializeDirectJNI (J9JavaVM *vm);
-
-/* prototypes from jsr292.c */
-void i2jFSDAssert();
 
 /* prototype from cnathelp.cpp */
 void initPureCFunctionTable(J9JavaVM *vm);
