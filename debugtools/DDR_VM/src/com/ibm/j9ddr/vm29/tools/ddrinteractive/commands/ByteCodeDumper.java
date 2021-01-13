@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -434,7 +434,7 @@ public class ByteCodeDumper {
 				out.append(J9UTF8Helper.stringValue(nameAndSig.signature())); /* dump signature */
 				out.append(nl);
 
-				pc = pc.add(4);
+				pc = pc.add(2);
 			} else if (bcIntVal == JBinvokeinterface2) {
 				incIndex();
 				pc = pc.add(1);
