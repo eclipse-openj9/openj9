@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2007, 2020 IBM Corp. and others
+// Copyright (c) 2007, 2021 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -148,7 +148,7 @@ TraceExit=Trc_Thunk_j9ThunkLookupNameAndSig_Exit_Success Overhead=1 Level=3 NoEn
 TraceExit=Trc_Thunk_j9ThunkLookupNameAndSig_Exit_ThunkNotFound Overhead=1 Level=1 NoEnv Template="j9ThunkLookupNameAndSig - thunk not found"
 
 TraceAssert=Assert_JSWalk_invalidFrameType noEnv Overhead=1 Level=1 Assert="(0 /* invalid frame (sub)type encountered */)"
-TraceAssert=Assert_j9i2jMHTransition_unreachable noEnv Overhead=1 Level=1 Assert="(0 /* unreachable */)"
+TraceAssert=Assert_CodertVM_unreachable noEnv Overhead=1 Level=1 Assert="(0 /* unreachable */)"
 
 TraceAssert=Assert_CodertVM_true noEnv Overhead=1 Level=1 Assert="(P1)"
 TraceAssert=Assert_CodertVM_false noEnv Overhead=1 Level=1 Assert="!(P1)"
