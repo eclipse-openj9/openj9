@@ -510,7 +510,7 @@ exportPackageToAll(J9VMThread * currentThread, J9Module * fromModule, const char
 	UDATA retval = ERRCODE_GENERAL_FAILURE;
 	J9Package * const j9package = getPackageDefinition(currentThread, fromModule, package, &retval);
 	if (NULL != j9package) {
-		j9package->exportToAll = TRUE;
+		j9package->exportToAll = 1;
 		if (TrcEnabled_Trc_MODULE_addModuleExportsToAll) {
 			trcModulesAddModuleExportsToAll(currentThread, fromModule, package);
 		}
@@ -541,7 +541,7 @@ exportPackageToAllUnamed(J9VMThread * currentThread, J9Module * fromModule, cons
 	UDATA retval = ERRCODE_GENERAL_FAILURE;
 	J9Package * const j9package = getPackageDefinition(currentThread, fromModule, package, &retval);
 	if (NULL != j9package) {
-		j9package->exportToAllUnnamed = TRUE;
+		j9package->exportToAllUnnamed = 1;
 		if (TrcEnabled_Trc_MODULE_addModuleExportsToAllUnnamed) {
 			trcModulesAddModuleExportsToAllUnnamed(currentThread, fromModule, package);
 		}

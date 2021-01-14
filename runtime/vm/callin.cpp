@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corp. and others
+ * Copyright (c) 2012, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -758,7 +758,7 @@ isAccessibleToAllModulesViaReflection(J9VMThread *currentThread, J9Class *clazz,
 			package = getPackageDefinitionWithName(currentThread, module, (U_8*) packageName, (U_16) packageNameLength, &err);
 			omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 
-			if ((ERRCODE_SUCCESS != err) || !package->exportToAll) {
+			if ((ERRCODE_SUCCESS != err) || (0 == package->exportToAll)) {
 				isAccessible = false;
 			}
 		} else {

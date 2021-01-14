@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -211,7 +211,7 @@ isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Module *fromModule,
 		isExported = TRUE;
 	} else if (NULL != j9package) {
 		/* First try the general export rules */
-		BOOLEAN const isExportedAll = j9package->exportToAll || (toUnnamed ? j9package->exportToAllUnnamed : FALSE);
+		BOOLEAN const isExportedAll = (0 != j9package->exportToAll) || (toUnnamed ? (0 != j9package->exportToAllUnnamed) : FALSE);
 		/* then look for an specific export rule */
 		if (isExportedAll) {
 			isExported = TRUE;
