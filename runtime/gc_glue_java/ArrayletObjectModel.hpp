@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -831,160 +831,6 @@ public:
 		return getSpineSize(J9GC_J9OBJECT_CLAZZ(arrayPtr, this), layout, getSizeInElements(arrayPtr));
 	}
 
-#if defined(J9VM_ENV_DATA64)
-
-	/**
-	 * Gets data pointer of a contiguous indexable object.
-	 * Helper to get dataAddr field of contiguous indexable objects.
-	 *
-	 * @return Pointer which points to indexable object data
-	 */
-	MMINLINE void **
-	dataAddrSlotForContiguous(J9IndexableObject *arrayPtr)
-	{
-		AssertContiguousArrayletLayout(arrayPtr);
-		bool const compressed = compressObjectReferences();
-		void **dataAddrPtr = NULL;
-		if (compressed) {
-			dataAddrPtr = &((J9IndexableObjectContiguousCompressed *)arrayPtr)->dataAddr;
-		} else {
-			dataAddrPtr = &((J9IndexableObjectContiguousFull *)arrayPtr)->dataAddr;
-		}
-		return dataAddrPtr;
-	}
-
-	/**
-	 * Gets data pointer of a discontiguous indexable object.
-	 * Helper to get dataAddr field of discontiguous indexable objects.
-	 *
-	 * @return Pointer which points to discontiguous indexable object data
-	 */
-	MMINLINE void **
-	dataAddrSlotForDiscontiguous(J9IndexableObject *arrayPtr)
-	{
-		/* If double mapping is enabled only, arraylet will have a discontiguous layout.
-		 * If sparse-heap is enabled, arraylet will have a contiguous layout. For now
-		 * we can't simply Assert only the discontiguous case because there could also
-		 * exist hybrid arraylets (which will be dicontinued in the future) */
-		bool const compressed = compressObjectReferences();
-		void **dataAddrPtr = NULL;
-		if (compressed) {
-			dataAddrPtr = &((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->dataAddr;
-		} else {
-			dataAddrPtr = &((J9IndexableObjectDiscontiguousFull *)arrayPtr)->dataAddr;
-		}
-		return dataAddrPtr;
-	}
-
-	/**
-	 * Sets data pointer of a contiguous indexable object.
-	 * Sets the data pointer of a contiguous indexable object; in this case
-	 * dataAddr will point directly into the data right after dataAddr field
-	 * (data resides in heap).
-	 *
-	 * @param arrayPtr      Pointer to the indexable object whose size is required
-	 */
-	MMINLINE void
-	setDataAddrForContiguous(J9IndexableObject *arrayPtr)
-	{
-		void **dataAddrPtr = dataAddrSlotForContiguous(arrayPtr);
-		void *dataAddr = (void *)((UDATA)arrayPtr + contiguousHeaderSize());
-		*dataAddrPtr = dataAddr;
-	}
-
-	/**
-	 * Sets data pointer of a discontiguous indexable object.
-	 * Sets the data pointer of a discontiguous indexable object; in this case
-	 * dataAddr will point to the contiguous representation of the data
-	 * which resides outside the heap (assuming double map/sparse-heap is enabled).
-	 * In case double map is disabled, the dataAddr will point to the first arrayoid
-	 * of the discontiguous indexable object, which also resides right after dataAddr
-	 * field.
-	 *
-	 * @param arrayPtr      Pointer to the indexable object whose size is required
-	 * @param dataAddr      Pointer which points to indexable object data
-	 */
-	MMINLINE void
-	setDataAddrForDiscontiguous(J9IndexableObject *arrayPtr, void *address)
-	{
-		/* If double mapping is enabled only, arraylet will have a discontiguous layout.
-		 * If sparse-heap is enabled, arraylet will have a contiguous layout. For now
-		 * we can't simply Assert only the discontiguous case because there could also
-		 * exist hybrid arraylets (which will be dicontinued in the future) */
-		void *calculatedDataAddr = address;
-		void **dataAddrPtr = dataAddrSlotForDiscontiguous(arrayPtr);
-
-		/* If calculatedDataAddr is NULL then we make dataAddr point to the first arrayoid */
-		/* Later on, when sparse-heap is enabled by default, we must assert dataAddr is not NULL */
-		if (NULL == calculatedDataAddr) {
-			calculatedDataAddr = (void *)((UDATA)arrayPtr + discontiguousHeaderSize());
-		}
-
-		*dataAddrPtr = calculatedDataAddr;
-	}
-
-	/**
-	 * Returns data pointer associated with a contiguous Indexable object.
-	 * Data pointer will always be pointing at the arraylet data. In this
-	 * case the data pointer will be pointing to address immediately after
-	 * the header.
-	 *
-	 * @param arrayPtr      Pointer to the indexable object whose size is required
-	 * @return data address associated with the Indexable object
-	 */
-	MMINLINE void *
-	getDataAddrForContiguous(J9IndexableObject *arrayPtr)
-	{
-		void *dataAddr = *dataAddrSlotForContiguous(arrayPtr);
-		return dataAddr;
-	}
-
-	/**
-	 * Returns data pointer associated with a discontiguous Indexable object.
-	 * Data pointer will always be pointing at the arraylet data. In this
-	 * case the data pointer will be pointing to address immediately after
-	 * the header (the arrayoid), except when double mapping or sparse-heap
-	 * is enabled. In these cases, the data pointer will point to the
-	 * contiguous representation of the data; hence returning that pointer.
-	 *
-	 * @param arrayPtr      Pointer to the indexable object whose size is required
-	 * @return data address associated with the Indexable object
-	 */
-	MMINLINE void *
-	getDataAddrForDiscontiguous(J9IndexableObject *arrayPtr)
-	{
-		/* If double mapping is enabled only, arraylet will have a discontiguous layout.
-		 * If sparse-heap is enabled, arraylet will have a contiguous layout. For now we
-		 * Assert only the discontiguous case until sparse-heap is introduced. */
-		AssertDiscontiguousArrayletLayout(arrayPtr);
-		void *dataAddr = *dataAddrSlotForDiscontiguous(arrayPtr);
-		return dataAddr;
-	}
-
-	/**
-	 * Returns data pointer associated with the Indexable object.
-	 * Data pointer will always be pointing at the arraylet data. In all
-	 * cases the data pointer will be pointing to address immediately after
-	 * the header, except when double mapping is enabled. In this case,
-	 * if double mapping is enabled and arraylet was double mapped
-	 * successfully the data pointer will point to the contiguous
-	 * representation of the data; hence returning that pointer.
-	 *
-	 * @param arrayPtr      Pointer to the indexable object whose size is required
-	 * @return data address associated with the Indexable object
-	 */
-	MMINLINE void *
-	getDataAddrForIndexableObject(J9IndexableObject *arrayPtr)
-	{
-		ArrayLayout layout = getArrayLayout(arrayPtr);
-		bool isDiscontiguous = (layout != InlineContiguous);
-
-		return isDiscontiguous
-			? getDataAddrForDiscontiguous(arrayPtr)
-			: getDataAddrForContiguous(arrayPtr);
-	}
-#endif /* J9VM_ENV_DATA64 */
-
 	/**
 	 * Returns the header size of a given indexable object. The arraylet layout is determined base on "small" size.
 	 * @param arrayPtr Ptr to an array for which header size will be returned
@@ -1102,15 +948,5 @@ public:
 	 * Asserts that an Arraylet has indeed discontiguous layout
 	 */
 	void AssertArrayletIsDiscontiguous(J9IndexableObject *objPtr);
-
-	/**
-	 * Asserts that an Arraylet has true contiguous layout
-	 */
-	void AssertContiguousArrayletLayout(J9IndexableObject *objPtr);
-
-	/**
-	 * Asserts that an Arraylet has true discontiguous layout
-	 */
-	void AssertDiscontiguousArrayletLayout(J9IndexableObject *objPtr);
 };
 #endif /* ARRAYLETOBJECTMODEL_ */

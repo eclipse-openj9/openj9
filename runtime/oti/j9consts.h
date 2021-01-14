@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -459,8 +459,6 @@ extern "C" {
 
 #define J9_GC_MINIMUM_OBJECT_SIZE 0x10
 #if defined(J9VM_ENV_DATA64)
-#define J9_GC_INDEXABLE_DATA_FIELD_SIZE sizeof(void *)
-#define J9_GC_MINIMUM_INDEXABLE_OBJECT_SIZE (J9_GC_MINIMUM_OBJECT_SIZE + J9_GC_INDEXABLE_DATA_FIELD_SIZE)
 #define J9_GC_MARK_MAP_LOG_SIZEOF_UDATA 0x6
 #define J9_GC_MARK_MAP_UDATA_MASK 0x3F
 #else /* J9VM_ENV_DATA64 */

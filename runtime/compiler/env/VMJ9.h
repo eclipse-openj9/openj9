@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -503,10 +503,6 @@ public:
    virtual uintptr_t         getIdentityHashSaltPolicy();
    virtual uintptr_t         getJ9JavaClassRamShapeShift();
    virtual uintptr_t         getObjectHeaderShapeMask();
-#if defined(TR_TARGET_64BIT)
-   virtual uintptr_t         getOffsetOfContiguousDataAddrField();
-   virtual uintptr_t         getOffsetOfDiscontiguousDataAddrField();
-#endif /* TR_TARGET_64BIT */
 
    virtual bool               assumeLeftMostNibbleIsZero();
 
