@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,10 +118,6 @@ public:
    uintptr_t offsetOfDiscontiguousArraySizeField();
    uintptr_t objectHeaderSizeInBytes();
    uintptr_t offsetOfIndexableSizeField();
-#if defined(TR_TARGET_64BIT)
-   uintptr_t offsetOfContiguousDataAddrField();
-   uintptr_t offsetOfDiscontiguousDataAddrField();
-#endif /* TR_TARGET_64BIT */
 
    /**
    * @brief Returns the read barrier type of VM's GC

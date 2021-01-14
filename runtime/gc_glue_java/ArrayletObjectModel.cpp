@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,18 +57,6 @@ GC_ArrayletObjectModel::AssertArrayletIsDiscontiguous(J9IndexableObject *objPtr)
 			Assert_MM_true((getSpineSize(objPtr) + remainderBytes + extensions->getObjectAlignmentInBytes()) > arrayletLeafSize);
 		}
 	}
-}
-
-void
-GC_ArrayletObjectModel::AssertContiguousArrayletLayout(J9IndexableObject *objPtr)
-{
-        Assert_MM_true(InlineContiguous == getArrayLayout(objPtr));
-}
-
-void
-GC_ArrayletObjectModel::AssertDiscontiguousArrayletLayout(J9IndexableObject *objPtr)
-{
-        Assert_MM_true(Discontiguous == getArrayLayout(objPtr));
 }
 
 GC_ArrayletObjectModel::ArrayLayout
