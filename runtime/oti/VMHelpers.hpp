@@ -1379,7 +1379,7 @@ done:
 			} else {
 				/* Final field - ensure the running method is allowed to store */
 				if (J9_UNEXPECTED(!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(J9_ROM_METHOD_FROM_RAM_METHOD(method), J9AccStatic))) {
-					if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass))) {
+					if (J9_UNEXPECTED(ramClassChecksFinalStores(ramConstantPool->ramClass))) {
 						/* Store not allowed - run the resolve code to throw the exception */
 						resolved = false;
 					}
@@ -1594,7 +1594,7 @@ exit:
 				|| (method == vm->jliMethodHandleInvokeWithArgs)
 				|| (method == vm->jliMethodHandleInvokeWithArgsList)
 				|| (vm->srMethodAccessor
-						&& VM_VMHelpers::isSameOrSuperclass(
+						&& isSameOrSuperclass(
 								J9VM_J9CLASS_FROM_JCLASS(currentThread,
 										vm->srMethodAccessor), currentClass)));
 	}

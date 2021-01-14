@@ -6401,9 +6401,10 @@ done:
 			VM_VMHelpers::resolvedStaticFieldRefIsPutResolved(flagsAndClass, _literals, ramConstantPool)
 		))) {
 			/* Unresolved */
+			J9Method *method = _literals; /* Record the running method before building the special frame */
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
-			resolveResult = resolveStaticFieldRef(_currentThread, _literals, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
+			resolveResult = resolveStaticFieldRef(_currentThread, method, ramConstantPool, index, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_FIELD_SETTER | J9_RESOLVE_FLAG_CHECK_CLINIT, NULL);
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
