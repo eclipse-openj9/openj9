@@ -2624,6 +2624,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<levels>
 			<level>sanity</level>
 		</levels>
