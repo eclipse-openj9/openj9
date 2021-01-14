@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1024,10 +1024,6 @@ UDATA TR_J9VMBase::getOffsetOfBackfillOffsetField()                 {return offs
 
 UDATA TR_J9VMBase::getOffsetOfContiguousArraySizeField()            {return TR::Compiler->om.offsetOfContiguousArraySizeField();}
 UDATA TR_J9VMBase::getOffsetOfDiscontiguousArraySizeField()         {return TR::Compiler->om.offsetOfDiscontiguousArraySizeField();}
-#if defined(TR_TARGET_64BIT)
-UDATA TR_J9VMBase::getOffsetOfContiguousDataAddrField()             {return TR::Compiler->om.offsetOfContiguousDataAddrField();}
-UDATA TR_J9VMBase::getOffsetOfDiscontiguousDataAddrField()          {return TR::Compiler->om.offsetOfDiscontiguousDataAddrField();}
-#endif /* TR_TARGET_64BIT */
 UDATA TR_J9VMBase::getJ9ObjectContiguousLength()                    {return TR::Compiler->om.offsetOfContiguousArraySizeField();}
 UDATA TR_J9VMBase::getJ9ObjectDiscontiguousLength()                 {return TR::Compiler->om.offsetOfContiguousArraySizeField();}
 
