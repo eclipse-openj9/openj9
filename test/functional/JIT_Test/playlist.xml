@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-	Copyright (c) 2016, 2020 IBM Corp. and others
+	Copyright (c) 2016, 2021 IBM Corp. and others
 
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -494,7 +494,7 @@
 	<test>
 		<testCaseName>jit_hwWarm</testCaseName>
 		<variations>
-			<variation>-Xdump:java -Xjit:optlevel=warm,count=0</variation>
+			<variation>Mode110 -Xdump:java -Xjit:optlevel=warm,count=0</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
@@ -504,7 +504,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>os.linux,^vm.cmprssptrs,^arch.arm</platformRequirements>
+		<platformRequirements>os.linux,^arch.arm</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -625,8 +625,8 @@
 		<testCaseName>testJITServer</testCaseName>
 		<!-- Variations are passed to the client via the CLIENT_PROGRAM property from $JVM_OPTIONS; neither the test harness nor the server care about these. -->
 		<variations>
-			<variation>NoOptions</variation>
-			<variation>-Xshareclasses:none -Xjit:optLevel=hot</variation>
+			<variation>Mode610</variation>
+			<variation>Mode610 -Xshareclasses:none -Xjit:optLevel=hot</variation>
 		</variations>
 		<!-- Check if the JITServer launcher exists and if so start the test and
 			 - specify the executables for the client and server via the CLIENT_EXE and SERVER_EXE properties respectively,
@@ -650,7 +650,7 @@
 		echo $(Q)$(TEST_JDK_BIN)$(D)jitserver doesn't exist; assuming this JDK does not support JITServer and trivially passing the test.$(Q); \
 	fi; \
 	$(TEST_STATUS)</command>
-		<platformRequirements>os.linux,arch.x86,bits.64,vm.cmprssptrs</platformRequirements>
+		<platformRequirements>os.linux,arch.x86,bits.64</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>

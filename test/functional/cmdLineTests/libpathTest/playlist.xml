@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,9 @@
 	<!-- LIBPATH tests intended for PMR56610 (CMVC 201272) -->
 	<test>
 		<testCaseName>cmdLineTester_libpathTestRtf</testCaseName>
+		<variations>
+			<variation>Mode610</variation>
+		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(JAVA_COMMAND) -DJAVA_HOME=$(Q)$(JAVA_HOME)$(Q) -DJAVATEST_ROOT=$(JAVATEST_ROOT) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) \
 	-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)libpathTest.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
@@ -34,7 +37,7 @@
 	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3787 -->
-		<platformRequirements>bits.64,vm.cmprssptrs,^os.osx,^os.zos</platformRequirements>
+		<platformRequirements>bits.64,^os.osx,^os.zos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
