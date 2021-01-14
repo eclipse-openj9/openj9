@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2019, 2020 IBM Corp. and others
+#  Copyright (c) 2019, 2021 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,11 +20,11 @@
 #  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ##############################################################################
 
-ADD_EXPORTS=
-ASM_JAR=$(LIB_DIR)$(D)asm-all.jar
+ADD_EXPORTS_VM=
+ADD_EXPORTS_ASM=
 # ADD_EXPORTS needs to set for JDK9 and up
 # if JDK_VERSION is not 8
 ifeq ($(filter 8, $(JDK_VERSION)),)
- ADD_EXPORTS=--add-exports=java.base/com.ibm.oti.vm=ALL-UNNAMED
- ASM_JAR=$(LIB_DIR)$(D)asm.jar
+ ADD_EXPORTS_VM=--add-exports=java.base/com.ibm.oti.vm=ALL-UNNAMED
+ ADD_EXPORTS_ASM=--add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED
 endif
