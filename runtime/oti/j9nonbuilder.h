@@ -1700,8 +1700,8 @@ typedef struct J9Module {
 
 typedef struct J9Package {
 	struct J9UTF8* packageName;
-	BOOLEAN exportToAll;
-	BOOLEAN exportToAllUnnamed;
+	U_32 exportToAll;
+	U_32 exportToAllUnnamed;
 	struct J9Module* module;
 	struct J9HashTable* exportsHashTable;
 	struct J9ClassLoader* classLoader;

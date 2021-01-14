@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,9 +83,6 @@ typeoverride.J9AnnotationInfoEntry.memberName=J9SRP(J9UTF8)
 typeoverride.J9AnnotationInfoEntry.memberSignature=J9SRP(J9UTF8)
 
 typeoverride.J9EnclosingObject.nameAndSignature=J9SRP(J9ROMNameAndSignature)
-
-typeoverride.J9Package.exportToAll=UDATA
-typeoverride.J9Package.exportToAllUnnamed=UDATA
 
 typeoverride.J9ROMClass.className=J9SRP(J9UTF8)
 typeoverride.J9ROMClass.cpShapeDescription=J9SRP(U32)
