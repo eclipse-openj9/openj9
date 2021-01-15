@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,16 +51,15 @@ private:
 	static const uintptr_t _objectHeaderSlotOffset = 0;
 	static const uintptr_t _objectHeaderSlotFlagsShift = 0;
 
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-	bool _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
-
 	const uintptr_t _delegateHeaderSlotFlagsMask;
 
 	GC_ArrayObjectModel *_arrayObjectModel;
 	GC_MixedObjectModel *_mixedObjectModel;
 
 protected:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 public:
 
 /*

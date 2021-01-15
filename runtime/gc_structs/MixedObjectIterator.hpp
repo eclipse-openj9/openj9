@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,9 +46,9 @@ class GC_MixedObjectIterator
 private:
 protected:
 	GC_SlotObject _slotObject;	/**< Create own SlotObject class to provide output */
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
 	bool const _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 	J9Object *_objectPtr;		/**< save address of object this class initiated with */
 	fj9object_t *_scanPtr;		/**< current scan pointer */
@@ -248,9 +248,9 @@ public:
 	 */
 	GC_MixedObjectIterator (OMR_VM *omrVM)
 		: _slotObject(GC_SlotObject(omrVM, NULL))
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
 		, _compressObjectReferences(OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM))
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		, _objectPtr(NULL)
 		, _scanPtr(NULL)
 		, _endPtr(NULL)
@@ -265,9 +265,9 @@ public:
 	 */
 	GC_MixedObjectIterator (OMR_VM *omrVM, J9Object *objectPtr)
 		: _slotObject(GC_SlotObject(omrVM, NULL))
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
 		, _compressObjectReferences(OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM))
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		, _objectPtr(NULL)
 		, _scanPtr(NULL)
 		, _endPtr(NULL)
