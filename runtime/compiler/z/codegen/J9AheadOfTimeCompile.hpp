@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,12 +48,21 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public J9::AheadOfTimeCompile
      AheadOfTimeCompile(TR::CodeGenerator *cg);
 
     virtual void     processRelocations();
-    virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
+
+     /**
+      * @brief Initialization of relocation record headers for whom data for the fields are acquired
+      *        in a manner that is specific to this platform
+      *
+      * @param relocation pointer to the iterated external relocation
+      * @param reloTarget pointer to the TR_RelocationTarget object
+      * @param reloRecord pointer to the associated
+      * @param targetKind the TR_ExternalRelocationTargetKind enum value
+      */
+    void initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t targetKind);
 
     TR::list<TR::S390Relocation*>& getRelocationList() {return _relocationList;}
 
   private:
-    static uint32_t _relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds];
     TR::list<TR::S390Relocation*>     _relocationList;
     TR::CodeGenerator *_cg;
    };
