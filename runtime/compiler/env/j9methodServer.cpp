@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -758,7 +758,7 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation 
       {
       // Signature polymorphic method's signature varies at different call sites and will be different than its declared signature
       int32_t signatureLength;
-      char   *signature = getMethodNameAndSignatureFromConstantPool(cpIndex, signatureLength);
+      char   *signature = getMethodSignatureFromConstantPool(cpIndex, signatureLength);
       ((TR_ResolvedJ9Method *)m)->setSignature(signature, signatureLength, comp->trMemory());
       }
    return m;
@@ -772,7 +772,7 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation 
       {
       // Signature polymorphic method's signature varies at different call sites and will be different than its declared signature
       int32_t signatureLength;
-      char   *signature = getMethodNameAndSignatureFromConstantPool(cpIndex, signatureLength);
+      char   *signature = getMethodSignatureFromConstantPool(cpIndex, signatureLength);
       ((TR_ResolvedJ9Method *)m)->setSignature(signature, signatureLength, comp->trMemory());
       }
    return m;
@@ -1142,7 +1142,7 @@ TR_ResolvedJ9JITServerMethod::classSignatureOfFieldOrStatic(I_32 cpIndex, int32_
    }
 
 char *
-TR_ResolvedJ9JITServerMethod::getMethodNameAndSignatureFromConstantPool(I_32 cpIndex, int32_t & len)
+TR_ResolvedJ9JITServerMethod::getMethodSignatureFromConstantPool(I_32 cpIndex, int32_t & len)
    {
    I_32 realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), cpIndex);
    if (realCPIndex == -1)
@@ -1153,6 +1153,20 @@ TR_ResolvedJ9JITServerMethod::getMethodNameAndSignatureFromConstantPool(I_32 cpI
                         offsetof(J9ROMNameAndSignature, signature)
                         });
    return signature;
+   }
+
+char *
+TR_ResolvedJ9JITServerMethod::getMethodNameFromConstantPool(I_32 cpIndex, int32_t & len)
+   {
+   I_32 realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), cpIndex);
+   if (realCPIndex == -1)
+      return 0;
+   char *name = getROMString(len, &romCPBase()[realCPIndex],
+                        {
+                        offsetof(J9ROMMethodRef, nameAndSignature),
+                        offsetof(J9ROMNameAndSignature, name)
+                        });
+   return name;
    }
 
 char *
@@ -2389,7 +2403,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method(TR::Co
       {
       // Signature polymorphic method's signature varies at different call sites and will be different than its declared signature
       int32_t signatureLength;
-      char   *signature = getMethodNameAndSignatureFromConstantPool(cpIndex, signatureLength);
+      char   *signature = getMethodSignatureFromConstantPool(cpIndex, signatureLength);
       ((TR_ResolvedJ9Method *)resolvedMethod)->setSignature(signature, signatureLength, comp->trMemory());
       }
 
@@ -2410,7 +2424,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::C
       {
       // Signature polymorphic method's signature varies at different call sites and will be different than its declared signature
       int32_t signatureLength;
-      char   *signature = getMethodNameAndSignatureFromConstantPool(cpIndex, signatureLength);
+      char   *signature = getMethodSignatureFromConstantPool(cpIndex, signatureLength);
       ((TR_ResolvedJ9Method *)resolvedMethod)->setSignature(signature, signatureLength, comp->trMemory());
       }
 
@@ -2894,4 +2908,3 @@ TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9C
    parseSignature(trMemory);
    _fullSignature = NULL;
    }
-
