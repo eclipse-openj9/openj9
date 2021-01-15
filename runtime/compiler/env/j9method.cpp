@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -6348,7 +6348,7 @@ TR_ResolvedJ9Method::getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &le
    }
 
 char *
-TR_ResolvedJ9Method::getMethodNameAndSignatureFromConstantPool(I_32 cpIndex, int32_t & len)
+TR_ResolvedJ9Method::getMethodSignatureFromConstantPool(I_32 cpIndex, int32_t & len)
    {
    I_32 realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), cpIndex);
    if (realCPIndex == -1)
@@ -6356,6 +6356,17 @@ TR_ResolvedJ9Method::getMethodNameAndSignatureFromConstantPool(I_32 cpIndex, int
    J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *) (&romCPBase()[realCPIndex]);
    J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
    return utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig), len);
+   }
+
+char *
+TR_ResolvedJ9Method::getMethodNameFromConstantPool(int32_t cpIndex, int32_t & len)
+   {
+   I_32 realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), cpIndex);
+   if (realCPIndex == -1)
+      return 0;
+   J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *) (&romCPBase()[realCPIndex]);
+   J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+   return utf8Data(J9ROMNAMEANDSIGNATURE_NAME(nameAndSig), len);
    }
 
 const char *
@@ -6716,7 +6727,7 @@ bool
 TR_ResolvedJ9Method::shouldCompileTimeResolveMethod(I_32 cpIndex)
    {
    int32_t methodNameLength;
-   char *methodName = getMethodNameAndSignatureFromConstantPool(cpIndex, methodNameLength);
+   char *methodName = getMethodNameFromConstantPool(cpIndex, methodNameLength);
 
    I_32 classCPIndex = classCPIndexOfMethod(cpIndex);
    uint32_t classNameLength;
