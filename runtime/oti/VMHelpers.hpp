@@ -1113,6 +1113,29 @@ done:
 	}
 
 	/**
+	 * Determines whether the Unicode string is an ASCII string.
+	 *
+	 * @param data[in] points to Unicode characters
+	 * @param length[in] the number of Unicode characters in data
+	 *
+	 * @return true if all of the characters in the Unicode input string are ASCII; false otherwise
+	 */
+	static VMINLINE bool
+	isUnicodeASCII(const U_16 *data, UDATA length)
+	{
+		bool isASCII = true;
+
+		for (UDATA i = 0; i < length; ++i) {
+			if (data[i] > 0x7F) {
+				isASCII = false;
+				break;
+			}
+		}
+
+		return isASCII;
+	}
+
+	/**
 	 * Copies a UTF8 string into a backing array containing UTF16 characters at a specific index.
 	 *
 	 * @param vmThread[in] the current J9VMThread

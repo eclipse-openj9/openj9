@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -533,9 +533,16 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	j9object_t result = NULL;
 	j9object_t charArray = NULL;
 	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
+	bool isUnicode = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_UNICODE);
 
-	if (VM_VMHelpers::isUTF8ASCII(data, length)) {
-		stringFlags |= J9_STR_ASCII;
+	if (isUnicode) {
+		if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && VM_VMHelpers::isUnicodeASCII((const U_16 *)data, length / 2)) {
+			stringFlags |= J9_STR_ASCII;
+		}
+	} else {
+		if (VM_VMHelpers::isUTF8ASCII(data, length)) {
+			stringFlags |= J9_STR_ASCII;
+		}
 	}
 
 	Trc_MM_createJavaLangString_Entry(vmThread, length, data, stringFlags);
@@ -581,7 +588,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			goto nomem;
 		}
 
-		if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
+		if (isUnicode) {
 			unicodeLength = length / 2;
 		} else {
 			if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
@@ -613,7 +620,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			goto nomem;
 		}
 
-		if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
+		if (isUnicode) {
 			UDATA i;
 			U_16 * unicodeData = (U_16 *) data;
 
