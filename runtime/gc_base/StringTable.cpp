@@ -241,7 +241,7 @@ stringComparatorFn(struct J9AVLTree *tree, struct J9AVLTreeNode *leftNode, struc
 			U_16 rightChar = 0;
 			U_32 consumed = 0;
 
-			consumed = decodeUTF8CharN(u8Ptr+left_i, &leftChar, leftLength-left_i);
+			consumed = (U_32)VM_VMHelpers::decodeUTF8CharN(u8Ptr+left_i, &leftChar, leftLength-left_i);
 			if (0 == consumed) { 
 				/* reached the end of the left string early */
 				rc = -1;
@@ -384,7 +384,7 @@ stringHashEqualFn(void *leftKey, void *rightKey, void *userData)
 			U_16 leftChar, rightChar;
 			U_32 consumed;
 
-			consumed = decodeUTF8CharN(u8Ptr+right_i, &rightChar, rightLength-right_i);
+			consumed = (U_32)VM_VMHelpers::decodeUTF8CharN(u8Ptr+right_i, &rightChar, rightLength-right_i);
 			if (0 == consumed) { /* reached the end of the string early */
 				return FALSE;
 			}
@@ -532,20 +532,42 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	MM_StringTable *stringTable = MM_GCExtensions::getExtensions(vm->omrVM)->getStringTable();
 	j9object_t result = NULL;
 	j9object_t charArray = NULL;
-	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
+	bool compressStrings = IS_STRING_COMPRESSION_ENABLED_VM(vm);
 	bool isUnicode = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_UNICODE);
-
-	if (isUnicode) {
-		if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && VM_VMHelpers::isUnicodeASCII((const U_16 *)data, length / 2)) {
-			stringFlags |= J9_STR_ASCII;
-		}
-	} else {
-		if (VM_VMHelpers::isUTF8ASCII(data, length)) {
-			stringFlags |= J9_STR_ASCII;
-		}
-	}
+	bool translateSlashes = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT);
+	bool anonClassName = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME);
+	bool internString = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_INTERN);
 
 	Trc_MM_createJavaLangString_Entry(vmThread, length, data, stringFlags);
+
+	/* Determine if the string contains only ASCII (<= 0x7F) characters */
+	bool isASCII = true;
+	if (isUnicode) {
+		/* Translation and anon class name are not currently supported for unicode input */
+		Assert_MM_false(translateSlashes || anonClassName);
+		/* Currently, the only users of isASCII when isUnicode is true are also gated by compressStrings, so
+		 * don't bother computing isASCII if compression is off.
+		 */
+		if (compressStrings) {
+			U_16 *unicodeData = (U_16*)data;
+			for (UDATA i = 0; i < length; ++i) {
+				if (unicodeData[i] > 0x7F) {
+					isASCII = false;
+					break;
+				}
+			}
+		} else {
+			/* For future safety, ensure isASCII is false if not computed correctly */
+			isASCII = false;
+		}
+	} else {
+		for (UDATA i = 0; i < length; ++i) {
+			if (data[i] > 0x7F) {
+				isASCII = false;
+				break;
+			}
+		}
+	}
 
 	/* For strings that should be interned, and don't need to be converted or translated,
 	 * check if they are already in the string hashtable.  Otherwise, don't bother with
@@ -556,11 +578,13 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	 * add the string before this one is not fatal and is ignored.
 	 */
 
-	if ((stringFlags & (J9_STR_XLAT | J9_STR_UNICODE | J9_STR_INTERN)) == J9_STR_INTERN) {
+	if (internString && !translateSlashes && !isUnicode) {
 		UDATA hash = 0;
 
-		if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
-			hash = VM_VMHelpers::computeHashForASCII(data, length);
+		if (isASCII) {
+			for (UDATA i = 0; i < length; ++i) {
+				hash = (hash << 5) - hash + data[i];
+			}
 		} else {
 			hash = VM_VMHelpers::computeHashForUTF8(data, length);
 		}
@@ -574,11 +598,11 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 	if (NULL == result) {
 		UDATA unicodeLength = 0;
+		UDATA allocateFlags = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_INSTRUMENTABLE)
+				? J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE
+				: J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
 
-		if (stringFlags & J9_STR_INSTRUMENTABLE) {
-			allocateFlags = J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE;
-		}
-		if ((stringFlags & (J9_STR_TENURE | J9_STR_INTERN)) != 0) {
+		if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_TENURE | J9_STR_INTERN)) {
 			allocateFlags |= J9_GC_ALLOCATE_OBJECT_TENURED;
 		}
 
@@ -591,23 +615,31 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		if (isUnicode) {
 			unicodeLength = length / 2;
 		} else {
-			if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
+			if (isASCII) {
 				unicodeLength = length;
 			} else {
-				unicodeLength = VM_VMHelpers::getUTF8UnicodeLength(data, length);
+				UDATA tempLength = length;
+				U_8 *tempData = data;
+				while (tempLength != 0) {
+					U_16 unicode = 0;
+					UDATA consumed = VM_VMHelpers::decodeUTF8CharN(tempData, &unicode, tempLength);
+					tempData += consumed;
+					tempLength -= consumed;
+					unicodeLength += 1;
+				}
 			}
 		}
 
 		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, result);
 
 		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
+			if (compressStrings && isASCII) {
 				charArray = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength, allocateFlags);
 			} else {
 				charArray = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength * 2, allocateFlags);
 			}
 		} else {
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
+			if (compressStrings && isASCII) {
 				charArray = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) (unicodeLength + 1) / 2, allocateFlags);
 			} else {
 				charArray = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) unicodeLength, allocateFlags);
@@ -621,30 +653,90 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		}
 
 		if (isUnicode) {
-			UDATA i;
 			U_16 * unicodeData = (U_16 *) data;
 
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
-				for (i = 0; i < unicodeLength; ++i) {
+			if (compressStrings && isASCII) {
+				for (UDATA i = 0; i < unicodeLength; ++i) {
 					J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (I_8)unicodeData[i]);
 				}
 			} else {
-				for (i = 0; i < unicodeLength; ++i) {
+				for (UDATA i = 0; i < unicodeLength; ++i) {
 					J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, unicodeData[i]);
 				}
 			}
 		} else {
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
-				VM_VMHelpers::copyUTF8ToBackingArrayAsASCII(vmThread, data, length, stringFlags, charArray, 0);
+			if (compressStrings && isASCII) {
+				if (translateSlashes) {
+					for (UDATA i = 0; i < length; ++i) {
+						U_8 c = data[i];
+						J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, c != '/' ? c : '.');
+					}
+				} else {
+					for (UDATA i = 0; i < length; ++i) {
+						J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, data[i]);
+					}
+				}
+
+				/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to fix up the name
+				 * because the previous loops have converted '/' to '.' already.
+				 */
+				if (translateSlashes && anonClassName) {
+					for (UDATA i = length - 1; i != 0; --i) {
+						if ((U_8)'.' == J9JAVAARRAYOFBYTE_LOAD(vmThread, charArray, i)) {
+							J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (U_8)'/');
+							break;
+						}
+					}
+				}
 			} else {
-				VM_VMHelpers::copyUTF8ToBackingArrayAsUTF16(vmThread, data, length, stringFlags, charArray, 0);
+				if (isASCII) {
+					if (translateSlashes) {
+						for (UDATA i = 0; i < length; ++i) {
+							U_8 c = data[i];
+							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, c != '/' ? c : '.');
+						}
+					} else {
+						for (UDATA i = 0; i < length; ++i) {
+							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, data[i]);
+						}
+					}
+				} else {
+					UDATA writeIndex = 0;
+					UDATA tempLength = length;
+					U_8* tempData = data;
+					while (tempLength > 0) {
+						U_16 unicode = 0;
+						UDATA consumed = VM_VMHelpers::decodeUTF8Char(tempData, &unicode);
+						if (translateSlashes) {
+							if ((U_16)'/' == unicode) {
+								unicode = (U_16)'.';
+							}
+						}
+						J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, writeIndex, unicode);
+						writeIndex += 1;
+						tempData += consumed;
+						tempLength -= consumed;
+					}
+				}
+
+				/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to fix up the name
+				 * because the previous loops have converted '/' to '.' already.
+				 */
+				if (translateSlashes && anonClassName) {
+					for (UDATA i = length - 1; i != 0; --i) {
+						if ((U_16)'.' == J9JAVAARRAYOFCHAR_LOAD(vmThread, charArray, i)) {
+							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, (U_16)'/');
+							break;
+						}
+					}
+				}
 			}
 		}
 
 		J9VMJAVALANGSTRING_SET_VALUE(vmThread, result, charArray);
 
-		if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
-			if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
+		if (compressStrings) {
+			if (isASCII) {
 				if (J2SE_VERSION(vm) >= J2SE_V11) {
 					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 0);
 				} else {
@@ -689,7 +781,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 		/* Intern the String if requested */
 
-		if (stringFlags & J9_STR_INTERN) {
+		if (internString) {
 			result = stringTable->addStringToInternTable(vmThread, result);
 			if (NULL == result) {
 				goto nomem;
