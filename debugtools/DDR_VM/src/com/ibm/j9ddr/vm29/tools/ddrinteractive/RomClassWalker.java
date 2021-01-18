@@ -30,7 +30,9 @@ import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_FLOAT;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_HANDLE_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INSTANCE_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INT;
+import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_INSTANCE_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_METHOD;
+import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_STATIC_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_LONG;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHODHANDLE;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHOD_TYPE;
@@ -640,7 +642,9 @@ public class RomClassWalker extends ClassWalker {
 			} else if ((shapeDesc == J9CPTYPE_HANDLE_METHOD) ||
 					(shapeDesc == J9CPTYPE_STATIC_METHOD) || 
 					(shapeDesc == J9CPTYPE_INSTANCE_METHOD) ||
-					(shapeDesc == J9CPTYPE_INTERFACE_METHOD)) {
+					(shapeDesc == J9CPTYPE_INTERFACE_METHOD) ||
+					(shapeDesc == J9CPTYPE_INTERFACE_INSTANCE_METHOD) ||
+					(shapeDesc == J9CPTYPE_INTERFACE_STATIC_METHOD)) {
 				J9ROMMethodRefPointer ref = J9ROMMethodRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_SRPNAS, ref.nameAndSignatureEA(), "cpFieldNAS");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.classRefCPIndexEA(), "cpFieldClassRef");
