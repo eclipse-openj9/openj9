@@ -21,7 +21,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 # About
 Artifactory is a binary repository manager.
-Our server is being used to store the Jenkins artifacts between builds to save space on the Jenkins master. The artifacts will be kept for a period after the job in case someone needs to debug the build.
+Our server is being used to store the Jenkins artifacts between builds to save space on the Jenkins Manager node. The artifacts will be kept for a period after the job in case someone needs to debug the build.
 It is being hosted on the proxy worker machine and the current address is https://140-211-168-230-openstack.osuosl.org/artifactory/webapp/
 
 # Install Artifactory:
