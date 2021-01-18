@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,27 +65,27 @@ timeout(time: 6, unit: 'HOURS') {
                 variableFile.set_user_credentials()
 
                 def buildNodes = jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()
-                def slaveNodes = []
+                def todoNodes = []
                 def setupNodesNames = []
                 def buildNodesNames = []
 
                 if (UPDATE_SETUP_NODES) {
-                    // update openj9 repo cache on slaves that have SETUP_LABEL
+                    // update openj9 repo cache on nodes that have SETUP_LABEL
                     if (UPDATE_BUILD_NODES) {
                         // remove build nodes from the setup nodes collection
-                        slaveNodes.addAll(jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().minus(buildNodes))
+                        todoNodes.addAll(jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().minus(buildNodes))
                     } else {
-                        slaveNodes.addAll(jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes())
+                        todoNodes.addAll(jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes())
                     }
 
-                    //add master if slaveNodes does not contain it already
-                    if (slaveNodes.intersect(jenkins.model.Jenkins.instance.getLabel('master').getNodes()).isEmpty()) {
-                        slaveNodes.addAll(jenkins.model.Jenkins.instance.getLabel('master').getNodes())
+                    //add Jenkins Manager node if todoNodes does not contain it already
+                    if (todoNodes.intersect(jenkins.model.Jenkins.instance.getLabel('master').getNodes()).isEmpty()) {
+                        todoNodes.addAll(jenkins.model.Jenkins.instance.getLabel('master').getNodes())
                     }
 
-                    for (sNode in slaveNodes) {
+                    for (sNode in todoNodes) {
                         if (sNode.toComputer().isOffline()) {
-                            // skip offline slave
+                            // skip offline node
                             continue
                         }
 
@@ -106,10 +106,10 @@ timeout(time: 6, unit: 'HOURS') {
                 }
 
                 if (UPDATE_BUILD_NODES) {
-                    // update openjdk and openj9 repos cache on slaves
+                    // update openjdk and openj9 repos cache on nodes
                     for (aNode in buildNodes) {
                         if (aNode.toComputer().isOffline()) {
-                            // skip offline slave
+                            // skip offline node
                             continue
                         }
 

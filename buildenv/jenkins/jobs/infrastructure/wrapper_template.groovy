@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,7 +116,8 @@ pipelineJob(job_name) {
             if (triggers.pull_request_builder) {
                 githubPullRequest {
                     admins(triggers.pull_request_builder.admin_list)
-                    blackListCommitAuthor(triggers.pull_request_builder.blacklist)
+                    // #10071 This function name is defined by the plugin https://plugins.jenkins.io/ghprb/
+                    blackListCommitAuthor(triggers.pull_request_builder.block_list)
                     cron(triggers.pull_request_builder.cron)
                     triggerPhrase(triggers.pull_request_builder.trigger_phrase)
                     onlyTriggerPhrase()
