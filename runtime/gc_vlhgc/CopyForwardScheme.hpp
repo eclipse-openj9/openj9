@@ -46,6 +46,7 @@ class MM_CopyForwardCompactGroup;
 class MM_CopyForwardGMPCardCleaner;
 class MM_CopyForwardNoGMPCardCleaner;
 class MM_CopyForwardVerifyScanner;
+class MM_ForwardedHeader;
 class MM_ParallelDispatcher;
 class MM_HeapRegionManager;
 class MM_HeapRegionDescriptorVLHGC;
@@ -59,7 +60,6 @@ class MM_CopyForwardSchemeAbortScanner;
 class MM_CopyForwardSchemeRootScanner;
 class MM_CopyForwardSchemeRootClearer;
 class MM_CopyForwardSchemeTask;
-class MM_ScavengerForwardedHeader;
 
 /**
  * Copy Forward scheme used for highly mobile partial collection operations.
@@ -468,9 +468,8 @@ private:
 
 	/**
 	 * @param doesObjectNeedHash[out]		True, if object need to store hashcode in hashslot
-	 * @param isObjectGrowingHashSlot[out]	True, if object need to grow size for hashslot
 	 */
-	MMINLINE void calculateObjectDetailsForCopy(MM_ScavengerForwardedHeader* forwardedHeader, UDATA *objectCopySizeInBytes, UDATA *objectReserveSizeInBytes, bool *doesObjectNeedHash, bool *isObjectGrowingHashSlot);
+	MMINLINE void calculateObjectDetailsForCopy(MM_ForwardedHeader* forwardedHeader, UDATA *objectCopySizeInBytes, UDATA *objectReserveSizeInBytes, bool *doesObjectNeedHash);
 
 	/**
 	 * Remove any remaining regions from the reserved allocation list.
@@ -862,7 +861,7 @@ private:
 	 * @note This will respect any alignment requirements due to hot fields etc.
 	 * @return an object pointer representing the new location of the object, or the original object pointer on failure.
 	 */
-	J9Object *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader, bool leafType = false);
+	J9Object *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ForwardedHeader* forwardedHeader, bool leafType = false);
 	void updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
 	
 

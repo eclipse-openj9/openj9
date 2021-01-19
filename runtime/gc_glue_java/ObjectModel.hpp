@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,20 +145,20 @@ private:
 	 * Examine all classes as they are loaded to determine if they require the J9AccClassGCSpecial bit.
 	 * These classes are handled specially by GC_ObjectModel::getScanType()
 	 */
-	static void internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+	static void internalClassLoadHook(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
 
 	/**
 	 * Update all of the  GC special class pointers to their most current version after a class
 	 * redefinition has occurred.
 	 */
-	static void classesRedefinedHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+	static void classesRedefinedHook(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData);
 	
 	/**
 	 * Returns the shape of an class.
 	 * @param objectPtr Pointer to object whose shape is required.
 	 * @return The shape of the object
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getClassShape(J9Object *objectPtr)
 	{
 		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, this);
@@ -179,7 +179,7 @@ public:
 		switch(J9GC_CLASS_SHAPE(clazz)) {
 		case OBJECT_HEADER_SHAPE_MIXED:
 		{
-			UDATA classFlags = J9CLASS_FLAGS(clazz) & (J9AccClassReferenceMask | J9AccClassGCSpecial | J9AccClassOwnableSynchronizer);
+			uintptr_t classFlags = J9CLASS_FLAGS(clazz) & (J9AccClassReferenceMask | J9AccClassGCSpecial | J9AccClassOwnableSynchronizer);
 			if (0 == classFlags) {
 				if (0 != clazz->selfReferencingField1) {
 					result = SCAN_MIXED_OBJECT_LINKED;
@@ -237,7 +237,7 @@ public:
 	 * @param objectPtr Pointer to object whose depth is required.
 	 * @return The depth of the object
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getObjectDepth(J9Object *objectPtr)
 	{
 		return (getRememberedBits(objectPtr) & OBJECT_HEADER_DEPTH_MASK);
@@ -363,17 +363,17 @@ public:
 	 * @param object[in] the object to be hashed
 	 * @return the persistent, basic hash code for the object 
 	 */
-	MMINLINE I_32
+	MMINLINE int32_t
 	getObjectHashCode(J9JavaVM *vm, J9Object *object)
 	{
-		I_32 result = 0;
+		int32_t result = 0;
 #if defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL)
 		if (hasBeenMoved(object)) {
-			UDATA hashOffset = getHashcodeOffset(object);
-			result = *(I_32*)((U_8*)object + hashOffset);
+			uintptr_t hashOffset = getHashcodeOffset(object);
+			result = *(int32_t*)((uint8_t*)object + hashOffset);
 		} else {
 			atomicSetObjectFlags(object, 0, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
-			result = convertValueToHash(vm, (UDATA)object);
+			result = convertValueToHash(vm, (uintptr_t)object);
 		}
 #else /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 		result = computeObjectAddressToHash(vm, object);
@@ -392,10 +392,10 @@ public:
 	initializeHashSlot(J9JavaVM* vm, J9Object *objectPtr)
 	{
 #if defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL)
-		UDATA hashOffset = getHashcodeOffset(objectPtr);
-		U_32 *hashCodePointer = (U_32*)((U_8*)objectPtr + hashOffset);
+		uintptr_t hashOffset = getHashcodeOffset(objectPtr);
+		uint32_t *hashCodePointer = (uint32_t*)((uint8_t*)objectPtr + hashOffset);
 
-		*hashCodePointer = convertValueToHash(vm, (UDATA)objectPtr);
+		*hashCodePointer = convertValueToHash(vm, (uintptr_t)objectPtr);
 		setObjectHasBeenMoved(objectPtr);
 #endif /* defined (OMR_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 	}
@@ -488,6 +488,12 @@ public:
 		setObjectFlags(objectPtr, OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS, OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS);
 	}
 
+	MMINLINE int32_t
+	computeObjectHash(MM_ForwardedHeader *forwardedHeader)
+	{
+		return convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
+	}
+
 	MMINLINE void
 	preMove(OMR_VMThread* vmThread, omrobjectptr_t objectPtr)
 	{
@@ -533,7 +539,7 @@ public:
 	 * @param objectPtr Pointer to an object
 	 * @return The consumed heap size of an object, in bytes, including the header
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getConsumedSizeInBytesWithHeaderForMove(J9Object *objectPtr)
 	{
 		return adjustSizeInBytes(getObjectModelDelegate()->getObjectSizeInBytesWithHeader(objectPtr, hasBeenHashed(objectPtr)));
@@ -546,7 +552,7 @@ public:
 	 * @param objectPtr Pointer to an object
 	 * @return The consumed heap size of an object, in bytes, including the header
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getConsumedSizeInBytesWithHeaderBeforeMove(J9Object *objectPtr)
 	{
 		return adjustSizeInBytes(getObjectModelDelegate()->getObjectSizeInBytesWithHeader(objectPtr, hasBeenMoved(objectPtr) && !hasRecentlyBeenMoved(objectPtr)));
