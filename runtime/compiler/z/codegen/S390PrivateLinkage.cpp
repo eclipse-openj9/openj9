@@ -58,10 +58,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
-J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
+J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_LinkageConventions lc)
    : J9::PrivateLinkage(codeGen)
    {
-   setExplicitLinkageType(elc);
+   setLinkageType(lc);
 
    // linkage properties
    setProperty(SplitLongParm);
@@ -3508,7 +3508,7 @@ J9::Z::PrivateLinkage::getSystemStackPointerRegister()
    }
 
 
-J9::Z::JNILinkage::JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
-   :J9::Z::PrivateLinkage(cg, elc, lc)
+J9::Z::JNILinkage::JNILinkage(TR::CodeGenerator * cg, TR_LinkageConventions elc)
+   :J9::Z::PrivateLinkage(cg, elc)
    {
    }
