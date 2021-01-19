@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,11 +71,16 @@ tgcHookGlobalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, 
 					shouldIncludeThread = env->_markStats._gcCount == extensions->globalGCStats.gcCount;
 #endif /* defined(J9VM_GC_MODRON_STANDARD) */
 				}
+				
+				/* Get RS busy and stall times and convert time from microseconds to milliseconds for reporting */
+				uint64_t rsStallTimeInMillis = ((uint64_t)(env->_workPacketStats.getStallTime())) / 1000;
+				uint64_t rsBusyTimeInMillis =  (RSScanTotalTime / 1000) - rsStallTimeInMillis;
+
 				if (shouldIncludeThread) {
 					tgcExtensions->printf("%4zu:  %5llu  %5llu   %5zu     %5zu     %5zu\n",
 						env->getWorkerID(),
-						j9time_hires_delta(parallelExtensions->RSScanStartTime, env->_workPacketStatsRSScan.getStallTime(), J9PORT_TIME_DELTA_IN_MILLISECONDS),
-						j9time_hires_delta(env->_workPacketStatsRSScan.getStallTime(), parallelExtensions->RSScanEndTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
+						rsBusyTimeInMillis,
+						rsStallTimeInMillis,
 						env->_workPacketStatsRSScan.workPacketsAcquired,
 						env->_workPacketStatsRSScan.workPacketsReleased,
 						env->_workPacketStatsRSScan.workPacketsExchanged);
