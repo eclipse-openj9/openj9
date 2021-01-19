@@ -73,7 +73,7 @@ extern "C" {
  *
  * Note: caller must have vmaccess before invoking this helper
  */
-void
+static void
 initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refObject)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -223,7 +223,7 @@ getClassSignature(J9VMThread *currentThread, J9Class * clazz)
 				if (J9ROMCLASS_IS_PRIMITIVE_TYPE(componentClass->romClass)) {
 					break;
 				}
-				numDims++;
+				numDims += 1;
 				myClass = componentClass;
 			}
 
@@ -238,7 +238,7 @@ getClassSignature(J9VMThread *currentThread, J9Class * clazz)
 			sigLength++; /* for null-termination */
 			sig = (char *)j9mem_allocate_memory(sigLength, OMRMEM_CATEGORY_VM);
 			if (NULL != sig) {
-				U_32 i;
+				U_32 i = 0;
 				for (i = 0; i < numDims; i++) {
 					sig[i] = '[';
 				}
@@ -261,7 +261,7 @@ getClassSignature(J9VMThread *currentThread, J9Class * clazz)
 	return sig;
 }
 
-char *
+static char *
 getSignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, UDATA *signatureLength)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -464,6 +464,25 @@ lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9JNINameAndSign
 	result = (J9Method*)currentThread->javaVM->internalVMFunctions->javaLookupMethod(currentThread, resolvedClass, (J9ROMNameAndSignature*)nas, callerClass, lookupOptions);
 
 	return result;
+}
+
+static void
+setCallSiteTargetImpl(J9VMThread *currentThread, jobject callsite, jobject target, bool isVolatile)
+{
+	const J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	if ((NULL == callsite) || (NULL == target)) {
+		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		j9object_t callsiteObject = J9_JNI_UNWRAP_REFERENCE(callsite);
+		j9object_t targetObject = J9_JNI_UNWRAP_REFERENCE(target);
+
+		UDATA offset = (UDATA)vmFuncs->instanceFieldOffset(currentThread, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, callsiteObject), (U_8*)"target", strlen("target"), (U_8*)"Ljava/lang/invoke/MethodHandle;", strlen("Ljava/lang/invoke/MethodHandle;"), NULL, NULL, 0);
+		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+		objectAccessBarrier.inlineMixedObjectStoreObject(currentThread, callsiteObject, offset, targetObject, isVolatile);
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 
@@ -1316,7 +1335,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass cl
 				j9object_t membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
 				jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
 				jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
-				j9object_t target;
+				j9object_t target = NULL;
 				if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
 					vmindex = ((J9JNIFieldID*)vmindex)->offset;
 					target = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, membernameObject);
@@ -1334,7 +1353,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass cl
 
 				J9VMJAVALANGLONG_SET_VALUE(currentThread, box, vmindex);
 				J9JAVAARRAYOFOBJECT_STORE(currentThread, arrayObject, 0, box);
-				J9JAVAARRAYOFOBJECT_STORE(currentThread, arrayObject, 0, target);
+				J9JAVAARRAYOFOBJECT_STORE(currentThread, arrayObject, 1, target);
 
 				result = vmFuncs->j9jni_createLocalRef(env, arrayObject);
 			}
@@ -1352,21 +1371,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass cl
 void JNICALL
 Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetNormal(JNIEnv *env, jclass clazz, jobject callsite, jobject target)
 {
-	J9VMThread *currentThread = (J9VMThread*)env;
-	const J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-
-	if ((NULL == callsite) || (NULL == target)) {
-		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-	} else {
-		j9object_t callsiteObject = J9_JNI_UNWRAP_REFERENCE(callsite);
-		j9object_t targetObject = J9_JNI_UNWRAP_REFERENCE(target);
-
-		UDATA offset = (UDATA)vmFuncs->instanceFieldOffset(currentThread, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, callsiteObject), (U_8*)"target", strlen("target"),  (U_8*)"Ljava/lang/invoke/MethodHandle;", strlen("Ljava/lang/invoke/MethodHandle;"), NULL, NULL, 0);
-		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
-		objectAccessBarrier.inlineMixedObjectStoreObject(currentThread, callsiteObject, offset, targetObject, false);
-	}
-	vmFuncs->internalExitVMToJNI(currentThread);
+	setCallSiteTargetImpl((J9VMThread*)env, callsite, target, false);
 }
 
 /**
@@ -1375,21 +1380,7 @@ Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetNormal(JNIEnv *env, j
 void JNICALL
 Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetVolatile(JNIEnv *env, jclass clazz, jobject callsite, jobject target)
 {
-	J9VMThread *currentThread = (J9VMThread*)env;
-	const J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-
-	if ((NULL == callsite) || (NULL == target)) {
-		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-	} else {
-		j9object_t callsiteObject = J9_JNI_UNWRAP_REFERENCE(callsite);
-		j9object_t targetObject = J9_JNI_UNWRAP_REFERENCE(target);
-
-		UDATA offset = (UDATA)vmFuncs->instanceFieldOffset(currentThread, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, callsiteObject), (U_8*)"target", strlen("target"), (U_8*)"Ljava/lang/invoke/MethodHandle;", strlen("Ljava/lang/invoke/MethodHandle;"), NULL, NULL, 0);
-		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
-		objectAccessBarrier.inlineMixedObjectStoreObject(currentThread, callsiteObject, offset, targetObject, true);
-	}
-	vmFuncs->internalExitVMToJNI(currentThread);
+	setCallSiteTargetImpl((J9VMThread*)env, callsite, target, true);
 }
 
 /**
@@ -1419,7 +1410,7 @@ Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments(JNIEnv *env,
 		} else if (((start < -4) || (start > end) || (pos < 0)) || ((jint)J9INDEXABLEOBJECT_SIZE(currentThread, bufferArray) <= pos) || ((jint)J9INDEXABLEOBJECT_SIZE(currentThread, bufferArray) <= (pos + end - start))) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, NULL);
 		} else {
-			/* U_16 bsmArgCount = (U_16)J9JAVAARRAYOFINT_LOAD(currentThread, indexInfoArray, 0); */
+			U_16 bsmArgCount = (U_16)J9JAVAARRAYOFINT_LOAD(currentThread, indexInfoArray, 0);
 			U_16 cpIndex = (U_16)J9JAVAARRAYOFINT_LOAD(currentThread, indexInfoArray, 1);
 			J9ROMClass *romClass = callerClass->romClass;
 			U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
@@ -1441,6 +1432,13 @@ Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments(JNIEnv *env,
 
 				U_16 bsmCPIndex = bsmData[0];
 				U_16 argCount = bsmData[1];
+
+				/* Check the argCount from indexInfo array matches actual value */
+				if (bsmArgCount != argCount) {
+					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+					goto done;
+				}
+
 				bsmData += 2;
 
 				while (start < end) {
