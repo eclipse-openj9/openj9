@@ -118,7 +118,9 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                  'target*.tmp',
                                  'sharedcacheapi',
                                  'intermediateClassCreateTest',
-                                 'sh-np.*']
+                                 'sh-np.*',
+                                 'xlc*',
+                                 'sh-np-*']
 
                 for (aNode in jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()) {
                     def nodeName = aNode.getDisplayName()
