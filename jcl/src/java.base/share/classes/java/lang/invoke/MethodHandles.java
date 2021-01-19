@@ -5528,6 +5528,9 @@ public class MethodHandles {
 	 * @return the classData casted to the appropriate type.
 	 * @throws IllegalAccessException in the absence of full privilege access.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 16]*/
+	public
+	/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 	static <T> T classData(Lookup caller, String unused, Class<T> type) throws IllegalAccessException {
 		if (caller.hasFullPrivilegeAccess()) {
 			Object classData = MethodHandleNatives.classData(caller.accessClass);
