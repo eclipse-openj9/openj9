@@ -3634,10 +3634,13 @@ public class MethodHandles {
 		MethodType handleType = handle.type;	// implicit null check
 		Class<?> permuteReturnType = permuteType.returnType(); // implicit null check
 		if (permute.length != handleType.parameterCount()) { // implicit null check on permute
-			throw new IllegalArgumentException();
+			/*[MSG "K0687", "old type parameter count and reorder array length do not match: '{0}', '{1}'"]*/
+			throw new IllegalArgumentException(Msg.getString("K0687", handleType, Arrays.toString(permute)));
 		}
-		if (permuteReturnType != handleType.returnType()) {
-			throw new IllegalArgumentException();
+		Class<?> handleReturnType = handleType.returnType();
+		if (permuteReturnType != handleReturnType) {
+			/*[MSG "K0688", "return types do not match: '{0}', '{1}'"]*/
+			throw new IllegalArgumentException(Msg.getString("K0688", handleReturnType, permuteReturnType));
 		}
 		permute = permute.clone();	// ensure the permute[] can't be modified during/after validation
 		// validate permuted args are an exact match
@@ -3707,10 +3710,12 @@ public class MethodHandles {
 		for (int i = 0; i < permute.length; i++) {
 			int permuteIndex = permute[i];
 			if ((permuteIndex < 0) || (permuteIndex >= permuteArgs.length)){
-				throw new IllegalArgumentException();
+				/*[MSG "K0689", "index is out of bounds for new type: '{0}', '{1}'"]*/
+				throw new IllegalArgumentException(Msg.getString("K0689", permuteIndex, permuteType));
 			}
 			if (handleArgs[i] != permuteArgs[permuteIndex]) {
-				throw new IllegalArgumentException();
+				/*[MSG "K0690", "parameter types do not match after reorder: '{0}', '{1}'"]*/
+				throw new IllegalArgumentException(Msg.getString("K0690", handleType, permuteType));
 			}
 		}
 		return true;
