@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2020, 2020 IBM Corp. and others
+Copyright (c) 2020, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,7 +176,7 @@ If `reloPrivateData->_failValidation` is true, then if the SVM is enabled
 the AOT load is aborted; if the SVM is disabled then 
 `TR_RelocationRecordNopGuard::invalidateGuard` is called, which patches
 the guard to branch to the slow path. If `reloPrivateData->_failValidation`
-is true, then `TR_RelocationRecordNopGuard::activateGuard` is called, which
+is false, then `TR_RelocationRecordNopGuard::activateGuard` is called, which
 
 1. Calls `createAssumptions`, which will add assumptions appropriate for the kind of the inlined method (virtual, interface).
 2. Registers a Class Redefinition assumption against the class of the inlined method.
