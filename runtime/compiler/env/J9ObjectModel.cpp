@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -618,7 +618,7 @@ J9::ObjectModel::getArrayLengthInElements(TR::Compilation* comp, uintptr_t objec
 uintptr_t
 J9::ObjectModel::decompressReference(TR::Compilation* comp, uintptr_t compressedReference)
    {
-   return (compressedReference << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
+   return (compressedReference << TR::Compiler->om.compressedReferenceShift());
    }
 
 bool

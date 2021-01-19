@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -499,32 +499,25 @@ bool J9::TreeEvaluator::getIndirectWrtbarValueNode(TR::CodeGenerator *cg, TR::No
          translatedNode = translatedNode->getFirstChild();
          }
 
-      if (translatedNode->getOpCode().isSub() ||
-           TR::Compiler->vm.heapBaseAddress() == 0 || sourceChild->isNull()) /* i.e. usingLowMemHeap */
+      usingCompressedPointers = true;
+
+      while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
          {
-         usingCompressedPointers = true;
+         sourceChild = sourceChild->getFirstChild();
+         }
+      if (sourceChild->getOpCodeValue() == TR::a2l)
+         {
+         sourceChild = sourceChild->getFirstChild();
          }
 
-      if (usingCompressedPointers)
+      // Artificially bump up the refCount on the value so
+      // that different registers are allocated for the actual
+      // and compressed values. This is done so that the VMwrtbarEvaluator
+      // uses the uncompressed value. We only need to do this when the caller
+      // is evaluating the actual write barrier.
+      if (incSrcRefCount)
          {
-         while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
-            {
-            sourceChild = sourceChild->getFirstChild();
-            }
-         if (sourceChild->getOpCodeValue() == TR::a2l)
-            {
-            sourceChild = sourceChild->getFirstChild();
-            }
-
-         // Artificially bump up the refCount on the value so
-         // that different registers are allocated for the actual
-         // and compressed values. This is done so that the VMwrtbarEvaluator
-         // uses the uncompressed value. We only need to do this when the caller
-         // is evaluating the actual write barrier.
-         if (incSrcRefCount)
-            {
-            sourceChild->incReferenceCount();
-            }
+         sourceChild->incReferenceCount();
          }
       }
    return usingCompressedPointers;

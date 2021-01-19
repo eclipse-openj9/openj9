@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1141,7 +1141,7 @@ TR_J9VMBase::getReferenceFieldAtAddress(uintptr_t fieldAddress)
    if (TR::Compiler->om.compressObjectReferences())
       {
       uintptr_t compressedResult = *(uint32_t*)fieldAddress;
-      return (compressedResult << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
+      return (compressedResult << TR::Compiler->om.compressedReferenceShift());
       }
    return *(uintptr_t*)fieldAddress;
    }

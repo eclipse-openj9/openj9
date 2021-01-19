@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,14 +60,6 @@ J9::VMEnv::maxHeapSizeInBytes()
    J9MemoryManagerFunctions * mmf = jvm->memoryManagerFunctions;
    return (int64_t) mmf->j9gc_get_maximum_heap_size(jvm);
    }
-
-
-UDATA
-J9::VMEnv::heapBaseAddress()
-   {
-   return 0;
-   }
-
 
 bool
 J9::VMEnv::hasAccess(OMR_VMThread *omrVMThread)

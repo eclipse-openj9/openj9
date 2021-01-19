@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -484,20 +484,12 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
       if (translatedNode->getOpCode().isRightShift()) // optional
          translatedNode = translatedNode->getFirstChild();
 
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 || secondChild->isNull())
-         usingLowMemHeap = true;
+      usingCompressedPointers = true;
 
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
-         {
-         while (secondChild->getNumChildren() && secondChild->getOpCodeValue() != TR::a2l)
-            secondChild = secondChild->getFirstChild();
-         if (secondChild->getNumChildren())
-            secondChild = secondChild->getFirstChild();
-         }
+      while (secondChild->getNumChildren() && secondChild->getOpCodeValue() != TR::a2l)
+         secondChild = secondChild->getFirstChild();
+      if (secondChild->getNumChildren())
+         secondChild = secondChild->getFirstChild();
       }
 
    if (secondChild->getReferenceCount() > 1 && secondChild->getRegister() != NULL)
@@ -2645,20 +2637,12 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
       if (translatedNode->getOpCode().isRightShift()) // optional
          translatedNode = translatedNode->getFirstChild();
 
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 || sourceChild->isNull())
-         usingLowMemHeap = true;
+      usingCompressedPointers = true;
 
-      if ((translatedNode->getOpCode().isSub()) || usingLowMemHeap)
-         usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
-         {
-         while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
-            sourceChild = sourceChild->getFirstChild();
-         if (sourceChild->getOpCodeValue() == TR::a2l)
-            sourceChild = sourceChild->getFirstChild();
-         }
+      while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
+         sourceChild = sourceChild->getFirstChild();
+      if (sourceChild->getOpCodeValue() == TR::a2l)
+         sourceChild = sourceChild->getFirstChild();
       }
 
    TR::Register *srcReg;

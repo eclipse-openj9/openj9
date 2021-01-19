@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -462,12 +462,7 @@ J9::CodeGenerator::lowerCompressedRefs(
       vcount_t visitCount,
       TR_BitVector *childrenToBeLowered)
    {
-   bool isLowMem = false;
-   if (TR::Compiler->vm.heapBaseAddress() == 0)
-      {
-      isLowMem = true;
-      }
-
+   bool isLowMem = true;
    if (node->getOpCode().isCall() && childrenToBeLowered)
       {
       TR_BitVectorIterator bvi(*childrenToBeLowered);
@@ -484,8 +479,7 @@ J9::CodeGenerator::lowerCompressedRefs(
                }
 
             TR::Node *heapBase = TR::Node::create(node, TR::lconst, 0, 0);
-            heapBase->setLongInt(TR::Compiler->vm.heapBaseAddress());
-            lowerCASValues(node, nextChild, valueChild, self()->comp(), shftOffset, isLowMem, heapBase);
+            lowerCASValues(node, nextChild, valueChild, self()->comp(), shftOffset, true, heapBase);
             }
          }
 
@@ -3322,8 +3316,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
 
    // no need to rematerialize for lowMemHeap
    if (self()->comp()->useCompressedPointers() &&
-         ((TR::Compiler->vm.heapBaseAddress() != 0) ||
-         (TR::Compiler->om.compressedReferenceShift() != 0)) &&
+         (TR::Compiler->om.compressedReferenceShift() != 0) &&
          !disableRematforCP)
       {
       if (self()->comp()->getOption(TR_TraceCG))
@@ -3440,7 +3433,6 @@ J9::CodeGenerator::compressedReferenceRematerialization()
       }
 
    if (self()->comp()->useCompressedPointers() &&
-         (TR::Compiler->vm.heapBaseAddress() == 0) &&
          !disableRematforCP)
       {
       for (tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
@@ -3500,8 +3492,6 @@ J9::CodeGenerator::rematerializeCompressedRefs(
    bool alreadyVisitedNullCheckReference = false;
    bool alreadyVisitedReferenceInNullTest = false;
    bool alreadyVisitedReferenceInStore = false;
-
-   bool isLowMemHeap = (TR::Compiler->vm.heapBaseAddress() == 0);
 
    TR::Node *reference = NULL;
    TR::Node *address = NULL;
@@ -3589,7 +3579,6 @@ J9::CodeGenerator::rematerializeCompressedRefs(
       ((node->getFirstChild()->getOpCodeValue() == TR::ladd &&
        node->getFirstChild()->containsCompressionSequence()) ||
        ((node->getFirstChild()->getOpCodeValue() == TR::lshl) &&
-        (self()->canFoldLargeOffsetInAddressing() || (TR::Compiler->vm.heapBaseAddress() == 0)) &&
         self()->isAddressScaleIndexSupported((1 << TR::Compiler->om.compressedReferenceShiftOffset())))))
       {
       if (parent &&
@@ -3720,7 +3709,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
 
    static bool disableBranchlessPassThroughNULLCHK = feGetEnv("TR_disableBranchlessPassThroughNULLCHK") != NULL;
    if (node->getOpCode().isNullCheck() && reference &&
-          (!isLowMemHeap || self()->performsChecksExplicitly() || (disableBranchlessPassThroughNULLCHK && node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
+          (self()->performsChecksExplicitly() || (disableBranchlessPassThroughNULLCHK && node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
           ((node->getFirstChild()->getOpCodeValue() == TR::l2a) ||
            (reference->getOpCodeValue() == TR::l2a)) &&
          performTransformation(self()->comp(), "%sTransforming null check reference %p in null check node %p to be checked explicitly\n", OPT_DETAILS, reference, node))
@@ -3860,32 +3849,6 @@ J9::CodeGenerator::rematerializeCompressedRefs(
              }
           }
       }
-
-   if (self()->materializesHeapBase() &&
-       !isLowMemHeap &&
-       parent && (!parent->getOpCode().isStore()) &&
-       (node->getOpCodeValue() == TR::lconst) &&
-       (node->getLongInt() == TR::Compiler->vm.heapBaseAddress()) &&
-       performTransformation(self()->comp(), "%sTransforming heap base constant node %p to auto load \n", OPT_DETAILS, node))
-      {
-      if (!autoSymRef)
-         {
-         autoSymRef = self()->comp()->getSymRefTab()->createTemporary(self()->comp()->getMethodSymbol(), node->getDataType());
-         TR::TreeTop *startTree = self()->comp()->getStartTree();
-         TR::TreeTop *nextTree = startTree->getNextTreeTop();
-
-         TR::Node *lconstNode = TR::Node::create(node, TR::lconst, 0, 0);
-         lconstNode->setLongInt(node->getLongInt());
-         TR::Node *storeNode = TR::Node::createWithSymRef(TR::lstore, 1, 1, lconstNode, autoSymRef);
-         TR::TreeTop *tt = TR::TreeTop::create(self()->comp(), storeNode);
-         startTree->join(tt);
-         tt->join(nextTree);
-         }
-
-      TR::Node::recreate(node, TR::lload);
-      node->setSymbolReference(autoSymRef);
-      }
-
 
    if (address && node->getOpCode().isStoreIndirect())
       {

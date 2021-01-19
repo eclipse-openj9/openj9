@@ -4772,11 +4772,6 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
          {
          cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, tmpReg, tmpReg, cmpRefsShift, cursor);
          }
-
-      // Add heapbase value if necessary.
-      uintptr_t heapBaseValue = TR::Compiler->vm.heapBaseAddress();
-      if (heapBaseValue != 0)
-         cursor = generateRegLitRefInstruction(cg, TR::InstOpCode::AG, node, tmpReg, (int64_t)heapBaseValue, NULL, cursor, NULL, false);
       }
 
    // Calculate the offset with the arraylet for the index.
@@ -4887,11 +4882,6 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
             {
             cursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, loadOrStoreReg, loadOrStoreReg, cmpRefsShift, cursor);
             }
-
-         // Add heapbase value if necessary.
-         uintptr_t heapBaseValue = TR::Compiler->vm.heapBaseAddress();
-         if (heapBaseValue != 0)
-            cursor = generateRegLitRefInstruction(cg, TR::InstOpCode::AG, node, loadOrStoreReg, (int64_t)heapBaseValue, NULL, cursor, NULL, false);
          }
 
       if (highArrayletMR)
@@ -5201,13 +5191,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       if (translatedNode->getOpCode().isRightShift()) // optional
          translatedNode = translatedNode->getFirstChild();
 
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 ||
-             sourceChild->isNull())
-         usingLowMemHeap = true;
-
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         usingCompressedPointers = true;
+      usingCompressedPointers = true;
 
       if (usingCompressedPointers)
          {
@@ -9094,8 +9078,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          if (generateArraylets)
             {
             iCursor = generateS390ImmOp(cg, TR::InstOpCode::getAddOpCode(), node, temp1Reg, resReg, dataBegin, conditions, litPoolBaseReg);
-            if(TR::Compiler->vm.heapBaseAddress() == 0)
-            iCursor = generateS390ImmOp(cg, TR::InstOpCode::getAddOpCode(), node, temp1Reg, temp1Reg, -((int64_t)(TR::Compiler->vm.heapBaseAddress())), conditions, litPoolBaseReg);
+            iCursor = generateS390ImmOp(cg, TR::InstOpCode::getAddOpCode(), node, temp1Reg, temp1Reg, -((int64_t)(0)), conditions, litPoolBaseReg);
             if(TR::Compiler->om.compressedReferenceShiftOffset() > 0)
             iCursor = generateRSInstruction(cg, TR::InstOpCode::SRL, node, temp1Reg, TR::Compiler->om.compressedReferenceShiftOffset(), iCursor);
 
@@ -9993,28 +9976,22 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mn
          decompressedValueNode = decompressedValueNode->getFirstChild();
          }
 
-      if (decompressedValueNode->getOpCode().isSub() || TR::Compiler->vm.heapBaseAddress() == 0 || newVNode->isNull())
+      isValueCompressedReference = true;
+
+      while ((decompressedValueNode->getNumChildren() > 0) && (decompressedValueNode->getOpCodeValue() != TR::a2l))
          {
-         isValueCompressedReference = true;
+         decompressedValueNode = decompressedValueNode->getFirstChild();
          }
 
-      if (isValueCompressedReference)
+      if (decompressedValueNode->getOpCodeValue() == TR::a2l)
          {
-         while ((decompressedValueNode->getNumChildren() > 0) && (decompressedValueNode->getOpCodeValue() != TR::a2l))
-            {
-            decompressedValueNode = decompressedValueNode->getFirstChild();
-            }
-
-         if (decompressedValueNode->getOpCodeValue() == TR::a2l)
-            {
-            decompressedValueNode = decompressedValueNode->getFirstChild();
-            }
-
-         // Artificially bump the reference count on the value so that different registers are allocated for the
-         // compressed and decompressed values. This is done so that the card mark write barrier helper uses the
-         // decompressed value.
-         decompressedValueNode->incReferenceCount();
+         decompressedValueNode = decompressedValueNode->getFirstChild();
          }
+
+      // Artificially bump the reference count on the value so that different registers are allocated for the
+      // compressed and decompressed values. This is done so that the card mark write barrier helper uses the
+      // decompressed value.
+      decompressedValueNode->incReferenceCount();
       }
 
    // Eval old and new vals

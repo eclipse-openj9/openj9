@@ -1498,20 +1498,11 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
       if (translatedNode->getOpCode().isRightShift()) // optional
          translatedNode = translatedNode->getFirstChild();
 
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 || secondChild->isNull())
-         usingLowMemHeap = true;
-
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
-         {
-         while (secondChild->getNumChildren() && secondChild->getOpCodeValue() != TR::a2l)
-            secondChild = secondChild->getFirstChild();
-         if (secondChild->getNumChildren())
-            secondChild = secondChild->getFirstChild();
-         }
+      usingCompressedPointers = true;
+      while (secondChild->getNumChildren() && secondChild->getOpCodeValue() != TR::a2l)
+         secondChild = secondChild->getFirstChild();
+      if (secondChild->getNumChildren())
+         secondChild = secondChild->getFirstChild();
       }
 
    int32_t sizeofMR = TR::Compiler->om.sizeofReferenceAddress();
@@ -2613,26 +2604,9 @@ static TR::InstOpCode::Mnemonic getLoadOrStoreFromDataType(TR::CodeGenerator *cg
 static void genDecompressPointer(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg, TR::Register *condReg = NULL, bool nullCheck = true)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
 
-   if (heapBase != 0)
-      {
-      TR::LabelSymbol *skipLabel = NULL;
-      if (nullCheck)
-         {
-         TR_ASSERT(condReg, "Need a condition reg for non-zero heap base decompression");
-         skipLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, condReg, ptrReg, NULLVALUE);
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, skipLabel, condReg);
-         }
-      if (shiftAmount != 0)
-         generateShiftLeftImmediateLong(cg, node, ptrReg, ptrReg, shiftAmount);
-      addConstantToLong(node, ptrReg, heapBase, ptrReg, cg);
-      if (nullCheck)
-         generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLabel);
-      }
-   else if (shiftAmount != 0)
+   if (shiftAmount != 0)
       generateShiftLeftImmediateLong(cg, node, ptrReg, ptrReg, shiftAmount);
    }
 
@@ -2664,47 +2638,18 @@ static TR::Register *addConstantToLongWithTempReg(TR::Node * node, TR::Register 
 static void genDecompressPointerWithTempReg(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg, TR::Register *tempReg, TR::Register *condReg = NULL, bool nullCheck = true)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
 
-   if (heapBase != 0)
-      {
-      TR::LabelSymbol *skipLabel = NULL;
-      if (nullCheck)
-         {
-         TR_ASSERT(condReg, "Need a condition reg for non-zero heap base decompression");
-         skipLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, condReg, ptrReg, NULLVALUE);
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, skipLabel, condReg);
-         }
-      if (shiftAmount != 0)
-         generateShiftLeftImmediateLong(cg, node, ptrReg, ptrReg, shiftAmount);
-      addConstantToLongWithTempReg(node, ptrReg, heapBase, ptrReg, tempReg, cg);
-      if (nullCheck)
-         generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLabel);
-      }
-   else if (shiftAmount != 0)
+   if (shiftAmount != 0)
       generateShiftLeftImmediateLong(cg, node, ptrReg, ptrReg, shiftAmount);
    }
 
 static TR::Register *genDecompressPointerNonNull2Regs(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg, TR::Register *targetReg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
 
-   if (heapBase != 0)
-      {
-      TR::Register *temp = ptrReg;
-      if (shiftAmount != 0)
-         {
-         generateShiftLeftImmediateLong(cg, node, targetReg, ptrReg, shiftAmount);
-         temp = targetReg;
-         }
-      addConstantToLong(node, temp, heapBase, targetReg, cg);
-      return targetReg;
-      }
-   else if (shiftAmount != 0)
+   if (shiftAmount != 0)
       {
       generateShiftLeftImmediateLong(cg, node, targetReg, ptrReg, shiftAmount);
       return targetReg;
@@ -2718,21 +2663,9 @@ static TR::Register *genDecompressPointerNonNull2Regs(TR::CodeGenerator *cg, TR:
 static TR::Register *genDecompressPointerNonNull2RegsWithTempReg(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg, TR::Register *targetReg, TR::Register *tempReg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
 
-   if (heapBase != 0)
-      {
-      TR::Register *temp = ptrReg;
-      if (shiftAmount != 0)
-         {
-         generateShiftLeftImmediateLong(cg, node, targetReg, ptrReg, shiftAmount);
-         temp = targetReg;
-         }
-      addConstantToLongWithTempReg(node, temp, heapBase, targetReg, tempReg, cg);
-      return targetReg;
-      }
-   else if (shiftAmount != 0)
+   if (shiftAmount != 0)
       {
       generateShiftLeftImmediateLong(cg, node, targetReg, ptrReg, shiftAmount);
       return targetReg;
@@ -2746,26 +2679,9 @@ static TR::Register *genDecompressPointerNonNull2RegsWithTempReg(TR::CodeGenerat
 static void genCompressPointerWithTempReg(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg, TR::Register *tempReg, TR::Register *condReg = NULL, bool nullCheck = true)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
 
-   if (heapBase != 0)
-      {
-      TR::LabelSymbol *skipLabel = NULL;
-      if (nullCheck)
-         {
-         TR_ASSERT(condReg, "Need a condition reg for non-zero heap base compression");
-         skipLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, condReg, ptrReg, NULLVALUE);
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, skipLabel, condReg);
-         }
-      addConstantToLongWithTempReg(node, ptrReg, (int64_t)(-heapBase), ptrReg, tempReg, cg);
-      if (shiftAmount != 0)
-         generateShiftRightLogicalImmediateLong(cg, node, ptrReg, ptrReg, shiftAmount);
-      if (nullCheck)
-         generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLabel);
-      }
-   else if (shiftAmount != 0)
+   if (shiftAmount != 0)
       {
       generateShiftRightLogicalImmediateLong(cg, node, ptrReg, ptrReg, shiftAmount);
       }
@@ -2774,26 +2690,9 @@ static void genCompressPointerWithTempReg(TR::CodeGenerator *cg, TR::Node *node,
 static void genCompressPointer(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg, TR::Register *condReg = NULL, bool nullCheck = true)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
 
-   if (heapBase != 0)
-      {
-      TR::LabelSymbol *skipLabel = NULL;
-      if (nullCheck)
-         {
-         TR_ASSERT(condReg, "Need a condition reg for non-zero heap base compression");
-         skipLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli8, node, condReg, ptrReg, NULLVALUE);
-         generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, skipLabel, condReg);
-         }
-      addConstantToLong(node, ptrReg, -heapBase, ptrReg, cg);
-      if (shiftAmount != 0)
-         generateShiftRightLogicalImmediateLong(cg, node, ptrReg, ptrReg, shiftAmount);
-      if (nullCheck)
-         generateLabelInstruction(cg, TR::InstOpCode::label, node, skipLabel);
-      }
-   else if (shiftAmount != 0)
+   if (shiftAmount != 0)
       {
       generateShiftRightLogicalImmediateLong(cg, node, ptrReg, ptrReg, shiftAmount);
       }
@@ -2802,17 +2701,9 @@ static void genCompressPointer(TR::CodeGenerator *cg, TR::Node *node, TR::Regist
 static TR::Register *genCompressPointerNonNull2RegsWithTempReg(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg, TR::Register *targetReg, TR::Register *tempReg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
 
-   if (heapBase != 0)
-      {
-      addConstantToLongWithTempReg(node, targetReg, (int64_t)(-heapBase), ptrReg, tempReg, cg);
-      if (shiftAmount != 0)
-         generateShiftRightLogicalImmediateLong(cg, node, targetReg, targetReg, shiftAmount);
-      return targetReg;
-      }
-   else if (shiftAmount != 0)
+   if (shiftAmount != 0)
       {
       generateShiftRightLogicalImmediateLong(cg, node, targetReg, ptrReg, shiftAmount);
       return targetReg;
@@ -2824,17 +2715,9 @@ static TR::Register *genCompressPointerNonNull2RegsWithTempReg(TR::CodeGenerator
 static TR::Register *genCompressPointerNonNull2Regs(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg, TR::Register *targetReg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   uintptr_t heapBase = TR::Compiler->vm.heapBaseAddress();
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
 
-   if (heapBase != 0)
-      {
-      addConstantToLong(node, targetReg, (int64_t)(-heapBase), ptrReg, cg);
-      if (shiftAmount != 0)
-         generateShiftRightLogicalImmediateLong(cg, node, targetReg, targetReg, shiftAmount);
-      return targetReg;
-      }
-   else if (shiftAmount != 0)
+   if (shiftAmount != 0)
       {
       generateShiftRightLogicalImmediateLong(cg, node, targetReg, ptrReg, shiftAmount);
       return targetReg;
@@ -3105,15 +2988,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *no
          genArrayletAccessAddr(cg, node, elementSize, baseArrayReg, indexReg, indexChild->getInt(), arrayletReg, arrayletOffsetReg, arrayletOffsetVal);
 
          // Decompress the arraylet pointer if necessary.
-         //
-         if (TR::Compiler->vm.heapBaseAddress())
-            {
-            TR::Register *condReg = srm->findOrCreateScratchRegister(TR_CCR);
-            genDecompressPointer(cg, node, arrayletReg, condReg);
-            srm->reclaimScratchRegister(condReg);
-            }
-         else
-            genDecompressPointer(cg, node, arrayletReg);
+         genDecompressPointer(cg, node, arrayletReg);
 
          if (doLoadOrStore)
             {
@@ -3194,15 +3069,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *no
                if (doLoadDecompress)
                   {
                   TR_ASSERT(dt == TR::Address, "Expecting loads with decompression trees to have data type TR::Address");
-
-                  if (TR::Compiler->vm.heapBaseAddress())
-                     {
-                     TR::Register *condReg = srm->findOrCreateScratchRegister(TR_CCR);
-                     genDecompressPointer(cg, node, loadOrStoreReg, condReg);
-                     srm->reclaimScratchRegister(condReg);
-                     }
-                  else
-                     genDecompressPointer(cg, node, loadOrStoreReg);
+                  genDecompressPointer(cg, node, loadOrStoreReg);
                   }
                }
 
@@ -3513,7 +3380,6 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    TR::Node *sourceChild = firstChild->getSecondChild();
    TR::Node *destinationChild = firstChild->getChild(2);
 
-   bool usingCompressedPointers = false;
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
       {
       // pattern match the sequence
@@ -3540,20 +3406,10 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
       if (translatedNode->getOpCode().isRightShift()) // optional
          translatedNode = translatedNode->getFirstChild();
 
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 || sourceChild->isNull())
-         usingLowMemHeap = true;
-
-      if ((translatedNode->getOpCode().isSub()) || usingLowMemHeap)
-         usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
-         {
-         while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
-            sourceChild = sourceChild->getFirstChild();
-         if (sourceChild->getOpCodeValue() == TR::a2l)
-            sourceChild = sourceChild->getFirstChild();
-         }
+      while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
+         sourceChild = sourceChild->getFirstChild();
+      if (sourceChild->getOpCodeValue() == TR::a2l)
+         sourceChild = sourceChild->getFirstChild();
       }
 
    // Since ArrayStoreCHK doesn't have the shape of the corresponding helper call we have to create this tree
@@ -6828,8 +6684,6 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                generateInstruction(cg, TR::InstOpCode::bad, node);
 
             iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tmp4Reg, resReg, dataBegin, iCursor);
-            if (TR::Compiler->vm.heapBaseAddress() != 0)
-               iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tmp4Reg, tmp4Reg, -TR::Compiler->vm.heapBaseAddress(), iCursor);
             if (TR::Compiler->om.compressedReferenceShiftOffset() > 0)
                iCursor = generateShiftRightLogicalImmediateLong(cg, node, tmp4Reg, tmp4Reg, TR::Compiler->om.compressedReferenceShiftOffset(), iCursor);
             iCursor = generateMemSrc1Instruction(cg, (comp->target().is64Bit() && !comp->useCompressedPointers()) ? TR::InstOpCode::std : TR::InstOpCode::stw, node,
@@ -8505,12 +8359,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
    bool bumpedRefCount = false;
    if (comp->useCompressedPointers() && (fifthChild->getDataType() != TR::Address))
       {
-      bool usingLowMemHeap = false;
       bool useShiftedOffsets = (TR::Compiler->om.compressedReferenceShiftOffset() != 0);
-      bool usingCompressedPointers = false;
-
-      if (TR::Compiler->vm.heapBaseAddress() == 0 || fifthChild->isNull())
-         usingLowMemHeap = true;
 
       translatedNode = fifthChild;
       if (translatedNode->getOpCode().isConversion())
@@ -8518,25 +8367,19 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       if (translatedNode->getOpCode().isRightShift()) // optional
          translatedNode = translatedNode->getFirstChild();
 
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         usingCompressedPointers = true;
-
       translatedNode = fifthChild;
-      if (usingCompressedPointers)
+      if (useShiftedOffsets)
          {
-         if (!usingLowMemHeap || useShiftedOffsets)
-            {
-            while ((translatedNode->getNumChildren() > 0) && (translatedNode->getOpCodeValue() != TR::a2l))
-               translatedNode = translatedNode->getFirstChild();
+         while ((translatedNode->getNumChildren() > 0) && (translatedNode->getOpCodeValue() != TR::a2l))
+            translatedNode = translatedNode->getFirstChild();
 
-            if (translatedNode->getOpCodeValue() == TR::a2l)
-               translatedNode = translatedNode->getFirstChild();
+         if (translatedNode->getOpCodeValue() == TR::a2l)
+            translatedNode = translatedNode->getFirstChild();
 
-            // this is required so that different registers are
-            // allocated for the actual store and translated values
-            translatedNode->incReferenceCount();
-            bumpedRefCount = true;
-            }
+         // this is required so that different registers are
+         // allocated for the actual store and translated values
+         translatedNode->incReferenceCount();
+         bumpedRefCount = true;
          }
       }
 
