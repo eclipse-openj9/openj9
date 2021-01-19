@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2019, 2019 IBM Corp. and others
+Copyright (c) 2019, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,9 +86,7 @@ objectively, but the committer should verify that each commit contains distinct
 changes that should not otherwise be logically squashed with other commits in the
 same pull request.
 
-* When commits are pushed to a pull request, TravisCI builds launch automatically 
-to build the changes on x86 Linux (with and without the linter). However, as this only 
-builds the changes, you must initiate pull request builds sufficient to cover
+* You must initiate pull request builds sufficient to cover
 all affected architectures and language levels prior to merging. To launch a pull
 request build, see [Triggering PR Builds](https://github.com/eclipse/openj9/tree/master/buildenv/jenkins).
 
@@ -102,8 +100,10 @@ commits), PR builds must be triggered again.
 
    If any builds fail because of infrastructure issues, they must be restarted.
 
-* Ensure `[ci skip]` is used for documentation only changes; any changes to code **must**
-be tested using the appropriate PR builds.
+* When a PR is opened, synchronized, reopened, or set ready for review 
+(see [pull_request event](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request)),
+a GitHub action to run the JIT linter launches automatically. The linter can be re-run
+from the `Checks` tab of the PR if necessary.
 
 * If the code change(s) necessitate change(s) to the [OpenJ9 Documentation](https://www.eclipse.org/openj9/docs/),
 first add the `depends:doc` label to the OpenJ9 PR, and then ensure the contributer 
