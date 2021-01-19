@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 import java.lang.invoke.VarHandle.AccessMode;
 import java.lang.reflect.Array;
 /*[IF Sidecar19-SE-OpenJ9]*/
@@ -70,6 +71,7 @@ import java.lang.reflect.Module;
 /*[ENDIF] Sidecar19-SE-OpenJ9*/
 /*[ELSE] Sidecar19-SE*/
 import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
 /*[ENDIF] Sidecar19-SE*/
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
@@ -602,7 +604,7 @@ public class MethodHandles {
 				 * the protected flag of this class doesn't exist on the VM level (there is no 
 				 * access flag in the binary form representing 'protected')
 				 */
-				int targetClassModifiers = targetClass.getModifiers();
+				int targetClassModifiers = Reflection.getClassAccessFlags(targetClass);
 				final boolean targetClassIsPublic = (Modifier.isPublic(targetClassModifiers) || Modifier.isProtected(targetClassModifiers));
 
 				/*[IF JAVA_SPEC_VERSION >= 14]*/
