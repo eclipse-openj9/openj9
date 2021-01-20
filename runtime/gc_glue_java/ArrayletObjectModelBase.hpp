@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,13 +41,13 @@ class GC_ArrayletObjectModelBase
 * Data members
 */
 private:
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
-	bool _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	bool _enableDoubleMapping; /** Allows arraylets to be double mapped */
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 protected:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	OMR_VM *_omrVM; 	/**< used so that we can pull the arrayletLeafSize and arrayletLeafLogSize for arraylet sizing calculations */
 	void * _arrayletRangeBase; /**< The base heap range of where discontiguous arraylets are allowed. */
 	void * _arrayletRangeTop; /**< The top heap range of where discontiguous arraylets are allowed. */

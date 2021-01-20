@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 	J9JavaVM *vm = (J9JavaVM*)env->getOmrVM()->_language_vm;
 	OMR_VM *omrVM = env->getOmrVM();
 	
-#if defined (OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 	if (env->compressObjectReferences()) {
 
 #if defined(J9VM_GC_REALTIME)
@@ -67,14 +67,14 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 		}
 #endif /* J9VM_GC_REALTIME */
 
-#if defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#if defined(OMR_GC_FULL_POINTERS)
 		_compressObjectReferences = true;
-#endif /* defined (OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
+#endif /* defined(OMR_GC_FULL_POINTERS) */
 		_compressedPointersShift = omrVM->_compressedPointersShift;
 		vm->compressedPointersShift = omrVM->_compressedPointersShift;
 		Trc_MM_CompressedAccessBarrierInitialized(env->getLanguageVMThread(), 0, _compressedPointersShift);
 	}
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
 	vm->objectAlignmentInBytes = omrVM->_objectAlignmentInBytes;
 	vm->objectAlignmentShift = omrVM->_objectAlignmentShift;
