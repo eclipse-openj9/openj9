@@ -5172,11 +5172,11 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    TR::Compilation *comp = cg->comp();
+   TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
    if (comp->getOption(TR_OptimizeForSpace) ||
          comp->getOption(TR_FullSpeedDebug) ||
-         ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled()) &&
-          (cg->isMonitorValueBasedOrValueType(node) == TR_yes)) ||
+         (isMonitorValueBasedOrValueType == TR_yes) ||
          comp->getOption(TR_DisableInlineMonExit))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
@@ -5249,8 +5249,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
    startLabel->setStartInternalControlFlow();
 
    //If object is not known to be value type or value based class at compile time, check at run time
-   if ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled())
-      && (cg->isMonitorValueBasedOrValueType(node) == TR_maybe))
+   if (isMonitorValueBasedOrValueType == TR_maybe)
       {
       generateCheckForValueMonitorEnterOrExit(node, callLabel, objReg, objectClassReg, tempReg, threadReg, condReg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
       }
@@ -7590,7 +7589,6 @@ void J9::Power::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    TR::MemoryReference *classFlagsMemRef = TR::MemoryReference::createWithDisplacement(cg, objectClassReg, static_cast<uintptr_t>(fej9->getOffsetOfClassFlags()), 4);
 
-   //check J9_CLASS_DISALLOWS_LOCKING_FLAGS (J9ClassIsValueType | J9ClassIsValueBased)
    generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, temp1Reg, classFlagsMemRef);
 
    loadConstant(cg, node, classFlag, temp2Reg);
@@ -7606,12 +7604,12 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    TR_ASSERT(lwOffset>=LOWER_IMMED && lwOffset<=UPPER_IMMED, "Need re-work on using lwOffset.");
+   TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
    if (comp->getOption(TR_OptimizeForSpace) ||
          comp->getOption(TR_MimicInterpreterFrameShape) ||
          (comp->getOption(TR_FullSpeedDebug) && node->isSyncMethodMonitor()) ||
-         ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled()) &&
-          (cg->isMonitorValueBasedOrValueType(node) == TR_yes)) ||
+         (isMonitorValueBasedOrValueType == TR_yes) ||
          comp->getOption(TR_DisableInlineMonEnt))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
@@ -7684,8 +7682,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
    startLabel->setStartInternalControlFlow();
 
    //If object is not known to be value type or value based class at compile time, check at run time
-   if ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled())
-      && (cg->isMonitorValueBasedOrValueType(node) == TR_maybe))
+   if (isMonitorValueBasedOrValueType == TR_maybe)
       {
       generateCheckForValueMonitorEnterOrExit(node, callLabel, objReg, objectClassReg, tempReg, offsetReg, condReg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
       }

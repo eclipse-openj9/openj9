@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -334,7 +334,8 @@ public:
    TR_YesNoMaybe isMonitorValueType(TR::Node* monNode);
    /*
     * \brief
-    *    Whether a monitor object is of value based class type or value type
+    *    Whether a monitor object is of value based class type or value type.
+    *    This API checks if value based or value type is enabled first.
     *
     * \return
     *    TR_yes The monitor object is definitely value based class type or value type

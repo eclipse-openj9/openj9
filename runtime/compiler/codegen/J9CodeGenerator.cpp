@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5447,20 +5447,22 @@ J9::CodeGenerator::isMonitorValueType(TR::Node* monNode)
 TR_YesNoMaybe
 J9::CodeGenerator::isMonitorValueBasedOrValueType(TR::Node* monNode)
    {
-   TR_OpaqueClassBlock *clazz = self()->getMonClass(monNode);
+   if (TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled())
+      {
+      TR_OpaqueClassBlock *clazz = self()->getMonClass(monNode);
 
-   if (!clazz)
-      return TR_maybe;
+      if (!clazz)
+         return TR_maybe;
 
-   //java.lang.Object class is only set when monitor is java.lang.Object but not its subclass
-   if (clazz == self()->comp()->getObjectClassPointer())
-      return TR_no;
+      //java.lang.Object class is only set when monitor is java.lang.Object but not its subclass
+      if (clazz == self()->comp()->getObjectClassPointer())
+         return TR_no;
 
-   if (!TR::Compiler->cls.isConcreteClass(self()->comp(), clazz))
-      return TR_maybe;
+      if (!TR::Compiler->cls.isConcreteClass(self()->comp(), clazz))
+         return TR_maybe;
 
-   if (TR::Compiler->cls.isValueBasedOrValueTypeClass(clazz))
-      return TR_yes;
-
+      if (TR::Compiler->cls.isValueBasedOrValueTypeClass(clazz))
+         return TR_yes;
+      }
    return TR_no;
    }
