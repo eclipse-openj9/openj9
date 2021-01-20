@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ set(interp_new_flags) # flags to be added when compiling the interpreter
 # support building the interpreter with xlc on linux
 if(OMR_ARCH_POWER AND OMR_OS_AIX)
 	if(OMR_TOOLCONFIG STREQUAL "xlc")
-		list(APPEND interp_flags_to_remove "-O3")
+		list(APPEND interp_flags_to_remove "-O3" "-g")
 		list(APPEND interp_new_flags "-O2" "-qdebug=lincomm:ptranl:tfbagg")
 		# Note: the following code is specified in the UMA builds, however,
 		# it isn't currently reachable, so it is block commneted out ( #[[ ]] )
