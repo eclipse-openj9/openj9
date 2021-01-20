@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,6 +69,30 @@ enum RemoteCompilationModes
    NONE = 0,
    CLIENT,
    SERVER,
+   };
+
+enum ServerMemoryState
+   {
+   VERY_LOW = 0,
+   LOW,
+   NORMAL,
+   };
+
+enum CompThreadActivationPolicy
+   {
+   // Order is important, we use comparison operators
+   // on policy states and for indexing into the name array
+   SUSPEND = 0,
+   MAINTAIN,
+   SUBDUE,
+   AGGRESSIVE,
+   };
+
+static const char *compThreadActivationPolicyNames[] = {
+   "SUSPEND",
+   "MAINTAIN",
+   "SUBDUE",
+   "AGGRESSIVE",
    };
 }
 #endif /* defined(J9VM_OPT_JITSERVER) */
