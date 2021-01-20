@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -580,8 +580,6 @@ extern "C" {
 #define J9_STR_ANON_CLASS_NAME 0x20
 /* Determines whether a copied string result will be null terminated */
 #define J9_STR_NULL_TERMINATE_RESULT 0x40
-/* Determines whether the string contains only ASCII characters (ord <= 127) */
-#define J9_STR_ASCII 0x80
 
 #define J9_JCL_FLAG_REFERENCE_OBJECTS 0x1
 #define J9_JCL_FLAG_FINALIZATION 0x2
