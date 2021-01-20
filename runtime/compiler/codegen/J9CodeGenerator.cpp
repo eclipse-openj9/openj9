@@ -462,7 +462,6 @@ J9::CodeGenerator::lowerCompressedRefs(
       vcount_t visitCount,
       TR_BitVector *childrenToBeLowered)
    {
-   bool isLowMem = true;
    if (node->getOpCode().isCall() && childrenToBeLowered)
       {
       TR_BitVectorIterator bvi(*childrenToBeLowered);
@@ -633,9 +632,7 @@ J9::CodeGenerator::lowerCompressedRefs(
    if (TR::Compiler->om.compressedReferenceShiftOffset() > 0)
       shftOffset = TR::Node::create(loadOrStoreNode, TR::iconst, 0, TR::Compiler->om.compressedReferenceShiftOffset());
 
-   static char *pEnv = feGetEnv("TR_disableLowHeapMem");
-   if (pEnv)
-      isLowMem = false;
+   bool isLowMem = feGetEnv("TR_disableLowHeapMem") ? false : true;
 
    if (isLoad)
       {

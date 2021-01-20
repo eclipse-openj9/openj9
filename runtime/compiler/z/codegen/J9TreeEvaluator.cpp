@@ -5167,30 +5167,6 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    bool usingCompressedPointers = false;
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
       {
-       // pattern match the sequence
-       //     iistore f     iistore f         <- node
-       //       aload O       aload O
-       //     value           l2i
-       //                       lshr
-       //                         lsub
-       //                           a2l
-       //                             value   <- sourceChild
-       //                           lconst HB
-       //                         iconst shftKonst
-       //
-       // -or- if the field is known to be null
-       // iistore f
-       //    aload O
-       //    l2i
-       //      a2l
-       //        value  <- valueChild
-       //
-      TR::Node *translatedNode = sourceChild;
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
-
       usingCompressedPointers = true;
 
       if (usingCompressedPointers)

@@ -460,30 +460,6 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    if (comp->useCompressedPointers() && (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) && (node->getSecondChild()->getDataType() != TR::Address))
       {
-      // pattern match the sequence
-      //     awrtbari f    awrtbari f         <- node
-      //       aload O       aload O
-      //     value           l2i
-      //                       lshr         <- translatedNode
-      //                         lsub
-      //                           a2l
-      //                             value   <- secondChild
-      //                           lconst HB
-      //                         iconst shftKonst
-      //
-      // -or- if the field is known to be null or usingLowMemHeap
-      // awrtbari f
-      //    aload O
-      //    l2i
-      //      a2l
-      //        value  <- secondChild
-      //
-      TR::Node *translatedNode = secondChild;
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
-
       usingCompressedPointers = true;
 
       while (secondChild->getNumChildren() && secondChild->getOpCodeValue() != TR::a2l)
@@ -2607,36 +2583,6 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
    bool usingCompressedPointers = false;
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
       {
-      // pattern match the sequence
-      // ArrayStoreCHK     ArrayStoreCHK
-      //   awrtbari          awrtbari               <- firstChild
-      //     aladd             aladd
-      //       ...               ...
-      //     value             l2i
-      //     aload               lshr
-      //                           lsub
-      //                             a2l
-      //                               value        <- sourceChild
-      //                             lconst HB
-      //                           iconst shftKonst
-      //                       aload                <- dstNode
-      //
-      // -or- if the value is known to be null
-      // ArrayStoreCHK
-      //    awrtbari
-      //      aladd
-      //        ...
-      //      l2i
-      //        a2l
-      //          value  <- sourceChild
-      //      aload      <- dstNode
-      //
-      TR::Node *translatedNode = sourceChild;
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
-
       usingCompressedPointers = true;
 
       while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))

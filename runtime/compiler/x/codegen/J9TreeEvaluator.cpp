@@ -458,8 +458,6 @@ static TR_OutlinedInstructions *generateArrayletReference(
       //
       if (loadNeedsDecompression)
          {
-         if (comp->target().is64Bit() && comp->useCompressedPointers())
-
          if (isHB0)
             {
             if (shiftOffset > 0)
@@ -1038,30 +1036,6 @@ TR::Register *J9::X86::TreeEvaluator::writeBarrierEvaluator(TR::Node *node, TR::
           (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) &&
           (node->getSecondChild()->getDataType() != TR::Address))
          {
-         // pattern match the sequence
-         //     iwrtbar f     iwrtbar f         <- node
-         //       aload O       aload O
-         //     value           l2i
-         //                       lshr
-         //                         lsub        <- translatedNode
-         //                           a2l
-         //                             value   <- sourceObject
-         //                           lconst HB
-         //                         iconst shftKonst
-         //
-         // -or- if the field is known to be null or usingLowMemHeap
-         // iwrtbar f
-         //    aload O
-         //    l2i
-         //      a2l
-         //        value  <- sourceObject
-         //
-         TR::Node *translatedNode = sourceObject;
-         if (translatedNode->getOpCode().isConversion())
-            translatedNode = translatedNode->getFirstChild();
-         if (translatedNode->getOpCode().isRightShift()) // optional
-            translatedNode = translatedNode->getFirstChild();
-
          usingCompressedPointers = true;
 
          if (useShiftedOffsets)
@@ -2557,30 +2531,6 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
 
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
       {
-      // pattern match the sequence
-      //     iistore f     iistore f         <- node
-      //       aload O       aload O
-      //     value           l2i
-      //                       lshr
-      //                         lsub
-      //                           a2l
-      //                             value   <- sourceChild
-      //                           lconst HB
-      //                         iconst shftKonst
-      //
-      // -or- if the field is known to be null or usingLowMemHeap
-      // iistore f
-      //    aload O
-      //    l2i
-      //      a2l
-      //        value  <- valueChild
-      //
-      TR::Node *translatedNode = sourceChild;
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) //optional
-         translatedNode = translatedNode->getFirstChild();
-
       usingLowMemHeap = true;
       usingCompressedPointers = true;
 
@@ -11022,30 +10972,6 @@ void J9::X86::TreeEvaluator::VMwrtbarWithStoreEvaluator(
          translatedStore = node->getFirstChild();
       else
          translatedStore = node;
-
-      // pattern match the sequence
-      //     iwrtbar f     iwrtbar f         <- node
-      //       aload O       aload O
-      //     value           l2i
-      //                       lshr
-      //                         lsub        <- translatedNode
-      //                           a2l
-      //                             value   <- sourceObject
-      //                           lconst HB
-      //                         iconst shftKonst
-      //
-      // -or- if the field is known to be null
-      // iwrtbar f
-      //    aload O
-      //    l2i
-      //      a2l
-      //        value  <- sourceObject
-      //
-      TR::Node *translatedNode = translatedStore->getSecondChild();
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
 
       usingLowMemHeap = true;
       usingCompressedPointers = true;

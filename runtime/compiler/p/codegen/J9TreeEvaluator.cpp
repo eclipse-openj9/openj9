@@ -1474,30 +1474,6 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
 
    if (comp->useCompressedPointers() && (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) && (node->getSecondChild()->getDataType() != TR::Address))
       {
-      // pattern match the sequence
-      //     iwrtbar f     iwrtbar f         <- node
-      //       aload O       aload O
-      //     value           l2i
-      //                       lshr         <- translatedNode
-      //                         lsub
-      //                           a2l
-      //                             value   <- secondChild
-      //                           lconst HB
-      //                         iconst shftKonst
-      //
-      // -or- if the field is known to be null or usingLowMemHeap
-      // iwrtbar f
-      //    aload O
-      //    l2i
-      //      a2l
-      //        value  <- secondChild
-      //
-      TR::Node *translatedNode = secondChild;
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
-
       usingCompressedPointers = true;
       while (secondChild->getNumChildren() && secondChild->getOpCodeValue() != TR::a2l)
          secondChild = secondChild->getFirstChild();
@@ -3382,30 +3358,6 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
 
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
       {
-      // pattern match the sequence
-      //     iistore f     iistore f         <- node
-      //       aload O       aload O
-      //     value           l2i
-      //                       lshr
-      //                         lsub
-      //                           a2l
-      //                             value   <- sourceChild
-      //                           lconst HB
-      //                         iconst shftKonst
-      //
-      // -or- if the field is known to be null
-      // iistore f
-      //    aload O
-      //    l2i
-      //      a2l
-      //        value  <- valueChild
-      //
-      TR::Node *translatedNode = sourceChild;
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
-
       while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
          sourceChild = sourceChild->getFirstChild();
       if (sourceChild->getOpCodeValue() == TR::a2l)
