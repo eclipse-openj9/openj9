@@ -956,13 +956,12 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 					if ((sourceItem | targetItem) & (BCV_BASE_OR_SPECIAL)) {
 
 						/* Mismatch results in undefined local - rewalk if modified stack
-						 * Note: BCV_SPECIAL (specifically BCV_SPECIAL_INIT) must be reserved
-						 * to flag the uninitialized_this object existing in the stackmap frame
-						 * when invoking setInitializedThisStatus() after the stackmaps is
-						 * successfully built.
+						 * Note: BCV_SPECIAL_INIT must be reserved to flag the uninitialized_this object
+						 * existing in the stackmap frame when invoking setInitializedThisStatus() after
+						 * the stackmaps are successfully built.
 						 */
-						if ((targetItem != (UDATA) (BCV_BASE_TYPE_TOP))
-						&& ((targetItem & BCV_SPECIAL) == 0)
+						if (((UDATA)(BCV_BASE_TYPE_TOP) != targetItem)
+						&& (0 == (targetItem & BCV_SPECIAL_INIT))
 						) {
 							*targetStackPtr = (UDATA) (BCV_BASE_TYPE_TOP);
 							rewalk = TRUE;

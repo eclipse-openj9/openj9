@@ -347,8 +347,8 @@ matchStack(J9BytecodeVerificationData * verifyData, J9BranchTargetStack *liveSta
 					}
 				}
 			} else if (*targetPtr != BCV_BASE_TYPE_TOP) {
-				if ((*targetPtr & BCV_SPECIAL) && verifyData->createdStackMap) {
-					/* Generated stackmaps can skip the check on the target slot with BCV_SPECIAL
+				if ((*targetPtr & BCV_SPECIAL_INIT) && verifyData->createdStackMap) {
+					/* Generated stackmaps can skip the check on the target slot with BCV_SPECIAL_INIT
 					 * as this slot is set up based on the bytecode itself rather than decompressed stackmaps.
 					 */
 				} else {
