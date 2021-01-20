@@ -869,6 +869,7 @@ executeSnippetCode:
       DECLARE_EXTERN jitResolvedFieldIsVolatile
 
       DECLARE_EXTERN mcc_callPointPatching_unwrapper
+      DECLARE_EXTERN mcc_reservationAdjustment_unwrapper
 
 
 ; interpreterUnresolved{Static|Special}Glue
@@ -931,6 +932,20 @@ interpreterUnresolvedStaticGlue:
       shl         rax, 16
       xor         rax, 0bf48h                                  ; REX+MOV bytes
       mov         qword [rsi-5], rax                           ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
+
+      ; Call to adjust trampoline reservations, since this callsite is now resolved
+      mov         edx, dword [rsi + 20]
+      push        rdx                                          ; descriptor+24: CP index
+      mov         rdx, qword [rsi + 12]
+      push        rdx                                          ; descriptor+16: CP address
+      push        rdi                                          ; descriptor+8: RAM method
+      push        rsi                                          ; descriptor+0: compiled method PC
+      MoveHelper  rax, mcc_reservationAdjustment_unwrapper     ; p1) rax = helper
+      lea         rsi, [rsp]                                   ; p2) rsi = EA of descriptor
+      lea         rdx, [rsp]                                   ; p3) rdx = EA of return value
+      call        jitCallCFunction
+      add         rsp, 32                                      ; tear down descriptor
+
       jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
                                                                ; jump to its target directly.
 .skippatching:
@@ -963,6 +978,20 @@ interpreterUnresolvedSpecialGlue:
       shl         rax, 16
       xor         rax, 0bf48h                                  ; REX+MOV bytes
       mov         qword [rsi-5], rax                           ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
+
+      ; Call to adjust trampoline reservations, since this callsite is now resolved
+      mov         edx, dword [rsi + 20]
+      push        rdx                                          ; descriptor+24: CP index
+      mov         rdx, qword [rsi + 12]
+      push        rdx                                          ; descriptor+16: CP address
+      push        rdi                                          ; descriptor+8: RAM method
+      push        rsi                                          ; descriptor+0: compiled method PC
+      MoveHelper  rax, mcc_reservationAdjustment_unwrapper     ; p1) rax = helper
+      lea         rsi, [rsp]                                   ; p2) rsi = EA of descriptor
+      lea         rdx, [rsp]                                   ; p3) rdx = EA of return value
+      call        jitCallCFunction
+      add         rsp, 32                                      ; tear down descriptor
+
       jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
                                                                ; jump to its target directly.
 
@@ -991,6 +1020,7 @@ interpreterStaticAndSpecialGlue:
 
       mov         rsi, qword [rsp]                             ; rsi = RA in mainline code
       sub         rsi, 5
+
       push        0                                            ; descriptor+24: 0
       push        rcx                                          ; descriptor+16: compiled method PC
       push        rsi                                          ; descriptor+8: call site

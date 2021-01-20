@@ -326,6 +326,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    TR::list<SerializedRuntimeAssumption*>& getSerializedRuntimeAssumptions() { return _serializedRuntimeAssumptions; }
    ClientSessionData *getClientData() const { return _clientData; }
    void setClientData(ClientSessionData *clientData) { _clientData = clientData; }
+
+   TR::list<J9Method *>& getMethodsRequiringTrampolines() { return _methodsRequiringTrampolines; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
@@ -430,6 +432,12 @@ private:
    // Client session data for the client that requested this out-of-process
    // compilation (at the JITServer); unused (always NULL) at the client side
    ClientSessionData *_clientData;
+
+   // This list contains RAM method pointers of resolved methods
+   // that require method trampolines.
+   // It needs to be sent to the client at the end of compilation
+   // so that trampolines can be reserved there.
+   TR::list<J9Method *> _methodsRequiringTrampolines;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *_symbolValidationManager;

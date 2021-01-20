@@ -344,6 +344,7 @@ class ClientSessionData
       void *_helperAddresses[TR_numRuntimeHelpers];
 #endif
       bool _isHotReferenceFieldRequired;
+      bool _needsMethodTrampolines;
       }; // struct VMInfo
 
    /**

@@ -555,6 +555,7 @@ J9::CodeCache::adjustTrampolineReservation(TR_OpaqueMethodBlock *method,
                                            void *cp,
                                            int32_t cpIndex)
    {
+   fprintf(stderr, "method=%p cp=%p cpIndex=%d\n", method, cp, cpIndex);
    OMR::CodeCacheHashEntry *unresolvedEntry;
    OMR::CodeCacheHashEntry *resolvedEntry;
 
@@ -582,6 +583,7 @@ J9::CodeCache::adjustTrampolineReservation(TR_OpaqueMethodBlock *method,
          }
       else if (unresolvedEntry && !resolvedEntry)
          {
+         fprintf(stderr, "resolving trampoline for method=%p\n", method);
          // Move the unresolved entry to the resolved table.
          self()->resolveHashEntry(unresolvedEntry, method);
          }
