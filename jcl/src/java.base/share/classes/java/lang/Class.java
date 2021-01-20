@@ -4922,7 +4922,16 @@ SecurityException {
 	 * 
 	 * @return true for a record class, false otherwise
 	 */
-	public native boolean isRecord();
+	public boolean isRecord() {
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+		Class superclazz = getSuperclass();
+		return ((superclazz == Record.class) && isRecordImpl());
+/*[ELSE] JAVA_SPEC_VERSION >= 16*/
+		return isRecordImpl();
+/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
+	}
+	
+	private native boolean isRecordImpl();
 
 	/**
 	 * Returns an array of RecordComponent objects for a record class.
