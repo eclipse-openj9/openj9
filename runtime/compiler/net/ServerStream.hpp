@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -217,14 +217,15 @@ public:
    /**
       @brief Function invoked by server when compilation is aborted
    */
-   void writeError(uint32_t statusCode)
+   template <typename ...T>
+   void writeError(uint32_t statusCode, T... args)
       {
       try
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d MessageType::compilationFailure: statusCode %u",
                   TR::compInfoPT->getCompThreadId(), statusCode);
-         write(MessageType::compilationFailure, statusCode);
+         write(MessageType::compilationFailure, statusCode, args...);
          }
       catch (std::exception &e)
          {

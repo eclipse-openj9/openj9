@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1052,8 +1052,9 @@ public:
    const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
    void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
 
-   bool serverHasLowPhysicalMemory() const { return _serverHasLowPhysicalMemory; }
-   void setServerHasLowPhysicalMemory(bool isLowMemory) { _serverHasLowPhysicalMemory = isLowMemory; }
+   void setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy newPolicy) { _activationPolicy = newPolicy; }
+   JITServer::CompThreadActivationPolicy getCompThreadActivationPolicy() const { return _activationPolicy; }
+   uint64_t getCachedFreePhysicalMemoryB() const { return _cachedFreePhysicalMemoryB; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
@@ -1272,7 +1273,7 @@ private:
    std::string                   _sslRootCerts;
    PersistentVector<std::string> _sslKeys;
    PersistentVector<std::string> _sslCerts;
-   bool _serverHasLowPhysicalMemory;
+   JITServer::CompThreadActivationPolicy _activationPolicy;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // CompilationInfo
 }

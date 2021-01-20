@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -626,9 +626,16 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
    _nextConnectionRetryTime = current_time + _waitTimeMs;
    _serverAvailable = false;
 
-   // Reset the low memory flag in case we never reconnect to the server
+   // Reset the activation policy flag in case we never reconnect to the server
    // and client compiles locally or connects to a new server
-   compInfo->setServerHasLowPhysicalMemory(false);
+   compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::AGGRESSIVE);
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads) ||
+        TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                     "t=%6u client has lost connection, resetting activation policy to AGGRESSIVE",
+                                     (uint32_t) compInfo->getPersistentInfo()->getElapsedTime());
+      }
    }
 
 void

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3156,6 +3156,57 @@ remoteCompilationEnd(
    return relocatedMetaData;
    }
 
+void
+updateCompThreadActivationPolicy(TR::CompilationInfoPerThreadBase *compInfoPT, JITServer::ServerMemoryState nextMemoryState)
+   {
+   // When the server starts running low on memory, clients need to reduce load on the server.
+   // This is achieved by suspending compilation threads once low server memory is detected.
+   //
+   // Under normal conditions, a client uses AGGRESSIVE activation policy, starting new compilation
+   // threads at lower thresholds then non-JITServer.
+   //
+   // Once the server reaches LOW threshold, the client enters MAINTAIN activation policy,
+   // it keeps the current threads running but is not allowed to start new ones.
+   //
+   // If the situation deteriorates further and the server reaches VERY_LOW threshold,
+   // client begins SUSPEND activation policy, disabling all but one compilation threads.
+   //
+   // If at some point the situation improves and the server returns to NORMAL memory state,
+   // then clients using MAINTAIN policy will begin SUBDUE policy, which allows them to start/resume
+   // compilation threads, but at a much higher activation threshold to avoid overwhelming the server again.
+   //
+   auto *compInfo = compInfoPT->getCompilationInfo();
+   JITServer::CompThreadActivationPolicy curPolicy = compInfo->getCompThreadActivationPolicy();
+   if (nextMemoryState == JITServer::ServerMemoryState::VERY_LOW)
+      {
+      compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::SUSPEND);
+      }
+   else if (nextMemoryState == JITServer::ServerMemoryState::LOW)
+      {
+      compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::MAINTAIN);
+      }
+   else // ServerMemoryState::NORMAL 
+      {
+      if (curPolicy <= JITServer::CompThreadActivationPolicy::MAINTAIN)
+         {
+         // It's expected that client will transition from MAINTAIN to SUBDUE,
+         // but it's possible to move from SUSPEND to SUBDUE, if there is a sudden
+         // increase in available memory on the server or a large delay in-between updates
+         compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::SUBDUE);
+         }
+      }
+
+   JITServer::CompThreadActivationPolicy newPolicy = compInfo->getCompThreadActivationPolicy();
+   if (curPolicy != newPolicy &&
+       (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads) ||
+        TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer)))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u client has begun %s activation policy",
+         (uint32_t) compInfo->getPersistentInfo()->getElapsedTime(),
+         JITServer::compThreadActivationPolicyNames[newPolicy]);
+      }
+   }
+
 TR_MethodMetaData *
 remoteCompile(
    J9VMThread * vmThread,
@@ -3316,7 +3367,7 @@ remoteCompile(
          {
          auto recv = client->getRecvData<std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
                                          std::string, std::string, std::vector<TR_ResolvedJ9Method*>,
-                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>, bool>();
+                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>, JITServer::ServerMemoryState>();
          statusCode = compilationOK;
          codeCacheStr = std::get<0>(recv);
          dataCacheStr = std::get<1>(recv);
@@ -3328,13 +3379,23 @@ remoteCompile(
          modifiedOptPlan = std::get<7>(recv);
          serializedRuntimeAssumptions = std::get<8>(recv);
 
-         compInfoPT->getCompilationInfo()->setServerHasLowPhysicalMemory(std::get<9>(recv));
+         JITServer::ServerMemoryState nextMemoryState = std::get<9>(recv);
+         updateCompThreadActivationPolicy(compInfoPT, nextMemoryState);
          }
       else
          {
          TR_ASSERT(JITServer::MessageType::compilationFailure == response, "Received %u but expect JITServer::MessageType::compilationFailure message type", response);
-         auto recv = client->getRecvData<uint32_t>();
-         statusCode = std::get<0>(recv);
+         if (JITServer::MessageType::compilationCode == compilationLowPhysicalMemory)
+            {
+            auto recv = client->getRecvData<uint32_t, JITServer::ServerMemoryState>();
+            statusCode = std::get<0>(recv);
+            updateCompThreadActivationPolicy(compInfoPT, std::get<1>(recv)); 
+            }
+         else
+            {
+            auto recv = client->getRecvData<uint32_t>();
+            statusCode = std::get<0>(recv);
+            }
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "remoteCompile: compilationFailure statusCode %u\n", statusCode);
 

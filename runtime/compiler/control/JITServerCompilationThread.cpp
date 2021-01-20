@@ -41,6 +41,49 @@
 #include "vmaccess.h"
 
 /**
+ * @brief Helper method executed at the end of a compilation
+ * to determine whether the server is running out of memory.
+ */
+JITServer::ServerMemoryState
+computeServerMemoryState(TR::CompilationInfo *compInfo)
+   {
+   // Compute LOW memory threshold relative to the number of clients but cap it at 16
+   // to avoid wasting memory in cases when clients disconnect without notifying the server
+   size_t numClients = compInfo->getClientSessionHT()->size();
+   numClients = numClients > 16 ? 16 : numClients;
+   uint64_t lowMemoryThreshold = TR::Options::getSafeReservePhysicalMemoryValue() + (numClients + 4) * TR::Options::getScratchSpaceLowerBound();
+   uint64_t veryLowMemoryThreshold = TR::Options::getSafeReservePhysicalMemoryValue() + 4 * TR::Options::getScratchSpaceLowerBound();
+
+   uint64_t freePhysicalMemorySizeB = compInfo->getCachedFreePhysicalMemoryB();
+   
+   // If the last measurement was LOW or VERY_LOW, sample memory at a higher rate to
+   // get more up-to-date information
+   JITServer::ServerMemoryState memoryState = JITServer::ServerMemoryState::NORMAL;
+   int64_t updatePeriodMs = -1;
+   if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE)
+      {
+      if (freePhysicalMemorySizeB <= veryLowMemoryThreshold)
+         updatePeriodMs = 50;
+      else if (freePhysicalMemorySizeB <= lowMemoryThreshold)
+         updatePeriodMs = 250;
+      }
+   bool incompleteInfo;
+   freePhysicalMemorySizeB = compInfo->computeAndCacheFreePhysicalMemory(incompleteInfo, updatePeriodMs);
+
+   if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE)
+      {
+      memoryState = freePhysicalMemorySizeB <= veryLowMemoryThreshold ?
+         JITServer::ServerMemoryState::VERY_LOW :
+         (freePhysicalMemorySizeB <= lowMemoryThreshold ?
+            JITServer::ServerMemoryState::LOW :
+            JITServer::ServerMemoryState::NORMAL);
+      return memoryState;
+      }
+   // memory info not available, return the default state
+   return JITServer::ServerMemoryState::NORMAL;
+   }
+
+/**
  * @brief Method executed by JITServer to process the end of a compilation.
  */
 void
@@ -104,11 +147,7 @@ outOfProcessCompilationEnd(
 
    auto resolvedMirrorMethodsPersistIPInfo = compInfoPT->getCachedResolvedMirrorMethodsPersistIPInfo();
 
-   // If the server is running low on memory, tell clients to reduce the number of active compilation threads
-   bool incompleteInfo;
-   uint64_t freePhysicalMemorySizeB = compInfoPT->getCompilationInfo()->computeAndCacheFreePhysicalMemory(incompleteInfo);
-   bool serverHasLowMemory = (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE &&
-       freePhysicalMemorySizeB <= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue() + 4 * TR::Options::getScratchSpaceLowerBound());
+   JITServer::ServerMemoryState memoryState = computeServerMemoryState(compInfoPT->getCompilationInfo());
 
    entry->_stream->finishCompilation(codeCacheStr, dataCacheStr, chTableData,
                                      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
@@ -116,7 +155,7 @@ outOfProcessCompilationEnd(
                                      (resolvedMirrorMethodsPersistIPInfo) ?
                                                          std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
                                                          std::vector<TR_ResolvedJ9Method*>(),
-                                     *entry->_optimizationPlan, serializedRuntimeAssumptions, serverHasLowMemory
+                                     *entry->_optimizationPlan, serializedRuntimeAssumptions, memoryState
                                      );
    compInfoPT->clearPerCompilationCaches();
 
@@ -731,7 +770,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server out of memory in processEntry: %s", e.what());
-      stream->writeError(compilationLowPhysicalMemory);
+      stream->writeError(compilationLowPhysicalMemory, computeServerMemoryState(getCompilationInfo()));
       abortCompilation = true;
       }
 

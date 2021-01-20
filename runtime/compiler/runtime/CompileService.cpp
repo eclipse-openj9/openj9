@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,5 +46,5 @@ void J9CompileDispatcher::compile(JITServer::ServerStream *stream)
          }
       } // end critical section
    // If we reached this point there was a memory allocation failure
-   stream->writeError(compilationLowPhysicalMemory);
+   stream->writeError(compilationLowPhysicalMemory, JITServer::ServerMemoryState::VERY_LOW);
    }
