@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,10 +47,6 @@ class GC_PointerArrayletInlineLeafIterator
 	/* Data Members */
 private:
 	GC_SlotObject _slotObject;		/**< Create own SlotObject class to provide output */
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
-	bool const _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
-
 	UDATA _arrayletLeafSize; 		/* The size of an arraylet leaf */
 	UDATA _fobjectsPerLeaf; 		/* The number of fj9object_t's per leaf */
 	fj9object_t * _currentArrayletBaseAddress; /* The base address of the current arraylet */
@@ -58,6 +54,9 @@ private:
 	UDATA _elementsStillToRead;		/**< The number of elements this iterator is still expecting to return */
 	J9JavaVM *_javaVM;				/**< The JavaVM */
 protected:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool const _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 public:
 
 	/* Member Functions */
@@ -123,10 +122,10 @@ public:
 
 	GC_PointerArrayletInlineLeafIterator(J9JavaVM *javaVM)
 		: _slotObject(GC_SlotObject(javaVM->omrVM, NULL))
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
-		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		, _javaVM(javaVM)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	{
 		_arrayletLeafSize = _javaVM->arrayletLeafSize;
 		_fobjectsPerLeaf = _arrayletLeafSize / J9JAVAVM_REFERENCE_SIZE(javaVM);
@@ -137,10 +136,10 @@ public:
 	 */
 	GC_PointerArrayletInlineLeafIterator(J9JavaVM *javaVM, J9Object *objectPtr)
 		: _slotObject(GC_SlotObject(javaVM->omrVM, NULL))
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
-		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 		, _javaVM(javaVM)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	{
 		_arrayletLeafSize = _javaVM->arrayletLeafSize;
 		_fobjectsPerLeaf = _arrayletLeafSize / J9JAVAVM_REFERENCE_SIZE(javaVM);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,16 +52,18 @@ class MM_ObjectAccessBarrierAPI
 
 /* Data members & types */
 public:
-protected:
+
 private:
 	const UDATA _writeBarrierType;
 	const UDATA _readBarrierType;
-#if defined (OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 	const UDATA _compressedPointersShift;
-#if defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+
+protected:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
 	bool const _compressObjectReferences;
-#endif /* defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 /* Methods */
 public:
@@ -72,12 +74,12 @@ public:
 	MM_ObjectAccessBarrierAPI(J9VMThread *currentThread)
 		: _writeBarrierType(currentThread->javaVM->gcWriteBarrierType)
 		, _readBarrierType(currentThread->javaVM->gcReadBarrierType)
-#if defined (OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_COMPRESSED_POINTERS)
 		, _compressedPointersShift(currentThread->javaVM->compressedPointersShift)
-#if defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
 		, _compressObjectReferences(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread))
-#endif /* defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	{}
 
 	/**

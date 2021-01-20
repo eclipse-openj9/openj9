@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,9 +70,6 @@ public:
 	UDATA _regionSize;  			/**< Cached region size */
 
 	bool _shouldFlushBuffersForDecommitedRegions;			/**< set to true at the end of a GC, if contraction occured. this is a signal for the next GC to perform flush buffers from regions contracted */
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
-	bool _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) && !defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
 
 	volatile UDATA _overflowedRegionCount;					/**< count of regions overflowed as full */
 	UDATA _stableRegionCount;								/**< count of regions overflowed as stable */
@@ -86,6 +83,11 @@ public:
 	MM_CardTable *_cardTable;								/**< cached copy of card table */
 
 	MM_RememberedSetCardBucket *_rememberedSetCardBucketPool; /**< RS bucket pool (for all regions) for Main thread or any other thread that caused GC in absence of Main thread */
+
+protected:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 private:
 
