@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@
 #include "OwnableSynchronizerObjectBuffer.hpp"
 #include "ParallelDispatcher.hpp"
 #include "PointerContiguousArrayIterator.hpp"
+#include "FlattenedContiguousArrayIterator.hpp"
 #include "Task.hpp"
 
 void
@@ -50,6 +51,17 @@ void
 MM_CompactSchemeFixupObject::fixupArrayObject(omrobjectptr_t objectPtr)
 {
 	GC_PointerContiguousArrayIterator it(_omrVM, objectPtr);
+	GC_SlotObject *slotObject;
+
+	while (NULL != (slotObject = it.nextSlot())) {
+		_compactScheme->fixupObjectSlot(slotObject);
+	}
+}
+
+void
+MM_CompactSchemeFixupObject::fixupFlattenedArrayObject(omrobjectptr_t objectPtr)
+{
+	GC_FlattenedContiguousArrayIterator it(_omrVM, objectPtr);
 	GC_SlotObject *slotObject;
 
 	while (NULL != (slotObject = it.nextSlot())) {
@@ -91,6 +103,10 @@ MM_CompactSchemeFixupObject::fixupObject(MM_EnvironmentStandard *env, omrobjectp
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		addOwnableSynchronizerObjectInList(env, objectPtr);
 		fixupMixedObject(objectPtr);
+		break;
+
+	case GC_ObjectModel::SCAN_FLATTENED_ARRAY_OBJECT:
+		fixupFlattenedArrayObject(objectPtr);
 		break;
 
 	default:

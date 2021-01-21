@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2017, 2020 IBM Corp. and others
+  Copyright (c) 2017, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,7 @@
 		<variations>
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation> -XX:ValueTypeFlatteningThreshold=99999 -Xgcpolicy:optthruput -XX:-EnableArrayFlattening</variation>
-			<variation>-Xgcpolicy:optthruput -Xnocompactgc -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xverify:none \
@@ -62,7 +62,7 @@
 			  -	<variation>-Xjit:count=0</variation>
 			  -->
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -Xnocompactgc -XX:ValueTypeFlatteningThreshold=99999</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xverify:none \
