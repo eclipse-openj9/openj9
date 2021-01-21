@@ -2218,6 +2218,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
          TR_ASSERT(((*info)->_reloKind == TR_ValidateInstanceField ||
                  (*info)->_reloKind == TR_ValidateStaticField ||
                  (*info)->_reloKind == TR_ValidateClass ||
+                 (*info)->_reloKind == TR_ValidateArbitraryObjectClass ||
                  (*info)->_reloKind == TR_ValidateArbitraryClass),
                 "TR::AOTClassInfo reloKind is not TR_ValidateInstanceField or TR_ValidateStaticField or TR_ValidateClass!");
 
@@ -2451,6 +2452,23 @@ TR_ResolvedRelocatableJ9JITServerMethod::getClassFromConstantPool(TR::Compilatio
    return NULL;
    }
 
+void *
+TR_ResolvedRelocatableJ9JITServerMethod::stringConstant(TR::Compilation *comp, I_32 cpIndex)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+
+   void * stringConst = TR_ResolvedJ9JITServerMethod::stringConstant(comp, cpIndex);
+   if (stringConst)
+      {
+      bool validated = validateArbitraryObjectClassFromConstantPool(comp, stringConst, cpIndex);
+      if (validated)
+         {
+         return stringConst;
+         }
+      }
+   return 0;
+   }
+
 bool
 TR_ResolvedRelocatableJ9JITServerMethod::validateClassFromConstantPool(TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex,  TR_ExternalRelocationTargetKind reloKind)
    {
@@ -2461,6 +2479,25 @@ TR_ResolvedRelocatableJ9JITServerMethod::validateClassFromConstantPool(TR::Compi
    else
       {
       return storeValidationRecordIfNecessary(comp, cp(), cpIndex, reloKind, ramMethod(), clazz);
+      }
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::validateArbitraryObjectClassFromConstantPool(TR::Compilation *comp, void * arbitraryObject, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind)
+   {
+   TR_OpaqueClassBlock *clazz;
+      {
+      TR::VMAccessCriticalSection constantCriticalSection(comp->fej9());
+      clazz = comp->fej9()->getObjectClassAt((uintptr_t)arbitraryObject); 
+      }
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      return comp->getSymbolValidationManager()->addArbitraryObjectClassFromCPRecord(clazz, cp(), cpIndex);
+      }
+   else
+      {
+      return storeValidationRecordIfNecessary(comp, cp(), cpIndex, reloKind, ramMethod(), reinterpret_cast<J9Class *>(clazz));
       }
    }
 

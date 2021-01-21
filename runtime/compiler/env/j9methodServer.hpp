@@ -290,8 +290,10 @@ class TR_ResolvedRelocatableJ9JITServerMethod : public TR_ResolvedJ9JITServerMet
 
    virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic, TR_OpaqueClassBlock **fromResolvedJ9Method = NULL) override;
    virtual TR_OpaqueClassBlock * getClassFromConstantPool(TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false) override;
+   virtual void *                stringConstant(TR::Compilation *comp, I_32 cpIndex) override;
    virtual bool                  validateClassFromConstantPool(TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass) override;
    virtual bool                  validateArbitraryClass(TR::Compilation *comp, J9Class *clazz) override;
+   virtual bool                  validateArbitraryObjectClassFromConstantPool(TR::Compilation *comp, void * arbitraryObject, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind) override;
    virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
    virtual void *                methodTypeConstant(int32_t cpIndex) override;
    virtual bool                  isUnresolvedMethodType(int32_t cpIndex) override;
