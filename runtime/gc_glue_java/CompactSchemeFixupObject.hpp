@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,6 +66,12 @@ private:
 	 * @param objectPtr pointer to object for fixup
 	 */
 	void fixupArrayObject(omrobjectptr_t objectPtr);
+
+	/**
+	 * Perform fixup for a flattened array object
+	 * @param objectPtr pointer to object for fixup
+	 */
+	void fixupFlattenedArrayObject(omrobjectptr_t objectPtr);
 
 	/**
 	 * Called whenever a ownable synchronizer object is fixed up during compact. Places the object on the thread-specific buffer of gc work thread.
