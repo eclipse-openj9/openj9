@@ -666,10 +666,15 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			}
 		} else {
 			if (compressStrings && isASCII) {
+				UDATA lastSlash = 0;
 				if (translateSlashes) {
 					for (UDATA i = 0; i < length; ++i) {
 						U_8 c = data[i];
-						J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, c != '/' ? c : '.');
+						if ('/' == c) {
+							lastSlash = i;
+							c = '.';
+						}
+						J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, c);
 					}
 				} else {
 					for (UDATA i = 0; i < length; ++i) {
@@ -680,20 +685,20 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to fix up the name
 				 * because the previous loops have converted '/' to '.' already.
 				 */
-				if (translateSlashes && anonClassName) {
-					for (UDATA i = length - 1; i != 0; --i) {
-						if ((U_8)'.' == J9JAVAARRAYOFBYTE_LOAD(vmThread, charArray, i)) {
-							J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (U_8)'/');
-							break;
-						}
-					}
+				if (anonClassName && (0 != lastSlash)) {
+					J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, lastSlash, (U_8)'/');
 				}
 			} else {
+				UDATA lastSlash = 0;
 				if (isASCII) {
 					if (translateSlashes) {
 						for (UDATA i = 0; i < length; ++i) {
 							U_8 c = data[i];
-							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, c != '/' ? c : '.');
+							if ('/' == c) {
+								lastSlash = i;
+								c = '.';
+							}
+							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, c);
 						}
 					} else {
 						for (UDATA i = 0; i < length; ++i) {
@@ -709,6 +714,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 						UDATA consumed = VM_VMHelpers::decodeUTF8Char(tempData, &unicode);
 						if (translateSlashes) {
 							if ((U_16)'/' == unicode) {
+								lastSlash = writeIndex;
 								unicode = (U_16)'.';
 							}
 						}
@@ -722,13 +728,8 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to fix up the name
 				 * because the previous loops have converted '/' to '.' already.
 				 */
-				if (translateSlashes && anonClassName) {
-					for (UDATA i = length - 1; i != 0; --i) {
-						if ((U_16)'.' == J9JAVAARRAYOFCHAR_LOAD(vmThread, charArray, i)) {
-							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, (U_16)'/');
-							break;
-						}
-					}
+				if (anonClassName && (0 != lastSlash)) {
+					J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, lastSlash, (U_16)'/');
 				}
 			}
 		}
