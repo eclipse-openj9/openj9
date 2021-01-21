@@ -232,38 +232,30 @@ jitMethodTranslated(J9VMThread *currentThread, J9Method *method, void *jitStartA
 	}
 }
 
-#if defined(J9VM_JIT_NEW_INSTANCE_PROTOTYPE)
 J9_EXTERN_BUILDER_SYMBOL(jitTranslateNewInstanceMethod);
 J9_EXTERN_BUILDER_SYMBOL(jitInterpretNewInstanceMethod);
-#endif /* J9VM_JIT_NEW_INSTANCE_PROTOTYPE */
 
 void*
 jitNewInstanceMethodStartAddress(J9VMThread *currentThread, J9Class *clazz)
 {
 	void *addr = NULL;
-#if defined(J9VM_JIT_NEW_INSTANCE_PROTOTYPE)
 	addr = (void*)clazz->romableAotITable;
 	if (addr == J9_BUILDER_SYMBOL(jitTranslateNewInstanceMethod)) {
 		addr = NULL;
 	}
-#endif /* J9VM_JIT_NEW_INSTANCE_PROTOTYPE */
 	return addr;
 }
 
 void
 jitNewInstanceMethodTranslated(J9VMThread *currentThread, J9Class *clazz, void *jitStartAddress)
 {
-#if defined(J9VM_JIT_NEW_INSTANCE_PROTOTYPE)
-	clazz->romableAotITable = (UDATA)VM_VMHelpers::jitToJitStartAddress(jitStartAddress);
-#endif /* J9VM_JIT_NEW_INSTANCE_PROTOTYPE */
+clazz->romableAotITable = (UDATA)VM_VMHelpers::jitToJitStartAddress(jitStartAddress);
 }
 
 void
 jitNewInstanceMethodTranslateFailed(J9VMThread *currentThread, J9Class *clazz)
 {
-#if defined(J9VM_JIT_NEW_INSTANCE_PROTOTYPE)
-	clazz->romableAotITable = (UDATA)J9_BUILDER_SYMBOL(jitInterpretNewInstanceMethod);
-#endif /* J9VM_JIT_NEW_INSTANCE_PROTOTYPE */
+clazz->romableAotITable = (UDATA)J9_BUILDER_SYMBOL(jitInterpretNewInstanceMethod);
 }
 
 UDATA

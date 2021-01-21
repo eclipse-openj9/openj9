@@ -3586,7 +3586,6 @@ void jitHookClassLoadHelper(J9VMThread *vmThread,
 
    compInfo->getPersistentInfo()->getPersistentClassLoaderTable()->associateClassLoaderWithClass(classLoader, clazz);
 
-#ifdef J9VM_JIT_NEW_INSTANCE_PROTOTYPE
    // Update the count for the newInstance
    //
    TR::Options * options = TR::Options::getCmdLineOptions();
@@ -3602,7 +3601,6 @@ void jitHookClassLoadHelper(J9VMThread *vmThread,
       }
    //fprintf(stderr, "Will set the count for NewInstancePrototype to %d\n", options->getInitialCount());
    cl->newInstanceCount = options->getInitialCount();
-#endif
 
    allocFailed = chTableOnClassLoad(vmThread, clazz, compInfo, vm);
 
