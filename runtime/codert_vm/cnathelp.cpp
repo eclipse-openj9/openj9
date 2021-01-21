@@ -215,11 +215,9 @@ restoreBranchJITResolveFrame(J9VMThread *currentThread)
 
 extern void jitAddPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched);
 
-#if defined(J9VM_JIT_NEW_INSTANCE_PROTOTYPE)
 J9_EXTERN_BUILDER_SYMBOL(jitTranslateNewInstanceMethod);
 J9_EXTERN_BUILDER_SYMBOL(jitInterpretNewInstanceMethod);
 J9_EXTERN_BUILDER_SYMBOL(icallVMprJavaSendStatic1);
-#endif /* J9VM_JIT_NEW_INSTANCE_PROTOTYPE */
 
 #define STATIC_FIELD_REF_BIT(bit) ((IDATA)(bit) << ((8 * sizeof(UDATA)) - J9_REQUIRED_CLASS_SHIFT))
 
@@ -3017,7 +3015,6 @@ old_slow_jitInduceOSRAtCurrentPC(J9VMThread *currentThread)
 void J9FASTCALL
 old_slow_jitInterpretNewInstanceMethod(J9VMThread *currentThread)
 {
-#if defined(J9VM_JIT_NEW_INSTANCE_PROTOTYPE)
 	/* JIT has passed two parameters, but only the first one matters to this call.
 	 * The parmCount has to be 1 in order for JIT_PARM_IN_MEMORY to function correctly
 	 * in the register case.
@@ -3045,14 +3042,12 @@ old_slow_jitInterpretNewInstanceMethod(J9VMThread *currentThread)
 #endif /* J9SW_NEEDS_JIT_2_INTERP_CALLEE_ARG_POP */
 	currentThread->tempSlot = (UDATA)J9_BUILDER_SYMBOL(icallVMprJavaSendStatic1);
 	jitRegisters->JIT_J2I_METHOD_REGISTER = (UDATA)J9VMJAVALANGJ9VMINTERNALS_NEWINSTANCEIMPL_METHOD(vm);
-#endif /* J9VM_JIT_NEW_INSTANCE_PROTOTYPE */
 }
 
 void* J9FASTCALL
 old_slow_jitNewInstanceImplAccessCheck(J9VMThread *currentThread)
 {
 	void *addr = NULL;
-#if defined(J9VM_JIT_NEW_INSTANCE_PROTOTYPE)
 	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(3);
 	DECLARE_JIT_PARM(j9object_t, thisClassObject, 1);
 	DECLARE_JIT_PARM(j9object_t, callerClassObject, 2);
@@ -3126,14 +3121,12 @@ illegalAccess:
 done:
 	addr = restoreJITResolveFrame(currentThread, oldPC);
 	SLOW_JIT_HELPER_EPILOGUE();
-#endif /* J9VM_JIT_NEW_INSTANCE_PROTOTYPE */
 	return addr;
 }
 
 void J9FASTCALL
 old_slow_jitTranslateNewInstanceMethod(J9VMThread *currentThread)
 {
-#if defined(J9VM_JIT_NEW_INSTANCE_PROTOTYPE)
 	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(2);
 	j9object_t objectClassObject = (j9object_t)JIT_DIRECT_CALL_PARM(1);
 	j9object_t callerClassObject = (j9object_t)JIT_DIRECT_CALL_PARM(2);
@@ -3175,7 +3168,6 @@ redo:
 	}
 	currentThread->tempSlot = (UDATA)address;
 	SLOW_JIT_HELPER_EPILOGUE();
-#endif /* J9VM_JIT_NEW_INSTANCE_PROTOTYPE */
 }
 
 #if !defined(J9VM_ENV_DATA64)
