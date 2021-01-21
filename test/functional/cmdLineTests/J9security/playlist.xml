@@ -31,7 +31,7 @@
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 		-DTESTJ9SECURITYJARPATH=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
 		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)j9SecurityTest.xml$(Q) \
-		-verbose -explainExcludes -nonZeroExitWhenError; \
+		-explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
