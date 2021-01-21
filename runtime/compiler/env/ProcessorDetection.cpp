@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -619,6 +619,9 @@ TR_J9VM::initializeProcessorType()
          processorDescription.processor = OMR_PROCESSOR_PPC_7XX;
 
       TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
+      J9JavaVM *javaVM = _jitConfig->javaVM;
+      if (!J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
+         TR::Compiler->relocatableTarget.cpu = TR::CPU::customize(processorDescription);
       }
    else if (TR::Compiler->target.cpu.isX86())
       {
