@@ -1,7 +1,7 @@
 package org.openj9.test.jep358;
 
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -346,14 +346,14 @@ public class NPEMessageTests {
 		nullField.nullField = new NPEMessageTests();
 	}
 
-	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot invoke \"java.lang.invoke.MethodHandle.invokeExact\\(java.lang.String\\)\"")
+	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot invoke \"java.lang.invoke.MethodHandle.(invokeExact\\(java.lang.String\\)\"|linkToVirtual\\(java.lang.Object, java.lang.invoke.MemberName\\)\" because \"<parameter1>\" is null)")
 	public void test_invokehandle() throws WrongMethodTypeException, Throwable {
 		String msg = null;
 		MethodHandle mh = MethodHandles.lookup().findVirtual(String.class, "length", MethodType.methodType(int.class));
 		int len = (int) mh.invokeExact(msg);
 	}
 
-	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot invoke \"java.lang.invoke.MethodHandle.invoke\\(java.lang.String\\)\"")
+	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot invoke \"java.lang.invoke.MethodHandle.(invoke\\(java.lang.String\\)\"|linkToVirtual\\(java.lang.Object, java.lang.invoke.MemberName\\)\" because \"<parameter1>\" is null)")
 	public void test_invokehandlegeneric() throws WrongMethodTypeException, ClassCastException, Throwable {
 		String msg = null;
 		MethodHandle mh = MethodHandles.lookup().findVirtual(String.class, "length", MethodType.methodType(int.class));
@@ -1520,14 +1520,14 @@ public class NPEMessageTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot invoke \"java.lang.invoke.MethodHandle.invoke\\(java.lang.String\\)\"")
+	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot invoke \"java.lang.invoke.MethodHandle.(invoke\\(java.lang.String\\)\"|linkToVirtual\\(java.lang.Object, java.lang.invoke.MemberName\\)\" because \"<parameter1>\" is null)")
 	public void test_MHinvoke() throws Throwable {
 		String msg = null;
 		MethodHandle mh = MethodHandles.lookup().findVirtual(String.class, "length", MethodType.methodType(int.class));
 		mh.invoke(msg);
 	}
 
-	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot invoke \"java.lang.invoke.MethodHandle.invokeExact\\(java.lang.String\\)\"")
+	@Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Cannot invoke \"java.lang.invoke.MethodHandle.(invokeExact\\(java.lang.String\\)\"|linkToVirtual\\(java.lang.Object, java.lang.invoke.MemberName\\)\" because \"<parameter1>\" is null)")
 	public void test_MHinvokeExact() throws Throwable {
 		String msg = null;
 		MethodHandle mh = MethodHandles.lookup().findVirtual(String.class, "length", MethodType.methodType(int.class));
