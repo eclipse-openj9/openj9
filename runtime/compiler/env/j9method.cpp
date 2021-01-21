@@ -1624,11 +1624,20 @@ cpType2trType(UDATA cpType)
    }
 
 void *
-TR_ResolvedRelocatableJ9Method::stringConstant(I_32 cpIndex)
+TR_ResolvedRelocatableJ9Method::stringConstant(TR::Compilation *comp, I_32 cpIndex)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
-   return (void *) ((U_8 *)&(((J9RAMStringRef *) romLiterals())[cpIndex].stringObject));
+   void * stringConst = TR_ResolvedJ9Method::stringConstant(comp, cpIndex);
+   if (stringConst)
+      {
+      bool validated = validateArbitraryObjectClassFromConstantPool(comp, stringConst, cpIndex);
+      if (validated)
+         {
+         return stringConst;
+         }
+      }
+   return 0;
    }
 
 bool
@@ -6190,7 +6199,7 @@ TR_ResolvedJ9Method::intConstant(I_32 cpIndex)
    }
 
 void *
-TR_ResolvedJ9Method::stringConstant(I_32 cpIndex)
+TR_ResolvedJ9Method::stringConstant(TR::Compilation *comp, I_32 cpIndex)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    return &((J9RAMStringRef *) literals())[cpIndex].stringObject;

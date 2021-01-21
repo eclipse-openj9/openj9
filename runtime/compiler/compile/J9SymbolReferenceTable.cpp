@@ -1299,7 +1299,12 @@ TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
    {
    TR_ResolvedMethod * owningMethod = owningMethodSymbol->getResolvedMethod();
-   void * stringConst = owningMethod->stringConstant(cpIndex);
+   void * stringConst = owningMethod->stringConstant(comp(), cpIndex);
+   if (!stringConst)
+      {
+      comp()->failCompilation<J9::AOTRelocationRecordGenerationFailure>("AOT Relocation Failed for Patched Constant failed.");
+      }
+
    TR::SymbolReference * symRef;
    bool isString = true;
    if (owningMethod->isUnresolvedString(cpIndex))
@@ -1340,7 +1345,7 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
       // if (comp()->compileRelocatableCode())
       //    comp()->failCompilation<J9::AOTHasPatchedCPConstant>("Patched Constant not supported in AOT.");
       sym->setNonSpecificConstObject();
-      static_cast<TR_ResolvedJ9Method*>(owningMethod)->validateArbitraryObjectClassFromConstantPool(comp(), stringConst, cpIndex);
+      // static_cast<TR_ResolvedJ9Method*>(owningMethod)->validateArbitraryObjectClassFromConstantPool(comp(), stringConst, cpIndex);
       }
    
    return symRef;

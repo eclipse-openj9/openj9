@@ -197,7 +197,7 @@ public:
    virtual char * getMethodNameFromConstantPool(int32_t cpIndex, int32_t & len) override;
    virtual char * fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
    virtual bool isSubjectToPhaseChange(TR::Compilation *comp) override;
-   virtual void * stringConstant(int32_t cpIndex) override;
+   virtual void * stringConstant(TR::Compilation * comp, int32_t cpIndex) override;
    virtual TR_ResolvedMethod *getResolvedHandleMethod(TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP) override;
    virtual bool isUnresolvedMethodTypeTableEntry(int32_t cpIndex) override;
    virtual void * methodTypeTableEntryAddress(int32_t cpIndex) override;

@@ -1187,7 +1187,7 @@ TR_ResolvedJ9JITServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_
    }
 
 void *
-TR_ResolvedJ9JITServerMethod::stringConstant(I_32 cpIndex)
+TR_ResolvedJ9JITServerMethod::stringConstant(TR::Compilation *comp, I_32 cpIndex)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    _stream->write(JITServer::MessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);

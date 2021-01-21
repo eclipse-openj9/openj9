@@ -811,8 +811,6 @@ TR::SymbolValidationManager::addArbitraryObjectClassFromCPRecord(TR_OpaqueClassB
    if (recordExists(&byName))
       return true; // already have an equivalent ClassByName
 
-   // we don't need a special record for classByName
-   // we do need one for ClassFromConstantPool because the cpIndex does not point to a Class but an arbitrary object
    bool added;
    if (!isAlreadyValidated(clazz)) // save a ClassChainRecord
       added = addClassRecordWithChain(new (_region) ArbitraryObjectClassFromCPRecord(clazz, beholder, cpIndex));

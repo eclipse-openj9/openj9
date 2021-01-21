@@ -1543,7 +1543,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
          auto mirror = std::get<0>(recv);
          auto cpIndex = std::get<1>(recv);
-         client->write(response, mirror->stringConstant(cpIndex),
+         client->write(response, mirror->stringConstant(comp, cpIndex),
                        mirror->isUnresolvedString(cpIndex, true),
                        mirror->isUnresolvedString(cpIndex, false));
          }

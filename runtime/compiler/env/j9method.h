@@ -364,7 +364,7 @@ public:
    virtual uint64_t                longConstant(int32_t cpIndex);
    virtual float *                 floatConstant(int32_t cpIndex);
    virtual double *                doubleConstant(int32_t cpIndex, TR_Memory *);
-   virtual void *                  stringConstant(int32_t cpIndex);
+   virtual void *                  stringConstant(TR::Compilation *comp, int32_t cpIndex);
    virtual bool                    isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
    /** \brief
     *     Retrieves the underlying type information for a given constant dynamic.
@@ -589,7 +589,7 @@ public:
    virtual bool                    validateArbitraryObjectClassFromConstantPool(TR::Compilation *comp, void * arbitraryObject, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateArbitraryObjectClass);
    virtual bool                    validateArbitraryClass( TR::Compilation *comp, J9Class *clazz);
 
-   virtual void *                  stringConstant(int32_t cpIndex);
+   virtual void *                  stringConstant(TR::Compilation * comp, int32_t cpIndex);
    virtual bool                    isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
    virtual void *                  methodTypeConstant(int32_t cpIndex);
    virtual bool                    isUnresolvedMethodType(int32_t cpIndex);
