@@ -3010,7 +3010,7 @@ TR_RelocationRecordInlinedVirtualMethod::name()
    }
 
 TR_OpaqueMethodBlock *
-TR_RelocationRecordInlinedVirtualMethod::getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex)
+TR_RelocationRecordInlinedVirtualMethod::getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod)
    {
    return getVirtualMethodFromCP(reloRuntime, void_cp, cpIndex);
    }
