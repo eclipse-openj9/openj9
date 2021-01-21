@@ -217,15 +217,14 @@ public:
    /**
       @brief Function invoked by server when compilation is aborted
    */
-   template <typename ...T>
-   void writeError(uint32_t statusCode, T... args)
+   void writeError(uint32_t statusCode, uint64_t otherData = -1)
       {
       try
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d MessageType::compilationFailure: statusCode %u",
                   TR::compInfoPT->getCompThreadId(), statusCode);
-         write(MessageType::compilationFailure, statusCode, args...);
+         write(MessageType::compilationFailure, statusCode, otherData);
          }
       catch (std::exception &e)
          {

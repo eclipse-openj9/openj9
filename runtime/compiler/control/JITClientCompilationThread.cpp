@@ -3385,17 +3385,11 @@ remoteCompile(
       else
          {
          TR_ASSERT(JITServer::MessageType::compilationFailure == response, "Received %u but expect JITServer::MessageType::compilationFailure message type", response);
-         if (JITServer::MessageType::compilationCode == compilationLowPhysicalMemory)
-            {
-            auto recv = client->getRecvData<uint32_t, JITServer::ServerMemoryState>();
-            statusCode = std::get<0>(recv);
-            updateCompThreadActivationPolicy(compInfoPT, std::get<1>(recv)); 
-            }
-         else
-            {
-            auto recv = client->getRecvData<uint32_t>();
-            statusCode = std::get<0>(recv);
-            }
+         auto recv = client->getRecvData<uint32_t, uint64_t>();
+         statusCode = std::get<0>(recv);
+         uint64_t otherData = std::get<1>(recv);
+         if (statusCode == compilationLowPhysicalMemory && otherData != -1) // if failed due to low memory, should've received an updated memory state
+            updateCompThreadActivationPolicy(compInfoPT, (JITServer::ServerMemoryState) otherData); 
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "remoteCompile: compilationFailure statusCode %u\n", statusCode);
 
