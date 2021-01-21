@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,16 +62,6 @@ public class J9DDRClassLoader extends SecureClassLoader {
 			return false;
 		}
 
-		// Get pointer sizes in bytes (rounding up for 31-bit s390 VMs).
-		int hostPointerSize = (Integer.getInteger("sun.arch.data.model", 0) + 7) / 8;
-		int corePointerSize = reader.getSizeOfUDATA();
-
-		if (hostPointerSize == corePointerSize) {
-			// The VM that produced the core file has the same size pointers
-			// as this VM: we can use the pointers classes in j9ddr.jar.
-			return false;
-		}
-
 		// This constant will only be present in a build using OMR tooling and in which
 		// the pointer classes generated from the associated DDR blob have been validated.
 		long coreVersion = reader.getConstantValue("DDRAlgorithmVersions", "J9DDR_GENERATE_VERSION", 0);
@@ -122,6 +112,7 @@ public class J9DDRClassLoader extends SecureClassLoader {
 		return reader.getHeader();
 	}
 
+	@Override
 	protected Class<?> findClass(String binaryName) throws ClassNotFoundException {
 		Class<?> clazz = cache.get(binaryName);
 
@@ -205,6 +196,7 @@ public class J9DDRClassLoader extends SecureClassLoader {
 	}
 
 	// Cause per core file classes to be loaded once per core file, and shared classes to be loaded once per runtime.
+	@Override
 	public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
 		if (name.startsWith(streamPackageDotName)) {
 			Class<?> clazz = findLoadedClass(name);
