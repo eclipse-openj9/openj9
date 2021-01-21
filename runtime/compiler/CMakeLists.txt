@@ -274,6 +274,17 @@ elseif(OMR_OS_AIX)
 			# Modify the arch tuning value we inherit from omr
 			list(REMOVE_ITEM TR_COMPILE_OPTIONS "-qarch=pwr7")
 			list(APPEND TR_COMPILE_OPTIONS "-qarch=ppc64grsq")
+
+			if(CMAKE_C_COMPILER_IS_XLCLANG)
+				# xlclang/xlclang++ options
+				list(APPEND J9_SHAREDFLAGS -qxlcompatmacros)
+				list(APPEND SPP_FLAGS -qlanglvl=extc99)
+				list(APPEND J9_CXXFLAGS -fno-rtti)
+				set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++")
+			else()
+				# xlc/xlc++ options
+				list(APPEND J9_SHAREDFLAGS -qnotempinc -qmbcs)
+			endif()
 		endif()
 	else()
 		list(APPEND J9_SHAREDFLAGS -q32)
