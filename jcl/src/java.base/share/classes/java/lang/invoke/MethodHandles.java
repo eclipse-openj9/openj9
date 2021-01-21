@@ -5596,7 +5596,30 @@ public class MethodHandles {
 		}
 		return buildTransformHandle(new CollectReturnHelper(target, filter), resultType);
 	}
-	
+
+	/*[IF JAVA_SPEC_VERSION >= 16]*/
+	/**
+	 * Creates an adapter MethodHandle (MH) which drops the return value of the
+	 * target MH and has a void return type.
+	 *
+	 * @param target represents the above target MH.
+	 *
+	 * @return target if it already has a void return type; otherwise, an adapter MH.
+	 * @throws NullPointerException if target is null.
+	 */
+	public static MethodHandle dropReturn(MethodHandle target) {
+		/* Implicit null check on target. */
+		MethodType targetType = target.type();
+		Class<?> fromReturn = targetType.returnType();
+		Class<?> toReturn = void.class;
+		if (fromReturn == toReturn) {
+			return target;
+		}
+		MethodHandle filter = ConvertHandle.FilterHelpers.getReturnFilter(fromReturn, toReturn, false);
+		return new FilterReturnHandle(target, filter);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
+
 	/**
 	 * Scan a MethodHandle for checked exception(s).
 	 * 
