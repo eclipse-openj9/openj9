@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4785,7 +4785,7 @@ SH_CacheMap::printAllCacheStats(J9VMThread* currentThread, UDATA showFlags, SH_C
 						if ((0 != srcw->modContextOffset.offset) && (0 == srcw->partitionOffset.offset)) {
 							CACHEMAP_PRINT2(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_ROMCLASS_MODCONTEXT_DISPLAY, J9UTF8_LENGTH(modContext), J9UTF8_DATA(modContext));
 						} else
-						if ((0 != srcw->modContextOffset.offset) && (0 == srcw->partitionOffset.offset)) {
+						if ((0 != srcw->modContextOffset.offset) && (0 != srcw->partitionOffset.offset)) {
 							CACHEMAP_PRINT4(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_ROMCLASS_PARTITIONINMOD_DISPLAY, J9UTF8_LENGTH(partition), J9UTF8_DATA(partition), J9UTF8_LENGTH(modContext), J9UTF8_DATA(modContext));
 						}
 					}
