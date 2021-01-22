@@ -4603,6 +4603,30 @@ done:
 		return EXECUTE_BYTECODE;
 	}
 
+	/* sun.reflect.Reflection (JDK8) 
+	 * jdk.internal.reflect.Reflection (JDK11+): private static native int getClassAccessFlags(Class<?> cls);
+	 */
+	VMINLINE VM_BytecodeAction
+	inlReflectionGetClassAccessFlags(REGISTER_ARGS_LIST)
+	{
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		j9object_t classObject = *(j9object_t*)_sp;
+		if (NULL == classObject) {
+			buildInternalNativeStackFrame(REGISTER_ARGS);
+			rc = THROW_NPE;
+		} else {
+			I_32 modifiers = 0;
+			J9ROMClass *romClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, classObject)->romClass;
+			if (J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)) {
+				modifiers = J9AccAbstract | J9AccFinal | J9AccPublic;
+			} else {
+				modifiers = romClass->modifiers & 0xFFFF;
+			}
+			returnSingleFromINL(REGISTER_ARGS, modifiers, 1);
+		}
+		return rc;
+	}
+
 	/* Redirect to out of line INL methods */
 	VMINLINE VM_BytecodeAction
 	outOfLineINL(REGISTER_ARGS_LIST)
@@ -9193,6 +9217,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_LOADLIBRARYWITHPATH),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_ISINTERRUPTEDIMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_INITIALIZEANONCLASSLOADER),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_VARHANDLE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_ON_SPIN_WAIT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_OUT_OF_LINE_INL),
@@ -9765,8 +9790,10 @@ runMethod: {
 		PERFORM_ACTION(inlThreadIsInterruptedImpl(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_INITIALIZEANONCLASSLOADER):
 		PERFORM_ACTION(inlInitializeAnonClassLoader(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS):
+		PERFORM_ACTION(inlReflectionGetClassAccessFlags(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_VARHANDLE):
-			PERFORM_ACTION(invokevarhandle(REGISTER_ARGS));
+		PERFORM_ACTION(invokevarhandle(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_THREAD_ON_SPIN_WAIT):
 		PERFORM_ACTION(inlThreadOnSpinWait(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_OUT_OF_LINE_INL):
