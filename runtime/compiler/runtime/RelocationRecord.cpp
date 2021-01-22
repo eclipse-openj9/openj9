@@ -5233,6 +5233,8 @@ TR_RelocationRecordSymbolFromManager::needsUnloadAssumptions(TR::SymbolType symb
       case TR::SymbolType::typeClass:
       case TR::SymbolType::typeMethod:
          needsAssumptions = true;
+         break;
+
       default:
          needsAssumptions = false;
       }
@@ -5250,8 +5252,12 @@ TR_RelocationRecordSymbolFromManager::needsRedefinitionAssumption(TR_RelocationR
       {
       case TR::SymbolType::typeClass:
          needsAssumptions =  TR::CodeGenerator::wantToPatchClassPointer(reloRuntime->comp(), clazz, reloLocation);
+         break;
+
       case TR::SymbolType::typeMethod:
          needsAssumptions = true;
+         break;
+
       default:
          needsAssumptions = false;
       }
