@@ -203,6 +203,11 @@ valhalla:
   extra_configure_options: '--enable-inline-types'
   test_build_list: 'functional/Valhalla,functional/cmdline_options_tester,functional/cmdLineTests/valuetypeddrtests'
 #========================================#
+# Valhalla Standard Testing
+#========================================#
+valhalla_standard:
+  extra_configure_options: '--enable-inline-types'
+#========================================#
 # OpenJDK JSR292
 #========================================#
 ojdk292:
@@ -481,6 +486,11 @@ x86-64_linux_mixed:
 #========================================#
 x86-64_linux_valhalla:
   extends: ['x86-64_linux', 'valhalla']
+#========================================#
+# Linux x86 64bits Compressed Pointers / Valhalla Standard Testing
+#========================================#
+x86-64_linux_vt_standard:
+  extends: ['x86-64_linux', 'valhalla_standard']
 #========================================#
 # Linux Aarch 64bits Compressed Pointers
 #========================================#
