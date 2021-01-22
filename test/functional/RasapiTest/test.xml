@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2016, 2021 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<project name="Launcher script for com.ibm.jvm.ras.tests" default="help" basedir=".">
+	<target name="help">
+		<echo>Ant script to run the tests for the com.ibm.jvm.Dump API.
+			First it runs the suite of tests defined in DumpAPISuite
+			Then it runs the Security tests with security on and the permission not granted.
+			This should show the correct methods are blocked.
+			Then it adds com.ibm.jvm.DumpPermssion to the security file and reruns the Basic and
+			QuerySetReset tests to confirm they work when security is on.
+		</echo>
+	</target>
+
+	<target name="launch_test">
+		<!--Depending on the machine we run on the ant launcher script may hardcode the VM
+			we end up using. We want to use the VM we are testing so that ant can manage the
+			security properties.
+			We can't fork the tests as then the permissions settings are ignored.
+			So we're just going to have to launch it manually...
+			(Luckily the ant manual gives the java task you need to launch ant:
+			http://ant.apache.org/manual/running.html#viajava )
+		-->
+		
+		<java jvm="${test.java.home}/bin/java"
+			classname="org.apache.tools.ant.launch.Launcher"
+			fork="true"
+			failonerror="true"
+			dir="${basedir}"
+			timeout="900000"
+			taskname="test">
+			<classpath>
+				<pathelement location="${ant.home}/lib/ant-launcher.jar"/>
+			</classpath>
+			<jvmarg value="-showversion"/>
+			<jvmarg value="-Xmx128m"/>
+			<arg value="-buildfile"/>
+			<arg file="${ant.file}"/>
+			<arg value="test"/>
+		</java>
+	</target>
+
+	<target name="test">
+		<!-- Run most tests with security disabled. -->
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIBasicTests"/>
+		<junit fork="yes" showoutput="true" haltonfailure="true">
+			<jvmarg value="-showversion"/>
+			<classpath>
+				<pathelement location="junit4.jar"/>
+				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<test name="com.ibm.jvm.ras.tests.DumpAPIBasicTests"/>
+		</junit>
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITriggerTests"/>
+		<junit fork="yes" showoutput="true" haltonfailure="true">
+			<jvmarg value="-showversion"/>
+			<classpath>
+				<pathelement location="junit4.jar"/>
+				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<test name="com.ibm.jvm.ras.tests.DumpAPITriggerTests"/>
+		</junit>
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIQuerySetReset"/>
+		<junit fork="yes" showoutput="true" haltonfailure="true">
+			<jvmarg value="-showversion" />
+			<classpath>
+				<pathelement location="junit4.jar" />
+				<pathelement location="com.ibm.jvm.ras.tests.jar" />
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<test name="com.ibm.jvm.ras.tests.DumpAPIQuerySetReset" />
+		</junit>
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPITokensTests" />
+		<junit fork="yes" showoutput="true" haltonfailure="true">
+			<jvmarg value="-showversion"/>
+			<classpath>
+				<pathelement location="junit4.jar"/>
+				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<test name="com.ibm.jvm.ras.tests.DumpAPITokensTests"/>
+		</junit>
+        <echo message="Running com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic with Xdump:dynamic"/>
+        <junit fork="yes" showoutput="true" haltonfailure="true">
+                <jvmarg value="-showversion" />
+                <jvmarg value="-Xdump:dynamic" />
+                <classpath>
+                        <pathelement location="junit4.jar" />
+                        <pathelement location="com.ibm.jvm.ras.tests.jar" />
+                </classpath>
+                <formatter type="plain" usefile="false" />
+                <test name="com.ibm.jvm.ras.tests.DumpAPISetTestXdumpdynamic" />
+        </junit>
+		<!-- Run security tests (that assume dumping will fail) with security enabled. -->
+		<!-- These need to be run with fork="no" to preserve the security settings -->
+		<echo message="Running com.ibm.jvm.ras.tests.[Dump|Log|Trace]APISecurityTests"/>
+		<junit fork="no" showoutput="true" haltonfailure="true">
+			<permissions>
+				<!--Turn on security, remove the dump permissions. -->
+				<grant class="java.security.AllPermission"/>
+				<revoke class="com.ibm.jvm.DumpPermission"/>
+				<revoke class="com.ibm.jvm.LogPermission"/>
+				<revoke class="com.ibm.jvm.ToolDumpPermission"/>
+				<revoke class="com.ibm.jvm.TracePermission"/>
+			</permissions>
+			<classpath>
+				<pathelement location="junit4.jar"/>
+				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<test name="com.ibm.jvm.ras.tests.DumpAPISecurityTests"/>
+			<test name="com.ibm.jvm.ras.tests.LogAPISecurityTests"/>
+			<test name="com.ibm.jvm.ras.tests.TraceAPISecurityTests"/>
+		</junit>
+		<!-- Run tool dump security test and one normal test with DumpPermission but without ToolDumpPermission -->
+		<echo message="Running com.ibm.jvm.ras.tests.DumpAPIToolSecuritySuite"/>
+		<junit fork="no" showoutput="true" haltonfailure="true">
+			<permissions>
+				<!--Turn on security, remove the tool dump permission. -->
+				<grant class="java.security.AllPermission"/>
+				<revoke class="com.ibm.jvm.ToolDumpPermission"/>
+			</permissions>
+			<classpath>
+				<pathelement location="junit4.jar"/>
+				<pathelement location="com.ibm.jvm.ras.tests.jar"/>
+			</classpath>
+			<formatter type="plain" usefile="false" />
+			<test name="com.ibm.jvm.ras.tests.DumpAPIToolSecuritySuite"/>
+		</junit>
+		<echo message="ALL TESTS PASSED"/>
+	</target>
+</project>

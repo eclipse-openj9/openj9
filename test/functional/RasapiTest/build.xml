@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+
+<!--
+  Copyright (c) 2016, 2021 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+<project name="Build script for com.ibm.jvm.ras.tests" default="check" basedir=".">
+	
+	<property name="build.jar.tests" value="com.ibm.jvm.ras.tests.jar" />
+	<property name="DEST" value="${BUILD_ROOT}/functional/RasapiTest" />
+	<property name="src.level" value="1.7"/>
+	<property name="target.level" value="1.7"/>
+	<property name="source.dir" location="./src" />
+	<property name="dummy.source.dir" location="./dummy_src" />
+	<property name="build.dir" location="./build" />
+	<property name="dist.dir" location="./dist" />
+	<property name="src" location="." />
+	<property name="LIB" value="junit4"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
+	<!-- <property name="build.cp" value="${BUILD_ROOT}/build/j9jcl/source/ive/lib/jclSC18/classes-vm.zip"/> -->
+	
+	<path id="build.cp">
+		<fileset  dir="${LIB_DIR}/" includes="junit4.jar" />
+	</path>
+	
+	<target name="help">
+		<echo>Ant build script to generate com.ibm.jvm.ras.tests.jar
+		</echo>
+	</target>
+	
+	<target name="clean">
+		<echo>Cleaning build directory ${build.dir}</echo>
+		<mkdir dir="${dist.dir}"/>
+		<delete failonerror="false" verbose="true">
+			<fileset dir="${dist.dir}" includes="${build.jar.tests}" />
+		</delete>
+		<mkdir dir="${build.dir}/bin"/>
+		<delete failonerror="false" verbose="false">
+			<fileset dir="${build.dir}" includes="bin/**/*" />
+		</delete>
+	</target>
+	
+	<target name="compile" depends="clean">
+
+		<echo>Ant version is ${ant.version}</echo>
+		<echo>Compiling code to ${build.dir} and packaging ${build.jar.tests} to ${dist.dir}</echo>
+				
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:				yes</echo>
+		<echo>===executable:			${compiler.javac}</echo>
+		<echo>===source:				${src.level}</echo>
+		<echo>===target:				${target.level}</echo>
+		<echo>===debug:					on</echo>
+		<echo>===destdir:				${build.dir}</echo>
+		
+		<mkdir dir="${build.dir}/bin"/>
+		<mkdir dir="${dist.dir}"/>
+		<javac destdir="${build.dir}/bin" source="${src.level}" target="${target.level}" 
+			debug="true" fork="true" executable="${compiler.javac}" encoding="UTF-8" classpathref="build.cp">
+			<!-- Locally there can be a problem with old versions of the DTFJ API which don't support Image.close().
+			 	 I could remove that call but it causes us to leak files and blocks checking if files are system
+			 	 dumps so this points to a recent version of dtfj-interface.jar to compile against instead. -->
+			<!-- <compilerarg value="-Xbootclasspath/p:${build.cp}"/> -->
+			<src path="${source.dir}"/>
+			<!-- The boot compiler, unless it's IBM 1.8, won't have the right API to build all these tests.
+				 We have a hollowed out version in dummy_src for the tests to compile against -->
+			<src path="${dummy.source.dir}"/>
+		</javac>
+		
+		<!-- jar the .class files except the dummy source -->
+		<jar destfile="${dist.dir}/${build.jar.tests}">
+			<fileset dir="${build.dir}/bin">
+				<exclude name="com/ibm/jvm/*.class" />
+			</fileset>
+		</jar>
+
+    	<copy todir="${dist.dir}">
+    		<fileset  dir="${LIB_DIR}/" includes="junit4.jar" />
+    	</copy>
+		
+    	<copy todir="${dist.dir}">
+    		<fileset dir="." includes="test.xml"/>
+    	</copy>
+	</target>
+
+	<target name="check" >
+		<if>
+			<or>
+				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="openj9" />
+			</or>
+			<then>
+				<antcall target="build" inheritall="true" />
+			</then>
+		</if>
+	</target>
+	
+    <target name="build" depends="compile">
+    	<mkdir dir="${DEST}"/>
+		<copy todir="${DEST}">
+			<fileset dir="${dist.dir}" includes="*.xml,**/*.jar,**/*.xml"/>
+			<fileset dir="${src}" includes="*.mk"/>
+		</copy>
+    </target>
+	
+</project>
