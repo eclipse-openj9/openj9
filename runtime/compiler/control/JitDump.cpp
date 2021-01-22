@@ -638,6 +638,13 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
          // get current compilation
          TR::Compilation *comp = threadCompInfo->getCompilation();
 
+         // Printing the crashed thread trees or any similar operation on the crashed thread may result in having to
+         // acquire VM access (ex. to get a class signature). Other VM events, such as VM shutdown or the GC unloading
+         // classes may cause compilations to be interrupted. Because the crashed thread is not a diagnostic thread,
+         // the call to print the crashed thread IL may get interrupted and the jitdump will be incomplete. We prevent
+         // this from occuring by disallowing interruptions until we are done generating the jitdump.
+         TR::CompilationInfoPerThreadBase::UninterruptibleOperation generateJitDumpForCrashedThread(*threadCompInfo);
+
          // if the compilation is in progress, dump interesting things from it and then recompile
          if (comp)
             {

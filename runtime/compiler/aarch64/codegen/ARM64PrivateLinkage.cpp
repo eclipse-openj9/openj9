@@ -41,7 +41,6 @@
 #include "env/CompilerEnv.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "exceptions/JITShutDown.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"

@@ -204,35 +204,57 @@ class CompilationInfoPerThreadBase
    bool methodCanBeCompiled(TR_Memory *trMemory, TR_FrontEnd *fe, TR_ResolvedMethod *compilee, TR_FilterBST *&filter);
    int32_t                getCompThreadId() const { return _compThreadId; }
 
-   bool                   compilationCanBeInterrupted() const { return _compilationCanBeInterrupted; }
-   void                   enterInterruptibleOperation()
-      {
-      TR_ASSERT(!_compilationCanBeInterrupted, "This guard is not re-entrant.");
-      _compilationCanBeInterrupted = true;
-      }
-   void                   exitInterruptibleOperation()
-      {
-      TR_ASSERT(_compilationCanBeInterrupted, "Exiting interruptible operation without having entered.");
-      _compilationCanBeInterrupted = false;
-      }
+   bool compilationCanBeInterrupted() const { return _compilationCanBeInterrupted; }
 
    class InterruptibleOperation
       {
+      friend class TR::CompilationInfoPerThreadBase;
+      
    public:
       InterruptibleOperation(TR::CompilationInfoPerThreadBase &compThread) :
          _compThread(compThread)
          {
-         _compThread.enterInterruptibleOperation();
+         TR_ASSERT_FATAL(!_compThread._compilationCanBeInterrupted, "This guard is not re-entrant");
+         _compThread._compilationCanBeInterrupted = true;
          }
 
       ~InterruptibleOperation()
          {
-         _compThread.exitInterruptibleOperation();
+         TR_ASSERT_FATAL(_compThread._compilationCanBeInterrupted, "Exiting interruptible operation without having entered");
+         _compThread._compilationCanBeInterrupted = false;
+         }
+
+   private:
+      TR::CompilationInfoPerThreadBase & _compThread;
+      };
+
+   /**
+    * \brief
+    * An RAII class used to scope an uniterruptable operation on a compilation thread. The state of whether the thread
+    * can be interrupted or not will remain the same after this object is destructed.
+    */
+   class UninterruptibleOperation
+      {
+      friend class TR::CompilationInfoPerThreadBase;
+      
+   public:
+      UninterruptibleOperation(TR::CompilationInfoPerThreadBase &compThread) :
+         _compThread(compThread), _originalValue(_compThread._compilationCanBeInterrupted)
+         {
+         _compThread._compilationCanBeInterrupted = false;
+         }
+
+      ~UninterruptibleOperation()
+         {
+         _compThread._compilationCanBeInterrupted = _originalValue;
          }
 
    private:
       TR::CompilationInfoPerThreadBase & _compThread;
 
+      /// Represents the original value of whether the compilation can be interrupted before executing the
+      /// uninterruptable operation
+      bool _originalValue;
       };
 
    uint8_t                compilationShouldBeInterrupted() const { return _compilationShouldBeInterrupted; }

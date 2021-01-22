@@ -59,7 +59,6 @@
 #include "control/CompilationController.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "compile/CompilationException.hpp"
-#include "exceptions/JITShutDown.hpp"
 #include "env/exports.h"
 #include "env/CompilerEnv.hpp"
 #include "env/CHTable.hpp"
