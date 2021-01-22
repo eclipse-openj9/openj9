@@ -2316,6 +2316,8 @@ public class MethodHandles {
 		 * @throws IllegalAccessException if this Lookup does not have full privilege access.
 		 */
 		public Lookup defineHiddenClassWithClassData(byte[] bytes, Object classData, boolean initOption, ClassOption... classOptions) throws IllegalAccessException {
+			/* Only classData requires an explicit null check. */
+			Objects.requireNonNull(classData);
 			ClassDefiner definer = classDefiner(bytes, classOptions);
 			return new Lookup(definer.defineClass(initOption, classData));
 		}
@@ -2332,6 +2334,8 @@ public class MethodHandles {
 		 * @throws IllegalAccessException if this Lookup does not have full privilege access.
 		 */
 		Lookup defineHiddenClassWithClassData(byte[] bytes, Object classData, ClassOption... classOptions) throws IllegalAccessException {
+			/* Only classData requires an explicit null check. */
+			Objects.requireNonNull(classData);
 			ClassDefiner definer = classDefiner(bytes, classOptions);
 			return new Lookup(definer.defineClass(true, classData));
 		}
