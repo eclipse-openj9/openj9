@@ -1007,80 +1007,22 @@ TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, T
    return resolvedMethod;
    }
 
-char *
-TR_ResolvedJ9JITServerMethod::getRemoteROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
-   {
-   TR_ASSERT(offsets.size() <= 2, "Number of offsets is greater than 2");
-
-   auto offsetFirst = *offsets.begin();
-   auto offsetSecond = (offsets.size() == 2) ? *(offsets.begin() + 1) : 0;
-
-   TR_ASSERT(offsetFirst < (1 << 16) && offsetSecond < (1 << 16), "Offsets are larger than 16 bits");
-
-   // create a key for hashing into a table of strings
-   TR_RemoteROMStringKey key;
-   uint32_t offsetKey = (offsetFirst << 16) + offsetSecond;
-   key._basePtr = basePtr;
-   key._offsets = offsetKey;
-   
-   std::string *cachedStr = NULL;
-   bool isCached = false;
-   TR::CompilationInfoPerThread *threadCompInfo = _fe->_compInfoPT;
-   {
-      OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
-      auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._remoteROMStringsCache;
-      auto gotStr = stringsCache.find(key);
-      if (gotStr != stringsCache.end())
-         {
-         cachedStr = &(gotStr->second);
-         isCached = true;
-         }
-   }
-
-   // only make a query if a string hasn't been cached
-   if (!isCached)
-      {
-      size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) romClassPtr();
-      std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
-      
-      _stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMString, _remoteMirror, offsetFromROMClass, offsetsStr);
-         {
-         // reaquire the monitor
-         OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
-         auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._remoteROMStringsCache;
-         cachedStr = &(stringsCache.insert({key, std::get<0>(_stream->read<std::string>())}).first->second);
-         }
-      }
-
-   len = cachedStr->length();
-   return &(cachedStr->at(0));
-   }
-
 // Takes a pointer to some data which is placed statically relative to the rom class,
 // as well as a list of offsets to J9SRP fields. The first offset is applied before the first
 // SRP is followed.
-//
-// If at any point while following the chain of SRP pointers we land outside the ROM class,
-// then we fall back to getRemoteROMString which follows the same process on the client.
-//
-// This is a workaround because some data referenced in the ROM constant pool is located outside of
-// it, but we cannot easily determine if the reference is outside or not (or even if it is a reference!)
-// because the data is untyped.
 char *
 TR_ResolvedJ9JITServerMethod::getROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
    {
-   uint8_t *ptr = (uint8_t*) basePtr;
-   const J9ROMClass * romClass = romClassPtr();
+   uint8_t *ptr = (uint8_t *)basePtr;
+   const J9ROMClass *romClass = romClassPtr();
    for (size_t offset : offsets)
       {
       ptr += offset;
-      if (!JITServerHelpers::isAddressInROMClass(ptr, romClass))
-         return getRemoteROMString(len, basePtr, offsets);
-      ptr = ptr + *(J9SRP*)ptr;
+      TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(ptr, romClass), "Address outside of ROMClass");
+      ptr = ptr + *(J9SRP *)ptr;
       }
-   if (!JITServerHelpers::isAddressInROMClass(ptr, romClass))
-      return getRemoteROMString(len, basePtr, offsets);
-   char *data = utf8Data((J9UTF8*) ptr, len);
+   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(ptr, romClass), "Address outside of ROMClass");
+   char *data = utf8Data((J9UTF8 *)ptr, len);
    return data;
    }
 

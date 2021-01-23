@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -142,16 +142,6 @@ struct ClassLoaderStringPair
       }
    };
 
-struct TR_RemoteROMStringKey
-   {
-   void *_basePtr;
-   uint32_t _offsets;
-   bool operator==(const TR_RemoteROMStringKey &other) const
-      {
-      return (_basePtr == other._basePtr) && (_offsets == other._offsets);
-      }
-   };
-
 
 // custom specializations of std::hash injected in std namespace
 namespace std
@@ -171,16 +161,6 @@ namespace std
       std::size_t operator()(const std::pair<T, Q> &key) const noexcept
          {
          return std::hash<T>()(key.first) ^ std::hash<Q>()(key.second);
-         }
-      };
-
-   template <> struct hash<TR_RemoteROMStringKey>
-      {
-      std::size_t operator()(const TR_RemoteROMStringKey &k) const noexcept
-         {
-         // Compute a hash for the table of ROM strings by hashing basePtr and offsets 
-         // separately and then XORing them
-         return (std::hash<void *>()(k._basePtr)) ^ (std::hash<uint32_t>()(k._offsets));
          }
       };
    }
@@ -256,7 +236,6 @@ class ClientSessionData
       J9ConstantPool *_constantPool;
       uintptr_t _classFlags;
       uintptr_t _classChainOffsetOfIdentifyingLoaderForClazz;
-      PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> _remoteROMStringsCache; // cached strings from the client
       PersistentUnorderedMap<int32_t, std::string> _fieldOrStaticNameCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _constantClassPoolCache;
@@ -273,7 +252,6 @@ class ClientSessionData
       PersistentUnorderedSet<J9ClassLoader *> _referencingClassLoaders;
 
       char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
-      char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
       }; // struct ClassInfo
 
 
