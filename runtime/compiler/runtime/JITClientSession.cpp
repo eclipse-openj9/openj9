@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -378,7 +378,6 @@ ClientSessionData::ClassInfo::ClassInfo() :
    _constantPool(NULL),
    _classFlags(0),
    _classChainOffsetOfIdentifyingLoaderForClazz(0),
-   _remoteROMStringsCache(decltype(_remoteROMStringsCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _fieldOrStaticNameCache(decltype(_fieldOrStaticNameCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _constantClassPoolCache(decltype(_constantClassPoolCache)::allocator_type(TR::Compiler->persistentAllocator())),
@@ -559,69 +558,21 @@ ClientSessionData::getCHTable()
    return _chTable;
    }
 
-char *
-ClientSessionData::ClassInfo::getRemoteROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
-   {
-   auto offsetFirst = *offsets.begin();
-   auto offsetSecond = (offsets.size() == 2) ? *(offsets.begin() + 1) : 0;
-
-   TR_ASSERT(offsetFirst < (1 << 16) && offsetSecond < (1 << 16), "Offsets are larger than 16 bits");
-   TR_ASSERT(offsets.size() <= 2, "Number of offsets is greater than 2");
-
-   // create a key for hashing into a table of strings
-   TR_RemoteROMStringKey key;
-   uint32_t offsetKey = (offsetFirst << 16) + offsetSecond;
-   key._basePtr = basePtr;
-   key._offsets = offsetKey;
-
-   std::string *cachedStr = NULL;
-   bool isCached = false;
-   auto gotStr = _remoteROMStringsCache.find(key);
-   if (gotStr != _remoteROMStringsCache.end())
-      {
-      cachedStr = &(gotStr->second);
-      isCached = true;
-      }
-
-   // only make a query if a string hasn't been cached
-   if (!isCached)
-      {
-      size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) _romClass;
-      std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
-
-      JITServer::ServerStream *stream = TR::CompilationInfo::getStream();
-      stream->write(JITServer::MessageType::ClassInfo_getRemoteROMString, _remoteRomClass, offsetFromROMClass, offsetsStr);
-      cachedStr = &(_remoteROMStringsCache.insert({key, std::get<0>(stream->read<std::string>())}).first->second);
-      }
-
-   len = cachedStr->length();
-   return &(cachedStr->at(0));
-   }
-
 // Takes a pointer to some data which is placed statically relative to the rom class,
 // as well as a list of offsets to J9SRP fields. The first offset is applied before the first
 // SRP is followed.
-//
-// If at any point while following the chain of SRP pointers we land outside the ROM class,
-// then we fall back to getRemoteROMString which follows the same process on the client.
-//
-// This is a workaround because some data referenced in the ROM constant pool is located outside of
-// it, but we cannot easily determine if the reference is outside or not (or even if it is a reference!)
-// because the data is untyped.
 char *
 ClientSessionData::ClassInfo::getROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
    {
-   uint8_t *ptr = (uint8_t*) basePtr;
+   uint8_t *ptr = (uint8_t *)basePtr;
    for (size_t offset : offsets)
       {
       ptr += offset;
-      if (!JITServerHelpers::isAddressInROMClass(ptr, _romClass))
-         return getRemoteROMString(len, basePtr, offsets);
-      ptr = ptr + *(J9SRP*)ptr;
+      TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(ptr, _romClass), "Address outside of ROMClass");
+      ptr = ptr + *(J9SRP *)ptr;
       }
-   if (!JITServerHelpers::isAddressInROMClass(ptr, _romClass))
-      return getRemoteROMString(len, basePtr, offsets);
-   char *data = utf8Data((J9UTF8*) ptr, len);
+   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(ptr, _romClass), "Address outside of ROMClass");
+   char *data = utf8Data((J9UTF8 *)ptr, len);
    return data;
    }
 
