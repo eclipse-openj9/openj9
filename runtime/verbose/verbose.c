@@ -69,7 +69,6 @@
 #define _UTE_STATIC_
 #include "ut_j9vrb.h"
 
-#define THIS_DLL_NAME J9_VERBOSE_DLL_NAME
 #define OPT_VERBOSE "-verbose"
 #define OPT_JNI "jni"
 #define OPT_CLASS "class"
@@ -749,7 +748,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 			break;
 
 		case VERBOSE_INIT_STAGE :
-			loadInfo = FIND_DLL_TABLE_ENTRY( THIS_DLL_NAME );
+			loadInfo = getVerboseDllLoadInfo(vm);
 
 			vm->verboseLevel = 0;
 			vm->setVerboseState = &setVerboseState;
@@ -810,7 +809,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 			break;
 
 		case LIBRARIES_ONUNLOAD :
-			loadInfo = FIND_DLL_TABLE_ENTRY( THIS_DLL_NAME );
+			loadInfo = getVerboseDllLoadInfo(vm);
 			if( IS_STAGE_COMPLETED( loadInfo->completedBits, VERBOSE_INIT_STAGE ) && vm->verboseStruct ) {
 				j9mem_free_memory(vm->verboseStruct );
 				vm->verboseStruct = NULL;
