@@ -3346,7 +3346,9 @@ remoteCompile(
          }
       else
          {
-         TR_ASSERT(JITServer::MessageType::compilationFailure == response, "Received %u but expect JITServer::MessageType::compilationFailure message type", response);
+         TR_ASSERT(JITServer::MessageType::compilationFailure == response,
+                   "Received %u %s but expected JITServer::MessageType::compilationFailure message type",
+                   response, JITServer::messageNames[response]);
          auto recv = client->getRecvData<uint32_t, uint64_t>();
          statusCode = std::get<0>(recv);
          uint64_t otherData = std::get<1>(recv);
