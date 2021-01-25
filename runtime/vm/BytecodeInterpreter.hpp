@@ -9904,11 +9904,14 @@ valueTypeIllegalMonitorState:
 	prepareForExceptionThrow(_currentThread);
 #define badClassName J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, (j9object_t)_currentThread->tempSlot)->romClass)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-	Assert_VM_true(J9_ARE_ALL_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
-	setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+	if (J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(_currentThread, (j9object_t)_currentThread->tempSlot))) {
+		setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+	} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	{
+		Assert_VM_true(J9_ARE_ALL_BITS_SET(_vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
+		setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+	}
 #undef badClassName
 	_currentThread->tempSlot = 0;
 	VMStructHasBeenUpdated(REGISTER_ARGS);
