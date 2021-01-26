@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,44 +26,43 @@ import java.util.Map;
 
 /**
  * DTFJ specific version of the plugin config
- * 
- * @author adam
  *
+ * @author adam
  */
 public class DTFJPluginConfig extends PluginConfig {
 	protected String version = "1.*";
 	protected boolean runtime = false;
 	protected boolean image = false;
 	protected String csv = null;
-	
+
 	public DTFJPluginConfig(Entry entry) {
 		super(entry);
 	}
-	
+
 	/**
 	 * Process the annotations found on this class.
-	 * 
+	 *
 	 * @throws IllegalArgumentException if the DTFJPlugin annotation is not present
 	 */
 	public void processAnnotations() {
 		ClassInfo info = entry.getData();
 		Annotation annotation = info.getAnnotation(DTFJPluginManager.ANNOTATION_CLASSNAME);
-		if(annotation == null) {
-			throw new IllegalArgumentException("The entry " + entry.getName() + " does not have the DTFJ plugin annotation");
+		if (annotation == null) {
+			throw new IllegalArgumentException("The entry " + entry.getName() + " does not have the DTFJ plugin annotation"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		Map<String, Object> values = annotation.getValues();
-		for(String key : values.keySet()) {
-			if(key.equals("version")) {
-				this.version = (String)values.get(key);		
-			}
-			if(key.equals("runtime")) {
-				this.runtime = (Boolean)values.get(key);		
-			}
-			if(key.equals("image")) {
-				this.image = (Boolean)values.get(key);		
-			}
-			if(key.equals("cacheOutput")) {
-				this.cacheOutput = (Boolean)values.get(key);		
+
+		for (Map.Entry<String, Object> entry : annotation.getValues().entrySet()) {
+			String key = entry.getKey();
+			Object value = entry.getValue();
+
+			if (key.equals("version")) { //$NON-NLS-1$
+				this.version = (String) value;
+			} else if (key.equals("runtime")) { //$NON-NLS-1$
+				this.runtime = ((Boolean) value).booleanValue();
+			} else if (key.equals("image")) { //$NON-NLS-1$
+				this.image = ((Boolean) value).booleanValue();
+			} else if (key.equals("cacheOutput")) { //$NON-NLS-1$
+				this.cacheOutput = ((Boolean) value).booleanValue();
 			}
 		}
 	}
@@ -80,8 +79,9 @@ public class DTFJPluginConfig extends PluginConfig {
 		return image;
 	}
 
+	@Override
 	public String toCSV() {
-		if(csv == null) {
+		if (csv == null) {
 			ClassInfo info = entry.getData();
 			StringBuilder builder = new StringBuilder();
 			builder.append(info.getClassname());
@@ -90,7 +90,7 @@ public class DTFJPluginConfig extends PluginConfig {
 			builder.append(",true,");
 			builder.append(info.getURL().toString());
 			builder.append(',');
-			if(null != t) {
+			if (null != t) {
 				builder.append(t.getClass().getName());
 			}
 			csv = builder.toString();
@@ -102,5 +102,5 @@ public class DTFJPluginConfig extends PluginConfig {
 	public String toString() {
 		return "DTFJ Plugin " + getClassName();
 	}
-	
+
 }

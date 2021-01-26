@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2018, 2020 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,17 +34,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<property name="src" location="./src" />
 	<property name="build" location="./bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src" />
-	<if>
-		<equals arg1="${JDK_VERSION}" arg2="8" />
-		<then>
-			<property name="j9ddr" location="${TEST_JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
-		</then>
-		<else>
-			<property name="j9ddr" location="${TEST_JDK_HOME}/lib/ddr/j9ddr.jar" />
-		</else>
-	</if>
-	<property name="LIB" value="junit4,asm_all,testng"/>
-	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
+	<property name="LIB" value="junit4,asm_all,testng" />
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -58,32 +49,58 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-			<src path="${src}" />
-			<src path="${transformerListener}" />
-			<classpath>
-				<pathelement location="${LIB_DIR}/junit4.jar" />
-				<pathelement location="${LIB_DIR}/testng.jar" />
-				<pathelement location="${LIB_DIR}/asm-all.jar" />
-				<pathelement location="${j9ddr}" />
-			</classpath>
-		</javac>
+		<if>
+			<equals arg1="${JDK_VERSION}" arg2="8" />
+			<then>
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${src}" />
+					<src path="${transformerListener}" />
+					<classpath>
+						<pathelement location="${LIB_DIR}/junit4.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/asm-all.jar" />
+						<pathelement location="${TEST_JDK_HOME}/jre/lib/ddr/j9ddr.jar" />
+					</classpath>
+				</javac>
+			</then>
+			<else>
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${src}" />
+					<src path="${transformerListener}" />
+					<classpath>
+						<pathelement location="${LIB_DIR}/junit4.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/asm-all.jar" />
+					</classpath>
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr=ALL-UNNAMED" />
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.tools.ddrinteractive=ALL-UNNAMED" />
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.tools.ddrinteractive.annotations=ALL-UNNAMED" />
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9=ALL-UNNAMED" />
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9.gc=ALL-UNNAMED" />
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.j9.walkers=ALL-UNNAMED" />
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer=ALL-UNNAMED" />
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer.generated=ALL-UNNAMED" />
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.pointer.helper=ALL-UNNAMED" />
+					<compilerarg value="--add-exports=openj9.dtfj/com.ibm.j9ddr.vm29.types=ALL-UNNAMED" />
+				</javac>
+			</else>
+		</if>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
 		<jar jarfile="${DEST}/ddrplugin.jar" filesonly="true">
-			<fileset dir="${build}" >
+			<fileset dir="${build}">
 				<include name="j9vm/test/ddrext/plugin/**" />
 			</fileset>
-			<fileset dir="${src}" >
+			<fileset dir="${src}">
 				<include name="j9vm/test/ddrext/plugin/**" />
 			</fileset>
 		</jar>
 		<jar jarfile="${DEST}/DDR_Test.jar" filesonly="true">
-			<fileset dir="${build}" >
+			<fileset dir="${build}">
 				<exclude name="j9vm/test/ddrext/plugin/**" />
 			</fileset>
-			<fileset dir="${src}" >
+			<fileset dir="${src}">
 				<exclude name="j9vm/test/ddrext/plugin/**" />
 			</fileset>
 		</jar>
@@ -98,21 +115,25 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="build">
 		<echo>os.name: ${os.name}</echo>
 		<if>
 			<or>
-				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
-  			</or>
+			</or>
 			<then>
 				<if>
-					<available file="${j9ddr}" />
+					<resourcecount when="greater" count="0">
+						<fileset dir="${TEST_JDK_HOME}">
+							<include name="**/j9ddr.dat" />
+						</fileset>
+					</resourcecount>
 					<then>
 						<antcall target="clean" inheritall="true" />
 					</then>
 					<else>
-						<fail  message="File '${j9ddr}' not found; assuming JDK '${TEST_JDK_HOME}' does not support DDR."/>
+						<fail message="File 'j9ddr.dat' not found; assuming JDK '${TEST_JDK_HOME}' does not support DDR." />
 					</else>
 				</if>
 			</then>
