@@ -401,7 +401,7 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::Compilation
    j9tty_printf(PORTLIB, "\t\tTypeName\n");
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
-      for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
+      for (int i = 0; i < JITServer::MessageType_MAXTYPE; ++i)
          {
          if (JITServerHelpers::serverMsgTypeCount[i] > 0)
             {
@@ -423,7 +423,7 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::Compilation
       // to print in server, run ./jitserver -Xdump:jit:events=user
       // then kill -3 <pidof jitserver>
 #ifdef MESSAGE_SIZE_STATS  
-      for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
+      for (int i = 0; i < JITServer::MessageType_MAXTYPE; ++i)
          {
          if (JITServer::CommunicationStream::collectMsgStat[i].samples() > 0)
             { 
