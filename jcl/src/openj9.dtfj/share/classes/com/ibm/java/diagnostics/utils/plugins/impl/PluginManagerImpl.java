@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2018 IBM Corp. and others
+ * Copyright (c) 2012, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -146,11 +146,11 @@ public class PluginManagerImpl implements PluginManager {
 	@Override
 	public void scanForClassFiles() throws CommandException {
 		synchronized (pluginSearchPath) {
-			classpath = null; //reset the URL classpath
-			for (File file : pluginSearchPath) { //a path entry can be null if the URI was malformed
+			classpath = null; // reset the URL classpath
+			for (File file : pluginSearchPath) { // a path entry can be null if the URI was malformed
 				logger.fine("Scanning path " + file + " in search of plugins"); //$NON-NLS-1$ //$NON-NLS-2$
 				if (!file.exists()) {
-					//log that the entry does not exist and skip
+					// log that the entry does not exist and skip
 					logger.fine(String.format("Skipping search path: %s does not exist", file.getAbsolutePath())); //$NON-NLS-1$
 					continue;
 				}
@@ -162,27 +162,35 @@ public class PluginManagerImpl implements PluginManager {
 			}
 
 			/*[IF Sidecar19-SE]*/
-			logger.fine("Scanning path jrt:/modules/openj9.dtfjview in search of plugins"); //$NON-NLS-1$
-			FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/")); //$NON-NLS-1$
-			Path modules = fs.getPath("modules/openj9.dtfjview"); //$NON-NLS-1$
-			listClassFiles(modules);
+			scanModule("openj9.dtfj"); //$NON-NLS-1$
+			scanModule("openj9.dtfjview"); //$NON-NLS-1$
 			/*[ENDIF] Sidecar19-SE */
 		}
 	}
 
 	/*[IF Sidecar19-SE]*/
+	private void scanModule(String moduleName) {
+		@SuppressWarnings("resource") // we explicitly do not want to close the file-system
+		FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/")); //$NON-NLS-1$
+		Path path = fs.getPath("modules/" + moduleName); //$NON-NLS-1$
+
+		logger.fine(String.format("Scanning path %s in search of plugins", path)); //$NON-NLS-1$
+		listClassFiles(path);
+	}
+
 	void listClassFiles(Path path) {
 		try (Stream<Path> paths = Files.list(path).filter(filePath -> !filePath.endsWith("module-info.class"))) { //$NON-NLS-1$
 			paths.forEach(filePath -> {
 				if (Files.isRegularFile(filePath)) {
 					try {
 						URL fileUrl = filePath.toUri().toURL();
-						if (fileUrl.getFile().endsWith(".class")) { //$NON-NLS-1$
-							InputStream is = Files.newInputStream(filePath);
-							Entry entry = examineClassFile(is, fileUrl);
-							if (entry != null) {
-								for (ClassListener listener : listeners) {
-									listener.scanComplete(entry);
+						if (fileUrl.getPath().endsWith(".class")) { //$NON-NLS-1$
+							try (InputStream is = Files.newInputStream(filePath)) {
+								Entry entry = examineClassFile(is, fileUrl);
+								if (entry != null) {
+									for (ClassListener listener : listeners) {
+										listener.scanComplete(entry);
+									}
 								}
 							}
 						}
@@ -266,15 +274,13 @@ public class PluginManagerImpl implements PluginManager {
 	private Entry examineClassFile(File file) {
 		if (file.length() > Integer.MAX_VALUE) {
 			logger.fine("Skipping file " + file.getAbsolutePath() + " as the file size is > Integer.MAX_VALUE"); //$NON-NLS-1$ //$NON-NLS-2$
-			return null; //skip this file
+			return null; // skip this file
 		}
-		//check to see if the class has been scanned or it's changed
+		// check to see if the class has been scanned or it's changed
 		Entry entry = getEntry(file);
 		if ((entry == null) || (entry.getData() == null) || entry.hasChanged(file)) {
-			//it hasn't so scan it
-			InputStream is = null;
-			try {
-				is = new FileInputStream(file);
+			// it hasn't so scan it
+			try (InputStream is = new FileInputStream(file)) {
 				ClassInfo info = scanClassFile(is, file.toURI().toURL());
 				if (entry == null) {
 					entry = new Entry(info.getClassname(), file);
@@ -285,14 +291,6 @@ public class PluginManagerImpl implements PluginManager {
 				entry.setLastModified(file.lastModified());
 			} catch (IOException e) {
 				logger.log(Level.FINE, e.getMessage());
-			} finally {
-				try {
-					if (is != null) {
-						is.close();
-					}
-				} catch (IOException e) {
-					logger.log(Level.FINE, "Error closing file " + file.getAbsolutePath(), e); //$NON-NLS-1$
-				}
 			}
 		}
 		return entry;
@@ -308,14 +306,6 @@ public class PluginManagerImpl implements PluginManager {
 			entry.setData(info);
 		} catch (IOException e) {
 			logger.log(Level.FINE, e.getMessage());
-		} finally {
-			try {
-				if (is != null) {
-					is.close();
-				}
-			} catch (IOException e) {
-				logger.log(Level.FINE, "Error closing file " + is, e); //$NON-NLS-1$
-			}
 		}
 		return entry;
 	}
@@ -342,9 +332,7 @@ public class PluginManagerImpl implements PluginManager {
 			cache.addEntry(root);
 		}
 		if ((root.getData() == null) || root.hasChanged(file)) {
-			JarInputStream jin = null;
-			try {
-				jin = new JarInputStream(new FileInputStream(file));
+			try (JarInputStream jin = new JarInputStream(new FileInputStream(file))) {
 				for (;;) {
 					JarEntry jarentry = jin.getNextJarEntry();
 					if (jarentry == null) {
@@ -371,14 +359,6 @@ public class PluginManagerImpl implements PluginManager {
 				}
 			} catch (IOException e) {
 				logger.log(Level.FINE, "Error reading from file " + file.getAbsolutePath(), e); //$NON-NLS-1$
-			} finally {
-				if (null != jin) {
-					try {
-						jin.close();
-					} catch (IOException e) {
-						logger.log(Level.FINE, "Error closing file " + file.getAbsolutePath(), e); //$NON-NLS-1$
-					}
-				}
 			}
 			// doesn't matter what the root data is set to, it acts as a marker
 			// to indicate that the jar file has been scanned
