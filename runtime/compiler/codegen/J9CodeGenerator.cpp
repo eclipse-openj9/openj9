@@ -632,8 +632,6 @@ J9::CodeGenerator::lowerCompressedRefs(
    if (TR::Compiler->om.compressedReferenceShiftOffset() > 0)
       shftOffset = TR::Node::create(loadOrStoreNode, TR::iconst, 0, TR::Compiler->om.compressedReferenceShiftOffset());
 
-   bool isLowMem = feGetEnv("TR_disableLowHeapMem") ? false : true;
-
    if (isLoad)
       {
       TR::Node *newLoad = TR::Node::createWithSymRef(loadOrStoreOp, 1, 1, address, symRef);
@@ -651,45 +649,16 @@ J9::CodeGenerator::lowerCompressedRefs(
       //
       TR::Node *iu2lNode = TR::Node::create(TR::iu2l, 1, newLoad);
 
-      if (!isLowMem && (loadOrStoreNode->getVisitCount() != visitCount))
-         {
-         TR::Node *ttNode = TR::Node::create(TR::treetop, 1, iu2lNode);
-         //traceMsg(comp(), "3creating treetop %p\n", ttNode);
-         TR::TreeTop *tt = TR::TreeTop::create(self()->comp(), ttNode);
-         TR::TreeTop *prevTT = treeTop->getPrevTreeTop();
-         prevTT->join(tt);
-         tt->join(treeTop);
-         }
-
       TR::Node *addNode = iu2lNode;
       if (loadOrStoreNode->isNonNull())
          addNode->setIsNonZero(true);
 
       // if the load is known to be null or if using lowMemHeap, do not
       // generate a compression sequence
-      //
-      if (loadOrStoreNode->isNull() || isLowMem)
+      addNode = iu2lNode;
+      if (shftOffset)
          {
-         addNode = iu2lNode;
-         if (shftOffset)
-            {
-            addNode = TR::Node::create(TR::lshl, 2, iu2lNode, shftOffset);
-            addNode->setContainsCompressionSequence(true);
-            }
-         }
-      else
-         {
-         if (shftOffset)
-            {
-            addNode = TR::Node::create(TR::lshl, 2, iu2lNode, shftOffset);
-            addNode->setContainsCompressionSequence(true);
-            }
-         if (loadOrStoreNode->isNonNull())
-            addNode->setIsNonZero(true);
-         addNode = TR::Node::create(TR::ladd, 2, addNode, heapBase);
-         if (loadOrStoreNode->isNonNull())
-            addNode->setIsNonZero(true);
-
+         addNode = TR::Node::create(TR::lshl, 2, iu2lNode, shftOffset);
          addNode->setContainsCompressionSequence(true);
          }
 
@@ -717,29 +686,16 @@ J9::CodeGenerator::lowerCompressedRefs(
             isNonNull = true;
 
          TR::Node *addNode = NULL;
+         addNode = a2lNode;
 
-         if (address->isNull() || isLowMem)
+         if (shftOffset)
             {
-            addNode = a2lNode;
-            }
-         else
-            {
-            if (isNonNull)
-               a2lNode->setIsNonZero(true);
-            addNode = TR::Node::create(TR::lsub, 2, a2lNode, heapBase);
+            addNode = TR::Node::create(TR::lushr, 2, addNode, shftOffset);
             addNode->setContainsCompressionSequence(true);
-            if (isNonNull)
-               addNode->setIsNonZero(true);
             }
 
-            if (shftOffset)
-               {
-               addNode = TR::Node::create(TR::lushr, 2, addNode, shftOffset);
-               addNode->setContainsCompressionSequence(true);
-               }
-
-            if (isNonNull)
-               addNode->setIsNonZero(true);
+         if (isNonNull)
+            addNode->setIsNonZero(true);
 
          l2iNode = TR::Node::create(TR::l2i, 1, addNode);
          if (isNonNull)
