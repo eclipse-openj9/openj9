@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2016, 2020 IBM Corp. and others
+Copyright (c) 2016, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -143,6 +143,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</test>
 	<test>
 		<testCaseName>jsigjnitest</testCaseName>
+		<disabled>
+			<comment>https://github.com/eclipse/openj9/issues/3212</comment>
+			<plat>.*windows.*</plat>
+		</disabled>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -151,8 +155,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)jsigjnitest$(SQ) \
 	$(SQ)$(J9VM_PATH)$(SQ) $(JVM_OPTIONS) ; \
 	$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on windows; https://github.com/eclipse/openj9/issues/3212 -->
-		<platformRequirements>^os.win</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -513,6 +515,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</test>
 	<test>
 		<testCaseName>vmLifecyleTests</testCaseName>
+		<disabled>
+			<comment>https://github.com/eclipse/openj9/issues/3561</comment>
+		</disabled>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -540,10 +545,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<subsets>
 			<subset>8</subset>
 		</subsets>
-		<disabled>https://github.com/eclipse/openj9/issues/3561</disabled>
 	</test>
 	<test>
 		<testCaseName>vmLifecyleTests</testCaseName>
+		<disabled>
+			<comment>https://github.com/eclipse/openj9/issues/3561</comment>
+		</disabled>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -568,7 +575,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<subset>9</subset>
 			<subset>11+</subset>
 		</subsets>
-		<disabled>https://github.com/eclipse/openj9/issues/3561</disabled>
 	</test>
 	<test>
 		<testCaseName>TestInvtest</testCaseName>

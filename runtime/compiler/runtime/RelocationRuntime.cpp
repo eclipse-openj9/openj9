@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1168,10 +1168,10 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
 
    if (aotHeader)
       {
+      memset(aotHeader, 0, sizeof(TR_AOTHeader));
       aotHeader->eyeCatcher = TR_AOTHeaderEyeCatcher;
 
       TR_Version *aotHeaderVersion = &aotHeader->version;
-      memset(aotHeaderVersion, 0, sizeof(TR_Version));
       aotHeaderVersion->structSize = sizeof(TR_Version);
       aotHeaderVersion->majorVersion = TR_AOTHeaderMajorVersion;
       aotHeaderVersion->minorVersion = TR_AOTHeaderMinorVersion;
