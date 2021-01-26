@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,31 @@ getGCDllLoadInfo(J9JavaVM *vm)
 		gcDLLName = J9_GC_FULL_DLL_NAME;
 	}
 #endif /* defined(OMR_MIXED_REFERENCES_MODE_STATIC) */
+
 	loadInfo = FIND_DLL_TABLE_ENTRY(gcDLLName);
+
+	return loadInfo;
+}
+
+/**
+ * Retrieves the load info for the appropriate VERBOSE DLL based on reference mode.
+ *
+ * @param vm The Java VM
+ * @returns J9VMDllLoadInfo for VERBOSE DLL selected
+ */
+J9VMDllLoadInfo *
+getVerboseDllLoadInfo(J9JavaVM *vm)
+{
+	J9VMDllLoadInfo *loadInfo = NULL;
+	const char *verboseDLLName = J9_VERBOSE_DLL_NAME;
+
+#if defined(OMR_MIXED_REFERENCES_MODE_STATIC)
+	if (!J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+		verboseDLLName = J9_VERBOSE_FULL_DLL_NAME;
+	}
+#endif /* defined(OMR_MIXED_REFERENCES_MODE_STATIC) */
+
+	loadInfo = FIND_DLL_TABLE_ENTRY(verboseDLLName);
 
 	return loadInfo;
 }

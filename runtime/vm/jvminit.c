@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1201,6 +1201,7 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 	char dllNameBuffer[SMALL_STRING_BUF_SIZE];			/* Plenty big enough - needs to be at least DLLNAME_LEN */
 	const char *gcDLLName = J9_GC_DLL_NAME;
 	const char *gccheckDLLName = J9_CHECK_GC_DLL_NAME;
+	const char *verboseDLLName = J9_VERBOSE_DLL_NAME;
 
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
@@ -1211,6 +1212,7 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 	if (!J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 		gcDLLName = J9_GC_FULL_DLL_NAME;
 		gccheckDLLName = J9_CHECK_GC_FULL_DLL_NAME;
+		verboseDLLName = J9_VERBOSE_FULL_DLL_NAME;
 	}
 #endif /* defined(OMR_MIXED_REFERENCES_MODE_STATIC) */
 
@@ -1233,7 +1235,7 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 		goto _error;
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_DYNLOAD_DLL_NAME, NOT_A_LIBRARY, (void*)&bcutil_J9VMDllMain, verboseFlags))
 		goto _error;
-	if (NULL == createLoadInfo(portLibrary, returnVal, J9_VERBOSE_DLL_NAME, ALLOW_POST_INIT_LOAD, NULL, verboseFlags))
+	if (NULL == createLoadInfo(portLibrary, returnVal, verboseDLLName, ALLOW_POST_INIT_LOAD, NULL, verboseFlags))
 		goto _error;
 	if (NULL == createLoadInfo(portLibrary, returnVal, J9_RAS_DUMP_DLL_NAME, 0, NULL, verboseFlags))
 		goto _error;
@@ -3164,20 +3166,20 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 		/* Unsetting the DllMain function pointer so library is never called */
 		entry->j9vmdllmain = 0;
 	} else if (xxverboseverification || xxverifyerrordetails) {
-		entry = findDllLoadInfo(loadTable, J9_VERBOSE_DLL_NAME);
+		entry = getVerboseDllLoadInfo(vm);
 		entry->loadFlags |= LOAD_BY_DEFAULT;
 		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "verbose support required... whacking table\n");
 	}
 
 #if defined( J9VM_OPT_SIDECAR )
-	entry = findDllLoadInfo(loadTable, J9_VERBOSE_DLL_NAME);
+	entry = getVerboseDllLoadInfo(vm);
 	entry->loadFlags |= LOAD_BY_DEFAULT;
 	JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "verbose support required in j2se... whacking table\n");
 #endif
 
 	if ( xverbosegclog ) {
 		ADD_FLAG_AT_INDEX( ARG_REQUIRES_LIBRARY, xverbosegclogIndex );
-		entry = findDllLoadInfo(loadTable, J9_VERBOSE_DLL_NAME);
+		entry = getVerboseDllLoadInfo(vm);
 		entry->loadFlags |= LOAD_BY_DEFAULT;
 		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "verbosegclog support required... whacking table\n");
 	}
@@ -3187,7 +3189,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 		optionValueOperations(PORTLIB, j9vm_args, verboseIndex, GET_OPTION, &optionValue, 0, ':', 0, NULL);			/* get option value for verbose: */
 		if ( !(optionValue!=NULL && strcmp(optionValue, OPT_NONE)==0) ) {
 			ADD_FLAG_AT_INDEX( ARG_REQUIRES_LIBRARY, verboseIndex );
-			entry = findDllLoadInfo(loadTable, J9_VERBOSE_DLL_NAME);
+			entry = getVerboseDllLoadInfo(vm);
 			entry->loadFlags |= LOAD_BY_DEFAULT;
 			JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "verbose support required... whacking table\n");
 		}
@@ -3195,7 +3197,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 
 	if ( xsnw ) {
 		ADD_FLAG_AT_INDEX( ARG_REQUIRES_LIBRARY, xsnwIndex );
-		entry = findDllLoadInfo(loadTable, J9_VERBOSE_DLL_NAME);
+		entry = getVerboseDllLoadInfo(vm);
 		entry->loadFlags |= LOAD_BY_DEFAULT;
 		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "verbose support required... whacking table\n");
 	}

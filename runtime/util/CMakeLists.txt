@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,7 @@ j9vm_add_library(j9util STATIC
 	cpplink.c
 	defarg.c
 	divhelp.c
+	dllloadinfo.c
 	eventframe.c
 	extendedHCR.c
 	extendedmethodblockaccess.c
@@ -53,7 +54,6 @@ j9vm_add_library(j9util STATIC
 	fltmath.c
 	fltodd.c
 	fltrem.c
-	gcloadinfo.c
 	genericSignalHandler.c
 	hshelp.c
 	j9crc32.c
