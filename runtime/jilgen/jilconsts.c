@@ -355,6 +355,10 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_preservedFPRs", offsetof(J9CInterpreterStackFrame, preservedFPRs)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitGPRs", offsetof(J9CInterpreterStackFrame, jitGPRs)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitFPRs", offsetof(J9CInterpreterStackFrame, jitFPRs)) |
+#if defined(J9VM_ENV_DATA64)
+			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitVRs", offsetof(J9CInterpreterStackFrame, jitVRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_preservedVRs", offsetof(J9CInterpreterStackFrame, preservedVRs)) |
+#endif /* J9VM_ENV_DATA64 */
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitCR", offsetof(J9CInterpreterStackFrame, jitCR)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitLR", offsetof(J9CInterpreterStackFrame, jitLR)) |
 #if !defined(LINUX) || defined(J9VM_ENV_DATA64)
