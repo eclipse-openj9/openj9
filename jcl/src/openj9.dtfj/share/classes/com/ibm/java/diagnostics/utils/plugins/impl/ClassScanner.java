@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corp. and others
+ * Copyright (c) 2012, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,15 +47,11 @@ public class ClassScanner extends ClassVisitor {
 		/*[IF JAVA_SPEC_VERSION >= 15]*/
 		super(Opcodes.ASM8, null);
 		/*[ELSE]*/
-		/*[IF JAVA_SPEC_VERSION >= 14]*/
-		super(Opcodes.ASM7, null);
-		/*[ELSE]*/
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		super(Opcodes.ASM6, null);
 		/*[ELSE]*/
 		super(Opcodes.ASM5, null);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-		/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		this.url = url;
 		this.listeners = listeners;
