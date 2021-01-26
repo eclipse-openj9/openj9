@@ -2,7 +2,7 @@
 <!DOCTYPE configurationreg SYSTEM "http://home.ottawa.ibm.com/teams/bluebird/web/eclipse_site/jpp.dtd">
 <!--
 /*******************************************************************************
- * Copyright (c) 2002, 2020 IBM Corp. and others
+ * Copyright (c) 2002, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -126,36 +126,9 @@
 	</configuration>
 
 	<configuration
-		  label="JAVA15"
-		  outputpath="JAVA15/src"
-		  dependencies="JAVA11"
-		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="src/java.base/share/classes"/>
-		<classpathentry kind="src" path="src/java.management/share/classes"/>
-		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
-		<classpathentry kind="src" path="src/jdk.jcmd/share/classes"/>
-		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.jvm/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
-		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava15.jar"/>
-		<source path="src"/>
-		<parameter name="macro:define" value="JAVA_SPEC_VERSION=15"/>
-		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
-		<parameter name="jxerules:outputdir" value="java/lang"/>
-	</configuration>
-
-	<configuration
 		  label="JAVA16"
 		  outputpath="JAVA16/src"
-		  dependencies="JAVA15"
+		  dependencies="JAVA11"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
