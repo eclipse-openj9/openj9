@@ -47,7 +47,7 @@ public:
    static void initSSL();
 
 #ifdef MESSAGE_SIZE_STATS
-   static TR_Stats collectMsgStat[JITServer::MessageType_ARRAYSIZE];
+   static TR_Stats collectMsgStat[JITServer::MessageType_MAXTYPE];
 #endif
 
    static void initConfigurationFlags();

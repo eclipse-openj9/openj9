@@ -268,8 +268,6 @@ enum MessageType : uint16_t
    MessageType_MAXTYPE
    };
 
-const int MessageType_ARRAYSIZE = MessageType_MAXTYPE;
-
 static const char *messageNames[] =
    {
    "compilationCode",
