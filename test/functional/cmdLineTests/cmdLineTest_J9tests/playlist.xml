@@ -118,6 +118,10 @@
 
 	<test>
 		<testCaseName>cmdLineTest_J9test_native</testCaseName>
+		<disabled>
+			<comment>https://github.com/eclipse/openj9/issues/3212;https://github.com/eclipse/openj9/issues/3560</comment>
+			<plat>.*windows.*</plat>
+		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) \
 	-DNATIVEVMARGS=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)nativevmargs$(Q) \
@@ -128,8 +132,6 @@
 	-xids all,$(PLATFORM) -plats all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)j9tests_exclude.xml$(Q) \
 	-explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on windows; similar failures as https://github.com/eclipse/openj9/issues/3212, https://github.com/eclipse/openj9/issues/3560 -->
-		<platformRequirements>^os.win</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>

@@ -25,6 +25,10 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_forceLazySymbolResolution</testCaseName>
+		<disabled>
+			<comment>https://github.com/eclipse/openj9/issues/11076</comment>
+			<subset>15+</subset>
+		</disabled>
 		<variations>
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
@@ -45,9 +49,9 @@
 			<type>native</type>
 		</types>
 		<subsets>
-			<!-- disable for 15+ https://github.com/eclipse/openj9/issues/11076 -->
 			<subset>8</subset>
 			<subset>11</subset>
+			<subset>15+</subset>
 		</subsets>
 		<impls>
 			<impl>openj9</impl>
