@@ -2,7 +2,7 @@
 
 print_license() {
 cat <<- EOF
-# Copyright (c) 2019, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -571,7 +571,7 @@ bootjdk_url() {
 }
 
 install_bootjdks() {
-  local versions="8 11 14"
+  local versions="8 11 15"
   echo ""
   echo "# Download and install boot JDKs from AdoptOpenJDK."
   echo "RUN cd /tmp \\"
@@ -625,7 +625,7 @@ add_git_remote() {
 
 create_git_cache() {
   local git_cache_dir=/home/$user/openjdk_cache
-  # The jdk15 remote is fetched first because that repository was subjected to
+  # The jdk16 remote is fetched first because that repository was subjected to
   # 'git gc --aggressive --prune=all' before it was first published making it much
   # smaller than some other jdk repositories. There is a large degree of overlap
   # among the jdk repositories so a relatively small number of commits must be
@@ -637,12 +637,12 @@ create_git_cache() {
   echo " && git init --bare \\"
   add_git_remote jdk8    https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
   add_git_remote jdk11   https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
-  add_git_remote jdk15   https://github.com/ibmruntimes/openj9-openjdk-jdk15.git
+  add_git_remote jdk16   https://github.com/ibmruntimes/openj9-openjdk-jdk16.git
   add_git_remote jdknext https://github.com/ibmruntimes/openj9-openjdk-jdk.git
   add_git_remote omr     https://github.com/eclipse/openj9-omr.git
   add_git_remote openj9  https://github.com/eclipse/openj9.git
   echo " && echo Fetching repository cache... \\"
-  echo " && git fetch jdk15 \\"
+  echo " && git fetch jdk16 \\"
   echo " && git fetch --all \\"
   echo " && echo Shrinking repository cache... \\"
   echo " && git gc --aggressive --prune=all"
