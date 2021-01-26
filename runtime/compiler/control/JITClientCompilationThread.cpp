@@ -238,23 +238,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, rv);
          }
          break;
-      case MessageType::VM_getSuperClass:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->getSuperClass(clazz));
-         }
-         break;
-      case MessageType::VM_isInstanceOf:
-         {
-         auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, bool, bool, bool>();
-         TR_OpaqueClassBlock *a = std::get<0>(recv);
-         TR_OpaqueClassBlock *b = std::get<1>(recv);
-         bool objectTypeIsFixed = std::get<2>(recv);
-         bool castTypeIsFixed = std::get<3>(recv);
-         bool optimizeForAOT = std::get<4>(recv);
-         client->write(response, fe->isInstanceOf(a, b, objectTypeIsFixed, castTypeIsFixed, optimizeForAOT));
-         }
-         break;
       case MessageType::VM_getSystemClassFromClassName:
          {
          auto recv = client->getRecvData<std::string, bool>();
@@ -281,21 +264,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock*>());
          client->write(response, fe->getClassOfMethod(method));
-         }
-         break;
-      case MessageType::VM_getBaseComponentClass:
-         {
-         auto recv = client->getRecvData<TR_OpaqueClassBlock*, int32_t>();
-         auto clazz = std::get<0>(recv);
-         int32_t numDims = std::get<1>(recv);
-         auto outClass = fe->getBaseComponentClass(clazz, numDims);
-         client->write(response, outClass, numDims);
-         };
-         break;
-      case MessageType::VM_getLeafComponentClassFromArrayClass:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
-         client->write(response, fe->getLeafComponentClassFromArrayClass(clazz));
          }
          break;
       case MessageType::VM_getClassFromSignature:
@@ -336,18 +304,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto clazz = std::get<0>(client->getRecvData<TR_ResolvedMethod *>());
          client->write(response, fe->compiledAsDLTBefore(clazz));
-         }
-         break;
-      case MessageType::VM_getComponentClassFromArrayClass:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->getComponentClassFromArrayClass(clazz));
-         }
-         break;
-      case MessageType::VM_classHasBeenReplaced:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->classHasBeenReplaced(clazz));
          }
          break;
       case MessageType::VM_classHasBeenExtended:
@@ -518,20 +474,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, vmInfo, listOfCacheDescriptors);
          }
          break;
-      case MessageType::VM_isPrimitiveArray:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->isPrimitiveArray(clazz));
-         }
-         break;
-      case MessageType::VM_getAllocationSize:
-         {
-         auto recv = client->getRecvData<TR::StaticSymbol *, TR_OpaqueClassBlock *>();
-         TR::StaticSymbol *classSym = std::get<0>(recv);
-         TR_OpaqueClassBlock *clazz = std::get<1>(recv);
-         client->write(response, fe->getAllocationSize(classSym, clazz));
-         }
-         break;
       case MessageType::VM_getObjectClass:
          {
          TR::VMAccessCriticalSection getObjectClass(fe);
@@ -569,18 +511,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->stackWalkerMaySkipFrames(method, clazz));
          }
          break;
-      case MessageType::VM_hasFinalFieldsInClass:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->hasFinalFieldsInClass(clazz));
-         }
-         break;
-      case MessageType::VM_getHostClass:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->getHostClass(clazz));
-         }
-         break;
       case MessageType::VM_getStringUTF8Length:
          {
          uintptr_t string = std::get<0>(client->getRecvData<uintptr_t>());
@@ -600,18 +530,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          int32_t index = std::get<0>(client->getRecvData<int32_t>());
          client->write(response, fe->getClassFromNewArrayType(index));
-         }
-         break;
-      case MessageType::VM_isCloneable:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->isCloneable(clazz));
-         }
-         break;
-      case MessageType::VM_canAllocateInlineClass:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->canAllocateInlineClass(clazz));
          }
          break;
       case MessageType::VM_getArrayClassFromComponentClass:
@@ -807,22 +725,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, JITServer::Void());
          }
          break;
-      case MessageType::VM_sameClassLoaders:
-         {
-         auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *>();
-         TR_OpaqueClassBlock *class1 = std::get<0>(recv);
-         TR_OpaqueClassBlock *class2 = std::get<1>(recv);
-         client->write(response, fe->sameClassLoaders(class1, class2));
-         }
-         break;
-      case MessageType::VM_isUnloadAssumptionRequired:
-         {
-         auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_ResolvedMethod *>();
-         TR_OpaqueClassBlock *clazz = std::get<0>(recv);
-         TR_ResolvedMethod *method = std::get<1>(recv);
-         client->write(response, fe->isUnloadAssumptionRequired(clazz, method));
-         }
-         break;
       case MessageType::VM_getInstanceFieldOffset:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, std::string, std::string, UDATA>();
@@ -840,12 +742,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          bool hashCodeComputed = false;
          int32_t hashCode = fe->getJavaLangClassHashCode(comp, clazz, hashCodeComputed);
          client->write(response, hashCode, hashCodeComputed);
-         }
-         break;
-      case MessageType::VM_hasFinalizer:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->hasFinalizer(clazz));
          }
          break;
       case MessageType::VM_getClassDepthAndFlagsValue:
@@ -981,12 +877,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getLocationOfClassLoaderObjectPointer(clazz));
          }
          break;
-      case MessageType::VM_isOwnableSyncClass:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->isOwnableSyncClass(clazz));
-         }
-         break;
       case MessageType::VM_getClassFromMethodBlock:
          {
          TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
@@ -1037,12 +927,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, TR::Compiler->mtd.bytecodeStart(method));
          }
          break;
-      case MessageType::VM_isClassLoadedBySystemClassLoader:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->isClassLoadedBySystemClassLoader(clazz));
-         }
-         break;
       case MessageType::VM_getVFTEntry:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, int32_t>();
@@ -1078,13 +962,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto method = std::get<0>(recv);
          auto clazz = std::get<1>(recv);
          client->write(response, fe->transformJlrMethodInvoke(method, clazz));
-         }
-         break;
-      case MessageType::VM_isAnonymousClass:
-         {
-         auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
-         TR_OpaqueClassBlock *clazz = std::get<0>(recv);
-         client->write(response, fe->isAnonymousClass(clazz));
          }
          break;
       case MessageType::VM_dereferenceStaticAddress:
@@ -1164,18 +1041,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
          client->write(response, JITServerHelpers::packRemoteROMClassInfo(clazz, fe->vmThread(), trMemory, true));
-         }
-         break;
-      case MessageType::ResolvedMethod_isJNINative:
-         {
-         TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
-         client->write(response, method->isJNINative());
-         }
-         break;
-      case MessageType::ResolvedMethod_isInterpreted:
-         {
-         TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
-         client->write(response, method->isInterpreted());
          }
          break;
       case MessageType::ResolvedMethod_staticAttributes:
@@ -1368,12 +1233,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, ramMethod, methodInfo);
          }
          break;
-      case MessageType::ResolvedMethod_virtualMethodIsOverridden:
-         {
-         TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
-         client->write(response, method->virtualMethodIsOverridden());
-         }
-         break;
       case MessageType::get_params_to_construct_TR_j9method:
          {
          auto recv = client->getRecvData<J9Class *, uintptr_t>();
@@ -1414,14 +1273,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             client->write(response, std::string(nameChars, len));
          else
             client->write(response, std::string());
-         }
-         break;
-      case MessageType::ResolvedMethod_jniNativeMethodProperties:
-         {
-         auto ramMethod = std::get<0>(client->getRecvData<J9Method*>());
-         uintptr_t jniProperties;
-         void *jniTargetAddress = fe->getJ9JITConfig()->javaVM->internalVMFunctions->jniNativeMethodProperties(fe->vmThread(), ramMethod, &jniProperties);
-         client->write(response, jniProperties, jniTargetAddress);
          }
          break;
       case MessageType::ResolvedMethod_getResolvedInterfaceMethod_2:
@@ -1663,12 +1514,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, JITServer::Void());
          }
          break;
-      case MessageType::ResolvedMethod_addressContainingIsOverriddenBit:
-         {
-         TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
-         client->write(response, mirror->addressContainingIsOverriddenBit());
-         }
-         break;
       case MessageType::ResolvedMethod_methodIsNotzAAPEligible:
          {
          TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
@@ -1682,18 +1527,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          J9Class *clazz = std::get<1>(recv);
          mirror->setClassForNewInstance(clazz);
          client->write(response, JITServer::Void());
-         }
-         break;
-      case MessageType::ResolvedMethod_getJittedBodyInfo:
-         {
-         auto mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
-         void *startPC = mirror->startAddressForInterpreterOfJittedMethod();
-         auto bodyInfo = J9::Recompilation::getJittedBodyInfoFromPC(startPC);
-         if (!bodyInfo)
-            client->write(response, std::string(), std::string());
-         else
-            client->write(response, std::string((char*) bodyInfo, sizeof(TR_PersistentJittedBodyInfo)),
-                          std::string((char*) bodyInfo->getMethodInfo(), sizeof(TR_PersistentMethodInfo)));
          }
          break;
       case MessageType::ResolvedMethod_isUnresolvedString:
@@ -2032,16 +1865,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, JITServer::Void());
          }
          break;
-      case MessageType::CompInfo_isClassSpecial:
-         {
-         J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
-         bool val = clazz->classDepthAndFlags & (J9AccClassReferenceWeak      |
-                                                 J9AccClassReferenceSoft      |
-                                                 J9AccClassFinalizeNeeded     |
-                                                 J9AccClassOwnableSynchronizer);
-         client->write(response, val);
-         }
-         break;
       case MessageType::CompInfo_getJ9MethodStartPC:
          {
          J9Method *method = std::get<0>(client->getRecvData<J9Method *>());
@@ -2053,18 +1876,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
          client->write(response, TR::Compiler->cls.classFlagsValue(clazz));
-         }
-         break;
-      case MessageType::ClassEnv_classDepthOf:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, TR::Compiler->cls.classDepthOf(clazz));
-         }
-         break;
-      case MessageType::ClassEnv_classInstanceSize:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, TR::Compiler->cls.classInstanceSize(clazz));
          }
          break;
       case MessageType::ClassEnv_superClassesOf:
@@ -2103,22 +1914,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto clazz = std::get<0>(recv);
          size_t index = std::get<1>(recv);
          client->write(response, TR::Compiler->cls.superClassesOf(clazz)[index]);
-         }
-         break;
-      case MessageType::ClassEnv_classHasIllegalStaticFinalFieldModification:
-         {
-         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, TR::Compiler->cls.classHasIllegalStaticFinalFieldModification(clazz));
-         }
-         break;
-      case MessageType::ClassEnv_getROMClassRefName:
-         {
-         auto recv = client->getRecvData<TR_OpaqueClassBlock *, uint32_t>();
-         auto clazz = std::get<0>(recv);
-         auto cpIndex = std::get<1>(recv);
-         int classRefLen;
-         uint8_t *classRefName = TR::Compiler->cls.getROMClassRefName(comp, clazz, cpIndex, classRefLen);
-         client->write(response, std::string((char *) classRefName, classRefLen));
          }
          break;
       case MessageType::ClassEnv_isClassRefValueType:
@@ -2607,22 +2402,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, collectArraySize, collectPosition, componentClazz);
          }
          break;
-      case MessageType::CHTable_getAllClassInfo:
-         {
-         client->getRecvData<JITServer::Void>();
-         auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
-         std::string encoded = FlatPersistentClassInfo::serializeHierarchy(table);
-         client->write(response, encoded);
-         }
-         break;
-      case MessageType::CHTable_getClassInfoUpdates:
-         {
-         client->getRecvData<JITServer::Void>();
-         auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
-         auto encoded = table->serializeUpdates();
-         client->write(response, encoded.first, encoded.second);
-         }
-         break;
       case MessageType::CHTable_clearReservable:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
@@ -2661,13 +2440,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          iProfiler->setCallCount(method, bcIndex, count, comp);
 
          client->write(response, TR::CompilationInfo::isCompiled((J9Method *)method));
-         }
-         break;
-      case MessageType::Recompilation_getExistingMethodInfo:
-         {
-         auto recomp = comp->getRecompilationInfo();
-         auto methodInfo = recomp->getMethodInfo();
-         client->write(response, *methodInfo);
          }
          break;
       case MessageType::Recompilation_getJittedBodyInfoFromPC:
@@ -3346,7 +3118,9 @@ remoteCompile(
          }
       else
          {
-         TR_ASSERT(JITServer::MessageType::compilationFailure == response, "Received %u but expect JITServer::MessageType::compilationFailure message type", response);
+         TR_ASSERT(JITServer::MessageType::compilationFailure == response,
+                   "Received %u %s but expected JITServer::MessageType::compilationFailure message type",
+                   response, JITServer::messageNames[response]);
          auto recv = client->getRecvData<uint32_t, uint64_t>();
          statusCode = std::get<0>(recv);
          uint64_t otherData = std::get<1>(recv);
