@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1250,6 +1250,7 @@ mapEventType(J9JVMTIHeapData * data, IDATA type, jint index, j9object_t referrer
 		case J9GC_ROOT_TYPE_CLASSLOADER:
 		case J9GC_ROOT_TYPE_JVMTI_TAG_REF:
 		case J9GC_REFERENCE_TYPE_UNKNOWN:
+		case J9GC_REFERENCE_TYPE_CLASS_FCC:
 		default:
 			event->type = J9JVMTI_HEAP_EVENT_NONE_NOFOLLOW;
 			event->refKind = JVMTI_HEAP_REFERENCE_OTHER;			

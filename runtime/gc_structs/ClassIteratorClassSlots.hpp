@@ -37,6 +37,7 @@
 #include "ClassSuperclassesIterator.hpp"
 #include "ClassLocalInterfaceIterator.hpp"
 #include "ClassArrayClassSlotIterator.hpp"
+#include "ClassFCCSlotIterator.hpp"
 #include "ClassModel.hpp"
 
 /**
@@ -49,6 +50,7 @@ enum {
 	classiteratorclassslots_state_superclasses,
 	classiteratorclassslots_state_interfaces,
 	classiteratorclassslots_state_array_class_slots,
+	classiteratorclassslots_state_flattened_class_cache_slots,
 	classiteratorclassslots_state_end
 };
 
@@ -71,6 +73,7 @@ protected:
 	GC_ClassSuperclassesIterator _classSuperclassesIterator;
 	GC_ClassLocalInterfaceIterator _classLocalInterfaceIterator;
 	GC_ClassArrayClassSlotIterator _classArrayClassSlotIterator;
+	GC_ClassFCCSlotIterator _classFCCSlotIterator;
 
 public:
 
@@ -81,7 +84,8 @@ public:
 		_constantPoolClassSlotIterator(clazz),
 		_classSuperclassesIterator(clazz),
 		_classLocalInterfaceIterator(clazz),
-		_classArrayClassSlotIterator(clazz)
+		_classArrayClassSlotIterator(clazz),
+		_classFCCSlotIterator(clazz)
 	{}
 	
 	/**
@@ -110,6 +114,9 @@ public:
 			case classiteratorclassslots_state_array_class_slots:
 				return _classArrayClassSlotIterator.getIndex();
 				
+			case classiteratorclassslots_state_flattened_class_cache_slots:
+				return _classFCCSlotIterator.getIndex();
+
 			case classiteratorclassslots_state_interfaces:
 			default:
 				return -1;

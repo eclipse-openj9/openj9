@@ -787,6 +787,10 @@ GC_CheckEngine::checkClassHeap(J9JavaVM *javaVM, J9Class *clazz, J9MemorySegment
 				result = checkJ9ClassPointer(javaVM, classPtr);
 				elementName = "array class ";
 				break;
+			case classiteratorclassslots_state_flattened_class_cache_slots:
+				result = checkJ9ClassPointer(javaVM, classPtr);
+				elementName = "flattened class cache ";
+				break;
 		}
 
 		if (J9MODRON_GCCHK_RC_OK != result) {
