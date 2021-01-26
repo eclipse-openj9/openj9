@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -316,6 +316,7 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
       }
 
    // The following piece of code will be executed only if the server shuts down properly
+   close(sockfd);
    if (sslCtx)
       {
       (*OSSL_CTX_free)(sslCtx);
