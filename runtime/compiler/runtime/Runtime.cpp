@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1033,25 +1033,24 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)) && defined(J9VM_JIT_NEW_DUAL_HELPERS)
    SET(TR_newObject,                  (void *)jitNewObject,              TR_CHelper);
-   SET(TR_newValue,                   (void *)jitNewValue,              TR_CHelper);
    SET(TR_newArray,                   (void *)jitNewArray,               TR_CHelper);
    SET(TR_aNewArray,                  (void *)jitANewArray,              TR_CHelper);
 
-   SET(TR_newObjectNoZeroInit,        (void *)jitNewObjectNoZeroInit, TR_CHelper);
-   SET(TR_newValueNoZeroInit,        (void *)jitNewValueNoZeroInit, TR_CHelper);
-   SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,  TR_CHelper);
-   SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit, TR_CHelper);
+   SET(TR_newObjectNoZeroInit,        (void *)jitNewObjectNoZeroInit,    TR_CHelper);
+   SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,     TR_CHelper);
+   SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit,    TR_CHelper);
 #else
    SET(TR_newObject,                  (void *)jitNewObject,              TR_Helper);
-   SET(TR_newValue,                  (void *)jitNewValue,              TR_Helper);
    SET(TR_newArray,                   (void *)jitNewArray,               TR_Helper);
    SET(TR_aNewArray,                  (void *)jitANewArray,              TR_Helper);
 
-   SET(TR_newObjectNoZeroInit,        (void *)jitNewObjectNoZeroInit, TR_Helper);
-   SET(TR_newValueNoZeroInit,        (void *)jitNewValueNoZeroInit, TR_Helper);
-   SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,  TR_Helper);
-   SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit, TR_Helper);
+   SET(TR_newObjectNoZeroInit,        (void *)jitNewObjectNoZeroInit,    TR_Helper);
+   SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,     TR_Helper);
+   SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit,    TR_Helper);
 #endif
+
+   SET(TR_newValue,                   (void *)jitNewValue,               TR_CHelper);
+   SET(TR_newValueNoZeroInit,         (void *)jitNewValueNoZeroInit,     TR_CHelper);
 
    SET(TR_getFlattenableField,        (void *)jitGetFlattenableField, TR_Helper);
    SET(TR_withFlattenableField,        (void *)jitWithFlattenableField, TR_Helper);

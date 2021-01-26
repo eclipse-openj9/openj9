@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -582,6 +582,41 @@ J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return NULL;
    }
 
+/**
+ * @brief Generates instructions to load j9class from object pointer
+ *
+ * @param[in]       node: node
+ * @param[in] j9classReg: register j9class value is assigned to
+ * @param[in]     objReg: register holding object pointer
+ * @param[in]         cg: code generator
+ */
+static void
+generateLoadJ9Class(TR::Node *node, TR::Register *j9classReg, TR::Register *objReg, TR::CodeGenerator *cg)
+   {
+   generateTrg1MemInstruction(cg, TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx, node, j9classReg,
+      new (cg->trHeapMemory()) TR::MemoryReference(objReg, static_cast<int32_t>(TR::Compiler->om.offsetOfObjectVftField()), cg));
+   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, j9classReg);
+   }
+
+void
+J9::ARM64::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *temp1Reg, TR::Register *temp2Reg, TR::CodeGenerator *cg, int32_t classFlag)
+{
+   // get class of object
+   generateLoadJ9Class(node, temp1Reg, objReg, cg);
+
+   // get memory reference to class flags
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::MemoryReference *classFlagsMemRef = new (cg->trHeapMemory()) TR::MemoryReference(temp1Reg, static_cast<uintptr_t>(fej9->getOffsetOfClassFlags()), cg);
+
+   // check J9_CLASS_DISALLOWS_LOCKING_FLAGS (J9ClassIsValueType | J9ClassIsValueBased)
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, temp1Reg, classFlagsMemRef);
+   loadConstant32(cg, node, classFlag, temp2Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::andw, node, temp1Reg, temp1Reg, temp2Reg);
+
+   // If obj is value type or value based class instance, call VM helper and throw IllegalMonitorState exception, else continue as usual
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, helperCallLabel, TR::CC_NE);
+}
+
 TR::Register *
 J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -592,6 +627,8 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    if (comp->getOption(TR_OptimizeForSpace) ||
        comp->getOption(TR_FullSpeedDebug) ||
+       ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled()) &&
+        (cg->isMonitorValueBasedOrValueType(node) == TR_yes)) ||
        comp->getOption(TR_DisableInlineMonExit) ||
        lwOffset <= 0)
       {
@@ -618,6 +655,13 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::LabelSymbol *callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *decLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+
+   // If object is not known to be value type or value based class at compile time, check at run time
+   if ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled())
+       && (cg->isMonitorValueBasedOrValueType(node) == TR_maybe))
+      {
+      generateCheckForValueMonitorEnterOrExit(node, callLabel, objReg, tempReg, dataReg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+      }
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, lwOffset);
    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx;
@@ -701,22 +745,6 @@ TR::Register *
 J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return VMinstanceofEvaluator(node, cg);
-   }
-
-/**
- * @brief Generates instructions to load j9class from object pointer
- * 
- * @param[in]       node: node
- * @param[in] j9classReg: register j9class value is assigned to
- * @param[in]     objReg: register holding object pointer
- * @param[in]         cg: code generator
- */
-static void 
-generateLoadJ9Class(TR::Node *node, TR::Register *j9classReg, TR::Register *objReg, TR::CodeGenerator *cg)
-   {
-   generateTrg1MemInstruction(cg, TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx, node, j9classReg,
-      new (cg->trHeapMemory()) TR::MemoryReference(objReg, static_cast<int32_t>(TR::Compiler->om.offsetOfObjectVftField()), cg));
-   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, j9classReg);
    }
 
 /**
@@ -2316,6 +2344,8 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    if (comp->getOption(TR_OptimizeForSpace) ||
        comp->getOption(TR_FullSpeedDebug) ||
+       ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled()) &&
+        (cg->isMonitorValueBasedOrValueType(node) == TR_yes)) ||
        comp->getOption(TR_DisableInlineMonEnt) ||
        lwOffset <= 0)
       {
@@ -2343,6 +2373,13 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::LabelSymbol *incLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+
+   // If object is not known to be value type or value based class at compile time, check at run time
+   if ((TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled())
+       && (cg->isMonitorValueBasedOrValueType(node) == TR_maybe))
+      {
+      generateCheckForValueMonitorEnterOrExit(node, callLabel, objReg, tempReg, dataReg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+      }
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, lwOffset); // ldxr/stxr instructions does not take immediate offset
    generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);

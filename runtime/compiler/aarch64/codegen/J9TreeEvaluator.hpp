@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,6 +155,19 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     * @return register containing result
     */
    static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   /**
+    * @brief Generates the sequence to handle cases where the monitor object is value type
+    * @param[in] node : the monitor enter/exit node
+    * @param[in] helperCallLabel : the label for OOL code calling VM monitor enter/exit helpers
+    * @param[in] objReg : register for the monitor object
+    * @param[in] temp1Reg : temporary register 1
+    * @param[in] temp2Reg : temporary register 2
+    * @param[in] cg : CodeGenerator
+    * @param[in] classFlag : class flag
+    */
+   static void generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *temp1Reg, TR::Register *temp2Reg, TR::CodeGenerator *cg, int32_t classFlag);
+
    };
 
 } // ARM64
