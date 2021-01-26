@@ -269,8 +269,8 @@ enum MessageType : uint16_t
    };
 
 const int MessageType_ARRAYSIZE = MessageType_MAXTYPE;
-   
-static const char *messageNames[MessageType_ARRAYSIZE] =
+
+static const char *messageNames[] =
    {
    "compilationCode",
    "compilationFailure",
@@ -486,6 +486,10 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "KnownObjectTable_getKnownObjectTableDumpInfo",
    "ClassEnv_isClassRefValueType",
    };
+
+   static_assert(sizeof(messageNames) / sizeof(messageNames[0]) == MessageType_MAXTYPE,
+                 "Invalid number of message type names: possibly missing a name for a newly added message");
+
    }; // namespace JITServer
 
 #endif // MESSAGE_TYPES_HPP

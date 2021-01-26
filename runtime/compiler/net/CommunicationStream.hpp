@@ -69,14 +69,7 @@ public:
       }
 
 protected:
-   CommunicationStream() :
-      _ssl(NULL),
-      _connfd(-1)
-      {
-      static_assert(
-         sizeof(messageNames) / sizeof(messageNames[0]) == MessageType_ARRAYSIZE,
-         "wrong number of message names");
-      }
+   CommunicationStream() : _ssl(NULL), _connfd(-1) { }
 
    virtual ~CommunicationStream()
       {
