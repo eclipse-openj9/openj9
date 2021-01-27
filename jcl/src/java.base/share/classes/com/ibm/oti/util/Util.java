@@ -2,7 +2,7 @@
 package com.ibm.oti.util;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,13 +31,25 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.Optional;
+import java.util.Set;
+
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+import java.lang.module.ResolvedModule;
+import jdk.internal.module.ModuleReferenceImpl;
+/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
+
+import com.ibm.oti.vm.VM;
+import com.ibm.oti.vm.VMLangAccess;
 
 public final class Util {
 
 	private static final String defaultEncoding;
+	private static final VMLangAccess vmLangAccess;
 
 	static {
-		String encoding = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.encoding"); //$NON-NLS-1$
+		vmLangAccess = VM.getVMLangAccess();
+		String encoding = vmLangAccess.internalGetProperties().getProperty("os.encoding"); //$NON-NLS-1$
 		if (encoding != null) {
 			try {
 				"".getBytes(encoding); //$NON-NLS-1$
@@ -286,25 +298,46 @@ public static void appendLnTo(Appendable buf) {
  * @param e StackTraceElement to add
  * @param elementSource location of the source file.  May be null.
  * @param buf Receiver for the text
- * @param extended add additional information
+ * @param includeExtendedInfo Whether or not to include extended info, such as classloader name or module version
  */
-public static void printStackTraceElement(StackTraceElement e, Object elementSource, Appendable buf, boolean extended) {
-	/*[IF Sidecar19-SE]*/
-	final java.lang.String modName = e.getModuleName();
-	if (null != modName) {
+public static void printStackTraceElement(StackTraceElement e, Object elementSource, Appendable buf, boolean includeExtendedInfo) {
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
+	boolean classLoaderNameIncluded = false;
+	final String classLoaderName = e.getClassLoaderName();
+	/**
+	 * The classloader name will only be included in the trace if the classloader isn't a built-in classloader,
+	 * or if it is the "app" classloader and the calling class is Throwable/StackFrame.
+	 */
+	if ((null != classLoaderName)
+			&& (!classLoaderName.isEmpty())
+			&& (includeExtendedInfo || includeClassLoaderName(e))
+	) {
+		classLoaderNameIncluded = true;
+		appendTo(buf, classLoaderName);
+		appendTo(buf, "/"); //$NON-NLS-1$
+	}
+
+	final String modName = e.getModuleName();
+	if ((null == modName) || (modName.isEmpty())) {
+		/* If the classloader name was included but there is no module name, note the empty module in the trace */
+		if (classLoaderNameIncluded) {
+			appendTo(buf, "/"); //$NON-NLS-1$
+		}
+	} else {
+		/* Append the module name if it exists */
 		appendTo(buf, modName);
-		if (extended) {
+		if (includeExtendedInfo || includeModuleVersion(e)) {
 			String mVer = e.getModuleVersion();
-			if (null != mVer) {
+			if ((null != mVer) && (!mVer.isEmpty())) {
+				/* Append the module version if it exists */
 				appendTo(buf, "@"); //$NON-NLS-1$
 				appendTo(buf, mVer);
 			}
 		}
 		appendTo(buf, "/"); //$NON-NLS-1$
-	} else if (extended) {
-		appendTo(buf, "app//"); //$NON-NLS-1$
 	}
-	/*[ENDIF] Sidecar19-SE*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
+
 	appendTo(buf, e.getClassName());
 	appendTo(buf, "."); //$NON-NLS-1$
 	appendTo(buf, e.getMethodName());
@@ -349,5 +382,59 @@ public static void printStackTraceElement(StackTraceElement e, Object elementSou
 		}
 	}
 }
+
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+/**
+ * Helper method for printStackTraceElement to check if the classloader name
+ * should be included in the stack trace for the provided StackTraceElement.
+ *
+ * @param element The StackTraceElement to check
+ * @return true if the classloader name should be included, false otherwise
+ */
+private static boolean includeClassLoaderName(StackTraceElement element) {
+	return vmLangAccess.getIncludeClassLoaderName(element);
+}
+
+/**
+ * Helper method for printStackTraceElement to check if the module version
+ * should be included in the stack trace for the provided StackTraceElement.
+ *
+ * The module version should not be included for modules that are non-upgradeable.
+ *
+ * @param element The StackTraceElement to check
+ * @return true if the module version should be included, false otherwise
+ */
+private static boolean includeModuleVersion(StackTraceElement element) {
+	boolean includeModuleVersion = vmLangAccess.getIncludeModuleVersion(element);
+
+	if (includeModuleVersion) {
+		/* includeModuleVersion should only be set to true if the module is not a non-upgradeable module */
+		includeModuleVersion = !NonUpgradeableModules.moduleNames.contains(element.getModuleName());
+	}
+
+	return includeModuleVersion;
+}
+
+/**
+ * NonUpgradeableModules statically determines the set of non-upgradeable modules
+ * by checking the module names that are recorded in the hashes of the java.base
+ * module. If a module name is contained within this set, then the module is a
+ * non-upgradeable module. Non-upgradeable modules should not have their module
+ * version displayed in a stack trace if the calling class is Throwable or StackFrame.
+ */
+private static class NonUpgradeableModules {
+	static Set<String> moduleNames;
+
+	static {
+		Optional<ResolvedModule> javaBaseModule = ModuleLayer.boot().configuration().findModule("java.base"); //$NON-NLS-1$
+
+		if (javaBaseModule.isPresent()) {
+			ResolvedModule resolvedJavaBaseModule = javaBaseModule.get();
+			ModuleReferenceImpl javaBaseModuleRef = (ModuleReferenceImpl) resolvedJavaBaseModule.reference();
+			moduleNames = javaBaseModuleRef.recordedHashes().names();
+		}
+	}
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
 }
