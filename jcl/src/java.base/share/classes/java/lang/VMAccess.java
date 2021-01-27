@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corp. and others
+ * Copyright (c) 2012, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -225,4 +225,28 @@ final class VMAccess implements VMLangAccess {
 	public void prepare(Class<?> theClass) {
 		J9VMInternals.prepare(theClass);
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
+	/**
+	 * Returns whether the classloader name should be included in the stack trace for the provided StackTraceElement.
+	 *
+	 * @param element The StackTraceElement to check
+	 * @return true if the classloader name should be included, false otherwise
+	 */
+	@Override
+	public boolean getIncludeClassLoaderName(StackTraceElement element) {
+		return element.getIncludeClassLoaderName();
+	}
+
+	/**
+	 * Returns whether the module version should be included in the stack trace for the provided StackTraceElement.
+	 *
+	 * @param element The StackTraceElement to check
+	 * @return true if the module version should be included, false otherwise
+	 */
+	@Override
+	public boolean getIncludeModuleVersion(StackTraceElement element) {
+		return element.getIncludeModuleVersion();
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 }

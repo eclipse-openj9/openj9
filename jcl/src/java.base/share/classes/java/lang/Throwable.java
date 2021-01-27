@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -489,14 +489,13 @@ private void readObject(ObjectInputStream s)
 	}
 }
 
-/* 
- * CMVC 97756 try to continue printing as much as possible of the stack trace even
- *            in the presence of OutOfMemoryErrors.
- */
-
 /**
- * Print stack trace
- *  
+ * Print stack trace.
+ *
+ * The stack trace is constructed with appendTo() and avoids allocating Objects (i.e. Strings)
+ * to try to continue printing as much as possible of the stack trace even in the presence of
+ * OutOfMemoryErrors (CMVC 97756).
+ *
  * @param	err	
  * 			the specified print stream/writer 
  * @param	parentStack	
@@ -591,18 +590,19 @@ private StackTraceElement[] printStackTrace(
 		return null;
 	}
 	for (int i=0; i < stack.length - duplicates; i++) {
+		StackTraceElement element = stack[i];
 		if (!outOfMemory) {
 			try {
-				appendTo(err, "\tat " + stack[i], indents);			 //$NON-NLS-1$
+				appendTo(err, "\tat " + element, indents); //$NON-NLS-1$
 			} catch(OutOfMemoryError e) {
 				outOfMemory = true;
 			}
 		}
 		if (outOfMemory) {
 			appendTo(err, "\tat ", indents); //$NON-NLS-1$
-			Util.printStackTraceElement(stack[i], null, err, false);
+			Util.printStackTraceElement(element, null, err, false);
 		}
-		appendLnTo(err);		
+		appendLnTo(err);
 	}
 	if (duplicates > 0) {
 		if (!outOfMemory) {

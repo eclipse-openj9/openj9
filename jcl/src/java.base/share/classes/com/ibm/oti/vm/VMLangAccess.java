@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2020 IBM Corp. and others
+ * Copyright (c) 2012, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,4 +176,22 @@ public interface VMLangAccess {
 	 * @param theClass The class to prepare
 	 */
 	public void prepare(Class<?> theClass);
+
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
+	/**
+	 * Returns whether the classloader name should be included in the stack trace for the provided StackTraceElement.
+	 *
+	 * @param element The StackTraceElement to check
+	 * @return true if the classloader name should be included, false otherwise
+	 */
+	public boolean getIncludeClassLoaderName(StackTraceElement element);
+
+	/**
+	 * Returns whether the module version should be included in the stack trace for the provided StackTraceElement.
+	 *
+	 * @param element The StackTraceElement to check
+	 * @return true if the module version should be included, false otherwise
+	 */
+	public boolean getIncludeModuleVersion(StackTraceElement element);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 }
