@@ -353,14 +353,10 @@ static TR_OutlinedInstructions *generateArrayletReference(
    generateRegMemInstruction(op, node, scratchReg, spineMR, cg);
 
    // Decompress the arraylet pointer from the spine.
-   //
-   bool isHB0 = false;
    int32_t shiftOffset = 0;
 
    if (comp->target().is64Bit() && comp->useCompressedPointers())
       {
-      isHB0 = true;
-
       shiftOffset = TR::Compiler->om.compressedReferenceShiftOffset();
       if (shiftOffset > 0)
          {
@@ -458,17 +454,13 @@ static TR_OutlinedInstructions *generateArrayletReference(
       //
       if (loadNeedsDecompression)
          {
-         if (isHB0)
-            {
+		 if (comp->target().is64Bit() && comp->useCompressedPointers())
+		    {
             if (shiftOffset > 0)
                {
                generateRegImmInstruction(SHL8RegImm1, node, loadOrStoreReg, shiftOffset, cg);
                }
-            }
-         else
-            {
-            TR_ASSERT(0, "!HB0 not supported yet");
-            }
+			}
          }
       }
    else
