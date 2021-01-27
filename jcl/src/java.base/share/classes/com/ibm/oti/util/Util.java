@@ -31,11 +31,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
-import java.util.Optional;
 import java.util.Set;
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.lang.module.ResolvedModule;
+import java.util.Optional;
 import jdk.internal.module.ModuleReferenceImpl;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
