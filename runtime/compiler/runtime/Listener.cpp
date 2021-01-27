@@ -216,12 +216,12 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&flag, sizeof(flag)) < 0)
       {
       perror("Can't set SO_REUSEADDR");
-      exit(-1);
+      exit(1);
       }
    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flag, sizeof(flag)) < 0)
       {
       perror("Can't set SO_KEEPALIVE");
-      exit(-1);
+      exit(1);
       }
 
    struct sockaddr_in serv_addr;
@@ -297,12 +297,12 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
             if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeoutMsForConnection, sizeof(timeoutMsForConnection)) < 0)
                {
                perror("Can't set option SO_RCVTIMEO on connfd socket");
-               exit(-1);
+               exit(1);
                }
             if (setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeoutMsForConnection, sizeof(timeoutMsForConnection)) < 0)
                {
                perror("Can't set option SO_SNDTIMEO on connfd socket");
-               exit(-1);
+               exit(1);
                }
 
             BIO *bio = NULL;
