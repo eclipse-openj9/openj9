@@ -490,6 +490,12 @@ int32_t TR::CompilationInfo::computeDynamicDumbInlinerBytecodeSizeCutoff(TR::Opt
 // Must have compilation queue monitor in hand when calling this routine
 TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    {
+   // If further compilations have been disabled we could be in a dire situation, for example virtual memory could be
+   // really low, there could be failures when attempting to allocate persistent memory, a compilation thread could
+   // have crashed, etc. In such situations we never want to activate a new compilation driven by this API.
+   if (getPersistentInfo()->getDisableFurtherCompilation())
+      return TR_no;
+
    // We must have at least one compilation thread active
    if (getNumCompThreadsActive() <= 0)
       return TR_yes;
@@ -4874,23 +4880,19 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
 
       if (activate == TR_yes)
          {
-         // Must find one that is SUSPENDED/SUSPENDING
+         // Must find one that is SUSPENDED/SUSPENDING otherwise the logic in shouldActivateNewCompThread is incorrect
          TR::CompilationInfoPerThread *compInfoPT = getFirstSuspendedCompilationThread();
-#if defined(J9VM_OPT_JITSERVER)
-         if (compInfoPT) // FIXME this is null sometimes during shutdown. Why??
-#endif
+
+         TR_ASSERT_FATAL(compInfoPT != NULL, "Could not find a suspended/suspending compilation thread");
+
+         compInfoPT->resumeCompilationThread();
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
             {
-            compInfoPT->resumeCompilationThread();
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Activate compThread %d Qweight=%d active=%d",
-                  (uint32_t)getPersistentInfo()->getElapsedTime(),
-                  compInfoPT->getCompThreadId(),
-                  getQueueWeight(),
-                  getNumCompThreadsActive());
-               }
-            //fprintf(stderr, "Activate compthread %d: _numQueuedMethods=%d queueWeight=%d getNumCompThreadsJobless=%d numactive=%d\n",
-            //   compInfoPT->getCompThreadId(), _numQueuedMethods, _queueWeight, getNumCompThreadsJobless(), getNumCompThreadsActive());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Activate compThread %d Qweight=%d active=%d",
+               (uint32_t)getPersistentInfo()->getElapsedTime(),
+               compInfoPT->getCompThreadId(),
+               getQueueWeight(),
+               getNumCompThreadsActive());
             }
          }
       }
