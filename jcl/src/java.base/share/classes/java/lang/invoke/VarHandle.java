@@ -1673,13 +1673,9 @@ public abstract class VarHandle extends VarHandleInternal
 		return accessModeTypeUncached(AccessType.values()[index]);
 	}
 
-	public VarHandle withInvokeExactBehavior() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
+	public abstract VarHandle withInvokeExactBehavior();
 
-	public VarHandle withInvokeBehavior() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
-	}
+	public abstract VarHandle withInvokeBehavior();
 
 	public boolean hasInvokeExactBehavior() {
 		return exact;

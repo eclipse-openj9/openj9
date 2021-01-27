@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,16 @@ abstract class ViewVarHandle extends VarHandle {
 			throw new InternalError("Invalid AccessMode"); //$NON-NLS-1$
 		}
 	}
+
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+	public VarHandle withInvokeExactBehavior() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	public VarHandle withInvokeBehavior() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 	static class ViewVarHandleOperations extends VarHandleOperations {
 		static final char convertEndian(char value) {
