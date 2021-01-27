@@ -384,7 +384,7 @@ bool acquireVMaccessIfNeeded(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
        * At shutdown time the compilation thread executes Java code and it may receive a sample (see D174900)
        * Only abort the compilation if we're explicitly prepared to handle it.
        */
-      if (compInfoPT->compilationCanBeInterrupted() && compInfoPT->compilationShouldBeInterrupted())
+      if (compInfoPT->compilationShouldBeInterrupted())
          {
          TR_ASSERT(compInfoPT->compilationShouldBeInterrupted() != GC_COMP_INTERRUPT, "GC should not have cut in _compInfoPT=%p\n", compInfoPT);
          // in prod builds take some corrective action

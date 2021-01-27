@@ -204,8 +204,6 @@ class CompilationInfoPerThreadBase
    bool methodCanBeCompiled(TR_Memory *trMemory, TR_FrontEnd *fe, TR_ResolvedMethod *compilee, TR_FilterBST *&filter);
    int32_t                getCompThreadId() const { return _compThreadId; }
 
-   bool compilationCanBeInterrupted() const { return _compilationCanBeInterrupted; }
-
    class InterruptibleOperation
       {
       friend class TR::CompilationInfoPerThreadBase;
@@ -257,7 +255,11 @@ class CompilationInfoPerThreadBase
       bool _originalValue;
       };
 
-   uint8_t                compilationShouldBeInterrupted() const { return _compilationShouldBeInterrupted; }
+   uint8_t compilationShouldBeInterrupted() const
+      {
+      return _compilationCanBeInterrupted ? _compilationShouldBeInterrupted : 0;
+      }
+
    void                   setCompilationShouldBeInterrupted(uint8_t reason) { _compilationShouldBeInterrupted = reason; }
    TR_DataCache*          reservedDataCache() { return _reservedDataCache; }
    void                   setReservedDataCache(TR_DataCache *dataCache) { _reservedDataCache = dataCache; }
