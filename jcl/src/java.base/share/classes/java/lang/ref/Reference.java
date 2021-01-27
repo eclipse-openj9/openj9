@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,7 +163,14 @@ private native T getImpl();
  * Return whether the reference object has been enqueued.
  *
  * @return	true if Reference has been enqueued, false otherwise.
- */	
+/*[IF JAVA_SPEC_VERSION >= 16]
+ * 
+ * @deprecated Use ReferenceQueue or Reference.refersTo(null).
+/*[ENDIF] JAVA_SPEC_VERSION >= 16
+ */
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+@Deprecated(since="16")
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 public boolean isEnqueued () {
 	synchronized(this) {
 		return state == STATE_ENQUEUED;
