@@ -5807,15 +5807,11 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       return startPC;
       }
 
-   // Check to see if compilation threads are available to perform the compilation
-   if (
-         (getNumCompThreadsActive() == 0) ||
-         (
-            getPersistentInfo()->getDisableFurtherCompilation() &&
-            oldStartPC == 0 &&
-            !details.isJitDumpMethod()
-         )
-      )
+   // If there are no active threads ready to perform the compilation or further compilations are disabled we will
+   // end this compilation request. The only exception to this case is if we are performing a JitDump compilation,
+   // in which case we always want to proceed with the compilation since it will be performed on the diagnostic
+   // thread. Note that the diagnostic thread is not counted towards `getNumCompThreadsActive` count.
+   if ((getNumCompThreadsActive() == 0 || getPersistentInfo()->getDisableFurtherCompilation()) && !details.isJitDumpMethod())
       {
       bool shouldReturn = true;
 
