@@ -4290,6 +4290,24 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    //
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
 
+   // We have acquired VM access above and will be releasing it below. It is possible however that during the
+   // compilation process in the above `compile(...)` call we have released VM access and have subsequently
+   // crashed or asserted. In such a scenarion the JitDump process will have started and queued the method
+   // for recompilation with a custom signal handler to catch the crash/assertion and return. The JitDump
+   // compilation will have hopefully crashed/asserted in the same place as the original compilation, and
+   // thus we will not be holding VM access at that point. This means we will return from the above call to
+   // `compile(...)` without holding VM access, and below we will attempt to call `j9jni_deleteLocalRef` to
+   // unpin the class. The `j9jni_deleteLocalRef` function has a requirement that we hold VM access otherwise
+   // it will assert. We do not want to assert, as that will end up calling `abort()` and the JitDump process
+   // will not complete, nor will any dump handlers following JitDump.
+   if ((compThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) == 0)
+      {
+      TR_ASSERT_FATAL(isDiagnosticThread(), "A compilation thread has finished a compilation but does not hold VM access");
+
+      acquireVMAccessNoSuspend(compThread);
+      compInfo->debugPrint(compThread, "+VMacc\n");
+      }
+
    // Unpin the class
    if (!entry.isOutOfProcessCompReq())
       compThread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)compThread, classObject);
