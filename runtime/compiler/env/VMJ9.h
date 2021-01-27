@@ -369,8 +369,10 @@ public:
       }
 
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
+   virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueMethodBlock*);
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
-   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory *, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, char *signature, int32_t signatureLength, TR_ResolvedMethod *);
+   virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, uint32_t vTableSlot, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod = 0, TR_OpaqueClassBlock * classForNewInstance = 0);
+   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory *, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, char *signature, int32_t signatureLength, TR_ResolvedMethod *, uint32_t = 0);
    virtual void * getStaticFieldAddress(TR_OpaqueClassBlock *, unsigned char *, uint32_t, unsigned char *, uint32_t);
    virtual int32_t getInterpreterVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
    virtual int32_t getVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
@@ -714,6 +716,7 @@ public:
    virtual bool               startAsyncCompile(TR_OpaqueMethodBlock *methodInfo, void *oldStartPC, bool *queued, TR_OptimizationPlan *optimizationPlan  = NULL);
    virtual bool               isBeingCompiled(TR_OpaqueMethodBlock *methodInfo, void *startPC);
    virtual uint32_t           virtualCallOffsetToVTableSlot(uint32_t offset);
+   virtual uint32_t           vTableSlotToVirtualCallOffset(uint32_t vTableSlot);
    virtual void *             addressOfFirstClassStatic(TR_OpaqueClassBlock *);
 
    virtual TR_ResolvedMethod * getDefaultConstructor(TR_Memory *, TR_OpaqueClassBlock *);
@@ -798,6 +801,30 @@ public:
     *    VM access is not required
     */
    TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   /*
+    * \brief
+    *    Return MemberName.vmindex, a J9JNIMethodID pointer containing vtable/itable offset for the MemberName method
+    *    Caller must acquire VM access
+    */
+   J9JNIMethodID* jniMethodIdFromMemberName(uintptr_t memberName);
+   /*
+    * \brief
+    *    Return MemberName.vmindex, a J9JNIMethodID pointer containing vtable/itable offset for the MemberName method
+    *    VM access is not required
+    */
+   J9JNIMethodID* jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   /*
+    * \brief
+    *    Return vtable or itable index of a method represented by MemberName
+    *    Caller must acquire VM access
+    */
+   int32_t vTableOrITableIndexFromMemberName(uintptr_t memberName);
+   /*
+    * \brief
+    *    Return vtable or itable index of a method represented by MemberName
+    *    VM access is not required
+    */
+   int32_t vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
 #endif
 
    // JSR292 }}}

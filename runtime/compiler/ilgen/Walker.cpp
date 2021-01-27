@@ -1672,6 +1672,31 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    TR::MethodSymbol *symbol = symRef->getSymbol()->castToMethodSymbol();
    int32_t numArgs = symbol->getMethod()->numberOfExplicitParameters() + (symbol->isStatic() ? 0 : 1);
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   // invokehandle/invokedynamic bytecode implicitly push an object from side
+   // table as the last argument of the call. This is part of the behavior of
+   // the bytecode in Openjdk MethodHandle implementation. The object should
+   // not be stashed.
+   // The unresolved case will have one more implicit argument pushed onto the stack,
+   // as the MemberName from side table is unknown, the target method is not known at
+   // compile time, thus, the JIT uses MethodHandle.linkToStatic to represent the call.
+   // MethodHandle.linkToStatic expects the last argument to be MemberName object
+   //
+   // Resolved case:
+   // adapter(arg1, arg2, ..., argN, appendixObject)
+   // Unresolved case:
+   // MethodHandle.linkToStatic(arg1, arg2, ..., argN, appendixObject, MemberName)
+   //
+   if (byteCode == J9BCinvokedynamic ||
+       byteCode == J9BCinvokehandle)
+      {
+      if (symRef->isUnresolved())
+         numArgs -= 2;
+      else
+         numArgs -= 1;
+      }
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
    TR_OSRMethodData *osrMethodData =
       comp()->getOSRCompilationData()->findOrCreateOSRMethodData(comp()->getCurrentInlinedSiteIndex(), _methodSymbol);
    osrMethodData->ensureArgInfoAt(_bcIndex, numArgs);

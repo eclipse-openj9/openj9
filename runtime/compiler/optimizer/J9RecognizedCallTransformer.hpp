@@ -33,12 +33,13 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
    {
    public:
    RecognizedCallTransformer(TR::OptimizationManager* manager)
-      : OMR::RecognizedCallTransformer(manager)
+      : OMR::RecognizedCallTransformer(manager),  _knownObjectInAutoOrParmSlot(NULL)
       {}
 
    protected:
    virtual bool isInlineable(TR::TreeTop* treetop);
    virtual void transform(TR::TreeTop* treetop);
+   virtual void preProcess();
 
    private:
    void processIntrinsicFunction(TR::TreeTop* treetop, TR::Node* node, TR::ILOpCodes opcode);
@@ -108,6 +109,31 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *     Flag indicating if null check is needed on the first argument of the unsafe call
     */
    void processUnsafeAtomicCall(TR::TreeTop* treetop, TR::SymbolReferenceTable::CommonNonhelperSymbol helper, bool needsNullCheck = false);
+
+   /** \brief
+    *     Transforms MethodHandle.invokeBasic to a direct call to MemberName method with known object info
+    *
+    */
+   void processInvokeBasic(TR::TreeTop* treetop, TR::Node* node);
+   /** \brief
+    *     Transforms MethodHandle.linkTo methods to direct/indirect calls to MemberName method with known object info
+    *
+    */
+   void processLinkTo(TR::TreeTop* treetop, TR::Node* node);
+   /** \brief
+    *     Collect known object info needed by MethodHandle call transformation
+    *
+    */
+   void collectInfoForAdapterOrLambdaForm();
+   /** \brief
+    *     Given a reference type node, try to find its object info. Used in MethodHandle call transformation
+    *
+    */
+   TR::KnownObjectTable::Index getObjectInfoFromNode(TR::Node* node);
+
+private:
+   // Object info stored in auto or parm slot after they initialized, used in MethodHandle call transformation
+   TR_Array<TR::KnownObjectTable::Index>* _knownObjectInAutoOrParmSlot;
    };
 
 }
