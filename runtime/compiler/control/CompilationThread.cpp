@@ -3527,7 +3527,9 @@ void TR::CompilationInfo::stopCompilationThreads()
             TR_ASSERT(false, "No other comp thread state possible here\n");
          } // end switch
       }
-   TR_ASSERT(getNumCompThreadsActive()==0, "All threads must be inactive at this point\n");
+
+   TR_ASSERT_FATAL(getNumCompThreadsActive() == 0, "All threads must be inactive at this point\n");
+
    purgeMethodQueue(compilationSuspended);
 
    for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
