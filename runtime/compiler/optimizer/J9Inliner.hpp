@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -150,6 +150,7 @@ class TR_J9InlinerUtil: public OMR_InlinerUtil
       virtual TR_InlinerTracer * getInlinerTracer(TR::Optimization *optimization);
       virtual TR_PrexArgInfo *computePrexInfo(TR_CallTarget *target);
       virtual TR_PrexArgInfo *computePrexInfo(TR_CallTarget *target, TR_PrexArgInfo *callerArgInfo);
+      static  TR_PrexArgInfo *computePrexInfo(TR_InlinerBase *inliner, TR_CallSite *site, TR_PrexArgInfo *callerArgInfo = NULL);
       virtual void refineInlineGuard(TR::Node *callNode, TR::Block *&block1, TR::Block *&block2,
                    bool &appendTestToBlock1, TR::ResolvedMethodSymbol * callerSymbol, TR::TreeTop *cursorTree,
                    TR::TreeTop *&virtualGuard, TR::Block *block4);
