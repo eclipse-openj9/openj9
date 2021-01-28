@@ -246,7 +246,7 @@ class TR_PersistentProfileInfo
    int32_t _maxCount;
 
    // Manage several uses of this info
-   intptr_t _refCount;
+   volatile intptr_t _refCount;
 
    // Flag to determine whether the information is being actively updated
    bool _active;
@@ -1033,15 +1033,15 @@ class TR_JProfilerThread
    size_t getProfileInfoFootprint() { return _footprint * sizeof(TR_PersistentProfileInfo); }
 
    protected:
-   TR_PersistentProfileInfo *deleteProfileInfo(TR_PersistentProfileInfo **prevNext, TR_PersistentProfileInfo *info);
+   TR_PersistentProfileInfo *deleteProfileInfo(TR_PersistentProfileInfo * volatile *prevNext, TR_PersistentProfileInfo *info);
 
-   TR_PersistentProfileInfo *_listHead;
-   uintptr_t                 _footprint;
-   TR::Monitor              *_jProfilerMonitor;
-   j9thread_t                _jProfilerOSThread;
-   J9VMThread               *_jProfilerThread;
-   volatile State            _state;
-   static const uint32_t     _waitMillis = 500;
+   TR_PersistentProfileInfo * volatile  _listHead;
+   volatile uintptr_t                   _footprint;
+   TR::Monitor                         *_jProfilerMonitor;
+   j9thread_t                           _jProfilerOSThread;
+   J9VMThread                          *_jProfilerThread;
+   volatile State                       _state;
+   static const uint32_t                _waitMillis = 500;
    };
 
 #endif
