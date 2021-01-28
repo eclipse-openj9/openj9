@@ -422,17 +422,15 @@ private static boolean includeModuleVersion(StackTraceElement element) {
  * non-upgradeable module. Non-upgradeable modules should not have their module
  * version displayed in a stack trace if the calling class is Throwable or StackFrame.
  */
-private static class NonUpgradeableModules {
-	static Set<String> moduleNames;
+private static final class NonUpgradeableModules {
+	static final Set<String> moduleNames;
 
 	static {
-		Optional<ResolvedModule> javaBaseModule = ModuleLayer.boot().configuration().findModule("java.base"); //$NON-NLS-1$
+		ResolvedModule resolvedJavaBaseModule = ModuleLayer.boot().configuration().findModule("java.base") //$NON-NLS-1$
+				.orElseThrow(() -> new InternalError("java.base module could not be found")); //$NON-NLS-1$
+		ModuleReferenceImpl javaBaseModuleRef = (ModuleReferenceImpl) resolvedJavaBaseModule.reference();
 
-		if (javaBaseModule.isPresent()) {
-			ResolvedModule resolvedJavaBaseModule = javaBaseModule.get();
-			ModuleReferenceImpl javaBaseModuleRef = (ModuleReferenceImpl) resolvedJavaBaseModule.reference();
-			moduleNames = javaBaseModuleRef.recordedHashes().names();
-		}
+		moduleNames = javaBaseModuleRef.recordedHashes().names();
 	}
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 11*/
