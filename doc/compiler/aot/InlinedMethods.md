@@ -96,30 +96,15 @@ pool, and `bar` is named in `foo`'s constant pool. Therefore, in order to
 materialize the `J9Method` of `baz`, one first needs the `J9Method` of `bar`,
 which first requires the `J9Method` of `foo`.
 
-Generating external relocations for inlined methods requires the 
-existence of Guards. Guards are used to gate execution of regions of 
-code. When a method is inlined, a guard is generated for that inlined 
-method. It is possible for a guard to be removed for various reasons. 
-Currently, an inlined method cannot be validated/relocated without an 
-associated guard<sup>1</sup>. As such, if a guard is removed, it is 
-still kept aside so that the information it holds can be used 
-to create an external relocation. If a guard is removed, the Inlined Method 
-/ Profiled Inlined Method relocations are generated; if the guard remains, 
-the Inlined Method with NOP Guard / Profiled Inlined Method with Guard 
-relocations are generated.
-
-Unless the [SVM](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/SymbolValidationManager.md)
+If the inlined method has a guard assocated with it, then the Inlined Method
+with NOP Guard / Profiled Inlined Method with Guard relocations are 
+generated. If not, then the Inlined Method / Profiled Inlined Method
+relocations are generated. Additionally, unless the 
+[SVM](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/SymbolValidationManager.md)
 is enabled, the inlined method external relocations are the
 last entries added to the list; if the SVM is enabled, the SVM validation
 records are added next - part of the validation that would've been done by
 the inlined method validation procedure is delegated to the SVM.
-
-<hr/>
-
-<sup>1</sup> This is a problem that will be fixed soon<sup>TM</sup> 
-as features like OSR, NextGenHCR, and FSD cannot otherwise be supported 
-for AOT (see [#11060](https://github.com/eclipse/openj9/issues/11060)).
-
 
 # Validating Inlined Sites 
 
@@ -212,16 +197,9 @@ valid entries by this point.
 
 If the SVM is enabled, if all SVM validations pass then it is (almost)
 not possible for any of the various tests for both Inlined Method and 
-Profiled Inlined Method to fail; there are two exceptions:
-
-1. if `inlinedSiteCanBeActivated` returns false.
-2. if the caller of the inlined method is not relocated in the inlining table.
-
-1 can happen because of debug or other JVM restrictions. 2 can happen 
-because of the current limitation of depending on the existence of 
-guards to relocate the inlining table; if for whatever reason an 
-inlined body does not have a guard associated with it, the relocation 
-infrastructure will not be aware of that inlined method.
+Profiled Inlined Method to fail; the exception is if 
+`inlinedSiteCanBeActivated` returns false which can happen because of
+debug or other JVM restrictions.
 
 Because the SVM enables far more optimization, it is not immediately
 obvious whether it is safe to execute the code. Without validating

@@ -2736,7 +2736,7 @@ TR_MultipleCallTargetInliner::eliminateTailRecursion(
 
    //please don't move this if. It needs to be done after all early exits but exactly before
    //we do any transformations
-   if (!comp()->incInlineDepth(calleeSymbol, callNode->getByteCodeInfo(), callNode->getSymbolReference()->getCPIndex(), callNode->getSymbolReference(), !callNode->getOpCode().isCallIndirect(), 0))
+   if (!comp()->incInlineDepth(calleeSymbol, callNode, !callNode->getOpCode().isCallIndirect(), guard, calleeResolvedMethod->classOfMethod(), 0))
       {
       return false;
       }

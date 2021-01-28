@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -276,7 +276,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    TR_CHTable *getCHTable() const { return _transientCHTable; }
 
    // Inliner
+   using OMR::CompilationConnector::incInlineDepth;
+   bool incInlineDepth(TR::ResolvedMethodSymbol *, TR_ByteCodeInfo &, int32_t cpIndex, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo = 0);
+
    bool isGeneratedReflectionMethod(TR_ResolvedMethod *method);
+
+   TR_ExternalRelocationTargetKind getReloTypeForMethodToBeInlined(TR_VirtualGuardSelection *guard, TR::Node *callNode, TR_OpaqueClassBlock *receiverClass);
 
    // cache J9 VM pointers
    TR_OpaqueClassBlock *getObjectClassPointer();

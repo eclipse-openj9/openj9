@@ -48,6 +48,7 @@
 #include "il/Node_inlines.hpp"
 #include "ilgen/IlGenRequest.hpp"
 #include "infra/List.hpp"
+#include "optimizer/Inliner.hpp"
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/TransformUtil.hpp"
@@ -1116,6 +1117,12 @@ J9::Compilation::addAOTNOPSite()
    return site;
    }
 
+bool
+J9::Compilation::incInlineDepth(TR::ResolvedMethodSymbol * method, TR_ByteCodeInfo & bcInfo, int32_t cpIndex, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo)
+   {
+   TR_ASSERT_FATAL(callSymRef == NULL, "Should not be calling this API for non-NULL symref!\n");
+   return OMR::CompilationConnector::incInlineDepth(method, bcInfo, cpIndex, callSymRef, directCall, argInfo);
+   }
 
 bool
 J9::Compilation::isGeneratedReflectionMethod(TR_ResolvedMethod * method)
@@ -1129,6 +1136,71 @@ J9::Compilation::isGeneratedReflectionMethod(TR_ResolvedMethod * method)
    return false;
    }
 
+TR_ExternalRelocationTargetKind
+J9::Compilation::getReloTypeForMethodToBeInlined(TR_VirtualGuardSelection *guard, TR::Node *callNode, TR_OpaqueClassBlock *receiverClass)
+   {
+   TR_ExternalRelocationTargetKind reloKind = OMR::Compilation::getReloTypeForMethodToBeInlined(guard, callNode, receiverClass);
+
+   if (callNode && self()->compileRelocatableCode())
+      {
+      if (guard && guard->_kind == TR_ProfiledGuard)
+         {
+         if (guard->_type == TR_MethodTest)
+            reloKind = TR_ProfiledMethodGuardRelocation;
+         else if (guard->_type == TR_VftTest)
+            reloKind = TR_ProfiledClassGuardRelocation;
+         }
+      else
+         {
+         TR::MethodSymbol *methodSymbol = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol();
+
+         if (methodSymbol->isSpecial())
+            {
+            reloKind = TR_InlinedSpecialMethod;
+            }
+         else if (methodSymbol->isStatic())
+            {
+            reloKind = TR_InlinedStaticMethod;
+            }
+         else if (receiverClass
+                  && TR::Compiler->cls.isAbstractClass(self(), receiverClass)
+                  && methodSymbol->getResolvedMethodSymbol()->getResolvedMethod()->isAbstract())
+            {
+            reloKind = TR_InlinedAbstractMethod;
+            }
+         else if (methodSymbol->isVirtual())
+            {
+            reloKind = TR_InlinedVirtualMethod;
+            }
+         else if (methodSymbol->isInterface())
+            {
+            reloKind = TR_InlinedInterfaceMethod;
+            }
+         }
+
+      if (reloKind == TR_NoRelocation)
+         {
+         TR_InlinedCallSite *site = self()->getCurrentInlinedCallSite();
+         TR_OpaqueMethodBlock *caller;
+         if (site)
+            {
+            TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)site->_methodInfo;
+            caller = aotMethodInfo->resolvedMethod->getNonPersistentIdentifier();
+            }
+         else
+            {
+            caller = self()->getMethodBeingCompiled()->getNonPersistentIdentifier();
+            }
+
+         TR_ASSERT_FATAL(false, "Can't find relo kind for Caller %p Callee %p TR_ByteCodeInfo %p\n",
+                         caller,
+                         callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getNonPersistentIdentifier(),
+                         callNode->getByteCodeInfo());
+         }
+      }
+
+   return reloKind;
+   }
 
 bool
 J9::Compilation::compilationShouldBeInterrupted(TR_CallingContext callingContext)
