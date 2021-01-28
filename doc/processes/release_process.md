@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2020 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,8 +41,6 @@ extensions repos:
 * JDK14 https://github.com/ibmruntimes/openj9-openjdk-jdk14
 * JDK.next https://github.com/ibmruntimes/openj9-openjdk-jdk
 
-OpenJ9 binaries are built by the AdoptOpenJDK community.  
-
 An OpenJ9 release should:
 
 * Use a single code base to support the various JDK-levels.
@@ -50,8 +48,7 @@ An OpenJ9 release should:
 * Use a consistent set of tags across OpenJ9 & extensions repos to 
 ensure that releases can be rebuilt or branched later.
 * OpenJ9 releases should be high quality and pass a common quality bar. 
-* Communicate the tags for a release to AdoptOpenJDK to ensure that
-binaries at the correct levels have been created. 
+* Communicate the tags for a release to downstream projects. 
 * Clearly define the supported platforms
 * Should not regress performance from release to release.
 * Use Github releases to identify releases and link to the relevant
@@ -133,7 +130,7 @@ determination can be made to either:
 will be `openj9-0.8.0`.
 1. Create the [github release](https://help.github.com/articles/creating-releases/)
 corresponding to the tagged level.  The release should link to the Eclipse Release 
-document, the release issue, and the AdoptOpenJDK download links.
+document, and the release issue.
 1. Open an Eclipse Bugzilla requesting the branch be marked `protected` to prevent 
 commits after the release is complete.
 1. Remove the `doc:releasenote` tag from items that were included in the release 
