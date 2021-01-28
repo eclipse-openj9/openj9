@@ -134,9 +134,6 @@ mixedrefs:
 cmake:
   extra_configure_options:
     all: '--with-cmake'
-  excluded_tests:
-    8:
-      - special.system
 #========================================#
 # Build with uma
 #========================================#
@@ -265,11 +262,6 @@ ppc64le_linux_xl_uma:
 #========================================#
 ppc64le_linux_mixed:
   extends: ['ppc64le_linux', 'mixedrefs', 'cmake']
-  excluded_tests:
-    8:
-      - special.system
-    11:
-      - special.system
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -328,9 +320,6 @@ s390x_linux_xl_uma:
 #========================================#
 s390x_linux_mixed:
   extends: ['s390x_linux', 'mixedrefs', 'cmake']
-  excluded_tests:
-     11:
-      - special.system
 #========================================#
 # Linux S390 64bits Compressed Pointers /w JITSERVER
 #========================================#
@@ -439,6 +428,7 @@ x86-64_linux_cm:
       - extended.functional
       - sanity.system
       - extended.system
+      - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers /w uma
 #========================================#
@@ -476,11 +466,6 @@ x86-64_linux_xl:
 #========================================#
 x86-64_linux_mixed:
   extends: ['x86-64_linux', 'mixedrefs', 'cmake']
-  excluded_tests:
-    - extended.functional
-    - sanity.system
-    - extended.system
-    - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers / Valhalla
 #========================================#
@@ -668,9 +653,6 @@ x86-64_mac_xl:
 #========================================#
 x86-64_mac_mixed:
   extends: ['x86-64_mac', 'mixedrefs', 'cmake']
-  excluded_tests:
-    8:
-      - special.system
 #========================================#
 # OSX x86 64bits Compressed Pointers /w CMake
 #========================================#
