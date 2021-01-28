@@ -2648,7 +2648,7 @@ void
 TR_PersistentProfileInfo::incRefCount(TR_PersistentProfileInfo *info)
    {
    TR_ASSERT_FATAL(info->_refCount > 0, "Increment called on profile info with no references");
-   VM_AtomicSupport::add((uintptr_t*) &(info->_refCount), 1);
+   VM_AtomicSupport::add(reinterpret_cast<volatile uintptr_t*>(&(info->_refCount)), 1);
    TR_ASSERT_FATAL(info->_refCount >= 0, "Increment resulted in negative reference count");
    }
 
@@ -2661,7 +2661,7 @@ TR_PersistentProfileInfo::incRefCount(TR_PersistentProfileInfo *info)
 void
 TR_PersistentProfileInfo::decRefCount(TR_PersistentProfileInfo *info)
    {
-   VM_AtomicSupport::subtract((uintptr_t*) &(info->_refCount), 1);
+   VM_AtomicSupport::subtract(reinterpret_cast<volatile uintptr_t*>(&(info->_refCount)), 1);
    TR_ASSERT_FATAL(info->_refCount >= 0, "Decrement resulted in negative reference count");
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJProfilerThread))
       {
@@ -3107,7 +3107,17 @@ TR_JProfilerThread::processWorkingQueue()
 
       _jProfilerMonitor->exit();
 
-      TR_PersistentProfileInfo **prevPtr = &_listHead;
+      /*
+       * prevPtr has a type of "TR_PersistentProfileInfo * volatile *"
+       * This mix of pointers and volatile can be hard to make sense of. To break it down:
+       *
+       * _listHead has the type "TR_PersistentProfileInfo * volatile" which is a volatile pointer to a non-volatile TR_PersistentProfileInfo.
+       * It is the pointer value itself that is volatile not the data it is pointing to.
+       *
+       * prevPtr is a pointer to _listHead. prevPtr itself is non-volatile.
+       * When put together, prevPtr is a non-volatile pointer to a volatile pointer to a non-volatile TR_PersistentProfileInfo.
+       */
+      TR_PersistentProfileInfo * volatile *prevPtr = &_listHead;
       TR_PersistentProfileInfo *cur = _listHead;
 
       size_t index = 0;
@@ -3146,10 +3156,10 @@ TR_JProfilerThread::addProfileInfo(TR_PersistentProfileInfo *newHead)
    // Atomic update for list head
    do {
       oldHead = _listHead;
-      oldPtr = (uintptr_t)oldHead;
+      oldPtr = reinterpret_cast<uintptr_t>(oldHead);
       newHead->_next = oldHead;
       }
-   while (oldPtr != VM_AtomicSupport::lockCompareExchange((uintptr_t*)&_listHead, oldPtr, (uintptr_t)newHead));
+   while (oldPtr != VM_AtomicSupport::lockCompareExchange(reinterpret_cast<volatile uintptr_t*>(&_listHead), oldPtr, reinterpret_cast<uintptr_t>(newHead)));
 
    VM_AtomicSupport::add(&_footprint, 1);
    }
@@ -3158,17 +3168,17 @@ TR_JProfilerThread::addProfileInfo(TR_PersistentProfileInfo *newHead)
  * Remove an arbitrary entry from the linked list.
  * Should only be called by the thread, as it does not support concurrent removals.
  *
- * \param prevNext Pointer to previous info's next pointer.
+ * \param prevNext Pointer to previous info's next pointer. This is a non-volatile pointer to a volatile pointer to a non-volatile TR_PersistentProfileInfo.
  * \param info Info to remove.
  * \return The next TR_PersistentProfileInfo after the removed info.
  */
 TR_PersistentProfileInfo *
-TR_JProfilerThread::deleteProfileInfo(TR_PersistentProfileInfo **prevNext, TR_PersistentProfileInfo *info)
+TR_JProfilerThread::deleteProfileInfo(TR_PersistentProfileInfo * volatile *prevNext, TR_PersistentProfileInfo *info)
    {
    TR_PersistentProfileInfo *next = info->_next;
-   uintptr_t oldPtr = (uintptr_t)info;
+   uintptr_t oldPtr = reinterpret_cast<uintptr_t>(info);
 
-   if (oldPtr != VM_AtomicSupport::lockCompareExchange((uintptr_t*)prevNext, oldPtr, (uintptr_t)next))
+   if (oldPtr != VM_AtomicSupport::lockCompareExchange(reinterpret_cast<volatile uintptr_t*>(prevNext), oldPtr, reinterpret_cast<uintptr_t>(next)))
       return next;
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableProfilingDataReclamation))
