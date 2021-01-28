@@ -808,6 +808,16 @@ class TR_RelocationRecordInlinedStaticMethodWithNopGuard : public TR_RelocationR
       virtual void updateSucceededStats(TR_AOTStats *aotStats);
    };
 
+class TR_RelocationRecordInlinedStaticMethod: public TR_RelocationRecordInlinedMethod
+   {
+   public:
+      TR_RelocationRecordInlinedStaticMethod() {}
+      TR_RelocationRecordInlinedStaticMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordInlinedMethod(reloRuntime, record) {}
+      virtual char *name();
+   private:
+      virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
+   };
+
 
 class TR_RelocationRecordInlinedSpecialMethodWithNopGuard : public TR_RelocationRecordNopGuard
    {
@@ -820,6 +830,16 @@ class TR_RelocationRecordInlinedSpecialMethodWithNopGuard : public TR_Relocation
       virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
       virtual void updateFailedStats(TR_AOTStats *aotStats);
       virtual void updateSucceededStats(TR_AOTStats *aotStats);
+   };
+
+class TR_RelocationRecordInlinedSpecialMethod: public TR_RelocationRecordInlinedMethod
+   {
+   public:
+      TR_RelocationRecordInlinedSpecialMethod() {}
+      TR_RelocationRecordInlinedSpecialMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordInlinedMethod(reloRuntime, record) {}
+      virtual char *name();
+   private:
+      virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
    };
 
 class TR_RelocationRecordInlinedVirtualMethodWithNopGuard : public TR_RelocationRecordNopGuard
@@ -837,15 +857,12 @@ class TR_RelocationRecordInlinedVirtualMethodWithNopGuard : public TR_Relocation
 
 class TR_RelocationRecordInlinedVirtualMethod: public TR_RelocationRecordInlinedMethod
    {
-   typedef TR_RelocationRecordInlinedMethod Base;
    public:
       TR_RelocationRecordInlinedVirtualMethod() {}
       TR_RelocationRecordInlinedVirtualMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordInlinedMethod(reloRuntime, record) {}
       virtual char *name();
-      virtual void print(TR_RelocationRuntime *reloRuntime);
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
    private:
-      virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex);
+      virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
    };
 
 class TR_RelocationRecordInlinedInterfaceMethodWithNopGuard : public TR_RelocationRecordNopGuard
@@ -869,8 +886,6 @@ class TR_RelocationRecordInlinedInterfaceMethod: public TR_RelocationRecordInlin
       TR_RelocationRecordInlinedInterfaceMethod() {}
       TR_RelocationRecordInlinedInterfaceMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordInlinedMethod(reloRuntime, record) {}
       virtual char *name();
-      virtual void print(TR_RelocationRuntime *reloRuntime);
-      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
    private:
       virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpindex, TR_OpaqueMethodBlock *callerMethod);
    };
@@ -888,6 +903,16 @@ class TR_RelocationRecordInlinedAbstractMethodWithNopGuard : public TR_Relocatio
       virtual void updateFailedStats(TR_AOTStats *aotStats);
       virtual void updateSucceededStats(TR_AOTStats *aotStats);
       virtual void createAssumptions(TR_RelocationRuntime *reloRuntime, uint8_t *reloLocation);
+   };
+
+class TR_RelocationRecordInlinedAbstractMethod: public TR_RelocationRecordInlinedMethod
+   {
+   public:
+      TR_RelocationRecordInlinedAbstractMethod() {}
+      TR_RelocationRecordInlinedAbstractMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordInlinedMethod(reloRuntime, record) {}
+      virtual char *name();
+   private:
+      virtual TR_OpaqueMethodBlock *getMethodFromCP(TR_RelocationRuntime *reloRuntime, void *void_cp, int32_t cpIndex, TR_OpaqueMethodBlock *callerMethod);
    };
 
 class TR_RelocationRecordProfiledInlinedMethod : public TR_RelocationRecordInlinedMethod

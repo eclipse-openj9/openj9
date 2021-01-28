@@ -463,7 +463,12 @@ bool TR_InlinerBase::inlineCallTarget(TR_CallStack *callStack, TR_CallTarget *ca
       argInfo->dumpTrace();
       }
 
-   if (!comp()->incInlineDepth(calltarget->_calleeSymbol, calltarget->_myCallSite->_callNode->getByteCodeInfo(), calltarget->_myCallSite->_callNode->getSymbolReference()->getCPIndex(), calltarget->_myCallSite->_callNode->getSymbolReference(), !calltarget->_myCallSite->_isIndirectCall, argInfo))
+   if (!comp()->incInlineDepth(calltarget->_calleeSymbol,
+                               calltarget->_myCallSite->_callNode,
+                               !calltarget->_myCallSite->_isIndirectCall,
+                               calltarget->_guard,
+                               calltarget->_receiverClass,
+                               argInfo))
 		{
 		return false;
 		}
