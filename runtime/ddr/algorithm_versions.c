@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,14 @@
 #define ALG_VM_ITABLE_VERSION 1
 #define ALG_VM_BYTECODE_VERSION 1
 #define ALG_OBJECT_MONITOR_VERSION 1
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+#define MIXED_REFERENCE_MODE 1
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
+/*
+ * All constants in the table below must also be declared as macros above
+ * so they will be included in the blob created by OMR's ddrgen tools.
+ */
 J9DDRConstantTableBegin(DDRAlgorithmVersions)
 	J9DDRConstantTableEntryWithValue("VM_MAJOR_VERSION", VM_MAJOR_VERSION)
 	J9DDRConstantTableEntryWithValue("VM_MINOR_VERSION", VM_MINOR_VERSION)
@@ -63,9 +70,9 @@ J9DDRConstantTableBegin(DDRAlgorithmVersions)
 	J9DDRConstantTableEntryWithValue("ALG_VM_ITABLE_VERSION", ALG_VM_ITABLE_VERSION)
 	J9DDRConstantTableEntryWithValue("ALG_VM_BYTECODE_VERSION", ALG_VM_BYTECODE_VERSION)
 	J9DDRConstantTableEntryWithValue("ALG_OBJECT_MONITOR_VERSION", ALG_OBJECT_MONITOR_VERSION)
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-	J9DDRConstantTableEntryWithValue("MIXED_REFERENCE_MODE", 1)
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#if defined(MIXED_REFERENCE_MODE)
+	J9DDRConstantTableEntryWithValue("MIXED_REFERENCE_MODE", MIXED_REFERENCE_MODE)
+#endif /* defined(MIXED_REFERENCE_MODE) */
 J9DDRConstantTableEnd
 
 J9DDRStructTableBegin(AlgorithmVersions)
