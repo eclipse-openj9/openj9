@@ -2645,32 +2645,11 @@ void TR::CompilationInfo::resumeCompilationThread()
          if (activate == TR_no)
             break;
 
-         if (curCompThreadInfoPT->getCompilationThreadState() == COMPTHREAD_SIGNAL_SUSPEND ||
-             curCompThreadInfoPT->getCompilationThreadState() == COMPTHREAD_SUSPENDED)
-            {
-            if (curCompThreadInfoPT->getCompilationThreadState() == COMPTHREAD_SUSPENDED)
-               {
-               curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_ACTIVE);
-               curCompThreadInfoPT->getCompThreadMonitor()->enter();
-               curCompThreadInfoPT->getCompThreadMonitor()->notifyAll(); // wake the suspended thread
-               curCompThreadInfoPT->getCompThreadMonitor()->exit();
-               }
-            else // COMPTHREAD_SIGNAL_SUSPEND
-               {
-               curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_ACTIVE);
-               }
-            incNumCompThreadsActive();
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Resume compThread %d Qweight=%d active=%d",
-                  (uint32_t)getPersistentInfo()->getElapsedTime(),
-                  curCompThreadInfoPT->getCompThreadId(),
-                  getQueueWeight(),
-                  getNumCompThreadsActive());
-               }
-            }
-         } // end for
-      TR_ASSERT(getNumCompThreadsActive() > 0, "We must have at least one compilation thread active");
+         curCompThreadInfoPT->resumeCompilationThread();
+         }
+
+      TR_ASSERT_FATAL(getNumCompThreadsActive() > 0, "We must have at least one compilation thread active");
+
       releaseCompMonitor(vmThread);
       }
    else // compilation on application thread
