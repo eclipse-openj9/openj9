@@ -186,7 +186,12 @@ J9::Compilation::Compilation(int32_t id,
    _serializedRuntimeAssumptions(getTypedAllocator<SerializedRuntimeAssumption *>(self()->allocator())),
    _clientData(NULL),
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   _osrProhibitedOverRangeOfTrees(false)
+   _osrProhibitedOverRangeOfTrees(false),
+   _useTracingBuffer(false),
+   _tracingBufferStart(NULL),
+   _tracingBufferCursor(NULL),
+   _tracingBufferSize(0),
+   _tracingBufferFreeSpace(0)
    {
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
@@ -228,6 +233,14 @@ J9::Compilation::Compilation(int32_t id,
 J9::Compilation::~Compilation()
    {
    _profileInfo->~TR_AccessedProfileInfo();
+   }
+
+void
+J9::Compilation::allocateTracingBuffer()
+   {
+   const int32_t size = TRACING_BUFFER_CAPACITY;
+   _tracingBufferStart = (char *)self()->region().allocate(size);
+   _tracingBufferSize = size;
    }
 
 TR_J9VMBase *
