@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2017, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@ Welcome to the Eclipse OpenJ9 repository
 We're not sure which route you might have taken on your way here, but we're really pleased to see you! If you came directly from our website, you've probably already learned a lot about Eclipse OpenJ9 and how it fits in to the OpenJDK ecosystem. If you came via some other route, here are a few key links to get you started:
 
 - [Eclipse OpenJ9 website](http://www.eclipse.org/openj9) - Learn about this high performance, enterprise-grade Java Virtual Machine (JVM) and why we think you want to get involved in its development.
-- [AdoptOpenJDK website](https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=openj9) - Grab pre-built OpenJDK binaries that embed OpenJ9 and try it out.
 - Build instructions for [JDK8](https://github.com/eclipse/openj9/blob/master/doc/build-instructions/Build_Instructions_V8.md), [JDK11](https://github.com/eclipse/openj9/blob/master/doc/build-instructions/Build_Instructions_V11.md), and [More](https://github.com/eclipse/openj9/blob/master/doc/build-instructions) - Here's how you can build an OpenJDK with OpenJ9 yourself.
 
 If you're looking for ways to help out at the project (thanks!), we have:
@@ -60,11 +59,11 @@ License 2.0 or Eclipse Public License 2.0 with a secondary compatibility license
 GPLv2 license) that is designed to allow OpenJDK to be built with the OpenJ9 JVM.  Please see our
 [LICENSE file](https://github.com/eclipse/openj9/blob/master/LICENSE) for more details.
 
-Eclipse OpenJ9 is a source code project that can be built alongside Java class libraries.  Cross platform
-nightly and release binaries and docker containers for OpenJDK with OpenJ9, targeting several JDK levels
-(JDK8, JDK11, and the latest versions) are built by the [AdoptOpenJDK organization](https://github.com/adoptopenjdk)
-and can be downloaded from the [AdoptOpenJDK download site](https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=openj9)
-or on [DockerHub](https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=openj9&starCount=0).
+Eclipse OpenJ9 is a source code project that can be built alongside Java class libraries. See the
+[build instructions](https://github.com/eclipse/openj9/blob/master/doc/build-instructions). Eclipse
+Foundation projects are not permitted to distribute, market or promote JDK binaries unless they have
+passed a Java SE Technology Compatibility Kit licensed from Oracle, to which the OpenJ9 project does
+not currently have access. See the [Eclipse Adoptium Project Charter](https://projects.eclipse.org/projects/adoptium/charter).
 
 What is the goal of the project?
 ================================
