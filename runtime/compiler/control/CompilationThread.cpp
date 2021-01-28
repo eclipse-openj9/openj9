@@ -3465,7 +3465,7 @@ void TR::CompilationInfo::stopCompilationThreads()
       // set the flag for the compilation-in-progress to be aborted at the next yield,
       // unless the thread is compiling for log - then it should finish
       // NOTE: even if the thread is compiling for dump, it will still be signaled to terminate
-      if (!(curCompThreadInfoPT->isDiagnosticThread()))
+      if (!curCompThreadInfoPT->isDiagnosticThread())
          curCompThreadInfoPT->setCompilationShouldBeInterrupted(SHUTDOWN_COMP_INTERRUPT);
 
       switch (curCompThreadInfoPT->getCompilationThreadState())
@@ -3483,7 +3483,7 @@ void TR::CompilationInfo::stopCompilationThreads()
             curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
             // Only decrement the number of active threads if we are not a diagnostic
             // thread
-            if (!(curCompThreadInfoPT->isDiagnosticThread()))
+            if (!curCompThreadInfoPT->isDiagnosticThread())
                decNumCompThreadsActive();
             break;
 
@@ -4410,7 +4410,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    compInfo->debugPrint(compThread, "-VMacc\n");
    // We can suspend this thread if too many are active
    if (
-      !(isDiagnosticThread()) // must not be reserved for log
+      !isDiagnosticThread() // must not be reserved for log
       && compInfo->getNumCompThreadsActive() > 1 // we should have at least one active besides this one
       && compilationThreadIsActive() // We haven't already been signaled to suspend or terminate
       && (
@@ -8050,7 +8050,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
          TR_ASSERT(p->_optimizationPlan, "Must have an optimization plan");
 
-         TR::CompilationInfo *compInfo = &that->_compInfo;
 #if defined(J9VM_OPT_JITSERVER)
          // If the options come from a remote party, skip the setup options process
          if (that->_methodBeingCompiled->_clientOptions != NULL)
@@ -8141,17 +8140,14 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_UseSymbolValidationManager, false);
                }
 
-            // Set jitdump specific options
-            TR::CompilationInfoPerThread *threadCompInfo = compInfo ? compInfo->getCompInfoForThread(vmThread) : NULL;
-            if (threadCompInfo != NULL &&
-                threadCompInfo->isDiagnosticThread() &&
-                options->getDebug())
+            // Set JitDump specific options
+            if (details.isJitDumpMethod() && options->getDebug())
                {
                options->setOption(TR_TraceAll);
                options->setOption(TR_EnableParanoidOptCheck);
 
                // Trace crashing optimization or the codegen depending on where we crashed
-               UDATA vmState = compInfo->getVMStateOfCrashedThread();
+               UDATA vmState = that->_compInfo.getVMStateOfCrashedThread();
                if ((vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
                   {
                   options->setOption(TR_TraceCG);
@@ -8640,7 +8636,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                // available, plus some safe reserve
                // TODO: we may want to use a lower value for third parameter below if the
                // compilation is deemed cheap (JNI, thunks, cold small method)
-               uint64_t physicalLimit = compInfo->computeFreePhysicalLimitAndAbortCompilationIfLow(compiler,
+               uint64_t physicalLimit = that->_compInfo.computeFreePhysicalLimitAndAbortCompilationIfLow(compiler,
                                                                                                    incompleteInfo,
                                                                                                    TR::Options::getScratchSpaceLowerBound());
                // If we were able to get the memory information
