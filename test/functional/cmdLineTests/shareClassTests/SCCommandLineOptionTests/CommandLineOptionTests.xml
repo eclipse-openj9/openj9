@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2004, 2019 IBM Corp. and others
+  Copyright (c) 2004, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <!-- #### RUN TokenHelperTests SUITE #### -->
-<suite id="Shared Classes CommandLineOptionTests Suite - Windows Configuration">
+<suite id="Shared Classes CommandLineOptionTests Suite">
 
 	<!-- Set variables up -->
 	<variable name="JAVA_DIR" value="$TEST_JDK_HOME$/bin"/>
