@@ -1388,6 +1388,10 @@ public class MethodHandles {
 			if ((accessMode & UNCONDITIONAL) == UNCONDITIONAL) {
 				newPrevAccessClass = null;
 			}
+
+			/*[IF JAVA_SPEC_VERSION >= 16]*/
+			newAccessMode &= ~ORIGINAL;
+			/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 			
 			return new Lookup(lookupClass, newPrevAccessClass, newAccessMode, true);
 			/*[ELSE] JAVA_SPEC_VERSION >= 14 */
@@ -2131,6 +2135,9 @@ public class MethodHandles {
 			case PRIVATE:
 			case PROTECTED:
 			case UNCONDITIONAL:
+			/*[IF JAVA_SPEC_VERSION >= 16]*/
+			case ORIGINAL:
+			/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 				/* dropMode is OK */
 				break;
 			default:
@@ -2145,6 +2152,10 @@ public class MethodHandles {
 			/* The lookup object has to discard the protected and unconditional access by default */
 			int newAccessMode = accessMode & ~(PROTECTED | UNCONDITIONAL);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
+			
+			/*[IF JAVA_SPEC_VERSION >= 16]*/
+			newAccessMode &= ~ORIGINAL;
+			/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 
 			/* The access mode to be dropped must exist in the current access mode;
 			 * otherwise, the new access mode remains unchanged.
@@ -2521,6 +2532,10 @@ public class MethodHandles {
 			secmgr.checkPermission(com.ibm.oti.util.ReflectPermissions.permissionSuppressAccessChecks);
 		}
 
+		/*[IF JAVA_SPEC_VERSION >= 16]*/
+		callerLookupMode &= ~Lookup.ORIGINAL;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
+		
 		/*[IF JAVA_SPEC_VERSION >= 14]*/
 		if (Objects.equals(targetClassModule, accessClassModule)) {
 			return new Lookup(targetClass, null, callerLookupMode, true);
