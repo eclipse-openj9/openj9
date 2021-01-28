@@ -75,19 +75,7 @@ public:
 	MMINLINE bool
 	compressObjectReferences()
 	{
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-#if defined(OMR_GC_FULL_POINTERS)
-#if defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
-		return (bool)OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES;
-#else /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
-		return _compressObjectReferences;
-#endif /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
-#else /* defined(OMR_GC_FULL_POINTERS) */
-		return true;
-#endif /* defined(OMR_GC_FULL_POINTERS) */
-#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
-		return false;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return OMR_COMPRESS_OBJECT_REFERENCES(_compressObjectReferences);
 	}
 
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)

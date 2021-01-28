@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
 /**
  * @file
  * @ingroup GC_Base
@@ -274,19 +273,7 @@ public:
 	MMINLINE bool
 	compressObjectReferences()
 	{
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-#if defined(OMR_GC_FULL_POINTERS)
-#if defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
-		return (bool)OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES;
-#else /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
-		return _compressObjectReferences;
-#endif /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
-#else /* defined(OMR_GC_FULL_POINTERS) */
-		return true;
-#endif /* defined(OMR_GC_FULL_POINTERS) */
-#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
-		return false;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return OMR_COMPRESS_OBJECT_REFERENCES(_compressObjectReferences);
 	}
 
 	/**
