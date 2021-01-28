@@ -3455,73 +3455,61 @@ void TR::CompilationInfo::stopCompilationThreads()
 
    addCompilationTraceEntry(vmThread, OP_WillStopCompilationThreads);
 
-   // cycle through all the threads
-   // NOTE: comp monitor is held while this is happening
+   // Cycle though all non-diagnostic threads and stop them
    for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
-      TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
 
-      // set the flag for the compilation-in-progress to be aborted at the next yield,
-      // unless the thread is compiling for log - then it should finish
-      // NOTE: even if the thread is compiling for dump, it will still be signaled to terminate
       if (!curCompThreadInfoPT->isDiagnosticThread())
-         curCompThreadInfoPT->setCompilationShouldBeInterrupted(SHUTDOWN_COMP_INTERRUPT);
-
-      switch (curCompThreadInfoPT->getCompilationThreadState())
-         {
-         case COMPTHREAD_SUSPENDED:
-            curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
-            curCompThreadInfoPT->getCompThreadMonitor()->enter();
-            curCompThreadInfoPT->getCompThreadMonitor()->notifyAll();
-            curCompThreadInfoPT->getCompThreadMonitor()->exit();
-            break;
-
-         case COMPTHREAD_ACTIVE:
-         case COMPTHREAD_SIGNAL_WAIT:
-         case COMPTHREAD_WAITING:
-            curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
-            // Only decrement the number of active threads if we are not a diagnostic
-            // thread
-            if (!curCompThreadInfoPT->isDiagnosticThread())
-               decNumCompThreadsActive();
-            break;
-
-         case COMPTHREAD_SIGNAL_SUSPEND:
-            curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
-            break;
-
-         case COMPTHREAD_SIGNAL_TERMINATE:
-         case COMPTHREAD_STOPPING:
-         case COMPTHREAD_STOPPED:
-            // weird case; we should not do anything
-            break;
-
-         case COMPTHREAD_UNINITIALIZED:
-            // Compilation thread did not have time to become fully initialized
-            curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
-            break;
-
-         default:
-            TR_ASSERT(false, "No other comp thread state possible here\n");
-         } // end switch
+         stopCompilationThread(curCompThreadInfoPT);
       }
 
    TR_ASSERT_FATAL(getNumCompThreadsActive() == 0, "All threads must be inactive at this point\n");
 
    purgeMethodQueue(compilationSuspended);
 
+   // Cycle though all non-diagnostic threads and wait for them to terminate. At this point it is possible that a
+   // compilation thread has crashed and is going through the JitDump process. The reason we skipped terminating the
+   // diagnostic threads in the above loop is because the JitDump logic will activate the diagnostic thread to generate
+   // the JitDump, so the diagnostic thread must not be in a terminated state at that point.
    for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
-      TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
 
-      while (curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_STOPPED)
+      if (!curCompThreadInfoPT->isDiagnosticThread())
          {
-         getCompilationMonitor()->notifyAll();
-         waitOnCompMonitor(vmThread);
+         while (curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_STOPPED)
+            {
+            getCompilationMonitor()->notifyAll();
+            waitOnCompMonitor(vmThread);
+            }
          }
       }
+
+   // Now that all compilation threads have terminated, we are sure none of them have crashed, or they have finished
+   // generating a JitDump. Only at this point can we terminate the diagnostic threads.
+   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+      {
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+
+      if (curCompThreadInfoPT->isDiagnosticThread())
+         stopCompilationThread(curCompThreadInfoPT);
+      }
+
+   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+      {
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+
+      if (curCompThreadInfoPT->isDiagnosticThread())
+         {
+         while (curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_STOPPED)
+            {
+            getCompilationMonitor()->notifyAll();
+            waitOnCompMonitor(vmThread);
+            }
+         }
+      }
+
    // Remove the method pool entries
    //
    PORT_ACCESS_FROM_JAVAVM(_jitConfig->javaVM);
@@ -3573,6 +3561,48 @@ void TR::CompilationInfo::stopCompilationThreads()
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   }
+
+void TR::CompilationInfo::stopCompilationThread(CompilationInfoPerThread* compInfoPT)
+   {
+   compInfoPT->setCompilationShouldBeInterrupted(SHUTDOWN_COMP_INTERRUPT);
+
+   switch (compInfoPT->getCompilationThreadState())
+      {
+      case COMPTHREAD_SUSPENDED:
+         compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
+         compInfoPT->getCompThreadMonitor()->enter();
+         compInfoPT->getCompThreadMonitor()->notifyAll();
+         compInfoPT->getCompThreadMonitor()->exit();
+         break;
+
+      case COMPTHREAD_ACTIVE:
+      case COMPTHREAD_SIGNAL_WAIT:
+      case COMPTHREAD_WAITING:
+         compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
+         
+         if (!compInfoPT->isDiagnosticThread())
+            decNumCompThreadsActive();
+         break;
+
+      case COMPTHREAD_SIGNAL_SUSPEND:
+         compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
+         break;
+
+      case COMPTHREAD_SIGNAL_TERMINATE:
+      case COMPTHREAD_STOPPING:
+      case COMPTHREAD_STOPPED:
+         // Weird case; we should not do anything
+         break;
+
+      case COMPTHREAD_UNINITIALIZED:
+         // Compilation thread did not have time to become fully initialized
+         compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
+         break;
+
+      default:
+         TR_ASSERT_FATAL(false, "No other comp thread state possible here");
+      }
    }
 
 IDATA J9THREAD_PROC compilationThreadProc(void *entryarg)
