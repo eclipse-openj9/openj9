@@ -1613,16 +1613,20 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 #if JAVA_SPEC_VERSION >= 16
 		if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monstatus) {
 			j9object_t syncObject = (j9object_t)currentThread->floatTemp2;
-			J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(currentThread, syncObject)->romClass);
+			J9Class* badClass = J9OBJECT_CLAZZ(currentThread, syncObject);
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(badClass->romClass);
 			TIDY_BEFORE_THROW();
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, 
+			if (J9_IS_J9CLASS_VALUETYPE(badClass)) {
+				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, 
 					J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			Assert_CodertVM_true(J9_ARE_ALL_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
-			currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, 
-					J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+			} else 
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			{
+				Assert_CodertVM_true(J9_ARE_ALL_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
+				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, 
+						J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+			}
 			addr = J9_JITHELPER_ACTION_THROW;
 			goto done;
 		}
