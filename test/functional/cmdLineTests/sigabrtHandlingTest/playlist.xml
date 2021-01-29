@@ -30,7 +30,7 @@
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config  $(Q)$(TEST_RESROOT)$(D)sigabrtHandlingTest.xml$(Q) -verbose -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
+	-config  $(Q)$(TEST_RESROOT)$(D)sigabrtHandlingTest.xml$(Q) -explainExcludes -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
 	${TEST_STATUS}	</command>
 		<platformRequirements></platformRequirements>
 		<levels>
