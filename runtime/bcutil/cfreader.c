@@ -2397,15 +2397,6 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 				break;
 			}
 
-			value = ((J9CfrAttributePermittedSubclasses*)attrib)->numberOfClasses;
-			if (0 >= value) {
-				if (enablePermittedSubclassErrors) {
-					errorCode = J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES__ID;
-					goto _errorFound;
-				}
-				break;
-			}
-
 			for (j = 0; j < ((J9CfrAttributePermittedSubclasses*)attrib)->numberOfClasses; j++) {
 				value = ((J9CfrAttributePermittedSubclasses*)attrib)->classes[j];
 				if ((0 == value) || (value >= cpCount)) {
@@ -2534,7 +2525,7 @@ checkClassVersion(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted
 		if (0xffff == minorVersion) {
 			errorCode = J9NLS_CFR_ERR_PREVIEW_VERSION__ID;
 			/* Allow cfdump to dump preview classes from other releases */
-			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion)) {
+			if (J9_ARE_ANY_BITS_SET(flags, BCT_AnyPreviewVersion | BCT_EnablePreview)) {
 				return 0;
 			}
 		}

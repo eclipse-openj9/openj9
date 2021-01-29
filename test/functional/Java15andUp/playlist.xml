@@ -43,8 +43,7 @@
             <group>functional</group>
         </groups>
         <subsets>
-            <!-- run for Java 15 only since this is a preview feature. -->
-            <subset>15</subset>
+            <subset>15+</subset>
         </subsets>
     </test>
     <test>
