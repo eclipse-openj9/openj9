@@ -7894,7 +7894,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 #if defined(J9VM_PORT_SIGNAL_SUPPORT)
          U_32 flags = J9PORT_SIG_FLAG_MAY_RETURN |
                       J9PORT_SIG_FLAG_SIGSEGV | J9PORT_SIG_FLAG_SIGFPE |
-                      J9PORT_SIG_FLAG_SIGILL  | J9PORT_SIG_FLAG_SIGBUS;
+                      J9PORT_SIG_FLAG_SIGILL  | J9PORT_SIG_FLAG_SIGBUS | J9PORT_SIG_FLAG_SIGTRAP;
 
          static char *noSignalWrapper = feGetEnv("TR_NoSignalWrapper");
 
@@ -7908,18 +7908,15 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
             UDATA protectedResult;
             if (entry->getMethodDetails().isJitDumpMethod())
                {
-               // NOTE:
-               //       for intentional crashes, intentional traps cause the dump, and we
-               //       are not protected against them (flag: J9PORT_SIG_FLAG_SIGTRAP)
-               protectedResult = j9sig_protect((j9sig_protected_fn)wrappedCompile, static_cast<void *>(&compParam),
-                                                  (j9sig_handler_fn)  jitDumpSignalHandler, vmThread,
-                                                  flags, &result);
+               protectedResult = j9sig_protect(static_cast<j9sig_protected_fn>(wrappedCompile), static_cast<void*>(&compParam),
+                                                  static_cast<j9sig_handler_fn>(jitDumpSignalHandler), 
+                                                  vmThread, flags, &result);
                }
             else
                {
-               protectedResult = j9sig_protect((j9sig_protected_fn)wrappedCompile, static_cast<void*>(&compParam),
-                                                  (j9sig_handler_fn)  jitSignalHandler, vmThread,
-                                                  flags, &result);
+               protectedResult = j9sig_protect(static_cast<j9sig_protected_fn>(wrappedCompile), static_cast<void*>(&compParam),
+                                                  static_cast<j9sig_handler_fn>(jitSignalHandler), 
+                                                  vmThread, flags, &result);
                }
 
             if (protectedResult == 0) // successful completion of wrappedCompile
