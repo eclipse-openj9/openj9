@@ -3998,14 +3998,8 @@ TR::CompilationInfoPerThread::processEntries()
          case TR::CompilationInfo::GO_TO_SLEEP_EMPTY_QUEUE:
             {
             // This compilation thread goes to sleep because there is no more work to do
-
-            // NOTE:
-            //      if we are a diagnostic thread and we see an empty queue,
-            //      then it is either an error, or we have finished all of our
-            //      work; we should broadcast this fact because in the error
-            //      case, there is a possibility of deadlock
             if (isDiagnosticThread() && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "diagnostic thread encountered an empty queue");
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Diagnostic thread encountered an empty queue");
 
             setCompilationThreadState(COMPTHREAD_WAITING);
             setLastTimeThreadWentToSleep(compInfo->getPersistentInfo()->getElapsedTime());
@@ -5213,169 +5207,209 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
                                               TR_CompThreadActions *compThreadAction)
    {
    TR_MethodToBeCompiled *nextMethodToBeCompiled = NULL;
-   *compThreadAction = PROCESS_ENTRY;
-   if (_methodQueue)
+
+   // Only the diagnostic thread should be processing JitDump compilations. This is to ensure proper tracing is active
+   // and proper synchronization is performed w.r.t. special events (interpreter shutdown, etc.). The logic here is
+   // split into two parts. In the event we are a diagnostic thread, the JitDump process will have ensured the method
+   // compilation queue has been purged and all further compilations have been suspended until the entire JitDump
+   // process in complete. This also means if we are a diagnostic thread, then the only entries in the queue should
+   // be JitDump compile requests. We will ensure this is the case via a fatal assert.
+   //
+   // In addition there can be scenarios in which a non-diagnostic compilation thread is still attempting to process
+   // entries while the JitDump process (in a crashed thread) is happening. This is because one compilation thread
+   // must always be active, and there is a timing hole between purging of the queue in the JitDump process, and when
+   // the diagnostic thread is resumed. This means a non-diagnostic thread could attempt to pick up a JitDump
+   // compilation request (see eclipse/openj9#11772 for details). We must ensure that this does not happen and simply
+   // skip the request if we are a non-diagnostic thread attempting to process a JitDump compilation.
+   if (compInfoPT->isDiagnosticThread())
       {
-      // If the request is sync or AOT load or InstantReplay, take it now
-      if (compInfoPT->isDiagnosticThread() // InstantReplay compilations must be processed immediately
-          || _methodQueue->_priority >= CP_SYNC_MIN // sync comp
-          || _methodQueue->_methodIsInSharedCache == TR_yes // very cheap relocation
-#if defined(J9VM_OPT_JITSERVER)
-          || getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER // compile right away in server mode
-#endif
-         )
+      // We never want to self-suspend the diagnostic thread. The JitDump process will do it after it is complete.
+      *compThreadAction = GO_TO_SLEEP_EMPTY_QUEUE;
+
+      if (_methodQueue)
          {
          nextMethodToBeCompiled = _methodQueue;
          _methodQueue = _methodQueue->_next;
-         }
-      // Check if we need to throttle
-      else if (exceedsCompCpuEntitlement() == TR_yes &&
-              !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
-              (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
-         {
-         // If at all possible suspend the compilation thread
-         // Otherwise, perform a timed wait
-         if (getNumCompThreadsActive() > 1)
-            *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         else
-            *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         }
-      // Avoid two concurrent hot compilations
-      else if (getNumCompThreadsCompilingHotterMethods() <= 0 || // no hot compilation in progress
-               _methodQueue->_weight < TR::Options::_expensiveCompWeight) // This is a cheaper comp
-         {
-         nextMethodToBeCompiled = _methodQueue;
-         _methodQueue = _methodQueue->_next;
-         }
-      else // scan for a cold/warm method
-         {
-         TR_MethodToBeCompiled *prev = _methodQueue;
-         for (nextMethodToBeCompiled = _methodQueue->_next; nextMethodToBeCompiled; prev = nextMethodToBeCompiled, nextMethodToBeCompiled = nextMethodToBeCompiled->_next)
-            {
-            if (nextMethodToBeCompiled->_optimizationPlan->getOptLevel() <= warm || // cheaper comp
-                nextMethodToBeCompiled->_priority >= CP_SYNC_MIN ||       // sync comp
-                nextMethodToBeCompiled->_methodIsInSharedCache == TR_yes) // very cheap relocation
-               {
-               prev->_next = nextMethodToBeCompiled->_next;
-               break;
-               }
-            }
-         if (!nextMethodToBeCompiled)
-            {
-            *compThreadAction = GO_TO_SLEEP_CONCURRENT_EXPENSIVE_REQUESTS;
 
-            // make sure there is at least one thread that is not jobless
-            TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = getArrayOfCompilationInfoPerThread();
-            int32_t numActive = 0, numHot = 0, numLowPriority = 0;
-            for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
-               {
-               TR::CompilationInfoPerThread *curCompThreadInfoPT = arrayOfCompInfoPT[i];
-               TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
+         // See explanation at the start of this function of why it is important to ensure this
+         TR_ASSERT_FATAL(nextMethodToBeCompiled->getMethodDetails().isJitDumpMethod(), "Diagnostic thread attempting to process non-JitDump compilation");
 
-               CompilationThreadState currentThreadState = curCompThreadInfoPT->getCompilationThreadState();
-               if (
-                  currentThreadState == COMPTHREAD_ACTIVE
-                  || currentThreadState == COMPTHREAD_SIGNAL_WAIT
-                  || currentThreadState == COMPTHREAD_WAITING
-                  || currentThreadState == COMPTHREAD_SIGNAL_SUSPEND
-                  )
-                  {
-                  if (curCompThreadInfoPT->getMethodBeingCompiled() &&
-                      curCompThreadInfoPT->getMethodBeingCompiled()->_priority < CP_ASYNC_NORMAL)
-                      numLowPriority++;
-                  if (curCompThreadInfoPT->compilationThreadIsActive())
-                     numActive++;
-                  if (curCompThreadInfoPT->getMethodBeingCompiled() &&
-                      curCompThreadInfoPT->getMethodBeingCompiled()->_hasIncrementedNumCompThreadsCompilingHotterMethods)
-                     numHot++;
-                  }
-               }
-
-            // There is a method to be compiled, but this thread is not going to take it out of the queue
-            // There are two cases when this might happen:
-            // (1) Two hot requests going in parallel
-            // (2) Two low priority requests going in parallel during startup phase
-            TR_ASSERT(numHot >= 1 || numLowPriority >= 1, "We must have a comp thread working on a hot or low priority method %d %d", numHot, numLowPriority);
-
-            if (numActive <= 1) // Current thread is by default active because it tried to dequeue a request
-               {
-               // There is no thread left to handle the existing request
-               // See defect 182392 for why this could have happened and for the solution
-               //fprintf(stderr, "JIT WARNING: no active thread left to handle queued request\n");
-               }
-            // sanity checks
-            if (getNumCompThreadsActive() != numActive)
-               {
-               TR_ASSERT(false, "Inconsistency with active threads %d %d\n", getNumCompThreadsActive(), numActive);
-               setNumCompThreadsActive(numActive); // apply correction
-               }
-            if (getNumCompThreadsCompilingHotterMethods() != numHot)
-               {
-               TR_ASSERT(false, "Inconsistency with hot threads %d %d\n", getNumCompThreadsCompilingHotterMethods(), numHot);
-               setNumCompThreadsCompilingHotterMethods(numHot); // apply correction
-               }
-            }
-         }
-      if (nextMethodToBeCompiled) // A request has been dequeued
-         {
-         updateCompQueueAccountingOnDequeue(nextMethodToBeCompiled);
-         }
-      }
-   // When no request is in the main queue we can look in the low priority queue
-   else if (getLowPriorityCompQueue().hasLowPriorityRequest() &&
-            canProcessLowPriorityRequest())
-      {
-      // Check if we need to throttle
-      if (exceedsCompCpuEntitlement() == TR_yes &&
-          !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
-          (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
-         {
-         // If at all possible suspend the compilation thread
-         // Otherwise, perform a timed wait
-         if (getNumCompThreadsActive() > 1)
-            *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         else
-            *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         }
-      else
-         {
-         nextMethodToBeCompiled = getLowPriorityCompQueue().extractFirstLPQRequest();
-         }
-      }
-   // Now let's look in the JProfiling queue
-   else if (!getJProfilingCompQueue().isEmpty() && canProcessJProfilingRequest())
-      {
-      // Check if we need to throttle
-      if (exceedsCompCpuEntitlement() == TR_yes &&
-         !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
-         (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 >(TR::Options::_compThreadCPUEntitlement + 50)))
-         {
-         // If at all possible suspend the compilation thread
-         // Otherwise, perform a timed wait
-         if (getNumCompThreadsActive() > 1)
-            *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         else
-            *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         }
-      else
-         {
-         nextMethodToBeCompiled = getJProfilingCompQueue().extractFirstCompRequest();
+         *compThreadAction = PROCESS_ENTRY;
          }
       }
    else
       {
-      // Cannot take a request either from main queue or LPQ
-      // If this is the last active compilation thread, then go to sleep,
-      // otherwise suspend the compilation thread
-      if (getNumCompThreadsActive() > 1)
+      *compThreadAction = PROCESS_ENTRY;
+
+      if (_methodQueue)
          {
-         *compThreadAction = SUSPEND_COMP_THREAD_EMPTY_QUEUE;
+         // If the request is sync or AOT load, take it now
+         if (_methodQueue->_priority >= CP_SYNC_MIN // sync comp
+            || _methodQueue->_methodIsInSharedCache == TR_yes // very cheap relocation
+   #if defined(J9VM_OPT_JITSERVER)
+            || getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER // compile right away in server mode
+   #endif
+            )
+            {
+            nextMethodToBeCompiled = _methodQueue;
+            _methodQueue = _methodQueue->_next;
+            }
+         // Check if we need to throttle
+         else if (exceedsCompCpuEntitlement() == TR_yes &&
+               !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
+               (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
+            {
+            // If at all possible suspend the compilation thread
+            // Otherwise, perform a timed wait
+            if (getNumCompThreadsActive() > 1)
+               *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            else
+               *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            }
+         // Avoid two concurrent hot compilations
+         else if (getNumCompThreadsCompilingHotterMethods() <= 0 || // no hot compilation in progress
+                  _methodQueue->_weight < TR::Options::_expensiveCompWeight) // This is a cheaper comp
+            {
+            nextMethodToBeCompiled = _methodQueue;
+            _methodQueue = _methodQueue->_next;
+            }
+         else // scan for a cold/warm method
+            {
+            TR_MethodToBeCompiled *prev = _methodQueue;
+            for (nextMethodToBeCompiled = _methodQueue->_next; nextMethodToBeCompiled; prev = nextMethodToBeCompiled, nextMethodToBeCompiled = nextMethodToBeCompiled->_next)
+               {
+               if (nextMethodToBeCompiled->_optimizationPlan->getOptLevel() <= warm || // cheaper comp
+                  nextMethodToBeCompiled->_priority >= CP_SYNC_MIN ||       // sync comp
+                  nextMethodToBeCompiled->_methodIsInSharedCache == TR_yes) // very cheap relocation
+                  {
+                  prev->_next = nextMethodToBeCompiled->_next;
+                  break;
+                  }
+               }
+            if (!nextMethodToBeCompiled)
+               {
+               *compThreadAction = GO_TO_SLEEP_CONCURRENT_EXPENSIVE_REQUESTS;
+
+               // make sure there is at least one thread that is not jobless
+               TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = getArrayOfCompilationInfoPerThread();
+               int32_t numActive = 0, numHot = 0, numLowPriority = 0;
+               for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+                  {
+                  TR::CompilationInfoPerThread *curCompThreadInfoPT = arrayOfCompInfoPT[i];
+                  TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
+
+                  CompilationThreadState currentThreadState = curCompThreadInfoPT->getCompilationThreadState();
+                  if (
+                     currentThreadState == COMPTHREAD_ACTIVE
+                     || currentThreadState == COMPTHREAD_SIGNAL_WAIT
+                     || currentThreadState == COMPTHREAD_WAITING
+                     || currentThreadState == COMPTHREAD_SIGNAL_SUSPEND
+                     )
+                     {
+                     if (curCompThreadInfoPT->getMethodBeingCompiled() &&
+                        curCompThreadInfoPT->getMethodBeingCompiled()->_priority < CP_ASYNC_NORMAL)
+                        numLowPriority++;
+                     if (curCompThreadInfoPT->compilationThreadIsActive())
+                        numActive++;
+                     if (curCompThreadInfoPT->getMethodBeingCompiled() &&
+                        curCompThreadInfoPT->getMethodBeingCompiled()->_hasIncrementedNumCompThreadsCompilingHotterMethods)
+                        numHot++;
+                     }
+                  }
+
+               // There is a method to be compiled, but this thread is not going to take it out of the queue
+               // There are two cases when this might happen:
+               // (1) Two hot requests going in parallel
+               // (2) Two low priority requests going in parallel during startup phase
+               TR_ASSERT(numHot >= 1 || numLowPriority >= 1, "We must have a comp thread working on a hot or low priority method %d %d", numHot, numLowPriority);
+
+               if (numActive <= 1) // Current thread is by default active because it tried to dequeue a request
+                  {
+                  // There is no thread left to handle the existing request
+                  // See defect 182392 for why this could have happened and for the solution
+                  //fprintf(stderr, "JIT WARNING: no active thread left to handle queued request\n");
+                  }
+               // sanity checks
+               if (getNumCompThreadsActive() != numActive)
+                  {
+                  TR_ASSERT(false, "Inconsistency with active threads %d %d\n", getNumCompThreadsActive(), numActive);
+                  setNumCompThreadsActive(numActive); // apply correction
+                  }
+               if (getNumCompThreadsCompilingHotterMethods() != numHot)
+                  {
+                  TR_ASSERT(false, "Inconsistency with hot threads %d %d\n", getNumCompThreadsCompilingHotterMethods(), numHot);
+                  setNumCompThreadsCompilingHotterMethods(numHot); // apply correction
+                  }
+               }
+            }
+         if (nextMethodToBeCompiled) // A request has been dequeued
+            {
+            updateCompQueueAccountingOnDequeue(nextMethodToBeCompiled);
+            }
+         }
+      // When no request is in the main queue we can look in the low priority queue
+      else if (getLowPriorityCompQueue().hasLowPriorityRequest() &&
+               canProcessLowPriorityRequest())
+         {
+         // Check if we need to throttle
+         if (exceedsCompCpuEntitlement() == TR_yes &&
+            !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
+            (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
+            {
+            // If at all possible suspend the compilation thread
+            // Otherwise, perform a timed wait
+            if (getNumCompThreadsActive() > 1)
+               *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            else
+               *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            }
+         else
+            {
+            nextMethodToBeCompiled = getLowPriorityCompQueue().extractFirstLPQRequest();
+            }
+         }
+      // Now let's look in the JProfiling queue
+      else if (!getJProfilingCompQueue().isEmpty() && canProcessJProfilingRequest())
+         {
+         // Check if we need to throttle
+         if (exceedsCompCpuEntitlement() == TR_yes &&
+            !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
+            (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 >(TR::Options::_compThreadCPUEntitlement + 50)))
+            {
+            // If at all possible suspend the compilation thread
+            // Otherwise, perform a timed wait
+            if (getNumCompThreadsActive() > 1)
+               *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            else
+               *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            }
+         else
+            {
+            nextMethodToBeCompiled = getJProfilingCompQueue().extractFirstCompRequest();
+            }
          }
       else
          {
-         *compThreadAction = GO_TO_SLEEP_EMPTY_QUEUE;
+         // Cannot take a request either from main queue or LPQ
+         // If this is the last active compilation thread, then go to sleep,
+         // otherwise suspend the compilation thread
+         if (getNumCompThreadsActive() > 1)
+            {
+            *compThreadAction = SUSPEND_COMP_THREAD_EMPTY_QUEUE;
+            }
+         else
+            {
+            *compThreadAction = GO_TO_SLEEP_EMPTY_QUEUE;
+            }
+         }
+
+      if (nextMethodToBeCompiled != NULL)
+         {
+         // See explanation at the start of this function of why it is important to ensure this
+         TR_ASSERT_FATAL(!nextMethodToBeCompiled->getMethodDetails().isJitDumpMethod(), "Non-diagnostic thread attempting to process JitDump compilation");
          }
       }
+
    return nextMethodToBeCompiled;
    }
 
