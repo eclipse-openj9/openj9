@@ -5212,7 +5212,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
                                               bool compThreadCameOutOfSleep,
                                               TR_CompThreadActions *compThreadAction)
    {
-   TR_MethodToBeCompiled *m = NULL;
+   TR_MethodToBeCompiled *nextMethodToBeCompiled = NULL;
    *compThreadAction = PROCESS_ENTRY;
    if (_methodQueue)
       {
@@ -5225,7 +5225,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
 #endif
          )
          {
-         m = _methodQueue;
+         nextMethodToBeCompiled = _methodQueue;
          _methodQueue = _methodQueue->_next;
          }
       // Check if we need to throttle
@@ -5244,23 +5244,23 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
       else if (getNumCompThreadsCompilingHotterMethods() <= 0 || // no hot compilation in progress
                _methodQueue->_weight < TR::Options::_expensiveCompWeight) // This is a cheaper comp
          {
-         m = _methodQueue;
+         nextMethodToBeCompiled = _methodQueue;
          _methodQueue = _methodQueue->_next;
          }
       else // scan for a cold/warm method
          {
          TR_MethodToBeCompiled *prev = _methodQueue;
-         for (m = _methodQueue->_next; m; prev = m, m = m->_next)
+         for (nextMethodToBeCompiled = _methodQueue->_next; nextMethodToBeCompiled; prev = nextMethodToBeCompiled, nextMethodToBeCompiled = nextMethodToBeCompiled->_next)
             {
-            if (m->_optimizationPlan->getOptLevel() <= warm || // cheaper comp
-                m->_priority >= CP_SYNC_MIN ||       // sync comp
-                m->_methodIsInSharedCache == TR_yes) // very cheap relocation
+            if (nextMethodToBeCompiled->_optimizationPlan->getOptLevel() <= warm || // cheaper comp
+                nextMethodToBeCompiled->_priority >= CP_SYNC_MIN ||       // sync comp
+                nextMethodToBeCompiled->_methodIsInSharedCache == TR_yes) // very cheap relocation
                {
-               prev->_next = m->_next;
+               prev->_next = nextMethodToBeCompiled->_next;
                break;
                }
             }
-         if (!m)
+         if (!nextMethodToBeCompiled)
             {
             *compThreadAction = GO_TO_SLEEP_CONCURRENT_EXPENSIVE_REQUESTS;
 
@@ -5316,9 +5316,9 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
                }
             }
          }
-      if (m) // A request has been dequeued
+      if (nextMethodToBeCompiled) // A request has been dequeued
          {
-         updateCompQueueAccountingOnDequeue(m);
+         updateCompQueueAccountingOnDequeue(nextMethodToBeCompiled);
          }
       }
    // When no request is in the main queue we can look in the low priority queue
@@ -5339,7 +5339,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
          }
       else
          {
-         m = getLowPriorityCompQueue().extractFirstLPQRequest();
+         nextMethodToBeCompiled = getLowPriorityCompQueue().extractFirstLPQRequest();
          }
       }
    // Now let's look in the JProfiling queue
@@ -5359,7 +5359,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
          }
       else
          {
-         m = getJProfilingCompQueue().extractFirstCompRequest();
+         nextMethodToBeCompiled = getJProfilingCompQueue().extractFirstCompRequest();
          }
       }
    else
@@ -5376,7 +5376,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
          *compThreadAction = GO_TO_SLEEP_EMPTY_QUEUE;
          }
       }
-   return m;
+   return nextMethodToBeCompiled;
    }
 
 //----------------------------- computeCompThreadSleepTime ----------------------
