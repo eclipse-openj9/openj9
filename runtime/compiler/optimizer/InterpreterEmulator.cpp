@@ -22,6 +22,7 @@
 #include "optimizer/InterpreterEmulator.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "env/VMAccessCriticalSection.hpp"
+#include "env/JSR292Methods.h"
 #include "optimizer/PreExistence.hpp"
 #include "optimizer/J9CallGraph.hpp"
 #include "ilgen/IlGenRequest.hpp"
@@ -597,7 +598,13 @@ InterpreterEmulator::prepareToFindAndCreateCallsites(TR::Block **blocks, flags8_
 void
 InterpreterEmulator::visitInvokedynamic()
    {
-
+   TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
+   int32_t callSiteIndex = next2Bytes();
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   if (owningMethod->isUnresolvedCallSiteTableEntry(callSiteIndex) || comp()->compileRelocatableCode()) return; // do nothing if unresolved or is AOT
+   uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->callSiteTableEntryAddress(callSiteIndex);
+   updateKnotAndCreateCallSiteUsingInvokeCacheArray(owningMethod, invokeCacheArray, -1);
+#else
    bool isInterface = false;
    bool isIndirectCall = false;
    TR::Method *interfaceMethod = 0;
@@ -606,43 +613,7 @@ InterpreterEmulator::visitInvokedynamic()
    TR::Node *callNode = 0;
    TR::ResolvedMethodSymbol *resolvedSymbol = 0;
    Operand *result = NULL;
-   int32_t callSiteIndex = next2Bytes();
    TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-   TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
-
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   if (owningMethod->isUnresolvedCallSiteTableEntry(callSiteIndex) || comp()->compileRelocatableCode()) return; // do nothing if unresolved or is AOT
-   TR_J9VMBase *fej9 = comp()->fej9();
-   // add appendix object to knot and push to stack if emulator is initialized with state
-   if (_iteratorWithState)
-      {
-      if (knot)
-         {
-         TR::VMAccessCriticalSection vmAccess(fej9);
-         push(new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndex((uintptr_t )owningMethod->appendixElementRefFromInvokeDynamicSideTable(callSiteIndex), true)));
-         }
-      else
-         pushUnknownOperand();
-      }
-
-   TR_OpaqueMethodBlock* targetMethodObj = 0;
-      {
-      TR::VMAccessCriticalSection vmAccess(fej9);
-      targetMethodObj = fej9->targetMethodFromMemberName((uintptr_t) owningMethod->memberNameElementRefFromInvokeDynamicSideTable(callSiteIndex));
-      }
-   TR_ResolvedMethod * targetMethod = fej9->createResolvedMethod(this->trMemory(), targetMethodObj, owningMethod);
-
-   bool allconsts = false;
-   isIndirectCall = true;
-   if (targetMethod->numberOfExplicitParameters() > 0 && targetMethod->numberOfExplicitParameters() <= _pca.getNumPrevConstArgs(targetMethod->numberOfExplicitParameters()))
-         allconsts = true;
-   TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_DirectCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
-                                                                        callNode, interfaceMethod, targetMethod->classOfMethod(),
-                                                                        -1, -1, targetMethod,
-                                                                        resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-                                                                        _recursionDepth, allconsts);
-   findTargetAndUpdateInfoForCallsite(callsite);
-#else
    if (knot && !owningMethod->isUnresolvedCallSiteTableEntry(callSiteIndex))
       {
       isIndirectCall = true;
@@ -671,29 +642,25 @@ InterpreterEmulator::visitInvokedynamic()
 void
 InterpreterEmulator::visitInvokehandle()
    {
-
-   bool isInterface = false;
-   bool isIndirectCall = false;
-   TR::Method *interfaceMethod = 0;
-   TR::TreeTop *callNodeTreeTop = 0;
-   TR::Node *parent = 0;
-   TR::Node *callNode = 0;
-   TR::ResolvedMethodSymbol *resolvedSymbol = 0;
-   Operand *result = NULL;
    int32_t cpIndex = next2Bytes();
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
-
    if (owningMethod->isUnresolvedMethodTypeTableEntry(cpIndex) || comp()->compileRelocatableCode()) return; // do nothing if unresolved or is AOT
-   TR_J9VMBase *fej9 = comp()->fej9();
+   uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->methodTypeTableEntryAddress(cpIndex);
+   updateKnotAndCreateCallSiteUsingInvokeCacheArray(owningMethod, invokeCacheArray, cpIndex);
+   }
 
-   // add appendix object to knot and push to stack if emulator is initialized with state
+void
+InterpreterEmulator::updateKnotAndCreateCallSiteUsingInvokeCacheArray(TR_ResolvedJ9Method* owningMethod, uintptr_t * invokeCacheArray, int32_t cpIndex)
+   {
+   TR_J9VMBase *fej9 = comp()->fej9();
    if (_iteratorWithState)
       {
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
       if (knot)
          {
          TR::VMAccessCriticalSection vmAccess(fej9);
-         push(new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndex((uintptr_t) owningMethod->appendixElementRefFromInvokeHandleSideTable(cpIndex), true)));
+         uintptr_t appendixElementRef = (uintptr_t) fej9->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
+         push(new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndex(appendixElementRef, true)));
          }
       else
          pushUnknownOperand();
@@ -702,10 +669,18 @@ InterpreterEmulator::visitInvokehandle()
    TR_OpaqueMethodBlock * targetMethodObj = 0;
       {
       TR::VMAccessCriticalSection vmAccess(fej9);
-      targetMethodObj = fej9->targetMethodFromMemberName((uintptr_t) owningMethod->memberNameElementRefFromInvokeHandleSideTable(cpIndex));
+      uintptr_t memberNameElementRef = (uintptr_t) fej9->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex);
+      targetMethodObj = fej9->targetMethodFromMemberName(memberNameElementRef);
       }
    TR_ResolvedMethod * targetMethod = fej9->createResolvedMethod(this->trMemory(), targetMethodObj, owningMethod);
-
+   bool isInterface = false;
+   bool isIndirectCall = false;
+   TR::Method *interfaceMethod = 0;
+   TR::TreeTop *callNodeTreeTop = 0;
+   TR::Node *parent = 0;
+   TR::Node *callNode = 0;
+   TR::ResolvedMethodSymbol *resolvedSymbol = 0;
+   TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
    bool allconsts = false;
    if (targetMethod->numberOfExplicitParameters() > 0 && targetMethod->numberOfExplicitParameters() <= _pca.getNumPrevConstArgs(targetMethod->numberOfExplicitParameters()))
          allconsts = true;
@@ -716,8 +691,8 @@ InterpreterEmulator::visitInvokehandle()
                                                                         _recursionDepth, allconsts);
 
    findTargetAndUpdateInfoForCallsite(callsite);
-
    }
+
 #endif //J9VM_OPT_OPENJDK_METHODHANDLE
 
 bool

@@ -279,6 +279,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       void visitInvokevirtual();
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
       void visitInvokehandle();
+      void updateKnotAndCreateCallSiteUsingInvokeCacheArray(TR_ResolvedJ9Method* owningMethod, uintptr_t * invokeCacheArray, int32_t cpIndex);
 #endif
       void visitInvokespecial();
       void visitInvokestatic();

@@ -562,7 +562,7 @@ TR::SymbolReference *
 J9::SymbolReferenceTable::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::ResolvedMethodSymbol * owningMethodSymbol,  TR::SymbolReference * originalSymRef, uintptr_t arrayElementRef)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   TR::VMAccessCriticalSection invokeCacheEntry(comp());
+   TR_ASSERT(fej9->haveAccess(), "Require VM access to be acquired by caller");
    TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
    if (!knot) return originalSymRef;
    TR_ResolvedJ9Method *owningMethod = static_cast<TR_ResolvedJ9Method*>(owningMethodSymbol->getResolvedMethod());

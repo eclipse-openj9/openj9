@@ -146,6 +146,15 @@ private:
     *       The CP index for the invokehandle bytecode
     */
    void         loadFromSideTableForInvokeHandle(int32_t cpIndex);
+
+   /**
+    * \brief
+    *    Generates IL to load elements from invokeCacheArray
+    *
+    * \param tableEntrySymRef the symref representing the invokeCacheArray
+    * \param invokeCacheArray the invokeCacheArray
+    */
+   void         loadInvokeCacheArrayElements(TR::SymbolReference *tableEntrySymRef, uintptr_t * invokeCacheArray);
 #endif
 
    TR::Node *    genHandleTypeCheck(TR::Node *handle, TR::Node *expectedType);

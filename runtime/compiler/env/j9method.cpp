@@ -6894,9 +6894,10 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
    if (!isUnresolvedCallSiteTableEntry(callSiteIndex))
       {
       TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
+      uintptr_t * invokeCacheArray = (uintptr_t *) callSiteTableEntryAddress(callSiteIndex);
          {
          TR::VMAccessCriticalSection getResolvedDynamicMethod(fej9());
-         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) memberNameElementRefFromInvokeDynamicSideTable(callSiteIndex));
+         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex));
          }
       result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
       return result;
@@ -6949,10 +6950,11 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
 
    if (!isUnresolvedMethodTypeTableEntry(cpIndex))
       {
+      uintptr_t * invokeCacheArray = (uintptr_t *) methodTypeTableEntryAddress(cpIndex);
       TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
          {
          TR::VMAccessCriticalSection getResolvedHandleMethod(fej9());
-         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) memberNameElementRefFromInvokeHandleSideTable(cpIndex));
+         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex));
          }
       result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
       return result;
@@ -7042,44 +7044,6 @@ TR_ResolvedJ9Method::fieldsAreSame(I_32 cpIndex1, TR_ResolvedMethod * m2, I_32 c
 
    return false;
    }
-
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-void *
-TR_ResolvedJ9Method::memberNameElementRefFromInvokeDynamicSideTable(int32_t callSiteIndex)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
-   uintptr_t * invokeCacheArray = (uintptr_t *) callSiteTableEntryAddress(callSiteIndex);
-   TR::VMAccessCriticalSection getRefElement(fej9);
-   return (void*) fej9->getReferenceElement(*invokeCacheArray, 0);
-   }
-
-void *
-TR_ResolvedJ9Method::appendixElementRefFromInvokeDynamicSideTable(int32_t callSiteIndex)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
-   uintptr_t * invokeCacheArray = (uintptr_t *) callSiteTableEntryAddress(callSiteIndex);
-   TR::VMAccessCriticalSection getRefElement(fej9);
-   return (void*) fej9->getReferenceElement(*invokeCacheArray, 1);
-   }
-
-void *
-TR_ResolvedJ9Method::memberNameElementRefFromInvokeHandleSideTable(int32_t cpIndex)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
-   uintptr_t * invokeCacheArray = (uintptr_t *) methodTypeTableEntryAddress(cpIndex);
-   TR::VMAccessCriticalSection getRefElement(fej9);
-   return (void*) fej9->getReferenceElement(*invokeCacheArray, 0);
-   }
-
-void *
-TR_ResolvedJ9Method::appendixElementRefFromInvokeHandleSideTable(int32_t cpIndex)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
-   uintptr_t * invokeCacheArray = (uintptr_t *) methodTypeTableEntryAddress(cpIndex);
-   TR::VMAccessCriticalSection getRefElement(fej9);
-   return (void*) fej9->getReferenceElement(*invokeCacheArray, 1);
-   }
-#endif
 
 bool
 TR_ResolvedJ9Method::staticsAreSame(I_32 cpIndex1, TR_ResolvedMethod * m2, I_32 cpIndex2, bool &sigSame)

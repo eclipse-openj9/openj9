@@ -3382,55 +3382,50 @@ void
 TR_J9ByteCodeIlGenerator::loadFromSideTableForInvokeDynamic(int32_t callSiteIndex)
    {
    TR::SymbolReference *callSiteTableEntrySymRef = symRefTab()->findOrCreateCallSiteTableEntrySymbol(_methodSymbol, callSiteIndex);
-   loadSymbol(TR::aload, callSiteTableEntrySymRef);
-   loadConstant(TR::iconst, 1); // appendix object
-   loadArrayElement(TR::Address, comp()->il.opCodeForIndirectLoad(TR::Address), false);
-   if (callSiteTableEntrySymRef->isUnresolved())
-      {
-      // Appendix being unresolved means the target is also unresolved.
-      // Instead of creating a call to the adapter method, we construct
-      // a call to linkToStatic and provide appendix and target as
-      // additional parameters.
-      loadSymbol(TR::aload, callSiteTableEntrySymRef);
-      loadConstant(TR::iconst, 0); // membername object
-      loadArrayElement(TR::Address, comp()->il.opCodeForIndirectLoad(TR::Address), false);
-      }
-   else
-      {
-      TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
-      uintptr_t arrayElementRef = (uintptr_t) owningMethod->appendixElementRefFromInvokeDynamicSideTable(callSiteIndex);
-      TR::Node * appendixNode = _stack->top();
-      TR::SymbolReference * appendixSymRef = symRefTab()->refineInvokeCacheElementSymRefWithKnownObjectIndex(_methodSymbol, appendixNode->getSymbolReference(), arrayElementRef);
-      appendixNode->setSymbolReference(appendixSymRef);
-      }
+   TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->callSiteTableEntryAddress(callSiteIndex);
+   loadInvokeCacheArrayElements(callSiteTableEntrySymRef, invokeCacheArray);
    }
 
 void
 TR_J9ByteCodeIlGenerator::loadFromSideTableForInvokeHandle(int32_t cpIndex)
    {
    TR::SymbolReference *methodTypeTableEntrySymRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
-   loadSymbol(TR::aload, methodTypeTableEntrySymRef);
-   loadConstant(TR::iconst, 1); // appendix object
+   TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->methodTypeTableEntryAddress(cpIndex);
+   loadInvokeCacheArrayElements(methodTypeTableEntrySymRef, invokeCacheArray);
+   }
+
+void
+TR_J9ByteCodeIlGenerator::loadInvokeCacheArrayElements(TR::SymbolReference *tableEntrySymRef, uintptr_t * invokeCacheArray)
+   {
+   loadSymbol(TR::aload, tableEntrySymRef);
+   loadConstant(TR::iconst, JSR292_invokeCacheArrayAppendixIndex);
    loadArrayElement(TR::Address, comp()->il.opCodeForIndirectLoad(TR::Address), false);
-   if (methodTypeTableEntrySymRef->isUnresolved())
+   if (tableEntrySymRef->isUnresolved())
       {
       // Appendix being unresolved means the target is also unresolved.
       // Instead of creating a call to the adapter method, we construct
       // a call to linkToStatic and provide appendix and target as
       // additional parameters.
-      loadSymbol(TR::aload, methodTypeTableEntrySymRef);
-      loadConstant(TR::iconst, 0); // membername object
+      loadSymbol(TR::aload, tableEntrySymRef);
+      loadConstant(TR::iconst, JSR292_invokeCacheArrayMemberNameIndex);
       loadArrayElement(TR::Address, comp()->il.opCodeForIndirectLoad(TR::Address), false);
       }
    else
       {
       TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
-      uintptr_t arrayElementRef = (uintptr_t) owningMethod->appendixElementRefFromInvokeHandleSideTable(cpIndex);
       TR::Node * appendixNode = _stack->top();
-      TR::SymbolReference * appendixSymRef = symRefTab()->refineInvokeCacheElementSymRefWithKnownObjectIndex(_methodSymbol, appendixNode->getSymbolReference(), arrayElementRef);
+      TR::SymbolReference * appendixSymRef = NULL;
+         {
+         TR::VMAccessCriticalSection vmAccess(fej9());
+         uintptr_t arrayElementRef = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
+         appendixSymRef = symRefTab()->refineInvokeCacheElementSymRefWithKnownObjectIndex(_methodSymbol, appendixNode->getSymbolReference(), arrayElementRef);
+         }
       appendixNode->setSymbolReference(appendixSymRef);
       }
    }
+
 #endif
 
 TR::Node *
