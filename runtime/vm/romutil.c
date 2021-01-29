@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -126,7 +126,7 @@ romClassLoadFromCookie (J9VMThread *vmStruct, U_8 *clsName, UDATA clsNameLength,
 		return NULL;
 	}
 
-	Trc_VM_romClassLoadFromCookie_Entry1(vmStruct, vmStruct, clsName, clsNameLength, romClassBytes, romClassLength);
+	Trc_VM_romClassLoadFromCookie_Entry2(vmStruct, vmStruct, clsName, clsNameLength, clsName , romClassBytes, romClassLength);
 
 	if ( cookie->version != J9_ROM_CLASS_COOKIE_VERSION ) {
 		return NULL;
