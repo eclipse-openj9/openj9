@@ -5557,6 +5557,54 @@ public class MethodHandles {
 		}
 		throw new IllegalAccessException("No full privilege access found for " + caller);
 	}
+	
+	/*[IF JAVA_SPEC_VERSION >= 16]*/
+	/**
+	 * Return the element at the given index in class data, which is a List.
+	 * 
+	 * @param caller Lookup object used to verify ORIGINAL access and retrieve class data.
+	 * @param name should match ConstantDescs.DEFAULT_NAME ("_").
+	 * @param type used to cast the class data element at the given index.
+	 * @param index of the class data element.
+	 * 
+	 * @return the class data element at the index if class data is present; otherwise, null.
+	 * @throws IllegalArgumentException if name is not ConstantDescs.DEFAULT_NAME ("_").
+	 * @throws IllegalAccessException in the absence of ORIGINAL access.
+	 * @throws NullPointerException for null caller or type; or if the class data element at
+	 *                              the given index is null and fails unboxing.
+	 * @throws ClassCastException if the class data element cannot be converted to type; or
+	 *                            if the class data cannot be converted to List.
+	 * @throws IndexOutOfBoundsException if the given index is out of bounds.
+	 */
+	public static <T> T classDataAt(Lookup caller, String name, Class<T> type, int index) throws IllegalAccessException {
+		List<Object> classDataList = (List<Object>)classData(caller, name, List.class);
+		T output = null;
+
+		if (classDataList != null) {
+			Object classData = classDataList.get(index);
+			if (type.isPrimitive()) {
+				Class<?> widenType = MethodTypeHelper.wrapPrimitive(type);
+				if (!widenType.isInstance(classData)) {
+					try {
+						/* Widen. */
+						classData = ConvertHandle.FilterHelpers.getReturnFilter(type, widenType, false).invoke(classData);
+						output = (T)widenType.cast(classData);
+					} catch (RuntimeException ex) {
+						throw ex;
+					} catch (Throwable t) {
+						throw new InternalError(t);
+					}
+				} else {
+					output = (T)classData;
+				}
+			} else {
+				output = type.cast(classData);
+			}
+		}
+
+		return output;
+	}
+	/* [ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 	/**
 	 * Helper class used by collectReturnValue.
