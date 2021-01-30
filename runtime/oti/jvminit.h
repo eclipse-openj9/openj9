@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -392,9 +392,9 @@ enum INIT_STAGE {
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /* Option to turn on exception on synchronization on instances of value-based classes */
-#define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1 "-XX:DiagnoseSyncOnValuedBasedClasses=1"
+#define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1 "-XX:DiagnoseSyncOnValueBasedClasses=1"
 /* Option to turn on warning on synchronization on instances of value-based classes */
-#define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS2 "-XX:DiagnoseSyncOnValuedBasedClasses=2"
+#define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS2 "-XX:DiagnoseSyncOnValueBasedClasses=2"
 
 #define VMOPT_XX_NOSUBALLOC32BITMEM "-XXnosuballoc32bitmem"
 

@@ -27,8 +27,8 @@
 <suite id="Value based class tests" timeout="300">
 <!--   
 	This test is for the new command line options added in Java 16 and up by JEP390: Warnings for Value-Based Classes.
-	-XX:DiagnoseSyncOnValuedBasedClasses=1 triggers a VirtualMachineError when synchronizing on a object that is value-based.
-	-XX:DiagnoseSyncOnValuedBasedClasses=1 triggers a warning message when synchronizing on a object that is value-based.
+	-XX:DiagnoseSyncOnValueBasedClasses=1 triggers a VirtualMachineError when synchronizing on a object that is value-based.
+	-XX:DiagnoseSyncOnValueBasedClasses=1 triggers a warning message when synchronizing on a object that is value-based.
 	This JEP is to prepare users for the upcoming value-types.
  -->
  	<test id="Test 1-a Test no error warning or VirtualMachineError if neither of the new CML options is used when calling syncOnValueBasedClass()">
@@ -56,7 +56,7 @@
 	</test>
  
 	<test id="Test 2-a Test error message when calling syncOnValueBasedClass()">
-		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValuedBasedClasses=1 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest VB</command>
+		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValueBasedClasses=1 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest VB</command>
 		<output regex="no" type="success">Calling method syncOnValueBasedClass()</output> 
 		<output regex="no" type="required">VirtualMachineError: bad object type org/openj9/test/JEP390Test/ValueBasedClass: object that is synchronized is value-based</output>
 		<output regex="no" type="required">at org.openj9.test.JEP390Test.ValueBasedClassTest.syncOnValueBasedClass(ValueBasedClassTest.java:48)</output> 
@@ -66,7 +66,7 @@
 	</test>
 
 	<test id="Test 2-b Test error message when calling syncOnObject()">
-		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValuedBasedClasses=1 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest OBJ</command>
+		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValueBasedClasses=1 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest OBJ</command>
 		<output regex="no" type="success">Calling method syncOnObject()</output> 
 		<output regex="no" type="required">VirtualMachineError: bad object type org/openj9/test/JEP390Test/ValueBasedClass: object that is synchronized is value-based</output>
 		<output regex="no" type="required">at org.openj9.test.JEP390Test.ValueBasedClassTest.syncOnObject(ValueBasedClassTest.java:54)</output> 
@@ -76,7 +76,7 @@
 	</test>
 	
 	<test id="Test 3-a Test warning message when calling syncOnValueBasedClass()">
-		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValuedBasedClasses=2 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest VB</command>
+		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValueBasedClasses=2 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest VB</command>
 		<output regex="no" type="success">ValueBasedClassTest Exit</output> 
 		<output regex="no" type="required">Calling method syncOnValueBasedClass()</output>
 		<output regex="no" type="required">JVMJ9VM200W bad object type org/openj9/test/JEP390Test/ValueBasedClass: object that is synchronized is value-based</output>
@@ -88,7 +88,7 @@
 	</test>
 
 	<test id="Test 3-b Test warning message when calling syncOnObject()">
-		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValuedBasedClasses=2 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest OBJ</command>
+		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValueBasedClasses=2 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest OBJ</command>
 		<output regex="no" type="success">ValueBasedClassTest Exit</output> 
 		<output regex="no" type="required">Calling method syncOnObject()</output>
 		<output regex="no" type="required">JVMJ9VM200W bad object type org/openj9/test/JEP390Test/ValueBasedClass: object that is synchronized is value-based</output>
