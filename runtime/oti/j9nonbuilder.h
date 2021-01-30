@@ -4975,6 +4975,7 @@ typedef struct J9ReflectFunctionTable {
 	struct J9JNIFieldID*  ( *idFromFieldObject)(struct J9VMThread* vmStruct, j9object_t declaringClassObject, j9object_t fieldObject) ;
 	struct J9JNIMethodID*  ( *idFromMethodObject)(struct J9VMThread* vmStruct, j9object_t methodObject) ;
 	struct J9JNIMethodID*  ( *idFromConstructorObject)(struct J9VMThread* vmStruct, j9object_t constructorObject) ;
+	j9object_t  ( *createFieldObject)(struct J9VMThread *vmThread, struct J9ROMFieldShape *romField, struct J9Class *declaringClass, BOOLEAN isStaticField) ;
 } J9ReflectFunctionTable;
 
 /* @ddr_namespace: map_to_type=J9VMRuntimeStateListener */
@@ -5393,6 +5394,10 @@ typedef struct J9JavaVM {
 	U_32 minimumReservedRatio;
 	U_32 cancelAbsoluteThreshold;
 	U_32 minimumLearningRatio;
+#ifdef J9VM_OPT_OPENJDK_METHODHANDLE
+	UDATA vmindexOffset;
+	UDATA vmtargetOffset;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

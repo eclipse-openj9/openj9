@@ -5538,25 +5538,105 @@ public class MethodHandles {
 	}
 	
 	/**
-	 * Return the classData stored in the accessClass of the Lookup object.
+	 * Helper to convert class data to the given type.
+	 *
+	 * @param classData the class data.
+	 * @param type the conversion type.
+	 *
+	 * @return class data converted to the given type.
+	 * @throws ClassCastException if the class data cannot be converted to type.
+	 */
+	private static Object convertToType(Object classData, Class<?> type) {
+		Object output = classData;
+		
+		if (type.isPrimitive()) {
+			Class<?> widenType = MethodTypeHelper.wrapPrimitive(type);
+			if (!widenType.isInstance(classData)) {
+				try {
+					/* Convert to widenType. */
+					classData = ConvertHandle.FilterHelpers.getReturnFilter(type, widenType, false).invoke(classData);
+					output = widenType.cast(classData);
+				} catch (Error | RuntimeException e) {
+					throw e;
+				} catch (Throwable t) {
+					throw new InternalError(t);
+				}
+			}
+		} else {
+			output = type.cast(classData);
+		}
+		
+		return output;
+	}
+	
+	/**
+	 * Return the class data stored in the access class of the Lookup object.
 	 * 
-	 * @param caller Lookup object used to verify privileged access and retrieve classData.
-	 * @param unused.
-	 * @param type used to cast the classData of the accessClass.
+	 * @param caller Lookup object used to verify ORIGINAL access and retrieve class data.
+	 * @param name should match ConstantDescs.DEFAULT_NAME ("_").
+	 * @param type used to cast the class data of the access class.
 	 * 
-	 * @return the classData casted to the appropriate type.
-	 * @throws IllegalAccessException in the absence of full privilege access.
+	 * @return the class data casted to type if present; otherwise, null.
+	 * @throws IllegalArgumentException if name is not ConstantDescs.DEFAULT_NAME ("_").
+	 * @throws IllegalAccessException in the absence of ORIGINAL access.
+	 * @throws NullPointerException for null caller or type.
+	 * @throws ClassCastException if the class data cannot be converted to type.
 	 */
 	/*[IF JAVA_SPEC_VERSION >= 16]*/
 	public
 	/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
-	static <T> T classData(Lookup caller, String unused, Class<T> type) throws IllegalAccessException {
-		if (caller.hasFullPrivilegeAccess()) {
-			Object classData = MethodHandleNatives.classData(caller.accessClass);
-			return type.cast(classData);
+	static <T> T classData(Lookup caller, String name, Class<T> type) throws IllegalAccessException {
+		if (!java.lang.constant.ConstantDescs.DEFAULT_NAME.equals(name)) {
+			/*[MSG "K0687", "Name does not match. Expected: '{0}', but found: '{1}'"]*/
+			throw new IllegalArgumentException(
+					Msg.getString("K0687", java.lang.constant.ConstantDescs.DEFAULT_NAME, name));
 		}
-		throw new IllegalAccessException("No full privilege access found for " + caller);
+
+		if ((caller.lookupModes() & Lookup.ORIGINAL) != Lookup.ORIGINAL) {
+			/*[MSG "K0688", "Lookup does not have the ORIGINAL access bit"]*/
+			throw new IllegalAccessException(Msg.getString("K0688"));
+		}
+
+		Object classData = MethodHandleNatives.classData(caller.accessClass);
+		T output = null;
+
+		if (classData != null) {
+			output = (T)convertToType(classData, type);
+		}
+
+		return output;
 	}
+	
+	/*[IF JAVA_SPEC_VERSION >= 16]*/
+	/**
+	 * Return the element at the given index in class data, which is a List.
+	 * 
+	 * @param caller Lookup object used to verify ORIGINAL access and retrieve class data.
+	 * @param name should match ConstantDescs.DEFAULT_NAME ("_").
+	 * @param type used to cast the class data element at the given index.
+	 * @param index of the class data element.
+	 * 
+	 * @return the class data element at the index if class data is present; otherwise, null.
+	 * @throws IllegalArgumentException if name is not ConstantDescs.DEFAULT_NAME ("_").
+	 * @throws IllegalAccessException in the absence of ORIGINAL access.
+	 * @throws NullPointerException for null caller or type; or if the class data element at
+	 *                              the given index is null and fails unboxing.
+	 * @throws ClassCastException if the class data element cannot be converted to type; or
+	 *                            if the class data cannot be converted to List.
+	 * @throws IndexOutOfBoundsException if the given index is out of bounds.
+	 */
+	public static <T> T classDataAt(Lookup caller, String name, Class<T> type, int index) throws IllegalAccessException {
+		List<Object> classDataList = (List<Object>)classData(caller, name, List.class);
+		T output = null;
+
+		if (classDataList != null) {
+			Object classData = classDataList.get(index);
+			output = (T)convertToType(classData, type);
+		}
+
+		return output;
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 	/**
 	 * Helper class used by collectReturnValue.
