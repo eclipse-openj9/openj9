@@ -458,6 +458,35 @@ public class Test_Class {
 		Assert.assertEquals(java.util.List.class, specificMethod.getReturnType(), 
 			"Expected method return type: " + java.util.List.class + " but got: " + specificMethod.getReturnType());
 	}
+	abstract class ClzParent {}
+	class ClzChild extends ClzParent {}
+	class ClzImpl implements InterFaceLayerOne {
+		@Override
+		public ClzChild getType() {
+			return null;
+		}
+	}
+	interface InterFaceLayerOne extends InterfaceLayerTwoA<ClzChild>, InterfaceLayerTwoB {}
+	interface InterfaceLayerTwoA<S> extends InterfaceLayerThreeA<ClzChild>, InterfaceLayerThreeB {}
+	interface InterfaceLayerTwoB {
+		ClzParent getType();
+	}
+	interface InterfaceLayerThreeA<S> {
+		S getType();
+	}
+	interface InterfaceLayerThreeB {
+		ClzParent getType();
+	}
+	@Test
+	public void test_getMethods_subtest8() throws Exception {
+		ClzImpl clzImpl = new ClzImpl();
+		for (Method method : clzImpl.getClass().getMethods()) {
+			for (Class<?> anInterface : method.getDeclaringClass().getInterfaces()) {
+				Method intfMethod = anInterface.getMethod(method.getName(), method.getParameterTypes());
+				Assert.assertEquals(intfMethod.toString(), "public abstract java.lang.Object org.openj9.test.java.lang.Test_Class$InterfaceLayerThreeA.getType()");
+			}
+		}
+	}
 	
 	class TestSpecificMethodsCL extends ClassLoader {
 		public Class<?> findClass(String name) throws ClassNotFoundException {
@@ -904,7 +933,7 @@ public class Test_Class {
 	 */
 	@Test
 	public void test_getDeclaredClasses() {
-		int len = 66;
+		int len = 74;
 		// Test for method java.lang.Class [] java.lang.Class.getDeclaredClasses()
 		Class[] declaredClasses = Test_Class.class.getDeclaredClasses();
 		if (declaredClasses.length != len) {

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2021 IBM Corp. and others
  *
@@ -1677,8 +1677,19 @@ private Method getMostSpecificMethodFromAllInterfacesOfCurrentClass(HashMap<Clas
 		} else {
 			for (Method m: mi.jlrMethods) {
 				bestMethod = getMostSpecificInterfaceMethod(name, parameterTypes, bestMethod, m);
+				/*[IF JAVA_SPEC_VERSION == 8]*/
+				// Java 8 returns any matching method found
+				if (bestMethod != null) {
+					break;
+				}
+				/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 			}
 		}
+		/*[IF JAVA_SPEC_VERSION == 8]*/
+		if (bestMethod != null) {
+			break;
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	}
 
 	return bestMethod;
