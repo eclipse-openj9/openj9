@@ -202,12 +202,12 @@ TR::CompilationInfoPerThreadBase::setCompilation(TR::Compilation *compiler)
 thread_local TR::CompilationInfoPerThread *TR::compInfoPT;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-static UDATA
-jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
+static uintptr_t
+jitSignalHandler(struct J9PortLibrary *portLibrary, uint32_t gpType, void *gpInfo, void *handler_arg)
    {
    static int32_t numCrashes = 0;
    bool recoverable = true;
-   J9VMThread *vmThread = (J9VMThread *)arg;
+   J9VMThread *vmThread = (J9VMThread *)handler_arg;
 
    // Try to find the compilation object
    TR::Compilation * comp = 0;
@@ -7909,14 +7909,14 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
             UDATA protectedResult;
             if (entry->getMethodDetails().isJitDumpMethod())
                {
-               protectedResult = j9sig_protect(static_cast<j9sig_protected_fn>(wrappedCompile), static_cast<void*>(&compParam),
-                                                  static_cast<j9sig_handler_fn>(jitDumpSignalHandler), 
+               protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
+                                                  jitDumpSignalHandler, 
                                                   vmThread, flags, &result);
                }
             else
                {
-               protectedResult = j9sig_protect(static_cast<j9sig_protected_fn>(wrappedCompile), static_cast<void*>(&compParam),
-                                                  static_cast<j9sig_handler_fn>(jitSignalHandler), 
+               protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
+                                                  jitSignalHandler, 
                                                   vmThread, flags, &result);
                }
 

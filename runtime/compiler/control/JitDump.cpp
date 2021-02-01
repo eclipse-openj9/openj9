@@ -38,10 +38,10 @@
 #include "runtime/Listener.hpp"
 #endif
 
-UDATA
-jitDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
+uintptr_t
+jitDumpSignalHandler(struct J9PortLibrary *portLibrary, uint32_t gpType, void *gpInfo, void *handler_arg)
    {
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread = %p Recursive crash occurred. Aborting JIT dump.", reinterpret_cast<J9VMThread*>(arg));
+   TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread = %p Recursive crash occurred. Aborting JIT dump.", reinterpret_cast<J9VMThread*>(handler_arg));
 
    // Returning J9PORT_SIG_EXCEPTION_RETURN will make us come back to the same crashing instruction over and over
    //
@@ -69,9 +69,9 @@ typedef struct DumpCurrentILParamenters
    } DumpCurrentILParamenters;
 
 static UDATA
-blankDumpCurrentILSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
+blankDumpCurrentILSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *handler_arg)
    {
-   J9VMThread *vmThread = (J9VMThread *) arg;
+   J9VMThread *vmThread = (J9VMThread *) handler_arg;
    TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread=%p Crashed while printing out current IL.", vmThread);
    return J9PORT_SIG_EXCEPTION_RETURN;
    }
