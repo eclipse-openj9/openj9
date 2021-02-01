@@ -285,6 +285,9 @@ s390x_linux:
     build: 'ci.role.build && hw.arch.s390x && sw.os.rhel.7'
   build_env:
     cmd: 'source /home/jenkins/set_gcc7.5.0_env'
+  excluded_tests:
+    8:
+      - special.system
 #========================================#
 # Linux S390 64bits Compressed Pointers /w cmake
 #========================================#
@@ -354,6 +357,9 @@ ppc64_aix:
       15: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       16: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
+  excluded_tests:
+    8:
+      - special.system
 #========================================#
 # AIX PPC 64bits Compressed Pointers /w CMake
 #========================================#
