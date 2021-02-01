@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +20,6 @@
 
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<include>variables.mk</include>
 	<test>
@@ -54,7 +52,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292Test_jdk8_special</testCaseName>
 		<variations>
@@ -82,7 +79,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292Test_jdk9_jdk10</testCaseName>
 		<variations>
@@ -109,12 +105,11 @@
 			<subset>10</subset>
 		</subsets>
 	</test>
-
-  <test>
+	<test>
 		<testCaseName>jsr292Test</testCaseName>
 		<variations>
-				<variation>NoOptions</variation>
-				<variation>Mode195</variation>
+			<variation>NoOptions</variation>
+			<variation>Mode195</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
@@ -142,12 +137,11 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292Test_jdk12</testCaseName>
 		<variations>
-				<variation>NoOptions</variation>
-				<variation>Mode195</variation>
+			<variation>NoOptions</variation>
+			<variation>Mode195</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--illegal-access=permit \
@@ -173,7 +167,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292Test_JitCount0_jdk8</testCaseName>
 		<variations>
@@ -202,7 +195,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292Test_JitCount0</testCaseName>
 		<variations>
@@ -232,7 +224,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292BootstrapTest_jdk8</testCaseName>
 		<variations>
@@ -261,8 +252,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
-
 	<test>
 		<testCaseName>jsr292BootstrapTest</testCaseName>
 		<variations>
@@ -287,7 +276,6 @@
 			<subset>9+</subset>
 		</subsets>
 	</test>
-
 	<test>
 		<testCaseName>jsr292BootstrapTests_special</testCaseName>
 		<variations>
@@ -316,7 +304,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292_MethodHandleAPI_Test</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -345,7 +332,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292_MethodHandleAPI_Test_JitCount1</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -372,7 +358,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292_InDynTest</testCaseName>
 		<variations>
@@ -397,7 +382,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!--
 		TODO: The following test cases specific to Lookup are temporarily excluded in Java 14
 		as there is no backward compatibility of these APIs since Java 14 due to the new changes
@@ -437,7 +421,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr292Test_Lookup_JitCount0</testCaseName>
 		<variations>

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
   Copyright (c) 2016, 2021 IBM Corp. and others
 
@@ -21,9 +20,7 @@
 
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
-<playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
+<playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>JLM_Tests_interface_SE80</testCaseName>
 		<variations>
@@ -61,7 +58,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JLM_Tests_interface</testCaseName>
 		<variations>
@@ -100,7 +96,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JLM_Tests_class_SE80</testCaseName>
 		<variations>
@@ -130,7 +125,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JLM_Tests_class</testCaseName>
 		<variations>
@@ -161,7 +155,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JLM_Tests_IBMinternal_SE80</testCaseName>
 		<variations>
@@ -191,7 +184,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JLM_Tests_IBMinternal</testCaseName>
 		<variations>
@@ -222,7 +214,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxLocal</testCaseName>
 		<variations>
@@ -255,7 +246,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxLocal_zlinux_64</testCaseName>
 		<variations>
@@ -288,7 +278,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxLocal_zlinux_31</testCaseName>
 		<variations>
@@ -321,7 +310,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>SoftmxRASTest2</testCaseName>
 		<variations>
@@ -350,7 +338,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>SoftmxRASTest1</testCaseName>
 		<variations>
@@ -379,7 +366,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxLocal_LP4k</testCaseName>
 		<variations>
@@ -412,7 +398,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxLocal_LP64k</testCaseName>
 		<variations>
@@ -448,7 +433,6 @@
 			<tag>test:largepages</tag>
 		</tags>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxRemote</testCaseName>
 		<disabled>
@@ -482,7 +466,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxRemote_zlinux_64</testCaseName>
 		<disabled>
@@ -516,7 +499,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxRemote_zlinux_31</testCaseName>
 		<disabled>
@@ -550,7 +532,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxRemote_LP4k</testCaseName>
 		<disabled>
@@ -584,7 +565,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxRemote_LP64k</testCaseName>
 		<disabled>
@@ -621,7 +601,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxDisclaimMemory</testCaseName>
 		<variations>
@@ -654,7 +633,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxDisclaimMemory_zlinux_64</testCaseName>
 		<variations>
@@ -687,7 +665,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxDisclaimMemory_zlinux_31</testCaseName>
 		<variations>
@@ -720,7 +697,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxDisclaimMemory_LP4k</testCaseName>
 		<variations>
@@ -754,7 +730,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxDisclaimMemory_LP64k</testCaseName>
 		<variations>
@@ -791,7 +766,6 @@
 			<tag>test:largepages</tag>
 		</tags>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxNotDisclaimMemory</testCaseName>
 		<variations>
@@ -825,7 +799,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxNotDisclaimMemory_zlinux_64</testCaseName>
 		<variations>
@@ -859,7 +832,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxNotDisclaimMemory_zlinux_31</testCaseName>
 		<variations>
@@ -893,7 +865,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testDefaultDisclaimMemory</testCaseName>
 		<variations>
@@ -958,7 +929,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxDisclaimMemory_GC</testCaseName>
 		<variations>
@@ -992,7 +962,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testOSMXBeanLocal</testCaseName>
 		<variations>
@@ -1019,7 +988,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testOSMXBeanRemote</testCaseName>
 		<variations>
@@ -1047,7 +1015,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testJCMMXBeanLocal_SE80</testCaseName>
 		<variations>
@@ -1077,7 +1044,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testJCMMXBeanLocal</testCaseName>
 		<variations>
@@ -1107,7 +1073,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testJCMMXBeanRemote_SE80</testCaseName>
 		<variations>
@@ -1138,7 +1103,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testJCMMXBeanRemote</testCaseName>
 		<variations>
@@ -1169,7 +1133,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- Exclude testOpenJ9DiagnosticsMXBean test on win32: https://github.com/eclipse/openj9/issues/2213-->
 	<test>
 		<testCaseName>testOpenJ9DiagnosticsMXBean</testCaseName>
@@ -1197,7 +1160,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testGuestOSMXBeanLocal</testCaseName>
 		<variations>
@@ -1225,7 +1187,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testGuestOSMXBeanRemote</testCaseName>
 		<variations>
@@ -1254,7 +1215,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testCpuUtilization_testSingleCpuLoadObject</testCaseName>
 		<variations>
@@ -1279,7 +1239,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testCpuUtilization_testMxBean</testCaseName>
 		<variations>
@@ -1304,7 +1263,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testSoftMxUserScenario</testCaseName>
 		<disabled>
@@ -1337,5 +1295,4 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 </playlist>

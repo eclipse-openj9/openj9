@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
   Copyright (c) 2016, 2021 IBM Corp. and others
 
@@ -21,7 +20,6 @@
 
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>TestFlushReflectionCache</testCaseName>
@@ -53,7 +51,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI</testCaseName>
 		<variations>
@@ -83,7 +80,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_JIT_ON</testCaseName>
 		<variations>
@@ -112,7 +108,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_FAST_HCR</testCaseName>
 		<variations>
@@ -144,7 +139,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_EXTENDED_HCR</testCaseName>
 		<variations>
@@ -175,7 +169,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestGCClassWithStaticRetransformInGencon</testCaseName>
 		<variations>
@@ -205,7 +198,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestGCClassWithStaticRetransformInBalanced</testCaseName>
 		<variations>
@@ -234,7 +226,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestFlushReflectionCache_SE80</testCaseName>
 		<variations>
@@ -263,7 +254,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_SE80</testCaseName>
 		<variations>
@@ -291,7 +281,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_NOBCI_JIT_ON_SE80</testCaseName>
 		<variations>
@@ -318,7 +307,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_FAST_HCR_SE80</testCaseName>
 		<variations>
@@ -346,7 +334,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_FAST_HCR_JIT_ON_SE80</testCaseName>
 		<variations>
@@ -373,7 +360,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_EXTENDED_HCR_SE80</testCaseName>
 		<variations>
@@ -400,7 +386,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestRefreshGCSpecialClassesCache_BCI_EXTENDED_HCR_JIT_ON_SE80</testCaseName>
 		<variations>
@@ -427,7 +412,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestGCClassWithStaticRetransformInGencon_SE80</testCaseName>
 		<variations>
@@ -454,7 +438,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestGCClassWithStaticRetransformInBalanced_SE80</testCaseName>
 		<variations>
@@ -481,5 +464,4 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 </playlist>
