@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/amd64/codegen/OMRMemoryReference.cpp \
     omr/compiler/x/amd64/codegen/OMRRealRegister.cpp \
     omr/compiler/x/amd64/codegen/OMRTreeEvaluator.cpp \
-
+    omr/compiler/x/amd64/objectfmt/OMRJitCodeRXObjectFormat.cpp \
+    omr/compiler/x/amd64/objectfmt/OMRJitCodeRWXObjectFormat.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/amd64/codegen/AMD64GuardedDevirtualSnippet.cpp \
