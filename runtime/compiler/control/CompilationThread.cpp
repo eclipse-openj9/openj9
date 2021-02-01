@@ -2649,7 +2649,10 @@ void TR::CompilationInfo::resumeCompilationThread()
          curCompThreadInfoPT->resumeCompilationThread();
          }
 
-      TR_ASSERT_FATAL(getNumCompThreadsActive() > 0, "We must have at least one compilation thread active");
+      if (getNumCompThreadsActive() == 0)
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "No threads were activated following a resume all compilation threads call");
+         }
 
       releaseCompMonitor(vmThread);
       }
@@ -3456,7 +3459,7 @@ void TR::CompilationInfo::stopCompilationThreads()
 
    addCompilationTraceEntry(vmThread, OP_WillStopCompilationThreads);
 
-   // Cycle though all non-diagnostic threads and stop them
+   // Cycle through all non-diagnostic threads and stop them
    for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
