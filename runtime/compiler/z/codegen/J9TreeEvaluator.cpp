@@ -7205,8 +7205,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    J9::Z::CHelperLinkage *helperLink =  static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
-   bool isValueTypeOrValueBasedEnabled = (TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled());
-   TR_YesNoMaybe isMonitorValueBasedOrValueType = isValueTypeOrValueBasedEnabled ? cg->isMonitorValueBasedOrValueType(node) : TR_no;
+   TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
    if (comp->getOption(TR_OptimizeForSpace) ||
        (isMonitorValueBasedOrValueType == TR_yes) ||
@@ -7655,8 +7654,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    J9::Z::CHelperLinkage *helperLink =  static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
-   bool isValueTypeOrValueBasedEnabled = (TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled());
-   TR_YesNoMaybe isMonitorValueBasedOrValueType = isValueTypeOrValueBasedEnabled ? cg->isMonitorValueBasedOrValueType(node) : TR_no;
+   TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
    if (comp->getOption(TR_OptimizeForSpace) ||
        (isMonitorValueBasedOrValueType == TR_yes) ||
