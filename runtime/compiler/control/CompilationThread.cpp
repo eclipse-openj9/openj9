@@ -982,6 +982,7 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _numJITCompilations(),
    _qszWhenCompStarted(),
    _compilationCanBeInterrupted(false),
+   _uninterruptableOperationDepth(0),
    _compilationThreadState(COMPTHREAD_UNINITIALIZED),
    _compilationShouldBeInterrupted(false),
 #if defined(J9VM_OPT_JITSERVER)

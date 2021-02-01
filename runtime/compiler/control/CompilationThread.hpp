@@ -213,13 +213,21 @@ class CompilationInfoPerThreadBase
          _compThread(compThread)
          {
          TR_ASSERT_FATAL(!_compThread._compilationCanBeInterrupted, "This guard is not re-entrant");
-         _compThread._compilationCanBeInterrupted = true;
+         
+         if (_compThread._uninterruptableOperationDepth == 0)
+            {
+            _compThread._compilationCanBeInterrupted = true;
+            }
          }
 
       ~InterruptibleOperation()
          {
          TR_ASSERT_FATAL(_compThread._compilationCanBeInterrupted, "Exiting interruptible operation without having entered");
-         _compThread._compilationCanBeInterrupted = false;
+
+         if (_compThread._uninterruptableOperationDepth == 0)
+            {
+            _compThread._compilationCanBeInterrupted = false;
+            }
          }
 
    private:
@@ -240,11 +248,13 @@ class CompilationInfoPerThreadBase
          _compThread(compThread), _originalValue(_compThread._compilationCanBeInterrupted)
          {
          _compThread._compilationCanBeInterrupted = false;
+         _compThread._uninterruptableOperationDepth++;
          }
 
       ~UninterruptibleOperation()
          {
          _compThread._compilationCanBeInterrupted = _originalValue;
+         _compThread._uninterruptableOperationDepth--;
          }
 
    private:
@@ -314,7 +324,16 @@ class CompilationInfoPerThreadBase
    uintptr_t                    _timeWhenCompStarted;
    int32_t                      _numJITCompilations; // num JIT compilations this thread has performed; AOT loads not counted
    int32_t                      _qszWhenCompStarted; // size of compilation queue and compilation starts
-   bool                         _compilationCanBeInterrupted;
+
+   /// Determines whether this compilation thread can be interrupted the compile at the next yield point. A different
+   /// thread may still request that the compilation _should_ be interrupted, however we may not be in a state at
+   /// which we _can_ interrupt.
+   bool _compilationCanBeInterrupted;
+
+   /// Counts the number of nested \see UninterruptibleOperation in the stack. An \see InterruptibleOperation can only
+   /// be issued if the depth of uninterruptable operations is 0.
+   int32_t _uninterruptableOperationDepth;
+
    bool                         _addToJProfilingQueue;
 
    volatile CompilationThreadState _compilationThreadState;
