@@ -127,34 +127,16 @@ private:
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    /**
     * \brief
-    *       Loads appendix and target objects (if required) from call site table
-    *       into the stack to be used as parameters for adapter method call node.
-    *       Needed for OpenJDK method handle implementation.
-    *
-    * \param callSiteIndex
-    *       The call site index for the invokedynamic bytecode
-    */
-   void         loadFromSideTableForInvokeDynamic(int32_t callSiteIndex);
-
-   /**
-    * \brief
-    *       Loads appendix and target objects (if required) from constant pool
-    *       into the stack to be used as parameters for adapter method call node.
-    *       Needed for OpenJDK method handle implementation.
-    *
-    * \param cpIndex
-    *       The CP index for the invokehandle bytecode
-    */
-   void         loadFromSideTableForInvokeHandle(int32_t cpIndex);
-
-   /**
-    * \brief
-    *    Generates IL to load elements from invokeCacheArray
+    *    Generates IL to load elements from invokeCacheArray, resulting in load of
+    *    appendix and memberName objects into the stack to be used as
+    *    parameters for adapter method call node. memberName object is only required
+    *    to be loaded when the invokedynamic/invokehandle is unresolved
     *
     * \param tableEntrySymRef the symref representing the invokeCacheArray
-    * \param invokeCacheArray the invokeCacheArray
+    * \param invokeCacheArray the static address of the invokeCacheArray
+    * \param isUnresolved
     */
-   void         loadInvokeCacheArrayElements(TR::SymbolReference *tableEntrySymRef, uintptr_t * invokeCacheArray);
+   void         loadInvokeCacheArrayElements(TR::SymbolReference *tableEntrySymRef, uintptr_t * invokeCacheArray, bool isUnresolved);
 #endif
 
    TR::Node *    genHandleTypeCheck(TR::Node *handle, TR::Node *expectedType);

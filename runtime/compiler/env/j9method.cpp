@@ -6881,37 +6881,41 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
 
    J9Class    *ramClass = constantPoolHdr();
    J9ROMClass *romClass = romClassPtr();
-
+   bool isUnresolvedEntry = isUnresolvedCallSiteTableEntry(callSiteIndex);
    if (unresolvedInCP)
       {
       // "unresolvedInCP" is a bit of a misnomer here, but we can describe
       // something equivalent by checking the callSites table.
       //
-      *unresolvedInCP = isUnresolvedCallSiteTableEntry(callSiteIndex);
+      *unresolvedInCP = isUnresolvedEntry;
       }
-
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   if (!isUnresolvedCallSiteTableEntry(callSiteIndex))
-      {
-      TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
-      uintptr_t * invokeCacheArray = (uintptr_t *) callSiteTableEntryAddress(callSiteIndex);
-         {
-         TR::VMAccessCriticalSection getResolvedDynamicMethod(fej9());
-         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex));
-         }
-      result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
-      return result;
-      }
-#endif
 
    J9SRP                 *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
    J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callSiteIndex], J9ROMNameAndSignature*);
    J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
-   char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeDynamic(comp, signature);
-   result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, J9UTF8_LENGTH(signature) + 37, this);
+   if (!isUnresolvedEntry)
+      {
+      TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
+      uintptr_t * invokeCacheArray = (uintptr_t *) callSiteTableEntryAddress(callSiteIndex);
+         {
+         TR::VMAccessCriticalSection getResolvedDynamicMethod(fej9());
+         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex)); // this will not work in AOT or JITServer
+         }
+      result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
+      }
+   else
+      {
+      // Even when invokedynamic is unresolved, we construct a resolved method and rely on
+      // the call site table entry to be resolved instead. The resolved method we construct is
+      // linkToStatic, which is a VM internal native method that will prepare the call frame for
+      // the actual method to be invoked using the last argument we push to stack (memberName object)
+      TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+      int32_t signatureLength;
+      char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeDynamic(comp, signature, signatureLength);
+      result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, signatureLength, this);
+      }
 #else
    TR_OpaqueMethodBlock *dummyInvokeExact = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", JSR292_invokeExactSig);
    result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, utf8Data(signature), J9UTF8_LENGTH(signature), this);
@@ -6939,8 +6943,9 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
 
    // See if the constant pool entry is already resolved or not
 
+   bool isUnresolvedEntry = isUnresolvedMethodTypeTableEntry(cpIndex);
    if (unresolvedInCP)
-      *unresolvedInCP = isUnresolvedMethodTypeTableEntry(cpIndex);
+      *unresolvedInCP = isUnresolvedEntry;
 
    J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(cp()->romConstantPool + cpIndex);
    J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
@@ -6948,20 +6953,27 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 
-   if (!isUnresolvedMethodTypeTableEntry(cpIndex))
+   if (!isUnresolvedEntry)
       {
       uintptr_t * invokeCacheArray = (uintptr_t *) methodTypeTableEntryAddress(cpIndex);
       TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
          {
          TR::VMAccessCriticalSection getResolvedHandleMethod(fej9());
-         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex));
+         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex)); // this will not work in AOT or JITServer
          }
       result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
-      return result;
       }
-   TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
-   char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeHandle(comp, signature);
-   result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, J9UTF8_LENGTH(signature) + 55, this);
+   else
+      {
+      // Even when invokehandle is unresolved, we construct a resolved method and rely on
+      // the method type table entry to be resolved instead. The resolved method we construct is
+      // linkToStatic, which is a VM internal native method that will prepare the call frame for
+      // the actual method to be invoked using the last argument we push to stack (memberName object)
+      TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+      int32_t signatureLength;
+      char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeHandle(comp, signature, signatureLength);
+      result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, signatureLength, this);
+      }
 #else
 
    TR_OpaqueMethodBlock *dummyInvokeExact = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", JSR292_invokeExactSig);

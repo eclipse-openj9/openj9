@@ -4855,12 +4855,13 @@ TR_J9VMBase::targetMethodFromMethodHandle(uintptr_t methodHandle)
    }
 
 char *
-TR_J9VMBase::getSignatureForLinkToStaticForInvokeHandle(TR::Compilation* comp, J9UTF8* romMethodSignature)
+TR_J9VMBase::getSignatureForLinkToStaticForInvokeHandle(TR::Compilation* comp, J9UTF8* romMethodSignature, int32_t &signatureLength)
    {
+   signatureLength = J9UTF8_LENGTH(romMethodSignature) + 55; // 55 accounts for the number of chars added to ROM method signature to construct the linkToStatic signature from it
    char * signatureString = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+1)*sizeof(char), heapAlloc);
    char * linkToStaticSignature = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+55)*sizeof(char), heapAlloc);
    strcpy(signatureString, utf8Data(romMethodSignature));
-   if (strncmp(signatureString, "()", 2) == 0)
+   if (strncmp(signatureString, "()", 2) == 0) // handles empty signature
       {
       char * returnTypeToken = strtok(signatureString, "()");
       sprintf(linkToStaticSignature, "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)%s", returnTypeToken);
@@ -4875,14 +4876,15 @@ TR_J9VMBase::getSignatureForLinkToStaticForInvokeHandle(TR::Compilation* comp, J
    }
 
 char *
-TR_J9VMBase::getSignatureForLinkToStaticForInvokeDynamic(TR::Compilation* comp, J9UTF8* romMethodSignature)
+TR_J9VMBase::getSignatureForLinkToStaticForInvokeDynamic(TR::Compilation* comp, J9UTF8* romMethodSignature, int32_t &signatureLength)
    {
+   signatureLength = J9UTF8_LENGTH(romMethodSignature) + 37; // 37 accounts for the number of chars added to ROM method signature to construct linkToStatic signature from it
    char * signatureString = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+1)*sizeof(char), heapAlloc);
    char * linkToStaticSignature = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+37)*sizeof(char), heapAlloc);
    strcpy(signatureString, utf8Data(romMethodSignature));
    if (strncmp(signatureString, "()", 2) == 0)
       {
-      char * returnTypeToken = strtok(signatureString, "()");
+      char * returnTypeToken = strtok(signatureString, "()"); // handles empty signature
       sprintf(linkToStaticSignature, "(Ljava/lang/Object;Ljava/lang/Object;)%s", returnTypeToken);
       }
    else

@@ -3275,9 +3275,38 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
       comp()->failCompilation<J9::FSDHasInvokeHandle>("FSD_HAS_INVOKEHANDLE 0");
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 
-   TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateDynamicMethodSymbol(_methodSymbol, callSiteIndex);
-
-   loadFromSideTableForInvokeDynamic(callSiteIndex);
+   // Call generated when call site table entry is resolved:
+   // -----------------------------------------------------
+   // call <target method obtained from memberName object>
+   //    arg0
+   //    arg1
+   //    ...
+   //    aloadi <appendix object>
+   // ------------------------------------------------------
+   // Call generated when call site table entry is unresolved:
+   // ------------------------------------------------------
+   // ResolveCHK
+   //    aload <CallSiteTableEntry @<callSiteIndex>>
+   // treetop
+   //    aloadi <appendix object>  // array-shadow from CallSiteTableEntry
+   //    ...
+   // treetop
+   //    aloadi <memberName object>  // array-shadow from CallSiteTableEntry
+   //    ...
+   // treetop
+   //    call java/lang/invoke/MethodHandle.linkToStatic(arg0arg1...Ljava/lang/Object;Ljava/lang/Object;)<return type>
+   //       arg0
+   //       arg1
+   //       ...
+   //       aloadi <appendix object>
+   //       aloadi <memberName object>
+   // ------------------------------------------------------
+   bool isUnresolved;
+   TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateDynamicMethodSymbol(_methodSymbol, callSiteIndex, &isUnresolved);
+   TR::SymbolReference *callSiteTableEntrySymRef = symRefTab()->findOrCreateCallSiteTableEntrySymbol(_methodSymbol, callSiteIndex);
+   TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->callSiteTableEntryAddress(callSiteIndex);
+   loadInvokeCacheArrayElements(callSiteTableEntrySymRef, invokeCacheArray, isUnresolved);
 
    if (comp()->getOption(TR_TraceILGen))
       printStack(comp(), _stack, "(Stack after load from callsite table)");
@@ -3326,10 +3355,43 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(int32_t cpIndex)
    if (comp()->getOption(TR_FullSpeedDebug) && !isPeekingMethod())
       comp()->failCompilation<J9::FSDHasInvokeHandle>("FSD_HAS_INVOKEHANDLE 1");
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   // Call generated when methodType table entry is resolved:
+   // -----------------------------------------------------
+   // call <target method obtained from memberName object>
+   //    aload  <Ljava/lang/invoke/MethodHandle;>
+   //    arg0
+   //    arg1
+   //    ...
+   //    aloadi <appendix object>
+   // ------------------------------------------------------
+   // Call generated when methodType table entry is unresolved:
+   // ------------------------------------------------------
+   // ResolveCHK
+   //    aload <MethodTypeTableEntry @<cpIndex>>
+   // treetop
+   //    aloadi <appendix object>  // array-shadow from MethodTypeTableEntry
+   //    ...
+   // treetop
+   //    aloadi <memberName object>  // array-shadow from MethodTypeTableEntry
+   //    ...
+   // treetop
+   //    call java/lang/invoke/MethodHandle.linkToStatic(Ljava/lang/Object;arg0arg1...Ljava/lang/Object;Ljava/lang/Object;)<return type>
+   //       aload  <Ljava/lang/invoke/MethodHandle;>
+   //       arg0
+   //       arg1
+   //       ...
+   //       aloadi <appendix object>
+   //       aloadi <memberName object>
+   // ------------------------------------------------------
+   bool isUnresolved;
+   TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex, &isUnresolved);
+   TR::SymbolReference *methodTypeTableEntrySymRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
+   TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->methodTypeTableEntryAddress(cpIndex);
+   loadInvokeCacheArrayElements(methodTypeTableEntrySymRef, invokeCacheArray, isUnresolved);
 
-   TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex);
-
-   loadFromSideTableForInvokeHandle(cpIndex);
+   if (comp()->getOption(TR_TraceILGen))
+      printStack(comp(), _stack, "(Stack after load from method type table)");
 
    TR::Node* callNode = genInvokeDirect(targetMethodSymRef);
 
@@ -3379,48 +3441,33 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(TR::SymbolReference *invokeExactSymRef
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 void
-TR_J9ByteCodeIlGenerator::loadFromSideTableForInvokeDynamic(int32_t callSiteIndex)
-   {
-   TR::SymbolReference *callSiteTableEntrySymRef = symRefTab()->findOrCreateCallSiteTableEntrySymbol(_methodSymbol, callSiteIndex);
-   TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
-   uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->callSiteTableEntryAddress(callSiteIndex);
-   loadInvokeCacheArrayElements(callSiteTableEntrySymRef, invokeCacheArray);
-   }
-
-void
-TR_J9ByteCodeIlGenerator::loadFromSideTableForInvokeHandle(int32_t cpIndex)
-   {
-   TR::SymbolReference *methodTypeTableEntrySymRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
-   TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
-   uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->methodTypeTableEntryAddress(cpIndex);
-   loadInvokeCacheArrayElements(methodTypeTableEntrySymRef, invokeCacheArray);
-   }
-
-void
-TR_J9ByteCodeIlGenerator::loadInvokeCacheArrayElements(TR::SymbolReference *tableEntrySymRef, uintptr_t * invokeCacheArray)
+TR_J9ByteCodeIlGenerator::loadInvokeCacheArrayElements(TR::SymbolReference *tableEntrySymRef, uintptr_t * invokeCacheArray, bool isUnresolved)
    {
    loadSymbol(TR::aload, tableEntrySymRef);
    loadConstant(TR::iconst, JSR292_invokeCacheArrayAppendixIndex);
-   loadArrayElement(TR::Address, comp()->il.opCodeForIndirectLoad(TR::Address), false);
-   if (tableEntrySymRef->isUnresolved())
+   loadArrayElement(TR::Address, comp()->il.opCodeForIndirectArrayLoad(TR::Address), false);
+   if (isUnresolved)
       {
-      // Appendix being unresolved means the target is also unresolved.
-      // Instead of creating a call to the adapter method, we construct
-      // a call to linkToStatic and provide appendix and target as
-      // additional parameters.
+      // When the callSite table entry (for invokedynamic) or methodType table entry (for invokehandle)
+      // is unresolved, instead of calling the target method, we construct a call to VM internal native
+      // method "linkToStatic", which expects the last arg to be the memberName object which it uses to
+      // obtain the actual target method and construct the call frame for it
       loadSymbol(TR::aload, tableEntrySymRef);
       loadConstant(TR::iconst, JSR292_invokeCacheArrayMemberNameIndex);
-      loadArrayElement(TR::Address, comp()->il.opCodeForIndirectLoad(TR::Address), false);
+      loadArrayElement(TR::Address, comp()->il.opCodeForIndirectArrayLoad(TR::Address), false);
       }
    else
       {
+      // When the callSite table entry (for invokedynamic) or methodType table entry (for invokehandle)
+      // is resolved, we can improve the appendix object symRef with known object index as we can get
+      // the object reference of the appendix object from the invokeCacheArray entry
       TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
       TR::Node * appendixNode = _stack->top();
       TR::SymbolReference * appendixSymRef = NULL;
          {
          TR::VMAccessCriticalSection vmAccess(fej9());
-         uintptr_t arrayElementRef = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
-         appendixSymRef = symRefTab()->refineInvokeCacheElementSymRefWithKnownObjectIndex(_methodSymbol, appendixNode->getSymbolReference(), arrayElementRef);
+         uintptr_t arrayElementRef = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex); // this will not work in AOT and JITServer
+         appendixSymRef = symRefTab()->refineInvokeCacheElementSymRefWithKnownObjectIndex(appendixNode->getSymbolReference(), arrayElementRef);
          }
       appendixNode->setSymbolReference(appendixSymRef);
       }

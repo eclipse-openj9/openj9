@@ -413,8 +413,15 @@ J9::SymbolReferenceTable::findOrCreateInterfaceMethodSymbol(TR::ResolvedMethodSy
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateDynamicMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex)
+J9::SymbolReferenceTable::findOrCreateDynamicMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex, bool * unresolvedInCP)
    {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedDynamicMethod(comp(), callSiteIndex, unresolvedInCP);
+   if (method)
+      owningMethodSymbol->setMayHaveInlineableCall(true);
+
+   TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), -1, method, TR::MethodSymbol::Static);
+#else
    List<TR::SymbolReference> *methods = dynamicMethodSymrefsByCallSiteIndex(callSiteIndex);
    ListIterator<TR::SymbolReference> li(methods);
    for (TR::SymbolReference *symRef = li.getFirst(); symRef; symRef = li.getNext())
@@ -422,17 +429,10 @@ J9::SymbolReferenceTable::findOrCreateDynamicMethodSymbol(TR::ResolvedMethodSymb
       if (symRef->getOwningMethodIndex() == owningMethodSymbol->getResolvedMethodIndex())
          return symRef;
       }
-
-   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedDynamicMethod(comp(), callSiteIndex);
-   if (method)
-      owningMethodSymbol->setMayHaveInlineableCall(true);
-
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), -1, method, TR::MethodSymbol::Static);
-#else
+   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedDynamicMethod(comp(), callSiteIndex, unresolvedInCP);
    TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), -1, method, TR::MethodSymbol::ComputedVirtual);
-#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
    methods->add(symRef);
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
    return symRef;
    }
 
@@ -450,10 +450,9 @@ J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbo
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
+J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool * unresolvedInCP)
    {
-   bool isUnresolvedInCP;
-   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedHandleMethod(comp(), cpIndex, &isUnresolvedInCP);
+   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedHandleMethod(comp(), cpIndex, unresolvedInCP);
    if (method)
       owningMethodSymbol->setMayHaveInlineableCall(true);
 
@@ -559,15 +558,14 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMet
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 TR::SymbolReference *
-J9::SymbolReferenceTable::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::ResolvedMethodSymbol * owningMethodSymbol,  TR::SymbolReference * originalSymRef, uintptr_t arrayElementRef)
+J9::SymbolReferenceTable::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::SymbolReference * originalSymRef, uintptr_t arrayElementRef)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    TR_ASSERT(fej9->haveAccess(), "Require VM access to be acquired by caller");
    TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
    if (!knot) return originalSymRef;
-   TR_ResolvedJ9Method *owningMethod = static_cast<TR_ResolvedJ9Method*>(owningMethodSymbol->getResolvedMethod());
    TR::KnownObjectTable::Index arrayElementKnotIndex = TR::KnownObjectTable::UNKNOWN;
-   arrayElementKnotIndex = knot->getOrCreateIndex(arrayElementRef, true);
+   arrayElementKnotIndex = knot->getOrCreateIndex(arrayElementRef);
    TR::SymbolReference *newRef = findOrCreateSymRefWithKnownObject(originalSymRef, arrayElementKnotIndex);
    return newRef;
    }

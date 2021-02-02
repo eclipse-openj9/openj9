@@ -1074,9 +1074,9 @@ J9::CodeGenerator::lowerTreeIfNeeded(
        !node->getSymbol()->castToMethodSymbol()->isHelper() &&
        (node->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeBasic))
       {
-      // invokeBasic is signature-polymorphic, so the location of the method handle receiver object on the stack will depend
-      // on the number of arguments in the invokeBasic call. Therefore, the number of stack slots used by the args of the call
-      // is stored in vmThread.tempSlot so that the interpreter can locate the receiver object on the stack.
+      // invokeBasic is signature-polymorphic, so the location of the method handle receiver object on the stack will be
+      // the number of arg slots in the invokeBasic call minus 1 accounting for the receiver slot. This value is is stored
+      // in vmThread.tempSlot so that the interpreter can locate the receiver object on the stack.
       TR::SymbolReference *vmThreadTempSlotSymRef = self()->comp()->getSymRefTab()->findOrCreateVMThreadTempSlotFieldSymbolRef();
       int32_t numParameterStackSlots = node->getSymbol()->castToResolvedMethodSymbol()->getNumParameterSlots();
       TR::Node * numArgsNode = NULL;
