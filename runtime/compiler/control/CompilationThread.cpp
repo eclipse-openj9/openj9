@@ -7909,23 +7909,9 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
       Trc_JIT_outOfMemory(vmThread);
 
-#if defined(J9VM_OPT_JITSERVER)
-      if (getCompilation() && getCompilation()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-         {
-         getCompilation()->getOptions()->closeLogFileForClientOptions();
-         }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-      if (getCompilation())
-         {
-         // The KOT needs to survive at least until we're done committing virtual guards and we must not be holding the
-         // comp monitor prior to freeing the KOT because it requires VM access.
-         if (getCompilation()->getKnownObjectTable())
-            getCompilation()->freeKnownObjectTable();
-
-         getCompilation()->~Compilation();
-         }
-
-      setCompilation(NULL);
+      // Compilation object has already been deallocated by this point
+      // due to heap memory region going out of scope
+      TR_ASSERT_FATAL(getCompilation() == NULL, "Compilation must be deallocated and NULL by this point");
 
       // This method has to be called from within the catch block,
       // since moving it outside would result in it getting invoked
@@ -8777,81 +8763,102 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
       }
 
-   // Store hints in the SCC
-   TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
-   if (metaData  && !that->_methodBeingCompiled->isDLTCompile() &&
-      !that->_methodBeingCompiled->isAotLoad() && sc) // skip AOT loads
+   try
       {
-      J9Method *method = that->_methodBeingCompiled->getMethodDetails().getMethod();
-      TR_J9VMBase *fej9 = (TR_J9VMBase *)(compiler->fej9());
-      if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
+      // Store hints in the SCC
+      TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
+      if (metaData  && !that->_methodBeingCompiled->isDLTCompile() &&
+         !that->_methodBeingCompiled->isAotLoad() && sc) // skip AOT loads
          {
-         bool isEDOCompilation = false;
-         TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
-         if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
+         J9Method *method = that->_methodBeingCompiled->getMethodDetails().getMethod();
+         TR_J9VMBase *fej9 = (TR_J9VMBase *)(compiler->fej9());
+         if (!fej9->isAOT_DEPRECATED_DO_NOT_USE())
             {
-            isEDOCompilation = true;
-            sc->addHint(method, TR_HintEDO);
+            bool isEDOCompilation = false;
+            TR_CatchBlockProfileInfo * profileInfo = TR_CatchBlockProfileInfo::get(compiler);
+            if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
+               {
+               isEDOCompilation = true;
+               sc->addHint(method, TR_HintEDO);
+               }
+
+            // There is the possibility that a hot/scorching compilation happened outside
+            // startup and with hints we move this expensive compilation during startup
+            // thus affecting startup time
+            // To minimize risk, add hot/scorching hints only if we are in startup mode
+            if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
+               {
+               TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
+               if (hotness == hot)
+                  {
+                  if (!isEDOCompilation)
+                     sc->addHint(method, TR_HintHot);
+                  }
+               else if (hotness == scorching)
+                  {
+                  sc->addHint(method, TR_HintScorching);
+                  }
+               // We also want to add a hint about methods compiled (not AOTed) during startup
+               // In subsequent runs we should give such method lower counts the idea being
+               // that if I take the time to compile method, why not do it sooner
+               sc->addHint(method, TR_HintMethodCompiledDuringStartup);
+               }
             }
 
-         // There is the possibility that a hot/scorching compilation happened outside
-         // startup and with hints we move this expensive compilation during startup
-         // thus affecting startup time
-         // To minimize risk, add hot/scorching hints only if we are in startup mode
+         // If this is a cold/warm compilation that takes too much memory
+         // add a hint to avoid queuing a forced upgrade
+         // Look only during startup to avoid creating too many hints.
+         // If SCC is larger we could store hints for more methods
+         //
          if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
             {
-            TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
-            if (hotness == hot)
+            if (scratchSegmentProvider.regionBytesAllocated() > TR::Options::_memExpensiveCompThreshold)
                {
-               if (!isEDOCompilation)
-                  sc->addHint(method, TR_HintHot);
+               TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
+               if (hotness <= cold)
+                  {
+                  sc->addHint(method, TR_HintLargeMemoryMethodC);
+                  }
+               else if (hotness == warm)
+                  {
+                  sc->addHint(method, TR_HintLargeMemoryMethodW);
+                  }
                }
-            else if (hotness == scorching)
-               {
-               sc->addHint(method, TR_HintScorching);
-               }
-            // We also want to add a hint about methods compiled (not AOTed) during startup
-            // In subsequent runs we should give such method lower counts the idea being
-            // that if I take the time to compile method, why not do it sooner
-            sc->addHint(method, TR_HintMethodCompiledDuringStartup);
-            }
-         }
 
-      // If this is a cold/warm compilation that takes too much memory
-      // add a hint to avoid queuing a forced upgrade
-      // Look only during startup to avoid creating too many hints.
-      // If SCC is larger we could store hints for more methods
-      //
-      if (TR::Compiler->vm.isVMInStartupPhase(jitConfig))
-         {
-         if (scratchSegmentProvider.regionBytesAllocated() > TR::Options::_memExpensiveCompThreshold)
-            {
-            TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
-            if (hotness <= cold)
+            if (that->getCompilationInfo()->getMethodQueueSize() - that->getQszWhenCompStarted() > TR::Options::_cpuExpensiveCompThreshold)
                {
-               sc->addHint(method, TR_HintLargeMemoryMethodC);
-               }
-            else if (hotness == warm)
-               {
-               sc->addHint(method, TR_HintLargeMemoryMethodW);
-               }
-            }
-
-         if (that->getCompilationInfo()->getMethodQueueSize() - that->getQszWhenCompStarted() > TR::Options::_cpuExpensiveCompThreshold)
-            {
-            TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
-            if (hotness <= cold)
-               {
-               sc->addHint(method, TR_HintLargeCompCPUC);
-               }
-            else if (hotness == warm)
-               {
-               sc->addHint(method, TR_HintLargeCompCPUW);
+               TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
+               if (hotness <= cold)
+                  {
+                  sc->addHint(method, TR_HintLargeCompCPUC);
+                  }
+               else if (hotness == warm)
+                  {
+                  sc->addHint(method, TR_HintLargeCompCPUW);
+                  }
                }
             }
          }
       }
-
+#if defined(J9VM_OPT_JITSERVER)
+   catch (const JITServer::StreamFailure &e)
+      {
+      // Stream failure here means it was produced by one of the calls to sc->addHint
+      // Fail the compilation here since attempting to finish it will result
+      // in another StreamFailure
+      that->_methodBeingCompiled->_compErrCode = compilationStreamFailure;
+      metaData = NULL; // indicate that the compilation has failed for postCompilationTasks
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d JITServer StreamFailure: %s", that->getCompThreadId(), e.what());
+      Trc_JITServerStreamFailure(vmThread, that->getCompThreadId(),  __FUNCTION__, compiler->signature(), compiler->getHotnessName(), e.what());
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   catch (const std::exception &e)
+      {
+      // Catch-all case to handle any potential failures not related to JITServer
+      // At this point we have compiled method successfuly but failed to add hints.
+      // We will ignore this exception and continue hoping that compilation can be finished.
+      }
    return metaData;
    }
 
