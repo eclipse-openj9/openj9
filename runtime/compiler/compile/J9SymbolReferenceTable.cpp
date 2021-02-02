@@ -556,22 +556,6 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMet
    return symRef;
    }
 
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-TR::SymbolReference *
-J9::SymbolReferenceTable::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::SymbolReference * originalSymRef, uintptr_t arrayElementRef)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   TR_ASSERT(fej9->haveAccess(), "Require VM access to be acquired by caller");
-   TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-   if (!knot) return originalSymRef;
-   TR::KnownObjectTable::Index arrayElementKnotIndex = TR::KnownObjectTable::UNKNOWN;
-   arrayElementKnotIndex = knot->getOrCreateIndex(arrayElementRef);
-   TR::SymbolReference *newRef = findOrCreateSymRefWithKnownObject(originalSymRef, arrayElementKnotIndex);
-   return newRef;
-   }
-
-#endif
-
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateVarHandleMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
    {

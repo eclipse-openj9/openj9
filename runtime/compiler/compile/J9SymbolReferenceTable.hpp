@@ -108,14 +108,6 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool * unresolvedInCP = 0);
    TR::SymbolReference * findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, char *signature);
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   /**
-    * \brief
-    *    Refines invokeCache element symRef with known object index for invokehandle and invokedynamic bytecode
-    *
-    * \param originalSymRef the original symref to refine
-    * \param arrayElementRef the array element ref
-    * \return TR::SymbolReference* the refined symRef
-    */
    TR::SymbolReference * refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::SymbolReference * originalSymRef, uintptr_t arrayElementRef);
 
 #endif

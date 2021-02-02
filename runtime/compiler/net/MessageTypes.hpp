@@ -182,6 +182,11 @@ enum MessageType : uint16_t
    VM_stackWalkerMaySkipFramesSVM,
    VM_getFields,
    VM_increaseOSRGlobalBufferSize,
+   VM_targetMethodFromMemberName,
+   VM_targetMethodFromMethodHandle,
+   VM_getKnotIndexOfInvokeCacheArrayAppendixElement,
+   VM_targetMethodFromInvokeCacheArrayMemberNameObj,
+   VM_refineInvokeCacheElementSymRefWithKnownObjectIndex,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,
@@ -419,6 +424,11 @@ static const char *messageNames[] =
    "VM_stackWalkerMaySkipFramesSVM",
    "VM_getFields",
    "VM_increaseOSRGlobalBufferSize",
+   "VM_targetMethodFromMemberName",
+   "VM_targetMethodFromMethodHandle",
+   "VM_getKnotIndexOfInvokeCacheArrayAppendixElement",
+   "VM_targetMethodFromInvokeCacheArrayMemberNameObj",
+   "VM_refineInvokeCacheElementSymRefWithKnownObjectIndex",
    "CompInfo_isCompiled",
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",

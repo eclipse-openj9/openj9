@@ -42,6 +42,7 @@
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/RelocationTarget.hpp"
 #include "env/TypeLayout.hpp"
+#include "env/JSR292Methods.h"
 #include "jitprotos.h"
 #include "vmaccess.h"
 
@@ -1029,6 +1030,45 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, result, jitConfig->javaVM->osrGlobalBufferSize);
          }
          break;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      case MessageType::VM_targetMethodFromMemberName:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         client->write(response, fe->targetMethodFromMemberName(comp, std::get<0>(recv)));
+         }
+         break;
+      case MessageType::VM_targetMethodFromMethodHandle:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         client->write(response, fe->targetMethodFromMethodHandle(comp, std::get<0>(recv)));
+         }
+         break;
+      case MessageType::VM_getKnotIndexOfInvokeCacheArrayAppendixElement:
+         {
+         auto recv = client->getRecvData<uintptr_t *>();
+         TR::KnownObjectTable::Index idx = fe->getKnotIndexOfInvokeCacheArrayAppendixElement(comp, std::get<0>(recv));
+         client->write(response, idx, knot->getPointerLocation(idx));
+         }
+         break;
+      case MessageType::VM_targetMethodFromInvokeCacheArrayMemberNameObj:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uintptr_t *>();
+         auto *targetMethod = static_cast<TR_ResolvedJ9Method *>(fe->targetMethodFromInvokeCacheArrayMemberNameObj(comp, std::get<0>(recv), std::get<1>(recv)));
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
+         TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, targetMethod, fe);
+         client->write(response, targetMethod->getPersistentIdentifier(), methodInfo);
+         }
+         break;
+      case MessageType::VM_refineInvokeCacheElementSymRefWithKnownObjectIndex:
+         {
+         auto recv = client->getRecvData<uintptr_t *>();
+         uintptr_t *invokeCacheArray = std::get<0>(recv);
+         uintptr_t arrayElementRef = (uintptr_t) fe->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
+         TR::KnownObjectTable::Index arrayElementKnotIndex = knot->getOrCreateIndex(arrayElementRef);
+         client->write(response, arrayElementKnotIndex, knot->getPointerLocation(arrayElementKnotIndex));
+         }
+         break;
+#endif // J9VM_OPT_OPENJDK_METHODHANDLE
       case MessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
@@ -1396,19 +1436,22 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::ResolvedMethod_getResolvedHandleMethod:
          {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
-         auto mirror = std::get<0>(recv);
-         I_32 cpIndex = std::get<1>(recv);
-         TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
+         auto *owningMethod = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         bool isUnresolvedInCP;
+         auto *handleMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedHandleMethod(comp, cpIndex, &isUnresolvedInCP));
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
+         TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, handleMethod, fe);
+         std::string signature(utf8Data(handleMethod->_signature), J9UTF8_LENGTH(handleMethod->_signature));
 
-         bool unresolvedInCP = mirror->isUnresolvedMethodTypeTableEntry(cpIndex);
-         TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle",
-               "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;");
-         J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(mirror->cp()->romConstantPool + cpIndex);
-         J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-         int32_t signatureLength;
-         char   *signature = utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig), signatureLength);
-         client->write(response, dummyInvokeExact, std::string(signature, signatureLength), unresolvedInCP);
+         client->write(
+            response,
+            handleMethod->getPersistentIdentifier(),
+            methodInfo,
+            signature,
+            isUnresolvedInCP
+            );
          }
          break;
       case MessageType::ResolvedMethod_methodTypeTableEntryAddress:
@@ -1461,19 +1504,22 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::ResolvedMethod_getResolvedDynamicMethod:
          {
-         auto recv = client->getRecvData<int32_t, J9Class *>();
-         int32_t callSiteIndex = std::get<0>(recv);
-         J9Class *clazz = std::get<1>(recv);
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
+         TR_ResolvedJ9Method *owningMethod = std::get<0>(recv);
+         int32_t callSiteIndex = std::get<1>(recv);
 
-         TR::VMAccessCriticalSection getResolvedDynamicMethod(fe);
-         J9ROMClass *romClass = clazz->romClass;
-         bool unresolvedInCP = (clazz->callSites[callSiteIndex] == NULL);
-         J9SRP                 *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
-         J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callSiteIndex], J9ROMNameAndSignature*);
-         J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
-         TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle",
-               "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;");
-         client->write(response, dummyInvokeExact, std::string(utf8Data(signature), J9UTF8_LENGTH(signature)), unresolvedInCP);
+         bool isUnresolvedInCP;
+         auto *dynamicMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedDynamicMethod(comp, callSiteIndex, &isUnresolvedInCP));
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
+         TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, (TR_ResolvedJ9Method *) dynamicMethod, fe);
+
+         client->write(
+            response,
+            dynamicMethod->getPersistentIdentifier(),
+            methodInfo,
+            std::string(utf8Data(dynamicMethod->_signature), J9UTF8_LENGTH(dynamicMethod->_signature)),
+            isUnresolvedInCP
+            );
          }
          break;
       case MessageType::ResolvedMethod_shouldFailSetRecognizedMethodInfoBecauseOfHCR:
