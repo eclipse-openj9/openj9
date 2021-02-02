@@ -7518,18 +7518,26 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          _compiler->freeKnownObjectTable();
       }
 
-   // Re-acquire the compilation monitor so that we can update the J9Method.
-   //
-   _compInfo.debugPrint(vmThread, "\tacquiring compilation monitor\n");
-   _compInfo.acquireCompMonitor(vmThread);
-   _compInfo.debugPrint(vmThread, "+CM\n");
-   if (_onSeparateThread)
+#if defined(J9VM_OPT_JITSERVER)
+   // Do not acquire the compilation monitor on the server, because we do not need
+   // it until compilationEnd returns and we do not want to send message from
+   // outOfProcessCompilationEnd while holding the monitor
+   if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+#endif
       {
-      // Acquire the queue slot monitor now
+      // Re-acquire the compilation monitor so that we can update the J9Method.
       //
-      _compInfo.debugPrint(vmThread, "\tre-acquiring queue-slot monitor\n");
-      entry->acquireSlotMonitor(vmThread);
-      _compInfo.debugPrint(vmThread, "+AM-", entry);
+      _compInfo.debugPrint(vmThread, "\tacquiring compilation monitor\n");
+      _compInfo.acquireCompMonitor(vmThread);
+      _compInfo.debugPrint(vmThread, "+CM\n");
+      if (_onSeparateThread)
+         {
+         // Acquire the queue slot monitor now
+         //
+         _compInfo.debugPrint(vmThread, "\tre-acquiring queue-slot monitor\n");
+         entry->acquireSlotMonitor(vmThread);
+         _compInfo.debugPrint(vmThread, "+AM-", entry);
+         }
       }
 
    if (TR::CompilationInfo::shouldAbortCompilation(entry, _compInfo.getPersistentInfo()))
@@ -7723,6 +7731,22 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
 
    _vm = NULL;
    _addToJProfilingQueue = false;
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      // Re-acquire the compilation monitor now that the last message has been sent
+      //
+      _compInfo.debugPrint(vmThread, "\tacquiring compilation monitor\n");
+      _compInfo.acquireCompMonitor(vmThread);
+      _compInfo.debugPrint(vmThread, "+CM\n");
+      // Acquire the queue slot monitor now
+      //
+      _compInfo.debugPrint(vmThread, "\tre-acquiring queue-slot monitor\n");
+      entry->acquireSlotMonitor(vmThread);
+      _compInfo.debugPrint(vmThread, "+AM-", entry);
+      }
+#endif
 
    return startPC;
    }
