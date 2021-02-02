@@ -421,6 +421,9 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 ```
 bash get_source.sh
 ```
+:pencil: Do not check out the source code in a path which contains spaces or has a long name or is nested many levels deep.
+
+:pencil: Create the directory that is going to contain the OpenJDK clone by using the `mkdir` command in the Cygwin bash shell and not using Windows Explorer. This ensures that it will have proper Cygwin attributes, and that its children will inherit those attributes.
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.0.2 or v1.1.x available locally, you must obtain a prebuilt OpenSSL binary.
 
@@ -432,7 +435,7 @@ bash configure --disable-warnings-as-errors \
                --with-boot-jdk=<path_to_boot_JDK14> \
                --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar
 ```
-
+Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2017` option in the configure command.
 
 :pencil: Modify the paths for freemarker if you manually downloaded and unpacked these dependencies into different directories.
 
