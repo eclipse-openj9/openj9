@@ -45,13 +45,13 @@
 #include "CheckReporter.hpp"
 #include "CheckReporterTTY.hpp"
 #include "ClassModel.hpp"
+#include "ForwardedHeader.hpp"
 #include "GCExtensions.hpp"
 #include "HeapRegionDescriptor.hpp"
 #include "ModronTypes.hpp"
 #include "ObjectModel.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ScanFormatter.hpp"
-#include "ScavengerForwardedHeader.hpp"
 #include "SublistPool.hpp"
 #include "SublistPuddle.hpp"
 
@@ -286,9 +286,9 @@ GC_CheckEngine::checkJ9ObjectPointer(J9JavaVM *javaVM, J9Object *objectPtr, J9Ob
 		if ((regionType & MEMORY_TYPE_NEW) || extensions->isVLHGC()) {
 			// TODO: ideally, we should only check this in the evacuate segment
 			// TODO: do some safety checks first -- is there enough room in the segment?
-			MM_ScavengerForwardedHeader scavengerForwardedHeader(objectPtr, extensions);
-			if (scavengerForwardedHeader.isForwardedPointer()) {
-				*newObjectPtr = scavengerForwardedHeader.getForwardedObject();
+			MM_ForwardedHeader forwardedHeader(objectPtr, extensions->compressObjectReferences());
+			if (forwardedHeader.isForwardedPointer()) {
+				*newObjectPtr = forwardedHeader.getForwardedObject();
 				
 				if (_cycle->getMiscFlags() & J9MODRON_GCCHK_VERBOSE) {
 					PORT_ACCESS_FROM_PORT(_portLibrary);

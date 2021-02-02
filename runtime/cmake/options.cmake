@@ -152,3 +152,5 @@ option(J9VM_PORT_RUNTIME_INSTRUMENTATION "Controls whether runtime instrumentati
 
 option(J9VM_RAS_DUMP_AGENTS "Support multiple dump agents, instead of just console dump.")
 option(J9VM_RAS_EYE_CATCHERS "Add eyecatcher blocks to key structures")
+
+option(J9VM_USE_RDYNAMIC "Link using the -rdynamic option (Linux only)" ON)
