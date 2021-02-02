@@ -73,7 +73,7 @@ artifactory:
     unb: 5
   daysToKeepArtifacts:
     osu: 40
-    unb: 2
+    unb: 30
   manualCleanup:
     osu: true
     unb: true
