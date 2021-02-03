@@ -135,7 +135,9 @@ public:
 
 #if defined(J9VM_OPT_JITSERVER)
    static TR_PersistentJittedBodyInfo * persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory * trMemory);
-   static void resetPersistentProfileInfo(TR_PersistentMethodInfo *methodInfo);
+   static void serializePersistentProfileInfo(const TR_PersistentProfileInfo &profileInfo, std::string &profileInfoStr, TR_Memory *trMemory);
+   static void serializePersistentProfileInfo(TR_PersistentMethodInfo *methodInfo, std::string &recentProfileInfoStr, std::string &bestProfielInfoStr, TR_Memory *trMemory);
+   static void deserializePersistentProfileInfo(TR_PersistentMethodInfo *methodInfo, const std::string &recentProfileInfoStr, const std::string &bestProfielInfoStr);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 protected:

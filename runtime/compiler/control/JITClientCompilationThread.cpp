@@ -1693,7 +1693,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             for (int32_t i = 0; i < implCount; ++i)
                {
                TR_ResolvedJ9JITServerMethodInfo methodInfo;
-               TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, (TR_ResolvedJ9Method *) implArray[i], fe);
+               TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, (TR_ResolvedJ9Method *) implArray[i], fe, trMemory);
                methodInfos.push_back(methodInfo);
                ramMethods.push_back(static_cast<TR_ResolvedJ9Method *>(implArray[i])->ramMethod());
                }
@@ -3038,7 +3038,18 @@ remoteCompile(
 
    auto classInfoTuple = JITServerHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(), compiler->trMemory(), serializeClass);
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
-   std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
+   TR_PersistentMethodInfo *methodInfo = NULL;
+   if (compiler->isRecompilationEnabled())
+      {
+      methodInfo = compiler->getRecompilationInfo()->getMethodInfo();
+      }
+   std::string recompMethodInfoStr = (methodInfo) ? std::string((char *) methodInfo, sizeof(TR_PersistentMethodInfo)) : std::string();
+   std::string recentProfileInfoStr = std::string();
+   std::string bestProfileInfoStr = std::string();
+   if (methodInfo)
+      {
+      J9::Recompilation::serializePersistentProfileInfo(methodInfo, recentProfileInfoStr, bestProfileInfoStr, compiler->trMemory());
+      }
 
    // TODO: make this a synchronized region to avoid bad_alloc exceptions
    compInfo->getSequencingMonitor()->enter();
@@ -3087,7 +3098,8 @@ remoteCompile(
 
       client->buildCompileRequest(compiler->getPersistentInfo()->getClientUID(), seqNo, lastCriticalSeqNo, romMethodOffset, method,
                                   clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr,
-                                  details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr, recompMethodInfoStr,
+                                  details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
+                                  recompMethodInfoStr, recentProfileInfoStr, bestProfileInfoStr,
                                   chtableUpdates.first, chtableUpdates.second, useAotCompilation, TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()));
       JITServer::MessageType response;
       while(!handleServerMessage(client, compiler->fej9vm(), response));

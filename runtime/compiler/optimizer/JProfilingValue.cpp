@@ -164,7 +164,13 @@ loadConst(TR::DataType dt)
 int32_t
 TR_JProfilingValue::perform()
    {
-   if (comp()->getProfilingMode() == JProfiling)
+   if (comp()->getOption(TR_DisableValueProfiling))
+      {
+      if (trace())
+         traceMsg(comp(), "JProfiling has been disabled using TR_DisableValueProfiling, skip JProfilingValue\n");
+      return 0;
+      }
+   else if (comp()->getProfilingMode() == JProfiling)
       {
       if (trace())
          traceMsg(comp(), "JProfiling has been enabled for profiling compilations, run JProfilingValue\n");

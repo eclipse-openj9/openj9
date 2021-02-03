@@ -2114,11 +2114,9 @@ J9::Options::setupJITServerOptions()
        compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       self()->setOption(TR_DisableSamplingJProfiling);
-      self()->setOption(TR_DisableProfiling); // JITServer limitation, JIT profiling data is not available to remote compiles yet
       self()->setOption(TR_DisableEDO); // JITServer limitation, EDO counters are not relocatable yet
       self()->setOption(TR_DisableMethodIsCold); // Shady heuristic; better to disable to reduce client/server traffic
-      self()->setOption(TR_DisableJProfilerThread);
-      self()->setOption(TR_EnableJProfiling, false);
+      self()->setOption(TR_DisableValueProfiling);
 
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
