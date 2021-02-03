@@ -3491,7 +3491,12 @@ void TR::CompilationInfo::stopCompilationThreads()
       }
 
    // Now that all compilation threads have terminated, we are sure none of them have crashed, or they have finished
-   // generating a JitDump. Only at this point can we terminate the diagnostic threads.
+   // generating a JitDump. Only at this point can we terminate the diagnostic threads. If a compilation thread did
+   // crash we will actually never execute code following this comment. This is because the crashed thread will be
+   // in an active state, since it has crashed during a compilation, and the we will be waiting on the comp monitor
+   // for the crashed thread in the loop above. However because the diagnostic data is generated on the crashed 
+   // thread this thread will never return to execute the state processing loop, and thus will never terminate.
+   // This is ok, because following the dump process in the JVM we will terminate the entire JVM process.
    for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
@@ -3500,6 +3505,8 @@ void TR::CompilationInfo::stopCompilationThreads()
          stopCompilationThread(curCompThreadInfoPT);
       }
 
+   // Wake up the diagnostic thread and stop it. If it is currently active then we will block here until the JitDump
+   // process is complete (see #11860).
    for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
