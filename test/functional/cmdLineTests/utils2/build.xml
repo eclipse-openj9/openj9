@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2019, 2019 IBM Corp. and others
+  Copyright (c) 2019, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 	<property name="build" location="./bin"/>
 	<property name="addExports" value="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
 	<property name="TestUtilities" location="../utilshelper/src" />
+	<property name="TestUtilities_110" location="../utilshelper/src_110" />
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -48,15 +49,18 @@
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 		<if>
-			<not>
-				<equals arg1="${JDK_VERSION}" arg2="8" />
-			</not>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
 					<src path="${TestUtilities}" />
-					<compilerarg line='${addExports}' />
 				</javac>
 			</then>
+			<else>
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+					<src path="${TestUtilities_110}" />
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
 		</if>
 	</target>
 
