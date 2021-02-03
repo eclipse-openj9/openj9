@@ -204,6 +204,23 @@ class CompilationInfoPerThreadBase
    bool methodCanBeCompiled(TR_Memory *trMemory, TR_FrontEnd *fe, TR_ResolvedMethod *compilee, TR_FilterBST *&filter);
    int32_t                getCompThreadId() const { return _compThreadId; }
 
+   /**
+    * \brief
+    * 
+    * An RAII class used to scope an interruptible operation on a compilation thread.
+    * 
+    * \details
+    * 
+    * Interruptible (\see InterruptibleOperation) and Uninterruptible (\see UninterruptibleOperation) operations related
+    * classes expressing whether the current compilation thread can terminate the compilation at the next yield point.
+    * The two classes can be intertwined and the logic of what happens when scopes mix is as follows:
+    * 
+    * - Nesting an InterruptibleOperation under an UninterruptibleOperation acts as a NOP
+    * - Nesting an UninterruptibleOperation under an InterruptibleOperation results in an UninterruptibleOperation that 
+    *   once gone out of scope results in an InterruptibleOperation
+    * 
+    * Put simply, an UninterruptibleOperation takes higher precedence over an InterruptibleOperation.
+    */
    class InterruptibleOperation
       {
       friend class TR::CompilationInfoPerThreadBase;
@@ -212,8 +229,6 @@ class CompilationInfoPerThreadBase
       InterruptibleOperation(TR::CompilationInfoPerThreadBase &compThread) :
          _compThread(compThread)
          {
-         TR_ASSERT_FATAL(!_compThread._compilationCanBeInterrupted, "This guard is not re-entrant");
-         
          if (_compThread._uninterruptableOperationDepth == 0)
             {
             _compThread._compilationCanBeInterrupted = true;
@@ -222,8 +237,6 @@ class CompilationInfoPerThreadBase
 
       ~InterruptibleOperation()
          {
-         TR_ASSERT_FATAL(_compThread._compilationCanBeInterrupted, "Exiting interruptible operation without having entered");
-
          if (_compThread._uninterruptableOperationDepth == 0)
             {
             _compThread._compilationCanBeInterrupted = false;
@@ -236,8 +249,20 @@ class CompilationInfoPerThreadBase
 
    /**
     * \brief
-    * An RAII class used to scope an uniterruptable operation on a compilation thread. The state of whether the thread
-    * can be interrupted or not will remain the same after this object is destructed.
+    * 
+    * An RAII class used to scope an uninterruptible operation on a compilation thread.
+    * 
+    * \details
+    * 
+    * Interruptible (\see InterruptibleOperation) and Uninterruptible (\see UninterruptibleOperation) operations related
+    * classes expressing whether the current compilation thread can terminate the compilation at the next yield point.
+    * The two classes can be intertwined and the logic of what happens when scopes mix is as follows:
+    * 
+    * - Nesting an InterruptibleOperation under an UninterruptibleOperation acts as a NOP
+    * - Nesting an UninterruptibleOperation under an InterruptibleOperation results in an UninterruptibleOperation that 
+    *   once gone out of scope results in an InterruptibleOperation
+    * 
+    * Put simply, an UninterruptibleOperation takes higher precedence over an InterruptibleOperation.
     */
    class UninterruptibleOperation
       {
