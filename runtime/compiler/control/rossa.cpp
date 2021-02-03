@@ -1210,6 +1210,17 @@ onLoadInternal(
 #endif
 #endif
 
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (javaVM->internalVMFunctions->isJITServerEnabled(javaVM))
+      {
+      // Use smaller caches on the server because
+      // just one method's data is going to be stored there at a time
+      jitConfig->codeCacheKB = 1024;
+      jitConfig->dataCacheKB = 1024;
+      }
+#endif
+
    if (fe->isAOT_DEPRECATED_DO_NOT_USE())
       {
       jitConfig->codeCacheTotalKB = 128 * 1024; // default limit on amount of code that can be generated (128MB)
