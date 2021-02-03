@@ -51,7 +51,7 @@ protected:
 	omrobjectptr_t _objectPtr; /**< the object on which to act */
 	uintptr_t _preserved; /**< a backup copy of the header fields which may be modified by this class */
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-	bool const _compressObjectReferences;
+	bool _compressObjectReferences;
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 private:
 };
