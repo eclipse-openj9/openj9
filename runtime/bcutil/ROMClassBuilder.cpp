@@ -543,12 +543,18 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	if (context->isROMClassShareable()) {
 		UDATA loadType = J9SHR_LOADTYPE_NORMAL;
-		if (context->isClassHidden()) {
-			loadType = J9SHR_LOADTYPE_NOT_FROM_PATH;
-		} else if (context->isRedefining()) {
+		if (context->isRedefining()) {
 			loadType = J9SHR_LOADTYPE_REDEFINED;
 		} else if (context->isRetransforming()) {
 			loadType = J9SHR_LOADTYPE_RETRANSFORMED;
+		} else if (context->isClassUnsafe()
+			|| context->isClassHidden()
+			|| (LOAD_LOCATION_UNKNOWN == context->loadLocation())
+		) {
+			/* For redefining/transforming, we still want loadType to be J9SHR_LOADTYPE_REDEFINED/J9SHR_LOADTYPE_RETRANSFORMED,
+			 * so put these checks after the redefining/transforming checks.
+			 */ 
+			loadType = J9SHR_LOADTYPE_NOT_FROM_PATH;
 		}
 
 		SCStoreTransaction sharedStoreClassTransaction =
