@@ -422,6 +422,36 @@ public void test_getMethods_subtest5() {
 	}
 }
 
+abstract class ClzParent {}
+class ClzChild extends ClzParent {}
+class ClzImpl implements InterFaceLayerOne {
+	@Override
+	public ClzChild getType() {
+		return null;
+	}
+}
+interface InterFaceLayerOne extends InterfaceLayerTwoA<ClzChild>, InterfaceLayerTwoB {}
+interface InterfaceLayerTwoA<S> extends InterfaceLayerThreeA<ClzChild>, InterfaceLayerThreeB {}
+interface InterfaceLayerTwoB {
+	ClzParent getType();
+}
+interface InterfaceLayerThreeA<S> {
+	S getType();
+}
+interface InterfaceLayerThreeB {
+	ClzParent getType();
+}
+@Test
+public void test_getMethods_subtest6() throws Exception {
+	ClzImpl clzImpl = new ClzImpl();
+	for (Method method : clzImpl.getClass().getMethods()) {
+		for (Class<?> anInterface : method.getDeclaringClass().getInterfaces()) {
+			Method intfMethod = anInterface.getMethod(method.getName(), method.getParameterTypes());
+			Assert.assertEquals(intfMethod.toString(), "public abstract org.openj9.test.java.lang.Test_Class$ClzParent org.openj9.test.java.lang.Test_Class$InterfaceLayerThreeB.getType()");
+		}
+	}
+}
+
 static String[] concatenateObjectMethods(String methodList[]) {
 	final String[] jlobjectMethods = new String[] {
 			objectClass+".equals(java.lang.Object)boolean",
@@ -818,7 +848,7 @@ public void test_getConstructors() {
  */
 @Test
 public void test_getDeclaredClasses() {
-	int len = 65;
+	int len = 73;
 	// Test for method java.lang.Class [] java.lang.Class.getDeclaredClasses()
 	Class[] declaredClasses = Test_Class.class.getDeclaredClasses();
 	if (declaredClasses.length != len) {
