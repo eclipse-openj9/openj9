@@ -7268,6 +7268,10 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             && !details.isMethodHandleThunk()
             && !TR::CompilationInfo::isCompiled(method)
 
+            // If using a loadLimit/loadLimitFile, don't do an AOT compilation
+            // for a method body that's already in the SCC
+            && entry->_methodIsInSharedCache != TR_yes
+
             // See eclipse/openj9#11879 for details
             && (!TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
                 || !entry->_oldStartPC)
