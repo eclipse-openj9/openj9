@@ -38,10 +38,10 @@
 #include "runtime/Listener.hpp"
 #endif
 
-UDATA
-jitDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
+uintptr_t
+jitDumpSignalHandler(struct J9PortLibrary *portLibrary, uint32_t gpType, void *gpInfo, void *handler_arg)
    {
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread = %p Recursive crash occurred. Aborting JIT dump.", reinterpret_cast<J9VMThread*>(arg));
+   TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread = %p Recursive crash occurred. Aborting JIT dump.", reinterpret_cast<J9VMThread*>(handler_arg));
 
    // Returning J9PORT_SIG_EXCEPTION_RETURN will make us come back to the same crashing instruction over and over
    //
@@ -69,9 +69,9 @@ typedef struct DumpCurrentILParamenters
    } DumpCurrentILParamenters;
 
 static UDATA
-blankDumpCurrentILSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
+blankDumpCurrentILSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *handler_arg)
    {
-   J9VMThread *vmThread = (J9VMThread *) arg;
+   J9VMThread *vmThread = (J9VMThread *) handler_arg;
    TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread=%p Crashed while printing out current IL.", vmThread);
    return J9PORT_SIG_EXCEPTION_RETURN;
    }
@@ -637,6 +637,13 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
 
          // get current compilation
          TR::Compilation *comp = threadCompInfo->getCompilation();
+
+         // Printing the crashed thread trees or any similar operation on the crashed thread may result in having to
+         // acquire VM access (ex. to get a class signature). Other VM events, such as VM shutdown or the GC unloading
+         // classes may cause compilations to be interrupted. Because the crashed thread is not a diagnostic thread,
+         // the call to print the crashed thread IL may get interrupted and the jitdump will be incomplete. We prevent
+         // this from occuring by disallowing interruptions until we are done generating the jitdump.
+         TR::CompilationInfoPerThreadBase::UninterruptibleOperation generateJitDumpForCrashedThread(*threadCompInfo);
 
          // if the compilation is in progress, dump interesting things from it and then recompile
          if (comp)

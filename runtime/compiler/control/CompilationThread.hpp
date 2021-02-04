@@ -204,38 +204,97 @@ class CompilationInfoPerThreadBase
    bool methodCanBeCompiled(TR_Memory *trMemory, TR_FrontEnd *fe, TR_ResolvedMethod *compilee, TR_FilterBST *&filter);
    int32_t                getCompThreadId() const { return _compThreadId; }
 
-   bool                   compilationCanBeInterrupted() const { return _compilationCanBeInterrupted; }
-   void                   enterInterruptibleOperation()
-      {
-      TR_ASSERT(!_compilationCanBeInterrupted, "This guard is not re-entrant.");
-      _compilationCanBeInterrupted = true;
-      }
-   void                   exitInterruptibleOperation()
-      {
-      TR_ASSERT(_compilationCanBeInterrupted, "Exiting interruptible operation without having entered.");
-      _compilationCanBeInterrupted = false;
-      }
-
+   /**
+    * \brief
+    * 
+    * An RAII class used to scope an interruptible operation on a compilation thread.
+    * 
+    * \details
+    * 
+    * Interruptible (\see InterruptibleOperation) and Uninterruptible (\see UninterruptibleOperation) operations related
+    * classes expressing whether the current compilation thread can terminate the compilation at the next yield point.
+    * The two classes can be intertwined and the logic of what happens when scopes mix is as follows:
+    * 
+    * - Nesting an InterruptibleOperation under an UninterruptibleOperation acts as a NOP
+    * - Nesting an UninterruptibleOperation under an InterruptibleOperation results in an UninterruptibleOperation that 
+    *   once gone out of scope results in an InterruptibleOperation
+    * 
+    * Put simply, an UninterruptibleOperation takes higher precedence over an InterruptibleOperation.
+    */
    class InterruptibleOperation
       {
+      friend class TR::CompilationInfoPerThreadBase;
+      
    public:
       InterruptibleOperation(TR::CompilationInfoPerThreadBase &compThread) :
          _compThread(compThread)
          {
-         _compThread.enterInterruptibleOperation();
+         if (_compThread._uninterruptableOperationDepth == 0)
+            {
+            _compThread._compilationCanBeInterrupted = true;
+            }
          }
 
       ~InterruptibleOperation()
          {
-         _compThread.exitInterruptibleOperation();
+         if (_compThread._uninterruptableOperationDepth == 0)
+            {
+            _compThread._compilationCanBeInterrupted = false;
+            }
+         }
+
+   private:
+      TR::CompilationInfoPerThreadBase & _compThread;
+      };
+
+   /**
+    * \brief
+    * 
+    * An RAII class used to scope an uninterruptible operation on a compilation thread.
+    * 
+    * \details
+    * 
+    * Interruptible (\see InterruptibleOperation) and Uninterruptible (\see UninterruptibleOperation) operations related
+    * classes expressing whether the current compilation thread can terminate the compilation at the next yield point.
+    * The two classes can be intertwined and the logic of what happens when scopes mix is as follows:
+    * 
+    * - Nesting an InterruptibleOperation under an UninterruptibleOperation acts as a NOP
+    * - Nesting an UninterruptibleOperation under an InterruptibleOperation results in an UninterruptibleOperation that 
+    *   once gone out of scope results in an InterruptibleOperation
+    * 
+    * Put simply, an UninterruptibleOperation takes higher precedence over an InterruptibleOperation.
+    */
+   class UninterruptibleOperation
+      {
+      friend class TR::CompilationInfoPerThreadBase;
+      
+   public:
+      UninterruptibleOperation(TR::CompilationInfoPerThreadBase &compThread) :
+         _compThread(compThread), _originalValue(_compThread._compilationCanBeInterrupted)
+         {
+         _compThread._compilationCanBeInterrupted = false;
+         _compThread._uninterruptableOperationDepth++;
+         }
+
+      ~UninterruptibleOperation()
+         {
+         _compThread._compilationCanBeInterrupted = _originalValue;
+         _compThread._uninterruptableOperationDepth--;
          }
 
    private:
       TR::CompilationInfoPerThreadBase & _compThread;
 
+      /// Represents the original value of whether the compilation can be interrupted before executing the
+      /// uninterruptable operation
+      bool _originalValue;
       };
 
-   uint8_t                compilationShouldBeInterrupted() const { return _compilationShouldBeInterrupted; }
+   uint8_t compilationShouldBeInterrupted() const
+      {
+      return _compilationCanBeInterrupted ? _compilationShouldBeInterrupted : 0;
+      }
+
    void                   setCompilationShouldBeInterrupted(uint8_t reason) { _compilationShouldBeInterrupted = reason; }
    TR_DataCache*          reservedDataCache() { return _reservedDataCache; }
    void                   setReservedDataCache(TR_DataCache *dataCache) { _reservedDataCache = dataCache; }
@@ -290,7 +349,16 @@ class CompilationInfoPerThreadBase
    uintptr_t                    _timeWhenCompStarted;
    int32_t                      _numJITCompilations; // num JIT compilations this thread has performed; AOT loads not counted
    int32_t                      _qszWhenCompStarted; // size of compilation queue and compilation starts
-   bool                         _compilationCanBeInterrupted;
+
+   /// Determines whether this compilation thread can be interrupted the compile at the next yield point. A different
+   /// thread may still request that the compilation _should_ be interrupted, however we may not be in a state at
+   /// which we _can_ interrupt.
+   bool _compilationCanBeInterrupted;
+
+   /// Counts the number of nested \see UninterruptibleOperation in the stack. An \see InterruptibleOperation can only
+   /// be issued if the depth of uninterruptable operations is 0.
+   int32_t _uninterruptableOperationDepth;
+
    bool                         _addToJProfilingQueue;
 
    volatile CompilationThreadState _compilationThreadState;

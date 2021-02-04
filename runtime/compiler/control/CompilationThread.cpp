@@ -202,12 +202,12 @@ TR::CompilationInfoPerThreadBase::setCompilation(TR::Compilation *compiler)
 thread_local TR::CompilationInfoPerThread *TR::compInfoPT;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-static UDATA
-jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
+static uintptr_t
+jitSignalHandler(struct J9PortLibrary *portLibrary, uint32_t gpType, void *gpInfo, void *handler_arg)
    {
    static int32_t numCrashes = 0;
    bool recoverable = true;
-   J9VMThread *vmThread = (J9VMThread *)arg;
+   J9VMThread *vmThread = (J9VMThread *)handler_arg;
 
    // Try to find the compilation object
    TR::Compilation * comp = 0;
@@ -490,6 +490,12 @@ int32_t TR::CompilationInfo::computeDynamicDumbInlinerBytecodeSizeCutoff(TR::Opt
 // Must have compilation queue monitor in hand when calling this routine
 TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    {
+   // If further compilations have been disabled we could be in a dire situation, for example virtual memory could be
+   // really low, there could be failures when attempting to allocate persistent memory, a compilation thread could
+   // have crashed, etc. In such situations we never want to activate a new compilation driven by this API.
+   if (getPersistentInfo()->getDisableFurtherCompilation())
+      return TR_no;
+
    // We must have at least one compilation thread active
    if (getNumCompThreadsActive() <= 0)
       return TR_yes;
@@ -976,6 +982,7 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _numJITCompilations(),
    _qszWhenCompStarted(),
    _compilationCanBeInterrupted(false),
+   _uninterruptableOperationDepth(0),
    _compilationThreadState(COMPTHREAD_UNINITIALIZED),
    _compilationShouldBeInterrupted(false),
 #if defined(J9VM_OPT_JITSERVER)
@@ -2639,32 +2646,14 @@ void TR::CompilationInfo::resumeCompilationThread()
          if (activate == TR_no)
             break;
 
-         if (curCompThreadInfoPT->getCompilationThreadState() == COMPTHREAD_SIGNAL_SUSPEND ||
-             curCompThreadInfoPT->getCompilationThreadState() == COMPTHREAD_SUSPENDED)
-            {
-            if (curCompThreadInfoPT->getCompilationThreadState() == COMPTHREAD_SUSPENDED)
-               {
-               curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_ACTIVE);
-               curCompThreadInfoPT->getCompThreadMonitor()->enter();
-               curCompThreadInfoPT->getCompThreadMonitor()->notifyAll(); // wake the suspended thread
-               curCompThreadInfoPT->getCompThreadMonitor()->exit();
-               }
-            else // COMPTHREAD_SIGNAL_SUSPEND
-               {
-               curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_ACTIVE);
-               }
-            incNumCompThreadsActive();
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Resume compThread %d Qweight=%d active=%d",
-                  (uint32_t)getPersistentInfo()->getElapsedTime(),
-                  curCompThreadInfoPT->getCompThreadId(),
-                  getQueueWeight(),
-                  getNumCompThreadsActive());
-               }
-            }
-         } // end for
-      TR_ASSERT(getNumCompThreadsActive() > 0, "We must have at least one compilation thread active");
+         curCompThreadInfoPT->resumeCompilationThread();
+         }
+
+      if (getNumCompThreadsActive() == 0)
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "No threads were activated following a resume all compilation threads call");
+         }
+
       releaseCompMonitor(vmThread);
       }
    else // compilation on application thread
@@ -3470,71 +3459,68 @@ void TR::CompilationInfo::stopCompilationThreads()
 
    addCompilationTraceEntry(vmThread, OP_WillStopCompilationThreads);
 
-   // cycle through all the threads
-   // NOTE: comp monitor is held while this is happening
+   // Cycle through all non-diagnostic threads and stop them
    for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
-      TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
 
-      // set the flag for the compilation-in-progress to be aborted at the next yield,
-      // unless the thread is compiling for log - then it should finish
-      // NOTE: even if the thread is compiling for dump, it will still be signaled to terminate
-      if (!(curCompThreadInfoPT->isDiagnosticThread()))
-         curCompThreadInfoPT->setCompilationShouldBeInterrupted(SHUTDOWN_COMP_INTERRUPT);
-
-      switch (curCompThreadInfoPT->getCompilationThreadState())
-         {
-         case COMPTHREAD_SUSPENDED:
-            curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
-            curCompThreadInfoPT->getCompThreadMonitor()->enter();
-            curCompThreadInfoPT->getCompThreadMonitor()->notifyAll();
-            curCompThreadInfoPT->getCompThreadMonitor()->exit();
-            break;
-
-         case COMPTHREAD_ACTIVE:
-         case COMPTHREAD_SIGNAL_WAIT:
-         case COMPTHREAD_WAITING:
-            curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
-            // Only decrement the number of active threads if we are not a diagnostic
-            // thread
-            if (!(curCompThreadInfoPT->isDiagnosticThread()))
-               decNumCompThreadsActive();
-            break;
-
-         case COMPTHREAD_SIGNAL_SUSPEND:
-            curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
-            break;
-
-         case COMPTHREAD_SIGNAL_TERMINATE:
-         case COMPTHREAD_STOPPING:
-         case COMPTHREAD_STOPPED:
-            // weird case; we should not do anything
-            break;
-
-         case COMPTHREAD_UNINITIALIZED:
-            // Compilation thread did not have time to become fully initialized
-            curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
-            break;
-
-         default:
-            TR_ASSERT(false, "No other comp thread state possible here\n");
-         } // end switch
+      if (!curCompThreadInfoPT->isDiagnosticThread())
+         stopCompilationThread(curCompThreadInfoPT);
       }
-   TR_ASSERT(getNumCompThreadsActive()==0, "All threads must be inactive at this point\n");
+
+   TR_ASSERT_FATAL(getNumCompThreadsActive() == 0, "All threads must be inactive at this point\n");
+
    purgeMethodQueue(compilationSuspended);
 
+   // Cycle though all non-diagnostic threads and wait for them to terminate. At this point it is possible that a
+   // compilation thread has crashed and is going through the JitDump process. The reason we skipped terminating the
+   // diagnostic threads in the above loop is because the JitDump logic will activate the diagnostic thread to generate
+   // the JitDump, so the diagnostic thread must not be in a terminated state at that point.
    for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
-      TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
 
-      while (curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_STOPPED)
+      if (!curCompThreadInfoPT->isDiagnosticThread())
          {
-         getCompilationMonitor()->notifyAll();
-         waitOnCompMonitor(vmThread);
+         while (curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_STOPPED)
+            {
+            getCompilationMonitor()->notifyAll();
+            waitOnCompMonitor(vmThread);
+            }
          }
       }
+
+   // Now that all compilation threads have terminated, we are sure none of them have crashed, or they have finished
+   // generating a JitDump. Only at this point can we terminate the diagnostic threads. If a compilation thread did
+   // crash we will actually never execute code following this comment. This is because the crashed thread will be
+   // in an active state, since it has crashed during a compilation, and the we will be waiting on the comp monitor
+   // for the crashed thread in the loop above. However because the diagnostic data is generated on the crashed 
+   // thread this thread will never return to execute the state processing loop, and thus will never terminate.
+   // This is ok, because following the dump process in the JVM we will terminate the entire JVM process.
+   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+      {
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+
+      if (curCompThreadInfoPT->isDiagnosticThread())
+         stopCompilationThread(curCompThreadInfoPT);
+      }
+
+   // Wake up the diagnostic thread and stop it. If it is currently active then we will block here until the JitDump
+   // process is complete (see #11860).
+   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+      {
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+
+      if (curCompThreadInfoPT->isDiagnosticThread())
+         {
+         while (curCompThreadInfoPT->getCompilationThreadState() != COMPTHREAD_STOPPED)
+            {
+            getCompilationMonitor()->notifyAll();
+            waitOnCompMonitor(vmThread);
+            }
+         }
+      }
+
    // Remove the method pool entries
    //
    PORT_ACCESS_FROM_JAVAVM(_jitConfig->javaVM);
@@ -3586,6 +3572,48 @@ void TR::CompilationInfo::stopCompilationThreads()
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   }
+
+void TR::CompilationInfo::stopCompilationThread(CompilationInfoPerThread* compInfoPT)
+   {
+   compInfoPT->setCompilationShouldBeInterrupted(SHUTDOWN_COMP_INTERRUPT);
+
+   switch (compInfoPT->getCompilationThreadState())
+      {
+      case COMPTHREAD_SUSPENDED:
+         compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
+         compInfoPT->getCompThreadMonitor()->enter();
+         compInfoPT->getCompThreadMonitor()->notifyAll();
+         compInfoPT->getCompThreadMonitor()->exit();
+         break;
+
+      case COMPTHREAD_ACTIVE:
+      case COMPTHREAD_SIGNAL_WAIT:
+      case COMPTHREAD_WAITING:
+         compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
+         
+         if (!compInfoPT->isDiagnosticThread())
+            decNumCompThreadsActive();
+         break;
+
+      case COMPTHREAD_SIGNAL_SUSPEND:
+         compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
+         break;
+
+      case COMPTHREAD_SIGNAL_TERMINATE:
+      case COMPTHREAD_STOPPING:
+      case COMPTHREAD_STOPPED:
+         // Weird case; we should not do anything
+         break;
+
+      case COMPTHREAD_UNINITIALIZED:
+         // Compilation thread did not have time to become fully initialized
+         compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
+         break;
+
+      default:
+         TR_ASSERT_FATAL(false, "No other comp thread state possible here");
+      }
    }
 
 IDATA J9THREAD_PROC compilationThreadProc(void *entryarg)
@@ -3981,14 +4009,8 @@ TR::CompilationInfoPerThread::processEntries()
          case TR::CompilationInfo::GO_TO_SLEEP_EMPTY_QUEUE:
             {
             // This compilation thread goes to sleep because there is no more work to do
-
-            // NOTE:
-            //      if we are a diagnostic thread and we see an empty queue,
-            //      then it is either an error, or we have finished all of our
-            //      work; we should broadcast this fact because in the error
-            //      case, there is a possibility of deadlock
             if (isDiagnosticThread() && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "diagnostic thread encountered an empty queue");
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Diagnostic thread encountered an empty queue");
 
             setCompilationThreadState(COMPTHREAD_WAITING);
             setLastTimeThreadWentToSleep(compInfo->getPersistentInfo()->getElapsedTime());
@@ -4284,6 +4306,24 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    //
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
 
+   // We have acquired VM access above and will be releasing it below. It is possible however that during the
+   // compilation process in the above `compile(...)` call we have released VM access and have subsequently
+   // crashed or asserted. In such a scenarion the JitDump process will have started and queued the method
+   // for recompilation with a custom signal handler to catch the crash/assertion and return. The JitDump
+   // compilation will have hopefully crashed/asserted in the same place as the original compilation, and
+   // thus we will not be holding VM access at that point. This means we will return from the above call to
+   // `compile(...)` without holding VM access, and below we will attempt to call `j9jni_deleteLocalRef` to
+   // unpin the class. The `j9jni_deleteLocalRef` function has a requirement that we hold VM access otherwise
+   // it will assert. We do not want to assert, as that will end up calling `abort()` and the JitDump process
+   // will not complete, nor will any dump handlers following JitDump.
+   if ((compThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) == 0)
+      {
+      TR_ASSERT_FATAL(isDiagnosticThread(), "A compilation thread has finished a compilation but does not hold VM access");
+
+      acquireVMAccessNoSuspend(compThread);
+      compInfo->debugPrint(compThread, "+VMacc\n");
+      }
+
    // Unpin the class
    if (!entry.isOutOfProcessCompReq())
       compThread->javaVM->internalVMFunctions->j9jni_deleteLocalRef((JNIEnv*)compThread, classObject);
@@ -4405,7 +4445,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
    compInfo->debugPrint(compThread, "-VMacc\n");
    // We can suspend this thread if too many are active
    if (
-      !(isDiagnosticThread()) // must not be reserved for log
+      !isDiagnosticThread() // must not be reserved for log
       && compInfo->getNumCompThreadsActive() > 1 // we should have at least one active besides this one
       && compilationThreadIsActive() // We haven't already been signaled to suspend or terminate
       && (
@@ -4874,23 +4914,19 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
 
       if (activate == TR_yes)
          {
-         // Must find one that is SUSPENDED/SUSPENDING
+         // Must find one that is SUSPENDED/SUSPENDING otherwise the logic in shouldActivateNewCompThread is incorrect
          TR::CompilationInfoPerThread *compInfoPT = getFirstSuspendedCompilationThread();
-#if defined(J9VM_OPT_JITSERVER)
-         if (compInfoPT) // FIXME this is null sometimes during shutdown. Why??
-#endif
+
+         TR_ASSERT_FATAL(compInfoPT != NULL, "Could not find a suspended/suspending compilation thread");
+
+         compInfoPT->resumeCompilationThread();
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
             {
-            compInfoPT->resumeCompilationThread();
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Activate compThread %d Qweight=%d active=%d",
-                  (uint32_t)getPersistentInfo()->getElapsedTime(),
-                  compInfoPT->getCompThreadId(),
-                  getQueueWeight(),
-                  getNumCompThreadsActive());
-               }
-            //fprintf(stderr, "Activate compthread %d: _numQueuedMethods=%d queueWeight=%d getNumCompThreadsJobless=%d numactive=%d\n",
-            //   compInfoPT->getCompThreadId(), _numQueuedMethods, _queueWeight, getNumCompThreadsJobless(), getNumCompThreadsActive());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Activate compThread %d Qweight=%d active=%d",
+               (uint32_t)getPersistentInfo()->getElapsedTime(),
+               compInfoPT->getCompThreadId(),
+               getQueueWeight(),
+               getNumCompThreadsActive());
             }
          }
       }
@@ -5181,171 +5217,211 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
                                               bool compThreadCameOutOfSleep,
                                               TR_CompThreadActions *compThreadAction)
    {
-   TR_MethodToBeCompiled *m = NULL;
-   *compThreadAction = PROCESS_ENTRY;
-   if (_methodQueue)
+   TR_MethodToBeCompiled *nextMethodToBeCompiled = NULL;
+
+   // Only the diagnostic thread should be processing JitDump compilations. This is to ensure proper tracing is active
+   // and proper synchronization is performed w.r.t. special events (interpreter shutdown, etc.). The logic here is
+   // split into two parts. In the event we are a diagnostic thread, the JitDump process will have ensured the method
+   // compilation queue has been purged and all further compilations have been suspended until the entire JitDump
+   // process in complete. This also means if we are a diagnostic thread, then the only entries in the queue should
+   // be JitDump compile requests. We will ensure this is the case via a fatal assert.
+   //
+   // In addition there can be scenarios in which a non-diagnostic compilation thread is still attempting to process
+   // entries while the JitDump process (in a crashed thread) is happening. This is because one compilation thread
+   // must always be active, and there is a timing hole between purging of the queue in the JitDump process, and when
+   // the diagnostic thread is resumed. This means a non-diagnostic thread could attempt to pick up a JitDump
+   // compilation request (see eclipse/openj9#11772 for details). We must ensure that this does not happen and simply
+   // skip the request if we are a non-diagnostic thread attempting to process a JitDump compilation.
+   if (compInfoPT->isDiagnosticThread())
       {
-      // If the request is sync or AOT load or InstantReplay, take it now
-      if (compInfoPT->isDiagnosticThread() // InstantReplay compilations must be processed immediately
-          || _methodQueue->_priority >= CP_SYNC_MIN // sync comp
-          || _methodQueue->_methodIsInSharedCache == TR_yes // very cheap relocation
-#if defined(J9VM_OPT_JITSERVER)
-          || getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER // compile right away in server mode
-#endif
-         )
+      // We never want to self-suspend the diagnostic thread. The JitDump process will do it after it is complete.
+      *compThreadAction = GO_TO_SLEEP_EMPTY_QUEUE;
+
+      if (_methodQueue)
          {
-         m = _methodQueue;
+         nextMethodToBeCompiled = _methodQueue;
          _methodQueue = _methodQueue->_next;
-         }
-      // Check if we need to throttle
-      else if (exceedsCompCpuEntitlement() == TR_yes &&
-              !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
-              (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
-         {
-         // If at all possible suspend the compilation thread
-         // Otherwise, perform a timed wait
-         if (getNumCompThreadsActive() > 1)
-            *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         else
-            *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         }
-      // Avoid two concurrent hot compilations
-      else if (getNumCompThreadsCompilingHotterMethods() <= 0 || // no hot compilation in progress
-               _methodQueue->_weight < TR::Options::_expensiveCompWeight) // This is a cheaper comp
-         {
-         m = _methodQueue;
-         _methodQueue = _methodQueue->_next;
-         }
-      else // scan for a cold/warm method
-         {
-         TR_MethodToBeCompiled *prev = _methodQueue;
-         for (m = _methodQueue->_next; m; prev = m, m = m->_next)
-            {
-            if (m->_optimizationPlan->getOptLevel() <= warm || // cheaper comp
-                m->_priority >= CP_SYNC_MIN ||       // sync comp
-                m->_methodIsInSharedCache == TR_yes) // very cheap relocation
-               {
-               prev->_next = m->_next;
-               break;
-               }
-            }
-         if (!m)
-            {
-            *compThreadAction = GO_TO_SLEEP_CONCURRENT_EXPENSIVE_REQUESTS;
 
-            // make sure there is at least one thread that is not jobless
-            TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = getArrayOfCompilationInfoPerThread();
-            int32_t numActive = 0, numHot = 0, numLowPriority = 0;
-            for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
-               {
-               TR::CompilationInfoPerThread *curCompThreadInfoPT = arrayOfCompInfoPT[i];
-               TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
+         // See explanation at the start of this function of why it is important to ensure this
+         TR_ASSERT_FATAL(nextMethodToBeCompiled->getMethodDetails().isJitDumpMethod(), "Diagnostic thread attempting to process non-JitDump compilation");
 
-               CompilationThreadState currentThreadState = curCompThreadInfoPT->getCompilationThreadState();
-               if (
-                  currentThreadState == COMPTHREAD_ACTIVE
-                  || currentThreadState == COMPTHREAD_SIGNAL_WAIT
-                  || currentThreadState == COMPTHREAD_WAITING
-                  || currentThreadState == COMPTHREAD_SIGNAL_SUSPEND
-                  )
-                  {
-                  if (curCompThreadInfoPT->getMethodBeingCompiled() &&
-                      curCompThreadInfoPT->getMethodBeingCompiled()->_priority < CP_ASYNC_NORMAL)
-                      numLowPriority++;
-                  if (curCompThreadInfoPT->compilationThreadIsActive())
-                     numActive++;
-                  if (curCompThreadInfoPT->getMethodBeingCompiled() &&
-                      curCompThreadInfoPT->getMethodBeingCompiled()->_hasIncrementedNumCompThreadsCompilingHotterMethods)
-                     numHot++;
-                  }
-               }
-
-            // There is a method to be compiled, but this thread is not going to take it out of the queue
-            // There are two cases when this might happen:
-            // (1) Two hot requests going in parallel
-            // (2) Two low priority requests going in parallel during startup phase
-            TR_ASSERT(numHot >= 1 || numLowPriority >= 1, "We must have a comp thread working on a hot or low priority method %d %d", numHot, numLowPriority);
-
-            if (numActive <= 1) // Current thread is by default active because it tried to dequeue a request
-               {
-               // There is no thread left to handle the existing request
-               // See defect 182392 for why this could have happened and for the solution
-               //fprintf(stderr, "JIT WARNING: no active thread left to handle queued request\n");
-               }
-            // sanity checks
-            if (getNumCompThreadsActive() != numActive)
-               {
-               TR_ASSERT(false, "Inconsistency with active threads %d %d\n", getNumCompThreadsActive(), numActive);
-               setNumCompThreadsActive(numActive); // apply correction
-               }
-            if (getNumCompThreadsCompilingHotterMethods() != numHot)
-               {
-               TR_ASSERT(false, "Inconsistency with hot threads %d %d\n", getNumCompThreadsCompilingHotterMethods(), numHot);
-               setNumCompThreadsCompilingHotterMethods(numHot); // apply correction
-               }
-            }
-         }
-      if (m) // A request has been dequeued
-         {
-         updateCompQueueAccountingOnDequeue(m);
-         }
-      }
-   // When no request is in the main queue we can look in the low priority queue
-   else if (getLowPriorityCompQueue().hasLowPriorityRequest() &&
-            canProcessLowPriorityRequest())
-      {
-      // Check if we need to throttle
-      if (exceedsCompCpuEntitlement() == TR_yes &&
-          !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
-          (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
-         {
-         // If at all possible suspend the compilation thread
-         // Otherwise, perform a timed wait
-         if (getNumCompThreadsActive() > 1)
-            *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         else
-            *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         }
-      else
-         {
-         m = getLowPriorityCompQueue().extractFirstLPQRequest();
-         }
-      }
-   // Now let's look in the JProfiling queue
-   else if (!getJProfilingCompQueue().isEmpty() && canProcessJProfilingRequest())
-      {
-      // Check if we need to throttle
-      if (exceedsCompCpuEntitlement() == TR_yes &&
-         !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
-         (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 >(TR::Options::_compThreadCPUEntitlement + 50)))
-         {
-         // If at all possible suspend the compilation thread
-         // Otherwise, perform a timed wait
-         if (getNumCompThreadsActive() > 1)
-            *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         else
-            *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
-         }
-      else
-         {
-         m = getJProfilingCompQueue().extractFirstCompRequest();
+         *compThreadAction = PROCESS_ENTRY;
          }
       }
    else
       {
-      // Cannot take a request either from main queue or LPQ
-      // If this is the last active compilation thread, then go to sleep,
-      // otherwise suspend the compilation thread
-      if (getNumCompThreadsActive() > 1)
+      *compThreadAction = PROCESS_ENTRY;
+
+      if (_methodQueue)
          {
-         *compThreadAction = SUSPEND_COMP_THREAD_EMPTY_QUEUE;
+         // If the request is sync or AOT load, take it now
+         if (_methodQueue->_priority >= CP_SYNC_MIN // sync comp
+            || _methodQueue->_methodIsInSharedCache == TR_yes // very cheap relocation
+   #if defined(J9VM_OPT_JITSERVER)
+            || getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER // compile right away in server mode
+   #endif
+            )
+            {
+            nextMethodToBeCompiled = _methodQueue;
+            _methodQueue = _methodQueue->_next;
+            }
+         // Check if we need to throttle
+         else if (exceedsCompCpuEntitlement() == TR_yes &&
+               !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
+               (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
+            {
+            // If at all possible suspend the compilation thread
+            // Otherwise, perform a timed wait
+            if (getNumCompThreadsActive() > 1)
+               *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            else
+               *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            }
+         // Avoid two concurrent hot compilations
+         else if (getNumCompThreadsCompilingHotterMethods() <= 0 || // no hot compilation in progress
+                  _methodQueue->_weight < TR::Options::_expensiveCompWeight) // This is a cheaper comp
+            {
+            nextMethodToBeCompiled = _methodQueue;
+            _methodQueue = _methodQueue->_next;
+            }
+         else // scan for a cold/warm method
+            {
+            TR_MethodToBeCompiled *prev = _methodQueue;
+            for (nextMethodToBeCompiled = _methodQueue->_next; nextMethodToBeCompiled; prev = nextMethodToBeCompiled, nextMethodToBeCompiled = nextMethodToBeCompiled->_next)
+               {
+               if (nextMethodToBeCompiled->_optimizationPlan->getOptLevel() <= warm || // cheaper comp
+                  nextMethodToBeCompiled->_priority >= CP_SYNC_MIN ||       // sync comp
+                  nextMethodToBeCompiled->_methodIsInSharedCache == TR_yes) // very cheap relocation
+                  {
+                  prev->_next = nextMethodToBeCompiled->_next;
+                  break;
+                  }
+               }
+            if (!nextMethodToBeCompiled)
+               {
+               *compThreadAction = GO_TO_SLEEP_CONCURRENT_EXPENSIVE_REQUESTS;
+
+               // make sure there is at least one thread that is not jobless
+               TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = getArrayOfCompilationInfoPerThread();
+               int32_t numActive = 0, numHot = 0, numLowPriority = 0;
+               for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+                  {
+                  TR::CompilationInfoPerThread *curCompThreadInfoPT = arrayOfCompInfoPT[i];
+                  TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
+
+                  CompilationThreadState currentThreadState = curCompThreadInfoPT->getCompilationThreadState();
+                  if (
+                     currentThreadState == COMPTHREAD_ACTIVE
+                     || currentThreadState == COMPTHREAD_SIGNAL_WAIT
+                     || currentThreadState == COMPTHREAD_WAITING
+                     || currentThreadState == COMPTHREAD_SIGNAL_SUSPEND
+                     )
+                     {
+                     if (curCompThreadInfoPT->getMethodBeingCompiled() &&
+                        curCompThreadInfoPT->getMethodBeingCompiled()->_priority < CP_ASYNC_NORMAL)
+                        numLowPriority++;
+                     if (curCompThreadInfoPT->compilationThreadIsActive())
+                        numActive++;
+                     if (curCompThreadInfoPT->getMethodBeingCompiled() &&
+                        curCompThreadInfoPT->getMethodBeingCompiled()->_hasIncrementedNumCompThreadsCompilingHotterMethods)
+                        numHot++;
+                     }
+                  }
+
+               // There is a method to be compiled, but this thread is not going to take it out of the queue
+               // There are two cases when this might happen:
+               // (1) Two hot requests going in parallel
+               // (2) Two low priority requests going in parallel during startup phase
+               TR_ASSERT(numHot >= 1 || numLowPriority >= 1, "We must have a comp thread working on a hot or low priority method %d %d", numHot, numLowPriority);
+
+               if (numActive <= 1) // Current thread is by default active because it tried to dequeue a request
+                  {
+                  // There is no thread left to handle the existing request
+                  // See defect 182392 for why this could have happened and for the solution
+                  //fprintf(stderr, "JIT WARNING: no active thread left to handle queued request\n");
+                  }
+               // sanity checks
+               if (getNumCompThreadsActive() != numActive)
+                  {
+                  TR_ASSERT(false, "Inconsistency with active threads %d %d\n", getNumCompThreadsActive(), numActive);
+                  setNumCompThreadsActive(numActive); // apply correction
+                  }
+               if (getNumCompThreadsCompilingHotterMethods() != numHot)
+                  {
+                  TR_ASSERT(false, "Inconsistency with hot threads %d %d\n", getNumCompThreadsCompilingHotterMethods(), numHot);
+                  setNumCompThreadsCompilingHotterMethods(numHot); // apply correction
+                  }
+               }
+            }
+         if (nextMethodToBeCompiled) // A request has been dequeued
+            {
+            updateCompQueueAccountingOnDequeue(nextMethodToBeCompiled);
+            }
+         }
+      // When no request is in the main queue we can look in the low priority queue
+      else if (getLowPriorityCompQueue().hasLowPriorityRequest() &&
+               canProcessLowPriorityRequest())
+         {
+         // Check if we need to throttle
+         if (exceedsCompCpuEntitlement() == TR_yes &&
+            !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
+            (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
+            {
+            // If at all possible suspend the compilation thread
+            // Otherwise, perform a timed wait
+            if (getNumCompThreadsActive() > 1)
+               *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            else
+               *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            }
+         else
+            {
+            nextMethodToBeCompiled = getLowPriorityCompQueue().extractFirstLPQRequest();
+            }
+         }
+      // Now let's look in the JProfiling queue
+      else if (!getJProfilingCompQueue().isEmpty() && canProcessJProfilingRequest())
+         {
+         // Check if we need to throttle
+         if (exceedsCompCpuEntitlement() == TR_yes &&
+            !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
+            (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 >(TR::Options::_compThreadCPUEntitlement + 50)))
+            {
+            // If at all possible suspend the compilation thread
+            // Otherwise, perform a timed wait
+            if (getNumCompThreadsActive() > 1)
+               *compThreadAction = SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            else
+               *compThreadAction = THROTTLE_COMP_THREAD_EXCEED_CPU_ENTITLEMENT;
+            }
+         else
+            {
+            nextMethodToBeCompiled = getJProfilingCompQueue().extractFirstCompRequest();
+            }
          }
       else
          {
-         *compThreadAction = GO_TO_SLEEP_EMPTY_QUEUE;
+         // Cannot take a request either from main queue or LPQ
+         // If this is the last active compilation thread, then go to sleep,
+         // otherwise suspend the compilation thread
+         if (getNumCompThreadsActive() > 1)
+            {
+            *compThreadAction = SUSPEND_COMP_THREAD_EMPTY_QUEUE;
+            }
+         else
+            {
+            *compThreadAction = GO_TO_SLEEP_EMPTY_QUEUE;
+            }
+         }
+
+      if (nextMethodToBeCompiled != NULL)
+         {
+         // See explanation at the start of this function of why it is important to ensure this
+         TR_ASSERT_FATAL(!nextMethodToBeCompiled->getMethodDetails().isJitDumpMethod(), "Non-diagnostic thread attempting to process JitDump compilation");
          }
       }
-   return m;
+
+   return nextMethodToBeCompiled;
    }
 
 //----------------------------- computeCompThreadSleepTime ----------------------
@@ -5807,15 +5883,11 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       return startPC;
       }
 
-   // Check to see if compilation threads are available to perform the compilation
-   if (
-         (getNumCompThreadsActive() == 0) ||
-         (
-            getPersistentInfo()->getDisableFurtherCompilation() &&
-            oldStartPC == 0 &&
-            !details.isJitDumpMethod()
-         )
-      )
+   // If there are no active threads ready to perform the compilation or further compilations are disabled we will
+   // end this compilation request. The only exception to this case is if we are performing a JitDump compilation,
+   // in which case we always want to proceed with the compilation since it will be performed on the diagnostic
+   // thread. Note that the diagnostic thread is not counted towards `getNumCompThreadsActive` count.
+   if ((getNumCompThreadsActive() == 0 || getPersistentInfo()->getDisableFurtherCompilation()) && !details.isJitDumpMethod())
       {
       bool shouldReturn = true;
 
@@ -7857,7 +7929,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 #if defined(J9VM_PORT_SIGNAL_SUPPORT)
          U_32 flags = J9PORT_SIG_FLAG_MAY_RETURN |
                       J9PORT_SIG_FLAG_SIGSEGV | J9PORT_SIG_FLAG_SIGFPE |
-                      J9PORT_SIG_FLAG_SIGILL  | J9PORT_SIG_FLAG_SIGBUS;
+                      J9PORT_SIG_FLAG_SIGILL  | J9PORT_SIG_FLAG_SIGBUS | J9PORT_SIG_FLAG_SIGTRAP;
 
          static char *noSignalWrapper = feGetEnv("TR_NoSignalWrapper");
 
@@ -7871,18 +7943,15 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
             UDATA protectedResult;
             if (entry->getMethodDetails().isJitDumpMethod())
                {
-               // NOTE:
-               //       for intentional crashes, intentional traps cause the dump, and we
-               //       are not protected against them (flag: J9PORT_SIG_FLAG_SIGTRAP)
-               protectedResult = j9sig_protect((j9sig_protected_fn)wrappedCompile, static_cast<void *>(&compParam),
-                                                  (j9sig_handler_fn)  jitDumpSignalHandler, vmThread,
-                                                  flags, &result);
+               protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
+                                                  jitDumpSignalHandler, 
+                                                  vmThread, flags, &result);
                }
             else
                {
-               protectedResult = j9sig_protect((j9sig_protected_fn)wrappedCompile, static_cast<void*>(&compParam),
-                                                  (j9sig_handler_fn)  jitSignalHandler, vmThread,
-                                                  flags, &result);
+               protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
+                                                  jitSignalHandler, 
+                                                  vmThread, flags, &result);
                }
 
             if (protectedResult == 0) // successful completion of wrappedCompile
@@ -8063,7 +8132,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
          TR_ASSERT(p->_optimizationPlan, "Must have an optimization plan");
 
-         TR::CompilationInfo *compInfo = &that->_compInfo;
 #if defined(J9VM_OPT_JITSERVER)
          // If the options come from a remote party, skip the setup options process
          if (that->_methodBeingCompiled->_clientOptions != NULL)
@@ -8154,17 +8222,14 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_UseSymbolValidationManager, false);
                }
 
-            // Set jitdump specific options
-            TR::CompilationInfoPerThread *threadCompInfo = compInfo ? compInfo->getCompInfoForThread(vmThread) : NULL;
-            if (threadCompInfo != NULL &&
-                threadCompInfo->isDiagnosticThread() &&
-                options->getDebug())
+            // Set JitDump specific options
+            if (details.isJitDumpMethod() && options->getDebug())
                {
                options->setOption(TR_TraceAll);
                options->setOption(TR_EnableParanoidOptCheck);
 
                // Trace crashing optimization or the codegen depending on where we crashed
-               UDATA vmState = compInfo->getVMStateOfCrashedThread();
+               UDATA vmState = that->_compInfo.getVMStateOfCrashedThread();
                if ((vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
                   {
                   options->setOption(TR_TraceCG);
@@ -8653,7 +8718,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                // available, plus some safe reserve
                // TODO: we may want to use a lower value for third parameter below if the
                // compilation is deemed cheap (JNI, thunks, cold small method)
-               uint64_t physicalLimit = compInfo->computeFreePhysicalLimitAndAbortCompilationIfLow(compiler,
+               uint64_t physicalLimit = that->_compInfo.computeFreePhysicalLimitAndAbortCompilationIfLow(compiler,
                                                                                                    incompleteInfo,
                                                                                                    TR::Options::getScratchSpaceLowerBound());
                // If we were able to get the memory information

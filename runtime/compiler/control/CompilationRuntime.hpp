@@ -722,6 +722,18 @@ public:
    bool initializeCompilationOnApplicationThread();
    bool  asynchronousCompilation();
    void stopCompilationThreads();
+
+   /**
+    * \brief
+    *    Stops a compilation thread by issuing an interruption request at the threads next yield point and by changing
+    *    its state to signal termination. Note that there can be a delay between making this request and the thread
+    *    state changing to `COMPTHREAD_STOPPED`.
+    * 
+    * \param compInfoPT
+    *    The thread to be stopped.
+    */
+   void stopCompilationThread(CompilationInfoPerThread* compInfoPT);
+   
    void suspendCompilationThread();
    void resumeCompilationThread();
    void purgeMethodQueue(TR_CompilationErrorCode errorCode);
