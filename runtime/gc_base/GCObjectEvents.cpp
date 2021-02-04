@@ -82,6 +82,7 @@ localGCReportObjectEvents(MM_EnvironmentBase *env, MM_MemorySubSpaceSemiSpace *m
 	/* Find the region associated with the evacuate allocate profile */
 	GC_MemorySubSpaceRegionIterator regionIterator(memorySubSpaceNew);
 	MM_HeapRegionDescriptor *evacuateRegion = NULL;
+	bool const compressed = extensions->compressObjectReferences();
 	while ((evacuateRegion = regionIterator.nextRegion()) != NULL) {
 		J9Object *objectPtr = (J9Object *)evacuateRegion->getLowAddress();
 		/* skip survivor regions */
@@ -94,7 +95,7 @@ localGCReportObjectEvents(MM_EnvironmentBase *env, MM_MemorySubSpaceSemiSpace *m
 				if (extensions->objectModel.isDeadObject(objectPtr)) {
 					objectPtr = (J9Object *)((U_8 *)objectPtr + extensions->objectModel.getSizeInBytesDeadObject(objectPtr));
 				} else {
-					MM_ForwardedHeader forwardHeader(objectPtr, extensions);
+					MM_ForwardedHeader forwardHeader(objectPtr, compressed);
 					if (forwardHeader.isForwardedPointer()) {
 						J9Object *forwardPtr = forwardHeader.getForwardedObject();
 						Assert_MM_true(NULL != forwardPtr);

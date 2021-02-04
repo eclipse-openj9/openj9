@@ -1855,7 +1855,7 @@ MM_CopyForwardScheme::updateForwardedPointer(J9Object *objectPtr)
 	J9Object *forwardPtr;
 
 	if(isObjectInEvacuateMemory(objectPtr)) {
-		MM_ForwardedHeader forwardedHeader(objectPtr, _extensions);
+		MM_ForwardedHeader forwardedHeader(objectPtr, _extensions->compressObjectReferences());
 		forwardPtr = forwardedHeader.getForwardedObject();
 		if(forwardPtr != NULL) {
 			return forwardPtr;
