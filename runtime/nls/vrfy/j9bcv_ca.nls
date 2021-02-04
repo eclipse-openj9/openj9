@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -428,5 +428,13 @@ J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.sample_input_15=([Ljava/lang/String;)V
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.explanation=NOTAG
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.system_action=
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_BCV_ERR_BC_NEW_ARRAY=El codi de bytes nou no pot crear matrius
+# START NON-TRANSLATABLE
+J9NLS_BCV_ERR_BC_NEW_ARRAY.explanation=Verification failed due to an incorrect 'new' bytecode
+J9NLS_BCV_ERR_BC_NEW_ARRAY.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
+J9NLS_BCV_ERR_BC_NEW_ARRAY.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
