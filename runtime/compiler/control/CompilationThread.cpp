@@ -5252,7 +5252,9 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
       {
       *compThreadAction = PROCESS_ENTRY;
 
-      if (_methodQueue)
+      // Due to the above mentioned timing hole, a non-diagnostic compilation thread may still be trying to process
+      // entries. We prevent it from processing JitDump compilation requests here.
+      if (_methodQueue != NULL && !_methodQueue->getMethodDetails().isJitDumpMethod())
          {
          // If the request is sync or AOT load, take it now
          if (_methodQueue->_priority >= CP_SYNC_MIN // sync comp
