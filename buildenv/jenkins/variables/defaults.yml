@@ -139,7 +139,7 @@ cmake:
 #========================================#
 uma:
   extra_configure_options:
-    all: '--without-cmake'
+    all: '--with-cmake=no --with-mixedrefs=no'
 #========================================#
 # JITServer
 #========================================#
