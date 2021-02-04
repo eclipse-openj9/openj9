@@ -928,7 +928,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
    // We can suspend this thread if too many are active
    if (
-      !(isDiagnosticThread()) // Must not be reserved for log
+      !isDiagnosticThread() // Must not be reserved for log
       && compInfo->getNumCompThreadsActive() > 1 // we should have at least one active besides this one
       && compilationThreadIsActive() // We haven't already been signaled to suspend or terminate
       && (compInfo->getRampDownMCT() || compInfo->getSuspendThreadDueToLowPhysicalMemory())

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1332,7 +1332,6 @@ extern J9_CFUNC void  jitExclusiveVMShutdownPending (J9VMThread *vmThread);
 extern J9_CFUNC void*  getNextInlinedCallSite (J9JITExceptionTable * metaData, void * inlinedCallSite);
 extern J9_CFUNC void*  jitGetStackMapFromPC (J9JavaVM * javaVM, struct J9JITExceptionTable * exceptionTable, UDATA jitPC);
 extern J9_CFUNC void  jitAddPicToPatchOnClassUnload (void *classPointer, void *addressToBePatched);
-extern J9_CFUNC UDATA  jitSignalHandler (J9VMThread *vmStruct, U_32 gpType, void* gpInfo);
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 #endif /* _J9VMNATIVEHELPERSLARGE_ */
 
