@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
 Copyright (c) 2021, 2021 IBM Corp. and others
 
@@ -39,7 +39,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group>functional</group>
 		</groups>
 		<subsets>
-		<!-- run for Java 16 and up -->
+			<!-- run for Java 16 and up -->
 			<subset>16+</subset>
 		</subsets>
 		<impls>

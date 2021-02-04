@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
   Copyright (c) 2020, 2021 IBM Corp. and others
 
@@ -21,14 +20,13 @@
 
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
-    <test>
-        <testCaseName>Jep360Tests</testCaseName>
-        <variations>
-            <variation>--enable-preview</variation>
-        </variations>
-        <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	<test>
+		<testCaseName>Jep360Tests</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
             -cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
             -javaagent:$(Q)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
             org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep360Tests \
@@ -36,22 +34,22 @@
             -excludegroups $(DEFAULT_EXCLUDE); \
             $(TEST_STATUS)
         </command>
-        <levels>
-            <level>sanity</level>
-        </levels>
-        <groups>
-            <group>functional</group>
-        </groups>
-        <subsets>
-            <subset>15+</subset>
-        </subsets>
-    </test>
-    <test>
-        <testCaseName>Jep384Tests</testCaseName>
-        <variations>
-            <variation>--enable-preview</variation>
-        </variations>
-        <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>15+</subset>
+		</subsets>
+	</test>
+	<test>
+		<testCaseName>Jep384Tests</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
             --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED \
             -cp $(Q)$(LIB_DIR)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
             org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep384Tests \
@@ -59,14 +57,14 @@
             -excludegroups $(DEFAULT_EXCLUDE); \
             $(TEST_STATUS)
         </command>
-        <levels>
-            <level>sanity</level>
-        </levels>
-        <groups>
-            <group>functional</group>
-        </groups>
-        <subsets>
-            <subset>15+</subset>
-        </subsets>
-    </test>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>15+</subset>
+		</subsets>
+	</test>
 </playlist>
