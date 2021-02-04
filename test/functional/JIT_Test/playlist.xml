@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
 	Copyright (c) 2016, 2021 IBM Corp. and others
 
@@ -21,7 +20,6 @@
 
 	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<!-- jit.test.jitt tests start here -->
 	<test>
@@ -46,7 +44,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>stringConcatOptTest</testCaseName>
 		<variations>
@@ -69,7 +66,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_jitt</testCaseName>
 		<variations>
@@ -117,7 +113,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_jitt_array</testCaseName>
 		<variations>
@@ -143,7 +138,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_compareAndBranch</testCaseName>
 		<variations>
@@ -168,7 +162,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_jitt_openj9_none_SCC</testCaseName>
 		<variations>
@@ -215,7 +208,6 @@
 			<impl>openj9</impl>
 		</impls>
 	</test>
-	
 	<test>
 		<testCaseName>jit_jitt_none_SCC</testCaseName>
 		<variations>
@@ -265,7 +257,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_jitt_XCEEHDLR</testCaseName>
 		<variations>
@@ -314,7 +305,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.jar tests start here -->
 	<test>
 		<testCaseName>jit_jar</testCaseName>
@@ -340,7 +330,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.tr start here -->
 	<test>
 		<testCaseName>jit_tr</testCaseName>
@@ -383,7 +372,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>StringPeepholeTest</testCaseName>
 		<variations>
@@ -409,13 +397,12 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
-                <testCaseName>SIMDCommonedAddressTest</testCaseName>
-                <variations>
-                        <variation>-Xjit:count=50,limit={*testSIMDCommonedAddress*},optLevel=scorching,disableAsyncCompilation</variation>
-                </variations>
-                <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<testCaseName>SIMDCommonedAddressTest</testCaseName>
+		<variations>
+			<variation>-Xjit:count=50,limit={*testSIMDCommonedAddress*},optLevel=scorching,disableAsyncCompilation</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
         -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
         org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
         -testnames \
@@ -423,19 +410,18 @@
         -groups $(TEST_GROUP) \
         -excludegroups $(DEFAULT_EXCLUDE); \
         $(TEST_STATUS)</command>
-                <levels>
-                        <level>sanity</level>
-                </levels>
-                <groups>
-                        <group>functional</group>
-                </groups>
-                <aot>nonapplicable</aot>
-                <impls>
-                        <impl>openj9</impl>
-                        <impl>ibm</impl>
-                </impls>
-        </test>
-	
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<aot>nonapplicable</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 	<test>
 		<testCaseName>SIMDOptTest</testCaseName>
 		<variations>
@@ -461,7 +447,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.hw tests start here -->
 	<test>
 		<testCaseName>jit_hw</testCaseName>
@@ -490,7 +475,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_hwWarm</testCaseName>
 		<variations>
@@ -516,7 +500,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.ra tests start here -->
 	<test>
 		<testCaseName>jit_ra</testCaseName>
@@ -545,7 +528,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.vich tests start here -->
 	<test>
 		<testCaseName>jit_vich</testCaseName>
@@ -592,8 +574,7 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
-<!-- jit.test.recognizedMethod tests start here -->
+	<!-- jit.test.recognizedMethod tests start here -->
 	<test>
 		<testCaseName>jit_recognizedMethod</testCaseName>
 		<variations>
@@ -619,7 +600,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- JITServer tests start here. -->
 	<test>
 		<testCaseName>testJITServer</testCaseName>
