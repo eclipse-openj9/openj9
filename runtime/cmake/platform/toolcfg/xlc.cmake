@@ -39,7 +39,8 @@ if(CMAKE_C_COMPILER_IS_XLCLANG)
 	# OMR_PLATFORM_COMPILE_OPTIONS gets applied to the jit (which doesn't compile with -g),
 	# so we put -g in the CMAKE_C_FLAGS and CMAKE_CXX_FLAGS instead
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions -g")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -g")
+	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -fno-rtti)
 else()
 	# xlc/xlc++ options
 	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -g)
