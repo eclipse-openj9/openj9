@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,14 +115,14 @@ private:
 
 	virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator);
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);
-	virtual void doVMClassSlot(J9Class **slotPtr, GC_VMClassSlotIterator *vmClassSlotIterator);
+	virtual void doVMClassSlot(J9Class *classPtr);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
 	virtual void doStackSlot(J9Object **slotPtr, void *walkState, const void* stackLocation);
 	virtual void doSlot(J9Object **slotPtr);
-	virtual void doClassSlot(J9Class **slotPtr);
+	virtual void doClassSlot(J9Class *classPtr);
 	virtual void doClass(J9Class *clazz);
 	virtual void doSlot(J9Object **slotPtr, IDATA type, IDATA index, J9Object *sourceObj);
-	virtual void doClassSlot(J9Class **slotPtr, IDATA type, IDATA index, J9Object *sourceObj);
+	virtual void doClassSlot(J9Class *classPtr, IDATA type, IDATA index, J9Object *sourceObj);
 	using MM_RootScanner::doFieldSlot;
 	virtual void doFieldSlot(GC_SlotObject *slotObject, IDATA type, IDATA index, J9Object *sourceObj);
 	

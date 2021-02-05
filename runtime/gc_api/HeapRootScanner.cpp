@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -141,9 +141,9 @@ MM_HeapRootScanner::doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator
  * @todo Provide function documentation
  */
 void
-MM_HeapRootScanner::doVMClassSlot(J9Class **slotPtr, GC_VMClassSlotIterator *vmClassSlotIterator)
+MM_HeapRootScanner::doVMClassSlot(J9Class *classPtr)
 {
-	doClassSlot(slotPtr);
+	doClassSlot(classPtr);
 }
 
 #if defined(J9VM_OPT_JVMTI)
@@ -213,7 +213,7 @@ MM_HeapRootScanner::scanVMClassSlots()
 	J9Class **slotPtr;
 	
 	while((slotPtr = classSlotIterator.nextSlot()) != NULL) {
-		doVMClassSlot(slotPtr, &classSlotIterator);
+		doVMClassSlot(*slotPtr);
 	}
 	
 	reportScanningEnded(RootScannerEntity_VMClassSlots);	
@@ -224,9 +224,9 @@ MM_HeapRootScanner::scanVMClassSlots()
  * This handler is called for every reference to a J9Class. 
  */
 void 
-MM_HeapRootScanner::doClassSlot(J9Class** slotPtr)
+MM_HeapRootScanner::doClassSlot(J9Class *classPtr)
 {
-	doClass(*slotPtr);
+	doClass(classPtr);
 }
 
 /**

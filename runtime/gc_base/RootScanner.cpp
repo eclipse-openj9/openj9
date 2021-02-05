@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -245,9 +245,9 @@ MM_RootScanner::doStringCacheTableSlot(J9Object **slotPtr)
  * @todo Provide function documentation
  */
 void
-MM_RootScanner::doVMClassSlot(J9Class **slotPtr, GC_VMClassSlotIterator *vmClassSlotIterator)
+MM_RootScanner::doVMClassSlot(J9Class *classPtr)
 {
-	doClassSlot(slotPtr);
+	doClassSlot(classPtr);
 }
 
 /**
@@ -317,7 +317,7 @@ MM_RootScanner::scanVMClassSlots(MM_EnvironmentBase *env)
 		J9Class **slotPtr;
 
 		while((slotPtr = classSlotIterator.nextSlot()) != NULL) {
-			doVMClassSlot(slotPtr, &classSlotIterator);
+			doVMClassSlot(*slotPtr);
 		}
 
 		reportScanningEnded(RootScannerEntity_VMClassSlots);
@@ -329,7 +329,7 @@ MM_RootScanner::scanVMClassSlots(MM_EnvironmentBase *env)
  * This handler is called for every reference to a J9Class.
  */
 void
-MM_RootScanner::doClassSlot(J9Class** slotPtr)
+MM_RootScanner::doClassSlot(J9Class *classPtr)
 {
 	/* ignore class slots by default */
 }
