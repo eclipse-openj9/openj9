@@ -1145,7 +1145,7 @@ TR_J9VMBase::getReferenceFieldAtAddress(uintptr_t fieldAddress)
    if (TR::Compiler->om.compressObjectReferences())
       {
       uintptr_t compressedResult = *(uint32_t*)fieldAddress;
-      return (compressedResult << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
+      return (compressedResult << TR::Compiler->om.compressedReferenceShift());
       }
    return *(uintptr_t*)fieldAddress;
    }

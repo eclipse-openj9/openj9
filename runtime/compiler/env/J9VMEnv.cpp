@@ -61,14 +61,6 @@ J9::VMEnv::maxHeapSizeInBytes()
    return (int64_t) mmf->j9gc_get_maximum_heap_size(jvm);
    }
 
-
-UDATA
-J9::VMEnv::heapBaseAddress()
-   {
-   return 0;
-   }
-
-
 bool
 J9::VMEnv::hasAccess(OMR_VMThread *omrVMThread)
    {
