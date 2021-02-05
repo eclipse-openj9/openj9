@@ -636,7 +636,7 @@ J9::ObjectModel::getArrayLengthInElements(TR::Compilation* comp, uintptr_t objec
 uintptr_t
 J9::ObjectModel::decompressReference(TR::Compilation* comp, uintptr_t compressedReference)
    {
-   return (compressedReference << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
+   return (compressedReference << TR::Compiler->om.compressedReferenceShift());
    }
 
 bool

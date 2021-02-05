@@ -462,12 +462,6 @@ J9::CodeGenerator::lowerCompressedRefs(
       vcount_t visitCount,
       TR_BitVector *childrenToBeLowered)
    {
-   bool isLowMem = false;
-   if (TR::Compiler->vm.heapBaseAddress() == 0)
-      {
-      isLowMem = true;
-      }
-
    if (node->getOpCode().isCall() && childrenToBeLowered)
       {
       TR_BitVectorIterator bvi(*childrenToBeLowered);
@@ -484,8 +478,7 @@ J9::CodeGenerator::lowerCompressedRefs(
                }
 
             TR::Node *heapBase = TR::Node::create(node, TR::lconst, 0, 0);
-            heapBase->setLongInt(TR::Compiler->vm.heapBaseAddress());
-            lowerCASValues(node, nextChild, valueChild, self()->comp(), shftOffset, isLowMem, heapBase);
+            lowerCASValues(node, nextChild, valueChild, self()->comp(), shftOffset, true, heapBase);
             }
          }
 
@@ -639,10 +632,6 @@ J9::CodeGenerator::lowerCompressedRefs(
    if (TR::Compiler->om.compressedReferenceShiftOffset() > 0)
       shftOffset = TR::Node::create(loadOrStoreNode, TR::iconst, 0, TR::Compiler->om.compressedReferenceShiftOffset());
 
-   static char *pEnv = feGetEnv("TR_disableLowHeapMem");
-   if (pEnv)
-      isLowMem = false;
-
    if (isLoad)
       {
       TR::Node *newLoad = TR::Node::createWithSymRef(loadOrStoreOp, 1, 1, address, symRef);
@@ -660,45 +649,16 @@ J9::CodeGenerator::lowerCompressedRefs(
       //
       TR::Node *iu2lNode = TR::Node::create(TR::iu2l, 1, newLoad);
 
-      if (!isLowMem && (loadOrStoreNode->getVisitCount() != visitCount))
-         {
-         TR::Node *ttNode = TR::Node::create(TR::treetop, 1, iu2lNode);
-         //traceMsg(comp(), "3creating treetop %p\n", ttNode);
-         TR::TreeTop *tt = TR::TreeTop::create(self()->comp(), ttNode);
-         TR::TreeTop *prevTT = treeTop->getPrevTreeTop();
-         prevTT->join(tt);
-         tt->join(treeTop);
-         }
-
       TR::Node *addNode = iu2lNode;
       if (loadOrStoreNode->isNonNull())
          addNode->setIsNonZero(true);
 
       // if the load is known to be null or if using lowMemHeap, do not
       // generate a compression sequence
-      //
-      if (loadOrStoreNode->isNull() || isLowMem)
+      addNode = iu2lNode;
+      if (shftOffset)
          {
-         addNode = iu2lNode;
-         if (shftOffset)
-            {
-            addNode = TR::Node::create(TR::lshl, 2, iu2lNode, shftOffset);
-            addNode->setContainsCompressionSequence(true);
-            }
-         }
-      else
-         {
-         if (shftOffset)
-            {
-            addNode = TR::Node::create(TR::lshl, 2, iu2lNode, shftOffset);
-            addNode->setContainsCompressionSequence(true);
-            }
-         if (loadOrStoreNode->isNonNull())
-            addNode->setIsNonZero(true);
-         addNode = TR::Node::create(TR::ladd, 2, addNode, heapBase);
-         if (loadOrStoreNode->isNonNull())
-            addNode->setIsNonZero(true);
-
+         addNode = TR::Node::create(TR::lshl, 2, iu2lNode, shftOffset);
          addNode->setContainsCompressionSequence(true);
          }
 
@@ -726,29 +686,16 @@ J9::CodeGenerator::lowerCompressedRefs(
             isNonNull = true;
 
          TR::Node *addNode = NULL;
+         addNode = a2lNode;
 
-         if (address->isNull() || isLowMem)
+         if (shftOffset)
             {
-            addNode = a2lNode;
-            }
-         else
-            {
-            if (isNonNull)
-               a2lNode->setIsNonZero(true);
-            addNode = TR::Node::create(TR::lsub, 2, a2lNode, heapBase);
+            addNode = TR::Node::create(TR::lushr, 2, addNode, shftOffset);
             addNode->setContainsCompressionSequence(true);
-            if (isNonNull)
-               addNode->setIsNonZero(true);
             }
 
-            if (shftOffset)
-               {
-               addNode = TR::Node::create(TR::lushr, 2, addNode, shftOffset);
-               addNode->setContainsCompressionSequence(true);
-               }
-
-            if (isNonNull)
-               addNode->setIsNonZero(true);
+         if (isNonNull)
+            addNode->setIsNonZero(true);
 
          l2iNode = TR::Node::create(TR::l2i, 1, addNode);
          if (isNonNull)
@@ -3381,8 +3328,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
 
    // no need to rematerialize for lowMemHeap
    if (self()->comp()->useCompressedPointers() &&
-         ((TR::Compiler->vm.heapBaseAddress() != 0) ||
-         (TR::Compiler->om.compressedReferenceShift() != 0)) &&
+         (TR::Compiler->om.compressedReferenceShift() != 0) &&
          !disableRematforCP)
       {
       if (self()->comp()->getOption(TR_TraceCG))
@@ -3499,7 +3445,6 @@ J9::CodeGenerator::compressedReferenceRematerialization()
       }
 
    if (self()->comp()->useCompressedPointers() &&
-         (TR::Compiler->vm.heapBaseAddress() == 0) &&
          !disableRematforCP)
       {
       for (tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
@@ -3559,8 +3504,6 @@ J9::CodeGenerator::rematerializeCompressedRefs(
    bool alreadyVisitedNullCheckReference = false;
    bool alreadyVisitedReferenceInNullTest = false;
    bool alreadyVisitedReferenceInStore = false;
-
-   bool isLowMemHeap = (TR::Compiler->vm.heapBaseAddress() == 0);
 
    TR::Node *reference = NULL;
    TR::Node *address = NULL;
@@ -3648,7 +3591,6 @@ J9::CodeGenerator::rematerializeCompressedRefs(
       ((node->getFirstChild()->getOpCodeValue() == TR::ladd &&
        node->getFirstChild()->containsCompressionSequence()) ||
        ((node->getFirstChild()->getOpCodeValue() == TR::lshl) &&
-        (self()->canFoldLargeOffsetInAddressing() || (TR::Compiler->vm.heapBaseAddress() == 0)) &&
         self()->isAddressScaleIndexSupported((1 << TR::Compiler->om.compressedReferenceShiftOffset())))))
       {
       if (parent &&
@@ -3779,7 +3721,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
 
    static bool disableBranchlessPassThroughNULLCHK = feGetEnv("TR_disableBranchlessPassThroughNULLCHK") != NULL;
    if (node->getOpCode().isNullCheck() && reference &&
-          (!isLowMemHeap || self()->performsChecksExplicitly() || (disableBranchlessPassThroughNULLCHK && node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
+          (self()->performsChecksExplicitly() || (disableBranchlessPassThroughNULLCHK && node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
           ((node->getFirstChild()->getOpCodeValue() == TR::l2a) ||
            (reference->getOpCodeValue() == TR::l2a)) &&
          performTransformation(self()->comp(), "%sTransforming null check reference %p in null check node %p to be checked explicitly\n", OPT_DETAILS, reference, node))
@@ -3919,32 +3861,6 @@ J9::CodeGenerator::rematerializeCompressedRefs(
              }
           }
       }
-
-   if (self()->materializesHeapBase() &&
-       !isLowMemHeap &&
-       parent && (!parent->getOpCode().isStore()) &&
-       (node->getOpCodeValue() == TR::lconst) &&
-       (node->getLongInt() == TR::Compiler->vm.heapBaseAddress()) &&
-       performTransformation(self()->comp(), "%sTransforming heap base constant node %p to auto load \n", OPT_DETAILS, node))
-      {
-      if (!autoSymRef)
-         {
-         autoSymRef = self()->comp()->getSymRefTab()->createTemporary(self()->comp()->getMethodSymbol(), node->getDataType());
-         TR::TreeTop *startTree = self()->comp()->getStartTree();
-         TR::TreeTop *nextTree = startTree->getNextTreeTop();
-
-         TR::Node *lconstNode = TR::Node::create(node, TR::lconst, 0, 0);
-         lconstNode->setLongInt(node->getLongInt());
-         TR::Node *storeNode = TR::Node::createWithSymRef(TR::lstore, 1, 1, lconstNode, autoSymRef);
-         TR::TreeTop *tt = TR::TreeTop::create(self()->comp(), storeNode);
-         startTree->join(tt);
-         tt->join(nextTree);
-         }
-
-      TR::Node::recreate(node, TR::lload);
-      node->setSymbolReference(autoSymRef);
-      }
-
 
    if (address && node->getOpCode().isStoreIndirect())
       {
