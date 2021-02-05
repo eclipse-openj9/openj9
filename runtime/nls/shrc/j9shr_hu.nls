@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -768,7 +768,7 @@ J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=A(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.explanation=The shared class cache named in the message is corrupt.
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.system_action=The JVM will attempt to automatically re-create the cache before starting. If re-creation fails, the JVM will terminate unless unless you have specified the nonfatal option with "-Xshareclasses:nonfatal".
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.system_action=The JVM will attempt to automatically re-create the cache before starting. If re-creation fails, the JVM will terminate unless you have specified the nonfatal option with "-Xshareclasses:nonfatal".
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
@@ -2650,7 +2650,7 @@ J9NLS_SHRC_CC_CRC_CHECK_FAILED=A megosztott gyors\u00edt\u00f3t\u00e1r CRC ellen
 J9NLS_SHRC_CC_CRC_CHECK_FAILED.sample_input_1=-1
 J9NLS_SHRC_CC_CRC_CHECK_FAILED.sample_input_2=-1
 J9NLS_SHRC_CC_CRC_CHECK_FAILED.explanation=This message shows the CRC values when the cache startup CRC check fails
-J9NLS_SHRC_CC_CRC_CHECK_FAILED.system_action=The JVM will attempt to automatically re-create the cache before starting. If re-creation fails, the JVM will terminate unless unless you have specified the nonfatal option with "-Xshareclasses:nonfatal".
+J9NLS_SHRC_CC_CRC_CHECK_FAILED.system_action=The JVM will attempt to automatically re-create the cache before starting. If re-creation fails, the JVM will terminate unless you have specified the nonfatal option with "-Xshareclasses:nonfatal".
 J9NLS_SHRC_CC_CRC_CHECK_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
@@ -3608,7 +3608,7 @@ J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_2=-1
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_3=67676767
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.explanation=The shared class cache named in the message is corrupt.
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.system_action=The JVM will attempt to automatically re-create the cache before starting. If re-creation fails, the JVM will terminate unless unless you have specified the nonfatal option with "-Xshareclasses:nonfatal".
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.system_action=The JVM will attempt to automatically re-create the cache before starting. If re-creation fails, the JVM will terminate unless you have specified the nonfatal option with "-Xshareclasses:nonfatal".
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
@@ -6269,17 +6269,17 @@ J9NLS_SHRC_CC_WARN_AVAILABLE_SPACE_FULL.user_response=Increase the softmx limit 
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL=Az AOT adatok ter\u00fclete a(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.sample_input_1=myCache
-J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.explanation=The space for AOT data in named shared class cache is full and no further AOT data can be added to it. If the the shared cache is not full, then either the maximum space allowed for AOT data or softmx limit set for shared cache usage is reached.
+J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.explanation=The space for AOT data in named shared class cache is full and no further AOT data can be added to it. If the shared cache is not full, then either the maximum space allowed for AOT data or softmx limit set for shared cache usage is reached.
 J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.system_action=The JVM continues. The named shared cache is still operational and continues to provide increased performance for loading the classes it contains. However, no more AOT compiled methods can be added to the cache.
-J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.user_response=If the shared cache is not full, the the maximum space allowed for AOT data can be increased using -Xshareclasses:adjustmaxaot= option. In the case softmx limit for shared cache usage is reached, it can be increased using -Xshareclasses:adjustsoftmx= option. User can also increase the minimum space reserved for AOT data using -Xshareclasses:adjustminaot= option.
+J9NLS_SHRC_CC_WARN_AOT_SPACE_FULL.user_response=If the shared cache is not full, the maximum space allowed for AOT data can be increased using -Xshareclasses:adjustmaxaot= option. In the case softmx limit for shared cache usage is reached, it can be increased using -Xshareclasses:adjustsoftmx= option. User can also increase the minimum space reserved for AOT data using -Xshareclasses:adjustminaot= option.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL=A JIT adatok ter\u00fclete a(z) \"%s\" megosztott gyors\u00edt\u00f3t\u00e1rban megtelt.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.sample_input_1=myCache
-J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.explanation=The space for JIT data in named shared class cache is full and no further JIT data can be added to it. If the the shared cache is not full, then either the maximum space allowed for JIT data or softmx limit set for shared cache usage is reached.
+J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.explanation=The space for JIT data in named shared class cache is full and no further JIT data can be added to it. If the shared cache is not full, then either the maximum space allowed for JIT data or softmx limit set for shared cache usage is reached.
 J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.system_action=The JVM continues. The named shared cache is still operational and continues to provide increased performance for loading the classes it contains. However, no more JIT related data can be added to the cache.
-J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.user_response=If the shared cache is not full, the the maximum space allowed for JIT data can be increased using -Xshareclasses:adjustmaxjitdata= option. In the case softmx limit for shared cache usage is reached, it can be increased using -Xshareclasses:adjustsoftmx= option. User can also increase the minimum space reserved for JIT data using -Xshareclasses:adjustminjitdata= option.
+J9NLS_SHRC_CC_WARN_JIT_SPACE_FULL.user_response=If the shared cache is not full, the maximum space allowed for JIT data can be increased using -Xshareclasses:adjustmaxjitdata= option. In the case softmx limit for shared cache usage is reached, it can be increased using -Xshareclasses:adjustsoftmx= option. User can also increase the minimum space reserved for JIT data using -Xshareclasses:adjustminjitdata= option.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SOFTMAX_TOO_BIG=A megosztott gyors\u00edt\u00f3t\u00e1r haszn\u00e1lat\u00e1ra vonatkoz\u00f3an be\u00e1ll\u00edtott softmx korl\u00e1t nagyobb, mint a gyors\u00edt\u00f3t\u00e1r teljes m\u00e9rete (%u byte). A gyors\u00edt\u00f3t\u00e1r teljes m\u00e9ret\u00e9vel egyenl\u0151 \u00e9rt\u00e9kre lesz be\u00e1ll\u00edtva.

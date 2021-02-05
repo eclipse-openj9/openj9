@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1019,4 +1019,24 @@ J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2=B\u0142\u0105d JNI w %1$s: Argument nr %2$d nie jest podklas\u0105 %3$s ani %4$s
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_3=package1/Class1
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_4=package2/Class2
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# abortonerror is not translatable
+J9NLS_JNICHK_HELP_16=\tabortonerror   powoduje przerwanie w przypadku wyst\u0105pienia b\u0142\u0119du krytycznego
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_15.explanation=NOTAG
+J9NLS_JNICHK_HELP_15.system_action=
+J9NLS_JNICHK_HELP_15.user_response=
 # END NON-TRANSLATABLE

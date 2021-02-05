@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,7 +71,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER=Falha em instanciar o dispatcher 
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.explanation=The JVM was unable to instantiate the task dispatcher used for distributing tasks among different worker threads
 J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -79,7 +79,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR=Falha em instanciar o co
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.explanation=The JVM was unable to instantiate the global garbage collector structures
 J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -95,7 +95,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY=Falha em inicializar, sem mem\u00f3r
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -111,7 +111,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS=Falha em inicializar extens\u00f
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -119,7 +119,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX=Falha em inicializar o mutex para estat\u00e
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.explanation=The garbage collector failed to initialize due to insufficient system resources
 J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -128,7 +128,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT=Falha em inicializar o gerenc
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -136,7 +136,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES=Falha em inicializar o conjun
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -144,7 +144,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS=Falha em alocar segmentos de mem\
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -152,7 +152,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS=Falha em alocar segmentos 
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -160,7 +160,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS=Falha em alocar segmentos d
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -168,7 +168,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE=Falha em alocar espa\u00e7o de 
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -177,7 +177,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT=Falha em alocar segmento subsistent
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -297,7 +297,7 @@ J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES=-Xverbosegclog fal
 # START NON-TRANSLATABLE
 J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.system_action=The JVM will terminate
-J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -637,7 +637,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE=Falha ao alocar espa\u00e7o de
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 

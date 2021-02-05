@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -979,7 +979,7 @@ J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xsyslog:help            JVM -Xsyslog \ub3c4\uc6c0\ub9d0\uc744 \uc778\uc1c4\ud569\ub2c8\ub2e4.
+J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              JVM -Xsyslog \ub3c4\uc6c0\ub9d0\uc744 \uc778\uc1c4\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
@@ -987,7 +987,7 @@ J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xsyslog:none            \uc138\ubd80\uc0ac\ud56d\uc744 \ube44\ub86f\ud558\uc5ec \uc774\uc804\uc5d0 \uc9c0\uc815\ub41c JVM \ub85c\uadf8 \uc635\uc158\uc744 \uc0ac\uc6a9 \uc548\ud568\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
+J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              \uae30\ubcf8\uac12\uc744 \ud3ec\ud568\ud558\uc5ec \uc774\uc804\uc5d0 \uc9c0\uc815\ub41c JVM \ub85c\uadf8 \uc635\uc158\uc744 \uc0ac\uc6a9 \uc548\ud568\uc73c\ub85c \uc124\uc815\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
@@ -995,7 +995,7 @@ J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:all is not translatable
-J9NLS_VM_XLOG_HELP04=  -Xsyslog:all             \ubaa8\ub4e0 JVM \uba54\uc2dc\uc9c0\ub97c \ub85c\uadf8\ud569\ub2c8\ub2e4.
+J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               \ubaa8\ub4e0 JVM \uba54\uc2dc\uc9c0\ub97c \ub85c\uae45\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
@@ -1003,7 +1003,7 @@ J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info is not translatable
-J9NLS_VM_XLOG_HELP05=  -Xsyslog:info            JVM \uc815\ubcf4 \uba54\uc2dc\uc9c0\ub97c \ub85c\uadf8\ud569\ub2c8\ub2e4.
+J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              JVM \uc815\ubcf4 \uba54\uc2dc\uc9c0\ub97c \ub85c\uae45\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
@@ -1011,7 +1011,7 @@ J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn            JVM \uacbd\uace0 \uba54\uc2dc\uc9c0\ub97c \ub85c\uadf8\ud569\ub2c8\ub2e4.
+J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              JVM \uacbd\uace0 \uba54\uc2dc\uc9c0\ub97c \ub85c\uae45\ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
@@ -1019,7 +1019,7 @@ J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xsyslog:error           JVM \uc624\ub958 \uba54\uc2dc\uc9c0\ub97c \ub85c\uadf8\ud569\ub2c8\ub2e4. \uc774\ub294 \uae30\ubcf8\uc801\uc73c\ub85c \ucf1c\uc838 \uc788\uc2b5\ub2c8\ub2e4.
+J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             JVM \uc624\ub958 \uba54\uc2dc\uc9c0\ub97c \ub85c\uae45\ud569\ub2c8\ub2e4. \uc774\ub294 \uae30\ubcf8\uc801\uc73c\ub85c \ucf1c\uc838 \uc788\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
@@ -1027,7 +1027,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital           JVM \ud544\uc218 \uba54\uc2dc\uc9c0\ub97c \ub85c\uadf8\ud569\ub2c8\ub2e4. \uc774\ub294 \uae30\ubcf8\uc801\uc73c\ub85c \ucf1c\uc838 \uc788\uc2b5\ub2c8\ub2e4.
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             JVM \uc911\uc694 \uba54\uc2dc\uc9c0\ub97c \ub85c\uae45\ud569\ub2c8\ub2e4. \uc774\ub294 \uae30\ubcf8\uc801\uc73c\ub85c \ucf1c\uc838 \uc788\uc2b5\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09=  -Xsyslog:config          JVM \uad6c\uc131 \uba54\uc2dc\uc9c0\ub97c \ub85c\uadf8\ud569\ub2c8\ub2e4. \n
+J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            JVM \uad6c\uc131 \uba54\uc2dc\uc9c0\ub97c \ub85c\uae45\ud569\ub2c8\ub2e4.\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1997,4 +1997,16 @@ J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=%2$.*1$s \ud
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message for an improper attempt to synchronize on an instance of value-based class.
+# argument 1 is the length of the class name
+# argument 2 is the string of the class name
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED=\uc798\ubabb\ub41c \uc624\ube0c\uc81d\ud2b8 \uc720\ud615 %2$.*1$s: \ub3d9\uae30\ud654\ub41c \uc624\ube0c\uc81d\ud2b8\uac00 \uac12 \uae30\ubc18\uc785\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_1=3
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_2=Foo
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value-based class but the object on stack is an instance of value-based class.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.system_action=The JVM will throw an VirtualMachineError.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
