@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8 & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright (c) 2017, 2021 IBM Corp. and others
  *
