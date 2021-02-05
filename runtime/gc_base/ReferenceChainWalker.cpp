@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,16 +218,16 @@ MM_ReferenceChainWalker::doSlot(J9Object **slotPtr, IDATA type, IDATA index, J9O
  * @param sourceObj the object which contains this slot, or NULL if a root
  */
 void
-MM_ReferenceChainWalker::doClassSlot(J9Class **slotPtr, IDATA type, IDATA index, J9Object *sourceObj)
+MM_ReferenceChainWalker::doClassSlot(J9Class *classPtr, IDATA type, IDATA index, J9Object *sourceObj)
 {
-	if (*slotPtr != NULL) {
+	if (NULL != classPtr) {
 		/* NOTE: this "O-slot" is actually a pointer to a local variable in this
 		 * function. As such, any changes written back into it will be lost.
 		 * Since no-one writes back into the slot in classes-on-heap VMs this is
 		 * OK. We should simplify this code once classes-on-heap is enabled
 		 * everywhere.
 		 */
-		J9Object* clazzObject = J9VM_J9CLASS_TO_HEAPCLASS(*slotPtr);
+		J9Object* clazzObject = J9VM_J9CLASS_TO_HEAPCLASS(classPtr);
 		doSlot(&clazzObject, type, index, sourceObj);
 	}
 }
@@ -344,7 +344,7 @@ MM_ReferenceChainWalker::scanObject(J9Object *objectPtr)
 {
 	/* add the object's class for scanning */
 	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, _extensions);
-	doClassSlot(&clazz, J9GC_REFERENCE_TYPE_CLASS, -1, objectPtr);
+	doClassSlot(clazz, J9GC_REFERENCE_TYPE_CLASS, -1, objectPtr);
 
 	switch(_extensions->objectModel.getScanType(objectPtr)) {
 	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
@@ -433,19 +433,19 @@ MM_ReferenceChainWalker::scanClass(J9Class *clazz)
 	while(J9Class **slot = classIteratorClassSlots.nextSlot()) {
 		switch (classIteratorClassSlots.getState()) {
 		case classiteratorclassslots_state_constant_pool:
-			doClassSlot(slot, J9GC_REFERENCE_TYPE_CONSTANT_POOL, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(*slot, J9GC_REFERENCE_TYPE_CONSTANT_POOL, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		case classiteratorclassslots_state_superclasses:
-			doClassSlot(slot, J9GC_REFERENCE_TYPE_SUPERCLASS, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(*slot, J9GC_REFERENCE_TYPE_SUPERCLASS, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		case classiteratorclassslots_state_interfaces:
-			doClassSlot(slot, J9GC_REFERENCE_TYPE_INTERFACE, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(*slot, J9GC_REFERENCE_TYPE_INTERFACE, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		case classiteratorclassslots_state_array_class_slots:
-			doClassSlot(slot, J9GC_REFERENCE_TYPE_CLASS_ARRAY_CLASS, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(*slot, J9GC_REFERENCE_TYPE_CLASS_ARRAY_CLASS, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		default:
-			doClassSlot(slot, J9GC_REFERENCE_TYPE_UNKNOWN, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(*slot, J9GC_REFERENCE_TYPE_UNKNOWN, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		}
 	}
@@ -493,9 +493,9 @@ MM_ReferenceChainWalker::doSlot(J9Object **slotPtr) {
  * @param slotPtr a pointer to a class slot
  */
 void
-MM_ReferenceChainWalker::doClassSlot(J9Class** slotPtr)
+MM_ReferenceChainWalker::doClassSlot(J9Class *classPtr)
 {
-	doClassSlot(slotPtr, J9GC_ROOT_TYPE_CLASS, -1, NULL);
+	doClassSlot(classPtr, J9GC_ROOT_TYPE_CLASS, -1, NULL);
 }
 
 /**
@@ -503,7 +503,7 @@ MM_ReferenceChainWalker::doClassSlot(J9Class** slotPtr)
  */
 void
 MM_ReferenceChainWalker::doClass(J9Class *clazz) {
-	doClassSlot(&clazz);
+	doClassSlot(clazz);
 }
 
 
@@ -578,9 +578,9 @@ MM_ReferenceChainWalker::doStringTableSlot(J9Object **slotPtr, GC_StringTableIte
  * @todo Provide function documentation
  */
 void
-MM_ReferenceChainWalker::doVMClassSlot(J9Class **slotPtr, GC_VMClassSlotIterator *vmClassSlotIterator)
+MM_ReferenceChainWalker::doVMClassSlot(J9Class *classPtr)
 {
-	doClassSlot(slotPtr, J9GC_ROOT_TYPE_VM_CLASS_SLOT, -1, NULL);
+	doClassSlot(classPtr, J9GC_ROOT_TYPE_VM_CLASS_SLOT, -1, NULL);
 }
 
 /**

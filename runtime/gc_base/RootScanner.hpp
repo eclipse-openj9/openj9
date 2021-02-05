@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,7 +60,7 @@ class MM_CollectorLanguageInterfaceImpl;
  * should be done rarely and in only extreme circumstances.  Handling of elements can be specialized for all
  * elements as well as for specific types of structures.
  * 
- * The core routines to be reimplemented are doSlot(J9Object **), doClassSlot(J9Class **) and doClass(J9Class *).
+ * The core routines to be reimplemented are doSlot(J9Object **), doClassSlot(J9Class *) and doClass(J9Class *).
  * All other slot types are forwarded by default to these routines for processing.  To handle structure slots in 
  * specific ways, the slot handler for that type should be overridden.
  * 
@@ -382,7 +382,7 @@ public:
 	virtual void doSlot(J9Object** slotPtr) = 0;
 
 	/** General class slot handler to be reimplemented by specializing class. This handler is called for every reference to a J9Class. */
-	virtual void doClassSlot(J9Class** slotPtr);
+	virtual void doClassSlot(J9Class *classPtr);
 
 	/** General class handler to be reimplemented by specializing class. This handler is called once per class. */
 	virtual void doClass(J9Class *clazz) = 0;
@@ -504,7 +504,7 @@ public:
 
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);
 	virtual void doStringCacheTableSlot(J9Object **slotPtr);
-	virtual void doVMClassSlot(J9Class **slotPtr, GC_VMClassSlotIterator *vmClassSlotIterator);
+	virtual void doVMClassSlot(J9Class *classPtr);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/**
