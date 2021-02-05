@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -981,7 +981,7 @@ J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              \u6253\u5370 JVM -Xsyslog \u5e2e\u52a9\u3002
+J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              \u5217\u793a JVM -Xsyslog \u5e2e\u52a9\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
@@ -1029,7 +1029,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             \u8bb0\u5f55 JVM \u5fc5\u4e0d\u53ef\u5c11\u7684\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u6253\u5f00\u6b64\u53c2\u6570\u3002
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             \u8bb0\u5f55 JVM \u81f3\u5173\u91cd\u8981\u7684\u6d88\u606f\u3002\u7f3a\u7701\u60c5\u51b5\u4e0b\u4f1a\u6253\u5f00\u6b64\u53c2\u6570\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -1999,4 +1999,16 @@ J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=\u4e0d\u5141
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message for an improper attempt to synchronize on an instance of value-based class.
+# argument 1 is the length of the class name
+# argument 2 is the string of the class name
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED=\u9519\u8bef\u5bf9\u8c61\u7c7b\u578b %2$.*1$s\uff1a\u5df2\u540c\u6b65\u7684\u5bf9\u8c61\u57fa\u4e8e\u503c\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_1=3
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_2=Foo
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value-based class but the object on stack is an instance of value-based class.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.system_action=The JVM will throw an VirtualMachineError.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

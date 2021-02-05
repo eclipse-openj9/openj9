@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1019,4 +1019,24 @@ J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2=%1$s \u5185\u3067\u306e JNI \u30a8\u30e9\u30fc: \u5f15\u6570 #%2$d \u304c %3$s \u307e\u305f\u306f %4$s \u306e\u30b5\u30d6\u30af\u30e9\u30b9\u3067\u306f\u3042\u308a\u307e\u305b\u3093
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_3=package1/Class1
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_4=package2/Class2
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# abortonerror is not translatable
+J9NLS_JNICHK_HELP_16=\tabortonerror   \u81f4\u547d\u7684\u30a8\u30e9\u30fc\u3067\u7570\u5e38\u7d42\u4e86\u3055\u305b\u307e\u3059
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_15.explanation=NOTAG
+J9NLS_JNICHK_HELP_15.system_action=
+J9NLS_JNICHK_HELP_15.user_response=
 # END NON-TRANSLATABLE
