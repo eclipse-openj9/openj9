@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,13 @@ include(UseJava)
 project(j9_sourcetools VERSION 1.0)
 
 set(CMAKE_JAVA_TARGET_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+
+# Due to the way cmake generates the java class path, it will generate a leading path separator.
+# This prevents fixpath from JDKs after JDK11 from properly translating the path.
+# To work around the issue we tack on a dummy path at the beginning of the output classpath.
+if((WIN32 AND NOT CMAKE_HOST_WIN32) AND (JAVA_SPEC_VERSION GREATER 11))
+	set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${CMAKE_CURRENT_SOURCE_DIR}")
+endif()
 
 # TODO this needs to be named and handled better
 set(SPEC_LEVEL 7 CACHE STRING "")
