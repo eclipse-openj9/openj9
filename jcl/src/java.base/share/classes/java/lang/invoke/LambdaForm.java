@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8 & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,40 +33,52 @@ class LambdaForm {
 	LambdaForm(String str, int num1, Name[] names, int num2) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(String str, int num, Name[] names) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(String str, int num, Name[] names, boolean flag) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	LambdaForm(int a, Name[] b, int c) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(int a, Name[] b, int c, Kind d) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(int a, Name[] b, int c, boolean d, MethodHandle e) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(int a, Name[] b, int c, boolean d, MethodHandle e, Kind f) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(int a, Name[] b) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(int a, Name[] b, Kind c) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(int a, Name[] b, boolean c) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(int a, Name[] b, boolean c, Kind d) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(Name[] a, Name[] b, Name c) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 	LambdaForm(Name[] a, Name[] b, Name c, boolean d) {
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -76,20 +88,25 @@ class LambdaForm {
 		NamedFunction(MethodHandle mh) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
+
 		NamedFunction(MethodType mt) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
+
 		NamedFunction(MemberName mn, MethodHandle mh) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
+
 		NamedFunction(Method m) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
+
 		/*[IF JAVA_SPEC_VERSION >= 10]*/
-		NamedFunction(MethodHandle a, MethodHandleImpl.Intrinsic b){
+		NamedFunction(MethodHandle a, MethodHandleImpl.Intrinsic b) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		NamedFunction(MemberName a, MethodHandle b, MethodHandleImpl.Intrinsic c){
+
+		NamedFunction(MemberName a, MethodHandle b, MethodHandleImpl.Intrinsic c) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
@@ -140,6 +157,7 @@ class LambdaForm {
 			return basicType;
 		}
 	}
+
 	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	enum Kind {
 		CONVERT,
@@ -152,25 +170,27 @@ class LambdaForm {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
-	@interface Hidden{
+	@interface Hidden {
 	}
-	
+
 	static final class Name {
 		Name(MethodHandle mh, Object... objs) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
+
 		Name(MethodType mt, Object... objs) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		Name(NamedFunction nf,Object... objs) {
+
+		Name(NamedFunction nf, Object... objs) {
 			OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		
+
 		Name withConstraint(Object obj) {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
 	}
-	
+
 	static LambdaForm.Name[] arguments(int num, MethodType mt) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -178,12 +198,23 @@ class LambdaForm {
 	static NamedFunction constantZero(BasicType bt) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	void compileToBytecode() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	LambdaFormEditor editor() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	static String basicTypeSignature(Object type) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	static String shortenSignature(String signature) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
 }
