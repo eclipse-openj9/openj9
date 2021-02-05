@@ -573,7 +573,7 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
 #if defined(J9VM_OPT_JITSERVER)
       else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && JITServerHelpers::isServerAvailable())
          {
-         
+
          // For JITClient let's be more agressive with compilation thread activation
          // because the latencies are larger. Beyond 'numProc-1' we will use the
          // 'starvation activation schedule', but accelerated (divide those thresholds by 2)
@@ -3151,9 +3151,9 @@ void TR::CompilationInfo::stopCompilationThreads()
 
       fprintf(stderr, "Number of compilations per level:\n");
       for (int i = 0; i < (int)numHotnessLevels; i++)
-         {	      
+         {
          if (_statsOptLevels[i] > 0)
-            {		 
+            {
             fprintf(stderr, "Level=%d\tnumComp=%d", i, _statsOptLevels[i]);
 #if defined(J9VM_OPT_JITSERVER)
             if (_statsRemoteOptLevels[i] > 0)
@@ -7054,7 +7054,7 @@ TR::CompilationInfoPerThreadBase::isMemoryCheapCompilation(uint32_t bcsz, TR_Hot
    if (freePhysicalMemorySizeB < 20 * 1024 * 1024) // 10MB <= freeMem < 20MB
       {
       // Very small methods at cold (expected to take 1MB max)
-      return (optLevel <= cold) && (bcsz <= 4); 
+      return (optLevel <= cold) && (bcsz <= 4);
       }
    if (freePhysicalMemorySizeB < 100 * 1024 * 1024) // 20MB <= freeMem < 100MB
       {
@@ -7087,7 +7087,7 @@ TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotnes
          }
       // If we have CPU available we could keep local even medium sized cold compilations
       CpuUtilization *cpuUtil = _compInfo.getCpuUtil();
-      if (cpuUtil->isFunctional() && 
+      if (cpuUtil->isFunctional() &&
           _compInfo.getPersistentInfo()->getElapsedTime() >= TR::Options::_classLoadingPhaseInterval && // For first 0.5 sec we don't have valid data
           cpuUtil->getCpuIdle() >= 15 && // There is idle CPU to use
           cpuUtil->getVmCpuUsage() + 15 <= cpuEntitlement) // I am allowed to use 15% more CPU
@@ -7098,7 +7098,7 @@ TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotnes
    if (cpuEntitlement < 350.0) // [150, 350)
       {
       // Medium sized methods at noOpt/cold
-      return (optLevel <= cold) && (bcsz <= 31); 
+      return (optLevel <= cold) && (bcsz <= 31);
       }
 
    // CPU Entitlement >= 350%
@@ -7132,7 +7132,7 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
    TR_Hotness optLevel = entry->_optimizationPlan->getOptLevel();
    J9Method *method = entry->getMethodDetails().getMethod();
    uint32_t bcsz = TR::CompilationInfo::getMethodBytecodeSize(method);
-  
+
    return (isMemoryCheapCompilation(bcsz, optLevel) && isCPUCheapCompilation(bcsz, optLevel));
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -10237,8 +10237,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
                codeSize  = aotMethodHeaderEntry->compileMethodCodeSize;
 
-               aotMethodHeaderEntry->unused = TR::Compiler->host.is64Bit() ? 0xDEADC0DEDEADC0DEULL : 0xDEADC0DE;
-
                J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
 
                TR::CompilationInfo::storeAOTInSharedCache(
@@ -11283,7 +11281,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
    if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileEnd, TR_VerboseCompFailure))
       {
       uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
-      
+
       char compilationTypeString[15] = { 0 };
       snprintf(compilationTypeString, sizeof(compilationTypeString), "%s%s",
          compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",

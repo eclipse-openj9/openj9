@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,7 +167,6 @@ typedef struct TR_AOTMethodHeader {
    uintptr_t compileMethodCodeSize;
    uintptr_t compileMethodDataStartPC;
    uintptr_t compileMethodDataSize;
-   uintptr_t unused;
    uint32_t flags;
    } TR_AOTMethodHeader;
 
