@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1482,12 +1482,7 @@ J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.user_response=Contact the provider of t
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=Record \u30af\u30e9\u30b9\u3092 abstract \u306b\u3059\u308b\u3053\u3068\u306f\u3067\u304d\u307e\u305b\u3093
-# START NON-TRANSLATABLE
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=
 
 # Record is not translatable
 J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=Record \u540d\u306f\u30b9\u30c8\u30ea\u30f3\u30b0\u3067\u306a\u3051\u308c\u3070\u306a\u308a\u307e\u305b\u3093
@@ -1514,12 +1509,7 @@ J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.user_response=Contact the pro
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=Record \u306f\u6697\u9ed9\u306b final \u3067\u3059
-# START NON-TRANSLATABLE
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=
 
 # LocalVariableTypeTable is not translatable
 # LocalVariableTable is not translatable
@@ -1561,9 +1551,4 @@ J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.system_action=The J
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=Sealed \u30af\u30e9\u30b9\u306b\u306f\u5c11\u306a\u304f\u3068\u30821\u3064\u306e\u8a31\u53ef\u3055\u308c\u305f\u30b5\u30d6\u30af\u30e9\u30b9\u304c\u5fc5\u8981\u3067\u3059
-# START NON-TRANSLATABLE
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=

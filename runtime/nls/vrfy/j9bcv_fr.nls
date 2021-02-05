@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,7 +119,7 @@ J9NLS_BCV_ERR_TEMP_NOT_COMPATIBLE.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_ARRAY_SIZE_NOT_INTEGER=nouvelle taille de tableau non entier
+J9NLS_BCV_ERR_ARRAY_SIZE_NOT_INTEGER=nouvelle taille de tableau non enti\u00e8re
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_ARRAY_SIZE_NOT_INTEGER.explanation=None
 J9NLS_BCV_ERR_ARRAY_SIZE_NOT_INTEGER.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
@@ -127,7 +127,7 @@ J9NLS_BCV_ERR_ARRAY_SIZE_NOT_INTEGER.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_FINAL_METHOD_OVERRIDE=m\u00e9thode de type final remplac\u00e9e
+J9NLS_BCV_ERR_FINAL_METHOD_OVERRIDE=m\u00e9thode finale red\u00e9finie
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_FINAL_METHOD_OVERRIDE.explanation=The class redefines a method that has been marked 'final' in a super class
 J9NLS_BCV_ERR_FINAL_METHOD_OVERRIDE.system_action=The JVM will throw a VerifyError
@@ -135,7 +135,7 @@ J9NLS_BCV_ERR_FINAL_METHOD_OVERRIDE.user_response=Contact the provider of the cl
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_ARRAY_INDEX_NOT_INTEGER=index de tableau non entier
+J9NLS_BCV_ERR_ARRAY_INDEX_NOT_INTEGER=indice de tableau non entier
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_ARRAY_INDEX_NOT_INTEGER.explanation=None
 J9NLS_BCV_ERR_ARRAY_INDEX_NOT_INTEGER.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
@@ -215,7 +215,7 @@ J9NLS_BCV_ERR_INIT_NOT_CALL_INIT.user_response=Contact the provider of the class
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_STACK_OVERFLOW=nombre maximum de piles d\u00e9pass\u00e9
+J9NLS_BCV_ERR_STACK_OVERFLOW=d\u00e9bordement de la pile
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_STACK_OVERFLOW.explanation=Verification failed as the bytecodes use more stack space then the method declares
 J9NLS_BCV_ERR_STACK_OVERFLOW.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
@@ -223,7 +223,7 @@ J9NLS_BCV_ERR_STACK_OVERFLOW.user_response=Contact the provider of the classfile
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_CLASS_LOAD_FAILED=\u00e9chec chargement de classe
+J9NLS_BCV_ERR_CLASS_LOAD_FAILED=\u00e9chec au chargement de classe
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_CLASS_LOAD_FAILED.explanation=Verification failed as a required class was not found.
 J9NLS_BCV_ERR_CLASS_LOAD_FAILED.system_action=The JVM will prevent this from loading.
@@ -231,7 +231,7 @@ J9NLS_BCV_ERR_CLASS_LOAD_FAILED.user_response=Ensure that all required classfile
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_ARGS_NOT_COMPATIBLE=arguments appel\u00e9s de type non compatible
+J9NLS_BCV_ERR_ARGS_NOT_COMPATIBLE=arguments appel\u00e9s de types non compatibles
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_ARGS_NOT_COMPATIBLE.explanation=None
 J9NLS_BCV_ERR_ARGS_NOT_COMPATIBLE.system_action=THIS MESSAGE IS RESERVED FOR FUTURE USE
@@ -239,7 +239,7 @@ J9NLS_BCV_ERR_ARGS_NOT_COMPATIBLE.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_NOT_THROWABLE=objet d\u00e9clench\u00e9 ne peut pas \u00eatre d\u00e9clench\u00e9
+J9NLS_BCV_ERR_NOT_THROWABLE=objet lanc\u00e9 (thrown) non throwable
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_NOT_THROWABLE.explanation=Verification failed as an 'athrow' bytecode attempted to throw something that is not a subclass of java.lang.Throwable.
 J9NLS_BCV_ERR_NOT_THROWABLE.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
@@ -263,7 +263,7 @@ J9NLS_BCV_ERR_TABLESWITCH_NOT_INTEGER.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_ARGUMENTS_INCOMPATIBLE=les arguments sont de type non compatible
+J9NLS_BCV_ERR_ARGUMENTS_INCOMPATIBLE=les arguments sont de types non compatibles
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_ARGUMENTS_INCOMPATIBLE.explanation=Verification failed as the arguments to the method have the wrong type, or too many, or too few arguments were passed.
 J9NLS_BCV_ERR_ARGUMENTS_INCOMPATIBLE.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
@@ -279,7 +279,7 @@ J9NLS_BCV_ERR_BAD_ACCESS_PROTECTED.user_response=Contact the provider of the cla
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_UNEXPECTED_EOF=EOF inattendu
+J9NLS_BCV_ERR_UNEXPECTED_EOF=fin de fichier (EOF) inattendue
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_UNEXPECTED_EOF.explanation=Verification failed due to truncated data, such as a method, in the classfile.
 J9NLS_BCV_ERR_UNEXPECTED_EOF.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
@@ -359,7 +359,7 @@ J9NLS_BCV_ERR_NO_ERROR.user_response=None
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_STACK_UNDERFLOW=pile en sous capacit\u00e9
+J9NLS_BCV_ERR_STACK_UNDERFLOW=d\u00e9bordement de la pile par le bas
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_STACK_UNDERFLOW.explanation=Verification failed as the bytecodes attempt to pop more items from the stack then there are on the stack.
 J9NLS_BCV_ERR_STACK_UNDERFLOW.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
@@ -428,5 +428,13 @@ J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.sample_input_15=([Ljava/lang/String;)V
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.explanation=NOTAG
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.system_action=
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.user_response=
+
+# END NON-TRANSLATABLE
+
+J9NLS_BCV_ERR_BC_NEW_ARRAY=bytecode de new ne peut pas cr\u00e9er des tableaux
+# START NON-TRANSLATABLE
+J9NLS_BCV_ERR_BC_NEW_ARRAY.explanation=Verification failed due to an incorrect 'new' bytecode
+J9NLS_BCV_ERR_BC_NEW_ARRAY.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
+J9NLS_BCV_ERR_BC_NEW_ARRAY.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
