@@ -512,7 +512,7 @@ public:
 
    virtual uintptr_t         getOSRFrameHeaderSizeInBytes();
    virtual uintptr_t         getOSRFrameSizeInBytes(TR_OpaqueMethodBlock* method);
-   virtual bool               ensureOSRBufferSize(uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes);
+   virtual bool               ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes);
 
    virtual bool               generateCompressedPointers();
    virtual bool               generateCompressedLockWord();
@@ -1259,6 +1259,8 @@ public:
 
    virtual J9Class *              getClassForAllocationInlining( TR::Compilation *comp, TR::SymbolReference *classSymRef);
    virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr);
+
+   virtual bool               ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes);
    };
 
 #endif

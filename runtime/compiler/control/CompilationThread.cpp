@@ -2192,6 +2192,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationAotValidateExceptionHookFailure:
             case compilationAotBlockFrequencyReloFailure:
             case compilationAotRecompQueuedFlagReloFailure:
+            case compilationAOTValidateOSRFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;
@@ -10228,9 +10229,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                UDATA dataSize, codeSize;
 
                TR_ASSERT(comp, "AOT compilation that succeeded must have a compilation object");
-               J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-               TR_ASSERT(aotMethodHeader, "The header must have been set");
-               TR_AOTMethodHeader   *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+               TR_ASSERT(comp->getAotMethodDataStart(), "The header must have been set");
+               TR_AOTMethodHeader   *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
 
                dataStart = (U_8 *)aotMethodHeaderEntry->compileMethodDataStartPC;
                dataSize  = aotMethodHeaderEntry->compileMethodDataSize;
@@ -10378,8 +10378,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   // Must reclaim code cache, metadata, jittedBodyInfo, persistentMethodInfo,
                   // assumptions and RI records that could have been allocated.
                   //
-                  J9JITDataCacheHeader *aotMethodHeader      = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-                  TR_AOTMethodHeader   *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+                  TR_AOTMethodHeader   *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
                   J9JITDataCacheHeader *cacheEntry = (J9JITDataCacheHeader *)aotMethodHeaderEntry->compileMethodDataStartPC;
                   J9JITDataCacheHeader *exceptionTableCacheEntry = (J9JITDataCacheHeader *)((U_8 *)cacheEntry + aotMethodHeaderEntry->offsetToExceptionTable);
                   J9JITExceptionTable *metaData = (J9JITExceptionTable *) (exceptionTableCacheEntry + 1);

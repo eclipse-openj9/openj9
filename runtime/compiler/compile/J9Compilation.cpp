@@ -371,6 +371,13 @@ J9::Compilation::printCompYieldStatsMatrix()
       }
    }
 
+TR_AOTMethodHeader *
+J9::Compilation::getAotMethodHeaderEntry()
+   {
+   J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)self()->getAotMethodDataStart();
+   TR_AOTMethodHeader *aotMethodHeaderEntry =  (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+   return aotMethodHeaderEntry;
+   }
 
 TR::Node *
 J9::Compilation::findNullChkInfo(TR::Node *node)
