@@ -2915,8 +2915,7 @@ static void addSVMValidationRecords(TR::CodeGenerator *cg)
    if (cg->comp()->getOption(TR_UseSymbolValidationManager))
       {
       // Add the flags in TR_AOTMethodHeader on the compile run
-      J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)cg->comp()->getAotMethodDataStart();
-      TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+      TR_AOTMethodHeader *aotMethodHeaderEntry = cg->comp()->getAotMethodHeaderEntry();
       aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesSymbolValidationManager;
 
       for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)

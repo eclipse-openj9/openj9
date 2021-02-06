@@ -434,7 +434,7 @@ J9::VMEnv::OSRFrameSizeInBytes(TR::Compilation *comp, TR_OpaqueMethodBlock* meth
 bool
 J9::VMEnv::ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
    {
-   return comp->fej9()->ensureOSRBufferSize(osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
+   return comp->fej9()->ensureOSRBufferSize(comp, osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
    }
 
 uintptr_t

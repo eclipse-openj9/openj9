@@ -259,6 +259,20 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       return NULL;
       }
 
+   if (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesOSR)
+      {
+
+      if (!comp->getOption(TR_EnableOSR) ||
+          !fej9->ensureOSRBufferSize(comp,
+                                     _aotMethodHeaderEntry->_osrBufferInfo._frameSizeInBytes,
+                                     _aotMethodHeaderEntry->_osrBufferInfo._scratchBufferSizeInBytes,
+                                     _aotMethodHeaderEntry->_osrBufferInfo._stackFrameSizeInBytes))
+         {
+         setReturnCode(compilationAOTValidateOSRFailure);
+         return NULL;
+         }
+      }
+
    _exceptionTableCacheEntry = (J9JITDataCacheHeader *)((uint8_t *)cacheEntry + _aotMethodHeaderEntry->offsetToExceptionTable);
 
    if (_exceptionTableCacheEntry->type == J9_JIT_DCE_EXCEPTION_INFO)
@@ -734,6 +748,11 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
        _exceptionTable->riData)
       {
       _exceptionTable->riData = (void *) (((U_8 *)_exceptionTable->riData) + dataRelocationAmount);
+      }
+
+   if (_exceptionTable->osrInfo)
+      {
+      _exceptionTable->osrInfo = (void *) (((U_8 *)_exceptionTable->osrInfo) + dataRelocationAmount);
       }
 
 #if defined(J9VM_OPT_JITSERVER)

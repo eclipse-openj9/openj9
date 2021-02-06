@@ -163,6 +163,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    void * getAotMethodDataStart() const { return _aotMethodDataStart; }
    void setAotMethodDataStart(void *p) { _aotMethodDataStart = p; }
 
+   TR_AOTMethodHeader * getAotMethodHeaderEntry();
+
    TR::Node *findNullChkInfo(TR::Node *node);
 
    bool isAlignStackMaps() { return J9::Compilation::target().cpu.isARM(); }
