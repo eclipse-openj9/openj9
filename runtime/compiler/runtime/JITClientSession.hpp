@@ -274,6 +274,7 @@ class ClientSessionData
    /**
       @class VMInfo
       @brief Struct which contains information about VM that does not change during its lifetime
+      or changes infrequently
    */
    struct VMInfo
       {
@@ -322,6 +323,7 @@ class ClientSessionData
       void *_helperAddresses[TR_numRuntimeHelpers];
 #endif
       bool _isHotReferenceFieldRequired;
+      UDATA _osrGlobalBufferSize;
       }; // struct VMInfo
 
    /**

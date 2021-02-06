@@ -755,11 +755,6 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       _exceptionTable->osrInfo = (void *) (((U_8 *)_exceptionTable->osrInfo) + dataRelocationAmount);
       }
 
-#if defined(J9VM_OPT_JITSERVER)
-   if (_exceptionTable->osrInfo)
-      _exceptionTable->osrInfo = (void *) (((U_8 *)_exceptionTable->osrInfo) + dataRelocationAmount);
-#endif /* defined(J9VM_OPT_JITSERVER) */
-
    // Reset the uninitialized bit
    _exceptionTable->flags &= ~JIT_METADATA_NOT_INITIALIZED;
    }

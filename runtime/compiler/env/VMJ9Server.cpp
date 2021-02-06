@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -680,6 +680,32 @@ TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getOSRFrameSizeInBytes, method);
    return std::get<0>(stream->read<UDATA>());
+   }
+
+bool
+TR_J9ServerVM::ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
+   {
+   UDATA osrGlobalBufferSize = sizeof(J9JITDecompilationInfo);
+   // ROUND_TO in the base implementation calls OMR::align
+   osrGlobalBufferSize += OMR::align((UDATA) osrFrameSizeInBytes, sizeof(UDATA));
+   osrGlobalBufferSize += OMR::align((UDATA) osrScratchBufferSizeInBytes, sizeof(UDATA));
+   osrGlobalBufferSize += OMR::align((UDATA) osrStackFrameSizeInBytes, sizeof(UDATA));
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+
+   if (osrGlobalBufferSize > vmInfo->_osrGlobalBufferSize)
+      {
+      stream->write(JITServer::MessageType::VM_increaseOSRGlobalBufferSize, osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
+      auto recv = stream->read<bool, UDATA>();
+      bool result = std::get<0>(recv);
+      // if re-allocated the buffer successfully, updated the cached value
+      if (result)
+         vmInfo->_osrGlobalBufferSize = std::get<1>(recv);
+      return result;
+      }
+
+   return true;
    }
 
 int32_t
@@ -2580,6 +2606,21 @@ TR_J9SharedCacheServerVM::getClassForAllocationInlining(TR::Compilation *comp, T
       return TR_J9VM::getClassForAllocationInlining(comp, classSymRef);
    else
       return (J9Class *) classSymRef->getOwningMethod(comp)->getClassFromConstantPool(comp, classSymRef->getCPIndex(), returnClassForAOT);
+   }
+
+bool
+TR_J9SharedCacheServerVM::ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
+   {
+   bool valid = TR_J9ServerVM::ensureOSRBufferSize(comp, osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
+   if (valid)
+      {
+      TR_AOTMethodHeader *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
+      aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesOSR;
+      aotMethodHeaderEntry->_osrBufferInfo._frameSizeInBytes = osrFrameSizeInBytes;
+      aotMethodHeaderEntry->_osrBufferInfo._scratchBufferSizeInBytes = osrScratchBufferSizeInBytes;
+      aotMethodHeaderEntry->_osrBufferInfo._stackFrameSizeInBytes = osrStackFrameSizeInBytes;
+      }
+   return valid;
    }
 
 // Multiple codeCache support
