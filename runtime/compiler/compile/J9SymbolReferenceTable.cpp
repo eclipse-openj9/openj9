@@ -843,14 +843,6 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
    TR_ResolvedJ9Method * owningMethod =
       static_cast<TR_ResolvedJ9Method*>(owningMethodSymbol->getResolvedMethod());
 
-   if (comp()->compileRelocatableCode())
-      {
-      comp()->setUseTracingBuffer(true);
-      if (comp()->getTracingBufferStart() == NULL)
-         comp()->allocateTracingBuffer();
-      comp()->resetTracingBuffer();
-      }
-
    bool isVolatile = true, isFinal = false, isPrivate = false, isUnresolvedInCP;
    TR::DataType type = TR::NoType;
    uint32_t offset = 0;
@@ -876,22 +868,6 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
 
       if (comp()->compileRelocatableCode())
          {
-         if (comp()->useTracingBuffer())
-            {
-            if (containingClass == NULL)
-               {
-               const char *bufferPtr = comp()->getTracingBufferCursor();
-               for (char *cursor = comp()->getTracingBufferStart(); cursor < bufferPtr; cursor += TRACING_BUFFER_SEGMENT_SIZE)
-                  {
-                  J9VMThread *vmThread = comp()->fej9()->getCurrentVMThread();
-                  // each subsection *should* be NULL terminated
-                  fprintf(stderr, "%p: %s", vmThread, cursor);
-                  }
-               fprintf(stderr, "End (%d)\n", comp()->getTracingBufferFreeSpace());
-               }
-            comp()->setUseTracingBuffer(false);
-            }
-
          TR_ASSERT_FATAL(
             containingClass != NULL,
             "failed to get defining class of field ref cpIndex=%d in owning method J9Method=%p\n"
@@ -919,13 +895,8 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
          findResolvedFieldShadow(key, isVolatile, isPrivate, isFinal);
 
       if (symRef != NULL)
-         {
-         comp()->setUseTracingBuffer(false);
          return symRef;
-         }
       }
-
-   comp()->setUseTracingBuffer(false);
 
    TR::Symbol * sym = 0;
 

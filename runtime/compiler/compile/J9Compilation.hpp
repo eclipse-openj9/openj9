@@ -75,22 +75,6 @@ class ClientSessionData;
 #define COMPILATION_RESERVE_NTRAMPOLINES_ERROR_INBINARYENCODING -19
 #define COMPILATION_AOT_RELOCATION_FAILED -20
 
-#define TRACING_BUFFER_CAPACITY 10*1024
-#define TRACING_BUFFER_SEGMENT_SIZE 128
-#define ADD_TRACING_BUFFER_MESSAGE(comp, fmt, ...) \
-   do \
-      { \
-      if (comp->useTracingBuffer()) \
-         { \
-         char *buffer = comp->getTracingBufferCursor(); \
-         if (comp->getTracingBufferFreeSpace() >= TRACING_BUFFER_SEGMENT_SIZE) \
-            { \
-            snprintf(buffer, TRACING_BUFFER_SEGMENT_SIZE, fmt, ##__VA_ARGS__); \
-            comp->incTracingBuffer(TRACING_BUFFER_SEGMENT_SIZE); \
-            } \
-         } \
-      } while (false)
-
 
 
 namespace J9
@@ -357,23 +341,6 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    void setOSRProhibitedOverRangeOfTrees() { _osrProhibitedOverRangeOfTrees = true; }
    bool isOSRProhibitedOverRangeOfTrees() { return _osrProhibitedOverRangeOfTrees; }
 
-   void setUseTracingBuffer(bool use) { _useTracingBuffer = use; }
-   bool useTracingBuffer() { return _useTracingBuffer; }
-   char *getTracingBufferStart() { return _tracingBufferStart; }
-   char *getTracingBufferCursor() { return _tracingBufferCursor; }
-   void incTracingBuffer(size_t size)
-      {
-      _tracingBufferCursor += size;
-      _tracingBufferFreeSpace -= size;
-      }
-   void allocateTracingBuffer();
-   void resetTracingBuffer()
-      {
-      _tracingBufferCursor = _tracingBufferStart;
-      _tracingBufferFreeSpace = _tracingBufferSize;
-      }
-   int32_t getTracingBufferFreeSpace() { return _tracingBufferFreeSpace; }
-
 private:
    enum CachedClassPointerId
       {
@@ -474,12 +441,6 @@ private:
 
    TR::SymbolValidationManager *_symbolValidationManager;
    bool _osrProhibitedOverRangeOfTrees;
-
-   bool _useTracingBuffer;
-   char *_tracingBufferStart;
-   char *_tracingBufferCursor;
-   int32_t _tracingBufferSize;
-   int32_t _tracingBufferFreeSpace;
    };
 
 }

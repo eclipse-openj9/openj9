@@ -182,7 +182,6 @@ public:
       }
 
    virtual UDATA *rememberClass(J9Class *clazz, bool create=true);
-   virtual UDATA *rememberClass(bool create, TR::Compilation *comp, J9Class *clazz);
 
    virtual UDATA rememberDebugCounterName(const char *name);
    virtual const char *getDebugCounterName(UDATA offset);
@@ -393,7 +392,7 @@ private:
                          uint32_t numSuperclasses, uint32_t numInterfaces);
 
    bool romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd);
-   UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength, TR::Compilation *comp=NULL, J9ROMClass *romClass=NULL);
+   UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength);
 
    /**
     * \brief Helper Method; Converts an offset into the ROMClass section into a pointer.
