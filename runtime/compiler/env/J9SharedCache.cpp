@@ -867,12 +867,6 @@ TR_J9SharedCache::createClassKey(UDATA classOffsetInCache, char *key, uint32_t &
 UDATA *
 TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    {
-   return rememberClass(create, NULL, clazz);
-   }
-
-UDATA *
-TR_J9SharedCache::rememberClass(bool create, TR::Compilation *comp, J9Class *clazz)
-   {
    UDATA *chainData = NULL;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
@@ -885,10 +879,6 @@ TR_J9SharedCache::rememberClass(bool create, TR::Compilation *comp, J9Class *cla
    if (!isROMClassInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(1,"\trom class not in shared cache, returning\n");
-      if (comp)
-         {
-         ADD_TRACING_BUFFER_MESSAGE(comp, "rememberClass (%p): rom class %p not in shared cache, returning\n", clazz, romClass);
-         }
       return NULL;
       }
 
@@ -898,14 +888,10 @@ TR_J9SharedCache::rememberClass(bool create, TR::Compilation *comp, J9Class *cla
 
    LOG(3, "\tkey created: %.*s\n", keyLength, key);
 
-   chainData = findChainForClass(clazz, key, keyLength, comp, romClass);
+   chainData = findChainForClass(clazz, key, keyLength);
    if (chainData != NULL)
       {
       LOG(1, "\tchain exists (%p) so nothing to store\n", chainData);
-      if (comp)
-         {
-         ADD_TRACING_BUFFER_MESSAGE(comp, "rememberClass: chain exists (%p) so nothing to store, %p, %p\n", chainData, clazz, romClass);
-         }
       return chainData;
       }
 
@@ -920,30 +906,18 @@ TR_J9SharedCache::rememberClass(bool create, TR::Compilation *comp, J9Class *cla
    if (chainLength > maxChainLength*sizeof(UDATA))
       {
       LOG(1, "\t\t > %d so bailing\n", maxChainLength);
-      if (comp)
-         {
-         ADD_TRACING_BUFFER_MESSAGE(comp, "rememberClass: chainLength larger than maxChainLength; bailing, %p %p\n", clazz, romClass);
-         }
       return NULL;
       }
 
    if (!fillInClassChain(clazz, chainData, chainLength, numSuperclasses, numInterfaces))
       {
       LOG(1, "\tfillInClassChain failed, bailing\n");
-      if (comp)
-         {
-         ADD_TRACING_BUFFER_MESSAGE(comp, "rememberClass: failed to fill in class chain; bailing, %p, %p\n", clazz, romClass);
-         }
       return NULL;
       }
 
    if (!create)
       {
-      LOG(1, "\tnot asked to create but could create, returning non-null, %p %p\n", clazz, romClass);
-      if (comp)
-         {
-         ADD_TRACING_BUFFER_MESSAGE(comp, "rememberClass: not asked to create but could create ; bailing, %p %p\n", clazz, romClass);
-         }
+      LOG(1, "\tnot asked to create but could create, returning non-null\n");
       return (UDATA *) 0x1;
       }
 
@@ -966,18 +940,10 @@ TR_J9SharedCache::rememberClass(bool create, TR::Compilation *comp, J9Class *cla
    if (chainData)
       {
       LOG(1, "\tstored data, chain at %p\n", chainData);
-      if (comp)
-         {
-         ADD_TRACING_BUFFER_MESSAGE(comp, "rememberClass: stored data, chain at %p, %p, %p\n", chainData, clazz, romClass);
-         }
       }
    else
       {
       LOG(1, "\tunable to store chain\n");
-      if (comp)
-         {
-         ADD_TRACING_BUFFER_MESSAGE(comp, "rememberClass: unable to store chain %p, %p\n", vmThread, romClass);
-         }
       TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
 
       setSharedCacheDisabledReason(SHARED_CACHE_CLASS_CHAIN_STORE_FAILED);
@@ -1123,7 +1089,7 @@ TR_J9SharedCache::romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & c
    }
 
 UDATA *
-TR_J9SharedCache::findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength, TR::Compilation *comp, J9ROMClass *romClass)
+TR_J9SharedCache::findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength)
    {
    UDATA * chainForClass = NULL;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
@@ -1143,12 +1109,6 @@ TR_J9SharedCache::findChainForClass(J9Class *clazz, const char *key, uint32_t ke
    //fprintf(stderr,"findChainForClass: key %.*s chain %p\n", keyLength, key, dataDescriptor.address);
    chainForClass = (UDATA *) dataDescriptor.address;
 #endif
-
-   if (comp)
-      {
-      ADD_TRACING_BUFFER_MESSAGE(comp, "findChainForClass %p, %p, %p, %p\n", vmThread, clazz, romClass, chainForClass);
-      }
-
    return chainForClass;
    }
 
