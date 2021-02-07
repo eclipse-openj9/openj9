@@ -1725,9 +1725,6 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
       {
       if (aotStats)
          aotStats->numDefiningClassNotFound++;
-
-      ADD_TRACING_BUFFER_MESSAGE(comp, "relo::storeValRecordIfNec, definingClass NULL, %p, %d, %p\n", constantPool, cpIndex, ramMethod);
-
       return false;
       }
 
@@ -1739,10 +1736,7 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
    classChain = fej9->sharedCache()->rememberClass(true, comp, definingClass);
    if (!classChain)
-      {
-      ADD_TRACING_BUFFER_MESSAGE(comp, "relo::storeValRecordIfNec, classChain NULL, %p, %p, %d, %p\n", definingClass, constantPool, cpIndex, ramMethod);
       return false;
-      }
 
    bool inLocalList = false;
    TR::list<TR::AOTClassInfo*>* aotClassInfo = comp->_aotClassInfo;
@@ -1774,7 +1768,6 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
    if (inLocalList)
       {
       traceMsg(comp, "\tFound in local list, nothing to do\n");
-      ADD_TRACING_BUFFER_MESSAGE(comp, "relo::storeValRecordIfNec, Found in local list, nothing to do (%p, %d, %p)\n", constantPool, cpIndex, ramMethod);
       if (aotStats)
          {
          if (isStatic)
@@ -1798,13 +1791,10 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
             aotStats->numNewCHEntriesInLocalList++;
          }
 
-      ADD_TRACING_BUFFER_MESSAGE(comp, "relo::storeValRecordIfNec, Created new AOT class info %p\n", classInfo);
-
       return true;
       }
 
    // should only be a native OOM that gets us here...
-   ADD_TRACING_BUFFER_MESSAGE(comp, "relo::storeValRecordIfNec, native OOM?\n");
    return false;
    }
 
@@ -1857,7 +1847,6 @@ TR_ResolvedRelocatableJ9Method::fieldAttributes(TR::Compilation * comp, int32_t 
                }
             else
                {
-               ADD_TRACING_BUFFER_MESSAGE(comp, "relo::fieldAttrib, %d, %p, %p\n", cpIndex, constantPool, ramMethod());
                fieldInfoCanBeUsed = storeValidationRecordIfNecessary(comp, constantPool, cpIndex, TR_ValidateInstanceField, ramMethod());
                }
             }
@@ -1910,8 +1899,6 @@ TR_ResolvedRelocatableJ9Method::fieldAttributes(TR::Compilation * comp, int32_t 
 #if defined(DEBUG_LOCAL_CLASS_OPT)
       unresolvedCtr++;
 #endif
-
-      ADD_TRACING_BUFFER_MESSAGE(comp, "relo::fieldAttrib, theFieldIsFromLocalClass will be false (%p, %d, %p)\n", constantPool, cpIndex, ramMethod());
       }
 
    if (unresolvedInCP)
@@ -2056,10 +2043,7 @@ TR_ResolvedRelocatableJ9Method::definingClassFromCPFieldRef(
       valid = storeValidationRecordIfNecessary(comp, cp(), cpIndex, isStatic ? TR_ValidateStaticField : TR_ValidateInstanceField, ramMethod());
 
    if (!valid)
-      {
-      ADD_TRACING_BUFFER_MESSAGE(comp, "relo::definingClassFromCPFieldRef !valid, %p, %d, %p\n", cp(), cpIndex, ramMethod());
       clazz = NULL;
-      }
 
    return clazz;
    }
