@@ -2629,8 +2629,9 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node* callParamRoot = isVariableParam ? pdopNode : node;
    for (uint32_t i = firstCallParamIndex; i < callParamRoot->getNumChildren(); ++i)
       {
-      if (!callParamRoot->getChild(i)->isSingleRefUnevaluated())
-         cg->evaluate(callParamRoot->getChild(i));
+      TR::Node* callArg = callParamRoot->getChild(i);
+      if (callArg->getReferenceCount() != 1 || callArg->getRegister() != NULL)
+         cg->evaluate(callArg);
       }
 
    /*
@@ -7519,7 +7520,8 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
             firstChild->getOpCodeValue() == TR::pdmul ||
             firstChild->getOpCodeValue() == TR::pddiv ||
             firstChild->getOpCodeValue() == TR::pdrem) &&
-           firstChild->isSingleRefUnevaluated();
+            firstChild->getReferenceCount() == 1 &&
+            firstChild->getRegister() == NULL;
 
    int32_t shiftAmount = (int32_t)shiftAmountNode->get64bitIntegralValue();
    uint8_t decimalPrecision = node->getDecimalPrecision();
