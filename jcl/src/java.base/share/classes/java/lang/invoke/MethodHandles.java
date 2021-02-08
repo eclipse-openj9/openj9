@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 import java.lang.invoke.VarHandle.AccessMode;
 import java.lang.reflect.Array;
 /*[IF Sidecar19-SE-OpenJ9]*/
@@ -70,6 +71,7 @@ import java.lang.reflect.Module;
 /*[ENDIF] Sidecar19-SE-OpenJ9*/
 /*[ELSE] Sidecar19-SE*/
 import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
 /*[ENDIF] Sidecar19-SE*/
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
@@ -347,6 +349,20 @@ public class MethodHandles {
 		static final VMLangAccess getVMLangAccess() {
 			return VMLangAccessGetter.vma;
 		}
+
+		private static int getClassModifiers(Class<?> cls) {
+			int modifiers = 0;
+			/* Use Reflection.getClassAccessFlags to get the actual ROM Class modifiers
+			 * instead of the attribute flags for innerclasses
+			 */
+			if (cls.isPrimitive() || cls.isArray()) {
+				modifiers = cls.getModifiers();
+			} else {
+				modifiers = Reflection.getClassAccessFlags(cls);
+			}
+
+			return modifiers;
+		}
 		
 		/* Verify two classes share the same package in a way to avoid Class.getPackage()
 		 * and the security checks that go with it.
@@ -602,8 +618,8 @@ public class MethodHandles {
 				 * the protected flag of this class doesn't exist on the VM level (there is no 
 				 * access flag in the binary form representing 'protected')
 				 */
-				int targetClassModifiers = targetClass.getModifiers();
-				final boolean targetClassIsPublic = (Modifier.isPublic(targetClassModifiers) || Modifier.isProtected(targetClassModifiers));
+				int targetClassModifiers = getClassModifiers(targetClass);
+				final boolean targetClassIsPublic = Modifier.isPublic(targetClassModifiers);
 
 				/*[IF JAVA_SPEC_VERSION >= 14]*/
 				Module accessModule = accessClass.getModule();
@@ -1322,9 +1338,8 @@ public class MethodHandles {
 			 * the protected flag of this class doesn't exist on the VM level (there is no 
 			 * access flag in the binary form representing 'protected')
 			 */
-			int lookupClassModifiers = lookupClass.getModifiers();
-			final boolean lookupClassIsPublic = (Modifier.isPublic(lookupClassModifiers) || Modifier.isProtected(lookupClassModifiers));
-			if(!lookupClassIsPublic) {
+			int lookupClassModifiers = getClassModifiers(lookupClass);
+			if(!Modifier.isPublic(lookupClassModifiers)) {
 				if(isSamePackage(accessClass, lookupClass)) {
 					if (0 == (accessMode & PACKAGE)) {
 						newAccessMode = NO_ACCESS;
@@ -2038,7 +2053,7 @@ public class MethodHandles {
 		 */
 		public Class<?> accessClass(Class<?> targetClass) throws IllegalAccessException {
 			targetClass.getClass(); /* implicit null checks */
-			int targetClassModifiers = targetClass.getModifiers();
+			int targetClassModifiers = getClassModifiers(targetClass);
 			checkAccess(targetClass);
 			checkSecurity(targetClass, targetClass, targetClassModifiers);
 			return targetClass;
