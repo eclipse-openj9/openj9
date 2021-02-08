@@ -470,6 +470,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             vmInfo._helperAddresses[i] = runtimeHelperValue((TR_RuntimeHelper) i);
 #endif
          vmInfo._isHotReferenceFieldRequired = TR::Compiler->om.isHotReferenceFieldRequired();
+         vmInfo._osrGlobalBufferSize = javaVM->osrGlobalBufferSize;
 
          client->write(response, vmInfo, listOfCacheDescriptors);
          }
@@ -1019,6 +1020,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             fields.push_back(field);
             }
          client->write(response, declaringClasses, fields);
+         }
+         break;
+      case MessageType::VM_increaseOSRGlobalBufferSize:
+         {
+         auto recv = client->getRecvData<uintptr_t, uintptr_t, uintptr_t>();
+         bool result = fe->ensureOSRBufferSize(comp, std::get<0>(recv), std::get<1>(recv), std::get<2>(recv));
+         client->write(response, result, jitConfig->javaVM->osrGlobalBufferSize);
          }
          break;
       case MessageType::mirrorResolvedJ9Method:
