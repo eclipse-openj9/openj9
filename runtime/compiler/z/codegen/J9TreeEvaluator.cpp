@@ -3351,7 +3351,8 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool skipArrayLengthReg = false;
    bool skipArrayIndexReg = false;
    if (firstChild->getOpCodeValue() == TR::l2i &&
-           firstChild->isSingleRefUnevaluated() &&
+           firstChild->getReferenceCount() == 1 &&
+           firstChild->getRegister() == NULL &&
            firstChild->getFirstChild() &&
            firstChild->getFirstChild()->getRegister())
       {
@@ -3364,7 +3365,8 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
 
    if (secondChild->getOpCodeValue() == TR::l2i &&
-           secondChild->isSingleRefUnevaluated() &&
+           secondChild->getReferenceCount() == 1 &&
+           secondChild->getRegister() == NULL &&
            secondChild->getFirstChild() &&
            secondChild->getFirstChild()->getRegister())
       {
@@ -3538,8 +3540,12 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          return NULL;
          }
       else if (useS390CompareAndTrap &&
-              (  (firstChild->getOpCode().isLoadVar() && firstChild->isSingleRefUnevaluated()) ||
-                 (secondChild->getOpCode().isLoadVar() && secondChild->isSingleRefUnevaluated())) &&
+              ((firstChild->getOpCode().isLoadVar() &&
+               firstChild->getReferenceCount() == 1 &&
+               firstChild->getRegister() == NULL) ||
+               (secondChild->getOpCode().isLoadVar() && 
+               secondChild->getReferenceCount() == 1 &&
+               secondChild->getRegister() == NULL)) &&
               cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
          {
          // Assume 1st child is the memory operand.
@@ -3548,7 +3554,9 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          TR::InstOpCode::S390BranchCondition compareCondition = TR::InstOpCode::COND_BNL;
 
          // Check if first child is really the memory operand
-         if (!(firstChild->getOpCode().isLoadVar() && firstChild->isSingleRefUnevaluated()))
+         if (!(firstChild->getOpCode().isLoadVar() && 
+               firstChild->getReferenceCount() == 1 &&
+               firstChild->getRegister() == NULL))
             {
             // Nope... the second child is!
             memChild = secondChild;
