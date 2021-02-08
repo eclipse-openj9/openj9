@@ -20,12 +20,12 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-Building OpenJDK Version 15 with OpenJ9
-======================================
+Building OpenJDK Version 16 with OpenJ9
+=======================================
 
-Building OpenJDK 15 with OpenJ9 will be familiar to anyone who has already built OpenJDK. The easiest method
+Building OpenJDK 16 with OpenJ9 will be familiar to anyone who has already built OpenJDK. The easiest method
 involves the use of Docker and Dockerfiles to create a build environment that contains everything
-you need to produce a Linux binary of OpenJDK V15 with the Eclipse OpenJ9 virtual machine. If this method
+you need to produce a Linux binary of OpenJDK V16 with the Eclipse OpenJ9 virtual machine. If this method
 sounds ideal for you, go straight to the [Linux :penguin:](#linux) section.
 
 Build instructions are available for the following platforms:
@@ -45,7 +45,7 @@ documentation for the next release of OpenJ9 can be found [here](https://eclipse
 
 ## Linux
 :penguin:
-This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V15** with OpenJ9 on Ubuntu 16.04. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
+This build process provides detailed instructions for building a Linux x86-64 binary of **OpenJDK V16** with OpenJ9 on Ubuntu 16.04. The binary can be built directly on your system, in a virtual machine, or in a Docker container :whale:.
 
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
@@ -107,32 +107,24 @@ version used in the build.
 export CC=gcc-7 CXX=g++-7
 ```
 
-3. Download and setup **freemarker.jar** into a directory.
+3. Download and setup the boot JDK using the latest AdoptOpenJDK v15 build.
 ```
-cd /<my_home_dir>
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
-rm -f freemarker.tgz
-```
-
-4. Download and setup the boot JDK using the latest AdoptOpenJDK v14 build.
-```
-cd /<my_home_dir>
-wget -O bootjdk14.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/14/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
-tar -xzf bootjdk14.tar.gz
-rm -f bootjdk14.tar.gz
-mv $(ls | grep -i jdk-14) bootjdk14
+cd <my_home_dir>
+wget -O bootjdk15.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/15/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
+tar -xzf bootjdk15.tar.gz
+rm -f bootjdk15.tar.gz
+mv $(ls | grep -i jdk-15) bootjdk15
 ```
 
 ### 2. Get the source
 :penguin:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk15.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk16.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk15
+cd openj9-openjdk-jdk16
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 ```
@@ -145,15 +137,13 @@ bash get_source.sh
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar --with-boot-jdk=/usr/lib/jvm/adoptojdk-java-14
+bash configure --with-boot-jdk=/usr/lib/jvm/adoptojdk-java-15
 ```
-:warning: You must give an absolute path to freemarker.jar
-
-:warning: The path in the example `--with-boot-jdk= option` is appropriate for the Docker installation. If you're not using the Docker environment, set the path that's appropriate for your setup, such as `/<my_home_dir>/bootjdk14`.
+:warning: The path in the example `--with-boot-jdk= option` is appropriate for the Docker installation. If you're not using the Docker environment, set the path that's appropriate for your setup, such as `<my_home_dir>/bootjdk15`.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
-:pencil: **Mixed references support:** If you require a single build with both compressed references and non-compressed references available, enable a mixedrefs build with the `--with-mixedrefs` option during this step. Specify `--with-mixedrefs=static` for the VM to determine the reference mode statically (at compile time), or `--with-mixedrefs=dynamic` for the VM to determine the reference mode dynamically (at run time). The option defaults to determine the reference mode statically, if neither `static` nor `dynamic` is provided. _Note that `--with-cmake` must be used with this option, as it is only available with CMake enabled at this time._
+:pencil: **Mixed references support:** If you require a single build with both compressed references and non-compressed references available, enable a mixedrefs build with the `--with-mixedrefs` option during this step. Specify `--with-mixedrefs=static` for the VM to determine the reference mode statically (at compile time), or `--with-mixedrefs=dynamic` for the VM to determine the reference mode dynamically (at run time). The option defaults to determine the reference mode statically, if neither `static` nor `dynamic` is provided.
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
 
@@ -167,7 +157,7 @@ bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar --with-boot-j
 
 ### 4. Build
 :penguin:
-Now you're ready to build **OpenJDK V15** with OpenJ9:
+Now you're ready to build **OpenJDK V16** with OpenJ9:
 ```
 make all
 ```
@@ -180,14 +170,14 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 
     :whale: If you built your binaries in a Docker container, copy the binaries to the containers **/root/hostdir** directory so that you can access them on your local system. You'll find them in the directory you set for `<host_directory>` when you started your Docker container. See [Setting up your build environment with Docker](#setting-up-your-build-environment-with-docker).
 
-    :pencil: On other architectures the **/jdk** directory is in **build/linux-ppc64le-server-release/images** (Linux on 64-bit Power systems) and **build/linux-s390x-server-release/images** (Linux on 64-bit z Systems).
+    :pencil: On other architectures the **jdk** directory is in **build/linux-ppc64le-server-release/images** (Linux on 64-bit Power systems) or **build/linux-s390x-server-release/images** (Linux on 64-bit z Systems).
 
     :pencil: If you want a binary for the runtime environment (jre), you must run `make legacy-jre-image`, which produces a jre build in the **build/linux-x86_64-server-release/images/jre** directory.
 
 ### 5. Test
 :penguin:
 For a simple test, try running the `java -version` command.
-Change to the /jdk directory:
+Change to the jdk directory:
 ```
 cd build/linux-x86_64-server-release/images/jdk
 ```
@@ -199,12 +189,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "15-internal" 2020-09-01
-OpenJDK Runtime Environment (build 15-internal+0-adhoc..openj9-openjdk-jdk15)
-Eclipse OpenJ9 VM (build tye-2e3d778, JRE 15 Linux amd64-64-Bit Compressed References 20200901_000000 (JIT enabled, AOT enabled)
-OpenJ9   - 2e3d778
-OMR      - a5a028d
-JCL      - 9af014f based on jdk-15+29)
+openjdk version "16-internal" 2021-03-16
+OpenJDK Runtime Environment (build 16-internal+0-adhoc.userid.jdk16)
+Eclipse OpenJ9 VM (build master-eea5afd5461b, JRE 16 Linux amd64-64-Bit Compressed References 20210208_000000 (JIT enabled, AOT enabled)
+OpenJ9   - eea5afd5461b
+OMR      - 9d5020c417c
+JCL      - d0f36677cbe based on jdk-16+35)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -222,7 +212,7 @@ JCL      - 9af014f based on jdk-15+29)
 :construction:
 This section is still under construction. Further contributions expected.
 
-The following instructions guide you through the process of building an **OpenJDK V15** binary that contains Eclipse OpenJ9 on AIX 7.2.
+The following instructions guide you through the process of building an **OpenJDK V16** binary that contains Eclipse OpenJ9 on AIX 7.2.
 
 ### 1. Prepare your system
 :blue_book:
@@ -230,11 +220,11 @@ You must install the following AIX Licensed Program Products (LPPs):
 - [xlc/C++ 16](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
-You must also install the boot JDK: [Java14_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/14/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
+You must also install the boot JDK: [Java15_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/15/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
-Download the following file: [yum_install_aix-ppc64.txt](../../buildenv/aix/jdk15/yum_install_aix-ppc64.txt)
+Download the following file: [yum_install_aix-ppc64.txt](../../buildenv/aix/jdk16/yum_install_aix-ppc64.txt)
 
 This file contains a list of required RPM packages that you can install by specifying the following command:
 ```
@@ -246,7 +236,7 @@ It is important to take the list of package dependencies from this file because 
 Download and setup `freemarker.jar` into your home directory by running the following commands:
 
 ```
-cd /<my_home_dir>
+cd <my_home_dir>
 wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
 tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 rm -f freemarker.tgz
@@ -256,11 +246,11 @@ rm -f freemarker.tgz
 :blue_book:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk15.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk16.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk15
+cd openj9-openjdk-jdk16
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -274,10 +264,11 @@ bash get_source.sh
 :blue_book:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-boot-jdk=<path_to_boot_JDK14> \
-               --with-cups-include=<cups_include_path> \
-               --disable-warnings-as-errors
+bash configure \
+    --with-boot-jdk=<path_to_boot_JDK15> \
+    --with-cups-include=<cups_include_path> \
+    --with-freemarker-jar=<my_home_dir>/freemarker.jar \
+    --disable-warnings-as-errors
 ```
 where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
 
@@ -325,12 +316,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "15-internal" 2020-09-01
-OpenJDK Runtime Environment (build 15-internal+0-adhoc.jenkins.Build-JDK15-aixppc-64cmprssptrs)
-Eclipse OpenJ9 VM (build tye-e85051733, JRE 15 AIX ppc64-64-Bit Compressed References 20200901_28 (JIT enabled, AOT enabled)
-OpenJ9   - e85051733
-OMR      - 46127623
-JCL      - 2ef6b4c54d8 based on jdk-15+30)
+openjdk version "16-internal" 2021-03-16
+OpenJDK Runtime Environment (build 16-internal+0-adhoc.userid.jdk16)
+Eclipse OpenJ9 VM (build master-eea5afd5461b, JRE 16 AIX ppc64-64-Bit Compressed References 20210208_000000 (JIT enabled, AOT enabled)
+OpenJ9   - eea5afd5461b
+OMR      - 9d5020c417c
+JCL      - d0f36677cbe based on jdk-16+35)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -345,15 +336,15 @@ JCL      - 2ef6b4c54d8 based on jdk-15+30)
 ## Windows
 :ledger:
 
-The following instructions guide you through the process of building a Windows **OpenJDK V15** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows.
+The following instructions guide you through the process of building a Windows **OpenJDK V16** binary that contains Eclipse OpenJ9. This process can be used to build binaries for Windows.
 
 ### 1. Prepare your system
 :ledger:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
-- [Windows JDK 14](https://api.adoptopenjdk.net/v3/binary/latest/14/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
-- [Microsoft Visual Studio 2017](https://aka.ms/vs/15/release/vs_community.exe), which is the default compiler level used by OpenJDK15.
+- [Windows JDK 15](https://api.adoptopenjdk.net/v3/binary/latest/15/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [Microsoft Visual Studio 2017](https://aka.ms/vs/15/release/vs_community.exe), which is the default compiler level used by OpenJDK16.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 - [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
@@ -410,11 +401,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command in the Cygwin terminal:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk15.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk16.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk15
+cd openj9-openjdk-jdk16
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -431,9 +422,10 @@ bash get_source.sh
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --disable-warnings-as-errors \
-               --with-boot-jdk=<path_to_boot_JDK14> \
-               --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar
+bash configure \
+    --with-boot-jdk=<path_to_boot_JDK15> \
+    --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
+    --disable-warnings-as-errors
 ```
 Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2017` option in the configure command.
 
@@ -463,7 +455,7 @@ A binary for the full developer kit (jdk) is built and stored in the following d
 ### 5. Test
 :ledger:
 For a simple test, try running the `java -version` command.
-Change to the /jdk directory:
+Change to the jdk directory:
 ```
 cd build/windows-x86_64-server-release/images/jdk
 ```
@@ -475,12 +467,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "15-internal" 2020-09-01
-OpenJDK Runtime Environment (build 15-internal+0-adhoc.jenkins.Build-JDK15-winx86-64cmprssptrs)
-Eclipse OpenJ9 VM (build tye-e85051733, JRE 15 Windows Server 2016 amd64-64-Bit Compressed References 20200901_27 (JIT enabled, AOT enabled)
-OpenJ9   - e85051733
-OMR      - dfbca14c
-JCL      - 2ef6b4c54d8 based on jdk-15+30)
+openjdk version "16-internal" 2021-03-16
+OpenJDK Runtime Environment (build 16-internal+0-adhoc.userid.jdk16)
+Eclipse OpenJ9 VM (build master-eea5afd5461b, JRE 16 Windows Server 2016 amd64-64-Bit Compressed References 20210208_000000 (JIT enabled, AOT enabled)
+OpenJ9   - eea5afd5461b
+OMR      - 9d5020c417c
+JCL      - d0f36677cbe based on jdk-16+35)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
@@ -494,14 +486,14 @@ JCL      - 2ef6b4c54d8 based on jdk-15+30)
 
 ## macOS
 :apple:
-The following instructions guide you through the process of building a macOS **OpenJDK V15** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 10.
+The following instructions guide you through the process of building a macOS **OpenJDK V16** binary that contains Eclipse OpenJ9. This process can be used to build binaries for macOS 10.
 
 ### 1. Prepare your system
 :apple:
 You must install a number of software dependencies to create a suitable build environment on your system (the specified versions are minimums):
 
 - [Xcode 10.3, use >= 11.4.1 to support code signing](https://developer.apple.com/download/more/) (requires an Apple account to log in).
-- [macOS OpenJDK 14](https://api.adoptopenjdk.net/v3/binary/latest/14/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [macOS JDK 15](https://api.adoptopenjdk.net/v3/binary/latest/15/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
 The following dependencies can be installed by using [Homebrew](https://brew.sh/) (the specified versions are minimums):
 
@@ -515,15 +507,6 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 - [nasm 2.13.03](https://formulae.brew.sh/formula/nasm)
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
 - [wget 1.19.5](https://formulae.brew.sh/formula/wget)
-
-[Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
-
-```
-cd /<my_home_dir>
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
-rm -f freemarker.tgz
-```
 
 Bash version 4 is required by the `get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
 
@@ -544,11 +527,11 @@ First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repo
 
 Run the following command:
 ```
-git clone https://github.com/ibmruntimes/openj9-openjdk-jdk15.git
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk16.git
 ```
 Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
 ```
-cd openj9-openjdk-jdk15
+cd openj9-openjdk-jdk16
 ```
 Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
 
@@ -563,16 +546,14 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 
 ```
-bash configure \
-    --with-boot-jdk=<path_to_boot_JDK14> \
-    --with-freemarker-jar=/<my_home_dir>/freemarker.jar
+bash configure --with-boot-jdk=<path_to_boot_JDK15>
 ```
 
 :pencil: Modify the paths for freemarker and the macOS boot JDK that you installed in step 1. If `configure` is unable to detect Freetype, add the option `--with-freetype=<path to freetype>`, where `<path to freetype>` is typically `/usr/local/Cellar/freetype/2.9.1/`.
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
-:pencil: **Mixed references support:** If you require a single build with both compressed references and non-compressed references available, enable a mixedrefs build with the `--with-mixedrefs` option during this step. Specify `--with-mixedrefs=static` for the VM to determine the reference mode statically (at compile time), or `--with-mixedrefs=dynamic` for the VM to determine the reference mode dynamically (at run time). The option defaults to determine the reference mode statically, if neither `static` nor `dynamic` is provided. _Note that `--with-cmake` must be used with this option, as it is only available with CMake enabled at this time._
+:pencil: **Mixed references support:** If you require a single build with both compressed references and non-compressed references available, enable a mixedrefs build with the `--with-mixedrefs` option during this step. Specify `--with-mixedrefs=static` for the VM to determine the reference mode statically (at compile time), or `--with-mixedrefs=dynamic` for the VM to determine the reference mode dynamically (at run time). The option defaults to determine the reference mode statically, if neither `static` nor `dynamic` is provided.
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
 
@@ -609,12 +590,12 @@ Run:
 Here is some sample output:
 
 ```
-openjdk version "15-internal" 2020-09-01
-OpenJDK Runtime Environment (build 15-internal+0-adhoc.jenkins.Build-JDK15-osxx86-64cmprssptrs)
-Eclipse OpenJ9 VM (build tye-e85051733, JRE 15 Mac OS X amd64-64-Bit Compressed References 20200901_27 (JIT enabled, AOT enabled)
-OpenJ9   - e85051733
-OMR      - dfbca14c
-JCL      - 2ef6b4c54d8 based on jdk-15+30)
+openjdk version "16-internal" 2021-03-16
+OpenJDK Runtime Environment (build 16-internal+0-adhoc.userid.jdk16)
+Eclipse OpenJ9 VM (build master-eea5afd5461b, JRE 16 Mac OS X amd64-64-Bit Compressed References 20210208_000000 (JIT enabled, AOT enabled)
+OpenJ9   - eea5afd5461b
+OMR      - 9d5020c417c
+JCL      - d0f36677cbe based on jdk-16+35)
 ```
 
 :pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL support, the following acknowledgements apply in accordance with the license terms:
