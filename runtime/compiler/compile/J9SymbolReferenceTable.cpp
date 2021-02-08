@@ -288,14 +288,14 @@ J9::SymbolReferenceTable::findOrCreatePutFlattenableStaticFieldSymbolRef(TR::Res
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateLoadFlattenableArrayElementSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
    {
-   return findOrCreateRuntimeHelper(TR_ldFlattenableArrayElement, true, false, true);
+   return findOrCreateRuntimeHelper(TR_ldFlattenableArrayElement, true, true, true);
    }
 
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateStoreFlattenableArrayElementSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol)
    {
-   return findOrCreateRuntimeHelper(TR_strFlattenableArrayElement, true, false, true);
+   return findOrCreateRuntimeHelper(TR_strFlattenableArrayElement, true, true, true);
    }
 
 

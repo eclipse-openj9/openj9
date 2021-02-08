@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,13 +121,15 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findOrCreateAcmpHelperSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
 
-   // these helpers are guarenteed to never throw if the receiving object is not null,
+   // these helpers are guaranteed to never throw if the receiving object is not null,
    // so we explicit generate NULLCHKs and assume the helpers will never throw
    TR::SymbolReference * findOrCreateGetFlattenableFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
    TR::SymbolReference * findOrCreateWithFlattenableFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
    TR::SymbolReference * findOrCreatePutFlattenableFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
    TR::SymbolReference * findOrCreateGetFlattenableStaticFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
    TR::SymbolReference * findOrCreatePutFlattenableStaticFieldSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
+
+   // these helpers may throw exception such as ArrayIndexOutOfBoundsException or ArrayStoreException etc.
    TR::SymbolReference * findOrCreateLoadFlattenableArrayElementSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
    TR::SymbolReference * findOrCreateStoreFlattenableArrayElementSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
 
