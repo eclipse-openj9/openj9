@@ -762,7 +762,7 @@ GC_CheckEngine::checkClassHeap(J9JavaVM *javaVM, J9Class *clazz, J9MemorySegment
 	/*
 	 * Process class slots in the class
 	 */
-	GC_ClassIteratorClassSlots classIteratorClassSlots(clazz);
+	GC_ClassIteratorClassSlots classIteratorClassSlots(javaVM, clazz);
 	J9Class** classSlotPtr;
 	while((classSlotPtr = classIteratorClassSlots.nextSlot()) != NULL) {
 		int state = classIteratorClassSlots.getState();

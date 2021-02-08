@@ -429,7 +429,7 @@ MM_ReferenceChainWalker::scanClass(J9Class *clazz)
 		doSlot((j9object_t*)slot, refType, index, referrer);
 	}
 
-	GC_ClassIteratorClassSlots classIteratorClassSlots(clazz);
+	GC_ClassIteratorClassSlots classIteratorClassSlots(static_cast<J9JavaVM*>(_omrVM->_language_vm), clazz);
 	while(J9Class **slot = classIteratorClassSlots.nextSlot()) {
 		switch (classIteratorClassSlots.getState()) {
 		case classiteratorclassslots_state_constant_pool:

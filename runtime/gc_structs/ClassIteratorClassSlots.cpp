@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,28 +46,34 @@ GC_ClassIteratorClassSlots::nextSlot()
 
 	case classiteratorclassslots_state_constant_pool:
 		slotPtr = _constantPoolClassSlotIterator.nextSlot();
-		if(NULL != slotPtr) {
+		if (NULL != slotPtr) {
 			return slotPtr;
 		}
 		_state += 1;
 
 	case classiteratorclassslots_state_superclasses:
 		slotPtr = _classSuperclassesIterator.nextSlot();
-		if(NULL != slotPtr) {
+		if (NULL != slotPtr) {
 			return slotPtr;
 		}
 		_state += 1;
 
 	case classiteratorclassslots_state_interfaces:
-		slotPtr = _classLocalInterfaceIterator.nextSlot();
-		if(NULL != slotPtr) {
-			return slotPtr;
+		/*
+		 * Checking sharedITable is an optimization that only checks booleanArrayClass Interfaces
+		 * since all array claseses share the same ITable.
+		 */
+		if (_shouldScanInterfaces) {
+			slotPtr = _classLocalInterfaceIterator.nextSlot();
+			if (NULL != slotPtr) {
+				return slotPtr;
+			}
 		}
 		_state += 1;
 
 	case classiteratorclassslots_state_array_class_slots:
 		slotPtr = _classArrayClassSlotIterator.nextSlot();
-		if(NULL != slotPtr) {
+		if (NULL != slotPtr) {
 			return slotPtr;
 		}
 		_state += 1;
