@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2019, 2020 IBM Corp. and others
+Copyright (c) 2019, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -275,7 +275,7 @@ The Inflated state is also the same as before. It is used to handle cases where 
 ## Current Lock Reservation <a name="current-reservation"></a>
 x86 and z have not been fully updated to use all the features of the new lockword format. As such, they effectively use the original system with a lockword that has a 4 bit RC instead of 5 bits. The Learning bit is always set to 0.
 
-Under Power, lock reservation is now controlled by the `-XX:+GlobalLockReservation` option. Without the option, lockwords are always initialized to Flat-Unlocked and never reach any of the Reserved or Learning states. With the option set, lockwords may be initialized to New-PreLearning, New-AutoReserve or Flat-Unlocked. `-XX:-GlobalLockReservation` (note the minus sign) can be used to disable lock reservation. Lock reservation is disabled by default so this is only useful to override an enable option that occurs earlier in command line processing.
+Under Power, Global Lock Reservation is enabled by default. Lockwords may be initialized to New-PreLearning, New-AutoReserve or Flat-Unlocked. To disable Global Lock Reservation, the `-XX:-GlobalLockReservation` option must be set. when the option is set, lockwords are always initialized to Flat-Unlocked and the original lock reservation scheme is used. `-XX:+GlobalLockReservation` (note the plus sign) can be used to enable lock reservation (if it was disabled by an option that occurs earlier in command line processing) or to modify some of the lock reservation related suboptions that are described later in this document.
 
 ### Reservation Process
 The purpose of the new Learning state is to try and reduce the number of lock reservation cancellations by acting as a halfway step towards reservation. If the same object is locked by the same thread enough times without another thread attempting to lock the object, then a prediction is made that it will be safe to reserve the object. The object will transition to a Reserved state. This information is tracked in the Learning state exclusive LC field. The first time a new object is locked it transitions from New-PreLearning to Learning-Locked but the LC will remain at 0. If the same thread locks the object again, even if it is a nested locking action, the LC is incremented. When the LC is equal to `reservedTransitionThreshold` (default value of 1), the next time the object is locked by the same thread it will go to Reserved-Locked instead of Learning-Locked. `reservedTransitionThreshold` can be set via the option `-XX:+GlobalLockReservation:reservedTransitionThreshold=#`. Due to the LC field only having 2 bits, values of `reservedTransitionThreshold` of 4 or higher will prevent transition from Learning to Reserved.

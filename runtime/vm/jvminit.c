@@ -2424,8 +2424,14 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				printLockwordWhat(vm);
 			}
 
-			/* Global Lock Reservation is off by default. */
+			/* Global Lock Reservation is currently only supported on Power. */
+#if defined(AIXPPC) || defined(LINUXPPC)
+			/* Global Lock Reservation is ON by default on Power. */
+			vm->enableGlobalLockReservation = 1;
+#else
+			/* Global Lock Reservation is OFF by default on other platforms. */
 			vm->enableGlobalLockReservation = 0;
+#endif /* defined(AIXPPC) || defined(LINUXPPC) */
 
 			/* Set default parameters for Global Lock Reservation. */
 			vm->reservedTransitionThreshold = 1;
@@ -2437,22 +2443,19 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOGLOBALLOCKRESERVATION, NULL);
 			argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXGLOBALLOCKRESERVATION, NULL);
 
-			if ((argIndex2 >= 0) && (argIndex2 > argIndex)) {
-				/* Global Lock Reservation is currently only supported on Power. */
-#if defined(AIXPPC) || defined(LINUXPPC)
-				vm->enableGlobalLockReservation = 1;
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+			if ((argIndex >= 0) && (argIndex > argIndex2)) {
+				vm->enableGlobalLockReservation = 0;
 			}
 
 			argIndex2 = FIND_AND_CONSUME_ARG_FORWARD(STARTSWITH_MATCH, VMOPT_XXGLOBALLOCKRESERVATIONCOLON, NULL);
 
 			while (argIndex2 >= 0) {
-				if (argIndex2 > argIndex) {
-					/* Global Lock Reservation is currently only supported on Power. */
+				/* Global Lock Reservation is currently only supported on Power. */
 #if defined(AIXPPC) || defined(LINUXPPC)
+				if (argIndex2 > argIndex) {
 					vm->enableGlobalLockReservation = 1;
-#endif /* defined(AIXPPC) || defined(LINUXPPC) */
 				}
+#endif /* defined(AIXPPC) || defined(LINUXPPC) */
 
 				optionValue = NULL;
 				GET_OPTION_OPTION(argIndex2, ':', ':', &optionValue);
