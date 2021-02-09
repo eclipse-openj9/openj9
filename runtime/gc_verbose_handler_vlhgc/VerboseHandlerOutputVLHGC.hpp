@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -249,6 +249,12 @@ public:
 	virtual void enableVerbose();
 	virtual void disableVerbose();
 
+	/**
+	 * Return termination reason for concurrent collection.
+	 * @param stats concurrent stats
+	 * @return string representing the reason for termination
+	 */ 
+	const char *getConcurrentTerminationReason(MM_ConcurrentPhaseStatsBase *stats);
 };
 
 #endif /* VERBOSEHANDLEROUTPUTVLHGC_HPP_ */

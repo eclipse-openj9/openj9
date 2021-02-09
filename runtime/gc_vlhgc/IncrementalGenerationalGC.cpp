@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1921,10 +1921,13 @@ void
 MM_IncrementalGenerationalGC::preConcurrentInitializeStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats)
 {
 	Assert_MM_true(isConcurrentWorkAvailable(env));
+	Assert_MM_true(NULL == env->_cycleState);
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	stats->_cycleID = _persistentGlobalMarkPhaseState._verboseContextID;
 	stats->_scanTargetInBytes = _globalMarkPhaseIncrementBytesStillToScan;
+	env->_cycleState = &_persistentGlobalMarkPhaseState;
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._startTime = j9time_hires_clock();
 	TRIGGER_J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_START(
 			_extensions->privateHookInterface,
 			env->getOmrVMThread(),
@@ -1941,11 +1944,10 @@ MM_IncrementalGenerationalGC::mainThreadConcurrentCollect(MM_EnvironmentBase *en
 	/* note that we can't check isConcurrentWorkAvailable at this point since another thread could have set _forceConcurrentTermination since the
 	 * main thread calls this outside of the control monitor
 	 */
-	Assert_MM_true(NULL == env->_cycleState);
+	Assert_MM_true(env->_cycleState == &_persistentGlobalMarkPhaseState);
 	Assert_MM_true(isGlobalMarkPhaseRunning());
 	Assert_MM_true(MM_CycleState::state_process_work_packets_after_initial_mark == _persistentGlobalMarkPhaseState._markDelegateState);
 
-	env->_cycleState = &_persistentGlobalMarkPhaseState;
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.clear();
 	
 	/* We pass a pointer to _forceConcurrentTermination so that we can cause the concurrent to terminate early by setting the
@@ -1957,8 +1959,6 @@ MM_IncrementalGenerationalGC::mainThreadConcurrentCollect(MM_EnvironmentBase *en
 	
 	/* Accumulate the mark increment stats into persistent GMP state*/
 	_persistentGlobalMarkPhaseState._vlhgcCycleStats.merge(&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats);
-
-	env->_cycleState = NULL;
 
 	/* Release any resources that might be bound to this main thread,
 	 * since it may be implicit and more importantly change for other phases of the cycle */
@@ -1972,16 +1972,19 @@ void
 MM_IncrementalGenerationalGC::postConcurrentUpdateStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats, UDATA bytesConcurrentlyScanned)
 {
 	Assert_MM_false(isConcurrentWorkAvailable(env));
+	Assert_MM_true(env->_cycleState == &_persistentGlobalMarkPhaseState);
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	stats->_bytesScanned = bytesConcurrentlyScanned;
 	stats->_terminationWasRequested = _forceConcurrentTermination;
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._endTime = j9time_hires_clock();
 	TRIGGER_J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_END(
 			_extensions->privateHookInterface,
 			env->getOmrVMThread(),
 			j9time_hires_clock(),
 			J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_END,
 			stats);
+	env->_cycleState = NULL;
 }
 
 void
