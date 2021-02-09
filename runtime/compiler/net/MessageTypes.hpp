@@ -181,6 +181,7 @@ enum MessageType : uint16_t
    VM_getObjectSizeClass,
    VM_stackWalkerMaySkipFramesSVM,
    VM_getFields,
+   VM_increaseOSRGlobalBufferSize,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,
@@ -417,6 +418,7 @@ static const char *messageNames[] =
    "VM_getObjectSizeClass",
    "VM_stackWalkerMaySkipFramesSVM",
    "VM_getFields",
+   "VM_increaseOSRGlobalBufferSize",
    "CompInfo_isCompiled",
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",
