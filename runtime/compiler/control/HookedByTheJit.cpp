@@ -210,7 +210,7 @@ static void reportHook(J9VMThread *curThread, char *name, char *format=NULL, ...
       || TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::write(TR_Vlog_HK,"%x hook %s vmThread=%p ", (int)(intptr_t)curThread, name, curThread);
+      TR_VerboseLog::write(TR_Vlog_HK,"vmThread=%p hook %s ", curThread, name);
       if (format)
          {
          va_list args;
@@ -230,7 +230,7 @@ static void reportHookFinished(J9VMThread *curThread, char *name, char *format=N
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_HD,"%x finished ", (int)(intptr_t)curThread);
+      TR_VerboseLog::writeLine(TR_Vlog_HD,"vmThread=%p hook %s finished ", curThread, name);
       if (format)
          {
          va_list args;
@@ -249,7 +249,7 @@ static void reportHookDetail(J9VMThread *curThread, char *name, char *format, ..
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails))
       {
       TR_VerboseLog::vlogAcquire();
-      TR_VerboseLog::writeLine(TR_Vlog_HD," %x: ", (int)(intptr_t)curThread);
+      TR_VerboseLog::writeLine(TR_Vlog_HD,"vmThread=%p hook %s detail ", curThread, name);
       va_list args;
       va_start(args, format);
       j9jit_vprintf(jitConfig, format, args);
