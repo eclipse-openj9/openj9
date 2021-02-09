@@ -2936,3 +2936,16 @@ TR_J9SharedCacheServerVM::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *inter
       }
    return ramMethod;
    }
+
+bool
+TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method)
+   {
+   return false;
+   }
+
+bool
+TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_ResolvedMethod *method)
+   {
+   return false;
+   }
+

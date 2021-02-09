@@ -1032,6 +1032,10 @@ public:
       return isMethodTracingEnabled((TR_OpaqueMethodBlock *)j9method);
       }
 
+   // Is method generated for LambdaForm
+   virtual bool isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method);
+   virtual bool isLambdaFormGeneratedMethod(TR_ResolvedMethod *method);
+
    virtual bool isSelectiveMethodEnterExitEnabled();
 
    virtual bool canMethodEnterEventBeHooked();

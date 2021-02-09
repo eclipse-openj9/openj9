@@ -3114,6 +3114,18 @@ TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    }
 
 bool
+TR_J9VMBase::isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method)
+   {
+   return VM_VMHelpers::isLambdaFormGeneratedMethod(vmThread(), (J9Method *)method);
+   }
+
+bool
+TR_J9VMBase::isLambdaFormGeneratedMethod(TR_ResolvedMethod *method)
+   {
+   return isLambdaFormGeneratedMethod(method->getPersistentIdentifier());
+   }
+
+bool
 TR_J9VMBase::isSelectiveMethodEnterExitEnabled()
    {
    return false;
