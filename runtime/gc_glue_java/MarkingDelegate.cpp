@@ -387,11 +387,9 @@ MM_MarkingDelegate::scanClass(MM_EnvironmentBase *env, J9Class *clazz)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	if (isDynamicClassUnloadingEnabled()) {
 		GC_ClassIteratorClassSlots classSlotIterator((J9JavaVM*)env->getLanguageVM(), clazz);
-		J9Class **slotPtr;
-		while (NULL != (slotPtr = classSlotIterator.nextSlot())) {
-			if (NULL != *slotPtr) {
-				_markingScheme->markObject(env, (*slotPtr)->classObject);
-			}
+		J9Class *classPtr;
+		while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+			_markingScheme->markObject(env, classPtr->classObject);
 		}
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */

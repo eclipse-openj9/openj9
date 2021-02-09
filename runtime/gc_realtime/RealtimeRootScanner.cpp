@@ -57,9 +57,9 @@ MM_RealtimeRootScanner::doClass(J9Class *clazz)
 		doSlot((j9object_t*)objectSlotPtr);
 	}
 	GC_ClassIteratorClassSlots classSlotIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), clazz);
-	J9Class **classSlotPtr;
-	while((classSlotPtr = classSlotIterator.nextSlot()) != NULL) {
-		doClassSlot(*classSlotPtr);
+	J9Class *classPtr;
+	while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+		doClassSlot(classPtr);
 	}
 }
 

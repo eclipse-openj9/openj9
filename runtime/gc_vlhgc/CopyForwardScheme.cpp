@@ -2549,14 +2549,11 @@ MM_CopyForwardScheme::scanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 			 */
 			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(classPtr), J9ClassIsAnonymous)) {
 				GC_ClassIteratorClassSlots classSlotIterator(_javaVM, classPtr);
-				J9Class **classSlotPtr;
-				while (success && (NULL != (classSlotPtr = classSlotIterator.nextSlot()))) {
-					/* GC_ClassIteratorClassSlots can return NULL in *classSlotPtr so it should to be filtered out */
-					if (NULL != *classSlotPtr) {
-						slotPtr = &((*classSlotPtr)->classObject);
-						/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
-						success = copyAndForward(env, reservingContext, classObject, slotPtr);
-					}
+				J9Class *classPtr;
+				while (success && (NULL != (classPtr = classSlotIterator.nextSlot()))) {
+					slotPtr = &(classPtr->classObject);
+					/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
+					success = copyAndForward(env, reservingContext, classObject, slotPtr);
 				}
 			}
 

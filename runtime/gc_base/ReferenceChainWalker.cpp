@@ -430,22 +430,22 @@ MM_ReferenceChainWalker::scanClass(J9Class *clazz)
 	}
 
 	GC_ClassIteratorClassSlots classIteratorClassSlots(static_cast<J9JavaVM*>(_omrVM->_language_vm), clazz);
-	while(J9Class **slot = classIteratorClassSlots.nextSlot()) {
+	while (J9Class *classPtr = classIteratorClassSlots.nextSlot()) {
 		switch (classIteratorClassSlots.getState()) {
 		case classiteratorclassslots_state_constant_pool:
-			doClassSlot(*slot, J9GC_REFERENCE_TYPE_CONSTANT_POOL, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(classPtr, J9GC_REFERENCE_TYPE_CONSTANT_POOL, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		case classiteratorclassslots_state_superclasses:
-			doClassSlot(*slot, J9GC_REFERENCE_TYPE_SUPERCLASS, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(classPtr, J9GC_REFERENCE_TYPE_SUPERCLASS, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		case classiteratorclassslots_state_interfaces:
-			doClassSlot(*slot, J9GC_REFERENCE_TYPE_INTERFACE, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(classPtr, J9GC_REFERENCE_TYPE_INTERFACE, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		case classiteratorclassslots_state_array_class_slots:
-			doClassSlot(*slot, J9GC_REFERENCE_TYPE_CLASS_ARRAY_CLASS, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(classPtr, J9GC_REFERENCE_TYPE_CLASS_ARRAY_CLASS, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		default:
-			doClassSlot(*slot, J9GC_REFERENCE_TYPE_UNKNOWN, classIteratorClassSlots.getIndex(), referrer);
+			doClassSlot(classPtr, J9GC_REFERENCE_TYPE_UNKNOWN, classIteratorClassSlots.getIndex(), referrer);
 			break;
 		}
 	}

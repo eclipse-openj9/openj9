@@ -210,10 +210,10 @@ MM_HeapRootScanner::scanVMClassSlots()
 	setReachability(RootScannerEntityReachability_Strong);
 
 	GC_VMClassSlotIterator classSlotIterator(_javaVM);
-	J9Class **slotPtr;
+	J9Class *classPtr;
 	
-	while((slotPtr = classSlotIterator.nextSlot()) != NULL) {
-		doVMClassSlot(*slotPtr);
+	while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+		doVMClassSlot(classPtr);
 	}
 	
 	reportScanningEnded(RootScannerEntity_VMClassSlots);	

@@ -775,14 +775,11 @@ MM_GlobalMarkingScheme::scanClassObject(MM_EnvironmentVLHGC *env, J9Object *clas
 			 */
 			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(classPtr), J9ClassIsAnonymous)) {
 				GC_ClassIteratorClassSlots classSlotIterator(_javaVM, classPtr);
-				J9Class **classSlotPtr;
-				while(NULL != (classSlotPtr = classSlotIterator.nextSlot())) {
-					/* GC_ClassIteratorClassSlots can return NULL in *classSlotPtr so it should to be filtered out */
-					if (NULL != *classSlotPtr) {
-						J9Object *value = (*classSlotPtr)->classObject;
-						markObject(env, value);
-						rememberReferenceIfRequired(env, classObject, value);
-					}
+				J9Class *classPtr;
+				while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+					J9Object *value = classPtr->classObject;
+					markObject(env, value);
+					rememberReferenceIfRequired(env, classObject, value);
 				}
 			}
 			classPtr = classPtr->replacedClass;

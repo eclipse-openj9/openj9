@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,15 +47,7 @@ GC_ClassLoaderClassesIterator::GC_ClassLoaderClassesIterator(MM_GCExtensionsBase
 J9Class *
 GC_ClassLoaderClassesIterator::nextSystemClass() 
 {
-	J9Class * result = NULL;
-	J9Class ** slot = NULL;
-	while (NULL != (slot = _vmClassSlotIterator.nextSlot())) {
-		result = *slot;
-		if (NULL != result) {
-			break;
-		}
-	}
-	return result;
+	return _vmClassSlotIterator.nextSlot();
 }
 
 J9Class *
