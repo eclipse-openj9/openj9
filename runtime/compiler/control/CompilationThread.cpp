@@ -6057,7 +6057,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
 
    if (TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) && details.isOrdinaryMethod())
       {
-      if (!isJNINative(method) && !oldStartPC)
+      if (!isJNINative(method) && !isCompiled(method))
          {
          // If the method is in shared cache but we decide not to take it from there
          // we must bump the count, because this is a method whose count was decreased to scount
@@ -7323,10 +7323,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                entry->_priority = CP_ASYNC_NORMAL;
             }
          }
-      }
 
-   if (!entry->isAotLoad())
-      {
       // Determine if we need to perform an AOT compilation
       //
       if (entry->isOutOfProcessCompReq())
@@ -7340,18 +7337,27 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          {
          TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
          eligibleForRelocatableCompile =
-            TR::Options::sharedClassCache() &&
-            !details.isNewInstanceThunk() &&
-            !entry->isJNINative() &&
-            !details.isMethodHandleThunk() &&
-            !TR::CompilationInfo::isCompiled(method) &&
-            !entry->isDLTCompile() &&
-            !entry->_doNotUseAotCodeFromSharedCache &&
-            fe->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) &&
-            !isMethodIneligibleForAot(method) &&
-            (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
-               fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true) &&
-            (NULL != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)));
+            TR::Options::sharedClassCache()
+            && !details.isNewInstanceThunk()
+            && !entry->isJNINative()
+            && !details.isMethodHandleThunk()
+            && !TR::CompilationInfo::isCompiled(method)
+
+            // If using a loadLimit/loadLimitFile, don't do an AOT compilation
+            // for a method body that's already in the SCC
+            && entry->_methodIsInSharedCache != TR_yes
+
+            // See eclipse/openj9#11879 for details
+            && (!TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
+                || !entry->_oldStartPC)
+
+            && !entry->isDLTCompile()
+            && !entry->_doNotUseAotCodeFromSharedCache
+            && fe->sharedCache()->isROMClassInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass)
+            && !isMethodIneligibleForAot(method)
+            && (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap)
+                || fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true)
+            && (NULL != fe->sharedCache()->rememberClass(J9_CLASS_FROM_METHOD(method)));
          }
 
       bool sharedClassTest = eligibleForRelocatableCompile &&
