@@ -425,9 +425,12 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             def PARALLEL = "None"
 
             def NUM_MACHINES = ""
-            if (testJobName.contains("functional") || testJobName.contains("sanity.system") || testJobName.contains("extended.system")) {
+            if (testJobName.contains("functional")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "2"
+            } else if (testJobName.contains("sanity.system") || testJobName.contains("extended.system")) {
+                PARALLEL = "Dynamic"
+                NUM_MACHINES = "3"
             } else if (testJobName.contains("special.system")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "5"
