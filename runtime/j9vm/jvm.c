@@ -5477,6 +5477,7 @@ JVM_InitClassName
 }
 
 
+#if JAVA_SPEC_VERSION < 17
 /**
  * Return the JVM_INTERFACE_VERSION. This function should not lock, gc or throw exception.
  * @return JVM_INTERFACE_VERSION, JDK8 - 4, JDK11+ - 6.
@@ -5494,7 +5495,7 @@ JVM_GetInterfaceVersion(void)
 
 	return result;
 }
-
+#endif /* JAVA_SPEC_VERSION < 17 */
 
 
 /* jclass parameter 2 is apparently not used */
