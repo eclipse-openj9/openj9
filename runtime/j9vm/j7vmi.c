@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2020 IBM Corp. and others
+ * Copyright (c) 2002, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2686,6 +2686,8 @@ JVM_Bind(jint arg0, jint arg1, jint arg2)
 	return NULL;
 }
 
+#if JAVA_SPEC_VERSION < 17
+
 jobject JNICALL
 JVM_DTraceActivate(jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)
 {
@@ -2720,6 +2722,8 @@ JVM_DTraceIsSupported(jint arg0)
 	assert(!"JVM_DTraceIsSupported() stubbed!");
 	return NULL;
 }
+
+#endif /* JAVA_SPEC_VERSION < 17 */
 
 jobject JNICALL
 JVM_DefineClass(jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5)

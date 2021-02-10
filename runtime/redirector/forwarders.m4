@@ -1,4 +1,4 @@
-dnl Copyright (c) 2001, 2020 IBM Corp. and others
+dnl Copyright (c) 2001, 2021 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,8 @@ _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_InitClassName,JNICALL,true,jstring, JNIEnv *env, jclass theClass)])
 _X(JVM_GetClassSignature,JNICALL,true,jstring,JNIEnv *env, jclass target)
 _X(JVM_GetEnclosingMethodInfo,JNICALL,true,jobjectArray,JNIEnv *env, jclass theClass)
-_X(JVM_GetInterfaceVersion,JNICALL,true,jint,void)
+_IF([JAVA_SPEC_VERSION < 17],
+	[_X(JVM_GetInterfaceVersion,JNICALL,true,jint,void)])
 _X(JVM_GetLastErrorString,JNICALL,true,jint,char *buffer, jint length)
 _X(JVM_GetManagement,JNICALL,true,void *,jint version)
 _X(JVM_GetPortLibrary,JNICALL,true,struct J9PortLibrary *,void)
@@ -235,11 +236,16 @@ _X(GetStringPlatform,,false,jint,JNIEnv *env, jstring instr, char *outstr, jint 
 _X(GetStringPlatformLength,,false,jint,JNIEnv *env, jstring instr, jint *outlen, const char *encoding)
 _X(JVM_ExtendBootClassPath,JNICALL,true,void,JNIEnv *env, const char *path)
 _X(JVM_Bind,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
-_X(JVM_DTraceActivate,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)
-_X(JVM_DTraceDispose,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
-_X(JVM_DTraceGetVersion,JNICALL,true,jobject,jint arg0)
-_X(JVM_DTraceIsProbeEnabled,JNICALL,true,jobject,jint arg0, jint arg1)
-_X(JVM_DTraceIsSupported,JNICALL,true,jobject,jint arg0)
+_IF([JAVA_SPEC_VERSION < 17],
+	[_X(JVM_DTraceActivate,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)])
+_IF([JAVA_SPEC_VERSION < 17],
+	[_X(JVM_DTraceDispose,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)])
+_IF([JAVA_SPEC_VERSION < 17],
+	[_X(JVM_DTraceGetVersion,JNICALL,true,jobject,jint arg0)])
+_IF([JAVA_SPEC_VERSION < 17],
+	[_X(JVM_DTraceIsProbeEnabled,JNICALL,true,jobject,jint arg0, jint arg1)])
+_IF([JAVA_SPEC_VERSION < 17],
+	[_X(JVM_DTraceIsSupported,JNICALL,true,jobject,jint arg0)])
 _X(JVM_DefineClass,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5)
 _X(JVM_DefineClassWithSourceCond,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5, jint arg6, jint arg7)
 _X(JVM_EnqueueOperation,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)

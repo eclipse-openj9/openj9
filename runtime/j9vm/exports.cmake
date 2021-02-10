@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,7 +83,6 @@ jvm_add_exports(jvm
 	_JVM_GetClassLoader@8
 	_JVM_GetClassSignature@8
 	_JVM_GetEnclosingMethodInfo@8
-	_JVM_GetInterfaceVersion@0
 	_JVM_GetLastErrorString@8
 	_JVM_GetManagement@4
 	_JVM_GetPortLibrary@0
@@ -212,11 +211,6 @@ jvm_add_exports(jvm
 	_JVM_GetSockOpt@20
 	_JVM_ExtendBootClassPath@8
 	_JVM_Bind@12
-	_JVM_DTraceActivate@20
-	_JVM_DTraceDispose@12
-	_JVM_DTraceGetVersion@4
-	_JVM_DTraceIsProbeEnabled@8
-	_JVM_DTraceIsSupported@4
 	_JVM_DefineClass@24
 	_JVM_DefineClassWithSourceCond@32
 	_JVM_EnqueueOperation@20
@@ -375,6 +369,17 @@ elseif(NOT JAVA_SPEC_VERSION LESS 16)
 		JVM_IsSharingEnabled
 		JVM_LogLambdaFormInvoker
 		JVM_IsDumpingClassList
+	)
+endif()
+
+if(JAVA_SPEC_VERSION LESS 17)
+	jvm_add_exports(jvm
+		_JVM_DTraceActivate@20
+		_JVM_DTraceDispose@12
+		_JVM_DTraceGetVersion@4
+		_JVM_DTraceIsProbeEnabled@8
+		_JVM_DTraceIsSupported@4
+		_JVM_GetInterfaceVersion@0
 	)
 endif()
 
