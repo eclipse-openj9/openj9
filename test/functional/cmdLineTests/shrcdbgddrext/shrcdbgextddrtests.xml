@@ -139,7 +139,11 @@
                 <input>!shrc stats</input>
                 <input>quit</input>
         </command>
-  <output regex="no" type="success" >4 orphans</output>
+  <!-- 
+  Regex (>= 4) added for the success condition since there are additional
+  java/lang/invoke/BoundMethodHandle$Species orphan classes in OJDK MH builds.
+  -->
+  <output regex="yes" javaUtilPattern="yes" type="success" >([4-9]|[1-9][0-9]+) orphans</output>
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>
   <output regex="no" type="failure">could not read</output>
