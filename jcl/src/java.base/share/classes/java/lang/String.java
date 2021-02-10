@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -718,7 +718,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			value = StringUTF16.newBytesFor(concatlen);
 			coder = UTF16;
 
-			decompressedArrayCopy(s.value, 0, value, 0, slen);
+			// Check if the String is compressed
+			if (enableCompression && s.coder == LATIN1) {
+				decompress(s.value, 0, value, 0, slen);
+			} else {
+				decompressedArrayCopy(s.value, 0, value, 0, slen);
+			}		
 
 			helpers.putCharInArrayByIndex(value, slen, c);
 
@@ -4621,8 +4626,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				value = new char[concatlen];
 				count = (concatlen) | uncompressedBit;
 
-				System.arraycopy(s.value, 0, value, 0, slen);
-
+				// Check if the String is compressed
+				if (enableCompression && s.count >= 0) {
+					decompress(s.value, 0, value, 0, slen);
+				} else {
+					decompressedArrayCopy(s.value, 0, value, 0, slen);
+				}
 				value[slen] = c;
 
 				initCompressionFlag();
