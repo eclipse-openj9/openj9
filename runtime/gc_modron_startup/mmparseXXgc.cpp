@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1231,10 +1231,6 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-		if(try_scan(&scan_start, "dirtCardDuringRSScan")) {
-			extensions->dirtCardDuringRSScan = true;
-			continue;
-		}
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
 
 #if defined (J9VM_GC_HEAP_CARD_TABLE)
