@@ -555,6 +555,8 @@ x86-64_windows:
   build_env:
     vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
+    8:
+      - special.system
     11:
       - special.system
 #========================================#
@@ -644,6 +646,8 @@ x86-64_mac:
   build_env:
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   excluded_tests:
+    8:
+      - special.system
     11:
       - special.system
 #========================================#
