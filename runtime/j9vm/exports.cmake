@@ -284,6 +284,7 @@ jvm_add_exports(jvm
 	_JVM_GetMethodParameters@8
 	_JVM_GetMethodTypeAnnotations@8
 	JVM_IsUseContainerSupport
+	AsyncGetCallTrace
 	_JVM_IsVMGeneratedMethodIx@12
 	JVM_GetTemporaryDirectory
 	_JVM_CopySwapMemory@44
