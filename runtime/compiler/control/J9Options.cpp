@@ -2335,11 +2335,16 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_STATIC_FIELD) ||
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_SINGLE_STEP))
       {
-        static bool TR_DisableFullSpeedDebug = feGetEnv("TR_DisableFullSpeedDebug")?1:0;
-      #if defined(J9VM_JIT_FULL_SPEED_DEBUG)
+         static bool TR_DisableFullSpeedDebug = (feGetEnv("TR_DisableFullSpeedDebug") != NULL);
+         static bool TR_DisableFullSpeedDebugAOT = (feGetEnv("TR_DisableFullSpeedDebugAOT") != NULL);
+#if defined(J9VM_JIT_FULL_SPEED_DEBUG)
          if (TR_DisableFullSpeedDebug)
             {
             return false;
+            }
+         else if (TR_DisableFullSpeedDebugAOT)
+            {
+            doAOT = false;
             }
 
          self()->setOption(TR_FullSpeedDebug);
@@ -2349,9 +2354,9 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
          //setOption(TR_DisableInterpreterProfiling, true);
 
          initializeFSD(javaVM);
-      #else
+#else
          return false;
-      #endif
+#endif
       }
 
    bool exceptionEventHooked = false;
