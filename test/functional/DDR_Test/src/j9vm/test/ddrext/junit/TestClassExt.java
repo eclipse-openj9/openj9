@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,9 @@
  *******************************************************************************/
 package j9vm.test.ddrext.junit;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import j9vm.test.ddrext.Constants;
 import j9vm.test.ddrext.DDRExtTesterBase;
 
@@ -39,7 +42,6 @@ public class TestClassExt extends DDRExtTesterBase {
 	}
 
 	public void testJ9ClassShapeExt() {
-		
 		String ramAddr = getRAMClassAddress(Constants.J9CLASSSHAPE_TEST_CLASS);
 		if (ramAddr == null) {
 			fail("getRAMClassAddress returns null. Can not proceed with testJ9ClassShapeExt");
@@ -52,7 +54,6 @@ public class TestClassExt extends DDRExtTesterBase {
 	}
 
 	public void testJ9VTablesExt() {
-		
 		String ramAddr = getRAMClassAddress(Constants.J9CLASSSHAPE_TEST_CLASS);
 		if (ramAddr == null) {
 			fail("getRAMClassAddress returns null. Can not proceed with testJ9VTablesExt");
@@ -65,7 +66,6 @@ public class TestClassExt extends DDRExtTesterBase {
 	}
 
 	public void testJ9StaticsExt() {
-		
 		String ramAddr = getRAMClassAddress(Constants.J9CLASSSHAPE_TEST_CLASS);
 		if (ramAddr == null) {
 			fail("getRAMClassAddress returns null. Can not proceed with testJ9StaticsExt");
@@ -193,7 +193,6 @@ public class TestClassExt extends DDRExtTesterBase {
 		assertTrue(validate(dumpROMClassOutput,
 				Constants.DUMP_ROM_CLASS_INVALID_NAME_SUCCESS_KEY,
 				Constants.DUMP_ROM_CLASS_INVALID_NAME_FAILURE_KEY, true));
-
 	}
 
 	public void testQueryROMClassExt() {
@@ -304,17 +303,27 @@ public class TestClassExt extends DDRExtTesterBase {
 			return;
 		}
 
+		String j9objecttofj9objectOutput = exec(Constants.J9OBJECTTOFJ9OBJECT_CMD, new String[] { objAddr });
+
+		Pattern pattern = Pattern.compile("->\\s*!fj9object\\s+(\\S+)");
+		Matcher matcher = pattern.matcher(j9objecttofj9objectOutput);
+
+		if (!matcher.find()) {
+			fail("Not able to parse output of " + Constants.J9OBJECTTOFJ9OBJECT_CMD + ": '" + j9objecttofj9objectOutput + "'");
+			return;
+		}
+
+		String compressedAddr = matcher.group(1);
+
 		// Output should be same as j9object now.
-		String fj9objectOutput = exec(Constants.FJ9OBJECT_CMD,
-				new String[] { objAddr });
-		assertTrue(validate(fj9objectOutput, Constants.J9OBJECT_SUCCESS_KEY,
-				null, false));		
-		
+		String fj9objectOutput = exec(Constants.FJ9OBJECT_CMD, new String[] { compressedAddr });
+
+		assertTrue(validate(fj9objectOutput, Constants.J9OBJECT_SUCCESS_KEY, null, false));
+
 		// Test the address conversion only.
-		String fj9objecttoj9objectOutput = exec(
-				Constants.FJ9OBJECTTOJ9OBJECT_CMD, new String[] { objAddr });
-		assertTrue(validate(fj9objecttoj9objectOutput,
-				Constants.FJ9OBJECT_SUCCESS_KEY, null, true));
+		String fj9objecttoj9objectOutput = exec(Constants.FJ9OBJECTTOJ9OBJECT_CMD, new String[] { compressedAddr });
+
+		assertTrue(validate(fj9objecttoj9objectOutput, Constants.FJ9OBJECT_SUCCESS_KEY, null, true));
 	}
 
 	public void testDumpAllClassLoadersExt() {
@@ -324,7 +333,7 @@ public class TestClassExt extends DDRExtTesterBase {
 				Constants.DUMPALLCLASSLOADERS_SUCCESS_KEYS,
 				Constants.DUMPALLCLASSLOADERS_FAILURE_KEYS, true));
 	}
-	
+
 	private String getRAMClassAddress(String className) {
 		String allClassesOutput = exec(Constants.ALL_CLASSES_CMD,
 				new String[] {});
