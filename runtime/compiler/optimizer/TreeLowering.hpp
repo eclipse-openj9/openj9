@@ -60,6 +60,13 @@ class TreeLowering : public TR::Optimization
 
    virtual int32_t perform();
    virtual const char * optDetailString() const throw();
+
+   private:
+
+   // helpers related to Valhalla value type lowering
+   void lowerValueTypeOperations(TR::Node* node, TR::TreeTop* tt);
+   void fastpathAcmpHelper(TR::Node* node, TR::TreeTop* tt);
+   void lowerArrayStoreCHK(TR::Node* node, TR::TreeTop* tt);
    };
 
 }
