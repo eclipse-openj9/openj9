@@ -2543,7 +2543,7 @@ MM_CopyForwardScheme::scanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 			 * However we need to scan them for case of Anonymous classes. Its are unloaded on individual basis so it is important to reach each one
 			 */
 			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(classPtr), J9ClassIsAnonymous)) {
-				GC_ClassIteratorClassSlots classSlotIterator(classPtr);
+				GC_ClassIteratorClassSlots classSlotIterator(_javaVM, classPtr);
 				J9Class **classSlotPtr;
 				while (success && (NULL != (classSlotPtr = classSlotIterator.nextSlot()))) {
 					/* GC_ClassIteratorClassSlots can return NULL in *classSlotPtr so it should to be filtered out */

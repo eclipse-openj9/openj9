@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,7 @@
 #include "ClassSuperclassesIterator.hpp"
 #include "ClassLocalInterfaceIterator.hpp"
 #include "ClassArrayClassSlotIterator.hpp"
+#include "ClassModel.hpp"
 
 /**
  * State constants representing the current stage of the iteration process
@@ -62,6 +63,7 @@ enum {
 class GC_ClassIteratorClassSlots
 {
 protected:
+	const bool _shouldScanInterfaces;
 	J9Class *_clazzPtr;
 	int _state;
 
@@ -72,7 +74,8 @@ protected:
 
 public:
 
-	GC_ClassIteratorClassSlots(J9Class *clazz) :
+	GC_ClassIteratorClassSlots(J9JavaVM *vm, J9Class *clazz) :
+		_shouldScanInterfaces(!GC_ClassModel::usesSharedITable(vm, clazz)),
 		_clazzPtr(clazz),
 		_state(classiteratorclassslots_state_start),
 		_constantPoolClassSlotIterator(clazz),
