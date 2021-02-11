@@ -7095,7 +7095,6 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
       tempMR = TR::LoadStoreHandler::generateSimpleLoadMemoryReference(cg, nextTopNode, 4);
       loadOpCode = TR::InstOpCode::lwz;
       }
-   TR_ASSERT_FATAL_WITH_NODE(nextTopNode, !tempMR.getMemoryReference()->getIndexRegister(), "Simple read monitors do not currently support indexed loads");
    // end of code derived from the iaload and iiload evaluators
 
    TR::addDependency(conditions, loadResultReg, TR::RealRegister::NoReg, TR_GPR, cg);
