@@ -6291,10 +6291,13 @@ TR_ResolvedJ9Method::isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex)
 void *
 TR_ResolvedJ9Method::methodTypeTableEntryAddress(int32_t cpIndex)
    {
-   UDATA methodTypeIndex = (((J9RAMMethodRef*) literals())[cpIndex]).methodIndexAndArgCount;
-   methodTypeIndex >>= 8;
    J9Class *ramClass = constantPoolHdr();
-   return ramClass->methodTypes + methodTypeIndex;
+   UDATA index = (((J9RAMMethodRef*) literals())[cpIndex]).methodIndexAndArgCount >> 8;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   return ramClass->invokeCache + index;
+#else
+   return ramClass->methodTypes + index;
+#endif
    }
 
 bool
@@ -6895,30 +6898,50 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
    // the CP entry is resolved, even in rtResolve mode.
 
    // See if the constant pool entry is already resolved or not
+
+   J9Class    *ramClass = constantPoolHdr();
+   J9ROMClass *romClass = romClassPtr();
+   bool isUnresolvedEntry = isUnresolvedCallSiteTableEntry(callSiteIndex);
+   if (unresolvedInCP)
       {
-      TR::VMAccessCriticalSection getResolvedDynamicMethod(fej9());
-
-      J9Class    *ramClass = constantPoolHdr();
-      J9ROMClass *romClass = romClassPtr();
-
-      if (unresolvedInCP)
-         {
-         // "unresolvedInCP" is a bit of a misnomer here, but we can describe
-         // something equivalent by checking the callSites table.
-         //
-         *unresolvedInCP = (ramClass->callSites[callSiteIndex] == NULL);
-         }
-
-      J9SRP                 *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
-      J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callSiteIndex], J9ROMNameAndSignature*);
-      J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
-
-      TR_OpaqueMethodBlock *dummyInvokeExact = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", JSR292_invokeExactSig);
-      result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, utf8Data(signature), J9UTF8_LENGTH(signature), this);
+      // "unresolvedInCP" is a bit of a misnomer here, but we can describe
+      // something equivalent by checking the callSites table.
+      //
+      *unresolvedInCP = isUnresolvedEntry;
       }
 
+   J9SRP                 *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
+   J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callSiteIndex], J9ROMNameAndSignature*);
+   J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   if (!isUnresolvedEntry)
+      {
+      TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
+      uintptr_t * invokeCacheArray = (uintptr_t *) callSiteTableEntryAddress(callSiteIndex);
+         {
+         TR::VMAccessCriticalSection getResolvedDynamicMethod(fej9());
+         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex)); // this will not work in AOT or JITServer
+         }
+      result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
+      }
+   else
+      {
+      // Even when invokedynamic is unresolved, we construct a resolved method and rely on
+      // the call site table entry to be resolved instead. The resolved method we construct is
+      // linkToStatic, which is a VM internal native method that will prepare the call frame for
+      // the actual method to be invoked using the last argument we push to stack (memberName object)
+      TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+      int32_t signatureLength;
+      char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeDynamic(comp, signature, signatureLength);
+      result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, signatureLength, this);
+      }
+#else
+   TR_OpaqueMethodBlock *dummyInvokeExact = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", JSR292_invokeExactSig);
+   result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, utf8Data(signature), J9UTF8_LENGTH(signature), this);
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
    return result;
-#endif
+#endif /* TURN_OFF_INLINING */
    }
 
 TR_ResolvedMethod *
@@ -6930,7 +6953,6 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
    return 0;
 #else
    TR_ResolvedMethod *result = NULL;
-
    // JSR292: "Handle methods" differ from other kinds because the CP entry is
    // not a MethodRef, but rather a MethodTypeRef.
 
@@ -6940,21 +6962,48 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
    // the CP entry is resolved, even in rtResolve mode.
 
    // See if the constant pool entry is already resolved or not
+
+   bool isUnresolvedEntry = isUnresolvedMethodTypeTableEntry(cpIndex);
+   if (unresolvedInCP)
+      *unresolvedInCP = isUnresolvedEntry;
+
+   J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(cp()->romConstantPool + cpIndex);
+   J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+
+   if (!isUnresolvedEntry)
       {
-      TR::VMAccessCriticalSection getResolvedHandleMethod(fej9());
-
-      if (unresolvedInCP)
-         *unresolvedInCP = isUnresolvedMethodTypeTableEntry(cpIndex);
-      TR_OpaqueMethodBlock *dummyInvokeExact = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", JSR292_invokeExactSig);
-      J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(cp()->romConstantPool + cpIndex);
-      J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-      int32_t signatureLength;
-      char   *signature = utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig), signatureLength);
-      result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, signature, signatureLength, this);
+      uintptr_t * invokeCacheArray = (uintptr_t *) methodTypeTableEntryAddress(cpIndex);
+      TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
+         {
+         TR::VMAccessCriticalSection getResolvedHandleMethod(fej9());
+         targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex)); // this will not work in AOT or JITServer
+         }
+      result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
       }
+   else
+      {
+      // Even when invokehandle is unresolved, we construct a resolved method and rely on
+      // the method type table entry to be resolved instead. The resolved method we construct is
+      // linkToStatic, which is a VM internal native method that will prepare the call frame for
+      // the actual method to be invoked using the last argument we push to stack (memberName object)
+      TR_OpaqueMethodBlock *dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+      int32_t signatureLength;
+      char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeHandle(comp, signature, signatureLength);
+      result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, signatureLength, this);
+      }
+#else
 
+   TR_OpaqueMethodBlock *dummyInvokeExact = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", JSR292_invokeExactSig);
+
+   int32_t signatureLength;
+   char   *signature = utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig), signatureLength);
+   result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, signature, signatureLength, this);
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
    return result;
-#endif
+#endif /* TURN_OFF_INLINING */
    }
 
 TR_ResolvedMethod *
