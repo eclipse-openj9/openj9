@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -271,8 +271,8 @@ static TR::RecognizedMethod canSkipBoundChecks[] =
    TR::java_util_HashtableHashEnumerator_nextElement,
    TR::java_util_HashMap_getNode,
    TR::java_util_HashMap_resize,
-   TR::java_util_HashMapHashIterator_nextNode,
-   TR::java_util_HashMapHashIterator_init,
+   //TR::java_util_HashMapHashIterator_nextNode,  /* Unsafe if the Iterator is being incorrectly used (concurrent execution) */
+   TR::java_util_HashMapHashIterator_init,        /* Safe because the object is only visible by one thread when init() is executing */
    TR::java_util_EnumMap_put,
    TR::java_util_EnumMap_typeCheck,
    TR::java_util_EnumMap__init_,
