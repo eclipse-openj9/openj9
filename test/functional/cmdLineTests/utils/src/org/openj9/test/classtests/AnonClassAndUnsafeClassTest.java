@@ -22,20 +22,13 @@
 
 package org.openj9.test.classtests;
 
-import java.io.*;
-import org.openj9.test.classtests.ClassTestHelper;
+/* The AnonClassAndUnsafeClassTest.class will be used to create the Anonyomus Class and the Unsafe Class */
 
-/* 
- * Calls the helper class ClassTestHelper to generate the Anonymous class and the Unsafe class. 
- * A duplicate file is in the utils/src/org/openj9/classtests folder, please also modify that file if this one is modified.
- * */
-
-public class ClassTest {
-    public static void main(String[] args) throws Throwable {
-        ClassTest ct = new ClassTest();
-        ClassTestHelper ch = new ClassTestHelper();
-        InputStream anonUnsafeClassStream = ct.getClass().getResourceAsStream("AnonClassAndUnsafeClassTest.class");
-        InputStream unsafeBootClassStream = ct.getClass().getResourceAsStream("UnsafeBootClass.class");
-        ch.func(ct.getClass(), anonUnsafeClassStream, unsafeBootClassStream);
+public class AnonClassAndUnsafeClassTest {
+    public void func() {
+        System.out.println("Test");
+    }
+    public void funcunsafe() {
+        System.out.println("Hello");
     }
 }

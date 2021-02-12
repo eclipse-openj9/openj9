@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,10 +31,10 @@
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/utils" />
 	<property name="src" location="./src"/>
-	<property name="src_110" location="./src_110"/>
 	<property name="build" location="./bin"/>
 	<property name="addExports" value="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
 	<property name="TestUtilities" location="../utilshelper/src" />
+	<property name="TestUtilities_110" location="../utilshelper/src_110" />
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -48,17 +48,19 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
-		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" />
 		<if>
-			<not>
-				<equals arg1="${JDK_VERSION}" arg2="8" />
-			</not>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
-				<javac srcdir="${src_110}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
 					<src path="${TestUtilities}" />
-					<compilerarg line='${addExports}' />
 				</javac>
 			</then>
+			<else>
+				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+					<src path="${TestUtilities_110}" />
+					<compilerarg line='${addExports}' />
+				</javac>
+			</else>
 		</if>
 	</target>
 
