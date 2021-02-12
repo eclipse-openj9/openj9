@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,8 +122,22 @@ private:
    void         genInvokeVirtual(int32_t);
    void         genInvokeInterface(int32_t);
    void         genInvokeDynamic(int32_t callSiteIndex);
-   TR::Node *    genInvokeHandle(int32_t cpIndex);
-   TR::Node *    genInvokeHandleGeneric(int32_t cpIndex);
+   TR::Node *   genInvokeHandle(int32_t cpIndex);
+   TR::Node *   genInvokeHandleGeneric(int32_t cpIndex);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   /**
+    * \brief
+    *    Generates IL to load elements from invokeCacheArray, resulting in load of
+    *    appendix and memberName objects into the stack to be used as
+    *    parameters for adapter method call node. memberName object is only required
+    *    to be loaded when the invokedynamic/invokehandle is unresolved
+    *
+    * \param tableEntrySymRef the symref representing the invokeCacheArray
+    * \param invokeCacheArray the static address of the invokeCacheArray
+    * \param isUnresolved
+    */
+   void         loadInvokeCacheArrayElements(TR::SymbolReference *tableEntrySymRef, uintptr_t * invokeCacheArray, bool isUnresolved);
+#endif
 
    TR::Node *    genHandleTypeCheck(TR::Node *handle, TR::Node *expectedType);
 
@@ -422,4 +436,3 @@ private:
    };
 
 #endif
-

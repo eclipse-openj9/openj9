@@ -413,8 +413,15 @@ J9::SymbolReferenceTable::findOrCreateInterfaceMethodSymbol(TR::ResolvedMethodSy
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateDynamicMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex)
+J9::SymbolReferenceTable::findOrCreateDynamicMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex, bool * unresolvedInCP)
    {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedDynamicMethod(comp(), callSiteIndex, unresolvedInCP);
+   if (method)
+      owningMethodSymbol->setMayHaveInlineableCall(true);
+
+   TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), -1, method, TR::MethodSymbol::Static);
+#else
    List<TR::SymbolReference> *methods = dynamicMethodSymrefsByCallSiteIndex(callSiteIndex);
    ListIterator<TR::SymbolReference> li(methods);
    for (TR::SymbolReference *symRef = li.getFirst(); symRef; symRef = li.getNext())
@@ -422,13 +429,10 @@ J9::SymbolReferenceTable::findOrCreateDynamicMethodSymbol(TR::ResolvedMethodSymb
       if (symRef->getOwningMethodIndex() == owningMethodSymbol->getResolvedMethodIndex())
          return symRef;
       }
-
-   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedDynamicMethod(comp(), callSiteIndex);
-   if (method)
-      owningMethodSymbol->setMayHaveInlineableCall(true);
-
+   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedDynamicMethod(comp(), callSiteIndex, unresolvedInCP);
    TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), -1, method, TR::MethodSymbol::ComputedVirtual);
    methods->add(symRef);
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
    return symRef;
    }
 
@@ -446,14 +450,17 @@ J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbo
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
+J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool * unresolvedInCP)
    {
-   bool isUnresolvedInCP;
-   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedHandleMethod(comp(), cpIndex, &isUnresolvedInCP);
+   TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedHandleMethod(comp(), cpIndex, unresolvedInCP);
    if (method)
       owningMethodSymbol->setMayHaveInlineableCall(true);
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), cpIndex, method, TR::MethodSymbol::Static);
+#else
    TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), cpIndex, method, TR::MethodSymbol::ComputedVirtual);
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
    return symRef;
    }
 
@@ -482,7 +489,11 @@ J9::SymbolReferenceTable::findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMetho
       {
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
       if (knot)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation, true);
+#else
          knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation);
+#endif
       }
 
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1,
@@ -499,7 +510,6 @@ J9::SymbolReferenceTable::findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMetho
    aliasBuilder.callSiteTableEntrySymRefs().set(symRef->getReferenceNumber());
    return symRef;
    }
-
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
@@ -518,8 +528,21 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMet
    TR::StaticSymbol *sym = TR::StaticSymbol::createMethodTypeTableEntry(trHeapMemory(),cpIndex);
    sym->setStaticAddress(entryLocation);
    bool isUnresolved = owningMethod->isUnresolvedMethodTypeTableEntry(cpIndex);
+
+   TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+   if (!isUnresolved)
+      {
+      TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+      if (knot)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation, true);
+#else
+         knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)entryLocation);
+#endif
+      }
+
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1,
-                                                    isUnresolved ? _numUnresolvedSymbols++ : 0);
+                                                    (isUnresolved ? _numUnresolvedSymbols++ : 0), knownObjectIndex);
 
    if (isUnresolved)
       {
@@ -532,6 +555,22 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMet
    aliasBuilder.methodTypeTableEntrySymRefs().set(symRef->getReferenceNumber());
    return symRef;
    }
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+TR::SymbolReference *
+J9::SymbolReferenceTable::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::SymbolReference * originalSymRef, uintptr_t arrayElementRef)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+   TR_ASSERT(fej9->haveAccess(), "Require VM access to be acquired by caller");
+   TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+   if (!knot) return originalSymRef;
+   TR::KnownObjectTable::Index arrayElementKnotIndex = TR::KnownObjectTable::UNKNOWN;
+   arrayElementKnotIndex = knot->getOrCreateIndex(arrayElementRef);
+   TR::SymbolReference *newRef = findOrCreateSymRefWithKnownObject(originalSymRef, arrayElementKnotIndex);
+   return newRef;
+   }
+
+#endif
 
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateVarHandleMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)

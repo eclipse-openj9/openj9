@@ -798,6 +798,43 @@ public:
     *    VM access is not required
     */
    TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+
+   /*
+    * \brief
+    *    Get the signature For MethodHandle.linkToStatic call for unresolved invokehandle
+    *
+    *    For unresolved invokeHandle, we do not know the adapter method at
+    *    compile time. The call is expressed as a call to the signature-polymorphic
+    *    MethodHandle.linkToStatic method. In addition to the arguments of the original call,
+    *    we need to provide the memberName and appendix objects as the last two arguments, in
+    *    addition to the MethodHandle object as the first argument. Therefore, we need to modify
+    *    the signature of the original call and adapt it to accept three extra arguments.
+    *
+    * \param comp the current compilation
+    * \param romMethodSignature the ROM Method signature to be processed
+    * \param signatureLength the length of the resulting signature
+    * \return char * the signature for linkToStatic
+    */
+   char * getSignatureForLinkToStaticForInvokeHandle(TR::Compilation* comp, J9UTF8* romMethodSignature, int32_t &signatureLength);
+
+
+   /*
+    * \brief
+    *    Get the signature for MethodHandle.linkToStatic call for unresolved invokedynamic
+    *
+    *    For unresolved invokeDynamic, we do not know the adapter method at
+    *    compile time. The call is expressed as a call to the signature-polymorphic
+    *    MethodHandle.linkToStatic method. In addition to the arguments of the original call,
+    *    we need to provide the memberName and appendix objects as the last two arguments.
+    *    Therefore, we need to modify the signature of the original call and adapt it to accept
+    *    the two extra arguments.
+    *
+    * \param comp the current compilation
+    * \param romMethodSignature the ROM Method signature to be processed
+    * \param signatureLength the length of the resulting signature
+    * \return char * the signature for linkToStatic
+    */
+   char * getSignatureForLinkToStaticForInvokeDynamic(TR::Compilation* comp, J9UTF8* romMethodSignature, int32_t &signatureLength);
 #endif
 
    // JSR292 }}}
@@ -1312,4 +1349,3 @@ inline TR_PersistentMemory * persistentMemory(J9JITConfig * jitConfig) { return 
 bool signalOutOfMemory(J9JITConfig *);
 
 #endif // VMJ9
-
