@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,9 @@ add_subdirectory(port)
 add_subdirectory(props)
 add_subdirectory(redirector)
 add_subdirectory(shared)
-# add_subdirectory(shared_service)
+if(OMR_OS_WINDOWS AND NOT OMR_ENV_DATA64)
+	add_subdirectory(shared_service)
+endif()
 add_subdirectory(thread)
 if(OMR_HOST_OS STREQUAL "linux")
 	add_subdirectory(unresolved)

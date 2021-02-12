@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ target_include_directories(ffi PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #platform specific stuff hacked in
 if(OMR_ARCH_X86)
-	if(NOT OMR_ENV_DATA64)
+	if(NOT (OMR_ENV_DATA64 OR OMR_OS_WINDOWS))
 		message(SEND_ERROR "Only x86-64 is currently supported")
 	endif()
 
@@ -50,26 +50,38 @@ if(OMR_ARCH_X86)
 	elseif(OMR_OS_OSX)
 		target_include_directories(ffi PUBLIC preconf/oa)
 	elseif(OMR_OS_WINDOWS)
-		target_include_directories(ffi PUBLIC preconf/wa)
+		if(OMR_ENV_DATA64)
+			target_include_directories(ffi PUBLIC preconf/wa)
+		else()
+			target_include_directories(ffi PUBLIC preconf/wi)
+		endif()
 	else()
 		message(SEND_ERROR "Unsupported OS")
 	endif()
 
-	target_sources(ffi
-		PRIVATE
-		x86/ffi.c
-		x86/ffi64.c
-	)
+	target_sources(ffi PRIVATE x86/ffi.c)
+	if(OMR_ENV_DATA64)
+		target_sources(ffi PRIVATE x86/ffi64.c)
+	endif()
 
 	if(OMR_OS_WINDOWS)
+
+		if(OMR_ENV_DATA64)
+			set(source_name win64)
+			set(preconf_dir ${CMAKE_CURRENT_SOURCE_DIR}/preconf/wa)
+		else()
+			set(source_name win32)
+			set(preconf_dir ${CMAKE_CURRENT_SOURCE_DIR}/preconf/wi)
+		endif()
+
 		# We are assuming we are using an MSVC toolchain
 		add_custom_command(
-			OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/win64.asm
-			COMMAND ${CMAKE_C_COMPILER} -nologo -EP -P  -I ${CMAKE_CURRENT_SOURCE_DIR}/preconf/wa -I ${CMAKE_CURRENT_SOURCE_DIR}/x86 -Fiwin64.asm  ${CMAKE_CURRENT_SOURCE_DIR}/x86/win64.S
-			DEPENDS x86/win64.S
+			OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${source_name}.asm
+			COMMAND ${CMAKE_C_COMPILER} -nologo -EP -P  -I ${preconf_dir} -I ${CMAKE_CURRENT_SOURCE_DIR}/x86 -Fi${source_name}.asm  ${CMAKE_CURRENT_SOURCE_DIR}/x86/${source_name}.S
+			DEPENDS x86/${source_name}.S
 		)
-		target_sources(ffi PRIVATE win64.asm)
-		set_source_files_properties(win64.asm PROPERTIES LANGUAGE ASM_MASM)
+		target_sources(ffi PRIVATE ${source_name}.asm)
+		set_source_files_properties(${source_name}.asm PROPERTIES LANGUAGE ASM_MASM)
 	else()
 		target_sources(ffi PRIVATE x86/sysv.S)
 	endif()

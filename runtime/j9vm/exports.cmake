@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -298,10 +298,10 @@ jvm_add_exports(jvm
 
 if(JAVA_SPEC_VERSION LESS 11)
 	# i.e. JAVA_SPEC_VERSION < 11
-	jvm_add_exports(jvm _JVM_GetCallerClass@4)
+	jvm_add_exports(jvm _JVM_GetCallerClass@8)
 else()
 	jvm_add_exports(jvm
-		_JVM_GetCallerClass@8
+		_JVM_GetCallerClass@4
 		# Additions for Java 9 (Modularity)
 		JVM_DefineModule
 		JVM_AddModuleExports
