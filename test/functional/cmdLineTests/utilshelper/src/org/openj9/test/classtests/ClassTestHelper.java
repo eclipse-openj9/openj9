@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,14 +24,28 @@ package org.openj9.test.classtests;
 
 import java.io.*;
 import java.util.*;
+import java.lang.reflect.Field;
 
-import jdk.internal.misc.Unsafe;
+import sun.misc.Unsafe;
 
 /* Generates the Anonymous class and the Unsafe class */
 
 public class ClassTestHelper {
+	private static Unsafe unsafe;
+	static {
+		try {
+			Field f = Unsafe.class.getDeclaredField("theUnsafe");
+			f.setAccessible(true);
+			unsafe = (Unsafe) f.get(null);
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+	}
 
     public byte[] getContent(InputStream is) throws Throwable {
+    	if (null == is) {
+    		return null;
+    	}
         int read;
         byte[] data = new byte[4096];
         ByteArrayOutputStream isbuffer = new ByteArrayOutputStream();
@@ -41,14 +55,20 @@ public class ClassTestHelper {
         return isbuffer.toByteArray();
     }
 
-    public void func(Class hostclass, InputStream is) throws Throwable {
-        byte[] content = getContent(is);
+    public void func(Class hostclass, InputStream anonUnsafeClassStream, InputStream unsafeBootClassStream) throws Throwable {
+        byte[] content = getContent(anonUnsafeClassStream);
         ClassLoader extLoader = hostclass.getClassLoader();
-        Unsafe unsafe = Unsafe.getUnsafe();
-        Class<?> anonclass = unsafe.defineAnonymousClass(hostclass, content, null);
-        Class unsafeclass = unsafe.defineClass(null, content, 0, content.length, extLoader, hostclass.getProtectionDomain());
-        anonclass.getMethod("func").invoke(anonclass.getDeclaredConstructor().newInstance());
-        unsafeclass.getMethod("funcunsafe").invoke(unsafeclass.getDeclaredConstructor().newInstance());
+        if (null != content) {
+        	Class<?> anonclass = unsafe.defineAnonymousClass(hostclass, content, null);
+        	Class unsafeclass = unsafe.defineClass(null, content, 0, content.length, extLoader, hostclass.getProtectionDomain());
+        	anonclass.getMethod("func").invoke(anonclass.getDeclaredConstructor().newInstance());
+        	unsafeclass.getMethod("funcunsafe").invoke(unsafeclass.getDeclaredConstructor().newInstance());
+        }
+        content = getContent(unsafeBootClassStream);
+        if (null != content) {
+        	Class<?> unsafeclass = unsafe.defineClass(null, content, 0, content.length, null, null);
+            unsafeclass.getMethod("bar").invoke(unsafeclass.getDeclaredConstructor().newInstance());
+        }
         System.out.println("test done!");
     }
 }

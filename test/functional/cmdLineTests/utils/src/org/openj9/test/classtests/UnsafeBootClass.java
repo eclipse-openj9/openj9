@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2021, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,13 +22,14 @@
 
 package org.openj9.test.classtests;
 
-/* The AnonClassAndUnsafeClassTest.class will be used to create the Anonyomus Class and the Unsafe Class */
+/* The UnsafeBootClass.class will be used to create an unsafe bootstrap class */
 
-public class AnonClassAndUnsafeClassTest {
-    public void func() {
-        System.out.println("Test");
-    }
-    public void funcunsafe() {
-        System.out.println("Hello");
-    }
+public class UnsafeBootClass {
+	private String str = "This class is used to create an unsafe bootstrap class";
+	public void foo() {
+		System.out.println(str);
+	}
+	public void bar() {
+		System.out.println("running UnsafeBootClass.bar()");
+	}
 }
