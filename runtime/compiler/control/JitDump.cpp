@@ -48,34 +48,6 @@ jitDumpSignalHandler(struct J9PortLibrary *portLibrary, uint32_t gpType, void *g
    return J9PORT_SIG_EXCEPTION_RETURN;
    }
 
-typedef struct DumpCurrentILParamenters
-   {
-   DumpCurrentILParamenters(
-         TR::Compilation *comp,
-         J9VMThread *vmThread,
-         J9JITConfig *jitConfig,
-         TR::FILE *logFile
-      )  :
-      _comp(comp),
-      _vmThread(vmThread),
-      _jitConfig(jitConfig),
-      _logFile(logFile)
-      {}
-
-   TR::Compilation *_comp;
-   J9VMThread      *_vmThread;
-   J9JITConfig     *_jitConfig;
-   TR::FILE        *_logFile;
-   } DumpCurrentILParamenters;
-
-static UDATA
-blankDumpCurrentILSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *handler_arg)
-   {
-   J9VMThread *vmThread = (J9VMThread *) handler_arg;
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread=%p Crashed while printing out current IL.", vmThread);
-   return J9PORT_SIG_EXCEPTION_RETURN;
-   }
-
 static void jitDumpFailedBecause(J9VMThread *currentThread, const char* message)
    {
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
@@ -91,104 +63,95 @@ static void stackWalkEndingBecause(const char* message)
    return;
    }
 
-static UDATA dumpCurrentILProtected(J9PortLibrary *portLib, void * opaqueParameters)
+struct ILOfCrashedThreadParamenters
    {
-   DumpCurrentILParamenters *p = static_cast<DumpCurrentILParamenters *>(opaqueParameters);
-   TR::Compilation *comp       = p->_comp;
-   J9VMThread *vmThread        = p->_vmThread;
-   J9JITConfig *jitConfig      = p->_jitConfig;
-   TR::FILE *logFile           = p->_logFile;
+   ILOfCrashedThreadParamenters(J9VMThread *vmThread, TR::Compilation *comp, J9JITConfig *jitConfig, TR::FILE *logFile)
+   : vmThread(vmThread), comp(comp), jitConfig(jitConfig),logFile(logFile)
+      {}
 
-   comp->findOrCreateDebug();
+   J9VMThread      *vmThread;
+   TR::Compilation *comp;
+   J9JITConfig     *jitConfig;
+   TR::FILE        *logFile;
+   };
 
-   TR::Options *options = comp->getOptions();
-   TR_Debug *dbg = comp->getDebug();
-   TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, vmThread);
+static uintptr_t
+traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg)
+   {
+   auto p = *static_cast<ILOfCrashedThreadParamenters*>(handler_arg);
 
-   if (logFile != NULL)
+   TR_J9ByteCodeIlGenerator bci(p.comp->ilGenRequest().details(), p.comp->getMethodSymbol(),
+      TR_J9VMBase::get(p.jitConfig, p.vmThread), p.comp, p.comp->getSymRefTab());
+   bci.printByteCodes();
+
+   // This call will reset the previously recorded symbol reference size to 0, thus indicating to the debug object that
+   // we should print all the symbol references in the symbol reference table when tracing the trees. By default the
+   // debug object will only print new symbol references since the last time they were printed. Here we are in a
+   // crashed thread state so we can safely reset this coutner so we print all the symbol references.
+   p.comp->setPrevSymRefTabSize(0);
+   p.comp->dumpMethodTrees("Trees");
+
+   if ((p.vmThread->omrVMThread->vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
       {
-      comp->setOutFile(logFile);
-      options->setOption(TR_TraceAll);
-      options->setOption(TR_TraceKnownObjectGraph);
-      dbg->setFile(logFile);
-
-      trfprintf(logFile,"<currentIL>\n");
-
-      // Print Bytecodes
-      TR::IlGeneratorMethodDetails & details = comp->ilGenRequest().details();
-      TR::ResolvedMethodSymbol *resolvedMethod = comp->getMethodSymbol();
-      TR::SymbolReferenceTable *symRefTab = comp->getSymRefTab();
-      TR_J9ByteCodeIlGenerator bci(details, resolvedMethod, fe, comp, symRefTab);
-      bci.printByteCodes();
-
-      dbg->printMethodHotness();
-      comp->dumpMethodTrees("Trees");
-      dbg->print(logFile, comp->getSymRefTab());
-
-      if ((vmThread->omrVMThread->vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
-         {
-         dbg->dumpMethodInstrs(logFile, "Post Binary Instructions", false, true);
-         dbg->print(logFile,comp->cg()->getSnippetList());
-         dbg->dumpMixedModeDisassembly();
-         }
-      else if ((vmThread->omrVMThread->vmState & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
-         {
-         // Tree verification is only valid during optimizations as it relies on consistent node counts which are only
-         // valid before codegen, since the codegen will decrement the node counts as part of instruction selection
-         comp->verifyTrees(comp->getMethodSymbol());
-         comp->verifyBlocks(comp->getMethodSymbol());
-         }
-
-      trfprintf(logFile, "</currentIL>\n");
+      TR_Debug *debug = p.comp->getDebug();
+      debug->dumpMethodInstrs(p.logFile, "Post Binary Instructions", false, true);
+      debug->print(p.logFile, p.comp->cg()->getSnippetList());
+      debug->dumpMixedModeDisassembly();
+      }
+   else if ((p.vmThread->omrVMThread->vmState & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
+      {
+      // Tree verification is only valid during optimizations as it relies on consistent node counts which are only
+      // valid before codegen, since the codegen will decrement the node counts as part of instruction selection
+      p.comp->verifyTrees();
+      p.comp->verifyBlocks();
       }
 
    return 0;
    }
 
-static void dumpCurrentIL(TR::Compilation *comp, J9VMThread *vmThread, J9JITConfig *jitConfig, TR::FILE *logFile )
+static void
+traceILOfCrashedThread(J9VMThread *vmThread, TR::Compilation *comp, J9JITConfig *jitConfig, TR::FILE *logFile)
    {
-   /* Acquire VM Access */
+   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
    bool alreadyHaveVMAccess = ((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) != 0);
    bool haveAcquiredVMAccess = false;
    if (!alreadyHaveVMAccess)
+      {
       if (0 == vmThread->javaVM->internalVMFunctions->internalTryAcquireVMAccessWithMask(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_ANY_NO_JAVA_SUSPEND))
+         {
          haveAcquiredVMAccess = true;
+         }
+      }
+   
+   comp->setOutFile(logFile);
 
-   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   TR_Debug *debug = comp->findOrCreateDebug();
+   debug->setFile(logFile);
 
-   DumpCurrentILParamenters p(
-      comp,
-      vmThread,
-      jitConfig,
-      logFile
-      );
+   TR::Options *options = comp->getOptions();
+   options->setOption(TR_TraceAll);
+   options->setOption(TR_TraceKnownObjectGraph);
 
-   UDATA result = 0;
+   trfprintf(logFile, "<ilOfCrashedThread>\n");
 
-#if defined(J9VM_PORT_SIGNAL_SUPPORT)
+   ILOfCrashedThreadParamenters p(vmThread, comp, jitConfig, logFile);
+
    U_32 flags = J9PORT_SIG_FLAG_MAY_RETURN |
                 J9PORT_SIG_FLAG_SIGSEGV | J9PORT_SIG_FLAG_SIGFPE |
-                J9PORT_SIG_FLAG_SIGILL  | J9PORT_SIG_FLAG_SIGBUS;
+                J9PORT_SIG_FLAG_SIGILL  | J9PORT_SIG_FLAG_SIGBUS | J9PORT_SIG_FLAG_SIGTRAP;
 
-   static char *noSignalWrapper = feGetEnv("TR_NoSignalWrapper");
+   uintptr_t result = 0;
+   j9sig_protect(traceILOfCrashedThreadProtected, static_cast<void *>(&p),
+      jitDumpSignalHandler,
+      vmThread, flags, &result);
 
-   if (!noSignalWrapper && j9sig_can_protect(flags))
+   trfprintf(logFile, "</ilOfCrashedThread>\n");
+
+   if (!alreadyHaveVMAccess && haveAcquiredVMAccess)
       {
-      UDATA protectedResult;
-
-      protectedResult = j9sig_protect((j9sig_protected_fn)dumpCurrentILProtected, static_cast<void *>(&p),
-                                         (j9sig_handler_fn)blankDumpCurrentILSignalHandler, vmThread,
-                                         flags, &result);
+      vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
       }
-   else
-#endif
-      result = dumpCurrentILProtected(privatePortLibrary, &p);
-
-
-   /* Release VM Access */
-   if (!alreadyHaveVMAccess)
-      if (haveAcquiredVMAccess)
-         vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
    }
 
 #define STACK_WALK_DEPTH 16
@@ -652,7 +615,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Found compilation object");
 
             // dump IL of current compilation
-            dumpCurrentIL(comp, crashedThread, jitConfig, logFile);
+            traceILOfCrashedThread(crashedThread, comp, jitConfig, logFile);
 
             // if there was an available compilation thread, recompile the current method
             if (recompilationThread)
