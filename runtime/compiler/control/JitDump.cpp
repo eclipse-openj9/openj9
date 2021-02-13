@@ -286,6 +286,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    TR::CompilationInfo *compInfo,
    TR_Hotness          optimizationLevel,
    bool                profilingCompile,
+   TR::Options         *optionsFromOriginalCompile,
    bool                aotCompile,
    void               *oldStartPC,
    TR::FILE *logFile
@@ -326,7 +327,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    // TODO: this is indiscriminately compiling as J9::DumpMethodRequest, which is wrong;
    //       should be fixed by checking if the method is indeed DLT, and compiling DLT if so
       {
-      J9::JitDumpMethodDetails details(ramMethod, aotCompile);
+      J9::JitDumpMethodDetails details(ramMethod, optionsFromOriginalCompile, aotCompile);
       compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &compErrCode, &successfullyQueued, plan);
       }
 
@@ -607,6 +608,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                   compInfo,
                   jittedMethodsOnStack[i]._optLevel,
                   false,
+                  NULL,
                   isAOTBody,
                   startPC,
                   logFile
@@ -687,6 +689,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                         compInfo,
                         (TR_Hotness)comp->getOptLevel(),
                         comp->isProfilingCompilation(),
+                        comp->getOptions(),
                         comp->compileRelocatableCode(),
                         oldStartPC,
                         logFile
