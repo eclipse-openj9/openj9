@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,9 +35,10 @@ namespace J9 { typedef J9::IlGeneratorMethodDetails IlGeneratorMethodDetailsConn
 #include "ilgen/OMRIlGeneratorMethodDetails.hpp"
 
 #include <stdint.h>
-#include "infra/Annotations.hpp"
+#include "control/Options.hpp"
 #include "env/IO.hpp"
 #include "env/jittypes.h"
+#include "infra/Annotations.hpp"
 
 class J9Class;
 class J9Method;
@@ -156,6 +157,8 @@ protected:
       bool _aotCompile;
       } _data;
 
+   /// A cached options object from the original (crashed) compilation thread
+   TR::Options *_optionsFromOriginalCompile;
    };
 
 // Replay compilation support that must not be used by anyone else because it breaks encapsulation

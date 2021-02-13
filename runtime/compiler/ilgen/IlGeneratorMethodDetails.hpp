@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,16 +65,21 @@ class JitDumpMethodDetails : public TR::IlGeneratorMethodDetails
    // Objects cannot hold data of its own: must store in the _data union in TR::IlGeneratorMethodDetails
 
 public:
-   JitDumpMethodDetails(J9Method* method, bool aotCompile) : TR::IlGeneratorMethodDetails(method)
+   JitDumpMethodDetails(J9Method* method, TR::Options* optionsFromOriginalCompile, bool aotCompile)
+      : TR::IlGeneratorMethodDetails(method)
       {
+      _optionsFromOriginalCompile = optionsFromOriginalCompile;
       _data._aotCompile = aotCompile;
       }
-   JitDumpMethodDetails(const JitDumpMethodDetails& other) : TR::IlGeneratorMethodDetails(other.getMethod())
+      
+   JitDumpMethodDetails(const JitDumpMethodDetails& other)
+      : TR::IlGeneratorMethodDetails(other.getMethod())
       {
+      _optionsFromOriginalCompile = other._optionsFromOriginalCompile;
       _data._aotCompile = other._data._aotCompile;
       }
 
-   virtual const char * name()     const { return "DumpMethod"; }
+   virtual const char * name()     const { return "JitDumpMethod"; }
 
    virtual bool isOrdinaryMethod()   const { return false; }
    virtual bool isJitDumpMethod()    const { return true; }
@@ -87,6 +92,18 @@ public:
       }
 
    virtual bool supportsInvalidation() { return false; }
+
+   /**
+    * \brief
+    * Gets the options used in the original compilation which we are trying to reproduce.
+    * 
+    * \returns
+    * The options from the original compile if it exists; \c NULL otherwise.
+    */
+   TR::Options* getOptionsFromOriginalCompile() const
+      {
+      return _optionsFromOriginalCompile;
+      }
    };
 
 
