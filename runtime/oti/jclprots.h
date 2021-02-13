@@ -919,36 +919,38 @@ jlong JNICALL Java_sun_misc_Perf_highResFrequency(JNIEnv *env, jobject perf);
 void JNICALL Java_jdk_internal_perf_Perf_registerNatives(JNIEnv *env, jclass clazz);
 
 /* java_dyn_methodhandle.c */
-jclass JNICALL Java_java_lang_invoke_PrimitiveHandle_lookupMethod(JNIEnv *env, jobject handle, jclass lookupClass, jstring name, jstring signature, jbyte kind, jclass specialCaller);
-void JNICALL Java_java_lang_invoke_MethodHandle_requestCustomThunkFromJit(JNIEnv* env, jobject handle, jobject thunk);
-jclass JNICALL Java_java_lang_invoke_PrimitiveHandle_lookupField(JNIEnv *env, jobject handle, jclass lookupClass, jstring name, jstring signature, jboolean isStatic, jclass accessClass);
+#if defined(J9VM_OPT_METHOD_HANDLE)
+void		JNICALL Java_java_lang_invoke_InterfaceHandle_registerNatives(JNIEnv *env, jclass nativeClass);
+jobject		JNICALL Java_java_lang_invoke_MethodHandle_invoke(JNIEnv *env, jclass ignored, jobject handle, jobject args);
+jobject		JNICALL Java_java_lang_invoke_MethodHandle_invokeExact(JNIEnv *env, jclass ignored, jobject handle, jobject args);
+void		JNICALL Java_java_lang_invoke_MethodHandle_requestCustomThunkFromJit(JNIEnv* env, jobject handle, jobject thunk);
+jint		JNICALL Java_java_lang_invoke_MethodHandle_vmRefFieldOffset(JNIEnv *env, jclass clazz, jclass ignored);
+void		JNICALL Java_java_lang_invoke_MutableCallSite_freeGlobalRef(JNIEnv *env, jclass mutableCallSite, jlong bypassOffset);
+void		JNICALL Java_java_lang_invoke_MutableCallSite_registerNatives(JNIEnv *env, jclass nativeClass);
+jclass		JNICALL Java_java_lang_invoke_PrimitiveHandle_lookupField(JNIEnv *env, jobject handle, jclass lookupClass, jstring name, jstring signature, jboolean isStatic, jclass accessClass);
+jclass		JNICALL Java_java_lang_invoke_PrimitiveHandle_lookupMethod(JNIEnv *env, jobject handle, jclass lookupClass, jstring name, jstring signature, jbyte kind, jclass specialCaller);
+jboolean	JNICALL Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromConstructor(JNIEnv *env, jclass clazz, jobject handle, jobject ctor);
+jboolean	JNICALL Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromField(JNIEnv *env, jclass clazz, jobject handle, jobject reflectField);
+jboolean	JNICALL Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromMethod(JNIEnv *env, jclass clazz, jobject handle, jclass declaringClass, jobject method, jbyte kind, jclass specialToken);
+jboolean	JNICALL Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromSpecialHandle(JNIEnv *env, jclass clazz, jobject handle, jobject specialHandle);
+void		JNICALL Java_java_lang_invoke_ThunkTuple_registerNatives(JNIEnv *env, jclass nativeClass);
+
 UDATA lookupField(JNIEnv *env, jboolean isStatic, J9Class *j9LookupClass, jstring name, J9UTF8 *sigUTF, J9Class **definingClass, UDATA *romField, jclass accessClass);
-jboolean JNICALL Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromField(JNIEnv *env, jclass clazz, jobject handle, jobject reflectField);
-jboolean JNICALL Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromMethod(JNIEnv *env, jclass clazz, jobject handle, jclass declaringClass, jobject method, jbyte kind, jclass specialToken);
-jboolean JNICALL Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromConstructor(JNIEnv *env, jclass clazz, jobject handle, jobject ctor);
-jlong JNICALL Java_java_lang_invoke_MethodHandle_findVMDispatchTarget(JNIEnv *env, jclass clazz, jint kind);
-jboolean JNICALL Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromSpecialHandle(JNIEnv *env, jclass clazz, jobject handle, jobject specialHandle);
-jint JNICALL Java_java_lang_invoke_MethodHandle_vmRefFieldOffset(JNIEnv *env, jclass clazz, jclass ignored);
-jint JNICALL Java_java_lang_invoke_MethodHandle_addressSize(JNIEnv *env, jclass clazz);
-jobject JNICALL Java_java_lang_invoke_MethodHandle_invokeExact(JNIEnv *env, jclass ignored, jobject handle, jobject args);
-jobject JNICALL Java_java_lang_invoke_MethodHandle_invokeGeneric(JNIEnv *env, jclass ignored, jobject handle, jobject args);
-jobject JNICALL Java_java_lang_invoke_MethodHandle_invoke(JNIEnv *env, jclass ignored, jobject handle, jobject args);
-void JNICALL Java_java_lang_invoke_ThunkTuple_registerNatives(JNIEnv *env, jclass nativeClass);
-void JNICALL Java_java_lang_invoke_InterfaceHandle_registerNatives(JNIEnv *env, jclass nativeClass);
-jlong JNICALL Java_java_lang_invoke_MethodHandle_vtableOffset(JNIEnv *env, jclass ignored);
-void JNICALL Java_java_lang_invoke_MutableCallSite_freeGlobalRef(JNIEnv *env, jclass mutableCallSite, jlong bypassOffset);
 void setClassLoadingConstraintLinkageError(J9VMThread *vmThread, J9Class *methodOrFieldClass, J9UTF8 *signatureUTF8);
 #ifdef J9VM_OPT_PANAMA
 extern J9_CFUNC jlong JNICALL
 Java_java_lang_invoke_MethodHandles_findNativeAddress(JNIEnv *env, jclass jlClass, jstring methodName);
 #endif
-
-/* java_dyn_methodtype.c */
-jobject JNICALL Java_java_lang_invoke_MethodType_makeTenured(JNIEnv *env, jclass clazz, jobject receiverObject);
 #if JAVA_SPEC_VERSION >= 15
 extern J9_CFUNC void JNICALL
 Java_java_lang_invoke_MethodHandleNatives_checkClassBytes(JNIEnv *env, jclass jlClass, jbyteArray classRep);
 #endif /* JAVA_SPEC_VERSION >= 15 */
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
+
+/* java_dyn_methodtype.c */
+#if defined(J9VM_OPT_METHOD_HANDLE)
+jobject JNICALL Java_java_lang_invoke_MethodType_makeTenured(JNIEnv *env, jclass clazz, jobject receiverObject);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 /* java_lang_invoke_MethodHandleNatives.cpp */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
