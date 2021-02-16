@@ -2050,8 +2050,14 @@ bool TR_StringPeepholes::classesRedefined()
 
 bool TR_StringPeepholes::classRedefined(TR_OpaqueClassBlock *clazz)
    {
-   if (!clazz)
-      return true;
+   // The class in question may not have been loaded yet. For example in JDK11 the JCL removed most (all?) uses of the
+   // StringBuffer class, thus this class is never loaded until `main` is reached. If the class is not loaded it could
+   // not have been redefined, so we return false here.
+   if (clazz == NULL)
+      {
+      return false;
+      }
+
    TR_PersistentClassInfo *clazzInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, fe());
    return !clazzInfo || clazzInfo->classHasBeenRedefined();
    }
