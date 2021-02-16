@@ -4034,6 +4034,10 @@ static bool foldFinalFieldsIn(const char *className, int32_t classNameLength, TR
       return true;
    else if (classNameLength == 16 && !strncmp(className, "java/lang/String", 16))
       return true;
+   else if (classNameLength >= 20 && !strncmp(className, "jdk/incubator/vector", 20))
+      return true;
+   else if (classNameLength >= 22 && !strncmp(className, "jdk/internal/vm/vector", 22))
+      return true;
    else
       return false;
    }

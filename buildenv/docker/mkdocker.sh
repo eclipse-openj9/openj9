@@ -292,7 +292,7 @@ fi
   local autoconf_version=2.69
   echo "# Install autoconf."
   echo "RUN cd /tmp \\"
-  echo " && $wget_O autoconf.tar.gz https://fossies.org/linux/misc/autoconf-$autoconf_version.tar.gz \\"
+  echo " && $wget_O autoconf.tar.gz https://ftp.gnu.org/gnu/autoconf/autoconf-$autoconf_version.tar.gz \\"
   echo " && tar -xzf autoconf.tar.gz \\"
   echo " && cd autoconf-$autoconf_version \\"
   echo " && ./configure --build=\$(rpm --eval %{_host}) \\"
@@ -327,7 +327,7 @@ fi
   echo "# Install git."
   echo "RUN cd /tmp \\"
   echo " && $wget_O git.tar.gz https://www.kernel.org/pub/software/scm/git/git-$git_version.tar.gz \\"
-  echo " && tar -xzf git.tar.gz \\"
+  echo " && tar -xzf git.tar.gz --no-same-owner \\"
   echo " && cd git-$git_version \\"
   echo " && make prefix=/usr/local all \\"
   echo " && make prefix=/usr/local install \\"
