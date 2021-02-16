@@ -1133,6 +1133,53 @@ extern J9_CFUNC struct J9Method* jitResolveStaticMethodRef(J9VMThread *vmStruct,
 extern J9_CFUNC struct J9Method* jitResolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpOrSplitIndex, UDATA resolveFlags);
 extern J9_CFUNC struct J9Class * jitGetDeclaringClassOfROMField(J9VMThread *vmStruct, J9Class *clazz, J9ROMFieldShape *romField);
 
+typedef struct J9MethodFromSignatureWalkState {
+	const char *className;
+	U_32 classNameLength;
+	struct J9JNINameAndSignature nameAndSig;
+	struct J9VMThread *vmThread;
+	struct J9ClassLoaderWalkState classLoaderWalkState;
+} J9MethodFromSignatureWalkState;
+
+/**
+ * Cleans up the iterator after matching all methods found.
+ *
+ * @param state The inlialized iterator state
+ */
+extern J9_CFUNC void
+allMethodsFromSignatureEndDo(J9MethodFromSignatureWalkState *state);
+
+/**
+ * Advances the iterator looking for the next method matching the exact signature provided during initialization.
+ *
+ * @param state The inlialized iterator state
+ *
+ * @return      J9Method matching the exact signature provided during initialization of the iterator in the class loader
+ *              if it exists; NULL if no such method is found.
+ */
+extern J9_CFUNC struct J9Method *
+allMethodsFromSignatureNextDo(J9MethodFromSignatureWalkState *state);
+
+/**
+ * Initializes the iterator state and returns the first method matching the supplied exact (no wildcards allowed)
+ * signature from any class loader.
+ *
+ * @param state            The iterator state which will be initialized.
+ * @param vm               The VM instance to look for methods in.
+ * @param flags            The flags forwarded to class loader iterator functions
+ * @param className        The class name including the package.
+ * @param classNameLength  The length (in number of bytes) of the class name
+ * @param methodName       The method name
+ * @param methodNameLength The length (in number of bytes) of the method name
+ * @param methodSig        The method signature
+ * @param methodSigLength  The length (in number of bytes) of the method signature
+ *
+ * @return                 J9Method matching the exact signature provided in the first class loader it is found; NULL if
+ *                         no such method is found.
+ */
+extern J9_CFUNC struct J9Method *
+allMethodsFromSignatureStartDo(J9MethodFromSignatureWalkState *state, J9JavaVM* vm, UDATA flags, const char *className, U_32 classNameLength, const char *methodName, U_32 methodNameLength, const char *methodSig, U_32 methodSigLength);
+
 #endif /* J9VM_INTERP_NATIVE_SUPPORT*/
 #endif /* _J9VMJITNATIVECOMPILESUPPORT_ */
 

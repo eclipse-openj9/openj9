@@ -250,7 +250,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    TR_Hotness          optimizationLevel,
    bool                profilingCompile,
    TR::Options         *optionsFromOriginalCompile,
-   bool                aotCompile,
+   bool                isAOTBody,
    void               *oldStartPC,
    TR::FILE *logFile
    )
@@ -290,7 +290,7 @@ static TR_CompilationErrorCode recompileMethodForLog(
    // TODO: this is indiscriminately compiling as J9::DumpMethodRequest, which is wrong;
    //       should be fixed by checking if the method is indeed DLT, and compiling DLT if so
       {
-      J9::JitDumpMethodDetails details(ramMethod, optionsFromOriginalCompile, aotCompile);
+      J9::JitDumpMethodDetails details(ramMethod, optionsFromOriginalCompile, isAOTBody);
       compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &compErrCode, &successfullyQueued, plan);
       }
 
@@ -483,9 +483,84 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
 
    try
       {
-      // if our compinfo is null, we are an application thread
+      // Process user defined options first. The user can specify any method signature to be recompiled at an arbitrary
+      // dump event. This is typically used for debugging purposes so we process this option first if it exists.
+      if (NULL != agent->dumpOptions)
+         {
+         const char *indexOfDot = strchr(agent->dumpOptions, '.');
+         const char *indexOfParen = strchr(agent->dumpOptions, '(');
+
+         if ((NULL != indexOfDot) && (NULL != indexOfParen))
+            {
+            TR::VMAccessCriticalSection findUserMethod(TR_J9VMBase::get(jitConfig, crashedThread));
+
+            const char *className = agent->dumpOptions;
+            U_32 classNameLength = static_cast<U_32>(indexOfDot - agent->dumpOptions);
+            const char *methodName = indexOfDot + 1;
+            U_32 methodNameLength = static_cast<U_32>(indexOfParen - methodName);
+            const char *methodSig = indexOfParen;
+            U_32 methodSigLength = strlen(methodSig);
+
+            J9MethodFromSignatureWalkState state;
+            J9Method *userMethod = allMethodsFromSignatureStartDo(&state, context->javaVM, 0, className, classNameLength, methodName, methodNameLength, methodSig, methodSigLength);
+            while (NULL != userMethod)
+               {
+               J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, reinterpret_cast<UDATA>(userMethod->extra));
+               if (NULL != metadata)
+                  {
+                  auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>(metadata->bodyInfo);
+                  if (NULL != bodyInfo)
+                     {
+                     recompilationThreadInfo->resumeCompilationThread();
+
+                     if (NULL == threadCompInfo)
+                        {
+                        // We are an application thread
+                        TR_CompilationErrorCode compErrCode = recompileMethodForLog(
+                           crashedThread,
+                           userMethod,
+                           compInfo,
+                           bodyInfo->getHotness(),
+                           bodyInfo->getIsProfilingBody(),
+                           NULL,
+                           bodyInfo->getIsAotedBody(),
+                           bodyInfo->getStartPCAfterPreviousCompile(),
+                           logFile
+                        );
+                        }
+                     else
+                        {
+                        // We are a compilation thread
+
+                        // See comment below for the same call on why this is needed
+                        TR::CompilationInfoPerThreadBase::UninterruptibleOperation generateJitDumpForCrashedThread(*threadCompInfo);
+
+                        // See comment below for the same call on why this is needed
+                        TR::VMAccessCriticalSection requestSynchronousCompilation(TR_J9VMBase::get(jitConfig, crashedThread));
+
+                        TR_CompilationErrorCode compErrCode = recompileMethodForLog(
+                           crashedThread,
+                           userMethod,
+                           compInfo,
+                           bodyInfo->getHotness(),
+                           bodyInfo->getIsProfilingBody(),
+                           NULL,
+                           bodyInfo->getIsAotedBody(),
+                           bodyInfo->getStartPCAfterPreviousCompile(),
+                           logFile
+                        );
+                        }
+                     }
+                  }
+               userMethod = allMethodsFromSignatureNextDo(&state);
+               }
+            allMethodsFromSignatureEndDo(&state);
+            }
+         }
+
       if (threadCompInfo == 0)
          {
+         // We are an application thread
          if (options->getVerboseOption(TR_VerboseDump))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Crashed in application thread");
          trfprintf(logFile, "#INFO: Crashed in application thread %p.\n", crashedThread);
@@ -551,16 +626,14 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                   continue;
 
                bool isAOTBody = false;
-               J9JITExceptionTable *metadata = NULL;
-               void *startPC = jittedMethodsOnStack[i]._oldStartPC;
-               if (startPC)
+
+               J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, reinterpret_cast<UDATA>(jittedMethodsOnStack[i]._oldStartPC));
+               if (NULL != metadata)
                   {
-                  metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, (UDATA)startPC);
-                  if (metadata)
+                  auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo*>(metadata->bodyInfo);
+                  if (NULL != bodyInfo)
                      {
-                     TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)metadata->bodyInfo;
-                     if (bodyInfo)
-                        isAOTBody = bodyInfo->getIsAotedBody();
+                     isAOTBody = bodyInfo->getIsAotedBody();
                      }
                   }
 
@@ -573,7 +646,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                   false,
                   NULL,
                   isAOTBody,
-                  startPC,
+                  jittedMethodsOnStack[i]._oldStartPC,
                   logFile
                );
                } // for
@@ -591,11 +664,10 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             jitDumpFailedBecause(crashedThread, "no thread available to compile for dump");
             }
 
-         } // if threadcompinfo
-
-      // if our compinfo is not null, we are a compilation thread
+         }
       else
          {
+         // We are a compilation thread
          if (options->getVerboseOption(TR_VerboseDump))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "crashed in compilation thread");
          trfprintf(logFile, "#INFO: Crashed in compilation thread %p.\n", crashedThread);
