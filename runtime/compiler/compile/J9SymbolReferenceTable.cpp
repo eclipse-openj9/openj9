@@ -1391,24 +1391,29 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
 
    TR::StaticSymbol * sym = (TR::StaticSymbol *)symRef->getSymbol();
 
-   // If symbol is created the first time
-   if (!symRef->isUnresolved() &&
-       !sym->isConstString() &&
-       !sym->isNonSpecificConstObject())
+   // If the cp entry is patched, it's resolved during the patching
+   // Unresolved cp entry will always contain a const string
+   if (symRef->isUnresolved())
+      {
+      sym->setConstString();
+      }
+   // If symbol is created the first time, check if the const object is String
+   else if (!sym->isConstString() &&
+            !sym->isNonSpecificConstObject())
       {
       TR::VMAccessCriticalSection constantCriticalSection(comp()->fej9());
       TR_OpaqueClassBlock *clazz = comp()->fej9()->getObjectClassAt((uintptr_t)stringConst);
-      isString = comp()->fej9()->isString(clazz);
-      }
+      if (comp()->fej9()->isString(clazz))
+         {
+         sym->setConstString();
+         }
+      else
+         {
+         if (comp()->compileRelocatableCode())
+            comp()->failCompilation<J9::AOTHasPatchedCPConstant>("Patched Constant not supported in AOT.");
 
-   if (isString)
-      sym->setConstString();
-   else
-      {
-      if (comp()->compileRelocatableCode())
-         comp()->failCompilation<J9::AOTHasPatchedCPConstant>("Patched Constant not supported in AOT.");
-
-      sym->setNonSpecificConstObject();
+         sym->setNonSpecificConstObject();
+         }
       }
 
    return symRef;
