@@ -1,4 +1,4 @@
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/aarch64/runtime/VirtualGuardRuntime.cpp
 
 JIT_PRODUCT_SOURCE_FILES+= \
-    compiler/aarch64/runtime/ARM64ArrayCopy.spp \
     compiler/aarch64/runtime/ARM64RelocationTarget.cpp \
     compiler/aarch64/runtime/FlushICache.spp \
     compiler/aarch64/runtime/PicBuilder.spp \
