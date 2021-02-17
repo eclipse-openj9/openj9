@@ -7935,42 +7935,30 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          PORT_ACCESS_FROM_JITCONFIG(jitConfig);
          _compInfo.debugPrint("\tcompiling method", entry->getMethodDetails(), vmThread);
 
-#if defined(J9VM_PORT_SIGNAL_SUPPORT)
          U_32 flags = J9PORT_SIG_FLAG_MAY_RETURN |
                       J9PORT_SIG_FLAG_SIGSEGV | J9PORT_SIG_FLAG_SIGFPE |
                       J9PORT_SIG_FLAG_SIGILL  | J9PORT_SIG_FLAG_SIGBUS | J9PORT_SIG_FLAG_SIGTRAP;
 
-         static char *noSignalWrapper = feGetEnv("TR_NoSignalWrapper");
+         uintptr_t result = 0;
 
-         if (!noSignalWrapper && j9sig_can_protect(flags))
+         // Attempt to request a compilation, while guarding against any crashes that occur
+         // inside the compile request. For log compilations, simply return.
+         //
+         uintptr_t protectedResult = 0;
+         if (entry->getMethodDetails().isJitDumpMethod())
             {
-            UDATA result = 0;
-
-            // Attempt to request a compilation, while guarding against any crashes that occur
-            // inside the compile request. For log compilations, simply return.
-            //
-            UDATA protectedResult;
-            if (entry->getMethodDetails().isJitDumpMethod())
-               {
-               protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
-                                                  jitDumpSignalHandler, 
-                                                  vmThread, flags, &result);
-               }
-            else
-               {
-               protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
-                                                  jitSignalHandler, 
-                                                  vmThread, flags, &result);
-               }
-
-            if (protectedResult == 0) // successful completion of wrappedCompile
-               metaData = reinterpret_cast<TR_MethodMetaData *>(result);
-            else
-               metaData = 0;
+            protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
+                                                jitDumpSignalHandler, 
+                                                vmThread, flags, &result);
             }
          else
-#endif
-            metaData = wrappedCompile(privatePortLibrary, &compParam);
+            {
+            protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
+                                                jitSignalHandler, 
+                                                vmThread, flags, &result);
+            }
+
+         metaData = (protectedResult == 0) ? reinterpret_cast<TR_MethodMetaData *>(result) : NULL;
          }
       else
          {
