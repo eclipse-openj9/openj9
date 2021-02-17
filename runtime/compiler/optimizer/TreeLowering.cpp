@@ -86,7 +86,7 @@ TR::TreeLowering::lowerValueTypeOperations(TR::Node* node, TR::TreeTop* tt)
  * @details
  *
  * This transformation adds checks for the cases where the acmp can be performed
- * without calling the VM helper. The trasformed Trees represen the following operation:
+ * without calling the VM helper. The transformed Trees represent the following operation:
  *
  * 1. If the address of lhs and rhs are the same, produce an eq (true) result
  *    and skip the call (note the two objects must be the same regardless of
@@ -148,6 +148,9 @@ TR::TreeLowering::lowerValueTypeOperations(TR::Node* node, TR::TreeTop* tt)
  * Any GlRegDeps on the extension block are created by OMR::Block::splitPostGRA
  * while those on the ifacmpeq at the end of the first block are copies of those,
  * with the exception of any register (x, above) holding the result of the compare
+ *
+ * @param node is the current node in the tree walk
+ * @param tt is the treetop at the root of the tree ancoring the current node
  *
  */
 void
@@ -255,7 +258,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt)
       storeNode->setSymbolReference(anchoredNode->getSymbolReference());
       }
    else
-      TR_ASSERT_FATAL(false, "Anchord call has been turned into unexpected opcode %s\n", anchoredNode->getOpCode().getName());
+      TR_ASSERT_FATAL_WITH_NODE(anchoredNode, false, "Anchored call has been turned into unexpected opcode\n");
    prevBlock->append(TR::TreeTop::create(comp, storeNode));
 
    // insert acmpeq for fastpath, taking care to set the proper register dependencies
@@ -300,11 +303,14 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt)
    cfg->addEdge(prevBlock, targetBlock);
    }
 
-/*
+/**
  * If value types are enabled, and the value that is being assigned to the array
  * element might be a null reference, lower the ArrayStoreCHK by splitting the
  * block before the ArrayStoreCHK, and inserting a NULLCHK guarded by a check
  * of whether the array's component type is a value type.
+ *
+ * @param node is the current node in the tree walk
+ * @param tt is the treetop at the root of the tree ancoring the current node
  */
 void
 TR::TreeLowering::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
