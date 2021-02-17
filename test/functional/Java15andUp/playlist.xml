@@ -40,9 +40,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>15+</subset>
-		</subsets>
+		<versions>
+			<version>15+</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>Jep384Tests</testCaseName>
@@ -63,8 +63,8 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>15+</subset>
-		</subsets>
+		<versions>
+			<version>15+</version>
+		</versions>
 	</test>
 </playlist>

@@ -118,9 +118,9 @@ the format to use.
       - impl:    [openj9|hotspot|ibm] (filter test based on exported JDK_IMPL 
                  value; a test can be tagged with multiple impls at the 
                  same time; default to all impls)
-      - subset:  [8|8+|9|9+|10|10+|11|11+|Panama|Valhalla] (filter test based on 
+      - version:  [8|8+|9|9+|10|10+|11|11+|Panama|Valhalla] (filter test based on 
                  exported JDK_VERSION value; a test can be tagged with 
-                 multiple subsets at the same time; if a test tagged with 
+                 multiple versions at the same time; if a test tagged with 
                  a number (e.g., 8), it will used to match JDK_VERSION; if
                  a test tagged with a number followed by + sign, any JDK_VERSION
                  after the number will be a match; default to always match)
@@ -219,9 +219,9 @@ make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
 
 #### Run tests against specific (e.g., hotspot 8) SDK
 
-`<impl>` and `<subset>` elements are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable).  
+`<impl>` and `<version>` elements are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable).  
 
-For example, adding a `<subsets><subset>8</subset></subsets>` block into the [target definition of TestExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L26-L49) would mean that test would only get run against jdk8 and would be skipped for other JDK versions.  If `<subsets>` or `<impls>` are not included in the target definition, then it is assumed that ALL versions and implementations are valid for that test target.
+For example, adding a `<versions><version>8</version></versions>` block into the [target definition of TestExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L26-L49) would mean that test would only get run against jdk8 and would be skipped for other JDK versions.  If `<versions>` or `<impls>` are not included in the target definition, then it is assumed that ALL versions and implementations are valid for that test target.
 
 
 #### Rerun the failed tests from the last run
@@ -372,7 +372,7 @@ For example, to exclude the test for AdoptOpenJDK only:
 ```
 
 ##### Exclude a test against specific java version:
-Add a ```<subset>``` element in the ```<disabled>``` element to specify the version.
+Add a ```<version>``` element in the ```<disabled>``` element to specify the version.
 
 For example, to exclude the test for java 11 and up:
 
@@ -381,7 +381,7 @@ For example, to exclude the test for java 11 and up:
   <testCaseName>jdk_test</testCaseName> 
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-    <subset>11+</subset>
+    <version>11+</version>
   </disabled>
   ...
 ```
@@ -404,7 +404,7 @@ For example, to exclude the test for all linux platforms:
 
 
 ##### Exclude test against multiple criteria:
-Defined a combination of ```<variation>```, ```<impl>```, ```<subset>```, and  ```<plat>``` in the ```<disabled>``` element.
+Defined a combination of ```<variation>```, ```<impl>```, ```<version>```, and  ```<plat>``` in the ```<disabled>``` element.
 
 For example, to exclude the test with variation ```-Xmx1024m``` against adoptopenjdk openj9 java 8 on windows only:
 
@@ -414,7 +414,7 @@ For example, to exclude the test with variation ```-Xmx1024m``` against adoptope
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
     <variation>-Xmx1024m</variation>
-    <subset>8</subset>
+    <version>8</version>
     <impl>openj9</impl>
     <vendor>adoptopenjdk</vendor>
     <plat>.*windows.*</plat>
@@ -431,12 +431,12 @@ For example, to exclude test on against hotspot and openj9. It is required to de
   <testCaseName>jdk_test</testCaseName> 
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-    <subset>8</subset>
+    <version>8</version>
     <impl>openj9</impl>
   </disabled>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-    <subset>8</subset>
+    <version>8</version>
     <impl>hotspot</impl>
   </disabled>
   ...
@@ -449,7 +449,7 @@ Or remove ```<impl>``` element to exclude test against all implementations:
   <testCaseName>jdk_test</testCaseName> 
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-    <subset>8</subset>
+    <version>8</version>
   </disabled>
   ...
 ```
