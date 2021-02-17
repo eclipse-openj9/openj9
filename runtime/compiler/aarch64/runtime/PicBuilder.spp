@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -131,6 +131,22 @@
 
 	.text
 	.align 2
+
+
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+#define LOAD_CLASS(dest64, dest32, src) \
+	ldr	dest64, [x19, J9TR_VMThreadCompressObjectReferences] ; \
+	cmp	dest64, 0 ; \
+	ldr	dest32, [src, J9TR_J9Object_class] ; \
+	bne	8 ; \
+	ldr	dest64, [src, J9TR_J9Object_class]
+#else /* OMR_GC_FULL_POINTERS */
+#define LOAD_CLASS(dest64, dest32, src)	ldr	dest32, [src, J9TR_J9Object_class]
+#endif /* OMR_GC_FULL_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
+#define LOAD_CLASS(dest64, dest32, src)	ldr	dest64, [src, J9TR_J9Object_class]
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 
 // Rewrite the distance of the specified branch instruction (BL or unconditional B)
 //
@@ -751,12 +767,8 @@ L_typeCheckAndDirectDispatch:
 	bl	jitInstanceOf
 	cbnz	x0, L_directDispatchInterface			// If jitInstanceOf did not return null, continue on to direct dispatch
 	ldr	x0, [J9SP, #56]					// Load 'this' pointer
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	ldr	w0, [x0, #J9TR_J9Object_class]			// Load the class offset
-#else
-	ldr	x0, [x0, #J9TR_J9Object_class]			// Load the class
-#endif
-	and	x0, x0, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
+	LOAD_CLASS(x2, w2, x0)					// Load class pointer
+	and	x0, x2, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
 	add	x1, x7, J9TR_ICSnippet_InterfaceClass		// Address of InterfaceClass/ITableIndex pair
 	mov	x2, x7						// Load original RA for use inside jitLookupInterfaceMethod
 	bl	jitLookupInterfaceMethod			// Branch to jitLookupInterfaceMethod to trigger exception
@@ -797,12 +809,8 @@ _interfaceDispatch:
 	stp	x3, x2, [J9SP, #32]
 	stp	x1, x0, [J9SP, #48]
 L_continueInterfaceSend:
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	ldr	w0, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
-#else
-	ldr	x0, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
-#endif
-	and	x0, x0, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
+	LOAD_CLASS(x2, w2, x0)					// Load class pointer
+	and	x0, x2, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
 	add	x1, x30, #J9TR_ICSnippet_InterfaceClass		// get InterfaceClass/ITableIndex pair pointer
 	ldr	x2, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// get code cache RA
 	mov	x10, x2						// protect LR in x10 (in L_commonLookupException, it is expected)
@@ -812,11 +820,7 @@ L_continueInterfaceSend:
 	sub	x9, x9, x0					// convert interp vTableIndex to jit index (must be in x9 for patch virtual)
 	mov	x30, x10					// set LR = code cache RA
 	ldr	x0, [J9SP, #56]					// refetch 'this'
-#ifdef OMR_GC_COMPRESSED_POINTERS
-	ldr	w11, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
-#else
-	ldr	x11, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
-#endif
+	LOAD_CLASS(x11, w11, x0)				// Load class pointer
 	and	x11, x11, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
 
 	ldp	x7, x6, [J9SP, #0]				// restore other parameter regs
