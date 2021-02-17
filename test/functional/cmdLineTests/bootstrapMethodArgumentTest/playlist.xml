@@ -43,8 +43,8 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>11</subset>
-		</subsets>
+		<versions>
+			<version>11</version>
+		</versions>
 	</test>
 </playlist>
