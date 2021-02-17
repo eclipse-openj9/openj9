@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -386,46 +386,11 @@ MM_MarkingDelegate::scanClass(MM_EnvironmentBase *env, J9Class *clazz)
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	if (isDynamicClassUnloadingEnabled()) {
-		UDATA classDepth = GC_ClassModel::getClassDepth(clazz);
-		/* Superclasses - if the depth is 0, don't bother - no superclasses */
-		if (0 < classDepth) {
-			J9Class** superclassScanPtr = clazz->superclasses;
-			J9Class** superclassEndScanPtr = superclassScanPtr + classDepth;
-			while (superclassScanPtr < superclassEndScanPtr) {
-				J9Class *clazzPtr = *superclassScanPtr++;
-				_markingScheme->markObject(env, clazzPtr->classObject);
-			}
-		}
-
-		if (NULL != clazz->arrayClass) {
-			J9Class *clazzPtr = clazz->arrayClass;
-			_markingScheme->markObject(env, clazzPtr->classObject);
-		}
-
-		/* Component type and Leaf Component type for indexable */
-		if (_extensions->objectModel.isIndexable(clazz)) {
-			J9ArrayClass *indexableClass = (J9ArrayClass *)clazz;
-			J9Class *clazzPtr = indexableClass->componentType;
-			_markingScheme->markObject(env, clazzPtr->classObject);
-
-			/*
-			 * There is no mandatory need to scan leafComponentType here because this class
-			 * would be discovered at the end componentType chain eventually
-			 * However it is a performance optimization because an early class discovery
-			 * might reduce number of loops to scan
-			 */
-			clazzPtr = indexableClass->leafComponentType;
-			_markingScheme->markObject(env, clazzPtr->classObject);
-		}
-
-		/* ITable */
-		J9JavaVM *javaVM = (J9JavaVM *)env->getLanguageVM();
-		if (!GC_ClassModel::usesSharedITable(javaVM, clazz)) {
-			J9ITable *clazzITable = (J9ITable *)clazz->iTable;
-			J9ITable *endITable = (0 != classDepth) ? (J9ITable *)(clazz->superclasses[classDepth - 1]->iTable) : NULL;
-			while (clazzITable != endITable) {
-				_markingScheme->markObject(env, clazzITable->interfaceClass->classObject);
-				clazzITable = clazzITable->next;
+		GC_ClassIteratorClassSlots classSlotIterator((J9JavaVM*)env->getLanguageVM(), clazz);
+		J9Class **slotPtr;
+		while (NULL != (slotPtr = classSlotIterator.nextSlot())) {
+			if (NULL != *slotPtr) {
+				_markingScheme->markObject(env, (*slotPtr)->classObject);
 			}
 		}
 	}
