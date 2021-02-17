@@ -2137,7 +2137,9 @@ void J9::AheadOfTimeCompile::interceptAOTRelocation(TR::ExternalRelocation *relo
    {
    OMR::AheadOfTimeCompile::interceptAOTRelocation(relocation);
 
-   if (relocation->getTargetKind() == TR_ClassAddress)
+   TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
+
+   if (kind == TR_ClassAddress)
       {
       TR::SymbolReference *symRef = NULL;
       void *p = relocation->getTargetAddress();
@@ -2148,5 +2150,33 @@ void J9::AheadOfTimeCompile::interceptAOTRelocation(TR::ExternalRelocation *relo
 
       if (symRef->getCPIndex() == -1)
          relocation->setTargetKind(TR_ArbitraryClassAddress);
+      }
+   else if (kind == TR_MethodPointer)
+      {
+      TR::Node *aconstNode = reinterpret_cast<TR::Node *>(relocation->getTargetAddress());
+
+      TR_OpaqueMethodBlock *j9method = reinterpret_cast<TR_OpaqueMethodBlock *>(aconstNode->getAddress());
+      if (aconstNode->getOpCodeValue() == TR::loadaddr)
+         {
+         j9method =
+               reinterpret_cast<TR_OpaqueMethodBlock *>(
+                  aconstNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress());
+         }
+
+      uintptr_t inlinedSiteIndex = static_cast<uintptr_t>(aconstNode->getInlinedSiteIndex());
+      TR_InlinedCallSite & ics = TR::comp()->getInlinedCallSite(inlinedSiteIndex);
+      TR_ResolvedMethod *inlinedMethod = ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod;
+      TR_OpaqueMethodBlock *inlinedJ9Method = inlinedMethod->getPersistentIdentifier();
+
+      /* If the j9method from the aconst node is the same as the j9method at
+       * inlined call site at inlinedSiteIndex, switch the relo kind to
+       * TR_InlinedMethodPointer; at relo time, the inlined site index is
+       * sufficient to materialize the j9method pointer
+       */
+      if (inlinedJ9Method == j9method)
+         {
+         relocation->setTargetKind(TR_InlinedMethodPointer);
+         relocation->setTargetAddress(reinterpret_cast<uint8_t *>(inlinedSiteIndex));
+         }
       }
    }
