@@ -1765,6 +1765,17 @@ class TR_RelocationRecordMethodPointer : public TR_RelocationRecordPointer
       virtual void activatePointer(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
    };
 
+class TR_RelocationRecordInlinedMethodPointer : public TR_RelocationRecordWithInlinedSiteIndex
+   {
+   public:
+      TR_RelocationRecordInlinedMethodPointer() {}
+      TR_RelocationRecordInlinedMethodPointer(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecordWithInlinedSiteIndex(reloRuntime, record) {}
+      virtual char *name();
+
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+   };
+
 class TR_RelocationRecordEmitClass : public TR_RelocationRecordWithInlinedSiteIndex
    {
    public:

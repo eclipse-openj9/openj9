@@ -727,6 +727,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_MethodPointer:
          reloRecord = new (storage) TR_RelocationRecordMethodPointer(reloRuntime, record);
          break;
+      case TR_InlinedMethodPointer:
+         reloRecord = new (storage) TR_RelocationRecordInlinedMethodPointer(reloRuntime, record);
+         break;
       case TR_EmitClass:
          reloRecord = new (storage) TR_RelocationRecordEmitClass(reloRuntime, record);
          break;
@@ -5684,6 +5687,79 @@ TR_RelocationRecordMethodPointer::activatePointer(TR_RelocationRuntime *reloRunt
       registerHCRAssumption(reloRuntime, reloLocation);
    }
 
+char *
+TR_RelocationRecordInlinedMethodPointer::name()
+   {
+   return "TR_InlinedMethodPointer";
+   }
+
+void
+TR_RelocationRecordInlinedMethodPointer::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordPointerPrivateData *reloPrivateData = &(privateData()->pointer);
+      J9Method *inlinedMethod =
+            reinterpret_cast<J9Method *>(
+               getInlinedSiteMethod(reloRuntime, inlinedSiteIndex(reloTarget)));
+
+   if (inlinedMethod != reinterpret_cast<J9Method *>(-1))
+      {
+      reloPrivateData->_activatePointer = true;
+      reloPrivateData->_clazz = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_METHOD(inlinedMethod));
+      reloPrivateData->_pointer = reinterpret_cast<uintptr_t>(inlinedMethod);
+      reloPrivateData->_needUnloadAssumption =
+            !reloRuntime->fej9()->sameClassLoaders(
+               reloPrivateData->_clazz,
+               reloRuntime->comp()->getCurrentMethod()->classOfMethod());
+
+      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: pointer %p\n", reloPrivateData->_pointer);
+      }
+   else
+      {
+      reloPrivateData->_activatePointer = false;
+      reloPrivateData->_clazz = reinterpret_cast<TR_OpaqueClassBlock *>(-1);
+      reloPrivateData->_pointer = static_cast<uintptr_t>(-1);
+      reloPrivateData->_needUnloadAssumption = false;
+
+      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: invalid site\n");
+      }
+   }
+
+int32_t
+TR_RelocationRecordInlinedMethodPointer::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordPointerPrivateData *reloPrivateData = &(privateData()->pointer);
+
+   /* Apply relocation */
+   reloTarget->storePointer((uint8_t *)reloPrivateData->_pointer, reloLocation);
+
+   if (reloPrivateData->_activatePointer)
+      {
+      /* Add class unload assumptions if needed */
+      if (reloPrivateData->_needUnloadAssumption)
+         reloTarget->addPICtoPatchPtrOnClassUnload(reloPrivateData->_clazz, reloLocation);
+
+      /* Add HCR assumptions if needed */
+      if (reloRuntime->options()->getOption(TR_EnableHCR))
+         {
+         createClassRedefinitionPicSite(
+                  reinterpret_cast<void *>(reloPrivateData->_pointer),
+                  reinterpret_cast<void *>(reloLocation),
+                  sizeof(uintptr_t),
+                  false,
+                  reloRuntime->comp()->getMetadataAssumptionList());
+
+         reloRuntime->comp()->setHasClassRedefinitionAssumptions();
+         }
+      }
+   else
+      {
+      TR_ASSERT_FATAL(reloPrivateData->_clazz == reinterpret_cast<TR_OpaqueClassBlock *>(-1),
+                      "Not activating pointer but clazz=%p", reloPrivateData->_clazz);
+      }
+
+   return 0;
+   }
+
 void
 TR_RelocationRecordEmitClass::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
    {
@@ -6143,4 +6219,5 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedSpecialMethod                         = 105
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedAbstractMethod                        = 106
    sizeof(TR_RelocationRecordBreapointGuardBinaryTemplate),                          // TR_Breakpoint                                   = 107
+   sizeof(TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate),                    // TR_InlinedMethodPointer                         = 108
    };

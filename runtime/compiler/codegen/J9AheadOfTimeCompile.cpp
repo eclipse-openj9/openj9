@@ -560,6 +560,14 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_InlinedMethodPointer:
+         {
+         TR_RelocationRecordInlinedMethodPointer *impRecord = reinterpret_cast<TR_RelocationRecordInlinedMethodPointer *>(reloRecord);
+
+         impRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
+         }
+         break;
+
       case TR_ClassPointer:
          {
          TR_RelocationRecordClassPointer *cpRecord = reinterpret_cast<TR_RelocationRecordClassPointer *>(reloRecord);
@@ -1470,6 +1478,18 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                       mpRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
                                       mpRecord->classChainForInlinedMethod(reloTarget),
                                       mpRecord->vTableSlot(reloTarget));
+            }
+         }
+         break;
+
+      case TR_InlinedMethodPointer:
+         {
+         TR_RelocationRecordInlinedMethodPointer *impRecord = reinterpret_cast<TR_RelocationRecordInlinedMethodPointer *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nInlined Method Pointer: Inlined site index = %d", impRecord->inlinedSiteIndex(reloTarget));
             }
          }
          break;
