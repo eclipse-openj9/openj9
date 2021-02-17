@@ -297,6 +297,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt)
       }
 
    prevBlock->append(TR::TreeTop::create(comp, ifacmpeqNode));
+   cfg->addEdge(prevBlock, targetBlock);
    }
 
 /*
