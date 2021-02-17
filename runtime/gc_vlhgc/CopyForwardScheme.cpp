@@ -2442,7 +2442,7 @@ MM_CopyForwardScheme::createNextSplitArrayWorkUnit(MM_EnvironmentVLHGC *env, J9I
 				noEvacuation = isObjectInNoEvacuationRegions(env, (J9Object *) arrayPtr);
 			}
 
-			if (_abortInProgress || noEvacuation) {
+			if (abortFlagRaised() || noEvacuation) {
 				if (!currentSplitUnitOnly) {
 					/* work stack driven */
 					env->_workStack.push(env, (void *)arrayPtr, (void *)((nextIndex << PACKET_ARRAY_SPLIT_SHIFT) | PACKET_ARRAY_SPLIT_TAG));
@@ -2646,7 +2646,7 @@ MM_CopyForwardScheme::isAnyScanCacheWorkAvailable()
 bool
 MM_CopyForwardScheme::isAnyScanWorkAvailable(MM_EnvironmentVLHGC *env)
 {
-	return (isAnyScanCacheWorkAvailable() || ((0 != _regionCountCannotBeEvacuated) && !_abortInProgress && !abortFlagRaised() && env->_workStack.inputPacketAvailableFromWorkPackets(env)));
+	return (isAnyScanCacheWorkAvailable() || ((0 != _regionCountCannotBeEvacuated) && !abortFlagRaised() && env->_workStack.inputPacketAvailableFromWorkPackets(env)));
 }
 
 MM_CopyScanCacheVLHGC *
@@ -2780,7 +2780,7 @@ MM_CopyForwardScheme::getNextWorkUnitNoWait(MM_EnvironmentVLHGC *env, UDATA pref
 			nextNode = (nextNode + 1) % nodeLists;
 		}
 	}
-	if (SCAN_REASON_NONE == ret && (0 != _regionCountCannotBeEvacuated) && !_abortInProgress && !abortFlagRaised()) {
+	if (SCAN_REASON_NONE == ret && (0 != _regionCountCannotBeEvacuated) && !abortFlagRaised()) {
 		if (env->_workStack.retrieveInputPacket(env)) {
 			ret = SCAN_REASON_PACKET;
 		}
@@ -2906,7 +2906,11 @@ MM_CopyForwardScheme::updateScanStats(MM_EnvironmentVLHGC *env, J9Object *object
 		noEvacuation = isObjectInNoEvacuationRegions(env, objectPtr);
 	}
 
-	if ((_abortInProgress || noEvacuation) && isObjectInEvacuateMemory(objectPtr)) {
+	if (SCAN_REASON_DIRTY_CARD == reason) {
+		UDATA objectSize = _extensions->objectModel.getSizeInBytesWithHeader(objectPtr);
+		env->_copyForwardStats._objectsCardClean += 1;
+		env->_copyForwardStats._bytesCardClean += objectSize;
+	} else if (abortFlagRaised() || noEvacuation) {
 		UDATA objectSize = _extensions->objectModel.getSizeInBytesWithHeader(objectPtr);
 		Assert_MM_false(SCAN_REASON_DIRTY_CARD == reason);
 		MM_HeapRegionDescriptorVLHGC * region = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(objectPtr);
@@ -2922,10 +2926,6 @@ MM_CopyForwardScheme::updateScanStats(MM_EnvironmentVLHGC *env, J9Object *object
 			env->_copyForwardCompactGroups[compactGroup]._nonEdenStats._scannedObjects += 1;
 			env->_copyForwardCompactGroups[compactGroup]._nonEdenStats._scannedBytes += objectSize;
 		}
-	} else if (SCAN_REASON_DIRTY_CARD == reason) {
-		UDATA objectSize = _extensions->objectModel.getSizeInBytesWithHeader(objectPtr);
-		env->_copyForwardStats._objectsCardClean += 1;
-		env->_copyForwardStats._bytesCardClean += objectSize;
 	}
 
 	/* else:
@@ -2940,20 +2940,17 @@ MM_CopyForwardScheme::scanPointerArrayObjectSlots(MM_EnvironmentVLHGC *env, MM_A
 {
 	UDATA index = 0;
 	bool currentSplitUnitOnly = false;
-
-	bool noEvacuation = false;
-	if (0 != _regionCountCannotBeEvacuated) {
-		noEvacuation = isObjectInNoEvacuationRegions(env, (J9Object *) arrayPtr);
-	}
 	
-	if (_abortInProgress || noEvacuation) {
+	/*	only _abortInProgress==true or noEvacuation==true case are expected here, but we should handle all of exception cases(such as abortFlagRaised() case) */
+	if (SCAN_REASON_PACKET == reason) {
 		UDATA peekValue = (UDATA)env->_workStack.peek(env);
 		if ((PACKET_ARRAY_SPLIT_TAG == (peekValue & PACKET_ARRAY_SPLIT_TAG))) {
 			UDATA workItem = (UDATA)env->_workStack.pop(env);
 			index = workItem >> PACKET_ARRAY_SPLIT_SHIFT;
 			currentSplitUnitOnly = ((PACKET_ARRAY_SPLIT_CURRENT_UNIT_ONLY_TAG == (peekValue & PACKET_ARRAY_SPLIT_CURRENT_UNIT_ONLY_TAG)));
 		}
-	} else {
+	}
+	if (0 == index) {
 		/* make sure we only record stats for the object once -- note that this means we might
 		 * attribute the scanning cost to the wrong thread, but that's not really important
 		 */
