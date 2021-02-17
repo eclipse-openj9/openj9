@@ -1671,7 +1671,11 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 			/* ensure that the superclass isn't an interface or final */
 			if (J9_ARE_ANY_BITS_SET(superclass->romClass->modifiers, J9AccFinal)) {
 				Trc_VM_CreateRAMClassFromROMClass_superclassIsFinal(vmThread, superclass);
+#if JAVA_SPEC_VERSION >= 16
+				setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS);
+#else /* JAVA_SPEC_VERSION >= 16 */
 				setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS);
+#endif /* JAVA_SPEC_VERSION >= 16 */
 				return FALSE;
 			}
 			if (J9_ARE_ANY_BITS_SET(superclass->romClass->modifiers, J9AccInterface)) {
@@ -2462,7 +2466,12 @@ fail:
 			verifyErrorString = j9bcv_createVerifyErrorString(PORTLIB, bcvd);
 			omrthread_monitor_exit(bcvd->verifierMutex);
 
+#if JAVA_SPEC_VERSION >= 16
+			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (char *) verifyErrorString);
+#else /* JAVA_SPEC_VERSION >= 16 */
 			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, (char *) verifyErrorString);
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 			j9mem_free_memory(verifyErrorString);
 			return internalCreateRAMClassDoneNoMutex(vmThread, romClass, options, state);
 		}
