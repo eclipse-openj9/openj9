@@ -1071,6 +1071,29 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, arrayElementKnotIndex, knot->getPointerLocation(arrayElementKnotIndex));
          }
          break;
+      case MessageType::VM_isLambdaFormGeneratedMethod:
+         {
+         auto recv = client->getRecvData<TR_OpaqueMethodBlock *>();
+         client->write(response, fe->isLambdaFormGeneratedMethod(std::get<0>(recv)));
+         }
+         break;
+      case MessageType::VM_vTableOrITableIndexFromMemberName:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         client->write(response, fe->vTableOrITableIndexFromMemberName(comp, std::get<0>(recv)));
+         }
+         break;
+      case MessageType::VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index, std::string>();
+         auto &memberNameStr = std::get<1>(recv);
+         TR::KnownObjectTable::Index fieldKnotIndex = 
+            fe->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(
+               comp, std::get<0>(recv),
+               &memberNameStr[0]);
+         client->write(response, fieldKnotIndex, knot->getPointerLocation(fieldKnotIndex));
+         }
+         break;
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
       case MessageType::mirrorResolvedJ9Method:
          {

@@ -24,7 +24,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "env/VMAccessCriticalSection.hpp"
 #include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
@@ -357,10 +356,7 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
            auto mhIndex = getObjectInfoOfNode(node->getFirstArgument());
            if (knot && isKnownObject(mhIndex) && !knot->isNull(mhIndex))
               {
-              TR::VMAccessCriticalSection dereferenceKnownObjectField(comp()->fej9());
-              uintptr_t mhObject = knot->getPointer(mhIndex);
-              uintptr_t mnObject = comp()->fej9()->getReferenceField(mhObject, "member", "Ljava/lang/invoke/MemberName;");
-              auto mnIndex = knot->getOrCreateIndex(mnObject);
+              auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "member");
               if (trace())
                  traceMsg(comp(), "Get DirectMethodHandle.member known object %d\n", mnIndex);
               return mnIndex;
@@ -371,10 +367,7 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
            auto mhIndex = getObjectInfoOfNode(node->getFirstArgument());
            if (knot && isKnownObject(mhIndex) && !knot->isNull(mhIndex))
               {
-              TR::VMAccessCriticalSection dereferenceKnownObjectField(comp()->fej9());
-              uintptr_t mhObject = knot->getPointer(mhIndex);
-              uintptr_t mnObject = comp()->fej9()->getReferenceField(mhObject, "initMethod", "Ljava/lang/invoke/MemberName;");
-              auto mnIndex = knot->getOrCreateIndex(mnObject);
+              auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "initMethod");
               if (trace())
                  traceMsg(comp(), "Get DirectMethodHandle.initMethod known object %d\n", mnIndex);
               return mnIndex;

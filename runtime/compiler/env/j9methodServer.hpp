@@ -51,6 +51,7 @@ TR_ResolvedJ9JITServerMethodInfoStruct
    bool virtualMethodIsOverridden;
    void *addressContainingIsOverriddenBit;
    J9ClassLoader *classLoader;
+   bool isLambdaFormGeneratedMethod;
    };
 
 
@@ -228,6 +229,7 @@ public:
    void cacheResolvedMethodsCallees(int32_t ttlForUnresolved = 2);
    void cacheFields();
    int32_t collectImplementorsCapped(TR_OpaqueClassBlock *topClass, int32_t maxCount, int32_t cpIndexOrOffset, TR_YesNoMaybe useGetResolvedInterfaceMethod, TR_ResolvedMethod **implArray);
+   bool isLambdaFormGeneratedMethod() { return _isLambdaFormGeneratedMethod; }
    static void packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
 
 protected:
@@ -255,6 +257,7 @@ private:
    TR_PersistentJittedBodyInfo *_bodyInfo; // cached info coming from the client; uses heap memory
                                            // If method is not yet compiled this is null
    TR_IPMethodHashTableEntry *_iProfilerMethodEntry;
+   bool _isLambdaFormGeneratedMethod;
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;

@@ -269,6 +269,7 @@ class ClientSessionData
       bool _isMethodTracingEnabled;
       TR_OpaqueClassBlock * _owningClass;
       bool _isCompiledWhenProfiling; // To record if the method is compiled when doing Profiling
+      bool _isLambdaFormGeneratedMethod;
       }; // struct J9MethodInfo
 
    /**
