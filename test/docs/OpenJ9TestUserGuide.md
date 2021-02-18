@@ -267,11 +267,11 @@ For example:
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <variations>
-      <variation>NoOptions</variation>
-      <variation>-Xmx1024m</variation>
-    </variations>
-    ...
+  <variations>
+    <variation>NoOptions</variation>
+    <variation>-Xmx1024m</variation>
+  </variations>
+  ...
 ```
 To exclude the entire suite:
 
@@ -313,10 +313,10 @@ For example:
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-    </disabled>
-    ...
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+  </disabled>
+  ...
 ```
 
 This will disable the entire test suite. The following section describes how to disable the specific test cases.
@@ -329,16 +329,16 @@ For example, to exclude the test case with variation ```-Xmx1024m```:
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-      <variation>-Xmx1024m</variation>
-    </disabled>
-    ...
-    <variations>
-      <variation>NoOptions</variation>
-      <variation>-Xmx1024m</variation>
-    </variations>
-    ...
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <variation>-Xmx1024m</variation>
+  </disabled>
+  ...
+  <variations>
+    <variation>NoOptions</variation>
+    <variation>-Xmx1024m</variation>
+  </variations>
+  ...
 ```
 
 ##### Exclude a test against specific java implementation:
@@ -349,11 +349,11 @@ For example, to exclude the test for openj9 only:
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-      <impl>openj9</impl>
-    </disabled>
-    ...
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <impl>openj9</impl>
+  </disabled>
+  ...
 ```
 
 ##### Exclude a test against specific java vendor:
@@ -364,11 +364,11 @@ For example, to exclude the test for AdoptOpenJDK only:
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-      <vendor>adoptopenjdk</vendor>
-    </disabled>
-    ...
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <vendor>adoptopenjdk</vendor>
+  </disabled>
+  ...
 ```
 
 ##### Exclude a test against specific java version:
@@ -379,11 +379,11 @@ For example, to exclude the test for java 11 and up:
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-      <subset>11+</subset>
-    </disabled>
-    ...
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <subset>11+</subset>
+  </disabled>
+  ...
 ```
 
 
@@ -395,11 +395,11 @@ For example, to exclude the test for all linux platforms:
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-      <plat>.*linux.*</plat>
-    </disabled>
-    ...
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <plat>.*linux.*</plat>
+  </disabled>
+  ...
 ```
 
 
@@ -411,15 +411,15 @@ For example, to exclude the test with variation ```-Xmx1024m``` against adoptope
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-      <variation>-Xmx1024m</variation>
-      <subset>8</subset>
-      <impl>openj9</impl>
-      <vendor>adoptopenjdk</vendor>
-      <plat>.*windows.*</plat>
-    </disabled>
-    ...
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <variation>-Xmx1024m</variation>
+    <subset>8</subset>
+    <impl>openj9</impl>
+    <vendor>adoptopenjdk</vendor>
+    <plat>.*windows.*</plat>
+  </disabled>
+  ...
 ```
 
 Note: Same element cannot be defined multiple times inside one ```<disabled>``` element. It is because the elements inside the disable element are in AND relationship.
@@ -429,17 +429,17 @@ For example, to exclude test on against hotspot and openj9. It is required to de
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-      <subset>8</subset>
-      <impl>openj9</impl>
-    </disabled>
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-      <subset>8</subset>
-      <impl>hotspot</impl>
-    </disabled>
-    ...
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <subset>8</subset>
+    <impl>openj9</impl>
+  </disabled>
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <subset>8</subset>
+    <impl>hotspot</impl>
+  </disabled>
+  ...
 ```
 
 Or remove ```<impl>``` element to exclude test against all implementations:
@@ -447,11 +447,11 @@ Or remove ```<impl>``` element to exclude test against all implementations:
 ```
 <test>
   <testCaseName>jdk_test</testCaseName> 
-    <disabled>
-      <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
-      <subset>8</subset>
-    </disabled>
-    ...
+  <disabled>
+    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <subset>8</subset>
+  </disabled>
+  ...
 ```
 #### Execute excluded test target
 
