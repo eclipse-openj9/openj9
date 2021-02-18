@@ -173,6 +173,8 @@ TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::Compilati
    _recompilationMethodInfo(NULL),
    _seqNo(0),
    _waitToBeNotified(false),
+   _clientOptions(NULL),
+   _clientOptionsSize(0),
    _methodIPDataPerComp(NULL),
    _resolvedMethodInfoMap(NULL),
    _resolvedMirrorMethodsPersistIPInfo(NULL),
@@ -590,10 +592,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          }
 
 
-      // Copy the option strings
-      size_t clientOptSize = clientOptStr.size();
-      clientOptions = new (PERSISTENT_NEW) char[clientOptSize];
-      memcpy(clientOptions, clientOptStr.data(), clientOptSize);
+      // Copy the option string
+      copyClientOptions(clientOptStr, clientSession->persistentMemory());
 
       // _recompilationMethodInfo will be passed to J9::Recompilation::_methodInfo,
       // which will get freed in populateBodyInfo() when creating the
@@ -649,8 +649,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       entry.initialize(*serverDetails, NULL, CP_SYNC_NORMAL, optPlan);
       entry._jitStateWhenQueued = compInfo->getPersistentInfo()->getJitState();
       entry._stream = stream; // Add the stream to the entry
-      entry._clientOptions = clientOptions;
-      entry._clientOptionsSize = clientOptSize;
       entry._entryTime = compInfo->getPersistentInfo()->getElapsedTime(); // Cheaper version
       entry._methodIsInSharedCache = false; // No SCC for now in JITServer
       entry._compInfoPT = this; // Need to know which comp thread is handling this request
@@ -792,8 +790,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       if (clientOptions)
          {
-         getClientData()->persistentMemory()->freePersistentMemory(clientOptions);
-         entry._clientOptions = NULL;
+         deleteClientOptions(getClientData()->persistentMemory());
          }
 
       if (_recompilationMethodInfo)
@@ -825,19 +822,14 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Put the request back into the pool
       setMethodBeingCompiled(NULL); // Must have the compQmonitor
 
-
-      // Save the pointer to the plan before recycling the entry
-      TR_OptimizationPlan *optPlan = entry._optimizationPlan;
-      // This deallocates client options, so need to use a per-client allocator
-      compInfo->requeueOutOfProcessEntry(&entry);
-
       exitPerClientAllocationRegion();
+
       if (optPlan)
          {
          TR_OptimizationPlan::freeOptimizationPlan(optPlan);
          }
 
-
+      compInfo->requeueOutOfProcessEntry(&entry);
 
       // Reset the pointer to the cached client session data
       if (getClientData())
@@ -906,6 +898,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          }
       }
 
+   deleteClientOptions(getClientData()->persistentMemory());
+
    // Release the queue slot monitor because we don't need it anymore
    // This will allow us to acquire the sequencing monitor later
    entry.releaseSlotMonitor(compThread);
@@ -917,15 +911,15 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // Save the pointer to the plan before recycling the entry
    // Decrease the queue weight
    compInfo->decreaseQueueWeightBy(entry._weight);
-   // Put the request back into the pool
-   setMethodBeingCompiled(NULL);
-   compInfo->requeueOutOfProcessEntry(&entry);
-   compInfo->printQueue();
 
    exitPerClientAllocationRegion();
 
    TR_OptimizationPlan::freeOptimizationPlan(optPlan); // we no longer need the optimization plan
 
+   // Put the request back into the pool
+   setMethodBeingCompiled(NULL);
+   compInfo->requeueOutOfProcessEntry(&entry);
+   compInfo->printQueue();
 
    // Decrement number of active threads before _inUse, but we
    // need to acquire the sequencing monitor when accessing numActiveThreads
