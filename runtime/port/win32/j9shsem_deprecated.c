@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,6 +74,10 @@ j9shsem_deprecated_open (struct J9PortLibrary *portLibrary, const char* cacheDir
 
 	/* clear portable error number */
 	omrerror_set_last_error(0, 0);
+	
+	if (NULL != controlFileStatus) {
+		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
+	}
 
 	if (cacheDirName == NULL) {
 		Trc_PRT_shsem_j9shsem_deprecated_open_ExitNullCacheDirName();
