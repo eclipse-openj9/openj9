@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -204,7 +204,13 @@
 		<delete dir="${classUnloadingBin}" />
 	</target>
 
+	<target name="check_vm_build" unless="vm_build.executed">
+		<echo message="target check_build is called....." />
+		<antcall target="build" inheritall="true" />
+	</target>
+
 	<target name="build" >
+		<property name="vm_build.executed" value="true" />
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
