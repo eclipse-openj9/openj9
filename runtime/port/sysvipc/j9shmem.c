@@ -327,6 +327,10 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 	Trc_PRT_shmem_j9shmem_open_Entry(rootname, size, perm);
 
 	clearPortableError(portLibrary);
+	
+	if (NULL != controlFileStatus) {
+		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
+	}
 
 	if (cacheDirName == NULL) {
 		Trc_PRT_shmem_j9shmem_open_ExitNullCacheDirName();
@@ -358,10 +362,6 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 		tmphandle->currentStorageProtectKey = getStorageKey();
 	}	
 #endif
-	
-	if (NULL != controlFileStatus) {
-		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
-	}
 
 	for (retryIfReadOnlyCount = 10; retryIfReadOnlyCount > 0; retryIfReadOnlyCount -= 1) {
 		/*Open control file with write lock*/
