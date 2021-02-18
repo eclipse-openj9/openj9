@@ -236,6 +236,10 @@ j9shsem_deprecated_open (struct J9PortLibrary *portLibrary, const char* cacheDir
 	Trc_PRT_shsem_j9shsem_open_Entry(semname, setSize, permission);
 
 	clearPortableError(portLibrary);
+	
+	if (NULL != controlFileStatus) {
+		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
+	}
 
 	if (cacheDirName == NULL) {
 		Trc_PRT_shsem_j9shsem_deprecated_open_ExitNullCacheDirName();
@@ -254,10 +258,6 @@ j9shsem_deprecated_open (struct J9PortLibrary *portLibrary, const char* cacheDir
 		return J9PORT_ERROR_SHSEM_OPFAILED;
 	}
 	tmphandle->baseFile = (char *) (((char *) tmphandle) + handleStructLength);
-
-	if (NULL != controlFileStatus) {
-		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
-	}
 
 	for (retryIfReadOnlyCount = 10; retryIfReadOnlyCount > 0; retryIfReadOnlyCount -= 1) {
 		/*Open control file with write lock*/
