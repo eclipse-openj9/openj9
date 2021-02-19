@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,11 +119,7 @@ TR::Instruction *OMR::ARM::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGen
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    uintptr_t mask = TR::Compiler->om.maskOfObjectVftField();
-#ifdef OMR_GC_COMPRESSED_POINTERS
-   bool isCompressed = true;
-#else
-   bool isCompressed = false;
-#endif
+
    if (~mask == 0)
       {
       // no mask instruction required
