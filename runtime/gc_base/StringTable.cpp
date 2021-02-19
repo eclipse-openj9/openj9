@@ -623,6 +623,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				while (tempLength != 0) {
 					U_16 unicode = 0;
 					UDATA consumed = VM_VMHelpers::decodeUTF8CharN(tempData, &unicode, tempLength);
+					Assert_GC_true_with_message2(MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread), 0 != consumed, "Invalid UTF8 character at %p, %zu", tempData, tempLength);
 					tempData += consumed;
 					tempLength -= consumed;
 					unicodeLength += 1;
