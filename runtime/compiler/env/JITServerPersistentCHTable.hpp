@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -157,7 +157,7 @@ class FlatPersistentClassInfo
    {
 public:
    static std::string serializeHierarchy(const JITClientPersistentCHTable *chTable);
-   static std::vector<TR_PersistentClassInfo*> deserializeHierarchy(const std::string& data);
+   static std::vector<TR_PersistentClassInfo*> deserializeHierarchy(const std::string& data, TR_PersistentMemory *persistentMemory);
    static size_t classSize(TR_PersistentClassInfo *clazz);
    static size_t serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info);
    static size_t deserializeClassSimple(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo *info);
@@ -204,7 +204,7 @@ public:
    virtual void setFirstSubClass(TR_SubClass *sc) override;
    virtual void setFieldInfo(TR_PersistentClassInfoForFields *i) override;
    virtual TR_SubClass *addSubClass(TR_PersistentClassInfo *subClass) override;
-   virtual void removeSubClasses() override;
+   virtual void removeSubClasses(TR_PersistentMemory *persistentMemory = ::trPersistentMemory) override;
    virtual void removeASubClass(TR_PersistentClassInfo *subClass) override;
    virtual void removeUnloadedSubClasses() override;
    virtual void setUnloaded() override;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,9 +26,10 @@
 namespace JITServer
 {
 MessageBuffer::MessageBuffer() :
-   _capacity(INITIAL_BUFFER_SIZE)
+   _capacity(INITIAL_BUFFER_SIZE),
+   _allocator(TR::Compiler->persistentGlobalAllocator())
    {
-   _storage = static_cast<char *>(TR_Memory::jitPersistentAlloc(_capacity));
+   _storage = allocateMemory(_capacity);
    if (!_storage)
       throw std::bad_alloc();
    _curPtr = _storage;
@@ -42,12 +43,12 @@ MessageBuffer::expandIfNeeded(uint32_t requiredSize)
    if (requiredSize > _capacity)
       {
       _capacity = requiredSize * 2;
-      char *newStorage = static_cast<char *>(TR_Memory::jitPersistentAlloc(_capacity));
+      char *newStorage = allocateMemory(_capacity);
       if (!newStorage)
          throw std::bad_alloc();
       uint32_t curSize = size();
       memcpy(newStorage, _storage, curSize);
-      TR_Memory::jitPersistentFree(_storage);
+      freeMemory(_storage);
       _storage = newStorage;
       _curPtr = _storage + curSize;
       }
@@ -62,13 +63,13 @@ MessageBuffer::expand(uint32_t requiredSize, uint32_t numBytesToCopy)
    _capacity = requiredSize;
    uint32_t curSize = size();
 
-   char *newStorage = static_cast<char *>(TR_Memory::jitPersistentAlloc(_capacity));
+   char *newStorage = allocateMemory(_capacity);
    if (!newStorage)
       throw std::bad_alloc();
 
    memcpy(newStorage, _storage, numBytesToCopy);
 
-   TR_Memory::jitPersistentFree(_storage);
+   freeMemory(_storage);
    _storage = newStorage;
    _curPtr = _storage + curSize;
    }

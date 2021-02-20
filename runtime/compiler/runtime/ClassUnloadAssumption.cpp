@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -110,14 +110,14 @@ TR_PersistentClassInfo::removeASubClass(TR_PersistentClassInfo *subClassToRemove
 
 
 void
-TR_PersistentClassInfo::removeSubClasses()
+TR_PersistentClassInfo::removeSubClasses(TR_PersistentMemory *persistentMemory)
    {
    TR_SubClass *scl = _subClasses.getFirst();
    _subClasses.setFirst(0);
    while (scl)
       {
       TR_SubClass *nextScl = scl->getNext();
-      jitPersistentFree(scl);
+      persistentMemory->freePersistentMemory(scl);
       scl = nextScl;
       }
    }
@@ -1284,9 +1284,9 @@ J9::PersistentInfo::addUnloadedClass(
    }
 
 #if defined(J9VM_OPT_JITSERVER)
-void TR_AddressSet::destroy()
+void TR_AddressSet::destroy(TR_PersistentMemory *persistentMemory)
    {
-   jitPersistentFree(_addressRanges);
+   persistentMemory->freePersistentMemory(_addressRanges);
    }
 
 void TR_AddressSet::getRanges(std::vector<TR_AddressRange> &ranges)

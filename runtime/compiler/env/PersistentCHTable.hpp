@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,6 +220,8 @@ class TR_PersistentCHTable
 
    uint8_t _buffer[sizeof(TR_LinkHead<TR_PersistentClassInfo>) * (CLASSHASHTABLE_SIZE + 1)];
    TR_LinkHead<TR_PersistentClassInfo> *_classes;
+
+   protected:
    TR_PersistentMemory *_trPersistentMemory;
    };
 

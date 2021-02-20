@@ -154,7 +154,6 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
 #if defined(J9VM_OPT_JITSERVER)
-         _remoteCompilationMode(JITServer::NONE),
          _JITServerAddress("localhost"),
          _JITServerPort(38400),
          _socketTimeoutMs(2000),
@@ -321,8 +320,9 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    int32_t _countForRecompile;
 
 #if defined(J9VM_OPT_JITSERVER)
-   JITServer::RemoteCompilationModes getRemoteCompilationMode() const { return _remoteCompilationMode; }
-   void setRemoteCompilationMode(JITServer::RemoteCompilationModes m) { _remoteCompilationMode = m; }
+   static JITServer::RemoteCompilationModes _remoteCompilationMode; // JITServer::NONE, JITServer::CLIENT, JITServer::SERVER
+
+   static JITServer::RemoteCompilationModes getRemoteCompilationMode() { return _remoteCompilationMode; }
    const std::string &getJITServerAddress() const { return _JITServerAddress; }
    void setJITServerAddress(char *addr) { _JITServerAddress = addr; }
    uint32_t getSocketTimeout() const { return _socketTimeoutMs; }
@@ -416,7 +416,6 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
    int32_t _numLoadedClasses; ///< always increasing
 #if defined(J9VM_OPT_JITSERVER)
-   JITServer::RemoteCompilationModes _remoteCompilationMode; // JITServer::NONE, JITServer::CLIENT, JITServer::SERVER
    std::string _JITServerAddress;
    uint32_t    _JITServerPort;
    uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation

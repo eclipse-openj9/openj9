@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,7 +121,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    int32_t getSubClassesCount() { return _subClasses.getSize(); }
 
    virtual TR_SubClass *addSubClass(TR_PersistentClassInfo *subClass);
-   virtual void removeSubClasses();
+   virtual void removeSubClasses(TR_PersistentMemory *persistentMemory = ::trPersistentMemory);
    virtual void removeASubClass(TR_PersistentClassInfo *subClass);
    virtual void removeUnloadedSubClasses();
    virtual void setUnloaded(){_visitedStatus |= 0x2;}
@@ -251,7 +251,7 @@ class TR_AddressSet
       {}
 
 #if defined(J9VM_OPT_JITSERVER)
-   void destroy();
+   void destroy(TR_PersistentMemory *persistentMemory);
    void getRanges(std::vector<TR_AddressRange> &ranges); // copies the address ranges stored in the current object into a vector
    void setRanges(const std::vector<TR_AddressRange> &ranges); // loads the address ranges from the vector given as parameter
    int32_t getNumberOfRanges() const { return _numAddressRanges; }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 
 JITServerPersistentCHTable::JITServerPersistentCHTable(TR_PersistentMemory *trMemory)
    : TR_PersistentCHTable(trMemory),
-   _classMap(decltype(_classMap)::allocator_type(TR::Compiler->persistentAllocator()))
+   _classMap(decltype(_classMap)::allocator_type(trMemory->_persistentAllocator.get()))
    {
    _chTableMonitor = TR::Monitor::create("JIT-JITServerCHTableMonitor");
    if (!_chTableMonitor)
@@ -45,8 +45,8 @@ JITServerPersistentCHTable::~JITServerPersistentCHTable()
    for (auto& it : _classMap)
       {
       TR_PersistentClassInfo *classInfo = it.second;
-      classInfo->removeSubClasses();
-      jitPersistentFree(classInfo);
+      classInfo->removeSubClasses(_trPersistentMemory);
+      _trPersistentMemory->freePersistentMemory(classInfo);
       }
    _classMap.clear();
    _chTableMonitor->destroy();
@@ -57,7 +57,7 @@ JITServerPersistentCHTable::initializeCHTable(TR_J9VMBase *fej9, const std::stri
    {
    if (rawData.length() == 0)
       return false;
-   auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData);
+   auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData, _trPersistentMemory);
       {
       TR::ClassTableCriticalSection initializeIfNeeded(fej9);
       if (_classMap.empty()) // check again to prevent races
@@ -164,7 +164,7 @@ JITServerPersistentCHTable::commitModifications(const std::string &rawData)
       {
       auto flat = it.second.first;
       auto persist = it.second.second;
-      persist->removeSubClasses();
+      persist->removeSubClasses(_trPersistentMemory);
       for (size_t i = 0; i < flat->_numSubClasses; i++)
          {
          auto classInfo = findClassInfo(flat->_subClasses[i]);
@@ -362,7 +362,7 @@ FlatPersistentClassInfo::deserializeClassSimple(TR_PersistentClassInfo *clazz, F
    }
 
 std::vector<TR_PersistentClassInfo*> 
-FlatPersistentClassInfo::deserializeHierarchy(const std::string& data)
+FlatPersistentClassInfo::deserializeHierarchy(const std::string& data, TR_PersistentMemory *persistentMemory)
    {
    std::vector<TR_PersistentClassInfo*> out;
    std::unordered_map<TR_OpaqueClassBlock*, std::pair<FlatPersistentClassInfo*, TR_PersistentClassInfo*>> infoMap;
@@ -567,10 +567,10 @@ TR_SubClass *TR_JITClientPersistentClassInfo::addSubClass(TR_PersistentClassInfo
    return TR_PersistentClassInfo::addSubClass(subClass);
    }
 
-void TR_JITClientPersistentClassInfo::removeSubClasses()
+void TR_JITClientPersistentClassInfo::removeSubClasses(TR_PersistentMemory *persistentMemory)
    {
    TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
-   TR_PersistentClassInfo::removeSubClasses();
+   TR_PersistentClassInfo::removeSubClasses(persistentMemory);
    }
 
 void TR_JITClientPersistentClassInfo::removeASubClass(TR_PersistentClassInfo *subClass)

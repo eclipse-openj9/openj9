@@ -309,7 +309,7 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
             if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
                continue;
 
-            JITServer::ServerStream *stream = new (PERSISTENT_NEW) JITServer::ServerStream(connfd, bio);
+            JITServer::ServerStream *stream = new (TR::Compiler->persistentGlobalAllocator()) JITServer::ServerStream(connfd, bio);
             compiler->compile(stream);
             }
          } while ((-1 != connfd) && !getListenerThreadExitFlag());
