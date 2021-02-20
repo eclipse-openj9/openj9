@@ -2510,3 +2510,17 @@ J9::SymbolReferenceTable::createParameterSymbol(
 
    return sym;
    }
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findArrayClassRomPtrSymbolRef()
+   {
+   return element(arrayClassRomPtrSymbol);
+   }
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findClassRomPtrSymbolRef()
+   {
+   return element(classRomPtrSymbol);
+   }
+
+

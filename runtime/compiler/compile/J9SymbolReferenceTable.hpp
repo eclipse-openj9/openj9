@@ -221,6 +221,9 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findOrCreateClassIsArraySymbolRef();
 
+   TR::SymbolReference * findArrayClassRomPtrSymbolRef();
+   TR::SymbolReference * findClassRomPtrSymbolRef();
+
    TR::SymbolReference * findClassFromJavaLangClassAsPrimitiveSymbolRef();
    TR::SymbolReference * findOrCreateClassFromJavaLangClassAsPrimitiveSymbolRef();
 
