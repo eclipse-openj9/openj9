@@ -363,6 +363,15 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findShadowSymbol(TR_ResolvedMethod * owningMethod, int32_t cpIndex, TR::DataType, TR::Symbol::RecognizedField *recognizedField = NULL);
 
+   /**
+    * @brief Retrieve the textual name of the given NonHelperSymbol
+    *
+    * @param[in] nonHelper : the nonHelper symbol
+    *
+    * @return Textual name of the NonHelperSymbol
+    */
+   static const char *getNonHelperSymbolName(CommonNonhelperSymbol nonHelper);
+
    protected:
 
    TR::Symbol                           *_currentThreadDebugEventDataSymbol;
@@ -463,6 +472,9 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR_Array<TR::SymbolReference *> * _unsafeJavaStaticVolatileSymRefs;
 
    ResolvedFieldShadows _resolvedFieldShadows;
+
+   static const char *_commonNonHelperSymbolNames[];
+
    };
 
 }

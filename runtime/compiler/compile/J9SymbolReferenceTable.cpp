@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "omrformatconsts.h"
 #include "codegen/CodeGenerator.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "compile/AliasBuilder.hpp"
@@ -2523,4 +2524,45 @@ J9::SymbolReferenceTable::findClassRomPtrSymbolRef()
    return element(classRomPtrSymbol);
    }
 
+const char *J9::SymbolReferenceTable::_commonNonHelperSymbolNames[] =
+   {
+   "<classRomPtr>",
+   "<ramStaticsFromClass>",
+   "<componentClassAsPrimitive>",
+   "<initializeStatusFromClass>",
+   "<threadPrivateFlags>",
+   "<arrayletSpineFirstElement>",
+   "<dltBlock>",
+   "<classFromJavaLangClassAsPrimitive>",
+   "<javaVM>",
+   "<j9methodExtraField>",
+   "<j9methodConstantPoolField>",
+   "<startPCLinkageInfo>",
+   "<instanceShapeFromROMClass>",
+   "<j9VMThreadTempSlotField>"
+   };
+
+
+const char *
+J9::SymbolReferenceTable::getNonHelperSymbolName(CommonNonhelperSymbol nonHelper)
+   {
+#ifdef OMR_ENABLE_NONHELPER_EXTENSIBLE_ENUM
+   TR_ASSERT_FATAL(nonHelper <= J9lastNonhelperSymbol, "unknown nonhelper %" OMR_PRId32, static_cast<int32_t>(nonHelper));
+
+   static_assert(sizeof(_commonNonHelperSymbolNames)/sizeof(_commonNonHelperSymbolNames[0]) ==
+                 static_cast<int32_t>(J9lastNonhelperSymbol - J9firstNonhelperSymbol + 1),
+              "_commonNonHelperSymbolNames array must match CommonNonHelperSymbol enumeration");
+
+   if (nonHelper >= J9firstNonhelperSymbol)
+      {
+      return _commonNonHelperSymbolNames[static_cast<int32_t>(nonHelper - J9firstNonhelperSymbol)];
+      }
+   else
+      {
+      return OMR::SymbolReferenceTableConnector::getNonHelperSymbolName(nonHelper);
+      }
+#else
+   return NULL;
+#endif
+   }
 
