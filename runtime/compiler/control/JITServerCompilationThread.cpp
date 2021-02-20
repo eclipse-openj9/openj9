@@ -401,6 +401,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       const std::string &chtableMods     = std::get<15>(req);
       useAotCompilation                  = std::get<16>(req);
 
+      TR_ASSERT_FATAL(TR::Compiler->persistentMemory() == compInfo->persistentMemory(), "per-client persistent memory must not be set at this point");
       isCriticalRequest = !chtableMods.empty() || !chtableUnloads.empty() || !illegalModificationList.empty() || !unloadedClasses.empty();
 
       if (useAotCompilation)
@@ -431,10 +432,16 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Obtain monitor RAII style because creating a new hastable entry may throw bad_alloc
       OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
       compInfo->getClientSessionHT()->purgeOldDataIfNeeded(); // Try to purge old data
-      if (!(clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId, criticalSeqNo, &sessionDataWasEmpty)))
+      if (!(clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId, criticalSeqNo, &sessionDataWasEmpty, _jitConfig)))
          throw std::bad_alloc();
 
       setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object
+
+      // After this line, all persistent allocations are made per-client,
+      // until exitPerClientAllocationRegion is called
+      enterPerClientAllocationRegion();
+      TR_ASSERT(!clientSession->usesPerClientMemory() || TR::Compiler->persistentMemory() != compInfo->persistentMemory(), "per-client persistent memory must be set at this point");
+
       clientSession->setIsInStartupPhase(std::get<17>(req));
       } // End critical section
 
@@ -582,7 +589,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          clientSession->getSequencingMonitor()->exit();
          }
 
-   
 
       // Copy the option strings
       size_t clientOptSize = clientOptStr.size();
@@ -608,7 +614,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // If it's an empty string then I dont't need to cache it
          if(!(std::get<0>(classInfoTuple).empty()))
             {
-            romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
+            romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), clientSession->persistentMemory());
             }
          else
             {
@@ -616,17 +622,21 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             // It could be a renewed connection, so that's a new server because old one was shutdown
             // When the server receives an empty ROM class it would check if it actually has this class cached,
             // And if it's not cached, send a request to the client
-            romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, compInfo->persistentMemory(), &classInfoTuple);
+            romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, clientSession->persistentMemory(), &classInfoTuple);
             }
          JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
          }
 
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);
 
+      // Optimization plan needs to use the global allocator,
+      // because there is a global pool of plans
+      exitPerClientAllocationRegion();
       // Build my entry
       if (!(optPlan = TR_OptimizationPlan::alloc(clientOptPlan.getOptLevel())))
          throw std::bad_alloc();
       optPlan->clone(&clientOptPlan);
+      enterPerClientAllocationRegion();
 
       TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
       *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
@@ -666,7 +676,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          {
          // Delete server stream
          stream->~ServerStream();
-         TR_Memory::jitPersistentFree(stream);
+         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
          entry._stream = NULL;
          }
       }
@@ -683,7 +693,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          {
          // Delete server stream
          stream->~ServerStream();
-         TR_Memory::jitPersistentFree(stream);
+         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
          entry._stream = NULL;
          }
       }
@@ -709,7 +719,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (!enableJITServerPerCompConn) // JITServer TODO: remove the perCompConn mode
          {
          stream->~ServerStream();
-         TR_Memory::jitPersistentFree(stream);
+         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
          entry._stream = NULL;
          }
       }
@@ -721,12 +731,13 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       Trc_JITServerStreamClientSessionTerminate(compThread, getCompThreadId(), __FUNCTION__, e.what());
 
       abortCompilation = true;
+      
       deleteClientSessionData(e.getClientId(), compInfo, compThread);
 
       if (!enableJITServerPerCompConn)
          {
          stream->~ServerStream();
-         TR_Memory::jitPersistentFree(stream);
+         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
          entry._stream = NULL;
          }
       }
@@ -781,14 +792,13 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       if (clientOptions)
          {
-         TR_Memory::jitPersistentFree(clientOptions);
+         getClientData()->persistentMemory()->freePersistentMemory(clientOptions);
          entry._clientOptions = NULL;
          }
-      if (optPlan)
-         TR_OptimizationPlan::freeOptimizationPlan(optPlan);
+
       if (_recompilationMethodInfo)
          {
-         TR_Memory::jitPersistentFree(_recompilationMethodInfo);
+         getClientData()->persistentMemory()->freePersistentMemory(_recompilationMethodInfo);
          _recompilationMethodInfo = NULL;
          }
 
@@ -815,7 +825,19 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Put the request back into the pool
       setMethodBeingCompiled(NULL); // Must have the compQmonitor
 
+
+      // Save the pointer to the plan before recycling the entry
+      TR_OptimizationPlan *optPlan = entry._optimizationPlan;
+      // This deallocates client options, so need to use a per-client allocator
       compInfo->requeueOutOfProcessEntry(&entry);
+
+      exitPerClientAllocationRegion();
+      if (optPlan)
+         {
+         TR_OptimizationPlan::freeOptimizationPlan(optPlan);
+         }
+
+
 
       // Reset the pointer to the cached client session data
       if (getClientData())
@@ -839,11 +861,12 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             }
          setClientData(NULL);
          }
+
       if (enableJITServerPerCompConn)
          {
          // Delete server stream
          stream->~ServerStream();
-         TR_Memory::jitPersistentFree(stream);
+         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
          entry._stream = NULL;
          }
       return;
@@ -878,7 +901,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_ASSERT(entry._stream, "stream should still exist after compilation even if it encounters a streamFailure.");
          // Clean up server stream because the stream is already dead
          stream->~ServerStream();
-         TR_Memory::jitPersistentFree(stream);
+         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
          entry._stream = NULL;
          }
       }
@@ -886,6 +909,23 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // Release the queue slot monitor because we don't need it anymore
    // This will allow us to acquire the sequencing monitor later
    entry.releaseSlotMonitor(compThread);
+
+   entry._newStartPC = startPC;
+   // Update statistics regarding the compilation status (including compilationOK)
+   compInfo->updateCompilationErrorStats((TR_CompilationErrorCode)entry._compErrCode);
+
+   // Save the pointer to the plan before recycling the entry
+   // Decrease the queue weight
+   compInfo->decreaseQueueWeightBy(entry._weight);
+   // Put the request back into the pool
+   setMethodBeingCompiled(NULL);
+   compInfo->requeueOutOfProcessEntry(&entry);
+   compInfo->printQueue();
+
+   exitPerClientAllocationRegion();
+
+   TR_OptimizationPlan::freeOptimizationPlan(optPlan); // we no longer need the optimization plan
+
 
    // Decrement number of active threads before _inUse, but we
    // need to acquire the sequencing monitor when accessing numActiveThreads
@@ -901,19 +941,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
 
    setClientData(NULL); // Reset the pointer to the cached client session data
-
-   entry._newStartPC = startPC;
-   // Update statistics regarding the compilation status (including compilationOK)
-   compInfo->updateCompilationErrorStats((TR_CompilationErrorCode)entry._compErrCode);
-
-   TR_OptimizationPlan::freeOptimizationPlan(entry._optimizationPlan); // we no longer need the optimization plan
-   // Decrease the queue weight
-   compInfo->decreaseQueueWeightBy(entry._weight);
-   // Put the request back into the pool
-   setMethodBeingCompiled(NULL);
-   compInfo->requeueOutOfProcessEntry(&entry);
-   compInfo->printQueue();
-
 
    // At this point we should always have VMAccess
    // We should always have the compilation monitor
@@ -974,7 +1001,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       // Delete server stream
       stream->~ServerStream();
-      TR_Memory::jitPersistentFree(stream);
+      TR::Compiler->persistentGlobalAllocator().deallocate(stream);
       entry._stream = NULL;
       }
    }

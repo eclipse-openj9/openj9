@@ -349,6 +349,14 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    TR::list<SerializedRuntimeAssumption*>& getSerializedRuntimeAssumptions() { return _serializedRuntimeAssumptions; }
    ClientSessionData *getClientData() const { return _clientData; }
    void setClientData(ClientSessionData *clientData) { _clientData = clientData; }
+   void switchToPerClientMemory()
+      {
+      _trMemory = _perClientMemory;
+      }
+   void switchToGlobalMemory()
+      {
+      _trMemory = &_globalMemory;
+      }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
@@ -470,6 +478,9 @@ private:
    // Client session data for the client that requested this out-of-process
    // compilation (at the JITServer); unused (always NULL) at the client side
    ClientSessionData *_clientData;
+
+   TR_Memory *_perClientMemory;
+   TR_Memory _globalMemory;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *_symbolValidationManager;

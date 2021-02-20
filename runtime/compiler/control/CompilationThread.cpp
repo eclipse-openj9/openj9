@@ -988,6 +988,7 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
 #if defined(J9VM_OPT_JITSERVER)
    _cachedClientDataPtr(NULL),
    _clientStream(NULL),
+   _perClientPersistentMemory(NULL),
 #endif /* defined(J9VM_OPT_JITSERVER) */
    _addToJProfilingQueue(false)
    {
@@ -7136,6 +7137,27 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
   
    return (isMemoryCheapCompilation(bcsz, optLevel) && isCPUCheapCompilation(bcsz, optLevel));
    }
+
+void
+TR::CompilationInfoPerThreadBase::enterPerClientAllocationRegion()
+   {
+   // To use per-client memory, this thread must have a cached pointer to the client data
+   ClientSessionData *clientData = getClientData();
+   if (clientData && clientData->usesPerClientMemory())
+      {
+      _perClientPersistentMemory = clientData->persistentMemory();
+      if (_compiler)
+         _compiler->switchToPerClientMemory();
+      }
+   }
+
+void
+TR::CompilationInfoPerThreadBase::exitPerClientAllocationRegion()
+   {
+   if (_compiler)
+      _compiler->switchToGlobalMemory();
+   _perClientPersistentMemory = NULL;
+   }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 /**
@@ -7895,7 +7917,10 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
             static_cast<TR::SegmentAllocator &>(debugSegmentProvider) :
             static_cast<TR::SegmentAllocator &>(defaultSegmentProvider);
       TR::Region dispatchRegion(regionSegmentProvider, rawAllocator);
-      TR_Memory trMemory(*_compInfo.persistentMemory(), dispatchRegion);
+
+      // Initialize JITServer's trMemory with per-client persistent memory, since
+      // we are guaranteed to be inside a per-client allocation region here.
+      TR_Memory trMemory(*TR::Compiler->persistentMemory(), dispatchRegion);
 
       preCompilationTasks(vmThread, entry,
                           method, &aotCachedMethod, trMemory,
@@ -8842,6 +8867,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       if (compiler && compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          compiler->getOptions()->closeLogFileForClientOptions();
+         if (!that->getPerClientPersistentMemory()) // threw while outside of per-client region, re-enter it here
+            that->enterPerClientAllocationRegion();
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

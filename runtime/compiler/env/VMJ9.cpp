@@ -764,7 +764,7 @@ TR_J9VMBase::TR_J9VMBase(
 #if defined(J9VM_OPT_JITSERVER)
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
-         _sharedCache = new (PERSISTENT_NEW) TR_J9JITServerSharedCache(this);
+         _sharedCache = new (compInfo->persistentMemory()) TR_J9JITServerSharedCache(this);
          }
       else
 #endif /* defined(J9VM_OPT_JITSERVER) */

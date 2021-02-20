@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "env/jittypes.h"
 #include "env/TRMemory.hpp"
 #include "OMR/Bytes.hpp" // for alignNoCheck
+#include "env/CompilerEnv.hpp"
 
 namespace JITServer
 {
@@ -52,7 +53,7 @@ public:
 
    ~MessageBuffer()
       {
-      TR_Memory::jitPersistentFree(_storage);
+      freeMemory(_storage);
       }
 
 
@@ -203,10 +204,13 @@ public:
 private:
    static const size_t INITIAL_BUFFER_SIZE = 18000;
    uint32_t offset(char *addr) const { return addr - _storage; }
+   char *allocateMemory(uint32_t capacity) { return static_cast<char *>(_allocator.allocate(capacity)); }
+   void freeMemory(char *storage) { _allocator.deallocate(storage); }
 
    uint32_t _capacity;
    char *_storage;
    char *_curPtr;
+   TR::PersistentAllocator &_allocator;
    };
 };
 #endif

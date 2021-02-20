@@ -1995,7 +1995,7 @@ J9::Options::fePreProcess(void * base)
       JITServerAlreadyParsed = true;
       if (vm->internalVMFunctions->isJITServerEnabled(vm))
          {
-         compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::SERVER);
+         J9::PersistentInfo::_remoteCompilationMode = JITServer::SERVER;
          // Increase the default timeout value for JITServer.
          // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
          compInfo->getPersistentInfo()->setSocketTimeout(30000);
@@ -2013,7 +2013,7 @@ J9::Options::fePreProcess(void * base)
          // Check if option is at all specified
          if (xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex)
             {
-            compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::CLIENT);
+            J9::PersistentInfo::_remoteCompilationMode = JITServer::CLIENT;
 
             // Check if the technology preview message should be displayed.
             const char *xxJITServerTechPreviewMessageOption = "-XX:+JITServerTechPreviewMessage";
