@@ -37,6 +37,14 @@
 #include "ClassFileParser.hpp"  /* included to obtain definition of VerifyClassFunction */
 #include "StringInternTable.hpp"
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define MAX_INTERFACE_INJECTION 1
+typedef struct InterfaceInjectionInfo {
+	J9UTF8 *interfaces[MAX_INTERFACE_INJECTION];
+	U_16 numOfInterfaces;
+} InterfaceInjectionInfo;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 class BufferManager;
 class ClassFileOracle;
 class ConstantPoolMap;
@@ -118,8 +126,14 @@ private:
 	UDATA _anonClassNameBufferSize;
 	U_8 *_bufferManagerBuffer;
 	StringInternTable _stringInternTable;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	InterfaceInjectionInfo _interfaceInjectionInfo;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	BuildResult handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, U_8* hostPackageName, UDATA hostPackageLength);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	BuildResult injectInterfaces(ClassFileOracle *classFileOracle);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	U_32 computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	U_32 computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	BuildResult prepareAndLaydown( BufferManager *bufferManager, ClassFileParser *classFileParser, ROMClassCreationContext *context );

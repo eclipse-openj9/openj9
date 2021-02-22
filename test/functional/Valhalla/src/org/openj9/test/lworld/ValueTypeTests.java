@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import sun.misc.Unsafe;
 import org.testng.Assert;
 import static org.testng.Assert.*;
@@ -3029,7 +3030,41 @@ public class ValueTypeTests {
 			}
 		}
 	}
-	
+
+	@Test(priority = 1)
+	static public void testIdentityObjectOnValueType() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("testIdentityObjectOnValueType", fields);
+		assertFalse(Arrays.asList(valueClass.getInterfaces()).contains(IdentityInterface.class));
+	}
+
+	@Test(priority = 1)
+	static public void testIdentityObjectOnAbstract() throws Throwable {
+		assertFalse(Arrays.asList(AbstractClass.class.getInterfaces()).contains(IdentityInterface.class));
+	}
+	private static abstract class AbstractClass {
+		private int x;
+		private int y;
+		public int getX(){
+			return x;
+		}
+		public int getY(){
+			return y;
+		}
+	}
+
+	@Test(priority = 1)
+	static public void testIdentityObjectOnJLObject() throws Throwable {
+		assertFalse(Arrays.asList(Object.class.getInterfaces()).contains(IdentityInterface.class));
+	}
+
+	@Test(priority = 1)
+	static public void testIdentityObjectOnRef() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class refClass = ValueTypeGenerator.generateRefClass("testIdentityObjectOnRef", fields);
+		assertTrue(Arrays.asList(refClass.getInterfaces()).contains(IdentityInterface.class));
+	}
+
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
 			return lookup.findVirtual(clazz, "get"+fieldName, MethodType.methodType(fieldType));

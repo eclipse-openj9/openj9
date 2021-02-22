@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPT
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_ENCLOSING_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_GENERIC_SIGNATURE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE;
+import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SIMPLE_NAME;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME;

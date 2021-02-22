@@ -34,6 +34,9 @@
 #include "ConstantPoolMap.hpp"
 #include "SRPOffsetTable.hpp"
 #include "ROMClassCreationContext.hpp"
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#include "ROMClassBuilder.hpp" /* included to obtain definition of InterfaceInjectionInfo */
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 class Cursor;
 class SRPKeyProducer;
@@ -42,7 +45,11 @@ class BufferManager;
 class ROMClassWriter
 {
 public:
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *classFileOracle, SRPKeyProducer *srpKeyProducer, ConstantPoolMap *constantPoolMap, ROMClassCreationContext *context, InterfaceInjectionInfo *interfaceInjectionInfo);
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *classFileOracle, SRPKeyProducer *srpKeyProducer, ConstantPoolMap *constantPoolMap, ROMClassCreationContext *context);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	~ROMClassWriter();
 
 	void setSRPOffsetTable(SRPOffsetTable *srpOffsetTable)
@@ -142,6 +149,9 @@ private:
 	U_32 computeNativeSignatureSize(U_8 *methodDescriptor);
 	void writeNativeSignature(Cursor *cursor, U_8 *methodDescriptor, U_8 nativeArgCount);
 	void writePermittedSubclasses(Cursor *cursor, bool markAndCountOnly);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	void writeInjectedInterfaces(Cursor *cursor, bool markAndCountOnly);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	BufferManager *_bufferManager;
 	ClassFileOracle *_classFileOracle;
@@ -149,6 +159,9 @@ private:
 	ConstantPoolMap *_constantPoolMap;
 	SRPOffsetTable *_srpOffsetTable;
 	ROMClassCreationContext *_context;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	InterfaceInjectionInfo *_interfaceInjectionInfo;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	MethodNotes *_methodNotes;
 	BuildResult _buildResult;
 	UDATA _interfacesSRPKey;
@@ -172,6 +185,9 @@ private:
 	UDATA _specialSplitTableSRPKey;
 	UDATA _recordInfoSRPKey;
 	UDATA _permittedSubclassesInfoSRPKey;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	UDATA _injectedInterfaceInfoSRPKey;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 };
 
 #endif /* ROMCLASSWRITER_HPP_ */
