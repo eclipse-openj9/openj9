@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2020 IBM Corp. and others
+ * Copyright (c) 2007, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -440,6 +440,27 @@ final class Access implements JavaLangAccess {
 		fromModule.implAddExports(pkg);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+	// This implementation can be replaced with invoking of String.decodeASCII() after switching to RI String.
+	public int decodeASCII(byte[] srcBytes, int srcPos, char[] dstChars, int dstPos, int length) {
+		int numDecoded = 0;
+		while (numDecoded < length) {
+			byte srcByte = srcBytes[srcPos++];
+			if (srcByte >= 0) {
+				dstChars[dstPos++] = (char) srcByte;
+				numDecoded += 1;
+				continue;
+			}
+			break;
+		}
+		return numDecoded;
+	}
+
+	public void inflateBytesToChars(byte[] srcBytes, int srcOffset, char[] dstChars, int dstOffset, int length) {
+		StringLatin1.inflate(srcBytes, srcOffset, dstChars, dstOffset, length);
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 /*[ENDIF] Sidecar19-SE */
 }
