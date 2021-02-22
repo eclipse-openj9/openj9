@@ -55,6 +55,8 @@ SH_OSCacheTestSysv::testBasic(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	J9PortShcVersion versionData;
 	char cacheDir[J9SH_MAXPATH];
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
+	void* allocatedMem = NULL;
+	UDATA memSize = 0;
 
 #if defined(OPENJ9_BUILD)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
@@ -74,21 +76,29 @@ SH_OSCacheTestSysv::testBasic(J9PortLibrary* portLibrary, J9JavaVM *vm)
 		rc = FAIL;
 		goto cleanup;
 	}
+	memset(piconfig, 0, sizeof(J9SharedClassPreinitConfig));
 
 	piconfig->sharedClassCacheSize = SHM_REGIONSIZE;
-	
-	initObj = new(j9mem_allocate_memory(sizeof(Init), J9MEM_CATEGORY_CLASSES)) Init();
-	if (NULL == initObj) {
+	memSize = sizeof(Init);
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if (NULL == allocatedMem) {
+		j9tty_printf(PORTLIB, "testBasic: failed to allocate memory for initObj\n");
 		rc = FAIL;
 		goto cleanup;
 	}
+	memset(allocatedMem, 0, memSize);
+	initObj = new(allocatedMem) Init();
 
 	/* Testing 2 ways of creating OSCache: This is the way Composite cache creates OSCache object */
-	osc = (SH_OSCachesysv *) j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES);
-	if (NULL == osc) {
+	memSize = SH_OSCache::getRequiredConstrBytes();
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if (NULL == allocatedMem) {
+		j9tty_printf(PORTLIB, "testBasic: failed to allocate memory for osc\n");
 		rc = FAIL;
 		goto cleanup;
 	}
+	memset(allocatedMem, 0, memSize);
+	osc = (SH_OSCachesysv *)allocatedMem;
 	/* Currently explicitly requests non-persistent cache */
 	SH_OSCache::newInstance(PORTLIB, (SH_OSCache*)osc, CACHE_NAME, SH_OSCache::getCurrentCacheGen(), &versionData, 0);
 	if (!osc->startup(vm, cacheDir, J9SH_DIRPERM_ABSENT, CACHE_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 0, 0, 0, 0, &versionData, initObj, SHR_STARTUP_REASON_NORMAL)) {
@@ -97,8 +107,15 @@ SH_OSCacheTestSysv::testBasic(J9PortLibrary* portLibrary, J9JavaVM *vm)
 		goto cleanup;
 	}
 
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if (NULL == allocatedMem) {
+		j9tty_printf(PORTLIB, "testBasic: failed to allocate memory for osc1\n");
+		rc = FAIL;
+		goto cleanup;
+	}
+	memset(allocatedMem, 0, memSize);
 	/* This is how Utility creating oscache object*/
-	osc1 = new(j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES)) SH_OSCachesysv(PORTLIB, vm, cacheDir, CACHE_NAME1, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, initObj);
+	osc1 = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, CACHE_NAME1, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, initObj);
 	if (NULL == osc1) {
 		rc = FAIL;
 		goto cleanup;
@@ -185,6 +202,8 @@ SH_OSCacheTestSysv::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 	char * childargv[SHRTEST_MAX_CMD_OPTS];
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
+	UDATA memSize = SH_OSCache::getRequiredConstrBytes();
+	void* allocatedMem = NULL;
 
 #if defined(OPENJ9_BUILD)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
@@ -195,6 +214,7 @@ SH_OSCacheTestSysv::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 	if (NULL == (piconfig = (J9SharedClassPreinitConfig *)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES))) {
 		return FAIL;
 	}
+	memset(piconfig, 0 , sizeof(J9SharedClassPreinitConfig));
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
 	if (rc < 0) {
@@ -215,9 +235,14 @@ SH_OSCacheTestSysv::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 			j9tty_printf(PORTLIB, "testMultipleCreate: Cannot open launch control semaphores\n");
 			return FAIL;
 		}
-
+		allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+		if (NULL == allocatedMem) {
+			j9tty_printf(PORTLIB, "testMultipleCreate: failed to allocate memory for oscHandle \n");
+			return FAIL;
+		}
+		memset(allocatedMem, 0 , memSize);
 		/*Ensure there is no cache before we start*/
-		oscHandle = new(j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES)) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHE_AREA_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+		oscHandle = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHE_AREA_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 		if(oscHandle->getError() == J9SH_OSCACHE_OPENED) {
 			oscHandle->destroy(false);
 		}else if(oscHandle->getError() == J9SH_OSCACHE_CREATED) {
@@ -283,7 +308,13 @@ SH_OSCacheTestSysv::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 		CloseLaunchSemaphore(PORTLIB, semhandle);
 
 		piconfig->sharedClassCacheSize = SHM_REGIONSIZE;
-		oscHandle = new(j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES)) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHE_AREA_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+		allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+		if (NULL == allocatedMem) {
+			j9tty_printf(PORTLIB, "testMultipleCreate: failed to allocate memory for oscHandle \n");
+			return FAIL;
+		}
+		memset(allocatedMem, 0 , memSize);
+		oscHandle = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHE_AREA_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 		
 		if(oscHandle->getError() == J9SH_OSCACHE_OPENED) {
 			rc = 0;
@@ -299,7 +330,14 @@ SH_OSCacheTestSysv::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 		return rc;
 	}
 	
-	oscHandle = new(j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES)) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHE_AREA_NAME, piconfig, 1, J9SH_OSCACHE_OPEXIST_DESTROY, 1, 0, 0, &versionData, NULL);
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if (NULL == allocatedMem) {
+		j9tty_printf(PORTLIB, "testMultipleCreate: failed to allocate memory for oscHandle \n");
+		return FAIL;
+	}
+	memset(allocatedMem, 0 , memSize);
+	
+	oscHandle = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHE_AREA_NAME, piconfig, 1, J9SH_OSCACHE_OPEXIST_DESTROY, 1, 0, 0, &versionData, NULL);
 	oscHandle->destroy(false);
 	CloseLaunchSemaphore(PORTLIB, semhandle);
 
@@ -321,6 +359,8 @@ SH_OSCacheTestSysv::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	J9SharedClassPreinitConfig *piconfig;
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
+	UDATA memSize = 0;
+	void* allocatedMem = NULL;
 
 #if defined(OPENJ9_BUILD)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
@@ -333,24 +373,27 @@ SH_OSCacheTestSysv::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 		rc = FAIL;
 		goto cleanup;
 	}
-
+	memset(piconfig, 0 , sizeof(J9SharedClassPreinitConfig));
+	
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
 	if (rc < 0) {
 		rc = FAIL;
 		goto cleanup;
 	}
-
-	osc = (SH_OSCachesysv *) j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES);
-	if(NULL == osc) {
+	memSize = SH_OSCache::getRequiredConstrBytes();
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if(NULL == allocatedMem) {
 		j9tty_printf(PORTLIB, "testConstructor: memory allocation failed \n");		
 		rc = FAIL;
 		goto cleanup;
 	}
+	
+	memset(allocatedMem, 0 , memSize);
 
 	/* First, we try to allocate SH_OSCache with 0 size */
 	piconfig->sharedClassCacheSize = 0;
 	
-	osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_CONSTRUCTOR_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+	osc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_CONSTRUCTOR_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 
 	if(osc->getError() >= 0) {
 		j9tty_printf(PORTLIB, "testConstructor: setting size to 0 does not fail the constructor \n");
@@ -362,7 +405,8 @@ SH_OSCacheTestSysv::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	/* Try to create a cache that is too small */
 	piconfig->sharedClassCacheSize = 2;
 	
-	osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_CONSTRUCTOR_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+	memset(allocatedMem, 0 , memSize);
+	osc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_CONSTRUCTOR_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 
 	if(osc->getError() >= 0) {
 		j9tty_printf(PORTLIB, "testConstructor: allocate small area does not fail the constructor \n");
@@ -374,7 +418,8 @@ SH_OSCacheTestSysv::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	/* Now try to use a nonexistent cache with OPEXIST flag set */
 	piconfig->sharedClassCacheSize = 1024*1024;
 	
-	osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_CONSTRUCTOR_NAME, piconfig, 1, J9SH_OSCACHE_OPEXIST_DESTROY, 1, 0, 0, &versionData, NULL);
+	memset(allocatedMem, 0 , memSize);
+	osc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_CONSTRUCTOR_NAME, piconfig, 1, J9SH_OSCACHE_OPEXIST_DESTROY, 1, 0, 0, &versionData, NULL);
 	if(osc->getError() > 0) {
 		j9tty_printf(PORTLIB, "testConstructor: opening existing shared memory area with J9SH_OSCACHE_OPEXIST_DESTROY should fail\n");
 		rc = FAIL;
@@ -405,6 +450,8 @@ SH_OSCacheTestSysv::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 	J9SharedClassPreinitConfig *piconfig;
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
+	UDATA memSize = 0;
+	void* allocatedMem = NULL;
 
 #if defined(OPENJ9_BUILD)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
@@ -416,23 +463,26 @@ SH_OSCacheTestSysv::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 		j9tty_printf(PORTLIB, "testFailedConstructor: J9SharedClassPreinitConfig memory allocation failed \n");
 		return FAIL;
 	}
+	
+	memset(piconfig, 0 , sizeof(J9SharedClassPreinitConfig));
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
 	if (rc < 0) {
 		rc = FAIL;
 		goto cleanup;
 	}
-
-	osc = (SH_OSCachesysv *) j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES);
-	if(NULL == osc) {
+	memSize = SH_OSCache::getRequiredConstrBytes();
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if(NULL == allocatedMem) {
 		j9tty_printf(PORTLIB, "testFailedConstructor: SH_OSCachesysv memory allocation failed \n");		
 		rc = FAIL;
 		goto cleanup;
 	}
+	memset(allocatedMem, 0 , memSize);
 
 	/* First, we try to create a cache with 0 size - this should fail */
 	piconfig->sharedClassCacheSize = 0;
-	osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_CONSTRUCTOR_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+	osc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_CONSTRUCTOR_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 
 	if(osc->getError() >= 0) {
 		j9tty_printf(PORTLIB, "testFailedConstructor: failed: setting size to 0 should have failed the constructor\n");
@@ -498,6 +548,7 @@ SH_OSCacheTestSysv::testGetAllCacheStatistics(J9JavaVM* vm)
 		j9tty_printf(PORTLIB, "testGetAllCacheStatistics: J9SharedClassPreinitConfig memory allocation failed \n");
 		goto cleanup;
 	}
+	memset(piconfig, 0 , sizeof(J9SharedClassPreinitConfig));
 
 #if defined(OPENJ9_BUILD)
 	flags |= (J9SHMEM_GETDIR_USE_USERHOME | J9SHMEM_GETDIR_APPEND_BASEDIR);
@@ -518,16 +569,19 @@ SH_OSCacheTestSysv::testGetAllCacheStatistics(J9JavaVM* vm)
 	 */
 	for(UDATA i = 0; i < NUMBER_OF_CACHES_TO_TEST; i++) {
 		SH_OSCachesysv * tmposc = NULL;
+		void* allocatedMem = NULL;
+		UDATA memSize = SH_OSCache::getRequiredConstrBytes();
 		
 		piconfig->sharedClassCacheSize = 10240;
 
-		tmposc = (SH_OSCachesysv *)j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES);
-		if(NULL == tmposc) {
+		allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+		if(NULL == allocatedMem) {
 			j9tty_printf(PORTLIB, "testGetAllCacheStatistics: clean up old caches : failed to allocate memory for cache %zu\n", i);
 			goto loop_cleanup;
 		}
+		memset(allocatedMem, 0, memSize);
 
-		tmposc = new(tmposc) SH_OSCachesysv(PORTLIB, vm, testDir, cacheName[i], piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+		tmposc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, testDir, cacheName[i], piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 		if(tmposc->getError() < 0) {
 			j9tty_printf(PORTLIB, "testGetAllCacheStatistics: clean up old caches : failed to create cache %zu (getError() =%zd)\n", i, tmposc->getError());
 			goto loop_cleanup;
@@ -550,14 +604,16 @@ SH_OSCacheTestSysv::testGetAllCacheStatistics(J9JavaVM* vm)
 	}
 	
 	for(UDATA i = 0; i < NUMBER_OF_CACHES_TO_TEST; i++) {
+		UDATA memSize = SH_OSCache::getRequiredConstrBytes();
+		void* allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
 		piconfig->sharedClassCacheSize = 10240;
-		osc[i] = (SH_OSCachesysv *)j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES);
-		if(NULL == osc[i]) {
+		if(NULL == allocatedMem) {
 			j9tty_printf(PORTLIB, "testGetAllCacheStatistics: failed to allocate memory for cache %zu\n", i);
 			goto cleanup;
 		}
+		memset(allocatedMem, 0 , memSize);
 		/* J9SH_BASEDIR will be appended to cacheDirName. Caches are created in "/tmp/javasharedresources". */
-		osc[i] = new(osc[i]) SH_OSCachesysv(PORTLIB, vm, testDir, cacheName[i], piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+		osc[i] = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, testDir, cacheName[i], piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 		if(osc[i]->getError() < 0) {
 			j9tty_printf(PORTLIB, "testGetAllCacheStatistics: failed to create cache %zu (getError() =%zd)\n", i, osc[i]->getError());
 			goto cleanup;
@@ -614,6 +670,8 @@ SH_OSCacheTestSysv::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 	UDATA childargc = 0;
 	IDATA rc;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
+	UDATA memSize = 0;
+	void* allocatedMem = NULL;
 
 #if	defined(OPENJ9_BUILD)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
@@ -621,14 +679,18 @@ SH_OSCacheTestSysv::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
-	if (NULL == (osc = (SH_OSCachesysv *)j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES))) {
+	memSize = SH_OSCache::getRequiredConstrBytes();
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if (NULL == allocatedMem) {
 		j9tty_printf(PORTLIB, "testMutex: failed SH_OSCachesysv malloc\n");
 		return FAIL;
 	}
+	memset(allocatedMem, 0, memSize);
 	if (NULL == (piconfig = (J9SharedClassPreinitConfig *)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES))) {
 		j9tty_printf(PORTLIB, "testMutex: failed J9SharedClassPreinitConfig malloc\n");
 		return FAIL;
 	}
+	memset(piconfig, 0, sizeof(J9SharedClassPreinitConfig));
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
 	if (rc < 0) {
@@ -636,7 +698,7 @@ SH_OSCacheTestSysv::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 	}
 
 	piconfig->sharedClassCacheSize = SHM_REGIONSIZE;
-	osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHE_TEST_MUTEX_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+	osc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHE_TEST_MUTEX_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 	if (osc->getError() < 0) {
 		j9tty_printf(PORTLIB, "testMutex: cannot open OSCache\n");
 		return FAIL;
@@ -709,6 +771,8 @@ SH_OSCacheTestSysv::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 	char * childargv[SHRTEST_MAX_CMD_OPTS];
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
+	UDATA memSize = 0;
+	void* allocatedMem = NULL;
 
 #if defined(OPENJ9_BUILD)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
@@ -721,13 +785,16 @@ SH_OSCacheTestSysv::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 		rc = FAIL;
 		goto cleanup;
 	}
+	memset(piconfig, 0, sizeof(J9SharedClassPreinitConfig));
 	
-	osc = (SH_OSCachesysv *)j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES);
-	if(osc == NULL) {
+	memSize = SH_OSCache::getRequiredConstrBytes();
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if(NULL == allocatedMem) {
 		j9tty_printf(PORTLIB, "testMutexHang: cannot allocate SH_OSCachesysv memory");
 		rc = FAIL;
 		goto cleanup;
 	}
+	memset(allocatedMem, 0, memSize);
 	
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
 	if (rc < 0) {
@@ -736,7 +803,7 @@ SH_OSCacheTestSysv::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 	}
 
 	piconfig->sharedClassCacheSize = 10240;
-	osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_MUTEX_HANG_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+	osc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_MUTEX_HANG_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 	
 	if(osc->getError() < 0) {
 		j9tty_printf(PORTLIB, "testMutexHang: cannot open oscache area");
@@ -802,6 +869,8 @@ SH_OSCacheTestSysv::testSize(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	J9SharedClassPreinitConfig *piconfig;
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
+	UDATA memSize = 0;
+	void* allocatedMem = NULL;
 
 #if defined(OPENJ9_BUILD)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
@@ -814,23 +883,25 @@ SH_OSCacheTestSysv::testSize(J9PortLibrary* portLibrary, J9JavaVM *vm)
 		rc = FAIL;
 		goto cleanup;
 	}
+	memset(piconfig, 0, sizeof(J9SharedClassPreinitConfig));
 
 	rc = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
 	if (rc < 0) {
 		rc = FAIL;
 		goto cleanup;
 	}
-
-	osc = (SH_OSCachesysv *)j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES);
-	if(osc == NULL) {
+	memSize = SH_OSCache::getRequiredConstrBytes();
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if(NULL == allocatedMem) {
 		j9tty_printf(PORTLIB, "testSize: cannot allocate SH_OSCachesysv memory\n");
 		rc = FAIL;
 		goto cleanup;
 	}
+	memset(allocatedMem, 0, memSize);
 
 	/* Try to allocate old cache and destroy it */
 	piconfig->sharedClassCacheSize = 10240;
-	osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_SIZE_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+	osc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_SIZE_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 	if (osc->getError() >= 0) {
 		j9tty_printf(PORTLIB, "testSize found existing cache, destroying\n");
 		osc->destroy(false);
@@ -872,7 +943,8 @@ SH_OSCacheTestSysv::testSize(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	/* Try allocating cache with the various sizes */
 	for(i = 0; i < NO_SIZE_TESTS; i++) {
 		piconfig->sharedClassCacheSize = (UDATA)size[i];
-		osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_SIZE_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+		memset(allocatedMem, 0, memSize);
+		osc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_SIZE_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 
 		if(osc->getError() < 0) {
 			UDATA defaultSize = J9_SHARED_CLASS_CACHE_DEFAULT_SIZE;
@@ -958,6 +1030,8 @@ SH_OSCacheTestSysv::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 	char * childargv[SHRTEST_MAX_CMD_OPTS];
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
+	UDATA memSize = 0;
+	void *allocatedMem = NULL;
 
 #if defined(OPENJ9_BUILD)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
@@ -969,6 +1043,7 @@ SH_OSCacheTestSysv::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 		j9tty_printf(PORTLIB, "testDestroy cannot allocate J9SharedClassPreinitConfig memory\n");
 		goto cleanup;
 	}
+	memset(piconfig, 0, sizeof(J9SharedClassPreinitConfig));
 
 	ret = j9shmem_getDir(NULL, flags, cacheDir, J9SH_MAXPATH);
 	if (0 > ret) {
@@ -976,14 +1051,16 @@ SH_OSCacheTestSysv::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 		goto cleanup;
 	}
 
-	osc = (SH_OSCachesysv *)j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES);
-	if(osc == NULL) {
+	memSize = SH_OSCache::getRequiredConstrBytes();
+	allocatedMem = j9mem_allocate_memory(memSize, J9MEM_CATEGORY_CLASSES);
+	if(NULL == allocatedMem) {
 		j9tty_printf(PORTLIB, "testDestroy cannot allocate SH_OSCachesysv memory\n");
 		goto cleanup;
 	}
+	memset(allocatedMem, 0, memSize);
 
 	piconfig->sharedClassCacheSize = 10240;
-	osc = new(osc) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_DESTROY_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
+	osc = new(allocatedMem) SH_OSCachesysv(PORTLIB, vm, cacheDir, OSCACHETEST_DESTROY_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 1, 0, 0, &versionData, NULL);
 
 	if(osc->getError() < 0) {
 		j9tty_printf(PORTLIB, "testDestroy: cannot open oscache area\n");
