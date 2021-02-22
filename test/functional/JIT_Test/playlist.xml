@@ -48,6 +48,7 @@
 		<testCaseName>stringConcatOptTest</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
+			<variation>-XX:+CompactStrings</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xjit:count=1,disableAsyncCompilation,verbose,vlog=$(Q)$(REPORTDIR)$(D)jitv.log$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
