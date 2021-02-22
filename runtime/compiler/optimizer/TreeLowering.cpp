@@ -37,6 +37,10 @@ TR::TreeLowering::optDetailString() const throw()
 int32_t
 TR::TreeLowering::perform()
    {
+   if (!TR::Compiler->om.areValueTypesEnabled())
+      {
+      return 0;
+      }
 
    TR::ResolvedMethodSymbol* methodSymbol = comp()->getMethodSymbol();
    for (TR::PreorderNodeIterator nodeIter(methodSymbol->getFirstTreeTop(), comp()); nodeIter != NULL ; ++nodeIter)
