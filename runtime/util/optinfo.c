@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -705,6 +705,17 @@ getNumberOfRecordComponents(J9ROMClass *romClass)
 
 	return *SRP_PTR_GET(ptr, U_32*);
 }
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+U_32
+getNumberOfInjectedInterfaces(J9ROMClass *romClass) {
+	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO);
+
+	Assert_VMUtil_true(ptr != NULL);
+
+	return *SRP_PTR_GET(ptr, U_32*);
+}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 BOOLEAN
 recordComponentHasSignature(J9ROMRecordComponentShape* recordComponent)

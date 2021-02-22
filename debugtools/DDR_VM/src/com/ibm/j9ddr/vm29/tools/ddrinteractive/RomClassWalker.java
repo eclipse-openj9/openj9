@@ -51,6 +51,7 @@ import static com.ibm.j9ddr.vm29.structure.J9RecordComponentFlags.J9RecordCompon
 import java.nio.ByteOrder;
 
 import com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants;
+import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.corereaders.memory.IProcess;
@@ -721,7 +722,12 @@ public class RomClassWalker extends ClassWalker {
 			permittedSubclassAttributeDo(U32Pointer.cast(cursor.get()));
 			cursor = cursor.add(1);
 		}
-
+		if (ValueTypeHelper.getValueTypeHelper().areValueTypesSupported()) {
+			if (romClass.optionalFlags().allBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO)) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "optionalInjectedInterfaces");
+				cursor = cursor.add(1);
+			}
+		}
 		classWalkerCallback.addSection(clazz, optionalInfo, cursor.getAddress() - optionalInfo.getAddress(), "optionalInfo", true);
 	}
 

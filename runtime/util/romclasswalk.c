@@ -906,6 +906,15 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 		}
 		cursor++;
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_ARE_ANY_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO)) {
+		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
+		if (rangeValid) {
+			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "optionalInjectedInterfaces", userData);
+		}
+		cursor++;
+	}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	callbacks->sectionCallback(romClass, optionalInfo, (UDATA)cursor - (UDATA)optionalInfo, "optionalInfo", userData);
 }
 

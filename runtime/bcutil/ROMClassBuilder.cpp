@@ -249,6 +249,19 @@ ROMClassBuilder::buildROMClass(ROMClassCreationContext *context)
 	return result;
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+BuildResult
+ROMClassBuilder::injectInterfaces(ClassFileOracle *classFileOracle)
+{
+	U_32 numOfInterfaces = 0;
+	if (classFileOracle->needsIdentityInterface()) {
+		J9_DECLARE_CONSTANT_UTF8(identityInterface, IDENTITY_OBJECT_NAME);
+		_interfaceInjectionInfo.interfaces[numOfInterfaces++] = (J9UTF8 *) &identityInterface;
+	}
+	_interfaceInjectionInfo.numOfInterfaces = numOfInterfaces;
+	return OK;
+}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 BuildResult
 ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, U_8* hostPackageName, UDATA hostPackageLength)
 {
@@ -459,13 +472,25 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 		return classFileOracle.getBuildResult();
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	result = injectInterfaces(&classFileOracle);
+	if (OK != result) {
+		return result;
+	}
+	SRPKeyProducer srpKeyProducer(&classFileOracle, &_interfaceInjectionInfo);
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	SRPKeyProducer srpKeyProducer(&classFileOracle);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	/*
 	 * The ROMClassWriter must be constructed before the SRPOffsetTable because it generates additional SRP keys.
 	 * There must be no SRP keys generated after the SRPOffsetTable is initialized.
 	 */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	ROMClassWriter romClassWriter(bufferManager, &classFileOracle, &srpKeyProducer, &constantPoolMap, context, &_interfaceInjectionInfo);
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	ROMClassWriter romClassWriter(bufferManager, &classFileOracle, &srpKeyProducer, &constantPoolMap, context);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	if ( !romClassWriter.isOK() ) {
 		return romClassWriter.getBuildResult();
 	}
@@ -1292,6 +1317,11 @@ ROMClassBuilder::computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClass
 	if (classFileOracle->isSealed()) {
 		optionalFlags |= J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE;
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (_interfaceInjectionInfo.numOfInterfaces > 0) {
+		optionalFlags |= J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO;
+	}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	return optionalFlags;
 }
 
