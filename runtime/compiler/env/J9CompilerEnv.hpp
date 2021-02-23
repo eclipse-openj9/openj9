@@ -58,9 +58,11 @@ public:
    TR::PersistentAllocator &persistentAllocator();
 
    TR_PersistentMemory *persistentMemory();
+
 #if defined(J9VM_OPT_JITSERVER)
    TR::PersistentAllocator &persistentGlobalAllocator();
-#endif
+   TR_PersistentMemory *persistentGlobalMemory();
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 }
