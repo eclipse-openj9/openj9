@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,17 @@ public class StringConcatTest {
 	private String buildNullStr_Middle(){
 		return Integer.toString(-5) + " is bigger than " + Integer.toString(1) + null + " to a less than sane person";
 	}
-		
+
+	private String concatChar(String s, char c) {
+		return new StringBuilder().append(s).append(c).toString();
+	}
+
+	@Test(invocationCount=2)
+	public void testStringPeepholeInitStringCharReduction() {
+		String str = concatChar("abcd", '\u205e');
+		AssertJUnit.assertEquals("abcd\u205e", str);
+	}
+
 	public void testNullStr_End(){
 		String str = buildNullStr_End();
 		str = buildNullStr_End();
