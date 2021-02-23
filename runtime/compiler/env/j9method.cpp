@@ -6759,11 +6759,19 @@ TR_ResolvedJ9Method::shouldCompileTimeResolveMethod(I_32 cpIndex)
    if (classNameLength == strlen(JSR292_MethodHandle) &&
        !strncmp(className, JSR292_MethodHandle, classNameLength))
       {
-      // MethodHandle.invokeBasic has to be resolved to be recognized for special handling in tree
-      // lowering. Its resolution has no side effect and should always succeed.
+      // MethodHandle.invokeBasic and MethodHandle.linkTo* methods have to be
+      // resolved to be recognized for special handling in tree
+      // lowering. Their resolution has no side effect and should always succeed.
       //
-      if (methodNameLength == 11 &&
-          !strncmp(methodName, "invokeBasic", methodNameLength))
+      if ((methodNameLength == 11 &&
+            !strncmp(methodName, "invokeBasic", methodNameLength)) ||
+         (methodNameLength == 12 &&
+            !strncmp(methodName, "linkToStatic", methodNameLength)) ||
+         (methodNameLength == 13 &&
+            (!strncmp(methodName, "linkToSpecial", methodNameLength) ||
+             !strncmp(methodName, "linkToVirtual", methodNameLength))) ||
+         (methodNameLength == 15 &&
+            !strncmp(methodName, "linkToInterface", methodNameLength)))
          return true;
       }
 
