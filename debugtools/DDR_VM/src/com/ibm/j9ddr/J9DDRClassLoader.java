@@ -182,12 +182,10 @@ public class J9DDRClassLoader extends SecureClassLoader {
 		if (finalSeparator != -1) {
 			String packageName = name.substring(0, finalSeparator);
 
-			if (getPackage(packageName) != null) {
-				return;
+			if (getDefinedPackage(packageName) == null) {
+				// TODO think about the correct values here
+				definePackage(packageName, "J9DDR", "0.1", "IBM", "J9DDR", "0.1", "IBM", null);
 			}
-
-			// TODO think about the correct values here
-			definePackage(packageName, "J9DDR", "0.1", "IBM", "J9DDR", "0.1", "IBM", null);
 		}
 	}
 

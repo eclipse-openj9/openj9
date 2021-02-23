@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
-
 package com.ibm.j9ddr.tools.ddrinteractive.plugins;
 
 import java.io.ByteArrayOutputStream;
@@ -56,7 +55,6 @@ import com.ibm.j9ddr.tools.ddrinteractive.annotations.DebugExtension;
  * DDR Interactive classloader which is responsible for finding all classes specified by the plugins property.
  * 
  * @author apilkington
- *
  */
 public class DDRInteractiveClassLoader extends ClassLoader {
 	/**
@@ -72,14 +70,14 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	private static final String FILE_EXT_JAR = ".jar";			//jar file extension
 	private static final String FILE_EXT_CLASS = ".class";		//class file extension
 	private static final String VM_ALLVERSIONS = "*";		//indicator for support in all VM versions
-	private Logger logger = Logger.getLogger(getClass().getName());
+	private static Logger logger = Logger.getLogger(DDRInteractiveClassLoader.class.getName());
 	Level logLevelForPluginLoadFailures = Level.WARNING; // emit warnings to DDRInteractive console
 	private final String vmversion;
-	private final ArrayList<PluginConfig> pluginCache = new ArrayList<PluginConfig>();		//list of plugins successfully loaded
-	private final ArrayList<PluginConfig> pluginFailures = new ArrayList<PluginConfig>();	//list of plugins which failed to load
-	protected static ArrayList<String> runtimeCommandClasses = new ArrayList<String>();	//classes that implement ICommand and are added after startup
-	private final ArrayList<File> pluginSearchPath = new ArrayList<File>();	//specify classloader paths by URI as this can be used by the File class and converted into a URL
-	
+	private final ArrayList<PluginConfig> pluginCache = new ArrayList<>(); //list of plugins successfully loaded
+	private final ArrayList<PluginConfig> pluginFailures = new ArrayList<>(); //list of plugins which failed to load
+	protected static ArrayList<String> runtimeCommandClasses = new ArrayList<>(); //classes that implement ICommand and are added after startup
+	private final ArrayList<File> pluginSearchPath = new ArrayList<>(); //specify classloader paths by URI as this can be used by the File class and converted into a URL
+
 	public DDRInteractiveClassLoader(IVMData vmdata) throws DDRInteractiveCommandException {
 		this(vmdata, vmdata.getClassLoader());
 	}
@@ -103,14 +101,14 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	 */
 	@SuppressWarnings("unchecked")
 	private void examineClass(URL url, Class<?> clazz) {
-		if(clazz.isAnnotationPresent(DebugExtension.class)) {
+		if (clazz.isAnnotationPresent(DebugExtension.class)) {
 			Annotation a = clazz.getAnnotation(DebugExtension.class);
-			if(null != a) {
+			if (null != a) {
 				String value = ((DebugExtension) a).VMVersion();
 				String[] versions = value.split(",");
-				for(String version : versions) {
-					if(version.equals(vmversion) || version.equals(VM_ALLVERSIONS)) {
-						if(hasCommandIFace(clazz)) {
+				for (String version : versions) {
+					if (version.equals(vmversion) || version.equals(VM_ALLVERSIONS)) {
+						if (hasCommandIFace(clazz)) {
 							PluginConfig config = new PluginConfig(clazz.getName(), vmversion, (Class<ICommand>)clazz, true, url);
 							pluginCache.add(config);
 							logger.fine("Added command " + clazz.getName());
@@ -125,74 +123,71 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			}
 		}
 	}
-	
-	private void definePackage(String name)
-	{
-		//Split off the class name
-		int finalSeparator = name.lastIndexOf("/");
-		
+
+	private void definePackage(String name) {
+		// split off the class name
+		int finalSeparator = name.lastIndexOf('/');
+
 		if (finalSeparator != -1) {
 			String packageName = name.substring(0, finalSeparator);
-			
-			if (getPackage(packageName) != null) {
-				return;
+
+			if (getDefinedPackage(packageName) == null) {
+				definePackage(packageName, "J9DDR", "0.1", "IBM", "J9DDR", "0.1", "IBM", null);
 			}
-			
-			definePackage(packageName, "J9DDR", "0.1", "IBM", "J9DDR", "0.1", "IBM", null);
 		}
 	}
-	
+
 	/**
 	 * At the bottom of this file is a main and a special constructor which is useful for running and testing 
 	 * this class loader as a stand-alone application
 	 */
-	
+
 	//if the required system property has been set then parse it and add the paths to the classloader search path
 	private void configureSearchPath() {
 		// The search path can be set by a system property or environment variable with the sys prop taking precedence
 		// TODO handle quoted string, blanks in the file name
 		String property = System.getProperty(PLUGIN_SYSTEM_PROPERTY);
-		if(null == property) {
+		if (null == property) {
 			property = System.getenv(PLUGIN_ENV_VAR);
-			if(property == null) {
+			if (property == null) {
 				property = System.getenv(PLUGIN_ENV_VAR_ALT);
 			}
 		}
-		if((null == property) || (property.length() == 0)) {
+		if ((null == property) || (property.length() == 0)) {
 			//no plugin path was specified
 			logger.fine("No system property called " + PLUGIN_SYSTEM_PROPERTY + " was found");
-			return;		
+			return;
 		}
 		logger.fine("Plugins search path = " + property);
 		//break the path up and add to classloader search path
 		String[] parts = property.split(File.pathSeparator);
-		for(int i = 0; i < parts.length; i++) {
+		for (String part : parts) {
 			try {
-				File file = new File(parts[i]);
+				File file = new File(part);
 				pluginSearchPath.add(file);
 			} catch (Exception e) {
-				logger.warning("Failed to create a URI or URL from " + parts[i]);
+				logger.warning("Failed to create a URI or URL from " + part);
 			}
 		}
 	}
-	
+
 	/**
-	 * Used with asm's ClassReader - checks if a given class has a DTFJPlugin annotation and reads its name
-	 * @author blazejc
+	 * Used with asm's ClassReader - checks if a given class has a DTFJPlugin annotation and reads its name.
 	 *
+	 * @author blazejc
 	 */
-	private class DTFJPluginSnifferVisitor extends ClassVisitor {
+	private static class DTFJPluginSnifferVisitor extends ClassVisitor {
 		private boolean isDebugExtension = false;
-		private String className; 
-		
- 		public DTFJPluginSnifferVisitor() {
- 			super(Opcodes.ASM4, null);
- 		}
- 		
+		private String className;
+
+		public DTFJPluginSnifferVisitor() {
+			super(Opcodes.ASM4, null);
+		}
+
 		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
 			String extensionClassname = DebugExtension.class.getName().replace(".", "/");
 			logger.finest("Inspecting annotation " + desc + " looking for annotation " + extensionClassname);
-			
+
 			// check if the annotation on this class contains the class name of the DebugExtension annotation
 			// this amounts to the annotation being present or not on the visited class
 			if (desc.contains(extensionClassname)) {
@@ -204,7 +199,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			}
 			return null;
 		}
-		
+
 		public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 			className = name.replace("/", ".");
 		}
@@ -213,11 +208,11 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		public void visitEnd() {}
 		public FieldVisitor visitField(int arg0, String arg1, String arg2, String arg3, Object arg4) { return null; }
 		public void visitInnerClass(String arg0, String arg1, String arg2, int arg3) {}
-		public MethodVisitor visitMethod(int arg0, String arg1,	String arg2, String arg3, String[] arg4) { return null;	}
+		public MethodVisitor visitMethod(int arg0, String arg1, String arg2, String arg3, String[] arg4) { return null; }
 		public void visitOuterClass(String arg0, String arg1, String arg2) {}
 		public void visitSource(String arg0, String arg1) {}
 	}
-	
+
 	//******************************************************************************************************
 	//******************************************************************************************************
 	//******************************************************************************************************
@@ -229,28 +224,27 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	//******************************************************************************************************
 	//******************************************************************************************************
 
-	
-	private Map<String, ClassFile> classFilesOnClasspath = new HashMap<String, ClassFile>();
-	
+	private Map<String, ClassFile> classFilesOnClasspath = new HashMap<>();
+
 	/**
 	 * Represents the information and common code we need to locate and load a class on the plugins search path
 	 */
 	private abstract class ClassFile {
 		protected String classFilePathName;
 		boolean loaded = false;
-		
+
 		/**
 		 * Construct a ClassFile object given the pathname of the file.
 		 * For a class file within a jar file this will be the path name within the jar file e.g. /com/ibm/....
 		 * For a stand alone class file this will be the pathname of the file.
 		 * @param cfpn classfile pathname
 		 */
-		ClassFile (String cfpn) {
+		ClassFile(String cfpn) {
 			this.classFilePathName = cfpn;
 		}
-		
+
 		public abstract URL toURL();
-		
+
 		/**
 		 * Load the code into a buffer then pass the buffer to 
 		 * loadByteCodeFromBuffer(String...) for loading
@@ -282,9 +276,9 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			}
 			return null;
 		}
-		
+
 		public abstract InputStream getStreamForByteCode() throws FileNotFoundException, IOException;
-		
+
 		/**
 		 * Read the byte code from a stream into a byte array
 		 * @param in InputStream
@@ -295,12 +289,12 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			byte[] buffer = new byte[4096];
 			ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
 			int bytesRead = 0;
-			while(-1 != (bytesRead = in.read(buffer))) {
+			while (-1 != (bytesRead = in.read(buffer))) {
 				out.write(buffer, 0, bytesRead);
 			}
 			return out.toByteArray();
 		}
-		
+
 		/**
 		 * Provide a central function for processing the byte code for a class and allows any exceptions or errors to be handled.
 		 * @param url URL of the file from which the byte code came
@@ -319,7 +313,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 				logger.finer("Successful call to defineClass, loaded class is " + clazz.getName());
 				loaded = true;
 				//define the package for the class
-				if(null == packageName) {
+				if (null == packageName) {
 					definePackage(clazz.getName());
 				} else {
 					definePackage(packageName);
@@ -349,13 +343,13 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Represents the information we need to locate a class within a jar file 
 	 */
 	private class ClassFileWithinJarFile extends ClassFile {
 		private File jarFile;
-		
+
 		public ClassFileWithinJarFile(File f, String cfpn) {
 			super(cfpn);
 			this.jarFile = f;
@@ -367,13 +361,13 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			} catch (MalformedURLException e) {
 				logger.log(logLevelForPluginLoadFailures,"Exception thrown when constructing URL from jar file name " + jarFile.getAbsolutePath() + " and class file name " + classFilePathName);
 				return null;
-			} 
+			}
 		}
-		
+
 		public InputStream getStreamForByteCode() throws FileNotFoundException, IOException {
 			JarInputStream jin = new JarInputStream(new FileInputStream(jarFile));
 			JarEntry entry = null;
-			while(null != (entry = jin.getNextJarEntry())) {
+			while (null != (entry = jin.getNextJarEntry())) {
 				if (entry.getName().equals(classFilePathName)) {
 					return jin;
 				}
@@ -381,13 +375,13 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			throw new FileNotFoundException();
 		}
 	}
-	
+
 	/**
 	 * Represents the information we need to locate a class within a class file in the file system
 	 */
 	private class StandaloneClassFile extends ClassFile {
 		private File classFile;
-		
+
 		public StandaloneClassFile(File f) {
 			super(f.getAbsolutePath());
 			this.classFile = f;
@@ -397,11 +391,11 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			try {
 				return classFile.toURI().toURL();
 			} catch (MalformedURLException e) {
-				logger.log(logLevelForPluginLoadFailures,"Exception thrown when constructing URL from class file name " + classFile.getName());
+				logger.log(logLevelForPluginLoadFailures, "Exception thrown when constructing URL from class file name " + classFile.getName());
 				return null;
-			} 
+			}
 		}
-		
+
 		public InputStream getStreamForByteCode() throws FileNotFoundException, IOException {
 			return new FileInputStream(classFile);
 		}
@@ -413,7 +407,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	 */
 	public void loadPlugins() throws DDRInteractiveCommandException {
 		scanForClassFiles();
-		
+
 		for (String str : classFilesOnClasspath.keySet()) {
 			try {
 				DTFJPluginSnifferVisitor sniffer = sniffClassFile(classFilesOnClasspath.get(str).getStreamForByteCode());
@@ -429,12 +423,12 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		}
 		addRuntimeCommands();
 	}
-	
+
 	/**
 	 * Adds any commands that have been added at runtime rather than loaded from the classpath
 	 */
 	private void addRuntimeCommands() {
-		for(String name : runtimeCommandClasses) {
+		for (String name : runtimeCommandClasses) {
 			try {
 				loadCommandClass(name, false);
 			} catch (ClassNotFoundException e) {
@@ -442,7 +436,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			}
 		}
 	}
-	
+
 	/**
 	 * Scan the supplied plugin path to find commands which are written.
 	 * This method does not support MVS on z/OS, the path needs to point to HFS locations 
@@ -451,14 +445,14 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	 * @throws CommandException if any location on the plugins search path does not exist
 	 */
 	private void scanForClassFiles() throws DDRInteractiveCommandException {
-		for(File file : pluginSearchPath) {	//a path entry can be null if the URI was malformed
+		for (File file : pluginSearchPath) { //a path entry can be null if the URI was malformed
 			logger.fine("Scanning path " + file + " in search of DDR plugins");
-			if(!file.exists()) {
+			if (!file.exists()) {
 				//log that the entry does not exist and skip
 				logger.fine(String.format("Abandoning scan of DDR plugins search path: %s does not exist", file.getAbsolutePath()));
 				throw new DDRInteractiveCommandException(file.getAbsolutePath() + " was specified on the plugins search path but it does not exist");
 			} else {
-				if(file.isDirectory()) {
+				if (file.isDirectory()) {
 					scanDirectory(file);
 				} else {
 					scanFile(file);
@@ -466,19 +460,19 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			}
 		}
 	}
-	
+
 	private void scanDirectory(File dir) {
 		logger.fine("Scanning directory " + dir.getAbsolutePath());
 		File[] files = dir.listFiles();
-		for(File file : files) {
-			if(file.isDirectory()) {
+		for (File file : files) {
+			if (file.isDirectory()) {
 				scanDirectory(file);
 			} else {
 				scanFile(file);
 			}
 		}
 	}
-	
+
 	/**
 	 * Returns the file extension
 	 * @param file file to test
@@ -487,13 +481,13 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	private static String getExtension(File file) {
 		String name = file.getName();
 		int pos = name.lastIndexOf('.');
-		if((-1 == pos) || (name.length() == (pos + 1))) {
-			return "";	//no extension
+		if ((-1 == pos) || (name.length() == (pos + 1))) {
+			return ""; //no extension
 		} else {
 			return name.substring(pos);
 		}
 	}
-	
+
 	/**
 	 * Scans a file and determines if it can be loaded
 	 * @param file
@@ -501,24 +495,24 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	private void scanFile(File file) {
 		logger.fine("Scanning file " + file.getAbsolutePath());
 		String ext = getExtension(file);
-		if(ext.equals(FILE_EXT_JAR)) {
+		if (ext.equals(FILE_EXT_JAR)) {
 			examineJarFile(file);
 			return;
 		}
-		if(ext.equals(FILE_EXT_CLASS)) {
+		if (ext.equals(FILE_EXT_CLASS)) {
 			examineClassFile(file);
 			return;
 		}
 		//if get this far, ignore the file as not having a recognised extension
 	}
-	
+
 	private void examineClassFile(File file) {
 		logger.fine("Found class file " + file.getAbsolutePath());
-		if(file.length() > Integer.MAX_VALUE) {
+		if (file.length() > Integer.MAX_VALUE) {
 			logger.fine("Skipping file " + file.getAbsolutePath() + " as the file size is > Integer.MAX_VALUE");
-			return;		//skip this file
+			return; //skip this file
 		}
-		
+
 		InputStream is = null;
 		try {
 			is = new FileInputStream(file);
@@ -536,14 +530,14 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			}
 		}
 	}
-	
+
 	private DTFJPluginSnifferVisitor sniffClassFile(InputStream in) throws IOException {
 		DTFJPluginSnifferVisitor sniffer = new DTFJPluginSnifferVisitor();
 		ClassReader cr = new ClassReader(in);
 		cr.accept(sniffer, 0);
 		return sniffer;
 	}
-	
+
 	/**
 	 * Scans all classes in the specified jar file
 	 * @param file
@@ -555,16 +549,16 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		try {
 			jin = new JarInputStream(new FileInputStream(file));
 			JarEntry entry = null;
-			while(null != (entry = jin.getNextJarEntry())) {
-				if(entry.isDirectory() || !entry.getName().endsWith(".class")) {
+			while (null != (entry = jin.getNextJarEntry())) {
+				if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
 					//skip directories, only interested in classes
 					continue;
 				}
-				if(entry.getSize() > Integer.MAX_VALUE) {
+				if (entry.getSize() > Integer.MAX_VALUE) {
 					logger.fine("Skipping jar entry " + entry.getName() + " as the uncompressed size is > Integer.MAX_VALUE");
-					continue;		//skip this entry
+					continue; //skip this entry
 				}
-				
+
 				ClassFile classFile = new ClassFileWithinJarFile(file, entry.getName());
 				InputStream in = classFile.getStreamForByteCode();
 				DTFJPluginSnifferVisitor sniffer = sniffClassFile(in);
@@ -574,16 +568,16 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		} catch (IOException e) {
 			logger.log(logLevelForPluginLoadFailures, "Error reading from file " + file.getAbsolutePath(), e);
 		} finally {
-			if(null != jin) {
+			if (null != jin) {
 				try {
-					jin.close();		
+					jin.close();
 				} catch (IOException e) {
 					logger.log(logLevelForPluginLoadFailures, "Error closing file " + file.getAbsolutePath(), e);
 				}
 			}
 		}
 	}
-	
+
 	/**
 	 * Check to see if a class implements the command interface
 	 * @param clazz class to test
@@ -592,11 +586,11 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	protected boolean hasCommandIFace(Class<?> clazz) {
 		return ICommand.class.isAssignableFrom(clazz);
 	}
-	
+
 	public ArrayList<PluginConfig> getPlugins() {
 		return pluginCache;
 	}
-	
+
 	public ArrayList<PluginConfig> getPluginFailures() {
 		return pluginFailures;
 	}
@@ -607,11 +601,11 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	 */
 	public Class<?> findClass(String className) throws ClassNotFoundException {
 		logger.finest("Entered findClass with class name of " + className);
-		if (classFilesOnClasspath.containsKey(className)) {	
+		if (classFilesOnClasspath.containsKey(className)) {
 			logger.finest("Found match for with class " + className);
 			return classFilesOnClasspath.get(className).loadByteCode();
 		}
-		
+
 		throw new ClassNotFoundException("Unable to load class " + className);
 	}
 
@@ -623,23 +617,23 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	 * @return the loaded class
 	 * @throws ClassNotFoundException
 	 */
-	private synchronized Class<?> loadCommandClass(String className, boolean resolveClass) throws ClassNotFoundException {		
+	private synchronized Class<?> loadCommandClass(String className, boolean resolveClass) throws ClassNotFoundException {
 		Class<?> clazz = loadClass(className, resolveClass);
 		try {
 			URL url = new File("RuntimeLoad").toURI().toURL();
 			examineClass(url, clazz);
 		} catch (MalformedURLException e) {
-			logger.log(logLevelForPluginLoadFailures,"Exception thrown when forming URL from file \"RuntimeLoad\" : " + e);
+			logger.log(logLevelForPluginLoadFailures, "Exception thrown when forming URL from file \"RuntimeLoad\" : " + e);
 		}
 		return clazz;
 	}
-	
+
 	public void addCommandClass(String className) {
 		runtimeCommandClasses.add(className);
 	}
-	
+
 	public void removeCommandClass(String className) {
-		if(!runtimeCommandClasses.remove(className)) {
+		if (!runtimeCommandClasses.remove(className)) {
 			logger.fine(String.format("Ignored call to remove command %s as it was not previously added"));
 		}
 	}
@@ -669,4 +663,3 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 //	configureSearchPath();
 //	reload();
 //}
-

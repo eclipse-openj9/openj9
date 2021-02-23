@@ -221,7 +221,7 @@ public abstract class VMDataFactory {
 			// Load an instantiate a VM specific J9RASPointer via a call to J9RASPointer.cast(long);
 			String basePackageName = structureReader.getPackageName(PackageNameType.POINTER_PACKAGE_DOT_NAME);
 			Class<?> rasClazz = ddrClassLoader.loadClass(basePackageName + ".J9RASPointer");
-			Method getStructureMethod = rasClazz.getDeclaredMethod("cast", new Class[] { Long.TYPE });
+			Method getStructureMethod = rasClazz.getDeclaredMethod("cast", Long.TYPE);
 			Object pointer = getStructureMethod.invoke(null, new Object[] { j9RASAddress });
 
 			// Set the J9RASPointer on DataType.

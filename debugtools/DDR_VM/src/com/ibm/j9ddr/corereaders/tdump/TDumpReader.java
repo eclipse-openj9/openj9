@@ -78,24 +78,22 @@ import com.ibm.j9ddr.corereaders.tdump.zebedee.util.FileFormatException;
 
 /**
  * zOS dump reader implemented as a thin wrapper around Zebedee.
- * 
+ *
  * @author andhall
- * 
  */
 public class TDumpReader implements ICoreFileReader
 {
 	private static final Logger logger = Logger.getLogger(J9DDR_CORE_READERS_LOGGER_NAME);
-	
+
 	private final static int DR1 = 0xC4D9F140; // 31-bit OS
 	private final static int DR2 = 0xC4D9F240; // 64-bit OS
 
 	public boolean validDump(byte[] data, long filesize)
 	{
-
-	int signature = (0xFF000000 & data[0] << 24)
+		int signature = (0xFF000000 & data[0] << 24)
 		| (0x00FF0000 & data[1] << 16) | (0x0000FF00 & data[2] << 8)
 		| (0xFF & data[3]);
-	
+
 		return (signature == DR1 || signature == DR2);
 	}
 
@@ -103,7 +101,7 @@ public class TDumpReader implements ICoreFileReader
 	{
 		return new DumpAdapter(new com.ibm.j9ddr.corereaders.tdump.zebedee.dumpreader.Dump(path));
 	}
-	
+
 	public ICore processDump(ImageInputStream in) throws InvalidDumpFormatException, IOException
 	{
 		return new DumpAdapter(new com.ibm.j9ddr.corereaders.tdump.zebedee.dumpreader.Dump(in));
@@ -133,13 +131,13 @@ public class TDumpReader implements ICoreFileReader
 			throw new IOException(ex.getMessage());
 		}
 	}
-	
+
 	public DumpTestResult testDump(ImageInputStream in) throws IOException
-	{	
+	{
 		try {
 			in.seek(0);
 			int header = in.readInt();
-			if((header == DR1) || (header == DR2)) {
+			if ((header == DR1) || (header == DR2)) {
 				return DumpTestResult.RECOGNISED_FORMAT;
 			} else {
 				return DumpTestResult.UNRECOGNISED_FORMAT;
@@ -151,40 +149,36 @@ public class TDumpReader implements ICoreFileReader
 			ioe.initCause(ex);
 			throw ioe;
 		} finally {
-			in.seek(0);		//reset the header
+			in.seek(0); //reset the header
 		}
 	}
 
 	private static class DumpAdapter implements ICore
 	{
-	
+
 		private final Dump _dump;
-	
+
 		private List<IAddressSpace> addressSpaces = null;
-		
-		public DumpAdapter(Dump dump)
-		{
+
+		public DumpAdapter(Dump dump) {
 			_dump = dump;
 		}
 
 		public void close() throws IOException {
 			_dump.close();
 		}
-		
+
 		/*
 		 * (non-Javadoc)
 		 * 
 		 * @see com.ibm.dtfj.j9ddr.corereaders.ICoreReader#getAddressSpaces()
 		 */
-		public List<IAddressSpace> getAddressSpaces()
-		{
+		public List<IAddressSpace> getAddressSpaces() {
 			if (null == addressSpaces) {
-			
 				AddressSpace[] zebAddressSpaces = _dump.getAddressSpaces();
-				
-				addressSpaces = new ArrayList<IAddressSpace>(
-						zebAddressSpaces.length);
-				
+
+				addressSpaces = new ArrayList<>(zebAddressSpaces.length);
+
 				for (AddressSpace thisAs : zebAddressSpaces) {
 					/* Ignore A/S 0 */
 					if (thisAs.getAsid() != 0) {
@@ -192,25 +186,21 @@ public class TDumpReader implements ICoreFileReader
 					}
 				}
 			}
-	
+
 			return addressSpaces;
 		}
-	
+
 		/*
 		 * (non-Javadoc)
 		 * 
 		 * @see com.ibm.dtfj.j9ddr.corereaders.ICoreReader#getDumpFormat()
 		 */
-		public String getDumpFormat()
-		{
+		public String getDumpFormat() {
 			return "tdump";
 		}
-	
-	
-	
+
 		@Override
-		public boolean equals(Object obj)
-		{
+		public boolean equals(Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -230,34 +220,31 @@ public class TDumpReader implements ICoreFileReader
 			}
 			return true;
 		}
-	
+
 		@Override
-		public int hashCode()
-		{
+		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + ((_dump == null) ? 0 : _dump.hashCode());
 			return result;
 		}
-		
-		public Properties getProperties()
-		{
+
+		public Properties getProperties() {
 			Properties properties = new Properties();
-			
+
 			properties.setProperty(ICore.CORE_CREATE_TIME_PROPERTY, Long.toString(_dump.getCreationDate().getTime()));
 			properties.setProperty(ICore.PROCESSOR_TYPE_PROPERTY,"s390");
 			properties.setProperty(ICore.PROCESSOR_SUBTYPE_PROPERTY,"");
-			properties.setProperty(ICore.SYSTEM_TYPE_PROPERTY,"z/OS");
-			
+			properties.setProperty(ICore.SYSTEM_TYPE_PROPERTY, "z/OS");
+
 			return properties;
 		}
-		
-		public Platform getPlatform()
-		{
+
+		public Platform getPlatform() {
 			return Platform.ZOS;
 		}
 	}
-	
+
 	/**
 	 * Adapter for Zebedee address spaces to make them implement the
 	 * IAddressSpace interface
@@ -265,8 +252,7 @@ public class TDumpReader implements ICoreFileReader
 	 * @author andhall
 	 * 
 	 */
-	private static class AddressSpaceAdapter extends SearchableMemory implements IAddressSpace
-	{
+	private static class AddressSpaceAdapter extends SearchableMemory implements IAddressSpace {
 
 		private final AddressSpace addressSpace;
 		private final ICore reader;
@@ -276,8 +262,7 @@ public class TDumpReader implements ICoreFileReader
 		 */
 		private Set<IProcess> processes;
 
-		private AddressSpaceAdapter(AddressSpace as, ICore reader)
-		{
+		private AddressSpaceAdapter(AddressSpace as, ICore reader) {
 			this.addressSpace = as;
 			this.reader = reader;
 		}
@@ -285,9 +270,8 @@ public class TDumpReader implements ICoreFileReader
 		public ICore getCore() {
 			return reader;
 		}
-		
-		public Collection<IProcess> getProcesses()
-		{
+
+		public Collection<IProcess> getProcesses() {
 			initializeProcesses();
 
 			if (processes != null) {
@@ -297,8 +281,7 @@ public class TDumpReader implements ICoreFileReader
 			}
 		}
 
-		private void initializeProcesses()
-		{
+		private void initializeProcesses() {
 			if (processes != null) {
 				return;
 			}
@@ -306,14 +289,14 @@ public class TDumpReader implements ICoreFileReader
 			Tcb tc[] = Tcb.getTcbs(addressSpace);
 			if (tc != null) {
 				processes = new HashSet<IProcess>();
-				
+
 				Set<Edb> knownEdbs = new HashSet<Edb>();
-				
+
 				for (int i = 0; i < tc.length; ++i) {
 					try {
 						Caa ca = new Caa(tc[i]);
 						Edb edb = ca.getEdb();
-						if (! knownEdbs.contains(edb)) {
+						if (!knownEdbs.contains(edb)) {
 							knownEdbs.add(edb);
 							// Some EDBs don't have any modules, so ignore them
 							if (edb.getFirstDll() != null) {
@@ -327,14 +310,12 @@ public class TDumpReader implements ICoreFileReader
 			}
 		}
 
-		public int getAddressSpaceId()
-		{
+		public int getAddressSpaceId() {
 			return addressSpace.getAsid();
 		}
-		
+
 		@Override
-		public int hashCode()
-		{
+		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result
@@ -347,8 +328,7 @@ public class TDumpReader implements ICoreFileReader
 		}
 
 		@Override
-		public boolean equals(Object obj)
-		{
+		public boolean equals(Object obj) {
 			if (this == obj) {
 				return true;
 			}
@@ -415,7 +395,7 @@ public class TDumpReader implements ICoreFileReader
 			} catch (IOException e) {
 				throw new MemoryFault(address, e);
 			}
-			
+
 			return length;
 		}
 
@@ -440,12 +420,12 @@ public class TDumpReader implements ICoreFileReader
 		public Collection<? extends IMemoryRange> getMemoryRanges()
 		{
 			AddressRange[] zebedeeRanges = addressSpace.getAddressRanges();
-			List<IMemoryRange> memoryRanges = new ArrayList<IMemoryRange>(zebedeeRanges.length);
-			
+			List<IMemoryRange> memoryRanges = new ArrayList<>(zebedeeRanges.length);
+
 			for (AddressRange thisRange : zebedeeRanges) {
 				memoryRanges.add(new AddressRangeAdapter(addressSpace, thisRange));
 			}
-			
+
 			return memoryRanges;
 		}
 
@@ -473,7 +453,7 @@ public class TDumpReader implements ICoreFileReader
 		{
 			return false;
 		}
-		
+
 		public Properties getProperties(long address)
 		{
 			return new Properties();
@@ -500,7 +480,6 @@ public class TDumpReader implements ICoreFileReader
 	 * Edb.
 	 * 
 	 * @author andhall
-	 * 
 	 */
 	private static class EdbAdapter implements IProcess
 	{
@@ -609,14 +588,14 @@ public class TDumpReader implements ICoreFileReader
 		public IModule getExecutable() throws CorruptDataException
 		{
 			loadModules();
-			
+
 			return executable;
 		}
 
 		public List<IModule> getModules() throws CorruptDataException
 		{
 			loadModules();
-			
+
 			return Collections.unmodifiableList(modules);
 		}
 		
@@ -625,20 +604,18 @@ public class TDumpReader implements ICoreFileReader
 			if (modulesLoaded) {
 				return;
 			}
-			
+
 			AddressRange rr[] = as.addressSpace.getAddressRanges();
 			Map<Long, String> stackSyms = getStackSymbols();
 			try {
 				// Do the lookup once per symbol
-				Map<Long, Dll> closestDlls = new HashMap<Long, Dll>();
-				for (Iterator<Long> i = stackSyms.keySet().iterator(); i.hasNext();) {
-					Long addr = (Long)i.next();
-					long address = addr.longValue();
-					Dll closest = closestDll(edb, address);
+				Map<Long, Dll> closestDlls = new HashMap<>();
+				for (Long addr : stackSyms.keySet()) {
+					Dll closest = closestDll(edb, addr.longValue());
 					closestDlls.put(addr, closest);
 				}
 				boolean firstPass = true;
-				
+
 				for (Dll dll = edb.getFirstDll(); dll != null; dll = dll.getNext()) {
 					final DllFunction f[] = dll.getFunctions();
 					final DllVariable g[] = dll.getVariables();
@@ -658,7 +635,7 @@ public class TDumpReader implements ICoreFileReader
 						symbols.add(new Symbol(f[i].name, f[i].address));
 						findRange(f[i].address, usedTextRangeLimits, rr);
 					}
-					
+
 					// Add variables
 					for (int i = 0; i < g.length; ++i) {
 						symbols.add(new Symbol(g[i].getName(), g[i].getAddress()));
@@ -668,14 +645,14 @@ public class TDumpReader implements ICoreFileReader
 					for (Iterator<Long> i = stackSyms.keySet().iterator(); i.hasNext();) {
 						Long addr = i.next();
 						long address = addr.longValue();
-						Dll closest = (Dll)closestDlls.get(addr);
+						Dll closest = (Dll) closestDlls.get(addr);
 						// Fix when Zebedee does equals() for Dll
 						//if (dll.equals(closest)) {
 						if (closest != null && dll.getName().equals(closest.getName())) {
 							// Check if the stack symbol is within the address range of functions for this DLL
 							int r = findRange(address, rr);
 							if (r >= 0 && (address > usedTextRangeLimits[r][0]) && (address < usedTextRangeLimits[r][1])) {
-								String name = (String)stackSyms.get(addr);
+								String name = (String) stackSyms.get(addr);
 								symbols.add(new Symbol(name, address));
 								i.remove();
 							}
@@ -683,25 +660,25 @@ public class TDumpReader implements ICoreFileReader
 					}
 
 					// Construct the memory sections for this DLL
-					List<IMemoryRange> sections = new ArrayList<IMemoryRange>();
+					List<IMemoryRange> sections = new ArrayList<>();
 					for (int i = 0; i < rr.length; ++i) {
 						if (usedTextRangeLimits[i][1] != 0) {
-							long base = roundToPage(usedTextRangeLimits[i][0],Direction.DOWN);
-							long size = roundToPage(usedTextRangeLimits[i][1],Direction.UP) - base;
+							long base = roundToPage(usedTextRangeLimits[i][0], Direction.DOWN);
+							long size = roundToPage(usedTextRangeLimits[i][1], Direction.UP) - base;
 							sections.add(new MemoryRange(this.as, base, size, ".text"));
 						}
 						if (usedDataRangeLimits[i][1] != 0) {
-							long base = roundToPage(usedDataRangeLimits[i][0],Direction.DOWN);
-							long size = roundToPage(usedDataRangeLimits[i][1],Direction.UP) - base;
+							long base = roundToPage(usedDataRangeLimits[i][0], Direction.DOWN);
+							long size = roundToPage(usedDataRangeLimits[i][1], Direction.UP) - base;
 							sections.add(new MemoryRange(this.as, base, size, ".data"));
-						} 
+						}
 					}
-					
+
 					long loadAddress;
 					try {
 						// Not yet implemented by Zebedee, which throws an Error() 
 						loadAddress = dll.getLoadAddress();
-					} catch (Error e) {	
+					} catch (Error e) {
 						// since the load address for z/OS modules is not available, find the first procedure symbol
 						loadAddress = Long.MAX_VALUE;
 						for (int i = 0; i < f.length; ++i) {
@@ -710,29 +687,29 @@ public class TDumpReader implements ICoreFileReader
 						if (loadAddress == Long.MAX_VALUE) {
 							loadAddress = 0;
 						} else {
-							loadAddress = roundToPage(loadAddress,Direction.DOWN);
+							loadAddress = roundToPage(loadAddress, Direction.DOWN);
 						}
 					}
-					
+
 					Properties props = new Properties();
 					props.setProperty("Load address", format(loadAddress));
-					props.setProperty("Writable Static Area address",format(dll.getWsa()));
-					
+					props.setProperty("Writable Static Area address", format(dll.getWsa()));
+
 					IModule module = new Module(this, dllname, symbols, sections, loadAddress, props);
-				
+
 					if (firstPass) {
 						executable = module;
 						firstPass = false;
-					} else  {
+					} else {
 						modules.add(module);
 					}
 				}
-				
+
 				if (stackSyms.size() > 0) {
 					// Unrecognised symbols, so put them into a dummy DLL where they can be found for printing stack frames
 					final String dllname = "ExtraSymbolsModule";
 					long loadAddress = Long.MAX_VALUE;
-					List<ISymbol> symbols = new ArrayList<ISymbol>();
+					List<ISymbol> symbols = new ArrayList<>();
 					// Array of lowest and highest symbol addresses found in each contiguous memory range
 					long usedTextRangeLimits[][] = new long[rr.length][2];
 					// initialize start address to high
@@ -753,7 +730,7 @@ public class TDumpReader implements ICoreFileReader
 					if (loadAddress == Long.MAX_VALUE) {
 						loadAddress = 0;
 					} else {
-						loadAddress = roundToPage(loadAddress,Direction.DOWN);
+						loadAddress = roundToPage(loadAddress, Direction.DOWN);
 					}
 
 					Properties props = new Properties();
@@ -762,30 +739,29 @@ public class TDumpReader implements ICoreFileReader
 
 					for (int i = 0; i < rr.length; ++i) {
 						if (usedTextRangeLimits[i][1] != 0) {
-							long base = roundToPage(usedTextRangeLimits[i][0],Direction.DOWN);
-							long size = roundToPage(usedTextRangeLimits[i][1],Direction.UP) - base;
+							long base = roundToPage(usedTextRangeLimits[i][0], Direction.DOWN);
+							long size = roundToPage(usedTextRangeLimits[i][1], Direction.UP) - base;
 							sections.add(new MemoryRange(this.as, base, size, ".text"));
 						}
 					}
-					
+
 					IModule mod = new Module(this, dllname, symbols, sections, loadAddress, props);
 					modules.add(mod);
 				}
 			} catch (IOException e) {
 				logger.log(Level.FINE, "Problem for Zebedee finding module information", e);
 			}
-			
+
 			modulesLoaded = true;
 		}
-		
-		private Map<Long, String> getStackSymbols() throws CorruptDataException
-		{
-			Map<Long, String> result = new HashMap<Long, String>();
-			
+
+		private Map<Long, String> getStackSymbols() throws CorruptDataException {
+			Map<Long, String> result = new HashMap<>();
+
 			for (TCBAdapter thread : getThreads()) {
 				result.putAll(thread.getStackSymbols());
 			}
-			
+
 			return result;
 		}
 
@@ -800,13 +776,13 @@ public class TDumpReader implements ICoreFileReader
 		 */
 		private void findRange(long address, long[][] usedRangeLimits, AddressRange rr[]) {
 			int r = findRange(address, rr);
-			
+
 			if (r >= 0) {
 				usedRangeLimits[r][0] = Math.min(usedRangeLimits[r][0], address);
 				usedRangeLimits[r][1] = Math.max(usedRangeLimits[r][1], address);
 			}
 		}
-		
+
 		/**
 		 * Sees which AddressRange the routine it is in. 
 		 * @param routine
@@ -818,12 +794,12 @@ public class TDumpReader implements ICoreFileReader
 			for (int i = 0; i < rr.length; ++i) {
 				if (rr[i].getStartAddress() <= routine && routine <= rr[i].getEndAddress()) {
 					/* Found */
-					logger.fine("Found address "+format(routine)+" at "+format(rr[i].getStartAddress())+":"+format(rr[i].getEndAddress()));
+					logger.fine("Found address " + format(routine) + " at " + format(rr[i].getStartAddress()) + ":" + format(rr[i].getEndAddress()));
 					return i;
 				}
 			}
 			// Not found on the address range
-			logger.fine("Didn't find address "+format(routine));
+			logger.fine("Didn't find address " + format(routine));
 			return -2;
 		}
 
@@ -870,7 +846,7 @@ public class TDumpReader implements ICoreFileReader
 							closestDll = dll;
 							closestDist = dist;
 						}
-					}	
+					}
 				} catch (IOException e) {
 					logger.log(Level.FINE, "Skipping DDL due to IOException ", e);
 				}
@@ -882,7 +858,7 @@ public class TDumpReader implements ICoreFileReader
 		{
 			return edb.address();
 		}
-		
+
 		public boolean isExecutable(long address)
 		{
 			return as.isExecutable(address);
@@ -897,29 +873,29 @@ public class TDumpReader implements ICoreFileReader
 		{
 			return as.isShared(address);
 		}
-		
+
 		public Properties getProperties(long address) {
 			return as.getProperties(address);
 		}
-		
+
 		public String getProcedureNameForAddress(long address) throws CorruptDataException, DataUnavailableException {
 			return getProcedureNameForAddress(address, false);
 		}
-		
+
 		public String getProcedureNameForAddress(long address, boolean dtfjFormat) throws CorruptDataException, DataUnavailableException
 		{
 			//Weirdness in z/OS DLL regions (some overlapping) breaks the SymbolUtil.getProcedureNameForAddress() code.
 			//Instead, iterate over all symbols and find the closest.
-			
+
 			ISymbol closestSymbol = null;
 			IModule closestModule = null;
 			long diff = Long.MAX_VALUE;
-			
+
 			for (IModule thisModule : getModules()) {
 				for (ISymbol thisSymbol : thisModule.getSymbols()) {
 					if (Addresses.lessThan(thisSymbol.getAddress(), address)) {
 						long thisDiff = address - thisSymbol.getAddress();
-						
+
 						if (thisDiff < diff) {
 							diff = thisDiff;
 							closestSymbol = thisSymbol;
@@ -928,7 +904,7 @@ public class TDumpReader implements ICoreFileReader
 					}
 				}
 			}
-			
+
 			if (closestSymbol != null) {
 				return closestModule.getName() + "::" + closestSymbol.getName() + "+0x" + Long.toHexString(diff);
 			} else {
@@ -938,8 +914,8 @@ public class TDumpReader implements ICoreFileReader
 
 		public List<TCBAdapter> getThreads() throws CorruptDataException
 		{
-			if( threads == null ) {
-				List<TCBAdapter> threadsList = new LinkedList<TCBAdapter>();
+			if (threads == null) {
+				List<TCBAdapter> threadsList = new LinkedList<>();
 				Tcb tcbs[] = Tcb.getTcbs(as.addressSpace);
 
 				for (Tcb tcb : tcbs) {
@@ -947,7 +923,7 @@ public class TDumpReader implements ICoreFileReader
 						continue;
 					}
 
-					Caa caa = null;
+					Caa caa;
 					try {
 						caa = new Caa(tcb);
 					} catch (CaaNotFound e) {
@@ -962,7 +938,7 @@ public class TDumpReader implements ICoreFileReader
 				}
 				threads = Collections.unmodifiableList(threadsList);
 			}
-			
+
 			return threads;
 		}
 
@@ -1020,10 +996,10 @@ public class TDumpReader implements ICoreFileReader
 			try {
 				return caa.getTcb().tcbcmp() != 0L;
 			} catch (IOException e) {
-				throw new DataUnavailableException("Couldn't determine TCB CMP status",e);
+				throw new DataUnavailableException("Couldn't determine TCB CMP status", e);
 			}
 		}
-		
+
 	}
 
 	/**
@@ -1032,22 +1008,21 @@ public class TDumpReader implements ICoreFileReader
 	 * @author andhall
 	 * 
 	 */
-	private static class AddressRangeAdapter extends ProtectedMemoryRange
-	{
+	private static class AddressRangeAdapter extends ProtectedMemoryRange {
 
 		private final AddressSpace addressSpace;
 		private final String name;
 
 		public AddressRangeAdapter(AddressSpace space, AddressRange range, String name)
 		{
-			super(range.getStartAddress(),range.getLength());
+			super(range.getStartAddress(), range.getLength());
 			this.addressSpace = space;
 			this.name = name;
 		}
-		
+
 		public AddressRangeAdapter(AddressSpace space, AddressRange range)
 		{
-			this(space,range,null);
+			this(space, range, null);
 		}
 
 		public int getAddressSpaceId()
@@ -1058,7 +1033,7 @@ public class TDumpReader implements ICoreFileReader
 		@Override
 		public String toString()
 		{
-			return String.format("TDumpReader address range from 0x%X to 0x%X in address space %x",getBaseAddress(),getTopAddress(),getAddressSpaceId());
+			return String.format("TDumpReader address range from 0x%X to 0x%X in address space %x", getBaseAddress(), getTopAddress(), getAddressSpaceId());
 		}
 
 		public String getName()
@@ -1106,9 +1081,9 @@ public class TDumpReader implements ICoreFileReader
 			}
 			return true;
 		}
-		
+
 	}
-	
+
 	private static class TCBAdapter implements IOSThread
 	{
 		private static final int NUMBER_OF_GP_REGISTERS = 16;
@@ -1116,15 +1091,14 @@ public class TDumpReader implements ICoreFileReader
 		private final Caa caa;
 		private final Properties props = new Properties();
 		private final EdbAdapter edb;
-		private List<DSAAdapter> stackFrames = new LinkedList<DSAAdapter>();
+		private List<DSAAdapter> stackFrames = new LinkedList<>();
 		private boolean stacksWalked = false;
-		
-		public TCBAdapter(Tcb tcb, Caa caa, EdbAdapter edb)
-		{
+
+		public TCBAdapter(Tcb tcb, Caa caa, EdbAdapter edb) {
 			this.tcb = tcb;
 			this.caa = caa;
 			this.edb = edb;
-			
+
 			props.setProperty("TCB", format(tcb.address()));
 			props.setProperty("CAA", format(caa.address()));
 			props.setProperty("EDB", format(caa.getEdb().address()));
@@ -1133,26 +1107,26 @@ public class TDumpReader implements ICoreFileReader
 			} catch (IOException e) {
 				props.setProperty("PTHREADID", "unknown");
 			}
-			
+
 			try {
 				props.setProperty("Stack direction", caa.ceecaa_stackdirection() == 0 ? "up" : "down");
 				props.setProperty("CAA CEL level", format(caa.ceecaalevel()));
 			} catch (IOException e) {
 				//TODO handle
 			}
-			
+
 			// Get the Task Completion Code
 			try {
-				int code = tcb.space().readInt(tcb.address()+0x10);
+				int code = tcb.space().readInt(tcb.address() + 0x10);
 				props.setProperty("Task Completion Code", format(code));
 			} catch (IOException e) {
 				//TODO handle
 			}
-			
+
 			try {
 				long psw = tcb.getRegisters().getPSW();
 				String pswn = null;
-				switch ((int)(psw >> 31) & 3) {
+				switch ((int) (psw >> 31) & 3) {
 				case 0x0:
 					pswn = "PSW:24";
 					break;
@@ -1163,25 +1137,25 @@ public class TDumpReader implements ICoreFileReader
 					pswn = "PSW:64";
 					break;
 				}
-				
+
 				props.setProperty(pswn, format(psw));
 			} catch (IOException e) {
 				//TODO handle
 			}
-			
+
 			/*
 			 * see if this is a failing thread - in the zebedee code if the task completion code is non-zero then
 			 * the code also sets a failingregisters RegisterSet on the CAA. This is the same set as is returned 
 			 * for registers, so all we need to do is set a property if the failingregister set is not null.
 			 */
-			if(null != caa.getFailingRegisters()) {
+			if (null != caa.getFailingRegisters()) {
 				props.setProperty("FailingRegisters", "true");
 			}
-			
+
 			// Set up IFA/zAAP/zIIP enabled properties for this thread, if the information is available
 			try {
 				props.setProperty("IFA Enabled", tcb.isIFAEnabled() ? "yes" : "no");
-				props.setProperty("WEBFLAG2", String.format("0x%02x",tcb.getIFAFlags())); // the actual bit-field
+				props.setProperty("WEBFLAG2", String.format("0x%02x", tcb.getIFAFlags())); // the actual bit-field
 			} catch (IOException e) {
 				// Unable to get IFA information, leave properties unset
 			}
@@ -1191,30 +1165,30 @@ public class TDumpReader implements ICoreFileReader
 		{
 			//Populate stackFrames
 			this.getStackFrames();
-			
-			Map<Long,String> symbols = new HashMap<Long,String>();
-			
+
+			Map<Long, String> symbols = new HashMap<>();
+
 			for (DSAAdapter frame : getStackFrames()) {
 				Symbol sym = frame.getSymbol();
 				symbols.put(sym.getAddress(), sym.getName());
 			}
-			
+
 			return symbols;
 		}
 
 		public Collection<? extends IMemoryRange> getMemoryRanges()
 		{
 			List<? extends IOSStackFrame> frames = getStackFrames();
-			Set<IMemoryRange> ranges = new HashSet<IMemoryRange>();
-			
+			Set<IMemoryRange> ranges = new HashSet<>();
+
 			for (IOSStackFrame frame : frames) {
 				IMemoryRange range = edb.getAddressSpace().getRangeForAddress(frame.getBasePointer());
-				
+
 				if (range != null) {
-					ranges.add(new MemoryRange(edb.getAddressSpace(),range,"Stack"));
+					ranges.add(new MemoryRange(edb.getAddressSpace(), range, "Stack"));
 				}
 			}
-			
+
 			return ranges;
 		}
 
@@ -1227,7 +1201,7 @@ public class TDumpReader implements ICoreFileReader
 		{
 			RegisterSet rs = new RegisterSet();
 			DsaStackFrame dsa = caa.getCurrentFrame();
-			
+
 			// Get registers from the current (top) stack frame if available, else from the TCB
 			if (dsa != null && dsa.getRegisterSet() != null) {
 				rs = dsa.getRegisterSet();
@@ -1244,18 +1218,17 @@ public class TDumpReader implements ICoreFileReader
 			}
 			List<IRegister> regs = new ArrayList<IRegister>(NUMBER_OF_GP_REGISTERS + 1);
 			long psw = rs.getPSW();
-			
+
 			regs.add(new Register("PSW", psw));
 			// There isn't an easy way to get the total number of registers, so hard code it
 			for (int i = 0; i < NUMBER_OF_GP_REGISTERS; ++i) {
-				regs.add(new Register("R"+i, rs.getRegister(i)));
+				regs.add(new Register("R" + i, rs.getRegister(i)));
 			}
-			
+
 			return regs;
 		}
 
-		public List<DSAAdapter> getStackFrames()
-		{
+		public List<DSAAdapter> getStackFrames() {
 			if (!stacksWalked) {
 				DsaStackFrame dsa = null;
 				try {
@@ -1263,12 +1236,12 @@ public class TDumpReader implements ICoreFileReader
 				} catch (Exception e) {
 					//TODO handle
 				}
-				
+
 				if (dsa == null) {
 					// No stack frames available, leave an indication of the problem
 					//TODO handle this case
 					// Don't add corruptData to the stackFrames as getStackFrames throws DataUnavailable for us if the list is empty
-				} else { 
+				} else {
 					try {
 						for (; dsa != null; dsa = dsa.getParentFrame()) {
 							stackFrames.add(new DSAAdapter(dsa, edb));
@@ -1277,7 +1250,7 @@ public class TDumpReader implements ICoreFileReader
 						//TODO handle
 					}
 				}
-				
+
 				stacksWalked = true;
 			}
 
@@ -1310,12 +1283,12 @@ public class TDumpReader implements ICoreFileReader
 					return 0;
 				}
 			}
-				
+
 			return dsa.getInstructionPointer();
 		}
 
 		public long getBasePointer() {
-			DSAAdapter dsa = null;
+			DSAAdapter dsa;
 			if (stacksWalked) {
 				if (stackFrames.isEmpty()) {
 					logger.log(Level.FINE, "No stack frames for DSA");
@@ -1331,7 +1304,7 @@ public class TDumpReader implements ICoreFileReader
 					return 0;
 				}
 			}
-				
+
 			return dsa.getBasePointer();
 		}
 
@@ -1344,7 +1317,7 @@ public class TDumpReader implements ICoreFileReader
 			 * fastlink - GPR13 => the callers stack frame in the Language Environment stack. Each such stack frame begins with a 36-word save area.
 			 * xplink - GPR4 => the callers stack frame in the downward- growing stack. This is biased and actually points to 2048 bytes before the real start of the stack frame 
 			 */
-			DSAAdapter dsa = null;
+			DSAAdapter dsa;
 			if (stacksWalked) {
 				if (stackFrames.isEmpty()) {
 					logger.log(Level.FINE, "No stack frames for DSA");
@@ -1360,7 +1333,7 @@ public class TDumpReader implements ICoreFileReader
 					return 0;
 				}
 			}
-				
+
 			return dsa.getStackPointer();
 		}
 
@@ -1370,7 +1343,7 @@ public class TDumpReader implements ICoreFileReader
 	{
 		private final DsaStackFrame dsa;
 		private final EdbAdapter edb;
-		
+
 		public DSAAdapter(DsaStackFrame dsa, EdbAdapter edb)
 		{
 			this.dsa = dsa;
@@ -1402,6 +1375,6 @@ public class TDumpReader implements ICoreFileReader
 	}
 
 	private static String format(long l) {
-		return "0x"+Long.toHexString(l);
+		return "0x" + Long.toHexString(l);
 	}
 }
