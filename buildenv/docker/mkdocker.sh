@@ -547,7 +547,7 @@ install_freemarker() {
   echo "RUN mkdir -p /root \\"
   echo " && cd /root \\"
   echo " && $wget_O freemarker.tar.gz https://sourceforge.net/projects/freemarker/files/freemarker/$freemarker_version/freemarker-$freemarker_version.tar.gz/download \\"
-  echo " && tar -xzf freemarker.tar.gz freemarker-$freemarker_version/lib/freemarker.jar --strip=2 \\"
+  echo " && tar -xzf freemarker.tar.gz freemarker-$freemarker_version/lib/freemarker.jar --strip-components=2 \\"
   echo " && rm -f freemarker.tar.gz"
 }
 
@@ -580,7 +580,7 @@ for version in $versions ; do
 done
   echo " && mkdir -p" $(bootjdk_dirs $versions) "\\"
 for version in $versions ; do
-  echo " && tar -xzf jdk$version.tar.gz --directory=$(bootjdk_dirs $version)/ --strip=1 \\"
+  echo " && tar -xzf jdk$version.tar.gz --directory=$(bootjdk_dirs $version)/ --strip-components=1 \\"
 done
   echo " && rm -f jdk*.tar.gz"
 }
