@@ -147,7 +147,13 @@ SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          'x86-64_windows_ojdk292' : CURRENT_RELEASES,
          'x86-64_windows_xl_ojdk292' : CURRENT_RELEASES,
          'aarch64_linux_ojdk292' : CURRENT_RELEASES,
-         'aarch64_linux_xl_ojdk292' : CURRENT_RELEASES]
+         'aarch64_linux_xl_ojdk292' : CURRENT_RELEASES,
+         'ppc64_aix_aot'      : CURRENT_RELEASES,
+         'ppc64le_linux_aot'  : CURRENT_RELEASES,
+         's390x_linux_aot'    : CURRENT_RELEASES,
+         'x86-64_linux_aot'   : CURRENT_RELEASES,
+         'x86-64_mac_aot'     : CURRENT_RELEASES,
+         'x86-64_windows_aot' : CURRENT_RELEASES]
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
@@ -250,7 +256,13 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'alinux64largeheapojdk292' : ['aarch64_linux_xl_ojdk292'],
             'zosojdk292' : ['s390x_zos_ojdk292'],
             'zosxlojdk292' : ['s390x_zos_xl_ojdk292'],
-            'zoslargeheapojdk292' : ['s390x_zos_xl_ojdk292']]
+            'zoslargeheapojdk292' : ['s390x_zos_xl_ojdk292'],
+            'aixaot' : ['ppc64_aix_aot'],
+            'plinuxaot' : ['ppc64le_linux_aot'],
+            'zlinuxaot' : ['s390x_linux_aot'],
+            'xlinuxaot' : ['x86-64_linux_aot'],
+            'osxaot' : ['x86-64_mac_aot'],
+            'winaot' : ['x86-64_windows_aot']]
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
