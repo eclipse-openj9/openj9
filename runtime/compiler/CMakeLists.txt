@@ -154,6 +154,7 @@ endif()
 # Some files in OMR provide duplicate or extra functionality not needed
 # in J9, so we need to remove them
 set(REMOVED_OMR_FILES
+	${omr_SOURCE_DIR}/compiler/codegen/CCData.cpp
 	${omr_SOURCE_DIR}/compiler/control/CompileMethod.cpp
 	${omr_SOURCE_DIR}/compiler/control/CompilationController.cpp
 	${omr_SOURCE_DIR}/compiler/env/FEBase.cpp
@@ -284,6 +285,8 @@ elseif(OMR_OS_AIX)
 	else()
 		list(APPEND J9_SHAREDFLAGS -q32)
 	endif()
+elseif(OMR_OS_ZOS)
+	# Nothing to do here.
 else()
 	message(SEND_ERROR "unsupported platform")
 endif()
