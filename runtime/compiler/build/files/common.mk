@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,7 +218,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/OSRDefAnalysis.cpp \
     omr/compiler/optimizer/PartialRedundancy.cpp \
     omr/compiler/optimizer/PreExistence.cpp \
-    omr/compiler/optimizer/PrefetchInsertion.cpp \
     omr/compiler/optimizer/Reachability.cpp \
     omr/compiler/optimizer/ReachingDefinitions.cpp \
     omr/compiler/optimizer/RedundantAsyncCheckRemoval.cpp \
