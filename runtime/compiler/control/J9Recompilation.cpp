@@ -335,6 +335,10 @@ J9::Recompilation::endOfCompilation()
          _bodyInfo->setDisableSampling(true);
          }
       }
+
+   // If we disallow recompilation then disable sampling
+   if (!_compilation->allowRecompilation())
+      _bodyInfo->setDisableSampling(true);
    }
 
 

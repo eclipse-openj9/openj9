@@ -8747,6 +8747,16 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_EnableOSR, false);
                }
 
+            // Disable recompilation for sync compiles in FSD mode. An app thread that blocks
+            // on compilation releases VM Access. If class redefinition occurs during a
+            // recompilation, the application thread can no longer OSR out to the interpreter;
+            // it is forced to return to the oldStartPC (to jump to a helper) which may not
+            // necessarily be valid.
+            if (compiler->getOption(TR_FullSpeedDebug) && !that->_compInfo.asynchronousCompilation())
+               {
+               compiler->getOptions()->setAllowRecompilation(false);
+               }
+
             // Check to see if there is sufficient physical memory available for this compilation
             if (compiler->getOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile))
                {
