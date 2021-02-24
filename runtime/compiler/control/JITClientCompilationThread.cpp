@@ -37,6 +37,8 @@
 #include "net/ClientStream.hpp"
 #include "optimizer/J9TransformUtil.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
+#include "runtime/CodeCache.hpp"
+#include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/JITServerIProfiler.hpp"
@@ -471,6 +473,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 #endif
          vmInfo._isHotReferenceFieldRequired = TR::Compiler->om.isHotReferenceFieldRequired();
          vmInfo._osrGlobalBufferSize = javaVM->osrGlobalBufferSize;
+         vmInfo._needsMethodTrampolines = TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines();
 
          client->write(response, vmInfo, listOfCacheDescriptors);
          }
@@ -3078,6 +3081,7 @@ remoteCompile(
    std::vector<TR_ResolvedJ9Method*> resolvedMirrorMethodsPersistIPInfo;
    TR_OptimizationPlan modifiedOptPlan;
    std::vector<SerializedRuntimeAssumption> serializedRuntimeAssumptions;
+   std::vector<TR_OpaqueMethodBlock *> methodsRequiringTrampolines;
    try
       {
       // Release VM access just before sending the compilation request
@@ -3109,7 +3113,8 @@ remoteCompile(
          {
          auto recv = client->getRecvData<std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
                                          std::string, std::string, std::vector<TR_ResolvedJ9Method*>,
-                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>, JITServer::ServerMemoryState>();
+                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>, JITServer::ServerMemoryState,
+                                         std::vector<TR_OpaqueMethodBlock *>>();
          statusCode = compilationOK;
          codeCacheStr = std::get<0>(recv);
          dataCacheStr = std::get<1>(recv);
@@ -3120,6 +3125,7 @@ remoteCompile(
          resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
          modifiedOptPlan = std::get<7>(recv);
          serializedRuntimeAssumptions = std::get<8>(recv);
+         methodsRequiringTrampolines = std::get<10>(recv);
 
          JITServer::ServerMemoryState nextMemoryState = std::get<9>(recv);
          updateCompThreadActivationPolicy(compInfoPT, nextMemoryState);
@@ -3269,6 +3275,12 @@ remoteCompile(
                   } // end switch (it->getKind())
                }
             metaData->runtimeAssumptionList = *(compiler->getMetadataAssumptionList());
+
+            for (auto& it : methodsRequiringTrampolines)
+               {
+               if (compInfoPT->reloRuntime()->codeCache()->reserveResolvedTrampoline(it, true) != OMR::CodeCacheErrorCode::ERRORCODE_SUCCESS)
+                  compiler->failCompilation<TR::RecoverableTrampolineError>("Failed to allocate trampoline in the code cache");
+               }
             }
 
          if (!compiler->getOption(TR_DisableCHOpts) && !useAotCompilation)

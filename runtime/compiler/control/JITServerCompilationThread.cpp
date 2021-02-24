@@ -148,13 +148,25 @@ outOfProcessCompilationEnd(
 
    JITServer::ServerMemoryState memoryState = computeServerMemoryState(compInfoPT->getCompilationInfo());
 
+   // Send methods requring resolved trampolines in this compilation to the client
+   std::vector<TR_OpaqueMethodBlock *> methodsRequiringTrampolines;
+   if (comp->getMethodsRequiringTrampolines().size() > 0)
+      {
+      methodsRequiringTrampolines.reserve(comp->getMethodsRequiringTrampolines().size());
+      for (auto it : comp->getMethodsRequiringTrampolines())
+         {
+         methodsRequiringTrampolines.push_back(it);
+         }
+      }
+
    entry->_stream->finishCompilation(codeCacheStr, dataCacheStr, chTableData,
                                      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
                                      logFileStr, svmSymbolToIdStr,
                                      (resolvedMirrorMethodsPersistIPInfo) ?
                                                          std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
                                                          std::vector<TR_ResolvedJ9Method*>(),
-                                     *entry->_optimizationPlan, serializedRuntimeAssumptions, memoryState
+                                     *entry->_optimizationPlan, serializedRuntimeAssumptions, memoryState,
+                                     methodsRequiringTrampolines
                                      );
    compInfoPT->clearPerCompilationCaches();
 

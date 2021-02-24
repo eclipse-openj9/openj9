@@ -357,6 +357,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
       {
       _trMemory = &_globalMemory;
       }
+
+   TR::list<TR_OpaqueMethodBlock *>& getMethodsRequiringTrampolines() { return _methodsRequiringTrampolines; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
@@ -481,6 +483,11 @@ private:
 
    TR_Memory *_perClientMemory;
    TR_Memory _globalMemory;
+   // This list contains RAM method pointers of resolved methods
+   // that require method trampolines.
+   // It needs to be sent to the client at the end of compilation
+   // so that trampolines can be reserved there.
+   TR::list<TR_OpaqueMethodBlock *> _methodsRequiringTrampolines;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *_symbolValidationManager;

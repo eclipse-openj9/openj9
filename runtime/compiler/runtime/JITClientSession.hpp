@@ -324,6 +324,7 @@ class ClientSessionData
 #endif
       bool _isHotReferenceFieldRequired;
       UDATA _osrGlobalBufferSize;
+      bool _needsMethodTrampolines;
       }; // struct VMInfo
 
    /**
