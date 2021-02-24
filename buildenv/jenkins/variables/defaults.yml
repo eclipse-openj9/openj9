@@ -748,3 +748,21 @@ x86-64_mac_ojdk292:
 #========================================#
 x86-64_mac_xl_ojdk292:
   extends: ['x86-64_mac_xl', 'ojdk292']
+
+#========================================#
+# AOT testing
+#========================================#
+aot:
+  test_flags: 'AOT'
+ppc64_aix_aot:
+  extends: ['ppc64_aix', 'aot']
+ppc64le_linux_aot:
+  extends: ['ppc64le_linux', 'aot']
+s390x_linux_aot:
+  extends: ['s390x_linux', 'aot']
+x86-64_linux_aot:
+  extends: ['x86-64_linux', 'aot']
+x86-64_mac_aot:
+  extends: ['x86-64_mac', 'aot']
+x86-64_windows_aot:
+  extends: ['x86-64_windows', 'aot']
