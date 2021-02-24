@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2020, 2020 IBM Corp. and others
+# Copyright (c) 2020, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,3 +47,7 @@ omr_stringify(CMAKE_J9VM_CXX_FLAGS
     -DVS12AndHigher
     ${OMR_PLATFORM_DEFINITIONS}
 )
+
+if(OMR_ENV_DATA32)
+    set(CMAKE_J9VM_CXX_FLAGS "${CMAKE_J9VM_CXX_FLAGS} -m32")
+endif()
