@@ -5556,9 +5556,6 @@ void TR::CompilationInfo::recycleCompilationEntry(TR_MethodToBeCompiled *entry)
    entry->_freeTag |= ENTRY_IN_POOL_NOT_FREE;
    if (entry->_numThreadsWaiting == 0)
       entry->_freeTag |= ENTRY_IN_POOL_FREE;
-#if defined(J9VM_OPT_JITSERVER)
-   entry->freeJITServerAllocations();
-#endif /* defined(J9VM_OPT_JITSERVER) */
 
    entry->_next = _methodPool;
    _methodPool = entry;
@@ -8156,10 +8153,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
 #if defined(J9VM_OPT_JITSERVER)
          // If the options come from a remote party, skip the setup options process
-         if (that->_methodBeingCompiled->_clientOptions != NULL)
+
+         if (that->_methodBeingCompiled->isOutOfProcessCompReq())
             {
-            TR_ASSERT(that->_methodBeingCompiled->isOutOfProcessCompReq(), "Options are already provided only for JITServer");
-            options = TR::Options::unpackOptions(that->_methodBeingCompiled->_clientOptions, that->_methodBeingCompiled->_clientOptionsSize, that, vm, p->trMemory());
+            auto compInfoPTRemote = static_cast<TR::CompilationInfoPerThreadRemote *>(that);
+            TR_ASSERT_FATAL(compInfoPTRemote->getClientOptions(), "client options must be set for an out-of-process compilation");
+            options = TR::Options::unpackOptions(compInfoPTRemote->getClientOptions(), compInfoPTRemote->getClientOptionsSize(), that, vm, p->trMemory());
             options->setLogFileForClientOptions();
             // The following is a hack to prevent the JITServer from allocating
             // a sentinel entry for the list of runtime assumptions kept in the compiler object

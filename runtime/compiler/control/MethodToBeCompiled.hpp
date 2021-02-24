@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,6 @@ struct TR_MethodToBeCompiled
    void unsetRemoteCompReq() { _remoteCompReq = false; }
    bool isOutOfProcessCompReq() const { return _stream != NULL; } // at the server
    uint64_t getClientUID() const;
-   void freeJITServerAllocations(); // Clean up client options which were allocated using persistent allocator
    bool hasChangedToLocalSyncComp() const { return (_origOptLevel != unknownHotness); }
 #else
    bool isRemoteCompReq() const { return false; } // at the client
@@ -136,8 +135,6 @@ struct TR_MethodToBeCompiled
 #if defined(J9VM_OPT_JITSERVER)
    bool                   _remoteCompReq; // Comp request should be sent remotely to JITServer
    JITServer::ServerStream  *_stream; // A non-NULL field denotes an out-of-process compilation request
-   char                  *_clientOptions;
-   size_t                 _clientOptionsSize;
    TR_Hotness             _origOptLevel; //  Cache original optLevel when transforming a remote sync compilation to a local cheap one
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // TR_MethodToBeCompiled
