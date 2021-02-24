@@ -313,7 +313,7 @@ inlIntercept(J9VMThread *currentThread, J9Method *nativeMethod, const char *symb
 		if (0 == strcmp(symbolName, mappings[i].nativeName)) {
 			Trc_VM_INLIntercepted(currentThread, symbolName);
 			nativeMethod->methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(mappings[i].sendTargetNumber);
-			nativeMethod->extra = (void*)(UDATA)-1;
+			nativeMethod->extra = reinterpret_cast<void*>(J9_JIT_NEVER_TRANSLATE);
 			rc = J9_NATIVE_METHOD_BIND_SUCCESS;
 			break;
 		}
