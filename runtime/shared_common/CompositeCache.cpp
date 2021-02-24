@@ -5780,7 +5780,7 @@ SH_CompositeCacheImpl::changePartialPageProtection(J9VMThread *currentThread, vo
 			Trc_SHR_Assert_ShouldNeverHappen();
 		}
 	} else {
-		Trc_SHR_CC_changePartialPageProtection_NotDone(currentThread);
+		Trc_SHR_CC_changePartialPageProtection_NotDone_V1(currentThread, addr, readOnly ? "read-only" : "read-write");
 	}
 
 done:
@@ -6170,118 +6170,125 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 		goto done;
 	}
 	
+	if (_cacheFullFlags == _theca->cacheFullFlags) {
+		goto done;
+	}
+	
 	/* It is possible we take _headerProtectMutex inside _runtimeFlagsProtectMutex.
 	 * So assert we do not hold _headerProtectMutex before taking _runtimeFlagsProtectMutex.
 	 */
 	Trc_SHR_Assert_True(1 != omrthread_monitor_owned_by_self(_headerProtectMutex));
-	omrthread_monitor_enter(_runtimeFlagsProtectMutex);
-	if (_cacheFullFlags == _theca->cacheFullFlags) {
-		omrthread_monitor_exit(_runtimeFlagsProtectMutex);
-		goto done;
-	}
-	_cacheFullFlags = _theca->cacheFullFlags;
-
-	if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_BLOCK_SPACE_FULL)) {
-		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
-			Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL);
-			flagUnset |= J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL;
-		}
-	} else {
-		if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
-			Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL);
-			flagSet |= J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL;
-		}
-	}
-
-	if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_AVAILABLE_SPACE_FULL)) {
-		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
-			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
-				if (_reduceStoreContentionDisabled) {
-					Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION);
-					*_runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION;
-					_useWriteHash = true;
-					_reduceStoreContentionDisabled = false;
-				}
-			}
-			Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL);
-			flagUnset |= J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL;
-			resetSoftmxUnstoredBytes = true;
-		}
-	} else {
-		if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
-			Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL);
-			flagSet |= J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL;
-			
-			if ((true == _useWriteHash) && (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION))) {
-				this->setWriteHash(currentThread, 0);
-				_reduceStoreContentionDisabled = true;
-			}
-			*_runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION;
-			_useWriteHash = false;
-		}
-	}
-
-	if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_AOT_SPACE_FULL)) {
-		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL)) {
-			Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL);
-			flagUnset |= J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL;
-			/* J9SHR_AOT_SPACE_FULL can be removed when either softmx or maxAOT gets increased by this VM or another VM. Keep a local copy of _maxAOT,
-			 * so that we know whether it is the increased maxAOT that removes J9SHR_AOT_SPACE_FULL. Set _maxAOTUnstoredBytes to 0 only when maxAOT is increased.
-			 */
-			if (_maxAOT < _theca->maxAOT) {
-				resetMaxAOTUnstoredBytes = true;
-				_maxAOT = _theca->maxAOT;
-				Trc_SHR_CC_updateRuntimeFullFlags_maxAOTIncreased(currentThread, _maxAOT);
-			}
-		}
-	} else {
-		if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL)) {
-			Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL);
-			flagSet |= J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL;
-		}
-	}
-
-	if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_JIT_SPACE_FULL)) {
-		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL)) {
-			Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL);
-			flagUnset |= J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL;
-			/* J9SHR_JIT_SPACE_FULL can be removed when either softmx or maxJIT gets increased by this VM or another VM. Keep a local copy of _maxJIT,
-			 * so that we know whether it is the increased maxJIT that removes J9SHR_JIT_SPACE_FULL. Set _maxJITUnstoredBytes to 0 only when maxJIT is increased.
-			 */
-			if (_maxJIT < _theca->maxJIT) {
-				resetMaxJITUnstoredBytes = true;
-				_maxJIT = _theca->maxJIT;
-				Trc_SHR_CC_updateRuntimeFullFlags_maxJITIncreased(currentThread, _maxJIT);
-			}
-		}	
-	} else {
-		if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL)) {
-			Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL);
-			flagSet |= J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL;
-		}
-	}
-
-	*_runtimeFlags &= ~flagUnset;
-	*_runtimeFlags |= flagSet;
-	/* JAZZ103 108287 Add write barrier to ensure the setting/unsetting of runtime flags happens before resetting 
-	 * _maxAOTUnstoredBytes/_maxJITUnstoredBytes/_softmxUnstoredBytes to 0.
-	 */
-	VM_AtomicSupport::writeBarrier();
-	if (resetMaxAOTUnstoredBytes) {
-		_maxAOTUnstoredBytes = 0;
-	}
-	if (resetMaxJITUnstoredBytes) {
-		_maxJITUnstoredBytes = 0;
-	}
-	if (resetSoftmxUnstoredBytes) {
-		_softmxUnstoredBytes = 0;
-	}
-
-	omrthread_monitor_exit(_runtimeFlagsProtectMutex);
-
 	if ((holdWriteMutex)
 		|| (0 == enterWriteMutex(currentThread, false, fnName))
 	) {
+		omrthread_monitor_enter(_runtimeFlagsProtectMutex);
+		/* Things may have changed while waiting for the mutexes, do one more comparison between _cacheFullFlags and _theca->cacheFullFlags inside mutexes */
+		if (_cacheFullFlags == _theca->cacheFullFlags) {
+			omrthread_monitor_exit(_runtimeFlagsProtectMutex);
+			if (!holdWriteMutex) {
+				exitWriteMutex(currentThread, fnName);
+			}
+			goto done;
+		}
+		_cacheFullFlags = _theca->cacheFullFlags;
+
+		if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_BLOCK_SPACE_FULL)) {
+			if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
+				Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL);
+				flagUnset |= J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL;
+			}
+		} else {
+			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
+				Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL);
+				flagSet |= J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL;
+			}
+		}
+	
+		if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_AVAILABLE_SPACE_FULL)) {
+			if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
+				if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
+					if (_reduceStoreContentionDisabled) {
+						Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION);
+						*_runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION;
+						_useWriteHash = true;
+						_reduceStoreContentionDisabled = false;
+					}
+				}
+				Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL);
+				flagUnset |= J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL;
+				resetSoftmxUnstoredBytes = true;
+			}
+		} else {
+			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
+				Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL);
+				flagSet |= J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL;
+				
+				if ((true == _useWriteHash) && (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION))) {
+					this->setWriteHash(currentThread, 0);
+					_reduceStoreContentionDisabled = true;
+				}
+				*_runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION;
+				_useWriteHash = false;
+			}
+		}
+	
+		if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_AOT_SPACE_FULL)) {
+			if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL)) {
+				Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL);
+				flagUnset |= J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL;
+				/* J9SHR_AOT_SPACE_FULL can be removed when either softmx or maxAOT gets increased by this VM or another VM. Keep a local copy of _maxAOT,
+				 * so that we know whether it is the increased maxAOT that removes J9SHR_AOT_SPACE_FULL. Set _maxAOTUnstoredBytes to 0 only when maxAOT is increased.
+				 */
+				if (_maxAOT < _theca->maxAOT) {
+					resetMaxAOTUnstoredBytes = true;
+					_maxAOT = _theca->maxAOT;
+					Trc_SHR_CC_updateRuntimeFullFlags_maxAOTIncreased(currentThread, _maxAOT);
+				}
+			}
+		} else {
+			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL)) {
+				Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL);
+				flagSet |= J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL;
+			}
+		}
+	
+		if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_JIT_SPACE_FULL)) {
+			if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL)) {
+				Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL);
+				flagUnset |= J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL;
+				/* J9SHR_JIT_SPACE_FULL can be removed when either softmx or maxJIT gets increased by this VM or another VM. Keep a local copy of _maxJIT,
+				 * so that we know whether it is the increased maxJIT that removes J9SHR_JIT_SPACE_FULL. Set _maxJITUnstoredBytes to 0 only when maxJIT is increased.
+				 */
+				if (_maxJIT < _theca->maxJIT) {
+					resetMaxJITUnstoredBytes = true;
+					_maxJIT = _theca->maxJIT;
+					Trc_SHR_CC_updateRuntimeFullFlags_maxJITIncreased(currentThread, _maxJIT);
+				}
+			}	
+		} else {
+			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL)) {
+				Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL);
+				flagSet |= J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL;
+			}
+		}
+	
+		*_runtimeFlags &= ~flagUnset;
+		*_runtimeFlags |= flagSet;
+		/* JAZZ103 108287 Add write barrier to ensure the setting/unsetting of runtime flags happens before resetting 
+		 * _maxAOTUnstoredBytes/_maxJITUnstoredBytes/_softmxUnstoredBytes to 0.
+		 */
+		VM_AtomicSupport::writeBarrier();
+		if (resetMaxAOTUnstoredBytes) {
+			_maxAOTUnstoredBytes = 0;
+		}
+		if (resetMaxJITUnstoredBytes) {
+			_maxJITUnstoredBytes = 0;
+		}
+		if (resetSoftmxUnstoredBytes) {
+			_softmxUnstoredBytes = 0;
+		}
+	
+		omrthread_monitor_exit(_runtimeFlagsProtectMutex);
 		if (flagSet > 0) {
 			if (true == isAllRuntimeCacheFullFlagsSet()) {
 				_debugData->protectUnusedPages(currentThread, (AbstractMemoryPermission*)this);

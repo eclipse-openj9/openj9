@@ -2828,7 +2828,7 @@ TraceException=Trc_SHR_CC_changePartialPageProtection_StartupNotComplete Overhea
 TraceEvent=Trc_SHR_CC_changePartialPageProtection_AddrPageAligned Overhead=1 Level=4 Template="CC changePartialPageProtection: Returning as address is page aligned"
 TraceEvent=Trc_SHR_CC_changePartialPageProtection_Event Overhead=1 Level=1 Template="CC changePartialPageProtection: Marking pages from %p to %p as %s"
 TraceException=Trc_SHR_CC_changePartialPageProtection_setRegionPermissions_Failed Overhead=1 Level=1 Template="CC changePartialPageProtection: setRegionPermissions failed with error=%d"
-TraceException=Trc_SHR_CC_changePartialPageProtection_NotDone Overhead=1 Level=1 Template="CC changePartialPageProtection: Returning without changing page protection"
+TraceException=Trc_SHR_CC_changePartialPageProtection_NotDone Obsolete Overhead=1 Level=1 Template="CC changePartialPageProtection: Returning without changing page protection"
 TraceExit=Trc_SHR_CC_changePartialPageProtection_Exit Overhead=1 Level=4 Template="CC changePartialPageProtection: Exiting"
 
 TraceException=Trc_SHR_CC_setCacheAreaBoundaries_infeasibleSoftMaxBytes Overhead=1 Level=1 Template="CC setCacheAreaBoundaries: The softmx bytes %u is smaller than the already used bytes %u"
@@ -2990,3 +2990,4 @@ TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_cacheSoftFull_Event Ove
 
 TraceExit-Exception=Trc_SHR_CMI_Update_Exit5 Overhead=1 Level=2 Template="CMI Update: StoreIdentified failed to acquire _identifiedMutex. Returning -1."
 TraceExit-Exception=Trc_SHR_CMI_validate_Exit_IdentifiedMutex_Failed Overhead=1 Level=2 Template="CMI validate: Failed to acquire _identifiedMutex. Returning -1."
+TraceException=Trc_SHR_CC_changePartialPageProtection_NotDone_V1 Overhead=1 Level=1 Template="CC changePartialPageProtection: Returning without changing page protection for address %p to %s"
