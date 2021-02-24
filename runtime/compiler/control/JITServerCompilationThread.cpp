@@ -1272,6 +1272,33 @@ TR::CompilationInfoPerThreadRemote::getResolvedMethodKey(TR_ResolvedMethodType t
    }
 
 /**
+ * @brief Helper method executed by JITServer to cache and retrieve a resolved method from the resolved method cache
+ *
+ * @param key Identifier used to identify a resolved method in resolved methods cache
+ * @param method The resolved method of interest
+ * @param vTableSlot The vTableSlot for the resolved method of interest
+ * @param methodInfo Additional method info about the resolved method of interest
+ * @param owningMethod Owning method of the resolved method of interest
+ * @param resolvedMethod The resolved method of interest, set by this API
+ * @param unresolvedInCP The unresolvedInCP boolean value of interest, set by this API
+ * @param ttlForUnresolved Time-to-live for cached unresolved methods. After this number of accesses, the entry is deleted
+ * @return returns a resolved method pointer from the cache after caching it
+ */
+TR_ResolvedMethod *
+TR::CompilationInfoPerThreadRemote::cacheAndGetResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9JITServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP, int32_t ttlForUnresolved)
+   {
+   cacheResolvedMethod(
+      key,
+      method,
+      vTableSlot,
+      methodInfo,
+      ttlForUnresolved);
+   getCachedResolvedMethod(key, owningMethod, resolvedMethod);
+
+   return *resolvedMethod;
+   }
+
+/**
  * @brief Method executed by JITServer to save the mirrors of resolved method of interest to a list
  *
  * @param resolvedMethod The mirror of the resolved method of interest (existing at JITClient)

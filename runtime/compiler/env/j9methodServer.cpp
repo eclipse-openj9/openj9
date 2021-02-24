@@ -334,22 +334,13 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
 #else
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_ResolvedMethod *resolvedMethod = NULL;
-
-   // See if the constant pool entry is already resolved or not
-   if (unresolvedInCP)
-       *unresolvedInCP = true;
-
-   bool shouldCompileTimeResolve = shouldCompileTimeResolveMethod(cpIndex);
-
-   if (!((compInfoPT->getClientData()->getRtResolve()) &&
+   TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex);
+   if (!((_fe->_compInfoPT->getClientData()->getRtResolve()) &&
          !comp->ilGenRequest().details().isMethodHandleThunk() && // cmvc 195373
-         performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve || shouldCompileTimeResolve)
+         performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve)
       {
-      if (compInfoPT->getCachedResolvedMethod(
-            compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex),
-            this,
-            &resolvedMethod,
-            unresolvedInCP))
+      if (compInfoPT->getCachedResolvedMethod(key, this,
+                                             &resolvedMethod, unresolvedInCP))
          {
          if (resolvedMethod == NULL)
             {
@@ -364,55 +355,39 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
             }
          return resolvedMethod;
          }
+      }
 
-      _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror, (TR_ResolvedMethod *) _remoteMirror, literals(), cpIndex);
-      auto recv = _stream->read<J9Method *, UDATA, bool, TR_ResolvedJ9JITServerMethodInfo>();
-      J9Method *ramMethod = std::get<0>(recv);
-      UDATA vTableIndex = std::get<1>(recv);
-      bool isUnresolvedInCP = std::get<2>(recv);
+   // See if the constant pool entry is already resolved or not
+   if (unresolvedInCP)
+       *unresolvedInCP = true;
+
+   bool shouldCompileTimeResolve = shouldCompileTimeResolveMethod(cpIndex);
+
+   if (!((compInfoPT->getClientData()->getRtResolve()) &&
+         !comp->ilGenRequest().details().isMethodHandleThunk() && // cmvc 195373
+         performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve || shouldCompileTimeResolve)
+      {
+      _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror, _remoteMirror, cpIndex, ignoreRtResolve);
+      auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, uint32_t, bool>();
+      TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
+      auto methodInfo = std::get<1>(recv);
+      uint32_t vTableSlot = std::get<2>(recv);
+      bool isUnresolvedInCP = std::get<3>(recv);
 
       if (unresolvedInCP)
          *unresolvedInCP = isUnresolvedInCP;
 
-      bool createResolvedMethod = true;
-
-      if (comp->compileRelocatableCode() && ramMethod && comp->getOption(TR_UseSymbolValidationManager))
+      if (ramMethod == NULL) 
          {
-         if (!comp->getSymbolValidationManager()->addVirtualMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
-            createResolvedMethod = false;
-         }
-
-      if (vTableIndex)
-         {
-         TR_AOTInliningStats *aotStats = NULL;
-         if (comp->getOption(TR_EnableAOTStats))
-            aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->virtualMethods);
-
-         TR_ResolvedJ9JITServerMethodInfo &methodInfo = std::get<3>(recv);
-         
-         // call constructor without making a new query
-         if (createResolvedMethod)
+         if (unresolvedInCP) 
             {
-            resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, unresolvedInCP, aotStats, methodInfo);
-            compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex), (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, methodInfo);
+            handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
             }
+         return NULL;
          }
+      resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, vTableSlot, methodInfo, this, &resolvedMethod, unresolvedInCP);
+      
       }
-
-   TR_ASSERT_FATAL(resolvedMethod || !shouldCompileTimeResolve, "Method has to be resolved in %s at cpIndex  %d", signature(comp->trMemory()), cpIndex);
-
-   if (resolvedMethod == NULL)
-      {
-      TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual/null");
-      if (unresolvedInCP)
-         handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
-      }
-   else
-      {
-      TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
-      TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
-      }
-
    return resolvedMethod;
 #endif
    }
@@ -647,7 +622,8 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
 
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_ResolvedMethod *resolvedMethod = NULL;
-   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Static, (TR_OpaqueClassBlock *) _ramClass, cpIndex), this, &resolvedMethod, unresolvedInCP))
+   TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Static, (TR_OpaqueClassBlock *) _ramClass, cpIndex);
+   if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod, unresolvedInCP))
       {
       if ((resolvedMethod == NULL) && unresolvedInCP)
          handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
@@ -655,54 +631,22 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
       }
 
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedStaticMethodAndMirror, _remoteMirror, cpIndex);
-   auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITServerMethodInfo, bool>();
-   J9Method * ramMethod = std::get<0>(recv);
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, bool>();
+   TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
+   auto methodInfo = std::get<1>(recv);
    bool isUnresolvedInCP = std::get<2>(recv);
    if (unresolvedInCP)
       *unresolvedInCP = isUnresolvedInCP;
 
-   if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && ramMethod)
+   if (ramMethod == NULL) 
       {
-      if (!comp->getSymbolValidationManager()->addStaticMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
-         ramMethod = NULL;
-      }
-
-   bool skipForDebugging = doResolveAtRuntime(ramMethod, cpIndex, comp);
-   if (isArchetypeSpecimen())
-      {
-      // ILGen macros currently must be resolved for correctness, or else they
-      // are not recognized and expanded.  If we have unresolved calls, we can't
-      // tell whether they're ilgen macros because the recognized-method system
-      // only works on resovled methods.
-      //
-      if (ramMethod)
-         skipForDebugging = false;
-      else
+      if (unresolvedInCP) 
          {
-         comp->failCompilation<TR::ILGenFailure>("Can't compile an archetype specimen with unresolved calls");
-         }
-      }
-
-   auto &methodInfo = std::get<1>(recv);
-   if (ramMethod && !skipForDebugging)
-      {
-      TR_AOTInliningStats *aotStats = NULL;
-      if (comp->getOption(TR_EnableAOTStats))
-         aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->staticMethods);
-      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats, methodInfo);
-      if (unresolvedInCP)
-         *unresolvedInCP = false;
-      }
-
-   if (resolvedMethod == NULL)
-      {
-      if (unresolvedInCP)
          handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
+         }
+      return NULL;
       }
-   else
-      {
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Static, (TR_OpaqueClassBlock *) _ramClass, cpIndex), (TR_OpaqueMethodBlock *) ramMethod, 0, methodInfo);
-      }
+   resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, 0, methodInfo, this, &resolvedMethod, unresolvedInCP);
 
    return resolvedMethod;
    }
@@ -716,7 +660,8 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_ResolvedMethod *resolvedMethod = NULL;
    TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
-   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Special, clazz, cpIndex), this, &resolvedMethod, unresolvedInCP))
+   TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Special, clazz, cpIndex);
+   if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod, unresolvedInCP))
       {
       if ((resolvedMethod == NULL) && unresolvedInCP)
          handleUnresolvedSpecialMethodInCP(cpIndex, unresolvedInCP);
@@ -730,37 +675,20 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
       *unresolvedInCP = true;
 
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror, _remoteMirror, cpIndex);
-   auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITServerMethodInfo>();
-   J9Method * ramMethod = std::get<0>(recv);
-   auto &methodInfo = std::get<1>(recv);
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo>();
+   TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
+   auto methodInfo = std::get<1>(recv);
 
-   if (ramMethod)
-      {
-      bool createResolvedMethod = true;
-      if (comp->getOption(TR_UseSymbolValidationManager))
+   if (ramMethod == NULL) 
          {
-         if (!comp->getSymbolValidationManager()->addSpecialMethodFromCPRecord((TR_OpaqueMethodBlock *)ramMethod, cp(), cpIndex))
-            createResolvedMethod = false;
+         if (unresolvedInCP) 
+            {
+            handleUnresolvedSpecialMethodInCP(cpIndex, unresolvedInCP);
+            }
+         return NULL;
          }
-      TR_AOTInliningStats *aotStats = NULL;
-      if (comp->getOption(TR_EnableAOTStats))
-         aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->specialMethods);
-      if (createResolvedMethod)
-         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats, methodInfo);
-      if (unresolvedInCP)
-         *unresolvedInCP = false;
-      }
-
-   if (resolvedMethod == NULL)
-      {
-      if (unresolvedInCP)
-         handleUnresolvedSpecialMethodInCP(cpIndex, unresolvedInCP);
-      }
-   else
-      {
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Special, clazz, cpIndex), (TR_OpaqueMethodBlock *) ramMethod, 0, methodInfo);
-      }
-
+   resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, 0, methodInfo, this, &resolvedMethod, unresolvedInCP);
+   
    return resolvedMethod;
    }
 
@@ -841,59 +769,22 @@ TR_ResolvedJ9JITServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp,
    TR_ResolvedMethod *resolvedMethod = NULL;
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
-   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface, clazz, cpIndex, classObject), this, &resolvedMethod))
+   TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface, clazz, cpIndex, classObject);
+   if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod))
       return resolvedMethod;
    
-   _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, getPersistentIdentifier(), classObject, cpIndex, _remoteMirror);
-   auto recv = _stream->read<bool, J9Method*, TR_ResolvedJ9JITServerMethodInfo>();
-   bool resolved = std::get<0>(recv);
-   J9Method *ramMethod = std::get<1>(recv);
-   auto &methodInfo = std::get<2>(recv);
+   _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, classObject, cpIndex, _remoteMirror);
+   auto recv = _stream->read<TR_OpaqueMethodBlock*, TR_ResolvedJ9JITServerMethodInfo>();
+   TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
+   auto &methodInfo = std::get<1>(recv);
 
-   if (comp && comp->getOption(TR_UseSymbolValidationManager))
+   if (ramMethod == NULL)
       {
-      if (!comp->getSymbolValidationManager()->addInterfaceMethodFromCPRecord((TR_OpaqueMethodBlock *) ramMethod,
-                                                                              (TR_OpaqueClassBlock *) ((TR_J9VM *) _fe)->getClassFromMethodBlock(getPersistentIdentifier()),
-                                                                              classObject,
-                                                                              cpIndex))
-         {
-         return NULL;
-         }
+      return NULL;   
       }
-
-
-   // If the method ref is unresolved, the bytecodes of the ramMethod will be NULL.
-   // IFF resolved, then we can look at the rest of the ref.
-   //
-   if (resolved)
-      {
-      TR_AOTInliningStats *aotStats = NULL;
-      if (comp->getOption(TR_EnableAOTStats))
-         aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->interfaceMethods);
-      TR_ResolvedMethod *m = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, NULL, aotStats, methodInfo);
-
-      TR_OpaqueClassBlock *c = NULL;
-      if (m)
-         {
-         c = m->classOfMethod();
-         if (c && !_fe->isInterfaceClass(c))
-            {
-            TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface");
-            TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface:#bytes", sizeof(TR_ResolvedJ9Method));
-            resolvedMethod = m;
-            }
-         }
-      }
-   // for resolved interface method, need to know cpIndex, as well as classObject
-   // to uniquely identify it.
-   if (resolvedMethod)
-      {
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface, clazz, cpIndex, classObject), (TR_OpaqueMethodBlock *) ramMethod, 0, methodInfo);
-      return resolvedMethod;
-      }
-
-   TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface/null");
-   return 0;
+   resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, 0, methodInfo, this, &resolvedMethod);
+   
+   return resolvedMethod;
    }
 
 U_32
@@ -922,30 +813,24 @@ TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(TR::Compilation
       // check for cache first
       auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
       TR_ResolvedMethod * resolvedMethod = NULL;
-      if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface, (TR_OpaqueClassBlock *) _ramClass, cpIndex), this, &resolvedMethod)) 
+      TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface, (TR_OpaqueClassBlock *) _ramClass, cpIndex);
+      if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod)) 
          return resolvedMethod;
 
       // query for resolved method and create its mirror at the same time
       _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror, _remoteMirror, cpIndex);
-      auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITServerMethodInfo, UDATA>();
+      auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, UDATA>();
       auto j9method = std::get<0>(recv);
       auto &methodInfo = std::get<1>(recv);
       auto vtableOffset = std::get<2>(recv);
 
-      if (comp->getOption(TR_UseSymbolValidationManager) && j9method)
-         {
-         if (!comp->getSymbolValidationManager()->addImproperInterfaceMethodFromCPRecord((TR_OpaqueMethodBlock *)j9method, cp(), cpIndex))
-            j9method = NULL;
-         }
-
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface, (TR_OpaqueClassBlock *) _ramClass, cpIndex),
-                                     (TR_OpaqueMethodBlock *) j9method, vtableOffset, methodInfo);
       if (j9method == NULL)
+      {
          return NULL;
-      else
-         return createResolvedMethodFromJ9Method(comp, cpIndex, vtableOffset, j9method, NULL, NULL, methodInfo);
       }
-
+      resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, j9method, vtableOffset, methodInfo, this, &resolvedMethod);
+      return resolvedMethod;
+      }
    return NULL;
 #endif
    }
@@ -978,7 +863,8 @@ TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, T
    TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
    TR_ResolvedMethod *resolvedMethod = NULL;
    // If method is already cached, return right away
-   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject), this, &resolvedMethod)) 
+   TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject);
+   if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod)) 
       return resolvedMethod;
 
    // Remote call finds RAM method at offset and creates a resolved method at the client
@@ -987,23 +873,11 @@ TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, T
    auto ramMethod = std::get<0>(recv);
    auto &methodInfo = std::get<1>(recv);
 
-   // it seems better to override this method for AOT but that's what baseline is doing
-   // maybe there is a reason for it
-   if (_fe->isAOT_DEPRECATED_DO_NOT_USE())
+   if (ramMethod == NULL)
       {
-      if (comp && comp->getOption(TR_UseSymbolValidationManager))
-         {
-         if (!comp->getSymbolValidationManager()->addVirtualMethodFromOffsetRecord(ramMethod, classObject, virtualCallOffset, ignoreRtResolve))
-            return NULL;
-         }
-      resolvedMethod = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), methodInfo, this) : 0;
+      return NULL;
       }
-   else
-      {
-      resolvedMethod = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), methodInfo, this) : 0;
-      }
-   if (resolvedMethod)
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject), ramMethod, 0, methodInfo);
+   resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, 0, methodInfo, this, &resolvedMethod);
    return resolvedMethod;
    }
 
