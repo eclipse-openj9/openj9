@@ -165,6 +165,17 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          }
          break;
 
+      case TR_AbsoluteHelperAddress:
+         {
+         TR_RelocationRecordAbsoluteHelperAddress *ahaRecord = reinterpret_cast<TR_RelocationRecordAbsoluteHelperAddress *>(reloRecord);
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+
+         ahaRecord->setHelperID(reloTarget, static_cast<uint32_t>(symRef->getReferenceNumber()));
+         ahaRecord->setReloFlags(reloTarget, flags);
+         }
+         break;
+
       case TR_AbsoluteMethodAddressOrderedPair:
          {
          TR_RelocationRecordMethodAddress *maRecord = reinterpret_cast<TR_RelocationRecordMethodAddress *>(reloRecord);
