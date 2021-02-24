@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,21 +20,19 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-if(OMR_HOST_OS STREQUAL "aix")
+if(OMR_OS_AIX)
 	set(PPC_HW_PROFILER PPCHWProfilerAIX.cpp)
-#
 #	ifeq ($(I5_VERSION),I5_V6R1)
 #		PPC_HW_PROFILER=
 #	endif
 #	ifeq ($(I5_VERSION),I5_V7R2)
 #		PPC_HW_PROFILER=
 #	endif
-endif()
-
-if(OMR_HOST_OS STREQUAL "linux")
+elseif(OMR_OS_LINUX)
 	set(PPC_HW_PROFILER PPCHWProfilerLinux.cpp)
+else()
+	message(SEND_ERROR "Unsupported platform")
 endif()
-
 
 j9jit_files(
 	p/runtime/${PPC_HW_PROFILER}

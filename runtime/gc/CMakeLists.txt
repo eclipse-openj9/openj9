@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,7 @@ if(OMR_NEED_LIBRT)
 	target_link_libraries(j9gc PRIVATE rt)
 endif()
 
-if(OMR_HOST_OS STREQUAL "linux")
+if(OMR_OS_LINUX)
 	target_link_libraries(j9gc PRIVATE pthread)
 endif()
 
@@ -151,7 +151,7 @@ if(OMR_MIXED_REFERENCES_MODE_STATIC)
 		target_link_libraries(j9gc_full PRIVATE rt)
 	endif()
 
-	if(OMR_HOST_OS STREQUAL "linux")
+	if(OMR_OS_LINUX)
 		target_link_libraries(j9gc_full PRIVATE pthread)
 	endif()
 
