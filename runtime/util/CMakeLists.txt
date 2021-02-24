@@ -121,6 +121,23 @@ if(OMR_ARCH_X86)
 		PRIVATE
 			fpusup.s
 	)
+	if(OMR_ENV_DATA32 AND OMR_OS_WINDOWS)
+		# On windows we have to set the language, because we have ASM_MASM and ASM_NASM both enabled.
+		set_source_files_properties(
+			sse2enabled.asm
+			sse2memclear.asm
+			wi32/volatile.asm
+			PROPERTIES
+				LANGUAGE ASM_MASM
+		)
+		target_sources(j9util
+			PRIVATE
+			clang_comp.c
+			sse2enabled.asm
+			sse2memclear.asm
+			wi32/volatile.asm
+		)
+	endif()
 endif()
 
 target_include_directories(j9util

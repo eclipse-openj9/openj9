@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,10 +23,13 @@
 j9vm_add_executable(servicetest
 	SharedService.c
 )
+# JIT helper methods require us to disable buffer security checks on Windows
+set_source_files_properties(SharedService.c COMPILE_FLAGS "/GS-")
 
 target_link_libraries(servicetest
 	PRIVATE
 		j9vm_interface
+		j9vm_main_wrapper
 
 		j9util
 		j9utilcore
