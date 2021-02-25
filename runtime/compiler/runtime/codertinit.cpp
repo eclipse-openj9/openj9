@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -219,7 +219,10 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
       }
 
    /* Should use portlib */
-#if defined(TR_HOST_X86)
+#if defined(TR_HOST_POWER)
+   // On P10+ Prefix instructions require uniform 64-byte boundary alignment.
+   jitConfig->codeCacheAlignment = 64;
+#elif defined(TR_HOST_X86)
    jitConfig->codeCacheAlignment = 32;
 #elif defined(TR_HOST_S390)
    // On IBM Z, it can generate load and store quadword instructions from 
