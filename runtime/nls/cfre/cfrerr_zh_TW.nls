@@ -32,7 +32,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or
+# It indicates a single percent sign. Please do not modify the format specifiers, or 
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -438,7 +438,7 @@ J9NLS_CFR_ERR_BC_NOT_WIDE.user_response=Contact the provider of the classfile fo
 # invokeinterface is not translatable
 J9NLS_CFR_ERR_BC_METHOD_RESERVED=invokeinterface \u4f4d\u5143\u7d44\u78bc\u4fdd\u7559\u7684\u5c6c\u6027\u4e0d\u662f\u96f6
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_BC_METHOD_RESERVED.explanation='invokeinterface' has none zero value in the fourth operand byte.
+J9NLS_CFR_ERR_BC_METHOD_RESERVED.explanation='invokeinterface' has none zero value in the fourth operand byte. 
 J9NLS_CFR_ERR_BC_METHOD_RESERVED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_METHOD_RESERVED.user_response=Contact the provider of the classfile for a corrected version.
 
@@ -823,7 +823,7 @@ J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX.user_response=Contact the provider of the 
 # END NON-TRANSLATABLE
 
 # new is not translatable
-J9NLS_CFR_ERR_BC_NEW_ARRAY=New \u4f4d\u5143\u7d44\u78bc\u7121\u6cd5\u5efa\u7acb\u9663\u5217
+J9NLS_CFR_ERR_BC_NEW_ARRAY=new \u4f4d\u5143\u7d44\u78bc\u7121\u6cd5\u5efa\u7acb\u9663\u5217
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NEW_ARRAY.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_NEW_ARRAY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -898,7 +898,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8.user_response=Contact the provid
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=\u4e0d\u5408\u6cd5\u7684\u65b9\u6cd5\u4fee\u98fe\u5143
+J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=\u4e0d\u5408\u6cd5\u7684\u65b9\u6cd5\u4fee\u98fe\u5143 
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1099,7 +1099,7 @@ J9NLS_CFR_ERR_ACCESS_CONFLICT_CLASS.system_action=The JVM will throw a verificat
 J9NLS_CFR_ERR_ACCESS_CONFLICT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# A CONSTANT_MethodHandle must either a field or method ref for its reference index
+# A CONSTANT_MethodHandle must either a field or method ref for its reference index 
 J9NLS_CFR_ERR_BAD_METHODHANDLE_REF_INDEX=MethodHandle \u5e38\u6578\u5fc5\u9808\u53c3\u8003\u5230\u6b04\u4f4d\u6216\u65b9\u6cd5\u53c3\u7167
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_METHODHANDLE_REF_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -1127,7 +1127,7 @@ J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC.user_response=Contact the provider of the cla
 # invokedynamic is not translatable
 J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED=invokedynamic \u4f4d\u5143\u7d44\u78bc\u4fdd\u7559\u7684\u5c6c\u6027\u4e0d\u662f\u96f6
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.explanation='invokedynamic' has non zero values in the third or fourth operand bytes
+J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.explanation='invokedynamic' has non zero values in the third or fourth operand bytes 
 J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
@@ -1135,7 +1135,7 @@ J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.user_response=Contact the provider of th
 # MethodHandle is not translatable
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE=\u5f15\u5c0e\u65b9\u6cd5\u7d22\u5f15\u5fc5\u9808\u53c3\u7167 MethodHandle \u5e38\u6578\u5132\u5b58\u5340\u9805\u76ee
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation. 
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
@@ -1288,7 +1288,7 @@ J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.user_response=Contact the pro
 
 # END NON-TRANSLATABLE
 
-# Nest host attribute is not a constant class
+# Nest host attribute is not a constant class 
 J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX=\u5de2\u72c0\u4e3b\u6a5f\u5fc5\u9808\u662f\u5e38\u6578\u985e\u5225
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
