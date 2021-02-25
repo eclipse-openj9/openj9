@@ -130,3 +130,11 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	}
 	return layout;
 }
+#if defined(J9VM_ENV_DATA64)
+void
+GC_ArrayletObjectModel::AssertArrayPtrIsIndexable(J9IndexableObject *arrayPtr)
+{
+	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
+	Assert_MM_true(extensions->objectModel.isIndexable(J9GC_J9OBJECT_CLAZZ(arrayPtr, this)));
+}
+#endif /* defined(J9VM_ENV_DATA64) */

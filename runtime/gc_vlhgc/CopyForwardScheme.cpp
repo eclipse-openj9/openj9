@@ -1985,6 +1985,13 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 
 				if(objectModel->isIndexable(destinationObjectPtr)) {
 					updateInternalLeafPointersAfterCopy((J9IndexableObject *)destinationObjectPtr, (J9IndexableObject *)forwardedHeader->getObject());
+
+					/* Updates internal data address of indexable objects. Every indexable object have a void *dataAddr
+					 * that always points to the array data. It will always point to the address right after the header,
+					 * in case of contiguous data it will point to the data itself, and in case of discontiguous
+					 * arraylet it will point to the first arrayiod. dataAddr is only updated if dataAddr points to data
+					 * within heap. */
+					_extensions->indexableObjectModel.fixupDataAddr(destinationObjectPtr);
 				}
 
 				/* IF the object has been hashed and has not been moved then we must store the previous

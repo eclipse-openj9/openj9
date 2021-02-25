@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,8 +28,16 @@
 
 #include "MarkJavaStats.hpp"
 #include "ScavengerJavaStats.hpp"
+#include "GCExtensionsBase.hpp"
+#include "ObjectModel.hpp"
 
 struct OMR_VMThread;
+
+typedef struct GCmovedObjectHashCode {
+	uint32_t originalHashCode;
+	bool hasBeenMoved;
+	bool hasBeenHashed;
+} GCmovedObjectHashCode;
 
 class MM_EnvironmentBase;
 class MM_OwnableSynchronizerObjectBuffer;
@@ -52,6 +60,8 @@ public:
 	MM_UnfinalizedObjectBuffer *_unfinalizedObjectBuffer; /**< The thread-specific buffer of recently allocated unfinalized objects */
 	MM_OwnableSynchronizerObjectBuffer *_ownableSynchronizerObjectBuffer; /**< The thread-specific buffer of recently allocated ownable synchronizer objects */
 
+	struct GCmovedObjectHashCode movedObjectHashCodeCache; /**< Structure to aid on object movement and hashing */
+
 	/* Function members */
 private:
 protected:
@@ -68,6 +78,7 @@ class MM_EnvironmentDelegate
 	/* Data members */
 private:
 	MM_EnvironmentBase *_env;
+	MM_GCExtensionsBase *_extensions;
 	J9VMThread *_vmThread;
 	GC_Environment _gcEnv;
 protected:
@@ -159,6 +170,47 @@ public:
 
 	void forceOutOfLineVMAccess();
 
+	/**
+	 * This method is responsible for remembering object information before object is moved. Differently than
+	 * evacuation, we're sliding the object; therefore, we need to remember object's original information
+	 * before object moves and could potentially grow
+	 *
+	 * @param[in] objectPtr points to the object that is about to be moved
+	 * @see postObjectMoveForCompact(omrobjectptr_t)
+	 */
+	MMINLINE void
+	preObjectMoveForCompact(omrobjectptr_t objectPtr)
+	{
+		GC_ObjectModel *objectModel = &_extensions->objectModel;
+		bool hashed = objectModel->hasBeenHashed(objectPtr);
+		bool moved = objectModel->hasBeenMoved(objectPtr);
+
+		_gcEnv.movedObjectHashCodeCache.hasBeenHashed = hashed;
+		_gcEnv.movedObjectHashCodeCache.hasBeenMoved = moved;
+
+		if (hashed && !moved) {
+			/* calculate this BEFORE we (potentially) destroy the object */
+			_gcEnv.movedObjectHashCodeCache.originalHashCode = computeObjectAddressToHash((J9JavaVM *)_extensions->getOmrVM()->_language_vm, objectPtr);
+		}
+	}
+
+	/**
+	 * This method may be called during heap compaction, after the object has been moved to a new location.
+	 * The implementation may apply any information extracted and cached in the calling thread at this point.
+	 *
+	 * @param[in] objectPtr points to the object that has just been moved
+	 * @see preObjectMoveForCompact(omrobjectptr_t)
+	 */
+	MMINLINE void
+	postObjectMoveForCompact(omrobjectptr_t objectPtr)
+	{
+		GC_ObjectModel *objectModel = &_extensions->objectModel;
+		if (_gcEnv.movedObjectHashCodeCache.hasBeenHashed && !_gcEnv.movedObjectHashCodeCache.hasBeenMoved) {
+			*(uint32_t*)((uintptr_t)objectPtr + objectModel->getHashcodeOffset(objectPtr)) = _gcEnv.movedObjectHashCodeCache.originalHashCode;
+			objectModel->setObjectHasBeenMoved(objectPtr);
+		}
+	}
+
 #if defined (OMR_GC_THREAD_LOCAL_HEAP)
 	/**
 	 * Disable inline TLH allocates by hiding the real heap top address from
@@ -206,6 +258,7 @@ public:
 		
 	
 		: _env(NULL)
+		, _extensions(NULL)
 		, _vmThread(NULL)
 	{ }
 };

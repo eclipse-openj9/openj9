@@ -902,7 +902,7 @@ public:
 	 * field.
 	 *
 	 * @param arrayPtr      Pointer to the indexable object whose size is required
-	 * @param dataAddr      Pointer which points to indexable object data
+	 * @param address       Pointer which points to indexable object data
 	 */
 	MMINLINE void
 	setDataAddrForDiscontiguous(J9IndexableObject *arrayPtr, void *address)
@@ -922,6 +922,13 @@ public:
 
 		*dataAddrPtr = calculatedDataAddr;
 	}
+
+	/**
+	 * Asserts that an indexable object pointer is indeed an indexable object
+	 *
+	 * @param arrayPtr      Pointer to the indexable object
+	 */
+	void AssertArrayPtrIsIndexable(J9IndexableObject *arrayPtr);
 
 	/**
 	 * Returns data pointer associated with a contiguous Indexable object.
@@ -984,6 +991,31 @@ public:
 			: getDataAddrForContiguous(arrayPtr);
 	}
 #endif /* J9VM_ENV_DATA64 */
+
+	/**
+	 * External fixup dataAddr API to update pointer of indexable objects.
+	 * Sets the dataAddr of either a contiguous or discomtiguous indexable
+	 * object.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object whose size is required
+	 */
+	MMINLINE void
+	fixupDataAddr(omrobjectptr_t arrayPtr)
+	{
+#if defined(J9VM_ENV_DATA64)
+		J9IndexableObject *j9ArrayPtr = (J9IndexableObject *)arrayPtr;
+		AssertArrayPtrIsIndexable(j9ArrayPtr);
+
+		ArrayLayout layout = getArrayLayout(j9ArrayPtr);
+		bool isDiscontiguous = (layout != InlineContiguous);
+
+		if (isDiscontiguous) {
+			setDataAddrForDiscontiguous(j9ArrayPtr, NULL);
+		} else {
+			setDataAddrForContiguous(j9ArrayPtr);
+		}
+#endif /* J9VM_ENV_DATA64 */
+	}
 
 	/**
 	 * Returns the header size of a given indexable object. The arraylet layout is determined base on "small" size.
