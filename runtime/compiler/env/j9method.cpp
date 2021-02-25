@@ -1737,7 +1737,7 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
    void *classChain = NULL;
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
-   classChain = fej9->sharedCache()->rememberClass(definingClass);
+   classChain = fej9->sharedCache()->rememberClass(true, comp, definingClass);
    if (!classChain)
       {
       ADD_TRACING_BUFFER_MESSAGE(comp, "relo::storeValRecordIfNec, classChain NULL, %p, %p, %d, %p\n", definingClass, constantPool, cpIndex, ramMethod);
