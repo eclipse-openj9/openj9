@@ -2787,33 +2787,6 @@ static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register 
    cg->machine()->setLinkRegisterKilled(true);
    }
 
-static void VMoutlinedHelperWrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::CodeGenerator *cg)
-   {
-   auto gcMode = TR::Compiler->om.writeBarrierType();
-   if (gcMode == gc_modron_wrtbar_none)
-      return;
-
-   TR::Compilation *comp = cg->comp();
-   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-   TR::SymbolReference *wbref = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
-
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-   TR::addDependency(deps, dstReg, TR::RealRegister::x0, TR_GPR, cg);
-   TR::addDependency(deps, srcReg, TR::RealRegister::x1, TR_GPR, cg);
-
-   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel);
-
-   TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
-                                                        (uintptr_t)wbref->getMethodAddress(),
-                                                        new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg->trMemory()),
-                                                        wbref, NULL);
-   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
-
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
-
-   cg->machine()->setLinkRegisterKilled(true);
-   }
-
 TR::Register *
 J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -2833,47 +2806,17 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
          sourceChild = sourceChild->getFirstChild();
       }
 
-   TR::Register *srcReg;
+   TR::Register *srcReg = cg->evaluate(sourceChild);
    TR::Register *dstReg = cg->evaluate(dstNode);
-   bool stopUsingSrc = false;
-   if (sourceChild->getReferenceCount() > 1 && (srcReg = sourceChild->getRegister()) != NULL)
-      {
-      TR::Register *tempReg = cg->allocateCollectedReferenceRegister();
 
-      // Source must be an object.
-      TR_ASSERT(!srcReg->containsInternalPointer(), "Stored value is an internal pointer");
-      generateMovInstruction(cg, node, tempReg, srcReg);
-      srcReg = tempReg;
-      stopUsingSrc = true;
-      }
-   else
-      {
-      srcReg = cg->evaluate(sourceChild);
-      }
    if (!sourceChild->isNull())
       {
       VMoutlinedHelperArrayStoreCHKEvaluator(node, srcReg, dstReg, cg);
       }
-   TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
-   TR::Register *translatedSrcReg = usingCompressedPointers ? cg->evaluate(firstChild->getSecondChild()) : srcReg;
 
-   TR::MemoryReference *storeMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, cg);
-   generateMemSrc1Instruction(cg, storeOp, node, storeMR, translatedSrcReg);
+   cg->evaluate(firstChild);
 
-   if (!sourceChild->isNull())
-      {
-      VMoutlinedHelperWrtbarEvaluator(firstChild, srcReg, dstReg, cg);
-      }
-
-   if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
-      firstChild->setStoreAlreadyEvaluated(true);
-
-   cg->decReferenceCount(firstChild->getSecondChild());
-   cg->decReferenceCount(dstNode);
-   storeMR->decNodeReferenceCounts(cg);
    cg->decReferenceCount(firstChild);
-   if (stopUsingSrc)
-      cg->stopUsingRegister(srcReg);
 
    return NULL;
    }
