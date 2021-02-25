@@ -32,7 +32,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or
+# It indicates a single percent sign. Please do not modify the format specifiers, or 
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -71,7 +71,7 @@ J9NLS_CFR_ERROR_TEMPLATE_METHOD.user_response=
 # END NON-TRANSLATABLE
 
 # Example: JVMCFRE074 bad magic number; class=Foo, offset=0
-J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD=%1$s; clase=%3$.*2$s, offset=%4$u
+J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD=%1$s; clase=%3$.*2$s, desplazamiento=%4$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.sample_input_1=JVMCFRE074 bad magic number
 J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD.sample_input_2=3
@@ -438,7 +438,7 @@ J9NLS_CFR_ERR_BC_NOT_WIDE.user_response=Contact the provider of the classfile fo
 # invokeinterface is not translatable
 J9NLS_CFR_ERR_BC_METHOD_RESERVED=la ranura reservada del bytecode invokeinterface no es cero
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_BC_METHOD_RESERVED.explanation='invokeinterface' has none zero value in the fourth operand byte.
+J9NLS_CFR_ERR_BC_METHOD_RESERVED.explanation='invokeinterface' has none zero value in the fourth operand byte. 
 J9NLS_CFR_ERR_BC_METHOD_RESERVED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_METHOD_RESERVED.user_response=Contact the provider of the classfile for a corrected version.
 
@@ -1099,7 +1099,7 @@ J9NLS_CFR_ERR_ACCESS_CONFLICT_CLASS.system_action=The JVM will throw a verificat
 J9NLS_CFR_ERR_ACCESS_CONFLICT_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# A CONSTANT_MethodHandle must either a field or method ref for its reference index
+# A CONSTANT_MethodHandle must either a field or method ref for its reference index 
 J9NLS_CFR_ERR_BAD_METHODHANDLE_REF_INDEX=las constantes MethodHandle deben hacer referencia a un campo o a una referencia de m\u00e9todo
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_METHODHANDLE_REF_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -1127,7 +1127,7 @@ J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC.user_response=Contact the provider of the cla
 # invokedynamic is not translatable
 J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED=la ranura reservada del bytecode invokedynamic no es cero
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.explanation='invokedynamic' has non zero values in the third or fourth operand bytes
+J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.explanation='invokedynamic' has non zero values in the third or fourth operand bytes 
 J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
@@ -1135,7 +1135,7 @@ J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.user_response=Contact the provider of th
 # MethodHandle is not translatable
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE=el \u00edndice de m\u00e9todos del programa de arranque debe hacer referencia a una entrada de la agrupaci\u00f3n constante MethodHandle
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation. 
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BOOTSTRAP_METHODHANDLE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
@@ -1165,7 +1165,7 @@ J9NLS_CFR_ERR_FOUND_MULTIPLE_BOOTSTRAP_METHODS_ATTRIBUTES.user_response=Contact 
 # END NON-TRANSLATABLE
 
 # BootstrapMethods entries in the attributes table
-J9NLS_CFR_ERR_BOOTSTRAP_METHOD_TABLE_ABSENT_OR_WRONG_SIZE=el atributo BootstrapMethods requerido por invokedynamic no se encuentra o es demasiado peque\u00f1o
+J9NLS_CFR_ERR_BOOTSTRAP_METHOD_TABLE_ABSENT_OR_WRONG_SIZE=el atributo BootstrapMethods requerido por invokedynamic no se encuentra o es demasiado peque\u00f1o 
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BOOTSTRAP_METHOD_TABLE_ABSENT_OR_WRONG_SIZE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BOOTSTRAP_METHOD_TABLE_ABSENT_OR_WRONG_SIZE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1173,7 +1173,7 @@ J9NLS_CFR_ERR_BOOTSTRAP_METHOD_TABLE_ABSENT_OR_WRONG_SIZE.user_response=Contact 
 # END NON-TRANSLATABLE
 
 # type_annotation entries in the attributes table
-J9NLS_CFR_ERR_BAD_TARGET_TYPE_TAG=type_annotation target_type no reconocidos
+J9NLS_CFR_ERR_BAD_TARGET_TYPE_TAG=type_annotation target_type no reconocidos 
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_TARGET_TYPE_TAG.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_TARGET_TYPE_TAG.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1288,7 +1288,7 @@ J9NLS_CFR_ERR_NEST_MEMBERS_NAME_NOT_CONSTANT_CLASS.user_response=Contact the pro
 
 # END NON-TRANSLATABLE
 
-# Nest host attribute is not a constant class
+# Nest host attribute is not a constant class 
 J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX=El anfitri\u00f3n de anidado tiene que ser una clase constante
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_NEST_HOST_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -1425,7 +1425,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.user_response=Contact the provider of
 # END NON-TRANSLATABLE
 
 #Example: JVMCFRE154 BootstrapMethod (0) arguments contain invalid constantpool entry at index (#20) of type (9); class=Foo, offset=492
-J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=Los argumentos BootstrapMethod (%1$d) contienen una entrada constantpool no v\u00e1lida en el \u00edndice (#%2$u) de tipo (%3$u); clase=%5$.*4$s, compensaci\u00f3n=%6$u
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=Los argumentos BootstrapMethod (%1$d) contienen una entrada constantpool no v\u00e1lida en el \u00edndice (#%2$u) de tipo (%3$u); clase=%5$.*4$s, desplazamiento=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_1=1
 J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_2=3

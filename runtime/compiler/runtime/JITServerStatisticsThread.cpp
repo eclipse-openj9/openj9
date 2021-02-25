@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,6 +75,7 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
    uint64_t crtTime = j9time_current_time_millis();
    uint64_t lastStatsTime = crtTime;
    uint64_t lastPurgeTime = crtTime;
+   uint64_t lastCpuUpdate = crtTime;
 
    persistentInfo->setStartTime(crtTime);
    persistentInfo->setElapsedTime(0);
@@ -96,15 +97,16 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
             lastPurgeTime = crtTime;
             OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
             compInfo->getClientSessionHT()->purgeOldDataIfNeeded();
-            }
+            }     
 
          // Print operational statistics to vlog if enabled
+         CpuUtilization *cpuUtil = compInfo->getCpuUtil(); 
          if ((statsThreadObj->getStatisticsFrequency() != 0) && ((crtTime - lastStatsTime) > statsThreadObj->getStatisticsFrequency()))
             {
             int32_t cpuUsage = 0, avgCpuUsage = 0, vmCpuUsage = 0;
-            CpuUtilization *cpuUtil = compInfo->getCpuUtil();
             if (cpuUtil->isFunctional())
                {
+               lastCpuUpdate = crtTime;
                cpuUtil->updateCpuUtil(jitConfig);
                cpuUsage = cpuUtil->getCpuUsage();
                avgCpuUsage = cpuUtil->getAvgCpuUsage();
@@ -122,6 +124,12 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
                }
             TR_VerboseLog::vlogRelease();
             lastStatsTime = crtTime;
+            }
+            
+         if (cpuUtil->isFunctional() && TR::Options::isAnyVerboseOptionSet() && ((crtTime - lastCpuUpdate) >= 500))
+            {
+            lastCpuUpdate = crtTime;
+            cpuUtil->updateCpuUtil(jitConfig);
             }
          }
       // This thread has been interrupted or StatisticsThreadExitFlag flag was set
