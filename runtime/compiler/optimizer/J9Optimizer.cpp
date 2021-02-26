@@ -205,7 +205,6 @@ static const OptimizationStrategy fsdStrategyOptsForMethodsWithoutSlotSharing[] 
    { OMR::localDeadStoreElimination,   OMR::IfEnabled }, //remove the astore if no literal pool is required
    { OMR::localCSE,                    OMR::IfEnabled },  //common up lit pool refs in the same block
    { OMR::deadTreesElimination,        OMR::IfEnabled }, // cleanup at the end
-   { OMR::prefetchInsertionGroup,      OMR::IfLoops   }, // created IL should not be moved
    { OMR::treeSimplification,          OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
    { OMR::trivialDeadTreeRemoval,      OMR::IfEnabled }, // final cleanup before opcode expansion
    { OMR::globalDeadStoreElimination,            },
@@ -363,7 +362,6 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::localCSE,                                  OMR::IfEnabled  },  //common up lit pool refs in the same block
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
    { OMR::signExtendLoadsGroup,                      OMR::IfEnabled                  }, // last opt before GRA
-   { OMR::prefetchInsertionGroup,                    OMR::IfLoops                    }, // created IL should not be moved
    { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
    { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                  }, // final cleanup before opcode expansion
    { OMR::globalDeadStoreElimination,                OMR::IfVoluntaryOSR            },
@@ -443,7 +441,6 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::loopAliasRefinerGroup,                 OMR::IfLoops     },
    { OMR::recompilationModifier,                 OMR::IfEnabledAndNotProfiling },
    { OMR::sequentialStoreSimplificationGroup,                             }, // reduce sequential stores into an arrayset
-   { OMR::prefetchInsertionGroup,                OMR::IfLoops                  }, // created IL should not be moved
    { OMR::partialRedundancyEliminationGroup                               },
    { OMR::globalDeadStoreElimination,            OMR::IfLoopsAndNotProfiling   },
    { OMR::inductionVariableAnalysis,             OMR::IfLoopsAndNotProfiling   },
@@ -530,7 +527,6 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::recompilationModifier,                 OMR::IfEnabled   },
 
    { OMR::sequentialStoreSimplificationGroup                 }, // reduce sequential stores into an arrayset
-   { OMR::prefetchInsertionGroup,                OMR::IfLoops     }, // created IL should not be moved
    { OMR::partialRedundancyEliminationGroup                  },
    { OMR::globalDeadStoreElimination,            OMR::IfLoops     },
    { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
@@ -630,7 +626,6 @@ static const OptimizationStrategy AOTStrategyOpts[] =
    { OMR::globalDeadStoreElimination,            OMR::IfMoreThanOneBlock}, // global dead store removal
    { OMR::deadTreesElimination                             }, // cleanup after dead store removal
    { OMR::compactNullChecks                                }, // cleanup at the end
-   { OMR::prefetchInsertionGroup,                OMR::IfLoops   }, // created IL should not be moved
    { OMR::finalGlobalGroup                                 }, // done just before codegen
    { OMR::regDepCopyRemoval                                },
    { OMR::endOpts                                          }
