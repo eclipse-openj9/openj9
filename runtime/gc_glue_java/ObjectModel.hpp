@@ -494,39 +494,6 @@ public:
 		return convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
 	}
 
-	MMINLINE void
-	preMove(OMR_VMThread* vmThread, omrobjectptr_t objectPtr)
-	{
-		bool hashed = hasBeenHashed(objectPtr);
-		bool moved = hasBeenMoved(objectPtr);
-
-		vmThread->movedObjectHashCodeCache.hasBeenHashed = hashed;
-		vmThread->movedObjectHashCodeCache.hasBeenMoved = moved;
-
-		if (hashed && !moved) {
-			/* calculate this BEFORE we (potentially) destroy the object */
-			vmThread->movedObjectHashCodeCache.originalHashCode = computeObjectAddressToHash((J9JavaVM *)vmThread->_vm->_language_vm, objectPtr);
-		}
-	}
-
-	/**
-	 * This method may be called during heap compaction, after the object has been moved to a new location.
-	 * The implementation may apply any information extracted and cached in the calling thread at this point.
-	 *
-	 * @param[in] vmThread points to the calling thread
-	 * @param[in] objectPtr points to the object that has just been moved
-	 * @param[in] objectPtrOffsetInBytes byte offset from objectPtr to location to store extracted information
-	 * @see preMove(OMR_VMThread*, omrobjectptr_t)
-	 */
-	MMINLINE void
-	postMove(OMR_VMThread* vmThread, omrobjectptr_t objectPtr)
-	{
-		if (vmThread->movedObjectHashCodeCache.hasBeenHashed && !vmThread->movedObjectHashCodeCache.hasBeenMoved) {
-			*(uint32_t*)((uintptr_t)objectPtr + getHashcodeOffset(objectPtr)) = vmThread->movedObjectHashCodeCache.originalHashCode;
-			setObjectFlags(objectPtr, 0, OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS | OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS);
-		}
-	}
-
 	MMINLINE uintptr_t
 	getHashcodeOffset(omrobjectptr_t objectPtr) {
 		return getObjectModelDelegate()->getHashcodeOffset(objectPtr);
@@ -556,28 +523,6 @@ public:
 	getConsumedSizeInBytesWithHeaderBeforeMove(J9Object *objectPtr)
 	{
 		return adjustSizeInBytes(getObjectModelDelegate()->getObjectSizeInBytesWithHeader(objectPtr, hasBeenMoved(objectPtr) && !hasRecentlyBeenMoved(objectPtr)));
-	}
-
-	MMINLINE void
-	calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor)
-	{
-		GC_ObjectModelBase::calculateObjectDetailsForCopy(env, forwardedHeader, objectCopySizeInBytes, objectReserveSizeInBytes, hotFieldAlignmentDescriptor);
-	}
-
-	/**
-	 * Calculate the actual object size and the size adjusted to object alignment. The calculated object size
-	 * includes any expansion bytes allocated if the object will grow when moved.
-	 *
-	 * @param[in]  env points to the environment for the calling thread
-	 * @param[in]  forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
-	 * @param[out] objectCopySizeInBytes actual object size
-	 * @param[out] objectReserveSizeInBytes size adjusted to object alignment
-	 * @param[out] doesObjectNeedHash flag that indicates if object needs hashing
-	 */
-	MMINLINE void
-	calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader* forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash)
-	{
-		getObjectModelDelegate()->calculateObjectDetailsForCopy(env, forwardedHeader, objectCopySizeInBytes, objectReserveSizeInBytes, doesObjectNeedHash);
 	}
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)

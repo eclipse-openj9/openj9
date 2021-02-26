@@ -1171,8 +1171,7 @@ MMINLINE void
 MM_WriteOnceCompactor::preObjectMove(MM_EnvironmentVLHGC* env, J9Object *objectPtr, UDATA *objectSizeAfterMove)
 {
 	*objectSizeAfterMove = _extensions->objectModel.getConsumedSizeInBytesWithHeaderForMove(objectPtr);
-	_extensions->objectModel.preMove(env->getOmrVMThread(), objectPtr); // To be deprecated
-	//env->preObjectMoveForCompact(objectPtr); // Will substitute line above
+	env->preObjectMoveForCompact(objectPtr);
 }
 
 MMINLINE void
@@ -1182,19 +1181,8 @@ MM_WriteOnceCompactor::postObjectMove(MM_EnvironmentVLHGC* env, J9Object *newLoc
 	if (_extensions->objectModel.isRemembered(newLocation)) {
 		_extensions->objectModel.clearRemembered(newLocation);
 	}
-	if (_extensions->objectModel.isIndexable(newLocation)) {
-		_extensions->indexableObjectModel.fixupInternalLeafPointersAfterCopy((J9IndexableObject*) newLocation, (J9IndexableObject*) objectPtr);
 
-		/* Updates internal data address of indexable objects. Every indexable object have a void *dataAddr
-		 * that always points to the array data. It will always point to the address right after the header,
-		 * in case of contiguous data it will point to the data itself, and in case of discontiguous
-		 * arraylet it will point to the first arrayiod. dataAddr is only updated if dataAddr points to data
-		 * within heap. */
-		_extensions->indexableObjectModel.fixupDataAddr(newLocation);
-	}
-
-	_extensions->objectModel.postMove(env->getOmrVMThread(), newLocation); // To be deprecated along with lines above
-	//env->postObjectMoveForCompact(newLocation, objectPtr); // Will substitute lines above
+	env->postObjectMoveForCompact(newLocation, objectPtr);
 }
 
 void
