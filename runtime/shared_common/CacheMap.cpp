@@ -1628,15 +1628,7 @@ SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const
 		}
 
 		if (true == hasMutex) {
-			if (!_ccHead->isLocked()) {
-				_ccHead->protectPartiallyFilledPages(currentThread);
-			} else {
-				/* Do not protect last partially filled metadata page when cache is locked.
-				 * During lock state, whole of metadata in the cache is unprotected.
-				 * As such, protecting only the last partially filled page is not of much use.
-				 */
-				_ccHead->protectPartiallyFilledPages(currentThread, true, false, true);
-			}
+			_ccHead->protectPartiallyFilledPages(currentThread);
 			if (doExitMutex) {
 				_ccHead->exitWriteMutex(currentThread, "runEntryPointChecks");
 			}

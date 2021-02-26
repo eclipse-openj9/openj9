@@ -5809,6 +5809,11 @@ SH_CompositeCacheImpl::protectPartiallyFilledPages(J9VMThread *currentThread,  b
 		 */
 		BlockPtr segmentPtrPage = (BlockPtr)ROUND_DOWN_TO(_osPageSize, (UDATA)SEGUPDATEPTR(_theca));
 		BlockPtr updatePtrPage = (BlockPtr)ROUND_DOWN_TO(_osPageSize, (UDATA)UPDATEPTR(_theca));
+		
+		/* Do not protect last partially filled metadata page when cache is locked.
+		 * During lock state, whole of metadata in the cache is unprotected.
+		 */
+		protectMetadataPage = protectMetadataPage && !isLocked();
 
 		if ((segmentPtrPage != updatePtrPage) || (protectSegmentPage == protectMetadataPage)) {
 			if (protectSegmentPage) {
