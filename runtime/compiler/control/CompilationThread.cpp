@@ -8862,15 +8862,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          that->_methodBeingCompiled->_compErrCode = compilationFailure;
          }
 
-#if defined(J9VM_OPT_JITSERVER)
-      if (compiler && compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-         {
-         compiler->getOptions()->closeLogFileForClientOptions();
-         if (!that->getPerClientPersistentMemory()) // threw while outside of per-client region, re-enter it here
-            that->enterPerClientAllocationRegion();
-         }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-
       if (compiler)
          {
          // The KOT needs to survive at least until we're done committing virtual guards and we must not be holding the

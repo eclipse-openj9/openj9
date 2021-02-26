@@ -28,6 +28,7 @@
 #include "control/JITServerHelpers.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
+#include "env/JITServerAllocationRegion.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/ut_j9jit.h"
@@ -643,12 +644,13 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       // Optimization plan needs to use the global allocator,
       // because there is a global pool of plans
-      exitPerClientAllocationRegion();
-      // Build my entry
-      if (!(optPlan = TR_OptimizationPlan::alloc(clientOptPlan.getOptLevel())))
-         throw std::bad_alloc();
-      optPlan->clone(&clientOptPlan);
-      enterPerClientAllocationRegion();
+         {
+         JITServer::GlobalAllocationRegion globalRegion(this);
+         // Build my entry
+         if (!(optPlan = TR_OptimizationPlan::alloc(clientOptPlan.getOptLevel())))
+            throw std::bad_alloc();
+         optPlan->clone(&clientOptPlan);
+         }
 
       TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
       *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
