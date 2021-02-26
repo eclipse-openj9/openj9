@@ -1152,10 +1152,16 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    const static bool debugMHInlineWithOutPeeking = feGetEnv("TR_DebugMHInlineWithOutPeeking") ? true: false;
    bool mhInlineWithPeeking =  comp()->getOption(TR_DisableMHInlineWithoutPeeking);
    const static bool disableMethodHandleInliningAfterFirstPass = feGetEnv("TR_DisableMethodHandleInliningAfterFirstPass") ? true: false;
-   bool inlineMethodHandleCallee = calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen() &&
+   bool inlineArchetypeSpecimen = calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen() &&
                                    (!disableMethodHandleInliningAfterFirstPass || _inliner->firstPass());
-   if (nph.doPeeking() && recurseDown ||
-       inlineMethodHandleCallee && mhInlineWithPeeking)
+   bool inlineLambdaFormGeneratedMethod = comp()->fej9()->isLambdaFormGeneratedMethod(calltarget->_calleeMethod) &&
+                                   (!disableMethodHandleInliningAfterFirstPass || _inliner->firstPass());
+
+   // No need to peek LF methods, as we'll always interprete the method with state in order to propagate object info
+   // through bytecodes to find call targets
+   if (!inlineLambdaFormGeneratedMethod &&
+       (nph.doPeeking() && recurseDown ||
+       inlineArchetypeSpecimen && mhInlineWithPeeking))
       {
 
       heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- needsPeeking is true for calltarget %p",
@@ -1169,7 +1175,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          wasPeekingSuccessfull = true;
          }
       }
-   else if (inlineMethodHandleCallee && !mhInlineWithPeeking && debugMHInlineWithOutPeeking)
+   else if (inlineArchetypeSpecimen && !mhInlineWithPeeking && debugMHInlineWithOutPeeking)
       {
       traceMsg(comp(), "printing out trees and bytecodes through peeking because DebugMHInlineWithOutPeeking is on\n");
       methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL);
@@ -1187,7 +1193,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    //
    TR_ValueProfileInfoManager * profileManager = TR_ValueProfileInfoManager::get(comp());
    bool callGraphEnabled = !comp()->getOption(TR_DisableCallGraphInlining);//profileManager->isCallGraphProfilingEnabled(comp());
-   if (!_inliner->firstPass() || inlineMethodHandleCallee)
+   if (!_inliner->firstPass() || inlineArchetypeSpecimen || inlineLambdaFormGeneratedMethod)
       callGraphEnabled = false; // TODO: Work out why this doesn't function properly on subsequent passes
    if (callGraphEnabled && recurseDown)
       {
@@ -1290,7 +1296,8 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (!callsitesAreCreatedFromTrees)
       {
       bci.prepareToFindAndCreateCallsites(blocks, flags, callSites, &cfg, &newBCInfo, _recursionDepth, &callStack);
-      bool iteratorWithState = inlineMethodHandleCallee && !mhInlineWithPeeking;
+      bool iteratorWithState = (inlineArchetypeSpecimen && !mhInlineWithPeeking) || inlineLambdaFormGeneratedMethod;
+
       if (!bci.findAndCreateCallsitesFromBytecodes(wasPeekingSuccessfull, iteratorWithState))
          {
          heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. bci.findAndCreateCallsitesFromBytecode failed", _recursionDepth, calltarget, callerName);

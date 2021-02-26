@@ -436,7 +436,9 @@ static bool checkForRemainingInlineableJSR292(TR::Compilation *comp, TR::Resolve
                {
                TR_ResolvedMethod * resolvedMethod = node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
                if (!node->isTheVirtualCallNodeForAGuardedInlinedCall() &&
-                  (resolvedMethod->convertToMethod()->isArchetypeSpecimen() ||
+                  (comp->fej9()->isLambdaFormGeneratedMethod(resolvedMethod) ||
+                   resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeBasic ||
+                   resolvedMethod->convertToMethod()->isArchetypeSpecimen() ||
                    resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact))
                   {
                   return true;
@@ -2374,6 +2376,9 @@ TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
    if (method->convertToMethod()->isArchetypeSpecimen())
       return true;
 
+   if (comp()->fej9()->isLambdaFormGeneratedMethod(method))
+      return true;
+
    if (insideIntPipelineForEach(method, comp()))
       {
       if (comp()->trace(OMR::inlining))
@@ -3837,7 +3842,8 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
 
       int32_t weightBeforeLookingForBenefits = weight;
 
-      if (calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen() && calltarget->_calleeMethod->getMethodHandleLocation())
+      bool isLambdaFormGeneratedMethod = comp()->fej9()->isLambdaFormGeneratedMethod(calltarget->_calleeMethod);
+      if ((calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen() && calltarget->_calleeMethod->getMethodHandleLocation()) || isLambdaFormGeneratedMethod)
          {
          static char *methodHandleThunkWeightFactorStr = feGetEnv("TR_methodHandleThunkWeightFactor");
          static int32_t methodHandleThunkWeightFactor = methodHandleThunkWeightFactorStr? atoi(methodHandleThunkWeightFactorStr) : 10;
@@ -4222,13 +4228,18 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
      // HACK: Get frequency from both sources, and use both.  You're
      // only cold if you're cold according to both.
 
+     bool isLambdaFormGeneratedMethod = comp()->fej9()->isLambdaFormGeneratedMethod(callerResolvedMethod);
+     // TODO: we should ignore frequency for thunk archetype, however, this require performance evaluation
+     bool frequencyIsInaccurate = isLambdaFormGeneratedMethod;
+
      frequency1 = comp()->convertNonDeterministicInput(comp()->fej9()->getIProfilerCallCount(bcInfo, comp()), MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT, randomGenerator(), 0);
      frequency2 = comp()->convertNonDeterministicInput(block->getFrequency(), MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT, randomGenerator(), 0);
      if (frequency1 > frequency2 && callerResolvedMethod->convertToMethod()->isArchetypeSpecimen())
         frequency2 = frequency1;
 
      if ((frequency1 <= 0) && ((0 <= frequency2) &&  (frequency2 <= MAX_COLD_BLOCK_COUNT)) &&
-        !alwaysWorthInlining(calleeResolvedMethod, callNode))
+        !alwaysWorthInlining(calleeResolvedMethod, callNode) &&
+        !frequencyIsInaccurate)
         {
         isCold = true;
         }
@@ -4238,6 +4249,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
      if (allowBiggerMethods() &&
          !comp()->getMethodSymbol()->doJSR292PerfTweaks() &&
          calleeResolvedMethod &&
+         !frequencyIsInaccurate &&
          !j9InlinerPolicy->isInlineableJNI(calleeResolvedMethod, callNode))
         {
         bytecodeSize = scaleSizeBasedOnBlockFrequency(bytecodeSize,frequency2,borderFrequency, calleeResolvedMethod,callNode,veryColdBorderFrequency);
@@ -5024,6 +5036,9 @@ bool TR_J9InlinerPolicy::isJSR292AlwaysWorthInlining(TR_ResolvedMethod *resolved
       return true;
 
    if (resolvedMethod->convertToMethod()->isArchetypeSpecimen())
+      return true;
+
+   if (TR::comp()->fej9()->isLambdaFormGeneratedMethod(resolvedMethod))
       return true;
 
    return false;
