@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1260,10 +1260,10 @@ private static void multiLeafArrayCopy(Object src, int srcPos, Object dest,
 /**
  * Return platform specific line separator character(s)
  * Unix is \n while Windows is \r\n as per the prop set by the VM 
- * Refer to Jazz 30875
  *  
  * @return platform specific line separator character(s)
  */
+//  Refer to Jazz 30875
 public static String lineSeparator() {
 	 return lineSeparator;
 }
