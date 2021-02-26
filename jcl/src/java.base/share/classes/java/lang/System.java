@@ -1260,10 +1260,10 @@ private static void multiLeafArrayCopy(Object src, int srcPos, Object dest,
 /**
  * Return platform specific line separator character(s)
  * Unix is \n while Windows is \r\n as per the prop set by the VM 
- * Refer to Jazz 30875
  *  
  * @return platform specific line separator character(s)
  */
+//  Refer to Jazz 30875
 public static String lineSeparator() {
 	 return lineSeparator;
 }
