@@ -2867,11 +2867,11 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	 * to this will be required.
 	 */
 
-	/* class files with the ACC_VALUE_TYPE can only be loaded if -XX:+EnableValhalla is set */
+	/* class files with the ACC_VALUE_TYPE can only be loaded if -XX:+EnableValhalla is set, which is on by default. */
 	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)
 		&& J9_ARE_NO_BITS_SET(flags, BCT_ValueTypesEnabled)
 	) {
-		errorCode = J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED__ID;
+		errorCode = J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1__ID;
 		offset = index - data - 2;
 		goto _errorFound;
 	}
