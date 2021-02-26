@@ -1552,3 +1552,10 @@ J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Conta
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=
+
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1=ValueTypes are disabled with the -XX:-EnableValhalla option
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.explanation=ValueTypes is an experimental feature and is disabled by -XX:-EnableValhalla
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.user_response=Contact the provider of the class file for a corrected version, or remove the -XX:+EnableValhalla option and retry.
+# END NON-TRANSLATABLE
