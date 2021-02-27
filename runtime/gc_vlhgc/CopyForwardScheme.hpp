@@ -1074,11 +1074,20 @@ public:
 	void kill(MM_EnvironmentVLHGC *env);
 
 	/**
+	 * Pre Copy Forward process. Clear GC stats, pre process regions and perform any main-specific setup
+	 */
+	void copyForwardPreProcess(MM_EnvironmentVLHGC *env);
+
+	/**
+	 * Post Copy Forward process. Sets persistent flag indicating if copy forward collection was successful or not.
+	 */
+	void copyForwardPostProcess(MM_EnvironmentVLHGC *env);
+
+	/**
 	 * Run a copy forward collection operation on the already determined collection set.
 	 * @param env[in] Main thread.
-	 * @return Flag indicating if the copy forward collection was successful or not.
 	 */
-	bool copyForwardCollectionSet(MM_EnvironmentVLHGC *env);
+	void copyForwardCollectionSet(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Return true if CopyForward is running under Hybrid mode
@@ -1091,6 +1100,30 @@ public:
 	void setReservedNonEvacuatedRegions(UDATA regionCount)
 	{
 		_regionCountReservedNonEvacuated = regionCount;
+	}
+
+#if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
+	/**
+	 * Run concurrent copy forward collection increment. Contrary to regular copyForwardCollectionSet(),
+	 * this method will be called twice for each PGC cycle (whenever concurrent copy forward is
+	 * enabled), once for initial STW increment and once for the final STW increment. For each of
+	 * those increments isConcurrentCycleInProgress state/value will get updated. For initial increment,
+	 * it will change from false to true causing only preProcess step to be performed, and for the
+	 * final increment it will change from true to false causing only postProcess step to be performed.
+	 *
+	 * @param env[in] Main thread.
+	 */
+	void concurrentCopyForwardCollectionSet(MM_EnvironmentVLHGC *env);
+#endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
+
+	/**
+	 * True if concurrent CopyForward cycle is active at any point (STW or concurrent
+	 * task active, or even short gaps between STW and concurrent tasks). Equivalent to
+	 * isConcurrentCycleInProgress() from Scavenger
+	 */
+	MMINLINE bool isConcurrentCycleInProgress() {
+		/* Unimplemented */
+		return false;
 	}
 
 	friend class MM_CopyForwardGMPCardCleaner;
