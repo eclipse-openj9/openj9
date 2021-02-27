@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,10 @@
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 #include "vmaccess.h"
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+#include "ffi.h"
+#endif
 
 #ifdef BREW
 #define MAX_PATH_SIZE 40
@@ -144,14 +148,49 @@ sendLifecycleEventCallback(struct J9VMThread* vmThread, struct J9NativeLibrary* 
 	if (0 == j9sl_lookup_name(library->handle, (char*)functionName, (void*)&JNI_Load, "VLL")) {
 		Trc_VM_sendLifecycleEventCallback_Event1(vmThread, functionName, library->handle);
 
-		/* Check whether the return type for the callee lifecycle event is void; return 0 to indicate 
-		 * success instead of an undefined return value.
-		 */
-		if (0 == strncmp(functionName, J9DYNAMIC_ONUNLOAD, J9DYNAMIC_ONUNLOAD_LENGTH)) {
-			JNI_Load((JavaVM*)vmThread->javaVM, NULL);
-			result = 0;
-		} else {
-			result = JNI_Load((JavaVM*)vmThread->javaVM, NULL);
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+		if (J9_IS_31BIT_INTEROP_TARGET(JNI_Load)) {
+			ffi_type* args[2];
+			void* values[2];
+			U_32 nullSecondParam = 0;
+			UDATA returnValue = 0;
+			ffi_cif cif_t;
+			ffi_cif * const cif = &cif_t;
+
+			if (0 == vmThread->javaVM->javaVM31) {
+				queryJavaVM31(vmThread->javaVM);
+			}
+			args[0]= &ffi_type_sint32;
+			args[1]= &ffi_type_sint32;
+			values[0] = (void*)&(vmThread->javaVM->javaVM31);
+			values[1] = (void*)&nullSecondParam;
+
+			/* Check whether the return type for the callee lifecycle event is void; return 0 to indicate
+			 * success instead of an undefined return value.
+			 */
+			if (0 == strncmp(functionName, J9DYNAMIC_ONUNLOAD, J9DYNAMIC_ONUNLOAD_LENGTH)) {
+				if (FFI_OK == ffi_prep_cif(cif, FFI_CEL4RO31, 2, &ffi_type_void, args)) {
+					ffi_call(cif, FFI_FN(JNI_Load), NULL, values);
+					result = 0;
+				}
+			} else {
+				if (FFI_OK == ffi_prep_cif(cif, FFI_CEL4RO31, 2, &ffi_type_sint32, args)) {
+					ffi_call(cif, FFI_FN(JNI_Load), &returnValue, values);
+					result = returnValue;
+				}
+			}
+		} else
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+		{
+			/* Check whether the return type for the callee lifecycle event is void; return 0 to indicate
+			 * success instead of an undefined return value.
+			 */
+			if (0 == strncmp(functionName, J9DYNAMIC_ONUNLOAD, J9DYNAMIC_ONUNLOAD_LENGTH)) {
+				JNI_Load((JavaVM*)vmThread->javaVM, NULL);
+				result = 0;
+			} else {
+				result = JNI_Load((JavaVM*)vmThread->javaVM, NULL);
+			}
 		}
 	}
 
