@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,6 +83,27 @@ jfloat JNICALL callStaticFloatMethodA (JNIEnv *env, jclass cls, jmethodID method
 jdouble JNICALL callStaticDoubleMethod (JNIEnv *env, jclass cls, jmethodID methodID, ...);
 jdouble JNICALL callStaticDoubleMethodV (JNIEnv *env, jclass cls, jmethodID methodID, va_list va);
 jdouble JNICALL callStaticDoubleMethodA (JNIEnv *env, jclass cls, jmethodID methodID, jvalue *args);
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+void JNICALL callVirtualVoidMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va);
+jobject JNICALL callVirtualObjectMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va);
+jint JNICALL callVirtualIntMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va);
+jlong JNICALL callVirtualLongMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va);
+jfloat JNICALL callVirtualFloatMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va);
+jdouble JNICALL callVirtualDoubleMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va);
+void JNICALL callNonvirtualVoidMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va);
+jobject JNICALL callNonvirtualObjectMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va);
+jint JNICALL callNonvirtualIntMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va);
+jlong JNICALL callNonvirtualLongMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va);
+jfloat JNICALL callNonvirtualFloatMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va);
+jdouble JNICALL callNonvirtualDoubleMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va);
+void JNICALL callStaticVoidMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va);
+jobject JNICALL callStaticObjectMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va);
+jint JNICALL callStaticIntMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va);
+jlong JNICALL callStaticLongMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va);
+jfloat JNICALL callStaticFloatMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va);
+jdouble JNICALL callStaticDoubleMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va);
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 /* Macros to populate tables */
 #define CALL_VIRTUAL_VOID_METHOD callVirtualVoidMethod
@@ -175,6 +196,40 @@ jdouble JNICALL callStaticDoubleMethodA (JNIEnv *env, jclass cls, jmethodID meth
 #define CALL_STATIC_SHORT_METHOD (jshort (JNICALL *) (JNIEnv *env, jclass cls, jmethodID methodID, ...)) callStaticIntMethod
 #define CALL_STATIC_SHORT_METHOD_V (jshort (JNICALL *) (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)) callStaticIntMethodV
 #define CALL_STATIC_SHORT_METHOD_A (jshort (JNICALL *) (JNIEnv *env, jclass cls, jmethodID methodID, jvalue *args)) callStaticIntMethodA
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+#define CALL_VIRTUAL_VOID_METHOD_V31 callVirtualVoidMethodV31
+#define CALL_VIRTUAL_OBJECT_METHOD_V31 callVirtualObjectMethodV31
+#define CALL_VIRTUAL_INT_METHOD_V31 callVirtualIntMethodV31
+#define CALL_VIRTUAL_LONG_METHOD_V31 callVirtualLongMethodV31
+#define CALL_VIRTUAL_FLOAT_METHOD_V31 callVirtualFloatMethodV31
+#define CALL_VIRTUAL_DOUBLE_METHOD_V31 callVirtualDoubleMethodV31
+#define CALL_VIRTUAL_BOOLEAN_METHOD_V31 (jboolean (JNICALL *) (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)) callVirtualIntMethodV31
+#define CALL_VIRTUAL_BYTE_METHOD_V31 (jbyte (JNICALL *) (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)) callVirtualIntMethodV31
+#define CALL_VIRTUAL_CHAR_METHOD_V31 (jchar (JNICALL *) (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)) callVirtualIntMethodV31
+#define CALL_VIRTUAL_SHORT_METHOD_V31 (jshort (JNICALL *) (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)) callVirtualIntMethodV31
+#define CALL_NONVIRTUAL_VOID_METHOD_V31 callNonvirtualVoidMethodV31
+#define CALL_NONVIRTUAL_OBJECT_METHOD_V31 callNonvirtualObjectMethodV31
+#define CALL_NONVIRTUAL_INT_METHOD_V31 callNonvirtualIntMethodV31
+#define CALL_NONVIRTUAL_LONG_METHOD_V31 callNonvirtualLongMethodV31
+#define CALL_NONVIRTUAL_FLOAT_METHOD_V31 callNonvirtualFloatMethodV31
+#define CALL_NONVIRTUAL_DOUBLE_METHOD_V31 callNonvirtualDoubleMethodV31
+#define CALL_NONVIRTUAL_BOOLEAN_METHOD_V31 (jboolean (JNICALL *) (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)) callNonvirtualIntMethodV31
+#define CALL_NONVIRTUAL_BYTE_METHOD_V31 (jbyte (JNICALL *) (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)) callNonvirtualIntMethodV31
+#define CALL_NONVIRTUAL_CHAR_METHOD_V31 (jchar (JNICALL *) (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)) callNonvirtualIntMethodV31
+#define CALL_NONVIRTUAL_SHORT_METHOD_V31 (jshort (JNICALL *) (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)) callNonvirtualIntMethodV31
+#define CALL_STATIC_VOID_METHOD_V31 callStaticVoidMethodV31
+#define CALL_STATIC_OBJECT_METHOD_V31 callStaticObjectMethodV31
+#define CALL_STATIC_INT_METHOD_V31 callStaticIntMethodV31
+#define CALL_STATIC_LONG_METHOD_V31 callStaticLongMethodV31
+#define CALL_STATIC_FLOAT_METHOD_V31 callStaticFloatMethodV31
+#define CALL_STATIC_DOUBLE_METHOD_V31 callStaticDoubleMethodV31
+#define CALL_STATIC_BOOLEAN_METHOD_V31 (jboolean (JNICALL *) (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)) callStaticIntMethodV31
+#define CALL_STATIC_BYTE_METHOD_V31 (jbyte (JNICALL *) (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)) callStaticIntMethodV31
+#define CALL_STATIC_CHAR_METHOD_V31 (jchar (JNICALL *) (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)) callStaticIntMethodV31
+#define CALL_STATIC_SHORT_METHOD_V31 (jshort (JNICALL *) (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)) callStaticIntMethodV31
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 #ifdef __cplusplus
 }
 #endif

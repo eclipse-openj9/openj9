@@ -236,6 +236,22 @@ static jobject JNICALL newObjectV(JNIEnv *env, jclass clazz, jmethodID methodID,
 	return obj;
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jobject JNICALL newObjectV31(JNIEnv *env, jclass clazz, jmethodID methodID, va_list args)
+{
+	jobject obj;
+
+	obj = allocObject(env, clazz);
+	if (obj) {
+		CALL_NONVIRTUAL_VOID_METHOD_V31(env, obj, METHODID_CLASS_REF(methodID), methodID, args);
+		if (exceptionCheck(env)) {
+			deleteLocalRef(env, obj);
+			obj = (jobject) NULL;
+		}
+	}
+	return obj;
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 void JNICALL OMRNORETURN fatalError(JNIEnv *env, const char *msg)
 {
@@ -461,7 +477,27 @@ UDATA JNICALL pushArguments(J9VMThread *vmThread, J9Method* method, void *args) 
 	} else {
 		jvalues = NULL;
 	}
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+/* 31-bit vargs support being processed from 64-bit JVM.
+ * The alignment is set to be 4-bytes aligned.  Also __wsizeof() expands to 8 bytes on 64-bit, has been replaced with sizeof().
+ * The alignment check setting vl[0] will naturally take care of expansion.
+ */
+#define va_arg_31(vl, type) (*(type *)( (vl)[0] = (char *) (((unsigned long)((vl)[1])+3)&~(3)), (vl)[1] = (vl)[0] + (sizeof ( (* (type (*)(void)) 0 )() ) ), (sizeof(type) < sizeof(U_32)) ? ((vl)[0] + ((sizeof ( (* (type (*)(void)) 0 )() ) ) - sizeof(type))): (vl)[0] ))
+
+// Update ARG macro to also check if 31bit vargs, then call the va_arg_31 macro defined above if so.
+#define ARG(type, sig) (jvalues ? (jvalues++->sig) : ((isCrossAmodeVarArgs)?va_arg_31(*(va_list*)args, type):va_arg(*(va_list*)args, type)))
+
+	BOOLEAN isCrossAmodeVarArgs = FALSE;
+
+	if ( J9_ARE_ANY_BITS_SET((UDATA)args, 0x2) ) {
+		/* pointer being tagged with 0x2 implies it's a 31-bit cross-amode var_args */
+		isCrossAmodeVarArgs = TRUE;
+		args = (void *) ((U_8*)args - 2);
+	}
+#else /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 #define ARG(type, sig) (jvalues ? (jvalues++->sig) : va_arg(*(va_list*)args, type))
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 	/* process the arguments */
 	sigChar = &J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method)))[1];	/* skip the opening '(' */
