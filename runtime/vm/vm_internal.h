@@ -140,6 +140,26 @@ void
 sidecarShutdown(J9VMThread* shutdownThread);
 #endif /* J9VM_OPT_SIDECAR */
 
+/* ---------------- jnimem.c ----------------- */
+
+/**
+* @brief
+* @param vmThread
+* @param sizeInBytes
+* @return void*
+*/
+void*
+jniArrayAllocateMemory32FromThread(J9VMThread* vmThread, UDATA sizeInBytes);
+
+/**
+* @brief
+* @param vmThread
+* @param location
+* @return void
+*/
+void
+jniArrayFreeMemory32FromThread(J9VMThread* vmThread, void* location);
+
 /* ---------------- jnimisc.cpp -------------- */
 
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
