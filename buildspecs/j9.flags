@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2020 IBM Corp. and others
+Copyright (c) 2006, 2021 IBM Corp. and others
  
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2064,5 +2064,9 @@ Pass J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR into j9sig_set_options()  before the fir
 	<flag id="uma_windowsRebase">
 		<description>This enables the rebase targets generation for windows platforms</description>
 		<ifRemoved></ifRemoved>
+	</flag>
+	<flag id="zos_3164_interoperability">
+		<description>Enables support for 64-bit JDK invoking 31-bit JNI natives on z/OS.</description>
+		<ifRemoved>A 64-bit JVM will not be able to support 31-bit JNI interfaces.</ifRemoved>
 	</flag>
 </flags>
