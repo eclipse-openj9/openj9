@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,31 @@ void
 sidecarShutdown(J9VMThread* shutdownThread);
 #endif /* J9VM_OPT_SIDECAR */
 
+/* ---------------- jnimisc.cpp -------------- */
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+/**
+ * Helper function to query the matching 31-bit JNIEnv* for the given J9VMThread
+ * parameter.  The 31-bit JNIEnv* is needed to pass as the JNIEnv* parameter into
+ * cross-AMODE31 JNI natives.  Upon success, the 31-bit JNIEnv pointer will be
+ * stored into vmThread->jniEnv31.
+ *
+ * @param[in]  vmThread The J9VMThread to query
+ */
+void
+queryJNIEnv31(J9VMThread* vmThread);
+
+/**
+ * Helper function to query the matching 31-bit JavaVM* for the given J9JavaVM
+ * parameter.  The 31-bit JavaVM* is needed to pass as the JavaVM* parameter into
+ * cross-AMODE31 JNI natives.  Upon success, the 31-bit JavaVM pointer will be
+ * stored into vm->javaVM31.
+ *
+ * @param[in]  vm The J9JavaVM to query
+ */
+void
+queryJavaVM31(J9JavaVM* vm);
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 /* ---------------- vmifunc.c ---------------- */
 

@@ -38,6 +38,10 @@
 #include "VMAccess.hpp"
 #include "ArrayCopyHelpers.hpp"
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+#include "ffi.h"
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 extern "C" {
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
@@ -1024,5 +1028,77 @@ returnFromJNI(J9VMThread *currentThread, void *vbp)
 		jniPopFrame(currentThread, JNIFRAME_TYPE_INTERNAL);
 	}
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+void
+queryJNIEnv31(J9VMThread* vmThread)
+{
+	/* Query libjvm31 to get a handle on the corresponding 31-bit JNIEnv struct
+	 * for the given vmThread.
+	 */
+	UDATA slOpenResult = J9PORT_SL_FOUND;
+	UDATA dllHandle = 0;
+	UDATA getJNIEnv31Handle = 0;
+
+	if (0 == vmThread->jniEnv31) {
+		PORT_ACCESS_FROM_VMC(vmThread);
+		slOpenResult = j9sl_open_shared_library("libjvm31.so", &dllHandle, (J9PORT_SLOPEN_OPEN_EXECUTABLE | OMRPORT_SLOPEN_ATTEMPT_31BIT_OPEN));
+
+		if (J9PORT_SL_FOUND == slOpenResult) {
+			if (0 == j9sl_lookup_name(dllHandle, "getJNIEnv31", &getJNIEnv31Handle, "L")) {
+				ffi_type* args[1];
+				void* values[1];
+				UDATA returnValue = 0;
+				ffi_cif cif_t;
+				ffi_cif * const cif = &cif_t;
+
+				args[0]= &ffi_type_sint64;
+				values[0] = &vmThread;
+
+				if (FFI_OK == ffi_prep_cif(cif, FFI_CEL4RO31, 1, &ffi_type_uint32, args)) {
+					ffi_call(cif, FFI_FN(getJNIEnv31Handle), &returnValue, values);
+				}
+				vmThread->jniEnv31 = (U_32)returnValue;
+			}
+		}
+		Assert_VM_true(0 != vmThread->jniEnv31);
+	}
+}
+
+void
+queryJavaVM31(J9JavaVM* vm)
+{
+	/* Query libjvm31 to get a handle on the corresponding 31-bit JavaVM struct
+	 * for the given J9JavaVM.
+	 */
+	UDATA slOpenResult = J9PORT_SL_FOUND;
+	UDATA dllHandle = 0;
+	UDATA getJavaVM31Handle = 0;
+
+	if (0 == vm->javaVM31) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		slOpenResult = j9sl_open_shared_library("libjvm31.so", &dllHandle, (J9PORT_SLOPEN_OPEN_EXECUTABLE | OMRPORT_SLOPEN_ATTEMPT_31BIT_OPEN));
+
+		if (J9PORT_SL_FOUND == slOpenResult) {
+			if (0 == j9sl_lookup_name(dllHandle, "getJavaVM31", &getJavaVM31Handle, "L")) {
+				ffi_type* args[1];
+				void* values[1];
+				UDATA returnValue = 0;
+				ffi_cif cif_t;
+				ffi_cif * const cif = &cif_t;
+
+				args[0]= &ffi_type_sint64;
+				values[0] = &vm;
+
+				if (FFI_OK == ffi_prep_cif(cif, FFI_CEL4RO31, 1, &ffi_type_uint32, args)) {
+					ffi_call(cif, FFI_FN(getJavaVM31Handle), &returnValue, values);
+				}
+				vm->javaVM31 = (U_32)returnValue;
+			}
+		}
+		Assert_VM_true(0 != vm->javaVM31);
+	}
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 }
