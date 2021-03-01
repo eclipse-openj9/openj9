@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,7 @@ include(cmake/J9vmGenAsm.cmake)
 # to explicitly tag individual targets which seems tedious.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(OMR_HOST_OS STREQUAL "osx")
+if(OMR_OS_OSX)
 	set(CMAKE_INSTALL_RPATH "@loader_path")
 else()
 	set(CMAKE_INSTALL_RPATH "\$ORIGIN")
@@ -403,7 +403,7 @@ endif()
 if(OMR_DDR)
 	add_subdirectory(ddr)
 endif()
-if(OMR_HOST_OS STREQUAL "win")
+if(OMR_OS_WINDOWS)
 	# TODO: need to add windows support
 	# add_subdirectory(dfix)
 endif()
