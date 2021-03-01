@@ -1091,6 +1091,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::ResolvedMethod_getRemoteROMClassAndMethods:
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
+            {
+            OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());
+            compInfo->getclassesCachedAtServer().insert(clazz);
+            }
          client->write(response, JITServerHelpers::packRemoteROMClassInfo(clazz, fe->vmThread(), trMemory, true));
          }
          break;
