@@ -47,13 +47,6 @@ include(cmake/omr_config.cmake)
 # Get platform specific configuration stuff
 include(cmake/platform.cmake)
 
-# If we are building on windows, we want ASM_MASM not ASM
-if(OMR_OS_WINDOWS)
-	enable_language(ASM_MASM)
-else()
-	enable_language(ASM)
-endif()
-
 # Pull in definitions for omr_add_hookgen and omr_add_tracegen
 # these will be in omr/cmake/modules
 include(OmrHookgen)
