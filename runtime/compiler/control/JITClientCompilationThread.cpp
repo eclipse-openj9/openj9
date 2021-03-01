@@ -3075,26 +3075,22 @@ remoteCompile(
       }
 
    if (compiler->getOption(TR_UseSymbolValidationManager))
-       {
-       // We do not want client to validate anything during compilation, because
-       // validations are done on the server. Creating heuristic region makes SVM assume that everything is valdiated.
-       compiler->enterHeuristicRegion();
-       }
+      {
+      // We do not want client to validate anything during compilation, because
+      // validations are done on the server. Creating heuristic region makes SVM assume that everything is valdiated.
+      compiler->enterHeuristicRegion();
+      }
 
    if (compiler->isOptServer())
       compiler->setOption(TR_Server);
 
-      // Check the _classesCachedAtServer set to determine whether JITServer is likely to have this class already cached.
-      // If so, do not send the ROMClass content to save network traffic.
-      bool serializeClass = false;
+   // Check the _classesCachedAtServer set to determine whether JITServer is likely to have this class already cached.
+   // If so, do not send the ROMClass content to save network traffic.
+   bool serializeClass = false;
       {
       OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());
-      if (compInfo->getclassesCachedAtServer().find(clazz) == compInfo->getclassesCachedAtServer().end())
-         {
-         // clazz not found. Send the romClass to JITServer.
-         compInfo->getclassesCachedAtServer().insert(clazz);
-         serializeClass = true;
-         }
+      // Send the romClass to JITServer if clazz was not already in the set
+      serializeClass = compInfo->getclassesCachedAtServer().insert(clazz).second;
       }
 
    auto classInfoTuple = JITServerHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(), compiler->trMemory(), serializeClass);
