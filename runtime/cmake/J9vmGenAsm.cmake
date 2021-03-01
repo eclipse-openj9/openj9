@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2018, 2019 IBM Corp. and others
+# Copyright (c) 2018, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,8 @@ endif()
 # usage: j9vm_gen_asm(some_file.m4 .... DEFINES m4_def ...  INCLUDE_DIRECTORIES directory...)
 # converts 'some_file.m4' into 'some_file.s'.
 # Note: path is interpreted relative to CMAKE_CURRENT_SOURCE_DIR
-# .s file is put in CMAKE_CURRENT_BINARY_DIR 
-# Directory names from the input are ignored. IE. foo/bar.m4 > bar.s 
+# .s file is put in CMAKE_CURRENT_BINARY_DIR
+# Directory names from the input are ignored. IE. foo/bar.m4 > bar.s
 # For each value of m4_def, a `-D` command line option is added to the m4 command
 # For each value of directory an '-I` command line option is added to the m4 command
 function(j9vm_gen_asm)
@@ -39,12 +39,11 @@ function(j9vm_gen_asm)
 	set(multiValueArgs "DEFINES" "INCLUDE_DIRECTORIES")
 	cmake_parse_arguments(opt "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
-
 	set(m4_defines "")
 
-	if(OMR_HOST_OS STREQUAL "linux")
+	if(OMR_OS_LINUX)
 		set(m4_defines "-DLINUX")
-	elseif(OMR_HOST_OS STREQUAL "osx")
+	elseif(OMR_OS_OSX)
 		set(m4_defines "-DOSX")
 	elseif(OMR_OS_WINDOWS)
 		set(m4_defines "-DWIN32")
@@ -67,11 +66,10 @@ function(j9vm_gen_asm)
 	foreach(inc_dir IN LISTS opt_INCLUDE_DIRECTORIES)
 		list(APPEND m4_includes "-I${inc_dir}")
 	endforeach()
-	
 
 	foreach(m4_file IN LISTS opt_UNPARSED_ARGUMENTS)
 		get_filename_component(base_name "${m4_file}" NAME_WE)
-		
+
 		add_custom_command(
 			OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${base_name}.s
 			DEPENDS ${m4_file} run_constgen
