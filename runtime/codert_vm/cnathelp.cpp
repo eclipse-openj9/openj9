@@ -732,6 +732,72 @@ slow:
 }
 
 void* J9FASTCALL
+old_slow_jitCloneValueType(J9VMThread *currentThread)
+{
+	SLOW_JIT_HELPER_PROLOGUE();
+	j9object_t reciever = (j9object_t)currentThread->floatTemp1;
+	j9object_t returnObject = NULL;
+	void *rc = NULL;
+	void *oldPC = currentThread->jitReturnAddress;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+	if (NULL == reciever) {
+		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+		rc = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+		goto done;
+	}
+
+	buildJITResolveFrameWithPC(currentThread, J9_STACK_FLAGS_JIT_ALLOCATION_RESOLVE | J9_SSF_JIT_RESOLVE, parmCount, true, 0, oldPC);
+	returnObject = vmFuncs->cloneValueType(currentThread, J9OBJECT_CLAZZ(currentThread, reciever), reciever, FALSE);
+	if (J9_UNEXPECTED(NULL == returnObject)) {
+		rc = setHeapOutOfMemoryErrorFromJIT(currentThread);
+		goto done;
+	}
+
+	currentThread->floatTemp1 = (void*)returnObject; // in case of decompile
+	rc = restoreJITResolveFrame(currentThread, oldPC, false, false);
+	if (NULL != rc) {
+		goto done;
+	}
+
+	JIT_RETURN_UDATA(returnObject);
+
+done:
+	SLOW_JIT_HELPER_EPILOGUE();
+	return rc;
+
+}
+
+void* J9FASTCALL
+old_fast_jitCloneValueType(J9VMThread *currentThread)
+{
+	OLD_JIT_HELPER_PROLOGUE(1);
+	DECLARE_JIT_PARM(j9object_t, reciever, 1);
+	j9object_t returnObject = NULL;
+	void *rc = NULL;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+
+	if (NULL == reciever) {
+		goto slow;
+	}
+
+	returnObject = vmFuncs->cloneValueType(currentThread, J9OBJECT_CLAZZ(currentThread, reciever), reciever, TRUE);
+	if (J9_UNEXPECTED(NULL == returnObject)) {
+		goto slow;
+	}
+
+	JIT_RETURN_UDATA(returnObject);
+
+done:
+	return rc;
+
+slow:
+	currentThread->floatTemp1 = (void*)reciever;
+	rc = (void*)old_slow_jitCloneValueType;
+	goto done;
+}
+
+void* J9FASTCALL
 old_slow_jitWithFlattenableField(J9VMThread *currentThread)
 {
 	SLOW_JIT_HELPER_PROLOGUE();
@@ -3878,6 +3944,7 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_slow_jitTranslateNewInstanceMethod = (void*)old_slow_jitTranslateNewInstanceMethod;
 	jitConfig->old_slow_jitReportFinalFieldModified = (void*)old_slow_jitReportFinalFieldModified;
 	jitConfig->old_fast_jitGetFlattenableField = (void*) old_fast_jitGetFlattenableField;
+	jitConfig->old_fast_jitCloneValueType = (void*) old_fast_jitCloneValueType;
 	jitConfig->old_fast_jitWithFlattenableField = (void*) old_fast_jitWithFlattenableField;
 	jitConfig->old_fast_jitPutFlattenableField = (void*) old_fast_jitPutFlattenableField;
 	jitConfig->old_fast_jitGetFlattenableStaticField = (void*) old_fast_jitGetFlattenableStaticField;
