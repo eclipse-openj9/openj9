@@ -1027,16 +1027,45 @@ openFileFromDirectorySearchList(char *searchPath, char *fileName, int32_t flags,
  * Return the float version read, or 0.0F if an error reading the float occurred.
  */
 static float
-getDatFileVersion(char *formatFileContents)
+getDatFileVersion(const char *formatFileContents)
 {
-	float version;
-	/* read the length of the first line */
-	if (formatFileContents == NULL) {
-		return 0.0F;
+	float version = 0.0F;
+
+	/*
+	 * We cannot simply use atof() here because the tracepoint data file uses
+	 * the en_US locale which may differ from the the locale in effect as the
+	 * file is read. In particular, the decimal separator of the active locale
+	 * may not be '.'.
+	 */
+	if (NULL != formatFileContents) {
+		int majorValue = 0;
+		int decimalSeen = 0;
+		int minorValue = 0;
+		int minorScale = 1;
+		const char *cursor = formatFileContents;
+
+		for (;; ++cursor) {
+			char ch = *cursor;
+
+			if (('0' <= ch) && (ch <= '9')) {
+				if (0 == decimalSeen) {
+					majorValue = (majorValue * 10) + (ch - '0');
+				} else {
+					minorValue = (minorValue * 10) + (ch - '0');
+					minorScale *= 10;
+				}
+			} else if (('.' == ch) && (0 == decimalSeen)) {
+				decimalSeen = 1;
+			} else {
+				break;
+			}
+		}
+
+		version = (float)majorValue + ((float)minorValue / (float)minorScale);
 	}
 
-	version = (float)atof(formatFileContents);
 	UT_DBGOUT(2, ("<UT> getDatFileVersion %f\n", version));
+
 	return version;
 }
 
@@ -1054,7 +1083,7 @@ loadFormatStringsForComponent(UtComponentData *componentData)
 	char compName[1024];
 	char *fileContents = NULL;
 	int64_t fileSize = 0;
-	float datFileVersion = 0;
+	float datFileVersion = 0.0F;
 	const unsigned int componentNameLength = (const unsigned int)strlen(componentData->componentName);
 
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
@@ -1192,9 +1221,10 @@ loadFormatStringsForComponent(UtComponentData *componentData)
 		}
 		tempPtr++;
 		if (tempPtr >= (fileContents + fileSize - 1)) {
+			UT_DBGOUT(1, ("<UT> missing %d format strings\n", numFormats - currenttp));
 			/* fill any remaining positions in the arrays so they can be dereferenced */
 			for (; currenttp < numFormats; currenttp++) {
-				formatStringsComponentArray[currenttp] = UT_MISSING_TRACE_FORMAT;
+				formatStringsComponentArray[currenttp] = (char *)UT_MISSING_TRACE_FORMAT;
 			}
 			break;
 		}
