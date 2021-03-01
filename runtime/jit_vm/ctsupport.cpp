@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2020 IBM Corp. and others
+ * Copyright (c) 2008, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -718,6 +718,66 @@ jitGetDeclaringClassOfROMField(J9VMThread *vmStruct, J9Class *clazz, J9ROMFieldS
 		currentClass = currentClass->superclasses[J9CLASS_DEPTH(currentClass) - 1];
 	} while (NULL != currentClass);
 	return currentClass;
+}
+
+void
+allMethodsFromSignatureEndDo(J9MethodFromSignatureWalkState *state)
+{
+	J9JavaVM *vm = state->classLoaderWalkState.vm;
+	vm->internalVMFunctions->allClassLoadersEndDo(&state->classLoaderWalkState);
+}
+
+J9Method *
+allMethodsFromSignatureNextDo(J9MethodFromSignatureWalkState *state)
+{
+	UDATA result = 0;
+
+	J9JavaVM *vm = state->classLoaderWalkState.vm;
+	J9ClassLoader *classLoader = vm->internalVMFunctions->allClassLoadersNextDo(&state->classLoaderWalkState);
+	while (NULL != classLoader) {
+		J9Class *clazz = vm->internalVMFunctions->internalFindClassUTF8(state->vmThread, reinterpret_cast<U_8 *>(const_cast<char *>(state->className)), state->classNameLength, classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
+		if (NULL != clazz) {
+			result = vm->internalVMFunctions->javaLookupMethod(state->vmThread, clazz, reinterpret_cast<J9ROMNameAndSignature *>(&state->nameAndSig), NULL, J9_LOOK_JNI | J9_LOOK_NO_JAVA);
+			if (0 != result) {
+				break;
+			}
+		}
+
+		classLoader = vm->internalVMFunctions->allClassLoadersNextDo(&state->classLoaderWalkState);
+	}
+
+	return reinterpret_cast<J9Method*>(result);
+}
+
+J9Method*
+allMethodsFromSignatureStartDo(J9MethodFromSignatureWalkState *state, J9JavaVM *vm, UDATA flags, const char *className, U_32 classNameLength, const char *methodName, U_32 methodNameLength, const char *methodSig, U_32 methodSigLength)
+{
+	state->className = className;
+	state->classNameLength = classNameLength;
+	state->nameAndSig.name = methodName;
+	state->nameAndSig.nameLength = methodNameLength;
+	state->nameAndSig.signature = methodSig;
+	state->nameAndSig.signatureLength = methodSigLength;
+
+	J9VMThread *currentThread = vm->internalVMFunctions->currentVMThread(vm);
+	state->vmThread = currentThread;
+
+	UDATA result = 0;
+
+	J9ClassLoader *classLoader = vm->internalVMFunctions->allClassLoadersStartDo(&state->classLoaderWalkState, vm, J9CLASSLOADERWALK_INCLUDE_DEAD);
+	while (NULL != classLoader) {
+		J9Class *clazz = vm->internalVMFunctions->internalFindClassUTF8(currentThread, reinterpret_cast<U_8 *>(const_cast<char *>(className)), classNameLength, classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
+		if (NULL != clazz) {
+			result = vm->internalVMFunctions->javaLookupMethod(currentThread, clazz, reinterpret_cast<J9ROMNameAndSignature *>(&state->nameAndSig), NULL, J9_LOOK_JNI | J9_LOOK_NO_JAVA);
+			if (0 != result) {
+				break;
+			}
+		}
+
+		classLoader = vm->internalVMFunctions->allClassLoadersNextDo(&state->classLoaderWalkState);
+	}
+
+	return reinterpret_cast<J9Method*>(result);
 }
 
 } /* extern "C" */

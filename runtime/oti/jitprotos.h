@@ -88,6 +88,18 @@ extern J9_CFUNC J9JITHashTable *avl_jit_artifact_insert_existing_table (J9AVLTre
 extern J9_CFUNC J9AVLTree * jit_allocate_artifacts (J9PortLibrary * portLibrary);
 
 extern J9_CFUNC UDATA  jitWalkStackFrames (J9StackWalkState *walkState);
+
+/**
+ * Attempts to search for JIT method metadata given a program counter (PC).
+ *
+ * @param vmThread The thread which is attempting this search.
+ * @param jitPC    The program counter (PC) to search for.
+ *
+ * @return         The metadata corresponding to the method which was JIT compiled at the specified PC if such a method
+ *                 exists; NULL if no such method can be found.
+ * 
+ * @note           If jitPC is NULL this function will return NULL.
+ */
 extern J9_CFUNC J9JITExceptionTable * jitGetExceptionTableFromPC (J9VMThread * vmThread, UDATA jitPC);
 extern J9_CFUNC UDATA  jitGetOwnedObjectMonitors(J9StackWalkState *state);
 #if (defined(J9VM_INTERP_STACKWALK_TRACING)) /* priv. proto (autogen) */
