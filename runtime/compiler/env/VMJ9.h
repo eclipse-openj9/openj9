@@ -777,27 +777,52 @@ public:
     *    Return MemberName.vmtarget, a J9method pointer for method represented by `memberName`
     *    Caller must acquire VM access
     */
-   TR_OpaqueMethodBlock* targetMethodFromMemberName(uintptr_t memberName);
+   virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(uintptr_t memberName);
    /*
     * \brief
     *    Return MemberName.vmtarget, a J9method pointer for method represented by `memberName`
     *    VM access is not required
     */
-   TR_OpaqueMethodBlock* targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
    /*
     * \brief
     *    Return MethodHandle.form.vmentry.vmtarget, J9method for the underlying java method
     *    The J9Method is the target to be invoked intrinsically by MethodHandle.invokeBasic
     *    Caller must acquire VM access
     */
-   TR_OpaqueMethodBlock* targetMethodFromMethodHandle(uintptr_t methodHandle);
+   virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(uintptr_t methodHandle);
    /*
     * \brief
     *    Return MethodHandle.form.vmentry.vmtarget, J9method for the underlying java method
     *    The J9Method is the target to be invoked intrinsically by MethodHandle.invokeBasic
     *    VM access is not required
     */
-   TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+
+   /*
+    * \brief
+    *    Create and return a resolved method from member name index of an invoke cache array.
+    *    Encapsulates code that requires VM access to make JITServer support easier.
+    */
+   virtual TR_ResolvedMethod* targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *comp, TR_ResolvedMethod *owningMethod, uintptr_t *invokeCacheArray);
+
+   /*
+    * \brief
+    *    Return a Known Object Table index of an invoke cache array appendix element.
+    *    Encapsulates code that requires VM access to make JITServer support easier.
+    */
+   virtual TR::KnownObjectTable::Index getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray);
+
+   /**
+    * \brief
+    *    Refines invokeCache element symRef with known object index for invokehandle and invokedynamic bytecode
+    *
+    * \param comp the compilation object
+    * \param originalSymRef the original symref to refine
+    * \param invokeCacheArray the array containing the element we use to get known object index
+    * \return TR::SymbolReference* the refined symRef
+    */
+   virtual TR::SymbolReference* refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation *comp, TR::SymbolReference *originalSymRef, uintptr_t *invokeCacheArray);
 
    /*
     * \brief
