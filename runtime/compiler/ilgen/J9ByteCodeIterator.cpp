@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -283,6 +283,7 @@ TR_J9ByteCodeIterator::printByteCode()
       case J9BCgetstatic: case J9BCgetfield: case J9BCputstatic: case J9BCputfield:
       case J9BCcheckcast: case J9BCinstanceof:
       case J9BCnew: case J9BCanewarray:
+      case J9BCdefaultvalue: case J9BCwithfield:
          printCPIndex(next2Bytes());
          break;
 
