@@ -314,7 +314,7 @@ getSignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, UDA
 
 	/* Copy class signatures to descriptor string */
 	for (U_32 i = 0; i < numArgs; i++) {
-		U_32 len = strlen(signatures[i]);
+		UDATA len = strlen(signatures[i]);
 		strncpy(cursor, signatures[i], len);
 		cursor += len;
 	}

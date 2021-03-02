@@ -314,10 +314,10 @@ MM_RootScanner::scanVMClassSlots(MM_EnvironmentBase *env)
 		reportScanningStarted(RootScannerEntity_VMClassSlots);
 
 		GC_VMClassSlotIterator classSlotIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm));
-		J9Class **slotPtr;
+		J9Class *classPtr;
 
-		while((slotPtr = classSlotIterator.nextSlot()) != NULL) {
-			doVMClassSlot(*slotPtr);
+		while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+			doVMClassSlot(classPtr);
 		}
 
 		reportScanningEnded(RootScannerEntity_VMClassSlots);

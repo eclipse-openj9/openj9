@@ -116,7 +116,7 @@ public:
 		}			
 	}
 	
-	J9Class **nextSlot();
+	J9Class *nextSlot();
 
 };
 

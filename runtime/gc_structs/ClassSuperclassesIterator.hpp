@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ public:
 		_superclassPtr(clazz->superclasses)
 	{};
 
-	J9Class **nextSlot();
+	J9Class *nextSlot();
 	
 	/**
 	 * Gets the current superclass index.
