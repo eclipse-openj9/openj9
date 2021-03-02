@@ -1836,7 +1836,7 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
        !comp()->fej9()->traceableMethodsCanBeInlined())
       return false;
 
-   if ((TR::Compiler->vm.canAnyMethodEventsBeHooked(comp()) && !comp()->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled()) ||
+   if ((TR::Compiler->vm.canAnyMethodEventsBeHooked(comp()) && !comp()->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled(comp())) ||
        (comp()->fej9()->isAnyMethodTracingEnabled(calleeSymbol->getResolvedMethod()->getPersistentIdentifier()) &&
        !comp()->fej9()->traceableMethodsCanBeInlined()))
       return false;
@@ -2067,7 +2067,7 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
       return false;
       }
 
-   if ((TR::Compiler->vm.canAnyMethodEventsBeHooked(comp) && !comp->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled()) ||
+   if ((TR::Compiler->vm.canAnyMethodEventsBeHooked(comp) && !comp->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled(comp)) ||
        (comp->fej9()->isAnyMethodTracingEnabled(method->getPersistentIdentifier()) &&
         !comp->fej9()->traceableMethodsCanBeInlined()))
       return false;
@@ -4461,7 +4461,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
 
 bool TR_J9InlinerPolicy::canInlineMethodWhileInstrumenting(TR_ResolvedMethod *method)
    {
-   if ((TR::Compiler->vm.isSelectiveMethodEnterExitEnabled(comp()) && !comp()->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled()) ||
+   if ((TR::Compiler->vm.isSelectiveMethodEnterExitEnabled(comp()) && !comp()->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled(comp())) ||
          (comp()->fej9()->isAnyMethodTracingEnabled(method->getPersistentIdentifier()) &&
          !comp()->fej9()->traceableMethodsCanBeInlined()))
       return false;

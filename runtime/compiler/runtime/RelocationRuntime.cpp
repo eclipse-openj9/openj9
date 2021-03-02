@@ -544,25 +544,8 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
             }
          }
 
-#if 0
-      // add this in later...
-      /* Perform meta-data relocations */
-      if (_aotMethodHeaderEntry->offsetToMetaDataRelocations != 0)
-         {
-         TR_RelocationRecordBinaryTemplate * binaryReloRecords = (TR_RelocationRecordBinaryTemplate * )((U_8 *)_aotMethodHeaderEntry - sizeof(J9JITDataCacheHeader) + _aotMethodHeaderEntry->offsetToMetaDataRelocationItems);
-         TR_RelocationRecordGroup reloGroup(binaryReloRecords);
-         int rc = reloGroup.applyRelocations(this, reloTarget, _exceptionTable);
-         if (rc != 0)
-            {
-            _relocationStatus = RelocationFailure;
-            return;
-            }
-         }
-#endif
-
       reloTarget()->flushCache(codeStart, _aotMethodHeaderEntry->compileMethodCodeSize);
 
-#if 1
       // replace this with meta-data relocations above when we implement it
 
       /* Fix up inlined exception table ram method entries if wide */
@@ -570,11 +553,9 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          {
          // Highest 2 bits indicate wide exceptions and FSD, unset them and extract
          // the number of exception ranges
-         UDATA numExcptionRanges = ((UDATA)_exceptionTable->numExcptionRanges) & 0x7fff;
-#if defined(J9VM_OPT_JITSERVER)
-         if (_comp->getOption(TR_FullSpeedDebug))
-            numExcptionRanges &= ~(J9_JIT_METADATA_WIDE_EXCEPTIONS | J9_JIT_METADATA_HAS_BYTECODE_PC);
-#endif /* defined(J9VM_OPT_JITSERVER) */
+         uint16_t numExcptionRanges =
+               _exceptionTable->numExcptionRanges
+               & ~(J9_JIT_METADATA_WIDE_EXCEPTIONS | J9_JIT_METADATA_HAS_BYTECODE_PC);
 
          /* 4 byte exception range entries */
          J9JIT32BitExceptionTableEntry *excptEntry32 = (J9JIT32BitExceptionTableEntry *)(_exceptionTable + 1);
@@ -589,17 +570,13 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
                }
             excptEntry32->ramMethod = actualMethod;
 
-
-            //excptEntry32->ramMethod = _method;
             excptEntry32++;
-#if defined(J9VM_OPT_JITSERVER)
             if (_comp->getOption(TR_FullSpeedDebug))
                excptEntry32 = (J9JIT32BitExceptionTableEntry *) ((uint8_t *) excptEntry32 + 4);
-#endif /* defined(J9VM_OPT_JITSERVER) */
+
             numExcptionRanges--;
             }
          }
-#endif
 
       // Fix RAM method and send target AFTER all relocations are complete.
       startPC = _exceptionTable->startPC;
@@ -987,6 +964,8 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_AOTHeader *hdrInCache, i
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH, "AOT header validation failed: TLH prefetch feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_MethodTrampolines) != (hdrInCache->featureFlags & TR_FeatureFlag_MethodTrampolines))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH, "AOT header validation failed: MethodTrampolines feature mismatch.");
+   if ((featureFlags & TR_FeatureFlag_FSDEnabled) != (hdrInCache->featureFlags & TR_FeatureFlag_FSDEnabled))
+      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_FSD_MISMATCH, "AOT header validation failed: FSD feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_HCREnabled) != (hdrInCache->featureFlags & TR_FeatureFlag_HCREnabled))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_HCR_MISMATCH, "AOT header validation failed: HCR feature mismatch.");
    if (((featureFlags & TR_FeatureFlag_SIMDEnabled) == 0) && ((hdrInCache->featureFlags & TR_FeatureFlag_SIMDEnabled) != 0))
@@ -1311,6 +1290,9 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
 
    if (TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines())
       featureFlags |= TR_FeatureFlag_MethodTrampolines;
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
+      featureFlags |= TR_FeatureFlag_FSDEnabled;
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
       featureFlags |= TR_FeatureFlag_HCREnabled;

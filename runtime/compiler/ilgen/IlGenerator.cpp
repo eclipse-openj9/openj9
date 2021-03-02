@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1132,9 +1132,10 @@ TR_J9ByteCodeIlGenerator::prependEntryCode(TR::Block * firstBlock)
    TR::Node * methodEnterHook = 0;
 
    static const char* disableMethodHookForCallees = feGetEnv("TR_DisableMethodHookForCallees");
-   if ((fej9()->isMethodTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier()) ||
-        TR::Compiler->vm.canMethodEnterEventBeHooked(comp()))
-         && (isOutermostMethod() || !disableMethodHookForCallees))
+   if ((fej9()->isMethodTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier())
+        || (!comp()->getOption(TR_FullSpeedDebug)
+            && TR::Compiler->vm.canMethodEnterEventBeHooked(comp())))
+       && (isOutermostMethod() || !disableMethodHookForCallees))
       {
       methodEnterHook = genMethodEnterHook();
       }

@@ -560,6 +560,14 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_InlinedMethodPointer:
+         {
+         TR_RelocationRecordInlinedMethodPointer *impRecord = reinterpret_cast<TR_RelocationRecordInlinedMethodPointer *>(reloRecord);
+
+         impRecord->setInlinedSiteIndex(reloTarget, reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
+         }
+         break;
+
       case TR_ClassPointer:
          {
          TR_RelocationRecordClassPointer *cpRecord = reinterpret_cast<TR_RelocationRecordClassPointer *>(reloRecord);
@@ -1150,6 +1158,18 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_Breakpoint:
+         {
+         TR_RelocationRecordBreakpointGuard *bpgRecord = reinterpret_cast<TR_RelocationRecordBreakpointGuard *>(reloRecord);
+
+         int32_t inlinedSiteIndex     = static_cast<int32_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress()));
+         uintptr_t destinationAddress = reinterpret_cast<uintptr_t>(relocation->getTargetAddress2());
+
+         bpgRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
+         bpgRecord->setDestinationAddress(reloTarget, destinationAddress);
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -1458,6 +1478,18 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                       mpRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
                                       mpRecord->classChainForInlinedMethod(reloTarget),
                                       mpRecord->vTableSlot(reloTarget));
+            }
+         }
+         break;
+
+      case TR_InlinedMethodPointer:
+         {
+         TR_RelocationRecordInlinedMethodPointer *impRecord = reinterpret_cast<TR_RelocationRecordInlinedMethodPointer *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nInlined Method Pointer: Inlined site index = %d", impRecord->inlinedSiteIndex(reloTarget));
             }
          }
          break;
@@ -1996,6 +2028,20 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          }
          break;
 
+      case TR_Breakpoint:
+         {
+         TR_RelocationRecordBreakpointGuard *bpgRecord = reinterpret_cast<TR_RelocationRecordBreakpointGuard *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Breakpoint Guard: Inlined site index = %d, destinationAddress = %p",
+                     bpgRecord->inlinedSiteIndex(reloTarget),
+                     bpgRecord->destinationAddress(reloTarget));
+            }
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -2091,7 +2137,9 @@ void J9::AheadOfTimeCompile::interceptAOTRelocation(TR::ExternalRelocation *relo
    {
    OMR::AheadOfTimeCompile::interceptAOTRelocation(relocation);
 
-   if (relocation->getTargetKind() == TR_ClassAddress)
+   TR_ExternalRelocationTargetKind kind = relocation->getTargetKind();
+
+   if (kind == TR_ClassAddress)
       {
       TR::SymbolReference *symRef = NULL;
       void *p = relocation->getTargetAddress();
@@ -2102,5 +2150,33 @@ void J9::AheadOfTimeCompile::interceptAOTRelocation(TR::ExternalRelocation *relo
 
       if (symRef->getCPIndex() == -1)
          relocation->setTargetKind(TR_ArbitraryClassAddress);
+      }
+   else if (kind == TR_MethodPointer)
+      {
+      TR::Node *aconstNode = reinterpret_cast<TR::Node *>(relocation->getTargetAddress());
+
+      TR_OpaqueMethodBlock *j9method = reinterpret_cast<TR_OpaqueMethodBlock *>(aconstNode->getAddress());
+      if (aconstNode->getOpCodeValue() == TR::loadaddr)
+         {
+         j9method =
+               reinterpret_cast<TR_OpaqueMethodBlock *>(
+                  aconstNode->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress());
+         }
+
+      uintptr_t inlinedSiteIndex = static_cast<uintptr_t>(aconstNode->getInlinedSiteIndex());
+      TR_InlinedCallSite & ics = TR::comp()->getInlinedCallSite(inlinedSiteIndex);
+      TR_ResolvedMethod *inlinedMethod = ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod;
+      TR_OpaqueMethodBlock *inlinedJ9Method = inlinedMethod->getPersistentIdentifier();
+
+      /* If the j9method from the aconst node is the same as the j9method at
+       * inlined call site at inlinedSiteIndex, switch the relo kind to
+       * TR_InlinedMethodPointer; at relo time, the inlined site index is
+       * sufficient to materialize the j9method pointer
+       */
+      if (inlinedJ9Method == j9method)
+         {
+         relocation->setTargetKind(TR_InlinedMethodPointer);
+         relocation->setTargetAddress(reinterpret_cast<uint8_t *>(inlinedSiteIndex));
+         }
       }
    }

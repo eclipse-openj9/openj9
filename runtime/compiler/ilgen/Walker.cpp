@@ -7041,9 +7041,10 @@ TR_J9ByteCodeIlGenerator::genReturn(TR::ILOpCodes nodeop, bool monitorExit)
       }
 
    static const char* disableMethodHookForCallees = feGetEnv("TR_DisableMethodHookForCallees");
-   if ((fej9()->isMethodTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier()) ||
-        TR::Compiler->vm.canMethodExitEventBeHooked(comp()))
-         && (isOutermostMethod() || !disableMethodHookForCallees))
+   if ((fej9()->isMethodTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier())
+        || (!comp()->getOption(TR_FullSpeedDebug)
+            && TR::Compiler->vm.canMethodExitEventBeHooked(comp())))
+       && (isOutermostMethod() || !disableMethodHookForCallees))
       {
       TR::SymbolReference * methodExitSymRef = symRefTab()->findOrCreateReportMethodExitSymbolRef(_methodSymbol);
 

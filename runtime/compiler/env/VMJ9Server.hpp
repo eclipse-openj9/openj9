@@ -279,7 +279,7 @@ public:
    virtual bool traceableMethodsCanBeInlined() override;
    virtual bool canMethodEnterEventBeHooked() override;
    virtual bool canMethodExitEventBeHooked() override;
-   virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled() override;
+   virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp) override;
    virtual int32_t getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed) override;
    virtual bool javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result) override;
    virtual uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, uint32_t fieldLen, char * sig, uint32_t sigLen, UDATA options) override;

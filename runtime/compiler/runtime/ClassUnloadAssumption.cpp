@@ -1072,6 +1072,37 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
    }
 
 void
+TR_RuntimeAssumptionTable::notifyMethodBreakpointed(TR_FrontEnd *fe, TR_OpaqueMethodBlock *method)
+   {
+   OMR::CriticalSection notifyMutableCallSiteChangeEvent(assumptionTableMutex);
+
+   bool reportDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions);
+
+   OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnMethodBreakPoint, hashCode((uintptr_t)method));
+   TR_PatchNOPedGuardSiteOnMethodBreakPoint *cursor = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)(*headPtr);
+   while (cursor)
+      {
+      TR_PatchNOPedGuardSiteOnMethodBreakPoint *next = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)cursor->getNext();
+
+      if (cursor->matches((uintptr_t)method))
+         {
+         if (reportDetails)
+            {
+            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::write(TR_Vlog_RA,"compensating key (breakpointed method) " UINT64_PRINTF_FORMAT_HEX " ", method);
+            cursor->dumpInfo();
+            TR_VerboseLog::writeLine("");
+            TR_VerboseLog::vlogRelease();
+            }
+         cursor->compensate(fe, 0, 0);
+         markForDetachFromRAT(cursor);
+         }
+
+      cursor = next;
+      }
+   }
+
+void
 TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe, uintptr_t cookie)
    {
    OMR::CriticalSection notifyMutableCallSiteChangeEvent(assumptionTableMutex);
@@ -1097,6 +1128,7 @@ TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe, uin
          cursor->compensate(fe, 0, 0);
          markForDetachFromRAT(cursor);
          }
+
       cursor = next;
       }
    }
