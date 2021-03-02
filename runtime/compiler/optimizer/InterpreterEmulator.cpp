@@ -603,9 +603,6 @@ InterpreterEmulator::visitInvokedynamic()
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    if (owningMethod->isUnresolvedCallSiteTableEntry(callSiteIndex)
          || comp()->compileRelocatableCode()
-#if defined(J9VM_OPT_JITSERVER)
-         || comp()->isOutOfProcessCompilation()
-#endif
       ) return; // do nothing if unresolved, is AOT or JITServer compilation
    uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->callSiteTableEntryAddress(callSiteIndex);
    updateKnotAndCreateCallSiteUsingInvokeCacheArray(owningMethod, invokeCacheArray, -1);
@@ -651,10 +648,7 @@ InterpreterEmulator::visitInvokehandle()
    TR_ResolvedJ9Method * owningMethod = static_cast<TR_ResolvedJ9Method*>(_methodSymbol->getResolvedMethod());
    if (owningMethod->isUnresolvedMethodTypeTableEntry(cpIndex)
          || comp()->compileRelocatableCode()
-#if defined(J9VM_OPT_JITSERVER)
-         || comp()->isOutOfProcessCompilation()
-#endif
-      ) return; // do nothing if unresolved, is AOT or JITServer compilation
+      ) return; // do nothing if unresolved, is an AOT compilation
    uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->methodTypeTableEntryAddress(cpIndex);
    updateKnotAndCreateCallSiteUsingInvokeCacheArray(owningMethod, invokeCacheArray, cpIndex);
    }
@@ -665,24 +659,14 @@ InterpreterEmulator::updateKnotAndCreateCallSiteUsingInvokeCacheArray(TR_Resolve
    TR_J9VMBase *fej9 = comp()->fej9();
    if (_iteratorWithState)
       {
-      TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-      if (knot)
-         {
-         TR::VMAccessCriticalSection vmAccess(fej9);
-         uintptr_t appendixElementRef = (uintptr_t) fej9->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex); // dereferencing invokeCacheArray cannot be done in JITServer
-         push(new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndex(appendixElementRef)));
-         }
+      TR::KnownObjectTable::Index idx = fej9->getKnotIndexOfInvokeCacheArrayAppendixElement(comp(), invokeCacheArray);
+      if (idx != TR::KnownObjectTable::UNKNOWN)
+         push(new (trStackMemory()) KnownObjOperand(idx));
       else
          pushUnknownOperand();
       }
 
-   TR_OpaqueMethodBlock * targetMethodObj = 0;
-      {
-      TR::VMAccessCriticalSection vmAccess(fej9);
-      uintptr_t memberNameElementRef = (uintptr_t) fej9->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex); // dereferencing invokeCacheArray cannot be done in JITServer
-      targetMethodObj = fej9->targetMethodFromMemberName(memberNameElementRef);
-      }
-   TR_ResolvedMethod * targetMethod = fej9->createResolvedMethod(this->trMemory(), targetMethodObj, owningMethod);
+   TR_ResolvedMethod * targetMethod = fej9->targetMethodFromInvokeCacheArrayMemberNameObj(comp(), owningMethod, invokeCacheArray);
    bool isInterface = false;
    bool isIndirectCall = false;
    TR::Method *interfaceMethod = 0;

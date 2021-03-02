@@ -1247,15 +1247,24 @@ TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation * comp, I_
 #if TURN_OFF_INLINING
    return 0;
 #else
-
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedHandleMethod, _remoteMirror, cpIndex);
-   auto recv = _stream->read<TR_OpaqueMethodBlock *, std::string, bool>();
-   auto dummyInvokeExact = std::get<0>(recv);
-   auto signature = std::get<1>(recv);
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, std::string, bool>();
+   TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
+   auto methodInfo = std::get<1>(recv);
+   std::string &signature = std::get<2>(recv);
    if (unresolvedInCP)
-      *unresolvedInCP = std::get<2>(recv);
+      *unresolvedInCP = std::get<3>(recv);
 
-   return _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, &signature[0], signature.length(), this);
+
+   return static_cast<TR_J9ServerVM *>(_fe)->createResolvedMethodWithSignature(
+      comp->trMemory(),
+      ramMethod,
+      NULL,
+      &signature[0],
+      signature.length(),
+      this,
+      methodInfo
+      );
 #endif
    }
 
@@ -1309,18 +1318,23 @@ TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation * comp, I
 #if TURN_OFF_INLINING
    return 0;
 #else
-
-   J9Class    *ramClass = constantPoolHdr();
-   J9ROMClass *romClass = romClassPtr();
-   _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedDynamicMethod, callSiteIndex, ramClass);
-   auto recv = _stream->read<TR_OpaqueMethodBlock*, std::string, bool>();
-   TR_OpaqueMethodBlock *dummyInvokeExact = std::get<0>(recv);
-   std::string signature = std::get<1>(recv);
+   _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedDynamicMethod, _remoteMirror, callSiteIndex);
+   auto recv = _stream->read<TR_OpaqueMethodBlock*, TR_ResolvedJ9JITServerMethodInfo, std::string, bool>();
+   TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
+   auto &methodInfo = std::get<1>(recv);
+   std::string signature = std::get<2>(recv);
    if (unresolvedInCP)
-      *unresolvedInCP = std::get<2>(recv);
-   TR_ResolvedMethod *result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, &signature[0], signature.size(), this);
+      *unresolvedInCP = std::get<3>(recv);
 
-   return result;
+   return static_cast<TR_J9ServerVM *>(_fe)->createResolvedMethodWithSignature(
+      comp->trMemory(),
+      ramMethod,
+      NULL,
+      &signature[0],
+      signature.size(),
+      this,
+      methodInfo
+      );
 #endif
    }
 

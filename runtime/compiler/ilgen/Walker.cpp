@@ -3463,12 +3463,12 @@ TR_J9ByteCodeIlGenerator::loadInvokeCacheArrayElements(TR::SymbolReference *tabl
       // the object reference of the appendix object from the invokeCacheArray entry
       TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
       TR::Node * appendixNode = _stack->top();
-      TR::SymbolReference * appendixSymRef = NULL;
-         {
-         TR::VMAccessCriticalSection vmAccess(fej9());
-         uintptr_t arrayElementRef = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex); // this will not work in AOT and JITServer
-         appendixSymRef = symRefTab()->refineInvokeCacheElementSymRefWithKnownObjectIndex(appendixNode->getSymbolReference(), arrayElementRef);
-         }
+      TR::SymbolReference * appendixSymRef = 
+         fej9()->refineInvokeCacheElementSymRefWithKnownObjectIndex(
+                  comp(),
+                  appendixNode->getSymbolReference(),
+                  invokeCacheArray
+                  );
       appendixNode->setSymbolReference(appendixSymRef);
       }
    }

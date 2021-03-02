@@ -123,6 +123,13 @@ TR_J9ServerVM::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock *
    }
 
 TR_ResolvedMethod *
+TR_J9ServerVM::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod,
+                                    TR_ResolvedMethod * owningMethod, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueClassBlock *classForNewInstance)
+   {
+   return createResolvedMethodWithSignature(trMemory, aMethod, classForNewInstance, NULL, -1, owningMethod, methodInfo);
+   }
+
+TR_ResolvedMethod *
 TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
                                                  char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod)
    {
@@ -143,6 +150,38 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
    else
       {
       result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod(aMethod, this, trMemory, owningMethod);
+      if (classForNewInstance)
+         {
+         result->setClassForNewInstance((J9Class*)classForNewInstance);
+         TR_ASSERT(result->isNewInstanceImplThunk(), "createResolvedMethodWithSignature: if classForNewInstance is given this must be a thunk");
+         }
+      }
+   if (signature)
+      result->setSignature(signature, signatureLength, trMemory);
+   return result;
+   }
+
+TR_ResolvedMethod *
+TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
+                                                 char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
+   {
+   TR_ResolvedJ9Method *result = NULL;
+   if (_compInfoPT->getCompilation()->compileRelocatableCode())
+      {
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
+      result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(aMethod, this, trMemory, methodInfo, owningMethod);
+      TR::Compilation *comp = _compInfoPT->getCompilation();
+      if (comp && comp->getOption(TR_UseSymbolValidationManager))
+         {
+         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+         if (!svm->isAlreadyValidated(result->containingClass()))
+            return NULL;
+         }
+#endif
+      }
+   else
+      {
+      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod(aMethod, this, trMemory, methodInfo, owningMethod);
       if (classForNewInstance)
          {
          result->setClassForNewInstance((J9Class*)classForNewInstance);
@@ -2011,6 +2050,102 @@ TR_J9ServerVM::getHighTenureAddress()
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    return _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_highTenureAddress;
    }
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+TR_OpaqueMethodBlock*
+TR_J9ServerVM::targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_targetMethodFromMemberName, objIndex);
+      return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+      }
+   return NULL;
+   }
+
+TR_OpaqueMethodBlock*
+TR_J9ServerVM::targetMethodFromMemberName(uintptr_t memberName)
+   {
+   TR_ASSERT_FATAL(false, "targetMethodFromMemberName must not be called on JITServer");
+   return NULL;
+   }
+
+TR_OpaqueMethodBlock*
+TR_J9ServerVM::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_targetMethodFromMethodHandle, objIndex);
+      return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+      }
+   return NULL;
+   }
+
+TR_OpaqueMethodBlock*
+TR_J9ServerVM::targetMethodFromMethodHandle(uintptr_t methodHandle)
+   {
+   TR_ASSERT_FATAL(false, "targetMethodFromMethodHandle must not be called on JITServer");
+   return NULL;
+   }
+
+TR::KnownObjectTable::Index
+TR_J9ServerVM::getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray)
+   {
+   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+   if (!knot) return TR::KnownObjectTable::UNKNOWN;
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(
+      JITServer::MessageType::VM_getKnotIndexOfInvokeCacheArrayAppendixElement,
+      invokeCacheArray
+      );
+   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+   TR::KnownObjectTable::Index idx = std::get<0>(recv);
+   knot->updateKnownObjectTableAtServer(idx, std::get<1>(recv));
+   return idx;
+   }
+
+TR_ResolvedMethod *
+TR_J9ServerVM::targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *comp, TR_ResolvedMethod *owningMethod, uintptr_t *invokeCacheArray)
+   {
+   TR_OpaqueMethodBlock *targetMethodObj = 0;
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(
+      JITServer::MessageType::VM_targetMethodFromInvokeCacheArrayMemberNameObj,
+      static_cast<TR_ResolvedJ9JITServerMethod *>(owningMethod)->getRemoteMirror(),
+      invokeCacheArray
+      );
+   auto recv = stream->read<TR_OpaqueMethodBlock*, TR_ResolvedJ9JITServerMethodInfo>();
+   targetMethodObj = std::get<0>(recv);
+   auto &methodInfo = std::get<1>(recv);
+   return createResolvedMethod(comp->trMemory(), targetMethodObj, owningMethod, methodInfo);
+   }
+
+TR::SymbolReference*
+TR_J9ServerVM::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation *comp, TR::SymbolReference *originalSymRef, uintptr_t *invokeCacheArray)
+   {
+   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+   if (!knot) return originalSymRef;
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(
+      JITServer::MessageType::VM_refineInvokeCacheElementSymRefWithKnownObjectIndex,
+      invokeCacheArray
+      );
+   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+   TR::KnownObjectTable::Index idx = std::get<0>(recv);
+   knot->updateKnownObjectTableAtServer(idx, std::get<1>(recv));
+   return comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(originalSymRef, idx);
+   }
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
