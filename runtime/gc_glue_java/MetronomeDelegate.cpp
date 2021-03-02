@@ -924,9 +924,9 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 							}
 
 							GC_ClassIteratorClassSlots classSlotIterator(_javaVM, clazz);
-							J9Class **classSlotPtr;
-							while((classSlotPtr = classSlotIterator.nextSlot()) != NULL) {
-								didWork |= markClass(env, *classSlotPtr);
+							J9Class *classPtr;
+							while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+								didWork |= markClass(env, classPtr);
 							}
 						}
 					}
@@ -953,9 +953,9 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 							}
 
 							GC_ClassIteratorClassSlots classSlotIterator(_javaVM, clazz);
-							J9Class **classSlotPtr;
-							while((classSlotPtr = classSlotIterator.nextSlot()) != NULL) {
-								didWork |= markClass(env, *classSlotPtr);
+							J9Class *classPtr;
+							while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+								didWork |= markClass(env, classPtr);
 							}
 						}
 						_realtimeGC->condYield(env, 0);

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,11 +36,15 @@
  * @return the next slot containing an object reference
  * @return NULL if there are no more such slots
  */
-J9Class **
+J9Class *
 GC_VMClassSlotIterator::nextSlot()
 {
-	if(_scanPtr < _endPtr) {
-		return _scanPtr++;
+	J9Class *classPtr = NULL;
+	while (_scanPtr < _endPtr) {
+		classPtr = *_scanPtr++;
+		if (NULL != classPtr) {
+			break;
+		}
 	}
-	return NULL;
+	return classPtr;
 }

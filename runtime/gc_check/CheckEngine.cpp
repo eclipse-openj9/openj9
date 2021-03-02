@@ -763,43 +763,34 @@ GC_CheckEngine::checkClassHeap(J9JavaVM *javaVM, J9Class *clazz, J9MemorySegment
 	 * Process class slots in the class
 	 */
 	GC_ClassIteratorClassSlots classIteratorClassSlots(javaVM, clazz);
-	J9Class** classSlotPtr;
-	while((classSlotPtr = classIteratorClassSlots.nextSlot()) != NULL) {
+	J9Class *classPtr;
+	while (NULL != (classPtr = classIteratorClassSlots.nextSlot())) {
 		int state = classIteratorClassSlots.getState();
 		const char *elementName = "";
-		J9Class *clazzPtr = *classSlotPtr;
 
 		result = J9MODRON_GCCHK_RC_OK;
 
 		switch (state) {
 			case classiteratorclassslots_state_constant_pool:
-				/* may be NULL */
-				if (clazzPtr != NULL) {
-					result = checkJ9ClassPointer(javaVM, clazzPtr);
-				}
+				result = checkJ9ClassPointer(javaVM, classPtr);
 				elementName = "constant ";
 				break;
 			case classiteratorclassslots_state_superclasses:
-				/* must not be NULL */
-				result = checkJ9ClassPointer(javaVM, clazzPtr);
+				result = checkJ9ClassPointer(javaVM, classPtr);
 				elementName = "superclass ";
 				break;
 			case classiteratorclassslots_state_interfaces:
-				/* must not be NULL */
-				result = checkJ9ClassPointer(javaVM, clazzPtr);
+				result = checkJ9ClassPointer(javaVM, classPtr);
 				elementName = "interface ";
 				break;
 			case classiteratorclassslots_state_array_class_slots:
-				/* may be NULL */
-				if (clazzPtr != NULL) {
-					result = checkJ9ClassPointer(javaVM, clazzPtr);
-				}
+				result = checkJ9ClassPointer(javaVM, classPtr);
 				elementName = "array class ";
 				break;
 		}
 
 		if (J9MODRON_GCCHK_RC_OK != result) {
-			GC_CheckError error( clazz, classSlotPtr, _cycle, _currentCheck, elementName, result, _cycle->nextErrorCount());
+			GC_CheckError error(clazz, &classPtr, _cycle, _currentCheck, elementName, result, _cycle->nextErrorCount());
 			_reporter->report(&error);
 			return J9MODRON_SLOT_ITERATOR_OK;
 		}

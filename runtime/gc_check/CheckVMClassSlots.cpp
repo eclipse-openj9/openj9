@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,14 +48,11 @@ void
 GC_CheckVMClassSlots::check()
 {
 	GC_VMClassSlotIterator classSlotIterator(_javaVM);
-	J9Class **slotPtr;
+	J9Class *classPtr;
 
-	while((slotPtr = classSlotIterator.nextSlot()) != NULL) {
-		J9Class *theClazz = *slotPtr;
-		if (theClazz != NULL) {
-			if (_engine->checkJ9ClassPointer(_javaVM, theClazz) != J9MODRON_GCCHK_RC_OK) {
-				return;
-			}
+	while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+		if (J9MODRON_GCCHK_RC_OK != _engine->checkJ9ClassPointer(_javaVM, classPtr)) {
+			return;
 		}
 	}
 }
@@ -64,11 +61,11 @@ void
 GC_CheckVMClassSlots::print()
 {
 	GC_VMClassSlotIterator classSlotIterator(_javaVM);
-	J9Class **slotPtr;
+	J9Class *classPtr;
 
 	GC_ScanFormatter formatter(_portLibrary, "VMClass Slot");
-	while((slotPtr = classSlotIterator.nextSlot()) != NULL) {
-		formatter.entry((void *)*slotPtr);
+	while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+		formatter.entry((void *)classPtr);
 	}
 	formatter.end("VMClass Slot");
 }
