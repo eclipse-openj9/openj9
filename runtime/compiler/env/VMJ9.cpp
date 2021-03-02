@@ -3138,7 +3138,7 @@ TR_J9VMBase::canMethodExitEventBeHooked()
    }
 
 bool
-TR_J9VMBase::methodsCanBeInlinedEvenIfEventHooksEnabled()
+TR_J9VMBase::methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp)
    {
    return false;
    }
@@ -8335,9 +8335,9 @@ TR_J9SharedCacheVM::canMethodExitEventBeHooked()
    }
 
 bool
-TR_J9SharedCacheVM::methodsCanBeInlinedEvenIfEventHooksEnabled()
+TR_J9SharedCacheVM::methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp)
    {
-   return true;
+   return !comp->getOption(TR_FullSpeedDebug);
    }
 
 int32_t

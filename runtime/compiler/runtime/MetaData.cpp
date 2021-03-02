@@ -1071,14 +1071,14 @@ static int32_t calculateExceptionsSize(
       if (fourByteExceptionTableEntries)
          {
          entrySize = sizeof(J9JIT32BitExceptionTableEntry);
-         numberOfExceptionRangesWithBits |= 0x8000;
+         numberOfExceptionRangesWithBits |= J9_JIT_METADATA_WIDE_EXCEPTIONS;
          }
       else
          entrySize = sizeof(J9JIT16BitExceptionTableEntry);
 
       if (comp->getOption(TR_FullSpeedDebug))
          {
-         numberOfExceptionRangesWithBits |= 0x4000;
+         numberOfExceptionRangesWithBits |= J9_JIT_METADATA_HAS_BYTECODE_PC;
          entrySize += 4;
          }
 

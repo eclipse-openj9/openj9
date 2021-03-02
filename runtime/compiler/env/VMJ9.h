@@ -1011,7 +1011,7 @@ public:
 
    virtual bool canMethodEnterEventBeHooked();
    virtual bool canMethodExitEventBeHooked();
-   virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled();
+   virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp);
 
    virtual bool canExceptionEventBeHooked();
 
@@ -1264,7 +1264,7 @@ public:
 
    virtual bool               canMethodEnterEventBeHooked();
    virtual bool               canMethodExitEventBeHooked();
-   virtual bool               methodsCanBeInlinedEvenIfEventHooksEnabled();
+   virtual bool               methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp);
    virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
    virtual void               getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
    virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature);
