@@ -535,6 +535,7 @@ enum INIT_STAGE {
 #define MAPOPT_XXPARALLELCMSTHREADS_EQUALS "-XX:ParallelCMSThreads="
 #define MAPOPT_XXCONCGCTHREADS_EQUALS "-XX:ConcGCThreads="
 #define MAPOPT_XXPARALLELGCTHREADS_EQUALS "-XX:ParallelGCThreads="
+#define MAPOPT_XXPARALLELGCMAXTHREADS_EQUALS "-XX:ParallelGCMaxThreads="
 
 #define VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS "-XX:ActiveProcessorCount="
 
@@ -550,6 +551,7 @@ enum INIT_STAGE {
 #define VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSENABLE "-XX:+IdleTuningIgnoreUnrecognizedOptions"
 #define VMOPT_XCONCURRENTBACKGROUND "-Xconcurrentbackground"
 #define VMOPT_XGCTHREADS "-Xgcthreads"
+#define VMOPT_XGCMAXTHREADS "-Xgcmaxthreads"
 
 #define VMOPT_XXSHOW_EXTENDED_NPE_MESSAGE "-XX:+ShowCodeDetailsInExceptionMessages"
 #define VMOPT_XXNOSHOW_EXTENDED_NPE_MESSAGE "-XX:-ShowCodeDetailsInExceptionMessages"
