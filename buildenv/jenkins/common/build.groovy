@@ -565,14 +565,32 @@ def add_node_to_description() {
     currentBuild.description = TMP_DESC + "<a href=${JENKINS_URL}computer/${NODE_NAME}>${NODE_NAME}</a>"
 }
 
+def cleanWorkspace (KEEP_WORKSPACE) {
+    if (!KEEP_WORKSPACE) {
+        try {
+            cleanWs disableDeferredWipeout: true, deleteDirs: true
+        } catch (Exception e) {
+            try {
+                if (SPEC.contains('win')) {
+                    WORKSPACE = sh(script: "cygpath -u '${env.WORKSPACE}'", returnStdout: true).trim()
+                }
+                if (WORKSPACE) {
+                    sh "rm -fr ${WORKSPACE}/*"
+                }
+            } catch(Exception f) {
+                throw f
+            }
+        }
+    }
+}
+
 def build_all() {
     stage ('Queue') {
         timeout(time: 10, unit: 'HOURS') {
             node("${NODE}") {
                 timeout(time: 5, unit: 'HOURS') {
                     try {
-                        // Cleanup in case an old build left anything behind
-                        cleanWs disableDeferredWipeout: true, deleteDirs: true
+                        cleanWorkspace(false)
                         add_node_to_description()
                         // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here
                         // to correctly expand $HOME variable
@@ -585,10 +603,7 @@ def build_all() {
                         archive_sdk()
                     } finally {
                         KEEP_WORKSPACE = (params.KEEP_WORKSPACE) ?: false
-                        if (!KEEP_WORKSPACE) {
-                            // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
-                            cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
-                        }
+                        cleanWorkspace(KEEP_WORKSPACE)
                     }
                 }
             }
