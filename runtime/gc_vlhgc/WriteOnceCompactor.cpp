@@ -1182,8 +1182,8 @@ MM_WriteOnceCompactor::postObjectMove(MM_EnvironmentVLHGC* env, J9Object *newLoc
 	if (_extensions->objectModel.isRemembered(newLocation)) {
 		_extensions->objectModel.clearRemembered(newLocation);
 	}
-	if(_extensions->objectModel.isIndexable(newLocation)) {
-		updateInternalLeafPointersAfterCopy((J9IndexableObject*) newLocation, (J9IndexableObject*) objectPtr);
+	if (_extensions->objectModel.isIndexable(newLocation)) {
+		_extensions->indexableObjectModel.fixupInternalLeafPointersAfterCopy((J9IndexableObject*) newLocation, (J9IndexableObject*) objectPtr);
 
 		/* Updates internal data address of indexable objects. Every indexable object have a void *dataAddr
 		 * that always points to the array data. It will always point to the address right after the header,
@@ -1193,8 +1193,8 @@ MM_WriteOnceCompactor::postObjectMove(MM_EnvironmentVLHGC* env, J9Object *newLoc
 		_extensions->indexableObjectModel.fixupDataAddr(newLocation);
 	}
 
-	_extensions->objectModel.postMove(env->getOmrVMThread(), newLocation); // To be deprecated
-	//env->postObjectMoveForCompact(newLocation); // Will substitute line above
+	_extensions->objectModel.postMove(env->getOmrVMThread(), newLocation); // To be deprecated along with lines above
+	//env->postObjectMoveForCompact(newLocation, objectPtr); // Will substitute lines above
 }
 
 void
@@ -1900,35 +1900,6 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 					regionPool->setFreeEntryCount(0);
 					regionPool->setLargestFreeEntry(0);
 				}
-			}
-		}
-	}
-}
-
-/**
- * Updates leaf pointers that point to an address located within the indexable object.  For example,
- * when the array layout is either inline continuous or hybrid, there will be leaf pointers that point
- * to data that is contained within the indexable object.  These internal leaf pointers are updated by
- * calculating their offset within the source arraylet, then updating the destination arraylet pointers 
- * to use the same offset.
- * 
- * @param destinationPtr Pointer to the new indexable object
- * @param sourcePtr	Pointer to the original indexable object that was copied
- */
-void
-MM_WriteOnceCompactor::updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr)
-{
-	if (_extensions->indexableObjectModel.hasArrayletLeafPointers(destinationPtr)) {
-		GC_ArrayletLeafIterator leafIterator(_javaVM, destinationPtr);
-		GC_SlotObject *leafSlotObject = NULL;
-		UDATA sourceStartAddress = (UDATA) sourcePtr;
-		UDATA sourceEndAddress = sourceStartAddress + _extensions->indexableObjectModel.getSizeInBytesWithHeader(destinationPtr);
-
-		while(NULL != (leafSlotObject = leafIterator.nextLeafPointer())) {
-			UDATA leafAddress = (UDATA)leafSlotObject->readReferenceFromSlot();
-
-			if ((sourceStartAddress < leafAddress) && (leafAddress < sourceEndAddress)) {
-				leafSlotObject->writeReferenceToSlot((J9Object*)((UDATA)destinationPtr + (leafAddress - sourceStartAddress)));
 			}
 		}
 	}

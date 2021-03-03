@@ -209,7 +209,6 @@ private:
 	void fixupStacks(MM_EnvironmentVLHGC *env);
 	void fixupRememberedSet(MM_EnvironmentVLHGC *env);
 	void fixupMonitorReferences(MM_EnvironmentVLHGC *env);
-	void updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
 
 	/**
 	 * Return the page index for an object.
