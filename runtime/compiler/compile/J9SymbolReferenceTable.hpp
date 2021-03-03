@@ -107,10 +107,6 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateDynamicMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex, bool * unresolvedInCP = 0);
    TR::SymbolReference * findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool * unresolvedInCP = 0);
    TR::SymbolReference * findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, char *signature);
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-   TR::SymbolReference * refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::SymbolReference * originalSymRef, uintptr_t arrayElementRef);
-
-#endif
    TR::SymbolReference * findOrCreateCallSiteTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t callSiteIndex);
    TR::SymbolReference * findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
    TR::SymbolReference * findOrCreateVarHandleMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex);
