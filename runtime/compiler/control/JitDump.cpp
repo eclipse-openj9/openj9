@@ -533,7 +533,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                         // We are a compilation thread
 
                         // See comment below for the same call on why this is needed
-                        TR::CompilationInfoPerThreadBase::UninterruptibleOperation generateJitDumpForCrashedThread(*threadCompInfo);
+                        TR::CompilationInfoPerThreadBase::UninterruptibleOperation jitDumpForCrashedCompilationThread(*threadCompInfo);
 
                         // See comment below for the same call on why this is needed
                         TR::VMAccessCriticalSection requestSynchronousCompilation(TR_J9VMBase::get(jitConfig, crashedThread));
@@ -680,7 +680,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
          // classes may cause compilations to be interrupted. Because the crashed thread is not a diagnostic thread,
          // the call to print the crashed thread IL may get interrupted and the jitdump will be incomplete. We prevent
          // this from occuring by disallowing interruptions until we are done generating the jitdump.
-         TR::CompilationInfoPerThreadBase::UninterruptibleOperation generateJitDumpForCrashedThread(*threadCompInfo);
+         TR::CompilationInfoPerThreadBase::UninterruptibleOperation jitDumpForCrashedCompilationThread(*threadCompInfo);
 
          // if the compilation is in progress, dump interesting things from it and then recompile
          if (comp)

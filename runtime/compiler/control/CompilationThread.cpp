@@ -4310,7 +4310,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
 
    // We have acquired VM access above and will be releasing it below. It is possible however that during the
    // compilation process in the above `compile(...)` call we have released VM access and have subsequently
-   // crashed or asserted. In such a scenarion the JitDump process will have started and queued the method
+   // crashed or asserted. In such a scenario the JitDump process will have started and queued the method
    // for recompilation with a custom signal handler to catch the crash/assertion and return. The JitDump
    // compilation will have hopefully crashed/asserted in the same place as the original compilation, and
    // thus we will not be holding VM access at that point. This means we will return from the above call to
@@ -7969,6 +7969,8 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          uintptr_t protectedResult = 0;
          if (entry->getMethodDetails().isJitDumpMethod())
             {
+            TR::CompilationInfoPerThreadBase::UninterruptibleOperation jitDumpRecompilation(*this);
+
             protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
                                                 jitDumpSignalHandler, 
                                                 vmThread, flags, &result);
