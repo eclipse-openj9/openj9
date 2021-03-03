@@ -157,7 +157,7 @@ SPECS = ['ppc64_aix' : CURRENT_RELEASES,
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
-SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_linux_xl','x86-64_linux','x86-64_linux_xl','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac'],
+SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac'],
             'aix' : ['ppc64_aix'],
             'aixcm': ['ppc64_aix_cm'],
             'aixuma' : ['ppc64_aix_uma'],
