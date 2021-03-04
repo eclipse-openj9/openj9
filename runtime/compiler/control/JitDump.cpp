@@ -429,15 +429,6 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
    // get crashed thread's own compinfo
    TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(crashedThread);
 
-   // Crashes on the diagnostic thread should not be processed
-   if (threadCompInfo && threadCompInfo->isDiagnosticThread())
-      {
-      jitDumpFailedBecause(crashedThread, "detected recursive crash");
-      trfprintf(logFile, "Detected recursive crash. No log created.\n");
-      trfclose(logFile);
-      return OMR_ERROR_NONE;
-      }
-
    // get the method currently being compiled
    TR_MethodToBeCompiled *currentMethodBeingCompiled = 0;
    if (threadCompInfo)
