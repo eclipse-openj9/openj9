@@ -9824,6 +9824,83 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          genInitArrayHeader(node, iCursor, isVariableLen, classAddress, NULL, resReg, zeroReg,
                enumReg, dataSizeReg, temp1Reg, litPoolBaseReg, conditions, cg);
 
+#ifdef TR_TARGET_64BIT
+         /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
+          * simple as we just need to check first child of the node for array size. For variable length arrays
+          * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
+          *
+          * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
+          * discontiguous header layout.
+          */
+         TR::Register *offsetReg = NULL;
+         TR::MemoryReference *dataAddrMR = NULL;
+         TR::MemoryReference *dataAddrSlotMR = NULL;
+
+         if (isVariableLen && TR::Compiler->om.compressObjectReferences())
+            {
+            /* We need to check enumReg (array size) at runtime to determine correct offset of dataAddr field.
+             * Here we deal only with compressed refs because dataAddr offset for discontiguous
+             * and contiguous arrays is the same in full refs.
+             */
+            if (comp->getOption(TR_TraceCG))
+               traceMsg(comp, "Node (%p): Dealing with compressed refs variable length array.\n", node);
+
+            TR_ASSERT_FATAL_WITH_NODE(node,
+               (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
+               "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. "
+               "But was %d bytes for discontigous and %d bytes for contiguous array.\n",
+               fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+
+            offsetReg = cg->allocateRegister();
+            // Invert enumReg sign. 0 and negative numbers remain unchanged.
+            iCursor = generateRREInstruction(cg, TR::InstOpCode::LNGFR, node, offsetReg, enumReg, iCursor);
+            iCursor = generateRSInstruction(cg, TR::InstOpCode::SRLG, node, temp1Reg, offsetReg, 63, iCursor);
+            iCursor = generateRSInstruction(cg, TR::InstOpCode::SLLG, node, offsetReg, temp1Reg, 3, iCursor);
+            // Inverting the sign bit will leave us with either -8 (if enumCopyReg > 0) or 0 (if enumCopyReg == 0).
+            iCursor = generateRREInstruction(cg, TR::InstOpCode::LNGR, node, offsetReg, offsetReg, iCursor);
+
+            dataAddrMR = generateS390MemoryReference(resReg, offsetReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
+            dataAddrSlotMR = generateS390MemoryReference(resReg, offsetReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
+            }
+         else if (!isVariableLen && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
+            {
+            if (comp->getOption(TR_TraceCG))
+               traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
+
+            dataAddrMR = generateS390MemoryReference(resReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
+            dataAddrSlotMR = generateS390MemoryReference(resReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
+            }
+         else
+            {
+            if (comp->getOption(TR_TraceCG))
+               {
+               traceMsg(comp,
+                  "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array or full refs variable length array.\n",
+                  node);
+               }
+
+            if (!TR::Compiler->om.compressObjectReferences())
+               {
+               TR_ASSERT_FATAL_WITH_NODE(node,
+               fej9->getOffsetOfDiscontiguousDataAddrField() == fej9->getOffsetOfContiguousDataAddrField(),
+               "dataAddr field offset is expected to be same for both contiguous and discontiguous arrays in full refs. "
+               "But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
+               fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+               }
+
+            dataAddrMR = generateS390MemoryReference(resReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+            dataAddrSlotMR = generateS390MemoryReference(resReg, fej9->getOffsetOfContiguousDataAddrField(), cg);
+            }
+
+            iCursor = generateRXInstruction(cg, TR::InstOpCode::LAY, node, temp1Reg, dataAddrMR, iCursor);
+            iCursor = generateRXInstruction(cg, TR::InstOpCode::STG, node, temp1Reg, dataAddrSlotMR, iCursor);
+
+         if (offsetReg)
+            {
+            conditions->addPostCondition(offsetReg, TR::RealRegister::AssignAny);
+            cg->stopUsingRegister(offsetReg);
+            }
+#endif /* TR_TARGET_64BIT */
          // Write Arraylet Pointer
          if (generateArraylets)
             {
