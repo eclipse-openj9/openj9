@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -179,6 +179,7 @@ getClassAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFlag
 	if (NULL != constantPoolOop) {
 		J9Class *clazz = NULL;
 		vmFunctions->internalEnterVMFromJNI(vmThread);
+		resolveFlags |= (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL | J9_RESOLVE_FLAG_NO_CLASS_INIT | J9_RESOLVE_FLAG_NO_CP_UPDATE);
 		result = getJ9ClassAt(vmThread, constantPoolOop, cpIndex, resolveFlags, &clazz);
 		if (NULL != clazz) {
 			returnValue = vmFunctions->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
@@ -206,6 +207,7 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 		jclass jlClass = NULL;
 
 		vmFunctions->internalEnterVMFromJNI(vmThread);
+		resolveFlags |= (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL | J9_RESOLVE_FLAG_NO_CLASS_INIT | J9_RESOLVE_FLAG_NO_CP_UPDATE);
 		result = getRAMConstantRefAndType(vmThread, constantPoolOop, cpIndex, &cpType, &ramConstantRef);
 		if (OK == result) {
 			J9Method *method = NULL;
@@ -238,7 +240,7 @@ getMethodAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFla
 				method = ((J9RAMStaticMethodRef *) ramConstantRef)->method;
 				/* TODO is this the right check for an unresolved method? Can I check against vm->initialMethods.initialStaticMethod */
 				if ((NULL == method) || (NULL == method->constantPool)) {
-					method = vmFunctions->resolveStaticMethodRef(vmThread, constantPool, cpIndex, resolveFlags);
+					method = vmFunctions->resolveStaticMethodRefInto(vmThread, constantPool, cpIndex, resolveFlags, NULL);
 					if (NULL == method) {
 						clearException(vmThread);
 						vmFunctions->resolveVirtualMethodRef(vmThread, constantPool, cpIndex, resolveFlags, &method);
@@ -292,6 +294,7 @@ getFieldAt(JNIEnv *env, jobject constantPoolOop, jint cpIndex, UDATA resolveFlag
 		jclass jlClass = NULL;
 		
 		vmFunctions->internalEnterVMFromJNI(vmThread);
+		resolveFlags |= (J9_RESOLVE_FLAG_NO_THROW_ON_FAIL | J9_RESOLVE_FLAG_NO_CLASS_INIT | J9_RESOLVE_FLAG_NO_CP_UPDATE);
 retry:
 		ramConstantRef = NULL;
 		result = getRAMConstantRefAndType(vmThread, constantPoolOop, cpIndex, &cpType, &ramConstantRef);
@@ -305,7 +308,7 @@ retry:
 				/* Try to resolve as instance field, then as a static */
 				offset = (UDATA) vmFunctions->resolveInstanceFieldRef(vmThread, NULL, constantPool, cpIndex, resolveFlags, &resolvedField);
 				if (NULL == resolvedField) {
-					void *fieldAddress = vmFunctions->resolveStaticFieldRef(vmThread, NULL, constantPool, cpIndex, resolveFlags, &resolvedField);
+					void *fieldAddress = vmFunctions->resolveStaticFieldRefInto(vmThread, NULL, constantPool, cpIndex, resolveFlags, &resolvedField, NULL);
 					offset = (UDATA) fieldAddress - (UDATA) cpClass->ramStatics;
 				}
 				break;
@@ -432,37 +435,37 @@ Java_sun_reflect_ConstantPool_getSize0(JNIEnv *env, jobject unusedObject, jobjec
 jclass JNICALL
 Java_sun_reflect_ConstantPool_getClassAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
 {
-	return getClassAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	return getClassAt(env, constantPoolOop, cpIndex, 0);
 }
 
 jclass JNICALL
 Java_sun_reflect_ConstantPool_getClassAtIfLoaded0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
 {
-	return getClassAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	return getClassAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_NO_CLASS_LOAD);
 }
 
 jobject JNICALL
 Java_sun_reflect_ConstantPool_getMethodAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
 {
-	return getMethodAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	return getMethodAt(env, constantPoolOop, cpIndex, 0);
 }
 
 jobject JNICALL
 Java_sun_reflect_ConstantPool_getMethodAtIfLoaded0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
 {
-	return getMethodAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	return getMethodAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_NO_CLASS_LOAD);
 }
 
 jobject JNICALL
 Java_sun_reflect_ConstantPool_getFieldAt0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
 {
-	return getFieldAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_RUNTIME_RESOLVE | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	return getFieldAt(env, constantPoolOop, cpIndex, 0);
 }
 
 jobject JNICALL
 Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0(JNIEnv *env, jobject unusedObject, jobject constantPoolOop, jint cpIndex)
 {
-	return getFieldAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME | J9_RESOLVE_FLAG_NO_THROW_ON_FAIL);
+	return getFieldAt(env, constantPoolOop, cpIndex, J9_RESOLVE_FLAG_NO_CLASS_LOAD);
 }
 
 /**
