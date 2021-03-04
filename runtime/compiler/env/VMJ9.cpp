@@ -3078,6 +3078,23 @@ static TR::ILOpCodes udataCmpEqOpCode(TR::Compilation * comp)
       }
    }
 
+TR::Node *
+TR_J9VMBase::testAreSomeClassFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest)
+   {
+   TR::SymbolReference *classFlagsSymRef = TR::comp()->getSymRefTab()->findOrCreateClassFlagsSymbolRef();
+
+   TR::Node *loadClassFlags = TR::Node::createWithSymRef(TR::iloadi, 1, 1, j9ClassRefNode, classFlagsSymRef);
+   TR::Node *isValueTypeNode = TR::Node::create(TR::iand, 2, loadClassFlags, TR::Node::iconst(j9ClassRefNode, flagsToTest));
+
+   return isValueTypeNode;
+   }
+
+TR::Node *
+TR_J9VMBase::testIsClassValueType(TR::Node *j9ClassRefNode)
+   {
+   return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassIsValueType);
+   }
+
 TR::TreeTop *
 TR_J9VMBase::lowerAsyncCheck(TR::Compilation * comp, TR::Node * root, TR::TreeTop * treeTop)
    {
