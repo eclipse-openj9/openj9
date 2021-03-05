@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -202,8 +202,15 @@ public class TestJcmd extends AttachApiTest {
 
 	@Test
 	public void testDumps() throws IOException {
-		String[][] commandsAndDumpTypes = {{DUMP_HEAP, "Heap"}, {GC_HEAP_DUMP, "Heap"}, {DUMP_JAVA, "Java"}, {DUMP_SNAP, "Snap"}, {DUMP_SYSTEM, "System"}};
-		for (String[] commandAndDumpName : commandsAndDumpTypes) {
+		List<String[]> commandsAndDumpTypesList = new ArrayList<String[]>();
+		commandsAndDumpTypesList.add(new String[] {DUMP_HEAP, "Heap"});
+		commandsAndDumpTypesList.add(new String[] {GC_HEAP_DUMP, "Heap"});
+		commandsAndDumpTypesList.add(new String[] {DUMP_JAVA, "Java"});
+		commandsAndDumpTypesList.add(new String[] {DUMP_SNAP, "Snap"});
+		if (!PlatformInfo.isZOS()) {
+			commandsAndDumpTypesList.add(new String[] {DUMP_SYSTEM, "System"});
+		}
+		for (String[] commandAndDumpName : commandsAndDumpTypesList.toArray(new String[0][0])) {
 			TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
 					Collections.singletonList("-Xmx10M"), Collections.emptyList());
 			tgt.syncWithTarget();
@@ -242,12 +249,15 @@ public class TestJcmd extends AttachApiTest {
 
 	@Test
 	public void testDumpsWithOptions() throws IOException {
-		String[][] commandsAndDumpTypes = {
-				{DUMP_HEAP, "Heap", "request=exclusive+compact+prepwalk,opts=CLASSIC"},
-				{GC_HEAP_DUMP, "Heap", "opts=PHD"}, {DUMP_JAVA, "Java", "request=serial"},
-				{DUMP_SNAP, "Snap", "request=exclusive"},
-				{DUMP_SYSTEM, "System", "request=exclusive+compact+prepwalk"}};
-		for (String[] commandAndDumpName : commandsAndDumpTypes) {
+		List<String[]> commandsAndDumpTypesList = new ArrayList<String[]>();
+		commandsAndDumpTypesList.add(new String[] {DUMP_HEAP, "Heap", "request=exclusive+compact+prepwalk,opts=CLASSIC"});
+		commandsAndDumpTypesList.add(new String[] {GC_HEAP_DUMP, "Heap", "opts=PHD"});
+		commandsAndDumpTypesList.add(new String[] {DUMP_JAVA, "Java", "request=serial"});
+		commandsAndDumpTypesList.add(new String[] {DUMP_SNAP, "Snap", "request=exclusive"});
+		if (!PlatformInfo.isZOS()) {
+			commandsAndDumpTypesList.add(new String[] {DUMP_SYSTEM, "System", "request=exclusive+compact+prepwalk"});
+		}
+		for (String[] commandAndDumpName : commandsAndDumpTypesList.toArray(new String[0][0])) {
 			TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
 					Collections.singletonList("-Xmx10M"), Collections.emptyList());
 			tgt.syncWithTarget();
@@ -299,8 +309,15 @@ public class TestJcmd extends AttachApiTest {
 
 	@Test
 	public void testDumpsDefaultSettings() throws IOException {
-		String[][] commandsAndDefaultDumpNames = {{DUMP_HEAP, "heapdump"}, {GC_HEAP_DUMP, "heapdump"}, {DUMP_JAVA, "javacore"}, {DUMP_SNAP, "Snap"}, {DUMP_SYSTEM, "core"}};
-		for (String[] commandAndDumpName : commandsAndDefaultDumpNames) {
+		List<String[]> commandAndDumpNameList = new ArrayList<String[]>();
+		commandAndDumpNameList.add(new String[] {DUMP_HEAP, "heapdump"});
+		commandAndDumpNameList.add(new String[] {GC_HEAP_DUMP, "heapdump"});
+		commandAndDumpNameList.add(new String[] {DUMP_JAVA, "javacore"});
+		commandAndDumpNameList.add(new String[] {DUMP_SNAP, "Snap"});
+		if (!PlatformInfo.isZOS()) {
+			commandAndDumpNameList.add(new String[] {DUMP_SYSTEM, "core"});
+		}
+		for (String[] commandAndDumpName : commandAndDumpNameList.toArray(new String[0][0])) {
 			TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
 				Collections.singletonList("-Xmx10M"), Collections.emptyList());
 			tgt.syncWithTarget();
