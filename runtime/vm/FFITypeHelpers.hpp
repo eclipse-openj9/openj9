@@ -291,7 +291,11 @@ doneGetArrayFFIType:
 
 		return typeFFI;
 	}
+<<<<<<< Upstream, based on upstream/master
 
+=======
+	
+>>>>>>> f6dcda1 JEP389 Foreign Linker API: DownCall (Phase 1 / Primitive support)
 	/**
 	 * @brief Obtain a primitive FFI type from a layout string object
 	 * @param typeFFI[in] The primitive FFI type to be obtain

@@ -5588,8 +5588,11 @@ typedef struct J9JavaVM {
 #if JAVA_SPEC_VERSION >= 16
 	struct J9Pool *cifNativeCalloutDataCache;
 	omrthread_monitor_t cifNativeCalloutDataCacheMutex;
+<<<<<<< Upstream, based on upstream/master
 	struct J9Pool *cifArgumentTypesCache;
 	omrthread_monitor_t cifArgumentTypesCacheMutex;
+=======
+>>>>>>> f6dcda1 JEP389 Foreign Linker API: DownCall (Phase 1 / Primitive support)
 #endif /* JAVA_SPEC_VERSION >= 16 */
 	struct J9HashTable* ensureHashedClasses;
 } J9JavaVM;
