@@ -588,10 +588,23 @@ public:
 
    virtual void *                  stringConstant(int32_t cpIndex);
    virtual bool                    isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
+
+   virtual void *                  getConstantDynamicTypeFromCP(int32_t cpIndex);
+   virtual bool                    isConstantDynamic(int32_t cpIndex);
+   virtual bool                    isUnresolvedConstantDynamic(int32_t cpIndex);
+   virtual void *                  dynamicConstant(int32_t cpIndex, uintptr_t *obj);
+
    virtual void *                  methodTypeConstant(int32_t cpIndex);
    virtual bool                    isUnresolvedMethodType(int32_t cpIndex);
    virtual void *                  methodHandleConstant(int32_t cpIndex);
    virtual bool                    isUnresolvedMethodHandle(int32_t cpIndex);
+
+   virtual bool                    isUnresolvedCallSiteTableEntry(int32_t callSiteIndex);
+   virtual void *                  callSiteTableEntryAddress(int32_t callSiteIndex);
+   virtual bool                    isUnresolvedMethodTypeTableEntry(int32_t cpIndex);
+   virtual void *                  methodTypeTableEntryAddress(int32_t cpIndex);
+   virtual bool                    isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex);
+   virtual void *                  varHandleMethodTypeTableEntryAddress(int32_t cpIndex);
 
    virtual bool                    fieldAttributes ( TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
 
