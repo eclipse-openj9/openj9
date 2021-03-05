@@ -74,3 +74,6 @@ jobs:
           branch: 'autoTestPR'
           branch-suffix: 'random'
           signoff: 'true'
+      - name: add label
+        run: |
+          curl -u github-actions:${{ secrets.GITHUB_TOKEN }} -d '{"labels":["test excluded"]}' -X POST ${{ github.event.issue.url }}/labels
