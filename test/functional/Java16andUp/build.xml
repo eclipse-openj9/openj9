@@ -35,12 +35,45 @@
 	<!--Properties for this particular build-->
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
+	<property name="module_src_root" location="./modules"/>
+	<property name="module_bin_root" location="./module_bin"/>
+	<property name="dest_module_bin" location="${DEST}/module_bin"/>
 	<property name="LIB" value="asm,testng,jcommander"/>
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}"/>
+	</target>
+	
+	<property name="MODULE_NAME_ROOT" value="org.openj9test.modularity" />
+	<property name="MODULE_PATH_ROOT" value="org/openj9/test/modularity"/>
+	
+	<target name="compile_modules" depends="init" description="Create the base modules for the sealed classes">
+		<mkdir dir="${module_bin_root}" />
+		<copy file="${LIB_DIR}/testng.jar" todir="${module_bin_root}" />
+		<copy file="${LIB_DIR}/jcommander.jar" todir="${module_bin_root}" />
+		<copy file="${LIB_DIR}/asm.jar" todir="${module_bin_root}" />
+		<for list="moduleX,moduleY" param="mod">
+			<sequential>
+				<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
+				<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
+				<mkdir dir="${module_bin_dir}" />
+				<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir}" />
+				<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${module_src_dir}" />
+					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
+					<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
+					<compilerarg line="${modpath}" />
+					<classpath>
+						<pathelement location="${LIB_DIR}/testng.jar"/>
+						<pathelement location="${LIB_DIR}/jcommander.jar"/>
+						<pathelement location="${LIB_DIR}/asm.jar" />
+						<pathelement location="${build}" />
+					</classpath>
+				</javac>
+			</sequential>
+		</for>
 	</target>
 
 	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source" >
@@ -53,6 +86,7 @@
 
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>
+			<exclude name="**/modules/**" />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
 			<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
 			<classpath>
@@ -64,10 +98,16 @@
 		</javac>
 	</target>
 
-	<target name="dist" depends="compile,dist_functional" description="generate the distribution" >
+	<target name="dist" depends="compile,dist_functional,compile_modules" description="generate the distribution" >
+		<echo>copy ${module_bin_root} to ${dest_module_bin}</echo>
+		<mkdir dir="${dest_module_bin}"/>
+		<copy todir="${dest_module_bin}">
+			<fileset dir="${module_bin_root}"/>
+		</copy>
 		<mkdir dir="${DEST}"/>
 		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true">
 			<fileset dir="${build}"/>
+			<fileset dir="${dest_module_bin}"/>
 			<fileset dir="${src}/../" includes="*.properties,*.xml"/>
 		</jar>
 		<copy todir="${DEST}">
