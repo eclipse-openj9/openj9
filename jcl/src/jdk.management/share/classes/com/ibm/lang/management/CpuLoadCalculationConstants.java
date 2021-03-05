@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 package com.ibm.lang.management;
 
 /**
- * Constants used by {@link com.ibm.lang.managementOperatingSystemMXBean#getProcessCpuLoad()} and
+ * Constants used by {@link com.ibm.lang.management.OperatingSystemMXBean#getProcessCpuLoad()} and
  * {@link com.ibm.lang.management.OperatingSystemMXBean#getSystemCpuLoad()} methods.
  * 
  * @author Sridevi

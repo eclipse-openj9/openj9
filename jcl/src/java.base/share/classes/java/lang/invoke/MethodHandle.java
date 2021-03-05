@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17 & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -627,7 +627,7 @@ public abstract class MethodHandle
 	 * exactly match the underlying MethodType.
 	 * <p>
 	 * <i>invoke</i> acts as normally unless the arities differ.  In that case, the trailing
-	 * arguments are converted as though by a call to {@link #asCollector(int)} before invoking the underlying
+	 * arguments are converted as though by a call to {@link #asCollector(Class<?>, int)} before invoking the underlying
 	 * methodhandle.
 	 * 
 	 * @param arrayParameter - the type of the array to collect the arguments into

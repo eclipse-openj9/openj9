@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@ package com.ibm.oti.shared;
 /**
  * Exception thrown if an attempt is made to modify confirmed elements of a
  * classpath in SharedClassURLClasspathHelper.
- * <p>
  */
 public class CannotSetClasspathException extends Exception {
 	private static final long serialVersionUID = 608627979560424852L;

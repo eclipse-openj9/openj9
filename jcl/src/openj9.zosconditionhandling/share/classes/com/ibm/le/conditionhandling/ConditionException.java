@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar16]*/
 
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@ package com.ibm.le.conditionhandling;
  * <li>z/OS Language Environment Programming Reference: CEEDCOD-Decompose a condition token
  * <li>z/OS XL C/C++ Run-Time Library Reference: __le_condition_token_build()
  * <li>The AMODE31 header file leawi.h
+ * </ul>
  */
 
 public class ConditionException extends RuntimeException {

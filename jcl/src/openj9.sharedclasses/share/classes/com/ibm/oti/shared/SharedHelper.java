@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ package com.ibm.oti.shared;
 
 /**
  * The SharedHelper superinterface defines functions common to all helpers. 
- * <p>
  */
 public interface SharedHelper {
 	
