@@ -29,8 +29,8 @@
 #include "control/CompilationThread.hpp"
 #include "env/ut_j9jit.h"
 #include "env/VMAccessCriticalSection.hpp"
-#include "env/VerboseLog.hpp"
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
+#include "nls/j9dmpnls.h"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerHelpers.hpp"
 #include "runtime/JITServerIProfiler.hpp"
@@ -41,26 +41,9 @@
 uintptr_t
 jitDumpSignalHandler(struct J9PortLibrary *portLibrary, uint32_t gpType, void *gpInfo, void *handler_arg)
    {
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "vmThread = %p Recursive crash occurred. Aborting JIT dump.", reinterpret_cast<J9VMThread*>(handler_arg));
-
-   // Returning J9PORT_SIG_EXCEPTION_RETURN will make us come back to the same crashing instruction over and over
-   //
+   PORT_ACCESS_FROM_VMC(reinterpret_cast<J9VMThread*>(handler_arg));
+   j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_RECURSIVE_CRASH);
    return J9PORT_SIG_EXCEPTION_RETURN;
-   }
-
-static void jitDumpFailedBecause(J9VMThread *currentThread, const char* message)
-   {
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "JIT dump failed because %s", message);
-   Trc_JIT_DumpFail(currentThread, message);
-   return;
-   }
-
-static void stackWalkEndingBecause(const char* message)
-   {
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "stack walk ending because %s", message);
-   return;
    }
 
 struct ILOfCrashedThreadParamenters
@@ -113,6 +96,7 @@ static void
 traceILOfCrashedThread(J9VMThread *vmThread, TR::Compilation *comp, J9JITConfig *jitConfig, TR::FILE *logFile)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD);
 
    bool alreadyHaveVMAccess = ((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) != 0);
    bool haveAcquiredVMAccess = false;
@@ -168,30 +152,9 @@ static UDATA logStackIterator(J9VMThread *currentThread, J9StackWalkState *walkS
    {
    Trc_JIT_DumpWalkingFrame(currentThread);
 
-   // stop iterating if the walk state is null
-   if (!walkState)
-      {
-      stackWalkEndingBecause("got a null walkState");
-      return J9_STACKWALK_STOP_ITERATING;
-      }
-
    // get user data from walk state
    TR_MethodToBeCompiledForDump* jittedMethodsOnStack = (TR_MethodToBeCompiledForDump *) walkState->userData1;
    int *currentMethodIndex                            = (int *) walkState->userData2;
-
-   // also stop iterating if passed user data is null
-   if (currentMethodIndex == 0 || jittedMethodsOnStack == 0)
-      {
-      stackWalkEndingBecause("one or both user data are null");
-      return J9_STACKWALK_STOP_ITERATING;
-      }
-
-   // also stop iterating if enough frames have been reached
-   if ((*currentMethodIndex) >= STACK_WALK_DEPTH)
-      {
-      stackWalkEndingBecause("reached limit on number of methods to recompile");
-      return J9_STACKWALK_STOP_ITERATING;
-      }
 
    // if the frame has jit metadata, then it belongs to a JITed method
    if (walkState->jitInfo)
@@ -255,63 +218,66 @@ static TR_CompilationErrorCode recompileMethodForLog(
    TR::FILE *logFile
    )
    {
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "recompiling a method for log: %p", ramMethod);
+   PORT_ACCESS_FROM_VMC(vmThread);
+   J9Class *clazz = J9_CLASS_FROM_METHOD(ramMethod);
+   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+   J9UTF8 *methName = J9ROMMETHOD_NAME(romMethod);
+   J9UTF8 *methSig = J9ROMMETHOD_SIGNATURE(romMethod);
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+
+   j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_RECOMPILING_METHOD,
+         (UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
+         (UDATA)J9UTF8_LENGTH(methName), J9UTF8_DATA(methName),
+         (UDATA)J9UTF8_LENGTH(methSig), J9UTF8_DATA(methSig));
 
    Trc_JIT_DumpCompilingMethod(vmThread, ramMethod, optimizationLevel, oldStartPC);
 
-   // the request to use Log should be passed to the compilation, via optimizationPlan
-   // then the option object created should use this to open the log; thus must create a new optimization plan
-   // the right optlevel would be set during the Options setting
+   // The request to use a trace log gets passed to the compilation via the optimization plan. The options object
+   // created before the compile is issued will use the trace log we provide to initialize IL tracing.
    TR_OptimizationPlan *plan = TR_OptimizationPlan::alloc(optimizationLevel);
-   if (!plan)
+   if (NULL == plan)
+      {
+      j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_OPTIMIZATION_PLAN);
       return compilationFailure;
+      }
 
-   if (profilingCompile)
-      plan->setInsertInstrumentation(true);
-
-   // pass the log file to the compilation
+   plan->setInsertInstrumentation(profilingCompile);
    plan->setLogCompilation(logFile);
 
-   bool successfullyQueued = false;
-
-   trfprintf(logFile, "<logRecompilation>\n");
-
-   // actually request the compilation
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "compileMethod() about to issued synchronously");
-   TR_CompilationErrorCode compErrCode;
+   trfprintf(logFile, "<recompilation>\n");
 
    // Set the VM state of the crashed thread so the diagnostic thread can use consume it
    compInfo->setVMStateOfCrashedThread(vmThread->omrVMThread->vmState);
 
-   // create a compilation request
-   // NOTE: operator new() is overridden, and takes a storage object as a parameter
-   // TODO: this is indiscriminately compiling as J9::DumpMethodRequest, which is wrong;
-   //       should be fixed by checking if the method is indeed DLT, and compiling DLT if so
+   J9::JitDumpMethodDetails details(ramMethod, optionsFromOriginalCompile, isAOTBody);
+   auto rc = compilationOK;
+   auto queued = false;
+   compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &rc, &queued, plan);
+
+   trfprintf(logFile, "</recompilation rc=%d queued=%d>\n", rc, queued);
+
+   if (!queued)
       {
-      J9::JitDumpMethodDetails details(ramMethod, optionsFromOriginalCompile, isAOTBody);
-      compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &compErrCode, &successfullyQueued, plan);
+      TR_OptimizationPlan::freeOptimizationPlan(plan);
       }
 
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Crashing thread returned from compileMethod() with rc = %d", compErrCode);
-
-   trfprintf(logFile, "</logRecompilation>\n");
-
-   // if the request failed, get rid of the optimization plan we made
-   if (!successfullyQueued)
-      TR_OptimizationPlan::freeOptimizationPlan(plan);
-
-   return compErrCode;
+   return rc;
    }
 
 omr_error_t
 runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
    {
-   J9VMThread *crashedThread = context->javaVM->internalVMFunctions->currentVMThread(context->javaVM);
+   PORT_ACCESS_FROM_VMC(context);
 
+   J9VMThread *crashedThread = context->javaVM->internalVMFunctions->currentVMThread(context->javaVM);
    Trc_JIT_DumpStart(crashedThread);
+
+   TR::FILE *logFile = trfopen(label, "ab", false);
+   if (NULL == logFile)
+      {
+      j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_NO_OPEN_READ, label);
+      return OMR_ERROR_INTERNAL;
+      }
 
 #if defined(J9VM_OPT_JITSERVER)
    if (context && context->javaVM && context->javaVM->jitConfig)
@@ -338,62 +304,36 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       }
 #endif
 
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "JIT dump initiated. Crashed vmThread=%p", crashedThread);
+   char *crashedThreadName = getOMRVMThreadName(crashedThread->omrVMThread);
+   j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_OCCURRED_THREAD_NAME_ID, "JIT", crashedThreadName, crashedThread);
 
-   // if either one of the args is null, we can't really do anything
-   if (crashedThread == 0 || label == 0)
+   J9JITConfig *jitConfig = crashedThread->javaVM->jitConfig;
+   if (NULL == jitConfig)
       {
-      jitDumpFailedBecause(crashedThread, "one or both arguments are null");
-      return OMR_ERROR_NONE;
+      j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not locate J9JITConfig");
+      return OMR_ERROR_INTERNAL;
       }
-
-   // if VM is gone, can't do anything either
-   if (crashedThread->javaVM == 0)
-      {
-      jitDumpFailedBecause(crashedThread, "VM pointer is null");
-      return OMR_ERROR_NONE;
-      }
-
-   // get a hold of jitConfig in order to later get compinfo and frontend
-   J9JITConfig * jitConfig = crashedThread->javaVM->jitConfig;
-
-   // if jitConfig is gone, then we can't do anything either
-   if (jitConfig == 0)
-      {
-      jitDumpFailedBecause(crashedThread, "jitConfig is null");
-      return OMR_ERROR_NONE;
-      }
-   // get global compinfo
+      
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
-   if (!compInfo)
+   if (NULL == compInfo)
       {
-      jitDumpFailedBecause(crashedThread, "compInfo is null");
-      return OMR_ERROR_NONE;
+      j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not locate TR::CompilationInfo");
+      return OMR_ERROR_INTERNAL;
       }
 
-   // Must be able to allocate a frontend for this thread
    TR_J9VMBase *frontendOfThread = TR_J9VMBase::get(jitConfig, crashedThread);
-   if (!frontendOfThread)
+   if (NULL == frontendOfThread)
       {
-      jitDumpFailedBecause(crashedThread, "thread's frontend is missing");
-      return OMR_ERROR_NONE;
+      j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not locate TR_J9VMBase");
+      return OMR_ERROR_INTERNAL;
       }
 
-   // get global configuration options
    TR::Options *options = TR::Options::getCmdLineOptions();
-   if (!options)
+   if (NULL == options)
       {
-      jitDumpFailedBecause(crashedThread, "No cmdLineOptions available");
-      return OMR_ERROR_NONE;
+      j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not locate TR::Options");
+      return OMR_ERROR_INTERNAL;
       }
-
-
-   // open log file, using the postfixed timestamp if specified
-   TR::FILE *logFile;
-   char tmp[1025];
-   label = frontendOfThread->getFormattedName(tmp, 1025, label, NULL, false);
-   logFile = trfopen(label, "ab", false);
 
    trfprintf(logFile,
       "<?xml version=\"1.0\" standalone=\"no\"?>\n"
@@ -401,18 +341,9 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       );
 
 #if defined(J9VM_OPT_JITSERVER)
-   if (context && context->javaVM && context->javaVM->jitConfig)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      J9JITConfig *jitConfig = context->javaVM->jitConfig;
-      TR::CompilationInfo *compInfo = TR::CompilationInfo::get(context->javaVM->jitConfig);
-      if (compInfo &&
-          compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-         {
-         jitDumpFailedBecause(crashedThread, "Skipped jitdump at the JITServer");
-         trfprintf(logFile, "Skipped jitdump at the JITServer\n");
-         trfclose(logFile);
-         return OMR_ERROR_NONE;
-         }
+      return OMR_ERROR_NONE;
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    
@@ -430,47 +361,41 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
    TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(crashedThread);
 
    // get the method currently being compiled
-   TR_MethodToBeCompiled *currentMethodBeingCompiled = 0;
-   if (threadCompInfo)
+   TR_MethodToBeCompiled *currentMethodBeingCompiled = NULL;
+   if (NULL != threadCompInfo)
+      {
       currentMethodBeingCompiled = threadCompInfo->getMethodBeingCompiled();
+      }
 
-   /*
-    * at this stage, we know that we are good to orchestrate a dump
-    */
-
-   if (options->getOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "dump agent obtained necessary information to perform dump");
-
-   // if we are currently compiling a method, wake everyone waiting for it to compile
-   if (currentMethodBeingCompiled && currentMethodBeingCompiled->getMonitor())
+   // If we are currently compiling a method, wake everyone waiting for it to compile
+   if (NULL != currentMethodBeingCompiled && NULL != currentMethodBeingCompiled->getMonitor())
       {
       currentMethodBeingCompiled->getMonitor()->enter();
       currentMethodBeingCompiled->getMonitor()->notifyAll();
       currentMethodBeingCompiled->getMonitor()->exit();
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Notified all waiting threads");
+      
+      j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS);
       }
 
-   // disable all non-essential compilations
    compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
-   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Disabled further compilation");
 
-   // get the dump thread
    TR::CompilationInfoPerThread *recompilationThreadInfo = compInfo->getCompilationInfoForDumpThread();
-   J9VMThread                  *recompilationThread = NULL;
-   if (recompilationThreadInfo)
-      recompilationThread = recompilationThreadInfo->getCompilationThread();
-
-   // purge the compilation queue if a thread was found
-   if (recompilationThread)
+   if (NULL == recompilationThreadInfo)
       {
-      if (options->getVerboseOption(TR_VerboseDump))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Diagnostic compilation thread available - purging compilation queue");
-      compInfo->acquireCompMonitor(crashedThread);
-      compInfo->purgeMethodQueue(compilationFailure); // compilationFailure is a TR_CompilationErrorCode
-      compInfo->releaseCompMonitor(crashedThread);
+      j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not locate the diagnostic thread info");
+      return OMR_ERROR_INTERNAL;
       }
+
+   auto *recompilationThread = recompilationThreadInfo->getCompilationThread();
+   if (NULL == recompilationThread)
+      {
+      j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not locate the diagnostic thread");
+      return OMR_ERROR_INTERNAL;
+      }
+
+   compInfo->acquireCompMonitor(crashedThread);
+   compInfo->purgeMethodQueue(compilationFailure);
+   compInfo->releaseCompMonitor(crashedThread);
 
    try
       {
@@ -549,122 +474,94 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             }
          }
 
-      if (threadCompInfo == 0)
+      if (NULL == threadCompInfo)
          {
          // We are an application thread
-         if (options->getVerboseOption(TR_VerboseDump))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Crashed in application thread");
-         trfprintf(logFile, "#INFO: Crashed in application thread %p.\n", crashedThread);
 
-         // only bother doing anything if we have a healthy compilation thread available
-         if (recompilationThread)
+         // make space for methods to be recompiled
+         // FIXME: this is on the stack... is the stack big enough?
+         int currentMethodIndex = 0;
+         TR_MethodToBeCompiledForDump jittedMethodsOnStack[STACK_WALK_DEPTH] = { 0 };
+
+         // set up the stack walk object
+         J9StackWalkState walkState;
+
+         walkState.userData1 = (void *)jittedMethodsOnStack;
+         walkState.userData2 = (void *)&currentMethodIndex;
+         walkState.walkThread = crashedThread;
+         walkState.skipCount = 0;
+         walkState.maxFrames = STACK_WALK_DEPTH;
+         walkState.flags = (
+            // J9_STACKWALK_LINEAR |
+            // J9_STACKWALK_START_AT_JIT_FRAME |
+            // J9_STACKWALK_INCLUDE_NATIVES |
+            // J9_STACKWALK_HIDE_EXCEPTION_FRAMES |
+            // J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES |
+            J9_STACKWALK_VISIBLE_ONLY |
+            J9_STACKWALK_SKIP_INLINES |
+            J9_STACKWALK_COUNT_SPECIFIED |
+            J9_STACKWALK_ITERATE_FRAMES
+            );
+         walkState.frameWalkFunction = logStackIterator;
+
+         /*
+            * NOTE [March 6th, 2013]:
+            *
+            *    Graham Chapman said:
+            *
+            *    This will make the stack walker jump back to the last
+            *    interpreter transition point if a bad return address is found,
+            *    rather than asserting.  You'll miss a bunch of frames, but
+            *    there's really nothing better to be done in that case.
+            */
+         walkState.errorMode = J9_STACKWALK_ERROR_MODE_IGNORE;
+
+         // actually walk the stack, adding all JITed methods to the queue
+         compInfo->acquireCompMonitor(crashedThread);
+         crashedThread->javaVM->walkStackFrames(crashedThread, &walkState);
+         compInfo->releaseCompMonitor(crashedThread);
+
+         j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_METHODS_ON_STACK, currentMethodIndex);
+
+         // resume the compilation thread
+         recompilationThreadInfo->resumeCompilationThread();
+
+         // compile our methods
+         for (int i = 0; i < currentMethodIndex; i++)
             {
-            // make space for methods to be recompiled
-            // FIXME: this is on the stack... is the stack big enough?
-            int currentMethodIndex = 0;
-            TR_MethodToBeCompiledForDump jittedMethodsOnStack[STACK_WALK_DEPTH] = { 0 };
+            // skip if method is somehow null
+            if (!(jittedMethodsOnStack[i]._method))
+               continue;
 
-            // set up the stack walk object
-            J9StackWalkState walkState;
+            bool isAOTBody = false;
 
-            walkState.userData1 = (void *)jittedMethodsOnStack;
-            walkState.userData2 = (void *)&currentMethodIndex;
-            walkState.walkThread = crashedThread;
-            walkState.skipCount = 0;
-            walkState.maxFrames = STACK_WALK_DEPTH;
-            walkState.flags = (
-               // J9_STACKWALK_LINEAR |
-               // J9_STACKWALK_START_AT_JIT_FRAME |
-               // J9_STACKWALK_INCLUDE_NATIVES |
-               // J9_STACKWALK_HIDE_EXCEPTION_FRAMES |
-               // J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES |
-               J9_STACKWALK_VISIBLE_ONLY |
-               J9_STACKWALK_SKIP_INLINES |
-               J9_STACKWALK_COUNT_SPECIFIED |
-               J9_STACKWALK_ITERATE_FRAMES
-               );
-            walkState.frameWalkFunction = logStackIterator;
-
-            /*
-             * NOTE [March 6th, 2013]:
-             *
-             *    Graham Chapman said:
-             *
-             *    This will make the stack walker jump back to the last
-             *    interpreter transition point if a bad return address is found,
-             *    rather than asserting.  You'll miss a bunch of frames, but
-             *    there's really nothing better to be done in that case.
-             */
-            walkState.errorMode = J9_STACKWALK_ERROR_MODE_IGNORE;
-
-            // actually walk the stack, adding all JITed methods to the queue
-            compInfo->acquireCompMonitor(crashedThread);
-            crashedThread->javaVM->walkStackFrames(crashedThread, &walkState);
-            compInfo->releaseCompMonitor(crashedThread);
-
-            if (options->getVerboseOption(TR_VerboseDump))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "found %d JITed methods on Java stack", currentMethodIndex);
-            trfprintf(logFile, "#INFO: Found %d JITed methods on Java stack.\n", currentMethodIndex);
-
-            // resume the compilation thread
-            recompilationThreadInfo->resumeCompilationThread();
-
-            // compile our methods
-            for (int i = 0; i < currentMethodIndex; i++)
+            J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, reinterpret_cast<UDATA>(jittedMethodsOnStack[i]._oldStartPC));
+            if (NULL != metadata)
                {
-               // skip if method is somehow null
-               if (!(jittedMethodsOnStack[i]._method))
-                  continue;
-
-               bool isAOTBody = false;
-
-               J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, reinterpret_cast<UDATA>(jittedMethodsOnStack[i]._oldStartPC));
-               if (NULL != metadata)
+               auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo*>(metadata->bodyInfo);
+               if (NULL != bodyInfo)
                   {
-                  auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo*>(metadata->bodyInfo);
-                  if (NULL != bodyInfo)
-                     {
-                     isAOTBody = bodyInfo->getIsAotedBody();
-                     }
+                  isAOTBody = bodyInfo->getIsAotedBody();
                   }
+               }
 
-               TR_CompilationErrorCode compErrCode;
-               compErrCode = recompileMethodForLog(
-                  crashedThread,
-                  jittedMethodsOnStack[i]._method,
-                  compInfo,
-                  jittedMethodsOnStack[i]._optLevel,
-                  false,
-                  NULL,
-                  isAOTBody,
-                  jittedMethodsOnStack[i]._oldStartPC,
-                  logFile
-               );
-               } // for
-
-            if (currentMethodIndex == 0)
-               trfprintf(logFile, "#INFO: DUMP FAILED: no methods to recompile\n");
-
-            if (options->getVerboseOption(TR_VerboseDump))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "recompilations complete");
-
-            } // if recompilationThread
-         else
-            {
-            trfprintf(logFile, "#INFO: DUMP FAILED: no diagnostic thread\n");
-            jitDumpFailedBecause(crashedThread, "no thread available to compile for dump");
+            TR_CompilationErrorCode compErrCode;
+            compErrCode = recompileMethodForLog(
+               crashedThread,
+               jittedMethodsOnStack[i]._method,
+               compInfo,
+               jittedMethodsOnStack[i]._optLevel,
+               false,
+               NULL,
+               isAOTBody,
+               jittedMethodsOnStack[i]._oldStartPC,
+               logFile
+            );
             }
-
          }
       else
          {
          // We are a compilation thread
-         if (options->getVerboseOption(TR_VerboseDump))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "crashed in compilation thread");
-         trfprintf(logFile, "#INFO: Crashed in compilation thread %p.\n", crashedThread);
-
-         // get current compilation
-         TR::Compilation *comp = threadCompInfo->getCompilation();
 
          // Printing the crashed thread trees or any similar operation on the crashed thread may result in having to
          // acquire VM access (ex. to get a class signature). Other VM events, such as VM shutdown or the GC unloading
@@ -673,79 +570,45 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
          // this from occuring by disallowing interruptions until we are done generating the jitdump.
          TR::CompilationInfoPerThreadBase::UninterruptibleOperation jitDumpForCrashedCompilationThread(*threadCompInfo);
 
-         // if the compilation is in progress, dump interesting things from it and then recompile
-         if (comp)
+         TR::Compilation *comp = threadCompInfo->getCompilation();
+         if (NULL == comp)
             {
-            if (options->getVerboseOption(TR_VerboseDump))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Found compilation object");
-
-            // dump IL of current compilation
-            traceILOfCrashedThread(crashedThread, comp, jitConfig, logFile);
-
-            // if there was an available compilation thread, recompile the current method
-            if (recompilationThread)
-               {
-               // only proceed to recompile if the method is a regular Java method
-               if (currentMethodBeingCompiled &&
-                  currentMethodBeingCompiled->getMethodDetails().isOrdinaryMethod())
-                  {
-                  // resume the healthy compilation thread
-                  recompilationThreadInfo->resumeCompilationThread();  // TODO: Postpone this so that the thread does not get to sleep again
-                  if (options->getVerboseOption(TR_VerboseDump))
-                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "Resuming DiagCompThread");
-
-                  // get old start PC if method was available
-                  void *oldStartPC = 0;
-                  if (currentMethodBeingCompiled)
-                     oldStartPC = currentMethodBeingCompiled->_oldStartPC;
-
-                  {
-                     // The current thread is a compilation thread which may or may not currently hold VM access. The request
-                     // for recompilation to generate the jitdump will be performed synchronously for which the code path we
-                     // will take will be the same as if we were an application thread. We will take the synchronous request
-                     // path in `compileOnSeparateThread` which ends up releasing VM access prior to waiting on the diagnostic
-                     // thread to finish the queued compile. To avoid deadlocks we must acquire VM access here.
-                     TR::VMAccessCriticalSection requestSynchronousCompilation(TR_J9VMBase::get(jitConfig, crashedThread));
-
-                     // request the compilation
-                     TR_CompilationErrorCode compErrCode;
-                     compErrCode = recompileMethodForLog(
-                        crashedThread,
-                        (J9Method *)(comp->getCurrentMethod()->getPersistentIdentifier()),
-                        compInfo,
-                        (TR_Hotness)comp->getOptLevel(),
-                        comp->isProfilingCompilation(),
-                        comp->getOptions(),
-                        comp->compileRelocatableCode(),
-                        oldStartPC,
-                        logFile
-                     );
-                  }
-
-                  if (options->getVerboseOption(TR_VerboseDump))
-                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "recompilation complete");
-                  }
-               else
-                  {
-                  trfprintf(logFile, "#INFO: DUMP FAILED: not recompiling DLT method\n");
-                  jitDumpFailedBecause(crashedThread, "method was not a OrdinaryMethod");
-                  }
-
-               } // if recompilationThread
-            else
-               {
-               trfprintf(logFile, "#INFO: DUMP FAILED: no diagnostic thread\n");
-               jitDumpFailedBecause(crashedThread, "no thread available to compile for dump");
-               }
-
-            } // if comp
-         else
-            {
-            trfprintf(logFile, "#INFO: DUMP FAILED: no compilation in progress to redo\n");
-            jitDumpFailedBecause(crashedThread, "found no in-progress compilation to redo");
+            j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not locate the compilation object");
+            return OMR_ERROR_INTERNAL;
             }
 
-         } // if threadcompinfo
+         traceILOfCrashedThread(crashedThread, comp, jitConfig, logFile);
+
+         // We can only handle ordinary method recompilations
+         if (NULL != currentMethodBeingCompiled && currentMethodBeingCompiled->getMethodDetails().isOrdinaryMethod())
+            {
+            j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_ORDINARY_METHOD);
+
+            recompilationThreadInfo->resumeCompilationThread();
+
+               {
+               // The current thread is a compilation thread which may or may not currently hold VM access. The request
+               // for recompilation to generate the jitdump will be performed synchronously for which the code path we
+               // will take will be the same as if we were an application thread. We will take the synchronous request
+               // path in `compileOnSeparateThread` which ends up releasing VM access prior to waiting on the diagnostic
+               // thread to finish the queued compile. To avoid deadlocks we must acquire VM access here.
+               TR::VMAccessCriticalSection requestSynchronousCompilation(TR_J9VMBase::get(jitConfig, crashedThread));
+
+               // request the compilation
+               TR_CompilationErrorCode compErrCode = recompileMethodForLog(
+                  crashedThread,
+                  (J9Method *)(comp->getCurrentMethod()->getPersistentIdentifier()),
+                  compInfo,
+                  (TR_Hotness)comp->getOptLevel(),
+                  comp->isProfilingCompilation(),
+                  comp->getOptions(),
+                  comp->compileRelocatableCode(),
+                  currentMethodBeingCompiled->_oldStartPC,
+                  logFile
+               );
+               }
+            }
+         }
       }
    catch (const std::exception &e)
       {
@@ -763,16 +626,10 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       }
 
    trfprintf(logFile, "</jitDump>\n");
-
-   // flush and close log file
    trfflush(logFile);
    trfclose(logFile);
 
-   // re-enable all non-essential compilations
    compInfo->getPersistentInfo()->setDisableFurtherCompilation(false);
-
-   if (options && options->getVerboseOption(TR_VerboseDump))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "JIT dump complete");
 
    return OMR_ERROR_NONE;
    }
