@@ -197,17 +197,33 @@ public:
 	/**
 	 * This method may be called during heap compaction, after the object has been moved to a new location.
 	 * The implementation may apply any information extracted and cached in the calling thread at this point.
+	 * It also updates indexable dataAddr field through fixupDataAddr.
 	 *
-	 * @param[in] objectPtr points to the object that has just been moved
+	 * @param[in] destinationObjectPtr points to the object that has just been moved (new location)
+	 * @param[in] sourceObjectPtr points to the old object that has just been moved (old location)
 	 * @see preObjectMoveForCompact(omrobjectptr_t)
 	 */
 	MMINLINE void
-	postObjectMoveForCompact(omrobjectptr_t objectPtr)
+	postObjectMoveForCompact(omrobjectptr_t destinationObjectPtr, omrobjectptr_t sourceObjectPtr)
 	{
 		GC_ObjectModel *objectModel = &_extensions->objectModel;
 		if (_gcEnv.movedObjectHashCodeCache.hasBeenHashed && !_gcEnv.movedObjectHashCodeCache.hasBeenMoved) {
-			*(uint32_t*)((uintptr_t)objectPtr + objectModel->getHashcodeOffset(objectPtr)) = _gcEnv.movedObjectHashCodeCache.originalHashCode;
-			objectModel->setObjectHasBeenMoved(objectPtr);
+			*(uint32_t*)((uintptr_t)destinationObjectPtr + objectModel->getHashcodeOffset(destinationObjectPtr)) = _gcEnv.movedObjectHashCodeCache.originalHashCode;
+			objectModel->setObjectHasBeenMoved(destinationObjectPtr);
+		}
+
+		if (_extensions->objectModel.isIndexable(destinationObjectPtr)) {
+			/* Updates internal field of indexable objects. Every indexable object have an extra field
+			 * that can be used to store any extra information about the indexable object. One use case is
+			 * OpenJ9 where we use this field to point to array data. In this case it will always point to
+			 * the address right after the header, in case of contiguous data it will point to the data
+			 * itself, and in case of discontiguous arraylet it will point to the first arrayiod. How to
+			 * updated dataAddr is up to the target language that must override fixupDataAddr */
+			_extensions->indexableObjectModel.fixupDataAddr(destinationObjectPtr);
+
+			if (_extensions->isVLHGC()) {
+				_extensions->indexableObjectModel.fixupInternalLeafPointersAfterCopy((J9IndexableObject *)destinationObjectPtr, (J9IndexableObject *)sourceObjectPtr);
+			}
 		}
 	}
 

@@ -646,43 +646,6 @@ MM_CopyForwardScheme::isObjectInNurseryMemory(J9Object *objectPtr)
 }
 
 MMINLINE void
-MM_CopyForwardScheme::calculateObjectDetailsForCopy(MM_ForwardedHeader* forwardedHeader, UDATA *objectCopySizeInBytes, UDATA *objectReserveSizeInBytes, bool *doesObjectNeedHash)
-{
-	/* NOTE: the size is fetched by hand from the class in the mixed case because a forwarding pointer could have been substituted into the clazz slot.
-	 * the class pointer passed into this routine is guaranteed to have been checked
-	 */
-	GC_ObjectModel *objectModel = &_extensions->objectModel;
-	J9Class* clazz = objectModel->getPreservedClass(forwardedHeader);
-	UDATA actualObjectCopySizeInBytes = 0;
-	UDATA hashcodeOffset = 0;
-
-	if(objectModel->isIndexable(objectModel->getPreservedClass(forwardedHeader))) {
-		UDATA numberOfElements = (UDATA)objectModel->getPreservedIndexableSize(forwardedHeader);
-		UDATA dataSizeInBytes = _extensions->indexableObjectModel.getDataSizeInBytes(clazz, numberOfElements);
-		GC_ArrayletObjectModel::ArrayLayout layout = _extensions->indexableObjectModel.getArrayletLayout(clazz, dataSizeInBytes);
-		*objectCopySizeInBytes = _extensions->indexableObjectModel.getSizeInBytesWithHeader(clazz, layout, numberOfElements);
-		hashcodeOffset = _extensions->indexableObjectModel.getHashcodeOffset(clazz, layout, numberOfElements);
-	} else {
-		*objectCopySizeInBytes = clazz->totalInstanceSize + J9GC_OBJECT_HEADER_SIZE(_extensions);
-		hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(clazz);
-	}
-
-	/* IF the object has been hashed and has not been moved, then we need generate hash from the old address */
-	UDATA forwardedHeaderPreservedFlags = objectModel->getPreservedFlags(forwardedHeader);
-	*doesObjectNeedHash = (objectModel->hasBeenHashed(forwardedHeaderPreservedFlags) && !objectModel->hasBeenMoved(forwardedHeaderPreservedFlags));
-	
-	if (hashcodeOffset == *objectCopySizeInBytes) {
-		if (objectModel->hasBeenMoved(forwardedHeaderPreservedFlags)) {
-			*objectCopySizeInBytes += sizeof(UDATA);
-		} else if (objectModel->hasBeenHashed(forwardedHeaderPreservedFlags)) {
-			actualObjectCopySizeInBytes += sizeof(UDATA);
-		}
-	}
-	actualObjectCopySizeInBytes += *objectCopySizeInBytes;
-	*objectReserveSizeInBytes = objectModel->adjustSizeInBytes(actualObjectCopySizeInBytes);
-}
-
-MMINLINE void
 MM_CopyForwardScheme::reinitCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache, void *base, void *top, UDATA compactGroup)
 {
 	MM_CopyForwardCompactGroup *compactGroupForMarkData = &(env->_copyForwardCompactGroups[compactGroup]);
@@ -1905,7 +1868,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 		GC_ObjectModel *objectModel = &_extensions->objectModel;
 		
 		/* Object is in the evacuate space but not forwarded. */
-		calculateObjectDetailsForCopy(forwardedHeader, &objectCopySizeInBytes, &objectReserveSizeInBytes, &doesObjectNeedHash);
+		_extensions->objectModel.calculateObjectDetailsForCopy(env, forwardedHeader, &objectCopySizeInBytes, &objectReserveSizeInBytes, &doesObjectNeedHash);
 
 		Assert_MM_objectAligned(env, objectReserveSizeInBytes);
 
@@ -1981,8 +1944,8 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 
 				forwardedHeader->fixupForwardedObject(destinationObjectPtr);
 
-				if(objectModel->isIndexable(destinationObjectPtr)) {
-					updateInternalLeafPointersAfterCopy((J9IndexableObject *)destinationObjectPtr, (J9IndexableObject *)forwardedHeader->getObject());
+				if (objectModel->isIndexable(destinationObjectPtr)) {
+					_extensions->indexableObjectModel.fixupInternalLeafPointersAfterCopy((J9IndexableObject *)destinationObjectPtr, (J9IndexableObject *)forwardedHeader->getObject());
 
 					/* Updates internal data address of indexable objects. Every indexable object have a void *dataAddr
 					 * that always points to the array data. It will always point to the address right after the header,
@@ -2008,7 +1971,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 				/* Move the cache allocate pointer to reflect the consumed memory */
 				Assert_MM_true(copyCache->cacheAlloc <= copyCache->cacheTop);
 
-				if(_tracingEnabled) {
+				if (_tracingEnabled) {
 					PORT_ACCESS_FROM_ENVIRONMENT(env);
 					j9tty_printf(PORTLIB, "Cache alloc: %p newAlloc: %p origO: %p copyO: %p\n", copyCache->cacheAlloc, newCacheAlloc, forwardedHeader->getObject(), destinationObjectPtr);
 				}
@@ -2081,35 +2044,6 @@ MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationCo
 	}
 }
 #endif /* J9VM_GC_LEAF_BITS */
-
-/**
- * Updates leaf pointers that point to an address located within the indexable object.  For example,
- * when the array layout is either inline continuous or hybrid, there will be leaf pointers that point
- * to data that is contained within the indexable object.  These internal leaf pointers are updated by
- * calculating their offset within the source arraylet, then updating the destination arraylet pointers 
- * to use the same offset.
- * 
- * @param destinationPtr Pointer to the new indexable object
- * @param sourcePtr	Pointer to the original indexable object that was copied
- */
-void
-MM_CopyForwardScheme::updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr)
-{
-	if (_extensions->indexableObjectModel.hasArrayletLeafPointers(destinationPtr)) {
-		GC_ArrayletLeafIterator leafIterator(_javaVM, destinationPtr);
-		GC_SlotObject *leafSlotObject = NULL;
-		UDATA sourceStartAddress = (UDATA) sourcePtr;
-		UDATA sourceEndAddress = sourceStartAddress + _extensions->indexableObjectModel.getSizeInBytesWithHeader(destinationPtr);
-		
-		while(NULL != (leafSlotObject = leafIterator.nextLeafPointer())) {
-			UDATA leafAddress = (UDATA)leafSlotObject->readReferenceFromSlot();
-						
-			if ((sourceStartAddress < leafAddress) && (leafAddress < sourceEndAddress)) {
-				leafSlotObject->writeReferenceToSlot((J9Object*)((UDATA)destinationPtr + (leafAddress - sourceStartAddress)));
-			}
-		}
-	}
-}
 
 MMINLINE void
 MM_CopyForwardScheme::depthCopyHotFields(MM_EnvironmentVLHGC *env, J9Class *clazz, J9Object *destinationObjectPtr, MM_AllocationContextTarok *reservingContext) {
