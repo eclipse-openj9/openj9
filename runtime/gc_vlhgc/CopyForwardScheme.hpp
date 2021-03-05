@@ -467,11 +467,6 @@ private:
 	MMINLINE bool isObjectInNurseryMemory(J9Object *objectPtr);
 
 	/**
-	 * @param doesObjectNeedHash[out]		True, if object need to store hashcode in hashslot
-	 */
-	MMINLINE void calculateObjectDetailsForCopy(MM_ForwardedHeader* forwardedHeader, UDATA *objectCopySizeInBytes, UDATA *objectReserveSizeInBytes, bool *doesObjectNeedHash);
-
-	/**
 	 * Remove any remaining regions from the reserved allocation list.
 	 * @param env GC thread.
 	 */
@@ -862,7 +857,6 @@ private:
 	 * @return an object pointer representing the new location of the object, or the original object pointer on failure.
 	 */
 	J9Object *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ForwardedHeader* forwardedHeader, bool leafType = false);
-	void updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
 	
 
 	/* Depth copy the hot fields of an object.

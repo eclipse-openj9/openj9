@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "ArrayletLeafIterator.hpp"
 #include "ArrayletObjectModel.hpp"
 #include "GCExtensionsBase.hpp"
 #include "ModronAssertions.h"
@@ -130,6 +131,26 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	}
 	return layout;
 }
+
+void
+GC_ArrayletObjectModel::fixupInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr)
+{
+	if (hasArrayletLeafPointers(destinationPtr)) {
+		GC_ArrayletLeafIterator leafIterator((J9JavaVM*)_omrVM->_language_vm, destinationPtr);
+		GC_SlotObject *leafSlotObject = NULL;
+		UDATA sourceStartAddress = (UDATA) sourcePtr;
+		UDATA sourceEndAddress = sourceStartAddress + getSizeInBytesWithHeader(destinationPtr);
+
+		while (NULL != (leafSlotObject = leafIterator.nextLeafPointer())) {
+			UDATA leafAddress = (UDATA)leafSlotObject->readReferenceFromSlot();
+
+			if ((sourceStartAddress < leafAddress) && (leafAddress < sourceEndAddress)) {
+				leafSlotObject->writeReferenceToSlot((J9Object*)((UDATA)destinationPtr + (leafAddress - sourceStartAddress)));
+			}
+		}
+	}
+}
+
 #if defined(J9VM_ENV_DATA64)
 void
 GC_ArrayletObjectModel::AssertArrayPtrIsIndexable(J9IndexableObject *arrayPtr)

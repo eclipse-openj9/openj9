@@ -558,6 +558,28 @@ public:
 		return adjustSizeInBytes(getObjectModelDelegate()->getObjectSizeInBytesWithHeader(objectPtr, hasBeenMoved(objectPtr) && !hasRecentlyBeenMoved(objectPtr)));
 	}
 
+	MMINLINE void
+	calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor)
+	{
+		GC_ObjectModelBase::calculateObjectDetailsForCopy(env, forwardedHeader, objectCopySizeInBytes, objectReserveSizeInBytes, hotFieldAlignmentDescriptor);
+	}
+
+	/**
+	 * Calculate the actual object size and the size adjusted to object alignment. The calculated object size
+	 * includes any expansion bytes allocated if the object will grow when moved.
+	 *
+	 * @param[in]  env points to the environment for the calling thread
+	 * @param[in]  forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @param[out] objectCopySizeInBytes actual object size
+	 * @param[out] objectReserveSizeInBytes size adjusted to object alignment
+	 * @param[out] doesObjectNeedHash flag that indicates if object needs hashing
+	 */
+	MMINLINE void
+	calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader* forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash)
+	{
+		getObjectModelDelegate()->calculateObjectDetailsForCopy(env, forwardedHeader, objectCopySizeInBytes, objectReserveSizeInBytes, doesObjectNeedHash);
+	}
+
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	/**
 	 * Extract the class pointer from an unforwarded object.
@@ -572,80 +594,6 @@ public:
 	getPreservedClass(MM_ForwardedHeader *forwardedHeader)
 	{
 		return (J9Class *)((uintptr_t)(forwardedHeader->getPreservedSlot()) & J9GC_J9OBJECT_CLAZZ_ADDRESS_MASK);
-	}
-
-	/**
-	 * Extract the size (as getSizeInElements()) from an unforwarded object
-	 *
-	 * This method will assert if the object is not indexable or has been marked as forwarded.
-	 *
-	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
-	 * @return the size (#elements) of the array encapsulated by forwardedHeader
-	 * @see MM_ForwardingHeader::isForwardedObject()
-	 */
-	MMINLINE uint32_t
-	getPreservedIndexableSize(MM_ForwardedHeader *forwardedHeader)
-	{
-		ForwardedHeaderAssert(isIndexable(getPreservedClass(forwardedHeader)));
-
-		/* in compressed headers, the size of the object is stored in the low-order half of the uintptr_t read when we read clazz
-		 * so read it from there instead of the heap (since the heap copy would have been over-written by the forwarding
-		 * pointer if another thread copied the object underneath us). In non-compressed, this field should still be readable
-		 * out of the heap.
-		 */
-		uint32_t size = 0;
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		if (compressObjectReferences()) {
-			size = forwardedHeader->getPreservedOverlap();
-		} else
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
-		{
-			size = ((J9IndexableObjectContiguousFull *)forwardedHeader->getObject())->size;
-		}
-
-		if (0 == size) {
-			/* Discontiguous */
-			if (compressObjectReferences()) {
-				size = ((J9IndexableObjectDiscontiguousCompressed *)forwardedHeader->getObject())->size;
-			} else {
-				size = ((J9IndexableObjectDiscontiguousFull *)forwardedHeader->getObject())->size;
-			}
-		}
-
-		return size;
-	}
-	
-	/**
-	 * Extract the array layout from preserved info in Forwarded header
-	 * (this mimics getArrayLayout())
-	 *
-	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
-	 * @return the ArrayLayout for the forwarded object
-	 */
-	GC_ArrayletObjectModel::ArrayLayout
-	getPreservedArrayLayout(MM_ForwardedHeader *forwardedHeader)
-	{
-		GC_ArrayletObjectModel::ArrayLayout layout = GC_ArrayletObjectModel::InlineContiguous;
-		 uint32_t size = 0;
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		if (compressObjectReferences()) {
-			size = forwardedHeader->getPreservedOverlap();
-		} else
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
-		{
-			size = ((J9IndexableObjectContiguousFull *)forwardedHeader->getObject())->size;
-		}
-		
-		if (0 != size) {
-			return layout;
-		}
-
-		/* we know we are dealing with heap object, so we don't need to check against _arrayletRangeBase/Top, like getArrayLayout does */
-		J9Class *clazz = getPreservedClass(forwardedHeader);
-		uintptr_t dataSizeInBytes = _indexableObjectModel->getDataSizeInBytes(clazz, getPreservedIndexableSize(forwardedHeader));
-		layout = _indexableObjectModel->getArrayletLayout(clazz, dataSizeInBytes);
-		
-		return layout;	
 	}
 
 	/**
@@ -665,6 +613,16 @@ public:
 	{
 		GC_ObjectModelBase::fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
 
+		if (isIndexable(forwardedHeader)) {
+			/* Updates internal field of indexable objects. Every indexable object have an extra field
+			 * that can be used to store any extra information about the indexable object. One use case is
+			 * OpenJ9 where we use this field to point to array data. In this case it will always point to
+			 * the address right after the header, in case of contiguous data it will point to the data
+			 * itself, and in case of discontiguous arraylet it will point to the first arrayiod. How to
+			 * updated dataAddr is up to the target language that must override fixupDataAddr */
+			_indexableObjectModel->fixupDataAddr(forwardedHeader, destinationObjectPtr);
+		}
+
 		/*	To have ability to backout last scavenge we need to recognize objects just moved (moved first time) in current scavenge
 		 *
 		 *	Bits	State
@@ -673,7 +631,7 @@ public:
 		 * 	0 0		not moved / not hashed
 		 * 	0 1		not moved / hashed
 		 * 	1 0		just moved / hashed
-		 *  1 1		moved / hashed
+		 * 	1 1		moved / hashed
 		 *	--------------------------------
 		 */
 		if (hasBeenMoved(getPreservedFlags(forwardedHeader))) {
@@ -686,10 +644,11 @@ public:
 			uintptr_t hashOffset;
 			J9Class *clazz = getPreservedClass(forwardedHeader);
 			if (isIndexable(clazz)) {
-				hashOffset = _indexableObjectModel->getHashcodeOffset(clazz, getPreservedArrayLayout(forwardedHeader), getPreservedIndexableSize(forwardedHeader));
+				hashOffset = _indexableObjectModel->getPreservedHashcodeOffset(forwardedHeader);
 			} else {
 				hashOffset = _mixedObjectModel->getHashcodeOffset(clazz);
 			}
+
 			uint32_t *hashCodePointer = (uint32_t*)((uint8_t*) destinationObjectPtr + hashOffset);
 			*hashCodePointer = convertValueToHash(_javaVM, (uintptr_t)forwardedHeader->getObject());
 			setObjectJustHasBeenMoved(destinationObjectPtr);
