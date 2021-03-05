@@ -35,8 +35,14 @@ class JITServerSharedROMClassCache
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::ROMClass)
 
+   //NOTE: The cache is not usable until initialize() is called
    JITServerSharedROMClassCache(size_t numPartitions);
    ~JITServerSharedROMClassCache();
+
+   // Initializes the cache. Must be called when the first client session is created.
+   void initialize(J9JITConfig *jitConfig);
+   // Releases memory used by the cache. Must be called when the last client session is destroyed.
+   void shutdown(bool lastClient = true);
 
    J9ROMClass *getOrCreate(const J9ROMClass *packedROMClass);
    void release(J9ROMClass *romClass);
@@ -49,8 +55,15 @@ private:
    // partitions, each synchronized with a separate monitor
    Partition &getPartition(const JITServerROMClassHash &hash);
 
+   void createPartitions();
+   void destroyPartitions();
+
+   bool isInitialized() const { return _persistentMemory != NULL; }
+
    const size_t _numPartitions;
+   TR_PersistentMemory *_persistentMemory;
    Partition *const _partitions;
+   TR::Monitor **const _monitors;
 };
 
 

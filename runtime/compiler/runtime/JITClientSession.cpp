@@ -754,6 +754,13 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, b
          sessionMemory = TR::Compiler->persistentGlobalMemory();
          }
 
+      // If this is the first client, initialize the shared ROMClass cache
+      if (_clientSessionMap.empty())
+         {
+         if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+            cache->initialize(jitConfig);
+         }
+
       // allocate a new ClientSessionData object and create a clientUID mapping
       clientData = new (sessionMemory) ClientSessionData(clientUID, seqNo, sessionMemory, usesPerClientMemory);
       if (clientData)
@@ -789,8 +796,15 @@ ClientSessionHT::deleteClientSession(uint64_t clientUID, bool forDeletion)
       if ((clientData->getInUse() == 0) && clientData->isMarkedForDeletion())
          {
          ClientSessionData::destroy(clientData); // delete the client data
-
          _clientSessionMap.erase(clientDataIt); // delete the mapping from the hashtable
+
+         // If this was the last client, shutdown the shared ROMClass cache
+         if (_clientSessionMap.empty())
+            {
+            if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+               cache->shutdown();
+            }
+
          return true;
          }
       }

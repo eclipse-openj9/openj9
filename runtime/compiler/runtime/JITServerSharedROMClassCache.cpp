@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include "AtomicSupport.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "env/CompilerEnv.hpp"
 #include "infra/CriticalSection.hpp"
 #include "runtime/JITServerSharedROMClassCache.hpp"
@@ -66,50 +67,132 @@ struct JITServerSharedROMClassCache::Entry
 
 struct JITServerSharedROMClassCache::Partition
    {
-   TR_PERSISTENT_ALLOC(TR_Memory::ROMClass)
-
-   Partition() :
-      _persistentMemory(TR::Compiler->persistentGlobalMemory()),
-      _map(decltype(_map)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
-      _monitor(TR::Monitor::create("JIT-JITServerSharedROMClassCacheMonitor"))
-      {
-      if (!_monitor)
-         throw std::bad_alloc();
-      }
+   Partition(TR_PersistentMemory *persistentMemory, TR::Monitor *monitor) :
+      _persistentMemory(persistentMemory), _monitor(monitor),
+      _map(decltype(_map)::allocator_type(persistentMemory->_persistentAllocator.get())) { }
 
    ~Partition()
       {
       for (const auto &kv : _map)
          _persistentMemory->freePersistentMemory(kv.second);
-      _monitor->destroy();
       }
 
    J9ROMClass *getOrCreate(const J9ROMClass *packedROMClass, const JITServerROMClassHash &hash);
    void release(Entry *entry);
 
    TR_PersistentMemory *const _persistentMemory;
+   TR::Monitor *const _monitor;
    // To avoid comparing the ROMClass contents inside a critical section when
    // inserting a new entry (which would increase lock contention), we instead
    // use a hash of the contents as the key. The hash is computed outside of
    // the critical section, and key hashing and comparison are very quick.
    PersistentUnorderedMap<JITServerROMClassHash, Entry *> _map;
-   TR::Monitor *const _monitor;
    };
 
 
 JITServerSharedROMClassCache::JITServerSharedROMClassCache(size_t numPartitions) :
-   _numPartitions(numPartitions),
-   _partitions(new (TR::Compiler->persistentGlobalMemory()) Partition[numPartitions])
+   _numPartitions(numPartitions), _persistentMemory(NULL),
+   _partitions((Partition *)TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory(
+               numPartitions * sizeof(Partition), TR_Memory::ROMClass)),
+   _monitors(new (TR::Compiler->persistentGlobalMemory()) TR::Monitor *[numPartitions])
    {
-   if (!_partitions)
+   if (!_partitions || !_monitors)
       throw std::bad_alloc();
+
+   for (size_t i = 0; i < numPartitions; ++i)
+      {
+      _monitors[i] = TR::Monitor::create("JIT-JITServerSharedROMClassCachePartitionMonitor");
+      if (!_monitors[i])
+         throw std::bad_alloc();
+      }
    }
 
 JITServerSharedROMClassCache::~JITServerSharedROMClassCache()
    {
+   if (isInitialized())
+      shutdown(false);
+
+   for (size_t i = 0; i < _numPartitions; ++i)
+      _monitors[i]->destroy();
+
+   TR::Compiler->persistentGlobalAllocator().deallocate(_partitions);
+   TR::Compiler->persistentGlobalAllocator().deallocate(_monitors);
+   }
+
+
+void
+JITServerSharedROMClassCache::initialize(J9JITConfig *jitConfig)
+   {
+   TR_ASSERT(!isInitialized(), "Already initialized");
+
+   // Must only be called when the first client session is created
+   auto compInfo = TR::CompilationInfo::get();
+   TR_ASSERT(compInfo->getCompilationMonitor()->owned_by_self(), "Must hold compilationMonitor");
+   TR_ASSERT(compInfo->getClientSessionHT()->size() == 0, "Must have no clients");
+
+   TR::PersistentAllocatorKit kit(1 << 20/*1 MB*/, *TR::Compiler->javaVM);
+   auto allocator = new (TR::Compiler->rawAllocator) TR::PersistentAllocator(kit);
+   try
+      {
+      _persistentMemory = new (TR::Compiler->rawAllocator) TR_PersistentMemory(jitConfig, *allocator);
+      for (size_t i = 0; i < _numPartitions; ++i)
+         new (&_partitions[i]) Partition(_persistentMemory, _monitors[i]);
+      }
+   catch (...)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Failed to initialize shared ROMClass cache");
+      // This automatically releases all resources (persistent allocations) in Partition objects
+      allocator->~PersistentAllocator();
+      TR::Compiler->rawAllocator.deallocate(allocator);
+      if (_persistentMemory)
+         TR::Compiler->rawAllocator.deallocate(_persistentMemory);
+      _persistentMemory = NULL;
+      throw;
+      }
+   }
+
+void
+JITServerSharedROMClassCache::shutdown(bool lastClient)
+   {
+   TR_ASSERT(isInitialized(), "Must be initialized");
+
+   if (lastClient)
+      {
+      // Must only be called when the last client session is destroyed
+      auto compInfo = TR::CompilationInfo::get();
+      TR_ASSERT(compInfo->getCompilationMonitor()->owned_by_self(), "Must hold compilationMonitor");
+      TR_ASSERT(compInfo->getClientSessionHT()->size() == 0, "Must have no clients");
+
+      // There should be no ROMClasses left in the cache if there are no clients using them
+      size_t numClasses = 0;
+      for (size_t i = 0; i < _numPartitions; ++i)
+         numClasses += _partitions[i]._map.size();
+      if (numClasses)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(
+               TR_Vlog_JITServer, "ERROR: %zu classes left in shared ROMClass cache at shutdown", numClasses
+            );
+         //NOTE: This assertion is not fatal since there are known cases when a cached
+         //      ROMClass is abandoned without decrementing its reference count,
+         //      e.g. due to mishandled exceptions or races between multiple threads
+         TR_ASSERT(false, "%zu classes left in shared ROMClass cache at shutdown", numClasses);
+         }
+      }
+
+#if defined(DEBUG)
+   // Calling destructors is not necessary - memory will be freed automatically with the persistent allocator
    for (size_t i = 0; i < _numPartitions; ++i)
       _partitions[i].~Partition();
-   TR::Compiler->persistentGlobalAllocator().deallocate(_partitions);
+#endif /* defined(DEBUG) */
+
+   auto allocator = &_persistentMemory->_persistentAllocator.get();
+   // This automatically releases all resources (persistent allocations) in Partition objects
+   allocator->~PersistentAllocator();
+   TR::Compiler->rawAllocator.deallocate(allocator);
+   TR::Compiler->rawAllocator.deallocate(_persistentMemory);
+   _persistentMemory = NULL;
    }
 
 
