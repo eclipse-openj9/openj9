@@ -103,9 +103,9 @@ enum J9ClassFragments {
 extern const J9ITable invalidITable;
 
 typedef struct J9RAMClassFreeListLargeBlock {
-    UDATA size;
-    struct J9RAMClassFreeListLargeBlock* nextFreeListBlock;
-    UDATA maxSizeInList;
+	UDATA size;
+	struct J9RAMClassFreeListLargeBlock* nextFreeListBlock;
+	UDATA maxSizeInList;
 } J9RAMClassFreeListLargeBlock;
 
 typedef struct RAMClassAllocationRequest {
@@ -1629,7 +1629,7 @@ isClassPermittedBySealedSuper(J9ROMClass *superRomClass, U_8* className, U_16 cl
  * @return TRUE if subclass can legally inherit the super, FALSE otherwise.
  */
 static VMINLINE BOOLEAN
-isClassInTheSameModuleOrPckageAsSealedSuper(J9VMThread *vmThread, J9Class *superClass, J9ROMClass *romClass, J9Module *module, UDATA packageID)
+isClassInTheSameModuleOrPackageAsSealedSuper(J9VMThread *vmThread, J9Class *superClass, J9ROMClass *romClass, J9Module *module, UDATA packageID)
 {
 	if (J9ROMCLASS_IS_SEALED(superClass->romClass)) {
 		J9JavaVM *vm = vmThread->javaVM;
@@ -1730,7 +1730,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 			/* JEP 397 sealed classes: the current class must be in the same module as its superclass
 			 * or in the same package as its superclass if non-public.
 			 */
-			if (!isClassInTheSameModuleOrPckageAsSealedSuper(vmThread, superclass, romClass, module, packageID)) {
+			if (!isClassInTheSameModuleOrPackageAsSealedSuper(vmThread, superclass, romClass, module, packageID)) {
 				return FALSE;
 			}
 #endif /* JAVA_SPEC_VERSION >= 16 */
@@ -1806,7 +1806,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 					/* JEP 397 sealed classes: the current interface must be in the same module as its superinterface
 					 * or in the same package as its superinterface if non-public.
 					 */
-					if (!isClassInTheSameModuleOrPckageAsSealedSuper(vmThread, interfaceClass, romClass, module, packageID)) {
+					if (!isClassInTheSameModuleOrPackageAsSealedSuper(vmThread, interfaceClass, romClass, module, packageID)) {
 						return FALSE;
 					}
 #endif /* JAVA_SPEC_VERSION >= 16 */
