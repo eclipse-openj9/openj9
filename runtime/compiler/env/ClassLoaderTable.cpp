@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,216 +22,167 @@
 
 #include "env/ClassLoaderTable.hpp"
 
-#include <stdint.h>
-#include "env/PersistentCHTable.hpp"
-#include "env/jittypes.h"
 
+enum TableKind { Loader, Chain };
+
+// To make the two-way map between class loaders and class chains more efficient, this struct
+// is linked into two linked lists - one for each hash table in TR_PersistentClassLoaderTable.
 struct TR_ClassLoaderInfo
    {
-   TR_ALLOC(TR_Memory::PersistentCHTable)
-   TR_ClassLoaderInfo(void *classLoaderPointer, void *classChainPointer) :
-      _classLoaderPointer(classLoaderPointer),
-      _classChainPointer(classChainPointer),
-      _next(NULL)
-      {
-      }
+   TR_PERSISTENT_ALLOC(TR_Memory::PersistentCHTable)
 
-   void *_classLoaderPointer;
-   void *_classChainPointer;
-   TR_ClassLoaderInfo *_next;
+   TR_ClassLoaderInfo(void *loader, void *chain) :
+      _loader(loader), _loaderTableNext(NULL),
+      _chain(chain), _chainTableNext(NULL) { }
+
+   template<TableKind T> TR_ClassLoaderInfo *&next();
+   template<TableKind T> bool equals(const void *key) const;
+
+   void *const _loader;
+   TR_ClassLoaderInfo *_loaderTableNext;
+   void *const _chain;
+   TR_ClassLoaderInfo *_chainTableNext;
    };
 
 
-TR_PersistentClassLoaderTable::TR_PersistentClassLoaderTable(TR_PersistentMemory *trPersistentMemory)
+template<TableKind T> static size_t hash(const void *key);
+
+template<TableKind T> static TR_ClassLoaderInfo *
+lookup(TR_ClassLoaderInfo *const *table, size_t &index, TR_ClassLoaderInfo *&prev, const void *key)
    {
-   for (int32_t i=0;i < CLASSLOADERTABLE_SIZE;i++)
+   index = hash<T>(key) % CLASSLOADERTABLE_SIZE;
+   TR_ClassLoaderInfo *info = table[index];
+   prev = NULL;
+   while (info && !info->equals<T>(key))
       {
-      _loaderTable[i] = NULL;
-      _classChainTable[i] = NULL;
+      prev = info;
+      info = info->next<T>();
       }
-   _trPersistentMemory = trPersistentMemory;
-   _sharedCache = NULL;
+   return info;
    }
 
-int32_t
-TR_PersistentClassLoaderTable::hashLoader(void *classLoaderPointer)
+template<TableKind T> static void
+insert(TR_ClassLoaderInfo *info, TR_ClassLoaderInfo **table, size_t index)
    {
-   return ((uintptr_t)classLoaderPointer % CLASSLOADERTABLE_SIZE);
+   info->next<T>() = table[index];
+   table[index] = info;
    }
 
-int32_t
-TR_PersistentClassLoaderTable::hashClassChain(void *classChainPointer)
+template<TableKind T> static void
+remove(TR_ClassLoaderInfo *info, TR_ClassLoaderInfo *prev, TR_ClassLoaderInfo **table, size_t index)
    {
-   return ((uintptr_t)classChainPointer % CLASSLOADERTABLE_SIZE);
+   if (prev)
+      prev->next<T>() = info->next<T>();
+   else
+      table[index] = info->next<T>();
    }
 
-int32_t TR_PersistentClassLoaderTable::_numClassLoaders = 0;
+
+template<> TR_ClassLoaderInfo *&TR_ClassLoaderInfo::next<Loader>() { return _loaderTableNext; }
+template<> bool TR_ClassLoaderInfo::equals<Loader>(const void *loader) const { return loader == _loader; }
+// Remove trailing zero bits in aligned pointer for better hash distribution
+template<> size_t hash<Loader>(const void *loader) { return (uintptr_t)loader >> 3; }
+
+template<> TR_ClassLoaderInfo *&TR_ClassLoaderInfo::next<Chain>() { return _chainTableNext; }
+template<> bool TR_ClassLoaderInfo::equals<Chain>(const void *chain) const { return chain == _chain; }
+// Remove trailing zero bits in aligned pointer for better hash distribution
+template<> size_t hash<Chain>(const void *chain) { return (uintptr_t)chain >> 3; }
+
+
+TR_PersistentClassLoaderTable::TR_PersistentClassLoaderTable(TR_PersistentMemory *persistentMemory) :
+   _persistentMemory(persistentMemory), _sharedCache(NULL)
+   {
+   memset(_loaderTable, 0, sizeof(_loaderTable));
+   memset(_chainTable, 0, sizeof(_chainTable));
+   }
+
 
 void
-TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPointer, TR_OpaqueClassBlock *clazz)
+TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *loader, TR_OpaqueClassBlock *clazz)
    {
-   if (!sharedCache())
+   if (!_sharedCache)
       return;
 
-   // need to acquire some kind of lock here
+   // Lookup by class loader and check if it already has an associated class
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Loader>(_loaderTable, index, prev, loader);
+   if (info)
+      return;
 
-   // first index by class loader
-   int32_t index = hashLoader(classLoaderPointer);
-   TR_ClassLoaderInfo *info = _loaderTable[index];
-   while (info != NULL && info->_classLoaderPointer != classLoaderPointer)
-      info = info->_next;
+   void *chain = _sharedCache->rememberClass(clazz);
+   if (!chain)
+      return;
+   TR_ASSERT(_sharedCache->isPointerInSharedCache(chain), "Class chain must be in SCC");
 
+   info = new (_persistentMemory) TR_ClassLoaderInfo(loader, chain);
    if (!info)
       {
-      void *classChainPointer = (void *) sharedCache()->rememberClass(clazz);
-      if (classChainPointer)
-         {
-         bool inCache = sharedCache()->isPointerInSharedCache(classChainPointer);
-         TR_ASSERT(inCache, "rememberClass should only return class chain pointers that are in the shared class cache");
-
-         info = new (trPersistentMemory()) TR_ClassLoaderInfo(classLoaderPointer, classChainPointer);
-         if (!info)
-            {
-            // this is a bad situation because we can't associate the right class with this class loader
-            // how to prevent this class loader from associating with a different class?
-            // probably not critical if multiple class loaders aren't routinely loading the exact same class
-            return;
-            }
-
-         info->_next = _loaderTable[index];
-         _loaderTable[index] = info;
-
-         // now index by class chain
-         index = hashClassChain(classChainPointer);
-         info = _classChainTable[index];
-         while (info != NULL && info->_classChainPointer != classChainPointer)
-            info = info->_next;
-
-         if (info)
-            {
-            // getting here means there are two class loaders with identical first loaded class
-            // current heuristic doesn't work in this scenario
-            // TODO some diagnostic output here
-            // we have added this loader to _loaderTable, which has nice side benefit that we won't keep trying it, so
-            // leave it there
-            return;
-            }
-
-         info = new (trPersistentMemory()) TR_ClassLoaderInfo(classLoaderPointer, classChainPointer);
-         if (!info)
-            {
-            // we have to leave the _loaderTable entry we just created intact to prevent other loaded classes from
-            // becoming the identifying class for this loader
-            return;
-            }
-         info->_next = _classChainTable[index];
-         _classChainTable[index] = info;
-         }
-      else
-         {
-         }
+      // This is a bad situation because we can't associate the right class with this class loader.
+      // Probably not critical if multiple class loaders aren't routinely loading the exact same class.
+      //TODO: Prevent this class loader from associating with a different class
+      return;
       }
+   insert<Loader>(info, _loaderTable, index);
+
+   // Lookup by class chain and check if was already associated with another class loader
+   TR_ClassLoaderInfo *otherInfo = lookup<Chain>(_chainTable, index, prev, chain);
+   if (otherInfo)
+      {
+      // There is more than one class loader with identical first loaded class.
+      // Current heuristic doesn't work in this scenario, but it doesn't break
+      // correctness, and in the worst case can only result in failed AOT loads.
+      // We have added this loader to _classLoaderTable, which has a nice side
+      // benefit that we won't keep trying to add it, so leave it there.
+      return;
+      }
+   insert<Chain>(info, _chainTable, index);
+   }
+
+
+void *
+TR_PersistentClassLoaderTable::lookupClassChainAssociatedWithClassLoader(void *loader) const
+   {
+   if (!_sharedCache)
+      return NULL;
+
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Loader>(_loaderTable, index, prev, loader);
+   return info ? info->_chain : NULL;
    }
 
 void *
-TR_PersistentClassLoaderTable::lookupClassChainAssociatedWithClassLoader(void *classLoaderPointer)
+TR_PersistentClassLoaderTable::lookupClassLoaderAssociatedWithClassChain(void *chain) const
    {
-   if (!sharedCache())
+   if (!_sharedCache)
       return NULL;
 
-   // need to acquire some kind of lock here
-
-   int32_t index = hashLoader(classLoaderPointer);
-   TR_ClassLoaderInfo *info = _loaderTable[index];
-   while (info != NULL && info->_classLoaderPointer != classLoaderPointer)
-      info = info->_next;
-
-   void *classChainPointer=NULL;
-   if (info)
-      {
-      classChainPointer = info->_classChainPointer;
-      }
-
-   //fprintf(stderr, "PCLT:looking up class chain for loader %p: found %p\n", classLoaderPointer, classChainPointer);
-
-   return classChainPointer;
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Chain>(_chainTable, index, prev, chain);
+   return info ? info->_loader : NULL;
    }
 
-void *
-TR_PersistentClassLoaderTable::lookupClassLoaderAssociatedWithClassChain(void *classChainPointer)
-   {
-   if (!sharedCache())
-      return NULL;
-
-   // need to acquire some kind of lock here
-
-   int32_t index = hashClassChain(classChainPointer);
-   TR_ClassLoaderInfo *info = _classChainTable[index];
-   while (info != NULL && info->_classChainPointer != classChainPointer)
-      info = info->_next;
-
-   void *classLoaderPointer=NULL;
-   if (info)
-      {
-      classLoaderPointer = info->_classLoaderPointer;
-      }
-
-   //fprintf(stderr, "PCLT:looking up class loader for class chain %p: found %p\n", classChainPointer, classLoaderPointer);
-
-   return classLoaderPointer;
-   }
 
 void
-TR_PersistentClassLoaderTable::removeClassLoader(void *classLoaderPointer)
+TR_PersistentClassLoaderTable::removeClassLoader(void *loader)
    {
-   // need to acquire some kind of lock here
+   if (!_sharedCache)
+      return;
 
-   //fprintf(stderr,"PCLT:removing unloaded loader %p\n", classLoaderPointer);
+   // Remove from the table indexed by class loader
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Loader>(_loaderTable, index, prev, loader);
+   if (!info)
+      return;
+   remove<Loader>(info, prev, _loaderTable, index);
 
-   // now remove it from the loaderTable
-   int32_t index = hashLoader(classLoaderPointer);
-   TR_ClassLoaderInfo *prevInfo = NULL;
-   TR_ClassLoaderInfo *info = _loaderTable[index];
-   while (info != NULL && info->_classLoaderPointer != classLoaderPointer)
-      {
-      prevInfo = info;
-      info = info->_next;
-      }
+   // Remove from the table indexed by class chain
+   TR_ClassLoaderInfo *otherInfo = lookup<Chain>(_chainTable, index, prev, info->_chain);
+   if (otherInfo == info)// Otherwise the entry belongs to another class loader
+      remove<Chain>(info, prev, _chainTable, index);
 
-   if (info)
-      {
-      //fprintf(stderr,"PCLT:\tfound it in loaderTable at index %d\n", index);
-      if (prevInfo)
-         prevInfo->_next = info->_next;
-      else
-         _loaderTable[index] = info->_next;
-      trPersistentMemory()->freePersistentMemory(info);
-      }
-
-   // now remove it from the classChainTable
-   for (index = 0;index < CLASSLOADERTABLE_SIZE;index++)
-      {
-      prevInfo = NULL;
-      info = _classChainTable[index];
-      while (info && info->_classLoaderPointer != classLoaderPointer)
-         {
-         prevInfo = info;
-         info = info->_next;
-         }
-
-      if (info)
-         break;
-      }
-
-   if (info)
-      {
-      //fprintf(stderr,"PCLT:\tfound it in classChainTable at index %d\n", index);
-      if (prevInfo)
-         prevInfo->_next = info->_next;
-      else
-         _classChainTable[index] = info->_next;
-      trPersistentMemory()->freePersistentMemory(info);
-      }
-
-   //fprintf(stderr,"PCLT:num class loaders now %d\n", --_numClassLoaders);
+   _persistentMemory->freePersistentMemory(info);
    }
