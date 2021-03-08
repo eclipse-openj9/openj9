@@ -2015,8 +2015,8 @@ J9::Options::fePreProcess(void * base)
          const char *xxUseJITServerOption = "-XX:+UseJITServer";
          const char *xxDisableUseJITServerOption = "-XX:-UseJITServer";
 
-         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxUseJITServerOption, 0);
-         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableUseJITServerOption, 0);
+         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxUseJITServerOption, 0);
+         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableUseJITServerOption, 0);
 
          // Check if option is at all specified
          if (xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex)
@@ -2027,8 +2027,8 @@ J9::Options::fePreProcess(void * base)
             const char *xxJITServerTechPreviewMessageOption = "-XX:+JITServerTechPreviewMessage";
             const char *xxDisableJITServerTechPreviewMessageOption = "-XX:-JITServerTechPreviewMessage";
 
-            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTechPreviewMessageOption, 0);
-            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
+            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerTechPreviewMessageOption, 0);
+            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
 
             if (xxJITServerTechPreviewMessageArgIndex >= xxDisableJITServerTechPreviewMessageArgIndex)
                {
