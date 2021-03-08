@@ -38,10 +38,10 @@ public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentCHTable)
    TR_PersistentClassLoaderTable(TR_PersistentMemory *persistentMemory);
 
-   void associateClassLoaderWithClass(void *loader, TR_OpaqueClassBlock *clazz);
+   void associateClassLoaderWithClass(J9VMThread *vmThread, void *loader, TR_OpaqueClassBlock *clazz);
    void *lookupClassChainAssociatedWithClassLoader(void *loader) const;
    void *lookupClassLoaderAssociatedWithClassChain(void *chain) const;
-   void removeClassLoader(void *loader);
+   void removeClassLoader(J9VMThread *vmThread, void *loader);
 
    void setSharedCache(TR_SharedCache *sharedCache) { _sharedCache = sharedCache; }
 

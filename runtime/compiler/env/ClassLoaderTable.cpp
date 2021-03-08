@@ -20,7 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "AtomicSupport.hpp"
+#include "control/CompilationThread.hpp"
 #include "env/ClassLoaderTable.hpp"
+#include "infra/MonitorTable.hpp"
 
 
 enum TableKind { Loader, Chain };
@@ -65,6 +68,9 @@ template<TableKind T> static void
 insert(TR_ClassLoaderInfo *info, TR_ClassLoaderInfo **table, size_t index)
    {
    info->next<T>() = table[index];
+   // Write barrier guarantees that a reader thread traversing the list will read
+   // the new list head only after its next field is already set to the old head.
+   VM_AtomicSupport::writeBarrier();
    table[index] = info;
    }
 
@@ -97,9 +103,26 @@ TR_PersistentClassLoaderTable::TR_PersistentClassLoaderTable(TR_PersistentMemory
    }
 
 
-void
-TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *loader, TR_OpaqueClassBlock *clazz)
+//NOTE: Class loader table doesn't require any additional locking for synchronization.
+// Writers are always mutually exclusive with each other. Readers cannot be concurrent
+// with the writers that remove entries from the table. Traversing linked lists in hash
+// buckets can be concurrent with inserting new entries (which only needs a write barrier).
+
+static bool
+hasSharedVMAccess(J9VMThread *vmThread)
    {
+   return (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && !vmThread->omrVMThread->exclusiveCount;
+   }
+
+
+void
+TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThread, void *loader,
+                                                             TR_OpaqueClassBlock *clazz)
+   {
+   // Since current thread has shared VM access and holds the classTableMutex,
+   // no other thread can be modifying the table at the same time.
+   TR_ASSERT(hasSharedVMAccess(vmThread), "Must have shared VM access");
+   TR_ASSERT(TR::MonitorTable::get()->getClassTableMutex()->owned_by_self(), "Must hold classTableMutex");
    if (!_sharedCache)
       return;
 
@@ -140,9 +163,23 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *loader, TR_Op
    }
 
 
+static void
+assertCurrentThreadCanRead()
+   {
+   // To guarantee that reading the table is not concurrent with class loader removal during GC,
+   // current thread must either have shared VM access or hold the classUnloadMonitor for reading.
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+   TR::Compilation *comp = TR::comp();
+   TR_ASSERT(hasSharedVMAccess(comp->j9VMThread()) ||
+             (TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(comp->getCompThreadID()) > 0),
+             "Must either have shared VM access of hold classUnloadMonitor for reading");
+#endif /* defined(DEBUG) || defined(PROD_WITH_ASSUMES) */
+   }
+
 void *
 TR_PersistentClassLoaderTable::lookupClassChainAssociatedWithClassLoader(void *loader) const
    {
+   assertCurrentThreadCanRead();
    if (!_sharedCache)
       return NULL;
 
@@ -155,6 +192,7 @@ TR_PersistentClassLoaderTable::lookupClassChainAssociatedWithClassLoader(void *l
 void *
 TR_PersistentClassLoaderTable::lookupClassLoaderAssociatedWithClassChain(void *chain) const
    {
+   assertCurrentThreadCanRead();
    if (!_sharedCache)
       return NULL;
 
@@ -166,8 +204,13 @@ TR_PersistentClassLoaderTable::lookupClassLoaderAssociatedWithClassChain(void *c
 
 
 void
-TR_PersistentClassLoaderTable::removeClassLoader(void *loader)
+TR_PersistentClassLoaderTable::removeClassLoader(J9VMThread *vmThread, void *loader)
    {
+   // Since current thread has exclusive VM access and holds the classUnloadMonitor
+   // for writing (NOTE: we don't have an assertion for that due to lack of API),
+   // no other thread can be modifying the table at the same time.
+   TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && vmThread->omrVMThread->exclusiveCount,
+             "Must have exclusive VM access");
    if (!_sharedCache)
       return;
 

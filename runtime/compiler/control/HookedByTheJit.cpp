@@ -2176,7 +2176,7 @@ static void jitHookClassLoaderUnload(J9HookInterface * * hookInterface, UDATA ev
    if (compInfo->getPersistentInfo()->isRuntimeInstrumentationEnabled())
       compInfo->getHWProfiler()->invalidateProfilingBuffers();
 
-   compInfo->getPersistentInfo()->getPersistentClassLoaderTable()->removeClassLoader(classLoader);
+   compInfo->getPersistentInfo()->getPersistentClassLoaderTable()->removeClassLoader(vmThread, classLoader);
    }
 
 #endif /* defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)*/
@@ -3581,7 +3581,7 @@ void jitHookClassLoadHelper(J9VMThread *vmThread,
       TR::Options::_numberOfUserClassesLoaded ++;
       }
 
-   compInfo->getPersistentInfo()->getPersistentClassLoaderTable()->associateClassLoaderWithClass(classLoader, clazz);
+   compInfo->getPersistentInfo()->getPersistentClassLoaderTable()->associateClassLoaderWithClass(vmThread, classLoader, clazz);
 
    // Update the count for the newInstance
    //
