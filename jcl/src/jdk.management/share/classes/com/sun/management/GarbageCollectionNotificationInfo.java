@@ -176,10 +176,11 @@ public class GarbageCollectionNotificationInfo implements CompositeDataView {
 	 * given {@code CompositeData}.
 	 * The given {@code CompositeData} must contain the following attributes:
 	 * <blockquote>
-	 * <table border summary="">
+	 * <table border=1>
+	 * <caption>CompositeData attributes</caption>
 	 * <tr>
-	 *   <th align=left>Attribute Name</th>
-	 *   <th align=left>Type</th>
+	 *   <th style="text-align:left">Attribute Name</th>
+	 *   <th style="text-align:left">Type</th>
 	 * </tr>
 	 * <tr>
 	 *   <td>gcName</td>

@@ -2917,33 +2917,34 @@ public Annotation[] getDeclaredAnnotations() {
 }
 
 /**
- * 
- * Terms used for annotations :
- * Repeatable Annotation : 
- * 		An annotation which can be used more than once for the same class declaration.
- * 		Repeatable annotations are annotated with Repeatable annotation which tells the 
- * 		container annotation for this repeatable annotation.
- * 		Example = 
- * 
- * 		@interface ContainerAnnotation {RepeatableAnn[] value();}
- * 		@Repeatable(ContainerAnnotation.class)
- * Container Annotation: 
- * 		Container annotation stores the repeated annotations in its array-valued element. 
- * 		Using repeatable annotations more than once makes them stored in their container annotation. 
- * 		In this case, container annotation is visible directly on class declaration, but not the repeated annotations.   
- * Repeated Annotation:
- * 		A repeatable annotation which is used more than once for the same class. 
- * Directly Declared Annotation :
- * 		All non repeatable annotations are directly declared annotations.
- * 		As for repeatable annotations, they can be directly declared annotation if and only if they are used once. 
- * 		Repeated annotations are not directly declared in class declaration, but their container annotation does. 
- * 
- * -------------------------------------------------------------------------------------------------------
- * 
  * Gets the specified type annotations of this class. 
- * If the specified type is not repeatable annotation, then returned array size will be 0 or 1.
- * If specified type is repeatable annotation, then all the annotations of that type will be returned. Array size might be 0, 1 or more.
- * 
+ * <br>
+ * Terms used for annotations :<br><br>
+ * Repeatable Annotation :
+ * 		<p>An annotation which can be used more than once for the same class declaration.
+ * 		Repeatable annotations are annotated with Repeatable annotation which tells the
+ * 		container annotation for this repeatable annotation.</p>
+ * 		Example
+ * 		<pre><code>
+ * 		{@literal @}interface ContainerAnnotation {RepeatableAnn[] value();}
+ * 		{@literal @}Repeatable(ContainerAnnotation.class)
+ * 		</code></pre>
+ * Container Annotation:
+ * 		<p>Container annotation stores the repeated annotations in its array-valued element.
+ * 		Using repeatable annotations more than once makes them stored in their container annotation.
+ * 		In this case, container annotation is visible directly on class declaration, but not the repeated annotations.</p>
+ * Repeated Annotation:
+ * 		<p>A repeatable annotation which is used more than once for the same class.</p>
+ * Directly Declared Annotation :
+ * 		<p>All non repeatable annotations are directly declared annotations.
+ * 		As for repeatable annotations, they can be directly declared annotation if and only if they are used once.
+ * 		Repeated annotations are not directly declared in class declaration, but their container annotation does.</p>
+ *
+ * -------------------------------------------------------------------------------------------------------
+ *
+ * <p>If the specified type is not repeatable annotation, then returned array size will be 0 or 1.
+ * If specified type is repeatable annotation, then all the annotations of that type will be returned. Array size might be 0, 1 or more.</p>
+ *
  * It does not search through super classes. 
  * 
  * @param annotationClass the annotation type to search for

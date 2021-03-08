@@ -834,7 +834,9 @@ private void setParent(ThreadGroup parent) {
  * @throws		SecurityException 	if <code>this.checkAccess()</code> fails with a SecurityException
  *
  * @see			Thread#stop()
+/*[IF JAVA_SPEC_VERSION < 11]
  * @see			Thread#stop(Throwable)
+/*[ENDIF] JAVA_SPEC_VERSION < 11
  * @see			ThreadDeath
  *
  * @deprecated Requires deprecated method Thread.stop().
@@ -946,7 +948,9 @@ public String toString() {
  * @param		e		The uncaught exception itself
  *
  * @see			Thread#stop()
+/*[IF JAVA_SPEC_VERSION < 11]
  * @see			Thread#stop(Throwable)
+/*[ENDIF] JAVA_SPEC_VERSION < 11
  * @see			ThreadDeath
  */
 @Override

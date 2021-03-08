@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@ import java.lang.management.MemoryUsage;
  * You can revert to the earlier implementation of {@link MemoryPoolMXBean} by setting the 
  * <b>-XX:+HeapManagementMXBeanCompatibility</b> Java command line option.
  * 
- * <h3>1. More detailed heap memory pools can be obtained by calling {@link java.lang.management.ManagementFactory#getMemoryPoolMXBeans}</h3>
+ * <h2>1. More detailed heap memory pools can be obtained by calling {@link java.lang.management.ManagementFactory#getMemoryPoolMXBeans}</h2>
  * The following names are reported for heap memory pools, listed by garbage collection policy:
  * <br><br>
  *	For <b>-Xgcpolicy:gencon</b>
@@ -70,7 +70,7 @@ import java.lang.management.MemoryUsage;
  * 	<li><b>Java heap</b>
  * </ul>
  * 
- * <h3>2. Memory Usage</h3>
+ * <h2>2. Memory Usage</h2>
  * Memory usage for each heap memory pool can be retrieved by using {@link java.lang.management.MemoryPoolMXBean#getUsage} or {@link java.lang.management.MemoryPoolMXBean#getCollectionUsage}.
  * In some cases the total sum of memory usage of all heap memory pools is more than the maximum heap size. 
  * This irregularity can be caused if data for each pool is collected between garbage collection cycles,
@@ -78,7 +78,7 @@ import java.lang.management.MemoryUsage;
  * If you want to collect memory usage data that is synchronized across the memory pools, use the 
  * {@link com.sun.management.GarbageCollectionNotificationInfo} or {@link com.sun.management.GarbageCollectorMXBean#getLastGcInfo} extensions.
  * 
- * <h3>3. Usage Threshold ({@link java.lang.management.MemoryPoolMXBean#getUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#setUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#isUsageThresholdExceeded})</h3>
+ * <h2>3. Usage Threshold ({@link java.lang.management.MemoryPoolMXBean#getUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#setUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#isUsageThresholdExceeded})</h2>
  * The usage threshold attribute is designed for monitoring the increasing trend of memory usage and incurs only a low overhead.
  * This attribute is not appropriate for some memory pools.
  * Use the {@link java.lang.management.MemoryPoolMXBean#isUsageThresholdSupported} method to determine 
@@ -94,7 +94,7 @@ import java.lang.management.MemoryUsage;
  *	<li><b>balanced-old</b>
  * </ul>
  * 
- * <h3>4. Collection Usage Threshold ({@link java.lang.management.MemoryPoolMXBean#getCollectionUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#setCollectionUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#isCollectionUsageThresholdExceeded})</h3>
+ * <h2>4. Collection Usage Threshold ({@link java.lang.management.MemoryPoolMXBean#getCollectionUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#setCollectionUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#isCollectionUsageThresholdExceeded})</h2>
  * The collection usage threshold is a manageable attribute that is applicable only to some garbage-collected memory pools. 
  * This attribute reports the amount of memory taken up by objects that are still in use after a garbage collection cycle. 
  * Use the {@link java.lang.management.MemoryPoolMXBean#isCollectionUsageThresholdSupported} method to determine 
@@ -126,7 +126,7 @@ public interface MemoryPoolMXBean extends java.lang.management.MemoryPoolMXBean 
 	 * The method will return a <code>null</code> if the virtual machine does
 	 * not support this type of functionality.
 	 * </p>
-	 * <h2>MBeanServer access:</h2>
+	 * MBeanServer access:<br>
 	 * The return value will be mapped to a
 	 * {@link javax.management.openmbean.CompositeData} with attributes as
 	 * specified in {@link java.lang.management.MemoryUsage}.

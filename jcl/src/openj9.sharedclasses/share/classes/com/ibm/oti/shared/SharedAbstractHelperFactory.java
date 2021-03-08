@@ -4,7 +4,7 @@ package com.ibm.oti.shared;
 import java.security.AccessControlException;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,6 @@ import java.security.AccessControlException;
 
 /**
  * SharedAbstractHelperFactory is an abstract superclass for helper factory subclasses.
- * <p>
  */
 public abstract class SharedAbstractHelperFactory {
 
