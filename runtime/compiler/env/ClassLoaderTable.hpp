@@ -23,12 +23,12 @@
 #ifndef CLASSLOADERTABLE_INCL
 #define CLASSLOADERTABLE_INCL
 
-#include "env/SharedCache.hpp"
 #include "env/TRMemory.hpp"
 
 
 #define CLASSLOADERTABLE_SIZE 2053
 
+class TR_J9SharedCache;
 struct TR_ClassLoaderInfo;
 
 class TR_PersistentClassLoaderTable
@@ -41,9 +41,15 @@ public:
    void associateClassLoaderWithClass(J9VMThread *vmThread, void *loader, TR_OpaqueClassBlock *clazz);
    void *lookupClassChainAssociatedWithClassLoader(void *loader) const;
    void *lookupClassLoaderAssociatedWithClassChain(void *chain) const;
+#if defined(J9VM_OPT_JITSERVER)
+   // JIT client needs to associate each class loader with the name of its first loaded class
+   // in order to support AOT method serialization (and caching at JITServer) and deserialization.
+   std::pair<void *, void *>// loader, chain
+   lookupClassLoaderAndChainAssociatedWithClassName(const uint8_t *data, size_t length) const;
+#endif /* defined(J9VM_OPT_JITSERVER) */
    void removeClassLoader(J9VMThread *vmThread, void *loader);
 
-   void setSharedCache(TR_SharedCache *sharedCache) { _sharedCache = sharedCache; }
+   void setSharedCache(TR_J9SharedCache *sharedCache) { _sharedCache = sharedCache; }
 
 private:
 
@@ -51,10 +57,13 @@ private:
    friend class TR_DebugExt;
 
    TR_PersistentMemory *const _persistentMemory;
-   TR_SharedCache *_sharedCache;
+   TR_J9SharedCache *_sharedCache;
 
    TR_ClassLoaderInfo *_loaderTable[CLASSLOADERTABLE_SIZE];
    TR_ClassLoaderInfo *_chainTable[CLASSLOADERTABLE_SIZE];
+#if defined(J9VM_OPT_JITSERVER)
+   TR_ClassLoaderInfo *_nameTable[CLASSLOADERTABLE_SIZE];
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 #endif
