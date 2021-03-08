@@ -766,28 +766,36 @@ J9::CodeGenerator::lowerTreeIfNeeded(
    OMR::CodeGeneratorConnector::lowerTreeIfNeeded(node, childNumberOfNode, parent, tt);
 
    if (node->getOpCode().isCall() &&
-       !node->getSymbol()->castToMethodSymbol()->isHelper() &&
-       (node->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeBasic))
+       !node->getSymbol()->castToMethodSymbol()->isHelper())
       {
-      // invokeBasic is signature-polymorphic, so the location of the method handle receiver object on the stack will be
-      // the number of arg slots in the invokeBasic call minus 1 accounting for the receiver slot. This value is is stored
-      // in vmThread.tempSlot so that the interpreter can locate the receiver object on the stack.
-      TR::SymbolReference *vmThreadTempSlotSymRef = self()->comp()->getSymRefTab()->findOrCreateVMThreadTempSlotFieldSymbolRef();
-      int32_t numParameterStackSlots = node->getSymbol()->castToResolvedMethodSymbol()->getNumParameterSlots();
-      TR::Node * numArgsNode = NULL;
-      TR::Node * storeNode = NULL;
-      if (self()->comp()->target().is64Bit())
+      TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
+
+      if(rm == TR::java_lang_invoke_MethodHandle_invokeBasic ||
+        rm == TR::java_lang_invoke_MethodHandle_linkToStatic ||
+        rm == TR::java_lang_invoke_MethodHandle_linkToSpecial ||
+        rm == TR::java_lang_invoke_MethodHandle_linkToVirtual ||
+        rm == TR::java_lang_invoke_MethodHandle_linkToInterface)
          {
-         numArgsNode = TR::Node::lconst(node, numParameterStackSlots - 1);
-         storeNode = TR::Node::createStore(vmThreadTempSlotSymRef, numArgsNode, TR::lstore);
+         // invokeBasic and linkTo* are signature-polymorphic, so the VM needs to know the number of argument slots
+         // for the INL call in order to locate the start of the arguments on the stack. The arg slot count is stored
+         // in vmThread.tempSlot
+         TR::SymbolReference *vmThreadTempSlotSymRef = self()->comp()->getSymRefTab()->findOrCreateVMThreadTempSlotFieldSymbolRef();
+         int32_t numParameterStackSlots = node->getSymbol()->castToResolvedMethodSymbol()->getNumParameterSlots();
+         TR::Node * numArgsNode = NULL;
+         TR::Node * storeNode = NULL;
+         if (self()->comp()->target().is64Bit())
+            {
+            numArgsNode = TR::Node::lconst(node, numParameterStackSlots);
+            storeNode = TR::Node::createStore(vmThreadTempSlotSymRef, numArgsNode, TR::lstore);
+            }
+         else
+            {
+            numArgsNode = TR::Node::iconst(node, numParameterStackSlots);
+            storeNode = TR::Node::createStore(vmThreadTempSlotSymRef, numArgsNode, TR::istore);
+            }
+         storeNode->setByteCodeIndex(node->getByteCodeIndex());
+         TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), storeNode);
          }
-      else
-         {
-         numArgsNode = TR::Node::iconst(node, numParameterStackSlots - 1);
-         storeNode = TR::Node::createStore(vmThreadTempSlotSymRef, numArgsNode, TR::istore);
-         }
-      storeNode->setByteCodeIndex(node->getByteCodeIndex());
-      TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), storeNode);
       }
 
    // J9

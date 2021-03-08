@@ -8245,19 +8245,22 @@ done:
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
-		UDATA methodArgCount = 0;
+		UDATA mhReceiverIndex = 0;
 
 		if (fromJIT) {
-			methodArgCount = _currentThread->tempSlot;
+			/* tempSlot contains the number of stack slots for the arguments, and the MH
+			 * receiver is the first argument.
+			 */
+			mhReceiverIndex = _currentThread->tempSlot - 1;
 		} else {
 			U_16 index = *(U_16 *)(_pc + 1);
 			J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
 			J9RAMMethodRef *ramMethodRef = ((J9RAMMethodRef *)ramConstantPool) + index;
 			UDATA volatile methodIndexAndArgCount = ramMethodRef->methodIndexAndArgCount;
-			methodArgCount = (methodIndexAndArgCount & 0xFF);
+			mhReceiverIndex = (methodIndexAndArgCount & 0xFF);
 		}
 
-		j9object_t mhReceiver = ((j9object_t *)_sp)[methodArgCount];
+		j9object_t mhReceiver = ((j9object_t *)_sp)[mhReceiverIndex];
 		if (J9_UNEXPECTED(NULL == mhReceiver)) {
 			return THROW_NPE;
 		}
