@@ -1,6 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -121,7 +121,7 @@ public interface SharedClassHelperFactory {
 	;
 
 	/**
-	 * <p>Returns a SharedClassURLHelper for a given ClassLoader.<p>
+	 * <p>Returns a SharedClassURLHelper for a given ClassLoader.</p>
 	 * <p>Creates a new SharedClassURLHelper if one cannot be found, otherwise returns existing SharedClassURLHelper.</p>
 	 * <p>Throws a HelperAlreadyDefinedException if the ClassLoader already has a different type of helper.</p>
 	 * <p>Returns null if a SecurityManager is installed and there is no 

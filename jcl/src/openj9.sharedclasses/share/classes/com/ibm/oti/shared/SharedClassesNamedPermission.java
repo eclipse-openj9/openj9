@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,11 +28,11 @@ import java.security.BasicPermission;
 /**
  * This class defines shared cache permissions as described in the table below.
  *
- * <table border=1 cellpadding=5>
+ * <table border=1 style="padding=5px">
  * <caption>Shared Cache Permissions</caption>
  * <tr>
- * <th align='left'>Permission Name</th>
- * <th align='left'>Allowed Action</th>
+ * <th style="text-align:left">Permission Name</th>
+ * <th style="text-align:left">Allowed Action</th>
  * </tr>
  * <tr>
  * <td>getSharedCacheInfo</td>

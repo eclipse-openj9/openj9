@@ -7,7 +7,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ import java.util.Hashtable;
 
 /**
  * SharedClassPermissionCollection provides permission collection to support SharedClassPermission
- * <p>
+ *
  * @see SharedClassPermission
  */
 public class SharedClassPermissionCollection extends PermissionCollection {

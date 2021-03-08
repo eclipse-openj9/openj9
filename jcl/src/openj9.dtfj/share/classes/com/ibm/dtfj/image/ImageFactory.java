@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ import javax.imageio.stream.ImageInputStream;
  *
  * e.g.
  *
- * <pre>
+ * <pre>{@code
  * Image image;
  * try {
  *   Class<?> factoryClass = Class.forName(&quot;com.ibm.dtfj.image.j9.ImageFactory&quot;);
@@ -56,7 +56,7 @@ import javax.imageio.stream.ImageInputStream;
  *   System.err.println(&quot;Could not find file required for bootstrapping:&quot;);
  *   e.printStackTrace(System.err);
  * }
- * </pre>
+ * }</pre>
  */
 public interface ImageFactory {
 

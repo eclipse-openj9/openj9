@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -528,10 +528,10 @@ final public class Message
    }
 
    /** returns the type of entry this message corresponds
-    *  to, as determined by the message file and TGConstants
+    *  to, as determined by the message file and TraceRecord
     *
-    * @return  an int that is one of the type defined in TGConstants
-    * @see     TGConstants
+    * @return  an int that is one of the types defined in TraceRecord
+    * @see     TraceRecord
     */
    protected int getType()
    {

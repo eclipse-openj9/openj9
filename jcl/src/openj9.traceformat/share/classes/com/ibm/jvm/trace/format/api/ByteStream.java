@@ -524,7 +524,7 @@ public class ByteStream {
 	 * 
 	 * @param bytes
 	 *                - the number of bytes to remove
-	 * @returns - the number of bytes truncated
+	 * @return - the number of bytes truncated
 	 */
 	synchronized public int truncate(byte bytes[]) {
 		Slice s;

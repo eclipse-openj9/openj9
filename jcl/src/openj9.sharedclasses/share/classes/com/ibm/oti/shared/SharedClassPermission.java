@@ -7,7 +7,7 @@ import java.security.PermissionCollection;
 import java.util.StringTokenizer;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,6 @@ import java.util.StringTokenizer;
  * <p>
  * "read" allows a ClassLoader to load classes from the shared cache.<br>
  * "write" allows a ClassLoader to add classes to the shared cache.
- * <p>
  */
 public class SharedClassPermission extends BasicPermission {
 

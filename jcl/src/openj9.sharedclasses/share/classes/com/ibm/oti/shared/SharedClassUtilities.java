@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@ import com.ibm.oti.shared.SharedClassesNamedPermission.SharedPermissions;
 /**
  * SharedClassUtilities provides APIs to get information about all shared class caches in a directory and
  * to destroy a particular shared class cache.   
- * <p>
  * 
  * @see SharedClassCacheInfo 
  *
@@ -177,7 +176,7 @@ public class SharedClassUtilities {
 	 * @throws		IllegalStateException
 	 * 					If shared classes is disabled for this JVM (that is -Xshareclasses:none is present).
 	 * @throws		IllegalArgumentException
-	 * 					If <code>cacheType<code> is not a valid value.
+	 * 					If <code>cacheType</code> is not a valid value.
 	 * @throws		SecurityException
 	 * 					If a security manager is enabled and the calling thread does not
 	 * 					have SharedClassesNamedPermission("destroySharedCache")

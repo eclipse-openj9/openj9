@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ import java.util.List;
  * <p>
  * Accessing this <code>MXBean</code> can be done in one of three ways.
  * <ol>
- * <li>Invoking the static {@link ManagementFactory#getPlatformMXBean()} method.
+ * <li>Invoking the static {@link ManagementFactory#getPlatformMXBean} method.
  * </li>
  * <li>Using a javax.management.MBeanServerConnection.</li>
  * <li>Obtaining a proxy MXBean from the static
