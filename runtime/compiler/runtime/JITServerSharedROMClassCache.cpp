@@ -69,7 +69,8 @@ struct JITServerSharedROMClassCache::Partition
    {
    Partition(TR_PersistentMemory *persistentMemory, TR::Monitor *monitor) :
       _persistentMemory(persistentMemory), _monitor(monitor),
-      _map(decltype(_map)::allocator_type(persistentMemory->_persistentAllocator.get())) { }
+      _map(decltype(_map)::allocator_type(persistentMemory->_persistentAllocator.get())),
+      _maxSize(0) { }
 
    ~Partition()
       {
@@ -87,6 +88,7 @@ struct JITServerSharedROMClassCache::Partition
    // use a hash of the contents as the key. The hash is computed outside of
    // the critical section, and key hashing and comparison are very quick.
    PersistentUnorderedMap<JITServerROMClassHash, Entry *> _map;
+   size_t _maxSize;
    };
 
 
@@ -165,19 +167,24 @@ JITServerSharedROMClassCache::shutdown(bool lastClient)
       TR_ASSERT(compInfo->getClientSessionHT()->size() == 0, "Must have no clients");
 
       // There should be no ROMClasses left in the cache if there are no clients using them
-      size_t numClasses = 0;
+      size_t numClasses = 0, maxClasses = 0;
       for (size_t i = 0; i < _numPartitions; ++i)
+         {
          numClasses += _partitions[i]._map.size();
+         maxClasses += _partitions[i]._maxSize;
+         }
       if (numClasses)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(
-               TR_Vlog_JITServer, "ERROR: %zu classes left in shared ROMClass cache at shutdown", numClasses
+               TR_Vlog_JITServer, "ERROR: %zu / %zu classes left in shared ROMClass cache at shutdown",
+               numClasses, maxClasses
             );
          //NOTE: This assertion is not fatal since there are known cases when a cached
          //      ROMClass is abandoned without decrementing its reference count,
          //      e.g. due to mishandled exceptions or races between multiple threads
-         TR_ASSERT(false, "%zu classes left in shared ROMClass cache at shutdown", numClasses);
+         TR_ASSERT(false, "%zu / %zu classes left in shared ROMClass cache at shutdown",
+                   numClasses, maxClasses);
          }
       }
 
@@ -249,9 +256,15 @@ JITServerSharedROMClassCache::Partition::getOrCreate(const J9ROMClass *packedROM
       OMR::CriticalSection sharedROMClassCache(_monitor);
       auto it = _map.insert({ hash, entry });
       if (it.second)
+         {
          entry->_hash = &it.first->first;
+         _maxSize = std::max(_maxSize, _map.size());
+         }
       else
-         romClass = it.first->second->acquire();// Another thread already created this entry; reuse it
+         {
+         // Another thread already created this entry; reuse it
+         romClass = it.first->second->acquire();
+         }
       }
    catch (...)
       {
