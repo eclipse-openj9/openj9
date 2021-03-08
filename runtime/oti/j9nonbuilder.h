@@ -4753,6 +4753,23 @@ typedef struct J9VMThread {
 	void* heapBaseForBarrierRange0;
 	UDATA heapSizeForBarrierRange0;
 	UDATA* jniLocalReferences;
+	/**
+	 * tempSlot is an overloaded field used for multiple purposes.
+	 *
+	 * Note: Listed below is one such use, and the other uses of this field still need to be
+	 * documented.
+	 *
+	 * 1. OpenJDK MethodHandle implementation
+	 *		For signature-polymorphic INL calls from compiled code for the following methods:
+	 *		* java/lang/invoke/MethodHandle.invokeBasic
+	 *		* java/lang/invoke/MethodHandle.linkToStatic
+	 *		* java/lang/invoke/MethodHandle.linkToSpecial
+	 *		* java/lang/invoke/MethodHandle.linkToVirtual
+	 *		* java/lang/invoke/MethodHandle.linkToInterface
+	 *		the compiled code performs a store to this field right before the INL call. The
+	 *		stored value represents the number of stack slots occupied by the args, and the
+	 *		interpreter uses the value to locate the beginning of the arguments on the stack.
+	 */
 	UDATA tempSlot;
 	void* jitReturnAddress;
 	/* floatTemp1 must be 8-aligned */
