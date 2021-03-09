@@ -638,6 +638,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportStaticFieldWrite", offsetof(J9JITConfig, old_slow_jitReportStaticFieldWrite)) |
 
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitGetFlattenableField", offsetof(J9JITConfig, old_fast_jitGetFlattenableField)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitCloneValueType", offsetof(J9JITConfig, old_fast_jitCloneValueType)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitWithFlattenableField", offsetof(J9JITConfig, old_fast_jitWithFlattenableField)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitPutFlattenableField", offsetof(J9JITConfig, old_fast_jitPutFlattenableField)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitGetFlattenableStaticField", offsetof(J9JITConfig, old_fast_jitGetFlattenableStaticField)) |
