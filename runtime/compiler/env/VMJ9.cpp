@@ -5812,7 +5812,7 @@ TR_J9VMBase::getStringClassEnableCompressionFieldAddr(TR::Compilation *comp, boo
          if (classInfo && classInfo->isInitialized())
             {
             enableCompressionFieldAddr = (int32_t *)getStaticFieldAddress(stringClass,
-               (unsigned char *)"enableCompression", 17, (unsigned char *)"Z", 1);
+               (unsigned char *)"COMPACT_STRINGS", 15, (unsigned char *)"Z", 1);
             if (enableCompressionFieldAddr)
                {
                // Cache the address
