@@ -429,6 +429,14 @@ retry:
 	}
 
 	VMINLINE void
+	buildJITResolveFrame(REGISTER_ARGS_LIST)
+	{
+		updateVMStruct(REGISTER_ARGS);
+		VM_VMHelpers::buildJITResolveFrameWithPC(_currentThread, J9_SSF_JIT_RESOLVE, _currentThread->tempSlot, 0, _literals);
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+	}
+
+	VMINLINE void
 	restoreInternalNativeStackFrame(REGISTER_ARGS_LIST)
 	{
 		J9SFNativeMethodFrame *nativeMethodFrame = (J9SFNativeMethodFrame*)_sp;
@@ -8262,6 +8270,9 @@ done:
 
 		j9object_t mhReceiver = ((j9object_t *)_sp)[mhReceiverIndex];
 		if (J9_UNEXPECTED(NULL == mhReceiver)) {
+			if (fromJIT) {
+				buildJITResolveFrame(REGISTER_ARGS);
+			}
 			return THROW_NPE;
 		}
 
@@ -8287,6 +8298,11 @@ done:
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
 		if (J9_UNEXPECTED(NULL == memberNameObject)) {
+			if (fromJIT) {
+				/* Restore SP to before popping memberNameObject. */
+				_sp -= 1;
+				buildJITResolveFrame(REGISTER_ARGS);
+			}
 			return THROW_NPE;
 		}
 
@@ -8296,7 +8312,7 @@ done:
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
 			UDATA methodArgCount = romMethod->argCount;
 
-			/* Restore sp position before popping memberNameObject. */
+			/* Restore SP to before popping memberNameObject. */
 			_sp -= 1;
 
 			/* Shift arguments by 1 and place memberNameObject before the first argument. */
@@ -8320,6 +8336,11 @@ done:
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
 		if (J9_UNEXPECTED(NULL == memberNameObject)) {
+			if (fromJIT) {
+				/* Restore SP to before popping memberNameObject. */
+				_sp -= 1;
+				buildJITResolveFrame(REGISTER_ARGS);
+			}
 			return THROW_NPE;
 		}
 
@@ -8329,13 +8350,19 @@ done:
 
 		j9object_t receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
 		if (J9_UNEXPECTED(NULL == receiverObject)) {
+			if (fromJIT) {
+				/* Restore SP to before popping memberNameObject. */
+				_sp -= 1;
+				buildJITResolveFrame(REGISTER_ARGS);
+			}
 			return THROW_NPE;
 		}
+
 		J9Class *receiverClass = J9OBJECT_CLAZZ(currentThread, receiverObject);
 		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + methodID->vTableIndex);
 
 		if (fromJIT) {
-			/* Restore sp position before popping memberNameObject. */
+			/* Restore SP to before popping memberNameObject. */
 			_sp -= 1;
 
 			/* Shift arguments by 1 and place memberNameObject before the first argument. */
@@ -8359,6 +8386,11 @@ done:
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
 		if (J9_UNEXPECTED(NULL == memberNameObject)) {
+			if (fromJIT) {
+				/* Restore SP to before popping memberNameObject. */
+				_sp -= 1;
+				buildJITResolveFrame(REGISTER_ARGS);
+			}
 			return THROW_NPE;
 		}
 
@@ -8368,8 +8400,14 @@ done:
 
 		j9object_t receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
 		if (J9_UNEXPECTED(NULL == receiverObject)) {
+			if (fromJIT) {
+				/* Restore SP to before popping memberNameObject. */
+				_sp -= 1;
+				buildJITResolveFrame(REGISTER_ARGS);
+			}
 			return THROW_NPE;
 		}
+
 		J9Class *receiverClass = J9OBJECT_CLAZZ(currentThread, receiverObject);
 		J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
 		UDATA vTableOffset = methodID->vTableIndex;
@@ -8412,7 +8450,7 @@ foundITable:
 		}
 
 		if (fromJIT) {
-			/* Restore sp position before popping memberNameObject. */
+			/* Restore SP to before popping memberNameObject. */
 			_sp -= 1;
 
 			/* Shift arguments by 1 and place memberNameObject before the first argument. */
