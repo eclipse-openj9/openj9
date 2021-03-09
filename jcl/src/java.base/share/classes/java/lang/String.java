@@ -246,7 +246,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 	private final byte[] value;
 	private final byte coder;
-	private int hashCode;
+	private int hash;
 
 	static {
 		stringArray = new String[stringArraySize];
@@ -824,7 +824,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 				value = compressedAsciiTable[theChar];
 				coder = LATIN1;
-				hashCode = theChar;
+				hash = theChar;
 			} else {
 				char theChar = helpers.getCharFromArrayByIndex(data, start);
 
@@ -837,7 +837,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				}
 
 				coder = UTF16;
-				hashCode = theChar;
+				hash = theChar;
 
 				if (enableCompression) {
 					initCompressionFlag();
@@ -887,7 +887,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 				value = compressedAsciiTable[theChar];
 				coder = LATIN1;
-				hashCode = theChar;
+				hash = theChar;
 			} else {
 				char theChar = helpers.getCharFromArrayByIndex(data, start);
 
@@ -900,7 +900,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				}
 
 				coder = UTF16;
-				hashCode = theChar;
+				hash = theChar;
 
 				if (enableCompression) {
 					initCompressionFlag();
@@ -944,7 +944,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(String string) {
 		value = string.value;
 		coder = string.coder;
-		hashCode = string.hashCode;
+		hash = string.hash;
 	}
 
 	/**
@@ -1706,10 +1706,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				if (s1Value == s2Value) {
 					return true;
 				} else {
-					// There was a time hole between first read of s.hashCode and second read if another thread does hashcode
+					// There was a time hole between first read of s.hash and second read if another thread does hashcode
 					// computing for incoming string object
-					int s1hash = s1.hashCode;
-					int s2hash = s2.hashCode;
+					int s1hash = s1.hash;
+					int s2hash = s2.hash;
 
 					if (s1hash != 0 && s2hash != 0 && s1hash != s2hash) {
 						return false;
@@ -2001,16 +2001,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #equals
 	 */
 	public int hashCode() {
-		if (hashCode == 0 && value.length > 0) {
+		if (hash == 0 && value.length > 0) {
 			// Check if the String is compressed
 			if (enableCompression && (compressionFlag == null || coder == LATIN1)) {
-				hashCode = hashCodeImplCompressed(value, 0, lengthInternal());
+				hash = hashCodeImplCompressed(value, 0, lengthInternal());
 			} else {
-				hashCode = hashCodeImplDecompressed(value, 0, lengthInternal());
+				hash = hashCodeImplDecompressed(value, 0, lengthInternal());
 			}
 		}
 
-		return hashCode;
+		return hash;
 	}
 
 	private static int hashCodeImplCompressed(byte[] value, int offset, int count) {
@@ -4184,7 +4184,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 	private final char[] value;
 	private final int count;
-	private int hashCode;
+	private int hash;
 
 	static {
 		stringArray = new String[stringArraySize];
@@ -4744,7 +4744,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					value = compressedAsciiTable[theChar];
 					count = 1;
 
-					hashCode = theChar;
+					hash = theChar;
 				} else {
 
 					char theChar = data[start];
@@ -4757,7 +4757,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 					count = 1 | uncompressedBit;
 
-					hashCode = theChar;
+					hash = theChar;
 
 					initCompressionFlag();
 				}
@@ -4796,7 +4796,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				value = decompressedAsciiTable[theChar];
 				count = 1;
 
-				hashCode = theChar;
+				hash = theChar;
 			} else {
 				if (start == 0) {
 					value = data;
@@ -4823,7 +4823,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					value = compressedAsciiTable[theChar];
 					count = 1;
 
-					hashCode = theChar;
+					hash = theChar;
 				} else {
 					char theChar = data[start];
 
@@ -4835,7 +4835,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 					count = 1 | uncompressedBit;
 
-					hashCode = theChar;
+					hash = theChar;
 
 					initCompressionFlag();
 				}
@@ -4874,7 +4874,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				value = decompressedAsciiTable[theChar];
 				count = 1;
 
-				hashCode = theChar;
+				hash = theChar;
 			} else {
 				if (start == 0 && sharingIsAllowed) {
 					value = data;
@@ -4898,7 +4898,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(String string) {
 		value = string.value;
 		count = string.count;
-		hashCode = string.hashCode;
+		hash = string.hash;
 	}
 
 	/**
@@ -5740,10 +5740,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				return true;
 			}
 
-			// There was a time hole between first read of s.hashCode and second read if another thread does hashcode
+			// There was a time hole between first read of s.hash and second read if another thread does hashcode
 			// computing for incoming string object
-			int s1hash = s1.hashCode;
-			int s2hash = s2.hashCode;
+			int s1hash = s1.hash;
+			int s2hash = s2.hash;
 
 			if (s1hash != 0 && s2hash != 0 && s1hash != s2hash) {
 				return false;
@@ -6057,18 +6057,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #equals
 	 */
 	public int hashCode() {
-		if (hashCode == 0) {
+		if (hash == 0) {
 			int length = lengthInternal();
 			if (length > 0) {
 				// Check if the String is compressed
 				if (enableCompression && (compressionFlag == null || count >= 0)) {
-					hashCode = hashCodeImplCompressed(value, 0, length);
+					hash = hashCodeImplCompressed(value, 0, length);
 				} else {
-					hashCode = hashCodeImplDecompressed(value, 0, length);
+					hash = hashCodeImplDecompressed(value, 0, length);
 				}
 			}
 		}
-		return hashCode;
+		return hash;
 	}
 
 	private static int hashCodeImplCompressed(char[] value, int offset, int count) {

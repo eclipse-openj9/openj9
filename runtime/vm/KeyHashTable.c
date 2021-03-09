@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,7 +218,7 @@ classHashFn(void *key, void *userData)
 	if (type == TYPE_UNICODE) {
 		j9object_t stringObject = (j9object_t)name;
 
-		hash = J9VMJAVALANGSTRING_HASHCODE_VM(javaVM, stringObject);
+		hash = J9VMJAVALANGSTRING_HASH_VM(javaVM, stringObject);
 		if (0 == hash) {
 			j9object_t charArray = J9VMJAVALANGSTRING_VALUE_VM(javaVM, stringObject);
 			U_32 i = 0;
@@ -236,7 +236,7 @@ classHashFn(void *key, void *userData)
 				}
 			}
 
-			J9VMJAVALANGSTRING_SET_HASHCODE_VM(javaVM, stringObject, hash);
+			J9VMJAVALANGSTRING_SET_HASH_VM(javaVM, stringObject, hash);
 		}
 		type = TYPE_CLASS;
 	} else {

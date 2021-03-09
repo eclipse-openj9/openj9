@@ -422,7 +422,7 @@ stringHashEqualFn(void *leftKey, void *rightKey, void *userData)
 		bool rightCompressed = IS_STRING_COMPRESSED_VM(javaVM, right_s);
 
 		/* Lengths have different significance for String and UTF8 */
-		if ((J9VMJAVALANGSTRING_HASHCODE_VM(javaVM, left_s) != J9VMJAVALANGSTRING_HASHCODE_VM(javaVM, right_s))
+		if ((J9VMJAVALANGSTRING_HASH_VM(javaVM, left_s) != J9VMJAVALANGSTRING_HASH_VM(javaVM, right_s))
 			|| (leftLength != rightLength))	{
 			return FALSE;
 		}
@@ -508,10 +508,10 @@ stringHashFn(void *key, void *userData)
 		hashCode = u8Ptr->hash;
 	} else {
 		j9object_t s = *(j9object_t*)key;
-		hashCode = J9VMJAVALANGSTRING_HASHCODE_VM(javaVM, s);
+		hashCode = J9VMJAVALANGSTRING_HASH_VM(javaVM, s);
 		if (hashCode == 0) {
 			hashCode = computeJavaHashForExpandedString(javaVM, s);
-			J9VMJAVALANGSTRING_SET_HASHCODE_VM(javaVM, s, hashCode);
+			J9VMJAVALANGSTRING_SET_HASH_VM(javaVM, s, hashCode);
 		}
 	}
 
