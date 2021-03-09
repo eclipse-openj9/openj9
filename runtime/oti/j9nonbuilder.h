@@ -3730,6 +3730,7 @@ typedef struct J9JITConfig {
 	void *old_slow_jitTranslateNewInstanceMethod;
 	void *old_slow_jitReportFinalFieldModified;
 	void *old_fast_jitGetFlattenableField;
+	void *old_fast_jitCloneValueType;
 	void *old_fast_jitWithFlattenableField;
 	void *old_fast_jitPutFlattenableField;
 	void *old_fast_jitGetFlattenableStaticField;
