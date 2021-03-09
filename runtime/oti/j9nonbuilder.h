@@ -3586,6 +3586,35 @@ typedef struct J9Method {
 	U_8* bytecodes;
 	struct J9ConstantPool* constantPool;
 	void* methodRunAddress;
+
+	/**
+	 * This field is overloaded and can have several meanings:
+	 * 
+	 * 1. If the J9_STARTPC_NOT_TRANSLATED bit is set, this method is interpreted
+	 *    a. If the value is non-negative, then the field contains the invocation count which is decremented towards
+	 *    zero. When the invocation count reaches zero, the method will be queued for JIT compilation. The invocation
+	 *    count is represented as:
+	 * 
+	 *    ```
+	 *    (invocationCount << 1) | J9_STARTPC_NOT_TRANSLATED
+	 *    ```
+	 * 
+	 *    b. If the method is a default method which has conflicts then this field contains the RAM method to execute.
+	 *    That is, the extra field will contain:
+	 * 
+	 *    ```
+	 *    ((J9Method*)<default method to execute>) | J9_STARTPC_NOT_TRANSLATED
+	 *    ```
+	 * 
+	 *    c. If the value is negative, then it can be one of (see definition for documentation on these):
+	 *        - J9_JIT_NEVER_TRANSLATE
+	 *              The VM will not decrement the count and the method will stay interpreted
+	 *        - J9_JIT_QUEUED_FOR_COMPILATION
+	 *              The method has been queued for JIT compilation
+	 * 
+	 * 2. If the J9_STARTPC_NOT_TRANSLATED bit is not set, this method is JIT compiled
+	 * 		a. The field contains the address of the start PC of the JIT compiled method
+	 */
 	void* volatile extra;
 } J9Method;
 

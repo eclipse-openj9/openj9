@@ -5164,7 +5164,7 @@ void TR::CompilationInfo::changeCompReqFromAsyncToSync(J9Method * method)
       cur->_changedFromAsyncToSync = true;  // Flag the method as synchronous
       // Allow new invocations to trigger compilations
       if (getJ9MethodVMExtra(method) == J9_JIT_QUEUED_FOR_COMPILATION)
-         setJ9MethodVMExtra(method, 1);
+         setInvocationCount(method, 0);
       // fprintf(stderr, "Changed method %p priority from async to sync\n", method);
       }
    }

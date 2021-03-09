@@ -616,7 +616,7 @@ public:
          return std::get<0>(stream->read<bool>());
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      newCount = (newCount << 1) | 1;
+      newCount = (newCount << 1) | J9_STARTPC_NOT_TRANSLATED;
       if (newCount < 1)
          return false;
       return setJ9MethodVMExtra(method, newCount);
@@ -630,8 +630,8 @@ public:
          return std::get<0>(stream->read<bool>());
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      newCount = (newCount << 1) | 1;
-      oldCount = (oldCount << 1) | 1;
+      newCount = (newCount << 1) | J9_STARTPC_NOT_TRANSLATED;
+      oldCount = (oldCount << 1) | J9_STARTPC_NOT_TRANSLATED;
       if (newCount < 0)
          return false;
       intptr_t oldMethodExtra = (intptr_t) method->extra & (intptr_t)(~J9_INVOCATION_COUNT_MASK);
@@ -651,7 +651,7 @@ public:
 #if defined(J9VM_OPT_JITSERVER)
       TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(J9VM_OPT_JITSERVER) */
-      value = (value << 1) | 1;
+      value = (value << 1) | J9_STARTPC_NOT_TRANSLATED;
       if (value < 0)
           value = INT_MAX;
       method->extra = reinterpret_cast<void *>(value);
