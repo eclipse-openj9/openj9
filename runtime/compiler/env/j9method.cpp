@@ -1734,7 +1734,7 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
    void *classChain = NULL;
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
-   classChain = fej9->sharedCache()->rememberClass(true, comp, definingClass);
+   classChain = fej9->sharedCache()->rememberClass(definingClass);
    if (!classChain)
       return false;
 
