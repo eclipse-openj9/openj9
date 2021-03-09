@@ -1614,6 +1614,48 @@ isClassPermittedBySealedSuper(J9ROMClass *superRomClass, U_8* className, U_16 cl
 	return result;
 }
 
+#if JAVA_SPEC_VERSION >= 16
+/**
+ * JEP 397 (second preview): if super class/interface is sealed, IncompatibleClassChangeError is throw out
+ * if one of the following conditions is false:
+ * (1) the inheriting subclass is not in the same module as its super class/interface;
+ * (2) the inheriting subclass (non-public) is not in the same package as its super class/interface.
+ *
+ * @param vmThread the current VM thread
+ * @param superClass the super class/interface
+ * @param romClass the ROM class of subclass
+ * @param module the subclass's module
+ * @param packageID the subclass's package ID
+ * @return TRUE if subclass can legally inherit the super, FALSE otherwise.
+ */
+static VMINLINE BOOLEAN
+isClassInTheSameModuleOrPckageAsSealedSuper(J9VMThread *vmThread, J9Class *superClass, J9ROMClass *romClass, J9Module *module, UDATA packageID)
+{
+	if (J9ROMCLASS_IS_SEALED(superClass->romClass)) {
+		J9JavaVM *vm = vmThread->javaVM;
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+		bool classIsPublic = J9_ARE_ALL_BITS_SET(romClass->modifiers, J9AccPublic);
+		J9Module * superModule = superClass->module;
+
+		if (J9_IS_J9MODULE_UNNAMED(vm, superModule)) {
+			if (!classIsPublic && (packageID != superClass->packageID)) {
+				Trc_VM_CreateRAMClassFromROMClass_sealedSuperFromDifferentPackage(vmThread, superClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+				setCurrentExceptionForBadClass(vmThread, className, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE);
+				return FALSE;
+			}
+		} else {
+			if (module != superModule) {
+				Trc_VM_CreateRAMClassFromROMClass_sealedSuperFromDifferentModule(vmThread, superClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+				setCurrentExceptionForBadClass(vmThread, className, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE);
+				return FALSE;
+			}
+		}
+	}
+
+	return TRUE;
+}
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 /**
  * Attempts to recursively load (if necessary) the required superclass and
  * interfaces for the class being loaded.
@@ -1679,6 +1721,15 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 				setCurrentExceptionForBadClass(vmThread, superclassName, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE);
 				return FALSE;
 			}
+
+#if JAVA_SPEC_VERSION >= 16
+			/* JEP 397 sealed classes: the current class must be in the same module as its superclass
+			 * or in the same package as its superclass if non-public.
+			 */
+			if (!isClassInTheSameModuleOrPckageAsSealedSuper(vmThread, superclass, romClass, module, packageID)) {
+				return FALSE;
+			}
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 			/* JEP 360 sealed classes: if superclass is sealed it must contain the romClass's name in its PermittedSubclasses attribute */
 			if (! isClassPermittedBySealedSuper(superclass->romClass, J9UTF8_DATA(className), J9UTF8_LENGTH(className))) {
@@ -1746,6 +1797,15 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 						setCurrentExceptionForBadClass(vmThread, J9ROMCLASS_CLASSNAME(interfaceClass->romClass), J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE);
 						return FALSE;
 					}
+
+#if JAVA_SPEC_VERSION >= 16
+					/* JEP 397 sealed classes: the current interface must be in the same module as its superinterface
+					 * or in the same package as its superinterface if non-public.
+					 */
+					if (!isClassInTheSameModuleOrPckageAsSealedSuper(vmThread, interfaceClass, romClass, module, packageID)) {
+						return FALSE;
+					}
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 					/* JEP 360 sealed classes: if superinterface is sealed it must contain the romClass's name in its PermittedSubclasses attribute */
 					if (! isClassPermittedBySealedSuper(interfaceClass->romClass, J9UTF8_DATA(className), J9UTF8_LENGTH(className))) {
