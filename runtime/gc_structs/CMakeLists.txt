@@ -27,6 +27,7 @@ set(gc_structs_sources
 	ClassHeapIterator.cpp
 	ClassIterator.cpp
 	ClassIteratorClassSlots.cpp
+	ClassFCCSlotIterator.cpp
 	ClassIteratorDeclarationOrder.cpp
 	ClassLoaderClassesIterator.cpp
 	ClassLoaderSegmentIterator.cpp
