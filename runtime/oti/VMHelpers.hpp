@@ -1776,6 +1776,30 @@ exit:
 		}
 		return result;
 	}
+
+	static VMINLINE void *
+	buildJITResolveFrameWithPC(J9VMThread *currentThread, UDATA flags, UDATA parmCount, UDATA spAdjust, void *oldPC)
+	{
+		UDATA *sp = currentThread->sp;
+		J9SFJITResolveFrame *resolveFrame = ((J9SFJITResolveFrame *)sp) - 1;
+		resolveFrame->savedJITException = currentThread->jitException;
+		currentThread->jitException = NULL;
+		resolveFrame->specialFrameFlags = flags;
+#if defined(J9SW_JIT_HELPERS_PASS_PARAMETERS_ON_STACK)
+		resolveFrame->parmCount = parmCount;
+#else /* J9SW_JIT_HELPERS_PASS_PARAMETERS_ON_STACK */
+		resolveFrame->parmCount = 0;
+#endif /* J9SW_JIT_HELPERS_PASS_PARAMETERS_ON_STACK */
+		resolveFrame->returnAddress = oldPC;
+		resolveFrame->taggedRegularReturnSP = (UDATA *)(((UDATA)(sp - spAdjust)) | J9SF_A0_INVISIBLE_TAG);
+		currentThread->sp = (UDATA *)resolveFrame;
+		currentThread->arg0EA = sp - 1;
+		currentThread->pc = (U_8 *)J9SF_FRAME_TYPE_JIT_RESOLVE;
+		currentThread->literals = NULL;
+		currentThread->jitStackFrameFlags = 0;
+		return oldPC;
+	}
+
 };
 
 #endif /* VMHELPERS_HPP_ */

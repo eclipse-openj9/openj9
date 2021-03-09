@@ -141,23 +141,7 @@ static VMINLINE void*
 buildJITResolveFrameWithPC(J9VMThread *currentThread, UDATA flags, UDATA parmCount, bool checkScavengeOnResolve, UDATA spAdjust, void *oldPC)
 {
 	VM_JITInterface::disableRuntimeInstrumentation(currentThread);
-	UDATA *sp = currentThread->sp;
-	J9SFJITResolveFrame *resolveFrame = ((J9SFJITResolveFrame*)sp) - 1;
-	resolveFrame->savedJITException = currentThread->jitException;
-	currentThread->jitException = NULL;
-	resolveFrame->specialFrameFlags = flags;
-#if defined(J9SW_JIT_HELPERS_PASS_PARAMETERS_ON_STACK)
-	resolveFrame->parmCount = parmCount;
-#else /* J9SW_JIT_HELPERS_PASS_PARAMETERS_ON_STACK */
-	resolveFrame->parmCount = 0;
-#endif /* J9SW_JIT_HELPERS_PASS_PARAMETERS_ON_STACK */
-	resolveFrame->returnAddress = oldPC;
-	resolveFrame->taggedRegularReturnSP = (UDATA*)(((UDATA)(sp - spAdjust)) | J9SF_A0_INVISIBLE_TAG);
-	currentThread->sp = (UDATA*)resolveFrame;
-	currentThread->arg0EA = sp - 1;
-	currentThread->pc = (U_8*)J9SF_FRAME_TYPE_JIT_RESOLVE;
-	currentThread->literals = NULL;
-	currentThread->jitStackFrameFlags = 0;
+	oldPC = VM_VMHelpers::buildJITResolveFrameWithPC(currentThread, flags, parmCount, spAdjust, oldPC);
 #if defined(J9VM_JIT_GC_ON_RESOLVE_SUPPORT) && defined(J9VM_GC_GENERATIONAL)
 	if (checkScavengeOnResolve) {
 		if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->jitConfig->runtimeFlags, J9JIT_SCAVENGE_ON_RESOLVE)) {
