@@ -444,6 +444,9 @@ MM_ReferenceChainWalker::scanClass(J9Class *clazz)
 		case classiteratorclassslots_state_array_class_slots:
 			doClassSlot(classPtr, J9GC_REFERENCE_TYPE_CLASS_ARRAY_CLASS, classIteratorClassSlots.getIndex(), referrer);
 			break;
+		case classiteratorclassslots_state_flattened_class_cache_slots:
+			doClassSlot(classPtr, J9GC_REFERENCE_TYPE_CLASS_FCC, classIteratorClassSlots.getIndex(), referrer);
+			break;
 		default:
 			doClassSlot(classPtr, J9GC_REFERENCE_TYPE_UNKNOWN, classIteratorClassSlots.getIndex(), referrer);
 			break;

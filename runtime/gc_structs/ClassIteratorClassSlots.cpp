@@ -77,7 +77,15 @@ GC_ClassIteratorClassSlots::nextSlot()
 			return classPtr;
 		}
 		_state += 1;
-		
+
+	case classiteratorclassslots_state_flattened_class_cache_slots:
+		classPtr = _classFCCSlotIterator.nextSlot();
+		if (NULL != classPtr) {
+			return classPtr;
+		}
+		_state += 1;
+
+	case classiteratorclassslots_state_end:
 	default:
 		break;
 	}
