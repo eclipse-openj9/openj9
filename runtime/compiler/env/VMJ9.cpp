@@ -7416,14 +7416,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                if (callerIndex != -1)
                   {
                   callerMethod = (J9Method *) comp->getInlinedCallSite(callerIndex)._methodInfo;
-                  if (isAOT_DEPRECATED_DO_NOT_USE())
-                     {
-                     callerClass = (J9Class*) ((TR_AOTMethodInfo *)callerMethod)->resolvedMethod->containingClass();
-                     }
-                  else
-                     {
-                     callerClass = (J9Class*) getClassOfMethod((TR_OpaqueMethodBlock*) callerMethod);
-                     }
+                  callerClass = (J9Class*) comp->getInlinedResolvedMethod(callerIndex)->containingClass();
                   }
                else
                   {
@@ -8958,7 +8951,7 @@ TR_J9SharedCacheVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
 TR_OpaqueMethodBlock *
 TR_J9SharedCacheVM::getInlinedCallSiteMethod(TR_InlinedCallSite *ics)
    {
-   return (TR_OpaqueMethodBlock *)((TR_AOTMethodInfo *)(ics->_vmMethodInfo))->resolvedMethod->getPersistentIdentifier();
+   return ics->_methodInfo;
    }
 
 // Answer the following conservatively until we know how to do better

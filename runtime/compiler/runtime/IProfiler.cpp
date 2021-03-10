@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1683,21 +1683,10 @@ static TR_OpaqueMethodBlock *
 getMethodFromBCInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    {
    TR_OpaqueMethodBlock *method = NULL;
-
-   if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
-      {
-      if (bcInfo.getCallerIndex() >= 0)
-         method = (TR_OpaqueMethodBlock *)(((TR_AOTMethodInfo *)comp->getInlinedCallSite(bcInfo.getCallerIndex())._vmMethodInfo)->resolvedMethod->getNonPersistentIdentifier());
-      else
-         method = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getNonPersistentIdentifier());
-      }
+   if (bcInfo.getCallerIndex() >= 0)
+      method = comp->getInlinedCallSite(bcInfo.getCallerIndex())._methodInfo;
    else
-      {
-      if (bcInfo.getCallerIndex() >= 0)
-         method = (TR_OpaqueMethodBlock *)(comp->getInlinedCallSite(bcInfo.getCallerIndex())._vmMethodInfo);
-      else
-         method = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getPersistentIdentifier());
-      }
+      method = comp->getCurrentMethod()->getPersistentIdentifier();
 
    return method;
    }
