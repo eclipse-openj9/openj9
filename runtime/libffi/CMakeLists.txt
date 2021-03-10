@@ -23,6 +23,13 @@
 set(OMR_ENHANCED_WARNINGS OFF)
 set(OMR_WARNINGS_AS_ERRORS OFF)
 
+# Work around a bug in MASM for VS2013
+if(OMR_TOOLCONFIG STREQUAL "msvc")
+	omr_remove_flags(CMAKE_ASM_MASM_FLAGS /W3)
+	omr_append_flags(CMAKE_ASM_MASM_FLAGS /W2)
+endif()
+
+
 j9vm_add_library(ffi STATIC
 	closures.c
 	debug.c
