@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,8 +33,11 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.ibm.j9ddr.CTypeParser;
 import com.ibm.j9ddr.StructureReader;
@@ -44,50 +47,49 @@ import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 import com.ibm.j9ddr.tools.store.J9DDRStructureStore;
 
 /**
- * Utility to generate concrete implementation classes based on that
- * structure data found in a binary file of the same format as the new
- * core file offset data.
+ * Utility to generate concrete implementation classes based on the structure
+ * data found in a binary file of the same format as the new core file offset
+ * data.
  */
 public class StructureStubGenerator {
 
-	final Map<String, String> opts;
-	StructureReader structureReader;
-	File outputDir;
+	private String compatibilityConstantsFileName;
+	private String compatibilityLimitFileName;
+	private boolean legacyMode;
+	private File outputDir;
+	private String outputDirectoryName;
+	private String packageName;
+	private StructureReader structureReader;
+	private String supersetDirectoryName;
+	private String supersetFileName;
 
 	public StructureStubGenerator() {
 		super();
-		opts = new HashMap<String, String>();
-		opts.put("-p", null);
-		opts.put("-o", null);
-		opts.put("-f", null);
-		opts.put("-s", null);
-		opts.put("-l", "false");
 	}
 
 	public static void main(String[] args) throws Exception {
 		StructureStubGenerator app = new StructureStubGenerator();
 		app.parseArgs(args);
 		app.generateClasses();
-		System.out.println("Processing complete");
+		System.out.println("Structure stub generation complete");
 	}
 
 	private void generateClasses() {
-		String supersetDirectoryName = opts.get("-f");
-		String supersetFileName = opts.get("-s");
-
 		try {
 			J9DDRStructureStore store = new J9DDRStructureStore(supersetDirectoryName, supersetFileName);
 
-			System.out.println("superset directory name : " + supersetDirectoryName);
-			System.out.println("superset file name : " + store.getSuperSetFileName());
+			System.out.println("superset directory name: " + supersetDirectoryName);
+			System.out.println("superset file name: " + store.getSuperSetFileName());
 
-			InputStream inputStream = store.getSuperset();
-			structureReader = new StructureReader(inputStream);
-			inputStream.close();
+			try (InputStream inputStream = store.getSuperset()) {
+				structureReader = new StructureReader(inputStream);
+			}
 		} catch (IOException e) {
-			System.out.println("Could not find file: " + supersetDirectoryName + "/" + supersetFileName);
+			System.err.println("Could not find file: " + supersetDirectoryName + "/" + supersetFileName);
 			return;
 		}
+
+		adjustForCompatibility();
 
 		outputDir = getOutputDir();
 
@@ -99,11 +101,56 @@ public class StructureStubGenerator {
 					generateClass(structure);
 				}
 			} catch (FileNotFoundException e) {
-				String error = String.format("File Not Found processing: %s: %s", structure.getName(), e.getMessage());
-				System.out.println(error);
+				System.err.format("File not found processing: %s: %s", structure.getName(), e.getMessage());
 			} catch (IOException e) {
-				String error = String.format("IOException processing: %s: %s", structure.getName(), e.getMessage());
-				System.out.println(error);
+				System.err.format("IOException processing: %s: %s", structure.getName(), e.getMessage());
+			}
+		}
+	}
+
+	private void adjustForCompatibility() {
+		if (compatibilityLimitFileName != null) {
+			Map<String, StructureDescriptor> limitMap = new HashMap<>();
+
+			try (InputStream inputStream = new FileInputStream(compatibilityLimitFileName)) {
+				StructureReader limitReader = new StructureReader(inputStream);
+
+				for (StructureDescriptor structure : limitReader.getStructures()) {
+					limitMap.put(structure.getName(), structure);
+				}
+			} catch (IOException e) {
+				System.err.println("Could not apply compatibility limits from: " + compatibilityLimitFileName);
+				return;
+			}
+
+			for (StructureDescriptor structure : structureReader.getStructures()) {
+				Set<String> allowedConstants;
+				StructureDescriptor limit = limitMap.get(structure.getName());
+
+				if (limit == null) {
+					allowedConstants = Collections.emptySet();
+				} else {
+					allowedConstants = new HashSet<>();
+
+					for (ConstantDescriptor constant : limit.getConstants()) {
+						allowedConstants.add(constant.getName());
+					}
+				}
+
+				for (Iterator<ConstantDescriptor> iter = structure.getConstants().iterator(); iter.hasNext();) {
+					if (!allowedConstants.contains(iter.next().getName())) {
+						iter.remove();
+					}
+				}
+			}
+		}
+
+		if (compatibilityConstantsFileName != null) {
+			try (InputStream inputStream = new FileInputStream(compatibilityConstantsFileName)) {
+				structureReader.addCompatibilityConstants(inputStream);
+			} catch (IOException e) {
+				System.err.println("Could not apply compatibility constants from: " + compatibilityConstantsFileName);
+				return;
 			}
 		}
 	}
@@ -115,32 +162,32 @@ public class StructureStubGenerator {
 		if (javaFile.exists()) {
 			length = (int) javaFile.length();
 			original = new byte[length];
-			FileInputStream fis = new FileInputStream(javaFile);
-			fis.read(original);
-			fis.close();
+			try (FileInputStream fis = new FileInputStream(javaFile)) {
+				fis.read(original);
+			}
 		}
 
 		ByteArrayOutputStream newContents = new ByteArrayOutputStream(length);
-		PrintWriter writer = new PrintWriter(newContents);
-		writeCopyright(writer);
-		writer.format("package %s;%n", opts.get("-p"));
-		writer.println();
-		writeClassComment(writer, structure.getName());
-		writer.format("public final class %s {%n", structure.getName());
-		writer.println();
-		writeConstants(writer, structure);
-		writer.println();
-		writeOffsetStubs(writer, structure);
-		writer.println();
-		writeStaticInitializer(writer, structure);
-		writer.println("}");
-		writer.close();
+		try (PrintWriter writer = new PrintWriter(newContents)) {
+			writeCopyright(writer);
+			writer.format("package %s;%n", packageName);
+			writer.println();
+			writeClassComment(writer, structure.getName());
+			writer.format("public final class %s {%n", structure.getName());
+			writer.println();
+			writeConstants(writer, structure);
+			writer.println();
+			writeOffsetStubs(writer, structure);
+			writer.println();
+			writeStaticInitializer(writer, structure);
+			writer.println("}");
+		}
 
 		byte[] newContentsBytes = newContents.toByteArray();
 		if (null == original || !Arrays.equals(original, newContentsBytes)) {
-			FileOutputStream fos = new FileOutputStream(javaFile);
-			fos.write(newContentsBytes);
-			fos.close();
+			try (FileOutputStream fos = new FileOutputStream(javaFile)) {
+				fos.write(newContentsBytes);
+			}
 		}
 	}
 
@@ -195,7 +242,7 @@ public class StructureStubGenerator {
 
 	private String getOffsetConstant(FieldDescriptor fieldDescriptor) {
 		String fieldName = fieldDescriptor.getName();
-		if (opts.get("-l").equals("true")) {
+		if (legacyMode) {
 			return PointerGenerator.getOffsetConstant(fieldName);
 		}
 		return fieldName;
@@ -214,12 +261,12 @@ public class StructureStubGenerator {
 		for (FieldDescriptor fieldDescriptor : fields) {
 			if (getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())
 					&& !PointerGenerator.omitFieldImplementation(structure, fieldDescriptor)) {
-				writeOffsetStub(writer, fieldDescriptor, structure.getName(), "Offset");
+				writeOffsetStub(writer, fieldDescriptor);
 			}
 		}
 	}
 
-	private static void writeOffsetStub(PrintWriter writer, FieldDescriptor fieldDescriptor, String className, String postFix) {
+	private static void writeOffsetStub(PrintWriter writer, FieldDescriptor fieldDescriptor) {
 		String getter = fieldDescriptor.getName();
 		CTypeParser parser = new CTypeParser(fieldDescriptor.getType());
 
@@ -227,7 +274,7 @@ public class StructureStubGenerator {
 			writer.format("\tpublic static final int _%s_s_;%n", getter);
 			writer.format("\tpublic static final int _%s_b_;%n", getter);
 		} else {
-			writer.format("\tpublic static final int _%s%s_;%n", getter, postFix);
+			writer.format("\tpublic static final int _%sOffset_;%n", getter);
 		}
 	}
 
@@ -256,23 +303,55 @@ public class StructureStubGenerator {
 			System.exit(1);
 		}
 
+		Set<String> required = new HashSet<>();
+
+		required.add("-f");
+		required.add("-o");
+		required.add("-p");
+
 		for (int i = 0; i < args.length; i += 2) {
-			if (opts.containsKey(args[i])) {
-				opts.put(args[i], args[i + 1]);
-			} else {
-				System.out.println("Invalid option : " + args[i]);
+			String arg = args[i];
+			String value = args[i + 1];
+
+			switch (arg) {
+			case "-c":
+				compatibilityConstantsFileName = value;
+				break;
+			case "-f":
+				supersetDirectoryName = value;
+				break;
+			case "-l":
+				legacyMode = Boolean.parseBoolean(value);
+				break;
+			case "-o":
+				outputDirectoryName = value;
+				break;
+			case "-p":
+				packageName = value;
+				break;
+			case "-r":
+				compatibilityLimitFileName = value;
+				break;
+			case "-s":
+				supersetFileName = value;
+				break;
+			default:
+				System.err.println("Invalid option: " + arg);
 				printHelp();
 				System.exit(1);
+				break;
 			}
+
+			required.remove(arg);
 		}
 
-		for (String key : opts.keySet()) {
-			String value = opts.get(key);
-			if (value == null && !key.equals("-s")) {
-				System.err.println("The option " + key + " has not been set.\n");
-				printHelp();
-				System.exit(1);
+		if (!required.isEmpty()) {
+			for (String missing : required) {
+				System.err.println("The option " + missing + " has not been set.");
 			}
+
+			printHelp();
+			System.exit(1);
 		}
 	}
 
@@ -280,24 +359,27 @@ public class StructureStubGenerator {
 	 * Print usage help to stdout
 	 */
 	private static void printHelp() {
-		System.out.println("Usage :\n\njava PointerGenerator -p <package name> -o <output path> -f <path to structure file> [-s <superset file name> -l <legacy mode>]\n");
-		System.out.println("<package name>           : the package name for all the generated classes e.g. com.ibm.dtfj.j9.structures");
-		System.out.println("<relative output path>   : where to write out the class files.  Full path to base of package hierarchy e.g. c:\\src\\");
-		System.out.println("<path to structure file> : full path to the J9 structure file");
-		System.out.println("<superset file name>     : optional file name of the superset to be used for input / output");
-		System.out.println("<legacy mode>            : optional flag set to true or false indicating if legacy DDR is used");
+		System.out.println("Usage: StructureStubGenerator {option value}...");
+		System.out.println("  options:");
+		System.out.println("    -p <package name>           : the package name for the generated classes e.g. com.ibm.dtfj.j9.structures");
+		System.out.println("    -o <relative output path>   : where to write the class files (full path to base of package hierarchy e.g. C:\\src\\)");
+		System.out.println("    -f <path to structure file> : full path to the J9 structure file");
+		System.out.println("    -s <superset file name>     : optional file name of the superset to be used");
+		System.out.println("    -l <legacy mode>            : optional flag set to true or false indicating if legacy DDR is used");
+		System.out.println("    -r <restrict path>          : optional path to superset for restricting available constants");
+		System.out.println("    -c <legacy mode>            : optional path to additional compatibility constants");
 	}
 
 	/**
-	 * Determine the output directory for the classes, create it if required
+	 * Determine the output directory for the classes, create it if required.
 	 * @return File pointing to the output directory
 	 */
 	private File getOutputDir() {
-		String outputPath = opts.get("-o").replace('\\', '/');
+		String outputPath = outputDirectoryName.replace('\\', '/');
 		if (!outputPath.endsWith("/")) {
 			outputPath += "/";
 		}
-		outputPath += opts.get("-p").replace('.', '/');
+		outputPath += packageName.replace('.', '/');
 		System.out.println("Writing generated classes to " + outputPath);
 		File output = new File(outputPath);
 		output.mkdirs();
