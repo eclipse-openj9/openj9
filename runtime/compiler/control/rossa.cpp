@@ -114,9 +114,10 @@
 #include "net/LoadSSLLibs.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/Listener.hpp"
+#include "runtime/JITServerSharedROMClassCache.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
 #include "runtime/JITServerIProfiler.hpp"
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 extern "C" int32_t encodeCount(int32_t count);
 
@@ -1688,6 +1689,17 @@ onLoadInternal(
       if (!JITServer::loadLibsslAndFindSymbols())
          return -1;
       }
+   else if ((compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER) &&
+            TR::Options::_shareROMClasses)
+      {
+      // ROMClass sharing uses a hash implementation from SSL. Disable it if we can't load the library.
+      if (!JITServer::loadLibsslAndFindSymbols())
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Failed to load SSL library, disabling ROMClass sharing");
+         TR::Options::_shareROMClasses = false;
+         }
+      }
 
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
@@ -1717,6 +1729,17 @@ onLoadInternal(
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject = NULL;
          }
+
+      //NOTE: This must be done only after the SSL library has been successfully loaded
+      if (TR::Options::_shareROMClasses)
+         {
+         size_t numPartitions = std::max(1, TR::Options::_sharedROMClassCacheNumPartitions);
+         auto cache = new (PERSISTENT_NEW) JITServerSharedROMClassCache(numPartitions);
+         if (!cache)
+            return -1;
+         compInfo->setJITServerSharedROMClassCache(cache);
+         }
+
       }
    else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {

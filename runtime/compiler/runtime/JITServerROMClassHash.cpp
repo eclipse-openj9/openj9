@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,52 +19,36 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+#include "j9.h"
+#include "net/LoadSSLLibs.hpp"
+#include "runtime/JITServerROMClassHash.hpp"
 
-#ifndef J9_COMPILER_ENV_INCL
-#define J9_COMPILER_ENV_INCL
 
-/*
- * The following #define and typedef must appear before any #includes in this file
- */
-#ifndef J9_COMPILER_ENV_CONNECTOR
-#define J9_COMPILER_ENV_CONNECTOR
-   namespace J9 { class CompilerEnv; }
-   namespace J9 { typedef J9::CompilerEnv CompilerEnvConnector; }
-#endif
-
-#include "env/OMRCompilerEnv.hpp"
-
-extern "C" {
-struct J9PortLibrary;
-struct J9JavaVM;
-}
-
-namespace J9
-{
-
-class OMR_EXTENSIBLE CompilerEnv : public OMR::CompilerEnvConnector
+JITServerROMClassHash::JITServerROMClassHash(const J9ROMClass *romClass)
    {
-public:
+   EVP_MD_CTX *ctx = OEVP_MD_CTX_new();
+   if (!ctx)
+      throw std::bad_alloc();//The only possible error is memory allocation failure
+   if (!OEVP_DigestInit_ex(ctx, OEVP_sha256(), NULL))
+      throw std::bad_alloc();//The only possible error is memory allocation failure
 
-   CompilerEnv(J9JavaVM *vm, TR::RawAllocator raw, const TR::PersistentAllocatorKit &persistentAllocatorKit);
+   int success = OEVP_DigestUpdate(ctx, romClass, romClass->romSize);
+   TR_ASSERT(success, "EVP_DigestUpdate() failed");
+   unsigned int hashSize = 0;
+   success = OEVP_DigestFinal_ex(ctx, (uint8_t *)_data, &hashSize);
+   TR_ASSERT(success, "EVP_DigestFinal() failed");
+   TR_ASSERT(hashSize == sizeof(_data), "Invalid hash size");
 
-   J9PortLibrary * const portLib;
-   J9JavaVM * const javaVM;
+   OEVP_MD_CTX_free(ctx);
+   }
 
-   void initializeTargetEnvironment();
+const char *
+JITServerROMClassHash::toString(char *buffer, size_t size) const
+   {
+   TR_ASSERT(size > sizeof(_data) * 2, "Buffer too small");
 
-   bool isCodeTossed();
-
-   TR::PersistentAllocator &persistentAllocator();
-
-   TR_PersistentMemory *persistentMemory();
-
-#if defined(J9VM_OPT_JITSERVER)
-   TR::PersistentAllocator &persistentGlobalAllocator();
-   TR_PersistentMemory *persistentGlobalMemory();
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   };
-
-}
-
-#endif
+   char *s = buffer;
+   for (size_t i = 0; i < sizeof(_data); ++i)
+      s += sprintf(s, "%02x", ((uint8_t *)_data)[i]);
+   return buffer;
+   }

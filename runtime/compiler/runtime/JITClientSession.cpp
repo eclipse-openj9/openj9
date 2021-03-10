@@ -28,6 +28,7 @@
 #include "env/ut_j9jit.h"
 #include "net/ServerStream.hpp" // for JITServer::ServerStream
 #include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
+#include "runtime/JITServerSharedROMClassCache.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/VerboseLog.hpp"
 #include "runtime/SymbolValidationManager.hpp"
@@ -402,7 +403,10 @@ ClientSessionData::ClassInfo::ClassInfo() :
 void
 ClientSessionData::ClassInfo::freeClassInfo(TR_PersistentMemory *persistentMemory)
    {
-   persistentMemory->freePersistentMemory(_romClass);
+   if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+      cache->release(_romClass);
+   else
+      persistentMemory->freePersistentMemory(_romClass);
 
    // free cached _interfaces
    _interfaces->~PersistentVector<TR_OpaqueClassBlock *>();
@@ -716,7 +720,7 @@ ClientSessionHT::~ClientSessionHT()
 // Must have compilation monitor in hand when calling this function.
 // Side effects: _inUse is incremented on the ClientSessionData
 //               _lastProcessedCriticalSeqNo is populated if a new ClientSessionData is created
-//                timeOflastAccess is updated with curent time.
+//                timeOflastAccess is updated with current time.
 ClientSessionData *
 ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, bool *newSessionWasCreated, J9JITConfig *jitConfig)
    {
@@ -729,22 +733,35 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, b
       static const char* disablePerClientPersistentAllocation = feGetEnv("TR_DisablePerClientPersistentAllocation");
       if (!disablePerClientPersistentAllocation)
          {
-         // allocate new persistent allocator and memory and store them inside a client session
-         TR::PersistentAllocator *newAllocator = new (TR::Compiler->rawAllocator) TR::PersistentAllocator(TR::PersistentAllocatorKit( 1 << 20, *TR::Compiler->javaVM));
-
-         sessionMemory = new (TR::Compiler->rawAllocator) TR_PersistentMemory(
-            jitConfig,
-            *newAllocator
-            );
+         // allocate new persistent allocator and memory and store them inside the client session
+         TR::PersistentAllocatorKit kit(1 << 20/*1 MB*/, *TR::Compiler->javaVM);
+         auto allocator = new (TR::Compiler->rawAllocator) TR::PersistentAllocator(kit);
+         try
+            {
+            sessionMemory = new (TR::Compiler->rawAllocator) TR_PersistentMemory(jitConfig, *allocator);
+            }
+         catch (...)
+            {
+            allocator->~PersistentAllocator();
+            TR::Compiler->rawAllocator.deallocate(allocator);
+            throw;
+            }
          }
       else
          {
          // passed env variable to disable per-client allocation, always use the global allocator
          usesPerClientMemory = false;
-         sessionMemory = TR::Compiler->persistentMemory();
+         sessionMemory = TR::Compiler->persistentGlobalMemory();
          }
 
-      // alocate a new ClientSessionData object and create a clientUID mapping
+      // If this is the first client, initialize the shared ROMClass cache
+      if (_clientSessionMap.empty())
+         {
+         if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+            cache->initialize(jitConfig);
+         }
+
+      // allocate a new ClientSessionData object and create a clientUID mapping
       clientData = new (sessionMemory) ClientSessionData(clientUID, seqNo, sessionMemory, usesPerClientMemory);
       if (clientData)
          {
@@ -757,7 +774,6 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, b
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Server could not allocate client session data");
-         // should we throw bad_alloc here?
          }
       }
    return clientData;
@@ -780,8 +796,15 @@ ClientSessionHT::deleteClientSession(uint64_t clientUID, bool forDeletion)
       if ((clientData->getInUse() == 0) && clientData->isMarkedForDeletion())
          {
          ClientSessionData::destroy(clientData); // delete the client data
-
          _clientSessionMap.erase(clientDataIt); // delete the mapping from the hashtable
+
+         // If this was the last client, shutdown the shared ROMClass cache
+         if (_clientSessionMap.empty())
+            {
+            if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+               cache->shutdown();
+            }
+
          return true;
          }
       }

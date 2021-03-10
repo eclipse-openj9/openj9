@@ -30,6 +30,7 @@
 #include "infra/Statistics.hpp"
 #include "net/CommunicationStream.hpp"
 #include "OMR/Bytes.hpp"// for OMR::alignNoCheck()
+#include "runtime/JITServerSharedROMClassCache.hpp"
 #include "romclasswalk.h"
 #include "util_api.h"// for allSlotsInROMClassDo()
 
@@ -602,10 +603,13 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
 J9ROMClass *
 JITServerHelpers::romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory)
    {
+   if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+      return cache->getOrCreate((const J9ROMClass *)romClassStr.data());
+
    auto romClass = (J9ROMClass *)(trMemory->allocatePersistentMemory(romClassStr.size(), TR_Memory::ROMClass));
    if (!romClass)
       throw std::bad_alloc();
-   memcpy(romClass, &romClassStr[0], romClassStr.size());
+   memcpy(romClass, romClassStr.data(), romClassStr.size());
    return romClass;
    }
 

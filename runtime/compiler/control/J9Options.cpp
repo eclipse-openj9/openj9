@@ -126,6 +126,8 @@ uintptr_t J9::Options::_compThreadAffinityMask = 0;
 int64_t J9::Options::_oldAge = 1000*60*1000; // 1000 minutes
 int64_t J9::Options::_oldAgeUnderLowMemory = 1000*60*5; // 5 minute
 int64_t J9::Options::_timeBetweenPurges = 1000*60*1; // 1 minute
+bool J9::Options::_shareROMClasses = false;
+int32_t J9::Options::_sharedROMClassCacheNumPartitions = 16;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 int32_t J9::Options::_interpreterSamplingThreshold = 300;
@@ -959,6 +961,12 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_secondaryClassLoadingPhaseThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"seriousCompFailureThreshold=",     "M<nnn>\tnumber of srious compilation failures after which we write a trace point in the snap file",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_seriousCompFailureThreshold, 0, "F%d", NOT_IN_SUBSET},
+#if defined(J9VM_OPT_JITSERVER)
+   {"sharedROMClassCacheNumPartitions=", " \tnumber of JITServer ROMClass cache partitions (each has its own monitor)",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_sharedROMClassCacheNumPartitions, 0, "F%d", NOT_IN_SUBSET},
+   {"shareROMClasses", " \tstore a single copy of each distinct ROMClass shared by all clients at JITServer",
+        TR::Options::setStaticBool, (intptr_t)&TR::Options::_shareROMClasses, 1, "F", NOT_IN_SUBSET},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"singleCache", "C\tallow only one code cache and one data cache to be allocated", RESET_JITCONFIG_RUNTIME_FLAG(J9JIT_GROW_CACHES) },
    {"smallMethodBytecodeSizeThreshold=", "O<nnn> Threshold for determining small methods\t "
                                          "(measured in number of bytecodes)",
