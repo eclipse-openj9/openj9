@@ -1450,8 +1450,8 @@ TR::Register *J9::Power::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::Co
       TR::Register *destinationAddressRegister = cg->allocateRegister();
 
       TR::LoadStoreHandler::generateComputeAddressSequence(cg, destinationAddressRegister, node);
-      VMwrtbarEvaluator(node, storeRegister, destinationRegister, destinationAddressRegister, NULL, secondChild->isNonNull(), true, usingCompressedPointers, cg);
-      TR::LoadStoreHandler::generateStoreAddressSequence(cg, sourceRegister, node, destinationAddressRegister, storeOp, sizeofMR);
+      VMwrtbarEvaluator(node, sourceRegister, destinationRegister, destinationAddressRegister, NULL, secondChild->isNonNull(), true, usingCompressedPointers, cg);
+      TR::LoadStoreHandler::generateStoreAddressSequence(cg, storeRegister, node, destinationAddressRegister, storeOp, sizeofMR);
 
       cg->stopUsingRegister(destinationAddressRegister);
       }
