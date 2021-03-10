@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,6 +93,13 @@ OX509_INFO_free_t * OX509_INFO_free = NULL;
 OX509_STORE_add_cert_t * OX509_STORE_add_cert = NULL;
 OX509_STORE_add_crl_t * OX509_STORE_add_crl = NULL;
 OX509_free_t * OX509_free = NULL;
+
+OEVP_MD_CTX_new_t * OEVP_MD_CTX_new = NULL;
+OEVP_MD_CTX_free_t * OEVP_MD_CTX_free = NULL;
+OEVP_DigestInit_ex_t * OEVP_DigestInit_ex = NULL;
+OEVP_DigestUpdate_t * OEVP_DigestUpdate = NULL;
+OEVP_DigestFinal_ex_t * OEVP_DigestFinal_ex = NULL;
+OEVP_sha256_t * OEVP_sha256 = NULL;
 
 OERR_print_errors_fp_t * OERR_print_errors_fp = NULL;
 
@@ -334,6 +341,13 @@ void dbgPrintSymbols()
    printf(" X509_STORE_add_crl %p\n", OX509_STORE_add_crl);
    printf(" X509_free %p\n", OX509_free);
 
+   printf(" EVP_MD_CTX_new %p\n", OEVP_MD_CTX_new);
+   printf(" EVP_MD_CTX_free %p\n", OEVP_MD_CTX_free);
+   printf(" EVP_DigestInit_ex %p\n", OEVP_DigestInit_ex);
+   printf(" EVP_DigestUpdate %p\n", OEVP_DigestUpdate);
+   printf(" EVP_DigestFinal_ex %p\n", OEVP_DigestFinal_ex);
+   printf(" EVP_sha256 %p\n", OEVP_sha256);
+
    printf(" ERR_print_errors_fp %p\n", OERR_print_errors_fp);
 
    printf("=============================================================\n\n");
@@ -448,6 +462,15 @@ bool loadLibsslAndFindSymbols()
    OX509_STORE_add_crl = (OX509_STORE_add_crl_t *)findLibsslSymbol(handle, "X509_STORE_add_crl");
    OX509_free = (OX509_free_t *)findLibsslSymbol(handle, "X509_free");
 
+   OEVP_MD_CTX_new = (OEVP_MD_CTX_new_t *)findLibsslSymbol(handle, (ossl_ver == 0) ? "EVP_MD_CTX_create"
+                                                                                   : "EVP_MD_CTX_new");
+   OEVP_MD_CTX_free = (OEVP_MD_CTX_free_t *)findLibsslSymbol(handle, (ossl_ver == 0) ? "EVP_MD_CTX_destroy"
+                                                                                     : "EVP_MD_CTX_free");
+   OEVP_DigestInit_ex = (OEVP_DigestInit_ex_t *)findLibsslSymbol(handle, "EVP_DigestInit_ex");
+   OEVP_DigestUpdate = (OEVP_DigestUpdate_t *)findLibsslSymbol(handle, "EVP_DigestUpdate");
+   OEVP_DigestFinal_ex = (OEVP_DigestFinal_ex_t *)findLibsslSymbol(handle, "EVP_DigestFinal_ex");
+   OEVP_sha256 = (OEVP_sha256_t *)findLibsslSymbol(handle, "EVP_sha256");
+
    OERR_print_errors_fp = (OERR_print_errors_fp_t *)findLibsslSymbol(handle, "ERR_print_errors_fp");
 
    if (
@@ -506,6 +529,13 @@ bool loadLibsslAndFindSymbols()
        (OX509_STORE_add_cert == NULL) ||
        (OX509_STORE_add_crl == NULL) ||
        (OX509_free == NULL) ||
+
+       (OEVP_MD_CTX_new == NULL) ||
+       (OEVP_MD_CTX_free == NULL) ||
+       (OEVP_DigestInit_ex == NULL) ||
+       (OEVP_DigestUpdate == NULL) ||
+       (OEVP_DigestFinal_ex == NULL) ||
+       (OEVP_sha256 == NULL) ||
 
        (OERR_print_errors_fp == NULL)
       )

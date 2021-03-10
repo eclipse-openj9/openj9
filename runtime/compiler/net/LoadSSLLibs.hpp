@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include <openssl/ssl.h>
+#include <openssl/evp.h>
 
 typedef const char * OOpenSSL_version_t(int);
 
@@ -88,6 +89,13 @@ typedef int OX509_STORE_add_cert_t(X509_STORE *ctx, X509 *x);
 typedef int OX509_STORE_add_crl_t(X509_STORE *ctx, X509_CRL *x);
 typedef void OX509_free_t(X509 *a);
 
+typedef EVP_MD_CTX * OEVP_MD_CTX_new_t(void);
+typedef void OEVP_MD_CTX_free_t(EVP_MD_CTX *ctx);
+typedef int OEVP_DigestInit_ex_t(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
+typedef int OEVP_DigestUpdate_t(EVP_MD_CTX *ctx, const void *d, size_t cnt);
+typedef int OEVP_DigestFinal_ex_t(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s);
+typedef const EVP_MD * OEVP_sha256_t(void);
+
 typedef void OERR_print_errors_fp_t(FILE *fp);
 
 extern "C" OOpenSSL_version_t * OOpenSSL_version;
@@ -148,7 +156,12 @@ extern "C" OX509_STORE_add_cert_t * OX509_STORE_add_cert;
 extern "C" OX509_STORE_add_crl_t * OX509_STORE_add_crl;
 extern "C" OX509_free_t * OX509_free;
 
-extern "C" OEVP_cleanup_t * OEVP_cleanup;
+extern "C" OEVP_MD_CTX_new_t * OEVP_MD_CTX_new;
+extern "C" OEVP_MD_CTX_free_t * OEVP_MD_CTX_free;
+extern "C" OEVP_DigestInit_ex_t * OEVP_DigestInit_ex;
+extern "C" OEVP_DigestUpdate_t * OEVP_DigestUpdate;
+extern "C" OEVP_DigestFinal_ex_t * OEVP_DigestFinal_ex;
+extern "C" OEVP_sha256_t * OEVP_sha256;
 
 extern "C" OERR_print_errors_fp_t * OERR_print_errors_fp;
 

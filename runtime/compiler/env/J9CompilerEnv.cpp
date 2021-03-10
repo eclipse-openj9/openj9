@@ -105,9 +105,17 @@ J9::CompilerEnv::persistentMemory()
    }
 
 #if defined(J9VM_OPT_JITSERVER)
+
 TR::PersistentAllocator &
 J9::CompilerEnv::persistentGlobalAllocator()
    {
    return OMR::CompilerEnv::persistentAllocator();
    }
-#endif
+
+TR_PersistentMemory *
+J9::CompilerEnv::persistentGlobalMemory()
+   {
+   return OMR::CompilerEnv::persistentMemory();
+   }
+
+#endif /* defined(J9VM_OPT_JITSERVER) */
