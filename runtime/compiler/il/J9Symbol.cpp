@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -126,7 +126,7 @@
        {r(TR::Symbol::Java_lang_J9VMInternals_jitHelpers,             "java/lang/J9VMInternals", "jitHelpers", "Lcom/ibm/jit/JITHelpers;")},
        {r(TR::Symbol::Java_lang_String_count,                         "java/lang/String", "count", "I")},
        {r(TR::Symbol::Java_lang_String_enableCompression,             "java/lang/String", "enableCompression", "Z") },
-       {r(TR::Symbol::Java_lang_String_hashCode,                      "java/lang/String", "hashCode", "I")},
+       {r(TR::Symbol::Java_lang_String_hashCode,                      "java/lang/String", "hash", "I")},
        {r(TR::Symbol::Java_lang_String_value,                         "java/lang/String", "value", "[B")},
        {r(TR::Symbol::Java_lang_String_value,                         "java/lang/String", "value", "[C")},
        {r(TR::Symbol::Java_lang_StringBuffer_count,                   "java/lang/StringBuffer", "count", "I")},

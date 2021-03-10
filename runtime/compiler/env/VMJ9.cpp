@@ -5023,7 +5023,7 @@ TR_J9VMBase::getStringFieldByName(TR::Compilation * comp, TR::SymbolReference * 
       pResult = (U_8*)string + J9VMJAVALANGSTRING_COUNT_OFFSET(vmThread());
    else if (field == TR::Symbol::Java_lang_String_hashCode)
       {
-      if (J9VMJAVALANGSTRING_HASHCODE(vmThread(), string) == 0)
+      if (J9VMJAVALANGSTRING_HASH(vmThread(), string) == 0)
          {
          // If not already computed, compute and clobber
          //
@@ -5036,9 +5036,9 @@ TR_J9VMBase::getStringFieldByName(TR::Compilation * comp, TR::SymbolReference * 
             sum += thisChar * scale;
             }
 
-         J9VMJAVALANGSTRING_SET_HASHCODE(vmThread(), string, sum);
+         J9VMJAVALANGSTRING_SET_HASH(vmThread(), string, sum);
          }
-      pResult = (U_8*)string + J9VMJAVALANGSTRING_HASHCODE_OFFSET(vmThread());
+      pResult = (U_8*)string + J9VMJAVALANGSTRING_HASH_OFFSET(vmThread());
       }
    else if (field == TR::Symbol::Java_lang_String_value)
       pResult = (U_8*)string + J9VMJAVALANGSTRING_VALUE_OFFSET(vmThread());
