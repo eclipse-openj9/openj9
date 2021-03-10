@@ -1635,6 +1635,8 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
 
    // Determine the symref to extract the number of arguments required by this bytecode
    TR::SymbolReference *symRef;
+   // Check if cp entry is resolved, used by invokedynamic and invokehandle in OpenJDK MethodHandle implementation
+   bool unresolvedInCP = false;
    switch (byteCode)
       {
       case J9BCinvokevirtual:
@@ -1653,11 +1655,11 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
          symRef = symRefTab()->findOrCreateInterfaceMethodSymbol(_methodSymbol, next2Bytes(3));
          break;
       case J9BCinvokedynamic:
-         symRef = symRefTab()->findOrCreateDynamicMethodSymbol(_methodSymbol, next2Bytes());
+         symRef = symRefTab()->findOrCreateDynamicMethodSymbol(_methodSymbol, next2Bytes(), &unresolvedInCP);
          break;
       case J9BCinvokehandle:
       case J9BCinvokehandlegeneric:
-         symRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, next2Bytes());
+         symRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, next2Bytes(), &unresolvedInCP);
          break;
       case J9BCinvokestaticsplit:
          symRef = symRefTab()->findOrCreateStaticMethodSymbol(_methodSymbol, next2Bytes() | J9_STATIC_SPLIT_TABLE_INDEX_FLAG);
@@ -1671,6 +1673,48 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
 
    TR::MethodSymbol *symbol = symRef->getSymbol()->castToMethodSymbol();
    int32_t numArgs = symbol->getMethod()->numberOfExplicitParameters() + (symbol->isStatic() ? 0 : 1);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   // If the transition target is invokehandle/invokedynamic, the arguments to be
+   // stashed are those already pushed onto the stack before generating the bytecode,
+   // regardless of the number of arguments needed by the generated call.
+   //
+   // The generated call requires one (in resolved case) or two (in unresolved case)
+   // implicit arguments, so we need to substract them to get the actual number of
+   // arguments needed.
+   // The reason why we don't need to stash the implicit arguments is because when we
+   // transition to the VM, VM will push the implicit argument onto the stack, this is
+   // part of the behavior of the invokehandle/invokedynamic bytecode.
+   //
+   // The method to call is determined by the MemberName object from the side table.
+   // In the resolved case, one implicit object is passed as the last argument to the
+   // call, it is the appendixObject from side table.
+   //
+   // When the side table entry is unresolved, this object is unknown, thus, the JIT
+   // doesn't know what method to call at compile time. To represent the unresolved
+   // case, the JIT uses MethodHandle.linkToStatic to represent the call.
+   // In addtion to the appendixObject, the MemberName object is also needed, thus
+   // the call requires two more arguments that what's on the stack.
+   //
+   // Resolved case:
+   // adapter(arg1, arg2, ..., argN, appendixObject)
+   // Unresolved case:
+   // MethodHandle.linkToStatic(arg1, arg2, ..., argN, appendixObject, MemberName)
+   //
+   // Notice that we always generate a resolved call, thus we use unresolvedInCP to tell
+   // us whether the side table entry is resolved
+   //
+   if (byteCode == J9BCinvokedynamic ||
+       byteCode == J9BCinvokehandle)
+      {
+      numArgs -= 1;
+      if (unresolvedInCP)
+         numArgs -= 1;
+
+      if (trace())
+         traceMsg(comp(), "Num args %d for invokedynamic/handle, stack size %d\n", numArgs, _stack->size());
+      }
+#endif
 
    TR_OSRMethodData *osrMethodData =
       comp()->getOSRCompilationData()->findOrCreateOSRMethodData(comp()->getCurrentInlinedSiteIndex(), _methodSymbol);
