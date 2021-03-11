@@ -72,6 +72,8 @@ public final class AlgorithmVersion {
 
 	public static final String MIXED_REFERENCE_MODE = "MIXED_REFERENCE_MODE";
 
+	public static final String JAVA_LANG_STRING_VERSION = "ALG_VM_JAVA_LANG_STRING_VERSION";
+
 	// Fields
 	private static AlgorithmVersion DEFAULT_VERSION;
 	private static int vmMajorVersion;

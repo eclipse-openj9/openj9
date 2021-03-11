@@ -47,6 +47,7 @@
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
 #define MIXED_REFERENCE_MODE 1
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#define ALG_VM_JAVA_LANG_STRING_VERSION 1
 
 /*
  * All constants in the table below must also be declared as macros above
@@ -75,6 +76,7 @@ J9DDRConstantTableBegin(DDRAlgorithmVersions)
 #if defined(MIXED_REFERENCE_MODE)
 	J9DDRConstantTableEntryWithValue("MIXED_REFERENCE_MODE", MIXED_REFERENCE_MODE)
 #endif /* defined(MIXED_REFERENCE_MODE) */
+	J9DDRConstantTableEntryWithValue("ALG_VM_JAVA_LANG_STRING_VERSION", ALG_VM_JAVA_LANG_STRING_VERSION)
 J9DDRConstantTableEnd
 
 J9DDRStructTableBegin(AlgorithmVersions)

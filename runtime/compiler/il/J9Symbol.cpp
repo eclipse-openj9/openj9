@@ -125,7 +125,7 @@
        {r(TR::Symbol::Java_io_ByteArrayOutputStream_count,            "java/io/ByteArrayOutputStream", "count", "I")},
        {r(TR::Symbol::Java_lang_J9VMInternals_jitHelpers,             "java/lang/J9VMInternals", "jitHelpers", "Lcom/ibm/jit/JITHelpers;")},
        {r(TR::Symbol::Java_lang_String_count,                         "java/lang/String", "count", "I")},
-       {r(TR::Symbol::Java_lang_String_enableCompression,             "java/lang/String", "enableCompression", "Z") },
+       {r(TR::Symbol::Java_lang_String_enableCompression,             "java/lang/String", "COMPACT_STRINGS", "Z") },
        {r(TR::Symbol::Java_lang_String_hashCode,                      "java/lang/String", "hash", "I")},
        {r(TR::Symbol::Java_lang_String_value,                         "java/lang/String", "value", "[B")},
        {r(TR::Symbol::Java_lang_String_value,                         "java/lang/String", "value", "[C")},

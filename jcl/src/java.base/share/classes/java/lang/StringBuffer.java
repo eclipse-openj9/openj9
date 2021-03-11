@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16 & !Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,7 +124,7 @@ public StringBuffer(int capacity) {
 	}
 	int arraySize = capacity;
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		arraySize = (capacity + 1) >>> 1;
 	}
 	value = new char[arraySize];
@@ -147,7 +147,7 @@ public StringBuffer (String string) {
 		newLength = stringLength;
 	}
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		if (string.isCompressed ()) {
 			value = new char[(newLength + 1) >>> 1];
 
@@ -196,7 +196,7 @@ public synchronized StringBuffer append (char[] chars) {
 		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
 	}
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		// Check if the StringBuffer is compressed
 		if (count >= 0 && String.canEncodeAsLatin1(chars, 0, chars.length)) {
 			if (newLength > currentCapacity) {
@@ -257,7 +257,7 @@ public synchronized StringBuffer append (char chars[], int start, int length) {
 			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
 		}
 		
-		if (String.enableCompression) {
+		if (String.COMPACT_STRINGS) {
 			// Check if the StringBuffer is compressed
 			if (count >= 0 && String.canEncodeAsLatin1(chars, start, length)) {
 				if (newLength > currentCapacity) {
@@ -307,7 +307,7 @@ synchronized StringBuffer append (char[] chars, int start, int length, boolean c
 		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
 	}
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		// Check if the StringBuffer is compressed
 		if (count >= 0 && compressed) {
 			if (newLength > currentCapacity) {
@@ -370,7 +370,7 @@ public synchronized StringBuffer append(char ch) {
 		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
 	}
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		// Check if the StringBuffer is compressed
 		if (count >= 0 && ch <= 255) {
 			if (newLength > currentCapacity) {
@@ -438,7 +438,7 @@ public StringBuffer append (float value) {
  */
 public synchronized StringBuffer append(int value) {
 	if (value != Integer.MIN_VALUE) {
-		if (String.enableCompression && count >= 0) {
+		if (String.COMPACT_STRINGS && count >= 0) {
 			return append(Integer.toString(value));
 		} else {
 			int currentLength = lengthInternalUnsynchronized();
@@ -464,7 +464,7 @@ public synchronized StringBuffer append(int value) {
 
 			Integer.getChars(value, newLength, this.value);
 
-			if (String.enableCompression) {
+			if (String.COMPACT_STRINGS) {
 				count = newLength | uncompressedBit;
 			} else {
 				count = newLength;
@@ -487,7 +487,7 @@ public synchronized StringBuffer append(int value) {
  */
 public synchronized StringBuffer append(long value) {
 	if (value != Long.MIN_VALUE) {
-		if (String.enableCompression && count >= 0) {
+		if (String.COMPACT_STRINGS && count >= 0) {
 			return append(Long.toString(value));
 		} else {
 			int currentLength = lengthInternalUnsynchronized();
@@ -513,7 +513,7 @@ public synchronized StringBuffer append(long value) {
 
 			Long.getChars(value, newLength, this.value);
 
-			if (String.enableCompression) {
+			if (String.COMPACT_STRINGS) {
 				count = newLength | uncompressedBit;
 			} else {
 				count = newLength;
@@ -560,7 +560,7 @@ public synchronized StringBuffer append (String string) {
 		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
 	}
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		// Check if the StringBuffer is compressed
 		if (count >= 0 && string.isCompressed ()) {
 			if (newLength > currentCapacity) {
@@ -650,7 +650,7 @@ public synchronized char charAt(int index) {
 	
 	if (index >= 0 && index < currentLength) {
 		// Check if the StringBuffer is compressed
-		if (String.enableCompression && count >= 0) {
+		if (String.COMPACT_STRINGS && count >= 0) {
 			return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 		} else {
 			return value[index];
@@ -686,7 +686,7 @@ public synchronized StringBuffer delete(int start, int end) {
 				if (capacity >= 0) {
 					if (numberOfTailChars > 0) {
 						// Check if the StringBuffer is compressed
-						if (String.enableCompression && count >= 0) {
+						if (String.COMPACT_STRINGS && count >= 0) {
 							String.compressedArrayCopy(value, end, value, start, numberOfTailChars);
 						} else {
 							String.decompressedArrayCopy(value, end, value, start, numberOfTailChars);
@@ -696,7 +696,7 @@ public synchronized StringBuffer delete(int start, int end) {
 					char[] newData = new char[value.length];
 					
 					// Check if the StringBuffer is compressed
-					if (String.enableCompression && count >= 0) {
+					if (String.COMPACT_STRINGS && count >= 0) {
 						if (start > 0) {
 							String.compressedArrayCopy(value, 0, newData, 0, start);
 						}
@@ -722,7 +722,7 @@ public synchronized StringBuffer delete(int start, int end) {
 				throw new StringIndexOutOfBoundsException();
 			}
 			
-			if (String.enableCompression) {
+			if (String.COMPACT_STRINGS) {
 				// Check if the StringBuffer is compressed
 				if (count >= 0) {
 					count = currentLength - (end - start);
@@ -793,7 +793,7 @@ private void ensureCapacityImpl(int min) {
 	int newLength = min > newCapacity ? min : newCapacity;
 	
 	// Check if the StringBuilder is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		char[] newData = new char[(newLength + 1) >>> 1];
 		
 		String.compressedArrayCopy(value, 0, newData, 0, currentLength);
@@ -831,7 +831,7 @@ public synchronized void getChars(int start, int end, char[] buffer, int index) 
 			// have implicitly checked these conditions
 			if (start >= 0 && start <= end && index >= 0 && end - start <= buffer.length - index) {
 				// Check if the StringBuffer is compressed
-				if (String.enableCompression && count >= 0) {
+				if (String.COMPACT_STRINGS && count >= 0) {
 					String.decompress(value, start, buffer, index, end - start);
 					
 					return;
@@ -866,7 +866,7 @@ public synchronized StringBuffer insert(int index, char[] chars) {
 	if (0 <= index && index <= currentLength) {
 		move(chars.length, index);
 		
-		if (String.enableCompression) {
+		if (String.COMPACT_STRINGS) {
 			// Check if the StringBuffer is compressed
 			if (count >= 0 && String.canEncodeAsLatin1(chars, 0, chars.length)) {
 				String.compress(chars, 0, value, index, chars.length);
@@ -920,7 +920,7 @@ public synchronized StringBuffer insert(int index, char[] chars, int start, int 
 		if (start >= 0 && 0 <= length && length <= chars.length - start) {
 			move(length, index);
 			
-			if (String.enableCompression) {
+			if (String.COMPACT_STRINGS) {
 				// Check if the StringBuffer is compressed
 				if (count >= 0 && String.canEncodeAsLatin1(chars, start, length)) {
 					String.compress(chars, start, value, index, length);
@@ -960,7 +960,7 @@ synchronized StringBuffer insert(int index, char[] chars, int start, int length,
 	
 	move(length, index);
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		// Check if the StringBuffer is compressed
 		if (count >= 0 && compressed) {
 			String.compressedArrayCopy(chars, start, value, index, length);
@@ -1004,7 +1004,7 @@ public synchronized StringBuffer insert(int index, char ch) {
 	if (0 <= index && index <= currentLength) {
 		move(1, index);
 		
-		if (String.enableCompression ) {
+		if (String.COMPACT_STRINGS ) {
 			// Check if the StringBuffer is compressed
 			if (count >= 0 && ch <= 255) {
 				helpers.putByteInArrayByIndex(value, index, (byte) ch);
@@ -1133,7 +1133,7 @@ public synchronized StringBuffer insert(int index, String string) {
 		
 		move(stringLength, index);
 		
-		if (String.enableCompression) {
+		if (String.COMPACT_STRINGS) {
 			// Check if the StringBuffer is compressed
 			if (count >= 0 && string.isCompressed()) {
 				string.getBytes(0, stringLength, value, index);
@@ -1198,7 +1198,7 @@ public synchronized int length() {
  * @return the number of characters in this StringBuffer
  */
 private int lengthInternalUnsynchronized() {
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		// Check if the StringBuffer is compressed
 		if (count >= 0) {
 			return count;
@@ -1215,7 +1215,7 @@ private void move(int size, int index) {
 	int currentCapacity = capacityInternal();
 	
 	// Check if the StringBuffer is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		int newLength;
 		
 		if (currentCapacity - currentLength >= size) {
@@ -1287,7 +1287,7 @@ private void move(int size, int index) {
 public synchronized StringBuffer replace(int start, int end, String string) {
 	int currentLength = lengthInternalUnsynchronized();
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		// Check if the StringBuffer is compressed
 		if (count >= 0 && string.isCompressed()) {
 			if (start >= 0) {
@@ -1451,7 +1451,7 @@ public synchronized StringBuffer reverse() {
 	}
 	
 	// Check if the StringBuffer is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		// Check if the StringBuffer is not shared
 		if (capacity >= 0) {
 			for (int i = 0, mid = currentLength / 2, j = currentLength - 1; i < mid; ++i, --j) {
@@ -1573,7 +1573,7 @@ public synchronized void setCharAt(int index, char ch) {
 	int currentLength = lengthInternalUnsynchronized();
 	
 	if (0 <= index && index < currentLength) {
-		if (String.enableCompression) {
+		if (String.COMPACT_STRINGS) {
 			// Check if the StringBuffer is compressed
 			if (count >= 0 && ch <= 255) {
 				if (capacity < 0) {
@@ -1628,7 +1628,7 @@ public synchronized void setLength(int length) {
 	int currentCapacity = capacityInternal();
 	
 	// Check if the StringBuffer is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		if (length > currentCapacity) {
 			ensureCapacityImpl(length);
 		} else if (length > currentLength) {
@@ -1676,7 +1676,7 @@ public synchronized void setLength(int length) {
 		}
 	}
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		// Check if the StringBuffer is compressed
 		if (count >= 0) {
 			count = length;
@@ -1702,7 +1702,7 @@ public synchronized String substring(int start) {
 	int currentLength = lengthInternalUnsynchronized();
 
 	// Check if the StringBuffer is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		if (0 <= start && start <= currentLength) {
 			return new String(value, start, currentLength - start, true, false);
 		}
@@ -1729,7 +1729,7 @@ public synchronized String substring(int start, int end) {
 	int currentLength = lengthInternalUnsynchronized();
 	
 	// Check if the StringBuffer is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		if (0 <= start && start <= end && end <= currentLength) {
 			return new String(value, start, end - start, true, false);
 		}
@@ -1765,7 +1765,7 @@ public synchronized String toString () {
 		int wasted = currentCapacity - currentLength;
 		if (wasted >= 768 || (wasted >= INITIAL_SIZE && wasted >= (currentCapacity >> 1))) {
 			// Check if the StringBuffer is compressed
-			if (String.enableCompression && count >= 0) {
+			if (String.COMPACT_STRINGS && count >= 0) {
 				return new String (value, 0, currentLength, true, false);
 			} else {
 				return new String (value, 0, currentLength, false, false);
@@ -1776,7 +1776,7 @@ public synchronized String toString () {
 		int roundedCount = (currentLength + 3) & ~3;
 		if (roundedCount < currentCapacity) {
 			// Check if the StringBuffer is compressed
-			if (String.enableCompression && count >= 0) {
+			if (String.COMPACT_STRINGS && count >= 0) {
 				return new String (value, 0, currentLength, true, false);
 			} else {
 				return new String (value, 0, currentLength, false, false);
@@ -1787,7 +1787,7 @@ public synchronized String toString () {
 	capacity = capacity | sharedBit;
 	
 	// Check if the StringBuffer is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		return new String (value, 0, currentLength, true);
 	} else {
 		return new String (value, 0, currentLength, false);
@@ -1802,7 +1802,7 @@ private synchronized void writeObject(ObjectOutputStream stream) throws IOExcept
 	pf.put("count", currentLength); //$NON-NLS-1$  
 
 	// Check if the StringBuffer is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		char[] newData = new char[currentLength];
 		
 		String.decompress(value, 0, newData, 0, currentLength);
@@ -1828,7 +1828,7 @@ private void readObject(ObjectInputStream stream) throws IOException, ClassNotFo
 		throw new InvalidObjectException(com.ibm.oti.util.Msg.getString("K0199")); //$NON-NLS-1$
 	} 
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		if (String.canEncodeAsLatin1(streamValue, 0, streamValue.length)) {
 			value = new char[(streamValue.length + 1) >>> 1];
 			
@@ -1873,7 +1873,7 @@ public synchronized StringBuffer append(StringBuffer buffer) {
 	} else {
 		synchronized (buffer) {
 			// Check if the StringBuffer is compressed
-			if (String.enableCompression && buffer.count >= 0) {
+			if (String.COMPACT_STRINGS && buffer.count >= 0) {
 				return append(buffer.value, 0, buffer.lengthInternalUnsynchronized(), true);
 			} else {
 				return append(buffer.value, 0, buffer.lengthInternalUnsynchronized(), false);
@@ -1947,7 +1947,7 @@ public synchronized int indexOf(String subString, int start) {
 		char firstChar = subString.charAtInternal(0);
 		
 		// Check if the StringBuffer is compressed
-		if (String.enableCompression && count >= 0) {
+		if (String.COMPACT_STRINGS && count >= 0) {
 			if (!subString.isCompressed()) {
 				return -1;
 			}
@@ -2064,7 +2064,7 @@ public synchronized int lastIndexOf(String subString, int start) {
 			char firstChar = subString.charAtInternal(0);
 			
 			// Check if the StringBuffer is compressed
-			if (String.enableCompression && count >= 0) {
+			if (String.COMPACT_STRINGS && count >= 0) {
 				if (!subString.isCompressed()) {
 					return -1;
 				}
@@ -2147,7 +2147,7 @@ char[] shareValue() {
 
 boolean isCompressed() {
 	// Check if the StringBuffer is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		return true;
 	} else {
 		return false;
@@ -2175,7 +2175,7 @@ public StringBuffer(CharSequence sequence) {
 		newLength = size;
 	}
 	
-	if (String.enableCompression) {
+	if (String.COMPACT_STRINGS) {
 		value = new char[(newLength + 1) >>> 1];
 	} else {
 		value = new char[newLength];
@@ -2188,7 +2188,7 @@ public StringBuffer(CharSequence sequence) {
 	} else if (sequence instanceof StringBuffer) {		
 		append((StringBuffer)sequence);
 	} else {		
-		if (String.enableCompression) {
+		if (String.COMPACT_STRINGS) {
 			boolean isCompressed = true;
 			
 			for (int i = 0; i < size; ++i) {
@@ -2254,7 +2254,7 @@ public synchronized StringBuffer append(CharSequence sequence) {
 			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
 		}
 		
-		if (String.enableCompression) {
+		if (String.COMPACT_STRINGS) {
 			boolean isCompressed = true;
 			
 			if (count >= 0) {
@@ -2335,7 +2335,7 @@ public synchronized StringBuffer append(CharSequence sequence, int start, int en
 				StringBuffer buffer = (StringBuffer) sequence;
 				
 				// Check if the StringBuffer is compressed
-				if (String.enableCompression && buffer.count >= 0) {
+				if (String.COMPACT_STRINGS && buffer.count >= 0) {
 					return append(buffer.value, start, end - start, true);
 				} else {
 					return append(buffer.value, start, end - start, false);
@@ -2345,7 +2345,7 @@ public synchronized StringBuffer append(CharSequence sequence, int start, int en
 			synchronized (sequence) {
 				StringBuilder builder = (StringBuilder) sequence;
 				
-				if (String.enableCompression && builder.isCompressed()) {
+				if (String.COMPACT_STRINGS && builder.isCompressed()) {
 					return append(builder.getValue(), start, end - start, true);
 				} else {
 					return append(builder.getValue(), start, end - start, false);
@@ -2361,7 +2361,7 @@ public synchronized StringBuffer append(CharSequence sequence, int start, int en
 				throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
 			}
 			
-			if (String.enableCompression) {
+			if (String.COMPACT_STRINGS) {
 				boolean isCompressed = true;
 				
 				if (count >= 0) {
@@ -2445,7 +2445,7 @@ public synchronized StringBuffer insert(int index, CharSequence sequence) {
 				StringBuffer buffer = (StringBuffer) sequence;
 				
 				// Check if the StringBuffer is compressed
-				if (String.enableCompression && buffer.count >= 0) {
+				if (String.COMPACT_STRINGS && buffer.count >= 0) {
 					return insert(index, buffer.value, 0, buffer.lengthInternalUnsynchronized(), true);
 				} else {
 					return insert(index, buffer.value, 0, buffer.lengthInternalUnsynchronized(), false);
@@ -2455,7 +2455,7 @@ public synchronized StringBuffer insert(int index, CharSequence sequence) {
 			synchronized (sequence) {
 				StringBuilder builder = (StringBuilder) sequence;
 				
-				if (String.enableCompression && builder.isCompressed()) {
+				if (String.COMPACT_STRINGS && builder.isCompressed()) {
 					return insert(index, builder.getValue(), 0, builder.lengthInternal(), true);
 				} else {
 					return insert(index, builder.getValue(), 0, builder.lengthInternal(), false);
@@ -2469,7 +2469,7 @@ public synchronized StringBuffer insert(int index, CharSequence sequence) {
 				
 				int newLength = currentLength + sequneceLength;
 				
-				if (String.enableCompression) {
+				if (String.COMPACT_STRINGS) {
 					boolean isCompressed = true;
 					
 					for (int i = 0; i < sequneceLength; ++i) {
@@ -2547,7 +2547,7 @@ public synchronized StringBuffer insert(int index, CharSequence sequence, int st
 					StringBuffer buffer = (StringBuffer) sequence;
 					
 					// Check if the StringBuffer is compressed
-					if (String.enableCompression && buffer.count >= 0) {
+					if (String.COMPACT_STRINGS && buffer.count >= 0) {
 						return insert(index, buffer.value, start, end - start, true);
 					} else {
 						return insert(index, buffer.value, start, end - start, false);
@@ -2557,7 +2557,7 @@ public synchronized StringBuffer insert(int index, CharSequence sequence, int st
 				synchronized(sequence) {
 					StringBuilder builder = (StringBuilder) sequence;
 					
-					if (String.enableCompression && builder.isCompressed()) {
+					if (String.COMPACT_STRINGS && builder.isCompressed()) {
 						return insert(index, builder.getValue(), start, end - start, true);
 					} else {
 						return insert(index, builder.getValue(), start, end - start, false);
@@ -2571,7 +2571,7 @@ public synchronized StringBuffer insert(int index, CharSequence sequence, int st
 					
 					int newLength = currentLength + sequenceLength;
 					
-					if (String.enableCompression) {
+					if (String.COMPACT_STRINGS) {
 						boolean isCompressed = true;
 						
 						for (int i = 0; i < sequenceLength; ++i) {
@@ -2633,7 +2633,7 @@ public synchronized void trimToSize() {
 	int currentCapacity = capacityInternal();
 	
 	// Check if the StringBuffer is compressed
-	if (String.enableCompression && count >= 0) {
+	if (String.COMPACT_STRINGS && count >= 0) {
 		// Check if the StringBuffer is not shared
 		if (capacity >= 0 && currentCapacity != currentLength) {
 			char[] newData = new char[(currentLength + 1) / 2];
@@ -2670,7 +2670,7 @@ public synchronized int codePointAt(int index) {
 	
 	if (index >= 0 && index < currentLength) {
 		// Check if the StringBuffer is compressed
-		if (String.enableCompression && count >= 0) {
+		if (String.COMPACT_STRINGS && count >= 0) {
 			return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 		} else {
 			int high = value[index];
@@ -2703,7 +2703,7 @@ public synchronized int codePointBefore(int index) {
 	
 	if (index > 0 && index <= currentLength) {
 		// Check if the StringBuffer is compressed
-		if (String.enableCompression && count >= 0) {
+		if (String.COMPACT_STRINGS && count >= 0) {
 			return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index - 1));
 		} else {
 			int low = value[index - 1];
@@ -2737,7 +2737,7 @@ public synchronized int codePointCount(int start, int end) {
 	
 	if (start >= 0 && start <= end && end <= currentLength) {
 		// Check if the StringBuffer is compressed
-		if (String.enableCompression && count >= 0) {
+		if (String.COMPACT_STRINGS && count >= 0) {
 			return end - start;
 		} else {
 			int count = 0;
@@ -2777,7 +2777,7 @@ public synchronized int offsetByCodePoints(int start, int codePointCount) {
 	
 	if (start >= 0 && start <= currentLength) {
 		// Check if the StringBuffer is compressed
-		if (String.enableCompression && count >= 0) {
+		if (String.COMPACT_STRINGS && count >= 0) {
 			int index = start + codePointCount;
 
 			if (index >= currentLength) {
@@ -2849,7 +2849,7 @@ public synchronized StringBuffer appendCodePoint(int codePoint) {
 			return append((char)codePoint);
 		} else if (codePoint < 0x110000) {
 			// Check if the StringBuffer is compressed
-			if (String.enableCompression && count >= 0) {
+			if (String.COMPACT_STRINGS && count >= 0) {
 				decompress(value.length);
 			}
 			
@@ -2871,7 +2871,7 @@ public synchronized StringBuffer appendCodePoint(int codePoint) {
 			value[currentLength] = (char) (Character.MIN_HIGH_SURROGATE + (codePoint >> 10));
 			value[currentLength + 1] = (char) (Character.MIN_LOW_SURROGATE + (codePoint & 0x3ff));
 
-			if (String.enableCompression) {
+			if (String.COMPACT_STRINGS) {
 				count = newLength | uncompressedBit;
 			} else {
 				count = newLength;

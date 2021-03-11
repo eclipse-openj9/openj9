@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -193,7 +193,13 @@ public class J9ObjectHelper
 		} else {
 			stringLength = getIntField(objPointer, getFieldOffset(objPointer, "count", "I"));
 
-			boolean enableCompression = getBooleanField(objPointer, getFieldOffset(objPointer, "enableCompression", "Z"));
+			String enableCompressionFieldName;
+			if (AlgorithmVersion.getVersionOf(AlgorithmVersion.JAVA_LANG_STRING_VERSION).getAlgorithmVersion() >= 1) {
+				enableCompressionFieldName = "COMPACT_STRINGS";
+			} else {
+				enableCompressionFieldName = "enableCompression";
+			}
+			boolean enableCompression = getBooleanField(objPointer, getFieldOffset(objPointer, enableCompressionFieldName, "Z"));
 
 			if (enableCompression) {
 				if (stringLength >= 0) {
