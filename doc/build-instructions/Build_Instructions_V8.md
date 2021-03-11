@@ -452,7 +452,6 @@ bash configure --disable-ccache \
 ```
 bash configure --disable-ccache \
                --with-boot-jdk=/cygdrive/c/<path_to_jdk8> \
-               --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
                --with-freetype-src=/cygdrive/c/temp/freetype
                --with-target-bits=32
 ```
