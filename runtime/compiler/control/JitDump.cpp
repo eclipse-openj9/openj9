@@ -40,76 +40,19 @@
 
 struct ILOfCrashedThreadParamenters
    {
-   ILOfCrashedThreadParamenters(J9VMThread *vmThread, TR::Compilation *comp, J9JITConfig *jitConfig, TR::FILE *jitdumpFile)
-   : vmThread(vmThread), comp(comp), jitConfig(jitConfig),jitdumpFile(jitdumpFile)
+   ILOfCrashedThreadParamenters(J9VMThread *vmThread, TR::Compilation *comp, TR::FILE *jitdumpFile)
+   : vmThread(vmThread), comp(comp), jitdumpFile(jitdumpFile)
       {}
 
-   J9VMThread      *vmThread;
+   /// The JVM thread backing the crashed thread
+   J9VMThread *vmThread;
+
+   /// The compilation object extracted from the crashed thread
    TR::Compilation *comp;
-   J9JITConfig     *jitConfig;
-   TR::FILE        *jitdumpFile;
+
+   /// The jitdump file to trace the IL of the crashed thread to
+   TR::FILE *jitdumpFile;
    };
-
-
-
-/// Recompiles a method for the JIT dump
-static TR_CompilationErrorCode recompileMethodForLog(
-   J9VMThread         *vmThread,
-   J9Method           *ramMethod,
-   TR::CompilationInfo *compInfo,
-   TR_Hotness          optimizationLevel,
-   bool                profilingCompile,
-   TR::Options         *optionsFromOriginalCompile,
-   bool                isAOTBody,
-   void               *oldStartPC,
-   TR::FILE *jitdumpFile
-   )
-   {
-   PORT_ACCESS_FROM_VMC(vmThread);
-   J9Class *clazz = J9_CLASS_FROM_METHOD(ramMethod);
-   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-   J9UTF8 *methName = J9ROMMETHOD_NAME(romMethod);
-   J9UTF8 *methSig = J9ROMMETHOD_SIGNATURE(romMethod);
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
-
-   j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_RECOMPILING_METHOD,
-         (UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
-         (UDATA)J9UTF8_LENGTH(methName), J9UTF8_DATA(methName),
-         (UDATA)J9UTF8_LENGTH(methSig), J9UTF8_DATA(methSig));
-
-   Trc_JIT_DumpCompilingMethod(vmThread, ramMethod, optimizationLevel, oldStartPC);
-
-   // The request to use a trace log gets passed to the compilation via the optimization plan. The options object
-   // created before the compile is issued will use the trace log we provide to initialize IL tracing.
-   TR_OptimizationPlan *plan = TR_OptimizationPlan::alloc(optimizationLevel);
-   if (NULL == plan)
-      {
-      j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_OPTIMIZATION_PLAN);
-      return compilationFailure;
-      }
-
-   plan->setInsertInstrumentation(profilingCompile);
-   plan->setLogCompilation(jitdumpFile);
-
-   trfprintf(jitdumpFile, "<recompilation>\n");
-
-   // Set the VM state of the crashed thread so the diagnostic thread can use consume it
-   compInfo->setVMStateOfCrashedThread(vmThread->omrVMThread->vmState);
-
-   J9::JitDumpMethodDetails details(ramMethod, optionsFromOriginalCompile, isAOTBody);
-   auto rc = compilationOK;
-   auto queued = false;
-   compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &rc, &queued, plan);
-
-   trfprintf(jitdumpFile, "</recompilation rc=%d queued=%d>\n", rc, queued);
-
-   if (!queued)
-      {
-      TR_OptimizationPlan::freeOptimizationPlan(plan);
-      }
-
-   return rc;
-   }
 
 static uintptr_t
 traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg)
@@ -117,7 +60,7 @@ traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg
    auto p = *static_cast<ILOfCrashedThreadParamenters*>(handler_arg);
 
    TR_J9ByteCodeIlGenerator bci(p.comp->ilGenRequest().details(), p.comp->getMethodSymbol(),
-      TR_J9VMBase::get(p.jitConfig, p.vmThread), p.comp, p.comp->getSymRefTab());
+      TR_J9VMBase::get(p.vmThread->javaVM->jitConfig, p.vmThread), p.comp, p.comp->getSymRefTab());
    bci.printByteCodes();
 
    // This call will reset the previously recorded symbol reference size to 0, thus indicating to the debug object that
@@ -146,9 +89,9 @@ traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg
    }
 
 static void
-traceILOfCrashedThread(J9VMThread *vmThread, TR::Compilation *comp, J9JITConfig *jitConfig, TR::FILE *jitdumpFile)
+traceILOfCrashedThread(J9VMThread *vmThread, TR::Compilation *comp, TR::FILE *jitdumpFile)
    {
-   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   PORT_ACCESS_FROM_VMC(vmThread);
    j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD);
 
    bool alreadyHaveVMAccess = ((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) != 0);
@@ -172,7 +115,7 @@ traceILOfCrashedThread(J9VMThread *vmThread, TR::Compilation *comp, J9JITConfig 
 
    trfprintf(jitdumpFile, "<ilOfCrashedThread>\n");
 
-   ILOfCrashedThreadParamenters p(vmThread, comp, jitConfig, jitdumpFile);
+   ILOfCrashedThreadParamenters p(vmThread, comp, jitdumpFile);
 
    U_32 flags = J9PORT_SIG_FLAG_MAY_RETURN |
                 J9PORT_SIG_FLAG_SIGSEGV | J9PORT_SIG_FLAG_SIGFPE |
@@ -188,6 +131,54 @@ traceILOfCrashedThread(J9VMThread *vmThread, TR::Compilation *comp, J9JITConfig 
    if (!alreadyHaveVMAccess && haveAcquiredVMAccess)
       {
       vmThread->javaVM->internalVMFunctions->internalReleaseVMAccess(vmThread);
+      }
+   }
+
+static void
+jitDumpRecompileWithTracing(J9VMThread *vmThread, J9Method *ramMethod, TR::CompilationInfo *compInfo, TR_Hotness optLevel, bool isProfilingCompile, TR::Options *optionsFromOriginalCompile, bool isAOTBody, void *oldStartPC, TR::FILE *jitdumpFile
+   )
+   {
+   PORT_ACCESS_FROM_VMC(vmThread);
+   J9Class *clazz = J9_CLASS_FROM_METHOD(ramMethod);
+   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+   J9UTF8 *methName = J9ROMMETHOD_NAME(romMethod);
+   J9UTF8 *methSig = J9ROMMETHOD_SIGNATURE(romMethod);
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+
+   j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_RECOMPILING_METHOD,
+         (UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
+         (UDATA)J9UTF8_LENGTH(methName), J9UTF8_DATA(methName),
+         (UDATA)J9UTF8_LENGTH(methSig), J9UTF8_DATA(methSig));
+
+   Trc_JIT_DumpCompilingMethod(vmThread, ramMethod, optLevel, oldStartPC);
+
+   // The request to use a trace log gets passed to the compilation via the optimization plan. The options object
+   // created before the compile is issued will use the trace log we provide to initialize IL tracing.
+   TR_OptimizationPlan *plan = TR_OptimizationPlan::alloc(optLevel);
+   if (NULL == plan)
+      {
+      j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_OPTIMIZATION_PLAN);
+      return;
+      }
+
+   plan->setInsertInstrumentation(isProfilingCompile);
+   plan->setLogCompilation(jitdumpFile);
+
+   trfprintf(jitdumpFile, "<recompilation>\n");
+
+   // Set the VM state of the crashed thread so the diagnostic thread can use consume it
+   compInfo->setVMStateOfCrashedThread(vmThread->omrVMThread->vmState);
+
+   J9::JitDumpMethodDetails details(ramMethod, optionsFromOriginalCompile, isAOTBody);
+   auto rc = compilationOK;
+   auto queued = false;
+   compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &rc, &queued, plan);
+
+   trfprintf(jitdumpFile, "</recompilation rc=%d queued=%d>\n", rc, queued);
+
+   if (!queued)
+      {
+      TR_OptimizationPlan::freeOptimizationPlan(plan);
       }
    }
 
@@ -209,7 +200,7 @@ jitDumpStackFrameIterator(J9VMThread *currentThread, J9StackWalkState *walkState
       auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>(walkState->jitInfo->bodyInfo);
       if (NULL != bodyInfo)
          {
-            TR_CompilationErrorCode compErrCode = recompileMethodForLog(
+            jitDumpRecompileWithTracing(
                currentThread,
                walkState->method,
                reinterpret_cast<TR::CompilationInfo*>(walkState->userData1),
@@ -297,34 +288,32 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    
-   // to avoid deadlock, release compilation monitor until we are no longer holding it
+   // To avoid a deadlock, release compilation monitor until we are no longer holding it
    while (compInfo->getCompilationMonitor()->owned_by_self())
-      compInfo->releaseCompMonitor(crashedThread);
-
-   // Release other monitors as well. In particular CHTable and classUnloadMonitor must not be held
-   while (TR::MonitorTable::get()->getClassTableMutex()->owned_by_self())
-      frontendOfThread->releaseClassTableMutex(false);
-
-   //FIXME: how do I detect that someone is holding the classUnloadMonitor
-
-   // get crashed thread's own compinfo
-   TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(crashedThread);
-
-   // get the method currently being compiled
-   TR_MethodToBeCompiled *currentMethodBeingCompiled = NULL;
-   if (NULL != threadCompInfo)
       {
-      currentMethodBeingCompiled = threadCompInfo->getMethodBeingCompiled();
+      compInfo->releaseCompMonitor(crashedThread);
       }
 
-   // If we are currently compiling a method, wake everyone waiting for it to compile
-   if (NULL != currentMethodBeingCompiled && NULL != currentMethodBeingCompiled->getMonitor())
+   // Release other monitors as well. In particular CHTable and classUnloadMonitor must not be held.
+   while (TR::MonitorTable::get()->getClassTableMutex()->owned_by_self())
       {
-      currentMethodBeingCompiled->getMonitor()->enter();
-      currentMethodBeingCompiled->getMonitor()->notifyAll();
-      currentMethodBeingCompiled->getMonitor()->exit();
-      
-      j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS);
+      frontendOfThread->releaseClassTableMutex(false);
+      }
+
+   TR::CompilationInfoPerThread *threadCompInfo = compInfo->getCompInfoForThread(crashedThread);
+   if (NULL != threadCompInfo)
+      {
+      TR_MethodToBeCompiled *methodBeingCompiled = threadCompInfo->getMethodBeingCompiled();
+
+      // If we are currently compiling a method, wake everyone waiting for it to compile
+      if (NULL != methodBeingCompiled && NULL != methodBeingCompiled->getMonitor())
+         {
+         methodBeingCompiled->getMonitor()->enter();
+         methodBeingCompiled->getMonitor()->notifyAll();
+         methodBeingCompiled->getMonitor()->exit();
+         
+         j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS);
+         }
       }
 
    compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
@@ -394,7 +383,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                      if (NULL == threadCompInfo)
                         {
                         // We are an application thread
-                        TR_CompilationErrorCode compErrCode = recompileMethodForLog(
+                        jitDumpRecompileWithTracing(
                            crashedThread,
                            userMethod,
                            compInfo,
@@ -416,7 +405,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                         // See comment below for the same call on why this is needed
                         TR::VMAccessCriticalSection requestSynchronousCompilation(TR_J9VMBase::get(jitConfig, crashedThread));
 
-                        TR_CompilationErrorCode compErrCode = recompileMethodForLog(
+                        jitDumpRecompileWithTracing(
                            crashedThread,
                            userMethod,
                            compInfo,
@@ -476,10 +465,10 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             return OMR_ERROR_INTERNAL;
             }
 
-         traceILOfCrashedThread(crashedThread, comp, jitConfig, jitdumpFile);
+         traceILOfCrashedThread(crashedThread, comp, jitdumpFile);
 
-         // We can only handle ordinary method recompilations
-         if (NULL != currentMethodBeingCompiled && currentMethodBeingCompiled->getMethodDetails().isOrdinaryMethod())
+         TR_MethodToBeCompiled *methodBeingCompiled = threadCompInfo->getMethodBeingCompiled();
+         if (NULL != methodBeingCompiled && methodBeingCompiled->getMethodDetails().isOrdinaryMethod())
             {
             j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_ORDINARY_METHOD);
 
@@ -492,7 +481,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                TR::VMAccessCriticalSection requestSynchronousCompilation(TR_J9VMBase::get(jitConfig, crashedThread));
 
                // request the compilation
-               TR_CompilationErrorCode compErrCode = recompileMethodForLog(
+               jitDumpRecompileWithTracing(
                   crashedThread,
                   (J9Method *)(comp->getCurrentMethod()->getPersistentIdentifier()),
                   compInfo,
@@ -500,7 +489,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
                   comp->isProfilingCompilation(),
                   comp->getOptions(),
                   comp->compileRelocatableCode(),
-                  currentMethodBeingCompiled->_oldStartPC,
+                  methodBeingCompiled->_oldStartPC,
                   jitdumpFile
                );
                }
