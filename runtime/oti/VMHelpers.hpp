@@ -1016,6 +1016,37 @@ done:
 	}
 
 	/**
+	 * Check if the UTF8 byte stream contains only ISO-8859-1/Latin-1 characters.
+	 *
+	 * @param data[in] the UTF8 byte stream
+	 * @param length[in] the length of incoming UTF8 byte stream
+	 *
+	 * @returns true if data only contains Latin-1 characters, false if otherwise
+	 */
+	static VMINLINE bool
+	isLatin1String(const U_8 *data, UDATA length)
+	{
+		bool isLatin1 = true;
+		while (0 != length) {
+			U_16 unicode = 0;
+			UDATA consumed = decodeUTF8CharN(data, &unicode, length);
+			if (consumed > 0) {
+				if (unicode > 0xFF) {
+					isLatin1 = false;
+					break;
+				}
+				data += consumed;
+				length -= consumed;
+			} else {
+				/* invalid UTF data */
+				isLatin1 = false;
+				break;
+			}
+		}
+		return isLatin1;
+	}
+
+	/**
 	 * Decode a single unicode character from a valid UTF8 byte stream.
 	 *
 	 * @param input[in] the UTF8 data

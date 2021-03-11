@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION < 17]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2021 IBM Corp. and others
  *
