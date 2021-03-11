@@ -570,16 +570,6 @@ J9NLS_DMP_OCCURRED_THREAD_NAME_ID.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_METHODS_ON_STACK=JIT dump found %1$d JIT methods on the stack
-# START NON-TRANSLATABLE
-J9NLS_DMP_JIT_METHODS_ON_STACK.explanation=The dump is reporting how many JIT methods were found on the stack after it was walked.
-J9NLS_DMP_JIT_METHODS_ON_STACK.system_action=The JVM continues.
-J9NLS_DMP_JIT_METHODS_ON_STACK.user_response=Diagnostic information, provide this information to your service representative.
-J9NLS_DMP_JIT_METHODS_ON_STACK.sample_input_1=7
-J9NLS_DMP_JIT_METHODS_ON_STACK.link=
-
-# END NON-TRANSLATABLE
-
 J9NLS_DMP_JIT_RECURSIVE_CRASH=JIT dump recursive crash occurred on diagnostic thread
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_RECURSIVE_CRASH.explanation=The dump is reporting a reproduction of the original unhandled exception, with tracing.
