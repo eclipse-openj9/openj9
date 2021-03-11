@@ -358,8 +358,8 @@ tryAgain:
 					ramClassRefWrapper->modifiers = -1;
 				}
 			}
-			goto done;
 		}
+		goto done;
 	}
 
 	/* Perform a package access check from the current class to the resolved class.
