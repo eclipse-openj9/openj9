@@ -972,6 +972,8 @@ void JNICALL Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments
 void JNICALL Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext(JNIEnv *env, jclass clazz, jobject context);
 jint JNICALL Java_java_lang_invoke_MethodHandleNatives_getNamedCon(JNIEnv *env, jclass clazz, jint which, jobjectArray name);
 void JNICALL Java_java_lang_invoke_MethodHandleNatives_registerNatives(JNIEnv *env, jclass clazz);
+jobject JNICALL Java_java_lang_invoke_MethodHandle_invoke(JNIEnv *env, jclass ignored, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_MethodHandle_invokeExact(JNIEnv *env, jclass ignored, jobject handle, jobject args);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /* java_lang_invoke_VarHandle.c */

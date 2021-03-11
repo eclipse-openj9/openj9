@@ -1667,4 +1667,18 @@ Java_java_lang_invoke_MethodHandleNatives_registerNatives(JNIEnv *env, jclass cl
 	return;
 }
 
+jobject JNICALL
+Java_java_lang_invoke_MethodHandle_invokeExact(JNIEnv *env, jclass ignored, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
+jobject JNICALL
+Java_java_lang_invoke_MethodHandle_invoke(JNIEnv *env, jclass ignored, jobject handle, jobject args)
+{
+	throwNewUnsupportedOperationException(env);
+	return NULL;
+}
+
 } /* extern "C" */

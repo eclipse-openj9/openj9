@@ -629,6 +629,8 @@ if(J9VM_OPT_OPENJDK_METHODHANDLE)
 		Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext
 		Java_java_lang_invoke_MethodHandleNatives_getNamedCon
 		Java_java_lang_invoke_MethodHandleNatives_registerNatives
+		Java_java_lang_invoke_MethodHandle_invoke
+		Java_java_lang_invoke_MethodHandle_invokeExact
 	)
 endif()
 
