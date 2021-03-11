@@ -563,18 +563,6 @@ TR_J9VM::initializeProcessorType()
    else if (TR::Compiler->target.cpu.isPower())
       {
       OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
-      // P10 support is not yet well-tested, so it's currently gated behind an environment
-      // variable to prevent it from being used by accident by users who use old versions of
-      // OMR once P10 chips become available.
-      if (processorDescription.processor == OMR_PROCESSOR_PPC_P10)
-         {
-         static bool enableP10 = feGetEnv("TR_EnableExperimentalPower10Support");
-         if (!enableP10)
-            {
-            processorDescription.processor = OMR_PROCESSOR_PPC_P9;
-            processorDescription.physicalProcessor = OMR_PROCESSOR_PPC_P9;
-            }
-         }
 
       if (debug("rios1"))
          processorDescription.processor = OMR_PROCESSOR_PPC_RIOS1;
