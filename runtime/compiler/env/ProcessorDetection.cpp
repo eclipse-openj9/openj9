@@ -563,60 +563,6 @@ TR_J9VM::initializeProcessorType()
    else if (TR::Compiler->target.cpu.isPower())
       {
       OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
-      // P10 support is not yet well-tested, so it's currently gated behind an environment
-      // variable to prevent it from being used by accident by users who use old versions of
-      // OMR once P10 chips become available.
-      if (processorDescription.processor == OMR_PROCESSOR_PPC_P10)
-         {
-         static bool enableP10 = feGetEnv("TR_EnableExperimentalPower10Support");
-         if (!enableP10)
-            {
-            processorDescription.processor = OMR_PROCESSOR_PPC_P9;
-            processorDescription.physicalProcessor = OMR_PROCESSOR_PPC_P9;
-            }
-         }
-
-      if (debug("rios1"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_RIOS1;
-      else if (debug("rios2"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_RIOS2;
-      else if (debug("pwr403"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_PWR403;
-      else if (debug("pwr405"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_PWR405;
-      else if (debug("pwr601"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_PWR601;
-      else if (debug("pwr603"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_PWR603;
-      else if (debug("pwr604"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_PWR604;
-      else if (debug("pwr630"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_PWR630;
-      else if (debug("pwr620"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_PWR620;
-      else if (debug("nstar"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_NSTAR;
-      else if (debug("pulsar"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_PULSAR;
-      else if (debug("gp"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_GP;
-      else if (debug("gpul"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_GPUL;
-      else if (debug("gr"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_GR;
-      else if (debug("p6"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_P6;
-      else if (debug("p7"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_P7;
-      else if (debug("p8"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_P8;
-      else if (debug("p9"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_P9;
-      else if (debug("440GP"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_PWR440;
-      else if (debug("750FX"))
-         processorDescription.processor = OMR_PROCESSOR_PPC_7XX;
-
       TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
       }
    else if (TR::Compiler->target.cpu.isX86())
