@@ -396,23 +396,26 @@ regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\msdia1
 regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\amd64\msdia120.dll"
 ```
 
-You can download Freemarker and Freetype manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
+You can download Freetype manually or obtain it using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
 
 - Open a cygwin64 terminal and change to the `/temp` directory:
 ```
 cd /cygdrive/c/temp
 ```
 
-- Run the following commands:
+- Run the following command:
 ```
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
 wget http://download.savannah.gnu.org/releases/freetype/freetype-2.5.3.tar.gz
 ```
 
-- To unpack the Freemarker and Freetype compressed files, run:
+- To unpack the Freetype archive, run:
+```
+tar --one-top-level=/cygdrive/c/temp/freetype --strip-components=1 -xzf freetype-2.5.3.tar.gz
+```
+
+- When building with `--with-cmake=no`, unpack the Freemarker archive:
 ```
 tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
-tar --one-top-level=/cygdrive/c/temp/freetype --strip-components=1 -xzf freetype-2.5.3.tar.gz
 ```
 
 ### 2. Get the source

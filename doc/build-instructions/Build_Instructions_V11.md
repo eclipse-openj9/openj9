@@ -389,20 +389,19 @@ set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
 set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%
 ```
 
-   You can download Visual Studio, Freemarker manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
+   You can download Visual Studio manually or obtain it using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
 
 - Open a cygwin terminal and change to the `/temp` directory:
 ```
 cd /cygdrive/c/temp
 ```
 
-- Run the following commands:
+- Run the following command:
 ```
 wget https://go.microsoft.com/fwlink/?LinkId=532495 -O vs2013.exe
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
 ```
 - Before installing Visual Studio, change the permissions on the installation file by running `chmod u+x vs2013.exe`.
-- Install Visual Studio by running the file `vs2013.exe` (There is no special step required for downloading/installing VS2017. Please follow the guide of the downloaded installer to install all required components, especially for VC compiler).
+- Install Visual Studio by running the file `vs2013.exe` (There is no special step required for installing. Please follow the guide of the installer to install all desired components, the C++ compiler is required).
 
 Not all of the shared libraries that are included with Visual Studio are registered during installation.
 In particular, the `msdia120.dll`(VS2013) or `msdia140.dll`(VS2017) libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
@@ -418,7 +417,7 @@ regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\
 regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\amd64\msdia140.dll"
 ```
 
-- To unpack the Freemarker compressed file, run:
+- When building with `--with-cmake=no`, unpack the Freemarker archive:
 ```
 tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
 ```
