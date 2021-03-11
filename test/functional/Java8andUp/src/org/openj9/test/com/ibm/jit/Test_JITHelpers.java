@@ -1,7 +1,7 @@
 package org.openj9.test.com.ibm.jit;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -444,7 +444,7 @@ public class Test_JITHelpers {
 			// Latin1 tests are valid if and only if compact strings are enabled because of the way we extract the
 			// String.value field and pass it off to the intrinsicIndexOfLatin1 API. The only way to ensure
 			// the extracted array is in Latin1 format is to make sure compact strings are enabled.
-			Field enableCompressionField = String.class.getDeclaredField("enableCompression");
+			Field enableCompressionField = String.class.getDeclaredField("COMPACT_STRINGS");
 			enableCompressionField.setAccessible(true);
 
 			if ((boolean)enableCompressionField.get(null)) {
@@ -678,7 +678,7 @@ public class Test_JITHelpers {
 			// Latin1 tests are valid if and only if compact strings are enabled because of the way we extract the
 			// String.value field and pass it off to the intrinsicIndexOfStringLatin1 API. The only way to ensure
 			// the extracted array is in Latin1 format is to make sure compact strings are enabled.
-			Field enableCompressionField = String.class.getDeclaredField("enableCompression");
+			Field enableCompressionField = String.class.getDeclaredField("COMPACT_STRINGS");
 			enableCompressionField.setAccessible(true);
 
 			if ((boolean)enableCompressionField.get(null)) {
