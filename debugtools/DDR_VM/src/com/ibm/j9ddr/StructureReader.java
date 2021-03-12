@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,6 +63,7 @@ public class StructureReader {
 	private static final Logger logger = Logger.getLogger(LoggerNames.LOGGER_STRUCTURE_READER);
 	private StructureHeader header;
 
+	@SuppressWarnings("rawtypes")
 	public static final Class<?>[] STRUCTURE_CONSTRUCTOR_SIGNATURE = new Class[] { Long.TYPE };
 	public static final byte BIT_FIELD_FORMAT_LITTLE_ENDIAN = 1;
 	public static final byte BIT_FIELD_FORMAT_BIG_ENDIAN = 2;
@@ -71,6 +72,7 @@ public class StructureReader {
 	private static final Pattern MULTI_LINE_COMMENT_PATTERN = Pattern.compile(Pattern.quote("/*") + ".*?" + Pattern.quote("*/") , Pattern.DOTALL);
 	private static final Pattern SINGLE_LINE_COMMENT_PATTERN = Pattern.compile(Pattern.quote("//") + ".*$", Pattern.MULTILINE);
 	private static final Pattern MAP_PATTERN = Pattern.compile("(.*?)=(.*?)$", Pattern.MULTILINE);
+	private static final Pattern CONSTANT_PATTERN = Pattern.compile("(.+?)\\.(.+?)=(.+)$", Pattern.MULTILINE);
 
 	private Long packageVersion;
 	private String basePackage = DDR_VERSIONED_PACKAGE_PREFIX;
@@ -116,6 +118,7 @@ public class StructureReader {
 		parse(in);
 		setStream();
 		applyAliases();
+		addCompatibilityConstants();
 		typeManager = new StructureTypeManager(getStructures());
 	}
 
@@ -146,7 +149,7 @@ public class StructureReader {
 		 * Therefore, we needed a new way to differentiate the special ARM jvm.29 stream
 		 * and this is the reason why the ARM_SPLIT_DDR_HACK field was added.
 		 */
-		String versionFormat = "%2d";
+		String versionFormat = "%02d";
 		if (version != null) {
 			for (ConstantDescriptor constant : version.getConstants()) {
 				String constantName = constant.getName();
@@ -155,7 +158,7 @@ public class StructureReader {
 				} else if (constantName.equals(VM_MINOR_VERSION)) {
 					vmMinorVersion = constant.getValue() / 10;
 				} else if (constantName.equals(ARM_SPLIT_DDR_HACK) && constant.getValue() == 1) {
-					versionFormat = "%2d_00";
+					versionFormat = "%02d_00";
 				}
 			}
 		}
@@ -224,6 +227,76 @@ public class StructureReader {
 		}
 	}
 
+	private void addCompatibilityConstants() throws IOException {
+		String resource = "/com/ibm/j9ddr/CompatibilityConstants" + getPackageVersion() + ".dat";
+
+		try (InputStream inputStream = StructureReader.class.getResourceAsStream(resource)) {
+			if (inputStream != null) {
+				addCompatibilityConstants(inputStream);
+			}
+		}
+	}
+
+	public void addCompatibilityConstants(InputStream inputStream) throws IOException {
+		Map<String, Map<String, Long>> map = new HashMap<>();
+		String text = stripComments(loadUTF8(inputStream));
+
+		for (Matcher matcher = CONSTANT_PATTERN.matcher(text); matcher.find();) {
+			String type = matcher.group(1).trim();
+			String name = matcher.group(2).trim();
+			String value = matcher.group(3).trim();
+
+			if (type.isEmpty() || name.isEmpty() || value.isEmpty()) {
+				throw new IOException("Malformed constant: " + matcher.group());
+			}
+
+			Map<String, Long> constants = map.get(type);
+
+			if (constants == null) {
+				constants = new HashMap<>();
+				map.put(type, constants);
+			}
+
+			try {
+				constants.put(name, Long.decode(value));
+			} catch (NumberFormatException e) {
+				throw new IOException("Malformed constant: " + matcher.group(), e);
+			}
+		}
+
+		for (StructureDescriptor structure : structures.values()) {
+			Map<String, Long> constants = map.remove(structure.getName());
+
+			if (constants == null) {
+				/* nothing applies to this structure */
+				continue;
+			}
+
+			/* remove entries that are already present */
+			for (ConstantDescriptor constant : structure.constants) {
+				constants.remove(constant.name);
+			}
+
+			/* add missing constants */
+			for (Map.Entry<String, Long> entry : constants.entrySet()) {
+				structure.constants.add(new ConstantDescriptor(entry.getKey(), entry.getValue()));
+			}
+		}
+
+		/* add default constants for new types */
+		for (Map.Entry<String, Map<String, Long>> entry : map.entrySet()) {
+			String name = entry.getKey();
+			String line = "S|" + name + "|" + name + "Pointer|";
+			StructureDescriptor structure = new StructureDescriptor(line);
+
+			for (Map.Entry<String, Long> constant : entry.getValue().entrySet()) {
+				structure.constants.add(new ConstantDescriptor(constant.getKey(), constant.getValue()));
+			}
+
+			structures.put(structure.getName(), structure);
+		}
+	}
+
 	public static Map<String, String> loadAliasMap(long version) throws IOException {
 		return loadAliasMap(Long.toString(version));
 	}
@@ -253,7 +326,7 @@ public class StructureReader {
 	}
 
 	private String getAliasVersion() {
-		long version = packageVersion.longValue();
+		long version = getPackageVersion();
 		String variant = "";
 
 		if ((version == 29) && !getBuildFlagValue("J9BuildFlags", "J9VM_OPT_USE_OMR_DDR", false)) {
@@ -269,15 +342,18 @@ public class StructureReader {
 
 	private static String loadAliasMapData(String version) throws IOException {
 		String streamAliasMapResource = "/com/ibm/j9ddr/StructureAliases" + version + ".dat";
-		InputStream is = StructureReader.class.getResourceAsStream(streamAliasMapResource);
 
-		if (null == is) {
-			throw new RuntimeException("Failed to load alias map from resource: " + streamAliasMapResource + " - cannot continue");
+		try (InputStream is = StructureReader.class.getResourceAsStream(streamAliasMapResource)) {
+			if (null == is) {
+				throw new RuntimeException("Failed to load alias map from resource: " + streamAliasMapResource + " - cannot continue");
+			}
+
+			return loadUTF8(is);
 		}
+	}
 
-		Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-
-		try {
+	private static String loadUTF8(InputStream is) throws IOException {
+		try (Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
 			StringBuilder builder = new StringBuilder();
 			char[] buffer = new char[4096];
 			int read;
@@ -287,8 +363,6 @@ public class StructureReader {
 			}
 
 			return builder.toString();
-		} finally {
-			reader.close();
 		}
 	}
 
@@ -574,6 +648,7 @@ public class StructureReader {
 			inflate(line);
 		}
 
+		@Override
 		public String toString() {
 			if (superName == null || superName.isEmpty()) {
 				return String.valueOf(name);

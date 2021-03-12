@@ -27,7 +27,6 @@ import java.util.NoSuchElementException;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.DataType;
-import com.ibm.j9ddr.vm29.j9.J9ConstantHelper;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
