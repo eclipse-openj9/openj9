@@ -49,7 +49,7 @@ JITServerPersistentCHTable::~JITServerPersistentCHTable()
       _trPersistentMemory->freePersistentMemory(classInfo);
       }
    _classMap.clear();
-   _chTableMonitor->destroy();
+   TR::Monitor::destroy(_chTableMonitor);
    }
 
 bool
