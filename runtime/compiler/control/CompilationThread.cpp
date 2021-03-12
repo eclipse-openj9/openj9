@@ -8676,6 +8676,18 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   {
                   options->enableTracing(opt);
                   }
+
+               // Enable additional tracing which are not part of standard optimizer tracing infrastructure
+               switch (opt)
+                  {
+                  case OMR::Optimizations::inlining:
+                  case OMR::Optimizations::targetedInlining:
+                  case OMR::Optimizations::trivialInlining:
+                     {
+                     options->setOption(TR_DebugInliner);
+                     break;
+                     }
+                  }
                }
             }
 
