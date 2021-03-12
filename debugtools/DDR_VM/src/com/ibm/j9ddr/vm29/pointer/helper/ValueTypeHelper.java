@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,12 +55,6 @@ public class ValueTypeHelper {
 	private static ValueTypeHelper helper = null;
 
 	private static class ValueTypeSupportEnabledHelper extends ValueTypeHelper {
-		private static final long J9AccValueType = J9ConstantHelper.getLong(J9JavaAccessFlags.class, "J9AccValueType", 0);
-		private static final long J9ClassIsValueType = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassIsValueType", 0);
-		private static final long J9ClassLargestAlignmentConstraintDouble = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassLargestAlignmentConstraintDouble", 0);
-		private static final long J9ClassLargestAlignmentConstraintReference = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassLargestAlignmentConstraintReference", 0);
-		private static final long J9ClassIsFlattened = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassIsFlattened", 0);
-		private static final long J9ClassRequiresPrePadding = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassRequiresPrePadding", 0);
 		private static final UDATA J9ClassFlagsMask = new UDATA(0xFF);
 		private static final UDATA J9ClazzInEntryMask = new UDATA(J9ClassFlagsMask.bitNot());
 		private MethodHandle getFlattenedClassCachePointer = null;
@@ -221,16 +215,16 @@ public class ValueTypeHelper {
 
 		@Override
 		public boolean isRomClassAValueType(J9ROMClassPointer romClass) throws CorruptDataException {
-			if (J9AccValueType != 0) {
-				return romClass.modifiers().allBitsIn(J9AccValueType);
+			if (J9JavaAccessFlags.J9AccValueType != 0) {
+				return romClass.modifiers().allBitsIn(J9JavaAccessFlags.J9AccValueType);
 			}
 			return false;
 		}
 
 		@Override
 		public boolean isJ9ClassAValueType(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9ClassIsValueType != 0) {
-				return clazz.classFlags().allBitsIn(J9ClassIsValueType);
+			if (J9JavaClassFlags.J9ClassIsValueType != 0) {
+				return clazz.classFlags().allBitsIn(J9JavaClassFlags.J9ClassIsValueType);
 			}
 			return false;
 		}
@@ -260,32 +254,32 @@ public class ValueTypeHelper {
 
 		@Override
 		public boolean isJ9ClassLargestAlignmentConstraintDouble(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9ClassLargestAlignmentConstraintDouble != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9ClassLargestAlignmentConstraintDouble);
+			if (J9JavaClassFlags.J9ClassLargestAlignmentConstraintDouble != 0) {
+				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintDouble);
 			}
 			return false;
 		}
 
 		@Override
 		public boolean isJ9ClassLargestAlignmentConstraintReference(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9ClassLargestAlignmentConstraintReference != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9ClassLargestAlignmentConstraintReference);
+			if (J9JavaClassFlags.J9ClassLargestAlignmentConstraintReference != 0) {
+				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintReference);
 			}
 			return false;
 		}
 
 		@Override
 		public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9ClassIsFlattened != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9ClassIsFlattened);
+			if (J9JavaClassFlags.J9ClassIsFlattened != 0) {
+				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassIsFlattened);
 			}
 			return false;
 		}
 		
 		@Override
 		public boolean classRequires4BytePrePadding(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9ClassRequiresPrePadding != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9ClassRequiresPrePadding);
+			if (J9JavaClassFlags.J9ClassRequiresPrePadding != 0) {
+				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassRequiresPrePadding);
 			}
 			return false;
 		}
@@ -303,7 +297,7 @@ public class ValueTypeHelper {
 	private static boolean checkIfValueTypesAreSupported() {
 		/* Older builds have builds flags in camel case, newer builds have flags capitalized */
 		return J9ConstantHelper.getBoolean(J9BuildFlags.class, "J9VM_OPT_VALHALLA_VALUE_TYPES", false)
-				|| J9ConstantHelper.getBoolean(J9BuildFlags.class, "opt_valhallaValueTypes", false);
+			|| J9ConstantHelper.getBoolean(J9BuildFlags.class, "opt_valhallaValueTypes", false);
 	}
 
 	/**
