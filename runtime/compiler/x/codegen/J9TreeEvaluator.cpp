@@ -3710,20 +3710,19 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
 
    // Profiled call site cache
    uintptr_t guessClass = 0;
-   TR_OpaqueClassBlock* guessClassArray[NUM_PICS];
-   auto num_PICs = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, node, guessClassArray);
-   auto fej9 = (TR_J9VMBase *)(comp->fe());
-   for (uint8_t i = 0; i < num_PICs; i++)
+   if (!comp->compileRelocatableCode())
       {
-      if (fej9->instanceOfOrCheckCast((J9Class*)guessClassArray[i], (J9Class*)clazz))
+      TR_OpaqueClassBlock* guessClassArray[NUM_PICS];
+      auto num_PICs = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, node, guessClassArray);
+      auto fej9 = static_cast<TR_J9VMBase *>(comp->fe());
+      for (uint8_t i = 0; i < num_PICs; i++)
          {
-         guessClass = (uintptr_t)guessClassArray[i];
+         if (fej9->instanceOfOrCheckCastNoCacheUpdate((J9Class*)guessClassArray[i], (J9Class*)clazz))
+            {
+            guessClass = reinterpret_cast<uintptr_t>(guessClassArray[i]);
+            }
          }
       }
-
-   if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
-      if (!comp->getSymbolValidationManager()->addProfiledClassRecord((TR_OpaqueClassBlock *)guessClass))
-         guessClass = 0;
 
    // Call site cache
    auto cache = sizeof(J9Class*) == 4 ? cg->create4ByteData(node, (uint32_t)guessClass) : cg->create8ByteData(node, (uint64_t)guessClass);
