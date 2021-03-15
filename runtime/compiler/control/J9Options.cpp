@@ -1069,9 +1069,13 @@ bool J9::Options::showPID()
 #if defined(J9VM_OPT_JITSERVER)
 static std::string readFileToString(char *fileName)
    {
-   I_32 fileId = j9jit_fopen_existing(fileName);
-   if (fileId == -1)
+   PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
+   FILE *f = fopen(fileName, "rb");
+   if (!f)
+      {
+      j9tty_printf(PORTLIB, "Fatal Error: Unable to open file (%s)\n", fileName);
       return "";
+      }
    const uint32_t BUFFER_SIZE = 4096; // 4KB
    const uint32_t MAX_FILE_SIZE_IN_PAGES = 16; // 64KB
    char buf[BUFFER_SIZE];
@@ -1079,19 +1083,28 @@ static std::string readFileToString(char *fileName)
    int readSize = 0;
    int iter = 0;
    do {
-      readSize = j9jit_fread(fileId, buf, BUFFER_SIZE);
-      fileStr.append(buf, readSize);
+      readSize = fread(buf, 1, BUFFER_SIZE, f);
+      fileStr = fileStr.append(buf, readSize);
       ++iter;
-   } while ((readSize == BUFFER_SIZE) && (iter < MAX_FILE_SIZE_IN_PAGES));
-   j9jit_fcloseId(fileId);
+   } while ((readSize == BUFFER_SIZE) && (iter <= MAX_FILE_SIZE_IN_PAGES));
+   fclose(f);
 
-   if (iter < MAX_FILE_SIZE_IN_PAGES)
+   if (iter <= MAX_FILE_SIZE_IN_PAGES)
+      {
       return fileStr;
+      }
    else
+      {
+      j9tty_printf(
+         PORTLIB,
+         "Fatal Error: File (%s) is too large, max allowed size is %dKB\n",
+         fileName,
+         BUFFER_SIZE * MAX_FILE_SIZE_IN_PAGES / 1000);
       return "";
+      }
    }
 
-static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compInfo)
+static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compInfo)
    {
    const char *xxJITServerPortOption = "-XX:JITServerPort=";
    const char *xxJITServerTimeoutOption = "-XX:JITServerTimeout=";
@@ -1140,6 +1153,10 @@ static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
          compInfo->addJITServerSslKey(key);
          compInfo->addJITServerSslCert(cert);
          }
+      else
+         {
+         return false;
+         }
       }
 
    if (xxJITServerSSLRootCertsArgIndex >= 0)
@@ -1149,10 +1166,14 @@ static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
       std::string cert = readFileToString(fileName);
       if (!cert.empty())
          compInfo->setJITServerSslRootCerts(cert);
+      else
+         return false;
       }
 
    if (xxJITServerUseAOTCacheArgIndex > xxDisableJITServerUseAOTCacheArgIndex)
       compInfo->getPersistentInfo()->setJITServerUseAOTCache(true);
+
+   return true;
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -2053,7 +2074,12 @@ J9::Options::fePreProcess(void * base)
                }
             }
          }
-      JITServerParseCommonOptions(vm, compInfo);
+      if (!JITServerParseCommonOptions(vm, compInfo))
+         {
+         // Could not parse JITServer options successfully
+         return false;
+         }
+
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
          // Generate a random identifier for this JITServer instance.
