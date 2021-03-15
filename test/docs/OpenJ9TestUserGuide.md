@@ -239,6 +239,10 @@ There are 3 ways to add options to your test run:
     make _jsr292_InDynTest_SE90_0 EXTRA_OPTIONS=-Xint
 ```
 
+- When appending `Xjit` option with braces, you'll need to either enclose them in quotes or escape them. Quotes won't work for tests which use STF framework, ex: system tests, so you'll need to escape them. This is because STF processes the options before forwarding them to the test JVM and it won't forward anything that it doesn't understand. Below is an example of what will be forwarded.
+```
+-Xjit:\{java/lang/reflect/Method.get*\}\(traceFull,log=tracelog.log\)
+```
 - If you want to change test options, you can update playlist.xml in the corresponding test project.
 
 #### Run test or group of tests multiple times
