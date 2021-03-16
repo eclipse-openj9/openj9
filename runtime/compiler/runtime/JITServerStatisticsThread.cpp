@@ -200,7 +200,7 @@ JITServerStatisticsThread::stopStatisticsThread(J9JITConfig * jitConfig)
       getStatisticsThreadMonitor()->exit();
 
       //Monitor is no longer needed
-      getStatisticsThreadMonitor()->destroy();
+      TR::Monitor::destroy(_statisticsThreadMonitor);
       _statisticsThreadMonitor = NULL;
       }
    }
