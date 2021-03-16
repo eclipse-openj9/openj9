@@ -115,7 +115,7 @@ JITServerSharedROMClassCache::~JITServerSharedROMClassCache()
       shutdown(false);
 
    for (size_t i = 0; i < _numPartitions; ++i)
-      _monitors[i]->destroy();
+      TR::Monitor::destroy(_monitors[i]);
 
    TR::Compiler->persistentGlobalAllocator().deallocate(_partitions);
    TR::Compiler->persistentGlobalAllocator().deallocate(_monitors);

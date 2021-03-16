@@ -86,23 +86,23 @@ ClientSessionData::~ClientSessionData()
    // This is because in some places from where the session is destroyed,
    // per-client allocation region cannot be entered.
    clearCaches();
-   _romMapMonitor->destroy();
-   _classMapMonitor->destroy();
-   _classChainDataMapMonitor->destroy();
-   _sequencingMonitor->destroy();
-   _constantPoolMapMonitor->destroy();
-   _staticMapMonitor->destroy();
+   TR::Monitor::destroy(_romMapMonitor);
+   TR::Monitor::destroy(_classMapMonitor);
+   TR::Monitor::destroy(_classChainDataMapMonitor);
+   TR::Monitor::destroy(_sequencingMonitor);
+   TR::Monitor::destroy(_constantPoolMapMonitor);
+   TR::Monitor::destroy(_staticMapMonitor);
    if (_vmInfo)
       {
       destroyJ9SharedClassCacheDescriptorList();
       _persistentMemory->freePersistentMemory(_vmInfo);
       }
-   _thunkSetMonitor->destroy();
+   TR::Monitor::destroy(_thunkSetMonitor);
 
    omrthread_rwmutex_destroy(_classUnloadRWMutex);
    _classUnloadRWMutex = NULL;
 
-   _wellKnownClassesMonitor->destroy();
+   TR::Monitor::destroy(_wellKnownClassesMonitor);
    }
 
 void

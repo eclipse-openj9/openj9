@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ J9::Monitor::create(char *name)
 void
 J9::Monitor::destroy(TR::Monitor *monitor)
    {
-   // The monitor will be destroyed when the monitor table is destroyed
+   TR::MonitorTable::get()->removeAndDestroy(monitor);
    }
 
 bool
@@ -73,7 +73,7 @@ void
 J9::Monitor::destroy()
    {
    j9thread_monitor_destroy(_monitor);
-   }  //FIXME: remove from the table as well
+   }
 
 void
 J9::Monitor::wait()
