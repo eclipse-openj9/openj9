@@ -333,6 +333,10 @@ J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
                optDetailString(),
                node->getGlobalIndex()))
             {
+            const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/simplifier-xformed/acmp/(%s)/bc=%d",
+                                                            comp()->signature(), node->getByteCodeIndex());
+            TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
+
             TR::Node::recreate(node, TR::acmpeq);
             node = simplify(node, block);
             }
