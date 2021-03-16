@@ -2870,6 +2870,49 @@ typedef struct J9JavaStack {
 /* @ddr_namespace: map_to_type=J9Object */
 
 typedef struct J9Object {
+	/**
+	 * An aligned class pointer representing the type of the object. The low order bits must be masked off prior to
+	 * dereferencing this pointer. The bit values are described below.
+	 * 
+	 * @details 
+	 * 
+	 * The following diagram describes the metadata stored in the low order bit flags of an object class pointer:
+	 * 
+	 * Bit   31                23                15                7 6 5 4 3 2 1 0
+	 *      ┌─────────────────────────────────────────────────────────────────────┐
+	 * Word │0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0│
+	 *      └──────────────────────────────────────────────────────┬─┬─┬─┬─┬─┬─┬─┬┘
+	 *                                                             │ │ │ │ │ │ │ │
+	 *                                                             └─┴┬┴─┘ │ │ │ └──► [1] Linked Free Header (Hole)
+	 *                                                                │    │ │ └────► [2] Object has been hashed and moved
+	 *                                                                │    │ └──────► [3] Slot contains forwarded pointer
+	 *                                                                │    └────────► [4] Object has been hashed
+	 *                                                                └─────────────► [5] Nursery age (0 - 14) or various remembered states
+	 * 
+	 * [1] If bit is 0, the slot represents the start of object, ie object header, which depending of forwarded bit
+	 *     could be class slot or forwarded pointer.
+	 *     If bit is 1, the slot represents the start of a hole, in which case the value is the address of the next
+	 *	   connected hole (as part of free memory pool). The address could be null, in which case it is a small 
+	 *	   stand-alone hole that is not part of the list, so called dark-matter. A hole will also have one more slot,
+	 *	   with info about its size/length.
+	 *	   This bit designation is needed when heap objects are iterated in address order - once an object is found,
+	 *	   it can be followed by another object, or a hole that needs to be skipped.
+	 * [2] If object is hashed (hash bit 4 set), and object is moved by a GC, the object will grow by a hash slot
+	 *     (position of hash slot is found in class struct), and this bit will be set.
+	 *     This bit is used to find hash value (from object address if not moved or from hash slot if moved) and to
+	 *     find proper size of object (for example when heap objects are iterated, to find the position of the next 
+	 *     object).
+	 * [3] If the object has been moved on the heap and we encounter a stale reference, this bit tells us that the a
+	 *     slot within the object contains a forwarding pointer (FP) to where we can find the moved object. FP
+	 *     partially overlaps with class slot (it's not quite following it). In 32bit it exactly overlaps (both FP and
+	 *     class slots are 32 bit). In 64bit non-CR, again it exactly overlaps (both FP and class slots are 64 bit ).
+	 *     In 64bit CR, 1/2 of FP overlaps with class slot, and the other 1/2 of FP follows the class slots (FP is 
+	 *     uncommpressed 64 bit, and class slot is 32 bit).
+	 * [4] Object has been hashed by application thread, for example by using the object as a key in a hash map
+	 * [5] If the object is in the nursery (gencon) these four bits count how many times the object has been flipped.
+	 *     If the object is in tenure (gencon) these bits describe the various tenure states. These bits are not used
+	 *     under the balanced GC policy. 
+	 */
 	j9objectclass_t clazz;
 } J9Object;
 
