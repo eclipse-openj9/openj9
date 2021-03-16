@@ -2604,6 +2604,22 @@ void *
 staticFieldAddress(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *staticField, UDATA options, J9Class *sourceClass);
 
 /**
+ *@breif find field in class
+ *@param vmstruct vmthread token
+ *@param clazz ramclass
+ *@param fieldName name of field
+ *@param fieldNameLength length of field name
+ *@param signature field signature
+ *@param signatureLength length of field name signature
+ *@param definingClass class that defines the field
+ *@param offsetAddress instance field offset or static field address
+ *@param options lookup options
+ *@return romfieldShape if field is found
+ */
+J9ROMFieldShape*
+findFieldExt(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options);
+
+/**
 * @brief
 * @param *vm: Reference to the VM, used to locate the table.
 * @param *ramClass: key for the table

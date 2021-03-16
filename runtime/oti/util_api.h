@@ -68,6 +68,20 @@ alignedMemcpy(J9VMThread *vmStruct, void *dest, void *source, UDATA bytes, UDATA
 void
 alignedBackwardsMemcpy(J9VMThread *vmStruct, void *dest, void *source, UDATA bytes, UDATA alignment);
 
+/* ---------------- annhelp.c ---------------- */
+
+/**
+ * Check if a fieldref contains the specified Runtime Visible annotation. Fieldref
+ * must be resolved.
+ *
+ * @param currentThread Thread token
+ * @param clazz The class the field belongs to.
+ * @param cpIndex The constant pool index of the fieldref.
+ * @param annotationName The name of the annotation to check for.
+ * @return TRUE if the annotation is found, FALSE otherwise.
+ */
+BOOLEAN
+fieldContainsRuntimeAnnotation(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
 
 /* ---------------- argbits.c ---------------- */
 

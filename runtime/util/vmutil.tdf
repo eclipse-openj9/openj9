@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2017 IBM Corp. and others
+// Copyright (c) 2006, 2021 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,3 +56,5 @@ TraceEntry=Trc_VMUtil_getOriginalROMMethodUnchecked_Entry Overhead=1 Level=3 Noe
 TraceExit=Trc_VMUtil_getOriginalROMMethodUnchecked_Exit Overhead=1 Level=3 Noenv Template="getOriginalROMMethodUnchecked (result=%p)"
 
 TraceException=Trc_VMUtil_getOriginalROMMethodUnchecked_getMethodIndexFailed Overhead=1 Level=1 Noenv Template="getOriginalROMMethodUnchecked: Unable to get methodIndex for method=%p"
+
+TraceEvent=Trc_Util_annhelp_SearchForFieldAnnotation Noenv Overhead=1 Level=5 Template="Search for field annotation: annotation=%s cpIndex=%zu clazz=%p romFieldShape=%p result=%zu"
