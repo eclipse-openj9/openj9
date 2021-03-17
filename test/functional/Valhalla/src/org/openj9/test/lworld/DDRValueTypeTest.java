@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,7 @@ public class DDRValueTypeTest {
 		};
 		Object assortedValueWithSingleAlignment = ValueTypeTests.createAssorted(makeAssortedValueWithSingleAlignment, ValueTypeTests.typeWithSingleAlignmentFields);
 		Object assortedValueWithSingleAlignmentAlt = ValueTypeTests.createAssorted(makeAssortedValueWithSingleAlignment, ValueTypeTests.typeWithSingleAlignmentFields, altFields);
+		Object valueTypeWithVolatileFields = ValueTypeTests.createValueTypeWithVolatileFields();
 		
 		Object valArray = Array.newInstance(assortedValueWithSingleAlignmentClass, 2);
 		Array.set(valArray, 0, assortedValueWithSingleAlignment);
@@ -67,6 +68,8 @@ public class DDRValueTypeTest {
 
 		ValueTypeTests.checkObject(assortedValueWithSingleAlignment, 
 				assortedValueWithSingleAlignmentAlt, 
-				valArray);
+				valArray, 
+				valueTypeWithVolatileFields
+				);
 	}
 }

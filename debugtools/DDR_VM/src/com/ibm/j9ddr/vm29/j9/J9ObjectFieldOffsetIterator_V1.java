@@ -212,7 +212,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 					if (modifiers.anyBitsIn(J9FieldFlagObject)) {
 						if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(localField))) {
 							J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(instanceClass, J9ROMFieldShapeHelper.getName(localField));
-							if (valueTypeHelper.isJ9ClassIsFlattened(fieldClass)) {
+							if (valueTypeHelper.isJ9FieldIsFlattened(fieldClass, localField)) {
 								UDATA size = null;
 								if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)) {
 									size = fieldClass.totalInstanceSize();

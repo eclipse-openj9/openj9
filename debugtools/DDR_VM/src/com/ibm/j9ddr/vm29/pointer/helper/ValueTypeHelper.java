@@ -42,6 +42,8 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.structure.J9JavaClassFlags;
+import com.ibm.j9ddr.vm29.types.U32;
+import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 /**
@@ -224,15 +226,16 @@ public class ValueTypeHelper {
 		}
 
 		@Override
-		public boolean isFieldInClassFlattened(J9ClassPointer clazz, String fieldName) throws CorruptDataException {
+		public boolean isFieldInClassFlattened(J9ClassPointer clazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
 			boolean result = false;
 
 			try {
 				StructurePointer flattenedClassCache = (StructurePointer) getFlattenedClassCachePointer.invoke(clazz);
 				if (!flattenedClassCache.isNull()) {
+					String fieldName = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().name());
 					J9ClassPointer flattenableClazz = findJ9ClassInFlattenedClassCacheWithFieldNameImpl(flattenedClassCache, fieldName);
 					if (!flattenableClazz.isNull()) {
-						result = isJ9ClassIsFlattened(flattenableClazz);
+						result = isJ9FieldIsFlattened(flattenableClazz, fieldShape);
 					}
 				}
 			} catch (WrongMethodTypeException | ClassCastException e) {
@@ -259,6 +262,18 @@ public class ValueTypeHelper {
 		@Override
 		public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
 			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassIsFlattened);
+		}
+		
+		@Override
+		public boolean isJ9FieldIsFlattened(J9ClassPointer fieldClazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
+			UDATA modifiers = fieldShape.modifiers();
+			UDATA size = fieldClazz.totalInstanceSize();
+			UDATA largeSize = new UDATA(U64.SIZEOF);
+			if (classRequires4BytePrePadding(fieldClazz)) {
+				size = size.sub(U32.SIZEOF);
+			}
+			return isJ9ClassIsFlattened(fieldClazz) && 
+					(!modifiers.anyBitsIn(J9JavaAccessFlags.J9AccVolatile) || (size.lte(largeSize)));
 		}
 
 		@Override
@@ -384,11 +399,11 @@ public class ValueTypeHelper {
 	 * Queries whether field is flattened of not.
 	 *
 	 * @param clazz clazz containing the field
-	 * @param fieldName name of the field
+	 * @param fieldShape J9ROMFieldShapePointer
 	 * @return true if field is flattened, false otherwise
 	 * @throws CorruptDataException
 	 */
-	public boolean isFieldInClassFlattened(J9ClassPointer clazz, String fieldName) throws CorruptDataException {
+	public boolean isFieldInClassFlattened(J9ClassPointer clazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
 		return false;
 	}
 
@@ -425,6 +440,16 @@ public class ValueTypeHelper {
 	 * @return true if clazz is flattened, false otherwise
 	 */
 	public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
+		return false;
+	}
+	
+	/**
+	 * Queries if a field in a class is flattened
+	 * @param fieldClazz J9Class of the field
+	 * @param fieldShape J9ROMFieldShapePointer
+	 * @return true if the field is flattened, false otherwise
+	 */
+	public boolean isJ9FieldIsFlattened(J9ClassPointer fieldClazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
 		return false;
 	}
 	

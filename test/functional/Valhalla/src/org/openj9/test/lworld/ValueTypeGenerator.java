@@ -204,6 +204,8 @@ public class ValueTypeGenerator extends ClassLoader {
 			} else {
 				if ((nameAndSigValue.length > 2) && nameAndSigValue[2].equals("static")) {
 					fieldModifiers = ACC_PUBLIC + ACC_STATIC;
+				} else if ((nameAndSigValue.length > 2) && nameAndSigValue[2].equals("volatile")) {
+					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_VOLATILE;
 				} else {
 					fieldModifiers = ACC_PUBLIC + ACC_FINAL;
 				}
