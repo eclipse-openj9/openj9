@@ -52,7 +52,8 @@
 J9::ValuePropagation::ValuePropagation(TR::OptimizationManager *manager)
    : OMR::ValuePropagation(manager),
      _bcdSignConstraints(NULL),
-     _callsToBeFoldedToNode(trMemory())
+     _callsToBeFoldedToNode(trMemory()),
+     _valueTypesHelperCallsToBeFolded(trMemory())
    {
    }
 
@@ -668,6 +669,10 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       const bool areSameRef = getValueNumber(lhsNode) == getValueNumber(rhsNode)
         || lhs != NULL && rhs != NULL && lhs->mustBeEqual(rhs, this);
 
+      // Non-helper equality comparison call is not needed if either operand
+      // is definitely not an instance of a value type or if both operands
+      // are definitely references to the same object
+      //
       if (isLhsValue == TR_no || isRhsValue == TR_no || areSameRef)
          {
          if (performTransformation(
@@ -676,16 +681,123 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                OPT_DETAILS,
                node->getGlobalIndex()))
             {
+            // Add a delayed transformation just for the purpose of being able to
+            // insert a dynamic debug counter
+            //
+            _valueTypesHelperCallsToBeFolded.add(
+                  new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node,
+                                              ValueTypesHelperCallTransform::IsRefCompare
+                                              | ValueTypesHelperCallTransform::InsertDebugCounter));
+
+            // Replace the non-helper equality comparison with an address comparison
             TR::Node::recreate(node, TR::acmpeq);
 
             // It might now be possible to fold.
             ValuePropagationPtr acmpeqHandler = constraintHandlers[TR::acmpeq];
             TR::Node *replacement = acmpeqHandler(this, node);
-            TR_ASSERT_FATAL(
-               replacement == node,
-               "can't replace n%un here",
-               node->getGlobalIndex());
+            TR_ASSERT_FATAL_WITH_NODE(node, replacement == node, "can't replace n%un here",
+                  node->getGlobalIndex());
             }
+         }
+      else
+         {
+         // Construct static debug counter to note failure to take advantage of
+         // any VP constraint to eliminate this equality comparison non-helper call
+         const char *reason = "unknown";
+
+         if (lhs == NULL && rhs == NULL)
+            {
+            reason = "no-constraint";
+            }
+         else if (isLhsValue != TR_no)
+            {
+            reason = (isLhsValue == TR_maybe) ? "lhs-may-be-vt" : "lhs-is-vt";
+            }
+         else if (isRhsValue != TR_no)
+            {
+            reason = (isRhsValue == TR_maybe) ? "rhs-may-be-vt" : "rhs-is-vt";
+            }
+
+         const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/vp-failed/acmp/(%s)/%s/block_%d/%s",
+                                                        comp()->signature(),
+                                                        comp()->getHotnessName(comp()->getMethodHotness()),
+                                                        _curTree->getEnclosingBlock()->getNumber(),
+                                                        reason);
+         TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
+         }
+
+      return;
+      }
+
+   // Check for call to jit{Load|Store}FlattenableArrayElement helpers
+   const bool isLoadFlattenableArrayElement =
+                 node->getOpCode().isCall()
+                 && node->getSymbolReference()
+                    == comp()->getSymRefTab()->findOrCreateLoadFlattenableArrayElementSymbolRef();
+
+   const bool isStoreFlattenableArrayElement =
+                 node->getOpCode().isCall()
+                 && node->getSymbolReference()
+                    == comp()->getSymRefTab()->findOrCreateStoreFlattenableArrayElementSymbolRef();
+
+   if (isLoadFlattenableArrayElement || isStoreFlattenableArrayElement)
+      {
+      // Only constrain the call in the last run of vp to avoid handling the candidate twice if the call is inside a loop
+      if (!lastTimeThrough())
+         {
+         return;
+         }
+
+      bool arrayRefGlobal;
+      const int elementIndexOpIndex = isLoadFlattenableArrayElement ? 0 : 1;
+      const int arrayRefOpIndex = elementIndexOpIndex+1;
+
+      TR::Node *indexNode = node->getChild(elementIndexOpIndex);
+      TR::Node *arrayRefNode = node->getChild(arrayRefOpIndex);
+      TR::VPConstraint *arrayConstraint = getConstraint(arrayRefNode, arrayRefGlobal);
+      TR_YesNoMaybe isCompTypeVT = isArrayCompTypeValueType(arrayConstraint);
+
+      // If the array's component type is definitely not a value type, add a delayed
+      // transformation to replace the helper call with inline code to perform the
+      // array element access
+      //
+      if (arrayConstraint != NULL && isCompTypeVT == TR_no)
+         {
+         flags8_t flagsForTransform = (isLoadFlattenableArrayElement ? ValueTypesHelperCallTransform::IsArrayLoad
+                                                                     : (ValueTypesHelperCallTransform::IsArrayStore
+                                                                        | ValueTypesHelperCallTransform::RequiresStoreCheck))
+                                      | ValueTypesHelperCallTransform::InsertDebugCounter;
+
+         _valueTypesHelperCallsToBeFolded.add(
+               new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node, flagsForTransform));
+         }
+      else
+         {
+         // Construct static debug counter to note failure to take advantage of
+         // any VP constraint to eliminate this array element helper call
+         const char *operationName = isLoadFlattenableArrayElement ? "aaload" : "aastore";
+
+         const char *reason = "unknown";
+
+         if (arrayConstraint == NULL)
+            {
+            reason = "no-array-constraint";
+            }
+         else if (isCompTypeVT == TR_yes)
+            {
+            reason = "comp-type-is-vt";
+            }
+         else if (isCompTypeVT == TR_maybe)
+            {
+            reason = "comp-type-may-be-vt";
+            }
+
+         const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/vp-failed/%s/(%s)/%s/block_%d/%s",
+                                                        operationName, comp()->signature(),
+                                                        comp()->getHotnessName(comp()->getMethodHotness()),
+                                                        _curTree->getEnclosingBlock()->getNumber(),
+                                                        reason);
+         TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
          }
 
       return;
@@ -1422,6 +1534,122 @@ J9::ValuePropagation::doDelayedTransformations()
          }
       }
    _callsToBeFoldedToNode.deleteAll();
+
+   // Process transformations for calls to value types helpers or non-helpers
+   ListIterator<ValueTypesHelperCallTransform> valueTypesHelperCallsToBeFolded(&_valueTypesHelperCallsToBeFolded);
+
+   for (ValueTypesHelperCallTransform *callToTransform = valueTypesHelperCallsToBeFolded.getFirst();
+        callToTransform != NULL;
+        callToTransform = valueTypesHelperCallsToBeFolded.getNext())
+      {
+      TR::TreeTop *callTree = callToTransform->_tree;
+      TR::Node *callNode = callToTransform->_callNode;
+
+      const bool isLoad = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsArrayLoad);
+      const bool isStore = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsArrayStore);
+      const bool isCompare = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsRefCompare);
+      const bool needsStoreCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresStoreCheck);
+
+      // performTransformation was already checked for comparison non-helper call
+      // Only need to check for array element load or store helper calls
+      if (!isCompare && !performTransformation(
+                            comp(),
+                            "%s Replacing n%dn from acall of <jit%sFlattenableArrayElement> to aloadi\n",
+                            OPT_DETAILS,
+                            callNode->getGlobalIndex(),
+                            isLoad ? "Load" : "Store"))
+         {
+         continue;
+         }
+
+      // Insert dynamic debug counter to describe successful transformation of value type helper or non-helper call
+      if (callToTransform->_flags.testAny(ValueTypesHelperCallTransform::InsertDebugCounter))
+         {
+         const char *operationName = isLoad ? "aaload" : (isStore ? "aastore" : "acmp");
+
+         const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/vp-xformed/%s/(%s)/bc=%d",
+                                                               operationName, comp()->signature(), callNode->getByteCodeIndex());
+         TR::DebugCounter::prependDebugCounter(comp(), counterName, callTree);
+         }
+
+      // Transformation for comparison was already handled.  Just needed post-processing to be able to insert debug counter
+      if (isCompare)
+         {
+         continue;
+         }
+
+      TR_ASSERT_FATAL_WITH_NODE(callNode, !comp()->requiresSpineChecks(), "Cannot handle VP yet for jit{Load|Store}FlattenableArrayElement if SpineCHKs are required\n");
+
+      int opIndex = 0;
+
+      TR::Node *valueNode = isLoad ? NULL : callNode->getChild(opIndex++);
+      TR::Node *indexNode = callNode->getChild(opIndex++);
+      TR::Node *arrayRefNode = callNode->getChild(opIndex);
+
+      TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddress(comp(), arrayRefNode, indexNode, TR::Address);
+
+      if (valueNode != NULL)
+         {
+         valueNode->decReferenceCount();
+         }
+
+      indexNode->decReferenceCount();
+      arrayRefNode->decReferenceCount();
+
+      const int32_t width = comp()->useCompressedPointers() ? TR::Compiler->om.sizeofReferenceField()
+                                                            : TR::Symbol::convertTypeToSize(TR::Address);
+
+      TR::Node *arrayLengthNode = TR::Node::create(callNode, TR::arraylength, 1, arrayRefNode);
+      arrayLengthNode->setArrayStride(width);
+
+      TR::Node *bndChkNode = TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arrayLengthNode, indexNode,
+                                          comp()->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp()->getMethodSymbol()));
+
+      callTree->insertBefore(TR::TreeTop::create(comp(), bndChkNode));
+
+      TR::SymbolReference *elementSymRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, arrayRefNode);
+
+      if (isLoad)
+         {
+         const TR::ILOpCodes loadOp = comp()->il.opCodeForIndirectArrayLoad(TR::Address);
+
+         TR::Node *elementLoadNode = TR::Node::recreateWithoutProperties(callNode, loadOp, 1, elementAddressNode, elementSymRef);
+
+         if (comp()->useCompressedPointers())
+            {
+            TR::Node *compressNode = TR::Node::createCompressedRefsAnchor(elementLoadNode);
+            callTree->insertBefore(TR::TreeTop::create(comp(), compressNode));
+            }
+         }
+      else
+         {
+         TR::Node *oldAnchorNode = callTree->getNode();
+         TR::Node *elementStoreNode = TR::Node::recreateWithoutProperties(callNode, TR::awrtbari, 3, elementAddressNode,
+                                                   valueNode, arrayRefNode, elementSymRef);
+
+         if (needsStoreCheck)
+            {
+            TR::ResolvedMethodSymbol *methodSym = comp()->getMethodSymbol();
+            TR::SymbolReference *storeCheckSymRef = comp()->getSymRefTab()->findOrCreateTypeCheckArrayStoreSymbolRef(methodSym);
+            TR::Node *storeCheckNode = TR::Node::createWithRoomForThree(TR::ArrayStoreCHK, elementStoreNode, 0, storeCheckSymRef);
+            callTree->setNode(storeCheckNode);
+            }
+         else
+            {
+            callTree->setNode(elementStoreNode);
+            }
+
+         oldAnchorNode->removeAllChildren();
+
+         if (comp()->useCompressedPointers())
+            {
+            TR::Node *compressNode = TR::Node::createCompressedRefsAnchor(elementStoreNode);
+            callTree->insertAfter(TR::TreeTop::create(comp(), compressNode));
+            }
+         }
+      }
+
+   _valueTypesHelperCallsToBeFolded.deleteAll();
 
    OMR::ValuePropagation::doDelayedTransformations();
    }
