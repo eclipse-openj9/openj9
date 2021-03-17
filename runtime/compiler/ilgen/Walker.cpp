@@ -2760,7 +2760,11 @@ TR_J9ByteCodeIlGenerator::genIfAcmpEqNe(TR::ILOpCodes ifacmpOp)
       TR::Node::createWithSymRef(TR::icall, 2, 2, lhs, rhs, comparisonNonHelper);
 
    substitutabilityTest->getByteCodeInfo().setDoNotProfile(true);
-   genTreeTop(substitutabilityTest);
+   TR::TreeTop* callTree = genTreeTop(substitutabilityTest);
+
+   const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/generated/acmp/(%s)/bc=%d",
+                                                      comp()->signature(), currentByteCodeIndex());
+   TR::DebugCounter::prependDebugCounter(comp(), counterName, callTree);
 
    push(substitutabilityTest);
    push(TR::Node::iconst(0));
@@ -6255,6 +6259,13 @@ TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes 
          }
       auto* helperSymRef = comp()->getSymRefTab()->findOrCreateLoadFlattenableArrayElementSymbolRef();
       auto* helperCallNode = TR::Node::createWithSymRef(TR::acall, 2, 2, elementIndex, arrayBaseAddress, helperSymRef);
+
+      TR::TreeTop *loadHelperCallTT = genTreeTop(helperCallNode);
+
+      const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/generated/aaload/(%s)/bc=%d",
+                                                      comp()->signature(), currentByteCodeIndex());
+      TR::DebugCounter::prependDebugCounter(comp(), counterName, loadHelperCallTT);
+
       push(helperCallNode);
       return;
       }
@@ -7708,7 +7719,12 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
          genTreeTop(nullchk);
          }
       auto* helperSymRef = comp()->getSymRefTab()->findOrCreateStoreFlattenableArrayElementSymbolRef();
-      genTreeTop(TR::Node::createWithSymRef(TR::acall, 3, 3, value, elementIndex, arrayBaseAddress, helperSymRef));
+      TR::TreeTop *storeHelperCallTT = genTreeTop(TR::Node::createWithSymRef(TR::acall, 3, 3, value, elementIndex, arrayBaseAddress, helperSymRef));
+
+      const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/generated/aastore/(%s)/bc=%d",
+                                                      comp()->signature(), currentByteCodeIndex());
+      TR::DebugCounter::prependDebugCounter(comp(), counterName, storeHelperCallTT);
+
       return;
       }
 
