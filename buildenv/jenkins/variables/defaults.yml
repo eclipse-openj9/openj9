@@ -137,6 +137,7 @@ cmake:
 uma:
   extra_configure_options:
     all: '--with-cmake=no --with-mixedrefs=no'
+  freemarker: '/home/jenkins/freemarker.jar'
 #========================================#
 # JITServer
 #========================================#
@@ -154,11 +155,6 @@ openssl:
 #========================================#
 openssl_bundle:
   extra_configure_options: --enable-openssl-bundling
-#========================================#
-# Freemarker
-#========================================#
-freemarker:
-  freemarker: '/home/jenkins/freemarker.jar'
 #========================================#
 # Reference Repo
 #========================================#
@@ -210,7 +206,7 @@ ojdk292:
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
 ppc64le_linux:
-  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     arch: 'ppc64le'
     os: 'linux'
@@ -270,7 +266,7 @@ ppc64le_linux_jit:
 #       IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 s390x_linux:
-  extends: ['boot_jdk_default', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     arch: 's390x'
     os: 'linux'
@@ -329,7 +325,7 @@ s390x_linux_jit:
 # AIX PPC 64bits Compressed Pointers
 #========================================#
 ppc64_aix:
-  extends: ['boot_jdk_default', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     location: '/opt/bootjdks'
     arch: 'ppc64'
@@ -396,7 +392,7 @@ ppc64_aix_mixed:
 # Linux x86 64bits Compressed Pointers
 #========================================#
 x86-64_linux:
-  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'cuda_version', 'debuginfo', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     arch: 'x64'
     os: 'linux'
@@ -483,7 +479,7 @@ x86-64_linux_vt_standard:
 # Linux Aarch 64bits Compressed Pointers
 #========================================#
 aarch64_linux:
-  extends: ['boot_jdk_default', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'debuginfo', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     arch: 'aarch64'
     os: 'linux'
