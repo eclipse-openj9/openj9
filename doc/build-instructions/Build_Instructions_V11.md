@@ -102,7 +102,7 @@ apt-get update \
 ```
 
 2. The previous step installed g++-7 and gcc-7 packages, which might be different
-than the default version installed on your system. Export variables to set the 
+than the default version installed on your system. Export variables to set the
 version used in the build.
 ```
 export CC=gcc-7 CXX=g++-7
@@ -158,8 +158,8 @@ bash configure --with-boot-jdk=/usr/lib/jvm/adoptojdk-java-11
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
@@ -293,8 +293,8 @@ where `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/fre
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
@@ -367,7 +367,7 @@ You must install a number of software dependencies to create a suitable build en
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 11](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
-- [Microsoft Visual Studio 2017]( https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15), which is the default compiler level used by OpenJDK11.
+- [Microsoft Visual Studio 2017](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15), which is the default compiler level used by OpenJDK11.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
 - [LLVM/Clang](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
@@ -398,20 +398,14 @@ cd /cygdrive/c/temp
 
 - Run the following command:
 ```
-wget https://go.microsoft.com/fwlink/?LinkId=532495 -O vs2013.exe
+wget https://aka.ms/vs/15/release/vs_community.exe -O vs2017.exe
 ```
-- Before installing Visual Studio, change the permissions on the installation file by running `chmod u+x vs2013.exe`.
-- Install Visual Studio by running the file `vs2013.exe` (There is no special step required for installing. Please follow the guide of the installer to install all desired components, the C++ compiler is required).
+- Before installing Visual Studio, change the permissions on the installation file by running `chmod u+x vs2017.exe`.
+- Install Visual Studio by running the file `vs2017.exe` (There is no special step required for installing. Please follow the guide of the installer to install all desired components, the C++ compiler is required).
 
 Not all of the shared libraries that are included with Visual Studio are registered during installation.
-In particular, the `msdia120.dll`(VS2013) or `msdia140.dll`(VS2017) libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
+In particular, the `msdia140.dll` libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
 
-**VS2013**
-```
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\msdia120.dll"
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\amd64\msdia120.dll"
-```
-**VS2017**
 ```
 regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\msdia140.dll"
 regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\DIA SDK\bin\amd64\msdia140.dll"
@@ -449,10 +443,8 @@ bash get_source.sh
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --disable-warnings-as-errors \
-               --with-toolchain-version=2013 or 2017
+bash configure --disable-warnings-as-errors
 ```
-Note: there is no need to specify --with-toolchain-version for 2017 as it will be located automatically
 
 :pencil: If Java 11 is not available on the path, add the `--with-boot-jdk=<path_to_jdk11>` configuration option.
 
@@ -464,8 +456,8 @@ Note: there is no need to specify --with-toolchain-version for 2017 as it will b
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
@@ -602,8 +594,8 @@ bash configure --with-boot-jdk=<path_to_boot_JDK11>
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
@@ -746,8 +738,8 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
 Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={system|path_to_library}`
@@ -939,7 +931,7 @@ Login: `root`
 Password: `riscv`
 
 The following screen messages show up after logging in the system with the root account
-e.g. 
+e.g.
 ```
 Welcome to the Fedora/RISC-V stage4 disk image
 https://fedoraproject.org/wiki/Architectures/RISC-V
@@ -986,7 +978,7 @@ Login: `root`
 Password: `riscv`
 
 The following screen messages show up after logging in the system with the root account
-e.g. 
+e.g.
 ```
 Welcome to the Fedora/RISC-V disk image
 https://fedoraproject.org/wiki/Architectures/RISC-V
@@ -1017,7 +1009,7 @@ SMP Mon Jan 6 17:31:22 UTC 2020 riscv64 riscv64 riscv64 GNU/Linux
 
 :bulb:
 Given that the root account is rejected in login remotely via SSH, you need
-to create a user account on `Fedora_Developer_Rawhide` to establish another 
+to create a user account on `Fedora_Developer_Rawhide` to establish another
 session to communicate with the target system as follows:
 
 Create a user account on `Fedora_Developer_Rawhide`:
@@ -1219,7 +1211,7 @@ Run the following configure command to set up the cross-compilation environment 
 export RISCV64=<path_to_gnu_cross_toolchain>  #e.g. /opt/riscv_toolchain_linux
 export PATH="$RISCV64/bin:$PATH"
 
-bash configure --disable-warnings-as-errors \ 
+bash configure --disable-warnings-as-errors \
                --disable-ddr \
                --with-boot-jdk=<path_to_build_JDK_for_cross_compilation> \   #the `build-JDK` created at step 5
                --with-build-jdk=<path_to_build_JDK_for_cross_compilation> \  #the `build-JDK` created at step 5
@@ -1233,7 +1225,7 @@ For installed cross-toolchain package, run the following configure command to se
 ```
 export RISCV_TOOLCHAIN_TYPE=install  #specify the install type to use the installed cross-toolchain for the cross-compilation
 
-bash configure --disable-warnings-as-errors \ 
+bash configure --disable-warnings-as-errors \
                --disable-ddr \
                --with-boot-jdk=<path_to_build_JDK_for_cross_compilation> \   #the `build-JDK` created at step 5
                --with-build-jdk=<path_to_build_JDK_for_cross_compilation> \  #the `build-JDK` created at step 5
@@ -1255,8 +1247,8 @@ You can check the version of OpenSSL on your target system as follows:
 e.g.
 ```
 <your_fedora_mount_directory>/usr/bin# file openssl
-openssl: ELF 64-bit LSB executable, UCB RISC-V, version 1 (SYSV), 
-dynamically linked, interpreter /lib/ld-linux-riscv64-lp64d.so.1, 
+openssl: ELF 64-bit LSB executable, UCB RISC-V, version 1 (SYSV),
+dynamically linked, interpreter /lib/ld-linux-riscv64-lp64d.so.1,
 for GNU/Linux 4.15.0, BuildID[sha1]=715cfde5a3bdc6ff31b6cc2e449f06df1b3c465a, not stripped
 ```
 
