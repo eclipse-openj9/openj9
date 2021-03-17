@@ -1,6 +1,7 @@
 /* -----------------------------------------------------------------*-C-*-
    ffitarget.h - Copyright (c) 2012  Anthony Green
                  Copyright (c) 1996-2003  Red Hat, Inc.
+                 Copyright (c) 2021, 2021 IBM Corp.
    Target configuration macros for S390.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -47,6 +48,7 @@ typedef signed long            ffi_sarg;
 typedef enum ffi_abi {
   FFI_FIRST_ABI = 0,
   FFI_SYSV,
+  FFI_CEL4RO31,
   FFI_LAST_ABI,
   FFI_DEFAULT_ABI = FFI_SYSV
 } ffi_abi;
