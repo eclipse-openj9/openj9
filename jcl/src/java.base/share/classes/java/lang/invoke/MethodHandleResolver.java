@@ -393,21 +393,24 @@ final class MethodHandleResolver {
 			String name,
 			String typeDescriptor,
 			ClassLoader loader) throws Throwable {
-		MethodType type = null;
 /*[IF OPENJDK_METHODHANDLES]*/
+		Object type = null;
+		MethodType mt = null;
 		switch (cpRefKind) {
 		case 1: /* getField */
 		case 2: /* getStatic */
 		case 3: /* putField */
 		case 4: /* putStatic */
-			type = MethodTypeHelper.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null);
+			mt = MethodTypeHelper.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null);
+			type = mt.parameterType(0);
 			break;
 		case 5: /* invokeVirtual */
 		case 6: /* invokeStatic */
 		case 7: /* invokeSpecial */
 		case 8: /* newInvokeSpecial */
 		case 9: /* invokeInterface */
-			type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+			mt = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+			type = mt;
 			break;
 		default:
 			/*[MSG "K0686", "Unknown reference kind: '{0}'"]*/
@@ -415,10 +418,11 @@ final class MethodHandleResolver {
 		}
 
 		final MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass);
-		inaccessibleTypeCheck(lookup, type);
+		inaccessibleTypeCheck(lookup, mt);
 		
 		return MethodHandleNatives.linkMethodHandleConstant(currentClass, cpRefKind, referenceClazz, name, type);
 /*[ELSE] OPENJDK_METHODHANDLES*/
+		MethodType type = null;
 		try {
 			MethodHandles.Lookup lookup = new MethodHandles.Lookup(currentClass, false);
 			MethodHandle result = null;
