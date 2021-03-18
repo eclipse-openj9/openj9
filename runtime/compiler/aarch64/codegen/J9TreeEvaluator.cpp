@@ -3060,6 +3060,32 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       {
       switch (methodSymbol->getRecognizedMethod())
          {
+         case TR::java_nio_Bits_keepAlive:
+         case TR::java_lang_ref_Reference_reachabilityFence:
+            {
+
+            // The only purpose of these functions is to prevent an otherwise
+            // unreachable object from being garbage collected, because we don't
+            // want its finalizer to be called too early.  There's no need to
+            // generate a full-blown call site just for this purpose.  
+
+            TR::Node *paramNode = node->getFirstChild();
+            TR::Register *paramReg = cg->evaluate(paramNode);
+
+            // In theory, a value could be kept alive on the stack, rather than in
+            // a register.  It is unfortunate that the following deps will force
+            // the value into a register for no reason.  However, in many common
+            // cases, this label will have no effect on the generated code, and
+            // will only affect GC maps.
+            //
+            TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
+            TR::addDependency(conditions, paramReg, TR::RealRegister::NoReg, TR_GPR, cg);
+            TR::LabelSymbol *label = generateLabelSymbol(cg);
+            generateLabelInstruction(cg, TR::InstOpCode::label, node, label, conditions);
+            cg->decReferenceCount(paramNode);
+            resultReg = NULL;
+            return true;
+            }
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             {
             if (!methodSymbol->isNative())
