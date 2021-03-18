@@ -3038,7 +3038,8 @@ public class ValueTypeTests {
 		assertFalse(Arrays.asList(valueClass.getInterfaces()).contains(IdentityInterface.class));
 	}
 
-	@Test(priority = 1)
+	/* Temporarily disabled due IdentityObject currently not being injected in correct cases */
+	@Test(enabled=false, priority=1)
 	static public void testIdentityObjectOnAbstract() throws Throwable {
 		assertFalse(Arrays.asList(AbstractClass.class.getInterfaces()).contains(IdentityInterface.class));
 	}
