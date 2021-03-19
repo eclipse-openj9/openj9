@@ -1098,12 +1098,16 @@ static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    const char *xxJITServerSSLKeyOption = "-XX:JITServerSSLKey=";
    const char *xxJITServerSSLCertOption = "-XX:JITServerSSLCert=";
    const char *xxJITServerSSLRootCertsOption = "-XX:JITServerSSLRootCerts=";
+   const char *xxJITServerUseAOTCacheOption = "-XX:+JITServerUseAOTCache";
+   const char *xxDisableJITServerUseAOTCacheOption = "-XX:-JITServerUseAOTCache";
 
    int32_t xxJITServerPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerPortOption, 0);
    int32_t xxJITServerTimeoutArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTimeoutOption, 0);
    int32_t xxJITServerSSLKeyArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLKeyOption, 0);
    int32_t xxJITServerSSLCertArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLCertOption, 0);
    int32_t xxJITServerSSLRootCertsArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLRootCertsOption, 0);
+   int32_t xxJITServerUseAOTCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerUseAOTCacheOption, 0);
+   int32_t xxDisableJITServerUseAOTCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerUseAOTCacheOption, 0);
 
    if (xxJITServerPortArgIndex >= 0)
       {
@@ -1146,6 +1150,9 @@ static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
       if (!cert.empty())
          compInfo->setJITServerSslRootCerts(cert);
       }
+
+   if (xxJITServerUseAOTCacheArgIndex > xxDisableJITServerUseAOTCacheArgIndex)
+      compInfo->getPersistentInfo()->setJITServerUseAOTCache(true);
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -2015,8 +2022,8 @@ J9::Options::fePreProcess(void * base)
          const char *xxUseJITServerOption = "-XX:+UseJITServer";
          const char *xxDisableUseJITServerOption = "-XX:-UseJITServer";
 
-         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxUseJITServerOption, 0);
-         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableUseJITServerOption, 0);
+         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxUseJITServerOption, 0);
+         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableUseJITServerOption, 0);
 
          // Check if option is at all specified
          if (xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex)
@@ -2027,8 +2034,8 @@ J9::Options::fePreProcess(void * base)
             const char *xxJITServerTechPreviewMessageOption = "-XX:+JITServerTechPreviewMessage";
             const char *xxDisableJITServerTechPreviewMessageOption = "-XX:-JITServerTechPreviewMessage";
 
-            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTechPreviewMessageOption, 0);
-            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
+            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerTechPreviewMessageOption, 0);
+            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
 
             if (xxJITServerTechPreviewMessageArgIndex >= xxDisableJITServerTechPreviewMessageArgIndex)
                {

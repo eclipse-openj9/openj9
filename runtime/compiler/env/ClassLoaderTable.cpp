@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,218 +20,361 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "AtomicSupport.hpp"
+#include "control/CompilationThread.hpp"
 #include "env/ClassLoaderTable.hpp"
+#include "env/J9SharedCache.hpp"
+#include "env/VerboseLog.hpp"
+#include "infra/MonitorTable.hpp"
 
-#include <stdint.h>
-#include "env/PersistentCHTable.hpp"
-#include "env/jittypes.h"
 
+enum TableKind { Loader, Chain, Name };
+
+// To make the three-way map between class loaders, class chains, and class names more efficient, this
+// struct is linked into three linked lists - one for each hash table in TR_PersistentClassLoaderTable.
 struct TR_ClassLoaderInfo
    {
-   TR_ALLOC(TR_Memory::PersistentCHTable)
-   TR_ClassLoaderInfo(void *classLoaderPointer, void *classChainPointer) :
-      _classLoaderPointer(classLoaderPointer),
-      _classChainPointer(classChainPointer),
-      _next(NULL)
+   TR_PERSISTENT_ALLOC(TR_Memory::PersistentCHTable)
+
+   TR_ClassLoaderInfo(void *loader, void *chain) :
+      _loader(loader), _loaderTableNext(NULL),
+      _chain(chain), _chainTableNext(NULL)
+#if defined(J9VM_OPT_JITSERVER)
+      , _nameTableNext(NULL)
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      { }
+
+   const J9UTF8 *name(TR_J9SharedCache *sharedCache) const
       {
+      return J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain((uintptr_t *)_chain));
       }
 
-   void *_classLoaderPointer;
-   void *_classChainPointer;
-   TR_ClassLoaderInfo *_next;
+   template<TableKind T> TR_ClassLoaderInfo *&next();
+   template<TableKind T> bool equals(const void *key) const;
+
+   void *const _loader;
+   TR_ClassLoaderInfo *_loaderTableNext;
+   void *const _chain;
+   TR_ClassLoaderInfo *_chainTableNext;
+#if defined(J9VM_OPT_JITSERVER)
+   TR_ClassLoaderInfo *_nameTableNext;
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 
-TR_PersistentClassLoaderTable::TR_PersistentClassLoaderTable(TR_PersistentMemory *trPersistentMemory)
+template<TableKind T> static size_t hash(const void *key);
+
+template<TableKind T> static TR_ClassLoaderInfo *
+lookup(TR_ClassLoaderInfo *const *table, size_t &index, TR_ClassLoaderInfo *&prev, const void *key)
    {
-   for (int32_t i=0;i < CLASSLOADERTABLE_SIZE;i++)
+   index = hash<T>(key) % CLASSLOADERTABLE_SIZE;
+   TR_ClassLoaderInfo *info = table[index];
+   prev = NULL;
+   while (info && !info->equals<T>(key))
       {
-      _loaderTable[i] = NULL;
-      _classChainTable[i] = NULL;
+      prev = info;
+      info = info->next<T>();
       }
-   _trPersistentMemory = trPersistentMemory;
-   _sharedCache = NULL;
+   return info;
    }
 
-int32_t
-TR_PersistentClassLoaderTable::hashLoader(void *classLoaderPointer)
+template<TableKind T> static void
+insert(TR_ClassLoaderInfo *info, TR_ClassLoaderInfo **table, size_t index)
    {
-   return ((uintptr_t)classLoaderPointer % CLASSLOADERTABLE_SIZE);
+   info->next<T>() = table[index];
+   // Write barrier guarantees that a reader thread traversing the list will read
+   // the new list head only after its next field is already set to the old head.
+   VM_AtomicSupport::writeBarrier();
+   table[index] = info;
    }
 
-int32_t
-TR_PersistentClassLoaderTable::hashClassChain(void *classChainPointer)
+template<TableKind T> static void
+remove(TR_ClassLoaderInfo *info, TR_ClassLoaderInfo *prev, TR_ClassLoaderInfo **table, size_t index)
    {
-   return ((uintptr_t)classChainPointer % CLASSLOADERTABLE_SIZE);
+   if (prev)
+      prev->next<T>() = info->next<T>();
+   else
+      table[index] = info->next<T>();
    }
 
-int32_t TR_PersistentClassLoaderTable::_numClassLoaders = 0;
+
+template<> TR_ClassLoaderInfo *&TR_ClassLoaderInfo::next<Loader>() { return _loaderTableNext; }
+template<> bool TR_ClassLoaderInfo::equals<Loader>(const void *loader) const { return loader == _loader; }
+// Remove trailing zero bits in aligned pointer for better hash distribution
+template<> size_t hash<Loader>(const void *loader) { return (uintptr_t)loader >> 3; }
+
+template<> TR_ClassLoaderInfo *&TR_ClassLoaderInfo::next<Chain>() { return _chainTableNext; }
+template<> bool TR_ClassLoaderInfo::equals<Chain>(const void *chain) const { return chain == _chain; }
+// Remove trailing zero bits in aligned pointer for better hash distribution
+template<> size_t hash<Chain>(const void *chain) { return (uintptr_t)chain >> 3; }
+
+
+#if defined(J9VM_OPT_JITSERVER)
+
+template<> TR_ClassLoaderInfo *&TR_ClassLoaderInfo::next<Name>() { return _nameTableNext; }
+
+struct NameKey
+   {
+   const uint8_t *_data;
+   size_t _length;
+   TR_J9SharedCache *_sharedCache;
+   };
+
+template<> bool
+TR_ClassLoaderInfo::equals<Name>(const void *keyPtr) const
+   {
+   auto key = (const NameKey *)keyPtr;
+   const J9UTF8 *str = name(key->_sharedCache);
+   return J9UTF8_DATA_EQUALS(J9UTF8_DATA(str), J9UTF8_LENGTH(str), key->_data, key->_length);
+   }
+
+template<> size_t
+hash<Name>(const void *keyPtr)
+   {
+   auto key = (const NameKey *)keyPtr;
+   size_t h = 0;
+   for (size_t i = 0; i < key->_length; ++i)
+      h = (h << 5) - h + key->_data[i];
+   return h;
+   }
+
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+
+TR_PersistentClassLoaderTable::TR_PersistentClassLoaderTable(TR_PersistentMemory *persistentMemory) :
+   _persistentMemory(persistentMemory), _sharedCache(NULL)
+   {
+   memset(_loaderTable, 0, sizeof(_loaderTable));
+   memset(_chainTable, 0, sizeof(_chainTable));
+#if defined(J9VM_OPT_JITSERVER)
+   memset(_nameTable, 0, sizeof(_nameTable));
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   }
+
+
+//NOTE: Class loader table doesn't require any additional locking for synchronization.
+// Writers are always mutually exclusive with each other. Readers cannot be concurrent
+// with the writers that remove entries from the table. Traversing linked lists in hash
+// buckets can be concurrent with inserting new entries (which only needs a write barrier).
+
+static bool
+hasSharedVMAccess(J9VMThread *vmThread)
+   {
+   return (vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && !vmThread->omrVMThread->exclusiveCount;
+   }
+
 
 void
-TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPointer, TR_OpaqueClassBlock *clazz)
+TR_PersistentClassLoaderTable::associateClassLoaderWithClass(J9VMThread *vmThread, void *loader,
+                                                             TR_OpaqueClassBlock *clazz)
    {
-   if (!sharedCache())
+   // Since current thread has shared VM access and holds the classTableMutex,
+   // no other thread can be modifying the table at the same time.
+   TR_ASSERT(hasSharedVMAccess(vmThread), "Must have shared VM access");
+   TR_ASSERT(TR::MonitorTable::get()->getClassTableMutex()->owned_by_self(), "Must hold classTableMutex");
+   if (!_sharedCache)
       return;
 
-   // need to acquire some kind of lock here
+   // Lookup by class loader and check if it already has an associated class
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Loader>(_loaderTable, index, prev, loader);
+   if (info)
+      return;
 
-   // first index by class loader
-   int32_t index = hashLoader(classLoaderPointer);
-   TR_ClassLoaderInfo *info = _loaderTable[index];
-   while (info != NULL && info->_classLoaderPointer != classLoaderPointer)
-      info = info->_next;
+#if defined(J9VM_OPT_JITSERVER)
+   bool useAOTCache = _persistentMemory->getPersistentInfo()->getJITServerUseAOTCache();
+   const J9UTF8 *nameStr = J9ROMCLASS_CLASSNAME(((J9Class *)clazz)->romClass);
+   const uint8_t *name = J9UTF8_DATA(nameStr);
+   uint16_t nameLength = J9UTF8_LENGTH(nameStr);
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
+   void *chain = _sharedCache->rememberClass(clazz);
+   if (!chain)
+      {
+#if defined(J9VM_OPT_JITSERVER)
+      if (useAOTCache && TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Failed to get class chain for %.*s loaded by %p",
+            nameLength, (const char *)name, loader
+         );
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      return;
+      }
+   TR_ASSERT(_sharedCache->isPointerInSharedCache(chain), "Class chain must be in SCC");
+
+   info = new (_persistentMemory) TR_ClassLoaderInfo(loader, chain);
    if (!info)
       {
-      void *classChainPointer = (void *) sharedCache()->rememberClass(clazz);
-      if (classChainPointer)
-         {
-         bool inCache = sharedCache()->isPointerInSharedCache(classChainPointer);
-         TR_ASSERT(inCache, "rememberClass should only return class chain pointers that are in the shared class cache");
-
-         info = new (trPersistentMemory()) TR_ClassLoaderInfo(classLoaderPointer, classChainPointer);
-         if (!info)
-            {
-            // this is a bad situation because we can't associate the right class with this class loader
-            // how to prevent this class loader from associating with a different class?
-            // probably not critical if multiple class loaders aren't routinely loading the exact same class
-            return;
-            }
-
-         info->_next = _loaderTable[index];
-         _loaderTable[index] = info;
-
-         // now index by class chain
-         index = hashClassChain(classChainPointer);
-         info = _classChainTable[index];
-         while (info != NULL && info->_classChainPointer != classChainPointer)
-            info = info->_next;
-
-         if (info)
-            {
-            // getting here means there are two class loaders with identical first loaded class
-            // current heuristic doesn't work in this scenario
-            // TODO some diagnostic output here
-            // we have added this loader to _loaderTable, which has nice side benefit that we won't keep trying it, so
-            // leave it there
-            return;
-            }
-
-         info = new (trPersistentMemory()) TR_ClassLoaderInfo(classLoaderPointer, classChainPointer);
-         if (!info)
-            {
-            // we have to leave the _loaderTable entry we just created intact to prevent other loaded classes from
-            // becoming the identifying class for this loader
-            return;
-            }
-         info->_next = _classChainTable[index];
-         _classChainTable[index] = info;
-         }
-      else
-         {
-         }
+      // This is a bad situation because we can't associate the right class with this class loader.
+      // Probably not critical if multiple class loaders aren't routinely loading the exact same class.
+      //TODO: Prevent this class loader from associating with a different class
+#if defined(J9VM_OPT_JITSERVER)
+      if (useAOTCache && TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Failed to associate class %.*s chain %p with loader %p",
+            nameLength, (const char *)name, chain, loader
+         );
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      return;
       }
+   insert<Loader>(info, _loaderTable, index);
+
+   // Lookup by class chain and check if was already associated with another class loader
+   TR_ClassLoaderInfo *otherInfo = lookup<Chain>(_chainTable, index, prev, chain);
+   if (otherInfo)
+      {
+      // There is more than one class loader with identical first loaded class.
+      // Current heuristic doesn't work in this scenario, but it doesn't break
+      // correctness, and in the worst case can only result in failed AOT loads.
+      // We have added this loader to _classLoaderTable, which has a nice side
+      // benefit that we won't keep trying to add it, so leave it there.
+#if defined(J9VM_OPT_JITSERVER)
+      if (useAOTCache && TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Class %.*s chain %p already associated with loader %p != %p",
+            nameLength, (const char *)name, chain, otherInfo->_loader, loader
+         );
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      return;
+      }
+   insert<Chain>(info, _chainTable, index);
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (useAOTCache)
+      {
+      // Lookup by class name and check if it was already associated with another class loader
+      NameKey key { name, nameLength, _sharedCache };
+      otherInfo = lookup<Name>(_nameTable, index, prev, &key);
+      if (otherInfo)
+         {
+         // There is more than one class loader with the same name of the first loaded
+         // class (but the classes themselves are not identical). Current AOT cache
+         // heuristic doesn't work in this scenario, but it doesn't break correctness,
+         // and in the worst case can only result in failed AOT method deserialization.
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "ERROR: Class name %.*s already associated with loader %p != %p",
+               nameLength, (const char *)name, otherInfo->_loader, loader
+            );
+         return;
+         }
+      insert<Name>(info, _nameTable, index);
+
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "Associated class loader %p with class %.*s chain %p",
+            loader, nameLength, (const char *)name, chain
+         );
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   }
+
+
+static void
+assertCurrentThreadCanRead()
+   {
+   // To guarantee that reading the table is not concurrent with class loader removal during GC,
+   // current thread must either have shared VM access or hold the classUnloadMonitor for reading.
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+   TR::Compilation *comp = TR::comp();
+   TR_ASSERT(hasSharedVMAccess(comp->j9VMThread()) ||
+             (TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(comp->getCompThreadID()) > 0),
+             "Must either have shared VM access of hold classUnloadMonitor for reading");
+#endif /* defined(DEBUG) || defined(PROD_WITH_ASSUMES) */
    }
 
 void *
-TR_PersistentClassLoaderTable::lookupClassChainAssociatedWithClassLoader(void *classLoaderPointer)
+TR_PersistentClassLoaderTable::lookupClassChainAssociatedWithClassLoader(void *loader) const
    {
-   if (!sharedCache())
+   assertCurrentThreadCanRead();
+   if (!_sharedCache)
       return NULL;
 
-   // need to acquire some kind of lock here
-
-   int32_t index = hashLoader(classLoaderPointer);
-   TR_ClassLoaderInfo *info = _loaderTable[index];
-   while (info != NULL && info->_classLoaderPointer != classLoaderPointer)
-      info = info->_next;
-
-   void *classChainPointer=NULL;
-   if (info)
-      {
-      classChainPointer = info->_classChainPointer;
-      }
-
-   //fprintf(stderr, "PCLT:looking up class chain for loader %p: found %p\n", classLoaderPointer, classChainPointer);
-
-   return classChainPointer;
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Loader>(_loaderTable, index, prev, loader);
+   return info ? info->_chain : NULL;
    }
 
 void *
-TR_PersistentClassLoaderTable::lookupClassLoaderAssociatedWithClassChain(void *classChainPointer)
+TR_PersistentClassLoaderTable::lookupClassLoaderAssociatedWithClassChain(void *chain) const
    {
-   if (!sharedCache())
+   assertCurrentThreadCanRead();
+   if (!_sharedCache)
       return NULL;
 
-   // need to acquire some kind of lock here
-
-   int32_t index = hashClassChain(classChainPointer);
-   TR_ClassLoaderInfo *info = _classChainTable[index];
-   while (info != NULL && info->_classChainPointer != classChainPointer)
-      info = info->_next;
-
-   void *classLoaderPointer=NULL;
-   if (info)
-      {
-      classLoaderPointer = info->_classLoaderPointer;
-      }
-
-   //fprintf(stderr, "PCLT:looking up class loader for class chain %p: found %p\n", classChainPointer, classLoaderPointer);
-
-   return classLoaderPointer;
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Chain>(_chainTable, index, prev, chain);
+   return info ? info->_loader : NULL;
    }
+
+#if defined(J9VM_OPT_JITSERVER)
+
+std::pair<void *, void *>
+TR_PersistentClassLoaderTable::lookupClassLoaderAndChainAssociatedWithClassName(const uint8_t *data, size_t length) const
+   {
+   assertCurrentThreadCanRead();
+   if (!_sharedCache)
+      return { NULL, NULL };
+
+   NameKey key { data, length, _sharedCache };
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Name>(_nameTable, index, prev, &key);
+   if (!info)
+      return { NULL, NULL };
+   return { info->_loader, info->_chain };
+   }
+
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 
 void
-TR_PersistentClassLoaderTable::removeClassLoader(void *classLoaderPointer)
+TR_PersistentClassLoaderTable::removeClassLoader(J9VMThread *vmThread, void *loader)
    {
-   // need to acquire some kind of lock here
+   // Since current thread has exclusive VM access and holds the classUnloadMonitor
+   // for writing (NOTE: we don't have an assertion for that due to lack of API),
+   // no other thread can be modifying the table at the same time.
+   TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && vmThread->omrVMThread->exclusiveCount,
+             "Must have exclusive VM access");
+   if (!_sharedCache)
+      return;
 
-   //fprintf(stderr,"PCLT:removing unloaded loader %p\n", classLoaderPointer);
+   // Remove from the table indexed by class loader
+   size_t index;
+   TR_ClassLoaderInfo *prev;
+   TR_ClassLoaderInfo *info = lookup<Loader>(_loaderTable, index, prev, loader);
+   if (!info)
+      return;
+   remove<Loader>(info, prev, _loaderTable, index);
 
-   // now remove it from the loaderTable
-   int32_t index = hashLoader(classLoaderPointer);
-   TR_ClassLoaderInfo *prevInfo = NULL;
-   TR_ClassLoaderInfo *info = _loaderTable[index];
-   while (info != NULL && info->_classLoaderPointer != classLoaderPointer)
+   // Remove from the table indexed by class chain
+   TR_ClassLoaderInfo *otherInfo = lookup<Chain>(_chainTable, index, prev, info->_chain);
+   if (otherInfo == info)// Otherwise the entry belongs to another class loader
+      remove<Chain>(info, prev, _chainTable, index);
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (_persistentMemory->getPersistentInfo()->getJITServerUseAOTCache())
       {
-      prevInfo = info;
-      info = info->_next;
+      // Remove from the table indexed by class name
+      const J9UTF8 *nameStr = info->name(_sharedCache);
+      const uint8_t *name = J9UTF8_DATA(nameStr);
+      uint16_t nameLength = J9UTF8_LENGTH(nameStr);
+
+      NameKey key { name, nameLength, _sharedCache };
+      otherInfo = lookup<Name>(_nameTable, index, prev, &key);
+      if (otherInfo == info)// Otherwise the entry belongs to another class loader
+         remove<Name>(info, prev, _nameTable, index);
+
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "Removed class loader %p associated with class %.*s chain %p",
+            loader, nameLength, (const char *)name, info->_chain
+         );
       }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
-   if (info)
-      {
-      //fprintf(stderr,"PCLT:\tfound it in loaderTable at index %d\n", index);
-      if (prevInfo)
-         prevInfo->_next = info->_next;
-      else
-         _loaderTable[index] = info->_next;
-      trPersistentMemory()->freePersistentMemory(info);
-      }
-
-   // now remove it from the classChainTable
-   for (index = 0;index < CLASSLOADERTABLE_SIZE;index++)
-      {
-      prevInfo = NULL;
-      info = _classChainTable[index];
-      while (info && info->_classLoaderPointer != classLoaderPointer)
-         {
-         prevInfo = info;
-         info = info->_next;
-         }
-
-      if (info)
-         break;
-      }
-
-   if (info)
-      {
-      //fprintf(stderr,"PCLT:\tfound it in classChainTable at index %d\n", index);
-      if (prevInfo)
-         prevInfo->_next = info->_next;
-      else
-         _classChainTable[index] = info->_next;
-      trPersistentMemory()->freePersistentMemory(info);
-      }
-
-   //fprintf(stderr,"PCLT:num class loaders now %d\n", --_numClassLoaders);
+   _persistentMemory->freePersistentMemory(info);
    }
