@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -336,7 +336,7 @@ unlinkClassLoadingConstraints (J9JavaVM* jvm)
 			if ((NULL == constraint->clazz) && (constraint->linkNext == constraint)) { /* no point in having a single empty element */
 				hashTableDoRemove(&walkState);
 				if (NULL != nameToFree) {
-					j9mem_free_memory(constraint->name);
+					j9mem_free_memory(nameToFree);
 				}
 			} else if (J9_GC_CLASS_LOADER_DEAD == (constraint->classLoader->gcFlags & J9_GC_CLASS_LOADER_DEAD) ) {
 				/* this class loader is being unloaded. Remove the constraint from the linked list */
@@ -344,7 +344,7 @@ unlinkClassLoadingConstraints (J9JavaVM* jvm)
 				J9_LINKED_LIST_REMOVE(root, constraint);
 				hashTableDoRemove(&walkState);
 				if (NULL != nameToFree) {
-					j9mem_free_memory(constraint->name);
+					j9mem_free_memory(nameToFree);
 				}
 			} else {
 				/* mark the constraint as unsatisfied if it refers to a dying loader */

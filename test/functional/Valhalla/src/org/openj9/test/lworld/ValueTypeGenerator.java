@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,9 +178,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		String classFileName = className + ".class";
 
 		if (isRef) {
-			cw.visit(55, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, className, null, "java/lang/Object", null);
+			cw.visit(56, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, className, null, "java/lang/Object", null);
 		} else {
-			cw.visit(55, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_VALUE_TYPE, className, null, "java/lang/Object", null);
+			cw.visit(56, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_VALUE_TYPE, className, null, "java/lang/Object", null);
 		}
 
 		cw.visitSource(className + ".java", null);
@@ -223,22 +223,20 @@ public class ValueTypeGenerator extends ClassLoader {
 			generateFieldMethods(cw, nameAndSigValue, className, isVerifiable, isRef);
 		}
 		
-		initHelper(cw);
-		
 		if (isRef) {
+			initHelper(cw);
 			makeRef(cw, className, makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 			makeRefDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			if (!isVerifiable) {
 				makeGeneric(cw, className, "makeRefGeneric", "makeRef", makeValueSig, makeValueGenericSig, fields, makeMaxLocal, isRef);
 				/* makeValue is invalid on ref: Included to test if runtime error is (correctly) thrown */
-				makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
-				makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
+				/* makeValue(cw, className, makeValueSig, fields, makeMaxLocal); */
+				makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal, isRef);
 			}
 
 			testWithFieldOnNonValueType(cw, className, fields);
 			testWithFieldOnNull(cw, className, fields);
 			testWithFieldOnNonExistentClass(cw, className, fields);
-			testMonitorEnterOnObject(cw, className, fields);
 			testMonitorExitOnObject(cw, className, fields);
 			testMonitorEnterAndExitWithRefType(cw, className, fields);
 			testCheckCastRefClassOnNull(cw, className, fields);
@@ -254,7 +252,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			}
 		} else {
 			makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
-			makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
+			makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal, isRef);
 			testCheckCastValueTypeOnNull(cw, className, fields);
 			testCheckCastValueTypeOnNonNullType(cw, className, fields);
 			if (!isVerifiable) {
@@ -280,7 +278,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitCode();
 		mv.visitInsn(ICONST_1);
 		mv.visitInsn(IRETURN);
-		mv.visitMaxs(1, 1);
+		mv.visitMaxs(1, 0);
 		mv.visitEnd();
 	}
 	
@@ -304,10 +302,10 @@ public class ValueTypeGenerator extends ClassLoader {
 		} else {
 			generateGetter(cw, nameAndSigValue, className);
 			generateSetter(cw, nameAndSigValue, className);
-			generateWither(cw, nameAndSigValue, className);
+			generateWither(cw, nameAndSigValue, className, isRef);
 			if (!isVerifiable) {
 				generateGetterGeneric(cw, nameAndSigValue, className);
-				generateWitherGeneric(cw, nameAndSigValue, className);
+				generateWitherGeneric(cw, nameAndSigValue, className, isRef);
 				generateSetterGeneric(cw, nameAndSigValue, className);
 			}
 		}
@@ -369,21 +367,6 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitFieldInsn(WITHFIELD, "NonExistentClass", "longField", "J");
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(3, 2);
-		mv.visitEnd();
-	}
-
-	 /* 
-	  * This function should only be called in the
-	  * TestMonitorEnterOnValueType test and 
-	  * TestMonitorEnterWithRefType test
-	  */
-	private static void testMonitorEnterOnObject(ClassWriter cw, String className, String[] fields) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testMonitorEnterOnObject", "(Ljava/lang/Object;)V", null, null);
-		mv.visitCode();
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitInsn(MONITORENTER);
-		mv.visitInsn(RETURN);
-		mv.visitMaxs(1, 1);
 		mv.visitEnd();
 	}
 
@@ -463,10 +446,10 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitEnd();
 	}
 	
-	private static void makeValueTypeDefaultValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal) {
+	private static void makeValueTypeDefaultValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal, boolean isRef) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValueTypeDefaultValue", "()Ljava/lang/Object;", null, null);
 		mv.visitCode();
-		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(valueName, false));
+		mv.visitTypeInsn(DEFAULTVALUE, getSigFromSimpleName(valueName, isRef));
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 0);
 		mv.visitEnd();
@@ -902,9 +885,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitEnd();
 	}
 
-	private static void generateWither(ClassWriter cw, String[] nameAndSigValue, String className) {
+	private static void generateWither(ClassWriter cw, String[] nameAndSigValue, String className, boolean isRef) {
 		boolean doubleDetected = false;
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "with" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")L" + className + ";", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "with" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")" + getSigFromSimpleName(className, isRef), null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		switch (nameAndSigValue[1]) {
@@ -937,9 +920,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitEnd();
 	}
 		
-	private static void generateWitherGeneric(ClassWriter cw, String[] nameAndSigValue, String className) {
+	private static void generateWitherGeneric(ClassWriter cw, String[] nameAndSigValue, String className, boolean isRef) {
 		boolean doubleDetected = false;
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "withGeneric" + nameAndSigValue[0], "(Ljava/lang/Object;)L" + className + ";", null, null);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "withGeneric" + nameAndSigValue[0], "(Ljava/lang/Object;)Ljava/lang/Object;", null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitVarInsn(ALOAD, 1);
@@ -952,15 +935,19 @@ public class ValueTypeGenerator extends ClassLoader {
 		case "I":
 			mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+			break;
 		case "Z":
 			mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+			break;
 		case "B":
 			mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
+			break;
 		case "C":
 			mv.visitTypeInsn(CHECKCAST, "java/lang/Character");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
+			break;
 		case "S":
 			mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()S", false);
@@ -978,7 +965,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			break;
 		}
 
-		mv.visitMethodInsn(INVOKEVIRTUAL, className, "with" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")L" + className + ";", false);
+		mv.visitMethodInsn(INVOKEVIRTUAL, className, "with" + nameAndSigValue[0], "(" + nameAndSigValue[1] + ")" +getSigFromSimpleName(className, isRef), false);
 		mv.visitInsn(ARETURN);
 		int maxStack = (doubleDetected ? 3 : 2);
 		mv.visitMaxs(maxStack, 2);
