@@ -2645,11 +2645,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       }
 
 #if defined(TR_HOST_ARM64)
-   // Internal Pointers support is not available in AArch64 yet.
-   // OpenJ9 issue #6367 tracks the work to enable.
-   //
-   self()->setOption(TR_DisableInternalPointers);
-
    // ArraySet support is not available in AArch64 yet.
    // OpenJ9 issue #6443 tracks the work to enable.
    //
