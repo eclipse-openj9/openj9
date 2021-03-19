@@ -292,10 +292,10 @@ public class ValueTypeTests {
 		
 		makePoint2D = lookup.findStatic(point2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		
-		getX = generateGetter(point2DClass, "x", int.class);
-		withX = generateWither(point2DClass, "x", int.class);
-		getY = generateGetter(point2DClass, "y", int.class);
-		withY = generateWither(point2DClass, "y", int.class);
+		getX = generateGenericGetter(point2DClass, "x");
+		withX = generateGenericWither(point2DClass, "x");
+		getY = generateGenericGetter(point2DClass, "y");
+		withY = generateGenericWither(point2DClass, "y");
 
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -455,10 +455,10 @@ public class ValueTypeTests {
 		
 		MethodHandle makePoint2DComplex = lookup.findStatic(point2DComplexClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 
-		MethodHandle getD = generateGetter(point2DComplexClass, "d", double.class);
-		MethodHandle withD = generateWither(point2DComplexClass, "d", double.class);
-		MethodHandle getJ = generateGetter(point2DComplexClass, "j", long.class);
-		MethodHandle withJ = generateWither(point2DComplexClass, "j", long.class);
+		MethodHandle getD = generateGenericGetter(point2DComplexClass, "d");
+		MethodHandle withD = generateGenericWither(point2DComplexClass, "d");
+		MethodHandle getJ = generateGenericGetter(point2DComplexClass, "j");
+		MethodHandle withJ = generateGenericWither(point2DComplexClass, "j");
 		
 		double d = Double.MAX_VALUE;
 		long j = Long.MAX_VALUE;
@@ -497,15 +497,15 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=2)
 	static public void testCreateLine2D() throws Throwable {
-		String fields[] = {"st:LPoint2D;:value", "en:LPoint2D;:value"};
+		String fields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
 		line2DClass = ValueTypeGenerator.generateValueClass("Line2D", fields);
 		
 		makeLine2D = lookup.findStatic(line2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		
-		MethodHandle getSt = generateGetter(line2DClass, "st", point2DClass);
- 		MethodHandle withSt = generateWither(line2DClass, "st", point2DClass);
- 		MethodHandle getEn = generateGetter(line2DClass, "en", point2DClass);
- 		MethodHandle withEn = generateWither(line2DClass, "en", point2DClass);
+		MethodHandle getSt = generateGenericGetter(line2DClass, "st");
+ 		MethodHandle withSt = generateGenericWither(line2DClass, "st");
+ 		MethodHandle getEn = generateGenericGetter(line2DClass, "en");
+ 		MethodHandle withEn = generateGenericWither(line2DClass, "en");
  		
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -691,7 +691,7 @@ public class ValueTypeTests {
 	 * }
 	 * 
 	 */
-	@Test(priority=3)
+	@Test(enabled=false, priority=3)
 	static public void testDefaultValueWithNonValueType() throws Throwable {
 		String fields[] = {"f1:Ljava/lang/Object;:value", "f2:Ljava/lang/Object;:value"};
 		Class<?> defaultValueWithNonValueType = ValueTypeGenerator.generateRefClass("DefaultValueWithNonValueType", fields);
@@ -708,13 +708,15 @@ public class ValueTypeTests {
 	 * class TestWithFieldOnNonValueType {
 	 *  long longField
 	 * }
+	 * 
+	 * TODO: Change VM to throw verification error when the reciever for the withfield instruction is not a Valuetype.
 	 */
-	@Test(priority=1)
+	@Test(enabled=false, priority=1)
 	static public void testWithFieldOnNonValueType() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class<?> testWithFieldOnNonValueType = ValueTypeGenerator.generateRefClass("TestWithFieldOnNonValueType", fields);
-		MethodHandle withFieldOnNonValueType = lookup.findStatic(testWithFieldOnNonValueType, "testWithFieldOnNonValueType", MethodType.methodType(Object.class));
 		try {
+			MethodHandle withFieldOnNonValueType = lookup.findStatic(testWithFieldOnNonValueType, "testWithFieldOnNonValueType", MethodType.methodType(Object.class));
 			withFieldOnNonValueType.invoke();
 			Assert.fail("should throw error. WithField must be used with ValueType");
 		} catch (IncompatibleClassChangeError e) {}
@@ -726,14 +728,16 @@ public class ValueTypeTests {
 	 * class TestWithFieldOnNull {
 	 *  long longField
 	 * }
+	 * 
+	 * TODO: Change VM to throw verification error when the reciever for the withfield instruction is not a Valuetype.
 	 */
-	@Test(priority=1)
+	@Test(enabled=false, priority=1)
 	static public void testWithFieldOnNull() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class<?> testWithFieldOnNull = ValueTypeGenerator.generateRefClass("TestWithFieldOnNull", fields);
 		
-		MethodHandle withFieldOnNull = lookup.findStatic(testWithFieldOnNull, "testWithFieldOnNull", MethodType.methodType(Object.class));
 		try {
+			MethodHandle withFieldOnNull = lookup.findStatic(testWithFieldOnNull, "testWithFieldOnNonValueType", MethodType.methodType(Object.class));
 			withFieldOnNull.invoke();
 			Assert.fail("should throw error. Objectref cannot be null");
 		} catch (NullPointerException e) {}
@@ -1136,35 +1140,6 @@ public class ValueTypeTests {
 		Assert.assertTrue((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment3), "A substitutability (!=) test on different value the same contents should always return false");
 
 	}
-	
-	/*
-	 * Test monitorEnter on valueType
-	 * 
-	 * class TestMonitorEnterOnValueType {
-	 *  long longField
-	 * }
-	 */
-	@Test(priority=2)
-	static public void testMonitorEnterOnValueType() throws Throwable {
-		int x = 0;
-		int y = 0;
-		Object valueType = makePoint2D.invoke(x, y);
-		Object valueTypeArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
-
-		String fields[] = {"longField:J"};
-		Class<?> testMonitorEnterOnValueType = ValueTypeGenerator.generateRefClass("TestMonitorEnterOnValueType", fields);
-		MethodHandle monitorEnterOnValueType = lookup.findStatic(testMonitorEnterOnValueType, "testMonitorEnterOnObject", MethodType.methodType(void.class, Object.class));
-		try {
-			monitorEnterOnValueType.invoke(valueType);
-			Assert.fail("should throw exception. MonitorEnter cannot be used with ValueType");
-		} catch (IllegalMonitorStateException e) {}
-		
-		try {
-			monitorEnterOnValueType.invoke(valueTypeArray);
-		} catch (IllegalMonitorStateException e) {
-			Assert.fail("Should not throw exception. MonitorEnter can be used with ValueType arrays");
-		}
-	}
 
 	/*
 	 * Test monitorExit on valueType
@@ -1174,7 +1149,7 @@ public class ValueTypeTests {
 	 * }
 	 */
 	@Test(priority=2)
-	static public void testMonitorExitOnValueType() throws Throwable {
+	static public void testMonitorEnterAndExitOnValueType() throws Throwable {
 		int x = 1;
 		int y = 1;
 		Object valueType = makePoint2D.invoke(x, y);
@@ -1182,24 +1157,21 @@ public class ValueTypeTests {
 
 		String fields[] = {"longField:J"};
 		Class<?> testMonitorExitOnValueType = ValueTypeGenerator.generateRefClass("TestMonitorExitOnValueType", fields);
-		MethodHandle monitorEnterOnValueType = lookup.findStatic(testMonitorExitOnValueType, "testMonitorEnterOnObject", MethodType.methodType(void.class, Object.class));
-		MethodHandle monitorExitOnValueType = lookup.findStatic(testMonitorExitOnValueType, "testMonitorExitOnObject", MethodType.methodType(void.class, Object.class));
+		MethodHandle monitorEnterAndExitOnValueType = lookup.findStatic(testMonitorExitOnValueType, "testMonitorEnterAndExitWithRefType", MethodType.methodType(void.class, Object.class));
 		try {
-			monitorEnterOnValueType.invoke(valueType);
-			monitorExitOnValueType.invoke(valueType);
+			monitorEnterAndExitOnValueType.invoke(valueType);
 			Assert.fail("should throw exception. MonitorExit cannot be used with ValueType");
 		} catch (IllegalMonitorStateException e) {}
 		
 		try {
-			monitorEnterOnValueType.invoke(valueTypeArray);
-			monitorExitOnValueType.invoke(valueTypeArray);
+			monitorEnterAndExitOnValueType.invoke(valueTypeArray);
 		} catch (IllegalMonitorStateException e) {
 			Assert.fail("Should not throw exception. MonitorExit can be used with ValueType arrays");
 		}
 	}
 
 
-	@Test(priority=2)
+	@Test(enabled=false, priority=2)
 	static public void testSynchMethodsOnValueTypes() throws Throwable {
 		int x = 1;
 		int y = 1;
@@ -1239,29 +1211,6 @@ public class ValueTypeTests {
 			staticSyncMethod.invoke();
 		} catch (IllegalMonitorStateException e) {
 			Assert.fail("should not throw exception. Synchronized static methods can be used with RefType");
-		}
-	}
-	
-	
-	/*
-	 * Test monitorEnter with refType
-	 * 
-	 * class TestMonitorEnterWithRefType {
-	 *  long longField
-	 * }
-	 */
-	@Test(priority=1)
-	static public void testMonitorEnterWithRefType() throws Throwable {
-		int x = 0;
-		Object refType = (Object) x;
-		
-		String fields[] = {"longField:J"};
-		Class<?> testMonitorEnterWithRefType = ValueTypeGenerator.generateRefClass("TestMonitorEnterWithRefType", fields);
-		MethodHandle monitorEnterWithRefType = lookup.findStatic(testMonitorEnterWithRefType, "testMonitorEnterOnObject", MethodType.methodType(void.class, Object.class));
-		try {
-			monitorEnterWithRefType.invoke(refType);
-		} catch (IllegalMonitorStateException e) { 
-			Assert.fail("shouldn't throw exception. MonitorEnter should be used with refType");
 		}
 	}
 
@@ -1387,8 +1336,8 @@ public class ValueTypeTests {
 		makeValueLong = lookup.findStatic(valueLongClass, "makeValueGeneric",
 				MethodType.methodType(Object.class, Object.class));
 
-		getLong = generateGetter(valueLongClass, "j", long.class);
-		withLong = generateWither(valueLongClass, "j", long.class);
+		getLong = generateGenericGetter(valueLongClass, "j");
+		withLong = generateGenericWither(valueLongClass, "j");
 
 		long j = Long.MAX_VALUE;
 		long jNew = Long.MIN_VALUE;
@@ -1414,8 +1363,8 @@ public class ValueTypeTests {
 
 		makeValueInt = lookup.findStatic(valueIntClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class));
 
-		getInt = generateGetter(valueIntClass, "i", int.class);
-		withInt = generateWither(valueIntClass, "i", int.class);
+		getInt = generateGenericGetter(valueIntClass, "i");
+		withInt = generateGenericWither(valueIntClass, "i");
 
 		int i = Integer.MAX_VALUE;
 		int iNew = Integer.MIN_VALUE;
@@ -1442,8 +1391,8 @@ public class ValueTypeTests {
 		makeValueDouble = lookup.findStatic(valueDoubleClass, "makeValueGeneric",
 				MethodType.methodType(Object.class, Object.class));
 
-		getDouble = generateGetter(valueDoubleClass, "d", double.class);
-		withDouble = generateWither(valueDoubleClass, "d", double.class);
+		getDouble = generateGenericGetter(valueDoubleClass, "d");
+		withDouble = generateGenericWither(valueDoubleClass, "d");
 
 		double d = Double.MAX_VALUE;
 		double dNew = Double.MIN_VALUE;
@@ -1470,8 +1419,8 @@ public class ValueTypeTests {
 		makeValueFloat = lookup.findStatic(valueFloatClass, "makeValueGeneric",
 				MethodType.methodType(Object.class, Object.class));
 
-		getFloat = generateGetter(valueFloatClass, "f", float.class);
-		withFloat = generateWither(valueFloatClass, "f", float.class);
+		getFloat = generateGenericGetter(valueFloatClass, "f");
+		withFloat = generateGenericWither(valueFloatClass, "f");
 
 		float f = Float.MAX_VALUE;
 		float fNew = Float.MIN_VALUE;
@@ -1502,8 +1451,8 @@ public class ValueTypeTests {
 		Object val = (Object)0xEEFFEEFF;
 		Object valNew = (Object)0xFFEEFFEE;
 
-		getObject = generateGetter(valueObjectClass, "val", Object.class);
-		withObject = generateWither(valueObjectClass, "val", Object.class);
+		getObject = generateGenericGetter(valueObjectClass, "val");
+		withObject = generateGenericWither(valueObjectClass, "val");
 
 		Object valueObject = makeValueObject.invoke(val);
 
@@ -2548,9 +2497,9 @@ public class ValueTypeTests {
 	}
 	
 	/*
-	 * Ensure that casting null to invalid Qtype class will throw a NoClassDef 
+	 * Ensure that casting null to invalid Qtype class will throw a null pointer exception 
 	 */
-	@Test(priority=1, expectedExceptions=NoClassDefFoundError.class)
+	@Test(enabled=false, priority=1, expectedExceptions=NullPointerException.class)
 	static public void testCheckCastValueTypeOnInvalidQtype() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("TestCheckCastOnInvalidQtype", fields);
@@ -3130,7 +3079,7 @@ public class ValueTypeTests {
 
 	static MethodHandle generateGenericWither(Class clazz, String fieldName) {
 		try {
-			return lookup.findVirtual(clazz, "withGeneric"+fieldName, MethodType.methodType(clazz, Object.class));
+			return lookup.findVirtual(clazz, "withGeneric"+fieldName, MethodType.methodType(Object.class, Object.class));
 		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}
