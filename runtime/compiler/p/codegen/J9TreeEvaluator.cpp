@@ -8301,7 +8301,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
          }
 
       VMnonNullSrcWrtBarCardCheckEvaluator(node, comp->useCompressedPointers() ? wrtbarSrcReg : newVReg, objReg, cndReg, temp1Reg, temp2Reg, temp3Reg, temp4Reg, doneLabel,
-            conditions, false, cg);
+            conditions, comp->useCompressedPointers(), cg);
 
       cg->stopUsingRegister(temp1Reg);
       cg->stopUsingRegister(temp2Reg);
@@ -8361,7 +8361,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
          }
 
       VMnonNullSrcWrtBarCardCheckEvaluator(node, comp->useCompressedPointers() ? translatedNode->getRegister() : newVReg, objReg, cndReg, temp1Reg, temp2Reg, dstAddrReg, NULL,
-            wrtBarEndLabel, conditions, false, cg);
+            wrtBarEndLabel, conditions, comp->useCompressedPointers(), cg);
 
       if (comp->getOptions()->realTimeGC())
          cg->stopUsingRegister(dstAddrReg);
