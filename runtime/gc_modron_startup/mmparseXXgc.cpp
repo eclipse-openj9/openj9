@@ -930,7 +930,41 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			}
 			extensions->aliasInhibitingThresholdPercentage = ((double)percentage) / 100.0;
 
-			continue ;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "adaptiveThreadingSensitivityFactor=")) {
+			UDATA sensitivityFactor = 0;
+			if (!scan_udata_helper(vm, &scan_start, &sensitivityFactor, "adaptiveThreadingSensitivityFactor=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->adaptiveThreadingSensitivityFactor = ((float)sensitivityFactor) / 10.0f;
+
+			continue;
+		}
+
+		if (try_scan(&scan_start, "adaptiveThreadingWeightActiveThreads=")) {
+			UDATA adaptiveThreadingWeightActiveThreads = 0;
+			if (!scan_udata_helper(vm, &scan_start, &adaptiveThreadingWeightActiveThreads, "adaptiveThreadingWeightActiveThreads=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+
+			extensions->adaptiveThreadingWeightActiveThreads = ((float)adaptiveThreadingWeightActiveThreads) / 100.0f;
+
+			continue;
+		}
+
+		if (try_scan(&scan_start, "adaptiveThreadBooster=")) {
+			UDATA adaptiveThreadBooster = 0;
+			if (!scan_udata_helper(vm, &scan_start, &adaptiveThreadBooster, "adaptiveThreadBooster=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->adaptiveThreadBooster = ((float)adaptiveThreadBooster) / 100.0f;
+
+			continue;
 		}
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
