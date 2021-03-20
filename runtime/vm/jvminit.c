@@ -4460,6 +4460,11 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 		return RC_FAILED;
 	}
 
+	/* Map -XX:ParallelMaxGCThreads=N  to -XgcmaxthreadsN */
+	if (registerCmdLineMapping(vm, MAPOPT_XXPARALLELGCMAXTHREADS_EQUALS, VMOPT_XGCMAXTHREADS, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+
 	return 0;
 }
 #endif /* J9VM_OPT_SIDECAR */

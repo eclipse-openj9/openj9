@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -958,6 +958,26 @@ gcParseSovereignArguments(J9JavaVM *vm)
 		extensions->gcThreadCountForced = true;
 	}
 
+	/* Handling VMOPT_XGCMAXTHREADS is equivalent to VMOPT_XGCTHREADS (above), except it sets gcThreadCountForced to false rather than true. */
+	if (-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, VMOPT_XGCMAXTHREADS, NULL)) {
+		result = option_set_to_opt_integer(vm, VMOPT_XGCMAXTHREADS, &index, EXACT_MEMORY_MATCH, &extensions->gcThreadCount);
+		if (OPTION_OK != result) {
+			if (OPTION_MALFORMED == result) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, VMOPT_XGCMAXTHREADS);
+			} else {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, VMOPT_XGCMAXTHREADS);
+			}
+			goto _error;
+		}
+
+		if (0 == extensions->gcThreadCount) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, VMOPT_XGCMAXTHREADS, (UDATA)0);
+			goto _error;
+		}
+
+		extensions->gcThreadCountForced = false;
+	}
+
 	if(-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-Xgcworkpackets", NULL)) {
 		result = option_set_to_opt_integer(vm, "-Xgcworkpackets", &index, EXACT_MEMORY_MATCH, &extensions->workpacketCount);
 		if (OPTION_OK != result) {
@@ -1257,6 +1277,19 @@ gcParseXXArguments(J9JavaVM *vm)
 				extensions->pretouchHeapOnExpand = true;
 			} else {
 				extensions->pretouchHeapOnExpand = false;
+			}
+		}
+	}
+
+	{
+		IDATA adaptiveGCThreadingIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+AdaptiveGCThreading", NULL);
+		IDATA noAdaptiveGCThreadingIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-AdaptiveGCThreading", NULL);
+		if (adaptiveGCThreadingIndex != noAdaptiveGCThreadingIndex) {
+			/* At least one option is set. Find the right most one. */
+			if (adaptiveGCThreadingIndex > noAdaptiveGCThreadingIndex) {
+				extensions->adaptiveGCThreading = true;
+			} else {
+				extensions->adaptiveGCThreading = false;
 			}
 		}
 	}
