@@ -948,7 +948,7 @@ typedef struct J9CfrClassFile {
 #define CFR_FOUND_CHARS_IN_EXTENDED_MUE_FORM 0x1
 #define CFR_FOUND_SEPARATOR_IN_MUE_FORM 0x2
 
-#define IDENTITY_OBJECT_NAME "java/lang/IdentityInterface"
+#define IDENTITY_OBJECT_NAME "java/lang/IdentityObject"
 
 #ifdef __cplusplus
 }

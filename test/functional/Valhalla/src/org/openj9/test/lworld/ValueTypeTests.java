@@ -2984,12 +2984,12 @@ public class ValueTypeTests {
 	static public void testIdentityObjectOnValueType() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class valueClass = ValueTypeGenerator.generateValueClass("testIdentityObjectOnValueType", fields);
-		assertFalse(Arrays.asList(valueClass.getInterfaces()).contains(IdentityInterface.class));
+		assertFalse(Arrays.asList(valueClass.getInterfaces()).contains(IdentityObject.class));
 	}
 
 	@Test(priority = 1)
 	static public void testIdentityObjectOnAbstract() throws Throwable {
-		assertFalse(Arrays.asList(AbstractClass.class.getInterfaces()).contains(IdentityInterface.class));
+		assertFalse(Arrays.asList(AbstractClass.class.getInterfaces()).contains(IdentityObject.class));
 	}
 	private static abstract class AbstractClass {
 		private int x;
@@ -3004,14 +3004,14 @@ public class ValueTypeTests {
 
 	@Test(priority = 1)
 	static public void testIdentityObjectOnJLObject() throws Throwable {
-		assertFalse(Arrays.asList(Object.class.getInterfaces()).contains(IdentityInterface.class));
+		assertFalse(Arrays.asList(Object.class.getInterfaces()).contains(IdentityObject.class));
 	}
 
 	@Test(priority = 1)
 	static public void testIdentityObjectOnRef() throws Throwable {
 		String fields[] = {"longField:J"};
 		Class refClass = ValueTypeGenerator.generateRefClass("testIdentityObjectOnRef", fields);
-		assertTrue(Arrays.asList(refClass.getInterfaces()).contains(IdentityInterface.class));
+		assertTrue(Arrays.asList(refClass.getInterfaces()).contains(IdentityObject.class));
 	}
 
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
