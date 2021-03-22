@@ -241,7 +241,12 @@ if(OMR_ARCH_X86)
 			j9vm_gen_asm(wa64/stackswap.m4)
 		else()
 			j9vm_gen_asm(wi32/stackswap.m4)
-			target_sources(j9vm PRIVATE wi32/inlineseh.c)
+			target_sources(j9vm PRIVATE
+				wi32/inlineseh.c
+				safeseh.asm
+			)
+
+			set_source_files_properties(safeseh.asm PROPERTIES LANGUAGE ASM_MASM)
 		endif()
 	else()
 		message(SEND_ERROR "Unsupported platform")
