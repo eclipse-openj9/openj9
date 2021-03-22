@@ -595,7 +595,15 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    TR_ValueProfileInfoManager *valueProfileInfo = TR_ValueProfileInfoManager::get(comp);
 
-   if (!valueProfileInfo)
+   // We do not have validation record to verify that relocated profiled class
+   // in the load run is instanceof castclass or not. So without that
+   // verification, we could end up generating code where we have a defined
+   // relationship between profiled class and cast class which could not be
+   // true in load run and we could end up with incorrect execution in the
+   // application. 
+   // TODO: Once we have validation record for instanceOfOrCheckCastNoCacheUpdate
+   // enable profiled class test in AOT when SVM is enabled.
+   if (!valueProfileInfo || comp->compileRelocatableCode())
       {
       return 0;
       }
@@ -844,7 +852,9 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
 
          // If the caller doesn't provide the output param don't bother with guessing.
          //
-         if (compileTimeGuessClass && !TR::Compiler->cls.isConcreteClass(cg->comp(), castClass))
+         if ((!cg->comp()->compileRelocatableCode() || cg->comp()->getOption(TR_UseSymbolValidationManager)) 
+               && compileTimeGuessClass
+               && !TR::Compiler->cls.isConcreteClass(cg->comp(), castClass))
             {
             // Figuring out that an interface/abstract class has a single concrete implementation is not as useful for instanceof as it is for checkcast.
             // For checkcast we expect the cast to succeed and the single concrete implementation is the logical class to do a quick up front test against.
