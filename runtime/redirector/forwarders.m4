@@ -354,3 +354,4 @@ _IF([JAVA_SPEC_VERSION >= 16],
 _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_IsDumpingClassList, JNICALL, false, jboolean, JNIEnv *env)])
 _X(JVM_IsUseContainerSupport, JNICALL, false, jboolean, JNIEnv *env)
+_X(AsyncGetCallTrace, JNICALL, false, void, void *trace, jint depth, void *ucontext)
