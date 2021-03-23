@@ -1120,13 +1120,24 @@ void genInstanceOfOrCheckCastArbitraryClassTest(TR::Node *node, TR::Register *in
    {
    TR::Compilation *comp = cg->comp();
    TR::Register *arbitraryClassReg = srm->findOrCreateScratchRegister();
+   TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp->fe());
+
    if (comp->compileRelocatableCode())
       {
       loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, TR_ClassPointer);
       }
    else
       {
-      loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, NULL, true);
+      bool isUnloadAssumptionRequired = fej9->isUnloadAssumptionRequired(arbitraryClass, comp->getCurrentMethod());
+
+      if (isUnloadAssumptionRequired)
+         {
+         loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, TR_NoRelocation, true);
+         }
+      else
+         {
+         loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, NULL, true);
+         }
       }
    generateCompareInstruction(cg, node, instanceClassReg, arbitraryClassReg, true);
    
