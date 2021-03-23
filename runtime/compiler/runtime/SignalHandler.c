@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,31 @@
 #endif
 
 #if defined(J9VM_PORT_SIGNAL_SUPPORT) && defined(J9VM_INTERP_NATIVE_SUPPORT)
+
+#if defined(TR_HOST_X86) && defined(TR_TARGET_X86)
+static UDATA isDfSet(J9VMThread* vmThread, void *sigInfo)
+{
+	PORT_ACCESS_FROM_VMC(vmThread);
+	const char* infoName;
+	void* infoValue;
+	U_32 infoType;
+	UDATA eflags;
+	const char* enableDFCheck = getenv("TR_enableBreakOnDFSet");
+
+	if (enableDFCheck) {
+		infoType = j9sig_info(sigInfo, J9PORT_SIG_CONTROL, J9PORT_SIG_CONTROL_X86_EFLAGS, &infoName, &infoValue);
+		if (infoType == J9PORT_SIG_VALUE_ADDRESS) {
+			eflags = *(UDATA*)infoValue;
+			if ((eflags & 0x400) != 0) {
+				j9tty_printf(PORTLIB, "EFlags %zx, EFlags & 0x400 = %zx, DF flag is set\n", eflags, eflags & 0x400);
+				return TRUE;
+			}
+		}
+	}
+
+	return FALSE;
+}
+#endif
 
 #if defined(TR_HOST_X86) && defined(TR_TARGET_X86) && !defined(TR_TARGET_64BIT)
 
@@ -359,8 +384,10 @@ UDATA jitX86Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
 				/* unexpected SIGFPE */
 				break;
 
-			case J9PORT_SIG_FLAG_SIGBUS:
 			case J9PORT_SIG_FLAG_SIGSEGV:
+				if (isDfSet(vmThread, sigInfo) == TRUE)
+					break;
+			case J9PORT_SIG_FLAG_SIGBUS:
 
 				infoType = j9sig_info(sigInfo, J9PORT_SIG_SIGNAL, J9PORT_SIG_SIGNAL_INACCESSIBLE_ADDRESS, &infoName, &infoValue);
 				if (sigType == J9PORT_SIG_FLAG_SIGSEGV && infoType == J9PORT_SIG_VALUE_ADDRESS) {
@@ -1824,8 +1851,10 @@ UDATA jitAMD64Handler(J9VMThread* vmThread, U_32 sigType, void *sigInfo)
 				}
 				break;
 #endif
-			case J9PORT_SIG_FLAG_SIGBUS:
 			case J9PORT_SIG_FLAG_SIGSEGV:
+				if (isDfSet(vmThread, sigInfo) == TRUE)
+					break;
+			case J9PORT_SIG_FLAG_SIGBUS:
 
 				vmThread->jitException = (J9Object *) ((UDATA) rip + 1);
 				*ripPtr = (U_64)(void*)(sigType == J9PORT_SIG_FLAG_SIGSEGV ? jitHandleNullPointerExceptionTrap : jitHandleInternalErrorTrap);
