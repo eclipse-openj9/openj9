@@ -1207,8 +1207,7 @@ J9::Compilation::getReloTypeForMethodToBeInlined(TR_VirtualGuardSelection *guard
          TR_OpaqueMethodBlock *caller;
          if (site)
             {
-            TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)site->_methodInfo;
-            caller = aotMethodInfo->resolvedMethod->getNonPersistentIdentifier();
+            caller = site->_methodInfo;
             }
          else
             {

@@ -2773,8 +2773,7 @@ static void addInliningTableRelocations(TR::CodeGenerator *cg, uint32_t inlinedC
             }
          else
             {
-            TR_InlinedCallSite &callSite = cg->comp()->getInlinedCallSite(counter);
-            TR_AOTMethodInfo *methodInfo = reinterpret_cast<TR_AOTMethodInfo *>(callSite._methodInfo);
+            TR_AOTMethodInfo *methodInfo = cg->comp()->getInlinedAOTMethodInfo(counter);
 
             addInlinedSiteRelocation(cg, methodInfo->reloKind, NULL, counter, methodInfo->callSymRef, methodInfo->receiver, NULL);
             }

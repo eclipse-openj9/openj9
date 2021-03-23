@@ -99,9 +99,7 @@ J9::AheadOfTimeCompile::findCorrectInlinedSiteIndex(void *constantPool, uintptr_
       }
    else
       {
-      TR_InlinedCallSite &inlinedCallSite = comp->getInlinedCallSite(inlinedSiteIndex);
-      TR_AOTMethodInfo *callSiteMethodInfo = (TR_AOTMethodInfo *)inlinedCallSite._methodInfo;
-      constantPoolForSiteIndex = (uintptr_t)callSiteMethodInfo->resolvedMethod->constantPool();
+      constantPoolForSiteIndex = (uintptr_t)comp->getInlinedResolvedMethod(inlinedSiteIndex)->constantPool();
       }
 
    bool matchFound = false;
@@ -124,10 +122,7 @@ J9::AheadOfTimeCompile::findCorrectInlinedSiteIndex(void *constantPool, uintptr_
          // Look for the first call site whose inlined method's constant pool matches ours and return that site index as the correct one.
          for (uintptr_t i = 0; i < comp->getNumInlinedCallSites(); i++)
             {
-            TR_InlinedCallSite &inlinedCallSite = comp->getInlinedCallSite(i);
-            TR_AOTMethodInfo *callSiteMethodInfo = (TR_AOTMethodInfo *)inlinedCallSite._methodInfo;
-
-            if ((uintptr_t)constantPool == (uintptr_t)callSiteMethodInfo->resolvedMethod->constantPool())
+            if ((uintptr_t)constantPool == (uintptr_t)comp->getInlinedResolvedMethod(i)->constantPool())
                {
                matchFound = true;
                inlinedSiteIndex = i;
@@ -408,9 +403,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
              kind == TR_InlinedAbstractMethodWithNopGuard ||
              kind == TR_InlinedAbstractMethod)
             {
-            TR_InlinedCallSite *inlinedCallSite = &comp->getInlinedCallSite(inlinedSiteIndex);
-            TR_AOTMethodInfo *aotMethodInfo = (TR_AOTMethodInfo *)inlinedCallSite->_methodInfo;
-            resolvedMethod = aotMethodInfo->resolvedMethod;
+            resolvedMethod = comp->getInlinedResolvedMethod(inlinedSiteIndex);
             }
          else
             {
@@ -499,8 +492,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR_ResolvedMethod *owningMethod = callSymRef->getOwningMethod(comp);
 
-         TR_InlinedCallSite & ics = comp->getInlinedCallSite(inlinedSiteIndex);
-         TR_ResolvedMethod *inlinedMethod = ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod;
+         TR_ResolvedMethod *inlinedMethod = comp->getInlinedResolvedMethod(inlinedSiteIndex);
          TR_OpaqueClassBlock *inlinedCodeClass = reinterpret_cast<TR_OpaqueClassBlock *>(inlinedMethod->classOfMethod());
 
          J9ROMClass *romClass = reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass));
@@ -2164,8 +2156,7 @@ void J9::AheadOfTimeCompile::interceptAOTRelocation(TR::ExternalRelocation *relo
          }
 
       uintptr_t inlinedSiteIndex = static_cast<uintptr_t>(aconstNode->getInlinedSiteIndex());
-      TR_InlinedCallSite & ics = TR::comp()->getInlinedCallSite(inlinedSiteIndex);
-      TR_ResolvedMethod *inlinedMethod = ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod;
+      TR_ResolvedMethod *inlinedMethod = TR::comp()->getInlinedResolvedMethod(inlinedSiteIndex);
       TR_OpaqueMethodBlock *inlinedJ9Method = inlinedMethod->getPersistentIdentifier();
 
       /* If the j9method from the aconst node is the same as the j9method at
