@@ -2520,11 +2520,7 @@ TR_CallSiteInfo::hasSamePartialBytecodeInfo(
       if (callSiteInfo1._byteCodeInfo.getByteCodeIndex() != callSiteInfo2._byteCodeInfo.getByteCodeIndex())
          break;
       TR_OpaqueMethodBlock *method1 = callSiteInfo1._methodInfo;
-      if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
-         method1 = ((TR_AOTMethodInfo *)method1)->resolvedMethod->getPersistentIdentifier();
       TR_OpaqueMethodBlock *method2 = callSiteInfo2._methodInfo;
-      if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
-         method2 = ((TR_AOTMethodInfo *)method2)->resolvedMethod->getPersistentIdentifier();
       if (method1 != method2)
          break;
       callSite1 = callSiteInfo1._byteCodeInfo.getCallerIndex();

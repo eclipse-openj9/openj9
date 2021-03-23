@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1624,7 +1624,7 @@ TR_DebugExt::printInlinedCallSites(TR::FILE *pOutFile, TR::ResolvedMethodSymbol 
    for (int32_t i = 0; i < localInlinedCallSites.size(); ++i)
          {
          TR_InlinedCallSite & ics = localInlinedCallSites.element(i).site();
-         TR_OpaqueMethodBlock *mb = _isAOT ? (TR_OpaqueMethodBlock*) ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod->getNonPersistentIdentifier() : ics._vmMethodInfo;
+         TR_OpaqueMethodBlock *mb = ics._methodInfo;
 
          trfprintf(pOutFile, "    %4d       %4d       %5d       %s !trprint j9method %p\n", i, ics._byteCodeInfo.getCallerIndex(),
                        ics._byteCodeInfo.getByteCodeIndex(), getMethodName(mb), mb);

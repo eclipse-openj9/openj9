@@ -2650,7 +2650,7 @@ TR_J9SharedCacheServerVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
 TR_OpaqueMethodBlock *
 TR_J9SharedCacheServerVM::getInlinedCallSiteMethod(TR_InlinedCallSite *ics)
    {
-   return (TR_OpaqueMethodBlock *)((TR_AOTMethodInfo *)(ics->_vmMethodInfo))->resolvedMethod->getPersistentIdentifier();
+   return ics->_methodInfo;
    }
 
 uintptr_t
