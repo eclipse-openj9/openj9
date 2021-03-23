@@ -63,7 +63,8 @@ public:
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t) override;
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance) override;
    TR_ResolvedMethod * createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueClassBlock *classForNewInstance = NULL);
-   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance, char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod) override;
+   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
+                                                                 char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, uint32_t = 0) override;
    TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance, char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
    virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed = true, bool optimizeForAOT = false) override;
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT = false) override;

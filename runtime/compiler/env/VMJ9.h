@@ -370,7 +370,8 @@ public:
 
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
-   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory *, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, char *signature, int32_t signatureLength, TR_ResolvedMethod *);
+   virtual TR_ResolvedMethod * createResolvedMethodWithVTableSlot(TR_Memory *, uint32_t vTableSlot, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod = 0, TR_OpaqueClassBlock * classForNewInstance = 0);
+   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory *, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, char *signature, int32_t signatureLength, TR_ResolvedMethod *, uint32_t = 0);
    virtual void * getStaticFieldAddress(TR_OpaqueClassBlock *, unsigned char *, uint32_t, unsigned char *, uint32_t);
    virtual int32_t getInterpreterVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
    virtual int32_t getVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
