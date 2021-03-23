@@ -251,6 +251,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
 
    char *crashedThreadName = getOMRVMThreadName(crashedThread->omrVMThread);
    j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_OCCURRED_THREAD_NAME_ID, "JIT", crashedThreadName, crashedThread);
+   releaseOMRVMThreadName(crashedThread->omrVMThread);
 
    J9JITConfig *jitConfig = crashedThread->javaVM->jitConfig;
    if (NULL == jitConfig)
