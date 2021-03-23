@@ -318,7 +318,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
 
    compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
 
-   TR::CompilationInfoPerThread *recompilationThreadInfo = compInfo->getCompilationInfoForDumpThread();
+   TR::CompilationInfoPerThread *recompilationThreadInfo = compInfo->getCompilationInfoForDiagnosticThread();
    if (NULL == recompilationThreadInfo)
       {
       j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not locate the diagnostic thread info");
