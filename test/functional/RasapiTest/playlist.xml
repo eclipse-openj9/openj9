@@ -29,7 +29,7 @@
 		</disabled>
 		<disabled>
 			<comment>https://github.com/eclipse/openj9/issues/11800</comment>
-			<subset>16+</subset>
+			<version>16+</version>
 		</disabled>
 		<command>
 			ant -f $(TEST_RESROOT)$(D)test.xml -Dtest.java.home=$(Q)$(TEST_JDK_HOME)$(D)$(Q) launch_test; \

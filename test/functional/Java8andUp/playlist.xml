@@ -168,9 +168,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -193,9 +193,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -225,9 +225,9 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>TestAttachAPI</testCaseName>
@@ -253,9 +253,9 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>TestAttachAPIEnabling_SE80</testCaseName>
@@ -271,9 +271,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -296,9 +296,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -324,9 +324,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -352,9 +352,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -384,9 +384,9 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>TestSunAttachClasses</testCaseName>
@@ -414,9 +414,9 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>TestManagementAgent_SE80</testCaseName>
@@ -434,9 +434,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -459,9 +459,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -485,9 +485,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 		</impls>
@@ -509,9 +509,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -534,9 +534,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 		</impls>
@@ -560,9 +560,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -585,9 +585,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 		</impls>
@@ -612,9 +612,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -658,9 +658,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>ibm</impl>
 		</impls>
@@ -701,9 +701,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>ibm</impl>
 		</impls>
@@ -723,9 +723,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -747,9 +747,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -945,9 +945,9 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>ContendedFieldsTests_90</testCaseName>
@@ -979,9 +979,9 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>CtorBCVTests</testCaseName>
@@ -1050,9 +1050,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<aot>nonapplicable</aot>
 		<impls>
 			<impl>openj9</impl>
@@ -1091,9 +1091,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<aot>nonapplicable</aot>
 		<types>
 			<type>native</type>
@@ -1150,9 +1150,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<aot>nonapplicable</aot>
 		<impls>
 			<impl>openj9</impl>
@@ -1191,9 +1191,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<aot>nonapplicable</aot>
 		<types>
 			<type>native</type>
@@ -1234,9 +1234,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1279,9 +1279,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1309,9 +1309,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<types>
 			<type>native</type>
 		</types>
@@ -1343,9 +1343,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1374,9 +1374,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1406,9 +1406,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1439,9 +1439,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1480,9 +1480,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1497,9 +1497,9 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -1526,9 +1526,9 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -1783,9 +1783,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>ibm</impl>
 		</impls>
@@ -2489,9 +2489,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -2512,9 +2512,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

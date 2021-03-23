@@ -25,7 +25,7 @@
 		<testCaseName>cmdLineTester_forceLazySymbolResolution</testCaseName>
 		<disabled>
 			<comment>https://github.com/eclipse/openj9/issues/11076</comment>
-			<subset>15+</subset>
+			<version>15+</version>
 		</disabled>
 		<variations>
 			<variation>Mode101</variation>
@@ -46,11 +46,11 @@
 		<types>
 			<type>native</type>
 		</types>
-		<subsets>
-			<subset>8</subset>
-			<subset>11</subset>
-			<subset>15+</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+			<version>11</version>
+			<version>15+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

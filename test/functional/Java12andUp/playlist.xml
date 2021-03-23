@@ -39,9 +39,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>12+</subset>
-		</subsets>
+		<versions>
+			<version>12+</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>StringIndentTests</testCaseName>
@@ -61,8 +61,8 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>12+</subset>
-		</subsets>
+		<versions>
+			<version>12+</version>
+		</versions>
 	</test>
 </playlist>

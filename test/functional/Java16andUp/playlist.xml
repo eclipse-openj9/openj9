@@ -39,9 +39,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>16+</subset>
-		</subsets>
+		<versions>
+			<version>16+</version>
+		</versions>
 	</test>
 	
 	<test>
@@ -70,9 +70,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>16+</subset>
-		</subsets>
+		<versions>
+			<version>16+</version>
+		</versions>
 	</test>
 	
 	<test>
@@ -93,9 +93,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>16+</subset>
-		</subsets>
+		<versions>
+			<version>16+</version>
+		</versions>
 	</test>
 	
 	<test>
@@ -122,8 +122,8 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>16+</subset>
-		</subsets>
+		<versions>
+			<version>16+</version>
+		</versions>
 	</test>
 </playlist>

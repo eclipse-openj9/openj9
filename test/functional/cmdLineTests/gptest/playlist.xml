@@ -49,9 +49,9 @@
 		<types>
 			<type>native</type>
 		</types>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -85,10 +85,10 @@
 		<types>
 			<type>native</type>
 		</types>
-		<subsets>
-			<subset>9</subset>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>9</version>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

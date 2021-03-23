@@ -40,9 +40,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>14+</subset>
-		</subsets>
+		<versions>
+			<version>14+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -67,9 +67,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>14+</subset>
-		</subsets>
+		<versions>
+			<version>14+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -93,9 +93,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>14+</subset>
-		</subsets>
+		<versions>
+			<version>14+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -119,9 +119,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>14+</subset>
-		</subsets>
+		<versions>
+			<version>14+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
