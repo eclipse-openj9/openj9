@@ -548,6 +548,13 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
    trfflush(jitdumpFile);
    trfclose(jitdumpFile);
 
+   recompilationThreadInfo->suspendCompilationThread();
+   while (recompilationThreadInfo->getCompilationThreadState() != COMPTHREAD_SUSPENDED)
+      {
+      //compInfo->getCompilationMonitor()->notifyAll();
+      //compInfo->waitOnCompMonitor(recompilationThreadInfo->getCompilationThread());
+      }
+
    compInfo->getPersistentInfo()->setDisableFurtherCompilation(false);
 
    return OMR_ERROR_NONE;
