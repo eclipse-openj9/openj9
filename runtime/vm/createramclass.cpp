@@ -2022,7 +2022,24 @@ internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9R
 			javaVM->anonClassCount += 1;
 		}
 
-		TRIGGER_J9HOOK_VM_INTERNAL_CLASS_LOAD(javaVM->hookInterface, vmThread, state->ramClass, failed);
+		/* Create all the method IDs if class load is hooked */
+		if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_CLASS_LOAD)) {
+			U_32 count = romClass->romMethodCount;
+			J9Method *method = state->ramClass->ramMethods;
+			while (0 != count) {
+				if (NULL == getJNIMethodID(vmThread, method)) {
+					failed = TRUE;
+					break;
+				}
+				method += 1;
+				count -= 1;
+			}
+		}
+
+		if (!failed) {
+			TRIGGER_J9HOOK_VM_INTERNAL_CLASS_LOAD(javaVM->hookInterface, vmThread, state->ramClass, failed);
+		}
+
 		if (failed) {
 			if (hotswapping) {
 				omrthread_monitor_exit(javaVM->classTableMutex);
