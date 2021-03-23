@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ MM_JNICriticalRegion::reacquireAccess(J9VMThread* vmThread, UDATA accessMask)
 	Assert_MM_true(0 == (accessMask & ~(J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS)));
 	omrthread_monitor_enter(vmThread->publicFlagsMutex);
 	Assert_MM_true(0 == (vmThread->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_JNI_CRITICAL_ACCESS)));
-	while (vmThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_ANY) {
+	while (vmThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE) {
 		omrthread_monitor_wait(vmThread->publicFlagsMutex);
 	}
 
