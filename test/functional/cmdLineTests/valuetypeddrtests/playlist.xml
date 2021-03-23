@@ -50,9 +50,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>Valhalla</subset>
-		</subsets>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -87,9 +87,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>Valhalla</subset>
-		</subsets>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -125,9 +125,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>Valhalla</subset>
-		</subsets>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -163,9 +163,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>Valhalla</subset>
-		</subsets>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

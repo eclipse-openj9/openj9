@@ -45,10 +45,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11</subset>
-			<subset>13</subset>
-		</subsets>
+		<versions>
+			<version>11</version>
+			<version>13</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>openj9_jsr292Test_JitCount0</testCaseName>
@@ -71,10 +71,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11</subset>
-			<subset>13</subset>
-		</subsets>
+		<versions>
+			<version>11</version>
+			<version>13</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

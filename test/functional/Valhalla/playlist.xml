@@ -44,9 +44,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>Valhalla</subset>
-		</subsets>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -78,9 +78,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>Valhalla</subset>
-		</subsets>
+		<versions>
+			<version>Valhalla</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
