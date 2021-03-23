@@ -311,6 +311,12 @@ SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPC,0)
 SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPCAndRecompile,0)
 SLOW_PATH_ONLY_HELPER(jitRetranslateMethod,3)
 
+dnl jitStackOverflow is special case in that the frame size argument
+dnl is implicit (in the register file) rather than being passed as
+dnl an argument in the usual way.
+
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitStackOverflow,0)
+
 dnl Helpers that are not at a method invocation point.
 dnl
 dnl See definition of SAVE_C_VOLATILE_REGS in phelpers.m4
@@ -330,12 +336,6 @@ DUAL_MODE_HELPER(jitANewArrayNoZeroInit,2)
 DUAL_MODE_HELPER(jitNewArray,2)
 DUAL_MODE_HELPER(jitNewArrayNoZeroInit,2)
 SLOW_PATH_ONLY_HELPER(jitAMultiNewArray,3)
-
-dnl jitStackOverflow is special case in that the frame size argument
-dnl is implicit (in the register file) rather than being passed as
-dnl an argument in the usual way.
-
-SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitStackOverflow,0)
 
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitCheckAsyncMessages,0)
 DUAL_MODE_HELPER_NO_RETURN_VALUE(jitCheckCast,2)
