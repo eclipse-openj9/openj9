@@ -554,7 +554,6 @@ done:
 }
 
 #define ADDMODS_PROPERTY_BASE "jdk.module.addmods."
-#define AGENT_MODULE_NAME "jdk.management.agent"
 UDATA
 initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 {
@@ -590,7 +589,7 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 
 	/* Determine java/lang/String.value signature before any required class is initialized */
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
-	   vm->runtimeFlags |= J9_RUNTIME_STRING_BYTE_ARRAY;
+		vm->runtimeFlags |= J9_RUNTIME_STRING_BYTE_ARRAY;
 	}
 
 	/* CANNOT hold VM Access while calling registerBootstrapLibrary */
@@ -750,21 +749,26 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_LOAD_AGENT_MODULE)
 		&& (NULL != vm->modulesPathEntry->extraInfo))
 	{
-		const char *module = NULL;
-		Trc_JCL_initializeRequiredClasses_addAgentModuleEntry(vmThread);
-		module = vm->jimageIntf->jimagePackageToModule(
+		const char *packageName = "jdk/internal/agent";
+		const char *expectedModuleName = "jdk.management.agent";
+		const char *moduleName = vm->jimageIntf->jimagePackageToModule(
 				vm->jimageIntf, (UDATA) vm->modulesPathEntry->extraInfo,
-				"jdk/internal/agent");
-		if (NULL != module) {
+				packageName);
+		if (NULL == moduleName) {
+			Trc_JCL_initializeRequiredClasses_moduleForPackageNotFound(vmThread, packageName);
+		} else if (0 != strcmp(expectedModuleName, moduleName)) {
+			Trc_JCL_initializeRequiredClasses_unexpectedModuleForPackage(vmThread, packageName, moduleName, expectedModuleName);
+		} else {
 			J9VMSystemProperty *systemProperty = NULL;
+			Trc_JCL_initializeRequiredClasses_addAgentModuleEntry(vmThread, moduleName);
 			/* Handle the case where there are no user-specified modules. In this case, there
 			 * is typically one system property but no user-set "add-modules" arguments.
 			 */
-			if ((0 == vm->addModulesCount) &&
-				(J9SYSPROP_ERROR_NONE == vmFuncs->getSystemProperty(vm, ADDMODS_PROPERTY_BASE "0", &systemProperty)))
+			if ((0 == vm->addModulesCount)
+				&& (J9SYSPROP_ERROR_NONE == vmFuncs->getSystemProperty(vm, ADDMODS_PROPERTY_BASE "0", &systemProperty)))
 			{
 				/* this is implicitly an unused property */
-				vmFuncs->setSystemProperty(vm, systemProperty, AGENT_MODULE_NAME);
+				vmFuncs->setSystemProperty(vm, systemProperty, moduleName);
 			} else {
 				UDATA indexLen = j9str_printf(PORTLIB, NULL, 0, "%zu", vm->addModulesCount); /* get the length of the number string */
 				char *propNameBuffer = j9mem_allocate_memory(sizeof(ADDMODS_PROPERTY_BASE) + indexLen, OMRMEM_CATEGORY_VM);
@@ -773,9 +777,49 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 					return 1;
 				}
 				j9str_printf(PORTLIB, propNameBuffer, sizeof(ADDMODS_PROPERTY_BASE) + indexLen, ADDMODS_PROPERTY_BASE "%zu", vm->addModulesCount);
-				Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty(vmThread, propNameBuffer);
-				vmFuncs->addSystemProperty(vm, propNameBuffer, AGENT_MODULE_NAME, J9SYSPROP_FLAG_NAME_ALLOCATED);
+				Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty(vmThread, propNameBuffer, moduleName);
+				vmFuncs->addSystemProperty(vm, propNameBuffer, moduleName, J9SYSPROP_FLAG_NAME_ALLOCATED);
 			}
+			vm->addModulesCount += 1;
+		}
+	}
+
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_LOAD_HEALTHCENTER_MODULE)
+		&& (NULL != vm->modulesPathEntry->extraInfo))
+	{
+		const char *packageName = "com/ibm/java/diagnostics/healthcenter/agent";
+		const char *expectedModuleName = "ibm.healthcenter";
+		const char *moduleName = vm->jimageIntf->jimagePackageToModule(
+				vm->jimageIntf, (UDATA) vm->modulesPathEntry->extraInfo,
+				packageName);
+		if (NULL == moduleName) {
+			Trc_JCL_initializeRequiredClasses_moduleForPackageNotFound(vmThread, packageName);
+		} else if (0 != strcmp(expectedModuleName, moduleName)) {
+			// package %s found in module %s (expected %s) - not loading"
+			Trc_JCL_initializeRequiredClasses_unexpectedModuleForPackage(vmThread, packageName, moduleName, expectedModuleName);
+		} else {
+			J9VMSystemProperty *systemProperty = NULL;
+			Trc_JCL_initializeRequiredClasses_addAgentModuleEntry(vmThread, moduleName);
+			/* Handle the case where there are no user-specified modules. In this case, there
+			 * is typically one system property but no user-set "add-modules" arguments.
+			 */
+			if ((0 == vm->addModulesCount)
+				&& (J9SYSPROP_ERROR_NONE == vmFuncs->getSystemProperty(vm, ADDMODS_PROPERTY_BASE "0", &systemProperty)))
+			{
+				/* this is implicitly an unused property */
+				vmFuncs->setSystemProperty(vm, systemProperty, moduleName);
+			} else {
+				UDATA indexLen = j9str_printf(PORTLIB, NULL, 0, "%zu", vm->addModulesCount); /* get the length of the number string */
+				char *propNameBuffer = j9mem_allocate_memory(sizeof(ADDMODS_PROPERTY_BASE) + indexLen, OMRMEM_CATEGORY_VM);
+				if (NULL == propNameBuffer) {
+					Trc_JCL_initializeRequiredClasses_addAgentModuleOutOfMemory(vmThread);
+					return 1;
+				}
+				j9str_printf(PORTLIB, propNameBuffer, sizeof(ADDMODS_PROPERTY_BASE) + indexLen, ADDMODS_PROPERTY_BASE "%zu", vm->addModulesCount);
+				Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty(vmThread, propNameBuffer, moduleName);
+				vmFuncs->addSystemProperty(vm, propNameBuffer, moduleName, J9SYSPROP_FLAG_NAME_ALLOCATED);
+			}
+			vm->addModulesCount += 1;
 		}
 	}
 
@@ -793,5 +837,3 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	return 0;
 }
 #undef ADDMODS_PROPERTY_BASE
-#undef AGENT_MODULE_NAME
-
