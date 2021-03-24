@@ -98,7 +98,7 @@
 		</javac>
 	</target>
 
-	<target name="dist" depends="compile,dist_functional,compile_modules" description="generate the distribution" >
+	<target name="dist" depends="compile,compile_modules" description="generate the distribution" >
 		<echo>copy ${module_bin_root} to ${dest_module_bin}</echo>
 		<mkdir dir="${dest_module_bin}"/>
 		<copy todir="${dest_module_bin}">
