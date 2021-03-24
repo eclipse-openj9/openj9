@@ -5454,7 +5454,7 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
    else if (symRef->isUnresolved() || isAOT_DEPRECATED_DO_NOT_USE())
       {
       void *cp = (void *)symRef->getOwningMethod(comp)->constantPool();
-      I_32 cpIndex = symRef->getCPIndex();
+      I_32 cpIndex = symRef->getCPIndexForVM();
 
 #if 0
       if (isAOT_DEPRECATED_DO_NOT_USE() && (comp->getOption(TR_TraceRelocatableDataCG) || comp->getOption(TR_TraceRelocatableDataDetailsCG)) )
