@@ -4392,8 +4392,8 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	if (registerCmdLineMapping(vm, MAPOPT_XLOGGC, MAPOPT_XVERBOSEGCLOG, MAP_WITH_INCLUSIVE_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
-	/* -Xagentlib:healthcenter is aliased as -Xhealthcenter */
-	if (registerCmdLineMapping(vm, MAPOPT_XHEALTHCENTER, VMOPT_AGENTLIB_HEALTHCENTER , EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
+	/* -agentlib:healthcenter is aliased as -Xhealthcenter */
+	if (registerCmdLineMapping(vm, MAPOPT_XHEALTHCENTER, VMOPT_AGENTLIB_HEALTHCENTER, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
 	if (registerCmdLineMapping(vm, MAPOPT_XHEALTHCENTER_COLON, VMOPT_AGENTLIB_HEALTHCENTER_EQUALS, MAP_WITH_INCLUSIVE_OPTIONS) == RC_FAILED) {
@@ -6573,7 +6573,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 #endif
 
-
 #ifdef J9VM_OPT_SIDECAR
 	/* Whine about -Djava.compiler after extra VM options are added, but before mappings are set */
 	if (RC_FAILED == checkDjavacompiler(portLibrary, vm->vmArgsArray)) {
@@ -6594,11 +6593,20 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		}
 	}
 
+#if JAVA_SPEC_VERSION > 8
+	if ((0 <= findArgInVMArgs(PORTLIB, vm->vmArgsArray, EXACT_MATCH, MAPOPT_XHEALTHCENTER, NULL, FALSE))
+	||  (0 <= findArgInVMArgs(PORTLIB, vm->vmArgsArray, STARTSWITH_MATCH, VMOPT_AGENTLIB_HEALTHCENTER_EQUALS, NULL, FALSE))
+	) {
+		/* implicitly include module for -Xhealthcenter or -Xhealthcenter: */
+		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_LOAD_HEALTHCENTER_MODULE;
+	}
+#endif /* JAVA_SPEC_VERSION > 8 */
+
 	/* Registers any unrecognised arguments that need to be mapped to J9 options */
 	if (RC_FAILED == registerVMCmdLineMappings(vm)) {
 		goto error;
 	}
-#endif
+#endif /* J9VM_OPT_SIDECAR */
 
 	vm->dllLoadTable = initializeDllLoadTable(portLibrary, vm->vmArgsArray, localVerboseLevel, vm);
 	if (NULL == vm->dllLoadTable) {

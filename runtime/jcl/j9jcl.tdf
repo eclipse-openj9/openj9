@@ -628,8 +628,8 @@ TraceException=Trc_JCL_stringConversionFailed Overhead=1 Level=1 Template="JCL: 
 
 TraceException=Trc_JCL_heapStatisticsOOM Overhead=1 Level=1 Template="JCL: memory allocation failed creating heap statistics"
 
-TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleEntry Overhead=1 Level=3 Template="initializeRequiredClasses: Adding jdk.management.agent as root module"
-TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty Overhead=1 Level=3 Template="initializeRequiredClasses: Adding property %s=jdk.management.agent"
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleEntry Obsolete Overhead=1 Level=3 Template="initializeRequiredClasses: Adding jdk.management.agent as root module"
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty Obsolete Overhead=1 Level=3 Template="initializeRequiredClasses: Adding property %s=jdk.management.agent"
 TraceException=Trc_JCL_initializeRequiredClasses_addAgentModuleOutOfMemory Overhead=1 Level=1 Template="initializeRequiredClasses: Could not allocate propNameBuffer"
 
 TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_Entry Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Entering"
@@ -674,3 +674,8 @@ TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_staticFieldBase_Exit Over
 
 TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMemberVMInfo_Entry Overhead=1 Level=3 Template="MethodHandleNatives_getMemberVMInfo Enter: self = %p"
 TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMemberVMInfo_Exit Overhead=1 Level=3 Template="MethodHandleNatives_getMemberVMInfo Exit: result = %p"
+
+TraceException=Trc_JCL_initializeRequiredClasses_moduleForPackageNotFound Overhead=1 Level=1 Template="initializeRequiredClasses: module containing package %s not found"
+TraceException=Trc_JCL_initializeRequiredClasses_unexpectedModuleForPackage Overhead=1 Level=1 Template="initializeRequiredClasses: package %s found in module %s (expected %s) - not loading"
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleEntry Overhead=1 Level=3 Template="initializeRequiredClasses: Adding %s as root module"
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty Overhead=1 Level=3 Template="initializeRequiredClasses: Adding property %s=%s"
