@@ -37,7 +37,7 @@ usage() {
   echo "  --print        write the Dockerfile to stdout (default; overrides '--build')"
   echo "  --tag=...      specify a name for the docker image (may be repeated, default: none)"
   echo "  --user=...     specify the user name (default: 'jenkins')"
-  echo "  --version=...  specify the distribution version (e.g. 6.9, 16.04)"
+  echo "  --version=...  specify the distribution version (e.g. 6.9, 18.04)"
   echo ""
   local arch="$(uname -m)"
   echo "Supported build patterns on this host ($arch):"
@@ -47,7 +47,6 @@ fi
 if [ $arch = x86_64 -o $arch = ppc64le ] ; then
   echo "  bash mkdocker.sh --tag=openj9/cent7  --dist=centos --version=7   --build"
 fi
-  echo "  bash mkdocker.sh --tag=openj9/ub16   --dist=ubuntu --version=16  --build"
   echo "  bash mkdocker.sh --tag=openj9/ub18   --dist=ubuntu --version=18  --build"
   echo "  bash mkdocker.sh --tag=openj9/ub20   --dist=ubuntu --version=20  --build"
   exit 1
@@ -145,10 +144,10 @@ validate_options() {
       ;;
     ubuntu)
       case $version in
-        16 | 18 | 20)
+        18 | 20)
           version=$version.04
           ;;
-        16.04 | 18.04 | 20.04)
+        18.04 | 20.04)
           ;;
         unspecified)
           echo "Unspecified Ubuntu version: use '--version' option" >&2
@@ -399,9 +398,6 @@ install_ubuntu_packages() {
   echo "RUN apt-get update \\"
   echo " && apt-get install -qq -y --no-install-recommends \\"
   echo "    software-properties-common \\"
-if [ $version = 16.04 ] ; then
-  echo "    python-software-properties \\"
-fi
   echo " && add-apt-repository ppa:ubuntu-toolchain-r/test \\"
   echo " && apt-get update \\"
   echo " && apt-get install -qq -y --no-install-recommends \\"
@@ -450,9 +446,6 @@ fi
   echo "    openssh-server \\"
   echo "    perl \\"
   echo "    pkg-config \\"
-if [ $version = 16.04 ] ; then
-  echo "    realpath \\"
-fi
   echo "    ssh \\"
   echo "    systemtap-sdt-dev \\"
   echo "    unzip \\"
