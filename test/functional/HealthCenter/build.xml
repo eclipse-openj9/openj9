@@ -38,6 +38,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<target name="dist" depends="init" description="generate the distribution">
 		<copy todir="${DEST}">
 			<fileset dir="${PROJECT_ROOT}">
+				<include name="*.mk" />
 				<include name="*.xml" />
 			</fileset>
 		</copy>
