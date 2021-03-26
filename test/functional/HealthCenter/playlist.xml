@@ -24,6 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test>
 		<testCaseName>HealthCenter_sanity</testCaseName>
 		<command>ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_JDK_HOME=${TEST_JDK_HOME} -f $(Q)$(TEST_RESROOT)$(D)healthcenter.xml$(Q); $(TEST_STATUS)</command>
+		<platformRequirements>os.zos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
