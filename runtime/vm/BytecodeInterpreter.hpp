@@ -8041,7 +8041,11 @@ retry:
 				 */
 				j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
 				_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
-				*--_sp = (UDATA)(j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
+
+				j9object_t appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
+				if (NULL != appendix) {
+					*--_sp = (UDATA)appendix;
+				}
 			} else {
 				VM_VMHelpers::setExceptionPending(_currentThread, invokeCacheArray);
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
@@ -8141,8 +8145,12 @@ retry:
 
 		if (J9_EXPECTED(NULL != invokeCacheArray)) {
 			j9object_t memberName = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 0);
-			*--_sp = (UDATA)(j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
 			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
+
+			j9object_t appendix = (j9object_t)J9JAVAARRAYOFOBJECT_LOAD(_currentThread, invokeCacheArray, 1);
+			if (NULL != appendix) {
+				*--_sp = (UDATA)appendix;
+			}
 		} else {
 			buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 			updateVMStruct(REGISTER_ARGS);
