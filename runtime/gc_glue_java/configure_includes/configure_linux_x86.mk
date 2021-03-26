@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2020 IBM Corp. and others
+# Copyright (c) 2016, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,6 +38,7 @@ ifeq (linux_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
+		--enable-OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
 		OMR_GC_POINTER_MODE=compressed
@@ -68,6 +69,7 @@ ifeq (linux_x86-64, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
+		--enable-OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
 		OMR_GC_POINTER_MODE=full

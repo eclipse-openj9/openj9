@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,10 +81,8 @@ public:
 	/**
 	 * Runs a PGC collect using the copy forward mechanism. This call does report events, before and after the collection, but does not collect statistics.
 	 * @param env[in] The main GC thread
-	 * @param allocDescription[in] The allocation request which triggered the collect
-	 * @return flag indicating if the copy forward collection was successful or not.
 	 */
-	bool performCopyForwardForPartialGC(MM_EnvironmentVLHGC *env);
+	void performCopyForwardForPartialGC(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Infrastructure and state setup pre-copyForward.
@@ -125,6 +123,11 @@ public:
 		if (NULL != _breadthFirstCopyForwardScheme) {
 			_breadthFirstCopyForwardScheme->setReservedNonEvacuatedRegions(regionCount);
 		}
+	}
+
+	MMINLINE bool isConcurrentCycleInProgress()
+	{
+		return _breadthFirstCopyForwardScheme->isConcurrentCycleInProgress();
 	}
 };
 
