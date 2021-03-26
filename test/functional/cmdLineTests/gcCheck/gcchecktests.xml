@@ -38,7 +38,7 @@
   <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE$" />
-  <command>$EXE$ $CP$ $XDUMP$ $PROGRAM$</command>
+  <command>$EXE$ -Xmx256m $CP$ $XDUMP$ $PROGRAM$</command>
   <output regex="no" type="success">System dump written</output>
  </test>
 
