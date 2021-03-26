@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,9 @@ hashMonitorCompare(void *tableEntryKey, void *userKey, void *userData)
 	/* In a Concurrent GC where monitor object can *move* in a middle of GC cycle,
 	 * we need a proper barrier to get an up-to-date location of the monitor object
 	 * Only access to the table entry needs the barrier. The user provided key should already have an updated location of the objects,
-	 * since a read barrier had to be executed some time prior to the construction of the key, wherever the value is read from */
+	 * since a read barrier had to be executed some time prior to the construction of the key, wherever the value is read from
+	 * In theory (if collision list is ever converted to AVL), this can be called from GC threads during monitor table pruning,
+	 * in which case this has to be unconditionally fixed up, even if read barrier is not active */
 	j9object_t tableEntryObject = J9WEAKROOT_OBJECT_LOAD_VM((J9JavaVM *)userData, &(tableEntryMonitor->userData));
 
 	return tableEntryObject == (j9object_t)userMonitor->userData;
