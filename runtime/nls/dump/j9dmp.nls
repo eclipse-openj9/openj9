@@ -540,7 +540,7 @@ J9NLS_DMP_JIT_ORDINARY_METHOD.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=JIT dump notified all waiting threads of the current method the be compiled
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=JIT dump notified all waiting threads of the current method to be compiled
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.explanation=The compilation threads waiting on the method to be compiled monitor will be notified.
 J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.system_action=The JVM continues.
