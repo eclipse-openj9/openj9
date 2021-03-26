@@ -120,6 +120,11 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 		walkState.walkThread = currentThread;
 		walkState.skipCount = 0;
 		walkState.maxFrames = parms->depth;
+		/* JIT cache may allocate, which we don't want inside a signal handler,
+		 * Flag is cleared in the caller (so both the normal and exception cases
+		 * clear it).
+		 */
+		currentThread->jitArtifactSearchCache = (void*)((UDATA)currentThread->jitArtifactSearchCache | J9_STACKWALK_NO_JIT_CACHE);
 		walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY
 			| J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET | J9_STACKWALK_COUNT_SPECIFIED
 			| J9_STACKWALK_ITERATE_FRAMES;
@@ -151,6 +156,9 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void *ucontext)
 				&result);
 		num_frames = parms.num_frames;
 		currentThread = parms.currentThread;
+		if (NULL != currentThread) {
+			currentThread->jitArtifactSearchCache = (void*)((UDATA)currentThread->jitArtifactSearchCache & ~(UDATA)J9_STACKWALK_NO_JIT_CACHE);
+		}
 	}
 #endif /* ASGCT_SUPPORTED */
 	trace->env_id = (JNIEnv*)currentThread;
