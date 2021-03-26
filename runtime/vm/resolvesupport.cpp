@@ -2295,19 +2295,23 @@ resolveInvokeDynamic(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSite
 		if (vmThread->currentException != NULL) {
 			/* Already a pending exception */
 			result = vmThread->currentException;
-		} else if (result == NULL) {
+		} else if (NULL == result) {
 			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-		} else { /* (result != NULL) */
-			/* Only write the value in if it is not null */
-			J9MemoryManagerFunctions *gcFuncs = vmThread->javaVM->memoryManagerFunctions;
-			J9Class *j9class = J9_CLASS_FROM_CP(ramCP);
+			result = vmThread->currentException;
+		}
 
-			/* Ensure that result array elements are written before the array reference is stored */
-			VM_AtomicSupport::writeBarrier();
-			if (0 == gcFuncs->j9gc_objaccess_staticCompareAndSwapObject(vmThread, j9class, callSite, NULL, result)) {
-				/* Another thread beat this thread to updating the call site, ensure both threads return the same method handle. */
-				result = *callSite;
-			}
+		/* The result can be an array or exception. Ensure that the result and its elements are
+		 * written/published before the result reference is stored.
+		 */
+		VM_AtomicSupport::writeBarrier();
+
+		J9MemoryManagerFunctions *gcFuncs = vmThread->javaVM->memoryManagerFunctions;
+		J9Class *j9class = J9_CLASS_FROM_CP(ramCP);
+		if (0 == gcFuncs->j9gc_objaccess_staticCompareAndSwapObject(vmThread, j9class, callSite, NULL, result)) {
+			/* Another thread beat this thread to updating the call site, ensure both threads
+			 * return the same method handle.
+			 */
+			result = *callSite;
 		}
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		/* Check if an exception is already pending */
