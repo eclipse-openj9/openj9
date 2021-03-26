@@ -918,11 +918,15 @@ jlong JNICALL Java_sun_misc_Perf_highResCounter(JNIEnv *env, jobject perf);
 jlong JNICALL Java_sun_misc_Perf_highResFrequency(JNIEnv *env, jobject perf);
 void JNICALL Java_jdk_internal_perf_Perf_registerNatives(JNIEnv *env, jclass clazz);
 
+/* Used by both OpenJ9 & OJDK MH impl */
+#if defined (J9VM_OPT_METHOD_HANDLE) || defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+jobject JNICALL Java_java_lang_invoke_MethodHandle_invoke(JNIEnv *env, jclass ignored, jobject handle, jobject args);
+jobject JNICALL Java_java_lang_invoke_MethodHandle_invokeExact(JNIEnv *env, jclass ignored, jobject handle, jobject args);
+#endif
+
 /* java_dyn_methodhandle.c */
 #if defined(J9VM_OPT_METHOD_HANDLE)
 void		JNICALL Java_java_lang_invoke_InterfaceHandle_registerNatives(JNIEnv *env, jclass nativeClass);
-jobject		JNICALL Java_java_lang_invoke_MethodHandle_invoke(JNIEnv *env, jclass ignored, jobject handle, jobject args);
-jobject		JNICALL Java_java_lang_invoke_MethodHandle_invokeExact(JNIEnv *env, jclass ignored, jobject handle, jobject args);
 void		JNICALL Java_java_lang_invoke_MethodHandle_requestCustomThunkFromJit(JNIEnv* env, jobject handle, jobject thunk);
 jint		JNICALL Java_java_lang_invoke_MethodHandle_vmRefFieldOffset(JNIEnv *env, jclass clazz, jclass ignored);
 void		JNICALL Java_java_lang_invoke_MutableCallSite_freeGlobalRef(JNIEnv *env, jclass mutableCallSite, jlong bypassOffset);
@@ -972,8 +976,6 @@ void JNICALL Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments
 void JNICALL Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext(JNIEnv *env, jclass clazz, jobject context);
 jint JNICALL Java_java_lang_invoke_MethodHandleNatives_getNamedCon(JNIEnv *env, jclass clazz, jint which, jobjectArray name);
 void JNICALL Java_java_lang_invoke_MethodHandleNatives_registerNatives(JNIEnv *env, jclass clazz);
-jobject JNICALL Java_java_lang_invoke_MethodHandle_invoke(JNIEnv *env, jclass ignored, jobject handle, jobject args);
-jobject JNICALL Java_java_lang_invoke_MethodHandle_invokeExact(JNIEnv *env, jclass ignored, jobject handle, jobject args);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /* java_lang_invoke_VarHandle.c */
