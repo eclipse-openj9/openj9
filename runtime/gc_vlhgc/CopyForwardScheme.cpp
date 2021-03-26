@@ -1555,8 +1555,8 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 	}
 }
 
-void
-MM_CopyForwardScheme::copyForwardPreProcess(MM_EnvironmentVLHGC *env)
+bool
+MM_CopyForwardScheme::copyForwardCollectionSet(MM_EnvironmentVLHGC *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
@@ -1575,12 +1575,10 @@ MM_CopyForwardScheme::copyForwardPreProcess(MM_EnvironmentVLHGC *env)
 	}
 	/* Perform any main-specific setup */
 	mainSetupForCopyForward(env);
-}
 
-void
-MM_CopyForwardScheme::copyForwardPostProcess(MM_EnvironmentVLHGC *env)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	/* And perform the copy forward */
+	MM_CopyForwardSchemeTask copyForwardTask(env, _dispatcher, this, env->_cycleState);
+	_dispatcher->run(env, &copyForwardTask);
 
 	mainCleanupForCopyForward(env);
 	
@@ -1608,48 +1606,7 @@ MM_CopyForwardScheme::copyForwardPostProcess(MM_EnvironmentVLHGC *env)
 	/* Do any final work to regions in order to release them back to the main collector implementation */
 	postProcessRegions(env);
 
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_abortFlagRaisedDuringPGC = copyForwardCompletedSuccessfully(env);
-}
-
-#if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
-void
-MM_CopyForwardScheme::concurrentCopyForwardCollectionSet(MM_EnvironmentVLHGC *env)
-{
-	/* isConcurrentCycleInProgress() tells us if this is the first PGC increment or not. If it is
-	 * we'll call copyForwardPreProcess(). isConcurrentCycleInProgress state/value will get updated
-	 * preventing copyForwardPreProcess from being called in subsequent increments. For initial increment,
-	 * isConcurrentCycleInProgress will change from false to true causing only preProcess step to
-	 * be performed */
-	if (!isConcurrentCycleInProgress())
-	{
-		copyForwardPreProcess(env);
-	}
-
-	/* Perform the copy forward. This step will update the isConcurrentCycleInProgress state/value.
-	 * Note: The following is temporary as this will be updated to call concurrent copy forward state machine */
-	MM_CopyForwardSchemeTask copyForwardTask(env, _dispatcher, this, env->_cycleState);
-	_dispatcher->run(env, &copyForwardTask);
-
-	/* isConcurrentCycleInProgress() tells us if this is the last PGC increment or not. If this is the
-	 * last increment, copyForwardPreProcess state/value would have been updated from from true to false,
-	 * which will cause the following copyForwardPostProcess step to be performed */
-	if (!isConcurrentCycleInProgress())
-	{
-		copyForwardPostProcess(env);
-	}
-}
-#endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
-
-void
-MM_CopyForwardScheme::copyForwardCollectionSet(MM_EnvironmentVLHGC *env)
-{
-	copyForwardPreProcess(env);
-
-	/* And perform the copy forward */
-	MM_CopyForwardSchemeTask copyForwardTask(env, _dispatcher, this, env->_cycleState);
-	_dispatcher->run(env, &copyForwardTask);
-
-	copyForwardPostProcess(env);
+	return copyForwardCompletedSuccessfully(env);
 }
 
 /**
