@@ -29,7 +29,6 @@
 #include "control/CompilationThread.hpp" // for TR::compInfoPT->getCompThreadId()
 #include "control/Options.hpp"
 #include "runtime/JITClientSession.hpp"
-#include <openssl/ssl.h>
 
 class SSLOutputStream;
 class SSLInputStream;
@@ -267,7 +266,6 @@ private:
    uint64_t _clientId;  // UID of client connected to this communication stream
    ClientSessionData *_pClientSessionData;
    };
-
 
 }
 

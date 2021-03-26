@@ -24,13 +24,10 @@
 #define COMMUNICATION_STREAM_H
 
 #include <unistd.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 #include "net/LoadSSLLibs.hpp"
 #include "net/Message.hpp"
 #include "infra/Statistics.hpp"
 #include "env/VerboseLog.hpp"
-
 
 namespace JITServer
 {
@@ -95,7 +92,7 @@ protected:
    void writeMessage(Message &msg);
 
    int getConnFD() const { return _connfd; }
-   
+
    BIO *_ssl; // SSL connection, null if not using SSL
    int _connfd;
    ServerMessage _sMsg;
@@ -178,7 +175,6 @@ private:
       writeBlocking(&val, sizeof(T));
       }
 
- 
    void writeBlocking(const char* data, size_t size)
       {
       if (_ssl)
