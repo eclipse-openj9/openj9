@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2018 IBM Corp. and others
+dnl Copyright (c) 2017, 2021 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@ dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exc
 
 include(phelpers.m4)
 
-	.file "pcinterp.s"
+	START_FILE("pcinterp.s")
 
 define({CSECT_NAME},{c_cInterpreter})
 
@@ -77,7 +77,7 @@ ifdef({SAVE_R13},{
 	SAVE_FPR(30)
 	SAVE_FPR(31)
  	mr J9VMTHREAD,r3
-	laddr r4,J9TR_VMThread_entryLocalStorage(r3)
+	laddr r4,J9TR_VMThread_entryLocalStorage(J9VMTHREAD)
 	addi r0,r1,JIT_GPR_SAVE_OFFSET(0)
 	staddr r0,J9TR_ELS_jitGlobalStorageBase(r4)
 	addi r0,r1,JIT_FPR_SAVE_OFFSET(0)
@@ -85,8 +85,36 @@ ifdef({SAVE_R13},{
 	li r3,-1
 ifdef({ASM_J9VM_ENV_DATA64},{
 	staddr r3,JIT_GPR_SAVE_SLOT(17)
-	laddr r3,J9TR_VMThread_javaVM(J9VMTHREAD)
-	laddr r3,J9TR_JavaVMJitConfig(r3)
+	laddr r4,J9TR_VMThread_javaVM(J9VMTHREAD)
+	lwz r3,J9TR_JavaVM_runtimeFlags(r4)
+	andi. r3,r3,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	beq .L_no_VR_save
+	addi r3,r1,J9TR_cframe_preservedVRs
+	stxvd2x 52,0,r3
+	addi r3,r3,16
+	stxvd2x 53,0,r3
+	addi r3,r3,16
+	stxvd2x 54,0,r3
+	addi r3,r3,16
+	stxvd2x 55,0,r3
+	addi r3,r3,16
+	stxvd2x 56,0,r3
+	addi r3,r3,16
+	stxvd2x 57,0,r3
+	addi r3,r3,16
+	stxvd2x 58,0,r3
+	addi r3,r3,16
+	stxvd2x 59,0,r3
+	addi r3,r3,16
+	stxvd2x 60,0,r3
+	addi r3,r3,16
+	stxvd2x 61,0,r3
+	addi r3,r3,16
+	stxvd2x 62,0,r3
+	addi r3,r3,16
+	stxvd2x 63,0,r3
+.L_no_VR_save:
+	laddr r3,J9TR_JavaVMJitConfig(r4)
 	cmpliaddr r3,0
 	beq .L_noJIT
 	laddr r3,J9TR_JitConfig_pseudoTOC(r3)
@@ -114,6 +142,37 @@ ifdef({ASM_J9VM_ENV_DATA64},{
 ifdef({SAVE_R13},{
 	RESTORE_GPR(13)
 })
+ifdef({ASM_J9VM_ENV_DATA64},{
+	laddr r4,J9TR_VMThread_javaVM(J9VMTHREAD)
+	lwz r3,J9TR_JavaVM_runtimeFlags(r4)
+	andi. r3,r3,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	beq .L_no_VR_restore
+	addi r3,r1,J9TR_cframe_preservedVRs
+	lxvd2x 52,0,r3
+	addi r3,r3,16
+	lxvd2x 53,0,r3
+	addi r3,r3,16
+	lxvd2x 54,0,r3
+	addi r3,r3,16
+	lxvd2x 55,0,r3
+	addi r3,r3,16
+	lxvd2x 56,0,r3
+	addi r3,r3,16
+	lxvd2x 57,0,r3
+	addi r3,r3,16
+	lxvd2x 58,0,r3
+	addi r3,r3,16
+	lxvd2x 59,0,r3
+	addi r3,r3,16
+	lxvd2x 60,0,r3
+	addi r3,r3,16
+	lxvd2x 61,0,r3
+	addi r3,r3,16
+	lxvd2x 62,0,r3
+	addi r3,r3,16
+	lxvd2x 63,0,r3
+.L_no_VR_restore:
+}) dnl ASM_J9VM_ENV_DATA64
 	RESTORE_GPR(14)
 	RESTORE_GPR(15)
 	RESTORE_GPR(16)
