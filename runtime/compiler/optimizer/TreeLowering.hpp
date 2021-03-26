@@ -27,6 +27,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
+#include "infra/ILWalk.hpp"
 #include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/OptimizationManager.hpp"
@@ -99,8 +100,8 @@ class TreeLowering : public TR::Optimization
    TR::Block* splitForFastpath(TR::Block* const block, TR::TreeTop* const splitPoint, TR::Block* const targetBlock);
 
    // helpers related to Valhalla value type lowering
-   void lowerValueTypeOperations(TR::Node* node, TR::TreeTop* tt);
-   void fastpathAcmpHelper(TR::Node* const node, TR::TreeTop* const tt);
+   void lowerValueTypeOperations(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
+   void fastpathAcmpHelper(TR::PreorderNodeIterator& nodeIter, TR::Node* const node, TR::TreeTop* const tt);
    void lowerArrayStoreCHK(TR::Node* node, TR::TreeTop* tt);
    };
 
