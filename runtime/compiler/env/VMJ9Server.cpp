@@ -131,13 +131,13 @@ TR_J9ServerVM::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock *
 
 TR_ResolvedMethod *
 TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
-                                                 char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod)
+                                                 char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    {
    TR_ResolvedJ9Method *result = NULL;
    if (isAOT_DEPRECATED_DO_NOT_USE())
       {
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-      result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(aMethod, this, trMemory, owningMethod);
+      result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(aMethod, this, trMemory, owningMethod, vTableSlot);
       TR::Compilation *comp = _compInfoPT->getCompilation();
       if (comp && comp->getOption(TR_UseSymbolValidationManager))
          {
@@ -149,7 +149,7 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
       }
    else
       {
-      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod(aMethod, this, trMemory, owningMethod);
+      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod(aMethod, this, trMemory, owningMethod, vTableSlot);
       if (classForNewInstance)
          {
          result->setClassForNewInstance((J9Class*)classForNewInstance);
@@ -2936,3 +2936,16 @@ TR_J9SharedCacheServerVM::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *inter
       }
    return ramMethod;
    }
+
+bool
+TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method)
+   {
+   return false;
+   }
+
+bool
+TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_ResolvedMethod *method)
+   {
+   return false;
+   }
+

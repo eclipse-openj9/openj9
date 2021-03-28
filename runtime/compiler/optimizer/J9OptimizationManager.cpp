@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,6 +89,9 @@ J9::OptimizationManager::OptimizationManager(TR::Optimizer *o, OptimizationFacto
          _flags.set(doesNotRequireAliasSets | supportsIlGenOptLevel);
          break;
       case OMR::varHandleTransformer:
+         _flags.set(doesNotRequireAliasSets | supportsIlGenOptLevel);
+         break;
+      case OMR::methodHandleTransformer:
          _flags.set(doesNotRequireAliasSets | supportsIlGenOptLevel);
          break;
       case OMR::unsafeFastPath:

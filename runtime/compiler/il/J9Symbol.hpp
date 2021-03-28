@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -160,6 +160,7 @@ public:
       Java_math_BigInteger_ZERO,
       Java_math_BigInteger_useLongRepresentation,
       Java_lang_invoke_VarHandle_handleTable,
+      Java_lang_invoke_MethodHandleImpl_LoopClauses_clauses,
       Java_lang_Integer_value,
       Java_lang_Long_value,
       Java_lang_Float_value,

@@ -209,8 +209,15 @@ TR_J9VMBase::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * a
    }
 
 TR_ResolvedMethod *
+TR_J9VMBase::createResolvedMethodWithVTableSlot(TR_Memory * trMemory, uint32_t vTableSlot, TR_OpaqueMethodBlock * aMethod,
+                                  TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance)
+   {
+   return createResolvedMethodWithSignature(trMemory, aMethod, classForNewInstance, NULL, -1, owningMethod, vTableSlot);
+   }
+
+TR_ResolvedMethod *
 TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
-                          char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod)
+                          char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    {
    TR_ResolvedJ9Method *result = NULL;
    if (isAOT_DEPRECATED_DO_NOT_USE())
@@ -219,7 +226,7 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
       if (TR::Options::sharedClassCache())
          {
-         result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(aMethod, this, trMemory, owningMethod);
+         result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(aMethod, this, trMemory, owningMethod, vTableSlot);
          TR::Compilation *comp = TR::comp();
          if (comp && comp->getOption(TR_UseSymbolValidationManager))
             {
@@ -235,7 +242,7 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
       }
    else
       {
-      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(aMethod, this, trMemory, owningMethod);
+      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(aMethod, this, trMemory, owningMethod, vTableSlot);
       if (classForNewInstance)
          {
          result->setClassForNewInstance((J9Class*)classForNewInstance);
@@ -3937,6 +3944,14 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X DirectMethodHandleMethods[] =
+      {
+      {x(TR::java_lang_invoke_DirectMethodHandle_internalMemberName,            "internalMemberName",                 "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit,  "internalMemberNameEnsureInit",       "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::java_lang_invoke_DirectMethodHandle_constructorMethod,             "constructorMethod",       "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {  TR::unknownMethod}
+      };
+
    static X PrimitiveHandleMethods[] =
       {
       {x(TR::java_lang_invoke_PrimitiveHandle_initializeClassIfRequired,  "initializeClassIfRequired",       "()V")},
@@ -4447,6 +4462,7 @@ void TR_ResolvedJ9Method::construct()
       {
       { "java/lang/invoke/ExplicitCastHandle", ExplicitCastHandleMethods },
       { "jdk/internal/loader/NativeLibraries", NativeLibrariesMethods },
+      { "java/lang/invoke/DirectMethodHandle", DirectMethodHandleMethods },
       { 0 }
       };
 
