@@ -151,6 +151,7 @@
        {r(TR::Symbol::Java_math_BigInteger_useLongRepresentation,     "java/math/BigInteger", "useLongRepresentation", "Z")},
        {r(TR::Symbol::Java_lang_ref_SoftReference_age,                "java/lang/ref/SoftReference", "age", "I")},
        {r(TR::Symbol::Java_lang_invoke_VarHandle_handleTable,         "java/lang/invoke/VarHandle", "handleTable", "[Ljava/lang/invoke/MethodHandle;")},
+       {r(TR::Symbol::Java_lang_invoke_MethodHandleImpl_LoopClauses_clauses,         "java/lang/invoke/MethodHandleImpl$LoopClauses", "clauses", "[[Ljava/lang/invoke/MethodHandle;")},
        {r(TR::Symbol::Java_lang_Integer_value,                        "java/lang/Integer", "value", "I")},
        {r(TR::Symbol::Java_lang_Long_value,                           "java/lang/Long", "value", "J")},
        {r(TR::Symbol::Java_lang_Float_value,                          "java/lang/Float", "value", "F")},

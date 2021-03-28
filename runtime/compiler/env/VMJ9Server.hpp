@@ -63,7 +63,8 @@ public:
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t) override;
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance) override;
    TR_ResolvedMethod * createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueClassBlock *classForNewInstance = NULL);
-   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance, char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod) override;
+   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
+                                                                 char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, uint32_t = 0) override;
    TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance, char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
    virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed = true, bool optimizeForAOT = false) override;
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT = false) override;
@@ -173,6 +174,11 @@ public:
    virtual bool needsInvokeExactJ2IThunk(TR::Node *node,  TR::Compilation *comp) override;
    virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
    virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueMethodBlock *archetype, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
+
+   // Is method generated for LambdaForm
+   virtual bool isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method) override;
+   virtual bool isLambdaFormGeneratedMethod(TR_ResolvedMethod *method) override;
+
    virtual intptr_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
    virtual bool isClassArray(TR_OpaqueClassBlock *klass) override;
    virtual uintptr_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer

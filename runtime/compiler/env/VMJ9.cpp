@@ -3114,6 +3114,18 @@ TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    }
 
 bool
+TR_J9VMBase::isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method)
+   {
+   return VM_VMHelpers::isLambdaFormGeneratedMethod(vmThread(), (J9Method *)method);
+   }
+
+bool
+TR_J9VMBase::isLambdaFormGeneratedMethod(TR_ResolvedMethod *method)
+   {
+   return isLambdaFormGeneratedMethod(method->getPersistentIdentifier());
+   }
+
+bool
 TR_J9VMBase::isSelectiveMethodEnterExitEnabled()
    {
    return false;
@@ -4052,6 +4064,7 @@ TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol
       case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
       case TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc:
       case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
+      case TR::Symbol::Java_lang_invoke_MethodHandleImpl_LoopClauses_clauses:
          {
          return true;
          }
@@ -4858,6 +4871,51 @@ TR_J9VMBase::targetMethodFromMethodHandle(uintptr_t methodHandle)
       "vmentry",             "Ljava/lang/invoke/MemberName;");
    return targetMethodFromMemberName(vmentry);
    }
+
+J9JNIMethodID*
+TR_J9VMBase::jniMethodIdFromMemberName(uintptr_t memberName)
+   {
+   TR_ASSERT(haveAccess(), "jniMethodIdFromMemberName requires VM access");
+   return (J9JNIMethodID *)J9OBJECT_U64_LOAD(vmThread(), memberName, vmThread()->javaVM->vmindexOffset);
+   }
+
+J9JNIMethodID*
+TR_J9VMBase::jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      TR::VMAccessCriticalSection jniMethodId(this);
+      uintptr_t object = knot->getPointer(objIndex);
+      return jniMethodIdFromMemberName(object);
+      }
+   return NULL;
+   }
+
+int32_t
+TR_J9VMBase::vTableOrITableIndexFromMemberName(uintptr_t memberName)
+   {
+   TR_ASSERT(haveAccess(), "vTableOrITableIndexFromMemberName requires VM access");
+   auto methodID = jniMethodIdFromMemberName(memberName);
+   return (int32_t)methodID->vTableIndex;
+   }
+
+int32_t
+TR_J9VMBase::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      TR::VMAccessCriticalSection vTableOrITableIndex(this);
+      uintptr_t object = knot->getPointer(objIndex);
+      return vTableOrITableIndexFromMemberName(object);
+      }
+   return -1;
+    }
 
 TR::KnownObjectTable::Index
 TR_J9VMBase::getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray)
@@ -5716,6 +5774,12 @@ bool
 TR_J9VMBase::isBeingCompiled(TR_OpaqueMethodBlock * method, void * startPC)
    {
    return _compInfo->isQueuedForCompilation((J9Method *)method, startPC);
+   }
+
+U_32
+TR_J9VMBase::vTableSlotToVirtualCallOffset(U_32 vTableSlot)
+   {
+   return TR::Compiler->vm.getInterpreterVTableOffset() - vTableSlot;
    }
 
 U_32
