@@ -1689,15 +1689,28 @@ onLoadInternal(
       if (!JITServer::loadLibsslAndFindSymbols())
          return -1;
       }
-   else if ((compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER) &&
-            TR::Options::_shareROMClasses)
+   else
       {
-      // ROMClass sharing uses a hash implementation from SSL. Disable it if we can't load the library.
-      if (!JITServer::loadLibsslAndFindSymbols())
+      bool shareROMClasses = TR::Options::_shareROMClasses &&
+                             (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER);
+      bool useAOTCache = compInfo->getPersistentInfo()->getJITServerUseAOTCache();
+
+      // ROMClass sharing and AOT cache use a hash implementation from SSL.
+      // Disable them (with an error message to vlog) if we can't load the library.
+      if ((shareROMClasses || useAOTCache) && !JITServer::loadLibsslAndFindSymbols())
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Failed to load SSL library, disabling ROMClass sharing");
          TR::Options::_shareROMClasses = false;
+         compInfo->getPersistentInfo()->setJITServerUseAOTCache(false);
+
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            {
+            if (shareROMClasses)
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                              "ERROR: Failed to load SSL library, disabling ROMClass sharing");
+            if (useAOTCache)
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                              "ERROR: Failed to load SSL library, disabling AOT cache");
+            }
          }
       }
 
