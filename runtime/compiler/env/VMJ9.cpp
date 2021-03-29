@@ -2367,7 +2367,7 @@ TR_J9VMBase::markHotField(TR::Compilation * comp, TR::SymbolReference * symRef, 
 
 
 /**
- * Report a hot field if the JIT has determined that the field has met appropriate thresholds to be determined a hot field. 
+ * Report a hot field if the JIT has determined that the field has met appropriate thresholds to be determined a hot field.
  * Valid if dynamicBreadthFirstScanOrdering is enabled.
  *
  * @param reducedCpuUtil normalized cpu utilization of the hot field for the method being compiled
@@ -2384,7 +2384,7 @@ TR_J9VMBase::reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fiel
 
 /**
  * Query if hot reference field is reqired for dynamicBreadthFirstScanOrdering
- *  @return true if scavenger dynamicBreadthFirstScanOrdering is enabled, 0 otherwise 
+ *  @return true if scavenger dynamicBreadthFirstScanOrdering is enabled, 0 otherwise
  */
 bool
 TR_J9VMBase::isHotReferenceFieldRequired()
@@ -2742,39 +2742,6 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
 
    TR::Node *callNode = callsite->_callNode;
    TR::TreeTop *callNodeTreeTop  = callsite->_callNodeTreeTop;
-
-   TR::SymbolReference * symRef = callNode->getSymbolReference();
-
-   if (!symRef->isUnresolved() && !callsite->_initialCalleeSymbol->isHelper())
-      {
-      static bool doStringOpt = feGetEnv("TR_EnableStringOpt") ? true : false;
-
-      TR_ResolvedMethod *m = callsite->_initialCalleeSymbol->getResolvedMethod();
-      if (doStringOpt && comp->supressEarlyInlining())
-         {
-         char *sig = "java/lang/String.<init>(";
-         if ((strncmp(m->signature(comp->trMemory()), sig, strlen(sig)) == 0) && (strncmp(m->signatureChars(), "([CII)", 6)==0))
-            {
-            return true;
-            }
-         }
-
-      if (true)
-         {
-         char *sig = "java/lang/String.checkForCacheHit(";
-         if (strncmp(m->signature(comp->trMemory()), sig, strlen(sig)) == 0)
-            {
-            return true;
-            }
-
-         sig = "java/lang/String.isAllSameCharacterArray(";
-         if (strncmp(m->signature(comp->trMemory()), sig, strlen(sig)) == 0)
-            {
-            return true;
-            }
-         }
-
-      }
 
    bool dontInlineRecognizedMethod = callsite->_initialCalleeSymbol->canReplaceWithHWInstr();
    if (callNode->getSymbol()->getResolvedMethodSymbol())
