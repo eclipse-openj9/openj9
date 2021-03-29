@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,9 +87,9 @@ typedef struct {
 	union {
 		UDATA numbered[32];
 	} gpr;
+	U_64 fpr[32];
 	UDATA cr;
 	UDATA lr;
-	U_64 fpr[32];
 } J9JITRegisters;
 
 #elif defined(J9VM_ARCH_S390)
