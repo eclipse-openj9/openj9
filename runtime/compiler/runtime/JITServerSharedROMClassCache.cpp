@@ -37,7 +37,7 @@ struct JITServerSharedROMClassCache::Entry
       }
 
    // The ROMClass is embedded in this structure in order to avoid exposing it in the API
-   static Entry *get(J9ROMClass *romClass)
+   static Entry *get(const J9ROMClass *romClass)
       {
       auto entry = (Entry *)((uint8_t *)romClass - offsetof(Entry, _data));
       TR_ASSERT_FATAL(entry->_eyeCatcher == JITSERVER_SHARED_ROMCLASS_EYECATCHER,
@@ -221,6 +221,12 @@ JITServerSharedROMClassCache::release(J9ROMClass *romClass)
    if (entry->release() == 0)
       getPartition(*entry->_hash).release(entry);
    }
+
+const JITServerROMClassHash &
+JITServerSharedROMClassCache::getHash(const J9ROMClass *romClass)
+{
+   return *Entry::get(romClass)->_hash;
+}
 
 JITServerSharedROMClassCache::Partition &
 JITServerSharedROMClassCache::getPartition(const JITServerROMClassHash &hash)

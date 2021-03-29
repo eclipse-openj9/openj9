@@ -47,6 +47,9 @@ public:
    J9ROMClass *getOrCreate(const J9ROMClass *packedROMClass);
    void release(J9ROMClass *romClass);
 
+   // Get precomputed hash of a shared ROMClass
+   static const JITServerROMClassHash &getHash(const J9ROMClass *romClass);
+
 private:
    struct Entry;
    struct Partition;
