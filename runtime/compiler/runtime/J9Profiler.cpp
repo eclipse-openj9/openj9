@@ -569,21 +569,6 @@ void TR_ValueProfiler::modifyTrees()
                child->setByteCodeInfo(bcInfo);
                }
             }
-
-         static bool doStringOpt = feGetEnv("TR_EnableStringOpt") ? true : false;
-
-         if (doStringOpt && !methodSymRef->isUnresolved() && !methodSymbol->isHelper())
-            {
-            TR::ResolvedMethodSymbol *method = firstChild->getSymbolReference()->getSymbol()->castToResolvedMethodSymbol();
-            TR_ResolvedMethod *m = method->getResolvedMethod();
-            char *sig = "java/lang/String.<init>(";
-            if ((strncmp(m->signature(trMemory()), sig, strlen(sig)) == 0) &&
-                (strncmp(m->signatureChars(), "([CII)", 6)==0))
-               {
-               if (!firstChild->getFirstChild()->getByteCodeInfo().doNotProfile())
-                  addProfilingTrees(firstChild->getFirstChild(), tt, 20, StringInfo);
-               }
-            }
          }
       else if ((node->getOpCodeValue() == TR::ificmpne) ||
                (node->getOpCodeValue() == TR::ificmpeq))

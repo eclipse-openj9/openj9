@@ -2507,8 +2507,6 @@ int32_t TR_Inliner::perform()
       comp()->getFlowGraph()->setFrequencies();
       }
 
-   comp()->setSupressEarlyInlining(false);
-
    return 1; // cost??
    }
 
