@@ -1194,6 +1194,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _localGCCounter = 0;
    _activationPolicy = JITServer::CompThreadActivationPolicy::AGGRESSIVE;
    _sharedROMClassCache = NULL;
+   _JITServerAOTCacheMap = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }
 

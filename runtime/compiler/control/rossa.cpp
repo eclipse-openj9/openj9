@@ -113,10 +113,11 @@
 #include "net/ClientStream.hpp"
 #include "net/LoadSSLLibs.hpp"
 #include "runtime/JITClientSession.hpp"
-#include "runtime/Listener.hpp"
+#include "runtime/JITServerAOTCache.hpp"
+#include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITServerSharedROMClassCache.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
-#include "runtime/JITServerIProfiler.hpp"
+#include "runtime/Listener.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 extern "C" int32_t encodeCount(int32_t count);
@@ -1753,6 +1754,14 @@ onLoadInternal(
          compInfo->setJITServerSharedROMClassCache(cache);
          }
 
+      //NOTE: This must be done only after the SSL library has been successfully loaded
+      if (compInfo->getPersistentInfo()->getJITServerUseAOTCache())
+         {
+         auto aotCacheMap = new (PERSISTENT_NEW) JITServerAOTCacheMap();
+         if (!aotCacheMap)
+            return -1;
+         compInfo->setJITServerAOTCacheMap(aotCacheMap);
+         }
       }
    else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
