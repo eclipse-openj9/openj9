@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,5 +51,18 @@ template<typename T>
 using VectorAllocator = TR::typed_allocator<T, TR::Region&>;
 template<typename T>
 using Vector = std::vector<T, VectorAllocator<T>>;
+
+
+namespace std
+   {
+   template<typename T0, typename T1> struct hash<std::pair<T0, T1>>
+      {
+      size_t operator()(const std::pair<T0, T1> &k) const noexcept
+         {
+         return std::hash<T0>()(k.first) ^ std::hash<T1>()(k.second);
+         }
+      };
+   }
+
 
 #endif

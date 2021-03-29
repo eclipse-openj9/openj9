@@ -133,19 +133,6 @@ using TR_FieldAttributesCache = PersistentUnorderedMap<int32_t, TR_J9MethodField
 
 using ClassLoaderStringPair = std::pair<J9ClassLoader *, std::string>;
 
-// custom specializations of std::hash injected in std namespace
-namespace std
-   {
-   template<typename T, typename Q> struct hash<std::pair<T, Q>>
-      {
-      std::size_t operator()(const std::pair<T, Q> &key) const noexcept
-         {
-         return std::hash<T>()(key.first) ^ std::hash<Q>()(key.second);
-         }
-      };
-   }
-
-
 
 struct ClassUnloadedData
    {
