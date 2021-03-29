@@ -131,31 +131,11 @@ class TR_J9MethodFieldAttributes
 
 using TR_FieldAttributesCache = PersistentUnorderedMap<int32_t, TR_J9MethodFieldAttributes>;
 
-struct ClassLoaderStringPair
-   {
-   J9ClassLoader *_classLoader;
-   std::string    _className;
-
-   bool operator==(const ClassLoaderStringPair &other) const
-      {
-      return _classLoader == other._classLoader &&  _className == other._className;
-      }
-   };
-
+using ClassLoaderStringPair = std::pair<J9ClassLoader *, std::string>;
 
 // custom specializations of std::hash injected in std namespace
 namespace std
    {
-   template<> struct hash<ClassLoaderStringPair>
-      {
-      typedef ClassLoaderStringPair argument_type;
-      typedef std::size_t result_type;
-      result_type operator()(argument_type const& clsPair) const noexcept
-         {
-         return std::hash<void*>()((void*)(clsPair._classLoader)) ^ std::hash<std::string>()(clsPair._className);
-         }
-      };
-
    template<typename T, typename Q> struct hash<std::pair<T, Q>>
       {
       std::size_t operator()(const std::pair<T, Q> &key) const noexcept
