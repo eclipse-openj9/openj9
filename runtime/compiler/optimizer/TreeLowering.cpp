@@ -186,6 +186,38 @@ copyExitRegDepsAndSubstitute(TR::Node* const targetNode, TR::Node* const sourceN
       }
    }
 
+/**
+ * @brief Add a GlRegDeps node to a branch by copying some other GlRegDeps.
+ *
+ * Given branch node, adds a GlRegDeps node by copying the dependencies from
+ * a different GlRegDeps. This function allows *one* register dependency to
+ * be changed (substituted). See `copyExitRegDepsAndSubstitue()` for details.
+ *
+ * Note that the branch node is assumed to *not* have a GlRegDeps node already.
+ *
+ * Returns a pointer to the newly created GlRegDeps. This is can be particularly
+ * useful to have when doing a substitution (e.g. for chaining calls).
+ *
+ * If the source GlRegDeps is NULL, then nothing is done and NULL is returned.
+ *
+ * @param branchNode is the branch node the GlRegDeps will be added to
+ * @param sourceGlRegDepsNode is the GlRegDeps node used to copy the reg deps from
+ * @param substituteNode is the reg dep node to be subsituted (NULL if none)
+ * @return TR::Node* the newly created GlRegDeps or NULL if `sourceGlRegDepsNode` was NULL
+ */
+static TR::Node*
+copyBranchGlRegDepsAndSubstitute(TR::Node* const branchNode, TR::Node* const sourceGlRegDepsNode, TR::Node* const substituteNode)
+   {
+   TR::Node* glRegDepsCopy = NULL;
+   if (sourceGlRegDepsNode != NULL)
+      {
+      glRegDepsCopy = TR::Node::create(TR::GlRegDeps, sourceGlRegDepsNode->getNumChildren());
+      copyExitRegDepsAndSubstitute(glRegDepsCopy, sourceGlRegDepsNode, substituteNode);
+      branchNode->addChildren(&glRegDepsCopy, 1);
+      }
+   return glRegDepsCopy;
+   }
+
 TR::Block*
 TR::TreeLowering::splitForFastpath(TR::Block* const block, TR::TreeTop* const splitPoint, TR::Block* const targetBlock)
    {
@@ -398,18 +430,22 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
       TR_ASSERT_FATAL_WITH_NODE(anchoredNode, false, "Anchored call has been turned into unexpected opcode\n");
    tt->insertBefore(TR::TreeTop::create(comp, storeNode));
 
+   // If the BBExit of the block containing the call has a GlRegDeps node,
+   // a matching GlRegDeps node will have to be added to all the checks.
+   // `exitGlRegDeps` is intended to point to the "reference" node used to
+   // create the GlRegDeps for each consecutive branch.
+   TR::Node* exitGlRegDeps = NULL;
+   if (callBlock->getExit()->getNode()->getNumChildren() > 0)
+      {
+      exitGlRegDeps = callBlock->getExit()->getNode()->getFirstChild();
+      }
+
    // insert acmpeq for fastpath, taking care to set the proper register dependencies
    // Any register dependencies added by splitPostGRA will now be on the BBExit for
    // the call block.  As the ifacmpeq branching around the call block will reach the same
    // target block, copy any GlRegDeps from the end of the call block to the ifacmpeq
    auto* ifacmpeqNode = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), anchoredCallArg2TT->getNode()->getFirstChild(), targetBlock->getEntry());
-   if (callBlock->getExit()->getNode()->getNumChildren() > 0)
-      {
-      TR::Node* sourceDeps = callBlock->getExit()->getNode()->getFirstChild();
-      TR::Node* glRegDeps = TR::Node::create(TR::GlRegDeps, sourceDeps->getNumChildren());
-      copyExitRegDepsAndSubstitute(glRegDeps, sourceDeps, regDepForStoreNode);
-      ifacmpeqNode->addChildren(&glRegDeps, 1);
-      }
+   exitGlRegDeps = copyBranchGlRegDepsAndSubstitute(ifacmpeqNode, exitGlRegDeps, regDepForStoreNode);
    tt->insertBefore(TR::TreeTop::create(comp, ifacmpeqNode));
    callBlock = splitForFastpath(callBlock, tt, targetBlock);
    if (trace())
@@ -433,13 +469,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
    // insert acmpeq to check if lhs is null
    auto* const nullConst = TR::Node::aconst(0);
    auto* const checkLhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
-   if (ifacmpeqNode->getNumChildren() == 3)
-      {
-      TR::Node* sourceDeps = ifacmpeqNode->getChild(2);
-      TR::Node* glRegDeps = TR::Node::create(TR::GlRegDeps, sourceDeps->getNumChildren());
-      copyExitRegDepsAndSubstitute(glRegDeps, sourceDeps, regDepForStoreNode);
-      checkLhsNull->addChildren(&glRegDeps, 1);
-      }
+   exitGlRegDeps = copyBranchGlRegDepsAndSubstitute(checkLhsNull, exitGlRegDeps, regDepForStoreNode);
    tt->insertBefore(TR::TreeTop::create(comp, checkLhsNull));
    callBlock = splitForFastpath(callBlock, tt, targetBlock);
    if (trace())
@@ -449,12 +479,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
       return;
 
    auto* const checkRhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg2TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
-   if (checkLhsNull->getNumChildren() == 3)
-      {
-      TR::Node* regDeps = TR::Node::copy(checkLhsNull->getChild(2));
-      copyExitRegDepsAndSubstitute(regDeps, checkLhsNull->getChild(2), NULL);
-      checkRhsNull->setChild(2, regDeps);
-      }
+   copyBranchGlRegDepsAndSubstitute(checkRhsNull, exitGlRegDeps, NULL);
    tt->insertBefore(TR::TreeTop::create(comp, checkRhsNull));
    callBlock = splitForFastpath(callBlock, tt, targetBlock);
    if (trace())
@@ -468,13 +493,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
    auto* const lhsVft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredCallArg1TT->getNode()->getFirstChild(), vftSymRef);
    auto* const isLhsValueType = comp->fej9()->testIsClassValueType(lhsVft);
    auto* const checkLhsIsVT = TR::Node::createif(TR::ificmpeq, isLhsValueType, storeNode->getFirstChild(), targetBlock->getEntry());
-   if (checkLhsNull->getNumChildren() == 3)
-      {
-      TR::Node* sourceDeps = checkLhsNull->getChild(2);
-      TR::Node* regDeps = TR::Node::create(TR::GlRegDeps, sourceDeps->getNumChildren());
-      copyExitRegDepsAndSubstitue(regDeps, sourceDeps, NULL);
-      checkLhsIsVT->addChildren(&regDeps, 1);
-      }
+   copyBranchGlRegDepsAndSubstitute(checkLhsIsVT, exitGlRegDeps, NULL);
    tt->insertBefore(TR::TreeTop::create(comp, checkLhsIsVT));
    callBlock = splitForFastpath(callBlock, tt, targetBlock);
 
@@ -484,13 +503,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
    auto* const rhsVft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredCallArg2TT->getNode()->getFirstChild(), vftSymRef);
    auto* const isRhsValueType = comp->fej9()->testIsClassValueType(rhsVft);
    auto* const checkRhsIsVT = TR::Node::createif(TR::ificmpeq, isRhsValueType, storeNode->getFirstChild(), targetBlock->getEntry());
-   if (checkLhsNull->getNumChildren() == 3)
-      {
-      TR::Node* sourceDeps = checkLhsNull->getChild(2);
-      TR::Node* regDeps = TR::Node::create(TR::GlRegDeps, sourceDeps->getNumChildren());
-      copyExitRegDepsAndSubstitue(regDeps, sourceDeps, NULL);
-      checkRhsIsVT->addChildren(&regDeps, 1);
-      }
+   copyBranchGlRegDepsAndSubstitute(checkRhsIsVT, exitGlRegDeps, NULL);
    tt->insertBefore(TR::TreeTop::create(comp, checkRhsIsVT));
    callBlock = splitForFastpath(callBlock, tt, targetBlock);
    }
