@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,18 +62,18 @@ MM_CopyForwardDelegate::tearDown(MM_EnvironmentVLHGC *env)
 	}
 }
 
-bool
+void
 MM_CopyForwardDelegate::performCopyForwardForPartialGC(MM_EnvironmentVLHGC *env)
 {
-	MM_CompactGroupPersistentStats *persistentStats = _extensions->compactGroupPersistentStats;
-	bool result = false;
-
-	MM_CompactGroupPersistentStats::updateStatsBeforeCopyForward(env, persistentStats);
-	result = _breadthFirstCopyForwardScheme->copyForwardCollectionSet(env);
-
-	MM_CompactGroupPersistentStats::updateStatsAfterCopyForward(env, persistentStats);
-
-	return result;
+#if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
+	if (_extensions->isConcurrentCopyForwardEnabled())
+	{
+		_breadthFirstCopyForwardScheme->concurrentCopyForwardCollectionSet(env);
+	} else
+#endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
+	{
+		_breadthFirstCopyForwardScheme->copyForwardCollectionSet(env);
+	}
 }
 
 void
