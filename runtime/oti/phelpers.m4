@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2021 IBM Corp. and others
+dnl Copyright (c) 1991, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,10 +88,6 @@ define({fp31},31)
 
 J9CONST({CINTERP_STACK_SIZE},J9TR_cframe_sizeof)
 
-define({CONCAT},$1$2)
-define({SYM_COUNT},0)
-define({INC_SYM_COUNT},{define({SYM_COUNT},eval(1+SYM_COUNT))})
-
 ifdef({ASM_J9VM_ENV_DATA64},{
 
 ifelse(eval(CINTERP_STACK_SIZE % 64),0, ,{ERROR stack size CINTERP_STACK_SIZE is not 64-aligned})
@@ -134,10 +130,6 @@ ifdef({AIXPPC},{
 
 dnl AIX PPC 32 and 64
 
-define({START_FILE},{
-	.file $1
-})
-
 define({FUNC_PTR},{r11})
 
 define({CALL_INDIRECT},{
@@ -152,7 +144,7 @@ dnl inline version of _ptrgl follows
 define({FUNC_LABEL},{.$1})
 
 define({BRANCH_SYMBOL},{FUNC_LABEL($1)[pr]})
-	
+
 define({DECLARE_PUBLIC},{
 	.globl .$1[pr]
 	.globl $1[ds]
@@ -177,7 +169,6 @@ define({START_TEXT},{
 })
 
 define({START_PROC},{
-	INC_SYM_COUNT
 	DECLARE_PUBLIC($1)
 	START_TEXT(CSECT_NAME)
 	.$1:
@@ -202,13 +193,6 @@ J9CONST({CR_SAVE_OFFSET},eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedCR))
 J9CONST({LR_SAVE_OFFSET},eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR))
 
 },{ dnl AIXPPC
-
-dnl Linux PPC
-
-define({START_FILE},{
-	.file $1
-	.machine power7
-})
 
 ifdef({ASM_J9VM_ENV_DATA64},{
 
@@ -246,7 +230,6 @@ define({CALL_DIRECT},{
 })
 
 define({START_PROC},{
-	INC_SYM_COUNT
 	DECLARE_PUBLIC($1)
 	START_TEXT(CSECT_NAME)
 	FUNC_LABEL($1):
@@ -312,7 +295,6 @@ define({DECLARE_EXTERN},{
 })
 
 define({START_PROC},{
-	INC_SYM_COUNT
 	DECLARE_PUBLIC($1)
 	START_TEXT(CSECT_NAME)
 	FUNC_LABEL($1):
@@ -359,7 +341,6 @@ define({START_TEXT})
 define({CALL_DIRECT},{bl BRANCH_SYMBOL($1)})
 
 define({START_PROC},{
-	INC_SYM_COUNT
 	DECLARE_PUBLIC($1)
 	START_TEXT(CSECT_NAME)
 	FUNC_LABEL($1):
@@ -464,25 +445,6 @@ define({CALL_C_WITH_VMTHREAD},{
 	CALL_DIRECT($1)
 })
 
-dnl Any helper called at a method invocation point does not
-dnl need to preserve FPR/VR as they are all considered volatile
-dnl in the JIT private linkage.
-dnl
-dnl The exceptions to this are FPRs which represent arguments to
-dnl the called method. These must be stored into the FPR save slots
-dnl in the ELS before calling the helper in case decompilation occurs.
-dnl They must be restored after the helper call as the PicBuilder code
-dnl does not preserve them. If VRs are in used, just restore the VRs
-dnl since they will also restore the contents of the FPRs.
-dnl
-dnl MUST_PRESERVE_FPR indicates that all FPRs must be preserved. If this is
-dnl not defined, then the JIT argument FPRs only must be preserved.
-dnl
-dnl MUST_PRESERVE_VR indicates that VRs must be preserved.
-dnl
-dnl jitSoftwareReadBarrier needs r3/r4 to contain their incoming values
-dnl after the preservation call, so don't corrupt those during the VSR path.
-
 define({SAVE_C_VOLATILE_REGS},{
 	SAVE_CR
 	SAVE_R2_FOR_ALL
@@ -504,261 +466,15 @@ define({SAVE_C_VOLATILE_REGS},{
 	stfd fp5,JIT_FPR_SAVE_SLOT(5)
 	stfd fp6,JIT_FPR_SAVE_SLOT(6)
 	stfd fp7,JIT_FPR_SAVE_SLOT(7)
-ifdef({MUST_PRESERVE_VR},{
-	laddr r12,J9TR_VMThread_javaVM(J9VMTHREAD)
-	lwz r12,J9TR_JavaVM_extendedRuntimeFlags(r12)
-	andi. r12,r12,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
-	beq CONCAT(.L_no_VR_save_,SYM_COUNT)
-	addi r12,r1,J9TR_cframe_jitVRs
-	stxvd2x 0,0,r12
-	addi r12,r12,16
-	stxvd2x 1,0,r12
-	addi r12,r12,16
-	stxvd2x 2,0,r12
-	addi r12,r12,16
-	stxvd2x 3,0,r12
-	addi r12,r12,16
-	stxvd2x 4,0,r12
-	addi r12,r12,16
-	stxvd2x 5,0,r12
-	addi r12,r12,16
-	stxvd2x 6,0,r12
-	addi r12,r12,16
-	stxvd2x 7,0,r12
-	addi r12,r12,16
-	stxvd2x 8,0,r12
-	addi r12,r12,16
-	stxvd2x 9,0,r12
-	addi r12,r12,16
-	stxvd2x 10,0,r12
-	addi r12,r12,16
-	stxvd2x 11,0,r12
-	addi r12,r12,16
-	stxvd2x 12,0,r12
-	addi r12,r12,16
-	stxvd2x 13,0,r12
-	addi r12,r12,16
-	stxvd2x 14,0,r12
-	addi r12,r12,16
-	stxvd2x 15,0,r12
-	addi r12,r12,16
-	stxvd2x 16,0,r12
-	addi r12,r12,16
-	stxvd2x 17,0,r12
-	addi r12,r12,16
-	stxvd2x 18,0,r12
-	addi r12,r12,16
-	stxvd2x 19,0,r12
-	addi r12,r12,16
-	stxvd2x 20,0,r12
-	addi r12,r12,16
-	stxvd2x 21,0,r12
-	addi r12,r12,16
-	stxvd2x 22,0,r12
-	addi r12,r12,16
-	stxvd2x 23,0,r12
-	addi r12,r12,16
-	stxvd2x 24,0,r12
-	addi r12,r12,16
-	stxvd2x 25,0,r12
-	addi r12,r12,16
-	stxvd2x 26,0,r12
-	addi r12,r12,16
-	stxvd2x 27,0,r12
-	addi r12,r12,16
-	stxvd2x 28,0,r12
-	addi r12,r12,16
-	stxvd2x 29,0,r12
-	addi r12,r12,16
-	stxvd2x 30,0,r12
-	addi r12,r12,16
-	stxvd2x 31,0,r12
-	addi r12,r12,16
-	stxvd2x 32,0,r12
-	addi r12,r12,16
-	stxvd2x 33,0,r12
-	addi r12,r12,16
-	stxvd2x 34,0,r12
-	addi r12,r12,16
-	stxvd2x 35,0,r12
-	addi r12,r12,16
-	stxvd2x 36,0,r12
-	addi r12,r12,16
-	stxvd2x 37,0,r12
-	addi r12,r12,16
-	stxvd2x 38,0,r12
-	addi r12,r12,16
-	stxvd2x 39,0,r12
-	addi r12,r12,16
-	stxvd2x 40,0,r12
-	addi r12,r12,16
-	stxvd2x 41,0,r12
-	addi r12,r12,16
-	stxvd2x 42,0,r12
-	addi r12,r12,16
-	stxvd2x 43,0,r12
-	addi r12,r12,16
-	stxvd2x 44,0,r12
-	addi r12,r12,16
-	stxvd2x 45,0,r12
-	addi r12,r12,16
-	stxvd2x 46,0,r12
-	addi r12,r12,16
-	stxvd2x 47,0,r12
-	addi r12,r12,16
-	stxvd2x 48,0,r12
-	addi r12,r12,16
-	stxvd2x 49,0,r12
-	addi r12,r12,16
-	stxvd2x 50,0,r12
-	addi r12,r12,16
-	stxvd2x 51,0,r12
-ifdef({MUST_PRESERVE_FPR},{
-	b CONCAT(.L_save_done_,SYM_COUNT)
-}) dnl MUST_PRESERVE_FPR
-CONCAT(.L_no_VR_save_,SYM_COUNT):	
-}) dnl MUST_PRESERVE_VR
-ifdef({MUST_PRESERVE_FPR},{
 	stfd fp8,JIT_FPR_SAVE_SLOT(8)
 	stfd fp9,JIT_FPR_SAVE_SLOT(9)
 	stfd fp10,JIT_FPR_SAVE_SLOT(10)
 	stfd fp11,JIT_FPR_SAVE_SLOT(11)
 	stfd fp12,JIT_FPR_SAVE_SLOT(12)
 	stfd fp13,JIT_FPR_SAVE_SLOT(13)
-}) dnl MUST_PRESERVE_FPR
-CONCAT(.L_save_done_,SYM_COUNT):	
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
-ifdef({MUST_PRESERVE_VR},{
-	laddr r12,J9TR_VMThread_javaVM(J9VMTHREAD)
-	lwz r12,J9TR_JavaVM_extendedRuntimeFlags(r12)
-	andi. r12,r12,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
-	beq CONCAT(.L_no_VR_restore_,SYM_COUNT)
-	addi r12,r1,J9TR_cframe_jitVRs
-	lxvd2x 0,0,r12
-	addi r12,r12,16
-	lxvd2x 1,0,r12
-	addi r12,r12,16
-	lxvd2x 2,0,r12
-	addi r12,r12,16
-	lxvd2x 3,0,r12
-	addi r12,r12,16
-	lxvd2x 4,0,r12
-	addi r12,r12,16
-	lxvd2x 5,0,r12
-	addi r12,r12,16
-	lxvd2x 6,0,r12
-	addi r12,r12,16
-	lxvd2x 7,0,r12
-	addi r12,r12,16
-	lxvd2x 8,0,r12
-	addi r12,r12,16
-	lxvd2x 9,0,r12
-	addi r12,r12,16
-	lxvd2x 10,0,r12
-	addi r12,r12,16
-	lxvd2x 11,0,r12
-	addi r12,r12,16
-	lxvd2x 12,0,r12
-	addi r12,r12,16
-	lxvd2x 13,0,r12
-	addi r12,r12,16
-	lxvd2x 14,0,r12
-	addi r12,r12,16
-	lxvd2x 15,0,r12
-	addi r12,r12,16
-	lxvd2x 16,0,r12
-	addi r12,r12,16
-	lxvd2x 17,0,r12
-	addi r12,r12,16
-	lxvd2x 18,0,r12
-	addi r12,r12,16
-	lxvd2x 19,0,r12
-	addi r12,r12,16
-	lxvd2x 20,0,r12
-	addi r12,r12,16
-	lxvd2x 21,0,r12
-	addi r12,r12,16
-	lxvd2x 22,0,r12
-	addi r12,r12,16
-	lxvd2x 23,0,r12
-	addi r12,r12,16
-	lxvd2x 24,0,r12
-	addi r12,r12,16
-	lxvd2x 25,0,r12
-	addi r12,r12,16
-	lxvd2x 26,0,r12
-	addi r12,r12,16
-	lxvd2x 27,0,r12
-	addi r12,r12,16
-	lxvd2x 28,0,r12
-	addi r12,r12,16
-	lxvd2x 29,0,r12
-	addi r12,r12,16
-	lxvd2x 30,0,r12
-	addi r12,r12,16
-	lxvd2x 31,0,r12
-	addi r12,r12,16
-	lxvd2x 32,0,r12
-	addi r12,r12,16
-	lxvd2x 33,0,r12
-	addi r12,r12,16
-	lxvd2x 34,0,r12
-	addi r12,r12,16
-	lxvd2x 35,0,r12
-	addi r12,r12,16
-	lxvd2x 36,0,r12
-	addi r12,r12,16
-	lxvd2x 37,0,r12
-	addi r12,r12,16
-	lxvd2x 38,0,r12
-	addi r12,r12,16
-	lxvd2x 39,0,r12
-	addi r12,r12,16
-	lxvd2x 40,0,r12
-	addi r12,r12,16
-	lxvd2x 41,0,r12
-	addi r12,r12,16
-	lxvd2x 42,0,r12
-	addi r12,r12,16
-	lxvd2x 43,0,r12
-	addi r12,r12,16
-	lxvd2x 44,0,r12
-	addi r12,r12,16
-	lxvd2x 45,0,r12
-	addi r12,r12,16
-	lxvd2x 46,0,r12
-	addi r12,r12,16
-	lxvd2x 47,0,r12
-	addi r12,r12,16
-	lxvd2x 48,0,r12
-	addi r12,r12,16
-	lxvd2x 49,0,r12
-	addi r12,r12,16
-	lxvd2x 50,0,r12
-	addi r12,r12,16
-	lxvd2x 51,0,r12
-	b CONCAT(.L_restore_done_,SYM_COUNT)
-CONCAT(.L_no_VR_restore_,SYM_COUNT):	
-}) dnl MUST_PRESERVE_VR
-	lfd fp0,JIT_FPR_SAVE_SLOT(0)
-	lfd fp1,JIT_FPR_SAVE_SLOT(1)
-	lfd fp2,JIT_FPR_SAVE_SLOT(2)
-	lfd fp3,JIT_FPR_SAVE_SLOT(3)
-	lfd fp4,JIT_FPR_SAVE_SLOT(4)
-	lfd fp5,JIT_FPR_SAVE_SLOT(5)
-	lfd fp6,JIT_FPR_SAVE_SLOT(6)
-	lfd fp7,JIT_FPR_SAVE_SLOT(7)
-ifdef({MUST_PRESERVE_FPR},{
-	lfd fp8,JIT_FPR_SAVE_SLOT(8)
-	lfd fp9,JIT_FPR_SAVE_SLOT(9)
-	lfd fp10,JIT_FPR_SAVE_SLOT(10)
-	lfd fp11,JIT_FPR_SAVE_SLOT(11)
-	lfd fp12,JIT_FPR_SAVE_SLOT(12)
-	lfd fp13,JIT_FPR_SAVE_SLOT(13)
-}) dnl MUST_PRESERVE_FPR
-CONCAT(.L_restore_done_,SYM_COUNT):	
 	RESTORE_CR
 	RESTORE_R2_FOR_ALL
 	laddr r3,JIT_GPR_SAVE_SLOT(3)
@@ -771,6 +487,20 @@ CONCAT(.L_restore_done_,SYM_COUNT):
 	laddr r10,JIT_GPR_SAVE_SLOT(10)
 	laddr r11,JIT_GPR_SAVE_SLOT(11)
 	laddr r12,JIT_GPR_SAVE_SLOT(12)
+	lfd fp0,JIT_FPR_SAVE_SLOT(0)
+	lfd fp1,JIT_FPR_SAVE_SLOT(1)
+	lfd fp2,JIT_FPR_SAVE_SLOT(2)
+	lfd fp3,JIT_FPR_SAVE_SLOT(3)
+	lfd fp4,JIT_FPR_SAVE_SLOT(4)
+	lfd fp5,JIT_FPR_SAVE_SLOT(5)
+	lfd fp6,JIT_FPR_SAVE_SLOT(6)
+	lfd fp7,JIT_FPR_SAVE_SLOT(7)
+	lfd fp8,JIT_FPR_SAVE_SLOT(8)
+	lfd fp9,JIT_FPR_SAVE_SLOT(9)
+	lfd fp10,JIT_FPR_SAVE_SLOT(10)
+	lfd fp11,JIT_FPR_SAVE_SLOT(11)
+	lfd fp12,JIT_FPR_SAVE_SLOT(12)
+	lfd fp13,JIT_FPR_SAVE_SLOT(13)
 })
 
 dnl No need to save/restore fp14-31 - the stack walker will never need to read
