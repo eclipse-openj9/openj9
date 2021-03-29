@@ -5617,20 +5617,16 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA currentTOC; /* callee saves incoming TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	UDATA jitGPRs[32]; /* r0-r31 */
+	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 	UDATA jitCR;
 	UDATA jitLR;
-	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 #if defined(J9VM_ENV_DATA64)
-	U_8 jitVRs[52 * 16]; /* vsr0-vsr51 */
 	UDATA align[3];
 #else /* J9VM_ENV_DATA64 */
 	UDATA align[1];
 #endif /* J9VM_ENV_DATA64 */
 	UDATA preservedGPRs[19]; /* r13-r31 */
 	U_8 preservedFPRs[18 * 8]; /* fp14-31 */
-#if defined(J9VM_ENV_DATA64)
-	U_8 preservedVRs[12 * 16]; /* vsr52-vsr63 */
-#endif /* J9VM_ENV_DATA64 */
 #elif defined(J9VM_ENV_DATA64) /* AIXPPC */
 #if defined(J9VM_ENV_LITTLE_ENDIAN)
 	/* Linux PPC 64 LE
@@ -5643,14 +5639,12 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA currentTOC; /* callee saves own TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	UDATA jitGPRs[32]; /* r0-r31 */
+	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 	UDATA jitCR;
 	UDATA jitLR;
-	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
-	U_8 jitVRs[52 * 16]; /* vsr0-vsr51 */
 	UDATA align[6];
 	UDATA preservedGPRs[18]; /* r14-r31 */
 	U_8 preservedFPRs[18 * 8]; /* fp14-31 */
-	U_8 preservedVRs[12 * 16]; /* vsr52-vsr63 */
 #else /* J9VM_ENV_LITTLE_ENDIAN */
 	/* Linux PPC 64 BE
 	 *
@@ -5664,14 +5658,12 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA currentTOC; /* callee saves own TOC in own frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	UDATA jitGPRs[32]; /* r0-r31 */
+	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 	UDATA jitCR;
 	UDATA jitLR;
-	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
-	U_8 jitVRs[52 * 16]; /* vsr0-vsr51 */
 	UDATA align[4];
 	UDATA preservedGPRs[18]; /* r14-r31 */
 	U_8 preservedFPRs[18 * 8]; /* fp14-31 */
-	U_8 preservedVRs[12 * 16]; /* vsr52-vsr63 */
 #endif /* J9VM_ENV_LITTLE_ENDIAN */
 #else /* J9VM_ENV_DATA64 */
 #if defined(J9VM_ENV_LITTLE_ENDIAN)
@@ -5686,9 +5678,9 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA preservedLR; /* callee saves in caller frame */
 	UDATA outgoingArguments[J9_INLINE_JNI_MAX_ARG_COUNT];
 	UDATA jitGPRs[32]; /* r0-r31 */
+	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 	UDATA jitCR;
 	UDATA jitLR;
-	U_8 jitFPRs[32 * 8]; /* fp0-fp31 */
 	UDATA preservedCR; /* callee saves in own frame */
 	UDATA preservedGPRs[19]; /* r13-r31 */
 	U_8 preservedFPRs[18 * 8]; /* fp14-31 */
