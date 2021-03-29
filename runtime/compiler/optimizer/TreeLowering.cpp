@@ -57,6 +57,53 @@ TR::TreeLowering::perform()
    return 0;
    }
 
+void
+TR::TreeLowering::moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node)
+   {
+   TR::Compilation* comp = self()->comp();
+   TR::TreeTop* blockExit = block->getExit();
+   TR::TreeTop* iterTT = tt->getNextTreeTop();
+
+   if (iterTT != blockExit)
+      {
+      if (trace())
+         {
+         traceMsg(comp, "Moving treetop containing node n%dn [%p] for acmp helper call to end of prevBlock in preparation of final block split\n", tt->getNode()->getGlobalIndex(), tt->getNode());
+         }
+
+      // Remove TreeTop for call node, and gather it and the treetops for stores that
+      // resulted from un-commoning in a TreeTop chain from tt to lastTTForCallBlock
+      tt->unlink(false);
+      TR::TreeTop* lastTTForCallBlock = tt;
+
+      while (iterTT != blockExit)
+         {
+         TR::TreeTop* nextTT = iterTT->getNextTreeTop();
+         TR::ILOpCodes op = iterTT->getNode()->getOpCodeValue();
+
+         if ((op == TR::iRegStore || op == TR::istore) && iterTT->getNode()->getFirstChild() == node)
+            {
+            if (trace())
+               {
+               traceMsg(comp, "Moving treetop containing node n%dn [%p] for store of acmp helper result to end of prevBlock in preparation of final block split\n", iterTT->getNode()->getGlobalIndex(), iterTT->getNode());
+               }
+
+            // Remove store node from prevBlock temporarily
+            iterTT->unlink(false);
+            lastTTForCallBlock->join(iterTT);
+            lastTTForCallBlock = iterTT;
+            }
+
+         iterTT = nextTT;
+         }
+
+      // Move the treetops that were gathered for the call and any stores of the
+      // result to the end of the block in preparation for the split of the call block
+      blockExit->getPrevTreeTop()->join(tt);
+      lastTTForCallBlock->join(blockExit);
+      }
+   }
+
 /**
  * @brief Perform lowering related to Valhalla value types
  *
@@ -313,47 +360,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
    // to splitPostGRA above.  Move the acmp helper call treetop to the end of prevBlock, along with
    // any stores resulting from un-commoning of the nodes in the helper call tree so that it can be
    // split into its own call block.
-   TR::TreeTop* prevBlockExit = callBlock->getExit();
-   TR::TreeTop* iterTT = tt->getNextTreeTop();
-
-   if (iterTT != prevBlockExit)
-      {
-      if (trace())
-         {
-         traceMsg(comp, "Moving treetop containing node n%dn [%p] for acmp helper call to end of prevBlock in preparation of final block split\n", tt->getNode()->getGlobalIndex(), tt->getNode());
-         }
-
-      // Remove TreeTop for call node, and gather it and the treetops for stores that
-      // resulted from un-commoning in a TreeTop chain from tt to lastTTForCallBlock
-      tt->unlink(false);
-      TR::TreeTop* lastTTForCallBlock = tt;
-
-      while (iterTT != prevBlockExit)
-         {
-         TR::TreeTop* nextTT = iterTT->getNextTreeTop();
-         TR::ILOpCodes op = iterTT->getNode()->getOpCodeValue();
-
-         if ((op == TR::iRegStore || op == TR::istore) && iterTT->getNode()->getFirstChild() == node)
-            {
-            if (trace())
-               {
-               traceMsg(comp, "Moving treetop containing node n%dn [%p] for store of acmp helper result to end of prevBlock in preparation of final block split\n", iterTT->getNode()->getGlobalIndex(), iterTT->getNode());
-               }
-
-            // Remove store node from prevBlock temporarily
-            iterTT->unlink(false);
-            lastTTForCallBlock->join(iterTT);
-            lastTTForCallBlock = iterTT;
-            }
-
-         iterTT = nextTT;
-         }
-
-      // Move the treetops that were gathered for the call and any stores of the
-      // result to the end of the block in preparation for the split of the call block
-      prevBlockExit->getPrevTreeTop()->join(tt);
-      lastTTForCallBlock->join(prevBlockExit);
-      }
+   moveNodeToEndOfBlock(callBlock, tt, node);
 
    if (!performTransformation(comp, "%sInserting fastpath for lhs == rhs\n", optDetailString()))
       return;

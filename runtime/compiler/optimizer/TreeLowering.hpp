@@ -64,6 +64,20 @@ class TreeLowering : public TR::Optimization
    private:
 
    /**
+    * @brief Moves a node down to the end of a block
+    *
+    * Any stores of the value of the node are also moved down.
+    *
+    * This can be useful to do after a call to splitPostGRA where, as part of un-commoning,
+    * it is possible that code to store the anchored node into a register or temp-slot is
+    * appended to the original block.
+    *
+    * @param block is the block containing the TreeTop to be moved
+    * @param tt is a pointer to the TreeTop to be moved
+    */
+   void moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node);
+
+   /**
     * @brief Split a block after having inserted a fastpath branch
     *
     * The function should be used to split a block after a branch has been inserted.
