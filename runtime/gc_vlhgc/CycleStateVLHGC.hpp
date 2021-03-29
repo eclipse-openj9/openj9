@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,11 +40,18 @@ public:
 	MM_VLHGCCycleStats _vlhgcCycleStats; /**< Stats for the various phases / operations within a cycle */
 	MM_SchedulingDelegate *_schedulingDelegate;
 
+	uintptr_t _desiredCompactWork; /**< Stats for desired amount of work to be compacted during a particular PGC cycle */
+	bool _useSlidingCompactor; /**< Stats to indicate If we surpassed survivor free memory. If so it's set to true, false otherwise */
+	bool _abortFlagRaisedDuringPGC; /**< Stats that indicate if PGC cycle aborted or not */
+
 	MM_CycleStateVLHGC()
 		: MM_CycleState()
 		, _vlhgcIncrementStats()
 		, _vlhgcCycleStats()
 		, _schedulingDelegate(NULL)
+		, _desiredCompactWork(0)
+		, _useSlidingCompactor(false)
+		, _abortFlagRaisedDuringPGC(false)
 	{
 	}
 };
