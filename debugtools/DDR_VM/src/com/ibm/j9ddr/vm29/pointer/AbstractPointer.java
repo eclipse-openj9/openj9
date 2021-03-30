@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,12 +81,7 @@ public abstract class AbstractPointer extends DataType {
 
 	public abstract AbstractPointer untag(long tagBits);
 	public abstract AbstractPointer untag();
-	
-	@Deprecated
-	public boolean isTagged(long mask) {
-		return 0 != (address & mask);
-	}
-		
+
 	public boolean allBitsIn(long bitmask) {
 		return bitmask == (address & bitmask);
 	}
@@ -101,47 +96,7 @@ public abstract class AbstractPointer extends DataType {
 
 	public abstract DataType at(long index) throws CorruptDataException;
 	public abstract DataType at(Scalar index) throws CorruptDataException;
-	
-	@Deprecated
-	public long longAt(long index) throws CorruptDataException {
-		return at(index).longValue();
-	}
-	
-	@Deprecated
-	public long longAt(Scalar index) throws CorruptDataException {
-		return longAt(index.longValue());
-	}
-	
-	@Deprecated
-	public float floatAt(long index) throws CorruptDataException {
-		return (float) longAt(index);
-	}
-	
-	@Deprecated
-	public float floatAt(Scalar index) throws CorruptDataException {
-		return floatAt(index.longValue());
-	}
-	
-	@Deprecated
-	public double doubleAt(long index) throws CorruptDataException {
-		return (double) longAt(index);
-	}
-	
-	@Deprecated
-	public double doubleAt(Scalar index) throws CorruptDataException {
-		return doubleAt(index.longValue());
-	}
-	
-	@Deprecated
-	public boolean boolAt(long index) throws CorruptDataException {
-		return longAt(index) != 0;
-	}
-	
-	@Deprecated
-	public boolean boolAt(Scalar index) throws CorruptDataException {
-		return boolAt(index.longValue());
-	}
-	
+
 	public boolean isNull() {
 		return address == 0;
 	}
