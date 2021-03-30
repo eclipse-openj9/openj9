@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -308,12 +308,20 @@ public:
 	VMINLINE bool
 	isBackfillSuitableInstanceSingleAvailable(void) const
 	{
-		return ((0 != getInstanceSingleCount())
+		return (0 != getInstanceSingleCount());
+	}
+	
+	VMINLINE bool
+	isBackfillSuitableFlatInstanceSingleAvailable(void) const
+	{
+		
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				|| (0 != getFlatAlignedSingleInstanceBackfillSize())
-				|| (0 != getFlatUnAlignedSingleInstanceBackfillSize())
+		return ((0 != getFlatAlignedSingleInstanceBackfillSize())
+				|| (0 != getFlatUnAlignedSingleInstanceBackfillSize()));
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		return false;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-		);
+		
 	}
 
 	VMINLINE bool
@@ -732,7 +740,7 @@ public:
 	getNonBackfilledFlatInstanceSingleSize(void) const
 	{
 		U_32 nonBackfilledFlatSinglesSize = _totalFlatFieldSingleBytes;
-		if (isBackfillSuitableInstanceSingleAvailable()
+		if (isBackfillSuitableFlatInstanceSingleAvailable()
 			&& isMyBackfillSlotAvailable()
 			&& (0 == getInstanceSingleCount())
 			&& (_objectCanUseBackfill && (0 == getInstanceObjectCount()))
