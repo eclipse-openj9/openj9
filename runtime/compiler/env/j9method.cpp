@@ -1467,13 +1467,8 @@ bool
 TR_ResolvedRelocatableJ9Method::isInterpreted()
    {
    bool alwaysTreatAsInterpreted = true;
-#if defined(TR_TARGET_S390)
-   TR::Compilation *comp = TR::comp();
-   if (comp && comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager))
-      alwaysTreatAsInterpreted = true;
-   else
-      alwaysTreatAsInterpreted = false;
-#elif defined(TR_TARGET_X86)
+
+#if defined(TR_TARGET_X86)
 
    /*if isInterpreted should be only overridden for JNI methods.
    Otherwise buildDirectCall in X86PrivateLinkage.cpp will generate CALL 0
