@@ -82,7 +82,18 @@ public abstract class AbstractPointer extends DataType {
 	public abstract AbstractPointer untag(long tagBits);
 	public abstract AbstractPointer untag();
 
-	public boolean allBitsIn(long bitmask) {
+	public final boolean allBitsIn(long bitmask) {
+		if (0 == bitmask) {
+			/*
+			 * In the vast majority of situations, the caller supplies a non-zero
+			 * argument. However, in backwards-compatibility cases the argument
+			 * may be derived from a constant which has not always been present.
+			 * The behavior we want is for such tests to return false (such a bit
+			 * could never have been set in core dumps generated before the constant
+			 * existed).
+			 */
+			return false;
+		}
 		return bitmask == (address & bitmask);
 	}
 	
@@ -108,7 +119,8 @@ public abstract class AbstractPointer extends DataType {
 	public boolean eq(Object obj) {
 		return equals(obj);
 	}
-	
+
+	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {
 			return false;
@@ -120,7 +132,8 @@ public abstract class AbstractPointer extends DataType {
 		
 		return address == ((AbstractPointer) obj).address;
 	}
-	
+
+	@Override
 	public int hashCode() {
 		return (int)((0xFFFFFFFFL & address) ^ ((0xFFFFFFFF00000000L & address) >> 32));
 	}
@@ -138,7 +151,7 @@ public abstract class AbstractPointer extends DataType {
 	}
 
 	public String getHexAddress() {
-		return String.format("0x%0" + UDATA.SIZEOF * 2 + "X", address);
+		return String.format("0x%0" + (UDATA.SIZEOF * 2) + "X", address);
 	}
 	
 	/**
