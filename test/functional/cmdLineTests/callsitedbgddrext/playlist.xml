@@ -44,9 +44,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_callsitedbgddrext_ibm</testCaseName>
@@ -71,10 +71,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>9</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+			<version>9</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_callsitedbgddrext_openj9</testCaseName>

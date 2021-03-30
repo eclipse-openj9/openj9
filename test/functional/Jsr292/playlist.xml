@@ -41,9 +41,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<!-- 
 			TODO: Further investigation is needed for running against non-openj9 sdk
 		-->
@@ -71,9 +71,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -100,10 +100,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-		</subsets>
+		<versions>
+			<version>9</version>
+			<version>10</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>jsr292Test</testCaseName>
@@ -126,9 +126,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<!-- 
 			TODO: Further investigation is needed for running against non-openj9 sdk
 		-->
@@ -159,9 +159,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>12+</subset>
-		</subsets>
+		<versions>
+			<version>12+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -187,9 +187,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -216,9 +216,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -244,9 +244,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -272,9 +272,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>jsr292BootstrapTests_special</testCaseName>
@@ -296,9 +296,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -321,9 +321,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<!-- 
 			TODO: Further investigation is needed for running against non-openj9 sdk
 		-->
@@ -350,9 +350,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -410,12 +410,12 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-			<subset>13</subset>
-		</subsets>
+		<versions>
+			<version>9</version>
+			<version>10</version>
+			<version>11</version>
+			<version>13</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -442,12 +442,12 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9</subset>
-			<subset>10</subset>
-			<subset>11</subset>
-			<subset>13</subset>
-		</subsets>
+		<versions>
+			<version>9</version>
+			<version>10</version>
+			<version>11</version>
+			<version>13</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

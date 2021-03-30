@@ -36,9 +36,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>Panama</subset>
-		</subsets>
+		<versions>
+			<version>Panama</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>HigherLevelNativeMethodHandleTest</testCaseName>
@@ -55,9 +55,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>Panama</subset>
-		</subsets>
+		<versions>
+			<version>Panama</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>CustomFFINativeMethodHandleTest</testCaseName>
@@ -74,8 +74,8 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>Panama</subset>
-		</subsets>
+		<versions>
+			<version>Panama</version>
+		</versions>
 	</test>
 </playlist>
