@@ -195,7 +195,9 @@ TR_RuntimeHelper TR::ARM64CallSnippet::getHelper()
       isJitInduceOSRCall = true;
       }
 
-   if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
+   bool forceUnresolvedDispatch = comp->fej9()->forceUnresolvedDispatch() && !comp->genRelocatableResolvedDispatchSnippet(methodSymbol);
+
+   if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
       if (methodSymbol->isSpecial())
          return TR_ARM64interpreterUnresolvedSpecialGlue;
@@ -268,8 +270,10 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
    //continue execution in interpreted mode. Therefore, it doesn't need the method pointer.
    if (!glueRef->isOSRInductionHelper())
       {
+      bool forceUnresolvedDispatch = comp->fej9()->forceUnresolvedDispatch() && !comp->genRelocatableResolvedDispatchSnippet(methodSymbol);
+
       // Store the method pointer: it is NULL for unresolved
-      if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
+      if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
          {
          *(intptr_t *)cursor = 0;
          if (comp->getOption(TR_EnableHCR))
@@ -282,14 +286,22 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
          }
       else
          {
-         *(intptr_t *)cursor = (intptr_t)methodSymbol->getMethodAddress();
+         uintptr_t ramMethod = (uintptr_t)methodSymbol->getMethodAddress();
+         *(uintptr_t *) cursor = ramMethod;
          if (comp->getOption(TR_EnableHCR))
             {
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)methodSymRef,
-                                                                                    getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                    TR_MethodObject, cg()),
-                                       __FILE__, __LINE__, callNode);
+            }
+
+         if (comp->compileRelocatableCode())
+            {
+            if (methodSymbol->isVMInternalNative())
+               {
+               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                     (uint8_t *)ramMethod,
+                                                                     TR_VMINLMethod,
+                                                                     cg()),  __FILE__, __LINE__, getNode());
+               }
             }
          }
       }

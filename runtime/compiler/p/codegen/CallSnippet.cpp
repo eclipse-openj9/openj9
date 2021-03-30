@@ -282,9 +282,7 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
       isJitInduceOSRCall = true;
       }
 
-   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      forceUnresolvedDispatch = false;
+   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch() && !comp->genRelocatableResolvedDispatchSnippet(methodSymbol);
 
    if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
@@ -398,9 +396,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
    //continue execution in interpreted mode. Therefore, it doesn't need the method pointer.
    if (!glueRef->isOSRInductionHelper())
       {
-      bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-      if (comp->getOption(TR_UseSymbolValidationManager))
-         forceUnresolvedDispatch = false;
+      bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch() && !comp->genRelocatableResolvedDispatchSnippet(methodSymbol);
 
       // Store the method pointer: it is NULL for unresolved
       if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
@@ -416,19 +412,32 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
          }
       else
          {
-         *(intptr_t *)cursor = (intptr_t)methodSymbol->getMethodAddress();
+         uintptr_t ramMethod = (uintptr_t)methodSymbol->getMethodAddress();
+         *(uintptr_t *) cursor = ramMethod;
+
          if (comp->getOption(TR_EnableHCR))
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
 
          if (comp->compileRelocatableCode())
             {
+            if (comp->getOption(TR_UseSymbolValidationManager))
+               {
+               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                     (uint8_t *)ramMethod,
+                                                                     (uint8_t *)TR::SymbolType::typeMethod,
+                                                                     TR_SymbolFromManager,
+                                                                     cg()),  __FILE__, __LINE__, getNode());
+               }
+            else if (methodSymbol->isVMInternalNative())
+               {
+               cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                     (uint8_t *)ramMethod,
+                                                                     TR_VMINLMethod,
+                                                                     cg()),  __FILE__, __LINE__, getNode());
+               }
+
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                  (uint8_t *)methodSymbol->getMethodAddress(),
-                                                                  (uint8_t *)TR::SymbolType::typeMethod,
-                                                                  TR_SymbolFromManager,
-                                                                  cg()),  __FILE__, __LINE__, getNode());
-            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
-                                                                  (uint8_t *)methodSymbol->getMethodAddress(),
+                                                                  (uint8_t *)ramMethod,
                                                                   TR_ResolvedTrampolines,
                                                                   cg()), __FILE__, __LINE__, getNode());
             }
@@ -1243,9 +1252,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
    const char          *labelString = NULL;
    bool                 isNativeStatic = false;
 
-   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      forceUnresolvedDispatch = false;
+   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch() && !comp->genRelocatableResolvedDispatchSnippet(methodSymbol);
 
    if (methodSymbol->isHelper() &&
        methodSymRef->isOSRInductionHelper())

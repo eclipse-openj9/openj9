@@ -2399,7 +2399,7 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
       TR::LabelSymbol * label = generateLabelSymbol(cg());
       TR::Snippet * snippet;
 
-      if (callSymRef->isUnresolved() || (comp()->compileRelocatableCode() && !comp()->getOption(TR_UseSymbolValidationManager)))
+      if (callSymRef->isUnresolved() || (comp()->compileRelocatableCode() && !comp()->genRelocatableResolvedDispatchSnippet(callSymbol)))
          {
          snippet = new (trHeapMemory()) TR::S390UnresolvedCallSnippet(cg(), callNode, label, argSize);
          }

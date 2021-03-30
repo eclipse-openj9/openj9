@@ -343,7 +343,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
       {
       // Store the method pointer: it is NULL for unresolved
       // This field must be doubleword aligned for 64-bit and word aligned for 32-bit
-      if (methodSymRef->isUnresolved() || (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager)))
+      if (methodSymRef->isUnresolved() || (comp->compileRelocatableCode() && !comp->genRelocatableResolvedDispatchSnippet(methodSymbol)))
          {
          pad_bytes = (((uintptr_t) cursor + (sizeof(uintptr_t) - 1)) / sizeof(uintptr_t) * sizeof(uintptr_t) - (uintptr_t) cursor);
          TR_ASSERT( pad_bytes == 0, "Method Pointer field must be aligned for patching");
@@ -373,6 +373,14 @@ TR::S390J9CallSnippet::emitSnippetBody()
                                                                         cg()),
                                                                      __FILE__, __LINE__, callNode);
             }
+         else if (comp->compileRelocatableCode() && methodSymbol->isVMInternalNative())
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                       (uint8_t *)ramMethod,
+                                                                       TR_VMINLMethod,
+                                                                       cg()),
+                                                                    __FILE__, __LINE__, callNode);
+            }
 #if defined(J9VM_OPT_JITSERVER)
          else if (!comp->isOutOfProcessCompilation()) // Since we query this information from the client, remote compilations don't need to add relocation records for TR_MethodObject
 #else
@@ -399,7 +407,7 @@ TR_RuntimeHelper TR::S390J9CallSnippet::getInterpretedDispatchHelper(TR::SymbolR
       isJitInduceOSRCall = true;
       }
 
-   if (methodSymRef->isUnresolved() || (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager)))
+   if (methodSymRef->isUnresolved() || (comp->compileRelocatableCode() && !comp->genRelocatableResolvedDispatchSnippet(methodSymbol)))
       {
       TR_ASSERT(!isJitInduceOSRCall || !comp->compileRelocatableCode(), "calling jitInduceOSR is not supported yet under AOT\n");
       if (methodSymbol->isStatic())
@@ -534,7 +542,7 @@ TR::S390J9CallSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
 
    bufferPos = debug->printS390ArgumentsFlush(pOutFile, callNode, bufferPos, getSizeOfArguments());
 
-   if (methodSymRef->isUnresolved() || (cg()->comp()->compileRelocatableCode() && !cg()->comp()->getOption(TR_UseSymbolValidationManager)))
+   if (methodSymRef->isUnresolved() || (cg()->comp()->compileRelocatableCode() && !cg()->comp()->genRelocatableResolvedDispatchSnippet(methodSymbol)))
       {
       if (methodSymbol->isStatic())
          glueRef = cg()->getSymRef(TR_S390interpreterUnresolvedStaticGlue);

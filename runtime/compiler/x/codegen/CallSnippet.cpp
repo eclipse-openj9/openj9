@@ -813,9 +813,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          }
       }
 
-   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch();
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      forceUnresolvedDispatch = false;
+   bool forceUnresolvedDispatch = fej9->forceUnresolvedDispatch() && !comp->genRelocatableResolvedDispatchSnippet(methodSymbol);
 
    if (methodSymRef->isUnresolved() || forceUnresolvedDispatch)
       {
@@ -981,6 +979,14 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
                                                                                           (uint8_t *)ramMethod,
                                                                                           (uint8_t *)TR::SymbolType::typeMethod,
                                                                                           TR_SymbolFromManager,
+                                                                                          cg()),
+                                        __FILE__, __LINE__, getNode());
+            }
+         else if (comp->compileRelocatableCode() && methodSymbol->isVMInternalNative())
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
+                                                                                          (uint8_t *)ramMethod,
+                                                                                          TR_VMINLMethod,
                                                                                           cg()),
                                         __FILE__, __LINE__, getNode());
             }
