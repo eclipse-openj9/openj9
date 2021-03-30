@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,7 @@ public abstract class Scalar extends DataType {
 	}
 
 	public String getHexValue() {
-		return String.format("0x%0" + sizeof() * 2 + "X", data);
+		return String.format("0x%0" + (sizeof() * 2) + "X", data);
 	}
 
 	protected String toStringPattern;
@@ -217,7 +217,18 @@ public abstract class Scalar extends DataType {
 		return new UDATA(result);
 	}
 
-	public boolean allBitsIn(long bitmask) {
+	public final boolean allBitsIn(long bitmask) {
+		if (0 == bitmask) {
+			/*
+			 * In the vast majority of situations, the caller supplies a non-zero
+			 * argument. However, in backwards-compatibility cases the argument
+			 * may be derived from a constant which has not always been present.
+			 * The behavior we want is for such tests to return false (such a bit
+			 * could never have been set in core dumps generated before the constant
+			 * existed).
+			 */
+			return false;
+		}
 		return bitmask == (data & bitmask);
 	}
 
