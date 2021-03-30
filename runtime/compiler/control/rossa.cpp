@@ -212,8 +212,9 @@ char *compilationErrorNames[]={
    "compilationAotBlockFrequencyReloFailure", //58
    "compilationAotRecompQueuedFlagReloFailure", //59
    "compilationAOTValidateOSRFailure", //60
+   "compilationFailedToAcquireVMINLMethod", //61
 #if defined(J9VM_OPT_JITSERVER)
-   "compilationStreamFailure", //compilationFirstJITServerFailure=61
+   "compilationStreamFailure", //compilationFirstJITServerFailure=62
    "compilationStreamLostMessage", // compilationFirstJITServerFailure+1
    "compilationStreamMessageTypeMismatch", //compilationFirstJITServerFailure+2
    "compilationStreamVersionIncompatible", //compilationFirstJITServerFailure+3

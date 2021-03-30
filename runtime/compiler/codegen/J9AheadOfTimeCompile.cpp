@@ -1162,6 +1162,24 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_VMINLMethod:
+         {
+         TR_RelocationRecordVMINLMethod *vminlmRecord = reinterpret_cast<TR_RelocationRecordVMINLMethod *>(reloRecord);
+
+         J9Method *methodToValidate = reinterpret_cast<J9Method *>(relocation->getTargetAddress());
+         TR_OpaqueClassBlock *classOfmethod = fej9->getClassFromMethodBlock(reinterpret_cast<TR_OpaqueMethodBlock *>(methodToValidate));
+
+         J9ROMClass *romClass = TR::Compiler->cls.romClassOf(classOfmethod);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromROMClass(sharedCache, romClass);
+
+         J9ROMMethod *romMethod = static_cast<TR_J9VM *>(fej9)->getROMMethodFromRAMMethod(methodToValidate);
+         uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromROMMethod(sharedCache, romMethod);
+
+         vminlmRecord->setRomClassOffsetInSCC(reloTarget, romClassOffsetInSharedCache);
+         vminlmRecord->setRomMethodOffsetInSCC(reloTarget, romMethodOffsetInSharedCache);
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2030,6 +2048,20 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             traceMsg(self()->comp(), "\n Breakpoint Guard: Inlined site index = %d, destinationAddress = %p",
                      bpgRecord->inlinedSiteIndex(reloTarget),
                      bpgRecord->destinationAddress(reloTarget));
+            }
+         }
+         break;
+
+      case TR_VMINLMethod:
+         {
+         TR_RelocationRecordVMINLMethod *vminlmRecord = reinterpret_cast<TR_RelocationRecordVMINLMethod *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\nVM INL Method: romClassOffsetInSCC = %p, romMethodOffsetInSCC = %p",
+                     (void *)vminlmRecord->romClassOffsetInSCC(reloTarget),
+                     (void *)vminlmRecord->romMethodOffsetInSCC(reloTarget));
             }
          }
          break;

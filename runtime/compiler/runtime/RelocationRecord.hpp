@@ -170,6 +170,11 @@ struct TR_RelocationRecordBreakpointGuardPrivateData
    uint8_t *_destinationAddress;
    };
 
+struct TR_RelocationRecordVMINLMethodPrivateData
+   {
+   TR_OpaqueMethodBlock *_vminlMethod;
+   };
+
 union TR_RelocationRecordPrivateData
    {
    TR_RelocationRecordHelperAddressPrivateData helperAddress;
@@ -188,6 +193,7 @@ union TR_RelocationRecordPrivateData
    TR_RelocationRecordBlockFrequencyPrivateData blockFrequency;
    TR_RelocationRecordRecompQueuedFlagPrivateData recompQueuedFlag;
    TR_RelocationRecordBreakpointGuardPrivateData breakpointGuard;
+   TR_RelocationRecordVMINLMethodPrivateData vminlMethod;
    };
 
 enum TR_RelocationRecordAction
@@ -1865,6 +1871,26 @@ class TR_RelocationRecordBreakpointGuard : public TR_RelocationRecordWithInlined
 
       void setDestinationAddress(TR_RelocationTarget *reloTarget, uintptr_t destinationAddress);
       uintptr_t destinationAddress(TR_RelocationTarget *reloTarget);
+   };
+
+class TR_RelocationRecordVMINLMethod : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordVMINLMethod() {}
+      TR_RelocationRecordVMINLMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record)
+         : TR_RelocationRecord(reloRuntime, record) {}
+
+      virtual char *name() { return "TR_RelocationRecordVMINLMethod"; }
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+      virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      void setRomClassOffsetInSCC(TR_RelocationTarget *reloTarget, uintptr_t romClassOffsetInSCC);
+      uintptr_t romClassOffsetInSCC(TR_RelocationTarget *reloTarget);
+
+      void setRomMethodOffsetInSCC(TR_RelocationTarget *reloTarget, uintptr_t romMethodOffsetInSCC);
+      uintptr_t romMethodOffsetInSCC(TR_RelocationTarget *reloTarget);
    };
 
 #endif   // RELOCATION_RECORD_INCL

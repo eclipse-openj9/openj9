@@ -417,6 +417,12 @@ struct TR_RelocationRecordBreapointGuardBinaryTemplate : public TR_RelocationRec
    UDATA _destinationAddress;
    };
 
+struct TR_RelocationRecordVMINLMethodBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   UDATA _romClassOffsetInSCC;
+   UDATA _romMethodOffsetInSCC;
+   };
+
 // END OF BINARY TEMPLATES
 
 uint8_t
@@ -831,6 +837,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_Breakpoint:
          reloRecord = new (storage) TR_RelocationRecordBreakpointGuard(reloRuntime, record);
+         break;
+      case TR_VMINLMethod:
+         reloRecord = new (storage) TR_RelocationRecordVMINLMethod(reloRuntime, record);
          break;
       default:
          // TODO: error condition
@@ -6111,6 +6120,92 @@ TR_RelocationRecordBreakpointGuard::applyRelocation(TR_RelocationRuntime *reloRu
    return 0;
    }
 
+void
+TR_RelocationRecordVMINLMethod::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tromClassOffsetInSCC %p\n", (void *)romClassOffsetInSCC(reloTarget));
+   reloLogger->printf("\tromMethodOffsetInSCC %p\n", (void *)romMethodOffsetInSCC(reloTarget));
+   }
+
+void
+TR_RelocationRecordVMINLMethod::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordVMINLMethodPrivateData *reloPrivateData = &(privateData()->vminlMethod);
+
+   uintptr_t romClassOffset = romClassOffsetInSCC(reloTarget);
+   uintptr_t romMethodOffset = romMethodOffsetInSCC(reloTarget);
+
+   J9ROMClass *romClass = reloRuntime->fej9()->sharedCache()->romClassFromOffsetInSharedCache(romClassOffset);
+   J9ROMMethod *romMethod = reloRuntime->fej9()->sharedCache()->romMethodFromOffsetInSharedCache(romMethodOffset);
+
+   J9UTF8 *classNameData = J9ROMCLASS_CLASSNAME(romClass);
+   char *className = (char *)alloca(J9UTF8_LENGTH(classNameData)+1);
+   strncpy(className, reinterpret_cast<const char *>(J9UTF8_DATA(classNameData)), J9UTF8_LENGTH(classNameData));
+   className[J9UTF8_LENGTH(classNameData)] = '\0';
+
+   J9UTF8 *methodNameData = J9ROMMETHOD_NAME(romMethod);
+   char *methodName = (char *)alloca(J9UTF8_LENGTH(methodNameData)+1);
+   strncpy(methodName, reinterpret_cast<const char *>(J9UTF8_DATA(methodNameData)), J9UTF8_LENGTH(methodNameData));
+   methodName[J9UTF8_LENGTH(methodNameData)] = '\0';
+
+   J9UTF8 *methodSigData = J9ROMMETHOD_SIGNATURE(romMethod);
+   char *methodSig = (char *)alloca(J9UTF8_LENGTH(methodSigData)+1);
+   strncpy(methodSig, reinterpret_cast<const char *>(J9UTF8_DATA(methodSigData)), J9UTF8_LENGTH(methodSigData));
+   methodSig[J9UTF8_LENGTH(methodSigData)] = '\0';
+
+   reloPrivateData->_vminlMethod = reloRuntime->fej9()->getMethodFromName(className, methodName, methodSig);
+   }
+
+int32_t
+TR_RelocationRecordVMINLMethod::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordVMINLMethodPrivateData *reloPrivateData = &(privateData()->vminlMethod);
+   J9Method *vminlMethod = reinterpret_cast<J9Method *>(reloPrivateData->_vminlMethod);
+
+   if (NULL == vminlMethod)
+      return compilationFailedToAcquireVMINLMethod;
+
+   TR_OpaqueClassBlock *clazz = reinterpret_cast<TR_OpaqueClassBlock *>(J9_CLASS_FROM_METHOD(vminlMethod));
+
+   reloTarget->addPICtoPatchPtrOnClassUnload(clazz, reloLocation);
+   if (reloRuntime->options()->getOption(TR_EnableHCR))
+      {
+      createClassRedefinitionPicSite(vminlMethod, reloLocation, sizeof(uintptr_t), false, reloRuntime->comp()->getMetadataAssumptionList());
+      reloRuntime->comp()->setHasClassRedefinitionAssumptions();
+      }
+
+   reloTarget->storePointer(reinterpret_cast<uint8_t *>(vminlMethod), reloLocation);
+
+   return 0;
+   }
+
+void
+TR_RelocationRecordVMINLMethod::setRomClassOffsetInSCC(TR_RelocationTarget *reloTarget, uintptr_t romClassOffsetInSCC)
+   {
+   reloTarget->storeRelocationRecordValue(romClassOffsetInSCC, (uintptr_t *) &((TR_RelocationRecordVMINLMethodBinaryTemplate *)_record)->_romClassOffsetInSCC);
+   }
+
+uintptr_t
+TR_RelocationRecordVMINLMethod::romClassOffsetInSCC(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordVMINLMethodBinaryTemplate *)_record)->_romClassOffsetInSCC);
+   }
+
+void
+TR_RelocationRecordVMINLMethod::setRomMethodOffsetInSCC(TR_RelocationTarget *reloTarget, uintptr_t romMethodOffsetInSCC)
+   {
+   reloTarget->storeRelocationRecordValue(romMethodOffsetInSCC, (uintptr_t *) &((TR_RelocationRecordVMINLMethodBinaryTemplate *)_record)->_romMethodOffsetInSCC);
+   }
+
+uintptr_t
+TR_RelocationRecordVMINLMethod::romMethodOffsetInSCC(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordVMINLMethodBinaryTemplate *)_record)->_romMethodOffsetInSCC);
+   }
+
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
    sizeof(TR_RelocationRecordConstantPoolBinaryTemplate),                            // TR_ConstantPool                                 = 0
@@ -6222,4 +6317,5 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordInlinedMethodBinaryTemplate),                           // TR_InlinedAbstractMethod                        = 106
    sizeof(TR_RelocationRecordBreapointGuardBinaryTemplate),                          // TR_Breakpoint                                   = 107
    sizeof(TR_RelocationRecordWithInlinedSiteIndexBinaryTemplate),                    // TR_InlinedMethodPointer                         = 108
+   sizeof(TR_RelocationRecordVMINLMethodBinaryTemplate),                             // TR_VMINLMethod                                  = 109
    };

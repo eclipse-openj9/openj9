@@ -79,6 +79,11 @@ class EnforceProfiling : public virtual TR::InsufficientlyAggressiveCompilation
    {
    virtual const char* what() const throw() { return "Enforce Profiling"; }
    };
+
+class VMINLMethodFailure : public virtual TR::CompilationException
+   {
+   virtual const char* what() const throw() { return "LinkTo Method Failure"; }
+   };
 }
 
 #endif // RUNTIME_FAILURE
