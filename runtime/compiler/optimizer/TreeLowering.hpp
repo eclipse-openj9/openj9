@@ -65,7 +65,7 @@ class TreeLowering : public TR::Optimization
 
    // helpers related to Valhalla value type lowering
    void lowerValueTypeOperations(TR::Node* node, TR::TreeTop* tt);
-   void fastpathAcmpHelper(TR::Node* node, TR::TreeTop* tt);
+   void fastpathAcmpHelper(TR::Node* const node, TR::TreeTop* const tt);
    void lowerArrayStoreCHK(TR::Node* node, TR::TreeTop* tt);
    };
 

@@ -112,41 +112,92 @@ TR::TreeLowering::lowerValueTypeOperations(TR::Node* node, TR::TreeTop* tt)
  *
  *  ...becomes...
  *
- *  +----------------------+
- *  |ttprev                |
- *  |iRegStore x           |
- *  |  iconst 1            |
- *  |ifacmpeq  -->---------*---------+
- *  |  aload lhs           |         |
- *  |  aload rhs           |         |
- *  |  GlRegDeps           |         |
- *  |    PassThrough x     |         |
- *  |      ==> iconst 1    |         |
- *  |    PassThrough ...   |         |
- *  |BBEnd                 |         |
- *  +----------------------+         |
- *  |BBStart (extension)   |         |
- *  |iRegStore x           |         |
- *  |  icall acmpHelper    |         |
- *  |    aload lhs         |         |
- *  |    aload rhs         |         |
- *  |BBEnd                 |         |
- *  |  GlRegDeps           |         |
- *  |    PassThrough x     |         |
- *  |      ==> icall acmpHelper      |
- *  |    PassThrough ...   |         |
- *  +----------------------+         |
- *        |                          |
- *        +--------------------------+
- *        |
- *        v
- *  +-----------------+
- *  |BBStart
- *  |ificmpeq --> ... |
- *  |  iRegLoad x     |
- *  |  iconst 0       |
- *  |BBEnd            |
- *  +-----------------+
+ *
+ * +------------------------------+
+ * |ttprev                        |
+ * |iRegStore x                   |
+ * |  iconst 1                    |
+ * |ifacmpeq  +->---------------------------+
+ * |  aload lhs                   |         |
+ * |  aload rhs                   |         |
+ * |  GlRegDeps                   |         |
+ * |    PassThrough x             |         |
+ * |      ==> iconst 1            |         |
+ * |    PassThrough ...           |         |
+ * |BBEnd                         |         |
+ * +------------------------------+         |
+ * |BBStart (extension)           |         |
+ * |iRegStore x                   |         |
+ * |  iconst 0                    |         |
+ * |ifacmpeq +->----------------------------+
+ * |  aload lhs                   |         |
+ * |  aconst 0                    |         |
+ * |  GlRegDeps                   |         |
+ * |    PassThrough x             |         |
+ * |      ==> iconst 0            |         |
+ * |    PassThrough ...           |         |
+ * |BBEnd                         |         |
+ * +------------------------------+         |
+ * |BBStart (extension)           |         |
+ * |ifacmpeq +------------------------------+
+ * |  aload rhs                   |         |
+ * |  ==> aconst 0                |         |
+ * |  GlRegDeps                   |         |
+ * |    PassThrough x             |         |
+ * |      ==> iconst 0            |         |
+ * |    PassThrough ...           |         |
+ * |BBEnd                         |         |
+ * +------------------------------+         |
+ * |BBStart (extension)           |         |
+ * |ificmpeq +->----------------------------+
+ * |  iand                        |         |
+ * |    iloadi ClassFlags         |         |
+ * |      aloadi J9Class          |         |
+ * |        aload lhs             |         |
+ * |    iconst J9ClassIsValueType |         |
+ * |  iconst 0                    |         |
+ * |  GlRegDeps                   |         |
+ * |    PassThrough x             |         |
+ * |      ==> iconst 0            |         |
+ * |    PassThrough ...           |         |
+ * |BBEnd                         |         |
+ * +------------------------------+         |
+ * |BBStart (extension)           |         |
+ * |ificmpeq +->----------------------------+
+ * |  iand                        |         |
+ * |    iloadi ClassFlags         |         |
+ * |      aloadi J9Class          |         |
+ * |        aload rhs             |         |
+ * |    iconst J9ClassIsValueType |         |
+ * |  iconst 0                    |         |
+ * |  GlRegDeps                   |         |
+ * |    PassThrough x             |         |
+ * |      ==> iconst 0            |         |
+ * |    PassThrough ...           |         |
+ * |BBEnd                         |         |
+ * +------------------------------+         |
+ * |BBStart (extension)           |         |
+ * |iRegStore x                   |         |
+ * |  icall acmpHelper            |         |
+ * |    aload lhs                 |         |
+ * |    aload rhs                 |         |
+ * |BBEnd                         |         |
+ * |  GlRegDeps                   |         |
+ * |    PassThrough x             |         |
+ * |      ==> icall acmpHelper    |         |
+ * |    PassThrough ...           |         |
+ * +-----+------------------------+         |
+ *       |                                  |
+ *       +----------------------------------+
+ *       |
+ *       v
+ * +-----+-----------+
+ * |BBStart          |
+ * |ificmpeq +-> ... +
+ * |  iRegLoad x     |
+ * |  iconst 0       |
+ * |BBEnd            |
+ * +-----------------+
  *
  * Any GlRegDeps on the extension block are created by OMR::Block::splitPostGRA
  * while those on the ifacmpeq at the end of the first block are copies of those,
@@ -157,33 +208,39 @@ TR::TreeLowering::lowerValueTypeOperations(TR::Node* node, TR::TreeTop* tt)
  *
  */
 void
-TR::TreeLowering::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt)
+TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const tt)
    {
    TR::Compilation* comp = self()->comp();
    TR::CFG* cfg = comp->getFlowGraph();
    cfg->invalidateStructure();
 
-   // anchor call node after split point to ensure the returned value goes into
-   // either a temp or a global register
-   auto* anchoredCallTT = TR::TreeTop::create(comp, tt, TR::Node::create(TR::treetop, 1, node));
-   if (trace())
-      traceMsg(comp, "Anchoring call node under treetop n%dn (0x%p)\n", anchoredCallTT->getNode()->getGlobalIndex(), anchoredCallTT->getNode());
+   if (!performTransformation(comp, "%sPreparing for post-GRA block split by anchoring helper call and arguments\n", optDetailString()))
+      return;
 
-   // anchor the call arguments just before the call
-   // this ensures the values are live before the call so that we can
-   // propagate their values in global registers if needed
-   auto* anchoredCallArg1TT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node->getFirstChild()));
-   auto* anchoredCallArg2TT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node->getSecondChild()));
+   // Anchor call node after split point to ensure the returned value goes into
+   // either a temp or a global register.
+   auto* const anchoredCallTT = TR::TreeTop::create(comp, tt, TR::Node::create(TR::treetop, 1, node));
+   if (trace())
+      traceMsg(comp, "Anchoring call node under treetop n%un (0x%p)\n", anchoredCallTT->getNode()->getGlobalIndex(), anchoredCallTT->getNode());
+
+   // Anchor the call arguments just before the call. This ensures the values are
+   // live before the call so that we can propagate their values in global registers if needed.
+   auto* const anchoredCallArg1TT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node->getFirstChild()));
+   auto* const anchoredCallArg2TT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node->getSecondChild()));
    if (trace())
       {
-      traceMsg(comp, "Anchoring call arguments n%dn and n%dn under treetops n%dn and n%dn\n",
+      traceMsg(comp, "Anchoring call arguments n%un and n%un under treetops n%un and n%un\n",
          node->getFirstChild()->getGlobalIndex(), node->getSecondChild()->getGlobalIndex(), anchoredCallArg1TT->getNode()->getGlobalIndex(), anchoredCallArg2TT->getNode()->getGlobalIndex());
       }
 
    // put non-helper call in its own block by block splitting at the
    // next treetop and then at the current one
    TR::Block* prevBlock = tt->getEnclosingBlock();
+   if (!performTransformation(comp, "%sSplitting block_%d at TreeTop [0x%p], which holds helper call node n%un\n", optDetailString(), prevBlock->getNumber(), tt, node->getGlobalIndex()))
+      return;
    TR::Block* targetBlock = prevBlock->splitPostGRA(tt->getNextTreeTop(), cfg, true, NULL);
+   if (trace())
+      traceMsg(comp, "prevBlock is %d, targetBlock is %d\n", prevBlock->getNumber(), targetBlock->getNumber());
 
    // As the block is split after the helper call node, it is possible that as part of un-commoning
    // code to store nodes into registers or temp-slots is appended to the original block by the call
@@ -232,6 +289,9 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt)
       lastTTForCallBlock->join(prevBlockExit);
       }
 
+   if (!performTransformation(comp, "%sInserting fastpath for lhs == rhs\n", optDetailString()))
+      return;
+
    TR::Block* callBlock = prevBlock->split(tt, cfg);
    callBlock->setIsExtensionOfPreviousBlock(true);
    if (trace())
@@ -243,7 +303,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt)
    // (i.e. jump around) the call
    TR::Node* anchoredNode = anchoredCallTT->getNode()->getFirstChild(); // call node is under a treetop node
    if (trace())
-      traceMsg(comp, "Anchored call has been transformed into %s node n%dn\n", anchoredNode->getOpCode().getName(), anchoredNode->getGlobalIndex());
+      traceMsg(comp, "Anchored call has been transformed into %s node n%un\n", anchoredNode->getOpCode().getName(), anchoredNode->getGlobalIndex());
    auto* const1Node = TR::Node::iconst(1);
    TR::Node* storeNode = NULL;
    if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
@@ -302,7 +362,93 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt)
          }
       }
 
+   if (trace())
+      traceMsg(comp, "Inserting first fast-path check node n%dn\n", ifacmpeqNode->getGlobalIndex());
    prevBlock->append(TR::TreeTop::create(comp, ifacmpeqNode));
+   cfg->addEdge(prevBlock, targetBlock);
+
+   // create block to check if lhs is null
+   prevBlock = callBlock;
+   callBlock = callBlock->split(tt, cfg);
+   callBlock->setIsExtensionOfPreviousBlock(true);
+   if (trace())
+      traceMsg(comp, "Call node n%dn is now in block_%d (prevBlock is %d)\n", node->getGlobalIndex(), callBlock->getNumber(), prevBlock->getNumber());
+
+   if (!performTransformation(comp, "%sInserting fastpath for lhs == NULL\n", optDetailString()))
+      return;
+
+   // duplicate the store node and put 0 (false), because if the lhs is null
+   // the comparison must return false
+   storeNode = storeNode->duplicateTree(true);
+   storeNode->getFirstChild()->setInt(0);
+   prevBlock->append(TR::TreeTop::create(comp, storeNode));
+
+   // insert acmpeq to check if lhs is null
+   auto* const nullConst = TR::Node::aconst(0);
+   auto* const checkLhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
+   if (callBlock->getExit()->getNode()->getNumChildren() > 0)
+      {
+      TR::Node* glRegDeps = TR::Node::create(TR::GlRegDeps);
+      TR::Node* depNode = NULL;
+
+      if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
+         {
+         depNode = TR::Node::create(TR::PassThrough, 1, storeNode->getChild(0));
+         depNode->setGlobalRegisterNumber(storeNode->getGlobalRegisterNumber());
+         glRegDeps->addChildren(&depNode, 1);
+         }
+
+      checkLhsNull->addChildren(&glRegDeps, 1);
+
+      TR::Node* expectedDeps = callBlock->getExit()->getNode()->getFirstChild();
+      for (int i = 0; i < expectedDeps->getNumChildren(); ++i)
+         {
+         TR::Node* temp = expectedDeps->getChild(i);
+         if (depNode && temp->getGlobalRegisterNumber() == depNode->getGlobalRegisterNumber())
+            continue;
+         else if (temp->getOpCodeValue() == TR::PassThrough)
+            {
+            // PassThrough nodes cannot be commoned because doing so does not
+            // actually anchor the child, causing it's lifetime to not be extended
+            TR::Node* original = temp;
+            temp = TR::Node::create(original, TR::PassThrough, 1, original->getFirstChild());
+            temp->setLowGlobalRegisterNumber(original->getLowGlobalRegisterNumber());
+            temp->setHighGlobalRegisterNumber(original->getHighGlobalRegisterNumber());
+            }
+         glRegDeps->addChildren(&temp, 1);
+         }
+      }
+
+   prevBlock->append(TR::TreeTop::create(comp, checkLhsNull));
+   cfg->addEdge(prevBlock, targetBlock);
+
+   if (!performTransformation(comp, "%sInserting fastpath for rhs == NULL\n", optDetailString()))
+      return;
+
+   auto* const checkRhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg2TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
+   if (checkLhsNull->getNumChildren() == 3)
+      {
+      auto* const fromDeps = checkLhsNull->getChild(2);
+      auto* const newDeps = TR::Node::copy(fromDeps);
+      for (uint16_t i = 0; i < fromDeps->getNumChildren(); ++i)
+         {
+         auto* const newChild = TR::Node::copy(fromDeps->getChild(i));
+         if (newChild->getFirstChild())
+            {
+            newChild->getFirstChild()->incReferenceCount();
+            }
+         newDeps->setChild(i, newChild);
+         }
+      checkRhsNull->setChild(2, newDeps);
+      }
+
+   // create block to check if rhs is null
+   prevBlock = callBlock;
+   callBlock = callBlock->split(tt, cfg);
+   callBlock->setIsExtensionOfPreviousBlock(true);
+   if (trace())
+      traceMsg(comp, "Call node n%dn is now in block_%d (prevBlock is %d)\n", node->getGlobalIndex(), callBlock->getNumber(), prevBlock->getNumber());
+   prevBlock->append(TR::TreeTop::create(comp, checkRhsNull));
    cfg->addEdge(prevBlock, targetBlock);
    }
 
