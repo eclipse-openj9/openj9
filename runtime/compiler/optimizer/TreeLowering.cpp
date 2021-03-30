@@ -378,8 +378,8 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
          node->getFirstChild()->getGlobalIndex(), node->getSecondChild()->getGlobalIndex(), anchoredCallArg1TT->getNode()->getGlobalIndex(), anchoredCallArg2TT->getNode()->getGlobalIndex());
       }
 
-   // put non-helper call in its own block by block splitting at the
-   // next treetop and then at the current one
+   // Split the block at the call TreeTop so that the new block created
+   // after the call can become a merge point for all the fastpaths.
    TR::Block* callBlock = tt->getEnclosingBlock();
    if (!performTransformation(comp, "%sSplitting block_%d at TreeTop [0x%p], which holds helper call node n%un\n", optDetailString(), callBlock->getNumber(), tt, node->getGlobalIndex()))
       return;
@@ -397,10 +397,11 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
    if (!performTransformation(comp, "%sInserting fastpath for lhs == rhs\n", optDetailString()))
       return;
 
-   // insert store of constant 1
-   // the value must go wherever the value returned by the helper call goes
-   // so that the code in the target block picks up the constant if we fast-path
-   // (i.e. jump around) the call
+   // Insert store of constant 1 as the result of the fastpath.
+   // The value must go wherever the value returned by the helper call goes
+   // so that the code in the target block (merge point) picks up the constant
+   // if the branch is taken. Use the TreeTop previously inserted to anchor the
+   // call to figure out where the return value of the call is being put.
    TR::Node* anchoredNode = anchoredCallTT->getNode()->getFirstChild(); // call node is under a treetop node
    if (trace())
       traceMsg(comp, "Anchored call has been transformed into %s node n%un\n", anchoredNode->getOpCode().getName(), anchoredNode->getGlobalIndex());
@@ -414,8 +415,8 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
       auto const globalRegNum = anchoredNode->getGlobalRegisterNumber();
       storeNode = TR::Node::create(TR::iRegStore, 1, const1Node);
       storeNode->setGlobalRegisterNumber(globalRegNum);
-      // since the result is in a global register, we're going to need a PassThrough
-      // on the exit point GlRegDeps
+      // Since the result is in a global register, we're going to need a PassThrough
+      // on the exit point GlRegDeps.
       regDepForStoreNode = TR::Node::create(TR::PassThrough, 1, const1Node);
       regDepForStoreNode->setGlobalRegisterNumber(globalRegNum);
       }
@@ -430,8 +431,10 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
       TR_ASSERT_FATAL_WITH_NODE(anchoredNode, false, "Anchored call has been turned into unexpected opcode\n");
    tt->insertBefore(TR::TreeTop::create(comp, storeNode));
 
-   // If the BBExit of the block containing the call has a GlRegDeps node,
-   // a matching GlRegDeps node will have to be added to all the checks.
+   // If the BBEnd of the block containing the call has a GlRegDeps node,
+   // a matching GlRegDeps node will be needed for all the branches. The
+   // fallthrough of the call block and the branch targets will be the
+   // same block. So, all register dependencies will be mostly the same.
    // `exitGlRegDeps` is intended to point to the "reference" node used to
    // create the GlRegDeps for each consecutive branch.
    TR::Node* exitGlRegDeps = NULL;
@@ -440,10 +443,9 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
       exitGlRegDeps = callBlock->getExit()->getNode()->getFirstChild();
       }
 
-   // insert acmpeq for fastpath, taking care to set the proper register dependencies
-   // Any register dependencies added by splitPostGRA will now be on the BBExit for
-   // the call block.  As the ifacmpeq branching around the call block will reach the same
-   // target block, copy any GlRegDeps from the end of the call block to the ifacmpeq
+   // Insert fastpath for lhs == rhs (reference comparison), taking care to set the
+   // proper register dependencies by copying them from the BBEnd of the call block
+   // (through `exitGlRegDeps`) when needed.
    auto* ifacmpeqNode = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), anchoredCallArg2TT->getNode()->getFirstChild(), targetBlock->getEntry());
    exitGlRegDeps = copyBranchGlRegDepsAndSubstitute(ifacmpeqNode, exitGlRegDeps, regDepForStoreNode);
    tt->insertBefore(TR::TreeTop::create(comp, ifacmpeqNode));
@@ -454,8 +456,8 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
    if (!performTransformation(comp, "%sInserting fastpath for lhs == NULL\n", optDetailString()))
       return;
 
-   // duplicate the store node and put 0 (false), because if the lhs is null
-   // the comparison must return false
+   // Create store of 0 as fastpath result by duplicate the node used to store
+   // the constant 1. Also duplicate the corresponding regdep if needed.
    storeNode = storeNode->duplicateTree(true);
    storeNode->getFirstChild()->setInt(0);
    tt->insertBefore(TR::TreeTop::create(comp, storeNode));
@@ -466,7 +468,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
       regDepForStoreNode->setAndIncChild(0, storeNode->getFirstChild());
       }
 
-   // insert acmpeq to check if lhs is null
+   // Using a similar strategy as above, insert check for lhs == NULL.
    auto* const nullConst = TR::Node::aconst(0);
    auto* const checkLhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
    exitGlRegDeps = copyBranchGlRegDepsAndSubstitute(checkLhsNull, exitGlRegDeps, regDepForStoreNode);
