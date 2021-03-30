@@ -503,8 +503,27 @@ static TR::Instruction* initializeLocals(TR::Instruction *cursor, uint32_t numSl
    auto offset = offsetToFirstSlotFromAdjustedSP;
    if (isImm7OffsetOverflow)
       {
-      // mov baseReg, javaSP
-      cursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::orrx, NULL, baseReg, zeroReg, javaSP, cursor);
+      if (!constantIsImm7(offset >> 3))
+         {
+         // If offset does not fit in imm7, update baseReg and reset offset to 0
+         if (constantIsUnsignedImm12(offset))
+            {
+            cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, NULL, baseReg, javaSP, offset, cursor);
+            }
+         else
+            {
+            cursor = loadConstant32(cg, NULL, offset, baseReg, cursor);
+            cursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, NULL, baseReg, javaSP, baseReg, cursor);
+            }
+         offset = 0;
+         }
+      else
+         {
+         // mov baseReg, javaSP
+         cursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::orrx, NULL, baseReg, zeroReg, javaSP, cursor);
+         }
+
+
       for (int32_t i = 0; i < loopCount; i++)
          {
          if (!constantIsImm7(offset >> 3))
