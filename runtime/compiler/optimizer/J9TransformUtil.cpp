@@ -2391,6 +2391,12 @@ J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::Tree
        (symRef->getOwningMethodIndex(), -1, refinedMethod, TR::MethodSymbol::Static);
 
    TR::Node::recreateWithSymRef(node, refinedMethod->directCallOpCode(), newSymRef);
+   // doNotProfile flag is used to imply whether the bytecode can OSR under voluntary OSR. Above transformation
+   // will set this flag to indicate the node cannot OSR. However, the transformation does not change the operand
+   // stack and local state before the call, hence it can OSR.
+   //
+   node->getByteCodeInfo().setDoNotProfile(false);
+
    return true;
 #else
    return false;
@@ -2522,6 +2528,11 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       node->removeAllChildren();
       // Recreate the node to a indirect call node
       TR::Node::recreateWithoutProperties(node, callOpCode, numArgs, vftLoad, newSymRef);
+      // doNotProfile flag is used to imply whether the bytecode can OSR under voluntary OSR. Above transformation
+      // will set this flag to indicate the node cannot OSR. However, the transformation does not change the operand
+      // stack and local state before the call, hence it can OSR.
+      //
+      node->getByteCodeInfo().setDoNotProfile(false);
 
       for (int32_t i = 0; i < numArgs - 1; i++)
          node->setAndIncChild(i + 1, args[i]);
