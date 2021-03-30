@@ -233,6 +233,21 @@ J9::Compilation::~Compilation()
    _profileInfo->~TR_AccessedProfileInfo();
    }
 
+bool
+J9::Compilation::genRelocatableResolvedDispatchSnippet(TR::MethodSymbol *sym)
+   {
+   TR_ASSERT_FATAL(self()->compileRelocatableCode(),
+                   "Should only call this API for a relocatable compilation!\n");
+
+   bool genResolved = false;
+   if (self()->getOption(TR_UseSymbolValidationManager)
+       || (sym && sym->isVMInternalNative()))
+      {
+      genResolved = true;
+      }
+   return genResolved;
+   }
+
 TR_J9VMBase *
 J9::Compilation::fej9()
    {
