@@ -84,6 +84,62 @@ TR::TreeLowering::lowerValueTypeOperations(TR::Node* node, TR::TreeTop* tt)
    }
 
 /**
+ * @brief Copy register dependencies between GlRegDeps node at exit points.
+ *
+ * This function is only intended to work with GlRegDeps nodes for exit points,
+ * (i.e. BBEnd, branch, or jump nodes) within the same extended basic block.
+ *
+ * Register dependencies are copied "logically", meaning that the actual node
+ * used to represent a dependency won't necessarily be copied. If the reg dep
+ * is represented by a PassThrough, then the node itself is copied and its
+ * child is commoned (so it's lifetime is extended; note that in correctly-formed
+ * IL, the child must also be the child of a reg store in the containing block).
+ * Otherwise, the dependency must be represented by a reg load, which must have
+ * come from the GlRegDeps node at the entry point and *must* be commoned
+ * (so it won't get copied).
+ *
+ * In addition, this function allows *one* register dependency to be changed
+ * (substituted). That is, if a register dependency is found under `sourceNode`
+ * for the same register that is set on `substituteNode`, then `substituteNode`
+ * will be used instead of the dependency from `sourceNode`. Note that the
+ * reference of of `substituteNode` is incremented if/when it gets added. If
+ * `substituteNode` is NULL the no substitution will be attempted.
+ *
+ * @param targetNode is the GlRegDeps node that reg deps are copied to
+ * @param sourceNode is the GlRegDeps node that reg deps are copied from
+ * @param substituteNode is the reg dep node to substitute if a matching register is found in `sourceNode` (NULL if none)
+ */
+static void
+copyExitRegDepsAndSubstitute(TR::Node* const targetNode, TR::Node* const sourceNode, TR::Node* const substituteNode)
+   {
+   for (int i = 0; i < sourceNode->getNumChildren(); ++i)
+      {
+      TR::Node* child = sourceNode->getChild(i);
+      if (substituteNode
+          && child->getLowGlobalRegisterNumber() == substituteNode->getLowGlobalRegisterNumber()
+          && child->getHighGlobalRegisterNumber() == substituteNode->getHighGlobalRegisterNumber())
+         targetNode->setAndIncChild(i, substituteNode);
+      else if (child->getOpCodeValue() == TR::PassThrough)
+         {
+         // PassThrough nodes cannot be commoned because doing so does not
+         // actually anchor the child, causing it's lifetime to not be extended
+         child = TR::Node::copy(child);
+         if (child->getFirstChild())
+            {
+            child->getFirstChild()->incReferenceCount();
+            }
+         child->setReferenceCount(1);
+         targetNode->setChild(i, child);
+         }
+      else
+         {
+         // all other nodes must be commoned as they won't get evaluated otherwise
+         targetNode->setAndIncChild(i, child);
+         }
+      }
+   }
+
+/**
  * @brief Add checks to skip (fast-path) acmpHelper call
  *
  * @details
@@ -306,12 +362,18 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
       traceMsg(comp, "Anchored call has been transformed into %s node n%un\n", anchoredNode->getOpCode().getName(), anchoredNode->getGlobalIndex());
    auto* const1Node = TR::Node::iconst(1);
    TR::Node* storeNode = NULL;
+   TR::Node* regDepForStoreNode = NULL; // this is the reg dep for the store if one is needed
    if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
       {
       if (trace())
          traceMsg(comp, "Storing constant 1 in register %s\n", comp->getDebug()->getGlobalRegisterName(anchoredNode->getGlobalRegisterNumber()));
+      auto const globalRegNum = anchoredNode->getGlobalRegisterNumber();
       storeNode = TR::Node::create(TR::iRegStore, 1, const1Node);
-      storeNode->setGlobalRegisterNumber(anchoredNode->getGlobalRegisterNumber());
+      storeNode->setGlobalRegisterNumber(globalRegNum);
+      // since the result is in a global register, we're going to need a PassThrough
+      // on the exit point GlRegDeps
+      regDepForStoreNode = TR::Node::create(TR::PassThrough, 1, const1Node);
+      regDepForStoreNode->setGlobalRegisterNumber(globalRegNum);
       }
    else if (anchoredNode->getOpCodeValue() == TR::iload)
       {
@@ -331,35 +393,10 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
    auto* ifacmpeqNode = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), anchoredCallArg2TT->getNode()->getFirstChild(), targetBlock->getEntry());
    if (callBlock->getExit()->getNode()->getNumChildren() > 0)
       {
-      TR::Node* glRegDeps = TR::Node::create(TR::GlRegDeps);
-      TR::Node* depNode = NULL;
-
-      if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
-         {
-         depNode = TR::Node::create(TR::PassThrough, 1, storeNode->getChild(0));
-         depNode->setGlobalRegisterNumber(storeNode->getGlobalRegisterNumber());
-         glRegDeps->addChildren(&depNode, 1);
-         }
-
+      TR::Node* sourceDeps = callBlock->getExit()->getNode()->getFirstChild();
+      TR::Node* glRegDeps = TR::Node::create(TR::GlRegDeps, sourceDeps->getNumChildren());
+      copyExitRegDepsAndSubstitute(glRegDeps, sourceDeps, regDepForStoreNode);
       ifacmpeqNode->addChildren(&glRegDeps, 1);
-
-      TR::Node* expectedDeps = callBlock->getExit()->getNode()->getFirstChild();
-      for (int i = 0; i < expectedDeps->getNumChildren(); ++i)
-         {
-         TR::Node* temp = expectedDeps->getChild(i);
-         if (depNode && temp->getGlobalRegisterNumber() == depNode->getGlobalRegisterNumber())
-            continue;
-         else if (temp->getOpCodeValue() == TR::PassThrough)
-            {
-            // PassThrough nodes cannot be commoned because doing so does not
-            // actually anchor the child, causing it's lifetime to not be extended
-            TR::Node* original = temp;
-            temp = TR::Node::create(original, TR::PassThrough, 1, original->getFirstChild());
-            temp->setLowGlobalRegisterNumber(original->getLowGlobalRegisterNumber());
-            temp->setHighGlobalRegisterNumber(original->getHighGlobalRegisterNumber());
-            }
-         glRegDeps->addChildren(&temp, 1);
-         }
       }
 
    if (trace())
@@ -382,41 +419,22 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
    storeNode = storeNode->duplicateTree(true);
    storeNode->getFirstChild()->setInt(0);
    prevBlock->append(TR::TreeTop::create(comp, storeNode));
+   if (regDepForStoreNode != NULL)
+      {
+      regDepForStoreNode = TR::Node::copy(regDepForStoreNode);
+      regDepForStoreNode->setReferenceCount(0);
+      regDepForStoreNode->setAndIncChild(0, storeNode->getFirstChild());
+      }
 
    // insert acmpeq to check if lhs is null
    auto* const nullConst = TR::Node::aconst(0);
    auto* const checkLhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
-   if (callBlock->getExit()->getNode()->getNumChildren() > 0)
+   if (ifacmpeqNode->getNumChildren() == 3)
       {
-      TR::Node* glRegDeps = TR::Node::create(TR::GlRegDeps);
-      TR::Node* depNode = NULL;
-
-      if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
-         {
-         depNode = TR::Node::create(TR::PassThrough, 1, storeNode->getChild(0));
-         depNode->setGlobalRegisterNumber(storeNode->getGlobalRegisterNumber());
-         glRegDeps->addChildren(&depNode, 1);
-         }
-
+      TR::Node* sourceDeps = ifacmpeqNode->getChild(2);
+      TR::Node* glRegDeps = TR::Node::create(TR::GlRegDeps, sourceDeps->getNumChildren());
+      copyExitRegDepsAndSubstitute(glRegDeps, sourceDeps, regDepForStoreNode);
       checkLhsNull->addChildren(&glRegDeps, 1);
-
-      TR::Node* expectedDeps = callBlock->getExit()->getNode()->getFirstChild();
-      for (int i = 0; i < expectedDeps->getNumChildren(); ++i)
-         {
-         TR::Node* temp = expectedDeps->getChild(i);
-         if (depNode && temp->getGlobalRegisterNumber() == depNode->getGlobalRegisterNumber())
-            continue;
-         else if (temp->getOpCodeValue() == TR::PassThrough)
-            {
-            // PassThrough nodes cannot be commoned because doing so does not
-            // actually anchor the child, causing it's lifetime to not be extended
-            TR::Node* original = temp;
-            temp = TR::Node::create(original, TR::PassThrough, 1, original->getFirstChild());
-            temp->setLowGlobalRegisterNumber(original->getLowGlobalRegisterNumber());
-            temp->setHighGlobalRegisterNumber(original->getHighGlobalRegisterNumber());
-            }
-         glRegDeps->addChildren(&temp, 1);
-         }
       }
 
    prevBlock->append(TR::TreeTop::create(comp, checkLhsNull));
@@ -428,18 +446,9 @@ TR::TreeLowering::fastpathAcmpHelper(TR::Node * const node, TR::TreeTop * const 
    auto* const checkRhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg2TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
    if (checkLhsNull->getNumChildren() == 3)
       {
-      auto* const fromDeps = checkLhsNull->getChild(2);
-      auto* const newDeps = TR::Node::copy(fromDeps);
-      for (uint16_t i = 0; i < fromDeps->getNumChildren(); ++i)
-         {
-         auto* const newChild = TR::Node::copy(fromDeps->getChild(i));
-         if (newChild->getFirstChild())
-            {
-            newChild->getFirstChild()->incReferenceCount();
-            }
-         newDeps->setChild(i, newChild);
-         }
-      checkRhsNull->setChild(2, newDeps);
+      TR::Node* regDeps = TR::Node::copy(checkLhsNull->getChild(2));
+      copyExitRegDepsAndSubstitute(regDeps, checkLhsNull->getChild(2), NULL);
+      checkRhsNull->setChild(2, regDeps);
       }
 
    // create block to check if rhs is null
