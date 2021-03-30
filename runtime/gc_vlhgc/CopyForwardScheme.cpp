@@ -4147,8 +4147,24 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	/* ensure that all buffers have been flushed before we start reference processing */
 	env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
 	
+	UDATA preservedGcReadBarrierType = 0;
 	if(env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 		_clearableProcessingStarted = true;
+
+		/* During clearable pass, GC threads can access clearable slots other than the one they are directly processing.
+		 * Such other slots could still point to fowarded objects and forwarded pointer needs to be
+		 * resolved (at least in thread local sense) to be able to access the object.
+		 * An example of that is string comparator, that may be used when removing
+		 * an entry from the string table, as part of AVL rebalancing.
+		 * String comparator happens to be used also in  the context of mutator thread when adding new elements,
+		 * and it already uses Read Barrier (to support concurrent evacuating GCs).
+		 * That read barrier will do exactly what we need for our clearable pass (well it will do more,
+		 * not just locally resolve FP, but even fix the slot, but it's correct for this pass, too). We just need
+		 * to enable the RB, if not already enabled.
+		 */
+		preservedGcReadBarrierType = _javaVM->gcReadBarrierType;
+		_javaVM->gcReadBarrierType = J9_GC_READ_BARRIER_TYPE_ALWAYS;
+
 		/* Soft and weak references resurrected by finalization need to be cleared immediately since weak and soft processing has already completed.
 		 * This has to be set before unfinalizable (and phantom) processing, because it can copy object to a tail filled region, in which case we do
 		 * not want to put GMP refs to REMEMBERED state (we want have a chance to put it back to INITIAL state).
@@ -4175,7 +4191,10 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	/* Clearable must not uncover any new work */
 	Assert_MM_true(NULL == env->_workStack.popNoWait(env));
 
-	env->_currentTask->synchronizeGCThreads(env, UNIQUE_ID);
+	if(env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
+		_javaVM->gcReadBarrierType = preservedGcReadBarrierType;
+		env->_currentTask->releaseSynchronizedGCThreads(env);
+	}
 
 	if(!abortFlagRaised()) {
 		clearCardTableForPartialCollect(env);
