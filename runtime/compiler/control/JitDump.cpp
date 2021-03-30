@@ -135,8 +135,7 @@ traceILOfCrashedThread(J9VMThread *vmThread, TR::Compilation *comp, TR::FILE *ji
    }
 
 static void
-jitDumpRecompileWithTracing(J9VMThread *vmThread, J9Method *ramMethod, TR::CompilationInfo *compInfo, TR_Hotness optLevel, bool isProfilingCompile, TR::Options *optionsFromOriginalCompile, bool isAOTBody, void *oldStartPC, TR::FILE *jitdumpFile
-   )
+jitDumpRecompileWithTracing(J9VMThread *vmThread, J9Method *ramMethod, TR::CompilationInfo *compInfo, TR_Hotness optLevel, bool isProfilingCompile, TR::Options *optionsFromOriginalCompile, bool isAOTBody, void *oldStartPC, TR::FILE *jitdumpFile)
    {
    PORT_ACCESS_FROM_VMC(vmThread);
    J9Class *clazz = J9_CLASS_FROM_METHOD(ramMethod);
@@ -428,6 +427,39 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       if (NULL == threadCompInfo)
          {
          // We are an application thread
+
+         // The stack walker may not be able to walk the stack if the crash did not happen on a transition frame. In
+         // such cases the stack walker will resume walking the stack on the last known valid point, which will be a
+         // transition frame further up the stack (ex. INT -> JIT transition frame). This will result in the stack
+         // walker potentially skipping some JIT methods on the backtrace. This is not desirable. Chances are high
+         // that the crash happen because of a miscompilation in the first JIT compiled method on the stack, so it
+         // is imperative that we recompile the method we actually crashed in.
+         const char *name;
+         void *value;
+         U_32 infoType = j9sig_info(crashedThread->gpInfo, J9PORT_SIG_CONTROL, J9PORT_SIG_CONTROL_PC, &name, &value);
+
+         if (J9PORT_SIG_VALUE_ADDRESS == infoType)
+            {
+            J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, *reinterpret_cast<UDATA*>(value));
+            if (NULL != metadata)
+               {
+               auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>(metadata->bodyInfo);
+               if (NULL != bodyInfo)
+                  {
+                  jitDumpRecompileWithTracing(
+                     crashedThread,
+                     metadata->ramMethod,
+                     compInfo,
+                     bodyInfo->getHotness(),
+                     bodyInfo->getIsProfilingBody(),
+                     NULL,
+                     bodyInfo->getIsAotedBody(),
+                     bodyInfo->getStartPCAfterPreviousCompile(),
+                     jitdumpFile
+                  );
+                  }
+               }
+            }
 
          J9StackWalkState walkState;
          walkState.userData1 = compInfo;
