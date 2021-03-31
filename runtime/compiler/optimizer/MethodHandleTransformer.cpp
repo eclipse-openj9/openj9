@@ -234,6 +234,18 @@ TR_MethodHandleTransformer::ObjectInfo*
 TR_MethodHandleTransformer::blockStartObjectInfoFromPredecessors(TR::Block* block)
    {
    auto blockNum = block->getNumber();
+   // If there exist an exception edge coming into this block, we don't know the object info at
+   // the time of the exception, thus initialize the object info for all locals to unknown for
+   // this block
+   //
+   if (block->isCatchBlock())
+      {
+      if (trace())
+         traceMsg(comp(), "block_%d has exception predecessor, initialize all local slots to unknown object\n", blockNum);
+
+      return new (comp()->trMemory()->currentStackRegion()) ObjectInfo(_numLocals, static_cast<int>(TR::KnownObjectTable::UNKNOWN), comp()->trMemory()->currentStackRegion());
+      }
+
    // If there exists one or more predecessor unvisited, the unvisited predecessor must be from a back edge.
    // Don't propagate as we don't know what might happen from the predecessor.
    //
