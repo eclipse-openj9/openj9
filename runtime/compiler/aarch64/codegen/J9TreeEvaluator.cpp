@@ -2254,10 +2254,11 @@ genZeroInitObject(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uin
  * @param[in] clazz:      class pointer to store in the object header
  * @param[in] objectReg:  the register that holds object address
  * @param[in] classReg:   the register that holds class
+ * @param[in] zeroReg:    the register whose value is zero
  * @param[in] tempReg1:   temporary register 1
  */
 static void
-genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *tempReg1)
+genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *zeroReg, TR::Register *tempReg1)
    {
    TR_ASSERT(clazz, "Cannot have a null OpaqueClassBlock\n");
    TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
@@ -2302,6 +2303,20 @@ genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *
    // Store the class
    generateMemSrc1Instruction(cg, TR::Compiler->om.generateCompressedObjectHeaders() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
       node, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), clzReg);
+
+   int32_t lwOffset = fej9->getByteOffsetToLockword(clazz);
+   if (clazz && (lwOffset > 0))
+      {
+      int32_t lwInitialValue = fej9->getInitialLockword(clazz);
+
+      if (0 != lwInitialValue)
+         {
+         bool isCompressedLockWord = fej9->generateCompressedLockWord();
+         loadConstant64(cg, node, lwInitialValue, tempReg1);
+         generateMemSrc1Instruction(cg, isCompressedLockWord ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
+               node, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, lwOffset, cg), tempReg1);
+         }
+      }
    }
 
 /**
@@ -2321,7 +2336,7 @@ genInitArrayHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *c
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
 
-   genInitObjectHeader(node, cg, clazz, objectReg, classReg, tempReg1);
+   genInitObjectHeader(node, cg, clazz, objectReg, classReg, zeroReg, tempReg1);
    if (node->getFirstChild()->getOpCode().isLoadConst() && (node->getFirstChild()->getInt() == 0))
       {
       // constant zero length array
@@ -2496,7 +2511,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
    else
       {
-      genInitObjectHeader(node, cg, clazz, resultReg, classReg, tempReg1);
+      genInitObjectHeader(node, cg, clazz, resultReg, classReg, zeroReg, tempReg1);
       }
 
    // 9. Setup AOT relocation
