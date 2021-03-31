@@ -2256,9 +2256,10 @@ genZeroInitObject(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uin
  * @param[in] classReg:   the register that holds class
  * @param[in] zeroReg:    the register whose value is zero
  * @param[in] tempReg1:   temporary register 1
+ * @param[in] isTLHHasNotBeenCleared: true if TLH has not been cleared
  */
 static void
-genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *zeroReg, TR::Register *tempReg1)
+genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *zeroReg, TR::Register *tempReg1, bool isTLHHasNotBeenCleared)
    {
    TR_ASSERT(clazz, "Cannot have a null OpaqueClassBlock\n");
    TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
@@ -2309,12 +2310,20 @@ genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *
       {
       int32_t lwInitialValue = fej9->getInitialLockword(clazz);
 
-      if (0 != lwInitialValue)
+      if ((0 != lwInitialValue) || isTLHHasNotBeenCleared)
          {
          bool isCompressedLockWord = fej9->generateCompressedLockWord();
-         loadConstant64(cg, node, lwInitialValue, tempReg1);
-         generateMemSrc1Instruction(cg, isCompressedLockWord ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
-               node, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, lwOffset, cg), tempReg1);
+         if (0 != lwInitialValue)
+            {
+            loadConstant64(cg, node, lwInitialValue, tempReg1);
+            generateMemSrc1Instruction(cg, isCompressedLockWord ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
+                  node, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, lwOffset, cg), tempReg1);
+            }
+         else
+            {
+            generateMemSrc1Instruction(cg, isCompressedLockWord ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
+                  node, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, lwOffset, cg), zeroReg);
+            }
          }
       }
    }
@@ -2322,55 +2331,74 @@ genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *
 /**
  * @brief Generates instructions for initializing array header for newarray/anewarray
  *
- * @param[in] node:       node
- * @param[in] cg:         code generator
- * @param[in] clazz:      class pointer to store in the object header
- * @param[in] objectReg:  the register that holds object address
- * @param[in] classReg:   the register that holds class
- * @param[in] sizeReg:    the register that holds array length.
- * @param[in] zeroReg:    the register whose value is zero
- * @param[in] tempReg1:   temporary register 1
+ * @param[in] node:                   node
+ * @param[in] cg:                     code generator
+ * @param[in] clazz:                  class pointer to store in the object header
+ * @param[in] objectReg:              the register that holds object address
+ * @param[in] classReg:               the register that holds class
+ * @param[in] sizeReg:                the register that holds array length.
+ * @param[in] zeroReg:                the register whose value is zero
+ * @param[in] tempReg1:               temporary register 1
+ * @param[in] isBatchClearTLHEnabled: true if BatchClearTLH is enabled 
+ * @param[in] isTLHHasNotBeenCleared: true if TLH has not been cleared
  */
 static void
-genInitArrayHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *sizeReg, TR::Register *zeroReg, TR::Register *tempReg1)
+genInitArrayHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *sizeReg, TR::Register *zeroReg, TR::Register *tempReg1,
+                  bool isBatchClearTLHEnabled, bool isTLHHasNotBeenCleared)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
 
-   genInitObjectHeader(node, cg, clazz, objectReg, classReg, zeroReg, tempReg1);
+   genInitObjectHeader(node, cg, clazz, objectReg, classReg, zeroReg, tempReg1, isTLHHasNotBeenCleared);
    if (node->getFirstChild()->getOpCode().isLoadConst() && (node->getFirstChild()->getInt() == 0))
       {
-      // constant zero length array
-      // Zero length arrays are discontiguous (i.e. they also need the discontiguous length field to be 0) because
-      // they are indistinguishable from non-zero length discontiguous arrays
-      if (TR::Compiler->om.generateCompressedObjectHeaders())
+      // If BatchClearTLH is enabled, we do not need to write 0 into the header.
+      if (!isBatchClearTLHEnabled)
          {
-         // `mustBeZero` and `size` field of J9IndexableObjectDiscontiguousCompressed must be cleared.
-         // We cannot use `strimmx` in this case because offset would be 4 bytes, which cannot be encoded as imm12 of `strimmx`.
-         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
-                                    new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
-                                    zeroReg);
-         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
-                                    new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg),
-                                    zeroReg);
-         }
-      else
-         {
-         // `strimmx` can be used as offset is 8 bytes.
-         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
-                                    new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
-                                    zeroReg);
+         // constant zero length array
+         // Zero length arrays are discontiguous (i.e. they also need the discontiguous length field to be 0) because
+         // they are indistinguishable from non-zero length discontiguous arrays
+         if (TR::Compiler->om.generateCompressedObjectHeaders())
+            {
+            // `mustBeZero` and `size` field of J9IndexableObjectDiscontiguousCompressed must be cleared.
+            // We cannot use `strimmx` in this case because offset would be 4 bytes, which cannot be encoded as imm12 of `strimmx`.
+            generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                                       new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
+                                       zeroReg);
+            generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                                       new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg),
+                                       zeroReg);
+            }
+         else
+            {
+            // `strimmx` can be used as offset is 8 bytes.
+            generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
+                                       new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
+                                       zeroReg);
+            }
          }
       }
    else
       {
       // Store the array size
-      // In the compressedrefs build, size field of discontigous array header is cleared by instructions generated by genZeroInit().
+      // If the size field of contiguous array header is 0, the array is discontiguous and
+      // the size of discontiguous array must be in the size field of discontiguous array header.
+      // For now, we do not create non-zero length discontigous array,
+      // so it is safe to write 0 into the size field of discontiguous array header.
+      //
+      // In the compressedrefs build, the size field of discontigous array header is cleared by instructions generated by genZeroInit().
       // In the large heap build, we must clear size and mustBeZero field here
       if (TR::Compiler->om.generateCompressedObjectHeaders())
          {
          generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
                                     new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfContiguousArraySizeField(), cg),
                                     sizeReg);
+         if (!isTLHHasNotBeenCleared)
+            {
+            // If BatchClearTLH is not enabled and TLH has not been cleared, write 0 into the size field of J9IndexableObjectDiscontiguousCompressed.
+            generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                           new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg),
+                           zeroReg);
+            }
          }
       else
          {
@@ -2501,17 +2529,25 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
 
    // 7. Initialize the allocated memory area with zero
-   // TODO selectively initialize necessary slots
-   genZeroInitObject(node, cg, isVariableLength, objectSize, headerSize, resultReg, tempReg3, zeroReg, tempReg1, tempReg2);
+   const bool isBatchClearTLHEnabled = fej9->tlhHasBeenCleared();
+   if (!isBatchClearTLHEnabled)
+      {
+      // TODO selectively initialize necessary slots
+      if (!node->canSkipZeroInitialization())
+         {
+         genZeroInitObject(node, cg, isVariableLength, objectSize, headerSize, resultReg, tempReg3, zeroReg, tempReg1, tempReg2);
+         }
+      }
+   const bool tlhHasNotBeenCleared = (!isBatchClearTLHEnabled) && node->canSkipZeroInitialization();
 
    // 8. Initialize Object Header
    if (isArrayNew)
       {
-      genInitArrayHeader(node, cg, clazz, resultReg, classReg, lengthReg, zeroReg, tempReg1);
+      genInitArrayHeader(node, cg, clazz, resultReg, classReg, lengthReg, zeroReg, tempReg1, isBatchClearTLHEnabled, tlhHasNotBeenCleared);
       }
    else
       {
-      genInitObjectHeader(node, cg, clazz, resultReg, classReg, zeroReg, tempReg1);
+      genInitObjectHeader(node, cg, clazz, resultReg, classReg, zeroReg, tempReg1, tlhHasNotBeenCleared);
       }
 
    // 9. Setup AOT relocation
