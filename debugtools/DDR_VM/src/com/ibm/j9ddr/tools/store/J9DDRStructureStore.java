@@ -536,16 +536,4 @@ public class J9DDRStructureStore {
 		return this.supersetFilename;
 	}
 
-	@Deprecated
-	public void close() throws IOException {
-//		if (zipOutputStream != null) {
-//			zipOutputStream.close();
-//			zipOutputStream = null;
-//		}
-		
-//		if (zipFile != null) {
-//			zipFile.close();
-//			zipFile = null;
-//		}
-	}
 }
