@@ -312,7 +312,7 @@ getJ9UTF8SignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObjec
 
 	signatureLength += strlen(rSignature);
 
-	methodDescriptor = (J9UTF8*)j9mem_allocate_memory(signatureLength + sizeof(J9UTF8) + 1, OMRMEM_CATEGORY_VM);
+	methodDescriptor = (J9UTF8*)j9mem_allocate_memory(signatureLength + sizeof(J9UTF8), OMRMEM_CATEGORY_VM);
 	if (NULL == methodDescriptor) {
 		goto done;
 	}
@@ -329,7 +329,7 @@ getJ9UTF8SignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObjec
 
 	*cursor++ = ')';
 	/* Copy return type signature to descriptor string */
-	strcpy(cursor, rSignature);
+	strncpy(cursor, rSignature, strlen(rSignature));
 
 done:
 	j9mem_free_memory(rSignature);
@@ -449,15 +449,20 @@ done:
 }
 
 J9Method *
-lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9NameAndSignature *nas, J9Class *callerClass, UDATA lookupOptions)
+lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9UTF8 *name, J9UTF8 *signature, J9Class *callerClass, UDATA lookupOptions)
 {
 	J9Method *result = NULL;
+	J9NameAndSignature nas;
+	J9UTF8 nullSignature = {0};
+
+	nas.name = name;
+	nas.signature = signature;
+	lookupOptions |= J9_LOOK_DIRECT_NAS;
 
 	/* If looking for a MethodHandle polymorphic INL method, allow any caller signature. */
 	if (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(currentThread->javaVM)) {
-		J9UTF8 *nameUTF = nas->name;
-		U_8 *nameData = J9UTF8_DATA(nameUTF);
-		U_16 nameLength = J9UTF8_LENGTH(nameUTF);
+		U_8 *nameData = J9UTF8_DATA(name);
+		U_16 nameLength = J9UTF8_LENGTH(name);
 
 		if ((J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToVirtual"))
 		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToStatic"))
@@ -465,13 +470,13 @@ lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9NameAndSignatu
 		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToInterface"))
 		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "invokeBasic"))
 		) {
-			J9UTF8_SET_LENGTH(nas->signature, 0);
+			nas.signature = &nullSignature;
 			/* Set flag for partial signature lookup. Signature length is already initialized to 0. */
 			lookupOptions |= J9_LOOK_PARTIAL_SIGNATURE;
 		}
 	}
 
-	result = (J9Method*)currentThread->javaVM->internalVMFunctions->javaLookupMethod(currentThread, resolvedClass, (J9ROMNameAndSignature*)nas, callerClass, lookupOptions);
+	result = (J9Method*)currentThread->javaVM->internalVMFunctions->javaLookupMethod(currentThread, resolvedClass, (J9ROMNameAndSignature*)&nas, callerClass, lookupOptions);
 
 	return result;
 }
@@ -738,8 +743,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 			Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_NAS(env, J9UTF8_LENGTH(name), J9UTF8_DATA(name), J9UTF8_LENGTH(signature), J9UTF8_DATA(signature));
 
 			if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
-				J9NameAndSignature nas;
-				UDATA lookupOptions = J9_LOOK_DIRECT_NAS;
+				UDATA lookupOptions = 0;
 
 				if (JNI_TRUE == speculativeResolve) {
 					lookupOptions |= J9_LOOK_NO_THROW;
@@ -780,11 +784,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 						break;
 				}
 
-				nas.name = name;
-				nas.signature = signature;
-
 				/* Check if signature polymorphic native calls */
-				J9Method *method = lookupMethod(currentThread, resolvedClass, &nas, callerClass, lookupOptions);
+				J9Method *method = lookupMethod(currentThread, resolvedClass, name, signature, callerClass, lookupOptions);
 
 				/* Check for resolution exception */
 				if (VM_VMHelpers::exceptionPending(currentThread)) {
