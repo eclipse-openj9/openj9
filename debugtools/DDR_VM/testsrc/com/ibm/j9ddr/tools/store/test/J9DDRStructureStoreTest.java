@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,25 +96,16 @@ public class J9DDRStructureStoreTest {
 
 		try {
 			store.add(key, structureFileName, true);
-			store.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 			fail(e.getMessage());
 		} catch (StructureMismatchError e) {
 			e.printStackTrace();
 			fail(e.getMessage());
-		} finally {
-			try {
-				store.close();
-			} catch (IOException e) {
-				fail("Could not close store");
-			}
 		}
-		
+
 		// TODO: Open file and make sure it is good.
 		try {
-			store.close();
-			store = null;
 			store = new J9DDRStructureStore("newDir", "superset.dat");
 			ImageInputStream is = store.get(key);
 			FileInputStream fis = new FileInputStream(structureFileName);
