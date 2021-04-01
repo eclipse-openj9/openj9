@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017, 2020 IBM Corp. and others
+* Copyright (c) 2017, 2021 IBM Corp. and others
 *
 * This program and the accompanying materials are made available under
 * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -356,6 +356,93 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    unsafeCall->setSymbolReference(comp()->getSymRefTab()->findOrCreateCodeGenInlinedHelper(helper));
    }
 
+void J9::RecognizedCallTransformer::process_java_lang_MethodHandle_invokeBasic(TR::TreeTop * treetop, TR::Node* node)
+   {
+   TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
+   // load MethodHandle.form (lambdaform)
+   uint32_t offset = fej9->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/MethodHandle;", "form", "Ljava/lang/invoke/LambdaForm;", comp()->getCurrentMethod());
+   TR::SymbolReference * lambdaFormSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
+                                                                                                TR::Symbol::Java_lang_invoke_MethodHandle_form,
+                                                                                                TR::Address,
+                                                                                                offset,
+                                                                                                false,
+                                                                                                false,
+                                                                                                false,
+                                                                                                "java/lang/invoke/MethodHandle.form Ljava/lang/invoke/LambdaForm;");
+   TR::Node * lambdaFormNode = TR::Node::createCompressedRefsAnchor(TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1,node->getArgument(0), lambdaFormSymRef));
+   lambdaFormNode->setIsNonNull(true);
+   // load from lambdaForm.vmEntry (memberName)
+   offset = fej9->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/LambdaForm;", "vmentry", "Ljava/lang/invoke/MemberName;", comp()->getCurrentMethod());
+   TR::SymbolReference * memberNameSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
+                                                                                                TR::Symbol::Java_lang_invoke_LambdaForm_vmentry,
+                                                                                                TR::Address,
+                                                                                                offset,
+                                                                                                false,
+                                                                                                false,
+                                                                                                false,
+                                                                                                "java/lang/invoke/LambdaForm.vmentry Ljava/lang/invoke/MemberName;");
+   TR::Node * memberNameNode = TR::Node::createCompressedRefsAnchor(TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1, lambdaFormNode->getFirstChild(), memberNameSymRef));
+   // load from membername.vmTarget (J9Method)
+   TR::SymbolReference * vmTargetSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
+                                                                                                TR::Symbol::Java_lang_invoke_MemberName_vmtarget,
+                                                                                                TR::Address,
+                                                                                                fej9->getCurrentVMThread()->javaVM->vmtargetOffset,
+                                                                                                false,
+                                                                                                false,
+                                                                                                false,
+                                                                                                "java/lang/invoke/MemberName.vmtarget J");
+   TR::Node * vmTargetNode = TR::Node::createCompressedRefsAnchor(TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1, memberNameNode->getFirstChild(), vmTargetSymRef));
+   // create ifcmpeq 0 on vmTarget.extra to see if compiled
+
+   TR::SymbolReference *extraField = comp()->getSymRefTab()->findOrCreateJ9MethodExtraFieldSymbolRef(offsetof(struct J9Method, extra));
+   TR::Node *extra = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(extraField->getSymbol()->getDataType()), 1, 1, vmTargetNode->getFirstChild(), extraField);
+
+   TR::ILOpCodes xcmpeq = comp()->target().is64Bit()? TR::iflcmpeq : TR::ificmpeq;
+   TR::ILOpCodes xand   = comp()->target().is64Bit()? TR::land   : TR::iand;
+   TR::Node *zero = comp()->target().is64Bit()? TR::Node::lconst(node, 0) : TR::Node::iconst(node, 0);
+   TR::Node *mask = comp()->target().is64Bit()? TR::Node::lconst(node, J9_STARTPC_NOT_TRANSLATED) : TR::Node::iconst(node, J9_STARTPC_NOT_TRANSLATED);
+
+   TR::Node* isCompiledNode = TR::Node::createif(xcmpeq,
+         TR::Node::create(xand, 2, extra, mask),
+         zero,
+         NULL);
+   isCompiledNode->copyByteCodeInfo(node);
+   TR::TreeTop * cmpCheckTreeTop = TR::TreeTop::create(self()->comp(), isCompiledNode);
+
+   // the null check should be separated out to the point we access the MethodHandle object
+   TR::TransformUtil::separateNullCheck(comp(), treetop, true);
+
+   treetop->insertBefore(TR::TreeTop::create(comp(),lambdaFormNode));
+   treetop->insertBefore(TR::TreeTop::create(comp(),memberNameNode));
+   treetop->insertBefore(TR::TreeTop::create(comp(),vmTargetNode));
+
+   // calculate the compiled method entry and construct the jit-ed method call using computed call mechanism
+   TR::SymbolReference *linkageInfoSymRef = comp()->getSymRefTab()->findOrCreateStartPCLinkageInfoSymbolRef(-4);
+   TR::ILOpCodes x2a = comp()->target().is64Bit()? TR::l2a : TR::i2a;
+   TR::Node *linkageInfo    = TR::Node::createWithSymRef(TR::iloadi, 1, 1, TR::Node::create(x2a, 1, extra), linkageInfoSymRef);
+   TR::Node *jitEntryOffset = TR::Node::create(TR::ishr,   2, linkageInfo, TR::Node::iconst(node, 16));
+   TR::Node *jitAddress;
+   if (comp()->target().is64Bit())
+      {
+      jitAddress = TR::Node::create(TR::ladd, 2, extra, TR::Node::create(TR::i2l, 1, jitEntryOffset));
+      }
+   else
+      {
+      jitAddress = TR::Node::create(TR::iadd, 2, extra, jitEntryOffset);
+      }
+
+   TR::SymbolReference * computedCallSymbol = comp()->getSymRefTab()->findOrCreateComputedStaticCallSymbol();
+
+   TR::Node * computedCallNode = TR::Node::createWithSymRef(node, node->getSymbol()->castToMethodSymbol()->getMethod()->indirectCallOpCode(),node->getNumChildren()+1, computedCallSymbol);
+   computedCallNode->setAndIncChild(0,jitAddress); // first arguments of computed calls is the actual method address
+   for (int32_t i = 0; i < node->getNumChildren(); i++){
+      computedCallNode->setAndIncChild(i+1, node->getChild(i)->duplicateTree());
+   }
+   TR::TreeTop * computedCallTreeTop = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, computedCallNode));
+   TR::TreeTop * inlCallTreeTop = TR::TreeTop::create(comp(), node->duplicateTree()); // original treetop gets deleted by createDiamondForCall
+   TR::TransformUtil::createDiamondForCall(this, treetop, cmpCheckTreeTop, inlCallTreeTop, computedCallTreeTop, false, false);
+   }
+
 bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    {
    auto node = treetop->getNode()->getFirstChild();
@@ -417,7 +504,8 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       // Post-inlining pass
       switch (rm)
          {
-         // TODO: invokeBasic, linkTo*
+         case TR::java_lang_invoke_MethodHandle_invokeBasic:
+            return true;
          default:
             return false;
          }
@@ -527,7 +615,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
       // Post-inlining pass
       switch (rm)
          {
-         // TODO: invokeBasic, linkTo*
+         case TR::java_lang_invoke_MethodHandle_invokeBasic:
+            process_java_lang_MethodHandle_invokeBasic(treetop, node);
+            break;
          default:
             break;
          }

@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017, 2020 IBM Corp. and others
+* Copyright (c) 2017, 2021 IBM Corp. and others
 *
 * This program and the accompanying materials are made available under
 * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,6 +108,13 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *     Flag indicating if null check is needed on the first argument of the unsafe call
     */
    void processUnsafeAtomicCall(TR::TreeTop* treetop, TR::SymbolReferenceTable::CommonNonhelperSymbol helper, bool needsNullCheck = false);
+
+   /** \brief
+    *     todo 
+    *  \param treetop
+    *  \param node 
+    */
+   void process_java_lang_MethodHandle_invokeBasic(TR::TreeTop * treetop, TR::Node* node);
    };
 
 }
