@@ -385,7 +385,6 @@ ClientSessionData::ClassInfo::ClassInfo() :
    _constantPool(NULL),
    _classFlags(0),
    _classChainOffsetOfIdentifyingLoaderForClazz(0),
-   _fieldOrStaticNameCache(decltype(_fieldOrStaticNameCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _constantClassPoolCache(decltype(_constantClassPoolCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(TR::Compiler->persistentAllocator())),

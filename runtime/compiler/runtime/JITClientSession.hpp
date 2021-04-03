@@ -236,7 +236,6 @@ class ClientSessionData
       J9ConstantPool *_constantPool;
       uintptr_t _classFlags;
       uintptr_t _classChainOffsetOfIdentifyingLoaderForClazz;
-      PersistentUnorderedMap<int32_t, std::string> _fieldOrStaticNameCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _constantClassPoolCache;
       TR_FieldAttributesCache _fieldAttributesCache;
