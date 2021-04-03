@@ -570,7 +570,14 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 #endif /* COUNT_BYTECODE_PAIRS */
 
 		if (vm->exitHook) {
-			vm->exitHook((jint) rc);
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+			if (J9_IS_31BIT_INTEROP_TARGET(vm->exitHook)) {
+				execute31BitExitHook(vm, (jint) rc);
+			} else
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+			{
+				vm->exitHook((jint) rc);
+			}
 		}
 
 		j9exit_shutdown_and_exit((I_32) rc);

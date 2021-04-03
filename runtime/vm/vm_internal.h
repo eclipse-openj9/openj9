@@ -140,6 +140,17 @@ void
 sidecarShutdown(J9VMThread* shutdownThread);
 #endif /* J9VM_OPT_SIDECAR */
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+/**
+* Helper function to invoke 31-bit target vm->exitHook via CEL4RO31.
+* @param vm J9JavaVM instance
+* @param rc The return code passed to exitHook
+* @return void
+*/
+void
+execute31BitExitHook(J9JavaVM * vm, jint rc);
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 /* ---------------- jnimem.c ----------------- */
 
 /**
