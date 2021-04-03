@@ -781,15 +781,11 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation 
 uint32_t
 TR_ResolvedJ9JITServerMethod::classCPIndexOfMethod(uint32_t methodCPIndex)
    {
-   uint32_t realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), methodCPIndex);
-   J9ROMMethodRef *methodRef = (J9ROMMethodRef *) &romCPBase()[realCPIndex];
-   if (JITServerHelpers::isAddressInROMClass(methodRef, romClassPtr()))
-      {
-      uint32_t classIndex = methodRef->classRefCPIndex;
-      return classIndex;
-      }
-   _stream->write(JITServer::MessageType::ResolvedMethod_classCPIndexOfMethod, _remoteMirror, methodCPIndex);
-   return std::get<0>(_stream->read<uint32_t>());
+   J9ROMClass *romClass = romClassPtr();
+   uint32_t realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClass, methodCPIndex);
+   J9ROMMethodRef *methodRef = (J9ROMMethodRef *)&romCPBase()[realCPIndex];
+   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(methodRef, romClass), "Address outside of ROMClass");
+   return methodRef->classRefCPIndex;
    }
 
 void *
