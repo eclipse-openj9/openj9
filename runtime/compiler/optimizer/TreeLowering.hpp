@@ -75,8 +75,9 @@ class TreeLowering : public TR::Optimization
     *
     * @param block is the block containing the TreeTop to be moved
     * @param tt is a pointer to the TreeTop to be moved
+    * @param isAddress shows if the node is address, otherwise it is assumed to be an integer
     */
-   void moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node);
+   void moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node, bool isAddress);
 
    /**
     * @brief Split a block after having inserted a fastpath branch
@@ -103,6 +104,9 @@ class TreeLowering : public TR::Optimization
    void lowerValueTypeOperations(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
    void fastpathAcmpHelper(TR::PreorderNodeIterator& nodeIter, TR::Node* const node, TR::TreeTop* const tt);
    void lowerArrayStoreCHK(TR::Node* node, TR::TreeTop* tt);
+
+   void lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
+   void lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
    };
 
 }
