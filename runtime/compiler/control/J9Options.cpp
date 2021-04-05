@@ -2360,6 +2360,15 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    setOption(TR_DisableDirectToJNI);
 #endif
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+   // 31-64 Interop currently lacks codegen DirectToJNI support to invoke cross AMODE calls.
+   // This is a temporarily measure to ensure functional correctness. At the least, we can
+   // enable DirectToJNI for resolved JNI calls to 64-bit targets.
+   if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_3164_INTEROPERABILITY)) {
+      setOption(TR_DisableDirectToJNI);
+   }
+#endif
+
    // Determine whether or not to call the hooked helpers
    //
    if (

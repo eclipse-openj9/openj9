@@ -3582,6 +3582,18 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+	{
+		IDATA enable3164Interop = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLE3164INTEROPERABILITY, NULL);
+		IDATA disable3164Interop = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLE3164INTEROPERABILITY, NULL);
+		if (enable3164Interop > disable3164Interop) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_3164_INTEROPERABILITY;
+		} else if (enable3164Interop < disable3164Interop) {
+			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_3164_INTEROPERABILITY;
+		}
+	}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 	/* -Xbootclasspath and -Xbootclasspath/p are not supported from Java 9 onwards */
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		PORT_ACCESS_FROM_JAVAVM(vm);

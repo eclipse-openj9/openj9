@@ -243,6 +243,13 @@ openNativeLibrary(J9JavaVM* vm, J9ClassLoader * classLoader, const char * libNam
 	/* If a library path was specified and the library name is not an absolute path,
    * search all entries in the library path for the library */
 
+	UDATA flags = lazy;
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_3164_INTEROPERABILITY)) {
+		flags |= OMRPORT_SLOPEN_ATTEMPT_31BIT_OPEN;
+	}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 	if (libraryPath && (!isAbsolutePath(libName))) {
 		char classPathSeparator = (char) j9sysinfo_get_classpathSeparator();
 		J9VMSystemProperty *classpathSeparatorProperty = NULL;
@@ -287,9 +294,9 @@ openNativeLibrary(J9JavaVM* vm, J9ClassLoader * classLoader, const char * libNam
 					fullPathBufferLength = expectedPathLength;
 				}
 				j9str_printf(PORTLIB, fullPathPtr, expectedPathLength, "%.*s%s%s", pathLength, libraryPath, dirSeparator, libName);
-				result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, lazy | J9PORT_SLOPEN_DECORATE | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
+				result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, flags | J9PORT_SLOPEN_DECORATE | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
 				if(result == J9NATIVELIB_LOAD_ERR_NOT_FOUND) {
-					result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, lazy | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
+					result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, flags | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
 					if(result != J9NATIVELIB_LOAD_ERR_NOT_FOUND) {
 						goto exit;
 					}
@@ -318,9 +325,9 @@ openNativeLibrary(J9JavaVM* vm, J9ClassLoader * classLoader, const char * libNam
 
 	/* No library path specified, just add the extension and try that */
 	/* temp fix.  Remove the second openFunc call once apps like javah have bootLibraryPaths */
-	result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, lazy);
+	result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, flags);
 	if(result == J9NATIVELIB_LOAD_ERR_NOT_FOUND) {
-		result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, lazy | J9PORT_SLOPEN_DECORATE);
+		result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, flags | J9PORT_SLOPEN_DECORATE);
 	}
 	
 exit:
