@@ -86,7 +86,7 @@ ifdef({SAVE_R13},{
 ifdef({ASM_J9VM_ENV_DATA64},{
 	staddr r3,JIT_GPR_SAVE_SLOT(17)
 	laddr r4,J9TR_VMThread_javaVM(J9VMTHREAD)
-	lwz r3,J9TR_JavaVM_runtimeFlags(r4)
+	lwz r3,J9TR_JavaVM_extendedRuntimeFlags(r4)
 	andi. r3,r3,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
 	beq .L_no_VR_save
 	addi r3,r1,J9TR_cframe_preservedVRs
@@ -139,12 +139,9 @@ ifdef({ASM_J9VM_ENV_DATA64},{
 	mtlr r0
 	laddr r0,CR_SAVE_OFFSET(r1)
 	mtcr r0
-ifdef({SAVE_R13},{
-	RESTORE_GPR(13)
-})
 ifdef({ASM_J9VM_ENV_DATA64},{
 	laddr r4,J9TR_VMThread_javaVM(J9VMTHREAD)
-	lwz r3,J9TR_JavaVM_runtimeFlags(r4)
+	lwz r3,J9TR_JavaVM_extendedRuntimeFlags(r4)
 	andi. r3,r3,J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
 	beq .L_no_VR_restore
 	addi r3,r1,J9TR_cframe_preservedVRs
@@ -173,6 +170,9 @@ ifdef({ASM_J9VM_ENV_DATA64},{
 	lxvd2x 63,0,r3
 .L_no_VR_restore:
 }) dnl ASM_J9VM_ENV_DATA64
+ifdef({SAVE_R13},{
+	RESTORE_GPR(13)
+})
 	RESTORE_GPR(14)
 	RESTORE_GPR(15)
 	RESTORE_GPR(16)
