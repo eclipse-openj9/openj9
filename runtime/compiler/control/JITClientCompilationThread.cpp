@@ -1212,14 +1212,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, ramMethod, methodInfo);
          }
          break;
-      case MessageType::ResolvedMethod_classCPIndexOfMethod:
-         {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
-         int32_t cpIndex = std::get<1>(recv);
-         client->write(response, method->classCPIndexOfMethod(cpIndex));
-         }
-         break;
       case MessageType::ResolvedMethod_startAddressForJittedMethod:
          {
          TR_ResolvedJ9Method *method = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
@@ -1421,18 +1413,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR_ResolvedJ9Method *method= std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          client->write(response, method->getUnresolvedFieldInCP(cpIndex));
-         }
-         break;
-      case MessageType::ResolvedMethod_fieldOrStaticName:
-         {
-         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
-         TR_ResolvedJ9Method *method = std::get<0>(recv);
-         size_t cpIndex = std::get<1>(recv);
-         int32_t len;
-
-         // Call staticName here in lieu of fieldOrStaticName as the server has already checked for "<internal field>"
-         char *s = method->staticName(cpIndex, len, trMemory, heapAlloc);
-         client->write(response, std::string(s, len));
          }
          break;
       case MessageType::ResolvedMethod_isSubjectToPhaseChange:
