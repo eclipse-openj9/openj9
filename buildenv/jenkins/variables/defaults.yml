@@ -92,7 +92,7 @@ test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins'
 build_discarder:
   logs:
-    Nightly: 35
+    Nightly: 40
     Release: 5
     OMR: 15
     OpenJDK8: 5
