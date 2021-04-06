@@ -471,7 +471,7 @@ def archive_diagnostics() {
         // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
         sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${diagnosticsFilename}"
     } else {
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' -o -name ddr_info -o -name j9ddr.dat -o -name superset.dat -o -name '*.annt.h' -o -name '*.stub.h' -o -name '*.dSYM' | sed 's#^./##' | tar -zcvf ${diagnosticsFilename} -T -"
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' -o -name ddr_info -o -name j9ddr.dat -o -name superset.dat -o -name '*.annt.h' -o -name '*.stub.h' -o -name '*.dSYM' -o -path '*/make-support/failure-logs/*' | sed 's#^./##' | tar -zcvf ${diagnosticsFilename} -T -"
     }
     if (ARTIFACTORY_CONFIG) {
         def uploadSpec = """{
