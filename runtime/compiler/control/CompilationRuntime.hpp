@@ -863,7 +863,7 @@ public:
    UDATA getVMStateOfCrashedThread() { return _vmStateOfCrashedThread; }
    void setVMStateOfCrashedThread(UDATA vmState) { _vmStateOfCrashedThread = vmState; }
    void printCompQueue();
-   TR::CompilationInfoPerThread *getCompilationInfoForDumpThread() const { return _compInfoForDiagnosticCompilationThread; }
+   TR::CompilationInfoPerThread *getCompilationInfoForDiagnosticThread() const { return _compInfoForDiagnosticCompilationThread; }
    TR::CompilationInfoPerThread * const *getArrayOfCompilationInfoPerThread() const { return _arrayOfCompilationInfoPerThread; }
    uint32_t getAotQueryTime() { return _statTotalAotQueryTime; }
    void     setAotQueryTime(uint32_t queryTime) { _statTotalAotQueryTime = queryTime; }

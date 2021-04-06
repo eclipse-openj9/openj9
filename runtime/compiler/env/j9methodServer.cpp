@@ -781,15 +781,11 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation 
 uint32_t
 TR_ResolvedJ9JITServerMethod::classCPIndexOfMethod(uint32_t methodCPIndex)
    {
-   uint32_t realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), methodCPIndex);
-   J9ROMMethodRef *methodRef = (J9ROMMethodRef *) &romCPBase()[realCPIndex];
-   if (JITServerHelpers::isAddressInROMClass(methodRef, romClassPtr()))
-      {
-      uint32_t classIndex = methodRef->classRefCPIndex;
-      return classIndex;
-      }
-   _stream->write(JITServer::MessageType::ResolvedMethod_classCPIndexOfMethod, _remoteMirror, methodCPIndex);
-   return std::get<0>(_stream->read<uint32_t>());
+   J9ROMClass *romClass = romClassPtr();
+   uint32_t realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClass, methodCPIndex);
+   J9ROMMethodRef *methodRef = (J9ROMMethodRef *)&romCPBase()[realCPIndex];
+   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(methodRef, romClass), "Address outside of ROMClass");
+   return methodRef->classRefCPIndex;
    }
 
 void *
@@ -1126,64 +1122,31 @@ TR_ResolvedJ9JITServerMethod::fieldOrStaticNameChars(I_32 cpIndex, int32_t & len
    }
 
 char *
-TR_ResolvedJ9JITServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind)
+TR_ResolvedJ9JITServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t &len, TR_Memory *trMemory, TR_AllocationKind kind)
    {
    if (cpIndex == -1)
       return "<internal name>";
 
-   J9ROMFieldRef * ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
-   J9ROMNameAndSignature * nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
-   const J9ROMClass * romClass = romClassPtr();
+   J9ROMFieldRef *ref = (J9ROMFieldRef *)&romCPBase()[cpIndex];
+   J9ROMNameAndSignature *nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
+   const J9ROMClass *romClass = romClassPtr();
+   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(nameAndSignature, romClass), "Address outside of ROMClass");
 
-   if (JITServerHelpers::isAddressInROMClass(nameAndSignature, romClass))
-      {
-      J9UTF8 * declName = J9ROMCLASSREF_NAME((J9ROMClassRef *) (&romCPBase()[ref->classRefCPIndex]));
-      J9UTF8 * name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
-      J9UTF8 * signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
+   J9UTF8 *declName = J9ROMCLASSREF_NAME((J9ROMClassRef *)&romCPBase()[ref->classRefCPIndex]);
+   J9UTF8 *name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
+   J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
 
-      if (JITServerHelpers::isAddressInROMClass(declName, romClass) &&
-          JITServerHelpers::isAddressInROMClass(name, romClass) &&
-          JITServerHelpers::isAddressInROMClass(signature, romClass))
-         {
-         len = J9UTF8_LENGTH(declName) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) +3;
-         char * s = (char *)trMemory->allocateMemory(len, kind);
-         sprintf(s, "%.*s.%.*s %.*s",
-                 J9UTF8_LENGTH(declName), utf8Data(declName),
-                 J9UTF8_LENGTH(name), utf8Data(name),
-                 J9UTF8_LENGTH(signature), utf8Data(signature));
-         return s;
-         }
-      }
+   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(declName, romClass), "Address outside of ROMClass");
+   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(name, romClass), "Address outside of ROMClass");
+   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(signature, romClass), "Address outside of ROMClass");
 
-   
-   std::string *cachedStr = NULL;
-   bool isCached = false;
-   TR::CompilationInfoPerThread *threadCompInfo = _fe->_compInfoPT;
-   {
-      OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
-      auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._fieldOrStaticNameCache;
-      auto gotStr = stringsCache.find(cpIndex);
-      if (gotStr != stringsCache.end())
-         {
-         cachedStr = &(gotStr->second);
-         isCached = true;
-         }
-   }
-
-   // only make a query if a string hasn't been cached
-   if (!isCached)
-      {
-      _stream->write(JITServer::MessageType::ResolvedMethod_fieldOrStaticName, _remoteMirror, cpIndex);
-         {
-         // reaquire the monitor
-         OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
-         auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._fieldOrStaticNameCache;
-         cachedStr = &(stringsCache.insert({cpIndex, std::get<0>(_stream->read<std::string>())}).first->second);
-         }
-      }
-
-   len = cachedStr->length();
-   return &(cachedStr->at(0));
+   len = J9UTF8_LENGTH(declName) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
+   char *s = (char *)trMemory->allocateMemory(len, kind);
+   sprintf(s, "%.*s.%.*s %.*s",
+           J9UTF8_LENGTH(declName), utf8Data(declName),
+           J9UTF8_LENGTH(name), utf8Data(name),
+           J9UTF8_LENGTH(signature), utf8Data(signature));
+   return s;
    }
 
 void *

@@ -2464,7 +2464,10 @@ void TR::CompilationInfoPerThread::suspendCompilationThread()
    if (compilationThreadIsActive())
       {
       setCompilationThreadState(COMPTHREAD_SIGNAL_SUSPEND);
-      getCompilationInfo()->decNumCompThreadsActive();
+
+      if (!isDiagnosticThread())
+         getCompilationInfo()->decNumCompThreadsActive();
+         
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Suspension request for compThread %d sleeping=%s",
