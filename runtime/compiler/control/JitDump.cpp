@@ -251,6 +251,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
 
    char *crashedThreadName = getOMRVMThreadName(crashedThread->omrVMThread);
    j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_OCCURRED_THREAD_NAME_ID, "JIT", crashedThreadName, crashedThread);
+   releaseOMRVMThreadName(crashedThread->omrVMThread);
 
    J9JITConfig *jitConfig = crashedThread->javaVM->jitConfig;
    if (NULL == jitConfig)
@@ -317,7 +318,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
 
    compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
 
-   TR::CompilationInfoPerThread *recompilationThreadInfo = compInfo->getCompilationInfoForDumpThread();
+   TR::CompilationInfoPerThread *recompilationThreadInfo = compInfo->getCompilationInfoForDiagnosticThread();
    if (NULL == recompilationThreadInfo)
       {
       j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR, "JIT", "Could not locate the diagnostic thread info");
@@ -428,35 +429,38 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
          {
          // We are an application thread
 
-         // The stack walker may not be able to walk the stack if the crash did not happen on a transition frame. In
-         // such cases the stack walker will resume walking the stack on the last known valid point, which will be a
-         // transition frame further up the stack (ex. INT -> JIT transition frame). This will result in the stack
-         // walker potentially skipping some JIT methods on the backtrace. This is not desirable. Chances are high
-         // that the crash happen because of a miscompilation in the first JIT compiled method on the stack, so it
-         // is imperative that we recompile the method we actually crashed in.
-         const char *name;
-         void *value;
-         U_32 infoType = j9sig_info(crashedThread->gpInfo, J9PORT_SIG_CONTROL, J9PORT_SIG_CONTROL_PC, &name, &value);
-
-         if (J9PORT_SIG_VALUE_ADDRESS == infoType)
+         if (NULL != crashedThread->gpInfo)
             {
-            J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, *reinterpret_cast<UDATA*>(value));
-            if (NULL != metadata)
+            // The stack walker may not be able to walk the stack if the crash did not happen on a transition frame. In
+            // such cases the stack walker will resume walking the stack on the last known valid point, which will be a
+            // transition frame further up the stack (ex. INT -> JIT transition frame). This will result in the stack
+            // walker potentially skipping some JIT methods on the backtrace. This is not desirable. Chances are high
+            // that the crash happen because of a miscompilation in the first JIT compiled method on the stack, so it
+            // is imperative that we recompile the method we actually crashed in.
+            const char *name;
+            void *value;
+            U_32 infoType = j9sig_info(crashedThread->gpInfo, J9PORT_SIG_CONTROL, J9PORT_SIG_CONTROL_PC, &name, &value);
+
+            if (J9PORT_SIG_VALUE_ADDRESS == infoType)
                {
-               auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>(metadata->bodyInfo);
-               if (NULL != bodyInfo)
+               J9JITExceptionTable *metadata = jitConfig->jitGetExceptionTableFromPC(crashedThread, *reinterpret_cast<UDATA*>(value));
+               if (NULL != metadata)
                   {
-                  jitDumpRecompileWithTracing(
-                     crashedThread,
-                     metadata->ramMethod,
-                     compInfo,
-                     bodyInfo->getHotness(),
-                     bodyInfo->getIsProfilingBody(),
-                     NULL,
-                     bodyInfo->getIsAotedBody(),
-                     bodyInfo->getStartPCAfterPreviousCompile(),
-                     jitdumpFile
-                  );
+                  auto *bodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>(metadata->bodyInfo);
+                  if (NULL != bodyInfo)
+                     {
+                     jitDumpRecompileWithTracing(
+                        crashedThread,
+                        metadata->ramMethod,
+                        compInfo,
+                        bodyInfo->getHotness(),
+                        bodyInfo->getIsProfilingBody(),
+                        NULL,
+                        bodyInfo->getIsAotedBody(),
+                        bodyInfo->getStartPCAfterPreviousCompile(),
+                        jitdumpFile
+                     );
+                     }
                   }
                }
             }
@@ -546,6 +550,8 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
    trfprintf(jitdumpFile, "</jitDump>\n");
    trfflush(jitdumpFile);
    trfclose(jitdumpFile);
+
+   recompilationThreadInfo->suspendCompilationThread();
 
    compInfo->getPersistentInfo()->setDisableFurtherCompilation(false);
 
