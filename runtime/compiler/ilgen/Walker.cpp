@@ -6247,7 +6247,12 @@ TR_J9ByteCodeIlGenerator::loadFromCallSiteTable(int32_t callSiteIndex)
 void
 TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes nodeop, bool checks)
    {
-   if (TR::Compiler->om.areValueTypesEnabled() && dataType == TR::Address)
+   // Value types prototype for flattened array elements does not yet support
+   // GC policies that allow arraylets.  If arraylets are required, assume
+   // we won't have flattening, so no call to flattenable array element access
+   // helper is needed.
+   //
+   if (TR::Compiler->om.areValueTypesEnabled() && !TR::Compiler->om.canGenerateArraylets() && dataType == TR::Address)
       {
       TR::Node* elementIndex = pop();
       TR::Node* arrayBaseAddress = pop();
@@ -7708,7 +7713,12 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
 
    handlePendingPushSaveSideEffects(value);
 
-   if (TR::Compiler->om.areValueTypesEnabled() && dataType == TR::Address)
+   // Value types prototype for flattened array elements does not yet support
+   // GC policies that allow arraylets.  If arraylets are required, assume
+   // we won't have flattening, so no call to flattenable array element access
+   // helper is needed.
+   //
+   if (TR::Compiler->om.areValueTypesEnabled() && !TR::Compiler->om.canGenerateArraylets() && dataType == TR::Address)
       {
       TR::Node* elementIndex = pop();
       TR::Node* arrayBaseAddress = pop();
