@@ -23,6 +23,7 @@
 #include "j9protos.h"
 #include "j9cfg.h"
 #include <assert.h>
+#include <stdlib.h>
 
 #if defined(TR_TARGET_S390) && defined(LINUX)
 #define FPE_DECDATA 86
