@@ -36,6 +36,7 @@
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/TreeEvaluator.hpp"
+#include "compile/VirtualGuard.hpp"
 #include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/LabelSymbol.hpp"
@@ -1039,7 +1040,7 @@ J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator 
    }
 
 /**
- *  @brief Generates Superclass Test for both checkcast and instanceof nodes.
+ *  @brief Generates Superclass Test for checkcast/instanceof/ArrayStoreCHK nodes.
  *  @details
  *    It will generate pseudocode as follows.
  *    if (objectClassDepth <= castClassDepth) call Helper
@@ -1047,9 +1048,18 @@ J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator 
  *    load superClassArrReg,superClassOfObjectClass
  *    cmp superClassArrReg[castClassDepth], castClass
  *    Here It sets up the condition code for callee to react on.
+ *
+ *  @param[in] node:                           node
+ *  @param[in] instanceClassReg:               register contains instance class
+ *  @param[in] instanceClassRegCanBeReclaimed: if true, instanceClassReg is reclaimed
+ *  @param[in] castClassReg:                   register contains cast class
+ *  @param[in] castClassDepth:                 class depth of the cast class. If -1 is passed, depth is loaded at runtime
+ *  @param[in] falseLabel:                     label to jump when test fails
+ *  @param[in] srm:                            scratch register manager
+ *  @param[in] cg:                             code generator
  */
 static
-void genInstanceOfOrCheckCastSuperClassTest(TR::Node *node, TR::Register *instanceClassReg, TR::Register *castClassReg, int32_t castClassDepth,
+void genSuperClassTest(TR::Node *node, TR::Register *instanceClassReg, bool instanceClassRegCanBeReclaimed, TR::Register *castClassReg, int32_t castClassDepth,
                                             TR::LabelSymbol *falseLabel, TR_ARM64ScratchRegisterManager *srm, TR::CodeGenerator *cg)
    {
    // Compare the instance class depth to the cast class depth. If the instance class depth is less than or equal to
@@ -1061,17 +1071,31 @@ void genInstanceOfOrCheckCastSuperClassTest(TR::Node *node, TR::Register *instan
    // load lower 16bit of classDepthAndFlags
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, instanceClassDepthReg,
                               new (cg->trHeapMemory()) TR::MemoryReference(instanceClassReg, offsetof(J9Class, classDepthAndFlags), cg));
-   if (constantIsUnsignedImm12(castClassDepth))
+   if (castClassDepth != -1)
       {
-      generateCompareImmInstruction(cg, node, instanceClassDepthReg, castClassDepth);
+      // castClassDepth is known at compile time
+      if (constantIsUnsignedImm12(castClassDepth))
+         {
+         generateCompareImmInstruction(cg, node, instanceClassDepthReg, castClassDepth);
+         }
+      else
+         {
+         castClassDepthReg = srm->findOrCreateScratchRegister();
+         loadConstant32(cg, node, castClassDepth, castClassDepthReg);
+         generateCompareInstruction(cg, node, instanceClassDepthReg, castClassDepthReg);
+         }
       }
    else
       {
+      // castClassDepth needs to be loaded from castClass
       castClassDepthReg = srm->findOrCreateScratchRegister();
-      loadConstant32(cg, node, castClassDepth, castClassDepthReg);
+      // load lower 16bit of classDepthAndFlags
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, castClassDepthReg,
+                              new (cg->trHeapMemory()) TR::MemoryReference(castClassReg, offsetof(J9Class, classDepthAndFlags), cg));
       generateCompareInstruction(cg, node, instanceClassDepthReg, castClassDepthReg);
       }
    srm->reclaimScratchRegister(instanceClassDepthReg);
+   instanceClassDepthReg = NULL; // prevent re-using this register by error
 
    // if objectClassDepth is less than or equal to castClassDepth, then call Helper
    generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, falseLabel, TR::CC_LE);
@@ -1080,13 +1104,20 @@ void genInstanceOfOrCheckCastSuperClassTest(TR::Node *node, TR::Register *instan
    // If not, the instance class and cast class are not in the same hierarchy.
    //
    TR::Register *instanceClassSuperClassesArrayReg = srm->findOrCreateScratchRegister();
-   TR::Register *instanceClassSuperClassReg = srm->findOrCreateScratchRegister();
 
    generateTrg1MemInstruction(cg,TR::InstOpCode::ldrimmx, node, instanceClassSuperClassesArrayReg,
                               new (cg->trHeapMemory()) TR::MemoryReference(instanceClassReg, offsetof(J9Class, superclasses), cg));
 
+   if (instanceClassRegCanBeReclaimed)
+      {
+      srm->reclaimScratchRegister(instanceClassReg);
+      instanceClassReg = NULL; // prevent re-using this register by error
+      }
+
+   TR::Register *instanceClassSuperClassReg = srm->findOrCreateScratchRegister();
+
    int32_t castClassDepthOffset = castClassDepth * TR::Compiler->om.sizeofReferenceAddress();
-   if (constantIsUnsignedImm12(castClassDepthOffset))
+   if ((castClassDepth != -1) && constantIsUnsignedImm12(castClassDepthOffset))
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, instanceClassSuperClassReg,
                                  new (cg->trHeapMemory()) TR::MemoryReference(instanceClassSuperClassesArrayReg, castClassDepthOffset, cg));
@@ -1318,7 +1349,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
 
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
             auto falseLabel = isNextItemGoToFalse(it, itEnd) ? doneLabel : (isNextItemHelperCall(it, itEnd) ? callHelperLabel : nextSequenceLabel);
-            genInstanceOfOrCheckCastSuperClassTest(node, objectClassReg, castClassReg, castClassDepth, falseLabel, srm, cg);
+            genSuperClassTest(node, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
             generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
             }
             break;
@@ -1617,7 +1648,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
 
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
             auto falseLabel = (isNextItemGoToFalse(it, itEnd) || isNextItemHelperCall(it, itEnd)) ? callHelperLabel : nextSequenceLabel;
-            genInstanceOfOrCheckCastSuperClassTest(node, objectClassReg, castClassReg, castClassDepth, falseLabel, srm, cg);
+            genSuperClassTest(node, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
             }
             break;
          /**
@@ -2950,18 +2981,111 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return (NULL);
    }
 
-static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::CodeGenerator *cg)
+/**
+ * @brief Generate instruction sequence for array store check
+ * 
+ * @param[in] node:            node
+ * @param[in] srcReg:          register contains source object
+ * @param[in] dstReg:          register contains destination array
+ * @param[in] srm:             scratch register manager
+ * @param[in] doneLabel:       label to jump when check is successful
+ * @param[in] helperCallLabel: label to jump when helper call is needed
+ * @param[in] cg:              code generator
+ */
+static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR_ARM64ScratchRegisterManager *srm,
+                                     TR::LabelSymbol *doneLabel, TR::LabelSymbol *helperCallLabel, TR::CodeGenerator *cg)
    {
-   TR::SymbolReference *arrayStoreChkHelper = node->getSymbolReference();
+   TR::Compilation *comp = cg->comp();
+   TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
+   TR::Register *sourceClassReg = srm->findOrCreateScratchRegister();
+   TR::Register *destArrayClassReg = srm->findOrCreateScratchRegister();
 
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-   TR::addDependency(deps, dstReg, TR::RealRegister::x0, TR_GPR, cg);
-   TR::addDependency(deps, srcReg, TR::RealRegister::x1, TR_GPR, cg);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator"), *srm);
 
-   TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
-                                                        (uintptr_t)arrayStoreChkHelper->getMethodAddress(),
-                                                        deps, arrayStoreChkHelper, NULL);
-   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+   generateLoadJ9Class(node, sourceClassReg, srcReg, cg);
+   generateLoadJ9Class(node, destArrayClassReg, dstReg, cg);
+
+   TR::Register *destComponentClassReg = srm->findOrCreateScratchRegister();
+   TR_Debug *debugObj = cg->getDebug();
+
+   auto instr = generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, destComponentClassReg,
+         new (cg->trHeapMemory()) TR::MemoryReference(destArrayClassReg, static_cast<int32_t>(offsetof(J9ArrayClass, componentType)), cg));
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "load component type of the destination array");
+      }
+   srm->reclaimScratchRegister(destArrayClassReg);
+   destArrayClassReg = NULL; // prevent re-using this register by error
+
+   generateCompareInstruction(cg, node, destComponentClassReg, sourceClassReg, true);
+   instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "done if component type of the destination array equals to source object class");
+      }
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:01ClassEqualityCheckDone"), *srm);
+
+   TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16, true);
+   /*
+    * objectClass is used for Object arrays check optimization: when we are storing to Object arrays we can skip all other array store checks
+    * However, TR_J9SharedCacheVM::getSystemClassFromClassName can return 0 when it's impossible to relocate j9class later for AOT loads
+    * in that case we don't want to generate the Object arrays check
+    */
+   bool doObjectArrayCheck = objectClass != NULL;
+   if (doObjectArrayCheck)
+      {
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:02JavaLangObjectCheck"), *srm);
+
+      TR::Register *javaLangObjectClassReg = srm->findOrCreateScratchRegister();
+      if (cg->wantToPatchClassPointer(objectClass, node) || cg->needClassAndMethodPointerRelocations())
+         {
+         loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(objectClass), javaLangObjectClassReg, TR_ClassPointer);
+         }
+      else
+         {
+         loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(objectClass), javaLangObjectClassReg);
+         }
+      generateCompareInstruction(cg, node, javaLangObjectClassReg, destComponentClassReg, true);
+      instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(instr, "done if component type of the destination array equals to java/lang/Object");
+         }
+      srm->reclaimScratchRegister(javaLangObjectClassReg);
+
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:03JavaLangObjectCheckDone"), *srm);
+      }
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:04CastClassCacheCheck"), *srm);
+
+   TR::Register *castClassCacheReg = srm->findOrCreateScratchRegister();
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, castClassCacheReg,
+                              new (cg->trHeapMemory()) TR::MemoryReference(sourceClassReg, offsetof(J9Class, castClassCache), cg));
+   generateCompareInstruction(cg, node, castClassCacheReg, destComponentClassReg, true);
+   instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "done if component type of the destination array equals to castClassCache of source object class");
+      }
+   srm->reclaimScratchRegister(castClassCacheReg);
+   castClassCacheReg = NULL; // prevent re-using this register by error
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:05CastClassCacheCheckDone"), *srm);
+
+
+   genSuperClassTest(node, sourceClassReg, true, destComponentClassReg, -1, helperCallLabel, srm, cg);
+   srm->reclaimScratchRegister(destComponentClassReg);
+
+   // prevent re-using these registers by error
+   sourceClassReg = NULL;
+   destComponentClassReg = NULL;
+
+   instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, helperCallLabel, TR::CC_NE);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "Call helper if super class test fails");
+      }
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:06SuperClassTestDone"), *srm);
 
    cg->machine()->setLinkRegisterKilled(true);
    }
@@ -2987,11 +3111,78 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
 
    TR::Register *srcReg = cg->evaluate(sourceChild);
    TR::Register *dstReg = cg->evaluate(dstNode);
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+
+   TR::LabelSymbol *wbLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *OOLMergeLabel = generateLabelSymbol(cg);
+   TR_Debug * debugObj = cg->getDebug();
 
    if (!sourceChild->isNull())
       {
-      VMoutlinedHelperArrayStoreCHKEvaluator(node, srcReg, dstReg, cg);
+      bool disableArrayStoreCHKOpts = feGetEnv("TR_AArch64DisableArrayStoreCHKOpts") != NULL;
+      TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
+      TR::LabelSymbol *helperCallLabel = generateLabelSymbol(cg);
+      // Since ArrayStoreCHK doesn't have the shape of the corresponding helper call we have to create this tree
+      // so we can have it evaluated out of line
+      TR::Node *helperCallNode = TR::Node::createWithSymRef(node, TR::call, 2, node->getSymbolReference());
+      helperCallNode->setAndIncChild(0, sourceChild);
+      helperCallNode->setAndIncChild(1, dstNode);
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "%s: Creating and evaluating the following tree to generate the necessary helper call for this node\n", node->getOpCode().getName());
+         cg->getDebug()->print(comp->getOutFile(), helperCallNode);
+         }
+
+      bool nopASC = node->getArrayStoreClassInNode() && comp->performVirtualGuardNOPing() &&
+                     (!fej9->classHasBeenExtended(node->getArrayStoreClassInNode())) && (!disableArrayStoreCHKOpts);
+      if (nopASC)
+         {
+         // Speculatively NOP the array store check if VP is able to prove that the ASC
+         // would always succeed given the current state of the class hierarchy.
+         //
+         TR_VirtualGuard *virtualGuard = TR_VirtualGuard::createArrayStoreCheckGuard(comp, node, node->getArrayStoreClassInNode());
+         TR::Instruction *vgnopInstr = generateVirtualGuardNOPInstruction(cg, node, virtualGuard->addNOPSite(), NULL, helperCallLabel);
+         }
+      else
+         {
+         // If source is null, we can skip array store check.
+         auto cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, wbLabel);
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(cbzInstruction, "jump past array store check");
+            }
+         if (!disableArrayStoreCHKOpts)
+            {
+            VMarrayStoreCHKEvaluator(node, srcReg, dstReg, srm, wbLabel, helperCallLabel, cg);
+            }
+         else
+            {
+            generateLabelInstruction(cg, TR::InstOpCode::b, node, helperCallLabel);
+            }
+         }
+
+      TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(helperCallNode, TR::call, NULL, helperCallLabel, OOLMergeLabel, cg);
+      cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+      cg->decReferenceCount(helperCallNode->getFirstChild());
+      cg->decReferenceCount(helperCallNode->getSecondChild());
       }
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2 + srm->numAvailableRegisters(), cg->trMemory());
+   srm->addScratchRegistersToDependencyList(deps);
+
+   deps->addPostCondition(srcReg, TR::RealRegister::NoReg);
+   deps->addPostCondition(dstReg, TR::RealRegister::NoReg);
+   auto instr = generateLabelInstruction(cg, TR::InstOpCode::label, node, wbLabel);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "ArrayStoreCHK Done");
+      }
+   instr = generateLabelInstruction(cg, TR::InstOpCode::label, node, OOLMergeLabel, deps);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "OOL merge point");
+      }
+
+   srm->stopUsingRegisters();
 
    cg->evaluate(firstChild);
 
