@@ -2145,7 +2145,73 @@ TR_J9ServerVM::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilatio
    knot->updateKnownObjectTableAtServer(idx, std::get<1>(recv));
    return comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(originalSymRef, idx);
    }
+
+J9JNIMethodID*
+TR_J9ServerVM::jniMethodIdFromMemberName(uintptr_t memberName)
+   {
+   TR_ASSERT_FATAL(false, "jniMethodIdFromMemberName must not be called on JITServer");
+   return NULL;
+   }
+
+J9JNIMethodID*
+TR_J9ServerVM::jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   // This could be made to work on JITServer, however we would need to receive a copy of J9JNIMethodID
+   // and put it in some sort of cache, to avoid memory allocation every time this method is called.
+   // Since the only parameter of J9JNIMethodID currently accessed is vTableIndex, we just use
+   // vTableOrITableIndexFromMemberName to get the index from the client directly.
+   TR_ASSERT_FATAL(false, "jniMethodIdFromMemberName must not be called on JITServer");
+   return NULL;
+   }
+
+int32_t
+TR_J9ServerVM::vTableOrITableIndexFromMemberName(uintptr_t memberName)
+   {
+   TR_ASSERT_FATAL(false, "vTableOrITableIndexFromMemberName must not be called on JITServer");
+   return 0;
+   }
+
+int32_t
+TR_J9ServerVM::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_vTableOrITableIndexFromMemberName, objIndex);
+      return std::get<0>(stream->read<int32_t>());
+      }
+   return -1;
+   }
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+TR::KnownObjectTable::Index
+TR_J9ServerVM::getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, char *fieldName)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex, mhIndex, std::string(fieldName));
+   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+
+   TR::KnownObjectTable::Index mnIndex = std::get<0>(recv);
+   comp->getKnownObjectTable()->updateKnownObjectTableAtServer(mnIndex, std::get<1>(recv));
+   return mnIndex;
+   }
+
+bool
+TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_isLambdaFormGeneratedMethod, method);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_ResolvedMethod *method)
+   {
+   return static_cast<TR_ResolvedJ9JITServerMethod *>(method)->isLambdaFormGeneratedMethod();
+   }
 
 bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
@@ -2936,16 +3002,3 @@ TR_J9SharedCacheServerVM::getResolvedInterfaceMethod(TR_OpaqueMethodBlock *inter
       }
    return ramMethod;
    }
-
-bool
-TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method)
-   {
-   return false;
-   }
-
-bool
-TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_ResolvedMethod *method)
-   {
-   return false;
-   }
-
