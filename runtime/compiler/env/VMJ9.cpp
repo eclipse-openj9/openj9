@@ -4882,7 +4882,7 @@ TR_J9VMBase::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownO
       return vTableOrITableIndexFromMemberName(object);
       }
    return -1;
-    }
+   }
 
 TR::KnownObjectTable::Index
 TR_J9VMBase::getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray)
@@ -4962,6 +4962,16 @@ TR_J9VMBase::getSignatureForLinkToStaticForInvokeDynamic(TR::Compilation* comp, 
    return linkToStaticSignature;
    }
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+TR::KnownObjectTable::Index
+TR_J9VMBase::getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, char *fieldName)
+   {
+   TR::VMAccessCriticalSection dereferenceKnownObjectField(this);
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   uintptr_t mhObject = knot->getPointer(mhIndex);
+   uintptr_t mnObject = getReferenceField(mhObject, fieldName, "Ljava/lang/invoke/MemberName;");
+   return knot->getOrCreateIndex(mnObject);
+   }
 
 /**
  * \brief

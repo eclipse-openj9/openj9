@@ -185,6 +185,9 @@ enum MessageType : uint16_t
    VM_getKnotIndexOfInvokeCacheArrayAppendixElement,
    VM_targetMethodFromInvokeCacheArrayMemberNameObj,
    VM_refineInvokeCacheElementSymRefWithKnownObjectIndex,
+   VM_isLambdaFormGeneratedMethod,
+   VM_vTableOrITableIndexFromMemberName,
+   VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,
@@ -425,6 +428,9 @@ static const char *messageNames[] =
    "VM_getKnotIndexOfInvokeCacheArrayAppendixElement",
    "VM_targetMethodFromInvokeCacheArrayMemberNameObj",
    "VM_refineInvokeCacheElementSymRefWithKnownObjectIndex",
+   "VM_isLambdaFormGeneratedMethod",
+   "VM_vTableOrITableIndexFromMemberName",
+   "VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex",
    "CompInfo_isCompiled",
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",
