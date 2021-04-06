@@ -325,6 +325,9 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_ResolvedMethod *resolvedMethod = NULL;
    TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex);
+   static const char *verifyCaching = feGetEnv("TR_VerifyResolvedMethodsCaching");
+   TR_YesNoMaybe unresolvedInCache;
+   TR_ResolvedJ9JITServerMethodInfo cachedMethodInfo;
    if (!((_fe->_compInfoPT->getClientData()->getRtResolve()) &&
          !comp->ilGenRequest().details().isMethodHandleThunk() && // cmvc 195373
          performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve)
@@ -343,7 +346,15 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
             }
-         return resolvedMethod;
+         
+         if (verifyCaching) 
+            {
+            cachedMethodInfo = compInfoPT->getCachedMethodInfo(key, &unresolvedInCache);
+            }
+         else
+            {
+            return resolvedMethod;
+            }
          }
       }
 
@@ -367,6 +378,11 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
       if (unresolvedInCP)
          *unresolvedInCP = isUnresolvedInCP;
 
+      if (verifyCaching)
+         {
+         TR_ASSERT_FATAL(verifyCache(methodInfo, cachedMethodInfo, unresolvedInCache, unresolvedInCP), "Cache and client method info did not match");
+         }
+
       if (ramMethod == NULL) 
          {
          if (unresolvedInCP) 
@@ -375,7 +391,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
             }
          return NULL;
          }
-      resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, vTableSlot, methodInfo, this, &resolvedMethod, unresolvedInCP);
+      resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, vTableSlot, methodInfo, this, &resolvedMethod, unresolvedInCache);
       
       }
    return resolvedMethod;
@@ -613,11 +629,21 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_ResolvedMethod *resolvedMethod = NULL;
    TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Static, (TR_OpaqueClassBlock *) _ramClass, cpIndex);
+   static const char *verifyCaching = feGetEnv("TR_VerifyResolvedMethodsCaching");
+   TR_YesNoMaybe unresolvedInCache;
+   TR_ResolvedJ9JITServerMethodInfo cachedMethodInfo;
    if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod, unresolvedInCP))
       {
       if ((resolvedMethod == NULL) && unresolvedInCP)
          handleUnresolvedStaticMethodInCP(cpIndex, unresolvedInCP);
-      return resolvedMethod;
+      if (verifyCaching) 
+         {
+         cachedMethodInfo = compInfoPT->getCachedMethodInfo(key, &unresolvedInCache);
+         }
+      else
+         {
+         return resolvedMethod;
+         }
       }
 
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedStaticMethodAndMirror, _remoteMirror, cpIndex);
@@ -628,6 +654,11 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
    if (unresolvedInCP)
       *unresolvedInCP = isUnresolvedInCP;
 
+   if (verifyCaching)
+      {
+      TR_ASSERT_FATAL(verifyCache(methodInfo, cachedMethodInfo, unresolvedInCache, unresolvedInCP), "Cache and client method info did not match");
+      }
+   
    if (ramMethod == NULL) 
       {
       if (unresolvedInCP) 
@@ -636,7 +667,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
          }
       return NULL;
       }
-   resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, 0, methodInfo, this, &resolvedMethod, unresolvedInCP);
+   resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, 0, methodInfo, this, &resolvedMethod, unresolvedInCache);
 
    return resolvedMethod;
    }
@@ -651,13 +682,24 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
    TR_ResolvedMethod *resolvedMethod = NULL;
    TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
    TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Special, clazz, cpIndex);
+   static const char *verifyCaching = feGetEnv("TR_VerifyResolvedMethodsCaching");
+   TR_YesNoMaybe unresolvedInCache;
+   TR_ResolvedJ9JITServerMethodInfo cachedMethodInfo;
+   
    if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod, unresolvedInCP))
       {
       if ((resolvedMethod == NULL) && unresolvedInCP)
          handleUnresolvedSpecialMethodInCP(cpIndex, unresolvedInCP);
-      return resolvedMethod;
+      if (verifyCaching) 
+         {
+         cachedMethodInfo = compInfoPT->getCachedMethodInfo(key, &unresolvedInCache);
+         }
+      else
+         {
+         return resolvedMethod;
+         }
       }
-
+   
    // Comments from TR_ResolvedJ9Method::getResolvedSpecialMethod
    // We init the CP with a special magic method, which has no bytecodes (hence bytecode start is NULL)
    // i.e. the CP will always contain a method for special and static methods
@@ -665,9 +707,18 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
       *unresolvedInCP = true;
 
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror, _remoteMirror, cpIndex);
-   auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo>();
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo, bool>();
    TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
    auto methodInfo = std::get<1>(recv);
+   bool isUnresolvedInCP = std::get<2>(recv);
+
+   if (unresolvedInCP)
+      *unresolvedInCP = isUnresolvedInCP;
+
+   if (verifyCaching)
+      {
+      TR_ASSERT_FATAL(verifyCache(methodInfo, cachedMethodInfo, unresolvedInCache, unresolvedInCP), "Cache and client method info did not match");
+      }
 
    if (ramMethod == NULL) 
          {
@@ -677,7 +728,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
             }
          return NULL;
          }
-   resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, 0, methodInfo, this, &resolvedMethod, unresolvedInCP);
+   resolvedMethod = compInfoPT->cacheAndGetResolvedMethod(key, ramMethod, 0, methodInfo, this, &resolvedMethod, unresolvedInCache);
    
    return resolvedMethod;
    }
@@ -770,13 +821,29 @@ TR_ResolvedJ9JITServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp,
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *) _ramClass;
    TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface, clazz, cpIndex, classObject);
+   static const char *verifyCaching = feGetEnv("TR_VerifyResolvedMethodsCaching");
+   TR_ResolvedJ9JITServerMethodInfo cachedMethodInfo;
    if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod))
-      return resolvedMethod;
+      {
+      if (verifyCaching) 
+         {
+         cachedMethodInfo = compInfoPT->getCachedMethodInfo(key);
+         }
+      else
+         {
+         return resolvedMethod;
+         }
+      }
    
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, classObject, cpIndex, _remoteMirror);
    auto recv = _stream->read<TR_OpaqueMethodBlock*, TR_ResolvedJ9JITServerMethodInfo>();
    TR_OpaqueMethodBlock *ramMethod = std::get<0>(recv);
    auto &methodInfo = std::get<1>(recv);
+
+   if (verifyCaching)
+      {
+      TR_ASSERT_FATAL(verifyCache(methodInfo, cachedMethodInfo), "Cache and client method info did not match");
+      }
 
    if (ramMethod == NULL)
       {
@@ -814,8 +881,19 @@ TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(TR::Compilation
       auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
       TR_ResolvedMethod * resolvedMethod = NULL;
       TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface, (TR_OpaqueClassBlock *) _ramClass, cpIndex);
-      if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod)) 
-         return resolvedMethod;
+      static const char *verifyCaching = feGetEnv("TR_VerifyResolvedMethodsCaching");
+      TR_ResolvedJ9JITServerMethodInfo cachedMethodInfo;
+      if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod))
+         {
+         if (verifyCaching) 
+            {
+            cachedMethodInfo = compInfoPT->getCachedMethodInfo(key);
+            }
+         else
+            {
+            return resolvedMethod;
+            }
+         }
 
       // query for resolved method and create its mirror at the same time
       _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror, _remoteMirror, cpIndex);
@@ -824,6 +902,10 @@ TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(TR::Compilation
       auto &methodInfo = std::get<1>(recv);
       auto vtableOffset = std::get<2>(recv);
 
+      if (verifyCaching)
+         {
+         TR_ASSERT_FATAL(verifyCache(methodInfo, cachedMethodInfo), "Cache and client method info did not match");
+         }
       if (j9method == NULL)
       {
          return NULL;
@@ -864,14 +946,30 @@ TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, T
    TR_ResolvedMethod *resolvedMethod = NULL;
    // If method is already cached, return right away
    TR_ResolvedMethodKey key = compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject);
-   if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod)) 
-      return resolvedMethod;
+   static const char *verifyCaching = feGetEnv("TR_VerifyResolvedMethodsCaching");
+   TR_ResolvedJ9JITServerMethodInfo cachedMethodInfo;
+   if (compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod))
+      {
+      if (verifyCaching) 
+         {
+         cachedMethodInfo = compInfoPT->getCachedMethodInfo(key);
+         }
+      else
+         {
+         return resolvedMethod;
+         }
+      }
 
    // Remote call finds RAM method at offset and creates a resolved method at the client
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedVirtualMethod, classObject, virtualCallOffset, ignoreRtResolve, (TR_ResolvedJ9Method *) getRemoteMirror());
    auto recv = _stream->read<TR_OpaqueMethodBlock *, TR_ResolvedJ9JITServerMethodInfo>();
    auto ramMethod = std::get<0>(recv);
    auto &methodInfo = std::get<1>(recv);
+
+   if (verifyCaching)
+      {
+      TR_ASSERT_FATAL(verifyCache(methodInfo, cachedMethodInfo), "Cache and client method info did not match");
+      }
 
    if (ramMethod == NULL)
       {
@@ -1448,6 +1546,39 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(TR_Resolved
    packMethodInfo(methodInfo, resolvedMethod, fe);
    }
 
+bool
+TR_ResolvedJ9JITServerMethod::verifyCache(TR_ResolvedJ9JITServerMethodInfo clientMethodInfo, TR_ResolvedJ9JITServerMethodInfo cachedMethodInfo, TR_YesNoMaybe unresolvedInCache, bool *unresolvedInCP)
+   {
+   // If method isn't cached, nothing to compare, trivially return true
+   if (std::get<0>(cachedMethodInfo).remoteMirror == NULL)
+      {
+      return true;
+      }
+   // If a method is interpreted, some of the parameters might differ from the cached one
+   // But since we are only caching for the duration of one compilation, we ignore the discrepancy
+   if (std::get<0>(clientMethodInfo).isInterpreted == std::get<0>(cachedMethodInfo).isInterpreted)
+      {
+      // cached method is interpreted nothing to compare
+      if (std::get<0>(cachedMethodInfo).isInterpreted)
+         {
+         return true;
+         }
+      if (unresolvedInCP)
+         {
+         // If unresolvedInCP was not cached, assume that updated info will be correct
+         if (unresolvedInCache == TR_maybe)
+            return true;
+         if ((unresolvedInCache == TR_yes) != (*unresolvedInCP))
+            {
+            return false;
+            }
+         }
+      return (clientMethodInfo == cachedMethodInfo);
+      }
+   // If there is a mismatch, return false if method was cached as compiled
+   return std::get<0>(cachedMethodInfo).isInterpreted;
+   }
+
 void
 TR_ResolvedJ9JITServerMethod::packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe)
    {
@@ -1682,12 +1813,13 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolv
 
    // 2. Send a remote query to mirror all uncached resolved methods
    _stream->write(JITServer::MessageType::ResolvedMethod_getMultipleResolvedMethods, (TR_ResolvedJ9Method *) _remoteMirror, methodTypes, cpIndices);
-   auto recv = _stream->read<std::vector<TR_OpaqueMethodBlock *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITServerMethodInfo>>();
+   auto recv = _stream->read<std::vector<TR_OpaqueMethodBlock *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITServerMethodInfo>, std::vector<TR_YesNoMaybe>>();
 
    // 3. Cache all received resolved methods
    auto &ramMethods = std::get<0>(recv);
    auto &vTableOffsets = std::get<1>(recv);
    auto &methodInfos = std::get<2>(recv);
+   auto &unresolvedInCPs = std::get<3>(recv);
    TR_ASSERT(numMethods == ramMethods.size(), "Number of received methods does not match the number of requested methods");
    for (int32_t i = 0; i < numMethods; ++i)
       {
@@ -1704,7 +1836,9 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolv
             ramMethods[i],
             vTableOffsets[i],
             methodInfos[i],
-            ttlForUnresolved);
+            ttlForUnresolved,
+            unresolvedInCPs[i]
+            );
          }
       }
    }

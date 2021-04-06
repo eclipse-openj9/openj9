@@ -1227,7 +1227,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(
             response,
             resolvedMethod ? resolvedMethod->getPersistentIdentifier() : NULL,
-            methodInfo
+            methodInfo,
+            unresolvedInCP
             );
          }
          break;
@@ -1598,6 +1599,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          std::vector<TR_OpaqueMethodBlock *> ramMethods(numMethods);
          std::vector<uint32_t> vTableOffsets(numMethods);
          std::vector<TR_ResolvedJ9JITServerMethodInfo> methodInfos(numMethods);
+         std::vector<TR_YesNoMaybe> unresolvedInCPs(numMethods);
          for (int32_t i = 0; i < numMethods; ++i)
             {
             int32_t cpIndex = cpIndices[i];
@@ -1605,6 +1607,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             TR_ResolvedJ9Method *resolvedMethod = NULL;
             TR_OpaqueMethodBlock *ramMethod = NULL;
             uint32_t vTableOffset = 0;
+            TR_YesNoMaybe unresolvedInCache = TR_no;
             TR_ResolvedJ9JITServerMethodInfo methodInfo;
             bool unresolvedInCP;
             switch (type)
@@ -1613,16 +1616,22 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                   {
                   resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedPossiblyPrivateVirtualMethod(comp, cpIndex, true, &unresolvedInCP));
                   vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot(cpIndex) : 0;
+                  if (unresolvedInCP)
+                     unresolvedInCache = TR_yes;
                   break;
                   }
                case TR_ResolvedMethodType::Static:
                   {
                   resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedStaticMethod(comp, cpIndex, &unresolvedInCP));
+                  if (unresolvedInCP)
+                     unresolvedInCache = TR_yes;
                   break;
                   }
                case TR_ResolvedMethodType::Special:
                   {
                   resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedSpecialMethod(comp, cpIndex, &unresolvedInCP));
+                  if (unresolvedInCP)
+                     unresolvedInCache = TR_yes;
                   break;
                   }
                case TR_ResolvedMethodType::ImproperInterface:
@@ -1644,8 +1653,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             ramMethods[i] = ramMethod;
             vTableOffsets[i] = vTableOffset;
             methodInfos[i] = methodInfo;
+            unresolvedInCPs[i] = unresolvedInCache;
             }
-         client->write(response, ramMethods, vTableOffsets, methodInfos);
+         client->write(response, ramMethods, vTableOffsets, methodInfos, unresolvedInCPs);
          }
          break;
       case MessageType::ResolvedMethod_getConstantDynamicTypeFromCP:
