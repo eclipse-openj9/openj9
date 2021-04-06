@@ -1202,9 +1202,14 @@ public class ShrCCommand extends Command
 					/*  _ccHead -------------> ccNext ---------> ccNext --------> ........---------> ccTail
 					 * (top layer)         (middle layer)     (middle layer)      ........         (layer 0)
 					 */
-					SH_CompositeCacheImplPointer compositeCacheImpl = cacheMap._ccTail();
-					for (int tmplayer = 0; tmplayer < layer; tmplayer++) {
-						compositeCacheImpl = compositeCacheImpl._previous();
+					SH_CompositeCacheImplPointer compositeCacheImpl;
+					try {
+						compositeCacheImpl = cacheMap._ccTail();
+						for (int tmplayer = 0; tmplayer < layer; tmplayer++) {
+							compositeCacheImpl = compositeCacheImpl._previous();
+						}
+					} catch (NoSuchFieldError | NoSuchMethodError e) {
+						compositeCacheImpl = cacheMap._cc();
 					}
 					if (compositeCacheImpl.notNull()) {
 						cacheStartAddress[layer] = compositeCacheImpl._theca();
