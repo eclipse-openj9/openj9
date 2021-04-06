@@ -1,7 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
-
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,28 +20,34 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package java.lang.invoke;
 
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
-
 final class MethodTypeForm {
+
 	static final int LF_DELEGATE = 8;
 	static final int LF_DELEGATE_BLOCK_INLINING = 9;
 	static final int LF_GWC = 16;
 	static final int LF_GWT = 17;
+
 	/*[IF Sidecar19-SE-OpenJ9]*/
 	static final int LF_TF = 18;
 	static final int LF_LOOP = 19;
 	/*[ENDIF]*/
-	
-	public LambdaForm cachedLambdaForm(int num) {
+
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	static final int LF_COLLECTOR = 25;
+	static final int LF_LIMIT = 26;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+	LambdaForm cachedLambdaForm(int num) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
-	public LambdaForm setCachedLambdaForm(int num, LambdaForm lf) {
+
+	LambdaForm setCachedLambdaForm(int num, LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
 }
