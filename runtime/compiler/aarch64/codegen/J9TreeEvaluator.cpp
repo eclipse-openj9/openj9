@@ -1849,6 +1849,22 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    }
 
 /**
+ * Helper template function to get value clamped between low and high.
+ * std::clamp is unavailable for C++11.
+ */
+template<typename T>
+const T& clamp(const T& value, const T& low, const T& high)
+   {
+   return std::min(std::max(value, low), high);
+   }
+
+template<typename T>
+const T& clamp(const int& value, const T& low, const T& high)
+   {
+   return static_cast<T>(std::min(std::max(value, static_cast<int>(low)), static_cast<int>(high)));
+   }
+
+/**
  * @brief Generates instructions for allocating heap for new/newarray/anewarray
  *        The limitation of the current implementation:
  *          - supports `new` only
@@ -1873,10 +1889,28 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
    TR::Register *lengthReg, TR::Register *heapTopReg, TR::Register *tempReg, TR::Register *dataSizeReg, TR::RegisterDependencyConditions *conditions,
    TR::LabelSymbol *callLabel)
    {
+   static const char *pTLHPrefetchThresholdSize = feGetEnv("TR_AArch64PrefetchThresholdSize");
+   static const char *pTLHPrefetchArrayLineCount = feGetEnv("TR_AArch64PrefetchArrayLineCount");
+   static const char *pTLHPrefetchType = feGetEnv("TR_AArch64PrefetchType");
+   static const char *pTLHPrefetchTarget = feGetEnv("TR_AArch64PrefetchTarget");
+   static const char *pTLHPrefetchPolicy = feGetEnv("TR_AArch64PrefetchPolicy");
+   static const int cacheLineSize = (TR::Options::_TLHPrefetchLineSize > 0) ? TR::Options::_TLHPrefetchLineSize : 64;
+   static const int tlhPrefetchLineCount = (TR::Options::_TLHPrefetchLineCount > 0) ? TR::Options::_TLHPrefetchLineCount : 1;
+   static const int tlhPrefetchStaggeredLineCount = (TR::Options::_TLHPrefetchStaggeredLineCount > 0) ? TR::Options::_TLHPrefetchStaggeredLineCount : 4;
+   static const int tlhPrefetchThresholdSize = (pTLHPrefetchThresholdSize) ? atoi(pTLHPrefetchThresholdSize) : 64;
+   static const int tlhPrefetchArrayLineCount = (pTLHPrefetchArrayLineCount) ? atoi(pTLHPrefetchArrayLineCount) : 4;
+   static const ARM64PrefetchType tlhPrefetchType = (pTLHPrefetchType) ? clamp(atoi(pTLHPrefetchType), ARM64PrefetchType::LOAD, ARM64PrefetchType::STORE)
+                                                                  : ARM64PrefetchType::STORE;
+   static const ARM64PrefetchTarget tlhPrefetchTarget = (pTLHPrefetchTarget) ? clamp(atoi(pTLHPrefetchTarget), ARM64PrefetchTarget::L1, ARM64PrefetchTarget::L3)
+                                                                  : ARM64PrefetchTarget::L3;
+   static const ARM64PrefetchPolicy tlhPrefetchPolicy = (pTLHPrefetchPolicy) ? clamp(atoi(pTLHPrefetchPolicy), ARM64PrefetchPolicy::KEEP, ARM64PrefetchPolicy::STRM)
+                                                                  : ARM64PrefetchPolicy::STRM;
+
    TR::Compilation *comp = cg->comp();
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
    uint32_t maxSafeSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
+   bool isTooSmallToPrefetch = false;
 
    static_assert(offsetof(J9VMThread, heapAlloc) < 32760, "Expecting offset to heapAlloc fits in imm12");
    static_assert(offsetof(J9VMThread, heapTop) < 32760, "Expecting offset to heapTop fits in imm12");
@@ -1997,6 +2031,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
       }
    else
       {
+      isTooSmallToPrefetch = allocSize < tlhPrefetchThresholdSize;
       /*
        * Instructions for allocating heap for fixed length `new/newarray/anewarray`.
        *
@@ -2053,6 +2088,18 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
    generateCompareInstruction(cg, node, tempReg, heapTopReg, true);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_GT, conditions);
 
+   if (comp->getOption(TR_TLHPrefetch) && (!isTooSmallToPrefetch))
+      {
+      int offset = tlhPrefetchStaggeredLineCount * cacheLineSize;
+      int loopCount = (node->getOpCodeValue() == TR::New) ? tlhPrefetchLineCount : tlhPrefetchArrayLineCount;
+
+      for (int i = 0; i < loopCount; i++)
+         {
+         generateMemImmInstruction(cg, TR::InstOpCode::prfmimm, node,
+            new (cg->trHeapMemory()) TR::MemoryReference(tempReg, offset, cg), toPrefetchOp(tlhPrefetchType, tlhPrefetchTarget, tlhPrefetchPolicy));
+         offset += cacheLineSize;
+         }
+      }
    //Done, write back to heapAlloc here.
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
          new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg), tempReg);

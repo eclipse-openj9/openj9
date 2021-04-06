@@ -478,7 +478,14 @@ setCallSiteTargetImpl(J9VMThread *currentThread, jobject callsite, jobject targe
 		j9object_t callsiteObject = J9_JNI_UNWRAP_REFERENCE(callsite);
 		j9object_t targetObject = J9_JNI_UNWRAP_REFERENCE(target);
 
-		UDATA offset = (UDATA)vmFuncs->instanceFieldOffset(currentThread, J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, callsiteObject), (U_8*)"target", strlen("target"), (U_8*)"Ljava/lang/invoke/MethodHandle;", strlen("Ljava/lang/invoke/MethodHandle;"), NULL, NULL, 0);
+		UDATA offset = (UDATA)vmFuncs->instanceFieldOffset(
+			currentThread,
+			J9OBJECT_CLAZZ(currentThread, callsiteObject),
+			(U_8*)"target",
+			LITERAL_STRLEN("target"),
+			(U_8*)"Ljava/lang/invoke/MethodHandle;",
+			LITERAL_STRLEN("Ljava/lang/invoke/MethodHandle;"),
+			NULL, NULL, 0);
 		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 		objectAccessBarrier.inlineMixedObjectStoreObject(currentThread, callsiteObject, offset, targetObject, isVolatile);
 	}

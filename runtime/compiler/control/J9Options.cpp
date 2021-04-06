@@ -985,7 +985,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"timeBetweenPurges=", " \tDefines how often we are willing to scan for old entries to be purged", 
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_timeBetweenPurges,  0, " %d"},
 #endif /* defined(J9VM_OPT_JITSERVER) */
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_ARM64)
    {"tlhPrefetchBoundaryLineCount=",    "O<nnn>\tallocation prefetch boundary line for allocation prefetch",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_TLHPrefetchBoundaryLineCount, 0, "P%d", NOT_IN_SUBSET},
    {"tlhPrefetchLineCount=",    "O<nnn>\tallocation prefetch line count for allocation prefetch",
@@ -1862,11 +1862,13 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM64)
    bool preferTLHPrefetch;
 #if defined(TR_HOST_POWER)
    preferTLHPrefetch = TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P6) && TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_PPC_P7);
 #elif defined(TR_HOST_S390)
+   preferTLHPrefetch = true;
+#elif defined(TR_HOST_ARM64)
    preferTLHPrefetch = true;
 #else // TR_HOST_X86
    preferTLHPrefetch = true;
