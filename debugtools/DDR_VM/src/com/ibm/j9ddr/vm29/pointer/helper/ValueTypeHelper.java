@@ -215,18 +215,12 @@ public class ValueTypeHelper {
 
 		@Override
 		public boolean isRomClassAValueType(J9ROMClassPointer romClass) throws CorruptDataException {
-			if (J9JavaAccessFlags.J9AccValueType != 0) {
-				return romClass.modifiers().allBitsIn(J9JavaAccessFlags.J9AccValueType);
-			}
-			return false;
+			return romClass.modifiers().allBitsIn(J9JavaAccessFlags.J9AccValueType);
 		}
 
 		@Override
 		public boolean isJ9ClassAValueType(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9JavaClassFlags.J9ClassIsValueType != 0) {
-				return clazz.classFlags().allBitsIn(J9JavaClassFlags.J9ClassIsValueType);
-			}
-			return false;
+			return clazz.classFlags().allBitsIn(J9JavaClassFlags.J9ClassIsValueType);
 		}
 
 		@Override
@@ -254,34 +248,22 @@ public class ValueTypeHelper {
 
 		@Override
 		public boolean isJ9ClassLargestAlignmentConstraintDouble(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9JavaClassFlags.J9ClassLargestAlignmentConstraintDouble != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintDouble);
-			}
-			return false;
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintDouble);
 		}
 
 		@Override
 		public boolean isJ9ClassLargestAlignmentConstraintReference(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9JavaClassFlags.J9ClassLargestAlignmentConstraintReference != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintReference);
-			}
-			return false;
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintReference);
 		}
 
 		@Override
 		public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9JavaClassFlags.J9ClassIsFlattened != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassIsFlattened);
-			}
-			return false;
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassIsFlattened);
 		}
-		
+
 		@Override
 		public boolean classRequires4BytePrePadding(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9JavaClassFlags.J9ClassRequiresPrePadding != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassRequiresPrePadding);
-			}
-			return false;
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassRequiresPrePadding);
 		}
 
 		@Override
