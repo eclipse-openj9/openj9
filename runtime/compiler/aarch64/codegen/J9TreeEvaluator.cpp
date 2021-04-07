@@ -1853,13 +1853,13 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
  * std::clamp is unavailable for C++11.
  */
 template<typename T>
-const T& clamp(const T& value, const T& low, const T& high)
+const T clamp(const T& value, const T& low, const T& high)
    {
    return std::min(std::max(value, low), high);
    }
 
 template<typename T>
-const T& clamp(const int& value, const T& low, const T& high)
+const T clamp(const int& value, const T& low, const T& high)
    {
    return static_cast<T>(std::min(std::max(value, static_cast<int>(low)), static_cast<int>(high)));
    }
