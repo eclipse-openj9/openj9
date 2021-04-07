@@ -1065,11 +1065,17 @@ public class MethodHandles {
 			if (INTERNAL_PRIVILEGED != accessMode) {
 				for (Class<?> para : type.ptypes()) {
 					if (!para.isPrimitive()) {
+						while (para.isArray()) {
+							para = para.getComponentType();
+						}
 						checkClassAccess(para);
 					}
 				}
 				Class<?> rType = type.returnType();
 				if (!rType.isPrimitive()) {
+					while (rType.isArray()) {
+						rType = rType.getComponentType();
+					}
 					checkClassAccess(rType);
 				}
 			}
