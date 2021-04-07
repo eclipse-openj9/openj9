@@ -322,6 +322,12 @@ TR::TreeLowering::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
    // (sourceChild) and the array to which an element will have a value assigned (destChild)
    TR::Node *firstChild = node->getFirstChild();
 
+   // The only kind of child for an ArrayStoreCHK should be an awrtbari.  If something
+   // else can appear (such as astorei) will need to rework the logic to determine the
+   // destination of the element store
+   //
+   TR_ASSERT_FATAL_WITH_NODE(node, firstChild->getOpCodeValue() == TR::awrtbari, "Expected child of ArrayStoreCHK to be awrtbari");
+
    TR::Node *sourceChild = firstChild->getSecondChild();
    TR::Node *destChild = firstChild->getChild(2);
 
@@ -345,11 +351,12 @@ TR::TreeLowering::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
       //   +--------------------------------+
       //   | ttprev                         |
       //   | ArrayStoreCHK                  |
-      //   |   astorei/awrtbari             |
+      //   |   awrtbari                     |
       //   |     aladd                      |
       //   |       <array-reference>        |
       //   |       index-offset-calculation |
-      //   |     <value-reference>          |
+      //   |     <value>                    |
+      //   |     <array-reference>          |
       //   +--------------------------------+
       //
       // into
@@ -381,7 +388,7 @@ TR::TreeLowering::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
       //   +--------------------------------+
       //   | BBStart                        |
       //   | ArrayStoreCHK                  |
-      //   |   astorei/awrtbari             |
+      //   |   awrtbari                     |
       //   |     aladd                      |
       //   |       aload <array>            |
       //   |       index-offset-calculation |
@@ -390,15 +397,11 @@ TR::TreeLowering::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
       //
       TR::SymbolReference *vftSymRef = comp()->getSymRefTab()->findOrCreateVftSymbolRef();
       TR::SymbolReference *arrayCompSymRef = comp()->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef();
-      TR::SymbolReference *classFlagsSymRef = comp()->getSymRefTab()->findOrCreateClassFlagsSymbolRef();
 
       TR::Node *vft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredArrayTT->getNode()->getFirstChild(), vftSymRef);
       TR::Node *arrayCompClass = TR::Node::createWithSymRef(node, TR::aloadi, 1, vft, arrayCompSymRef);
-      TR::Node *loadClassFlags = TR::Node::createWithSymRef(node, TR::iloadi, 1, arrayCompClass, classFlagsSymRef);
-      TR::Node *isValueTypeNode = TR::Node::create(node, TR::iand, 2, loadClassFlags, TR::Node::iconst(node, J9ClassIsValueType));
-
-      TR::Node *ifNode = TR::Node::createif(TR::ificmpeq, isValueTypeNode, TR::Node::iconst(node, 0));
-      ifNode->copyByteCodeInfo(node);
+      TR::Node *testIsValueTypeNode = comp()->fej9()->testIsClassValueType(arrayCompClass);
+      TR::Node *ifNode = TR::Node::createif(TR::ificmpeq, testIsValueTypeNode, TR::Node::iconst(node, 0));
 
       TR::Node *passThru  = TR::Node::create(node, TR::PassThrough, 1, sourceChild);
       TR::ResolvedMethodSymbol *currentMethod = comp()->getMethodSymbol();
