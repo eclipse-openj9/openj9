@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,6 @@
 #include "net/RawTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
 
-#include <openssl/ssl.h>
 class SSLOutputStream;
 class SSLInputStream;
 
@@ -117,7 +116,7 @@ public:
       @brief Read a message from the server
 
       The read operation is blocking (subject to a timeout)
- 
+
       @return Returns the type of the message being received
    */
    MessageType read()
@@ -139,7 +138,7 @@ public:
       @brief Send an error message to the JITServer
 
       Examples of error messages include 'compilationInterrupted' (e.g. when class unloading happens),
-      'clientSessionTerminate' (e.g. when the client is about to exit), 
+      'clientSessionTerminate' (e.g. when the client is about to exit),
       and 'connectionTerminate' (e.g. when the client is closing the connection)
    */
    template <typename ...T>
@@ -182,7 +181,7 @@ public:
        that the client sends to the server. This function is actually called to
        determine if we need to try the compatibilty check again. The idea is that
        the incompatible server could be killed and another one (compatible) could be
-       instantiated. If enough time has passed since the server was found to be 
+       instantiated. If enough time has passed since the server was found to be
        incompatible, then the client should try again. "Enough time" is defined as a
        constant 10 second interval.
    */
