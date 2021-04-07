@@ -28,6 +28,9 @@
 			<variation> -XX:ValueTypeFlatteningThreshold=99999 -Xgcpolicy:optthruput -XX:-EnableArrayFlattening</variation>
 			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<!-- Use -XX:-EnableArrayFlattening. testDefaultValueInTriangleArray asserts the fields of each element are not NULL, 
+					which is not true as a FlatteningThreshold is set. -->
+			<variation>-Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=12 -XX:-EnableArrayFlattening</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xverify:none \
