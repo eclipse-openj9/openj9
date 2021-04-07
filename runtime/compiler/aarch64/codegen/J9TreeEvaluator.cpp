@@ -651,6 +651,7 @@ static void wrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *
    srm->addScratchRegistersToDependencyList(conditions);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions, NULL);
 
+   srm->stopUsingRegisters();
    }
 
 TR::Register *
