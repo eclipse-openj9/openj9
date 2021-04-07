@@ -1064,6 +1064,25 @@ public:
 
    TR::Node * initializeLocalObjectFlags(TR::Compilation *, TR::Node * allocationNode, TR_OpaqueClassBlock * ramClass);
 
+   /**
+    * \brief Load class flags field of the specified class and test whether any of the
+    *        specified flags is set.
+    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \param flagsToTest    The class field flags that are to be checked
+    * \return \ref TR::Node that evaluates to a non-zero integer if any of the specified
+    *         flags is set; or evaluates to zero, otherwise.
+    */
+   TR::Node * testAreSomeClassFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest);
+
+   /**
+    * \brief Load class flags field of the specified class and test whether the value type
+    *        field is set.
+    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \return \ref TR::Node that evaluates to a non-zero integer if the class is a value type,
+    *         or zero if the class is an identity type
+    */
+   TR::Node * testIsClassValueType(TR::Node *j9ClassRefNode);
+
    virtual J9JITConfig *getJ9JITConfig() { return _jitConfig; }
 
    virtual int32_t getCompThreadIDForVMThread(void *vmThread);
