@@ -3015,6 +3015,48 @@ public class ValueTypeTests {
 		assertTrue(Arrays.asList(refClass.getInterfaces()).contains(IdentityObject.class));
 	}
 
+	@Test(priority=1)
+	static public void testIsPrimitiveClassOnRef() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class refClass = ValueTypeGenerator.generateRefClass("testIsPrimitiveClassOnRef", fields);
+		assertFalse(refClass.isPrimitiveClass());
+	}
+
+	@Test(priority=1)
+	static public void testIsPrimitiveClassOnValueType() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("testIsPrimitiveClassOnValueType", fields);
+		assertTrue(valueClass.isPrimitiveClass());
+	}
+
+	@Test(priority=1)
+	static public void testIsPrimitiveClassOnInterface() throws Throwable {
+		assertFalse(TestInterface.class.isPrimitiveClass());
+	}
+
+	private interface TestInterface {
+
+	}
+
+	@Test(priority=1)
+	static public void testIsPrimitiveClassOnAbstractClass() throws Throwable {
+		assertFalse(AbstractClass.class.isPrimitiveClass());
+	}
+
+	@Test(priority=1)
+	static public void testIsPrimitiveOnValueArrayClass() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("testIsPrimitiveOnValueArrayClass", fields);
+		assertFalse(valueClass.arrayType().isPrimitiveClass());
+	}
+
+	@Test(priority=1)
+	static public void testIsPrimitiveOnRefArrayClass() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class refClass = ValueTypeGenerator.generateRefClass("testIsPrimitiveOnRefArrayClass", fields);
+		assertFalse(refClass.arrayType().isPrimitiveClass());
+	}
+
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
 			return lookup.findVirtual(clazz, "get"+fieldName, MethodType.methodType(fieldType));

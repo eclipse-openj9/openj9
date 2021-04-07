@@ -2375,6 +2375,16 @@ public boolean isInterface() {
  */
 public native boolean isPrimitive();
 
+/*[IF INLINE-TYPES]*/
+/**
+ * Answers true if the receiver represents a primitive class type. Array classes
+ * return false.
+ *
+ * @return	true if reciever is primitive class type, and false otherwise.
+ */
+public native boolean isPrimitiveClass();
+/*[ENDIF] INLINE-TYPES */
+
 /**
  * Answers a new instance of the class represented by the
  * receiver, created by invoking the default (i.e. zero-argument)
