@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2020 IBM Corp. and others
+ * Copyright (c) 2015, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -213,8 +213,13 @@ public class ObjectFieldInfo {
 	boolean
 	isBackfillSuitableInstanceSingleAvailable()
 	{
-		return ((0 != getInstanceSingleCount())
-				|| (0 != getFlatAlignedSingleInstanceBackfillSize())
+		return (0 != getInstanceSingleCount());
+	}
+	
+	boolean
+	isBackfillSuitableFlatInstanceSingleAvailable()
+	{
+		return ((0 != getFlatAlignedSingleInstanceBackfillSize())
 				|| (0 != getFlatUnAlignedSingleInstanceBackfillSize()));
 	}
 
@@ -640,7 +645,7 @@ public class ObjectFieldInfo {
 	getNonBackfilledFlatInstanceSingleSize()
 	{
 		int nonBackfilledFlatSinglesSize = totalFlatFieldSingleBytes;
-		if (isBackfillSuitableInstanceSingleAvailable()
+		if (isBackfillSuitableFlatInstanceSingleAvailable()
 			&& isMyBackfillSlotAvailable()
 			&& (0 == getInstanceSingleCount())
 			&& (objectCanUseBackfill && (0 == getInstanceObjectCount()))

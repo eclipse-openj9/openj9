@@ -27,7 +27,13 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import sun.security.util.SecurityConstants;
-/*[IF JAVA_SPEC_VERSION >= 11]
+/*[IF JAVA_SPEC_VERSION >= 11]*/
+import java.io.BufferedOutputStream;
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.util.Properties;
 import jdk.internal.misc.TerminatingThreadLocal;
 import jdk.internal.reflect.CallerSensitive;
 /*[ELSE] JAVA_SPEC_VERSION >= 11 */
@@ -215,6 +221,47 @@ void completeInitialization() {
 	/*[IF Sidecar19-SE|Sidecar18-SE-OpenJ9]*/
 	System.startSNMPAgent();
 	/*[ENDIF]*/ // Sidecar19-SE|Sidecar18-SE-OpenJ9
+
+	/*[IF JAVA_SPEC_VERSION >= 11] */
+	/* Although file.encoding is used to set the default Charset, some Charset's are not available
+	 * in the java.base module and so are not used at startup. There are additional Charset's in the
+	 * jdk.charsets module, which is only loaded later. This means the default Charset may not be the
+	 * same as file.encoding. Now that all modules and Charset's are available, check if the desired
+	 * encodings can be used for System.err and System.out.
+	 */
+	Properties props = System.internalGetProperties();
+	/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
+	String consoleEncoding = props.getProperty("ibm.system.encoding"); //$NON-NLS-1$
+	/*[ELSE]*/
+	String consoleEncoding = props.getProperty("file.encoding"); //$NON-NLS-1$
+	/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
+
+	// If the sun.stderr.encoding was already set in System, don't change the encoding
+	if (!System.hasSetErrEncoding()) {
+		Charset stderrCharset = System.getCharset(props.getProperty("sun.stderr.encoding"), consoleEncoding); //$NON-NLS-1$
+		if (stderrCharset != null) {
+			System.err.flush();
+			/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
+			System.setErr(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true, stderrCharset));
+			/*[ELSE]*/
+			System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true, stderrCharset));
+			/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
+		}
+	}
+
+	// If the sun.stdout.encoding was already set in System, don't change the encoding
+	if (!System.hasSetOutEncoding()) {
+		Charset stdoutCharset = System.getCharset(props.getProperty("sun.stdout.encoding"), consoleEncoding); //$NON-NLS-1$
+		if (stdoutCharset != null) {
+			System.out.flush();
+			/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
+			System.setOut(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true, stdoutCharset));
+			/*[ELSE]*/
+			System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true, stdoutCharset));
+			/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
+		}
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 }
 
 /**
