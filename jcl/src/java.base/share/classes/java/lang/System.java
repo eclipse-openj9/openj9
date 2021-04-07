@@ -23,6 +23,9 @@
 package java.lang;
 
 import java.io.*;
+/*[IF Sidecar18-SE-OpenJ9 | JAVA_SPEC_VERSION >= 11]*/
+import java.nio.charset.Charset;
+/*[ENDIF] Sidecar18-SE-OpenJ9 | JAVA_SPEC_VERSION >= 11 */
 import java.util.Map;
 import java.util.Properties;
 import java.util.PropertyPermission;
@@ -102,6 +105,12 @@ public final class System {
 	private static String fileEncoding;
 	private static String osEncoding;
 
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
+	private static boolean hasSetErrEncoding;
+	private static boolean hasSetOutEncoding;
+	private static Charset consoleDefaultCharset;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+
 /*[IF Sidecar19-SE]*/
 	static java.lang.ModuleLayer	bootLayer;
 /*[ENDIF]*/
@@ -131,8 +140,74 @@ public final class System {
 		// if os.encoding is not defined, file.encoding will be used
 		if (osEncoding == null)
 			osEncoding = definedOSEncoding;
-	}	
-		
+	}
+
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
+	/*
+	 * Return the Charset of the primary or fallback encoding, if different from the default.
+	 */
+	static Charset getCharset(String primary, String fallback) {
+		if (primary != null) {
+			try {
+				Charset newCharset = Charset.forName(primary);
+				if (newCharset.equals(consoleDefaultCharset)) {
+					return null;
+				} else {
+					return newCharset;
+				}
+			} catch (IllegalArgumentException e) {
+				// ignore unsupported or invalid encodings
+			}
+		}
+		if (fallback != null) {
+			try {
+				Charset newCharset = Charset.forName(fallback);
+				if (newCharset.equals(consoleDefaultCharset)) {
+					return null;
+				} else {
+					return newCharset;
+				}
+			} catch (IllegalArgumentException e) {
+				// ignore unsupported or invalid encodings
+			}
+		}
+		return null;
+	}
+
+	static boolean hasSetErrEncoding() {
+		return hasSetErrEncoding;
+	}
+
+	static boolean hasSetOutEncoding() {
+		return hasSetOutEncoding;
+	}
+
+	static Charset getConsoleDefaultCharset() {
+		return consoleDefaultCharset;
+	}
+	/*[ELSE]*/
+	/*[IF Sidecar18-SE-OpenJ9]*/
+	/*
+	 * Return the Charset name of the primary encoding, if different from the default.
+	 */
+	private static String getCharsetName(String primary, Charset defaultCharset) {
+		if (primary != null) {
+			try {
+				Charset newCharset = Charset.forName(primary);
+				if (newCharset.equals(defaultCharset)) {
+					return null;
+				} else {
+					return newCharset.name();
+				}
+			} catch (IllegalArgumentException e) {
+				// ignore unsupported or invalid encodings
+			}
+		}
+		return null;
+	}
+	/*[ENDIF] Sidecar18-SE-OpenJ9 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+
 	static void afterClinitInitialization() {
 		/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 		/*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */
@@ -176,18 +251,82 @@ public final class System {
 		/*[ELSE]*/
 		StringCoding.encode(new char[1], 0, 1);
 		/*[ENDIF]*/
-		/*[IF (Sidecar18-SE-OpenJ9|Sidecar19-SE)&!(PLATFORM-mz31|PLATFORM-mz64)]*/
-		setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
-		setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true));
+
+		/*[IF Sidecar18-SE-OpenJ9 | JAVA_SPEC_VERSION >= 11]*/
+		Properties props = internalGetProperties();
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
+		consoleDefaultCharset = Charset.defaultCharset();
+		/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
+		try {
+			consoleDefaultCharset = Charset.forName(props.getProperty("ibm.system.encoding")); //$NON-NLS-1$
+		} catch (IllegalArgumentException e) {
+			// use the defaultCharset()
+		}
+		/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
+		Charset stdoutCharset = getCharset(props.getProperty("sun.stdout.encoding"), null); //$NON-NLS-1$
+		Charset stderrCharset = getCharset(props.getProperty("sun.stderr.encoding"), null); //$NON-NLS-1$
+		/*[ELSE]*/
+		Charset consoleCharset = Charset.defaultCharset();
+		String stdoutCharset = getCharsetName(props.getProperty("sun.stdout.encoding"), consoleCharset); //$NON-NLS-1$
+		String stderrCharset = getCharsetName(props.getProperty("sun.stderr.encoding"), consoleCharset); //$NON-NLS-1$
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+		/*[ENDIF] Sidecar18-SE-OpenJ9 | JAVA_SPEC_VERSION >= 11 */
+
+		/*[IF (Sidecar18-SE-OpenJ9 | JAVA_SPEC_VERSION >= 11) & !(PLATFORM-mz31 | PLATFORM-mz64)]*/
+		if (stderrCharset != null) {
+			/*[IF JAVA_SPEC_VERSION >= 11]*/
+			hasSetErrEncoding = true;
+			setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true, stderrCharset));
+			/*[ELSE]*/
+			try {
+				setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true, stderrCharset));
+			} catch (UnsupportedEncodingException e) {
+				// not possible as the Charset name was validated first
+				throw new InternalError("For encoding " + stderrCharset, e); //$NON-NLS-1$
+			}
+			/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+		} else {
+			setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
+		}
+		if (stdoutCharset != null) {
+			/*[IF JAVA_SPEC_VERSION >= 11]*/
+			hasSetOutEncoding = true;
+			setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true, stdoutCharset));
+			/*[ELSE]*/
+			try {
+				setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true, stdoutCharset));
+			} catch (UnsupportedEncodingException e) {
+				// not possible as the Charset name was validated first
+				throw new InternalError("For encoding " + stdoutCharset, e); //$NON-NLS-1$
+			}
+			/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+		} else {
+			setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true));
+		}
 		/*[IF Sidecar19-SE_RAWPLUSJ9]*/
 		setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
-		/*[ENDIF]*/
+		/*[ENDIF] Sidecar19-SE_RAWPLUSJ9 */
 		/*[ELSE]*/
 		/*[PR s66168] - ConsoleInputStream initialization may write to System.err */
 		/*[PR s73550, s74314] ConsolePrintStream incorrectly initialized */
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
+		if (stderrCharset != null) {
+			hasSetErrEncoding = true;
+			setErr(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true, stderrCharset));
+		} else {
+			setErr(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
+		}
+		if (stdoutCharset != null) {
+			hasSetOutEncoding = true;
+			setOut(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true, stdoutCharset));
+		} else {
+			setOut(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true));
+		}
+		/*[ELSE]*/
 		setErr(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
 		setOut(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true));
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+		/*[ENDIF] (Sidecar18-SE-OpenJ9 | JAVA_SPEC_VERSION >= 11) & !(PLATFORM-mz31 | PLATFORM-mz64) */
 	}
 
 native static void startSNMPAgent();
