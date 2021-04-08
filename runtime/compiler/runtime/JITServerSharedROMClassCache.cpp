@@ -224,9 +224,9 @@ JITServerSharedROMClassCache::release(J9ROMClass *romClass)
 
 const JITServerROMClassHash &
 JITServerSharedROMClassCache::getHash(const J9ROMClass *romClass)
-{
+   {
    return *Entry::get(romClass)->_hash;
-}
+   }
 
 JITServerSharedROMClassCache::Partition &
 JITServerSharedROMClassCache::getPartition(const JITServerROMClassHash &hash)
