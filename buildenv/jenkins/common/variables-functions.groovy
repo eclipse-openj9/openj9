@@ -1589,9 +1589,9 @@ def download_boot_jdk(bootJDKVersion, bootJDK) {
                 gzip -cd "\$sdkFile" | tar xof - -C ${bootJDK} --strip=${dirStrip}
             fi
             ${bootJDK}/bin/java -version
-            rm -f "\$sdkFile"
         """
     }
+    buildFile.cleanWorkspace(false)
 }
 
 def set_build_custom_options() {
