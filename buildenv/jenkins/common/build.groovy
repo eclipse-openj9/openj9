@@ -588,7 +588,7 @@ def cleanWorkspace (KEEP_WORKSPACE) {
 def build_all() {
     stage ('Queue') {
         timeout(time: 10, unit: 'HOURS') {
-            node("${NODE}") {
+            node("win2012-x86-6") {
                 timeout(time: 5, unit: 'HOURS') {
                     try {
                         cleanWorkspace(false)
