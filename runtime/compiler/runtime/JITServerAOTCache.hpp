@@ -231,8 +231,10 @@ private:
    };
 
 
-// Each AOT cache instance at the JITServer is identified by a unique name and stores its
-// own independent set of serialized AOT methods and corresponding serialization records.
+// This class implements the storage of serialized AOT methods and their
+// serialization records at the JITServer. It is only used on the server side.
+// Each AOT cache instance is identified by a unique name and stores its own
+// independent set of serialized AOT methods and their serialization records.
 class JITServerAOTCache
    {
 public:
@@ -243,6 +245,8 @@ public:
 
    const std::string &name() const { return _name; }
 
+   // Each get{Type}Record() method returns the record for given parameters (which fully identify
+   // the unique record), by either looking up the existing record or creating a new one.
    const AOTCacheClassLoaderRecord *getClassLoaderRecord(const uint8_t *name, size_t nameLength);
    const AOTCacheClassRecord *getClassRecord(const AOTCacheClassLoaderRecord *loaderRecord, const J9ROMClass *romClass);
    const AOTCacheMethodRecord *getMethodRecord(const AOTCacheClassRecord *definingClassRecord,
@@ -252,12 +256,21 @@ public:
                                                                    size_t length, uintptr_t includedClasses);
    const AOTCacheAOTHeaderRecord *getAOTHeaderRecord(const TR_AOTHeader *header, uint64_t clientUID);
 
+   // Add a serialized AOT method to the cache. The key identifying the method is a combination of:
+   // - class chain record for its defining class;
+   // - index in the array of methods in the defining class;
+   // - AOT header record for the TR_AOTHeader of the client JVM this method was compiled for;
+   // - optimization level.
+   // Each item in the `records` vector corresponds to an SCC offset stored in the AOT method's relocation data.
+   // Returns true if the method was successfully added, false otherwise (if a method already exists for this key).
    bool storeMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                     TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                     const Vector<std::pair<const AOTCacheRecord *, uintptr_t/*reloDataOffset*/>> &records,
                     const void *code, size_t codeSize, const void *data, size_t dataSize,
                     const char *signature, uint64_t clientUID);
 
+   // Lookup a serialized method for the given key (see comment for storeMethod() above)
+   // in the cache. Returns NULL if no such method exists in the cache.
    const CachedAOTMethod *findMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                                      TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord);
 
