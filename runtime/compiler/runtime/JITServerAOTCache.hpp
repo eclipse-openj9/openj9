@@ -61,6 +61,9 @@ public:
    // Calls f(r) for each sub-record r
    virtual void subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const { }
 
+   static void *allocate(size_t size);
+   static void free(void *ptr);
+
 protected:
    AOTCacheRecord() = default;
    };

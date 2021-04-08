@@ -27,13 +27,19 @@
 #include "runtime/JITServerSharedROMClassCache.hpp"
 
 
-static void *
-allocate(size_t size)
+void *
+AOTCacheRecord::allocate(size_t size)
    {
    void *ptr = TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory(size, TR_Memory::JITServerAOTCache);
    if (!ptr)
       throw std::bad_alloc();
    return ptr;
+   }
+
+void
+AOTCacheRecord::free(void *ptr)
+   {
+   TR::Compiler->persistentGlobalMemory()->freePersistentMemory(ptr);
    }
 
 
@@ -52,7 +58,8 @@ AOTCacheClassLoaderRecord::AOTCacheClassLoaderRecord(uintptr_t id, const uint8_t
 AOTCacheClassLoaderRecord *
 AOTCacheClassLoaderRecord::create(uintptr_t id, const uint8_t *name, size_t nameLength)
    {
-   return new(allocate(size(nameLength))) AOTCacheClassLoaderRecord(id, name, nameLength);
+   void *ptr = AOTCacheRecord::allocate(size(nameLength));
+   return new (ptr) AOTCacheClassLoaderRecord(id, name, nameLength);
    }
 
 
@@ -76,7 +83,7 @@ AOTCacheClassRecord *
 AOTCacheClassRecord::create(uintptr_t id, const AOTCacheClassLoaderRecord *classLoaderRecord,
                             const JITServerROMClassHash &hash, const J9ROMClass *romClass)
    {
-   void *ptr = allocate(size(J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass))));
+   void *ptr = AOTCacheRecord::allocate(size(J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass))));
    return new (ptr) AOTCacheClassRecord(id, classLoaderRecord, hash, romClass);
    }
 
@@ -103,7 +110,7 @@ AOTCacheMethodRecord::AOTCacheMethodRecord(uintptr_t id, const AOTCacheClassReco
 AOTCacheMethodRecord *
 AOTCacheMethodRecord::create(uintptr_t id, const AOTCacheClassRecord *definingClassRecord, uint32_t index)
    {
-   void *ptr = allocate(sizeof(AOTCacheMethodRecord));
+   void *ptr = AOTCacheRecord::allocate(sizeof(AOTCacheMethodRecord));
    return new (ptr) AOTCacheMethodRecord(id, definingClassRecord, index);
    }
 
@@ -141,7 +148,7 @@ ClassChainSerializationRecord::ClassChainSerializationRecord(uintptr_t id, size_
 AOTCacheClassChainRecord *
 AOTCacheClassChainRecord::create(uintptr_t id, const AOTCacheClassRecord *const *records, size_t length)
    {
-   void *ptr = allocate(size(length));
+   void *ptr = AOTCacheRecord::allocate(size(length));
    return new (ptr) AOTCacheClassChainRecord(id, records, length);
    }
 
@@ -157,7 +164,7 @@ AOTCacheWellKnownClassesRecord *
 AOTCacheWellKnownClassesRecord::create(uintptr_t id, const AOTCacheClassChainRecord *const *records,
                                        size_t length, uintptr_t includedClasses)
    {
-   void *ptr = allocate(size(length));
+   void *ptr = AOTCacheRecord::allocate(size(length));
    return new (ptr) AOTCacheWellKnownClassesRecord(id, records, length, includedClasses);
    }
 
@@ -176,7 +183,7 @@ AOTCacheAOTHeaderRecord::AOTCacheAOTHeaderRecord(uintptr_t id, const TR_AOTHeade
 AOTCacheAOTHeaderRecord *
 AOTCacheAOTHeaderRecord::create(uintptr_t id, const TR_AOTHeader *header)
    {
-   void *ptr = allocate(sizeof(AOTCacheAOTHeaderRecord));
+   void *ptr = AOTCacheRecord::allocate(sizeof(AOTCacheAOTHeaderRecord));
    return new (ptr) AOTCacheAOTHeaderRecord(id, header);
    }
 
@@ -215,7 +222,7 @@ CachedAOTMethod::create(const AOTCacheClassChainRecord *definingClassChainRecord
                         const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
                         const void *code, size_t codeSize, const void *data, size_t dataSize)
    {
-   void *ptr = allocate(size(records.size(), codeSize, dataSize));
+   void *ptr = AOTCacheRecord::allocate(size(records.size(), codeSize, dataSize));
    return new (ptr) CachedAOTMethod(definingClassChainRecord, index, optLevel, aotHeaderRecord,
                                     records, code, codeSize, data, dataSize);
    }
@@ -304,7 +311,7 @@ JITServerAOTCache::AOTHeaderKey::Hash::operator()(const AOTHeaderKey &k) const n
    }
 
 
-// Insert value (which must be allocated with the global persistent allocator)
+// Insert the value (which must be allocated with AOTCacheRecord::allocate())
 // with the key into the map, avoiding memory leaks in case of exceptions.
 template<typename K, typename V, typename H> static void
 addToMap(PersistentUnorderedMap<K, V *, H> &map,
@@ -317,17 +324,19 @@ addToMap(PersistentUnorderedMap<K, V *, H> &map,
       }
    catch (...)
       {
-      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(value);
+      AOTCacheRecord::free(value);
       throw;
       }
    }
 
-// Free all the values (which must be allocated with the global persistent allocator) in the map
+// Free all the values (which must be allocated with AOTCacheRecord::allocate()) in the map.
+// NOTE: This function can only be used in the destructor of the object containing the map.
+// The now invalid pointers stay in the map, so it must be destroyed after this call.
 template<typename K, typename V, typename H> static void
 freeMapValues(const PersistentUnorderedMap<K, V *, H> &map)
    {
    for (auto &kv : map)
-      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(kv.second);
+      AOTCacheRecord::free(kv.second);
    }
 
 
