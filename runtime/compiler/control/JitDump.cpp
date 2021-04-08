@@ -332,11 +332,11 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       return OMR_ERROR_INTERNAL;
       }
 
-   recompilationThreadInfo->resumeCompilationThread();
-
    compInfo->acquireCompMonitor(crashedThread);
    compInfo->purgeMethodQueue(compilationFailure);
    compInfo->releaseCompMonitor(crashedThread);
+
+   recompilationThreadInfo->resumeCompilationThread();
 
    TR::FILE *jitdumpFile = trfopen(label, "ab", false);
    if (NULL == jitdumpFile)
