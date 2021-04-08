@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -363,66 +363,6 @@ TR_PPCHWProfiler::processBuffers(J9VMThread *vmThread, TR_J9VMBase *fe)
    return false;
    }
 
-static void incrementMethodHotness(J9JITExceptionTable *metaData)
-   {
-#if 0
-   TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)metaData->bodyInfo;
-   if (!bodyInfo)
-      return;
-
-   TR_PersistentMethodInfo     *methodInfo = bodyInfo->getMethodInfo();
-   if (!methodInfo)
-      return;
-
-   if (methodInfo->_samples != UINT_MAX)
-      ++methodInfo->_samples;
-#endif
-   }
-
-static void incrementCallHotness(J9JITExceptionTable *callerMetaData, J9JITExceptionTable *calleeMetaData)
-   {
-#if 0
-   TR_PersistentJittedBodyInfo *callerBodyInfo = (TR_PersistentJittedBodyInfo *)callerMetaData->bodyInfo;
-   if (!callerBodyInfo)
-      return;
-
-   TR_PersistentMethodInfo     *callerMethodInfo = callerBodyInfo->getMethodInfo();
-   if (!callerMethodInfo)
-      return;
-
-   TR_PersistentJittedBodyInfo *calleeBodyInfo = (TR_PersistentJittedBodyInfo *)calleeMetaData->bodyInfo;
-   if (!calleeBodyInfo)
-      return;
-
-   TR_PersistentMethodInfo     *calleeMethodInfo = calleeBodyInfo->getMethodInfo();
-   if (!calleeMethodInfo)
-      return;
-
-   TR_SampledCallerInfo *sampledCallerInfo = calleeMethodInfo->_sampledCallers;
-   TR_SampledCallerInfo *prevSampledCallerInfo = NULL;
-   while (sampledCallerInfo)
-      {
-      if (sampledCallerInfo->_methodInfo == callerMethodInfo)
-         {
-         if (sampledCallerInfo->_samples != UINT_MAX)
-            ++sampledCallerInfo->_samples;
-         return;
-         }
-      prevSampledCallerInfo = sampledCallerInfo;
-      sampledCallerInfo = sampledCallerInfo->getNext();
-      }
-
-   TR_SampledCallerInfo *newCaller = (TR_SampledCallerInfo *)TR_Memory::jitPersistentAlloc(sizeof(TR_SampledCallerInfo));
-   newCaller->_methodInfo = callerMethodInfo;
-   newCaller->_samples = 1;
-   newCaller->setNext(NULL);
-   if (!prevSampledCallerInfo)
-      calleeMethodInfo->_sampledCallers = newCaller;
-   else
-      prevSampledCallerInfo->setNext(newCaller);
-#endif
-   }
-
 // This helps when you have several consecutive samples in a buffer hitting the same method,
 // however even with just a few hits it's probably a net win considering how much work is
 // done for a single metadata search.
@@ -474,7 +414,6 @@ static void processMethodHotness(J9VMThread *vmThread, J9JITConfig *jitConfig, T
          }
 
       ++numJittedSamples;
-      incrementMethodHotness(metaData);
 
       TR::Recompilation::hwpGlobalSampleCount++;
       if (recompilationEnabled && metaData->bodyInfo != NULL)
@@ -564,16 +503,8 @@ static void processMethodHotness(J9VMThread *vmThread, J9JITConfig *jitConfig, T
                   }
                else if (OMR_UNLIKELY(op == 16))          // B-form, bcl is fairly uncommon and is never used to call Java methods anyway
                   {
-#if 0
-                  if (OMR_UNLIKELY(callInsn & 2))        // Don't care about absolute calls
-                     continue;
-                  int32_t offset = callInsn & 0x0000FFFC;
-                  offset = (int16_t)offset;
-                  calleeAddr = callerAddr + offset;
-#else
                   // We don't use bcl for Java calls, just skip these
                   continue;
-#endif
                   }
                else
                   {
@@ -597,7 +528,6 @@ static void processMethodHotness(J9VMThread *vmThread, J9JITConfig *jitConfig, T
                   continue;
 
                ++numJit2JitCalls;
-               incrementCallHotness(callerMetaData, calleeMetaData);
                }
             }
          else if (bhrbEntry & ~BHRBE_EA_MASK)
