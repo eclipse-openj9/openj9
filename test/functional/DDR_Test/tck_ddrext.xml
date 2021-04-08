@@ -21,7 +21,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <project name="DDR Extension Test" default="clean">
-	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 
 	<property name="JAVA_COMMAND" value="${JAVA_COMMAND}" />
 	<property name="TEST_ROOT" value="${TEST_ROOT}" />
