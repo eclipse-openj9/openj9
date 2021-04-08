@@ -652,7 +652,11 @@ JITServerAOTCacheMap::JITServerAOTCacheMap() :
 
 JITServerAOTCacheMap::~JITServerAOTCacheMap()
    {
-   freeMapValues(_map);
+   for (auto &kv : _map)
+      {
+      kv.second->~JITServerAOTCache();
+      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(kv.second);
+      }
    TR::Monitor::destroy(_monitor);
    }
 
@@ -674,7 +678,17 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
    auto cache = new (TR::Compiler->persistentGlobalMemory()) JITServerAOTCache(name);
    if (!cache)
       throw std::bad_alloc();
-   addToMap(_map, it, name, cache);
+
+   try
+      {
+      _map.insert(it, { name, cache });
+      }
+   catch (...)
+      {
+      cache->~JITServerAOTCache();
+      TR::Compiler->persistentGlobalMemory()->freePersistentMemory(cache);
+      throw;
+      }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Using existing AOT cache %s for clientUID %llu",
