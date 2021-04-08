@@ -254,7 +254,7 @@ size_t
 JITServerAOTCache::ClassKey::Hash::operator()(const ClassKey &k) const noexcept
    {
    // Remove trailing zero bits in aligned pointer for better hash distribution
-   return ((uintptr_t)k._classLoaderRecord << 3) ^ std::hash<JITServerROMClassHash>()(*k._hash);
+   return ((uintptr_t)k._classLoaderRecord >> 3) ^ std::hash<JITServerROMClassHash>()(*k._hash);
    }
 
 
