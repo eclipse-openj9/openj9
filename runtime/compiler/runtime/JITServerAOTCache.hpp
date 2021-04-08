@@ -328,22 +328,28 @@ private:
    const std::string _name;
 
    PersistentUnorderedMap<ClassLoaderKey, AOTCacheClassLoaderRecord *, ClassLoaderKey::Hash> _classLoaderMap;
+   uintptr_t _nextClassLoaderId;
    TR::Monitor *const _classLoaderMonitor;
 
    PersistentUnorderedMap<ClassKey, AOTCacheClassRecord *, ClassKey::Hash> _classMap;
+   uintptr_t _nextClassId;
    TR::Monitor *const _classMonitor;
 
    PersistentUnorderedMap<MethodKey, AOTCacheMethodRecord *> _methodMap;
+   uintptr_t _nextMethodId;
    TR::Monitor *const _methodMonitor;
 
    PersistentUnorderedMap<ClassChainKey, AOTCacheClassChainRecord *, ClassChainKey::Hash> _classChainMap;
+   uintptr_t _nextClassChainId;
    TR::Monitor *const _classChainMonitor;
 
-   PersistentUnorderedMap<WellKnownClassesKey, AOTCacheWellKnownClassesRecord *, WellKnownClassesKey::Hash>
-      _wellKnownClassesMap;
+   PersistentUnorderedMap<WellKnownClassesKey, AOTCacheWellKnownClassesRecord *,
+                          WellKnownClassesKey::Hash> _wellKnownClassesMap;
+   uintptr_t _nextWellKnownClassesId;
    TR::Monitor *const _wellKnownClassesMonitor;
 
    PersistentUnorderedMap<AOTHeaderKey, AOTCacheAOTHeaderRecord *, AOTHeaderKey::Hash> _aotHeaderMap;
+   uintptr_t _nextAOTHeaderId;
    TR::Monitor *const _aotHeaderMonitor;
 
    PersistentUnorderedMap<CachedMethodKey, CachedAOTMethod *> _cachedMethodMap;

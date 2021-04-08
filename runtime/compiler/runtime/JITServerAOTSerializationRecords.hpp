@@ -60,6 +60,7 @@ public:
    void operator=(const AOTSerializationRecord &) = delete;
 
    size_t size() const { return _size; }
+   //NOTE: 0 signifies an invalid record ID
    uintptr_t id() const { return getId(_idAndType); }
    AOTSerializationRecordType type() const { return getType(_idAndType); }
    const uint8_t *end() const { return (const uint8_t *)this + size(); }
@@ -74,6 +75,7 @@ public:
    // Record ID and type are stored in compact way in a single pointer-sized word
    static uintptr_t idAndType(uintptr_t id, AOTSerializationRecordType type)
       {
+      TR_ASSERT(id, "ID 0 is invalid");
       TR_ASSERT(id <= (UINTPTR_MAX >> idShift), "ID overflow: %zu", id);
       return (id << idShift) | (uintptr_t)type;
       }
