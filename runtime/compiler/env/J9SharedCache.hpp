@@ -171,6 +171,8 @@ public:
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
 
+   static const uint32_t maxClassChainLength = 32;
+
    virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr)
       {
       return (rememberClass((J9Class *) classPtr, false) != NULL);
