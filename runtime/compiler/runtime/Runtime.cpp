@@ -480,7 +480,6 @@ JIT_HELPER(__arrayTranslateTRTO);
 JIT_HELPER(__arrayTranslateTRTO255);
 JIT_HELPER(__arrayTranslateTROT255);
 JIT_HELPER(__arrayTranslateTROT);
-JIT_HELPER(__arrayCmpVMX);
 JIT_HELPER(__arrayCmpLenVMX);
 JIT_HELPER(__arrayCmpScalar);
 JIT_HELPER(__arrayCmpLenScalar);
@@ -1399,12 +1398,10 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_PPCreferenceArrayCopy,           (void *) __referenceArrayCopy,           TR_Helper);
    SET(TR_PPCgeneralArrayCopy,             (void *) __generalArrayCopy,             TR_Helper);
 #if 1
-   SET(TR_PPCarrayCmpVMX,                 (void *) 0, TR_Helper);
    SET(TR_PPCarrayCmpLenVMX,              (void *) 0, TR_Helper);
    SET(TR_PPCarrayCmpScalar,              (void *) 0, TR_Helper);
    SET(TR_PPCarrayCmpLenScalar,           (void *) 0, TR_Helper);
 #else
-   SET(TR_PPCarrayCmpVMX,                 (void *) __arrayCmpVMX,                 TR_Helper);
    SET(TR_PPCarrayCmpLenVMX,              (void *) __arrayCmpLenVMX,              TR_Helper);
    SET(TR_PPCarrayCmpScalar,              (void *) __arrayCmpScalar,              TR_Helper);
    SET(TR_PPCarrayCmpLenScalar,           (void *) __arrayCmpLenScalar,           TR_Helper);
