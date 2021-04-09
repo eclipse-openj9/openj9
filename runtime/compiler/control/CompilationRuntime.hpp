@@ -77,6 +77,7 @@ template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
 #if defined(J9VM_OPT_JITSERVER)
 class ClientSessionHT;
+class JITServerAOTCacheMap;
 class JITServerSharedROMClassCache;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -1071,6 +1072,9 @@ public:
 
    JITServerSharedROMClassCache *getJITServerSharedROMClassCache() const { return _sharedROMClassCache; }
    void setJITServerSharedROMClassCache(JITServerSharedROMClassCache *cache) { _sharedROMClassCache = cache; }
+
+   JITServerAOTCacheMap *getJITServerAOTCacheMap() const { return _JITServerAOTCacheMap; }
+   void setJITServerAOTCacheMap(JITServerAOTCacheMap *map) { _JITServerAOTCacheMap = map; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
@@ -1291,6 +1295,7 @@ private:
    PersistentVector<std::string> _sslCerts;
    JITServer::CompThreadActivationPolicy _activationPolicy;
    JITServerSharedROMClassCache *_sharedROMClassCache;
+   JITServerAOTCacheMap *_JITServerAOTCacheMap;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // CompilationInfo
 }
