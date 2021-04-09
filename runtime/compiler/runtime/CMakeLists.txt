@@ -64,6 +64,7 @@ if(J9VM_OPT_JITSERVER)
 		runtime/CompileService.cpp
 		runtime/JITClientSession.cpp
 		runtime/JITServerAOTCache.cpp
+		runtime/JITServerAOTDeserializer.cpp
 		runtime/JITServerIProfiler.cpp
 		runtime/JITServerROMClassHash.cpp
 		runtime/JITServerSharedROMClassCache.cpp
