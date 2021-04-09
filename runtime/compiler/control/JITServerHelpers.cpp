@@ -110,9 +110,10 @@ sizeInfoCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *s
    // method debug info, and the ones that point to strings not used by the JIT.
    bool skip = !ctx.isInline(origSrp, romClass) || shouldSkipSlot(slotName);
    auto str = NNSRP_PTR_GET(origSrp, const J9UTF8 *);
-   auto it = ctx._strToOffsetMap.find(str);
-   if (it != ctx._strToOffsetMap.end())// duplicate - already visited
+   auto result = ctx._strToOffsetMap.insert({ str, skip ? (size_t)-1 : ctx._stringsSize });
+   if (!result.second)// duplicate - already visited
       {
+      auto &it = result.first;
       if (!skip && (it->second == (size_t)-1))
          {
          // Previously visited SRPs to this string were skipped, but this one isn't
@@ -122,7 +123,6 @@ sizeInfoCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *s
       return;
       }
 
-   ctx._strToOffsetMap.insert(it, { str, skip ? (size_t)-1 : ctx._stringsSize });
    size_t size = getUTF8Size(str);
    ctx._stringsSize += skip ? 0 : size;
 
@@ -251,7 +251,13 @@ packArrayROMClassData(const J9ROMClass *romClass, ROMClassPackContext &ctx)
       }
    }
 
-// Packs a ROMClass into a std::string to be transferred to the server.
+// Packs a ROMClass to be transferred to the server.
+//
+// The result is allocated from the stack region of trMemory (as well as temporary data
+// structures used for packing). This function should be used with TR::StackMemoryRegion.
+// If passed non-zero expectedSize, and it doesn't match the resulting packedSize
+// (which is returned to the caller by reference), this function returns NULL.
+//
 // UTF8 strings that a ROMClass refers to can be interned and stored outside of
 // the ROMClass body. This function puts all the strings (including interned ones)
 // at the end of the cloned ROMClass in deterministic order and updates the SRPs
@@ -273,15 +279,15 @@ packArrayROMClassData(const J9ROMClass *romClass, ROMClassPackContext &ctx)
 //   located at the end of the ROMClass (can only be followed by intermediate class data).
 // - ROMClass walk visits all the strings that the ROMClass references.
 //
-static std::string
-packROMClass(J9ROMClass *romClass, TR_Memory *trMemory)
+J9ROMClass *
+JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t &packedSize, size_t expectedSize)
    {
    auto name = J9ROMCLASS_CLASSNAME(romClass);
    // Primitive ROMClasses have different layout (see runtime/vm/romclasses.c): the last
    // ROMClass includes all the others' UTF8 name strings in its romSize, which breaks the
    // generic packing implementation. Pretend that its romSize only includes the header.
    size_t origRomSize = J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass) ? sizeof(*romClass) : romClass->romSize;
-   size_t totalSize = origRomSize;
+   packedSize = origRomSize;
 
    // Remove intermediate class data (not used by JIT)
    uint8_t *icData = J9ROMCLASS_INTERMEDIATECLASSDATA(romClass);
@@ -289,18 +295,16 @@ packROMClass(J9ROMClass *romClass, TR_Memory *trMemory)
       {
       TR_ASSERT_FATAL(icData + romClass->intermediateClassDataLength == (uint8_t *)romClass + romClass->romSize,
                       "Intermediate class data not stored at the end of ROMClass %.*s", name->length, name->data);
-      totalSize -= romClass->intermediateClassDataLength;
+      packedSize -= romClass->intermediateClassDataLength;
       }
 
-   // All allocated memory is only used in this function
-   TR::StackMemoryRegion stackMemoryRegion(*trMemory);
    ROMClassPackContext ctx(trMemory, origRomSize);
 
    size_t copySize = 0;
    if (isArrayROMClass(romClass))
       {
       copySize = sizeof(*romClass);
-      totalSize = getArrayROMClassPackedSize(romClass);
+      packedSize = getArrayROMClassPackedSize(romClass);
       }
    else
       {
@@ -309,7 +313,7 @@ packROMClass(J9ROMClass *romClass, TR_Memory *trMemory)
       ctx._callback = sizeInfoCallback;
       allSlotsInROMClassDo(romClass, slotCallback, NULL, NULL, &ctx);
       // Handle the case when all strings are interned
-      auto classEnd = (const uint8_t *)romClass + totalSize;
+      auto classEnd = (const uint8_t *)romClass + packedSize;
       ctx._utf8SectionStart = std::min(ctx._utf8SectionStart, classEnd);
 
       auto end = ctx._utf8SectionEnd ? ctx._utf8SectionEnd : classEnd;
@@ -321,14 +325,21 @@ packROMClass(J9ROMClass *romClass, TR_Memory *trMemory)
                       name->length, name->data, end, classEnd);
 
       copySize = ctx._utf8SectionStart - (const uint8_t *)romClass;
-      totalSize = OMR::alignNoCheck(copySize + ctx._stringsSize, sizeof(uint64_t));
+      packedSize = OMR::alignNoCheck(copySize + ctx._stringsSize, sizeof(uint64_t));
       }
 
-   ctx._packedRomClass = (J9ROMClass *)trMemory->allocateStackMemory(totalSize);
+   // Check if expected size matches, otherwise fail early. Size mismatch can occur when JIT client
+   // packs a ROMClass before computing its hash when deserializing a JITServer-cached AOT method that
+   // was compiled for a different version of the class. In such cases, we can skip the rest of the
+   // packing procedure and hash computation since we already know that the ROMClass doesn't match.
+   if (expectedSize && (expectedSize != packedSize))
+      return NULL;
+
+   ctx._packedRomClass = (J9ROMClass *)trMemory->allocateStackMemory(packedSize);
    if (!ctx._packedRomClass)
       throw std::bad_alloc();
    memcpy(ctx._packedRomClass, romClass, copySize);
-   ctx._packedRomClass->romSize = totalSize;
+   ctx._packedRomClass->romSize = packedSize;
    ctx._cursor = (uint8_t *)ctx._packedRomClass + copySize;
 
    // Zero out SRP to intermediate class data
@@ -361,11 +372,11 @@ packROMClass(J9ROMClass *romClass, TR_Memory *trMemory)
 
    // Pad to required alignment
    auto end = (uint8_t *)OMR::alignNoCheck((uintptr_t)ctx._cursor, sizeof(uint64_t));
-   TR_ASSERT(end == (uint8_t *)ctx._packedRomClass + totalSize, "Invalid final cursor position: %p != %p",
-             end, (uint8_t *)ctx._packedRomClass + totalSize);
+   TR_ASSERT_FATAL(end == (uint8_t *)ctx._packedRomClass + packedSize, "Invalid final cursor position: %p != %p",
+                   end, (uint8_t *)ctx._packedRomClass + packedSize);
    memset(ctx._cursor, 0, end - ctx._cursor);
 
-   return std::string((char *)ctx._packedRomClass, totalSize);
+   return ctx._packedRomClass;
    }
 
 // insertIntoOOSequenceEntryList needs to be executed with sequencingMonitor in hand.
@@ -621,11 +632,22 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    uintptr_t classChainOffsetOfIdentifyingLoaderForClazz = fe->sharedCache() ? 
       fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCacheNoFail((TR_OpaqueClassBlock *)clazz) : 0;
 
-   return std::make_tuple(serializeClass ? packROMClass(clazz->romClass, trMemory) : std::string(), methodsOfClass, baseClass, numDims, parentClass,
-                          TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo,
-                          classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword,
-                          leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize,
-                          clazz->romClass, cp, classFlags, classChainOffsetOfIdentifyingLoaderForClazz, origROMMethods);
+   std::string packedROMClassStr;
+   if (serializeClass)
+      {
+      TR::StackMemoryRegion stackMemoryRegion(*trMemory);
+      size_t packedSize;
+      J9ROMClass *packedROMClass = packROMClass(clazz->romClass, trMemory, packedSize);
+      packedROMClassStr = std::string((const char *)packedROMClass, packedSize);
+      }
+
+   return std::make_tuple(
+      packedROMClassStr, methodsOfClass, baseClass, numDims, parentClass,
+      TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo,
+      classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword,
+      leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize,
+      clazz->romClass, cp, classFlags, classChainOffsetOfIdentifyingLoaderForClazz, origROMMethods
+   );
    }
 
 J9ROMClass *
