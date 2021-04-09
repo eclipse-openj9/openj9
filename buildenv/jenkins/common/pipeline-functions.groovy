@@ -163,7 +163,7 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
         $class: "GitHubCommitStatusSetter",
         reposSource: [$class: "ManuallyEnteredRepositorySource", url: REPO],
         contextSource: [$class: "ManuallyEnteredCommitContextSource", context: CONTEXT],
-        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "SUCCESS"]],
         commitShaSource: [$class: "ManuallyEnteredShaSource", sha: SHA ],
         statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: URL],
         statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: MESSAGE, state: STATE]] ]
