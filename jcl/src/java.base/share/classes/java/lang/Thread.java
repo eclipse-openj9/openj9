@@ -230,15 +230,9 @@ void completeInitialization() {
 	 * encodings can be used for System.err and System.out.
 	 */
 	Properties props = System.internalGetProperties();
-	/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
-	String consoleEncoding = props.getProperty("ibm.system.encoding"); //$NON-NLS-1$
-	/*[ELSE]*/
-	String consoleEncoding = props.getProperty("file.encoding"); //$NON-NLS-1$
-	/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
-
 	// If the sun.stderr.encoding was already set in System, don't change the encoding
 	if (!System.hasSetErrEncoding()) {
-		Charset stderrCharset = System.getCharset(props.getProperty("sun.stderr.encoding"), consoleEncoding); //$NON-NLS-1$
+		Charset stderrCharset = System.getCharset(props.getProperty("sun.stderr.encoding"), true); //$NON-NLS-1$
 		if (stderrCharset != null) {
 			System.err.flush();
 			/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
@@ -251,7 +245,7 @@ void completeInitialization() {
 
 	// If the sun.stdout.encoding was already set in System, don't change the encoding
 	if (!System.hasSetOutEncoding()) {
-		Charset stdoutCharset = System.getCharset(props.getProperty("sun.stdout.encoding"), consoleEncoding); //$NON-NLS-1$
+		Charset stdoutCharset = System.getCharset(props.getProperty("sun.stdout.encoding"), true); //$NON-NLS-1$
 		if (stdoutCharset != null) {
 			System.out.flush();
 			/*[IF PLATFORM-mz31|PLATFORM-mz64]*/

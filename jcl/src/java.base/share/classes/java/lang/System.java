@@ -109,6 +109,7 @@ public final class System {
 	private static boolean hasSetErrEncoding;
 	private static boolean hasSetOutEncoding;
 	private static Charset consoleDefaultCharset;
+	private static String consoleDefaultEncoding;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[IF Sidecar19-SE]*/
@@ -144,9 +145,10 @@ public final class System {
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	/*
-	 * Return the Charset of the primary or fallback encoding, if different from the default.
+	 * Return the Charset of the primary or when fallback is true, the default console encoding,
+	 * if different from the default console Charset.
 	 */
-	static Charset getCharset(String primary, String fallback) {
+	static Charset getCharset(String primary, boolean fallback) {
 		if (primary != null) {
 			try {
 				Charset newCharset = Charset.forName(primary);
@@ -159,9 +161,9 @@ public final class System {
 				// ignore unsupported or invalid encodings
 			}
 		}
-		if (fallback != null) {
+		if (fallback && (consoleDefaultEncoding != null)) {
 			try {
-				Charset newCharset = Charset.forName(fallback);
+				Charset newCharset = Charset.forName(consoleDefaultEncoding);
 				if (newCharset.equals(consoleDefaultCharset)) {
 					return null;
 				} else {
@@ -174,14 +176,31 @@ public final class System {
 		return null;
 	}
 
+	/*
+	 * Return if sun.stderr.encoding was used.
+	 */
 	static boolean hasSetErrEncoding() {
 		return hasSetErrEncoding;
 	}
 
+	/*
+	 * Return if sun.stdout.encoding was used.
+	 */
 	static boolean hasSetOutEncoding() {
 		return hasSetOutEncoding;
 	}
 
+	/*
+	 * Return the default console encoding found via system properties.
+	 */
+	static String getConsoleDefaultEncoding() {
+		return consoleDefaultEncoding;
+	}
+
+	/*
+	 * Return the default console Charset. This is different from the
+	 * default console encoding when the encoding doesn't exist.
+	 */
 	static Charset getConsoleDefaultCharset() {
 		return consoleDefaultCharset;
 	}
@@ -258,13 +277,19 @@ public final class System {
 		consoleDefaultCharset = Charset.defaultCharset();
 		/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
 		try {
-			consoleDefaultCharset = Charset.forName(props.getProperty("ibm.system.encoding")); //$NON-NLS-1$
+			consoleDefaultEncoding = props.getProperty("console.encoding"); //$NON-NLS-1$
+			if (consoleDefaultEncoding == null) {
+				consoleDefaultEncoding = props.getProperty("ibm.system.encoding"); //$NON-NLS-1$
+			}
+			consoleDefaultCharset = Charset.forName(consoleDefaultEncoding); //$NON-NLS-1$
 		} catch (IllegalArgumentException e) {
 			// use the defaultCharset()
 		}
+		/*[ELSE]*/
+		consoleDefaultEncoding = props.getProperty("file.encoding"); //$NON-NLS-1$
 		/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
-		Charset stdoutCharset = getCharset(props.getProperty("sun.stdout.encoding"), null); //$NON-NLS-1$
-		Charset stderrCharset = getCharset(props.getProperty("sun.stderr.encoding"), null); //$NON-NLS-1$
+		Charset stdoutCharset = getCharset(props.getProperty("sun.stdout.encoding"), false); //$NON-NLS-1$
+		Charset stderrCharset = getCharset(props.getProperty("sun.stderr.encoding"), false); //$NON-NLS-1$
 		/*[ELSE]*/
 		Charset consoleCharset = Charset.defaultCharset();
 		String stdoutCharset = getCharsetName(props.getProperty("sun.stdout.encoding"), consoleCharset); //$NON-NLS-1$
