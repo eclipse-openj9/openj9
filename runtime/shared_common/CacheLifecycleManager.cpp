@@ -332,17 +332,12 @@ printSharedCache(void* element, void* param)
 			if (J9SH_OSCACHE_UNKNOWN == currentItem->lastdetach) {
 				j9tty_printf(PORTLIB, "%s\n", "Unknown");
 			} else {
-				time_t t;
-
-				t = (time_t) (currentItem->lastdetach/1000);
-
-				/*
-				 *	For now we will use ctime function - we need to modify str_ftime to take in the time at some point
-				 *	j9str_ftime(formatted, 30, "%d %b %Y %H:%m", currentItem->lastdetach * 1000);
-				 *  j9tty_printf(PORTLIB, "%-15s", formatted);
-				 */
-
-				j9tty_printf(PORTLIB, "%s", ctime(&t));
+				OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+#define FORMAT "%a %b %d %H:%M:%S %Y"
+				char buffer[sizeof(FORMAT) + 1 + 1 + 2]; /* %a and %b expand to 1 extra char each, %Y to 2 extra */
+				omrstr_ftime_ex(buffer, sizeof(buffer), FORMAT, currentItem->lastdetach, OMRSTR_FTIME_FLAG_LOCAL);
+				j9tty_printf(PORTLIB, "%s\n", buffer);
+#undef FORMAT
 			}
 		} else if ((currentItem->nattach == J9SH_OSCACHE_UNKNOWN) || (currentItem->lastdetach == J9SH_OSCACHE_UNKNOWN)) {
 			if (J9PORT_SHR_CACHE_TYPE_SNAPSHOT == currentItem->versionData.cacheType) {

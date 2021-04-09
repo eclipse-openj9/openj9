@@ -9401,7 +9401,8 @@ void TR_VerboseLog::writeTimeStamp()
       char timestamp[32];
       TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
       PORT_ACCESS_FROM_JITCONFIG(compInfo->getJITConfig());
-      j9str_ftime(timestamp, sizeof(timestamp), "%b-%d-%Y_%H:%M:%S ", j9time_current_time_millis());
+      OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+      omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b-%d-%Y_%H:%M:%S ", j9time_current_time_millis(), OMRSTR_FTIME_FLAG_LOCAL);
       write(timestamp);
       }
    }

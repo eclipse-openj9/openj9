@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -680,7 +680,6 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9sock_getaddrinfo_length(param1,param2) privatePortLibrary->sock_getaddrinfo_length(privatePortLibrary,param1,param2)
 #define j9sock_getaddrinfo_name(param1,param2,param3) privatePortLibrary->sock_getaddrinfo_name(privatePortLibrary,param1,param2,param3)
 #define j9sock_error_message() privatePortLibrary->sock_error_message(privatePortLibrary)
-#define j9str_ftime(param1,param2,param3,param4) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_ftime(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3,param4)
 #define j9mmap_startup() OMRPORT_FROM_J9PORT(privatePortLibrary)->mmap_startup(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9mmap_shutdown() OMRPORT_FROM_J9PORT(privatePortLibrary)->mmap_shutdown(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9mmap_capabilities() OMRPORT_FROM_J9PORT(privatePortLibrary)->mmap_capabilities(OMRPORT_FROM_J9PORT(privatePortLibrary))
