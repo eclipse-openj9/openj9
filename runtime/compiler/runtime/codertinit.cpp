@@ -461,35 +461,30 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
-#if defined(J9VM_OPT_JITSERVER)
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
-#endif
-      {
-      jitConfig->jitGetExceptionTableFromPC = jitGetExceptionTableFromPC;
-      jitConfig->jitGetStackMapFromPC = getStackMapFromJitPC;
-      jitConfig->jitGetInlinerMapFromPC = jitGetInlinerMapFromPC;
-      jitConfig->getJitInlineDepthFromCallSite = getJitInlineDepthFromCallSite;
-      jitConfig->getJitInlinedCallInfo = getJitInlinedCallInfo;
-      jitConfig->getStackMapFromJitPC = getStackMapFromJitPC;
-      jitConfig->getFirstInlinedCallSite = getFirstInlinedCallSite;
-      jitConfig->getNextInlinedCallSite = getNextInlinedCallSite;
-      jitConfig->hasMoreInlinedMethods = hasMoreInlinedMethods;
-      jitConfig->getInlinedMethod = getInlinedMethod;
-      jitConfig->getByteCodeIndex = getByteCodeIndex;
-      jitConfig->getByteCodeIndexFromStackMap = getByteCodeIndexFromStackMap;
-      jitConfig->getCurrentByteCodeIndexAndIsSameReceiver = getCurrentByteCodeIndexAndIsSameReceiver;
-      jitConfig->getJitRegisterMap = getJitRegisterMap;
-      jitConfig->jitReportDynamicCodeLoadEvents = jitReportDynamicCodeLoadEvents;
+   jitConfig->jitGetExceptionTableFromPC = jitGetExceptionTableFromPC;
+   jitConfig->jitGetStackMapFromPC = getStackMapFromJitPC;
+   jitConfig->jitGetInlinerMapFromPC = jitGetInlinerMapFromPC;
+   jitConfig->getJitInlineDepthFromCallSite = getJitInlineDepthFromCallSite;
+   jitConfig->getJitInlinedCallInfo = getJitInlinedCallInfo;
+   jitConfig->getStackMapFromJitPC = getStackMapFromJitPC;
+   jitConfig->getFirstInlinedCallSite = getFirstInlinedCallSite;
+   jitConfig->getNextInlinedCallSite = getNextInlinedCallSite;
+   jitConfig->hasMoreInlinedMethods = hasMoreInlinedMethods;
+   jitConfig->getInlinedMethod = getInlinedMethod;
+   jitConfig->getByteCodeIndex = getByteCodeIndex;
+   jitConfig->getByteCodeIndexFromStackMap = getByteCodeIndexFromStackMap;
+   jitConfig->getCurrentByteCodeIndexAndIsSameReceiver = getCurrentByteCodeIndexAndIsSameReceiver;
+   jitConfig->getJitRegisterMap = getJitRegisterMap;
+   jitConfig->jitReportDynamicCodeLoadEvents = jitReportDynamicCodeLoadEvents;
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-      jitConfig->jitClassesRedefined = jitClassesRedefined;
-      jitConfig->jitFlushCompilationQueue = jitFlushCompilationQueue;
+   jitConfig->jitClassesRedefined = jitClassesRedefined;
+   jitConfig->jitFlushCompilationQueue = jitFlushCompilationQueue;
 #endif
-      jitConfig->jitDiscardPendingCompilationsOfNatives = jitDiscardPendingCompilationsOfNatives;
-      jitConfig->jitMethodBreakpointed = jitMethodBreakpointed;
-      }
+   jitConfig->jitDiscardPendingCompilationsOfNatives = jitDiscardPendingCompilationsOfNatives;
+   jitConfig->jitMethodBreakpointed = jitMethodBreakpointed;
    jitConfig->jitIllegalFinalFieldModification = jitIllegalFinalFieldModification;
 
-      initializeCodertFunctionTable(javaVM);
+   initializeCodertFunctionTable(javaVM);
 
 #ifndef J9SW_NEEDS_JIT_2_INTERP_THUNKS
    jitConfig->jitSendTargetTable = &jit2InterpreterSendTargetTable;
