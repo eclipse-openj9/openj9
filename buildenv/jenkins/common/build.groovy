@@ -58,14 +58,14 @@ def get_sources_with_authentication() {
 def get_sources() {
     // Temp workaround for Windows clones
     // See #3633 and JENKINS-54612
-    if (NODE_LABELS.contains("windows") || NODE_LABELS.contains("zos")) {
+    if (SPEC.contains("win") || SPEC.contains("zos")) {
 
         CLONE_CMD = "git clone -b ${OPENJDK_BRANCH} ${OPENJDK_REPO} ."
         if (OPENJDK_REFERENCE_REPO) {
             CLONE_CMD += " --reference ${OPENJDK_REFERENCE_REPO}"
         }
 
-        if (USER_CREDENTIALS_ID && NODE_LABELS.contains("windows")) {
+        if (USER_CREDENTIALS_ID && SPEC.contains("win")) {
             sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
                 sh "${CLONE_CMD}"
             }
