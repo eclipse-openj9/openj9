@@ -28,10 +28,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import sun.security.util.SecurityConstants;
 /*[IF JAVA_SPEC_VERSION >= 11]*/
-import java.io.BufferedOutputStream;
 import java.io.FileDescriptor;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.Properties;
 import jdk.internal.misc.TerminatingThreadLocal;
@@ -235,11 +232,7 @@ void completeInitialization() {
 		Charset stderrCharset = System.getCharset(props.getProperty("sun.stderr.encoding"), true); //$NON-NLS-1$
 		if (stderrCharset != null) {
 			System.err.flush();
-			/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
-			System.setErr(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true, stderrCharset));
-			/*[ELSE]*/
-			System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true, stderrCharset));
-			/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
+			System.setErr(System.createConsole(FileDescriptor.err, stderrCharset));
 		}
 	}
 
@@ -248,11 +241,7 @@ void completeInitialization() {
 		Charset stdoutCharset = System.getCharset(props.getProperty("sun.stdout.encoding"), true); //$NON-NLS-1$
 		if (stdoutCharset != null) {
 			System.out.flush();
-			/*[IF PLATFORM-mz31|PLATFORM-mz64]*/
-			System.setOut(com.ibm.jvm.io.ConsolePrintStream.localize(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true, stdoutCharset));
-			/*[ELSE]*/
-			System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true, stdoutCharset));
-			/*[ENDIF] PLATFORM-mz31|PLATFORM-mz64 */
+			System.setOut(System.createConsole(FileDescriptor.out, stdoutCharset));
 		}
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
