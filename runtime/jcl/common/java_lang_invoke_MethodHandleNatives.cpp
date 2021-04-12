@@ -487,6 +487,7 @@ setCallSiteTargetImpl(J9VMThread *currentThread, jobject callsite, jobject targe
 			(U_8*)"Ljava/lang/invoke/MethodHandle;",
 			LITERAL_STRLEN("Ljava/lang/invoke/MethodHandle;"),
 			NULL, NULL, 0);
+		offset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 		objectAccessBarrier.inlineMixedObjectStoreObject(currentThread, callsiteObject, offset, targetObject, isVolatile);
 	}
