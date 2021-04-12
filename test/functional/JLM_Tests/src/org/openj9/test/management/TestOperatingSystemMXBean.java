@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,9 +29,11 @@ import org.testng.log4testng.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Optional;
 import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
@@ -63,6 +65,44 @@ public class TestOperatingSystemMXBean {
 	private static final int SLEEPINTERVAL = 5;
 	private static final int NTHREADS = 1;
 	private static final int NITERATIONS = 10;
+
+	private enum ContainerStatus {
+		UNINITIALIZED,
+		NOT_FOUND,
+		FOUND
+	}
+	private static ContainerStatus inContainer = ContainerStatus.UNINITIALIZED;
+
+	private static boolean isPhysicalMemoryTestExcluded() {
+		/* Exclude when running in a docker container
+		 * https://github.com/eclipse/openj9/issues/12038
+		 */
+		if (inContainer == ContainerStatus.NOT_FOUND) {
+			return false;
+		} else if (inContainer == ContainerStatus.FOUND) {
+			return true;
+		}
+		String osname = System.getProperty("os.name");
+		if ("Linux".equals(osname)) {
+			if (new File("/.dockerenv").exists()) {
+				logger.info("/.dockerenv found");
+				inContainer = ContainerStatus.FOUND;
+				return true;
+			}
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("/proc/1/cgroup")))) {
+				Optional<String> docker = reader.lines().filter(line -> line.contains("docker")).findFirst();
+				if (docker.isPresent()) {
+					logger.info("Container found: " + docker.get());
+					inContainer = ContainerStatus.FOUND;
+					return true;
+				}
+			} catch (IOException e) {
+				// not a container, fall through
+			}
+		}
+		inContainer = ContainerStatus.NOT_FOUND;
+		return false;
+	}
 
 	/**
 	 * Starting point for the test program.
@@ -260,8 +300,12 @@ public class TestOperatingSystemMXBean {
 			 */
 			Assert.assertTrue(totalMemory > 0,
 					"Invalid Physical Memory Info retrieved , Total Physical Memory cannot be 0 bytes.");
-			Assert.assertFalse(freeMemory > totalMemory,
-					"Free Physical Memory size cannot be greater than total Physical Memory Size.");
+			if (isPhysicalMemoryTestExcluded()) {
+				logger.info("Testing freeMemory <= totalMemory excluded on this platform");
+			} else {
+				Assert.assertFalse(freeMemory > totalMemory,
+					"Free Physical Memory size " + freeMemory + " cannot be greater than total Physical Memory Size " + totalMemory);
+			}
 		} else {
 			if ((-1 == totalMemory) && (false == osname.equalsIgnoreCase("z/OS"))) {
 				/*
