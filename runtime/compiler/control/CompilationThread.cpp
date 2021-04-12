@@ -873,8 +873,11 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
    if (romClass == NULL)
       {
       JITServerHelpers::ClassInfoTuple classInfoTuple;
-      romClass = JITServerHelpers::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &classInfoTuple);
-      JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
+      TR_Memory *currentMemory = trMemory ? trMemory : TR::comp()->trMemory();
+      romClass = JITServerHelpers::getRemoteROMClass(clazz, getStream(), currentMemory, &classInfoTuple);
+      bool cached = JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
+      if (!cached)
+         currentMemory->trPersistentMemory()->freePersistentMemory(romClass);
       }
    return romClass;
    }

@@ -486,7 +486,7 @@ JITServerHelpers::printJITServerCacheStats(J9JITConfig *jitConfig, TR::Compilati
       }
    }
 
-void 
+bool 
 JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple)
    {
    ClientSessionData::ClassInfo classInfo;
@@ -495,7 +495,9 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    if (it == clientSessionData->getROMClassMap().end())
       {
       JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple, classInfo);
+      return true;
       }
+   return false;
    }
 
 void
