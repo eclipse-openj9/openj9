@@ -83,6 +83,7 @@
 #include "optimizer/HandleRecompilationOps.hpp"
 #include "optimizer/MethodHandleTransformer.hpp"
 
+#include "optimizer/Optimizer_inlines.hpp"
 
 static const OptimizationStrategy J9EarlyGlobalOpts[] =
    {
@@ -908,11 +909,6 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       self()->setRequestOptimization(OMR::sequentialLoadAndStoreColdGroup, true);
    }
 
-inline
-TR::Optimizer *J9::Optimizer::self()
-   {
-   return (static_cast<TR::Optimizer *>(this));
-   }
 
 OMR_InlinerPolicy *J9::Optimizer::getInlinerPolicy()
    {
