@@ -637,7 +637,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             // And if it's not cached, send a request to the client
             romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, clientSession->persistentMemory(), &classInfoTuple);
             }
-         JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
+         bool cached = JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
+         if (!cached)
+            clientSession->persistentMemory()->freePersistentMemory(romClass);
          }
 
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);
