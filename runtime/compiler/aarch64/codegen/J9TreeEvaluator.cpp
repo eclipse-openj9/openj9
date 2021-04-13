@@ -1821,8 +1821,9 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       {
       if (!node->canOmitSync())
          {
-         // Data synchronization barrier -- 0xF to turn on option for both reads and writes
-         generateSynchronizationInstruction(cg, TR::InstOpCode::dsb, node, 0xF);
+         // StoreStore barrier is required after publishing new object reference to other threads.
+         // dmb ishst (Inner Shareable store barrier)
+         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xA);
          }
       }
    else
@@ -1830,20 +1831,25 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       uint32_t imm;
       if (op == TR::loadFence)
          {
-         // 0xD to turn on option for reads
-         imm = 0xD;
+         // TR::loadFence is used for both loadLoadFence and acquireFence.
+         // Loads before the barrier are ordered before loads/stores after the barrier.
+         // dmb ishld (Inner Shareable load barrier)
+         imm = 0x9;
          }
       else if (op == TR::storeFence)
          {
-         // 0xE to turn on option for writes
-         imm = 0xE;
+         // TR::storeFence is used for both storeStoreFence and releaseFence.
+         // Loads/Stores before the barrier are ordered before stores after the barrier.
+         // dmb ish (Inner Shareable full barrier)
+         imm = 0xB;
          }
       else
          {
-         // 0xF to turn on option for both reads and writes
-         imm = 0xF;
+         // TR::fullFence is used for fullFence.
+         // dmb ish (Inner Shareable full barrier)
+         imm = 0xB;
          }
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dsb, node, imm);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, imm);
       }
 
    return NULL;
