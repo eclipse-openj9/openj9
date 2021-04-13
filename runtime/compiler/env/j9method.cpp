@@ -7967,6 +7967,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             char *targetName = targetBuf; char *targetType = targetBuf;
             switch (sourceSig[0])
                {
+               case 'Q':
                case 'L':
                case '[':
                   sourceName = "object";
@@ -7978,6 +7979,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                }
             switch (targetSig[0])
                {
+               case 'Q':
                case 'L':
                case '[':
                   targetName = "object";

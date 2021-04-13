@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.lang.StringBuilder;
 
 import com.ibm.oti.util.Msg;
 
@@ -173,11 +174,19 @@ final class MethodTypeHelper {
 			name = name.substring(0, index) + '.' + name.substring(index + 1,name.length());
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
-
 		if (c.isArray()) {
-			return name;
 		}
-		return "L"+ name + ";"; //$NON-NLS-1$ //$NON-NLS-2$
+		/*[IF INLINE-TYPES]*/
+		else if (c.isPrimitiveClass()) {
+			name = new StringBuilder(name.length() + 2).
+				append('Q').append(name).append(';').toString();
+		}
+		/*[ENDIF] INLINE-TYPES */
+		else {
+			name = new StringBuilder(name.length() + 2).
+				append('L').append(name).append(';').toString();
+		}
+		return name;
 	}
 
 	/*
