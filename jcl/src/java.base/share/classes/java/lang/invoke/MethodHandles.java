@@ -1062,14 +1062,25 @@ public class MethodHandles {
 		 * Check access to the parameter and return classes within incoming MethodType
 		 */
 		final void accessCheckArgRetTypes(MethodType type) throws IllegalAccessException {
+			/* OpenJ9 Github issue #12285
+			 * Protected array innerclass should not throw IllegalAccessException
+			 * TODO: revert the arrayClass unwrapping code below and properly handle it in checkClassAccess()
+			 * 		once this has been updated in OpenJDK
+			 */
 			if (INTERNAL_PRIVILEGED != accessMode) {
 				for (Class<?> para : type.ptypes()) {
 					if (!para.isPrimitive()) {
+						while (para.isArray()) {
+							para = para.getComponentType();
+						}
 						checkClassAccess(para);
 					}
 				}
 				Class<?> rType = type.returnType();
 				if (!rType.isPrimitive()) {
+					while (rType.isArray()) {
+						rType = rType.getComponentType();
+					}
 					checkClassAccess(rType);
 				}
 			}
