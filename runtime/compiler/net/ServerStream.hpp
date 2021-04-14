@@ -88,6 +88,7 @@ public:
       {
       if (isReadingClassUnload() &&
           isClassUnloadingAttempted() &&
+          TR::compInfoPT->compilationCanBeInterrupted() &&
           (MessageType::compilationFailure != type) &&
           (MessageType::compilationCode != type))
          {
@@ -123,7 +124,11 @@ public:
          {
          case MessageType::compilationInterrupted:
             {
-            throw StreamInterrupted();
+            // If we are inside an uninterruptible operation on the server,
+            // but the corresponding operation hasn't yet started on the client,
+            // ignore the request to interrupt a compilation
+            if (TR::compInfoPT->compilationCanBeInterrupted())
+               throw StreamInterrupted();
             }
          case MessageType::connectionTerminate:
             {

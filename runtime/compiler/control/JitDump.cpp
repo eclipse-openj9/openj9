@@ -32,6 +32,7 @@
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "nls/j9dmpnls.h"
 #if defined(J9VM_OPT_JITSERVER)
+#include "control/JITServerCompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
@@ -138,11 +139,34 @@ static void
 jitDumpRecompileWithTracing(J9VMThread *vmThread, J9Method *ramMethod, TR::CompilationInfo *compInfo, TR_Hotness optLevel, bool isProfilingCompile, TR::Options *optionsFromOriginalCompile, bool isAOTBody, void *oldStartPC, TR::FILE *jitdumpFile)
    {
    PORT_ACCESS_FROM_VMC(vmThread);
-   J9Class *clazz = J9_CLASS_FROM_METHOD(ramMethod);
-   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-   J9UTF8 *methName = J9ROMMETHOD_NAME(romMethod);
-   J9UTF8 *methSig = J9ROMMETHOD_SIGNATURE(romMethod);
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+   J9Class *clazz;
+   J9ROMMethod *romMethod;
+   J9UTF8 *methName, *methSig, *className;
+#if defined(J9VM_OPT_JITSERVER)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(TR_J9VMBase::get(compInfo->getJITConfig(), vmThread, TR_J9VMBase::J9_SERVER_VM));
+      if (!fej9->vmThreadIsCompilationThread())
+         {
+         trfprintf(jitdumpFile, "JitDump for a non-compilation thread on JITServer is not supported.\n");
+         return;
+         }
+
+      clazz = reinterpret_cast<J9Class *>(fej9->getClassOfMethod(reinterpret_cast<TR_OpaqueMethodBlock *>(ramMethod)));
+      romMethod = JITServerHelpers::romMethodOfRamMethod(ramMethod);
+      methName = J9ROMMETHOD_NAME(romMethod);
+      methSig = J9ROMMETHOD_SIGNATURE(romMethod);
+      className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf(reinterpret_cast<TR_OpaqueClassBlock *>(clazz)));
+      }
+   else
+#endif
+      {
+      clazz = J9_CLASS_FROM_METHOD(ramMethod);
+      romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
+      methName = J9ROMMETHOD_NAME(romMethod);
+      methSig = J9ROMMETHOD_SIGNATURE(romMethod);
+      className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+      }
 
    j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_RECOMPILING_METHOD,
          (UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
@@ -153,15 +177,22 @@ jitDumpRecompileWithTracing(J9VMThread *vmThread, J9Method *ramMethod, TR::Compi
 
    // The request to use a trace log gets passed to the compilation via the optimization plan. The options object
    // created before the compile is issued will use the trace log we provide to initialize IL tracing.
-   TR_OptimizationPlan *plan = TR_OptimizationPlan::alloc(optLevel);
-   if (NULL == plan)
+   TR_OptimizationPlan *plan = NULL;
+#if defined(J9VM_OPT_JITSERVER)
+   // JITServer will create a new optimization plan on the client
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+#endif
       {
-      j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_OPTIMIZATION_PLAN);
-      return;
-      }
+      plan = TR_OptimizationPlan::alloc(optLevel);
+      if (NULL == plan)
+         {
+         j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_OPTIMIZATION_PLAN);
+         return;
+         }
 
-   plan->setInsertInstrumentation(isProfilingCompile);
-   plan->setLogCompilation(jitdumpFile);
+      plan->setInsertInstrumentation(isProfilingCompile);
+      plan->setLogCompilation(jitdumpFile);
+      }
 
    trfprintf(jitdumpFile, "<recompilation>\n");
 
@@ -169,13 +200,46 @@ jitDumpRecompileWithTracing(J9VMThread *vmThread, J9Method *ramMethod, TR::Compi
    compInfo->setVMStateOfCrashedThread(vmThread->omrVMThread->vmState);
 
    J9::JitDumpMethodDetails details(ramMethod, optionsFromOriginalCompile, isAOTBody);
-   auto rc = compilationOK;
    auto queued = false;
-   compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &rc, &queued, plan);
+   auto rc = compilationOK;
+#if defined(J9VM_OPT_JITSERVER)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      // Inform the client that the compilation thread has crashed and send it
+      // a pointer to the JitDump file, so that it can request
+      // a JitDump recompilation from the server with an updated plan and method details.
+      TR_MethodToBeCompiled *entry = TR::compInfoPT->getMethodBeingCompiled();
+      JITServer::ServerStream *stream = entry->_stream;
+      stream->write(JITServer::MessageType::compilationThreadCrashed, jitdumpFile);
+      stream->read<JITServer::Void>();
+         {
+         // Add an entry to the compilation queue using the current stream,
+         // and immediatelly set its method details as JitDump method details,
+         // so that only the diagnostic thread can compile it.
+         OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+
+         compInfo->requeueOutOfProcessEntry(entry);
+         entry->_methodDetails = TR::IlGeneratorMethodDetails::clone(entry->_methodDetailsStorage, details);
+         queued = true;
+         }
+      // Wait for the recompilation to finish
+      entry->acquireSlotMonitor(vmThread);
+      entry->getMonitor()->wait();
+      entry->releaseSlotMonitor(vmThread);
+      }
+   else
+#endif
+      {
+      compInfo->compileMethod(vmThread, details, oldStartPC, TR_no, &rc, &queued, plan);
+      }
 
    trfprintf(jitdumpFile, "</recompilation rc=%d queued=%d>\n", rc, queued);
 
-   if (!queued)
+   if (!queued
+#if defined(J9VM_OPT_JITSERVER)
+       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+       )
       {
       TR_OptimizationPlan::freeOptimizationPlan(plan);
       }
@@ -281,13 +345,6 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       return OMR_ERROR_INTERNAL;
       }
 
-#if defined(J9VM_OPT_JITSERVER)
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-      {
-      return OMR_ERROR_NONE;
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-   
    // To avoid a deadlock, release compilation monitor until we are no longer holding it
    while (compInfo->getCompilationMonitor()->owned_by_self())
       {
@@ -314,9 +371,19 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
          
          j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS);
          }
-      }
 
-   compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
+#if defined(J9VM_OPT_JITSERVER)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+         {
+         // Release the class unload RW mutex
+         auto serverCompInfo = static_cast<TR::CompilationInfoPerThreadRemote *>(threadCompInfo);
+         while (serverCompInfo->getClassUnloadReadMutexDepth() > 0)
+            {
+            serverCompInfo->getClientData()->readReleaseClassUnloadRWMutex(serverCompInfo);
+            }
+         }
+#endif
+      }
 
    TR::CompilationInfoPerThread *recompilationThreadInfo = compInfo->getCompilationInfoForDiagnosticThread();
    if (NULL == recompilationThreadInfo)
@@ -333,6 +400,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       }
 
    compInfo->acquireCompMonitor(crashedThread);
+   compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
    compInfo->purgeMethodQueue(compilationFailure);
    compInfo->releaseCompMonitor(crashedThread);
 
@@ -500,6 +568,17 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             trfclose(jitdumpFile);
             return OMR_ERROR_INTERNAL;
             }
+
+#if defined(J9VM_OPT_JITSERVER)
+         if (comp->isOutOfProcessCompilation())
+            {
+            // Inform the client that JitDump has started and is about to trace IL of the crashed thread
+            TR_MethodToBeCompiled *entry = threadCompInfo->getMethodBeingCompiled();
+            JITServer::ServerStream *stream = entry->_stream;
+            stream->write(JITServer::MessageType::jitDumpPrintIL, JITServer::Void());
+            stream->read<JITServer::Void>();
+            }
+#endif
 
          traceILOfCrashedThread(crashedThread, comp, jitdumpFile);
 

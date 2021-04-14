@@ -343,6 +343,9 @@ class CompilationInfoPerThreadBase
     */
    bool isCPUCheapCompilation(uint32_t bcsz, TR_Hotness optLevel);
    bool shouldPerformLocalComp(const TR_MethodToBeCompiled *entry);
+
+   bool compilationCanBeInterrupted() const { return _compilationCanBeInterrupted; }
+
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    protected:
@@ -456,7 +459,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    int32_t                getCompThreadPriority() const { return _compThreadPriority; }
    void                   setCompThreadPriority(int32_t priority) { _compThreadPriority = priority; }
    int32_t                changeCompThreadPriority(int32_t priority, int32_t locationCode);
-   TR::Monitor *getCompThreadMonitor() { return _compThreadMonitor; }
+   TR::Monitor           *getCompThreadMonitor() { return _compThreadMonitor; }
    void                   run();
    void                   processEntries();
    virtual void           processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider);
