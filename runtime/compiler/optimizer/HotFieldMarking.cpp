@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -154,10 +154,11 @@ int32_t TR_HotFieldMarking::perform()
       {
       if (itr->second->_score >= TR::Options::_hotFieldThreshold)
          {
-         int32_t fieldOffset = (comp()->fej9()->getInstanceFieldOffset(itr->second->_clazz, itr->second->_fieldName, itr->second->_fieldNameLength, itr->second->_fieldSig, itr->second->_fieldSigLength) + TR::Compiler->om.objectHeaderSizeInBytes()) / TR::Compiler->om.sizeofReferenceField();
+         uint32_t fieldOffset = (comp()->fej9()->getInstanceFieldOffset(itr->second->_clazz, itr->second->_fieldName, itr->second->_fieldNameLength, itr->second->_fieldSig, itr->second->_fieldSigLength) + TR::Compiler->om.objectHeaderSizeInBytes()) / TR::Compiler->om.sizeofReferenceField();
             
          if (!comp()->fej9()->isAnonymousClass(itr->second->_clazz) && performTransformation(comp(), "%sUpdate hot field info for hot field. signature: %.*s; fieldName: %.*s; frequencyScore = %d\n", optDetailString(), itr->second->_fieldSigLength, itr->second->_fieldSig, itr->second->_fieldNameLength, itr->second->_fieldName, itr->second->_score) && (fieldOffset < U_8_MAX))
             {
+            comp()->fej9()->reportHotField(getUtilization(), TR::Compiler->cls.convertClassOffsetToClassPtr(itr->second->_clazz), (uint8_t)fieldOffset, itr->second->_score);
             if (comp()->getOption(TR_TraceMarkingOfHotFields))
                {
                int32_t classNameLength = 0;
@@ -165,7 +166,6 @@ int32_t TR_HotFieldMarking::perform()
                traceMsg(comp(),"Hot field marked or updated. signature: %.*s; class:%.*s; fieldName: %.*s; frequencyScore = %d; fieldOffset: %d; \n", J9UTF8_LENGTH(itr->second->_fieldSig), J9UTF8_DATA(itr->second->_fieldSig), J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(itr->second->_fieldName), J9UTF8_DATA(itr->second->_fieldName), itr->second->_score, fieldOffset);
                }
             } 
-            comp()->fej9()->reportHotField(getUtilization(), TR::Compiler->cls.convertClassOffsetToClassPtr(itr->second->_clazz), fieldOffset, itr->second->_score);
          }
       }
    return 1;
