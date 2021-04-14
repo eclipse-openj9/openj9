@@ -80,11 +80,6 @@
 #define FFI390_CELQGIPB_RETCODE_DEPTH_EXCEEDED         0x2
 #define FFI390_CELQGIPB_RETCODE_OTHER_THREAD_SWITCHING 0x3
 
-/* FDCB slot for C_SWA pointer needed to set env pointer on call dispatch for CEL4RO31
- * FDCB reference: https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.ceev100/fdcb.htm
- */
-#define FFI390_CEEFDCB_DLL_CSWA_SLOT  0x3
-
 /* Fixed length Control Block structure CEL4RO31 */
 typedef struct ffi_cel4ro31_control_block {
   uint32_t version;               /**< (Input) A integer which contains the version of RO31_INFO */
@@ -94,8 +89,7 @@ typedef struct ffi_cel4ro31_control_block {
   uint32_t function_offset;       /**< (Input) Offset to RO31_function section from start of RO31_CB. Req'd for dll query flag. */
   uint32_t arguments_offset;      /**< (Input) Offset to outgoing arguments section from start of RO31_CB. Req'd for function execution flag. */
   uint32_t dll_handle;            /**< DLL handle of target program (Input) DLL handle if dll query flag. (Output) DLL handle if dll load flag. */
-  uint32_t func_env;              /**< Environment of target Program (Input) Environment if function execution flag. (Output) Environment if dll query flag. */
-  uint32_t func_enp;              /**< Function Descriptor Control Block pointer (Input) FDCB ptr if function execution flag. (Output) FDCB ptr if dll query flag. */
+  uint32_t func_desc;             /**< Function descriptor of target program (Input) if function execution flag. (Output) if dll query flag. */
   uint32_t gpr15_return_value;    /**< (Output) Return GPR buffer containing 32-bit GPR15 value when target program returned after execution. */
   uint32_t gpr0_return_value;     /**< (Output) Return GPR buffer containing 32-bit GPR0 value when target program returned after execution. */
   uint32_t gpr1_return_value;     /**< (Output) Return GPR buffer containing 32-bit GPR1 value when target program returned after execution. */
@@ -528,15 +522,7 @@ ffi_call_CEL4RO31(void (*fn)(void), extended_cif *ecif)
   control_block->module_offset = 0;
   control_block->function_offset = 0;
   control_block->retcode = 0;
-
-  /* Despite the member names based on LE docs, the current CEL4RO31 implementation
-   * takes a FDCB function descriptor pointer via func_enp member.  This descriptor
-   * contains the real target entry point and env ptrs in its 3rd and 4th 32-bit slots.
-   * However, we still need to load the C_WSA 4th slot from function descriptor and set
-   * that to the env pointer member of the RO31 control block.
-   */
-  control_block->func_enp = (unsigned int)(((unsigned long)fn) & 0xFFFFFFFF);
-  control_block->func_env = ((unsigned int *)control_block->func_enp)[FFI390_CEEFDCB_DLL_CSWA_SLOT];
+  control_block->func_desc = (unsigned int)(((unsigned long)fn) & 0xFFFFFFFF);
   control_block->dll_handle = 0;
 
   /* Control block length. */
