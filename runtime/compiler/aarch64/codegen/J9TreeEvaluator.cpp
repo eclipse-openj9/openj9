@@ -203,7 +203,9 @@ generateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg, bool isArdbar
    bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && comp->target().isSMP());
    if (needSync)
       {
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dsb, node, 0xF); // dsb SY
+      // Issue an Acquire barrier after volatile load
+      // dmb ishld
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0x9);
       }
 
    tempMR->decNodeReferenceCounts(cg);
@@ -723,12 +725,9 @@ J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    TR::Register *sourceRegister;
    bool killSource = false;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
+   bool isVolatileMode = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
+   bool isOrderedMode = (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && cg->comp()->target().isSMP());
 
-   if (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && cg->comp()->target().isSMP())
-      {
-      needSync = true;
-      }
    if (firstChild->getReferenceCount() > 1 && firstChild->getRegister() != NULL)
       {
       if (!firstChild->getRegister()->containsInternalPointer())
@@ -747,13 +746,17 @@ J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, cg);
 
-   if (needSync)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
+   // Issue a StoreStore barrier before each volatile store.
+   // dmb ishst
+   if (isVolatileMode || isOrderedMode)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xA);
 
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, tempMR, sourceRegister, NULL);
 
-   if (needSync)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF);
+   // Issue a StoreLoad barrier after each volatile store.
+   // dmb ish
+   if (isVolatileMode)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB);
 
    wrtbarEvaluator(node, sourceRegister, destinationRegister, firstChild->isNonNull(), cg);
 
@@ -777,12 +780,8 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
    TR::Register *sourceRegister;
    bool killSource = false;
    bool usingCompressedPointers = false;
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
-
-   if (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && cg->comp()->target().isSMP())
-      {
-      needSync = true;
-      }
+   bool isVolatileMode = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
+   bool isOrderedMode = (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && cg->comp()->target().isSMP());
 
    if (comp->useCompressedPointers() && (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) && (node->getSecondChild()->getDataType() != TR::Address))
       {
@@ -817,13 +816,17 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, cg);
 
-   if (needSync)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
+   // Issue a StoreStore barrier before each volatile store.
+   // dmb ishst
+   if (isVolatileMode || isOrderedMode)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xA);
 
    generateMemSrc1Instruction(cg, storeOp, node, tempMR, translatedSrcReg);
 
-   if (needSync)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF);
+   // Issue a StoreLoad barrier after each volatile store.
+   // dmb ish
+   if (isVolatileMode)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB);
 
    wrtbarEvaluator(node, sourceRegister, destinationRegister, secondChild->isNonNull(), cg);
 
