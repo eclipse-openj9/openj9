@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2020 IBM Corp. and others
+ * Copyright (c) 1999, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,6 +71,56 @@ import java.util.regex.Pattern;
  */
 public class JavaPreprocessor {
 
+	private static final class IfState {
+
+		/**
+		 * The current IF or ELSEIF branch is active.
+		 */
+		static final int IF_ACTIVE = 0;
+
+		/**
+		 * A previous IF or ELSEIF branch was selected.
+		 */
+		static final int IF_PREVIOUS = 1;
+
+		/**
+		 * The current IF or ELSEIF branch is inactive
+		 * (and no previous branch was selected).
+		 */
+		static final int IF_INACTIVE = 2;
+
+		/**
+		 * We're in an active ELSE branch.
+		 */
+		static final int ELSE_ACTIVE = 3;
+
+		/**
+		 * We're in an inactive ELSE branch.
+		 */
+		static final int ELSE_INACTIVE = 4;
+
+		final boolean outerActive;
+
+		int state;
+
+		IfState(boolean active, Stack<IfState> stack) {
+			super();
+			this.outerActive = stack.isEmpty() || stack.peek().isActive();
+			this.state = active ? IF_ACTIVE : IF_INACTIVE;
+		}
+
+		boolean isActive() {
+			switch (state) {
+			case IF_ACTIVE:
+			case ELSE_ACTIVE:
+				return outerActive;
+			default:
+				return false;
+			}
+		}
+
+	}
+
 	private static final Charset charset;
 
 	static {
@@ -113,7 +163,7 @@ public class JavaPreprocessor {
 	// whether to give warning about the files that do not have include if directive
 	/* [PR 117967] idea 491: Automatically create the jars required for test bootpath */
 	private boolean noWarnIncludeIf = false;
-	private final Stack<Boolean> ifResults = new Stack<>();
+	private final Stack<IfState> ifResults = new Stack<>();
 	private int lineCount = 0;
 	private int outputLineCount = 0;
 	private boolean echo = true;
@@ -252,6 +302,8 @@ public class JavaPreprocessor {
 			doCommand_ENDIF(arg);
 		} else if (cmd.equals("ELSE")) {
 			doCommand_ELSE(arg);
+		} else if (cmd.equals("ELSEIF")) {
+			doCommand_ELSEIF(arg);
 		} else if (cmd.equals("PR") || cmd.equals("BUG")) {
 			doCommand_PR(arg);
 		} else if (cmd.equals("IDEA")) {
@@ -285,8 +337,75 @@ public class JavaPreprocessor {
 			error("ELSE with no IF");
 		}
 
-		echo = (!echo) && ifResults.peek().booleanValue();
-		// If it was off before it should still be off.
+		IfState top = ifResults.peek();
+
+		switch (top.state) {
+		case IfState.IF_ACTIVE:
+		case IfState.IF_PREVIOUS:
+			top.state = IfState.ELSE_INACTIVE;
+			break;
+		case IfState.IF_INACTIVE:
+			top.state = IfState.ELSE_ACTIVE;
+			break;
+		case IfState.ELSE_ACTIVE:
+		case IfState.ELSE_INACTIVE:
+			error("ELSE after ELSE");
+			break;
+		}
+
+		echo = top.isActive();
+	}
+
+	/**
+	 * Handle the ELSEIF command.
+	 *
+	 * @param arg String the expression to test.
+	 */
+	private void doCommand_ELSEIF(String arg) {
+		if (ifResults.empty()) {
+			error("ELSEIF with no IF");
+		}
+
+		boolean satisfied;
+
+		if (arg.isEmpty()) {
+			satisfied = false;
+		} else {
+			try {
+				ExpressionResult parseResult = ExpressionParser.parse(arg, this);
+
+				if (!parseResult.isBoolean) {
+					error(String.format("boolean expression required: '%s'", arg)); //$NON-NLS-1$
+					return;
+				}
+
+				satisfied = parseResult.value != 0;
+			} catch (ParseException pe) {
+				error(pe);
+				return;
+			}
+		}
+
+		IfState top = ifResults.peek();
+
+		switch (top.state) {
+		case IfState.IF_ACTIVE:
+			top.state = IfState.IF_PREVIOUS;
+			break;
+		case IfState.IF_INACTIVE:
+			if (satisfied) {
+				top.state = IfState.IF_ACTIVE;
+			}
+			break;
+		case IfState.IF_PREVIOUS:
+			break;
+		case IfState.ELSE_ACTIVE:
+		case IfState.ELSE_INACTIVE:
+			error("ELSEIF after ELSE");
+			break;
+		}
+
+		echo = top.isActive();
 	}
 
 	/**
@@ -402,7 +521,9 @@ public class JavaPreprocessor {
 		if (ifResults.empty()) {
 			error("ENDIF with no IF");
 		}
-		echo = ifResults.pop().booleanValue();
+
+		ifResults.pop();
+		echo = ifResults.empty() || ifResults.peek().isActive();
 	}
 
 	/**
@@ -431,9 +552,10 @@ public class JavaPreprocessor {
 			}
 		}
 
-		ifResults.push(Boolean.valueOf(echo));
-		echo = echo && satisfied;
-		// If it was off before it should still be off.
+		IfState top = new IfState(satisfied, ifResults);
+
+		ifResults.push(top);
+		echo = top.isActive();
 	}
 
 	/**
