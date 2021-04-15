@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,7 +85,7 @@ defaultValueWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *claz
 	for (UDATA index = 0; index < length; index++) {
 		entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, index);
 		entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
-		if (!J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry) && J9_ARE_NO_BITS_SET(J9ClassIsFlattened, entryClazz->classFlags)) {
+		if (!J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry) && !J9_IS_FIELD_FLATTENED(entryClazz, entry->field)) {
 			objectAccessBarrier.inlineMixedObjectStoreObject(currentThread,
 												instance,
 												entry->offset + objectHeaderSize,
@@ -179,7 +179,7 @@ isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field)
         Assert_VM_notNull(field);
 
         J9Class* clazz = getFlattenableFieldType(fieldOwner, field);
-        BOOLEAN fieldFlattened = J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened);
+        BOOLEAN fieldFlattened = J9_IS_FIELD_FLATTENED(clazz, field);
 
         return fieldFlattened;
 }

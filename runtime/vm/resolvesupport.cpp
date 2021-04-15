@@ -1076,7 +1076,7 @@ illegalAccess:
 						fieldIndex = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
 						flattenableClass = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex)->clazz;
 					}
-					if (J9_ARE_ALL_BITS_SET(flattenableClass->classFlags, J9ClassIsFlattened)) {
+					if (J9_IS_FIELD_FLATTENED(flattenableClass, field)) {
 						if (fccEntryFieldNotSet) {
 							J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex)->offset = valueOffset;
 						}

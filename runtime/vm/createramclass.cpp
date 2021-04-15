@@ -1912,7 +1912,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 						goto done;
 					}
 
-					if (!J9_IS_J9CLASS_FLATTENED(valueClass)) {
+					if (!J9_IS_FIELD_FLATTENED(valueClass, field)) {
 						*valueTypeFlags |= (J9ClassContainsUnflattenedFlattenables | J9ClassHasReferences);
 						eligibleForFastSubstitutability = false;
 					} else if (J9_ARE_NO_BITS_SET(valueClass->classFlags, J9ClassCanSupportFastSubstitutability)) {
