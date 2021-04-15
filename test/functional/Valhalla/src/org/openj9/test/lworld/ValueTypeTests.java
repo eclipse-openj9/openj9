@@ -1256,7 +1256,7 @@ public class ValueTypeTests {
 			Assert.fail("shouldn't throw exception. MonitorEnter and MonitorExit should be used with refType");
 		}
 	}
-	
+
 	/*	
 	 * Create a valueType with three valueType members
 	 * 
@@ -1460,6 +1460,27 @@ public class ValueTypeTests {
 
 		valueObject = withObject.invoke(valueObject, valNew);
 		assertEquals(getObject.invoke(valueObject), valNew);
+	}
+	
+	/*	
+	 * Create a valueType with four valueType members including 2 volatile.  
+	 * 
+	 * value valueWithVolatile {
+	 *  flattened Point2D point;   <--- 8 bytes, will be flattened.
+	 *  volatile Point2D vpoint;   <--- volatile 8 bytes, will be flattened.
+	 *  flattened Line2D 1ine;     <--- 16 bytes, will be flattened.
+	 *  volatile Line2D vline;     <--- volatile 16 bytes, will not be flattened.
+	 * }
+	 */
+	@Test(priority=3)
+	static public Object createValueTypeWithVolatileFields() throws Throwable {
+		String fields[] = {"point:QPoint2D;:value", "vpoint:QPoint2D;:volatile", "line:QFlattenedLine2D;:value", "vline:QFlattenedLine2D;:volatile"};
+		Class ValueTypeWithVolatileFieldsClass = ValueTypeGenerator.generateValueClass("ValueTypeWithVolatileFields", fields);
+		MethodHandle valueWithVolatile = lookup.findStatic(ValueTypeWithVolatileFieldsClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
+		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(ValueTypeWithVolatileFieldsClass, fields);
+		Object valueWithVolatileObj = createAssorted(valueWithVolatile, fields);
+		checkFieldAccessMHOfAssortedType(getterAndWither, valueWithVolatileObj, fields, true);
+		return valueWithVolatileObj;
 	}
 
 	/*

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2020 IBM Corp. and others
+ * Copyright (c) 2015, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ ObjectFieldInfo::countInstanceFields(void)
 				if ('Q' == *fieldSigBytes) {
 					J9Class *fieldClass = findJ9ClassInFlattenedClassCache(_flattenedClassCache, fieldSigBytes + 1, J9UTF8_LENGTH(fieldSig) - 2);
 					U_32 size = fieldClass->totalInstanceSize;
-					if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassIsFlattened)) {
+					if (!J9_IS_FIELD_FLATTENED(fieldClass, field)) {
 						_instanceObjectCount += 1;
 						_totalObjectCount += 1;
 					} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {

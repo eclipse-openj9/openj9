@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -234,7 +234,7 @@ public class PrintObjectFieldsHelper {
 		String className = J9ClassHelper.getName(fromClass);
 		String fieldName = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().name());
 		String fieldSignature = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().signature());
-		boolean fieldIsFlattened = valueTypeHelper.isFieldInClassFlattened(localClazz, fieldName);
+		boolean fieldIsFlattened = valueTypeHelper.isFieldInClassFlattened(localClazz, fieldShape);
 
 		if (containerIsFlatObject && valueTypeHelper.classRequires4BytePrePadding(localClazz)) {
 			/* If container has pre-padding the dataStart was adjusted to reflect this. 
@@ -290,7 +290,7 @@ public class PrintObjectFieldsHelper {
 		boolean isHiddenField = objectFieldOffset.isHidden();
 		String fieldName = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().name());
 		String fieldSignature = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().signature());
-		boolean fieldIsFlattened = valueTypeHelper.isFieldInClassFlattened(localClazz, fieldName);
+		boolean fieldIsFlattened = valueTypeHelper.isFieldInClassFlattened(localClazz, fieldShape);
 		
 		padding(out, tabLevel);
 		

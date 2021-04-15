@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,9 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if ('Q' == *fieldSigBytes) {
 					J9Class *fieldClass = walkResult->flattenedClass;
-					if ((NULL != fieldClass) && J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassIsFlattened)) {
+					if ((NULL != fieldClass) 
+						&& J9_IS_FIELD_FLATTENED(fieldClass, walkResult->field)
+					) {
 						UDATA size = fieldClass->totalInstanceSize;
 
 						/* positive means the field will spill over to the next slot in the shape array */
