@@ -177,9 +177,7 @@ isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field)
 {
         Assert_VM_notNull(fieldOwner);
         Assert_VM_notNull(field);
-
-        J9Class* clazz = getFlattenableFieldType(fieldOwner, field);
-        BOOLEAN fieldFlattened = J9_IS_FIELD_FLATTENED(clazz, field);
+        BOOLEAN fieldFlattened = J9_IS_FIELD_FLATTENED(getFlattenableFieldType(fieldOwner, field), field);
 
         return fieldFlattened;
 }
