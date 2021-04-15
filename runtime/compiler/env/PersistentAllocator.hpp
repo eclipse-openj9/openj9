@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,12 +89,13 @@ private:
       void setNext(Block *b) { _next = b; }
       };
 
-   // Monitor to protect access to the linked lists of (small) fixed-size blocks
-   // The variable-size block list (which takes longer to access) will continue
-   // to be protected by memoryAllocMonitor. This arrangement prevents a fast
-   // fixed-size block list access to be delayed by a slow variable-size block
-   // list access
-   J9ThreadMonitor * _smallBlockListsMonitor;
+   // Use separate monitors to protect access to each data structure:
+   // - the lists of small fixed-size blocks;
+   // - the (indexed) list of vartiable-sized large blocks; and
+   // - the deque of segments.
+   J9ThreadMonitor *_smallBlockMonitor;
+   J9ThreadMonitor *_largeBlockMonitor;
+   J9ThreadMonitor *_segmentMonitor;
 
    static const size_t PERSISTANT_BLOCK_SIZE_BUCKETS = 16;
    // first list/bucket is for large blocks of variable size

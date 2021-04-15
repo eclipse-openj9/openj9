@@ -24,7 +24,6 @@
 #include "il/DataTypes.hpp"
 #include "infra/Monitor.hpp"
 
-extern TR::Monitor *memoryAllocMonitor;
 
 namespace J9 {
 
@@ -44,8 +43,10 @@ PersistentAllocator::PersistentAllocator(const PersistentAllocatorKit &creationK
 #endif
    _segments(SegmentContainerAllocator(RawAllocator(&creationKit.javaVM)))
    {
-   j9thread_monitor_init_with_name(&_smallBlockListsMonitor, 0, "JIT-SmallBlockListsMonitor");
-   if (!_smallBlockListsMonitor)
+   j9thread_monitor_init_with_name(&_smallBlockMonitor, 0, "JIT-PersistentAllocatorSmallBlockMonitor");
+   j9thread_monitor_init_with_name(&_largeBlockMonitor, 0, "JIT-PersistentAllocatorLargeBlockMonitor");
+   j9thread_monitor_init_with_name(&_segmentMonitor, 0, "JIT-PersistentAllocatorSegmentMonitor");
+   if (!_smallBlockMonitor || !_largeBlockMonitor || !_segmentMonitor)
       throw std::bad_alloc();
    }
 
@@ -57,8 +58,12 @@ PersistentAllocator::~PersistentAllocator() throw()
       _segments.pop_front();
       _segmentAllocator.deallocate(segment);
       }
-   j9thread_monitor_destroy(_smallBlockListsMonitor);
-   _smallBlockListsMonitor = NULL;
+   j9thread_monitor_destroy(_smallBlockMonitor);
+   _smallBlockMonitor = NULL;
+   j9thread_monitor_destroy(_largeBlockMonitor);
+   _largeBlockMonitor = NULL;
+   j9thread_monitor_destroy(_segmentMonitor);
+   _segmentMonitor = NULL;
    }
 
 void *
@@ -189,12 +194,12 @@ PersistentAllocator::allocateInternal(size_t requestedSize)
 
    if (TR::AllocatedMemoryMeter::_enabled & persistentAlloc)
       {
-      // Use _smallBlockListsMonitor to protect TR::AllocatedMemoryMeter::update_allocated
-      // because accessing the variable-size-block list protected by ::memoryAllocMonitor
+      // Use _smallBlockMonitor to protect TR::AllocatedMemoryMeter::update_allocated
+      // because accessing the variable-size-block list protected by _largeBlockMonitor
       // takes longer and we may be penalizing access to fixed size block which should be very fast
-      j9thread_monitor_enter(_smallBlockListsMonitor);
+      j9thread_monitor_enter(_smallBlockMonitor);
       TR::AllocatedMemoryMeter::update_allocated(allocSize, persistentAlloc);
-      j9thread_monitor_exit(_smallBlockListsMonitor);
+      j9thread_monitor_exit(_smallBlockMonitor);
       }
 
    // If this is a small block try to allocate it from the appropriate
@@ -203,32 +208,29 @@ PersistentAllocator::allocateInternal(size_t requestedSize)
    size_t const index = freeBlocksIndex(allocSize);
    if (index != LARGE_BLOCK_LIST_INDEX) // fixed-size-block chain
       {
-      j9thread_monitor_enter(_smallBlockListsMonitor);
-      Block * block = _freeBlocks[index];
+      j9thread_monitor_enter(_smallBlockMonitor);
+      Block *block = _freeBlocks[index];
       if (block)
          {
          _freeBlocks[index] = block->next();
          block->setNext(NULL);
-         j9thread_monitor_exit(_smallBlockListsMonitor);
+         j9thread_monitor_exit(_smallBlockMonitor);
          allocation = block + 1; // Return pointer after the header
          }
       else // Couldn't find suitable free block; need to allocate from segment
          {
-         j9thread_monitor_exit(_smallBlockListsMonitor);
+         j9thread_monitor_exit(_smallBlockMonitor);
 
          // Find the first persistent segment with enough free space
-         if (::memoryAllocMonitor)
-            ::memoryAllocMonitor->enter();
+         j9thread_monitor_enter(_segmentMonitor);
          allocation = allocateFromSegmentLocked(allocSize);
-         if (::memoryAllocMonitor)
-            ::memoryAllocMonitor->exit();
+         j9thread_monitor_exit(_segmentMonitor);
          }
       }
    else // Variable size block allocation
       {
-      if (::memoryAllocMonitor)
-         ::memoryAllocMonitor->enter();
-      Block * block = 
+      j9thread_monitor_enter(_largeBlockMonitor);
+      Block *block =
 #if defined(J9VM_OPT_JITSERVER)
          _isJITServer ? allocateFromIndexedListLocked(allocSize) :
 #endif
@@ -244,39 +246,38 @@ PersistentAllocator::allocateInternal(size_t requestedSize)
             const size_t excessIndex = freeBlocksIndex(excess);
             if (excessIndex > LARGE_BLOCK_LIST_INDEX)
                {
-               // Exit the variable size list monitor and grab a fixed size list monitor
-               if (::memoryAllocMonitor)
-                  ::memoryAllocMonitor->exit();
+               // Exit the variable size list monitor and grab the fixed size list monitor
+               j9thread_monitor_exit(_largeBlockMonitor);
 
-               j9thread_monitor_enter(_smallBlockListsMonitor);
-               freeFixedSizeBlock( new (pointer_cast<uint8_t *>(block) + allocSize) Block(excess) );
-               j9thread_monitor_exit(_smallBlockListsMonitor);
+               j9thread_monitor_enter(_smallBlockMonitor);
+               freeFixedSizeBlock(new (pointer_cast<uint8_t *>(block) + allocSize) Block(excess));
+               j9thread_monitor_exit(_smallBlockMonitor);
                }
             else
                {
 #if defined(J9VM_OPT_JITSERVER)
                if (_isJITServer)
-                  freeBlockToIndexedList( new (pointer_cast<uint8_t *>(block) + allocSize) Block(excess) );
+                  freeBlockToIndexedList(new (pointer_cast<uint8_t *>(block) + allocSize) Block(excess));
                else
 #endif
-                  freeVariableSizeBlock( new (pointer_cast<uint8_t *>(block) + allocSize) Block(excess) );
-               if (::memoryAllocMonitor)
-                  ::memoryAllocMonitor->exit();
+                  freeVariableSizeBlock(new (pointer_cast<uint8_t *>(block) + allocSize) Block(excess));
+               j9thread_monitor_exit(_largeBlockMonitor);
                }
             }
-         else // No block splitting required; just release memoryAllocMonitor
+         else // No block splitting required; just release _largeBlockMonitor
             {
-            if (::memoryAllocMonitor)
-               ::memoryAllocMonitor->exit();
+            j9thread_monitor_exit(_largeBlockMonitor);
             }
          allocation = block + 1; // Return pointer after the header
          }
       else // Must allocate block from segment
          {
-         // memoryAllocMonitor is already acquired
+         // Exit the variable size list monitor and grab the segment monitor
+         j9thread_monitor_exit(_largeBlockMonitor);
+
+         j9thread_monitor_enter(_segmentMonitor);
          allocation = allocateFromSegmentLocked(allocSize);
-         if (::memoryAllocMonitor)
-            ::memoryAllocMonitor->exit();
+         j9thread_monitor_exit(_segmentMonitor);
          }
       }
 #if defined(J9VM_OPT_JITSERVER)
@@ -567,7 +568,7 @@ PersistentAllocator::checkIntegrity(const char msg[])
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 void
-PersistentAllocator::freeBlock(Block * block)
+PersistentAllocator::freeBlock(Block *block)
    {
    TR_ASSERT(block->size() > 0, "Block size is non-positive");
 
@@ -575,9 +576,9 @@ PersistentAllocator::freeBlock(Block * block)
    // because that call is also used to free memory that wasn't actually committed
    if (TR::AllocatedMemoryMeter::_enabled & persistentAlloc)
       {
-      j9thread_monitor_enter(_smallBlockListsMonitor);
+      j9thread_monitor_enter(_smallBlockMonitor);
       TR::AllocatedMemoryMeter::update_freed(block->size(), persistentAlloc);
-      j9thread_monitor_exit(_smallBlockListsMonitor);
+      j9thread_monitor_exit(_smallBlockMonitor);
       }
   
    // If this is a small block, add it to the appropriate fixed-size-block
@@ -587,22 +588,20 @@ PersistentAllocator::freeBlock(Block * block)
    size_t const index = freeBlocksIndex(block->size());
    if (index > LARGE_BLOCK_LIST_INDEX)
       {
-      j9thread_monitor_enter(_smallBlockListsMonitor);
+      j9thread_monitor_enter(_smallBlockMonitor);
       freeFixedSizeBlock(block);
-      j9thread_monitor_exit(_smallBlockListsMonitor);
+      j9thread_monitor_exit(_smallBlockMonitor);
       }
    else
       {
-      if (::memoryAllocMonitor)
-         ::memoryAllocMonitor->enter();
+      j9thread_monitor_enter(_largeBlockMonitor);
 #if defined(J9VM_OPT_JITSERVER)
       if (_isJITServer)
          freeBlockToIndexedList(block);
       else
 #endif
          freeVariableSizeBlock(block);
-      if (::memoryAllocMonitor)
-         ::memoryAllocMonitor->exit();
+      j9thread_monitor_exit(_largeBlockMonitor);
       }
    }
 
