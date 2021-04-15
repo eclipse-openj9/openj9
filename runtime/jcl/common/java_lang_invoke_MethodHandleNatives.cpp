@@ -56,6 +56,12 @@ extern "C" {
 #define MN_SEARCH_SUPERCLASSES	0x00100000
 #define MN_SEARCH_INTERFACES	0x00200000
 
+#if JAVA_SPEC_VERSION >= 16
+#define MN_MODULE_MODE			0x00000010
+#define MN_UNCONDITIONAL_MODE	0x00000020
+#define MN_TRUSTED_MODE			-1
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 /* Private MemberName object init helper 
  *
  * Set the MemberName fields based on the refObject given:
@@ -262,16 +268,17 @@ getClassSignature(J9VMThread *currentThread, J9Class * clazz)
 	return sig;
 }
 
-static char *
-getSignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, UDATA *signatureLength)
+static J9UTF8 *
+getJ9UTF8SignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	j9object_t ptypes = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, typeObject);
 	U_32 numArgs = J9INDEXABLEOBJECT_SIZE(currentThread, ptypes);
 
-	char* methodDescriptor = NULL;
+	J9UTF8* methodDescriptor = NULL;
 	char* cursor = NULL;
 	char* rSignature = NULL;
+	UDATA signatureLength = 2; /* space for '(', ')' */
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -282,7 +289,6 @@ getSignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, UDA
 
 	memset(signatures, 0, (numArgs) * sizeof(char*));
 
-	*signatureLength = 2; /* space for '(', ')' */
 	for (U_32 i = 0; i < numArgs; i++) {
 		j9object_t pObject = J9JAVAARRAYOFOBJECT_LOAD(currentThread, ptypes, i);
 		J9Class *pclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, pObject);
@@ -291,7 +297,7 @@ getSignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, UDA
 			goto done;
 		}
 
-		*signatureLength += strlen(signatures[i]);
+		signatureLength += strlen(signatures[i]);
 	}
 
 	{
@@ -304,13 +310,14 @@ getSignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, UDA
 		}
 	}
 
-	*signatureLength += strlen(rSignature);
+	signatureLength += strlen(rSignature);
 
-	methodDescriptor = (char*)j9mem_allocate_memory(*signatureLength+1, OMRMEM_CATEGORY_VM);
+	methodDescriptor = (J9UTF8*)j9mem_allocate_memory(signatureLength + sizeof(J9UTF8), OMRMEM_CATEGORY_VM);
 	if (NULL == methodDescriptor) {
 		goto done;
 	}
-	cursor = methodDescriptor;
+	J9UTF8_SET_LENGTH(methodDescriptor, (U_16)signatureLength);
+	cursor = (char*)J9UTF8_DATA(methodDescriptor);
 	*cursor++ = '(';
 
 	/* Copy class signatures to descriptor string */
@@ -322,7 +329,7 @@ getSignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObject, UDA
 
 	*cursor++ = ')';
 	/* Copy return type signature to descriptor string */
-	strcpy(cursor, rSignature);
+	strncpy(cursor, rSignature, strlen(rSignature));
 
 done:
 	j9mem_free_memory(rSignature);
@@ -442,27 +449,34 @@ done:
 }
 
 J9Method *
-lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9JNINameAndSignature *nas, J9Class *callerClass, UDATA lookupOptions)
+lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9UTF8 *name, J9UTF8 *signature, J9Class *callerClass, UDATA lookupOptions)
 {
 	J9Method *result = NULL;
+	J9NameAndSignature nas;
+	J9UTF8 nullSignature = {0};
+
+	nas.name = name;
+	nas.signature = signature;
+	lookupOptions |= J9_LOOK_DIRECT_NAS;
 
 	/* If looking for a MethodHandle polymorphic INL method, allow any caller signature. */
 	if (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(currentThread->javaVM)) {
-		if ((0 == strcmp(nas->name, "linkToVirtual"))
-		|| (0 == strcmp(nas->name, "linkToStatic"))
-		|| (0 == strcmp(nas->name, "linkToSpecial"))
-		|| (0 == strcmp(nas->name, "linkToInterface"))
-		|| (0 == strcmp(nas->name, "invokeBasic"))
-		) {
-			nas->signature = NULL;
-			nas->signatureLength = 0;
+		U_8 *nameData = J9UTF8_DATA(name);
+		U_16 nameLength = J9UTF8_LENGTH(name);
 
+		if ((J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToVirtual"))
+		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToStatic"))
+		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToSpecial"))
+		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToInterface"))
+		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "invokeBasic"))
+		) {
+			nas.signature = &nullSignature;
 			/* Set flag for partial signature lookup. Signature length is already initialized to 0. */
 			lookupOptions |= J9_LOOK_PARTIAL_SIGNATURE;
 		}
 	}
 
-	result = (J9Method*)currentThread->javaVM->internalVMFunctions->javaLookupMethod(currentThread, resolvedClass, (J9ROMNameAndSignature*)nas, callerClass, lookupOptions);
+	result = (J9Method*)currentThread->javaVM->internalVMFunctions->javaLookupMethod(currentThread, resolvedClass, (J9ROMNameAndSignature*)&nas, callerClass, lookupOptions);
 
 	return result;
 }
@@ -631,15 +645,20 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
  * Throw NoSuchMethodError for method/constructor MemberName
  * Throw LinkageError for other
  */
+#if JAVA_SPEC_VERSION >= 16
+jobject JNICALL
+Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, jobject self, jclass caller, jint lookupMode, jboolean speculativeResolve)
+#else /* JAVA_SPEC_VERSION >= 16 */
 jobject JNICALL
 Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, jobject self, jclass caller, jboolean speculativeResolve)
+#endif /* JAVA_SPEC_VERSION >= 16 */
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	jobject result = NULL;
-	char *name = NULL;
-	char *signature = NULL;
+	J9UTF8 *name = NULL;
+	J9UTF8 *signature = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -668,8 +687,6 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 
 			jint ref_kind = (flags >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK;
 
-			UDATA nameLength = 0;
-			UDATA signatureLength = 0;
 			J9Class *typeClass = J9OBJECT_CLAZZ(currentThread, typeObject);
 
 			/* The type field of a MemberName could be in:
@@ -680,18 +697,24 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 			if (J9VMJAVALANGINVOKEMETHODTYPE(vm) == typeClass) {
 				j9object_t sigString = J9VMJAVALANGINVOKEMETHODTYPE_METHODDESCRIPTOR(currentThread, typeObject);
 				if (NULL != sigString) {
-					signature = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, sigString, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, NULL, 0, &signatureLength);
+					signature = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, sigString, J9_STR_XLAT, "", 0, NULL, 0);
 				} else {
-					signature = getSignatureFromMethodType(currentThread, typeObject, &signatureLength);
-					// TODO store this signature as j.l.String in MT
+					signature = getJ9UTF8SignatureFromMethodType(currentThread, typeObject);
 				}
 			} else if (J9VMJAVALANGSTRING_OR_NULL(vm) == typeClass) {
-				signature = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, typeObject, J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, NULL, 0, &signatureLength);
+				signature = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, typeObject, J9_STR_XLAT, "", 0, NULL, 0);
 			} else if (J9VMJAVALANGCLASS(vm) == typeClass) {
 				J9Class *rclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, typeObject);
-				signature = getClassSignature(currentThread, rclass);
-				if (NULL != signature) {
-					signatureLength = strlen(signature);
+				char *classSignature = getClassSignature(currentThread, rclass);
+				if (NULL != classSignature) {
+					UDATA signatureLength = strlen(classSignature);
+					PORT_ACCESS_FROM_JAVAVM(vm);
+					signature = (J9UTF8*)j9mem_allocate_memory(signatureLength + sizeof(J9UTF8), OMRMEM_CATEGORY_VM);
+					if (NULL != signature) {
+						J9UTF8_SET_LENGTH(signature, (U_16)signatureLength);
+						memcpy(J9UTF8_DATA(signature), classSignature, signatureLength);
+					}
+					j9mem_free_memory(classSignature);
 				}
 			} else {
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
@@ -709,24 +732,38 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 			/* Refetch reference after GC point */
 			membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
 			nameObject = J9VMJAVALANGINVOKEMEMBERNAME_NAME(currentThread, membernameObject);
-			name = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, nameObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, &nameLength);
+			name = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, nameObject, 0, "", 0, NULL, 0);
 			if (NULL == name) {
 				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 				goto done;
 			}
 
-			Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_NAS(env, name, signature);
+			j9object_t callerObject = (NULL == caller) ? NULL : J9_JNI_UNWRAP_REFERENCE(caller);
+			J9Class *callerClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, callerObject);
+
+			Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_NAS(env, J9UTF8_LENGTH(name), J9UTF8_DATA(name), J9UTF8_LENGTH(signature), J9UTF8_DATA(signature));
 
 			if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
-				j9object_t callerObject = (NULL == caller) ? NULL : J9_JNI_UNWRAP_REFERENCE(caller);
-				J9Class *callerClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, callerObject);
-
-				J9JNINameAndSignature nas;
-				UDATA lookupOptions = J9_LOOK_JNI;
+				UDATA lookupOptions = 0;
 
 				if (JNI_TRUE == speculativeResolve) {
 					lookupOptions |= J9_LOOK_NO_THROW;
 				}
+
+#if JAVA_SPEC_VERSION >= 16
+				/* Check CL constraint only for lookup that is not trusted (with caller) and not public (UNCONDITIONAL mode not set)
+				 * Note: UNCONDITIONAL lookupMode can only access unconditionally exported public members which assumes readablity
+				 * ie lookup class not used to determine lookup context
+				 * See java.lang.invoke.MethodHandles$Lookup.publicLookup()
+				 */
+				if ((NULL != callerClass) && J9_ARE_NO_BITS_SET(lookupMode, MN_UNCONDITIONAL_MODE)) {
+					lookupOptions |= J9_LOOK_CLCONSTRAINTS;
+				}
+#else
+				if (NULL != callerClass) {
+					lookupOptions |= J9_LOOK_CLCONSTRAINTS;
+				}
+#endif
 
 				/* Determine the lookup type based on reference kind and resolved class flags */
 				switch (ref_kind)
@@ -748,13 +785,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 						break;
 				}
 
-				nas.name = name;
-				nas.signature = signature;
-				nas.nameLength = (U_32)nameLength;
-				nas.signatureLength = (U_32)signatureLength;
-
 				/* Check if signature polymorphic native calls */
-				J9Method *method = lookupMethod(currentThread, resolvedClass, &nas, callerClass, lookupOptions);
+				J9Method *method = lookupMethod(currentThread, resolvedClass, name, signature, callerClass, lookupOptions);
 
 				/* Check for resolution exception */
 				if (VM_VMHelpers::exceptionPending(currentThread)) {
@@ -789,8 +821,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 				 */
 				offset = vmFuncs->instanceFieldOffset(currentThread,
 					resolvedClass,
-					(U_8*)name, strlen(name),
-					(U_8*)signature, strlen(signature),
+					J9UTF8_DATA(name), J9UTF8_LENGTH(name),
+					J9UTF8_DATA(signature), J9UTF8_LENGTH(signature),
 					&declaringClass, (UDATA*)&romField,
 					lookupOptions);
 
@@ -803,8 +835,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 
 					void* fieldAddress = vmFuncs->staticFieldAddress(currentThread,
 						resolvedClass,
-						(U_8*)name, strlen(name),
-						(U_8*)signature, strlen(signature),
+						J9UTF8_DATA(name), J9UTF8_LENGTH(name),
+						J9UTF8_DATA(signature), J9UTF8_LENGTH(signature),
 						&declaringClass, (UDATA*)&romField,
 						lookupOptions,
 						NULL);
@@ -817,6 +849,39 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 				}
 
 				if (NULL != declaringClass) {
+					if ((NULL != callerClass)
+#if JAVA_SPEC_VERSION >= 16
+					 && (J9_ARE_NO_BITS_SET(lookupMode, MN_UNCONDITIONAL_MODE))
+#endif
+					) {
+						if (callerClass->classLoader != declaringClass->classLoader) {
+							J9BytecodeVerificationData *verifyData = vm->bytecodeVerificationData;
+							U_16 sigOffset = 0;
+
+							/* Skip the '[', 'L' prefix */
+							while ('[' == J9UTF8_DATA(signature)[sigOffset]) {
+								sigOffset += 1;
+							}
+							if ('L' == J9UTF8_DATA(signature)[sigOffset]) {
+								sigOffset += 1;
+								omrthread_monitor_enter(vm->classTableMutex);
+								UDATA clConstraintResult = verifyData->checkClassLoadingConstraintForNameFunction(
+																currentThread,
+																declaringClass->classLoader,
+																callerClass->classLoader,
+																J9UTF8_DATA(signature) + sigOffset,
+																J9UTF8_DATA(signature) + sigOffset,
+																J9UTF8_LENGTH(signature) - sigOffset - 1, /* -1 to remove the trailing ;*/
+																true);
+								omrthread_monitor_exit(vm->classTableMutex);
+								if (0 != clConstraintResult) {
+									vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, NULL);
+									goto done;
+								}
+							}
+						}
+					}
+
 					UDATA inconsistentData = 0;
 					J9JNIFieldID *fieldID = vmFuncs->getJNIFieldID(currentThread, declaringClass, romField, offset, &inconsistentData);
 					vmindex = (jlong)(UDATA)fieldID;
