@@ -374,11 +374,12 @@ PersistentAllocator::freeVariableSizeBlock(Block * block)
    }
 
 #if defined(J9VM_OPT_JITSERVER)
-size_t 
+size_t
 PersistentAllocator::getInterval(size_t blockSize)
    {  
    // Find the power-of-two interval that this block size belongs to
-   TR_ASSERT(blockSize >= PERSISTANT_BLOCK_SIZE_BUCKETS * sizeof(void *), "getInterval should be used only on big blocks. blockSize=%zu", blockSize);
+   TR_ASSERT(blockSize >= PERSISTENT_BLOCK_SIZE_BUCKETS * sizeof(void *),
+             "getInterval should be used only on big blocks. blockSize=%zu", blockSize);
    // If very large block
    if (blockSize >= (1 << (BITS_TO_SHIFT_FIRST_INTERVAL + NUM_INTERVALS - 1)))
       return NUM_INTERVALS - 1; // last one

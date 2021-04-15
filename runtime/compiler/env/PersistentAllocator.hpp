@@ -97,16 +97,14 @@ private:
    J9ThreadMonitor *_largeBlockMonitor;
    J9ThreadMonitor *_segmentMonitor;
 
-   static const size_t PERSISTANT_BLOCK_SIZE_BUCKETS = 16;
+   static const size_t PERSISTENT_BLOCK_SIZE_BUCKETS = 16;
    // first list/bucket is for large blocks of variable size
    static const size_t LARGE_BLOCK_LIST_INDEX = 0;
    static size_t freeBlocksIndex(size_t const blockSize)
       {
       size_t const adjustedBlockSize = blockSize - sizeof(Block);
       size_t const candidateBucket = adjustedBlockSize / sizeof(void *);
-      return candidateBucket < PERSISTANT_BLOCK_SIZE_BUCKETS ?
-         candidateBucket :
-         LARGE_BLOCK_LIST_INDEX;
+      return candidateBucket < PERSISTENT_BLOCK_SIZE_BUCKETS ? candidateBucket : LARGE_BLOCK_LIST_INDEX;
       }
 
    void * allocateInternal(size_t);
@@ -123,7 +121,7 @@ private:
 
    size_t const _minimumSegmentSize;
    SegmentAllocator _segmentAllocator;
-   Block * _freeBlocks[PERSISTANT_BLOCK_SIZE_BUCKETS];
+   Block *_freeBlocks[PERSISTENT_BLOCK_SIZE_BUCKETS];
    typedef TR::typed_allocator<TR::reference_wrapper<J9MemorySegment>, TR::RawAllocator> SegmentContainerAllocator;
    typedef std::deque<TR::reference_wrapper<J9MemorySegment>, SegmentContainerAllocator> SegmentContainer;
    SegmentContainer _segments;
@@ -178,7 +176,7 @@ private:
    // will point to the same block. If there is no block in an interval, these
    // two pointers are NULL.
    static const size_t NUM_INTERVALS = 8;
-   static const size_t SIZE_FIRST_LARGE_BLOCK = PERSISTANT_BLOCK_SIZE_BUCKETS * sizeof(void *);
+   static const size_t SIZE_FIRST_LARGE_BLOCK = PERSISTENT_BLOCK_SIZE_BUCKETS * sizeof(void *);
    static const size_t BITS_TO_SHIFT_FIRST_INTERVAL = floorLog2(SIZE_FIRST_LARGE_BLOCK);
    ExtendedBlock * _startInterval[NUM_INTERVALS] = {}; // Acts like an index to help us find faster the block of appropriate size
                                                        // First shortcut points to blocks that are [128, 256) bytes in size
