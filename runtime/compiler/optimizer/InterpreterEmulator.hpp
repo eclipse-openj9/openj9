@@ -421,6 +421,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       void debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod);
       void maintainStackForAstore(int slotIndex);
       void maintainStackForldc(int32_t cpIndex);
+      void maintainStackForGetStatic();
       /*
        * \brief Check if a block has predecessors whose bytecodes haven't been visited
        */

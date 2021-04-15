@@ -29,6 +29,7 @@
 #include "jilconsts.h"
 #include "il/ParameterSymbol.hpp"
 #include "optimizer/PreExistence.hpp"
+#include "optimizer/TransformUtil.hpp"
 #include "il/Node_inlines.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
@@ -607,8 +608,10 @@ InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
       case J9BCfload0: case J9BCfload1: case J9BCfload2: case J9BCfload3:
       case J9BCiloadw: case J9BClloadw: case J9BCfloadw: case J9BCdloadw:
       case J9BCiload:  case J9BClload:  case J9BCfload:  case J9BCdload:
-      case J9BCgetstatic:
          pushUnknownOperand();
+         break;
+      case J9BCgetstatic:
+         maintainStackForGetStatic();
          break;
       case J9BCgenericReturn:
       case J9BCReturnC:
@@ -651,6 +654,47 @@ InterpreterEmulator::maintainStackForReturn()
    {
    if (method()->returnType() != TR::NoType)
       pop();
+   }
+
+void
+InterpreterEmulator::maintainStackForGetStatic()
+   {
+   TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
+   if (comp()->compileRelocatableCode())
+      {
+      pushUnknownOperand();
+      return;
+      }
+
+   int32_t cpIndex = next2Bytes();
+   debugTrace(tracer(), "getstatic cpIndex %d", cpIndex);
+
+   void * dataAddress;
+   bool isVolatile, isPrivate, isUnresolvedInCP, isFinal;
+   TR::DataType type = TR::NoType;
+   auto owningMethod = _calltarget->_calleeMethod;
+   bool resolved = owningMethod->staticAttributes(
+      comp(),
+      cpIndex,
+      &dataAddress,
+      &type,
+      &isVolatile,
+      &isFinal,
+      &isPrivate,
+      false,
+      &isUnresolvedInCP);
+
+   TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+   if (resolved && isFinal && type == TR::Address)
+      {
+      knownObjectIndex = TR::TransformUtil::knownObjectFromFinalStatic(
+          comp(), owningMethod, cpIndex, dataAddress);
+      }
+
+   if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
+      push(new (trStackMemory()) KnownObjOperand(knownObjectIndex));
+   else
+      pushUnknownOperand();
    }
 
 void
