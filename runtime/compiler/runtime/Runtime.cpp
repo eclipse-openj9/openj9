@@ -480,9 +480,6 @@ JIT_HELPER(__arrayTranslateTRTO);
 JIT_HELPER(__arrayTranslateTRTO255);
 JIT_HELPER(__arrayTranslateTROT255);
 JIT_HELPER(__arrayTranslateTROT);
-JIT_HELPER(__arrayCmpLenVMX);
-JIT_HELPER(__arrayCmpScalar);
-JIT_HELPER(__arrayCmpLenScalar);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 JIT_HELPER(AESKeyExpansion_PPC);
@@ -1397,15 +1394,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #endif
    SET(TR_PPCreferenceArrayCopy,           (void *) __referenceArrayCopy,           TR_Helper);
    SET(TR_PPCgeneralArrayCopy,             (void *) __generalArrayCopy,             TR_Helper);
-#if 1
-   SET(TR_PPCarrayCmpLenVMX,              (void *) 0, TR_Helper);
-   SET(TR_PPCarrayCmpScalar,              (void *) 0, TR_Helper);
-   SET(TR_PPCarrayCmpLenScalar,           (void *) 0, TR_Helper);
-#else
-   SET(TR_PPCarrayCmpLenVMX,              (void *) __arrayCmpLenVMX,              TR_Helper);
-   SET(TR_PPCarrayCmpScalar,              (void *) __arrayCmpScalar,              TR_Helper);
-   SET(TR_PPCarrayCmpLenScalar,           (void *) __arrayCmpLenScalar,           TR_Helper);
-#endif
    SET(TR_PPCarrayTranslateTRTO,       (void *) __arrayTranslateTRTO,    TR_Helper);
    SET(TR_PPCarrayTranslateTRTO255,    (void *) __arrayTranslateTRTO255, TR_Helper);
    SET(TR_PPCarrayTranslateTROT255,    (void *) __arrayTranslateTROT255, TR_Helper);
