@@ -2506,7 +2506,6 @@ TR_DebugExt::dxPrintJ9MonitorTable(TR::MonitorTable *remoteMonTable)
 
    _dbgPrintf("\tJ9MonitorTable at 0x%p\n", remoteMonTable);
    _dbgPrintf("\tTR::Monitor * _tableMonitor = 0x%p\n", &(remoteMonTable->_tableMonitor));
-   _dbgPrintf("\tTR::Monitor * _j9MemoryAllocMonitor = 0x%p\n", &(remoteMonTable->_j9MemoryAllocMonitor));
    _dbgPrintf("\tTR::Monitor * _j9ScratchMemoryPoolMonitor = 0x%p\n", &(remoteMonTable->_j9ScratchMemoryPoolMonitor));
    _dbgPrintf("\tTR::Monitor * _classUnloadMonitor = 0x%p\n", &(remoteMonTable->_classUnloadMonitor));
    _dbgPrintf("\tTR::Monitor * _classTableMutex = 0x%p\n", &(remoteMonTable->_classTableMutex));
