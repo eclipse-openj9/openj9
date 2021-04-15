@@ -656,7 +656,7 @@ TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Exit Overhead=1 Le
 
 TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Entry Overhead=1 Level=3 Template="MethodHandleNatives_resolve Enter: self = %p, caller = %p, speculativeResolve = %s"
 TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Data Overhead=1 Level=3 Template="MethodHandleNatives_resolve Data: membername = %p, caller = %p, flags = 0x%08X, vmindex = %lld, target = %lld"
-TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_NAS Overhead=1 Level=3 Template="MethodHandleNatives_resolve NAS: name = %s, signature = %s"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_NAS Overhead=1 Level=3 Template="MethodHandleNatives_resolve NAS: name = %.*s, signature = %.*s"
 TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_resolved Overhead=1 Level=3 Template="MethodHandleNatives_resolve Resolved to: vmindex = %lld, target = %lld, class = %p, flags = 0x%08X"
 TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Exit Overhead=1 Level=3 Template="MethodHandleNatives_resolve Exit"
 
