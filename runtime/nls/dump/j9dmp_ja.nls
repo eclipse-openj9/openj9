@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -529,4 +529,73 @@ J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the user.
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_ORDINARY_METHOD=\u30b3\u30f3\u30d1\u30a4\u30eb\u4e2d\u306e JIT \u30c0\u30f3\u30d7\u30fb\u30e1\u30bd\u30c3\u30c9\u306f\u901a\u5e38\u306e\u30e1\u30bd\u30c3\u30c9\u3067\u3059
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_ORDINARY_METHOD.explanation=The dump has reported that the method the unhandled exception occurred in is an ordinary method.
+J9NLS_DMP_JIT_ORDINARY_METHOD.system_action=The JVM continues.
+J9NLS_DMP_JIT_ORDINARY_METHOD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_ORDINARY_METHOD.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=JIT \u30c0\u30f3\u30d7\u306b\u3088\u308a\u3001\u73fe\u884c\u30e1\u30bd\u30c3\u30c9\u304c\u30b3\u30f3\u30d1\u30a4\u30eb\u3055\u308c\u308b\u3053\u3068\u304c\u3001\u5f85\u6a5f\u4e2d\u306e\u3059\u3079\u3066\u306e\u30b9\u30ec\u30c3\u30c9\u306b\u901a\u77e5\u3055\u308c\u307e\u3057\u305f
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.explanation=The compilation threads waiting on the method to be compiled monitor will be notified.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.system_action=The JVM continues.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN=JIT \u30c0\u30f3\u30d7\u306b\u3088\u308a\u65b0\u898f\u6700\u9069\u5316\u8a08\u753b\u3092\u5272\u308a\u632f\u308b\u3053\u3068\u304c\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.explanation=The dump could not allocate a new optimization plan for recompilation.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.system_action=The JVM will not recompile the current method and will continue.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID=%1$s \u30c0\u30f3\u30d7\u304c\u300c%2$s\u300d\u306e\u30b9\u30ec\u30c3\u30c9 0x%3$p \u3067\u884c\u308f\u308c\u307e\u3057\u305f
+# START NON-TRANSLATABLE
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.explanation=The dump is reporting which thread caused the unhandled exception.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.system_action=The JVM continues.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_1=JIT
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_2=main
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_3=1280FF00
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_RECURSIVE_CRASH=JIT \u30c0\u30f3\u30d7\u306e\u518d\u5e30\u7684\u7570\u5e38\u7d42\u4e86\u304c\u8a3a\u65ad\u30b9\u30ec\u30c3\u30c9\u3067\u767a\u751f\u3057\u307e\u3057\u305f
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_RECURSIVE_CRASH.explanation=The dump is reporting a reproduction of the original unhandled exception, with tracing.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.system_action=The JVM continues.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_RECOMPILING_METHOD=JIT \u30c0\u30f3\u30d7\u3067 %.*s.%.*s%.*s \u304c\u518d\u30b3\u30f3\u30d1\u30a4\u30eb\u4e2d\u3067\u3059
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_RECOMPILING_METHOD.explanation=The dump is recompiling the specified method signature.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.system_action=The JVM continues.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_1=java/lang/String
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_2=equals
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_3=(Ljava/lang/Object;)Z
+J9NLS_DMP_JIT_RECOMPILING_METHOD.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD=JIT \u30c0\u30f3\u30d7\u306b\u3088\u308a\u3001\u7570\u5e38\u7d42\u4e86\u3057\u305f\u30b3\u30f3\u30d1\u30a4\u30eb\u30fb\u30b9\u30ec\u30c3\u30c9\u4e0a\u306e\u30e1\u30bd\u30c3\u30c9\u306e IL \u304c\u30c8\u30ec\u30fc\u30b9\u4e2d\u3067\u3059
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.explanation=The dump is tracing the IL of the crashed thread in its current state before recompiling the method for tracing.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.system_action=The JVM continues.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.link=
+
 # END NON-TRANSLATABLE

@@ -997,7 +997,7 @@ J9NLS_CFR_ERR_INCOMPATIBLE_CONSTANT.user_response=Contact the provider of the cl
 # END NON-TRANSLATABLE
 
 # UTF8 is not translatable
-J9NLS_CFR_ERR_BAD_UTF8=UTF8 incorrectement form\u00e9
+J9NLS_CFR_ERR_BAD_UTF8=UTF8 incorrect
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1082,7 +1082,7 @@ J9NLS_CFR_ERR_FOUND_JSR_IN_CLASS_VER_51.user_response=Contact the provider of th
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=nom de champ non conforme
+J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=nom de champ ill\u00e9gal
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1307,7 +1307,7 @@ J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classf
 # END NON-TRANSLATABLE
 
 # <clinit> method at version 51.0 must be void and take no arguments
-J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=La m\u00e9thode <clinit> a une signature non conforme
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=La m\u00e9thode <clinit> a une signature ill\u00e9gale
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1552,3 +1552,10 @@ J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Conta
 # END NON-TRANSLATABLE
 
 J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=
+
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1=Les types valeur sont d\u00e9sactiv\u00e9s avec l'option -XX:-EnableValhalla
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.explanation=ValueTypes is an experimental feature and is disabled by -XX:-EnableValhalla
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.user_response=Contact the provider of the class file for a corrected version, or remove the -XX:+EnableValhalla option and retry.
+# END NON-TRANSLATABLE
