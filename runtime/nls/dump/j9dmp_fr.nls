@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -529,4 +529,73 @@ J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the user.
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_ORDINARY_METHOD=La m\u00e9thode de vidage JIT en cours de compilation est une m\u00e9thode ordinaire
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_ORDINARY_METHOD.explanation=The dump has reported that the method the unhandled exception occurred in is an ordinary method.
+J9NLS_DMP_JIT_ORDINARY_METHOD.system_action=The JVM continues.
+J9NLS_DMP_JIT_ORDINARY_METHOD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_ORDINARY_METHOD.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=Le vidage JIT a notifi\u00e9 tous les threads en attente de la m\u00e9thode en cours \u00e0 compiler
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.explanation=The compilation threads waiting on the method to be compiled monitor will be notified.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.system_action=The JVM continues.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN=Le vidage JIT n'a pas pu allouer un nouveau plan d'optimisation
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.explanation=The dump could not allocate a new optimization plan for recompilation.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.system_action=The JVM will not recompile the current method and will continue.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID=Le vidage %1$s s'est produit dans le thread '%2$s' 0x%3$p
+# START NON-TRANSLATABLE
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.explanation=The dump is reporting which thread caused the unhandled exception.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.system_action=The JVM continues.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_1=JIT
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_2=main
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_3=1280FF00
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_RECURSIVE_CRASH=Une panne r\u00e9cursive de vidage JIT s'est produite dans le thread de diagnostic
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_RECURSIVE_CRASH.explanation=The dump is reporting a reproduction of the original unhandled exception, with tracing.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.system_action=The JVM continues.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_RECOMPILING_METHOD=Le vidage JIT recompile %.*s.%.*s%.*s
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_RECOMPILING_METHOD.explanation=The dump is recompiling the specified method signature.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.system_action=The JVM continues.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_1=java/lang/String
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_2=equals
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_3=(Ljava/lang/Object;)Z
+J9NLS_DMP_JIT_RECOMPILING_METHOD.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD=Le vidage JIT trace l'IL de la m\u00e9thode du thread de compilation en panne
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.explanation=The dump is tracing the IL of the crashed thread in its current state before recompiling the method for tracing.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.system_action=The JVM continues.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.link=
+
 # END NON-TRANSLATABLE

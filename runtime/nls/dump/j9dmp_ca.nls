@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,7 +201,7 @@ J9NLS_DMP_UNRECOGNISED_REQUEST_STR.link=dita:///diag/tools/dumpagents_syntax.dit
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_NO_OPEN_READ=S'est\u00e0 avortant: No es pot obrir o llegir (%s)
+J9NLS_DMP_NO_OPEN_READ=Avortant: No es pot obrir o llegir (%s)
 # START NON-TRANSLATABLE
 J9NLS_DMP_NO_OPEN_READ.explanation=The JVM cannot open a dump file in read mode.
 J9NLS_DMP_NO_OPEN_READ.system_action=INTERNAL USE ONLY
@@ -211,7 +211,7 @@ J9NLS_DMP_NO_OPEN_READ.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_NO_CREATE=S'est\u00e0 avortant: No es pot crear el fitxer (%s)
+J9NLS_DMP_NO_CREATE=Avortant: No es pot crear el fitxer (%s)
 # START NON-TRANSLATABLE
 J9NLS_DMP_NO_CREATE.explanation=The JVM cannot open a new file.
 J9NLS_DMP_NO_CREATE.system_action=INTERNAL USE ONLY
@@ -221,7 +221,7 @@ J9NLS_DMP_NO_CREATE.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_NO_COMPRESS=S'est\u00e0 avortant: No es pot comprimir el fitxer (%s)
+J9NLS_DMP_NO_COMPRESS=Avortant: No es pot comprimir el fitxer (%s)
 # START NON-TRANSLATABLE
 J9NLS_DMP_NO_COMPRESS.explanation=The JVM cannot compress a file.
 J9NLS_DMP_NO_COMPRESS.system_action=INTERNAL USE ONLY
@@ -529,4 +529,73 @@ J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the user.
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_ORDINARY_METHOD=El m\u00e8tode d'abocament de mem\u00f2ria de JIT que s'est\u00e0 compilant \u00e9s un m\u00e8tode ordinari
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_ORDINARY_METHOD.explanation=The dump has reported that the method the unhandled exception occurred in is an ordinary method.
+J9NLS_DMP_JIT_ORDINARY_METHOD.system_action=The JVM continues.
+J9NLS_DMP_JIT_ORDINARY_METHOD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_ORDINARY_METHOD.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=L'abocament de mem\u00f2ria de JIT ha notificat que tots els fils en espera del m\u00e8tode actual s'han de compilar
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.explanation=The compilation threads waiting on the method to be compiled monitor will be notified.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.system_action=The JVM continues.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN=L'abocament de mem\u00f2ria de JIT no ha pogut assignar un nou pla d'optimitzaci\u00f3
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.explanation=The dump could not allocate a new optimization plan for recompilation.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.system_action=The JVM will not recompile the current method and will continue.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID=L'abocament de mem\u00f2ria de %1$s s'ha produ\u00eft a %2$s fil 0x%3$p
+# START NON-TRANSLATABLE
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.explanation=The dump is reporting which thread caused the unhandled exception.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.system_action=The JVM continues.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_1=JIT
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_2=main
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_3=1280FF00
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_RECURSIVE_CRASH=S'ha produ\u00eft un bloqueig recursiu d'abocament de mem\u00f2ria de JIT en el fil de diagn\u00f2stic
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_RECURSIVE_CRASH.explanation=The dump is reporting a reproduction of the original unhandled exception, with tracing.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.system_action=The JVM continues.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_RECOMPILING_METHOD=L'abocament de mem\u00f2ria de JIT est\u00e0 recompilant %.*s.%.*s%.*s
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_RECOMPILING_METHOD.explanation=The dump is recompiling the specified method signature.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.system_action=The JVM continues.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_1=java/lang/String
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_2=equals
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_3=(Ljava/lang/Object;)Z
+J9NLS_DMP_JIT_RECOMPILING_METHOD.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD=L'abocament de mem\u00f2ria de JIT est\u00e0 rastrejant la IL del m\u00e8tode en el fil de compilaci\u00f3 bloquejat
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.explanation=The dump is tracing the IL of the crashed thread in its current state before recompiling the method for tracing.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.system_action=The JVM continues.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.link=
+
 # END NON-TRANSLATABLE

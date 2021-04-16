@@ -979,7 +979,7 @@ J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              JVM -Xsyslog yard\u0131m\u0131n\u0131 yazd\u0131r\u0131r.
+J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              JVM -Xsyslog yard\u0131m\u0131n\u0131 yazd\u0131r\u0131n.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
@@ -987,7 +987,7 @@ J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              Varsay\u0131lanlar da i\u00e7inde olmak \u00fczere \u00f6nceden belirtilen JVM g\u00fcnl\u00fc\u011f\u00fc se\u00e7enekleri ge\u00e7ersiz k\u0131lar.
+J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              Varsay\u0131lanlar dahil, \u00f6nceden belirtilen JVM g\u00fcnl\u00fc\u011f\u00fc se\u00e7eneklerini devre d\u0131\u015f\u0131 b\u0131rak\u0131n.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
@@ -995,7 +995,7 @@ J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:all is not translatable
-J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               T\u00fcm JVM iletilerini g\u00fcnl\u00fc\u011fe kaydeder.
+J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               T\u00fcm JVM iletilerini g\u00fcnl\u00fc\u011fe kaydedin.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
@@ -1003,7 +1003,7 @@ J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info is not translatable
-J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              JVM bilgi iletilerini g\u00fcnl\u00fc\u011fe kaydeder.
+J9NLS_VM_XLOG_HELP05=  -Xsyslog:info               JVM bilgi iletilerini g\u00fcnl\u00fc\u011fe kaydedin.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
@@ -1011,7 +1011,7 @@ J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              JVM uyar\u0131 iletilerini g\u00fcnl\u00fc\u011fe kaydeder.
+J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn               JVM uyar\u0131 iletilerini g\u00fcnl\u00fc\u011fe kaydedin.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
@@ -1019,7 +1019,7 @@ J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             JVM hata iletilerini g\u00fcnl\u00fc\u011fe kaydeder. Varsay\u0131lan olarak a\u00e7\u0131kt\u0131r.
+J9NLS_VM_XLOG_HELP07=  -Xsyslog:error               JVM hata iletilerini g\u00fcnl\u00fc\u011fe kaydedin. Varsay\u0131lan olarak a\u00e7\u0131kt\u0131r.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
@@ -1027,7 +1027,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             JVM \u00e7ok \u00f6nemli iletilerini g\u00fcnl\u00fc\u011fe kaydeder. Varsay\u0131lan olarak a\u00e7\u0131kt\u0131r.
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital              \u00d6nemli JVM iletilerini g\u00fcnl\u00fc\u011fe kaydedin. Varsay\u0131lan olarak a\u00e7\u0131kt\u0131r.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            JVM yap\u0131land\u0131rma iletilerini g\u00fcnl\u00fc\u011fe kaydeder.\n
+J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            JVM yap\u0131land\u0131rma iletilerini g\u00fcnl\u00fc\u011fe kaydedin.\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1362,7 +1362,7 @@ J9NLS_VM_XOPTION_NO_LONGER_SUPPORTED.explanation=IBM SDK %s se\u00e7ene\u011fini
 J9NLS_VM_XOPTION_NO_LONGER_SUPPORTED.system_action=JVM ba\u015flamaz.
 J9NLS_VM_XOPTION_NO_LONGER_SUPPORTED.user_response=%s i\u015flevi gerekliyse IBM servisine ba\u015fvurun, tersi durumda se\u00e7ene\u011fi kald\u0131r\u0131n.
 
-J9NLS_VM_TOO_MANY_ARGUMENTS=\u00e7ok fazla parametre var: 255 + 1
+J9NLS_VM_TOO_MANY_ARGUMENTS=\u00e7ok fazla de\u011fi\u015ftirge var: 255 + 1
 # START NON-TRANSLATABLE
 J9NLS_VM_TOO_MANY_ARGUMENTS.explanation=The signature requires more than 255 argument slots plus one for the receiver.
 J9NLS_VM_TOO_MANY_ARGUMENTS.system_action=The JVM will throw java/lang/LinkageError.
@@ -1983,7 +1983,7 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the inco
 
 # Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
 # argument 1 is the class name
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=%2$.*1$s s\u0131n\u0131f\u0131n\u0131n, m\u00fch\u00fcrlenmi\u015f \u00fcst s\u0131n\u0131f\u0131ndan devralmas\u0131na izin verilmez.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=class %2$.*1$s i\u00e7in m\u00fch\u00fcrlenmi\u015f s\u00fcper s\u0131n\u0131f\u0131ndan devralmaya izin verilmez.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -1992,7 +1992,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Co
 
 # Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
 # argument 1 is the class name,
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=%2$.*1$s s\u0131n\u0131f\u0131n\u0131n, m\u00fch\u00fcrlenmi\u015f \u00fcst arabiriminden devralmas\u0131na izin verilmez.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=class %2$.*1$s i\u00e7in m\u00fch\u00fcrlenmi\u015f s\u00fcper arabiriminden devralmaya izin verilmez.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -2002,11 +2002,29 @@ J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_respons
 # Message for an improper attempt to synchronize on an instance of value-based class.
 # argument 1 is the length of the class name
 # argument 2 is the string of the class name
-J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED=hatal\u0131 nesne tipi %2$.*1$s: e\u015fitlenen nesne, de\u011fer tabanl\u0131d\u0131r
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED=hatal\u0131 nesne tipi %2$.*1$s: e\u015fitlenen nesne de\u011fer tabanl\u0131
 # START NON-TRANSLATABLE
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_1=3
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_2=Foo
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value-based class but the object on stack is an instance of value-based class.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.system_action=The JVM will throw an VirtualMachineError.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class/interface is not in the same module as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=%2$.*1$s s\u0131n\u0131f\u0131/arabirimi, m\u00fch\u00fcrlenmi\u015f s\u00fcper s\u0131n\u0131f\u0131/arabirimi ile ayn\u0131 mod\u00fclde de\u011fil.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.explanation=The specified class must be in the same module as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when non-public class/interface is not in the same package as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=Genel olmayan 2$.*1$s s\u0131n\u0131f/arabirimi, m\u00fch\u00fcrlenmi\u015f s\u00fcper s\u0131n\u0131f\u0131/arabirimi ile ayn\u0131 pakette de\u011fil.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.explanation=The specified non-public class must be in the same package as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
