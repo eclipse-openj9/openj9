@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,7 +100,7 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 	J9VMThread *vmThread = (J9VMThread *)env;
 	J9JavaVM *vm = vmThread->javaVM;
 	jobject msgObjectRef = NULL;
-	
+
 	Trc_SC_GetExtendedNPEMessage_Entry(vmThread, throwableObj);
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_SHOW_EXTENDED_NPEMSG)) {
 		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
@@ -148,7 +148,21 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 		vmFuncs->internalExitVMToJNI(vmThread);
 	}
 	Trc_SC_GetExtendedNPEMessage_Exit(vmThread, msgObjectRef);
-	
+
 	return msgObjectRef;
 }
 #endif /* JAVA_SPEC_VERSION >= 14 */
+
+#if JAVA_SPEC_VERSION >= 17
+JNIEXPORT void JNICALL
+JVM_DumpClassListToFile(JNIEnv *env, jstring str)
+{
+	assert(!"JVM_DumpClassListToFile unimplemented");
+}
+
+JNIEXPORT void JNICALL
+JVM_DumpDynamicArchive(JNIEnv *env, jstring str)
+{
+	assert(!"JVM_DumpDynamicArchive unimplemented");
+}
+#endif /* JAVA_SPEC_VERSION >= 17 */
