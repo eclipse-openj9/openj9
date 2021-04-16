@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,64 +117,15 @@ int32_t TR_NewInitialization::performAnalysis(bool doGlobalAnalysis)
 
    TR_Hotness methodHotness = comp()->getMethodHotness();
 
-   // Don't merge allocations if we are generating JVMPI hooks, since
-   // JVMPI needs to know about each allocation.
-   //
-   _allowMerge = cg()->getSupportsMergedAllocations() &&
-                 !comp()->getOption(TR_DisableMergeNew) &&
-                 !comp()->suppressAllocationInlining() &&
-                 !comp()->compileRelocatableCode() &&
-                 !comp()->getOptions()->realTimeGC();
-   if (_allowMerge)
-      {
-      static const char *p = feGetEnv("TR_MergeNew");
-      if (p)
-         {
-         if (*p == 's')
-            _allowMerge = (methodHotness >= scorching);
-         else if (*p == 'h')
-            _allowMerge = (methodHotness >= hot);
-         else if (*p >= '0' && *p <= '9')
-            {
-            static int32_t methodCount = 0;
-            int32_t low = 0, high = 0;
-            while (*p >= '0' && *p <= '9')
-               {
-               low = low * 10 + *p -'0';
-               p++;
-               }
-            if (*p == '-')
-               {
-               p++;
-               while (*p >= '0' && *p <= '9')
-                  {
-                  high = high * 10 + *p -'0';
-                  p++;
-                  }
-               }
-            else
-               high = low;
-            _allowMerge = (methodCount >= low && methodCount <= high);
-            methodCount++;
-            }
-         }
-      else
-         {
-         // Default setting
-         //
-         _allowMerge = (methodHotness >= scorching);
-         }
-      }
-
    static const char *q = feGetEnv("TR_Sniff");
    _sniffConstructorsOnly = false;
    _sniffCalls = false;
    if (q)
       {
       if (*q == 's')
-         _sniffCalls = _allowMerge && methodHotness >= scorching;
+         _sniffCalls = false;
       else if (*q == 'h')
-         _sniffCalls = _allowMerge && methodHotness >= hot;
+         _sniffCalls = false;
       else if (*q == 'n')
          _sniffCalls = false;
       else if (*q == 'c')
@@ -184,14 +135,6 @@ int32_t TR_NewInitialization::performAnalysis(bool doGlobalAnalysis)
          }
       else
          _sniffCalls = true;
-      }
-
-   // Default setting
-   //
-   else if (_allowMerge && methodHotness >= scorching)
-      {
-      _sniffCalls = true;
-      _sniffConstructorsOnly = true;
       }
 
    int32_t nodeCount = 0;
@@ -268,8 +211,7 @@ bool TR_NewInitialization::doAnalysisOnce(int32_t iteration)
 
    _inlinedCallSites.setFirst(NULL);
 
-   // First walk the trees to find allocation nodes, initializations, and merge
-   // opportunities
+   // First walk the trees to find allocation nodes and initializations
    //
    findNewCandidates();
 
@@ -277,7 +219,7 @@ bool TR_NewInitialization::doAnalysisOnce(int32_t iteration)
    //    1) inline the top-level methods that we deemed useful to inline,
    //       and ask for another iteration, or
    //    2) change the allocations that can reasonably be changed into
-   //       no-zero-init versions or merged versions, and insert the necessary
+   //       no-zero-init versions, and insert the necessary
    //       zero-initialization information.
    //
    bool doItAgain = changeNewCandidates();
@@ -286,7 +228,7 @@ bool TR_NewInitialization::doAnalysisOnce(int32_t iteration)
 
 void TR_NewInitialization::findNewCandidates()
    {
-   // Walk the trees to find allocation nodes that may be inlined and/or merged,
+   // Walk the trees to find allocation nodes that may be inlined
    // and explicit initializations.
    //
    _candidates.set(NULL, NULL);
@@ -301,7 +243,6 @@ void TR_NewInitialization::findNewCandidates()
       traceMsg(comp(), "\n\nFinding candidates\n\n");
 
    TR::CFG *cfg = comp()->getFlowGraph();
-   bool saveAllowMerge = _allowMerge;
    bool saveSniffCalls = _sniffCalls;
 
    TR::TreeTop *treeTop;
@@ -311,16 +252,12 @@ void TR_NewInitialization::findNewCandidates()
       TR_ASSERT(node->getOpCodeValue() == TR::BBStart, "Expected start of block");
       TR::Block *block = node->getBlock();
       _firstActiveCandidate = NULL;
-      _firstMergeCandidate = NULL;
 
-      // If this is a cold block, don't bother inlining or merging
+      // If this is a cold block, don't bother inlining
       //
-      //TR_Hotness hotness = block->getHotness(cfg);
-      //if (hotness != unknownHotness && hotness < hot)
       if ((block->getFrequency() >= 0) &&
           (block->getFrequency() <= MAX_WARM_BLOCK_COUNT))
          {
-         _allowMerge = false;
          _sniffCalls = false;
          }
 
@@ -328,9 +265,7 @@ void TR_NewInitialization::findNewCandidates()
 
       treeTop = block->getExit();
       escapeToUserCodeAllCandidates(treeTop->getNode());
-      setGCPoint(treeTop); // This is a GC point (at least, it may be)
 
-      _allowMerge = saveAllowMerge;
       _sniffCalls = saveSniffCalls;
       }
 
@@ -341,8 +276,8 @@ void TR_NewInitialization::findNewCandidates()
 
 bool TR_NewInitialization::findNewCandidatesInBlock(TR::TreeTop *startTree, TR::TreeTop *endTree)
    {
-   // Walk the trees for a block to find allocation nodes that may be inlined
-   // and/or merged. Sniff into initializer calls to see if they do any
+   // Walk the trees for a block to find allocation nodes that may be
+   // inlined.  Sniff into initializer calls to see if they do any
    // allocations or initializations.
    //
    vcount_t visitCount = comp()->getVisitCount();
@@ -384,56 +319,17 @@ bool TR_NewInitialization::findNewCandidatesInBlock(TR::TreeTop *startTree, TR::
       Candidate *prevCandidate = _candidates.getLast();
       if (findAllocationNode(treeTop, child))
          {
-         // See if this candidate can be merged with others
-         //
-         TR_OpaqueClassBlock *classInfo;
          Candidate *candidate = _candidates.getLast();
-         if (_allowMerge &&
-             (treeTop->getNode()->getOpCodeValue() != TR::MergeNew) &&
-             comp()->canAllocateInline(candidate->node, classInfo) > 0)
-            {
-            if (_firstMergeCandidate)
-               {
-               if (_firstMergeCandidate->GCPointFoundBeforeNextCandidate)
-                  {
-                  // This candidate's reference slots must be initialized at the
-                  // allocation point, since they must be valid at the GC point
-                  //
-                  escapeToGC(candidate, child);
-                  }
-               setAffectedCandidate(_firstMergeCandidate);
-               candidate->canBeMerged = true;
-               if (trace())
-                  traceMsg(comp(), "Candidate [%p] can be merged\n", candidate->node);
-               }
-            else
-               {
-               if (!candidate->isInSniffedMethod)
-                  {
-                  _firstMergeCandidate = candidate;
-                  candidate->firstMergeCandidate = true;
-                  candidate->canBeMerged = true;
-                  if (trace())
-                     traceMsg(comp(), "Candidate [%p] can be merged\n", candidate->node);
-                  }
-               }
-            }
 
-         else
+         // Any previous allocation nodes must have all have their
+         // reference fields completely initialized here by this
+         // point.  Take care not to mark the candidate just found.
+         //
+         if (prevCandidate)
             {
-            // If this allocation node can't be merged with others, any
-            // previous ones must all have their reference fields
-            // completely initialized here by this point.
-            // Take care not to mark the candidate just found.
-            //
-            if (prevCandidate)
-               {
-               prevCandidate->setNext(NULL);
-               escapeToGC(child);
-               prevCandidate->setNext(candidate);
-               }
-
-            setGCPoint(treeTop); // This is a GC point
+            prevCandidate->setNext(NULL);
+            escapeToGC(child);
+            prevCandidate->setNext(candidate);
             }
 
          // Activate the candidate
@@ -475,7 +371,6 @@ bool TR_NewInitialization::findNewCandidatesInBlock(TR::TreeTop *startTree, TR::
                if (!sniffCall(treeTop))
                   {
                   escapeViaCall(child);
-                  setGCPoint(treeTop); // This is a GC point
                   if (_outermostCallSite)
                      return false;
                   }
@@ -503,7 +398,6 @@ bool TR_NewInitialization::findNewCandidatesInBlock(TR::TreeTop *startTree, TR::
                // initialized since a GC may happen during the call.
                //
                escapeViaCall(child);
-               setGCPoint(treeTop); // This is a GC point
                }
             continue;
             }
@@ -512,7 +406,6 @@ bool TR_NewInitialization::findNewCandidatesInBlock(TR::TreeTop *startTree, TR::
          // slots marked as uninitialized.
          //
          escapeToGC(node);
-         setGCPoint(treeTop, node); // This is a GC point
          }
       }
 
@@ -526,7 +419,6 @@ bool TR_NewInitialization::findAllocationNode(TR::TreeTop *treeTop, TR::Node *no
 
    int32_t    size;
    bool       isArrayNew;
-   bool       doubleSizeArray = false;
 
    if (node->getOpCodeValue() == TR::New)
       {
@@ -584,7 +476,6 @@ bool TR_NewInitialization::findAllocationNode(TR::TreeTop *treeTop, TR::Node *no
             case 7:
             case 11:
                size *= 8;
-               doubleSizeArray = true;
                break;
             }
          }
@@ -630,7 +521,7 @@ bool TR_NewInitialization::findAllocationNode(TR::TreeTop *treeTop, TR::Node *no
       candidate->initializedBytes = new (trStackMemory()) TR_BitVector(size, trMemory(), stackAlloc);
       candidate->uninitializedBytes = new (trStackMemory()) TR_BitVector(size, trMemory(), stackAlloc);
       }
-   candidate->isDoubleSizeArray = doubleSizeArray;
+
    _candidates.append(candidate);
    return true;
    }
@@ -781,29 +672,6 @@ TR::ResolvedMethodSymbol *TR_NewInitialization::findInlinableMethod(TR::TreeTop 
    return calleeSymbol;
    }
 
-// Process a GC point
-//
-void TR_NewInitialization::setGCPoint(TR::TreeTop *treeTop, TR::Node *node)
-   {
-   // If this GC point can GC and return see if it is the first GC point for
-   // the previous merge sequence.
-   // If so, save it with the first candidate of the sequence.
-   // If this GC point is in a sniffed method, save the outermost call point.
-   //
-   if (_firstMergeCandidate)
-      {
-      if (!_firstMergeCandidate->firstGCTree &&
-          (node == NULL || node->canGCandReturn()))
-         {
-         TR::TreeTop * GCTree = _outermostCallSite ? _outermostCallSite : treeTop;
-         _firstMergeCandidate->firstGCTree = GCTree;
-         }
-
-      // Remember that a GC point was found before the next candidate
-      //
-      _firstMergeCandidate->GCPointFoundBeforeNextCandidate = true;
-      }
-   }
 
 // Resolve the node if it is a parameter reference
 //
@@ -1087,21 +955,10 @@ bool TR_NewInitialization::visitNode(TR::Node *node)
 
          if (c)
             {
-            // Allocation reference is being indirectly stored. If it is being
-            // stored into another part of the same merged allocation, that is
-            // OK, since it can't escape without the whole merged allocation
-            // being initialized first.
-            // Otherwise this allocation could escape and it must be completely
+            // This allocation could escape and it must be completely
             // initialized by this point.
             //
-            if (c->canBeMerged && node->getOpCode().isIndirect())
-               {
-               Candidate *c1 = findBaseOfIndirection(node->getFirstChild());
-               if (!(c1 && c1->canBeMerged))
-                  escapeToUserCode(c, node);
-               }
-            else
-               escapeToUserCode(c, node);
+            escapeToUserCode(c, node);
             }
          }
       else if (node->getOpCodeValue() == TR::astore)
@@ -1379,7 +1236,7 @@ bool TR_NewInitialization::changeNewCandidates()
    Candidate *c;
    for (c = _candidates.getFirst(); c; c = c->getNext())
       {
-      if (c->canBeMerged || !c->isInSniffedMethod)
+      if (!c->isInSniffedMethod)
          {
          while (!c->inlinedCalls.isEmpty())
             {
@@ -1406,9 +1263,8 @@ bool TR_NewInitialization::changeNewCandidates()
       return true;
       }
 
-   // Now go through the candidates again to see if any can either be merged
-   // with other candidates or have explicit zero-initialization information
-   // added.
+   // Now go through the candidates again to see if any can have
+   // explicit zero-initialization information added.
    //
    for (c = _candidates.getFirst(); c; c = c->getNext())
       {
@@ -1416,7 +1272,7 @@ bool TR_NewInitialization::changeNewCandidates()
       //
       if (c->treeTop == NULL)
          continue;
-      if (c->firstMergeCandidate || !c->isInSniffedMethod)
+      if (!c->isInSniffedMethod)
          modifyTrees(c);
       }
 
@@ -1465,147 +1321,34 @@ void TR_NewInitialization::inlineCalls()
 //
 void TR_NewInitialization::modifyTrees(Candidate *candidate)
    {
-   Candidate  *c;
-   TR::TreeTop *treeTop = candidate->treeTop;
-   int32_t     i;//, j;
+   int32_t allocationSize = (candidate->size + candidate->startOffset + 3) & ~3;
 
-   int32_t numExtraCandidates      = 0;
-   bool    hasDoubleSizeArrays     = candidate->isDoubleSizeArray;
-   int32_t allocationSize          = (candidate->size + candidate->startOffset + 3) & ~3;
-   int32_t numWordsToBeInitialized = candidate->numUninitializedWords;
-
-   Candidate *startOfNextMergeSequence = NULL;
-
-   TR_ExtraInfoForNew *extraInfo;
-   TR::SymbolReference *symRef;
-
-   // If this may be the start of a merge sequence, find the others and
-   // accumulate size information
+   // Change the symbol reference on the allocation node so that it can hold
+   // the zero-initialization information.
    //
-   if (candidate->firstMergeCandidate)
+   TR_ExtraInfoForNew *extraInfo = new (trHeapMemory()) TR_ExtraInfoForNew;
+   if (candidate->node->canSkipZeroInitialization())
       {
-      for (c = candidate->getNext(); c && !c->firstMergeCandidate; c = c->getNext())
-         {
-         if (c->canBeMerged)
-            {
-            numExtraCandidates++;
-            allocationSize += (c->size + c->startOffset + 3) & ~3;
-            numWordsToBeInitialized += c->numUninitializedWords;
-            hasDoubleSizeArrays |= c->isDoubleSizeArray;
-            }
-         }
-      startOfNextMergeSequence = c;
-      }
-
-   // If multiple allocation nodes are to be merged, set up the tree for the
-   // merged allocation.
-   //
-   if (numExtraCandidates)
-      {
-      if (trace())
-         traceMsg(comp(), "Found %d news to be merged, %d words to be initialized in %s\n", numExtraCandidates+1, numWordsToBeInitialized, comp()->signature());
-
-      // Set up a bit vector representing the words within the multiple
-      // allocation that are to be initialized and put it into the symbol
-      // reference associated with the mergenew node.
-      //
-      extraInfo = new (trHeapMemory()) TR_ExtraInfoForNew;
       extraInfo->numZeroInitSlots = 0;
-      extraInfo->zeroInitSlots = new (trHeapMemory()) TR_BitVector(allocationSize/4, trMemory());
-
-      symRef = new (trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), *candidate->node->getSymbolReference(), 0);
-      symRef->setReferenceNumber(candidate->node->getSymbolReference()->getReferenceNumber());
-      symRef->setExtraInfo(extraInfo);
-
-      TR::Node *mergeNode = TR::Node::createWithSymRef(candidate->node, TR::MergeNew, numExtraCandidates+1, symRef);
-
-      if (performTransformation(comp(), "%s Merging %d allocations starting at [%p] into merged new at [%p]\n", OPT_DETAILS, numExtraCandidates+1, candidate->node, mergeNode))
-         {
-         treeTop = TR::TreeTop::create(comp(), treeTop->getPrevTreeTop(), mergeNode);
-
-         // Go through the candidates to be merged twice. Process the double-size
-         // arrays first and then the rest. This puts the double-size arrays at
-         // the start of the merged allocation.
-         //
-         int32_t startWord = 0;
-         i = 0;
-         Candidate * startCandidate = 0;
-         if (hasDoubleSizeArrays)
-            {
-            for (c = candidate; c != startOfNextMergeSequence; c = c->getNext())
-               {
-               if (c->canBeMerged && c->isDoubleSizeArray)
-                  {
-                  if (!startCandidate)
-                     startCandidate = c;
-                  mergeNode->setAndIncChild(i++, c->node);
-                  TR::TransformUtil::removeTree(comp(), c->treeTop);
-
-                  extraInfo->numZeroInitSlots += buildInitializationInfo(c, extraInfo->zeroInitSlots, startWord);
-                  int32_t objectSize = (c->startOffset + c->size + 3) / 4;
-                  c->startOffset = startWord*4;
-                  startWord += objectSize;
-                  c->treeTop = NULL; // This candidate is now processed
-                  }
-               }
-            }
-         for (c = candidate; c != startOfNextMergeSequence; c = c->getNext())
-            {
-            if (c->canBeMerged && !c->isDoubleSizeArray)
-               {
-               if (!startCandidate)
-                  startCandidate = c;
-               mergeNode->setAndIncChild(i++, c->node);
-               TR::TransformUtil::removeTree(comp(), c->treeTop);
-
-               extraInfo->numZeroInitSlots += buildInitializationInfo(c, extraInfo->zeroInitSlots, startWord);
-               int32_t objectSize = (c->startOffset + c->size + 3) / 4;
-               c->startOffset = startWord*4;
-               startWord += objectSize;
-               c->treeTop = NULL; // This candidate is now processed
-               }
-            }
-
-         // Look through the trees and see if any references to merged allocations
-         // can be changed into references to offsets from the start of the
-         // merged object. This will relieve register pressure.
-         // This can only be done until the first GC point after the merged
-         // allocation, which has been saved in the first merged candidate.
-         //
-         modifyReferences(candidate, startOfNextMergeSequence, startCandidate, treeTop);
-
-         _invalidateUseDefInfo = true;
-         }
+      //printf("Skip zero init for new in %s\n", comp()->signature());
       }
-
    else
-      {
-      // Change the symbol reference on the allocation node so that it can hold
-      // the zero-initialization information.
-      //
-      extraInfo = new (trHeapMemory()) TR_ExtraInfoForNew;
-      if (candidate->node->canSkipZeroInitialization())
-         {
-         extraInfo->numZeroInitSlots = 0;
-         //printf("Skip zero init for new in %s\n", comp()->signature());
-         }
-      else
-         extraInfo->numZeroInitSlots = candidate->numUninitializedWords;
-      if (candidate->uninitializedWords &&
-          !candidate->node->canSkipZeroInitialization())
-         {
-         extraInfo->zeroInitSlots = new (trHeapMemory()) TR_BitVector(allocationSize, trMemory());
-         *extraInfo->zeroInitSlots = *candidate->uninitializedWords;
-         }
-      else
-         extraInfo->zeroInitSlots = NULL;
+      extraInfo->numZeroInitSlots = candidate->numUninitializedWords;
 
-      symRef = new (trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), *candidate->node->getSymbolReference(), 0);
-      symRef->setReferenceNumber(candidate->node->getSymbolReference()->getReferenceNumber());
-      symRef->setExtraInfo(extraInfo);
-      candidate->node->setSymbolReference(symRef);
-      candidate->treeTop = NULL;
+   if (candidate->uninitializedWords &&
+       !candidate->node->canSkipZeroInitialization())
+      {
+      extraInfo->zeroInitSlots = new (trHeapMemory()) TR_BitVector(allocationSize, trMemory());
+      *extraInfo->zeroInitSlots = *candidate->uninitializedWords;
       }
+   else
+      extraInfo->zeroInitSlots = NULL;
+
+   TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), *candidate->node->getSymbolReference(), 0);
+   symRef->setReferenceNumber(candidate->node->getSymbolReference()->getReferenceNumber());
+   symRef->setExtraInfo(extraInfo);
+   candidate->node->setSymbolReference(symRef);
+   candidate->treeTop = NULL;
    }
 
 int32_t TR_NewInitialization::buildInitializationInfo(Candidate *c, TR_BitVector *wordsToBeInitialized, int32_t startWord)
@@ -1633,101 +1376,3 @@ int32_t TR_NewInitialization::buildInitializationInfo(Candidate *c, TR_BitVector
       }
    return numWordsInitialized;
    }
-
-void TR_NewInitialization::modifyReferences(Candidate *candidate, Candidate *startOfNextMergeSequence, Candidate * startCandidate, TR::TreeTop *mergeTree)
-   {
-   TR_ASSERT(candidate->firstGCTree, "Merged candidates have no following GC tree");
-   TR::TreeTop *treeTop;
-   for (treeTop = mergeTree->getNextTreeTop(); treeTop; treeTop = treeTop->getNextTreeTop())
-      {
-      modifyReferences(candidate, startOfNextMergeSequence, startCandidate, treeTop->getNode());
-      if (treeTop == candidate->firstGCTree)
-         break;
-      }
-   }
-
-void TR_NewInitialization::modifyReferences(Candidate *candidate, Candidate *startOfNextMergeSequence, Candidate * startCandidate, TR::Node *node)
-   {
-   int32_t i;//, j;
-   bool firstChildIsCandidate = false;
-   bool secondChildIsCandidate = false;
-   Candidate *c;
-
-   // Look at the children of this node to see if they contain any references
-   // to allocation nodes that are part of this merge sequence
-   //
-   for (i = 0; i < node->getNumChildren(); i++)
-      {
-      TR::Node *child = node->getChild(i);
-      if (child->getOpCodeValue() == TR::New ||
-          child->getOpCodeValue() == TR::newarray ||
-          child->getOpCodeValue() == TR::anewarray)
-         {
-         if (child == startCandidate->node)
-            {
-            if (i == 0)
-               firstChildIsCandidate = true;
-            else if (i == 1)
-               secondChildIsCandidate = true;
-            continue;
-            }
-         for (c = candidate; c != startOfNextMergeSequence; c = c->getNext())
-            {
-            if (c != startCandidate && c->canBeMerged && child == c->node)
-               {
-               if (((comp()->target().is64Bit()
-                     ) ?
-                  dumpOptDetails(comp(), "%s Changing child %d of node [%p] into a TR::aladd\n", OPT_DETAILS, i, node)
-                  : dumpOptDetails(comp(), "%s Changing child %d of node [%p] into a TR::aiadd\n", OPT_DETAILS, i, node)))
-                  {
-                  // Replace the node reference with an address calculation off
-                  // the first candidate
-                  //
-                  if (!c->offsetReference)
-                     {
-                     // build a TR::aladd node instead if required
-                     if (comp()->target().is64Bit())
-                        {
-                        TR::Node *offsetNode = TR::Node::create(child, TR::lconst, 0);
-                        offsetNode->setLongInt((int64_t)c->startOffset);
-                        c->offsetReference = TR::Node::create(TR::aladd, 2, startCandidate->node, offsetNode);
-                        }
-                     else
-                        c->offsetReference = TR::Node::create(TR::aiadd, 2, startCandidate->node, TR::Node::create(child, TR::iconst, 0, c->startOffset));
-                     c->offsetReference->setIsNonNull(true);
-                     }
-                  node->setAndIncChild(i, c->offsetReference);
-                  child->decReferenceCount();
-                  TR_ASSERT(child->getReferenceCount() > 0, "Lost a merged allocation node");
-
-                  if (i == 0)
-                     firstChildIsCandidate = true;
-                  else if (i == 1)
-                     secondChildIsCandidate = true;
-                  }
-               break;
-               }
-            }
-         }
-      else if (child->getNumChildren())
-         {
-         // Look at the child's children
-         //
-         modifyReferences(candidate, startOfNextMergeSequence, startCandidate, child);
-         }
-      }
-
-   // If this is a write barrier store of one candidate into a field of another
-   // the write barrier store can be changed into a simple indirect store.
-   //
-   if (node->getOpCodeValue() == TR::awrtbari && firstChildIsCandidate && secondChildIsCandidate && !comp()->getOptions()->realTimeGC())
-      {
-      if (performTransformation(comp(), "%sChanging write barrier store into iastore [%p]\n", OPT_DETAILS, node))
-         {
-         TR::Node::recreate(node, TR::astorei);
-         node->getChild(2)->recursivelyDecReferenceCount();
-         node->setNumChildren(2);
-         }
-      }
-   }
-
