@@ -384,6 +384,14 @@ if(JAVA_SPEC_VERSION LESS 17)
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 17)
+	jvm_add_exports(jvm
+		# Additions for Java 17 (General)
+		JVM_DumpClassListToFile
+		JVM_DumpDynamicArchive
+	)
+endif()
+
 if(J9VM_OPT_JITSERVER)
 	jvm_add_exports(jvm
 		JITServer_CreateServer
