@@ -41,7 +41,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -53,7 +53,7 @@
 J9NLS.MODULE=J9VM
 J9NLS.HEADER=j9vmnls.h
 
-# Note: this string is not used by J2ME VMs. 
+# Note: this string is not used by J2ME VMs.
 # Note: IBM_JAVA_OPTIONS is an environment variable name and should not be translated
 J9NLS_VM_MALFORMED_OPTS_ERROR_STR=Nepravilno oblikovana vrednost za IBM_JAVA_OPTIONS
 # START NON-TRANSLATABLE
@@ -62,7 +62,7 @@ J9NLS_VM_MALFORMED_OPTS_ERROR_STR.system_action=The JVM will fail to start.
 J9NLS_VM_MALFORMED_OPTS_ERROR_STR.user_response=Examine IBM_JAVA_OPTIONS environment variable and correct the error.
 # END NON-TRANSLATABLE
 
-# Note: this string is not used by J2ME VMs. 
+# Note: this string is not used by J2ME VMs.
 # Note: -Xservice is a command line option and should not be translated
 J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR=Nepravilno oblikovana vrednost za -Xservice
 # START NON-TRANSLATABLE
@@ -71,7 +71,7 @@ J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR.system_action=The JVM will fail to start.
 J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR.user_response=Examine -Xservice option and correct the error.
 # END NON-TRANSLATABLE
 
-# Note: this string is not used by J2ME VMs. 
+# Note: this string is not used by J2ME VMs.
 J9NLS_VM_OPTIONS_FILE_NOT_FOUND_STR=Datoteke mo\u017enosti ni mogo\u010de najti
 # START NON-TRANSLATABLE
 J9NLS_VM_OPTIONS_FILE_NOT_FOUND_STR.explanation=The JVM could not open a file that contained extra command line options.
@@ -79,7 +79,7 @@ J9NLS_VM_OPTIONS_FILE_NOT_FOUND_STR.system_action=The JVM will ignore the failur
 J9NLS_VM_OPTIONS_FILE_NOT_FOUND_STR.user_response=Correct the issue with the options file, either location or permissions, or remove the reference to the options file from the command line.
 # END NON-TRANSLATABLE
 
-# Note: this string is not used by J2ME VMs. 
+# Note: this string is not used by J2ME VMs.
 J9NLS_VM_UNRECOGNISED_JIT_COMPILER=Prevajalnika JIT \"%s\" ni mogo\u010de najti. Uporabljen bo interpreter.
 # START NON-TRANSLATABLE
 J9NLS_VM_UNRECOGNISED_JIT_COMPILER.sample_input_1=j9jitm.dll
@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Izjemno stanje v niti \"%.*s\"\ 
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Izjemno stanje v niti \"%.*s\"\
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_2=\"main\" java/lang/StackOverflowError: An overflow occurred
@@ -400,7 +400,7 @@ J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE=JVMRI zahteva motor sledenja; za\u017eeni
 # START NON-TRANSLATABLE
 J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE.explanation=The requested JVMRI environment requires that tracing be enabled.
 J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE.system_action=The requested JVMRI environment will not be returned via the GetEnv() JNI function.
-J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE.user_response=Add the appropriate -Xtrace option to the command line. 
+J9NLS_VM_JVMRI_REQUESTED_WITHOUT_TRACE.user_response=Add the appropriate -Xtrace option to the command line.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_FATAL_OUT_OF_MEMORY=Ni mogo\u010de dodeliti OutOfMemoryError
@@ -749,10 +749,10 @@ J9NLS_VM_ILLEGAL_ACCESS_DETAIL.system_action=
 J9NLS_VM_ILLEGAL_ACCESS_DETAIL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_ACCESS_CLASS=Razred %2$.*1$s neveljavno dostopa do razreda %3$s %5$.*4$s 
+J9NLS_VM_ILLEGAL_ACCESS_CLASS=Razred %2$.*1$s neveljavno dostopa do razreda %3$s %5$.*4$s
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_ACCESS_CLASS.sample_input_1=3
-J9NLS_VM_ILLEGAL_ACCESS_CLASS.sample_input_2=foo 
+J9NLS_VM_ILLEGAL_ACCESS_CLASS.sample_input_2=foo
 J9NLS_VM_ILLEGAL_ACCESS_CLASS.sample_input_3=private
 J9NLS_VM_ILLEGAL_ACCESS_CLASS.sample_input_4=3
 J9NLS_VM_ILLEGAL_ACCESS_CLASS.sample_input_5=bar
@@ -965,7 +965,7 @@ J9NLS_VM_LOADING_CONSTRAINT_SIG_VIOLATION.user_response=Examine the use of Class
 
 J9NLS_VM_XSCDMX_IGNORED=-Xscdmx se prezre, \u010de -Xshareclasses ni podan
 # START NON-TRANSLATABLE
-J9NLS_VM_XSCDMX_IGNORED.explanation=-Xscdmx Specifies the size of the class debug area, in a shared class cache. If -Xshareclasses is not passed to the JVM -Xscdmx will be ignored. 
+J9NLS_VM_XSCDMX_IGNORED.explanation=-Xscdmx Specifies the size of the class debug area, in a shared class cache. If -Xshareclasses is not passed to the JVM -Xscdmx will be ignored.
 J9NLS_VM_XSCDMX_IGNORED.system_action=-Xscdmx will be ignored.
 J9NLS_VM_XSCDMX_IGNORED.user_response=Ignore this message, remove -Xscdmx, or enable -Xshareclasses.
 # END NON-TRANSLATABLE
@@ -979,7 +979,7 @@ J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              Natis pomo\u010di za JVM -Xsyslog.
+J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              Natisnite pomo\u010d za JVM -Xsyslog.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
@@ -987,7 +987,7 @@ J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              Onemogo\u010denje predhodno podanih mo\u017enosti dnevnika JVM, vklju\u010dno s privzetki.
+J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              Onemogo\u010dite predhodno podane mo\u017enosti dnevnika JVM, vklju\u010dno s privzetimi vrednostmi.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
@@ -995,7 +995,7 @@ J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:all is not translatable
-J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               Bele\u017eenje vseh sporo\u010dil JVM.
+J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               Zabele\u017eite vsa sporo\u010dila JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
@@ -1003,7 +1003,7 @@ J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:info is not translatable
-J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              Bele\u017eenje informativnih sporo\u010dil JVM.
+J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              Zabele\u017eite informativna sporo\u010dila JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
@@ -1011,7 +1011,7 @@ J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              Bele\u017eenje opozorilnih sporo\u010dil JVM.
+J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              Zabele\u017eite opozorilna sporo\u010dila JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
@@ -1019,7 +1019,7 @@ J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             Bele\u017eenje sporo\u010dil o napaki JVM. Privzeto je to vklopljeno.
+J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             Zabele\u017eite sporo\u010dila o napakah JVM. Privzeto je to vklopljeno.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
@@ -1027,7 +1027,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             Bele\u017eenje klju\u010dnih sporo\u010dil JVM. Privzeto je to vklopljeno.
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             Zabele\u017eite klju\u010dna sporo\u010dila JVM. Privzeto je to vklopljeno.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -1035,7 +1035,7 @@ J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:config is not translatable
-J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            Bele\u017eenje konfiguracijskih sporo\u010dil JVM.\n
+J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            Zabele\u017eite konfiguracijska sporo\u010dila JVM.\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1197,23 +1197,23 @@ J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE=Velikost odobritve 32-bitnega pod
 # START NON-TRANSLATABLE
 J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.explanation=This is an error message associated with the wrong usage of options '-XsuballocatorCommitSize' and/or ' -XsuballocatorInitialSize'
 J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.system_action=The JVM prints the error message and exits.
-J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.user_response= Correct the usage of the options '-XsuballocatorCommitSize' and/or ' -XsuballocatorInitialSize' and make sure commit size is not bigger than initial size. 
+J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.user_response= Correct the usage of the options '-XsuballocatorCommitSize' and/or ' -XsuballocatorInitialSize' and make sure commit size is not bigger than initial size.
 J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.sample_input_1=1000
 J9NLS_VM_COMMITSIZE_IS_BIGGER_THAN_INITIALSIZE.sample_input_2=800
 # END NON-TRANSLATABLE
 
-J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO=Velikost odobritve 32-bitnega poddodelilnika ne more biti nastavljena na ni\u010d. 
+J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO=Velikost odobritve 32-bitnega poddodelilnika ne more biti nastavljena na ni\u010d.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO.explanation=User tried to set the commit size to zero by using '-XsuballocatorCommitSize0'
 J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO.system_action=The JVM prints the error message and exits.
 J9NLS_VM_COMMITSIZE_CAN_NOT_BE_SET_TO_ZERO.user_response=Use positive value instead of 0 for '-XsuballocatorCommitSize'.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO=Za\u010detna velikost 32-bitnega poddodelilnika ne more biti nastavljena na ni\u010d. 
+J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO=Za\u010detna velikost 32-bitnega poddodelilnika ne more biti nastavljena na ni\u010d.
 # START NON-TRANSLATABLE
 J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO.explanation=User tried to set the initial size to zero by using '-XsuballocatorInitialSize0'
 J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO.system_action=The JVM prints the error message and exits.
-J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO.user_response=Use positive value instead of 0 for '-XsuballocatorInitialSize'. 
+J9NLS_VM_INITIALSIZE_CAN_NOT_BE_SET_TO_ZERO.user_response=Use positive value instead of 0 for '-XsuballocatorInitialSize'.
 # END NON-TRANSLATABLE
 
 # Message for OutOfMemoryError when the java heap space is exhausted.
@@ -1228,21 +1228,21 @@ J9NLS_VM_ILLEGAL_RESUME_DETECTED=Aplikacija se izvaja naprej po obravnavi nepopr
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()
-J9NLS_VM_ILLEGAL_RESUME_DETECTED.user_response=Inspect their user condition handler and change it to not resume execution after receiving an unrecoverable condition on a Java thread 
+J9NLS_VM_ILLEGAL_RESUME_DETECTED.user_response=Inspect their user condition handler and change it to not resume execution after receiving an unrecoverable condition on a Java thread
 # END NON-TRANSLATABLE
 
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT=Aplikacija se izvaja naprej po obravnavi nepopravljivega stanja in se je neveljavno vrnila v Javo oziroma je bila poklicana vanjo (koda JIT'ed)
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()
-J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.user_response=Inspect their user condition handler and change them to not resume execution after receiving an unrecoverable condition on a Java thread 
+J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.user_response=Inspect their user condition handler and change them to not resume execution after receiving an unrecoverable condition on a Java thread
 # END NON-TRANSLATABLE
 
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2=Ustavljanje procesa s CEE3AB2() s prekinitvijo %1$u, vzrok %2$u, \u010di\u0161\u010denje %3$u.
 # START NON-TRANSLATABLE
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.explanation=The JVM detected an unrecoverable condition and is terminating the process using the z/OS specific system call CEE3AB2, which throws an abend.
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.system_action=The JVM prints the error message and terminates the process
-J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.user_response=Inspect console and operator console messages. Contact your service representative if assistance is required 
+J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.user_response=Inspect console and operator console messages. Contact your service representative if assistance is required
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_1=0xded
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_2=1
 J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2.sample_input_3=2
@@ -1274,14 +1274,14 @@ J9NLS_VM_CHECK_DUMP_FULLCORE.user_response=Refer to the IBM SDK documentation
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE=/proc/sys/kernel/core_pattern "%s" podaja, da bodo izpisi jedra medpomnilni\u0161ko obdelani v zunanjem programu. JVM morda ne bo mogel najti izpisov jedra in jih preimenovati.
 # START NON-TRANSLATABLE
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.explanation=The JVM has been started on a system with /proc/sys/kernel/core_pattern set to pipe core dumps to the command specified after the | character. The JVM may be unable to locate core dumps and rename them.
-J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.system_action=The JVM continues to run. Message JVMPORT030W will be issued when a system dump is taken. 
+J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.system_action=The JVM continues to run. Message JVMPORT030W will be issued when a system dump is taken.
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.user_response=Refer to the IBM SDK documentation
 J9NLS_VM_CHECK_DUMP_COREPATTERN_PIPE.sample_input_1=|/usr/libexec/abrt-hook-ccpp %s %c %p %u %g %t e
 # END NON-TRANSLATABLE
 
 J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT=/proc/sys/kernel/core_pattern "%s" podaja formatni niz za preimenovanje izpisov jedra. JVM morda ne bo mogel najti izpisov jedra in jih preimenovati.
 # START NON-TRANSLATABLE
-J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.explanation=The JVM has been started on a system with /proc/sys/kernel/core_pattern set to rename core dumps. The JVM may be unable to locate core dumps  
+J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.explanation=The JVM has been started on a system with /proc/sys/kernel/core_pattern set to rename core dumps. The JVM may be unable to locate core dumps
 J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.system_action=The JVM continues to run
 J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.user_response=Refer to the IBM SDK documentation
 J9NLS_VM_CHECK_DUMP_COREPATTERN_FORMAT.sample_input_1=/tmp/core_dumps/core.%e.%p
@@ -1354,7 +1354,7 @@ J9NLS_VM_XREALTIME_NOT_SUPPORTED.explanation=Mo\u017enost -Xrealtime je bila v I
 J9NLS_VM_XREALTIME_NOT_SUPPORTED.system_action=Zagon JVM ne bo uspel.
 J9NLS_VM_XREALTIME_NOT_SUPPORTED.user_response=\u010ce je potrebna funkcionalnost -Xrealtime, se pove\u017eite z IBM-ovo podporo, sicer odstranite mo\u017enost -Xrealtime.
 
-# Message for a command-line option that is no longer supported 
+# Message for a command-line option that is no longer supported
 
 J9NLS_VM_XOPTION_NO_LONGER_SUPPORTED=Mo\u017enost ukazne vrstice %s v tej razli\u010dici IBM SDK-ja ni podprta
 J9NLS_VM_XOPTION_NO_LONGER_SUPPORTED.sample_input_1=-Xrealtime
@@ -1407,7 +1407,7 @@ J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED=Funkcija %s ni ve\u010d podprta.
 J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED.sample_input_1=-Djava.endorsed.dirs=lib/endorsed
 J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED.explanation=The specified java property is not supported since Java 9.
 J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED.system_action=The JVM will exit.
-J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED.user_response=Remove the specified java property from the command line and restart the JVM. 
+J9NLS_VM_PROPERTY_JAVA_ENDORSED_DIR_UNSUPPORTED.user_response=Remove the specified java property from the command line and restart the JVM.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_PROPERTY_JAVA_EXT_DIR_UNSUPPORTED=Funkcija %s ni ve\u010d podprta. V pot razreda dodajte zahtevane knji\u017enice/datoteke jar.
@@ -1415,7 +1415,7 @@ J9NLS_VM_PROPERTY_JAVA_EXT_DIR_UNSUPPORTED=Funkcija %s ni ve\u010d podprta. V po
 J9NLS_VM_PROPERTY_JAVA_EXT_DIR_UNSUPPORTED.sample_input_1=-Djava.ext.dirs=lib/ext
 J9NLS_VM_PROPERTY_JAVA_EXT_DIR_UNSUPPORTED.explanation=The specified java property is not supported since Java 9.
 J9NLS_VM_PROPERTY_JAVA_EXT_DIR_UNSUPPORTED.system_action=The JVM will exit.
-J9NLS_VM_PROPERTY_JAVA_EXT_DIR_UNSUPPORTED.user_response=Remove the specified java property from the command line and restart the JVM. 
+J9NLS_VM_PROPERTY_JAVA_EXT_DIR_UNSUPPORTED.user_response=Remove the specified java property from the command line and restart the JVM.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_XSCSOFTMX_IGNORED=-Xscsoftmx se prezre, \u010de -Xshareclasses ni podan
@@ -1450,18 +1450,18 @@ J9NLS_JIMAGE_INTF_SWITCHING_TO_J9JIMAGE_READER.user_response=None.
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING=Neveljavna vrednost za -Xpatch; vrednost lastnosti %s ni podana
 # START NON-TRANSLATABLE
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.sample_input_1=jdk.launcher.patch.0
-J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.explanation=The value of specified option is not correct 
+J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.explanation=The value of specified option is not correct
 J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.system_action=The JVM will exit.
-J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM. 
+J9NLS_VM_XPATCH_OPTION_VALUE_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING=Neveljavna vrednost za -Xpatch; pot do popravka ni podana v lastnosti %s=%s
 # START NON-TRANSLATABLE
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.sample_input_1=jdk.launcher.patch.0
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.sample_input_2=/home/user/patch
-J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.explanation=The value of specified option is not correct 
+J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.explanation=The value of specified option is not correct
 J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.system_action=The JVM will exit.
-J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM. 
+J9NLS_VM_XPATCH_OPTION_PATCH_PATH_MISSING.user_response=Specify the module name and its patch path with -Xpatch option and restart the JVM.
 # END NON-TRANSLATABLE
 
 J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED=-XX:SharedCacheHardLimit= se prezre, \u010de -Xshareclasses ni podan
@@ -1471,10 +1471,10 @@ J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED.system_action=The JVM continue
 J9NLS_VM_XXSHARED_CACHE_HARD_LIMIT_EQUALS_IGNORED.user_response=The -XX:SharedCacheHardLimit= value is ignored
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ=Razred %2$.*1$s(%3$s) ne more dostopati do razreda %5$.*4$s(%6$s), ker modul %3$s ne prebere modula %6$s 
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ=Razred %2$.*1$s(%3$s) ne more dostopati do razreda %5$.*4$s(%6$s), ker modul %3$s ne prebere modula %6$s
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_1=18
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_2=com.greetings.Main 
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_2=com.greetings.Main
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_3=module com.greetings
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_4=9
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.sample_input_5=com.hi.Hi
@@ -1487,7 +1487,7 @@ J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ.user_response=Refer IBM Java User Guide for 
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT=Razred %2$.*1$s(%3$s) ne more dostopiti do razreda %5$.*4$s(%6$s), ker modul %6$s ne izvozi paketa %7$s v modul %3$s
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_1=18
-J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_2=com.greetings.Main 
+J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_2=com.greetings.Main
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_3=module com.greetings
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_4=9
 J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT.sample_input_5=com.hi.Hi
@@ -2002,11 +2002,29 @@ J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_respons
 # Message for an improper attempt to synchronize on an instance of value-based class.
 # argument 1 is the length of the class name
 # argument 2 is the string of the class name
-J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED=neveljaven tip objekta%2$.*1$s: sinhroniziran objekt temelji na vrednosti.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED=Neveljaven tip objekta %2$.*1$s: sinhronizirani objekt temelji na vrednosti.
 # START NON-TRANSLATABLE
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_1=3
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_2=Foo
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value-based class but the object on stack is an instance of value-based class.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.system_action=The JVM will throw an VirtualMachineError.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class/interface is not in the same module as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=Razred/vmesnik %2$.*1$s ni v istem modulu kot njegov zape\u010dateni nadrazred/nadvmesnik.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.explanation=The specified class must be in the same module as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when non-public class/interface is not in the same package as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=Nejavni razred/vmesnik %2$.*1$s ni v istem paketu kot njegov zape\u010dateni nadrazred/nadvmesnik.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.explanation=The specified non-public class must be in the same package as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

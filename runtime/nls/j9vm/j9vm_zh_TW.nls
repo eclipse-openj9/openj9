@@ -2010,3 +2010,21 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.explanation=The class ha
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.system_action=The JVM will throw an VirtualMachineError.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+# Message to use when class/interface is not in the same module as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=class/interface %2$.*1$s \u672a\u8207\u5bc6\u5c01\u7684 super class/interface \u4f4d\u65bc\u540c\u4e00\u6a21\u7d44\u4e2d\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.explanation=The specified class must be in the same module as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when non-public class/interface is not in the same package as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=\u975e\u516c\u7528 class/interface %2$.*1$s \u672a\u8207\u5bc6\u5c01\u7684 super class/interface \u4f4d\u65bc\u540c\u4e00\u5957\u4ef6\u4e2d\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.explanation=The specified non-public class must be in the same package as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

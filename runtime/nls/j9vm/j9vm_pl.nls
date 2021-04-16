@@ -1891,7 +1891,7 @@ J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.user_response=
 
 # Message for LinkageError when a VerifyError is thrown out
 # arguments 1 and 2 are the specified class name
-J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS=Nie mo\u017cna rozszerza\u0107 finalnej superklasy %2$.*1$s
+J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS=Nie mo\u017cna rozszerza\u0107 ostatecznej superklasy %2$.*1$s
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.sample_input_1=9
 J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.sample_input_2=ClassName
@@ -2009,4 +2009,22 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_2=Foo
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value-based class but the object on stack is an instance of value-based class.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.system_action=The JVM will throw an VirtualMachineError.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class/interface is not in the same module as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=Klasa/interfejs %2$.*1$s nie znajduje si\u0119 w tym samym module, co jej zapiecz\u0119towana nadklasa/interfejs.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.explanation=The specified class must be in the same module as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when non-public class/interface is not in the same package as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=Niepubliczna klasa/interfejs %2$.*1$s nie znajduje si\u0119 w tym samym pakiecie, co jej zapiecz\u0119towana nadklasa/interfejs.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.explanation=The specified non-public class must be in the same package as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
