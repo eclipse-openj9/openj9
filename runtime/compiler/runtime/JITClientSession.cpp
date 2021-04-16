@@ -81,27 +81,41 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
 
 ClientSessionData::~ClientSessionData()
    {
-   // Note that persistent members of client session need to be
-   // deallocate explicitly with a per-client allocator.
-   // This is because in some places from where the session is destroyed,
-   // per-client allocation region cannot be entered.
+   //NOTE:
+   //
+   // Persistent members of the client session need to be deallocated explicitly
+   // with the per-client allocator. This is because in some places from where the
+   // session is destroyed, the per-client allocation region cannot be entered.
+   //
+   // Any objects whose lifetime is bound to the client session that are NOT allocated with
+   // the per-client persistent allocator need to be explicitly deallocated or released in
+   // ClientSessionData::destroy() in the 'if (usesPerClientMemory && useAOTCache)' branch.
+   // Examples of such objects are monitors (including ones inside client session members)
+   // and objects allocated with the global persistent allocator (e.g. shared ROMClasses).
+
    clearCaches();
+
+   if (_vmInfo)
+      {
+      destroyJ9SharedClassCacheDescriptorList();
+      _persistentMemory->freePersistentMemory(_vmInfo);
+      }
+
+   destroyMonitors();
+   }
+
+void
+ClientSessionData::destroyMonitors()
+   {
    TR::Monitor::destroy(_romMapMonitor);
    TR::Monitor::destroy(_classMapMonitor);
    TR::Monitor::destroy(_classChainDataMapMonitor);
    TR::Monitor::destroy(_sequencingMonitor);
    TR::Monitor::destroy(_constantPoolMapMonitor);
    TR::Monitor::destroy(_staticMapMonitor);
-   if (_vmInfo)
-      {
-      destroyJ9SharedClassCacheDescriptorList();
-      _persistentMemory->freePersistentMemory(_vmInfo);
-      }
    TR::Monitor::destroy(_thunkSetMonitor);
-
    omrthread_rwmutex_destroy(_classUnloadRWMutex);
    _classUnloadRWMutex = NULL;
-
    TR::Monitor::destroy(_wellKnownClassesMonitor);
    }
 
@@ -540,8 +554,34 @@ ClientSessionData::destroy(ClientSessionData *clientSession)
    {
    TR_PersistentMemory *persistentMemory = clientSession->persistentMemory();
    bool usesPerClientMemory = clientSession->usesPerClientMemory();
-   clientSession->~ClientSessionData();
-   persistentMemory->freePersistentMemory(clientSession);
+
+   // Since the client session and all its persistent objects are allocated with its own persistent
+   // allocator, we can avoid calling the destructor. All per-client persistent allocations are
+   // automatically freed when the allocator instance is destroyed. The only objects that need to
+   // be explicitly destroyed are the ones allocated globally, e.g. monitors and shared ROMClasses.
+   //
+   // This optimization is mostly useful with AOT cache (otherwise its performance
+   // impact is negligible) and can be error-prone (i.e. resulting in memory leaks
+   // for globally allocated objects). We only enable it when using AOT cache.
+   auto compInfo = TR::CompilationInfo::get();
+   bool useAOTCache = compInfo->getPersistentInfo()->getJITServerUseAOTCache();
+   if (usesPerClientMemory && useAOTCache)
+      {
+      // Destroy objects that are allocated globally: shared ROMClasses (if enabled) and monitors
+      if (auto cache = compInfo->getJITServerSharedROMClassCache())
+         {
+         for (auto &it : clientSession->_romClassMap)
+            cache->release(it.second._romClass);
+         }
+      clientSession->destroyMonitors();
+      if (clientSession->_chTable)
+         TR::Monitor::destroy(clientSession->_chTable->getCHTableMonitor());
+      }
+   else
+      {
+      clientSession->~ClientSessionData();
+      persistentMemory->freePersistentMemory(clientSession);
+      }
 
    if (usesPerClientMemory)
       {
