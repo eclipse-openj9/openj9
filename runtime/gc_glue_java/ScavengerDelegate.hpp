@@ -138,7 +138,6 @@ public:
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	void switchConcurrentForThread(MM_EnvironmentBase *env);
 	void fixupIndirectObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
-	bool shouldYield();
 	void signalThreadsToFlushCaches(MM_EnvironmentBase *env);
 	void cancelSignalToFlushCaches(MM_EnvironmentBase *env);
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
