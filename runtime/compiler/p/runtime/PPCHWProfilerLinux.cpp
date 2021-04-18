@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "j9port_generated.h"
 #include "control/CompilationThread.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 
 #include <errno.h>
 #include <gnu/libc-version.h>
@@ -124,9 +125,8 @@ TR_PPCHWProfiler::allocate(J9JITConfig *jitConfig)
       else
          VERBOSE("OS appears to be RHEL with glibc %d.%d, assuming glibc supports EBB context in TCB.", major, minor);
       }
-   J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   J9PortLibrary   *privatePortLibrary = TR::Compiler->portLib;
-   if (!j9sysinfo_processor_has_feature(processorDesc, J9PORT_PPC_FEATURE_EBB))
+
+   if (!TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_EBB))
       {
       VERBOSE("Failed to detect kernel EBB support.");
       return NULL;
@@ -206,16 +206,6 @@ TR_PPCHWProfiler::initializeThread(J9VMThread *vmThread)
    if (IS_THREAD_RI_INITIALIZED(vmThread))
       return true;
 
-#if 0
-   PORT_ACCESS_FROM_VMC(vmThread);
-
-   j9ri_initialize(vmThread->riParameters);
-   if (IS_THREAD_RI_INITIALIZED(vmThread))
-      {
-      VERBOSE("J9VMThread=%p initialized for HW profiling.", vmThread);
-      return true;
-      }
-#else
    // If we've already hit our memory budget don't even try to go further
    if (_ppcHWProfilerBufferMemoryAllocated >= _ppcHWProfilerBufferMaximumMemory)
       return false;
@@ -366,7 +356,6 @@ fail:
       VERBOSE("Failure on J9VMThread=%p was critical. HW profiling will be unavailable from now on.", vmThread);
       setHWProfilingAvailable(false);
       }
-#endif
    return false;
    }
 
@@ -376,11 +365,6 @@ TR_PPCHWProfiler::deinitializeThread(J9VMThread *vmThread)
    if (!IS_THREAD_RI_INITIALIZED(vmThread))
       return true;
 
-#if 0
-   PORT_ACCESS_FROM_VMC(vmThread);
-
-   j9ri_deinitialize(vmThread->riParameters);
-#else
    const TR_PPCHWProfilerPMUConfig *configs = TR_PPCHWProfilerPMUConfig::getPMUConfigs();
 
    MTSPR(MMCR0, MMCR0_FC);
@@ -403,7 +387,6 @@ TR_PPCHWProfiler::deinitializeThread(J9VMThread *vmThread)
    jitPersistentFree(context);
    setTCBContext(NULL);
    vmThread->riParameters->flags &= ~(J9PORT_RI_INITIALIZED | J9PORT_RI_ENABLED);
-#endif
    vmThread->riParameters->controlBlock = NULL;
 
    return !IS_THREAD_RI_INITIALIZED(vmThread);

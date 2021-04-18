@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -911,7 +911,7 @@ public class TestManagementFactory {
 			directUsage = realBean.getPeakUsage();
 			validateMemoryUsage(proxyUsage);
 			validateMemoryUsage(directUsage);
-			// we cannot simply assert the the two peak usage objects are equal
+			// we cannot simply assert the two peak usage objects are equal
 			// the committed size should, however, be non-decreasing
 			if (directUsage != null && proxyUsage != null) {
 				AssertJUnit.assertEquals("init should be the same", directUsage.getInit(), proxyUsage.getInit());

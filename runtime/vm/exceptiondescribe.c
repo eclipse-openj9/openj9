@@ -355,6 +355,16 @@ inlinedEntry:
 								 * by the bootstrap classloader.
 								 */
 								ramClass = peekClassHashTable(vmThread, vm->applicationClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+								if (NULL != ramClass) {
+									if (romClass != ramClass->romClass) {
+										/**
+										 * It is possible this romClass is not loaded by app class loader.
+										 * There is another class loader that loads a different class with the same name,
+										 * Do not return the ramClass from app loader in this case.
+										 */
+										ramClass = NULL;
+									}
+								}
 							}
 						}
 

@@ -32,9 +32,20 @@
 
 extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg);
 
-J9::ARM64::CodeGenerator::CodeGenerator() :
-      J9::CodeGenerator()
+J9::ARM64::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
+      J9::CodeGenerator(comp)
    {
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
+   }
+
+void
+J9::ARM64::CodeGenerator::initialize()
+   {
+   self()->J9::CodeGenerator::initialize();
+
    TR::CodeGenerator *cg = self();
 
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
@@ -159,9 +170,9 @@ J9::ARM64::CodeGenerator::generateSwitchToInterpreterPrePrologue(TR::Instruction
    TR::Register *lr = self()->machine()->getRealRegister(TR::RealRegister::x30); // link register
    TR::Register *xzr = self()->machine()->getRealRegister(TR::RealRegister::xzr); // zero register
    TR::ResolvedMethodSymbol *methodSymbol = comp->getJittedMethodSymbol();
-   TR::SymbolReference *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64revertToInterpreterGlue, false, false, false);
+   TR::SymbolReference *revertToInterpreterSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64revertToInterpreterGlue);
    uintptr_t ramMethod = (uintptr_t)methodSymbol->getResolvedMethod()->resolvedMethodAddress();
-   TR::SymbolReference *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, false, false, false);
+   TR::SymbolReference *helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
    uintptr_t helperAddr = (uintptr_t)helperSymRef->getMethodAddress();
 
    // x8 must contain the saved LR; see Recompilation.s

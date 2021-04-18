@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -249,7 +249,7 @@ public:
 							offset = ROUND_UP_TO_POWEROF2((offset << (romClass->arrayShape & 0x0000FFFF)) + sizeof(J9IndexableObjectContiguousFull), sizeof(I_32));
 							hashValue = *(I_32*)((UDATA)objectPointer + offset);
 						} else {
-							if (0 == ((J9IndexableObjectDiscontiguous*)objectPointer)->size) {
+							if (0 == ((J9IndexableObjectDiscontiguousFull*)objectPointer)->size) {
 								/* Zero-sized array */
 								hashValue = *(I_32*)((J9IndexableObjectDiscontiguousFull*)objectPointer + 1);
 							} else {

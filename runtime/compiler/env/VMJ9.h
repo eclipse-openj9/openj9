@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@
 #include "rommeth.h"
 #include "env/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
+#include "codegen/CodeGenPhase.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
 #include "control/OptionsUtil.hpp"
@@ -187,14 +188,22 @@ extern "C" {
    I_32 j9jit_vfprintfId(I_32 fileId, char *format, ...);
    I_32 j9jit_fprintfId(I_32 fileId, char *format, ...);
 
+   void jitHookClassLoadHelper(J9VMThread *vmThread,
+                               J9JITConfig * jitConfig,
+                               J9Class * cl,
+                               TR::CompilationInfo *compInfo,
+                               UDATA *classLoadEventFailed);
+
+   void jitHookClassPreinitializeHelper(J9VMThread *vmThread,
+                                        J9JITConfig *jitConfig,
+                                        J9Class *cl,
+                                        UDATA *classPreinitializeEventFailed);
+
 #ifdef __cplusplus
 }
 #endif
 
 
-TR_Processor      portLibCall_getProcessorType();
-TR_Processor      portLibCall_getPhysicalProcessorType();
-TR_Processor      mapJ9Processor(J9ProcessorArchitecture j9processor);
 static TR_Processor portLibCall_getARMProcessorType();
 static TR_Processor portLibCall_getX86ProcessorType();
 static bool portLibCall_sysinfo_has_resumable_trap_handler();
@@ -230,10 +239,6 @@ public:
    virtual bool supportsJitMethodEntryAlignment() { return true; }
    virtual bool canUseSymbolValidationManager() { return false; }
 
-#if defined(TR_TARGET_S390)
-   virtual void initializeS390ProcessorFeatures();
-#endif
-
 /////
    // Inlining optimization
    //
@@ -249,6 +254,7 @@ public:
    virtual bool isAbstractClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isCloneable(TR_OpaqueClassBlock *);
    virtual bool isInterfaceClass(TR_OpaqueClassBlock * clazzPointer);
+   virtual bool isConcreteClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isEnumClass(TR_OpaqueClassBlock * clazzPointer, TR_ResolvedMethod *method);
    virtual bool isPrimitiveClass(TR_OpaqueClassBlock *clazz);
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *);
@@ -281,8 +287,6 @@ public:
    static bool createGlobalFrontEnd(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo);
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
    static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, int32_t, char *, char *, bool suffix=false);
-   static TR_Processor getPPCProcessorType();
-   virtual bool getPPCSupportsVSXRegisters();
 
    static bool isBigDecimalClass(J9UTF8 * className);
    bool isCachedBigDecimalClassFieldAddr(){ return cachedStaticDFPAvailField; }
@@ -301,6 +305,9 @@ public:
 
    bool traceIsEnabled() { return _flags.testAny(TraceIsEnabled); }
    void setTraceIsEnabled(bool b) { _flags.set(TraceIsEnabled, b); }
+
+   bool fsdIsEnabled() { return _flags.testAny(FSDIsEnabled); }
+   void setFSDIsEnabled(bool b) { _flags.set(FSDIsEnabled, b); }
 
    uint32_t getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, char * fieldName, char * sig)
       {
@@ -363,7 +370,8 @@ public:
 
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
-   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory *, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, char *signature, int32_t signatureLength, TR_ResolvedMethod *);
+   virtual TR_ResolvedMethod * createResolvedMethodWithVTableSlot(TR_Memory *, uint32_t vTableSlot, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod = 0, TR_OpaqueClassBlock * classForNewInstance = 0);
+   virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory *, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, char *signature, int32_t signatureLength, TR_ResolvedMethod *, uint32_t = 0);
    virtual void * getStaticFieldAddress(TR_OpaqueClassBlock *, unsigned char *, uint32_t, unsigned char *, uint32_t);
    virtual int32_t getInterpreterVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
    virtual int32_t getVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
@@ -496,12 +504,16 @@ public:
    virtual uintptr_t         getIdentityHashSaltPolicy();
    virtual uintptr_t         getJ9JavaClassRamShapeShift();
    virtual uintptr_t         getObjectHeaderShapeMask();
+#if defined(TR_TARGET_64BIT)
+   virtual uintptr_t         getOffsetOfContiguousDataAddrField();
+   virtual uintptr_t         getOffsetOfDiscontiguousDataAddrField();
+#endif /* TR_TARGET_64BIT */
 
    virtual bool               assumeLeftMostNibbleIsZero();
 
    virtual uintptr_t         getOSRFrameHeaderSizeInBytes();
    virtual uintptr_t         getOSRFrameSizeInBytes(TR_OpaqueMethodBlock* method);
-   virtual bool               ensureOSRBufferSize(uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes);
+   virtual bool               ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes);
 
    virtual bool               generateCompressedPointers();
    virtual bool               generateCompressedLockWord();
@@ -521,6 +533,7 @@ public:
    virtual uint32_t             getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock * clazz);
 
    virtual TR_OpaqueClassBlock *getObjectClass(uintptr_t objectPointer);
+   virtual TR_OpaqueClassBlock *getObjectClassAt(uintptr_t objectAddress);
    virtual uintptr_t           getReferenceFieldAt(uintptr_t objectPointer, uintptr_t offsetFromHeader);
    virtual uintptr_t           getVolatileReferenceFieldAt(uintptr_t objectPointer, uintptr_t offsetFromHeader);
    virtual uintptr_t           getReferenceFieldAtAddress(uintptr_t fieldAddress);
@@ -702,6 +715,7 @@ public:
    virtual bool               startAsyncCompile(TR_OpaqueMethodBlock *methodInfo, void *oldStartPC, bool *queued, TR_OptimizationPlan *optimizationPlan  = NULL);
    virtual bool               isBeingCompiled(TR_OpaqueMethodBlock *methodInfo, void *startPC);
    virtual uint32_t           virtualCallOffsetToVTableSlot(uint32_t offset);
+   virtual uint32_t           vTableSlotToVirtualCallOffset(uint32_t vTableSlot);
    virtual void *             addressOfFirstClassStatic(TR_OpaqueClassBlock *);
 
    virtual TR_ResolvedMethod * getDefaultConstructor(TR_Memory *, TR_OpaqueClassBlock *);
@@ -758,7 +772,132 @@ public:
 
    bool hasMethodTypesSideTable();
 
+   // Openjdk implementation
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   /*
+    * \brief
+    *    Return MemberName.vmtarget, a J9method pointer for method represented by `memberName`
+    *    Caller must acquire VM access
+    */
+   virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(uintptr_t memberName);
+   /*
+    * \brief
+    *    Return MemberName.vmtarget, a J9method pointer for method represented by `memberName`
+    *    VM access is not required
+    */
+   virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   /*
+    * \brief
+    *    Return MethodHandle.form.vmentry.vmtarget, J9method for the underlying java method
+    *    The J9Method is the target to be invoked intrinsically by MethodHandle.invokeBasic
+    *    Caller must acquire VM access
+    */
+   virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(uintptr_t methodHandle);
+   /*
+    * \brief
+    *    Return MethodHandle.form.vmentry.vmtarget, J9method for the underlying java method
+    *    The J9Method is the target to be invoked intrinsically by MethodHandle.invokeBasic
+    *    VM access is not required
+    */
+   virtual TR_OpaqueMethodBlock* targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   /*
+    * \brief
+    *    Return MemberName.vmindex, a J9JNIMethodID pointer containing vtable/itable offset for the MemberName method
+    *    Caller must acquire VM access
+    */
+   virtual J9JNIMethodID* jniMethodIdFromMemberName(uintptr_t memberName);
+   /*
+    * \brief
+    *    Return MemberName.vmindex, a J9JNIMethodID pointer containing vtable/itable offset for the MemberName method
+    *    VM access is not required
+    */
+   virtual J9JNIMethodID* jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   /*
+    * \brief
+    *    Return vtable or itable index of a method represented by MemberName
+    *    Caller must acquire VM access
+    */
+   virtual int32_t vTableOrITableIndexFromMemberName(uintptr_t memberName);
+   /*
+    * \brief
+    *    Return vtable or itable index of a method represented by MemberName
+    *    VM access is not required
+    */
+   virtual int32_t vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   /*
+    * \brief
+    *    Create and return a resolved method from member name index of an invoke cache array.
+    *    Encapsulates code that requires VM access to make JITServer support easier.
+    */
+   virtual TR_ResolvedMethod* targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *comp, TR_ResolvedMethod *owningMethod, uintptr_t *invokeCacheArray);
+
+   /*
+    * \brief
+    *    Return a Known Object Table index of an invoke cache array appendix element.
+    *    Encapsulates code that requires VM access to make JITServer support easier.
+    */
+   virtual TR::KnownObjectTable::Index getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray);
+
+   /**
+    * \brief
+    *    Refines invokeCache element symRef with known object index for invokehandle and invokedynamic bytecode
+    *
+    * \param comp the compilation object
+    * \param originalSymRef the original symref to refine
+    * \param invokeCacheArray the array containing the element we use to get known object index
+    * \return TR::SymbolReference* the refined symRef
+    */
+   virtual TR::SymbolReference* refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation *comp, TR::SymbolReference *originalSymRef, uintptr_t *invokeCacheArray);
+
+   /*
+    * \brief
+    *    Get the signature For MethodHandle.linkToStatic call for unresolved invokehandle
+    *
+    *    For unresolved invokeHandle, we do not know the adapter method at
+    *    compile time. The call is expressed as a call to the signature-polymorphic
+    *    MethodHandle.linkToStatic method. In addition to the arguments of the original call,
+    *    we need to provide the memberName and appendix objects as the last two arguments, in
+    *    addition to the MethodHandle object as the first argument. Therefore, we need to modify
+    *    the signature of the original call and adapt it to accept three extra arguments.
+    *
+    * \param comp the current compilation
+    * \param romMethodSignature the ROM Method signature to be processed
+    * \param signatureLength the length of the resulting signature
+    * \return char * the signature for linkToStatic
+    */
+   char * getSignatureForLinkToStaticForInvokeHandle(TR::Compilation* comp, J9UTF8* romMethodSignature, int32_t &signatureLength);
+
+
+   /*
+    * \brief
+    *    Get the signature for MethodHandle.linkToStatic call for unresolved invokedynamic
+    *
+    *    For unresolved invokeDynamic, we do not know the adapter method at
+    *    compile time. The call is expressed as a call to the signature-polymorphic
+    *    MethodHandle.linkToStatic method. In addition to the arguments of the original call,
+    *    we need to provide the memberName and appendix objects as the last two arguments.
+    *    Therefore, we need to modify the signature of the original call and adapt it to accept
+    *    the two extra arguments.
+    *
+    * \param comp the current compilation
+    * \param romMethodSignature the ROM Method signature to be processed
+    * \param signatureLength the length of the resulting signature
+    * \return char * the signature for linkToStatic
+    */
+   char * getSignatureForLinkToStaticForInvokeDynamic(TR::Compilation* comp, J9UTF8* romMethodSignature, int32_t &signatureLength);
+#endif
+
    // JSR292 }}}
+
+   /**
+    * \brief
+    *   Return a Known Object Table index of a java/lang/invoke/MemberName field
+    *
+    * \param comp the compilation object
+    * \param mhIndex known object index of the java/lang/invoke/MemberName object
+    * \param fieldName the name of the field for which we return the known object index
+    */
+   virtual TR::KnownObjectTable::Index getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, char *fieldName);
 
    virtual uintptr_t getFieldOffset( TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef);
    /*
@@ -903,11 +1042,17 @@ public:
       return isMethodTracingEnabled((TR_OpaqueMethodBlock *)j9method);
       }
 
+   // Is method generated for LambdaForm
+   virtual bool isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method);
+   virtual bool isLambdaFormGeneratedMethod(TR_ResolvedMethod *method);
+
    virtual bool isSelectiveMethodEnterExitEnabled();
 
    virtual bool canMethodEnterEventBeHooked();
    virtual bool canMethodExitEventBeHooked();
-   virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled();
+   virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp);
+
+   virtual bool canExceptionEventBeHooked();
 
    TR::TreeTop * lowerMethodHook(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    TR::TreeTop * lowerArrayLength(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
@@ -918,6 +1063,25 @@ public:
    virtual void * getStaticHookAddress(int32_t event);
 
    TR::Node * initializeLocalObjectFlags(TR::Compilation *, TR::Node * allocationNode, TR_OpaqueClassBlock * ramClass);
+
+   /**
+    * \brief Load class flags field of the specified class and test whether any of the
+    *        specified flags is set.
+    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \param flagsToTest    The class field flags that are to be checked
+    * \return \ref TR::Node that evaluates to a non-zero integer if any of the specified
+    *         flags is set; or evaluates to zero, otherwise.
+    */
+   TR::Node * testAreSomeClassFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest);
+
+   /**
+    * \brief Load class flags field of the specified class and test whether the value type
+    *        field is set.
+    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \return \ref TR::Node that evaluates to a non-zero integer if the class is a value type,
+    *         or zero if the class is an identity type
+    */
+   TR::Node * testIsClassValueType(TR::Node *j9ClassRefNode);
 
    virtual J9JITConfig *getJ9JITConfig() { return _jitConfig; }
 
@@ -994,13 +1158,16 @@ public:
    virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType);
    virtual TR_OpaqueClassBlock * getClassFromNewArrayTypeNonNull(int32_t arrayType);
 
+   virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp);
+   virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod);
+
    // --------------------------------------------------------------------------
    // Object model
    // --------------------------------------------------------------------------
 
    virtual bool getNurserySpaceBounds(uintptr_t *base, uintptr_t *top);
-   virtual uintptr_t getLowTenureAddress();
-   virtual uintptr_t getHighTenureAddress();
+   virtual UDATA getLowTenureAddress();
+   virtual UDATA getHighTenureAddress();
    virtual uintptr_t getThreadLowTenureAddressPointerOffset();
    virtual uintptr_t getThreadHighTenureAddressPointerOffset();
    virtual uintptr_t thisThreadRememberedSetFragmentOffset();
@@ -1012,6 +1179,8 @@ public:
    uint32_t getInstanceFieldOffsetIncludingHeader(char* classSignature, char * fieldName, char * fieldSig, TR_ResolvedMethod* method);
 
    virtual void markHotField( TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool);
+   virtual void reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency);
+   virtual bool isHotReferenceFieldRequired();
    virtual void markClassForTenuredAlignment( TR::Compilation *comp, TR_OpaqueClassBlock *opclazz, uint32_t alignFromStart);
 
    virtual bool shouldDelayAotLoad() { return false; }
@@ -1030,6 +1199,7 @@ protected:
    enum // _flags
       {
       TraceIsEnabled = 0x0000001,
+      FSDIsEnabled   = 0x0000002,
       DummyLastEnum
       };
 
@@ -1098,15 +1268,12 @@ public:
    virtual uint32_t               getPrimitiveArrayOffsetInJavaVM(uint32_t arrayType);
 
    virtual TR_StaticFinalData dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType);
-   virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp);
-   virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod);
 
    TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPool * constantPool);
 
 private:
    void transformJavaLangClassIsArrayOrIsPrimitive( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop, int32_t andMask);
    void transformJavaLangClassIsArray( TR::Compilation *, TR::Node * callNode,  TR::TreeTop * treeTop);
-   void setProcessorByDebugOption();
    };
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
@@ -1155,7 +1322,7 @@ public:
 
    virtual bool               canMethodEnterEventBeHooked();
    virtual bool               canMethodExitEventBeHooked();
-   virtual bool               methodsCanBeInlinedEvenIfEventHooksEnabled();
+   virtual bool               methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp);
    virtual TR_OpaqueClassBlock *getClassOfMethod(TR_OpaqueMethodBlock *method);
    virtual void               getResolvedMethods(TR_Memory *, TR_OpaqueClassBlock *, List<TR_ResolvedMethod> *);
    virtual TR_ResolvedMethod *getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, const char* methodName, const char *signature);
@@ -1164,10 +1331,6 @@ public:
 
    virtual TR_OpaqueMethodBlock *getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, int32_t cpIndex, bool ignoreReResolve = true);
    virtual TR_OpaqueMethodBlock *getResolvedInterfaceMethod(TR_OpaqueMethodBlock *ownerMethod, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
-
-#if defined(TR_TARGET_S390)
-   virtual void               initializeS390ProcessorFeatures();
-#endif
 
    virtual int32_t            getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed);
    virtual bool               javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result);
@@ -1216,6 +1379,8 @@ public:
 
    virtual J9Class *              getClassForAllocationInlining( TR::Compilation *comp, TR::SymbolReference *classSymRef);
    virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr);
+
+   virtual bool               ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes);
    };
 
 #endif
@@ -1267,4 +1432,3 @@ inline TR_PersistentMemory * persistentMemory(J9JITConfig * jitConfig) { return 
 bool signalOutOfMemory(J9JITConfig *);
 
 #endif // VMJ9
-

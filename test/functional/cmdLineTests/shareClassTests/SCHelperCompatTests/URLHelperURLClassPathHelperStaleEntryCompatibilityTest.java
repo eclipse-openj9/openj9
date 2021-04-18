@@ -68,7 +68,7 @@ public class URLHelperURLClassPathHelperStaleEntryCompatibilityTest {
 		}
 		
 		String numberOfUrlsString = props.getProperty("NumberOfUrls");
-		Integer tempNumberOfUrls = new Integer(numberOfUrlsString);
+		Integer tempNumberOfUrls = Integer.valueOf(numberOfUrlsString);
 		int numberOfUrls = tempNumberOfUrls.intValue();
 		
 		int maxClassesToLoad = 0;		
@@ -76,7 +76,7 @@ public class URLHelperURLClassPathHelperStaleEntryCompatibilityTest {
 		for(int index = 0; index < numberOfUrls; index++){
 			urls[index] = props.getProperty("Url"+index);
 			String ctl = props.getProperty("NumberOfClassesToLoad"+index);
-			Integer intctl = new Integer(ctl);
+			Integer intctl = Integer.valueOf(ctl);
 			maxClassesToLoad = ((intctl.intValue() > maxClassesToLoad) ? intctl.intValue() : maxClassesToLoad);
 		}
 		
@@ -85,7 +85,7 @@ public class URLHelperURLClassPathHelperStaleEntryCompatibilityTest {
 		for(int urlIndex = 0; urlIndex < numberOfUrls; urlIndex++){
 			String loadClasses = props.getProperty("LoadClasses"+urlIndex);
 			String ctl = props.getProperty("NumberOfClassesToLoad"+urlIndex);
-			Integer intctl = new Integer(ctl);
+			Integer intctl = Integer.valueOf(ctl);
 			int numberOfClassesToLoad = intctl.intValue();
 			for(int classToLoadIndex = 0; classToLoadIndex < numberOfClassesToLoad; classToLoadIndex++){
 				classesToLoad[urlIndex][classToLoadIndex] = manipulator.getStringElement(classToLoadIndex, loadClasses);
@@ -95,7 +95,7 @@ public class URLHelperURLClassPathHelperStaleEntryCompatibilityTest {
 		String classPath = props.getProperty("Classpath");
 		
 		String ctf = props.getProperty("NumberOfClassesToFind");
-		Integer intctf = new Integer(ctf);
+		Integer intctf = Integer.valueOf(ctf);
 		int numberOfClassesToFind = intctf.intValue();
 		
 		String classesString = props.getProperty("FindClasses");

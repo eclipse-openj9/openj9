@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,7 +107,7 @@ public abstract class BootstrapJUnitTest implements IBootstrapRunnable {
 		} catch (IllegalArgumentException e) {
 			fail(e.getMessage());
 		} catch (NoSuchMethodException e) {
-			fail("Can not find test test message " + userData[0]);
+			fail("Can not find test message " + userData[0]);
 		} catch (IllegalAccessException e) {
 			fail(e.getMessage());
 		} catch (InvocationTargetException e) {

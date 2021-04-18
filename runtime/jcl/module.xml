@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2020 IBM Corp. and others
+Copyright (c) 2006, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 
+	<xi:include href="uma/java_lang_invoke_MethodHandleNatives_exports.xml"></xi:include>
+	<xi:include href="uma/java_dyn_methodhandle_exports.xml"></xi:include>
 	<xi:include href="uma/sun_misc_Unsafe_exports.xml"></xi:include>
 	<xi:include href="uma/unsafemem_inl_exports.xml"></xi:include>
 	<xi:include href="uma/se6_vm-side_natives_exports.xml"></xi:include>
@@ -37,11 +39,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<xi:include href="uma/se11_exports.xml"></xi:include>
 	<xi:include href="uma/se14_exports.xml"></xi:include>
 	<xi:include href="uma/se15_exports.xml"></xi:include>
+	<xi:include href="uma/se16_exports.xml"></xi:include>
 
 	<xi:include href="uma/vendor_jcl_exports.xml">
 		<xi:fallback/>
 	</xi:include>
 
+	<xi:include href="uma/java_lang_invoke_MethodHandleNatives_objects.xml"></xi:include>
+	<xi:include href="uma/java_dyn_methodhandle_objects.xml"></xi:include>
 	<xi:include href="uma/sun_misc_Unsafe_objects.xml"></xi:include>
 	<xi:include href="uma/se6_vm-side_natives_objects.xml"></xi:include>
 	<xi:include href="uma/se6_vm-side_lifecycle_objects.xml"></xi:include>
@@ -52,6 +57,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<xi:include href="uma/se8_objects.xml"></xi:include>
 	<xi:include href="uma/se8only_objects.xml"></xi:include>
 	<xi:include href="uma/se9_objects.xml"></xi:include>
+	<xi:include href="uma/se16_objects.xml"></xi:include>
 
 	<!-- vendor_jcl.xml can contain vendor specific configuration -->
 	<xi:include href="uma/vendor_jcl.xml">
@@ -78,6 +84,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<exports>
 			<group name="se6_vm-side_lifecycle"/>
 			<group name="se6_vm-side_natives"/>
+			<group name="java_lang_invoke_MethodHandleNatives">
+				<include-if condition="spec.flags.opt_openjdkMethodhandle"/>
+			</group>
+			<group name="java_dyn_methodhandle">
+				<include-if condition="spec.flags.opt_methodHandle"/>
+			</group>
 			<group name="jithelpers"/>
 			<group name="sun_misc_Unsafe"/>
 			<group name="sun_misc_Unsafe_inl"/>
@@ -102,6 +114,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</group>
 			<group name="se15">
 				<include-if condition="spec.java15"/>
+			</group>
+			<group name="se16">
+				<include-if condition="spec.java16"/>
 			</group>
 		</exports>
 
@@ -138,6 +153,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<objects>
 			<group name="se6_vm-side_lifecycle"/>
 			<group name="se6_vm-side_natives"/>
+			<group name="java_lang_invoke_MethodHandleNatives">
+				<include-if condition="spec.flags.opt_openjdkMethodhandle"/>
+			</group>
+			<group name="java_dyn_methodhandle">
+				<include-if condition="spec.flags.opt_methodHandle"/>
+			</group>
 			<group name="jithelpers"/>
 			<group name="sun_misc_Unsafe"/>
 			<group name="attach">
@@ -157,6 +178,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.java11"/>
 			</group>
 			-->
+			<group name="se16">
+				<include-if condition="spec.java16"/>
+			</group>
 
 			<group name="vendor_jcl"/>
 

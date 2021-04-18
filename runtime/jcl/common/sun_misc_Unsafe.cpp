@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,19 +117,23 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 				return NULL;
 			}
 		}
+
+		/* initialize the indexMap to 0 to represent unmapped entry */
+		memset(cpPatchMap.indexMap, 0, cpPatchMap.size * sizeof(U_16));
 	}
+
+	jsize length = (jsize)J9INDEXABLEOBJECT_SIZE(currentThread, J9_JNI_UNWRAP_REFERENCE(bytecodes));
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
-	jsize length = env->GetArrayLength(bytecodes);
-
 	/* acquires access internally */
-	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL,bytecodes, 0, length, protectionDomainLocalRef, &defineClassOptions, hostClazz, &cpPatchMap, FALSE);
+	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL, bytecodes, 0, length, protectionDomainLocalRef, &defineClassOptions, hostClazz, &cpPatchMap, FALSE);
 	if (env->ExceptionCheck()) {
-		return NULL;
+		anonClass = NULL;
+		goto exit;
 	} else if (NULL == anonClass) {
 		throwNewInternalError(env, NULL);
-		return NULL;
+		goto exit;
 	}
 
 	if (constPatches != NULL) {
@@ -142,33 +146,38 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 
 		/* Get J9 constantpool mapped item for patch item, only support patching STRING entries has been added */
 		for (U_16 i = 0; i < cpPatchMap.size; i++) {
-			j9object_t item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, patchArray, i);
-			if (item != NULL) {
-				if (J9_CP_TYPE(cpShapeDescription, cpPatchMap.indexMap[i]) == J9CPTYPE_STRING) {
+			/* Check if a valid mapping exist for cp entry */
+			if (cpPatchMap.indexMap[i] != 0) {
+				j9object_t item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, patchArray, i);
+				if (item != NULL) {
+					if (J9_CP_TYPE(cpShapeDescription, cpPatchMap.indexMap[i]) == J9CPTYPE_STRING) {
 
-					J9UTF8 *romString = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[cpPatchMap.indexMap[i]]);
+						J9UTF8 *romString = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[cpPatchMap.indexMap[i]]);
 
-					/* For each patch object, search the RAM constantpool for identical string entries */
-					for (U_16 j = 1; j < clazz->romClass->ramConstantPoolCount; j++) {
-						if ((J9_CP_TYPE(cpShapeDescription, j) == J9CPTYPE_STRING)
-							&& J9UTF8_EQUALS(romString, J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[j]))
-						) {
-							J9RAMStringRef *ramStringRef = ((J9RAMStringRef *)ramCP) + j;
-							J9STATIC_OBJECT_STORE(currentThread, clazz, &ramStringRef->stringObject, item);
+						/* For each patch object, search the RAM constantpool for identical string entries */
+						for (U_16 j = 1; j < clazz->romClass->ramConstantPoolCount; j++) {
+							if ((J9_CP_TYPE(cpShapeDescription, j) == J9CPTYPE_STRING)
+								&& J9UTF8_EQUALS(romString, J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[j]))
+							) {
+								J9RAMStringRef *ramStringRef = ((J9RAMStringRef *)ramCP) + j;
+								J9STATIC_OBJECT_STORE(currentThread, clazz, &ramStringRef->stringObject, item);
+							}
 						}
+					} else {
+						/* Only J9CPTYPE_STRING is patched, other CP types are not supported */
+						Assert_JCL_unreachable();
 					}
-				} else {
-					/* Only J9CPTYPE_STRING is patched, other CP types are not supported */
-					Assert_JCL_unreachable();
 				}
 			}
 		}
 
-		if (cpPatchMap.size > BUFFER_SIZE) {
-			j9mem_free_memory(cpPatchMap.indexMap);
-			cpPatchMap.indexMap = NULL;
-		}
 		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+
+exit:
+	if (cpPatchMap.size > BUFFER_SIZE) {
+		j9mem_free_memory(cpPatchMap.indexMap);
+		cpPatchMap.indexMap = NULL;
 	}
 
 	return anonClass;
@@ -256,24 +265,6 @@ jlong JNICALL
 Java_jdk_internal_misc_Unsafe_allocateDBBMemory(JNIEnv *env, jobject receiver, jlong size)
 {
 	return Java_sun_misc_Unsafe_allocateDBBMemory(env, receiver, size);
-}
-
-jlong JNICALL
-Java_sun_misc_Unsafe_allocateMemoryNoException(JNIEnv *env, jobject receiver, jlong size)
-{
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	jlong result = 0;
-	UDATA actualSize = (UDATA)size;
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	if ((size < 0) || (size != (jlong)actualSize)) {
-		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
-	} else {
-		result = (jlong)(UDATA)unsafeAllocateMemory(currentThread, actualSize, FALSE);
-	}
-	vmFuncs->internalExitVMToJNI(currentThread);
-	return result;
 }
 
 
@@ -798,7 +789,7 @@ Java_sun_misc_Unsafe_getKlassPointer(JNIEnv *env, jobject receiver, jobject addr
 }
 
 jboolean JNICALL
-Java_jdk_internal_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz)
+Java_sun_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz)
 {
 	jboolean result = JNI_FALSE;
 
@@ -973,7 +964,7 @@ registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 		{
 			(char*)"shouldBeInitialized0",
 			(char*)"(Ljava/lang/Class;)Z",
-			(void*)&Java_jdk_internal_misc_Unsafe_shouldBeInitialized
+			(void*)&Java_sun_misc_Unsafe_shouldBeInitialized
 		},
 		{
 			(char*)"allocateMemory0",
@@ -1129,7 +1120,9 @@ Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 jboolean
  memOverlapIsNone(j9object_t sourceObject, UDATA sourceOffset, j9object_t destObject, UDATA destOffset, UDATA actualCopySize) {
 	jboolean result = JNI_FALSE;
-	if ((sourceObject == NULL) && (destObject == NULL)) {
+	if (sourceObject != destObject) {
+		result = JNI_TRUE;
+	} else if ((sourceObject == NULL) && (destObject == NULL)) {
 		if (sourceOffset > (destOffset + actualCopySize)) {
 			result = JNI_TRUE;
 		} else if (destOffset > (sourceOffset + actualCopySize)) {

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,45 +22,42 @@
  *******************************************************************************/
 package com.ibm.jvm.dtfjview.tools.utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 
 /**
  * This is a kind of OutputStream which caches the incoming bytes (instead if printing them out) 
  * and releases them as a string whenever it is asked to.
  * <p>
  * @author Manqing Li, IBM.
- *
  */
 public class StringReceiver extends OutputStream {
+
+	private ByteArrayOutputStream _buffer;
+	private final String _charsetName;
+
 	public StringReceiver(String charsetName) {
-		_buffer = new ArrayList<Byte>();
+		_buffer = new ByteArrayOutputStream();
 		_charsetName = charsetName;
 	}
-	public void write(int b) throws IOException 
-	{
-		_buffer.add(Integer.valueOf(b).byteValue());		
+
+	@Override
+	public void write(int b) throws IOException {
+		_buffer.write(b);
 	}
 
+	@Override
 	public void close() throws IOException {
-		_buffer = new ArrayList<Byte>();
+		_buffer = new ByteArrayOutputStream();
 		super.close();
 	}
-	
+
 	public String release() throws UnsupportedEncodingException {
-		byte [] byteArray = new byte[_buffer.size()];
-		for (int i = 0; i < byteArray.length; i++) {
-			byteArray[i] = _buffer.get(i);
-		}
-		_buffer = new ArrayList<Byte>();
-		if(_charsetName == null) {
-			return new String(byteArray);
-		}
-		return new String(byteArray, _charsetName);
+		String content = (_charsetName == null) ? _buffer.toString() : _buffer.toString(_charsetName);
+		_buffer = new ByteArrayOutputStream();
+		return content;
 	}
-	
-	private ArrayList<Byte> _buffer = null;
-	private String _charsetName = null;
+
 }

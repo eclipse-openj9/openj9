@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,16 +218,16 @@ initializeMutatorModelJava(J9VMThread* vmThread)
 void
 cleanupMutatorModelJava(J9VMThread* vmThread)
 {
-	J9VMDllLoadInfo* loadInfo;
-	J9JavaVM* vm = vmThread->javaVM;
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 
 	if (NULL != env) {
+		J9JavaVM *vm = vmThread->javaVM;
+		J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
+
 		/* cleanupMutatorModelJava is called as part of the main vmThread shutdown, which happens after
 		 * gcCleanupHeapStructures has been called. We should therefore only flush allocation caches
 		 * if there is still a heap.
 		 */
-		loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
 		if (!IS_STAGE_COMPLETED(loadInfo->completedBits, HEAP_STRUCTURES_FREED)) {
 			/* this can only be called if the heap still exists since it will ask the TLH chunk to be abandoned with crashes if the heap is deallocated */
 			GC_OMRVMThreadInterface::flushCachesForGC(env);
@@ -311,7 +311,11 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 	MM_EnvironmentBase env(vm->omrVM);
 	MM_GlobalCollector *globalCollector;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
+	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
+
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE)) {
+		extensions->shouldForceLowMemoryHeapCeilingShiftIfPossible = true;
+	}
 
 #if defined(J9VM_GC_BATCH_CLEAR_TLH)
 	/* Record batch clear state in VM so inline allocates can decide correct initialization procedure */
@@ -511,7 +515,7 @@ gcInitializeHeapStructures(J9JavaVM *vm)
 
 	MM_MemorySpace *defaultMemorySpace;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
-	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
+	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 
 	/* For now, number of segments to default in pool */
 	if ((vm->memorySegments = vm->internalVMFunctions->allocateMemorySegmentList(vm, 10, OMRMEM_CATEGORY_VM)) == NULL) {
@@ -2706,7 +2710,7 @@ configurateGCWithPolicyAndOptionsStandard(MM_EnvironmentBase *env)
 				uintptr_t nurserySize = extensions->memoryMax / 4;
 
 				/*
-				 * correctness of -Xmn* values will be analyzed later on with with initialization error in case of bad combination
+				 * correctness of -Xmn* values will be analyzed later on with initialization error in case of bad combination
 				 * so assume here all of them are correct, just check none of them is larger then entire heap size
 				 */
 				if (extensions->userSpecifiedParameters._Xmn._wasSpecified) {
@@ -2827,8 +2831,7 @@ configurateGCWithPolicyAndOptions(OMR_VM* omrVM)
 jint
 gcInitializeDefaults(J9JavaVM* vm)
 {
-	J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(THIS_DLL_NAME);
-
+	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 	UDATA tableSize = (opt_none + 1) * sizeof(IDATA);
 	UDATA realtimeSizeClassesAllocationSize = ROUND_TO(sizeof(UDATA), sizeof(J9VMGCSizeClasses));
 	IDATA *memoryParameterTable;
@@ -2923,7 +2926,7 @@ gcInitializeDefaults(J9JavaVM* vm)
 
 				if (hwSupported) {
 					/* Software Barrier request overwrites HW usage on supported HW */
-					extensions->concurrentScavengerHWSupport = hwSupported && !extensions->softwareRangeCheckReadBarrier;
+					extensions->concurrentScavengerHWSupport = hwSupported && !extensions->softwareRangeCheckReadBarrier && !J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE);
 					extensions->concurrentScavenger = hwSupported || extensions->softwareRangeCheckReadBarrier;
 				} else {
 					extensions->concurrentScavengerHWSupport = false;

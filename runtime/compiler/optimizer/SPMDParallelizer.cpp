@@ -42,6 +42,7 @@
 #include "cs2/sparsrbit.h"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
+#include "env/VerboseLog.hpp"
 #include "il/AliasSetInterface.hpp"
 #include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
@@ -70,6 +71,7 @@
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/SPMDPreCheck.hpp"
 #include "optimizer/Structure.hpp"
+#include "optimizer/TransformUtil.hpp"
 #include "optimizer/UseDefInfo.hpp"
 #include "optimizer/ValueNumberInfo.hpp"
 #include "runtime/J9Runtime.hpp"
@@ -595,8 +597,32 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
          return visitNodeToSIMDize(node, 0, node->getFirstChild(), pSPMDInfo, isCheckMode, loop, comp, usesInLoop, useNodesOfDefsInLoop, useDefInfo, defsInLoop, reductionHashTab, node->getSymbolReference());
          }
       }
-   else if (scalarOp.isBranch() || node->getOpCodeValue()==TR::BBEnd ||
-            node->getOpCodeValue()==TR::BBStart || node->getOpCodeValue()==TR::asynccheck ||
+   else if (node->getOpCodeValue() == TR::asynccheck)
+      {
+      /*
+       * By default, loops with asynccheck nodes are not supported for AutoSIMD.
+       * If TR_enableAutoSIMDSkipAsynccheck is set, the asynccheck nodes will be removed from the loop while vectorizing it.
+       */
+      static bool enableAutoSIMDSkipAsynccheck = feGetEnv("TR_enableAutoSIMDSkipAsynccheck") ? true : false;
+
+      if (enableAutoSIMDSkipAsynccheck)
+         {
+         if (!isCheckMode)
+            {
+            dumpOptDetails(comp, "Removing asynccheck. TreeTop: %p, node: %p\n", tt, node);
+
+            optimizer()->prepareForTreeRemoval(tt);
+            TR::TransformUtil::removeTree(comp, tt);
+            }
+         return true;
+         }
+      else
+         {
+         if (trace) traceMsg(comp, "asynccheck nodes are not supported for AutoSIMD. node: %p\n", node);
+         return false;
+         }
+      }
+   else if (scalarOp.isBranch() || node->getOpCodeValue()==TR::BBEnd || node->getOpCodeValue()==TR::BBStart ||
             (node->getOpCodeValue()==TR::compressedRefs && node->getFirstChild()->getOpCode().isLoad()))
       {
       //Compressed ref treetops with a load can be ignored due to the load
@@ -1368,6 +1394,29 @@ bool TR_SPMDKernelParallelizer::reductionLoopExitProcessing(TR::Compilation *com
    return true;
    }
 
+void TR_SPMDKernelParallelizer::replaceAndAnchorOldNode(TR::Compilation *comp, TR::TreeTop *treeTop, TR::Node *parent, TR::Node *oldNode, TR::Node *newNode, int index)
+   {
+   treeTop->insertBefore(TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, oldNode)));
+   oldNode->recursivelyDecReferenceCount();
+   parent->setAndIncChild(index, newNode);
+   }
+
+inline bool TR_SPMDKernelParallelizer::matchIVIncrementPattern(TR::Node *node, TR::SymbolReference *pivSymRef)
+   {
+   return (node->getOpCode().isAdd() || node->getOpCode().isSub()) && node->getFirstChild()->getOpCode().isLoad()
+    && node->getFirstChild()->getSymbolReference() == pivSymRef && node->getSecondChild()->getOpCode().isLoadConst();
+   }
+
+TR::Node * TR_SPMDKernelParallelizer::multiplyLoopStride(TR::Node *parent, int32_t multiple)
+   {
+   TR::Node *constNode = parent->getSecondChild()->duplicateTree();
+   constNode->setInt(constNode->getInt() * multiple);
+   TR::Node *oldNode = parent->getSecondChild();
+   parent->getSecondChild()->recursivelyDecReferenceCount();
+   parent->setAndIncChild(1, constNode);
+   return oldNode;
+   }
+
 bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation *comp, TR::Optimizer *optimizer, TR_RegionStructure *loop,TR_PrimaryInductionVariable *piv, TR_HashTab* reductionHashTab, int32_t peelCount, TR::Block *invariantBlock)
    {
 
@@ -1426,29 +1475,108 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
    loop->getBlocks(&blocksInLoop);
    ListIterator<TR::Block> blocksIt1(&blocksInLoop);
 
-
-   // SIMD_TODO: improve this code
+   TR_HashTab* entries = new (comp->trStackMemory()) TR_HashTab(comp->trMemory(), stackAlloc);
 
    for (TR::Block *nextBlock = blocksIt1.getCurrent(); nextBlock; nextBlock=blocksIt1.getNext())
       {
       for (TR::TreeTop *tt = nextBlock->getEntry() ; tt != nextBlock->getExit() ; tt = tt->getNextTreeTop())
          {
          // identify operation for primary induction variable
-         TR::Node *storeNode = tt->getNode();
+         TR::Node *curNode = tt->getNode();
+         if (curNode->getOpCode().isBooleanCompare() && curNode->getOpCode().isBranch())
+            {
+            TR_HashId hashOne = 0;
+            TR_HashId hashTwo = 0;
+            if (entries->locate(curNode->getFirstChild(), hashOne) || entries->locate(curNode->getSecondChild(), hashTwo))
+               {
+               int nodeIndex = entries->locate(curNode->getFirstChild(), hashOne) ? 0 : 1;
+               TR::Node *newNode = nodeIndex == 0 ? reinterpret_cast<TR::Node*>(entries->getData(hashOne)) : reinterpret_cast<TR::Node*>(entries->getData(hashTwo));
+               if (trace())
+                  traceMsg(comp, "Parent node n%dn [%p] will be uncommoned to n%dn [%p]\n", curNode->getChild(nodeIndex)->getGlobalIndex(), curNode->getChild(nodeIndex),
+                   newNode->getGlobalIndex(), newNode);
+               replaceAndAnchorOldNode(comp, tt, curNode, curNode->getChild(nodeIndex), newNode, nodeIndex);
+               }
+            else if (curNode->getFirstChild()->getReferenceCount() > 1 || curNode->getSecondChild()->getReferenceCount() > 1)
+               {
+               TR::Node *oldNode = NULL;
+               TR::Node *newNode = NULL;
+               int32_t childIndex = 0;
+               if (curNode->getFirstChild()->getReferenceCount() > 1 && matchIVIncrementPattern(curNode->getFirstChild(), unroller._piv->getSymRef()))
+                  {
+                  oldNode = curNode->getFirstChild();
+                  childIndex = 0;
+                  }
+               else if (curNode->getSecondChild()->getReferenceCount() > 1 && matchIVIncrementPattern(curNode->getSecondChild(), unroller._piv->getSymRef()))
+                  {
+                  oldNode = curNode->getSecondChild();
+                  childIndex = 1;
+                  }
 
-         if (storeNode->getOpCodeValue() == TR::istore && storeNode->getSymbolReference() == unroller._piv->getSymRef())
+               if (oldNode)
+                  {
+                  // We encountered the node for the first time and it is commoned.
+                  // So, we need to adjust the stride by vectorSize and store the mapping {oldNode, newNode} in the hashTable.
+                  newNode = oldNode->duplicateTree(false);
+                  replaceAndAnchorOldNode(comp, tt, curNode, oldNode, newNode, childIndex);
+                  if (trace())
+                     traceMsg(comp, "Parent node n%dn [%p] was uncommoned to n%dn [%p]\n", oldNode->getGlobalIndex(), oldNode, newNode->getGlobalIndex(), newNode);
+                  _visitedNodes.reset(oldNode->getGlobalIndex());
+                  TR::Node *oldConstNode = multiplyLoopStride(newNode, vectorSize);
+                  _visitedNodes.reset(oldConstNode->getGlobalIndex());
+                  TR_HashId entryHash = entries->calculateHash(oldNode);
+                  entries->add(oldNode, entryHash, newNode);
+                  }
+               }
+            }
+
+         if (curNode->getOpCodeValue() == TR::istore && curNode->getSymbolReference() == unroller._piv->getSymRef())
             {
             // increment of PIV
-            traceMsg(comp, "Reducing the number of iterations of the loop %d at storeNode [%p] by vector length %d \n",loop->getNumber(), storeNode, unrollCount);
-            TR::Node *constNode = storeNode->getFirstChild()->getSecondChild()->duplicateTree();
-            constNode->setInt(constNode->getInt() * vectorSize);
-            storeNode->getFirstChild()->getSecondChild()->recursivelyDecReferenceCount();
-            //can visit the commoned node again
-            _visitedNodes.reset(storeNode->getFirstChild()->getSecondChild()->getGlobalIndex());
-            storeNode->getFirstChild()->setAndIncChild(1,constNode);
-
+            traceMsg(comp, "Reducing the number of iterations of the loop %d at storeNode [%p] by vector length %d \n",loop->getNumber(), curNode, unrollCount);
+            TR_ASSERT_FATAL(curNode->getFirstChild()->getOpCode().isAdd() || curNode->getFirstChild()->getOpCode().isSub(), "PIV increment should be simple (either by add or by sub");
+            TR_ASSERT_FATAL(curNode->getFirstChild()->getFirstChild()->getOpCode().isLoad(), "PIV increment should have load");
+            TR_ASSERT_FATAL(curNode->getFirstChild()->getSecondChild()->getOpCode().isLoadConst(), "PIV increment should have const increment value");
+            TR::Node *newNode = NULL;
+            TR::Node *oldNode = NULL;
+            if (curNode->getFirstChild()->getReferenceCount() > 1)
+               {
+               // We need to uncommon the parent node only (isub/iadd), but keep the commoned children (if it has any such child).
+               // Uncommoning of parent node prevents the propagation of loop stride to other parts in the block. For example, if the
+               // parent commoned node was used in address calculation, then changing the stride will introduce bug as the address calculation
+               // will be affected.
+               // Keeping the commoned children prevents unwanted side effect. For example, commoned iload should stay the same,
+               // even if isub/iadd is uncommoned. That way we know it will use the old iload value, not load the value again.
+               // Const node will be uncommoned before changing the stride to match with vector operations, so we don't need to uncommon it
+               // here.
+               oldNode = curNode->getFirstChild();
+               TR_HashId hashOne = 0;
+               if (entries->locate(oldNode, hashOne))
+                  {
+                  newNode = reinterpret_cast<TR::Node *>(entries->getData(hashOne));
+                  replaceAndAnchorOldNode(comp, tt, curNode, oldNode, newNode, 0);
+                  }
+               else
+                  {
+                  newNode = oldNode->duplicateTree(false);
+                  replaceAndAnchorOldNode(comp, tt, curNode, oldNode, newNode, 0);
+                  _visitedNodes.reset(oldNode->getGlobalIndex());
+                  TR::Node *oldConstNode = multiplyLoopStride(newNode, vectorSize);
+                  _visitedNodes.reset(oldConstNode->getGlobalIndex());
+                  TR_HashId entryHash = entries->calculateHash(oldNode);
+                  entries->add(oldNode, entryHash, newNode);
+                  }
+               if (trace())
+                  traceMsg(comp, "Parent node n%dn [%p] was uncommoned to n%dn [%p]\n", oldNode->getGlobalIndex(), oldNode,
+                   newNode->getGlobalIndex(), newNode);
+               }
+            else
+               {
+               TR::Node *oldConstNode = multiplyLoopStride(curNode->getFirstChild(), vectorSize);
+               _visitedNodes.reset(oldConstNode->getGlobalIndex());
+               }
             }
          }
+         entries->clear();
       }
 
    ListIterator<TR::Block> blocksIt(&blocksInLoop);
@@ -2172,7 +2300,7 @@ void TR_SPMDKernelParallelizer::insertGPUEstimate(TR::Node *firstNode, TR::Block
    TR::ILOpCodes addressLoadOpCode = TR::lload;
 
    TR::Node *estimateGPUNode = TR::Node::create(firstNode, TR::icall, 7);
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_estimateGPU, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_estimateGPU);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
    estimateGPUNode->setSymbolReference(helper);
 
@@ -2218,7 +2346,7 @@ void TR_SPMDKernelParallelizer::insertGPUParmsAllocate(TR::Node *firstNode, TR::
    TR::ILOpCodes addressLoadOpCode = TR::lload;
 
    TR::Node *allocateParmsNode = TR::Node::create(firstNode, addressCallOpCode, 2);
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_allocateGPUKernelParms, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_allocateGPUKernelParms);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
    allocateParmsNode->setSymbolReference(helper);
 
@@ -2265,7 +2393,7 @@ void TR_SPMDKernelParallelizer::insertGPUInvalidateSequence(TR::Node *firstNode,
       if (hoistAccess) continue;
 
       invalidateGPUNode = TR::Node::create(firstNode, addressCallOpCode, 2);
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_invalidateGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_invalidateGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
       invalidateGPUNode->setSymbolReference(helper);
 
@@ -2288,7 +2416,7 @@ void TR_SPMDKernelParallelizer::insertGPUErrorHandler(TR::Node *firstNode, TR::B
    TR::CFG *cfg = comp()->getFlowGraph();
 
    TR::Node *getStateGPUNode = TR::Node::create(firstNode, TR::icall, 2);
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_getStateGPU, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_getStateGPU);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
    getStateGPUNode->setSymbolReference(helper);
 
@@ -2360,7 +2488,7 @@ void TR_SPMDKernelParallelizer::insertGPUCopyFromSequence(TR::Node *firstNode, T
          }
 
       TR::Node *copyFromGPUNode = TR::Node::create(firstNode, TR::icall, 7);
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_copyFromGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_copyFromGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
       copyFromGPUNode->setSymbolReference(helper);
 
@@ -2473,7 +2601,7 @@ void TR_SPMDKernelParallelizer::insertGPUCopyToSequence(TR::Node *firstNode, TR:
 
       TR::Node *copyToGPUNode = TR::Node::create(firstNode, addressCallOpCode, 10);
 
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_copyToGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_copyToGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
       copyToGPUNode->setSymbolReference(helper);
 
@@ -2541,7 +2669,7 @@ void TR_SPMDKernelParallelizer::insertGPUKernelLaunch(TR::SymbolReference *alloc
    TR::SymbolReference *helper;
    TR::Node *launchGPUKernelNode = TR::Node::create(firstNode, TR::icall, 8);
 
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_launchGPUKernel, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_launchGPUKernel);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage);
    launchGPUKernelNode->setSymbolReference(helper);
 
@@ -2588,7 +2716,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionEntry(TR::Block * loopInvariantBl
 
    TR::Node* regionEntryGPUNode = TR::Node::create(insertionPoint->getNode(), addressCallOpCode, 5);
 
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionEntryGPU, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionEntryGPU);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
    regionEntryGPUNode->setSymbolReference(helper);
 
@@ -2641,7 +2769,7 @@ TR::Node* TR_SPMDKernelParallelizer::insertFlushGPU(TR::Block* flushGPUBlock, TR
    TR::TreeTop *insertionPoint = flushGPUBlock->getEntry();
 
    TR::Node* flushGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 2);
-   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_flushGPU, false, false, false);
+   helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_flushGPU);
    helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
    flushGPUNode->setSymbolReference(helper);
 
@@ -2724,7 +2852,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionExits(List<TR::Block>* exitBlocks
       TR::TreeTop *insertionPoint = exitBlock->getEntry();
 
       TR::Node* regionExitGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 4);
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
       regionExitGPUNode->setSymbolReference(helper);
 
@@ -2794,7 +2922,7 @@ void TR_SPMDKernelParallelizer::insertGPURegionExitInRegionExits(List<TR::Block>
       TR::TreeTop *insertionPoint = regionExitGPUBlock->getEntry();
 
       TR::Node* regionExitGPUNode = TR::Node::create(insertionPoint->getNode(), TR::icall, 4);
-      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU, false, false, false);
+      helper = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_regionExitGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(_helperLinkage/*@*/);
       regionExitGPUNode->setSymbolReference(helper);
 
@@ -3520,7 +3648,7 @@ bool TR_SPMDKernelParallelizer::visitCPUNode(TR::Node *node, int32_t visitCount,
 
       if (method)
          {
-         if (trace()) 
+         if (trace())
             traceMsg(comp(), "inside IntPipeline%s.forEach\n",
                method->getRecognizedMethod() == TR::java_util_stream_IntPipelineHead_forEach ? "$Head" : "");
 
@@ -3541,7 +3669,7 @@ bool TR_SPMDKernelParallelizer::visitCPUNode(TR::Node *node, int32_t visitCount,
 
          TR::Method * method = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod();
          const char * signature = method->signature(comp()->trMemory(), stackAlloc);
-         
+
          if (trace())
             traceMsg(comp(), "signature: %s\n", signature ? signature : "NULL");
 
@@ -4141,7 +4269,7 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
             {
             if (trace())
                traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: Testing (def %p, def %p) for dependence\n", defs[dc], defs[dc2]);
-            
+
             if (!loop->isExprInvariant(defs[dc]->getFirstChild()) &&
                 !loop->isExprInvariant(defs[dc2]->getFirstChild()) &&
                 areNodesEquivalent(comp,defs[dc]->getFirstChild(), defs[dc2]->getFirstChild()))
@@ -4159,7 +4287,7 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
                traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: def %p and def %p are dependent\n", defs[dc], defs[dc2]);
                traceMsg(comp, "SPMD DEPENDENCE ANALYSIS: will not vectorize\n");
                }
-            
+
             return false;
             }
          }

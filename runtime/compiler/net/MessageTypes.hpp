@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 
 #ifndef MESSAGE_TYPES_HPP
 #define MESSAGE_TYPES_HPP
+
 #include <cstdint> // for uint16_t
 
 namespace JITServer
@@ -39,11 +40,8 @@ enum MessageType : uint16_t
    connectionTerminate, // type used when client informs the server to close the connection
 
    // For TR_ResolvedJ9JITServerMethod methods
-   ResolvedMethod_isJNINative, // 9
-   ResolvedMethod_isInterpreted,
    ResolvedMethod_setRecognizedMethodInfo,
    ResolvedMethod_startAddressForInterpreterOfJittedMethod,
-   ResolvedMethod_jniNativeMethodProperties,
    ResolvedMethod_staticAttributes,
    ResolvedMethod_getClassFromConstantPool,
    ResolvedMethod_getDeclaringClassFromFieldOrStatic,
@@ -52,11 +50,9 @@ enum MessageType : uint16_t
    ResolvedMethod_fieldAttributes,
    ResolvedMethod_getResolvedStaticMethodAndMirror,
    ResolvedMethod_getResolvedSpecialMethodAndMirror,
-   ResolvedMethod_classCPIndexOfMethod,
    ResolvedMethod_startAddressForJittedMethod,
    ResolvedMethod_localName,
    ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror,
-   ResolvedMethod_virtualMethodIsOverridden,
    ResolvedMethod_getResolvedInterfaceMethod_2, // arity 2
    ResolvedMethod_getResolvedInterfaceMethodAndMirror_3, // arity 3
    ResolvedMethod_getResolvedInterfaceMethodOffset,
@@ -64,8 +60,6 @@ enum MessageType : uint16_t
    ResolvedMethod_isSubjectToPhaseChange,
    ResolvedMethod_getUnresolvedSpecialMethodInCP,
    ResolvedMethod_getUnresolvedFieldInCP,
-   ResolvedMethod_getRemoteROMString,
-   ResolvedMethod_fieldOrStaticName,
    ResolvedMethod_getRemoteROMClassAndMethods,
    ResolvedMethod_getResolvedHandleMethod,
    ResolvedMethod_isUnresolvedMethodTypeTableEntry,
@@ -80,10 +74,8 @@ enum MessageType : uint16_t
    ResolvedMethod_isInlineable,
    ResolvedMethod_setWarmCallGraphTooBig,
    ResolvedMethod_setVirtualMethodIsOverridden,
-   ResolvedMethod_addressContainingIsOverriddenBit,
    ResolvedMethod_methodIsNotzAAPEligible,
    ResolvedMethod_setClassForNewInstance,
-   ResolvedMethod_getJittedBodyInfo,
    ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror,
    ResolvedMethod_isUnresolvedString,
    ResolvedMethod_stringConstant,
@@ -96,17 +88,16 @@ enum MessageType : uint16_t
    ResolvedMethod_dynamicConstant,
    ResolvedMethod_definingClassFromCPFieldRef,
    ResolvedMethod_getResolvedImplementorMethods,
+   ResolvedMethod_isFieldFlattened,
 
-   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method, // 66
+   ResolvedRelocatableMethod_createResolvedRelocatableJ9Method,
    ResolvedRelocatableMethod_fieldAttributes,
    ResolvedRelocatableMethod_staticAttributes,
    ResolvedRelocatableMethod_getFieldType,
 
    // For TR_J9ServerVM methods
-   VM_isClassLibraryClass, // 70
+   VM_isClassLibraryClass,
    VM_isClassLibraryMethod,
-   VM_getSuperClass,
-   VM_isInstanceOf,
    VM_isClassArray,
    VM_transformJlrMethodInvoke,
    VM_getStaticReferenceFieldAtAddress,
@@ -115,13 +106,8 @@ enum MessageType : uint16_t
    VM_getClassClassPointer,
    VM_setJ2IThunk,
    VM_getClassOfMethod,
-   VM_getBaseComponentClass,
-   VM_getLeafComponentClassFromArrayClass,
-   VM_isClassLoadedBySystemClassLoader,
    VM_getClassFromSignature,
    VM_jitFieldsOrStaticsAreSame,
-   VM_getComponentClassFromArrayClass,
-   VM_classHasBeenReplaced,
    VM_classHasBeenExtended,
    VM_compiledAsDLTBefore,
    VM_isThunkArchetype,
@@ -132,18 +118,12 @@ enum MessageType : uint16_t
    VM_getInitialLockword,
    VM_isString1,
    VM_getMethods,
-   VM_isPrimitiveArray,
-   VM_getAllocationSize,
    VM_getObjectClass,
+   VM_getObjectClassAt,
    VM_stackWalkerMaySkipFrames,
-   VM_hasFinalFieldsInClass,
-   VM_getClassNameSignatureFromMethod,
-   VM_getHostClass,
    VM_getStringUTF8Length,
    VM_classInitIsFinished,
    VM_getClassFromNewArrayType,
-   VM_isCloneable,
-   VM_canAllocateInlineClass,
    VM_getArrayClassFromComponentClass,
    VM_matchRAMclassFromROMclass,
    VM_getReferenceFieldAtAddress,
@@ -161,16 +141,14 @@ enum MessageType : uint16_t
    VM_scanReferenceSlotsInClassForOffset,
    VM_findFirstHotFieldTenuredClassOffset,
    VM_getResolvedVirtualMethod,
-   VM_sameClassLoaders,
-   VM_isUnloadAssumptionRequired,
    VM_getInstanceFieldOffset,
    VM_getJavaLangClassHashCode,
-   VM_hasFinalizer,
    VM_getClassDepthAndFlagsValue,
    VM_getMethodFromName,
    VM_getMethodFromClass,
    VM_isClassVisible,
    VM_markClassForTenuredAlignment,
+   VM_reportHotField,
    VM_getReferenceSlotsInClass,
    VM_getMethodSize,
    VM_addressOfFirstClassStatic,
@@ -178,7 +156,6 @@ enum MessageType : uint16_t
    VM_getInterpreterVTableSlot,
    VM_revertToInterpreted,
    VM_getLocationOfClassLoaderObjectPointer,
-   VM_isOwnableSyncClass,
    VM_getClassFromMethodBlock,
    VM_fetchMethodExtendedFlagsPointer,
    VM_stringEquals,
@@ -186,13 +163,11 @@ enum MessageType : uint16_t
    VM_getLineNumberForMethodAndByteCodeIndex,
    VM_getObjectNewInstanceImplMethod,
    VM_getBytecodePC,
-   VM_getClassFromStatic,
    VM_setInvokeExactJ2IThunk,
    VM_createMethodHandleArchetypeSpecimen,
    VM_instanceOfOrCheckCast,
    VM_getResolvedMethodsAndMirror,
    VM_getVMInfo,
-   VM_isAnonymousClass,
    VM_dereferenceStaticAddress,
    VM_getClassFromCP,
    VM_getROMMethodFromRAMMethod,
@@ -204,9 +179,19 @@ enum MessageType : uint16_t
    VM_getObjectSizeClass,
    VM_stackWalkerMaySkipFramesSVM,
    VM_getFields,
+   VM_increaseOSRGlobalBufferSize,
+   VM_targetMethodFromMemberName,
+   VM_targetMethodFromMethodHandle,
+   VM_getKnotIndexOfInvokeCacheArrayAppendixElement,
+   VM_targetMethodFromInvokeCacheArrayMemberNameObj,
+   VM_refineInvokeCacheElementSymRefWithKnownObjectIndex,
+   VM_isLambdaFormGeneratedMethod,
+   VM_vTableOrITableIndexFromMemberName,
+   VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex,
 
    // For static TR::CompilationInfo methods
-   CompInfo_isCompiled, // 171
+   CompInfo_isCompiled,
+   CompInfo_getPCIfCompiled,
    CompInfo_getInvocationCount,
    CompInfo_setInvocationCount,
    CompInfo_getJ9MethodExtra,
@@ -215,30 +200,26 @@ enum MessageType : uint16_t
    CompInfo_getMethodBytecodeSize,
    CompInfo_setJ9MethodExtra,
    CompInfo_setInvocationCountAtomic,
-   CompInfo_isClassSpecial,
    CompInfo_getJ9MethodStartPC,
 
    // For J9::ClassEnv Methods
-   ClassEnv_classFlagsValue, // 182
-   ClassEnv_classDepthOf,
-   ClassEnv_classInstanceSize,
+   ClassEnv_classFlagsValue,
    ClassEnv_superClassesOf,
    ClassEnv_indexedSuperClassOf,
    ClassEnv_iTableOf,
    ClassEnv_iTableNext,
    ClassEnv_iTableRomClass,
    ClassEnv_getITable,
-   ClassEnv_classHasIllegalStaticFinalFieldModification,
-   ClassEnv_getROMClassRefName,
+   ClassEnv_enumerateFields,
 
    // For TR_J9SharedCache
-   SharedCache_getClassChainOffsetInSharedCache, // 193
+   SharedCache_getClassChainOffsetInSharedCache,
    SharedCache_rememberClass,
    SharedCache_addHint,
    SharedCache_storeSharedData,
 
    // For runFEMacro
-   runFEMacro_invokeCollectHandleNumArgsToCollect, // 197
+   runFEMacro_invokeCollectHandleNumArgsToCollect,
    runFEMacro_invokeExplicitCastHandleConvertArgs,
    runFEMacro_targetTypeL,
    runFEMacro_invokeILGenMacrosInvokeExactAndFixup,
@@ -264,24 +245,18 @@ enum MessageType : uint16_t
    runFEMacro_invokeCollectHandleAllocateArray,
 
    // for JITServerPersistentCHTable
-   CHTable_getAllClassInfo, // 221
-   CHTable_getClassInfoUpdates,
-   CHTable_commit,
    CHTable_clearReservable,
 
    // for JITServerIProfiler
-   IProfiler_profilingSample, // 225
+   IProfiler_profilingSample,
    IProfiler_searchForMethodSample,
    IProfiler_getMaxCallCount,
    IProfiler_setCallCount,
 
-   Recompilation_getExistingMethodInfo, // 229
    Recompilation_getJittedBodyInfoFromPC,
 
-   ClassInfo_getRemoteROMString,
-
    // for KnownObjectTable
-   KnownObjectTable_getOrCreateIndex, // 232
+   KnownObjectTable_getOrCreateIndex,
    KnownObjectTable_getOrCreateIndexAt,
    KnownObjectTable_getPointer,
    KnownObjectTable_getExistingIndexAt,
@@ -295,15 +270,14 @@ enum MessageType : uint16_t
    KnownObjectTable_invokeDirectHandleDirectCall,
    KnownObjectTable_getKnownObjectTableDumpInfo,
 
-   ClassEnv_isClassRefValueType, // 244
+   ClassEnv_isClassRefValueType,
+
    MessageType_MAXTYPE
    };
 
-const int MessageType_ARRAYSIZE = MessageType_MAXTYPE;
-   
-static const char *messageNames[MessageType_ARRAYSIZE] =
+static const char *messageNames[] =
    {
-   "compilationCode", // 0
+   "compilationCode",
    "compilationFailure",
    "mirrorResolvedJ9Method",
    "get_params_to_construct_TR_j9method",
@@ -312,11 +286,8 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "compilationInterrupted",
    "clientSessionTerminate",
    "connectionTerminate",
-   "ResolvedMethod_isJNINative", // 9
-   "ResolvedMethod_isInterpreted",
    "ResolvedMethod_setRecognizedMethodInfo",
    "ResolvedMethod_startAddressForInterpreterOfJittedMethod",
-   "ResolvedMethod_jniNativeMethodProperties",
    "ResolvedMethod_staticAttributes",
    "ResolvedMethod_getClassFromConstantPool",
    "ResolvedMethod_getDeclaringClassFromFieldOrStatic",
@@ -325,11 +296,9 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ResolvedMethod_fieldAttributes",
    "ResolvedMethod_getResolvedStaticMethodAndMirror",
    "ResolvedMethod_getResolvedSpecialMethodAndMirror",
-   "ResolvedMethod_classCPIndexOfMethod",
    "ResolvedMethod_startAddressForJittedMethod",
    "ResolvedMethod_localName",
    "ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror",
-   "ResolvedMethod_virtualMethodIsOverridden",
    "ResolvedMethod_getResolvedInterfaceMethod_2",
    "ResolvedMethod_getResolvedInterfaceMethodAndMirror_3",
    "ResolvedMethod_getResolvedInterfaceMethodOffset",
@@ -337,8 +306,6 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ResolvedMethod_isSubjectToPhaseChange",
    "ResolvedMethod_getUnresolvedSpecialMethodInCP",
    "ResolvedMethod_getUnresolvedFieldInCP",
-   "ResolvedMethod_getRemoteROMString",
-   "ResolvedMethod_fieldOrStaticName",
    "ResolvedMethod_getRemoteROMClassAndMethods",
    "ResolvedMethod_getResolvedHandleMethod",
    "ResolvedMethod_isUnresolvedMethodTypeTableEntry",
@@ -353,10 +320,8 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ResolvedMethod_isInlineable",
    "ResolvedMethod_setWarmCallGraphTooBig",
    "ResolvedMethod_setVirtualMethodIsOverridden",
-   "ResolvedMethod_addressContainingIsOverriddenBit",
    "ResolvedMethod_methodIsNotzAAPEligible",
    "ResolvedMethod_setClassForNewInstance",
-   "ResolvedMethod_getJittedBodyInfo",
    "ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror",
    "ResolvedMethod_isUnresolvedString",
    "ResolvedMethod_stringConstant",
@@ -369,14 +334,13 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "ResolvedMethod_dynamicConstant",
    "ResolvedMethod_definingClassFromCPFieldRef",
    "ResolvedMethod_getResolvedImplementorMethods",
-   "ResolvedRelocatableMethod_createResolvedRelocatableJ9Method", // 66
+   "ResolvedMethod_isFieldFlattened",
+   "ResolvedRelocatableMethod_createResolvedRelocatableJ9Method",
    "ResolvedRelocatableMethod_fieldAttributes",
    "ResolvedRelocatableMethod_staticAttributes",
    "ResolvedRelocatableMethod_getFieldType",
-   "VM_isClassLibraryClass", // 70
+   "VM_isClassLibraryClass",
    "VM_isClassLibraryMethod",
-   "VM_getSuperClass",
-   "VM_isInstanceOf",
    "VM_isClassArray",
    "VM_transformJlrMethodInvoke",
    "VM_getStaticReferenceFieldAtAddress",
@@ -385,13 +349,8 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "VM_getClassClassPointer",
    "VM_setJ2IThunk",
    "VM_getClassOfMethod",
-   "VM_getBaseComponentClass",
-   "VM_getLeafComponentClassFromArrayClass",
-   "VM_isClassLoadedBySystemClassLoader",
    "VM_getClassFromSignature",
    "VM_jitFieldsOrStaticsAreSame",
-   "VM_getComponentClassFromArrayClass",
-   "VM_classHasBeenReplaced",
    "VM_classHasBeenExtended",
    "VM_compiledAsDLTBefore",
    "VM_isThunkArchetype",
@@ -402,18 +361,12 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "VM_getInitialLockword",
    "VM_isString1",
    "VM_getMethods",
-   "VM_isPrimitiveArray",
-   "VM_getAllocationSize",
    "VM_getObjectClass",
+   "VM_getObjectClassAt",
    "VM_stackWalkerMaySkipFrames",
-   "VM_hasFinalFieldsInClass",
-   "VM_getClassNameSignatureFromMethod",
-   "VM_getHostClass",
    "VM_getStringUTF8Length",
    "VM_classInitIsFinished",
    "VM_getClassFromNewArrayType",
-   "VM_isCloneable",
-   "VM_canAllocateInlineClass",
    "VM_getArrayClassFromComponentClass",
    "VM_matchRAMclassFromROMclass",
    "VM_getReferenceFieldAtAddress",
@@ -431,16 +384,14 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "VM_scanReferenceSlotsInClassForOffset",
    "VM_findFirstHotFieldTenuredClassOffset",
    "VM_getResolvedVirtualMethod",
-   "VM_sameClassLoaders",
-   "VM_isUnloadAssumptionRequired",
    "VM_getInstanceFieldOffset",
    "VM_getJavaLangClassHashCode",
-   "VM_hasFinalizer",
    "VM_getClassDepthAndFlagsValue",
    "VM_getMethodFromName",
    "VM_getMethodFromClass",
    "VM_isClassVisible",
    "VM_markClassForTenuredAlignment",
+   "VM_reportHotField",
    "VM_getReferenceSlotsInClass",
    "VM_getMethodSize",
    "VM_addressOfFirstClassStatic",
@@ -448,7 +399,6 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "VM_getInterpreterVTableSlot",
    "VM_revertToInterpreted",
    "VM_getLocationOfClassLoaderObjectPointer",
-   "VM_isOwnableSyncClass",
    "VM_getClassFromMethodBlock",
    "VM_fetchMethodExtendedFlagsPointer",
    "VM_stringEquals",
@@ -456,13 +406,11 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "VM_getLineNumberForMethodAndByteCodeIndex",
    "VM_getObjectNewInstanceImplMethod",
    "VM_getBytecodePC",
-   "VM_getClassFromStatic",
    "VM_setInvokeExactJ2IThunk",
    "VM_createMethodHandleArchetypeSpecimen",
    "VM_instanceOfOrCheckCast",
    "VM_getResolvedMethodsAndMirror",
    "VM_getVMInfo",
-   "VM_isAnonymousClass",
    "VM_dereferenceStaticAddress",
    "VM_getClassFromCP",
    "VM_getROMMethodFromRAMMethod",
@@ -474,7 +422,17 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "VM_getObjectSizeClass",
    "VM_stackWalkerMaySkipFramesSVM",
    "VM_getFields",
-   "CompInfo_isCompiled", // 171
+   "VM_increaseOSRGlobalBufferSize",
+   "VM_targetMethodFromMemberName",
+   "VM_targetMethodFromMethodHandle",
+   "VM_getKnotIndexOfInvokeCacheArrayAppendixElement",
+   "VM_targetMethodFromInvokeCacheArrayMemberNameObj",
+   "VM_refineInvokeCacheElementSymRefWithKnownObjectIndex",
+   "VM_isLambdaFormGeneratedMethod",
+   "VM_vTableOrITableIndexFromMemberName",
+   "VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex",
+   "CompInfo_isCompiled",
+   "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",
    "CompInfo_setInvocationCount",
    "CompInfo_getJ9MethodExtra",
@@ -483,24 +441,20 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "CompInfo_getMethodBytecodeSize",
    "CompInfo_setJ9MethodExtra",
    "CompInfo_setInvocationCountAtomic",
-   "CompInfo_isClassSpecial",
    "CompInfo_getJ9MethodStartPC",
-   "ClassEnv_classFlagsValue", // 182
-   "ClassEnv_classDepthOf",
-   "ClassEnv_classInstanceSize",
+   "ClassEnv_classFlagsValue",
    "ClassEnv_superClassesOf",
    "ClassEnv_indexedSuperClassOf",
    "ClassEnv_iTableOf",
    "ClassEnv_iTableNext",
    "ClassEnv_iTableRomClass",
    "ClassEnv_getITable",
-   "ClassEnv_classHasIllegalStaticFinalFieldModification",
-   "ClassEnv_getROMClassRefName",
-   "SharedCache_getClassChainOffsetInSharedCache", // 193
+   "ClassEnv_enumerateFields",
+   "SharedCache_getClassChainOffsetInSharedCache",
    "SharedCache_rememberClass",
    "SharedCache_addHint",
    "SharedCache_storeSharedData",
-   "runFEMacro_invokeCollectHandleNumArgsToCollect", // 197
+   "runFEMacro_invokeCollectHandleNumArgsToCollect",
    "runFEMacro_invokeExplicitCastHandleConvertArgs",
    "runFEMacro_targetTypeL",
    "runFEMacro_invokeILGenMacrosInvokeExactAndFixup",
@@ -524,18 +478,13 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition",
    "runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices",
    "runFEMacro_invokeCollectHandleAllocateArray",
-   "CHTable_getAllClassInfo", // 221
-   "CHTable_getClassInfoUpdates",
-   "CHTable_commit",
    "CHTable_clearReservable",
-   "IProfiler_profilingSample", // 225
+   "IProfiler_profilingSample",
    "IProfiler_searchForMethodSample",
    "IProfiler_getMaxCallCount",
    "IProfiler_setCallCount",
-   "Recompilation_getExistingMethodInfo", // 229
    "Recompilation_getJittedBodyInfoFromPC",
-   "ClassInfo_getRemoteROMString",
-   "KnownObjectTable_getOrCreateIndex", // 232
+   "KnownObjectTable_getOrCreateIndex",
    "KnownObjectTable_getOrCreateIndexAt",
    "KnownObjectTable_getPointer",
    "KnownObjectTable_getExistingIndexAt",
@@ -547,7 +496,12 @@ static const char *messageNames[MessageType_ARRAYSIZE] =
    "KnownObjectTable_getReferenceField",
    "KnownObjectTable_invokeDirectHandleDirectCall",
    "KnownObjectTable_getKnownObjectTableDumpInfo",
-   "ClassEnv_isClassRefValueType", // 244
+   "ClassEnv_isClassRefValueType",
    };
+
+   static_assert(sizeof(messageNames) / sizeof(messageNames[0]) == MessageType_MAXTYPE,
+                 "Invalid number of message type names: possibly missing a name for a newly added message");
+
    }; // namespace JITServer
+
 #endif // MESSAGE_TYPES_HPP

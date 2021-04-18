@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,9 +96,12 @@ public:
    StreamMessageTypeMismatch() : _message("JITServer/JITClient message type mismatch detected") { }
    StreamMessageTypeMismatch(MessageType serverType, MessageType clientType)
       {
-      _message = "JITServer expected message type " + std::to_string(serverType) + " received " + std::to_string(clientType);
+      const char *expectedName = (serverType < MessageType_MAXTYPE) ? messageNames[serverType] : "";
+      const char *receivedName = (clientType < MessageType_MAXTYPE) ? messageNames[clientType] : "";
+      _message = "JITServer expected message type " + std::to_string(serverType) + " " + expectedName +
+                 " received " + std::to_string(clientType) + " " + receivedName;
       }
-   virtual const char* what() const throw() 
+   virtual const char* what() const throw()
       {
       return _message.c_str();
       }

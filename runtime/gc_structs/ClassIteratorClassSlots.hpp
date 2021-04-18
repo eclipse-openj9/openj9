@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,8 @@
 #include "ClassSuperclassesIterator.hpp"
 #include "ClassLocalInterfaceIterator.hpp"
 #include "ClassArrayClassSlotIterator.hpp"
+#include "ClassFCCSlotIterator.hpp"
+#include "ClassModel.hpp"
 
 /**
  * State constants representing the current stage of the iteration process
@@ -48,6 +50,7 @@ enum {
 	classiteratorclassslots_state_superclasses,
 	classiteratorclassslots_state_interfaces,
 	classiteratorclassslots_state_array_class_slots,
+	classiteratorclassslots_state_flattened_class_cache_slots,
 	classiteratorclassslots_state_end
 };
 
@@ -62,6 +65,7 @@ enum {
 class GC_ClassIteratorClassSlots
 {
 protected:
+	const bool _shouldScanInterfaces;
 	J9Class *_clazzPtr;
 	int _state;
 
@@ -69,16 +73,19 @@ protected:
 	GC_ClassSuperclassesIterator _classSuperclassesIterator;
 	GC_ClassLocalInterfaceIterator _classLocalInterfaceIterator;
 	GC_ClassArrayClassSlotIterator _classArrayClassSlotIterator;
+	GC_ClassFCCSlotIterator _classFCCSlotIterator;
 
 public:
 
-	GC_ClassIteratorClassSlots(J9Class *clazz) :
+	GC_ClassIteratorClassSlots(J9JavaVM *vm, J9Class *clazz) :
+		_shouldScanInterfaces(!GC_ClassModel::usesSharedITable(vm, clazz)),
 		_clazzPtr(clazz),
 		_state(classiteratorclassslots_state_start),
 		_constantPoolClassSlotIterator(clazz),
 		_classSuperclassesIterator(clazz),
 		_classLocalInterfaceIterator(clazz),
-		_classArrayClassSlotIterator(clazz)
+		_classArrayClassSlotIterator(clazz),
+		_classFCCSlotIterator(clazz)
 	{}
 	
 	/**
@@ -107,13 +114,16 @@ public:
 			case classiteratorclassslots_state_array_class_slots:
 				return _classArrayClassSlotIterator.getIndex();
 				
+			case classiteratorclassslots_state_flattened_class_cache_slots:
+				return _classFCCSlotIterator.getIndex();
+
 			case classiteratorclassslots_state_interfaces:
 			default:
 				return -1;
 		}			
 	}
 	
-	J9Class **nextSlot();
+	J9Class *nextSlot();
 
 };
 

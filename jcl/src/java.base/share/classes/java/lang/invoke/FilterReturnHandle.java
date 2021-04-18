@@ -23,9 +23,9 @@
 package java.lang.invoke;
 
 import java.lang.invoke.MethodHandle.FrameIteratorSkip;
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 @VMCONSTANTPOOL_CLASS
 final class FilterReturnHandle extends ConvertHandle {
@@ -33,7 +33,7 @@ final class FilterReturnHandle extends ConvertHandle {
 	final MethodHandle filter;
 	
 	FilterReturnHandle(MethodHandle next, MethodHandle filter) {
-		super(next, next.type.changeReturnType(filter.type.returnType), KIND_FILTERRETURN, filter.type()); //$NON-NLS-1$
+		super(next, next.type.changeReturnType(filter.type.returnType()), KIND_FILTERRETURN, filter.type()); //$NON-NLS-1$
 		this.filter = filter;
 	}
 
@@ -70,15 +70,15 @@ final class FilterReturnHandle extends ConvertHandle {
 		return ILGenMacros.invokeExact_X(filter, ILGenMacros.invokeExact(next, argPlaceholder));
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		relatedMHs.add(filter);
 		return true;
 	}
-/*[ENDIF] Java15 */
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
 	// }}} JIT support
 
 	@Override
@@ -99,4 +99,3 @@ final class FilterReturnHandle extends ConvertHandle {
 		c.compareChildHandle(left.filter, this.filter);
 	}
 }
-

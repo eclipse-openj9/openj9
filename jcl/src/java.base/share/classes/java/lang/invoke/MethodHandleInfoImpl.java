@@ -129,16 +129,16 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 					// Method
 					} else if (isMethod()) { 
 						if (isPublic) {
-							result = defc.getMethod(getName(), getMethodType().arguments);
+							result = defc.getMethod(getName(), getMethodType().ptypes());
 						} else {
-							result = defc.getDeclaredMethod(getName(), getMethodType().arguments);
+							result = defc.getDeclaredMethod(getName(), getMethodType().ptypes());
 						}
 					// Constructor
 					} else if (isConstructor()) {
 						if (isPublic) {
-							result = defc.getConstructor(getMethodType().arguments);
+							result = defc.getConstructor(getMethodType().ptypes());
 						} else {
-							result = defc.getDeclaredConstructor(getMethodType().arguments);
+							result = defc.getDeclaredConstructor(getMethodType().ptypes());
 						}
 					}
 				} catch (NoSuchFieldException | NoSuchMethodException e) {

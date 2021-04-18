@@ -1,28 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
-package java.lang.ref;
-
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
-import com.ibm.oti.vm.VM;
-
-/*[IF Java12]*/
-import jdk.internal.access.JavaLangRefAccess;
-import jdk.internal.access.SharedSecrets;
-/*[ELSE]
-/*[IF Sidecar19-SE]
-import jdk.internal.misc.JavaLangRefAccess;
-import jdk.internal.misc.SharedSecrets;
-/*[ELSE]
-/*[IF Sidecar18-SE-OpenJ9]
-import sun.misc.JavaLangRefAccess;
-import sun.misc.SharedSecrets;
-/*[ENDIF]*/
-/*[ENDIF]*/
-/*[ENDIF]*/
-
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +20,28 @@ import sun.misc.SharedSecrets;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
- 
+package java.lang.ref;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
+import com.ibm.oti.vm.VM;
+
+/*[IF JAVA_SPEC_VERSION >= 12]*/
+import jdk.internal.access.JavaLangRefAccess;
+import jdk.internal.access.SharedSecrets;
+/*[ELSE] JAVA_SPEC_VERSION >= 12
+/*[IF Sidecar19-SE]
+import jdk.internal.misc.JavaLangRefAccess;
+import jdk.internal.misc.SharedSecrets;
+/*[ELSE]
+/*[IF Sidecar18-SE-OpenJ9]
+import sun.misc.JavaLangRefAccess;
+import sun.misc.SharedSecrets;
+/*[ENDIF]*/
+/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+
 /**
  * Abstract class which describes behavior common to all reference objects.
  *
@@ -74,11 +73,11 @@ public abstract class Reference<T> extends Object {
 				return waitForReferenceProcessingImpl();
 			}
 
-			/*[IF Java11]*/
+			/*[IF JAVA_SPEC_VERSION >= 11]*/
 			public void runFinalization() {
 				Finalizer.runFinalization();
 			}
-			/*[ENDIF]*/
+			/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		});
 	}
 	
@@ -164,7 +163,14 @@ private native T getImpl();
  * Return whether the reference object has been enqueued.
  *
  * @return	true if Reference has been enqueued, false otherwise.
- */	
+/*[IF JAVA_SPEC_VERSION >= 16]
+ * 
+ * @deprecated Use ReferenceQueue or Reference.refersTo(null).
+/*[ENDIF] JAVA_SPEC_VERSION >= 16
+ */
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+@Deprecated(since="16")
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 public boolean isEnqueued () {
 	synchronized(this) {
 		return state == STATE_ENQUEUED;
@@ -254,7 +260,7 @@ public static void reachabilityFence(java.lang.Object ref) {
 }
 /*[ENDIF]*/
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 /**
  * This method will always throw CloneNotSupportedException. A clone of this instance will not be returned 
  * since a Reference cannot be cloned. Workaround is to create a new Reference.
@@ -268,5 +274,17 @@ protected Object clone() throws CloneNotSupportedException {
 	/*[MSG "K0900", "Create a new Reference, since a Reference cannot be cloned."]*/
 	throw new CloneNotSupportedException(com.ibm.oti.util.Msg.getString("K0900")); //$NON-NLS-1$
 }
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+/**
+ * Does this object refer to {@code target}?
+ *
+ * @param target the candidate referent
+ * @return true if this object refers to {@code target}
+ * @since 16
+ */
+public final native boolean refersTo(T target);
+
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 }

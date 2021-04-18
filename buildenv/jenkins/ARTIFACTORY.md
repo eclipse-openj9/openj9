@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2019, 2020 IBM Corp. and others
+Copyright (c) 2019, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +21,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 # About
 Artifactory is a binary repository manager.
-Our server is being used to store the Jenkins artifacts between builds to save space on the Jenkins master. The artifacts will be kept for a period after the job in case someone needs to debug the build.
+Our server is being used to store the Jenkins artifacts between builds to save space on the Jenkins Manager node. The artifacts will be kept for a period after the job in case someone needs to debug the build.
 It is being hosted on the proxy worker machine and the current address is https://140-211-168-230-openstack.osuosl.org/artifactory/webapp/
 
 # Install Artifactory:
@@ -258,6 +258,17 @@ Create a curl wrapper to redirect OSU requests to UNB. Also strip off user info 
 /usr/local/bin/curl
 ```
 ```
+#!/bin/bash
+echo "Entering curl wrapper for UNB machines..."
+echo "Redirecting OSU artifactory artifactory downloads from UNB artifactory mirror"
+for var in "$@"
+do
+  if [[ $var = https* ]]
+  then
+    echo "Original parameter: $var"
+    echo "Modified to UNB mirror: `echo $var | sed 's#140-211-168-230-openstack.osuosl.org#192.168.10.216#'`"
+  fi
+done
 echo $@ | sed 's#--user .*:.* ##' | xargs /usr/bin/curl --resolve 140-211-168-230-openstack.osuosl.org:443:192.168.10.216
 ```
 

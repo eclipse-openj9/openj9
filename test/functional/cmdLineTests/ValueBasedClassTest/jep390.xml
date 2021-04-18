@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2021, 2021 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="Value based class tests" timeout="300">
+<!--   
+	This test is for the new command line options added in Java 16 and up by JEP390: Warnings for Value-Based Classes.
+	-XX:DiagnoseSyncOnValueBasedClasses=1 triggers a VirtualMachineError when synchronizing on a object that is value-based.
+	-XX:DiagnoseSyncOnValueBasedClasses=1 triggers a warning message when synchronizing on a object that is value-based.
+	This JEP is to prepare users for the upcoming value-types.
+ -->
+ 	<test id="Test 1-a Test no error warning or VirtualMachineError if neither of the new CML options is used when calling syncOnValueBasedClass()">
+		<command>$JAVA_EXE$ -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest VB</command>
+		<output regex="no" type="success">ValueBasedClassTest Exit</output> 
+		<output regex="no" type="required">Calling method syncOnValueBasedClass()</output>
+		<output type="failure" caseSensitive="no" regex="no">object that is synchronized is value-based</output>
+		<output type="failure" caseSensitive="no" regex="no">VirtualMachineError</output>
+		<output type="failure" caseSensitive="no" regex="no">ValueBasedClassTest.java</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 1-b Test no error warning or VirtualMachineError if neither of the new CML options is used when calling syncOnObject()">
+		<command>$JAVA_EXE$ -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest OBJ</command>
+		<output regex="no" type="success">ValueBasedClassTest Exit</output> 
+		<output regex="no" type="required">Calling method syncOnObject()</output>
+		<output type="failure" caseSensitive="no" regex="no">object that is synchronized is value-based</output>
+		<output type="failure" caseSensitive="no" regex="no">VirtualMachineError</output>
+		<output type="failure" caseSensitive="no" regex="no">ValueBasedClassTest.java</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+ 
+	<test id="Test 2-a Test error message when calling syncOnValueBasedClass()">
+		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValueBasedClasses=1 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest VB</command>
+		<output regex="no" type="success">Calling method syncOnValueBasedClass()</output> 
+		<output regex="no" type="required">VirtualMachineError: bad object type org/openj9/test/JEP390Test/ValueBasedClass: object that is synchronized is value-based</output>
+		<output regex="no" type="required">at org.openj9.test.JEP390Test.ValueBasedClassTest.syncOnValueBasedClass(ValueBasedClassTest.java:48)</output> 
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 2-b Test error message when calling syncOnObject()">
+		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValueBasedClasses=1 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest OBJ</command>
+		<output regex="no" type="success">Calling method syncOnObject()</output> 
+		<output regex="no" type="required">VirtualMachineError: bad object type org/openj9/test/JEP390Test/ValueBasedClass: object that is synchronized is value-based</output>
+		<output regex="no" type="required">at org.openj9.test.JEP390Test.ValueBasedClassTest.syncOnObject(ValueBasedClassTest.java:54)</output> 
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test 3-a Test warning message when calling syncOnValueBasedClass()">
+		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValueBasedClasses=2 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest VB</command>
+		<output regex="no" type="success">ValueBasedClassTest Exit</output> 
+		<output regex="no" type="required">Calling method syncOnValueBasedClass()</output>
+		<output regex="no" type="required">JVMJ9VM200W bad object type org/openj9/test/JEP390Test/ValueBasedClass: object that is synchronized is value-based</output>
+		<output type="failure" caseSensitive="no" regex="no">VirtualMachineError</output>
+		<output type="failure" caseSensitive="no" regex="no">ValueBasedClassTest.java</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 3-b Test warning message when calling syncOnObject()">
+		<command>$JAVA_EXE$ -XX:DiagnoseSyncOnValueBasedClasses=2 -cp $Q$$JARPATH$$Q$ org.openj9.test.JEP390Test.ValueBasedClassTest OBJ</command>
+		<output regex="no" type="success">ValueBasedClassTest Exit</output> 
+		<output regex="no" type="required">Calling method syncOnObject()</output>
+		<output regex="no" type="required">JVMJ9VM200W bad object type org/openj9/test/JEP390Test/ValueBasedClass: object that is synchronized is value-based</output>
+		<output type="failure" caseSensitive="no" regex="no">VirtualMachineError</output>
+		<output type="failure" caseSensitive="no" regex="no">ValueBasedClassTest.java</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+</suite>

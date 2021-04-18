@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
-	Copyright (c) 2016, 2020 IBM Corp. and others
+	Copyright (c) 2016, 2021 IBM Corp. and others
 
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +20,6 @@
 
 	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<!-- jit.test.jitt tests start here -->
 	<test>
@@ -46,11 +44,11 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>stringConcatOptTest</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
+			<variation>-XX:+CompactStrings</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xjit:count=1,disableAsyncCompilation,verbose,vlog=$(Q)$(REPORTDIR)$(D)jitv.log$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
@@ -69,7 +67,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_jitt</testCaseName>
 		<variations>
@@ -117,7 +114,31 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
+	<test>
+		<testCaseName>jit_jitt_array</testCaseName>
+		<variations>
+			<variation>-Xjit:count=0</variation>
+			<variation>-Xjit:disableAsyncCompilation,count=1</variation>
+		</variations>
+		<command> $(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	arrayTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 	<test>
 		<testCaseName>jit_compareAndBranch</testCaseName>
 		<variations>
@@ -142,7 +163,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_jitt_openj9_none_SCC</testCaseName>
 		<variations>
@@ -189,7 +209,6 @@
 			<impl>openj9</impl>
 		</impls>
 	</test>
-	
 	<test>
 		<testCaseName>jit_jitt_none_SCC</testCaseName>
 		<variations>
@@ -232,14 +251,13 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_jitt_XCEEHDLR</testCaseName>
 		<variations>
@@ -288,7 +306,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.jar tests start here -->
 	<test>
 		<testCaseName>jit_jar</testCaseName>
@@ -314,7 +331,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.tr start here -->
 	<test>
 		<testCaseName>jit_tr</testCaseName>
@@ -357,7 +373,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>StringPeepholeTest</testCaseName>
 		<variations>
@@ -383,7 +398,31 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
+	<test>
+		<testCaseName>SIMDCommonedAddressTest</testCaseName>
+		<variations>
+			<variation>-Xjit:count=50,limit={*testSIMDCommonedAddress*},optLevel=scorching,disableAsyncCompilation</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+        -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+        org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+        -testnames \
+        SIMDCommonedAddressTest \
+        -groups $(TEST_GROUP) \
+        -excludegroups $(DEFAULT_EXCLUDE); \
+        $(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<aot>nonapplicable</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 	<test>
 		<testCaseName>SIMDOptTest</testCaseName>
 		<variations>
@@ -409,7 +448,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.hw tests start here -->
 	<test>
 		<testCaseName>jit_hw</testCaseName>
@@ -438,11 +476,10 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jit_hwWarm</testCaseName>
 		<variations>
-			<variation>-Xdump:java -Xjit:optlevel=warm,count=0</variation>
+			<variation>Mode110 -Xdump:java -Xjit:optlevel=warm,count=0</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
@@ -452,7 +489,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<platformRequirements>os.linux,^vm.cmprssptrs,^arch.arm</platformRequirements>
+		<platformRequirements>os.linux,^arch.arm</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -464,7 +501,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.ra tests start here -->
 	<test>
 		<testCaseName>jit_ra</testCaseName>
@@ -493,7 +529,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- jit.test.vich tests start here -->
 	<test>
 		<testCaseName>jit_vich</testCaseName>
@@ -540,13 +575,13 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
-<!-- jit.test.recognizedMethod tests start here -->
+	<!-- jit.test.recognizedMethod tests start here -->
 	<test>
 		<testCaseName>jit_recognizedMethod</testCaseName>
 		<variations>
 			<variation>-Xint</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
@@ -567,14 +602,13 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!-- JITServer tests start here. -->
 	<test>
 		<testCaseName>testJITServer</testCaseName>
 		<!-- Variations are passed to the client via the CLIENT_PROGRAM property from $JVM_OPTIONS; neither the test harness nor the server care about these. -->
 		<variations>
-			<variation>NoOptions</variation>
-			<variation>-Xshareclasses:none -Xjit:optLevel=hot</variation>
+			<variation>Mode610</variation>
+			<variation>Mode610 -Xshareclasses:none -Xjit:optLevel=hot</variation>
 		</variations>
 		<!-- Check if the JITServer launcher exists and if so start the test and
 			 - specify the executables for the client and server via the CLIENT_EXE and SERVER_EXE properties respectively,
@@ -598,7 +632,7 @@
 		echo $(Q)$(TEST_JDK_BIN)$(D)jitserver doesn't exist; assuming this JDK does not support JITServer and trivially passing the test.$(Q); \
 	fi; \
 	$(TEST_STATUS)</command>
-		<platformRequirements>os.linux,arch.x86,bits.64,vm.cmprssptrs</platformRequirements>
+		<platformRequirements>os.linux,^arch.arm,^arch.aarch64,^arch.s390x,bits.64</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>

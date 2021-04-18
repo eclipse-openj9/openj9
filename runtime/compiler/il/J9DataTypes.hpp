@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,7 +187,7 @@ public:
    static inline int32_t getUnicodeSignSize()    { return 2; }
    static inline int32_t getUnicodeElementSize() { return 2; }
 
-   static inline int32_t getBCDSignCharSize() { return 1; } // one byte for leading leading +/-/u char
+   static inline int32_t getBCDSignCharSize() { return 1; } // one byte for leading +/-/u char
    static inline int32_t getBCDStrlen()       { return TR_MAX_DECIMAL_PRECISION + J9::DataType::getBCDSignCharSize() + 1; }
                                                 // +1 for sign, +1 for terminating null -- for pretty printed string e.g. "+1234"
 

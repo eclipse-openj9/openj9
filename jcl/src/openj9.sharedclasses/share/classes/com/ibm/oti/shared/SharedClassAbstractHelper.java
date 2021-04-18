@@ -12,7 +12,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ import java.security.PrivilegedAction;
 
 /**
  * SharedClassAbstractHelper provides common functions and data to class helper subclasses.
- * <p>
+ *
  * @see SharedClassHelper
  * @see SharedAbstractHelper
  */

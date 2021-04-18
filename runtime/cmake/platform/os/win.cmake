@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2020, 2020 IBM Corp. and others
+# Copyright (c) 2020, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,4 +31,23 @@ if(OMR_ENV_DATA64)
         -DWIN64
         -D_WIN64
     )
+endif()
+list(APPEND OMR_PLATFORM_DEFINITIONS -DWINDOWS)
+
+# Set flags we use to build the interpreter
+omr_stringify(CMAKE_J9VM_CXX_FLAGS
+    -O3
+    -fno-rtti
+    -fno-threadsafe-statics
+    -fno-strict-aliasing
+    -fno-exceptions
+    -fno-asynchronous-unwind-tables
+    -std=c++0x
+    -D_CRT_SUPPRESS_RESTRICT
+    -DVS12AndHigher
+    ${OMR_PLATFORM_DEFINITIONS}
+)
+
+if(OMR_ENV_DATA32)
+    set(CMAKE_J9VM_CXX_FLAGS "${CMAKE_J9VM_CXX_FLAGS} -m32")
 endif()

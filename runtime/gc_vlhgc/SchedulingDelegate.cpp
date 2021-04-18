@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -412,16 +412,25 @@ void
 MM_SchedulingDelegate::measureScanRate(MM_EnvironmentVLHGC *env, double historicWeight)
 {
 	Trc_MM_SchedulingDelegate_measureScanRate_Entry(env->getLanguageVMThread(), env->_cycleState->_collectionType);
-	MM_MarkVLHGCStats *markStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats;
-	
-	UDATA currentBytesScanned = markStats->_bytesScanned + markStats->_bytesCardClean;
+	UDATA currentBytesScanned = 0;
+	U_64 scantime = 0;
+	if (env->_cycleState->_collectionType == MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION) {
+		/* mark/compact PGC has been replaced with CopyForwardHybrid collector, so retrieve scan stats from  */
+		MM_CopyForwardStats *copyforwardStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats;
+		currentBytesScanned = copyforwardStats->_scanBytesTotal + copyforwardStats->_bytesCardClean;
+		scantime = copyforwardStats->_endTime - copyforwardStats->_startTime;
+	} else {
+		MM_MarkVLHGCStats *markStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats;
+		currentBytesScanned = markStats->_bytesScanned + markStats->_bytesCardClean;
+		scantime = markStats->getScanTime();
+	}
 
 	if (0 != currentBytesScanned) {
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
 		UDATA historicalBytesScanned = _scanRateStats.historicalBytesScanned;
 		U_64 historicalScanMicroseconds = _scanRateStats.historicalScanMicroseconds;
 		/* NOTE: scan time is the total time all threads spent scanning */
-		U_64 currentScanMicroseconds = j9time_hires_delta(0, markStats->getScanTime(), J9PORT_TIME_DELTA_IN_MICROSECONDS);
+		U_64 currentScanMicroseconds = j9time_hires_delta(0, scantime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
 
 		if (0 != historicalBytesScanned) {
 			/* Keep a historical count of bytes scanned and scan times and re-derive microsecondsperBytes every time we receive new data */
@@ -783,7 +792,7 @@ MM_SchedulingDelegate::calculatePGCCompactionRate(MM_EnvironmentVLHGC *env, UDAT
 			Assert_MM_true(region->_sweepData._alreadySwept);
 			UDATA freeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
 			if (!region->getRememberedSetCardList()->isAccurate()) {
-				/* Overflowed regions or those that RSCL is being rebuilt will not be be compacted */
+				/* Overflowed regions or those that RSCL is being rebuilt will not be compacted */
 				nonCollectibleRegions += 1;
 				freeMemoryInNonCollectibleRegions += freeMemory;
 				totalLiveDataInNonCollectibleRegions += (regionSize - freeMemory);

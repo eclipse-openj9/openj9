@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,8 +29,18 @@
 static UDATA getOwnedObjectMonitorsIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
 static UDATA walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkState);
 static IDATA getJNIMonitors(J9VMThread *currentThread, J9VMThread *targetThread, J9ObjectMonitorInfo *minfoStart, J9ObjectMonitorInfo *minfoEnd);
-static IDATA countMonitorEnterRecords(J9VMThread *targetThread);
+static IDATA countMonitorEnterRecords(J9VMThread *currentThread, J9VMThread *targetThread);
 
+
+BOOLEAN
+objectIsBeingWaitedOn(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t obj)
+{
+	BOOLEAN rc = FALSE;
+	if (J9_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_THREAD_WAITING)) {
+		rc = (obj == J9VMTHREAD_BLOCKINGENTEROBJECT(currentThread, targetThread));
+	}
+	return rc;
+}
 
 /**
  * Get the object monitors owned by a thread
@@ -89,7 +99,7 @@ getOwnedObjectMonitors(J9VMThread *currentThread, J9VMThread *targetThread,
 		if (rc < 0) {
 			return J9_GETOWNEDMONITORS_ERROR;
 		}
-		rc += countMonitorEnterRecords(targetThread);
+		rc += countMonitorEnterRecords(currentThread, targetThread);
 	} else {
 		getJNIMonitors(currentThread, targetThread, walkState.userData1, walkState.userData2);
 		rc = infoLen;
@@ -136,8 +146,8 @@ walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkSt
 	J9ObjectMonitorInfo *lastInfo = walkState->userData2;
 	U_32 modifiers;
 	UDATA *frameID;
-	
 	IDATA monitorCount = (IDATA)walkState->userData2;
+	J9VMThread *targetThread = walkState->walkThread;
 
 	/*
 	 * Walk the monitor enter records from this frame and
@@ -154,8 +164,9 @@ walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkSt
 	while (monitorEnterRecords &&
 			(frameID == CONVERT_FROM_RELATIVE_STACK_OFFSET(walkState->walkThread, monitorEnterRecords->arg0EA))
 		) {
+		j9object_t obj = monitorEnterRecords->object;
 		/* Do not report monitors for stack allocated objects */
-		if (!isObjectStackAllocated(walkState->walkThread, monitorEnterRecords->object)) {
+		if (!(isObjectStackAllocated(targetThread, obj) || objectIsBeingWaitedOn(currentThread, targetThread, obj))) {
 			if (NULL == info) {
 				++monitorCount;
 			} else {
@@ -163,7 +174,7 @@ walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkSt
 					/* Don't overflow the MonitorInfo array */
 					return J9_STACKWALK_STOP_ITERATING;
 				}
-				info->object = monitorEnterRecords->object;
+				info->object = obj;
 				info->count = monitorEnterRecords->dropEnterCount;
 				info->depth = (IDATA) walkState->userData4;
 				info++;
@@ -192,7 +203,7 @@ walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkSt
 		}
 
 		/* Do not report monitors for stack allocated objects */
-		if ((!isObjectStackAllocated(walkState->walkThread, syncObject))) {
+		if (!(isObjectStackAllocated(targetThread, syncObject) || objectIsBeingWaitedOn(currentThread, targetThread, syncObject))) {
 			if (NULL == info) {
 				++monitorCount;
 			} else {
@@ -227,12 +238,14 @@ getJNIMonitors(J9VMThread *currentThread, J9VMThread *targetThread, J9ObjectMoni
 
 	enterRecord = targetThread->jniMonitorEnterRecords;
 	while (enterRecord != NULL) {
+		j9object_t obj = enterRecord->object;
+
 		if (minfo > lastInfo) {
 			/* Don't overflow the MonitorInfo array */
 			return count;
 		}
 		/* Do not report monitors for stack allocated objects */
-		if (!isObjectStackAllocated(targetThread, enterRecord->object)) {
+		if (!(isObjectStackAllocated(targetThread, obj) || objectIsBeingWaitedOn(currentThread, targetThread, obj))) {
 			minfo->object = enterRecord->object;
 			minfo->count = enterRecord->dropEnterCount;
 			minfo->depth = 0;
@@ -250,13 +263,15 @@ getJNIMonitors(J9VMThread *currentThread, J9VMThread *targetThread, J9ObjectMoni
  * >=0 - number of records in list
  */
 static IDATA
-countMonitorEnterRecords(J9VMThread *targetThread)
+countMonitorEnterRecords(J9VMThread *currentThread, J9VMThread *targetThread)
 {
 	IDATA count = 0;
 	J9MonitorEnterRecord *rec = targetThread->jniMonitorEnterRecords;
 
 	while (rec != NULL) {
-		if (!isObjectStackAllocated(targetThread, rec->object)) {
+		j9object_t obj = rec->object;
+
+		if (!(isObjectStackAllocated(targetThread, obj) || objectIsBeingWaitedOn(currentThread, targetThread, obj))) {
 			++count;
 		}
 		rec = rec->next;

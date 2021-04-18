@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,11 +51,34 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
 
    uint32_t getSeqNo() const { return _seqNo; }; // For ordering requests at the server
    void setSeqNo(uint32_t seqNo) { _seqNo = seqNo; }
-   void updateSeqNo(ClientSessionData *clientSession);
+   uint32_t getExpectedSeqNo() const { return _expectedSeqNo; }
+   void setExpectedSeqNo(uint32_t seqNo) { _expectedSeqNo = seqNo; }
 
+   void notifyAndDetachWaitingRequests(ClientSessionData *clientSession);
    void waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry); // Return false if timeout
    bool getWaitToBeNotified() const { return _waitToBeNotified; }
    void setWaitToBeNotified(bool b) { _waitToBeNotified = b; }
+
+   void copyClientOptions(const std::string &clientOptStr, TR_PersistentMemory *persistentMemory)
+      {
+      size_t clientOptSize = clientOptStr.size();
+      _clientOptionsSize = clientOptSize;
+      _clientOptions = new (persistentMemory->_persistentAllocator.get()) char[clientOptSize];
+      memcpy(_clientOptions, clientOptStr.data(), clientOptSize);
+      }
+
+   void deleteClientOptions(TR_PersistentMemory *persistentMemory)
+      {
+      if (_clientOptions)
+         {
+         persistentMemory->freePersistentMemory(_clientOptions);
+         _clientOptions = NULL;
+         _clientOptionsSize = 0;
+         }
+      }
+
+   char *getClientOptions() { return _clientOptions; }
+   size_t getClientOptionsSize() { return _clientOptionsSize; }
 
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
@@ -138,7 +161,10 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
 
    TR_PersistentMethodInfo *_recompilationMethodInfo;
    uint32_t _seqNo;
+   uint32_t _expectedSeqNo; // this request is allowed to go if _expectedSeqNo is processed
    bool _waitToBeNotified; // accessed with clientSession->_sequencingMonitor in hand
+   char *_clientOptions;
+   size_t _clientOptionsSize;
    IPTableHeap_t *_methodIPDataPerComp;
    TR_ResolvedMethodInfoCache *_resolvedMethodInfoMap;
    ResolvedMirrorMethodsPersistIP_t *_resolvedMirrorMethodsPersistIPInfo; //list of mirrors of resolved methods for persisting IProfiler info

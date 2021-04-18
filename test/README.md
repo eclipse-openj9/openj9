@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2020 IBM Corp. and others
+Copyright (c) 2016, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ By default, `make compile` compiles all tests. This is the safest way
 to ensure all the test code needed has been compiled. However, there is a
 way to shortcut the compilation process to reduce compilation time. If
 `BUILD_LIST` is set, `make compile` will only compile the folder names
-names that match within `BUILD_LIST`.
+that match within `BUILD_LIST`.
 
 ```
     export BUILD_LIST=functional/TestUtilities,functional/Java8andUp
@@ -84,21 +84,31 @@ that describes how to add container-based 3rd party application tests
 automated test builds at the AdoptOpenJDK project.
 
 ## 3) How to disable a test?
-In playlist.xml, to disable a test target, add
+
+- In playlist.xml, to disable a test target, add
 
  ```
-    <disabled>Reason for disabling test, should include issue number</disabled>
+    <disabled>
+        <comment>issue url or issue comment url</comment>
+    </disabled>
  ```
 
 inside the `<test>` element that you want to disable.
 
-- Disable an individual test class
-    - testNG test
+- auto exclusion
+Instead of having to manually create a PR to disable test targets, they can now be automatically disabled via Github workflow (see autoTestPR.yml). In the issue that describes the test failure, add a comment with the following format:
+
+```auto exclude test <testName>```
+
+- more granular exclusion for testNG test
+
 add a line to `TestConfig/resources/excludes/latest_exclude_$(JDK_VERSION).txt`
  file with issue number and specific specs to disable
 ```
     org.openj9.test.java.lang.management.TestOperatingSystemMXBean 123 linux_x86-64
 ```
+
+Please read [Configure environment](./docs/OpenJ9TestUserGuide.md#5-exclude-tests) for details and examples. 
 
 ## 4) How to execute a different group of tests?
 

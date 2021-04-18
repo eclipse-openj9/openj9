@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,7 +201,7 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 		}
 
 		if (doVisibilityCheck) {
-			IDATA checkResult = checkVisibility(currentThread, senderClass, methodClass, newModifiers, lookupOptions);
+			IDATA checkResult = checkVisibility(currentThread, senderClass, methodClass, newModifiers, lookupOptions | J9_LOOK_NO_MODULE_CHECKS);
 			if (checkResult < J9_VISIBILITY_ALLOWED) {
 				*exception = J9VMCONSTANTPOOL_JAVALANGILLEGALACCESSERROR;
 				*exceptionClass = methodClass;
@@ -1016,10 +1016,8 @@ getModuleNameUTF(J9VMThread *currentThread, j9object_t	moduleObject, char *buffe
 		nameBuffer = buffer;
 #undef	UNNAMED_MODULE
 	} else {
-#define NAMED_MODULE   "module "
 		nameBuffer = copyStringToUTF8WithMemAlloc(
-			currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, NAMED_MODULE, strlen(NAMED_MODULE), buffer, bufferLength, NULL);
-#undef	NAMED_MODULE
+			currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, buffer, bufferLength, NULL);
 	}
 	return nameBuffer;
 }

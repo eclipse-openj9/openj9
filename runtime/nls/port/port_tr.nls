@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -314,7 +314,7 @@ J9NLS_PORT_FILE_OPEN_FILE_IS_DIR.user_response=Contact your service representati
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION=Ge\u00e7ersiz bellek koruma de\u011fi\u015ftirgesi nedeniyle mmap ba\u015far\u0131s\u0131z oldu.
+J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION=Ge\u00e7ersiz bellek koruma parametresi nedeniyle mmap ba\u015far\u0131s\u0131z oldu.
 # START NON-TRANSLATABLE
 J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.explanation=Invalid value for memory protection parameter.
 J9NLS_PORT_MMAP_INVALID_MEMORY_PROTECTION.system_action=This will effect the normal operation of JVM, possibly resulting in failure to load one or more library.

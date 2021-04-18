@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2020 IBM Corp. and others
+ * Copyright (c) 2010, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,13 +26,12 @@ import java.util.HashMap;
 
 import com.ibm.j9ddr.vm29.structure.DDRAlgorithmVersions;
 
-public class AlgorithmVersion {
+public final class AlgorithmVersion {
 	// VM Version constants
 	private static final String VM_MAJOR_VERSION = "VM_MAJOR_VERSION";
 	private static final String VM_MINOR_VERSION = "VM_MINOR_VERSION";
-	
-	// ALgorithm version constants
-	
+
+	// Algorithm version constants
 	public static final String AVL_TREE_VERSION = "ALG_AVL_TREE_VERSION";
 	public static final String DEBUG_LOCAL_MAP_VERSION = "ALG_DEBUG_LOCAL_MAP_VERSION";
 	public static final String HASH_TABLE_VERSION = "VM_HASHTABLE_VERSION";
@@ -52,7 +51,7 @@ public class AlgorithmVersion {
 	public static final String VTABLE_VERSION = "ALG_VM_VTABLE_VERSION";
 	public static final String ITABLE_VERSION = "ALG_VM_ITABLE_VERSION";
 	public static final String BYTECODE_VERSION = "ALG_VM_BYTECODE_VERSION";
-	
+
 	public static final String GC_ARRAYLET_OBJECT_MODEL_VERSION = "ALG_GC_ARRAYLET_OBJECT_MODEL_VERSION";
 	public static final String GC_CLASS_MODEL_VERSION = "ALG_GC_CLASS_MODEL_VERSION";
 	public static final String GC_CONTIGUOUS_ARRAY_OBJECT_MODEL_VERSION = "ALG_GC_CONTIGUOUS_ARRAY_OBJECT_MODEL_VERSION";
@@ -73,90 +72,77 @@ public class AlgorithmVersion {
 
 	public static final String MIXED_REFERENCE_MODE = "MIXED_REFERENCE_MODE";
 
+	public static final String JAVA_LANG_STRING_VERSION = "ALG_VM_JAVA_LANG_STRING_VERSION";
+
 	// Fields
 	private static AlgorithmVersion DEFAULT_VERSION;
 	private static int vmMajorVersion;
 	private static int vmMinorVersion;
 	private static HashMap<String, AlgorithmVersion> versionCache;
-	private int algVersion;
-	
+	private final int algVersion;
+
 	// Nobody instantiates this Class.  Used by getVersionOf(String)
 	private AlgorithmVersion(int version) {
 		super();
 		this.algVersion = version;
 	}
-	
-	public static AlgorithmVersion getVersionOf(String algorithmID) {
-		if (versionCache == null) {
-			init();
-		}
 
-		AlgorithmVersion result = versionCache.get(algorithmID);
-		if (result == null) {
-			return DEFAULT_VERSION;
-		}
-		return result;
+	public static AlgorithmVersion getVersionOf(String algorithmID) {
+		init();
+		return versionCache.getOrDefault(algorithmID, DEFAULT_VERSION);
 	}
-	
+
 	// Read the blob constants and cache
 	private static void init() {
-		versionCache = new HashMap<String, AlgorithmVersion>();
+		if (versionCache != null) {
+			return;
+		}
+
+		// apply defaults
+		DEFAULT_VERSION = new AlgorithmVersion(0);
+		vmMajorVersion = 2;
+		vmMinorVersion = 30;
+
+		versionCache = new HashMap<>();
 		try {
 			Field[] fields = DDRAlgorithmVersions.class.getFields();
 			for (Field field : fields) {
 				if (field.getType().equals(Long.TYPE)) {
 					String fieldName = field.getName();
-					long value = field.getLong(null);
+					int value = (int) field.getLong(null);
 					if (fieldName.equals(VM_MAJOR_VERSION)) {
-						vmMajorVersion = (int) value;
+						vmMajorVersion = value;
 					} else if (fieldName.equals(VM_MINOR_VERSION)) {
-						vmMinorVersion = (int) value;
+						vmMinorVersion = value;
 					} else {
-						AlgorithmVersion version = new AlgorithmVersion((int) value);
-						versionCache.put(field.getName(), version);
+						versionCache.put(fieldName, new AlgorithmVersion(value));
 					}
 				}
 			}
-		} catch (IllegalArgumentException e) {
-			// Ignore
-		} catch (IllegalAccessException e) {
-			// Ignore
-		} catch (NoClassDefFoundError e) {
-			vmMajorVersion = 2;
-			vmMinorVersion = 30;
+		} catch (IllegalAccessException | IllegalArgumentException | NoClassDefFoundError e) {
+			// ignore
 		}
-		
-		// Create a default version to return
-		DEFAULT_VERSION = new AlgorithmVersion(0);
 	}
 
 	// VM Versions are constant for all algorithms in a particular VM
 	public static int getVMMajorVersion() {
-		if (versionCache == null) {
-			init();
-		}
-		
+		init();
 		return vmMajorVersion;
 	}
 
 	// VM Versions are constant for all algorithms in a particular VM
 	public static int getVMMinorVersion() {
-		if (versionCache == null) {
-			init();
-		}
-		
+		init();
 		return vmMinorVersion;
 	}
-	
+
 	public int getAlgorithmVersion() {
 		return algVersion;
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return "AlgorithmVersion. VM: " + getVMMajorVersion() + "." + getVMMinorVersion() + " algorithm version: " + getAlgorithmVersion();
 	}
-	
-	
+
 }

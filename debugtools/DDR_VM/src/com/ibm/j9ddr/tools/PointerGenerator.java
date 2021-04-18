@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ import static com.ibm.j9ddr.StructureTypeManager.TYPE_ENUM_POINTER;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_FJ9OBJECT;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_FJ9OBJECT_POINTER;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_FLOAT;
+import static com.ibm.j9ddr.StructureTypeManager.TYPE_IDATA;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_J9OBJECTCLASS;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_J9OBJECTCLASS_POINTER;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_J9OBJECTMONITOR;
@@ -43,6 +44,7 @@ import static com.ibm.j9ddr.StructureTypeManager.TYPE_SIMPLE_MAX;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_SIMPLE_MIN;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_STRUCTURE;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_STRUCTURE_POINTER;
+import static com.ibm.j9ddr.StructureTypeManager.TYPE_UDATA;
 import static com.ibm.j9ddr.StructureTypeManager.TYPE_VOID;
 import static com.ibm.j9ddr.StructureTypeManager.simpleTypeAccessorMap;
 
@@ -64,7 +66,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,7 +73,6 @@ import java.util.regex.Pattern;
 import com.ibm.j9ddr.BytecodeGenerator;
 import com.ibm.j9ddr.CTypeParser;
 import com.ibm.j9ddr.StructureReader;
-import com.ibm.j9ddr.StructureReader.ConstantDescriptor;
 import com.ibm.j9ddr.StructureReader.FieldDescriptor;
 import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 import com.ibm.j9ddr.StructureTypeManager;
@@ -97,6 +97,7 @@ public class PointerGenerator {
 	File outputDirHelpers;
 	private boolean cacheClass = false;
 	private boolean cacheFields = false;
+	private boolean generalizeSimpleTypes = false;
 	private Properties cacheProperties = null;
 
 	private StructureTypeManager typeManager;
@@ -107,11 +108,11 @@ public class PointerGenerator {
 		opts.put("-o", null);
 		opts.put("-f", null);
 		opts.put("-v", null);
-		opts.put("-s", null);  		// superset filename
-		opts.put("-h", null);		// helper class location - optional
-		opts.put("-u", "true");		// flag to control if user code is supported or not, default is true
-		opts.put("-c", "");			// optional value to provide a cache properties file
-		opts.put("-l", "false");	// flag to determine if legacy DDR is used, default is false
+		opts.put("-s", null);    // superset filename
+		opts.put("-h", null);    // helper class location - optional
+		opts.put("-u", "true");  // flag to control if user code is supported or not, default is true
+		opts.put("-c", "");      // optional value to provide a cache properties file
+		opts.put("-l", "false"); // flag to determine if legacy DDR is used, default is false
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -134,9 +135,9 @@ public class PointerGenerator {
 			J9DDRStructureStore store = new J9DDRStructureStore(fileName, supersetFileName);
 			System.out.println("superset directory name : " + fileName);
 			System.out.println("superset file name : " + store.getSuperSetFileName());
-			InputStream inputStream = store.getSuperset();
-			structureReader = new StructureReader(inputStream);
-			inputStream.close();
+			try (InputStream inputStream = store.getSuperset()) {
+				structureReader = new StructureReader(inputStream);
+			}
 		} catch (IOException e) {
 			errorCount += 1;
 			System.out.println("Problem with file: " + fileName);
@@ -182,38 +183,38 @@ public class PointerGenerator {
 		if (javaFile.exists()) {
 			length = (int) javaFile.length();
 			original = new byte[length];
-			FileInputStream fis = new FileInputStream(javaFile);
-			fis.read(original);
-			fis.close();
+			try (FileInputStream fis = new FileInputStream(javaFile)) {
+				fis.read(original);
+			}
 		}
 
 		ByteArrayOutputStream newContents = new ByteArrayOutputStream(length);
-		PrintWriter writer = new PrintWriter(newContents);
-		String className = structure.getName();
-		Map<String, String> constants = BytecodeGenerator.getConstantsAndAliases(structure);
+		try (PrintWriter writer = new PrintWriter(newContents)) {
+			String className = structure.getName();
+			Map<String, String> constants = BytecodeGenerator.getConstantsAndAliases(structure);
 
-		writeCopyright(writer);
-		writer.format("package %s;%n", opts.get("-p"));
-		writeBuildFlagImports(writer);
-		writer.println();
-		writeClassComment(writer, className);
-		writer.format("public final class %s {%n", className);
-		writer.println();
-		writer.println("\t// Do not instantiate constant classes");
-		writer.format("\tprivate %s() {%n", className);
-		writer.format("\t}%n");
-		writer.println();
-		writeBuildFlags(writer, constants.keySet());
-		writer.println();
-		writeBuildFlagsStaticInitializer(writer, className, constants);
-		writer.println("}");
-		writer.close();
+			writeCopyright(writer);
+			writer.format("package %s;%n", opts.get("-p"));
+			writeBuildFlagImports(writer);
+			writer.println();
+			writeClassComment(writer, className);
+			writer.format("public final class %s {%n", className);
+			writer.println();
+			writer.println("\t// Do not instantiate constant classes");
+			writer.format("\tprivate %s() {%n", className);
+			writer.format("\t}%n");
+			writer.println();
+			writeBuildFlags(writer, constants.keySet());
+			writer.println();
+			writeBuildFlagsStaticInitializer(writer, className, constants);
+			writer.println("}");
+		}
 
 		byte[] newContentsBytes = newContents.toByteArray();
 		if (null == original || !Arrays.equals(original, newContentsBytes)) {
-			FileOutputStream fos = new FileOutputStream(javaFile);
-			fos.write(newContentsBytes);
-			fos.close();
+			try (FileOutputStream fos = new FileOutputStream(javaFile)) {
+				fos.write(newContentsBytes);
+			}
 		}
 	}
 
@@ -275,83 +276,83 @@ public class PointerGenerator {
 		if (javaFile.exists()) {
 			length = (int) javaFile.length();
 			original = new byte[length];
-			FileInputStream fis = new FileInputStream(javaFile);
-			fis.read(original);
-			fis.close();
+			try (FileInputStream fis = new FileInputStream(javaFile)) {
+				fis.read(original);
+			}
 		}
 
 		ByteArrayOutputStream newContents = new ByteArrayOutputStream(length);
-		PrintWriter writer = new PrintWriter(newContents);
-		writeCopyright(writer);
-		writer.println();
-		writeGeneratedWarning(writer);
-		writer.format("package %s;%n", opts.get("-p"));
-		writer.println();
-		if (opts.get("-u").equals("true")) {
-			writerUserData(BEGIN_USER_IMPORTS, END_USER_IMPORTS, userImports, writer);
-		}
-		writer.println();
-		writeImports(writer, structure);
-		writer.println();
-		writeClassComment(writer, structure.getPointerName());
-		writer.format("@com.ibm.j9ddr.GeneratedPointerClass(structureClass=%s.class)", structure.getName());
-		writer.println();
+		try (PrintWriter writer = new PrintWriter(newContents)) {
+			writeCopyright(writer);
+			writer.println();
+			writeGeneratedWarning(writer);
+			writer.format("package %s;%n", opts.get("-p"));
+			writer.println();
+			if (opts.get("-u").equals("true")) {
+				writerUserData(BEGIN_USER_IMPORTS, END_USER_IMPORTS, userImports, writer);
+			}
+			writer.println();
+			writeImports(writer, structure);
+			writer.println();
+			writeClassComment(writer, structure.getPointerName());
+			writer.format("@com.ibm.j9ddr.GeneratedPointerClass(structureClass=%s.class)", structure.getName());
+			writer.println();
 
-		String superName = structure.getSuperName();
-		if (superName.isEmpty()) {
-			superName = "Structure";
-		}
-		writer.format("public class %s extends %sPointer {%n", structure.getPointerName(), superName);
-		writer.println();
-		writer.println("\t// NULL");
-		writer.format("\tpublic static final %s NULL = new %s(0);%n", structure.getPointerName(), structure.getPointerName());
-		writer.println();
-		if (cacheClass) {
-			writer.println("\t// Class Cache");
-			if (opts.get("-u").equals("false")) {
-				writer.println("\tprivate static final boolean CACHE_CLASS = true;");
+			String superName = structure.getSuperName();
+			if (superName.isEmpty()) {
+				superName = "Structure";
 			}
-			writer.format("\tprivate static HashMap<Long, %s> CLASS_CACHE = new HashMap<>();%n", structure.getPointerName());
+			writer.format("public class %s extends %sPointer {%n", structure.getPointerName(), superName);
 			writer.println();
-		}
-		if (cacheFields) {
-			if (opts.get("-u").equals("false")) {
-				writer.println("\tprivate static final boolean CACHE_FIELDS = true;");
+			writer.println("\t// NULL");
+			writer.format("\tpublic static final %s NULL = new %s(0);%n", structure.getPointerName(), structure.getPointerName());
+			writer.println();
+			if (cacheClass) {
+				writer.println("\t// Class Cache");
+				if (opts.get("-u").equals("false")) {
+					writer.println("\tprivate static final boolean CACHE_CLASS = true;");
+				}
+				writer.format("\tprivate static HashMap<Long, %s> CLASS_CACHE = new HashMap<>();%n", structure.getPointerName());
+				writer.println();
 			}
-		}
-		if (opts.get("-u").equals("true")) {
-			writerUserData(BEGIN_USER_CODE, END_USER_CODE, userCode, writer);
-		}
-		writer.println();
-		writeConstructor(writer, structure);
-		if (cacheClass) {
-			writer.println("\t// Caching support methods");
+			if (cacheFields) {
+				if (opts.get("-u").equals("false")) {
+					writer.println("\tprivate static final boolean CACHE_FIELDS = true;");
+				}
+			}
+			if (opts.get("-u").equals("true")) {
+				writerUserData(BEGIN_USER_CODE, END_USER_CODE, userCode, writer);
+			}
 			writer.println();
-			generateCacheSupportMethods(writer, structure);
+			writeConstructor(writer, structure);
+			if (cacheClass) {
+				writer.println("\t// Caching support methods");
+				writer.println();
+				generateCacheSupportMethods(writer, structure);
+			}
+			writer.println("\t// Implementation methods");
+			writer.println();
+			generateImplementationMethods(writer, structure);
+			writer.println("}");
 		}
-		writer.println("\t// Implementation methods");
-		writer.println();
-		generateImplementationMethods(writer, structure);
-		writer.println("}");
-		writer.close();
 
 		byte[] newContentsBytes = newContents.toByteArray();
 		if (null == original || !Arrays.equals(original, newContentsBytes)) {
-			FileOutputStream fos = new FileOutputStream(javaFile);
-			fos.write(newContentsBytes);
-			fos.close();
+			try (FileOutputStream fos = new FileOutputStream(javaFile)) {
+				fos.write(newContentsBytes);
+			}
 		}
 
 		if ((outputDirHelpers != null) && (userCode.size() > 4)) {
 			File helperFile = new File(outputDirHelpers, structure.getPointerName() + ".java");
-			PrintWriter helperWriter = new PrintWriter(helperFile);
-			for (String line : userImports) {
-				helperWriter.println(line);
+			try (PrintWriter helperWriter = new PrintWriter(helperFile)) {
+				for (String line : userImports) {
+					helperWriter.println(line);
+				}
+				for (String line : userCode) {
+					helperWriter.println(line);
+				}
 			}
-			for (String line : userCode) {
-				helperWriter.println(line);
-			}
-			helperWriter.close();
 		}
 	}
 
@@ -362,7 +363,7 @@ public class PointerGenerator {
 	 */
 	private void setCacheStatusFromPropertyFile(StructureDescriptor structure) {
 		String opt = opts.get("-c");
-		if ((opt == null) || (opt.length() == 0)) {
+		if ((opt == null) || (opt.isEmpty())) {
 			// no caching is set so set the flags to false
 			cacheClass = false;
 			cacheFields = false;
@@ -372,8 +373,7 @@ public class PointerGenerator {
 				cacheProperties = new Properties();
 				File file = new File(opt);
 				if (file.exists()) {
-					try {
-						FileInputStream in = new FileInputStream(file);
+					try (FileInputStream in = new FileInputStream(file)) {
 						cacheProperties.load(in);
 					} catch (Exception e) {
 						String msg = String.format("The cache properties file [%s] specified by the -c option could not be read", file.getAbsolutePath());
@@ -419,17 +419,17 @@ public class PointerGenerator {
 
 	private void collectMergeData(File javaFile, List<String> userImports, List<String> userCode) throws IOException {
 		if (javaFile.exists()) {
-			BufferedReader reader = new BufferedReader(new FileReader(javaFile));
-			String aLine;
+			try (BufferedReader reader = new BufferedReader(new FileReader(javaFile))) {
+				String aLine;
 
-			while ((aLine = reader.readLine()) != null) {
-				if (aLine.contains(BEGIN_USER_IMPORTS)) {
-					collectUserData(userImports, reader, END_USER_IMPORTS);
-				} else if (aLine.contains(BEGIN_USER_CODE)) {
-					collectUserData(userCode, reader, END_USER_CODE);
+				while ((aLine = reader.readLine()) != null) {
+					if (aLine.contains(BEGIN_USER_IMPORTS)) {
+						collectUserData(userImports, reader, END_USER_IMPORTS);
+					} else if (aLine.contains(BEGIN_USER_CODE)) {
+						collectUserData(userCode, reader, END_USER_CODE);
+					}
 				}
 			}
-			reader.close();
 		}
 
 		cacheClass = false;
@@ -636,24 +636,13 @@ public class PointerGenerator {
 
 	private void writeSRPPointerMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor, boolean wide) {
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		String pointerType = wide ? "WideSelfRelativePointer" : "SelfRelativePointer";
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
 		writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = %s.cast(getPointerAtOffset(%s._%sOffset_));%n", getter, pointerType, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn %s.cast(getPointerAtOffset(%s._%sOffset_));%n", pointerType, structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
+				pointerType, structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
@@ -663,7 +652,7 @@ public class PointerGenerator {
 		CTypeParser parser = new CTypeParser(fieldDescriptor.getType());
 		String typeString = parser.getCoreType();
 
-		if (getter.length() == 0) {
+		if (getter.isEmpty()) {
 			writer.format("\t// %s %s%n", fieldDescriptor.getDeclaredType(), fieldDescriptor.getName());
 			writer.println();
 			return;
@@ -673,18 +662,8 @@ public class PointerGenerator {
 			writer.format("\tprivate %s %s_cache;%n", typeString, getter);
 		}
 		writeMethodSignature(writer, generalizeSimpleType(typeString), getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = get%sBitfield(%s._%s_s_, %s._%s_b_);%n", getter, typeString, structure.getName(), getter, structure.getName(), getter);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn get%sBitfield(%s._%s_s_, %s._%s_b_);%n", typeString, structure.getName(), getter, structure.getName(), getter);
-		if (cacheFields) {
-			writer.println("\t\t}");
-		}
+		writeMethodReturn(writer, getter, "get%sBitfield(%s._%s_s_, %s._%s_b_)",
+				typeString, structure.getName(), getter, structure.getName(), getter);
 		writeMethodClose(writer);
 	}
 
@@ -719,57 +698,24 @@ public class PointerGenerator {
 	}
 
 	private void writeEAMethod(PrintWriter writer, String returnType, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
-		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
+		String getter = fieldDescriptor.getName() + "EA";
 		if (cacheFields) {
-			writer.format("\tprivate %s %sEA_cache;%n", returnType, getter);
+			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, generalizeSimplePointer(returnType), getter + "EA", fieldDescriptor, false);
-		writeZeroCheck(writer);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%sEA_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%sEA_cache = %s.cast(address + %s._%sOffset_);%n", getter, returnType, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %sEA_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn %s.cast(address + %s._%sOffset_);%n", returnType, structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodSignature(writer, generalizeSimplePointer(returnType), getter, fieldDescriptor, false);
+		writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_))",
+				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 	}
 
-	private static void writeZeroCheck(PrintWriter writer) {
-		writer.format("\t\tif (address == 0) {%n");
-		writer.format("\t\t\tthrow new NullPointerDereference();%n");
-		writer.format("\t\t}%n");
-		writer.println();
-	}
-
 	private void writeEnumEAMethod(PrintWriter writer, String returnType, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
-		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
-		String enumType = getEnumType(fieldDescriptor.getType());
-
+		String getter = fieldDescriptor.getName() + "EA";
 		if (cacheFields) {
-			writer.format("\tprivate %s %sEA_cache;%n", returnType, getter);
+			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter + "EA", fieldDescriptor, false);
-		writeZeroCheck(writer);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%sEA_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%sEA_cache = %s.cast(address + %s._%sOffset_, %s.class);%n", getter, returnType, structure.getName(), offsetConstant, enumType);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %sEA_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn %s.cast(address + %s._%sOffset_, %s.class);%n", returnType, structure.getName(), offsetConstant, enumType);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodSignature(writer, returnType, getter, fieldDescriptor, false);
+		writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_), %s.class)",
+				returnType, structure.getName(), getOffsetConstant(fieldDescriptor), getEnumType(fieldDescriptor.getType()));
 		writeMethodClose(writer);
 	}
 
@@ -792,25 +738,13 @@ public class PointerGenerator {
 	}
 
 	private void writeSRPEAMethod(PrintWriter writer, String returnType, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
-		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
+		String getter = fieldDescriptor.getName() + "EA";
 		if (cacheFields) {
-			writer.format("\tprivate %s %sEA_cache;%n", returnType, getter);
+			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter + "EA", fieldDescriptor, false);
-		writeZeroCheck(writer);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%sEA_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%sEA_cache = %s.cast(address + (%s._%sOffset_ + getIntAtOffset(%s._%sOffset_)));%n", getter, returnType, structure.getName(), offsetConstant, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %sEA_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn %s.cast(address + %s._%sOffset_);%n", returnType, structure.getName(), offsetConstant, structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodSignature(writer, returnType, getter, fieldDescriptor, false);
+		writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_))",
+				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 	}
 
@@ -821,26 +755,13 @@ public class PointerGenerator {
 
 	private void writePointerMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		String pointerType = getPointerType(fieldDescriptor.getType());
-		String returnType = generalizeSimplePointer(pointerType);
-
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = %s.cast(getPointerAtOffset(%s._%sOffset_));%n", getter, pointerType, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn %s.cast(getPointerAtOffset(%s._%sOffset_));%n", pointerType, structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodSignature(writer, generalizeSimplePointer(pointerType), getter, fieldDescriptor, true);
+		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
+				pointerType, structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
@@ -966,23 +887,12 @@ public class PointerGenerator {
 
 	private void writeBoolMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
 			writer.format("\tprivate Boolean %s_cache;%n", getter);
 		}
 		writeMethodSignature(writer, "boolean", getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = new Boolean(getBoolAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache.booleanValue();%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn getBoolAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "getBoolAtOffset(%s._%sOffset_)",
+				structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		/* Now write an EA method to return the address of the slot */
@@ -991,23 +901,12 @@ public class PointerGenerator {
 
 	private void writeDoubleMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
 			writer.format("\tprivate Double %s_cache;%n", getter);
 		}
 		writeMethodSignature(writer, "double", getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = new Double(getDoubleAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache.doubleValue();%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn getDoubleAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "getDoubleAtOffset(%s._%sOffset_)",
+				structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		/* Now write an EA method to return the address of the slot */
@@ -1027,34 +926,31 @@ public class PointerGenerator {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
 			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
 			writer.format("\t\t\t\tif (%s.SIZEOF == 1) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = new Long(getByteAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getByteAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = new Long(getShortAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getShortAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = new Long(getIntAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getIntAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = new Long(getLongAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getLongAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
 			writer.format("\t\t\t\t} else {%n");
 			writer.format("\t\t\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
 			writer.format("\t\t\t\t}%n");
 			writer.format("\t\t\t}%n");
 			writer.format("\t\t\treturn %s_cache.longValue();%n", getter);
-			writer.format("\t\t} else {%n");
-		}
-		writer.format("\t\t\tif (%s.SIZEOF == 1) {%n", enumType);
-		writer.format("\t\t\t\treturn getByteAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		writer.format("\t\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
-		writer.format("\t\t\t\treturn getShortAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		writer.format("\t\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
-		writer.format("\t\t\t\treturn getIntAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		writer.format("\t\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
-		writer.format("\t\t\t\treturn getLongAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		writer.format("\t\t\t} else {%n");
-		writer.format("\t\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
-		writer.format("\t\t\t}%n");
-		if (cacheFields) {
 			writer.format("\t\t}%n");
 		}
+		writer.format("\t\tif (%s.SIZEOF == 1) {%n", enumType);
+		writer.format("\t\t\treturn getByteAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+		writer.format("\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
+		writer.format("\t\t\treturn getShortAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+		writer.format("\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
+		writer.format("\t\t\treturn getIntAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+		writer.format("\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
+		writer.format("\t\t\treturn getLongAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+		writer.format("\t\t} else {%n");
+		writer.format("\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
+		writer.format("\t\t}%n");
 		writeMethodClose(writer);
 
 		/* Now write an EA method to return the address of the slot */
@@ -1063,27 +959,15 @@ public class PointerGenerator {
 
 	private void writeEnumPointerMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		String pointerType = "EnumPointer";
 		String type = fieldDescriptor.getType();
 		String enumType = getEnumType(type.substring(0, type.indexOf('*')));
-
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
 		writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = %s.cast(getPointerAtOffset(%s._%sOffset_), %s.class);%n", getter, pointerType, structure.getName(), offsetConstant, enumType);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn %s.cast(getPointerAtOffset(%s._%sOffset_), %s.class);%n", pointerType, structure.getName(), offsetConstant, enumType);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_), %s.class)",
+				pointerType, structure.getName(), getOffsetConstant(fieldDescriptor), enumType);
 		writeMethodClose(writer);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
@@ -1091,23 +975,12 @@ public class PointerGenerator {
 
 	private void writeFloatMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
 			writer.format("\tprivate Float %s_cache;%n", getter);
 		}
 		writeMethodSignature(writer, "float", getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = new Float(getFloatAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache.floatValue();%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn getFloatAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "getFloatAtOffset(%s._%sOffset_)",
+				structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		/* Now write an EA method to return the address of the slot */
@@ -1122,27 +995,29 @@ public class PointerGenerator {
 	 * the pointer stubs generated from this code so that incompatibilities will
 	 * be discovered at build time, rather than at run time.
 	 */
-	private static String generalizeSimpleType(String type) {
-		if ("I32".equals(type) || "I64".equals(type)) {
-			return "IDATA";
-		} else if ("U32".equals(type) || "U64".equals(type)) {
-			return "UDATA";
-		} else {
-			return type;
+	private String generalizeSimpleType(String type) {
+		if (generalizeSimpleTypes) {
+			if ("I32".equals(type) || "I64".equals(type)) {
+				return "IDATA";
+			} else if ("U32".equals(type) || "U64".equals(type)) {
+				return "UDATA";
+			}
 		}
+		return type;
 	}
 
 	/*
 	 * Like generalizeSimpleType() above, but for pointer types.
 	 */
-	private static String generalizeSimplePointer(String type) {
-		if ("I32Pointer".equals(type) || "I64Pointer".equals(type)) {
-			return "IDATAPointer";
-		} else if ("U32Pointer".equals(type) || "U64Pointer".equals(type)) {
-			return "UDATAPointer";
-		} else {
-			return type;
+	private String generalizeSimplePointer(String type) {
+		if (generalizeSimpleTypes) {
+			if ("I32Pointer".equals(type) || "I64Pointer".equals(type)) {
+				return "IDATAPointer";
+			} else if ("U32Pointer".equals(type) || "U64Pointer".equals(type)) {
+				return "UDATAPointer";
+			}
 		}
+		return type;
 	}
 
 	private void writeSimpleTypeMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor, int type) {
@@ -1150,22 +1025,21 @@ public class PointerGenerator {
 		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		String typeString = fieldDescriptor.getType();
 		String returnType = generalizeSimpleType(typeString);
-
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", typeString, getter);
 		}
 		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = new %s(%s(%s._%sOffset_));%n", getter, typeString, simpleTypeAccessorMap.get(type), structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn new %s(%s(%s._%sOffset_));%n", typeString, simpleTypeAccessorMap.get(type), structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
+		switch (type) {
+		case TYPE_IDATA:
+		case TYPE_UDATA:
+			// accessors for IDATA and UDATA already return objects
+			writeMethodReturn(writer, getter, "%s(%s._%sOffset_)",
+					simpleTypeAccessorMap.get(type), structure.getName(), offsetConstant);
+			break;
+		default:
+			writeMethodReturn(writer, getter, "new %s(%s(%s._%sOffset_))",
+					typeString, simpleTypeAccessorMap.get(type), structure.getName(), offsetConstant);
+			break;
 		}
 		writeMethodClose(writer);
 
@@ -1198,7 +1072,7 @@ public class PointerGenerator {
 
 		int type = typeManager.getType(referencedTypeString);
 
-		String pointerType = null;
+		String pointerType;
 		switch (type) {
 		case TYPE_STRUCTURE:
 			pointerType = removeTypeTags(referencedTypeString) + "Pointer";
@@ -1225,7 +1099,7 @@ public class PointerGenerator {
 			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
 		writeMethodSignature(writer, generalizeSimplePointer(pointerType), getter, fieldDescriptor, true);
-		writeZeroCheck(writer);
+		String value = String.format("%s.cast(address + (%s._%sOffset_ + nextAddress))", pointerType, structure.getName(), offsetConstant);
 		if (cacheFields) {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
 			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
@@ -1233,7 +1107,7 @@ public class PointerGenerator {
 			writer.format("\t\t\t\tif (nextAddress == 0) {%n");
 			writer.format("\t\t\t\t\t%s_cache = %s.NULL;%n", getter, pointerType);
 			writer.format("\t\t\t\t} else {%n");
-			writer.format("\t\t\t\t\t%s_cache = %s.cast(address + (%s._%sOffset_ + nextAddress));%n", getter, pointerType, structure.getName(), offsetConstant);
+			writer.format("\t\t\t\t\t%s_cache = %s;%n", getter, value);
 			writer.format("\t\t\t\t}%n");
 			writer.format("\t\t\t}%n");
 			writer.format("\t\t\treturn %s_cache;%n", getter);
@@ -1243,7 +1117,7 @@ public class PointerGenerator {
 		writer.format("\t\tif (nextAddress == 0) {%n");
 		writer.format("\t\t\treturn %s.NULL;%n", pointerType);
 		writer.format("\t\t}%n");
-		writer.format("\t\treturn %s.cast(address + (%s._%sOffset_ + nextAddress));%n", pointerType, structure.getName(), offsetConstant);
+		writer.format("\t\treturn %s;%n", value);
 
 		writeMethodClose(writer);
 
@@ -1255,28 +1129,12 @@ public class PointerGenerator {
 		String targetType = type.substring(0, type.indexOf('*'));
 		String returnType = removeTypeTags(targetType) + "Pointer";
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
 		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\tlong pointer = getPointerAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-			writer.format("\t\t\t\t%s_cache = %s.cast(pointer);%n", getter, returnType);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\tlong pointer = getPointerAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
-		writer.format("\t\treturn %s.cast(pointer);%n", returnType);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
+				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
@@ -1285,23 +1143,12 @@ public class PointerGenerator {
 	private void writeFJ9ObjectMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String returnType = "J9ObjectPointer";
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
 		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = getObjectReferenceAtOffset(%s._%sOffset_);%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn getObjectReferenceAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "getObjectReferenceAtOffset(%s._%sOffset_)",
+				structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		writeEAMethod(writer, "ObjectReferencePointer", structure, fieldDescriptor);
@@ -1310,25 +1157,12 @@ public class PointerGenerator {
 	private void writeFJ9ObjectPointerMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String returnType = "ObjectReferencePointer";
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
 		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\tlong pointer = getPointerAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-			writer.format("\t\t\t\t%s_cache = %s.cast(pointer);%n", getter, returnType);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\tlong pointer = getPointerAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		writer.format("\t\t\treturn %s.cast(pointer);%n", returnType);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
+				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
@@ -1337,23 +1171,12 @@ public class PointerGenerator {
 	private void writeJ9ObjectClassMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String returnType = "J9ClassPointer";
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
 		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = getObjectClassAtOffset(%s._%sOffset_);%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn getObjectClassAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "getObjectClassAtOffset(%s._%sOffset_)",
+				structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		writeEAMethod(writer, "ObjectClassReferencePointer", structure, fieldDescriptor);
@@ -1373,23 +1196,12 @@ public class PointerGenerator {
 	private void writeJ9ObjectMonitorMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String returnType = "J9ObjectMonitorPointer";
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
 		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = getObjectMonitorAtOffset(%s._%sOffset_);%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn getObjectMonitorAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "getObjectMonitorAtOffset(%s._%sOffset_)",
+				structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		writeEAMethod(writer, "ObjectMonitorReferencePointer", structure, fieldDescriptor);
@@ -1417,27 +1229,28 @@ public class PointerGenerator {
 		}
 
 		String getter = fieldDescriptor.getName();
-		String offsetConstant = getOffsetConstant(fieldDescriptor);
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
 		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		writeZeroCheck(writer);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\t%s_cache = %s.cast(address + %s._%sOffset_);%n", getter, returnType, structure.getName(), offsetConstant);
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
-			writer.format("\t\t} else {%n\t");
-		}
-		writer.format("\t\treturn %s.cast(address + %s._%sOffset_);%n", returnType, structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\t}%n");
-		}
+		writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_))",
+				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
 		writeMethodClose(writer);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
+	}
+
+	private void writeMethodReturn(PrintWriter writer, String getter, String valueFormat, Object... valueArgs) {
+		String value = String.format(valueFormat, valueArgs);
+		if (cacheFields) {
+			writer.format("\t\tif (CACHE_FIELDS) {%n");
+			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
+			writer.format("\t\t\t\t%s_cache = %s;%n", getter, value);
+			writer.format("\t\t\t}%n");
+			writer.format("\t\t\treturn %s_cache;%n", getter);
+			writer.format("\t\t}%n");
+		}
+		writer.format("\t\treturn %s;%n", value);
 	}
 
 	private void writeConstructor(PrintWriter writer, StructureDescriptor structure) {
@@ -1463,7 +1276,6 @@ public class PointerGenerator {
 		writer.format("\t\tif (address == 0) {%n");
 		writer.format("\t\t\treturn NULL;%n");
 		writer.format("\t\t}%n");
-		writer.println();
 		if (cacheClass) {
 			writer.format("\t\tif (CACHE_CLASS) {%n");
 			writer.format("\t\t\t%s clazz = checkCache(address);%n", name);
@@ -1529,7 +1341,7 @@ public class PointerGenerator {
 		writer.println();
 
 		writer.format("\tprotected long sizeOfBaseType() {%n");
-		writer.format("\t\treturn %s.SIZEOF;%n",structureName);
+		writer.format("\t\treturn %s.SIZEOF;%n", structureName);
 		writer.format("\t}%n");
 		writer.println();
 	}
@@ -1537,7 +1349,6 @@ public class PointerGenerator {
 	private void writeImports(PrintWriter writer, StructureDescriptor structure) {
 		if (structure.getFields().size() > 0) {
 			writer.println("import com.ibm.j9ddr.CorruptDataException;");
-			writer.println("import com.ibm.j9ddr.NullPointerDereference;");
 		}
 		String version = opts.get("-v");
 		writer.println(String.format("import com.ibm.j9ddr.vm%s.pointer.*;", version));
@@ -1572,11 +1383,13 @@ public class PointerGenerator {
 		for (String key : opts.keySet()) {
 			String value = opts.get(key);
 			if (value == null && !key.equals("-s") && !key.equals("-h")) {
-				System.err.println("The option " + key + " has not been set.\n");
+				System.err.println("The option " + key + " has not been set.");
 				printHelp();
 				System.exit(1);
 			}
 		}
+
+		generalizeSimpleTypes = "29".equals(opts.get("-v"));
 	}
 
 	/**

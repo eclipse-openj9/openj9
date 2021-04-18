@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ J9NLS.HEADER=j9vmnls.h
 
 # Note: this string is not used by J2ME VMs.
 # Note: IBM_JAVA_OPTIONS is an environment variable name and should not be translated
-J9NLS_VM_MALFORMED_OPTS_ERROR_STR=Valor mal format per IBM_JAVA_OPTIONS
+J9NLS_VM_MALFORMED_OPTS_ERROR_STR=Valor mal format per a IBM_JAVA_OPTIONS
 # START NON-TRANSLATABLE
 J9NLS_VM_MALFORMED_OPTS_ERROR_STR.explanation=An error in the options set in the environment variable IBM_JAVA_OPTIONS has been detected.
 J9NLS_VM_MALFORMED_OPTS_ERROR_STR.system_action=The JVM will fail to start.
@@ -64,7 +64,7 @@ J9NLS_VM_MALFORMED_OPTS_ERROR_STR.user_response=Examine IBM_JAVA_OPTIONS environ
 
 # Note: this string is not used by J2ME VMs.
 # Note: -Xservice is a command line option and should not be translated
-J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR=Valor mal format per -Xservice
+J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR=Valor mal format per a -Xservice
 # START NON-TRANSLATABLE
 J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR.explanation=An error in the options set by the -Xservice command line option has been detected.
 J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR.system_action=The JVM will fail to start.
@@ -538,7 +538,7 @@ J9NLS_VM_XJNI_OPTIONS_2.system_action=
 J9NLS_VM_XJNI_OPTIONS_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR=S'ha trobat una opci\u00f3 amb el format incorrecte %s a -Xoptionsfile
+J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR=L'opci\u00f3 mal formada %s s'ha trobat a -Xoptionsfile
 # START NON-TRANSLATABLE
 J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR.sample_input_1=badoption
 J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR.explanation=A badly formed command line option was found in an options file.
@@ -875,14 +875,14 @@ J9NLS_VM_MISSING_DUMP_DLL_RESETDUMPOPTION.user_response=Check whether the JVM du
 # END NON-TRANSLATABLE
 
 # CMVC 151143/ PMR 07257,t19,649 workaround: check that syscorepath has been set
-J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED=Av\u00eds: syscorepath no s'ha configurat, cosa que pot impedir la generaci\u00f3 del fitxer core del sistema (si en cal un).\n\t\tConsulteu les instruccions d'instal\u00b7laci\u00f3 del WebSphere Real Time per con\u00e8ixer els par\u00e0metres de configuraci\u00f3 correctes de syscorepath.\n\t\tNOTA: s'ha de configurar cada vegada que es reinici\u00ef la m\u00e0quina.
+J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED=Advertiment: syscorepath no s'ha configurat, cosa que pot impedir la generaci\u00f3 del fitxer core del sistema (si en cal un).\n\t\tConsulteu les instruccions d'instal\u00b7laci\u00f3 del WebSphere Real Time per con\u00e8ixer els par\u00e0metres de configuraci\u00f3 correctes de syscorepath.\n\t\tNOTA: s'ha de configurar cada vegada que es reinici\u00ef la m\u00e0quina.
 # START NON-TRANSLATABLE
 J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED.explanation=syscorepath needs to configured on certain AIX systems in order to generate system core files
 J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED.system_action=The JVM will warn the user at JVM startup and continue execution
 J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED.user_response=Configure syscorepath correctly, per the WebSphere Real Time installation instructions
 # END NON-TRANSLATABLE
 
-J9NLS_VM_SYSCONFIG_FAILED=Av\u00eds: no es poden verificar els par\u00e0metres de syscorepath amb sysconfig: %s.
+J9NLS_VM_SYSCONFIG_FAILED=Advertiment: no es poden verificar els par\u00e0metres de syscorepath amb sysconfig: %s.
 # START NON-TRANSLATABLE
 J9NLS_VM_SYSCONFIG_FAILED.explanation=sysconfig was called to lookup system settings, but the call failed.
 J9NLS_VM_SYSCONFIG_FAILED.system_action=The JVM will warn the user and continue execution.
@@ -970,7 +970,7 @@ J9NLS_VM_XSCDMX_IGNORED.system_action=-Xscdmx will be ignored.
 J9NLS_VM_XSCDMX_IGNORED.user_response=Ignore this message, remove -Xscdmx, or enable -Xshareclasses.
 # END NON-TRANSLATABLE
 
-# Help text for the -Xlog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
+# Help text for the -Xsyslog option. Note: please do not translate the text of the option flags: help, all, none, warn, error, info, config, vital
 J9NLS_VM_XLOG_HELP01=\n\u00das:\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP01.explanation=NOTAG
@@ -978,64 +978,64 @@ J9NLS_VM_XLOG_HELP01.system_action=
 J9NLS_VM_XLOG_HELP01.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:help is not translatable
-J9NLS_VM_XLOG_HELP02=  -Xlog:help              Imprimeix l'ajuda de -Xlog de la JVM.
+# -Xsyslog:help is not translatable
+J9NLS_VM_XLOG_HELP02=  -Xsyslog:help              Imprimeix l'ajuda de -Xsyslog de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP02.explanation=NOTAG
 J9NLS_VM_XLOG_HELP02.system_action=
 J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xlog:none              Inhabilita les opcions de registre de la JVM especificades anteriorment, incloent-hi els valors per defecte.
+# -Xsyslog:none is not translatable
+J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              Inhabilita les opcions de registre de la JVM especificades anteriorment, incloent-hi els valors per defecte.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
 J9NLS_VM_XLOG_HELP03.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:all is not translatable
-J9NLS_VM_XLOG_HELP04=  -Xlog:all               Registra tots els missatges de la JVM.
+# -Xsyslog:all is not translatable
+J9NLS_VM_XLOG_HELP04=  -Xsyslog:all               Registra tots els missatges de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP04.explanation=NOTAG
 J9NLS_VM_XLOG_HELP04.system_action=
 J9NLS_VM_XLOG_HELP04.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info is not translatable
-J9NLS_VM_XLOG_HELP05=  -Xlog:info              Registra els missatges informatius de la JVM.
+# -Xsyslog:info is not translatable
+J9NLS_VM_XLOG_HELP05=  -Xsyslog:info              Registra els missatges informatius de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP05.explanation=NOTAG
 J9NLS_VM_XLOG_HELP05.system_action=
 J9NLS_VM_XLOG_HELP05.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:warn is not translatable
-J9NLS_VM_XLOG_HELP06=  -Xlog:warn              Registra els missatges d'av\u00eds de la JVM.
+# -Xsyslog:warn is not translatable
+J9NLS_VM_XLOG_HELP06=  -Xsyslog:warn              Registra els missatges d'advertiment de la JVM.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP06.explanation=NOTAG
 J9NLS_VM_XLOG_HELP06.system_action=
 J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xlog:error             Registra missatges d'error de la JVM. Aquesta opci\u00f3 est\u00e0 activada per defecte.
+# -Xsyslog:error is not translatable
+J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             Registra missatges d'error de la JVM. Aquesta opci\u00f3 est\u00e0 activada per defecte.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
 J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xlog:vital             Registra missatges vitals de la JVM. Aquesta opci\u00f3 est\u00e0 activada per defecte.
+# -Xsyslog:vital is not translatable
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             Registra missatges vitals de la JVM. Aquesta opci\u00f3 est\u00e0 activada per defecte.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
 J9NLS_VM_XLOG_HELP08.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:config is not translatable
-J9NLS_VM_XLOG_HELP09=  -Xlog:config            Registra missatges de configuraci\u00f3 de la JVM. \n
+# -Xsyslog:config is not translatable
+J9NLS_VM_XLOG_HELP09=  -Xsyslog:config            Registra missatges de configuraci\u00f3 de la JVM. \n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP09.explanation=NOTAG
 J9NLS_VM_XLOG_HELP09.system_action=
@@ -1050,16 +1050,16 @@ J9NLS_VM_XLOG_HELP10.system_action=
 J9NLS_VM_XLOG_HELP10.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:error,warn is not translatable
-J9NLS_VM_XLOG_HELP11=  -Xlog:error,warn
+# -Xsyslog:error,warn is not translatable
+J9NLS_VM_XLOG_HELP11=  -Xsyslog:error,warn
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP11.explanation=NOTAG
 J9NLS_VM_XLOG_HELP11.system_action=
 J9NLS_VM_XLOG_HELP11.user_response=
 # END NON-TRANSLATABLE
 
-# -Xlog:info,warn,error is not translatable
-J9NLS_VM_XLOG_HELP12=  -Xlog:info,warn,error\n
+# -Xsyslog:info,warn,error is not translatable
+J9NLS_VM_XLOG_HELP12=  -Xsyslog:info,warn,error\n
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP12.explanation=NOTAG
 J9NLS_VM_XLOG_HELP12.system_action=
@@ -1983,7 +1983,7 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the inco
 
 # Message to use when class is not permitted in PermittedSubclasses attribute of sealed super class
 # argument 1 is the class name
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=La classe %2$.*1$s no pot heretar de la seva super classe segellada.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=la classe %2$.*1$s no pot heretar de la seva superclasse segellada.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -1992,9 +1992,39 @@ J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Co
 
 # Message to use when class is not permitted in PermittedSubclasses attribute of sealed super interface
 # argument 1 is the class name,
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=La classe %2$.*1$s no pot heretar de la seva super interf\u00edcie segellada.
+J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=la classe %2$.*1$s no pot heretar de la seva superinterf\u00edcie segellada.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message for an improper attempt to synchronize on an instance of value-based class.
+# argument 1 is the length of the class name
+# argument 2 is the string of the class name
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED=tipus d'objecte erroni %2$.*1$s: l'objecte sincronitzat es basa en valor.
+# START NON-TRANSLATABLE
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_1=3
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.sample_input_2=Foo
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value-based class but the object on stack is an instance of value-based class.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.system_action=The JVM will throw an VirtualMachineError.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when class/interface is not in the same module as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=La classe/interf\u00edcie %2$.*1$s no es troba en el mateix m\u00f2dul que la seva superclasse/superinterf\u00edcie segellada.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.explanation=The specified class must be in the same module as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# Message to use when non-public class/interface is not in the same package as its sealed super class/interface
+# argument 1 is the class name
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=La classe/interf\u00edcie no p\u00fablica %2$.*1$s no es troba en el mateix paquet que la seva superclasse/superinterf\u00edcie segellada.
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.explanation=The specified non-public class must be in the same package as its sealed super class/interface.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

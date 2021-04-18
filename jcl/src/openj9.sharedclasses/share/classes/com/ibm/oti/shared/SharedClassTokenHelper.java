@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,27 +25,27 @@ package com.ibm.oti.shared;
 
 /**
  * <p>SharedClassHelper API that stores and finds classes using String tokens.</p>
- * <h3>Description</h3>
+ * <h2>Description</h2>
  * <p>A SharedClassTokenHelper is obtained by calling getTokenHelper(ClassLoader) on a SharedClassHelperFactory.</p>
  * <p>The SharedClassTokenHelper, which is the most simple type of helper, uses generated String tokens to find and store classes.</p>
- * <h3>Usage</h3>
+ * <h2>Usage</h2>
  * <p>The ClassLoader should call findSharedClass after looking in its local cache and asking its parent (if one exists).
  * If findSharedClass does not return null, the ClassLoader calls defineClass on the byte[] that is returned.</p>
  * <p>The ClassLoader calls storeSharedClass immediately after a class is defined, unless the class that is being defined was loaded from the shared cache.</p>
  * <p>The ClassLoader is responsible for coordinating the creation of token Strings.</p>
- * <h3>Dynamic cache updates.</h3>
+ * <h2>Dynamic cache updates.</h2>
  * <p>Because the shared cache persists beyond the lifetime of a JVM, classes in the shared cache can become out of date (stale).
  * Using this helper, it is entirely the responsibility of the ClassLoader to ensure that cache entries are kept up-to-date.
  * Tokens have no meaning to the cache, so effectively turn the it into a dictionary of classes.</p>
  * <p>For example, a token may be the location where the class was found, combined with some type of versioning data.</p> 
  * <p>If a ClassLoader stores multiple versions of the same class by using the same token, only the most recent will be returned by findSharedClass. </p>
- * <h3>Security</h3>
+ * <h2>Security</h2>
  * <p>A SharedClassHelper will only allow classes to be stored in the cache which were defined by the ClassLoader that owns the SharedClassHelper.</p>
  * <p>If a SecurityManager is installed, SharedClassPermissions must be used to permit read/write access to the shared class cache.
  * Permissions are granted by ClassLoader classname in the java.policy file and are fixed when the SharedClassHelper is created.</p>
  * <p>Note also that if the createClassLoader RuntimePermission is not granted, ClassLoaders cannot be created, 
  * which in turn means that SharedClassHelpers cannot be created.</p>
- * <h3>Compatibility with other SharedClassHelpers</h3>
+ * <h2>Compatibility with other SharedClassHelpers</h2>
  * <p>Classes stored using the SharedClassTokenHelper cannot be retrieved using any other type of helper, and vice versa.  </p>
  * 
  * @see SharedClassHelper

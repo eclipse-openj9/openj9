@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_J9_X86_CODEGENERATORBASE_INCL
-#define TR_J9_X86_CODEGENERATORBASE_INCL
+#ifndef J9_X86_CODEGENERATOR_INCL
+#define J9_X86_CODEGENERATOR_INCL
 
 #include "compiler/codegen/J9CodeGenerator.hpp"
 
@@ -35,9 +35,14 @@ namespace X86
 
 class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    {
-   public:
 
-   CodeGenerator();
+protected:
+
+   CodeGenerator(TR::Compilation *comp);
+
+public:
+
+   void initialize();
 
    TR::Recompilation *allocateRecompilationInfo();
 
@@ -86,6 +91,10 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     * \brief Determines whether the code generator supports stack allocations
     */
    bool supportsStackAllocations() { return true; }
+   /** \brief
+    *     Determines whether to insert instructions to check DF flag and break on DF set
+    */
+   bool canEmitBreakOnDFSet();
    };
 
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1624,7 +1624,7 @@ TR_DebugExt::printInlinedCallSites(TR::FILE *pOutFile, TR::ResolvedMethodSymbol 
    for (int32_t i = 0; i < localInlinedCallSites.size(); ++i)
          {
          TR_InlinedCallSite & ics = localInlinedCallSites.element(i).site();
-         TR_OpaqueMethodBlock *mb = _isAOT ? (TR_OpaqueMethodBlock*) ((TR_AOTMethodInfo *)ics._methodInfo)->resolvedMethod->getNonPersistentIdentifier() : ics._vmMethodInfo;
+         TR_OpaqueMethodBlock *mb = ics._methodInfo;
 
          trfprintf(pOutFile, "    %4d       %4d       %5d       %s !trprint j9method %p\n", i, ics._byteCodeInfo.getCallerIndex(),
                        ics._byteCodeInfo.getByteCodeIndex(), getMethodName(mb), mb);
@@ -3581,7 +3581,6 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
          case TR_BodyInfoAddress:
          case TR_RamMethod:
          case TR_RamMethodSequence:
-         case TR_RamMethodSequenceReg:
          case TR_BodyInfoAddressLoad:
             _dbgPrintf("No additional fields");
             ptr = (U_8*) (((UDATA*)reloRecord)+1);
@@ -3597,13 +3596,12 @@ TR_DebugExt::dxPrintAOTinfo(void *addr)
          case TR_Thunks:
          case TR_Trampolines:
          case TR_ConstantPool:
-         case TR_ConstantPoolOrderedPair:
             {
             TR_RelocationRecordConstantPool *record = (TR_RelocationRecordConstantPool *) reloRecord;
             _dbgPrintf("0x%-16x  0x%-16x", record->inlinedSiteIndex, record->constantPool);
             ptr = (U_8*) (record+1);
             }
-         break;
+            break;
          case TR_FixedSequenceAddress:
          case TR_FixedSequenceAddress2:
 #if defined(TR_HOST_64BIT)

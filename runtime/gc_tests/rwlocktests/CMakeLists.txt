@@ -20,9 +20,13 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_executable(gc_rwlocktest
+set(gc_rwlocktest_sources
 	gc_rwlocktest.cpp
 	main.cpp
+)
+
+j9vm_add_executable(gc_rwlocktest
+	${gc_rwlocktest_sources}
 )
 
 target_link_libraries(gc_rwlocktest
@@ -48,3 +52,33 @@ install(
 	TARGETS gc_rwlocktest
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
+
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_executable(gc_rwlocktest_full
+		${gc_rwlocktest_sources}
+	)
+
+	target_link_libraries(gc_rwlocktest_full
+		PRIVATE
+			j9vm_interface
+			j9vm_gc_includes
+			j9vm_main_wrapper
+
+			thread_cutest_harness
+			j9prt
+			j9util
+			j9utilcore
+			j9thr
+			j9exelib
+			j9avl
+			j9hashtable
+			j9pool
+			j9gcbase_full
+			omrgc_full
+	)
+
+	install(
+		TARGETS gc_rwlocktest_full
+		RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
+	)
+endif()

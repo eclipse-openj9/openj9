@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -405,7 +405,7 @@ public interface CudaError {
 	/**
 	 * This error indicates that a call to ::cudaDeviceSynchronize made from
 	 * the device runtime failed because the call was made at grid depth greater
-	 * than than either the default (2 levels of grids) or user specified device
+	 * than either the default (2 levels of grids) or user specified device
 	 * limit ::cudaLimitDevRuntimeSyncDepth. To be able to synchronize on
 	 * launched grids at a greater depth successfully, the maximum nested
 	 * depth at which ::cudaDeviceSynchronize will be called must be specified

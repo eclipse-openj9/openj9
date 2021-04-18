@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2013, 2018 IBM Corp. and others
+  Copyright (c) 2013, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 		<output type="success" regex="no" showMatch="yes">Not found in java.library.path</output>
 		<!-- Accept "The specified network name is no longer available" as pass, since this test fails on win8 intermittently with follow message. For more detail, please see JAZZ103 69396 -->
 		<output type="success" regex="no" showMatch="yes">The specified network name is no longer available</output>
+		<output type="success" regex="no" showMatch="yes">java.lang.UnsatisfiedLinkError: Can't load abcdef</output>
 
 		<output type="failure" caseSensitive="no" regex="no">The specified path is invalid</output>
 		<output type="failure" caseSensitive="no" regex="no">Could not find or load main class Files</output>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,13 +23,16 @@ package com.ibm.j9ddr.vm29.tools.ddrinteractive;
 
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_ANNOTATION_UTF8;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_CLASS;
+import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_CONSTANT_DYNAMIC;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_DOUBLE;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_FIELD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_FLOAT;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_HANDLE_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INSTANCE_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INT;
+import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_INSTANCE_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_METHOD;
+import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_INTERFACE_STATIC_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_LONG;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHODHANDLE;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9CPTYPE_METHOD_TYPE;
@@ -48,6 +51,7 @@ import static com.ibm.j9ddr.vm29.structure.J9RecordComponentFlags.J9RecordCompon
 import java.nio.ByteOrder;
 
 import com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants;
+import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.corereaders.memory.IProcess;
@@ -79,6 +83,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9MethodParameterPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodParametersDataPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMArrayClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ROMConstantDynamicRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMConstantPoolItemPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
@@ -89,6 +94,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodTypeRefPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMNameAndSignaturePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMRecordComponentShapePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMStringRefPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9SourceDebugExtensionPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9MethodDebugInfoHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
@@ -99,6 +105,7 @@ import com.ibm.j9ddr.vm29.structure.J9MethodDebugInfo;
 import com.ibm.j9ddr.vm29.structure.J9ROMClass;
 import com.ibm.j9ddr.vm29.structure.J9ROMConstantPoolItem;
 import com.ibm.j9ddr.vm29.structure.J9ROMRecordComponentShape;
+import com.ibm.j9ddr.vm29.structure.J9SourceDebugExtension;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U16;
@@ -291,7 +298,7 @@ public class RomClassWalker extends ClassWalker {
 
 		return J9ROMMethodPointer.cast(cursor);
 	}
-	
+
 	private long allSlotsInMethodParametersDataDo(U32Pointer cursor) throws CorruptDataException
 	{
 		J9MethodParametersDataPointer methodParametersData = J9MethodParametersDataPointer.cast(cursor);
@@ -299,30 +306,30 @@ public class RomClassWalker extends ClassWalker {
 		long methodParametersSize = ROMHelp.J9_METHOD_PARAMS_SIZE_FROM_NUMBER_OF_PARAMS(methodParametersData.parameterCount().longValue());
 		long padding = U32.SIZEOF - (methodParametersSize % U32.SIZEOF);
 		long size = 0;
-		
+
 		if (padding == U32.SIZEOF) {
 			padding = 0;
 		}
-		
+
 		size = methodParametersSize + padding;
-		
+
 		classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, methodParametersData.parameterCountEA(), "parameterCount");
-		
+
 		for (int i = 0; i < methodParametersData.parameterCount().longValue(); i++) {
-			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, parameters.nameEA(), "methodParameterName");
-			classWalkerCallback.addSlot(clazz, SlotType.J9_U16, parameters.flagsEA(), "methodParameterFlag");			
+			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, parameters.nameEA(), "methodParameterName");
+			classWalkerCallback.addSlot(clazz, SlotType.J9_U16, parameters.flagsEA(), "methodParameterFlag");
 		}
-		
+
 		cursor = cursor.addOffset(methodParametersSize);
 		for (; padding > 0; padding--) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_U8, cursor, "MethodParameters padding");
 			cursor.addOffset(1);
 		}
-		
+
 		classWalkerCallback.addSection(clazz, methodParametersData, size, "Method Parameters", true);
 		return size/U32.SIZEOF;
 	}
-	
+
 	private int allSlotsInROMFieldDo(J9ROMFieldShapePointer field) throws CorruptDataException {
 		int fieldLength = 0;
 		
@@ -582,6 +589,7 @@ public class RomClassWalker extends ClassWalker {
 			//callbacks.slotCallback(romClass, J9ROM_U32, &cpShapeDescription[i], "cpShapeDescriptionU32", userData);
 		}
 	}
+
 	private void allSlotsInConstantPoolDo() throws CorruptDataException
 	{
 		J9ROMConstantPoolItemPointer constantPool = J9ROMClassHelper.constantPool(romClass);
@@ -590,10 +598,10 @@ public class RomClassWalker extends ClassWalker {
 		if (cpShapeDescription.isNull()) {
 			return;
 		}
-		
+
 		int constPoolCount = romClass.romConstantPoolCount().intValue();
 		PointerPointer cpEntry = PointerPointer.cast(J9ROMClassHelper.constantPool(romClass));
-		
+
 		// The spaces at the end of "Constant Pool" are important since the
 		// regions are sorted
 		// by address and size, but when they are equal they are sorted by
@@ -631,31 +639,43 @@ public class RomClassWalker extends ClassWalker {
 				J9ROMFieldRefPointer ref = J9ROMFieldRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_SRPNAS, ref.nameAndSignatureEA(), "cpFieldNAS");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.classRefCPIndexEA(), "cpFieldClassRef");
-				
+
 			} else if ((shapeDesc == J9CPTYPE_HANDLE_METHOD) ||
 					(shapeDesc == J9CPTYPE_STATIC_METHOD) || 
 					(shapeDesc == J9CPTYPE_INSTANCE_METHOD) ||
-					(shapeDesc == J9CPTYPE_INTERFACE_METHOD)) {
-				
+					(shapeDesc == J9CPTYPE_INTERFACE_METHOD) ||
+					(shapeDesc == J9CPTYPE_INTERFACE_INSTANCE_METHOD) ||
+					(shapeDesc == J9CPTYPE_INTERFACE_STATIC_METHOD)) {
 				J9ROMMethodRefPointer ref = J9ROMMethodRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_SRPNAS, ref.nameAndSignatureEA(), "cpFieldNAS");
-				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.classRefCPIndexEA(), "cpFieldClassRef");				
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.classRefCPIndexEA(), "cpFieldClassRef");
+
 			} else if (shapeDesc == J9CPTYPE_METHOD_TYPE) {
 				J9ROMMethodTypeRefPointer ref = J9ROMMethodTypeRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, ref.signatureEA(), "signature");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.cpTypeEA(), "cpType");
+
 			} else if (shapeDesc == J9CPTYPE_METHODHANDLE) {
 				J9ROMMethodHandleRefPointer ref = J9ROMMethodHandleRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.methodOrFieldRefIndexEA(), "methodOrFieldRefIndex");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.handleTypeAndCpTypeEA(), "handleTypeAndCpType");
+
+			} else if (shapeDesc == J9CPTYPE_CONSTANT_DYNAMIC) {
+				J9ROMConstantDynamicRefPointer ref = J9ROMConstantDynamicRefPointer.cast(cpEntry);
+				classWalkerCallback.addSlot(clazz, SlotType.J9_SRPNAS, ref.nameAndSignatureEA(), "cpFieldNAS");
+				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.bsmIndexAndCpTypeEA(), "cpFieldBSMIndexAndCpType");
+
 			} else if ((shapeDesc == J9CPTYPE_UNUSED) || (shapeDesc == J9CPTYPE_UNUSED8)) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_I64, I64Pointer.cast(cpEntry), "cpFieldUnused");
 
+			} else {
+				throw new CorruptDataException("Unknown CP entry type: " + shapeDesc);
 			}
 
 			cpEntry = cpEntry.addOffset(J9ROMConstantPoolItem.SIZEOF);
 		}
 	}
+
 	void allSlotsInOptionalInfoDo() throws CorruptDataException
 	{
 		U32Pointer optionalInfo = J9ROMClassHelper.optionalInfo(romClass);
@@ -670,13 +690,13 @@ public class RomClassWalker extends ClassWalker {
 			cursor = cursor.add(1);
 		}
 		if (romClass.optionalFlags().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION)) {
-			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, cursor, "optionalSourceDebugExtUTF8");
+			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "optionalSourceDebugExtSRP");
+			allSlotsInSourceDebugExtensionDo(J9SourceDebugExtensionPointer.cast(cursor.get()));
 			cursor = cursor.add(1);
 		}
 		if (romClass.optionalFlags().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_ENCLOSING_METHOD)) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "optionalEnclosingMethodSRP");
 			allSlotsInEnclosingObjectDo(J9EnclosingObjectPointer.cast(cursor.get()));
-			
 			cursor = cursor.add(1);
 		}
 		if (romClass.optionalFlags().anyBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SIMPLE_NAME)) {
@@ -702,9 +722,15 @@ public class RomClassWalker extends ClassWalker {
 			permittedSubclassAttributeDo(U32Pointer.cast(cursor.get()));
 			cursor = cursor.add(1);
 		}
-
+		if (ValueTypeHelper.getValueTypeHelper().areValueTypesSupported()) {
+			if (romClass.optionalFlags().allBitsIn(J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO)) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "optionalInjectedInterfaces");
+				cursor = cursor.add(1);
+			}
+		}
 		classWalkerCallback.addSection(clazz, optionalInfo, cursor.getAddress() - optionalInfo.getAddress(), "optionalInfo", true);
 	}
+
 	void allSlotsInIntermediateClassDataDo () throws CorruptDataException
 	{
 		UDATA count = romClass.intermediateClassDataLength();
@@ -960,6 +986,7 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, annotation, increment * U32.SIZEOF, annotationSectionName, true);
 		return increment;
 	}
+
 	long allSlotsInMethodDebugInfoDo(U32Pointer cursor) throws CorruptDataException
 	{
 		J9MethodDebugInfoPointer methodDebugInfo;
@@ -1016,7 +1043,7 @@ public class RomClassWalker extends ClassWalker {
 			if (methodDebugInfo.lineNumberCount().allBitsIn(1)) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, U32Pointer.cast(methodDebugInfo.add(1)), "compressed line number size");
 			}
-			
+
 			currentLineNumberPtr = J9MethodDebugInfoHelper.getCompressedLineNumberTableForROMClassV1(methodDebugInfo);
 			if (currentLineNumberPtr.notNull()) {
 				for (int j = 0; j < J9MethodDebugInfoHelper.getLineNumberCompressedSize(methodDebugInfo).intValue(); j++) {
@@ -1034,10 +1061,10 @@ public class RomClassWalker extends ClassWalker {
 				LocalVariableTable values = variableInfoValuesIterator.next();
 
 				// Need to walk the name and signature to add them to the UTF8 section
-				classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getName(), "name");
-				classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getSignature(), "getSignature");
+				classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, values.getNameSrp(), "name");
+				classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, values.getSignatureSrp(), "signature");
 				if (values.getGenericSignature().notNull()) {
-					classWalkerCallback.addSlot(clazz, SlotType.J9_UTF8, values.getGenericSignature(), "getGenericSignature");
+					classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, values.getGenericSignatureSrp(), "genericSignature");
 				}
 			}
 			U8Pointer end = variableInfoValuesIterator.getLocalVariableTablePtr();
@@ -1053,6 +1080,7 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, methodDebugInfo, sectionSizeBytes, "methodDebugInfo" + (inlineDebugExtension?" Inline":""), inlineDebugExtension);
 		return inlineSize;
 	}
+
 	void allSlotsInEnclosingObjectDo(J9EnclosingObjectPointer enclosingObject) throws CorruptDataException
 	{
 		if (enclosingObject.isNull()) {
@@ -1063,6 +1091,27 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, enclosingObject, J9EnclosingObject.SIZEOF, "enclosingObject", true);
 		
 		addObjectsasSlot(enclosingObject);
+	}
+
+	void allSlotsInSourceDebugExtensionDo(J9SourceDebugExtensionPointer sde) throws CorruptDataException
+	{
+		if (sde.isNull()) {
+			return;
+		}
+
+		classWalkerCallback.addSlot(clazz, SlotType.J9_U32, sde.sizeEA(), "optionalSourceDebugExtSize");
+		long size = sde.size().longValue();
+		long alignedSize = (size + U32.SIZEOF - 1) & ~(U32.SIZEOF - 1);
+
+		U8Pointer data = U8Pointer.cast(sde.add(1));
+		for (long i = 0; i < size; ++i) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_U8, data.add(i), "optionalSourceDebugExtData");
+		}
+		for (long i = size; i < alignedSize; ++i) {
+			classWalkerCallback.addSlot(clazz, SlotType.J9_U8, data.add(i), "optionalSourceDebugExtPadding");
+		}
+
+		classWalkerCallback.addSection(clazz, sde, J9SourceDebugExtension.SIZEOF + alignedSize, "optionalSourceDebugExt", true);
 	}
 	
 	private short SWAP2BE(short in) {

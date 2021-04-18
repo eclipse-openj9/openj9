@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,6 +47,7 @@ bool
 MM_EnvironmentDelegate::initialize(MM_EnvironmentBase *env)
 {
 	_env = env;
+	_extensions = _env->getExtensions();
 	_vmThread = (J9VMThread *)_env->getOmrVMThread()->_language_vmthread;
 
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);

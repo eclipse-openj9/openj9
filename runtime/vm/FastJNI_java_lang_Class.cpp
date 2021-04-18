@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,6 +130,17 @@ Fast_java_lang_Class_isPrimitive(J9VMThread *currentThread, j9object_t classObje
 	return J9ROMCLASS_IS_PRIMITIVE_TYPE(receiverClazz->romClass) ? JNI_TRUE : JNI_FALSE;
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/* java.lang.Class: private native boolean isPrimitiveClass(); */
+jboolean JNICALL
+Fast_java_lang_Class_isPrimitiveClass(J9VMThread *currentThread, j9object_t classObject)
+{
+	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, classObject);
+	bool isPrimitiveClass = J9_IS_J9CLASS_VALUETYPE(receiverClazz);
+	return isPrimitiveClass ? JNI_TRUE : JNI_FALSE;
+}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 /* java.lang.Class: public native boolean isInstance(Object object); */
 jboolean JNICALL
 Fast_java_lang_Class_isInstance(J9VMThread *currentThread, j9object_t receiverObject, j9object_t object)
@@ -204,9 +215,9 @@ Fast_java_lang_Class_getComponentType(J9VMThread *currentThread, j9object_t rece
 	return componentType;
 }
 
-/* java.lang.Class public native boolean isRecord(); */
+/* java.lang.Class public native boolean isRecordImpl(); */
 jboolean JNICALL
-Fast_java_lang_Class_isRecord(J9VMThread *currentThread, j9object_t receiverObject)
+Fast_java_lang_Class_isRecordImpl(J9VMThread *currentThread, j9object_t receiverObject)
 {
 	J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, receiverObject);
 	return J9ROMCLASS_IS_RECORD(receiverClazz->romClass) ? JNI_TRUE : JNI_FALSE;
@@ -231,6 +242,11 @@ J9_FAST_JNI_METHOD_TABLE(java_lang_Class)
 	J9_FAST_JNI_METHOD("isPrimitive", "()Z", Fast_java_lang_Class_isPrimitive,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9_FAST_JNI_METHOD("isPrimitiveClass", "()Z", Fast_java_lang_Class_isPrimitiveClass,
+		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
+		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	J9_FAST_JNI_METHOD("isInstance", "(Ljava/lang/Object;)Z", Fast_java_lang_Class_isInstance,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
@@ -242,7 +258,7 @@ J9_FAST_JNI_METHOD_TABLE(java_lang_Class)
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 	J9_FAST_JNI_METHOD("arrayTypeImpl", "()Ljava/lang/Class;", Fast_java_lang_Class_arrayTypeImpl,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
-	J9_FAST_JNI_METHOD("isRecord", "()Z", Fast_java_lang_Class_isRecord,
+	J9_FAST_JNI_METHOD("isRecordImpl", "()Z", Fast_java_lang_Class_isRecordImpl,
 		J9_FAST_JNI_RETAIN_VM_ACCESS | J9_FAST_JNI_NOT_GC_POINT | J9_FAST_JNI_NO_NATIVE_METHOD_FRAME | J9_FAST_JNI_NO_EXCEPTION_THROW |
 		J9_FAST_JNI_NO_SPECIAL_TEAR_DOWN | J9_FAST_JNI_DO_NOT_WRAP_OBJECTS)
 	J9_FAST_JNI_METHOD("isSealed", "()Z", Fast_java_lang_Class_isSealed,

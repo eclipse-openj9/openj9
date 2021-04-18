@@ -70,7 +70,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
    IDATA argIndexXjit = 0;
    IDATA argIndexXaot = 0;
    IDATA argIndexXnojit = 0;
-   IDATA argIndexXnoaot = 0;
 
    IDATA argIndexClient = 0;
    IDATA argIndexServer = 0;
@@ -129,7 +128,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
          argIndexXjit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xjit", 0);
          argIndexXaot = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xaot", 0);
          argIndexXnojit = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xnojit", 0);
-         argIndexXnoaot = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, "-Xnoaot", 0);
 
          argIndexRIEnabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:+RuntimeInstrumentation", 0);
          argIndexRIDisabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, "-XX:-RuntimeInstrumentation", 0);
@@ -169,7 +167,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
          /* setup field to indicate whether we will allow AOT compilation and perform AOT runtime
           * initializations to allow AOT code to be loaded from the shared cache as well as from JXEs */
-         if (argIndexXaot >= argIndexXnoaot)
+         if ((J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_AOT)))
             {
             isAOT = true;
             }
@@ -205,7 +203,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             //if disableDualTLH is specified, revert back to old semantics.
             // Do not batch clear, JIT has to zeroinit all code on TLH.
             //Non P6, P7 and up are allowed to batch clear however.
-            TR::Compiler->target.cpu.setProcessor(TR_J9VMBase::getPPCProcessorType());
             bool disableZeroedTLHPages = disableDualTLH && (((notlhPrefetch >= 0) || (!TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_P6) && !TR::Compiler->target.cpu.is(OMR_PROCESSOR_PPC_P7))));
 #endif//TR_HOST_POWER
 #endif//TR_HOST_X86
@@ -224,7 +221,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 #endif//TR_HOST_X86
             )
                {
-               J9VMDllLoadInfo* gcLoadInfo = FIND_DLL_TABLE_ENTRY( J9_GC_DLL_NAME );
+               J9VMDllLoadInfo *gcLoadInfo = getGCDllLoadInfo(vm);
+
                if (!IS_STAGE_COMPLETED(gcLoadInfo->completedBits, JCL_INITIALIZED) )//&& vm->memoryManagerFunctions)
                   {
                   vm->memoryManagerFunctions->allocateZeroedTLHPages(vm, true);
@@ -438,8 +436,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 
             if (isAOT
                 && TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching)
-                && (!TR::Options::getCmdLineOptions()->allowRecompilation()
-                    || TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)))
+                && (TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)))
                {
                TR::Options::getAOTCmdLineOptions()->setOption(TR_EnableClassChainValidationCaching, false);
                }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2020 IBM Corp. and others
+ * Copyright (c) 2015, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,15 +29,13 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import com.ibm.j9ddr.CorruptDataException;
-import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
-import com.ibm.j9ddr.vm29.structure.J9Object;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
@@ -70,11 +68,18 @@ public class ObjectFieldInfo {
 	int totalFlatFieldDoubleBytes = 0;
 	int totalFlatFieldRefBytes = 0;
 	int totalFlatFieldSingleBytes = 0;
+	int flatAlignedObjectInstanceBackfill = 0;
+	int flatAlignedSingleInstanceBackfill = 0;
+	int flatUnAlignedObjectInstanceBackfill = 0;
+	int flatUnAlignedSingleInstanceBackfill = 0;
+	boolean classRequiresPrePadding = false;
+	boolean isBackFillPostPadded = false;
 
-	public static final int	NO_BACKFILL_AVAILABLE = -1;
-	public static final int		BACKFILL_SIZE = U32.SIZEOF;
-	public static final int		LOCKWORD_SIZE = j9objectmonitor_t_SizeOf;
-	public static final int		FINALIZE_LINK_SIZE = fj9object_t_SizeOf;
+	public static final int NO_BACKFILL_AVAILABLE = -1;
+	public static final int BACKFILL_SIZE = U32.SIZEOF;
+	public static final int LOCKWORD_SIZE = j9objectmonitor_t_SizeOf;
+	public static final int FINALIZE_LINK_SIZE = fj9object_t_SizeOf;
+	private static final int OBJECT_SIZE_INCREMENT_IN_BYTES = U64.SIZEOF;
 
 	ObjectFieldInfo(J9ROMClassPointer romClass) {
 		instanceObjectCount = 0;
@@ -118,14 +123,21 @@ public class ObjectFieldInfo {
 	 * Priorities for slots are:
 	 * 1. instance singles
 	 * 2. instance objects
-	 * 3. hidden singles
-	 * 4. hidden objects
+	 * 3. flat end-aligned singles
+	 * 4. flat end-aligned objects
+	 * 5. flat end-unaligned singles
+	 * 6. flat end-unaligned objects
+	 * 7. hidden singles
+	 * 8. hidden objects
 	 * @return number of object fields (instance and hidden) which do not go  in a backfill slot.
 	 */
 	int getNonBackfilledObjectCount() {
 		int nonBackfilledObjects = totalObjectCount;
-		if (isBackfillSuitableObjectAvailable()  && !isBackfillSuitableInstanceSingleAvailable()
-				&& isMyBackfillSlotAvailable()) {
+		if (isBackfillSuitableObjectAvailable()  
+			&& !isBackfillSuitableInstanceSingleAvailable()
+			&& isMyBackfillSlotAvailable()
+			&& (0 != nonBackfilledObjects)
+		) {
 			nonBackfilledObjects -= 1;
 		}
 		return nonBackfilledObjects;
@@ -133,7 +145,10 @@ public class ObjectFieldInfo {
 
 	int getNonBackfilledSingleCount() {
 		int nonBackfilledSingle = totalSingleCount;
-		if (isBackfillSuitableSingleAvailable() && isMyBackfillSlotAvailable()) {
+		if (isBackfillSuitableSingleAvailable() 
+			&& isMyBackfillSlotAvailable()
+			&& (0 != nonBackfilledSingle)
+		) {
 			nonBackfilledSingle -= 1;
 		}
 		return nonBackfilledSingle;
@@ -141,8 +156,11 @@ public class ObjectFieldInfo {
 
 	int getNonBackfilledInstanceObjectCount() {
 		int nonBackfilledObjects = instanceObjectCount;
-		if (isBackfillSuitableInstanceObjectAvailable()  && !isBackfillSuitableInstanceSingleAvailable()
-				&& isMyBackfillSlotAvailable()) {
+		if (isBackfillSuitableInstanceObjectAvailable()
+			&& !isBackfillSuitableInstanceSingleAvailable()
+			&& isMyBackfillSlotAvailable()
+			&& (0 != nonBackfilledObjects)
+		) {
 			nonBackfilledObjects -= 1;
 		}
 		return nonBackfilledObjects;
@@ -150,7 +168,10 @@ public class ObjectFieldInfo {
 
 	int getNonBackfilledInstanceSingleCount() {
 		int nonBackfilledSingle = instanceSingleCount;
-		if (isBackfillSuitableInstanceSingleAvailable() && isMyBackfillSlotAvailable()) {
+		if (isBackfillSuitableInstanceSingleAvailable() 
+			&& isMyBackfillSlotAvailable()
+			&& (0 != nonBackfilledSingle)
+		) {
 			nonBackfilledSingle -= 1;
 		}
 		return nonBackfilledSingle;
@@ -172,27 +193,48 @@ public class ObjectFieldInfo {
 		return hiddenFieldCount;
 	}
 
-	boolean isBackfillSuitableSingleAvailable() {
-		return (0 != getTotalSingleCount());
+	boolean
+	isBackfillSuitableSingleAvailable()
+	{
+		return ((0 != getTotalSingleCount())
+				|| (0 != getFlatAlignedSingleInstanceBackfillSize())
+				|| (0 != getFlatUnAlignedSingleInstanceBackfillSize())
+		);
 	}
 
-	boolean isBackfillSuitableObjectAvailable() {
-		return (objectCanUseBackfill && (0 != getTotalObjectCount()));
+	boolean
+	isBackfillSuitableObjectAvailable()
+	{
+		return ((objectCanUseBackfill && (0 != getTotalObjectCount()))
+				|| (0 != getFlatAlignedObjectInstanceBackfillSize())
+				|| (0 != getFlatUnAlignedObjectInstanceBackfillSize()));
 	}
 
-	boolean isBackfillSuitableInstanceSingleAvailable() {
+	boolean
+	isBackfillSuitableInstanceSingleAvailable()
+	{
 		return (0 != getInstanceSingleCount());
 	}
-
-	boolean isBackfillSuitableInstanceObjectAvailable() {
-		return (objectCanUseBackfill && (0 != getInstanceObjectCount()));
+	
+	boolean
+	isBackfillSuitableFlatInstanceSingleAvailable()
+	{
+		return ((0 != getFlatAlignedSingleInstanceBackfillSize())
+				|| (0 != getFlatUnAlignedSingleInstanceBackfillSize()));
 	}
 
+	boolean
+	isBackfillSuitableInstanceObjectAvailable()
+	{
+		return ((objectCanUseBackfill && (0 != getInstanceObjectCount()))
+				|| (0 != getFlatAlignedObjectInstanceBackfillSize())
+				|| (0 != getFlatUnAlignedObjectInstanceBackfillSize()));
+	}
+	
 	boolean isBackfillSuitableFieldAvailable() {
 		return isBackfillSuitableSingleAvailable() || isBackfillSuitableObjectAvailable();
 	}
-
-
+	
 	/**
 	 * @note This is used for hidden fields which use an offset from the header
 	 * @return offset of backfill slot from the start of the object
@@ -232,13 +274,27 @@ public class ObjectFieldInfo {
 	 */
 	int calculateFieldDataStart() {
 		int fieldDataStart = getSuperclassFieldsSize();
+		
+		/* If the type has double field the doubles need to start on an 8-byte boundary. In the case of valuetypes
+		 * there is no lockword so the super class field size will be zero. This means that valueTypes in compressedrefs
+		 * mode with double alignment fields need to be pre-padded.
+		 */
 		boolean doubleAlignment = (totalDoubleCount > 0) || (totalFlatFieldDoubleBytes > 0);
 
 		if (
-			((getSuperclassObjectSize() % ObjectModel.getObjectAlignmentInBytes()) != 0) && /* superclass is not end-aligned */
+			((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) && /* superclass is not end-aligned */
 			(doubleAlignment || (!objectCanUseBackfill && (totalObjectCount > 0)))
 		) { /* our fields start on a 8-byte boundary */
-			fieldDataStart += BACKFILL_SIZE;
+			fieldDataStart += getBackfillSize();
+			/* if a flat type is used up as backfill and its size is not 4, 12, 20, ... this
+			 * means that the starting point for doubles will not be on an 8byte boundary. To
+			 * fix this the field start position will be incremented by 4bytes so doubles start
+			 * at the correct position.
+			 */
+			if (!isBackfillTypeEndAligned(fieldDataStart)) {
+				fieldDataStart += BACKFILL_SIZE;
+				isBackFillPostPadded = true;
+			}
 		}
 		return fieldDataStart;
 	}
@@ -270,10 +326,42 @@ public class ObjectFieldInfo {
 	 * at the end of the superclass.
 	 * @return backfill offset from the first field
 	 */
-
 	int getMyBackfillOffset() {
 		return myBackfillOffset;
+	}
+	
+	/**
+	 *
+	 * Returns the size of backfill. The order or precedence is:
+	 * 1. instance singles
+	 * 2. instance objects
+	 * 3. flat end-aligned singles
+	 * 4. flat end-aligned objects
+	 * 5. flat end-unaligned singles
+	 * 6. flat end-unaligned objects
+	 * 7. hidden singles
+	 * 8. hidden objects
+	 *
+	 * @return size of backfill
+	 */
+	int
+	getBackfillSize()
+	{
+		int backFillSize = BACKFILL_SIZE;
 
+		if ((0 != getInstanceSingleCount()) || (0 != getInstanceObjectCount())) {
+			/* BACKFILL_SIZE */
+		} else if (0 != getFlatAlignedSingleInstanceBackfillSize()) {
+			backFillSize = getFlatAlignedSingleInstanceBackfillSize();
+		} else if (0 != getFlatAlignedObjectInstanceBackfillSize()) {
+			backFillSize = getFlatAlignedObjectInstanceBackfillSize();
+		} else if (0 != getFlatUnAlignedSingleInstanceBackfillSize()) {
+			backFillSize = getFlatUnAlignedSingleInstanceBackfillSize();
+		} else if (0 != getFlatUnAlignedObjectInstanceBackfillSize()) {
+			backFillSize = getFlatUnAlignedObjectInstanceBackfillSize();
+		}
+		
+		return backFillSize;
 	}
 
 	int getSubclassBackfillOffset() {
@@ -305,16 +393,26 @@ public class ObjectFieldInfo {
 			if (!modifiers.anyBitsIn(J9AccStatic) ) {
 				if (modifiers.anyBitsIn(J9FieldFlagObject)) {
 					if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(f))) {
+						int size = 0;
 						J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(containerClazz, J9ROMFieldShapeHelper.getName(f));
-						if (!valueTypeHelper.isJ9ClassIsFlattened(fieldClass)) {
+						if (!valueTypeHelper.isJ9FieldIsFlattened(fieldClass, f)) {
 							instanceObjectCount += 1;
 							totalObjectCount += 1;
 						} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)) {
-							totalFlatFieldDoubleBytes += Scalar.roundToSizeofU64(fieldClass.totalInstanceSize().sub(fieldClass.backfillOffset())).intValue();
+							UDATA doubleSize = fieldClass.totalInstanceSize();
+							if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
+								doubleSize = doubleSize.sub(U32.SIZEOF);
+							}
+							size = Scalar.roundToSizeofU64(doubleSize).intValue();
+							totalFlatFieldDoubleBytes += size;
 						} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintReference(fieldClass)) {
-							totalFlatFieldRefBytes += Scalar.roundToSizeToFJ9object(fieldClass.totalInstanceSize().sub(fieldClass.backfillOffset())).intValue();
+							size = Scalar.roundToSizeToFJ9object(fieldClass.totalInstanceSize()).intValue();
+							totalFlatFieldRefBytes += size;
+							setPotentialFlatObjectInstanceBackfill(size);
 						} else {
-							totalFlatFieldSingleBytes += fieldClass.totalInstanceSize().sub(fieldClass.backfillOffset()).intValue();
+							size = fieldClass.totalInstanceSize().intValue();
+							totalFlatFieldSingleBytes += size;
+							setPotentialFlatSingleInstanceBackfill(size);
 						}
 					} else {
 						instanceObjectCount += 1;
@@ -362,11 +460,34 @@ public class ObjectFieldInfo {
 
 		/* ValueTypes cannot be subtyped and their superClass contains no fields */
 		if (isValue) {
+			/* If the first field does not start at zero, this means we added padding to satisfy
+			 * alignment requirements of double slot fields. We will use the J9ClassHasPrePadding flag
+			 * to denote this.
+			 */
 			int firstFieldOffset = calculateFieldDataStart();
-			accumulator += firstFieldOffset;
-			subclassBackfillOffset = firstFieldOffset;
+			if (0 < firstFieldOffset) {
+				if (isBackfillSuitableFieldAvailable()) {
+					/*
+					 * If the class is a valuetype and it has at least one single or object aligned field, instead of pre-padding
+					 * the field with the smaller alignment constraint will be placed first.
+					 */
+					myBackfillOffset = 0;
+					
+					/*
+					 * Backfill may not be end-aligned, ie 8, 16, 24btye types. In these cases the types
+					 * are post-padded so doubles can start on a 8byte boundary.
+					 */
+					if (isBackFillPostPadded()) {
+						accumulator += BACKFILL_SIZE;
+					}
+				} else {
+					/* add pre-padding */
+					accumulator += firstFieldOffset;
+					setClassRequiresPrePadding();
+				}
+			}
 		} else {
-			if (((getSuperclassObjectSize() % ObjectModel.getObjectAlignmentInBytes()) != 0)
+			if (((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0)
 					&& /* superclass is not end-aligned */
 					((totalDoubleCount > 0) || (!objectCanUseBackfill
 							&& (totalObjectCount > 0)))) { /* our fields start on a 8-byte boundary */
@@ -378,7 +499,7 @@ public class ObjectFieldInfo {
 				myBackfillOffset = superclassBackfillOffset;
 				superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
 			}
-			if (((accumulator + J9ObjectHelper.headerSize()) % ObjectModel.getObjectAlignmentInBytes()) != 0) {
+			if (((accumulator + J9ObjectHelper.headerSize()) % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) {
 				/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
 				subclassBackfillOffset = (int)accumulator;
 				accumulator += BACKFILL_SIZE;
@@ -406,7 +527,7 @@ public class ObjectFieldInfo {
 	int
 	addFlatObjectsArea(int start)
 	{
-		return start + totalFlatFieldRefBytes;
+		return start + getNonBackfilledFlatInstanceObjectSize();
 	}
 
 	/**
@@ -416,6 +537,150 @@ public class ObjectFieldInfo {
 	int
 	addFlatSinglesArea(int start)
 	{
-		return start + totalFlatFieldSingleBytes;
+		return start + getNonBackfilledFlatInstanceSingleSize();
+	}
+	
+	int
+	getFlatAlignedSingleInstanceBackfillSize()
+	{
+		return flatAlignedSingleInstanceBackfill;
+	}
+
+	int
+	getFlatUnAlignedSingleInstanceBackfillSize()
+	{
+		return flatUnAlignedSingleInstanceBackfill;
+	}
+
+	int
+	getFlatAlignedObjectInstanceBackfillSize()
+	{
+		return flatAlignedObjectInstanceBackfill;
+	}
+
+	int
+	getFlatUnAlignedObjectInstanceBackfillSize()
+	{
+		return flatUnAlignedObjectInstanceBackfill;
+	}
+
+	void
+	setFlatAlignedSingleInstanceBackfill(int size)
+	{
+		flatAlignedSingleInstanceBackfill = size;
+	}
+
+	void
+	setFlatUnAlignedSingleInstanceBackfill(int size)
+	{
+		flatUnAlignedSingleInstanceBackfill = size;
+	}
+
+	void
+	setFlatAlignedObjectInstanceBackfill(int size)
+	{
+		flatAlignedObjectInstanceBackfill = size;
+	}
+
+	void
+	setFlatUnAlignedObjectInstanceBackfill(int size)
+	{
+		flatUnAlignedObjectInstanceBackfill = size;
+	}
+
+	void
+	setPotentialFlatObjectInstanceBackfill(int size)
+	{
+		if (isValue) {
+			if (U32.SIZEOF == (size % U64.SIZEOF)) {
+				if (0 == getFlatAlignedObjectInstanceBackfillSize()) {
+					setFlatAlignedObjectInstanceBackfill(size);
+				}
+			} else {
+				if (0 == getFlatUnAlignedObjectInstanceBackfillSize()) {
+					setFlatUnAlignedObjectInstanceBackfill(size);
+				}
+			}
+		}
+	}
+
+	void
+	setPotentialFlatSingleInstanceBackfill(int size)
+	{
+		if (isValue) {
+			if (U32.SIZEOF == (size % U64.SIZEOF)) {
+				if (0 == getFlatAlignedSingleInstanceBackfillSize()) {
+					setFlatAlignedSingleInstanceBackfill(size);
+				}
+			} else {
+				if (0 == getFlatUnAlignedSingleInstanceBackfillSize()) {
+					setFlatUnAlignedSingleInstanceBackfill(size);
+				}
+			}
+		}
+	}
+
+	int
+	getNonBackfilledFlatInstanceObjectSize()
+	{
+		int nonBackfilledFlatObjectsSize = totalFlatFieldRefBytes;
+		if (isBackfillSuitableInstanceObjectAvailable()
+			&& isMyBackfillSlotAvailable()
+			&& (0 == getInstanceSingleCount())
+			&& (objectCanUseBackfill && (0 == getInstanceObjectCount()))
+			&& (0 == getFlatAlignedSingleInstanceBackfillSize())
+		) {
+			int backfillSize = getFlatAlignedObjectInstanceBackfillSize();
+			if (0 == backfillSize) {
+				if (0 == getFlatUnAlignedSingleInstanceBackfillSize()) {
+					backfillSize = getFlatUnAlignedObjectInstanceBackfillSize();
+				}
+			}
+			nonBackfilledFlatObjectsSize -= backfillSize;
+		}
+		return nonBackfilledFlatObjectsSize;
+	}
+
+	int
+	getNonBackfilledFlatInstanceSingleSize()
+	{
+		int nonBackfilledFlatSinglesSize = totalFlatFieldSingleBytes;
+		if (isBackfillSuitableFlatInstanceSingleAvailable()
+			&& isMyBackfillSlotAvailable()
+			&& (0 == getInstanceSingleCount())
+			&& (objectCanUseBackfill && (0 == getInstanceObjectCount()))
+		) {
+			int backfillSize = getFlatAlignedSingleInstanceBackfillSize();
+			if (0 == backfillSize) {
+				if (0 == getFlatAlignedObjectInstanceBackfillSize()) {
+					backfillSize = getFlatUnAlignedSingleInstanceBackfillSize();
+				}
+			}
+			nonBackfilledFlatSinglesSize -= backfillSize;
+		}
+		return nonBackfilledFlatSinglesSize;
+	}
+
+	boolean
+	doesClassRequiresPrePadding()
+	{
+		return classRequiresPrePadding;
+	}
+
+	void
+	setClassRequiresPrePadding()
+	{
+		classRequiresPrePadding = true;
+	}
+	
+	boolean
+	isBackfillTypeEndAligned(int fieldDataStart) {
+		return BACKFILL_SIZE == (fieldDataStart % U64.SIZEOF);
+	}
+	
+	boolean
+	isBackFillPostPadded()
+	{
+		return isBackFillPostPadded;
 	}
 }

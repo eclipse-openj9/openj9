@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -293,7 +293,7 @@ public class TestGarbageCollectorMXBean {
 
 		AssertJUnit.assertEquals(1, notifications.length);
 
-		// Print out both, the description as well as the the class name.
+		// Print out both, the description as well as the class name.
 		logger.debug("MBean description for " + gcb.getClass().getName() + ": " + mbi.getDescription());
 
 		// 10 attributes (5 standard, 6 IBM) - none is writable.
@@ -398,7 +398,7 @@ public class TestGarbageCollectorMXBean {
 			logger.debug("Exception occurred, as expected: " + "attempting to set a read-only attribute.");
 		}
 
-		attr = new Attribute("Valid", new Boolean(true));
+		attr = new Attribute("Valid", Boolean.valueOf(true));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -416,7 +416,7 @@ public class TestGarbageCollectorMXBean {
 			logger.debug("Exception occurred, as expected: " + "attempting to set a read-only attribute.");
 		}
 
-		attr = new Attribute("CollectionCount", new Long(233));
+		attr = new Attribute("CollectionCount", Long.valueOf(233));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -425,7 +425,7 @@ public class TestGarbageCollectorMXBean {
 			logger.debug("Exception occurred, as expected: " + "attempting to set a read-only attribute.");
 		}
 
-		attr = new Attribute("CollectionTime", new Long(233));
+		attr = new Attribute("CollectionTime", Long.valueOf(233));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -439,7 +439,7 @@ public class TestGarbageCollectorMXBean {
 	public final void testInvoke() {
 		// No operations to invoke...
 		try {
-			Object retVal = mbs.invoke(objName, "KissTheRoadOfRoratonga", new Object[] { new Long(7446), new Long(54) },
+			Object retVal = mbs.invoke(objName, "KissTheRoadOfRoratonga", new Object[] { Long.valueOf(7446), Long.valueOf(54) },
 					new String[] { "java.lang.Long", "java.lang.Long" });
 			Assert.fail("Unreacheable code: should have thrown an exception.");
 		} catch (Exception e) {

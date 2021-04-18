@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -235,6 +235,23 @@ I_64 helperCLongMultiplyLong(I_64 a, I_64 b);
 */
 I_64 helperCLongRemainderLong(I_64 a, I_64 b);
 
+/* ---------------- dllloadinfo.c ---------------- */
+
+/**
+* @brief Retrieves the load info for the appropriate
+*        GC DLL based on reference mode.
+* @param[in] vm The Java VM.
+* @return J9VMDllLoadInfo for the GC DLL selected.
+*/
+J9VMDllLoadInfo *getGCDllLoadInfo(J9JavaVM *vm);
+
+/**
+* @brief Retrieves the load info for the appropriate
+*        VERBOSE DLL based on reference mode.
+* @param[in] vm The Java VM.
+* @return J9VMDllLoadInfo for the VERBOSE DLL selected.
+*/
+J9VMDllLoadInfo *getVerboseDllLoadInfo(J9JavaVM *vm);
 
 /* ---------------- eventframe.c ---------------- */
 
@@ -1295,6 +1312,16 @@ getNumberOfPermittedSubclassesPtr(J9ROMClass *romClass);
 J9UTF8*
 permittedSubclassesNameAtIndex(U_32* permittedSubclassesCountPtr, U_32 index);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+ * Retrieves number of interfaces injected into a class.
+ * @param J9ROMClass class with injected interfaces
+ * @return U_32 number of injected interfaces in optionalinfo
+ */
+U_32
+getNumberOfInjectedInterfaces(J9ROMClass *romClass);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 /**
  * Retrieves number of record components in this record. Assumes that 
  * ROM class parameter references a record class.
@@ -2280,7 +2307,7 @@ uint64_t
 getOpenJ9Sha();
 
 /**
- * If the class is a lambda class get the pointer to the last '$' sign of the class name which is in the format of HostClassName$$Lambda$<IndexNumber>/0000000000000000.
+ * If the class is a lambda class get the pointer to the last '$' sign of the class name which is in the format of HostClassName$$Lambda$<IndexNumber>/0x0000000000000000.
  * NULL otherwise.
  *
  * @param[in] className  pointer to the class name

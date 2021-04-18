@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,10 +58,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
-J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
+J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_LinkageConventions lc)
    : J9::PrivateLinkage(codeGen)
    {
-   setExplicitLinkageType(elc);
+   setLinkageType(lc);
 
    // linkage properties
    setProperty(SplitLongParm);
@@ -1274,7 +1274,6 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
       }
 
       // End of stack overflow checking code ////////////////////////
-#if !defined(PUBLIC_BUILD)
    static bool bppoutline = (feGetEnv("TR_BPRP_Outline")!=NULL);
 
    if (bppoutline && cg()->_outlineCall._frequency != -1)
@@ -1291,7 +1290,6 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
       TR::MemoryReference * tempMR = generateS390MemoryReference(epReg, 0, cg());
       cursor = generateS390BranchPredictionPreloadInstruction(cg(), TR::InstOpCode::BPP, firstNode, cg()->_outlineArrayCall._callLabel, (int8_t) 0xD, tempMR, cursor);
       }
-#endif
 
       if (cg()->getSupportsRuntimeInstrumentation())
          cursor = TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RION, firstNode, cursor, true);
@@ -1460,9 +1458,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
    TR::RealRegister * epReg = getRealRegister(getEntryPointRegister());
    int32_t blockNumber = -1;
 
-#if !defined(PUBLIC_BUILD)
    bool enableBranchPreload = cg()->supportsBranchPreload();
-#endif
 
    dep = cursor->getNext()->getDependencyConditions();
    offset = getOffsetToRegSaveArea();
@@ -1493,7 +1489,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
       if (comp()->getOption(TR_TraceCG))
          traceMsg(comp(), "No RAREG context restore needed in Epilog\n");
       }
-#if !defined(PUBLIC_BUILD)
+
    if (enableBranchPreload && (cursor->getNext() == cg()->_hottestReturn._returnInstr))
       {
       if (cg()->_hottestReturn._frequency > 6 && cg()->_hottestReturn._insertBPPInEpilogue)
@@ -1504,7 +1500,6 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
          cg()->_hottestReturn._insertBPPInEpilogue = false;
          }
       }
-#endif
 
    // Restore GPRs
    firstUsedReg = getFirstRestoredRegister(TR::RealRegister::GPR6, TR::RealRegister::GPR12);
@@ -1558,7 +1553,6 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
       cursor = TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RIOFF, currentNode, cursor, true);
 
 
-#if !defined(PUBLIC_BUILD)
    if (enableBranchPreload)
       {
       if (cursor->getNext() == cg()->_hottestReturn._returnInstr)
@@ -1569,7 +1563,6 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
             }
          }
       }
-#endif
 
    cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, currentNode, getRealRegister(getReturnAddressRegister()), cursor);
    ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
@@ -1777,7 +1770,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                      TR_ResolvedMethod * method = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(),
                                                                 methodSymRef->getOwningMethod(comp()), comp());
                      if (method &&
-                        ((method->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) || !method->isInterpreted() || method->isJITInternalNative()))
+                        (comp()->isRecursiveMethodTarget(method) || !method->isInterpreted() || method->isJITInternalNative()))
                         {
                         performGuardedDevirtualization = true;
                         resolvedMethod = method;
@@ -1798,7 +1791,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                         TR_ResolvedMethod * calleeMethod = methodSymRef->getOwningMethod(comp())->getResolvedVirtualMethod(comp(),
                                                                 refinedThisClass, methodSymRef->getOffset());
                         if (calleeMethod &&
-                           ((calleeMethod->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ||
+                           (comp()->isRecursiveMethodTarget(calleeMethod) ||
                            !calleeMethod->isInterpreted() ||
                            calleeMethod->isJITInternalNative()))
                            {
@@ -2340,7 +2333,7 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
    TR_ResolvedMethod * fem = (sym == NULL) ? NULL : sym->getResolvedMethod();
    bool myself;
    bool isJitInduceOSR = callSymRef->isOSRInductionHelper();
-   myself = (fem != NULL && fem->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ? true : false;
+   myself = comp()->isRecursiveMethodTarget(fem);
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
@@ -2438,7 +2431,7 @@ J9::Z::PrivateLinkage::callPreJNICallOffloadCheck(TR::Node * callNode)
    TR::CodeGenerator * codeGen = cg();
    TR::LabelSymbol * offloadOffRestartLabel = generateLabelSymbol(codeGen);
    TR::LabelSymbol * offloadOffSnippetLabel = generateLabelSymbol(codeGen);
-   TR::SymbolReference * offloadOffSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPreJNICallOffloadCheck, false, false, false);
+   TR::SymbolReference * offloadOffSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPreJNICallOffloadCheck);
 
    TR::Instruction *gcPoint = generateS390BranchInstruction(
       codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, callNode, offloadOffSnippetLabel);
@@ -2459,7 +2452,7 @@ J9::Z::PrivateLinkage::callPostJNICallOffloadCheck(TR::Node * callNode)
    TR::Instruction *gcPoint = generateS390BranchInstruction(
       codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, callNode, offloadOnSnippetLabel);
    gcPoint->setNeedsGCMap(0);
-   TR::SymbolReference * offloadOnSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPostJNICallOffloadCheck, false, false, false);
+   TR::SymbolReference * offloadOnSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPostJNICallOffloadCheck);
    codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
       offloadOnSnippetLabel, offloadOnSymRef, offloadOnRestartLabel));
    generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, offloadOnRestartLabel);
@@ -2486,7 +2479,7 @@ void J9::Z::PrivateLinkage::collapseJNIReferenceFrame(TR::Node * callNode,
       generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, refPoolSnippetLabel);
    gcPoint->setNeedsGCMap(0);
 
-   TR::SymbolReference * collapseSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390collapseJNIReferenceFrame, false, false, false);
+   TR::SymbolReference * collapseSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390collapseJNIReferenceFrame);
    codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
       refPoolSnippetLabel, collapseSymRef, refPoolRestartLabel));
    generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, refPoolRestartLabel);
@@ -3000,7 +2993,7 @@ TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
       }
 
    // JNI dispatch does not allow for any object references to survive in preserved registers as they are saved onto
-   // the system stack, which the JVM stack walker has has no awareness of. Hence we need to ensure that all object
+   // the system stack, which the JVM stack walker has no awareness of. Hence we need to ensure that all object
    // references are evicted from preserved registers at the call site.
    TR::Register* tempReg = cg()->allocateRegister();
 
@@ -3515,7 +3508,7 @@ J9::Z::PrivateLinkage::getSystemStackPointerRegister()
    }
 
 
-J9::Z::JNILinkage::JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
-   :J9::Z::PrivateLinkage(cg, elc, lc)
+J9::Z::JNILinkage::JNILinkage(TR::CodeGenerator * cg, TR_LinkageConventions elc)
+   :J9::Z::PrivateLinkage(cg, elc)
    {
    }

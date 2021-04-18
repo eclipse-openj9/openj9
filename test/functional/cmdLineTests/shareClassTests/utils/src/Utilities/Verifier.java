@@ -66,7 +66,7 @@ public class Verifier {
 		String classPath = props.getProperty("ClassPath");
 		
 		String nctls = props.getProperty("NumberOfClassesToVerify");
-		Integer i = new Integer(nctls);
+		Integer i = Integer.valueOf(nctls);
 		int classesToVerifyCount = i.intValue();
 		
 		String[] classesToVerify = new String[classesToVerifyCount];

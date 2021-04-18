@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 package com.ibm.dtfj.javacore.parser.framework.parser;
 
 public interface IErrorListener {
-//this is not ideal but fixing it it properly is outside of the defect scope.
+//this is not ideal but fixing it properly is outside of the defect scope.
 //making it a string at least shows the only type of object that is raised
 	public void handleEvent(String msg);
 

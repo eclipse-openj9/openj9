@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,7 +111,7 @@ J9::ValuePropagation::transformCallToNodeWithHCRGuard(TR::TreeTop *callTree, TR:
    TR::ResolvedMethodSymbol *calleeSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
 
    // Add the call to inlining table
-   if (!comp()->incInlineDepth(calleeSymbol, callNode->getByteCodeInfo(), callNode->getSymbolReference()->getCPIndex(), callNode->getSymbolReference(), !callNode->getOpCode().isCallIndirect(), 0))
+   if (!comp()->incInlineDepth(calleeSymbol, callNode, !callNode->getOpCode().isCallIndirect(), NULL, calleeSymbol->getResolvedMethod()->classOfMethod(), 0))
       {
       if (trace())
          traceMsg(comp(), "Cannot inline call %p, quit transforming it into a constant\n", callNode);
@@ -481,6 +481,81 @@ bool J9::ValuePropagation::transformIndexOfKnownString(
       }
 
    return false;
+   }
+
+bool J9::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode)
+   {
+   if (!canRunTransformToArrayCopy())
+      return false;
+
+   if (comp()->canTransformUnsafeCopyToArrayCopy()
+         && arraycopyNode->isUnsafeCopyMemoryIntrinsic())
+      {
+
+      TR::TreeTop *tt = _curTree;
+      TR::Node *ttNode = tt->getNode();
+
+      if ((ttNode->getOpCodeValue() == TR::treetop || ttNode->getOpCode().isResolveOrNullCheck())
+            && performTransformation(comp(), "%sChanging call Unsafe.copyMemory [%p] to arraycopy\n", OPT_DETAILS, arraycopyNode))
+
+         {
+         TR::Node *unsafe     = arraycopyNode->getChild(0);
+         TR::Node *src        = arraycopyNode->getChild(1);
+         TR::Node *srcOffset  = arraycopyNode->getChild(2);
+         TR::Node *dest       = arraycopyNode->getChild(3);
+         TR::Node *destOffset = arraycopyNode->getChild(4);
+         TR::Node *len        = arraycopyNode->getChild(5);
+
+         bool isGlobal;
+         TR::VPConstraint *srcOffsetConstraint = getConstraint(srcOffset, isGlobal);
+         TR::VPConstraint *dstOffsetConstraint = getConstraint(destOffset, isGlobal);
+         TR::VPConstraint *copyLenConstraint   = getConstraint(len, isGlobal);
+
+         int64_t srcOffLow   = srcOffsetConstraint ? srcOffsetConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
+         int64_t srcOffHigh  = srcOffsetConstraint ? srcOffsetConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
+         int64_t dstOffLow   = dstOffsetConstraint ? dstOffsetConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
+         int64_t dstOffHigh  = dstOffsetConstraint ? dstOffsetConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
+         int64_t copyLenLow  = copyLenConstraint   ? copyLenConstraint->getLowInt() : TR::getMinSigned<TR::Int32>();
+         int64_t copyLenHigh = copyLenConstraint   ? copyLenConstraint->getHighInt() : TR::getMaxSigned<TR::Int32>();
+
+         if (comp()->target().is64Bit())
+            {
+            src  = TR::Node::create(TR::aladd, 2, src, srcOffset);
+            dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
+            }
+         else
+            {
+            srcOffset  = TR::Node::create(TR::l2i, 1, srcOffset);
+            destOffset = TR::Node::create(TR::l2i, 1, destOffset);
+            len        = TR::Node::create(TR::l2i, 1, len);
+            src  = TR::Node::create(TR::aiadd, 2, src, srcOffset);
+            dest = TR::Node::create(TR::aiadd, 2, dest, destOffset);
+            }
+
+         TR::Node    *oldArraycopyNode = arraycopyNode;
+         TR::TreeTop *oldTT = tt;
+
+         arraycopyNode = TR::Node::createArraycopy(src, dest, len);
+         TR::Node    *treeTopNode = TR::Node::create(TR::treetop, 1, arraycopyNode);
+         tt = TR::TreeTop::create(comp(), treeTopNode);
+
+         oldTT->insertAfter(tt);
+
+         if (ttNode->getOpCode().isNullCheck())
+            ttNode->setAndIncChild(0, TR::Node::create(TR::PassThrough, 1, unsafe));
+         else
+            ttNode->setAndIncChild(0, unsafe);
+
+         removeNode(oldArraycopyNode);
+
+         if ((srcOffLow >= dstOffHigh) || (srcOffHigh+copyLenHigh) <= dstOffLow)
+            arraycopyNode->setForwardArrayCopy(true);
+
+         return true;
+         }
+      }
+   return false;
+
    }
 
 void
@@ -1132,9 +1207,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
             // The following classes cannot be instantiated normally, i.e. via the new bytecode
             // InstantiationException will be thrown when calling java/lang/Class.newInstance on the following classes
-            if (comp()->fej9()->isAbstractClass(newClass) ||
+            if (!comp()->fej9()->isConcreteClass(newClass) ||
                 comp()->fej9()->isPrimitiveClass(newClass) ||
-                comp()->fej9()->isInterfaceClass(newClass) ||
                 comp()->fej9()->isClassArray(newClass))
                {
                if (trace())
@@ -1373,7 +1447,7 @@ J9::ValuePropagation::getParmValues()
                TR::ClassTableCriticalSection usesPreexistence(comp()->fe());
 
                prexClass = opaqueClass;
-               if (TR::Compiler->cls.isInterfaceClass(comp(), opaqueClass) || TR::Compiler->cls.isAbstractClass(comp(), opaqueClass))
+               if (!TR::Compiler->cls.isConcreteClass(comp(), opaqueClass))
                   opaqueClass = comp()->getPersistentInfo()->getPersistentCHTable()->findSingleConcreteSubClass(opaqueClass, comp());
 
                if (!opaqueClass)

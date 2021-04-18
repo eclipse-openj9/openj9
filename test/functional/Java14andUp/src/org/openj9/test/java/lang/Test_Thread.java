@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ public class Test_Thread {
         t.interrupt();
 
         /* Verify that the thread was successfully interrupted. */
-        AssertJUnit.assertTrue(name + "thread that has ended was was interrupted", t.isInterrupted());    
+        AssertJUnit.assertTrue(name + "thread that has ended was interrupted", t.isInterrupted());    
     }
 
     /* Verify that thread was sucessfully interrupted before it is started, and that the interrupt flag is 

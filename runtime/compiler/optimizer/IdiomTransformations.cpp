@@ -6798,10 +6798,12 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
    //
    TR::Node * LELoadTree  = LEloadMemNode->duplicateTree();
    TR::Node * LEStoreAddrTree = LEstoreMemNode->getChild(0)->duplicateTree();
-   if (comp->cg()->getSupportsReverseLoadAndStore())
+   if (comp->cg()->supportsByteswap())
       {
-      TR::Node * LEReverseStore = TR::Node::createWithSymRef(TR::irsstore, 2, 2, LEStoreAddrTree, LELoadTree,
-                                                 comp->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
+      TR::Node * LEReverseStore = TR::Node::createWithSymRef(TR::sstorei, 2, 2,
+         LEStoreAddrTree,
+         TR::Node::create(TR::sbyteswap, 1, LELoadTree),
+         comp->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
       blockLE->append(TR::TreeTop::create(comp, LEReverseStore));
       }
    else

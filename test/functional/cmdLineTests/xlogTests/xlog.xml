@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+Copyright (c) 2020, 2020 IBM Corp. and others
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="-Xlog Tests" timeout="60">
+<variable name="ENABLEXLOG" value="-XX:-LegacyXlogOption" />
+
+	<test id="-Xlog">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog: -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:all">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:all -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:all=off">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:all=off -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:any,gc">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:any,gc -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc,any">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc,any -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc,any=off">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc,any=off -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+		<output regex="no" type="failure">JVMJ9VM007</output>
+	</test>
+
+	<test id="-Xlog:gc:">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc: -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+		<output regex="no" type="failure">JVMJ9VM007</output>
+	</test>
+
+	<test id="-Xlog:gc:stderr">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:stderr -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+		<output regex="no" type="failure">JVMJ9VM007</output>
+	</test>
+
+	<test id="-Xlog:gc:stderr">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:stderr: -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+		<output regex="no" type="failure">JVMJ9VM007</output>
+	</test>
+
+	<test id="-Xlog:gc:stderr:any">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:stderr:any -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc:stdout">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:stdout -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc:gclog">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:gclog -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+		<output regex="no" type="failure">JVMJ9VM007</output>
+	</test>
+
+	<test id="-Xlog:gc:gclog check file">
+		<command>cat gclog</command>
+		<output regex="no" type="success">verbosegc</output>
+	</test>
+
+	<exec command="rm -f gclog" />
+
+	<test id="-Xlog:gc:gclog:">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:gclog: -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+		<output regex="no" type="failure">JVMJ9VM007</output>
+	</test>
+
+	<test id="-Xlog:gc:gclog: check file">
+		<command>cat gclog</command>
+		<output regex="no" type="success">verbosegc</output>
+	</test>
+
+	<exec command="rm -f gclog" />
+
+	<test id="-Xlog:gc:file=gclog">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc:file=gclog -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+		<output regex="no" type="failure">JVMJ9VM007</output>
+	</test>
+
+	<test id="-Xlog:gc:file=gclog check file">
+		<command>cat gclog</command>
+		<output regex="no" type="success">verbosegc</output>
+	</test>
+
+	<exec command="rm -f gclog" />
+
+	<test id="-Xlog:gc=off">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=off -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:any+gc=off">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:any+gc=off -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc+any=off">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc+any=off -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc=off,any">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=off,any -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:any,gc=off">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:any,gc=off -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:disable">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:disable -version</command>
+		<output regex="no" type="success">openjdk version</output>
+		<output regex="no" type="success">java version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:disable:">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:disable: -version</command>
+		<output regex="no" type="success">JVMJ9VM085E</output>
+		<output regex="no" type="failure">openjdk version</output>
+		<output regex="no" type="failure">java version</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM007W</output>
+	</test>
+
+	<test id="-Xlog:disable,any">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:disable,any -version</command>
+		<output regex="no" type="success">JVMJ9VM085E</output>
+		<output regex="no" type="failure">openjdk version</output>
+		<output regex="no" type="failure">java version</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM007W</output>
+	</test>
+
+	<test id="-Xlog:disable+any">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:disable+any -version</command>
+		<output regex="no" type="success">JVMJ9VM085E</output>
+		<output regex="no" type="failure">openjdk version</output>
+		<output regex="no" type="failure">java version</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM007W</output>
+	</test>
+</suite>

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or
+# It indicates a single percent sign. Please do not modify the format specifiers, or 
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -230,7 +230,7 @@ J9NLS_JNICHK_NONFATAL_ERROR.user_response=Investigate the JNI check error report
 # JNI is not translatable
 J9NLS_JNICHK_FATAL_ERROR=Byla zji\u0161t\u011bna chyba JNI. P\u0159ed\u010dasn\u00e9 ukon\u010den\u00ed.
 # START NON-TRANSLATABLE
-J9NLS_JNICHK_FATAL_ERROR.explanation=The JNI check utility has detected an unrecoverable JNI error.
+J9NLS_JNICHK_FATAL_ERROR.explanation=The JNI check utility has detected an unrecoverable JNI error. 
 J9NLS_JNICHK_FATAL_ERROR.system_action=The JVM terminates.
 J9NLS_JNICHK_FATAL_ERROR.user_response=Investigate the JNI check error reported in the previous message.
 # END NON-TRANSLATABLE
@@ -238,13 +238,13 @@ J9NLS_JNICHK_FATAL_ERROR.user_response=Investigate the JNI check error reported 
 # -Xcheck:jni:nonfatal is not translatable
 J9NLS_JNICHK_FATAL_ERROR_ADVICE=Chcete-li pokra\u010dovat i po v\u00fdskytu chyb, pou\u017eijte volbu -Xcheck:jni:nonfatal.
 # START NON-TRANSLATABLE
-J9NLS_JNICHK_FATAL_ERROR_ADVICE.explanation=The JVM has terminated because it has detected a JNI error. The -Xcheck:jni:nonfatal option can be used to change this behaviour.
+J9NLS_JNICHK_FATAL_ERROR_ADVICE.explanation=The JVM has terminated because it has detected a JNI error. The -Xcheck:jni:nonfatal option can be used to change this behaviour. 
 J9NLS_JNICHK_FATAL_ERROR_ADVICE.system_action=The JVM terminates.
 J9NLS_JNICHK_FATAL_ERROR_ADVICE.user_response=As required, add the -Xcheck:jni:nonfatal option and re-run.
 # END NON-TRANSLATABLE
 
 # JNI, JNIEnv, -Xcheck:jni:nonfatal and JVM are not translatable
-J9NLS_JNICHK_INVALID_ENV=Chyba JNI v %s: Prost\u0159ed\u00ed JNIEnv z\u0159ejm\u011b nen\u00ed platn\u00fdm podprocesem. Mohlo doj\u00edt k po\u0161kozen\u00ed pam\u011bti nebo se nejedn\u00e1 o virtu\u00e1ln\u00ed stroj J9.
+J9NLS_JNICHK_INVALID_ENV=Chyba JNI v %s: Prost\u0159ed\u00ed JNIEnv z\u0159ejm\u011b nen\u00ed platn\u00fdm podprocesem. Mohlo doj\u00edt k po\u0161kozen\u00ed pam\u011bti nebo se nejedn\u00e1 o virtu\u00e1ln\u00ed po\u010d\u00edta\u010d J9.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_INVALID_ENV.sample_input_1=methodName
 J9NLS_JNICHK_INVALID_ENV.explanation=Validation of the JNIEnv passed on the named JNI function has failed.
@@ -276,14 +276,14 @@ J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR=Chyba JNI v %s: Tuto funkci nelze vyvolat z k
 J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.sample_input_1=methodName
 J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.explanation=The named JNI function has been called within a JNI critical section.
 J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
-J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.user_response=Correct the JNI application code to avoid calling the named function within a JNI critical section.
+J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.user_response=Correct the JNI application code to avoid calling the named function within a JNI critical section. 
 # END NON-TRANSLATABLE
 
 # JNI, GC, JVMPI and JVMTI are not translatable
 J9NLS_JNICHK_GC_IS_DISABLED=Chyba JNI v %s: Tuto funkci nelze vyvolat, je-li zak\u00e1z\u00e1n modul GC. (Funkce byla pravd\u011bpodobn\u011b vol\u00e1na z ud\u00e1losti JVMPI nebo JVMTI.)
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GC_IS_DISABLED.sample_input_1=methodName
-J9NLS_JNICHK_GC_IS_DISABLED.explanation=The named JNI function has been called at a point where the calling thread that has an internal VM access lock.
+J9NLS_JNICHK_GC_IS_DISABLED.explanation=The named JNI function has been called at a point where the calling thread that has an internal VM access lock. 
 J9NLS_JNICHK_GC_IS_DISABLED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_GC_IS_DISABLED.user_response=Correct the JNI application code to avoid calling the named function at this point.
 # END NON-TRANSLATABLE
@@ -978,7 +978,7 @@ J9NLS_JNICHK_PACKED_MISMATCH=Chyba JNI v %1$s: argument #%2$d o\u010dek\u00e1v\u
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_1=SetObjectField
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_2=3
-J9NLS_JNICHK_PACKED_MISMATCH.sample_input_3=non nested
+J9NLS_JNICHK_PACKED_MISMATCH.sample_input_3=non nested  
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_4=field
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_5=nested
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_6=field
@@ -991,12 +991,12 @@ J9NLS_JNICHK_NON_ARRAY_REQUIRED=Chyba JNI v %1$s: argument #%2$d vy\u017eaduje t
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.sample_input_1=GetClassPackedDataSize
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.sample_input_2=2
-J9NLS_JNICHK_NON_ARRAY_REQUIRED.explanation=expects a non-array type
+J9NLS_JNICHK_NON_ARRAY_REQUIRED.explanation=expects a non-array type 
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.user_response=Check and correct the JNI application code.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS=Rada JNI v %1$s: Tuto funkci nelze pou\u017e\u00edt se sbalen\u00fdmi objekty. Pou\u017eijte m\u00edsto toho %2$s.
+J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS=Rada JNI v %1$s: Tuto funkci nelze pou\u017e\u00edt se sbalen\u00fdmi objekty. Pou\u017eijte m\u00edsto n\u00ed %2$s.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_1=GetPrimitiveArrayCritical
 J9NLS_JNICHK_NON_PACKED_API_USED_FOR_PACKED_OBJECTS.sample_input_2=GetPackedArrayElements
@@ -1019,4 +1019,24 @@ J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2=Chyba JNI v %1$s: Typ argumentu #%2$d nen\u00ed podt\u0159\u00eddou t\u0159\u00eddy %3$s nebo %4$s.
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_3=package1/Class1
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_4=package2/Class2
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# abortonerror is not translatable
+J9NLS_JNICHK_HELP_16=\tabortonerror   p\u0159i z\u00e1va\u017en\u00e9 chyb\u011b dojde k p\u0159ed\u010dasn\u00e9mu ukon\u010den\u00ed
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_15.explanation=NOTAG
+J9NLS_JNICHK_HELP_15.system_action=
+J9NLS_JNICHK_HELP_15.user_response=
 # END NON-TRANSLATABLE

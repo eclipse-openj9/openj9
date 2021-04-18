@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,10 @@
 #include "rommeth.h"
 #include "vm_api.h"
 #include "ut_j9jcl.h"
+
+#if JAVA_SPEC_VERSION >= 11
+static void setStackTraceElementFields(J9VMThread *vmThread, j9object_t element, J9ClassLoader *classLoader);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 static UDATA getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
 
@@ -185,6 +189,9 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 						J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULEVERSION(vmThread, element, module->version);
 					}
 				}
+#if JAVA_SPEC_VERSION >= 11
+				setStackTraceElementFields(vmThread, element, classLoader);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 			}
 
 			/* Fill in method class */
@@ -372,3 +379,38 @@ retry:
 
 	return result;
 }
+
+#if JAVA_SPEC_VERSION >= 11
+/**
+ * Set the includeClassLoaderName and includeModuleVersion fields for a StackTraceElement.
+ *
+ * @param vmThread The VM thread.
+ * @param element The element to set fields for.
+ * @param classLoader The classloader to check.
+ */
+static void
+setStackTraceElementFields(J9VMThread *vmThread, j9object_t element, J9ClassLoader *classLoader) {
+	J9JavaVM *vm = vmThread->javaVM;
+	BOOLEAN includeClassLoaderName = TRUE;
+	BOOLEAN includeModuleVersion = TRUE;
+
+	/**
+	 * If the classloader is one of the Platform or Bootstrap built-in classloaders,
+	 * don't include its name or module version in the stack trace. If it is the
+	 * Application/System built-in classloader, don't include the class name, but
+	 * include the module version.
+	 */
+	if ((NULL == classLoader)
+		|| (vm->extensionClassLoader == classLoader) // JRE: Platform ClassLoader
+		|| (vm->systemClassLoader == classLoader) // JRE: Bootstrap ClassLoader
+	) {
+		includeClassLoaderName = FALSE;
+		includeModuleVersion = FALSE;
+	} else if (vm->applicationClassLoader == classLoader) { // JRE: System ClassLoader
+		includeClassLoaderName = FALSE;
+	}
+
+	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDECLASSLOADERNAME(vmThread, element, (U_32) includeClassLoaderName);
+	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDEMODULEVERSION(vmThread, element, (U_32) includeModuleVersion);
+}
+#endif /* JAVA_SPEC_VERSION >= 11 */

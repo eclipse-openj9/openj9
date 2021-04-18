@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,16 +51,15 @@ private:
 	static const uintptr_t _objectHeaderSlotOffset = 0;
 	static const uintptr_t _objectHeaderSlotFlagsShift = 0;
 
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-	bool _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
-
 	const uintptr_t _delegateHeaderSlotFlagsMask;
 
 	GC_ArrayObjectModel *_arrayObjectModel;
 	GC_MixedObjectModel *_mixedObjectModel;
 
 protected:
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 public:
 
 /*
@@ -76,19 +75,7 @@ public:
 	MMINLINE bool
 	compressObjectReferences()
 	{
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-#if defined(OMR_GC_FULL_POINTERS)
-#if defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES)
-		return (bool)OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES;
-#else /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
-		return _compressObjectReferences;
-#endif /* defined(OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES) */
-#else /* defined(OMR_GC_FULL_POINTERS) */
-		return true;
-#endif /* defined(OMR_GC_FULL_POINTERS) */
-#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
-		return false;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return OMR_COMPRESS_OBJECT_REFERENCES(_compressObjectReferences);
 	}
 
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
@@ -392,6 +379,60 @@ public:
 	}
 
 	/**
+	 * Returns the field offset of the hottest field of the object referred to by the forwarded header.
+	 * Valid if scavenger dynamicBreadthFirstScanOrdering is enabled.
+	 *
+	 * @param forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @return the offset of the hottest field of the given object referred to by the forwarded header, return U_8_MAX if a hot field does not exist
+	 */
+	MMINLINE uint8_t
+	getHotFieldOffset(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class* hotClass = ((J9Class *)(((uintptr_t)(forwardedHeader->getPreservedSlot())) & ~(UDATA)_delegateHeaderSlotFlagsMask));
+		if (hotClass->hotFieldsInfo != NULL) {
+			return hotClass->hotFieldsInfo->hotFieldOffset1;
+		}
+		
+		return U_8_MAX;
+	}
+
+	/**
+	 * Returns the field offset of the second hottest field of the object referred to by the forwarded header.
+	 * Valid if scavenger dynamicBreadthFirstScanOrdering is enabled
+	 *
+	 * @param forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @return the offset of the second hottest field of the given object referred to by the forwarded header, return U_8_MAX if the hot field does not exist
+	 */
+	MMINLINE uint8_t
+	getHotFieldOffset2(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class* hotClass = ((J9Class *)(((uintptr_t)(forwardedHeader->getPreservedSlot())) & ~(UDATA)_delegateHeaderSlotFlagsMask));
+		if (hotClass->hotFieldsInfo != NULL) {
+			return hotClass->hotFieldsInfo->hotFieldOffset2;
+		}
+		
+		return U_8_MAX;	
+	}
+
+	/**
+	 * Returns the field offset of the third hottest field of the object referred to by the forwarded header.
+	 * Valid if scavenger dynamicBreadthFirstScanOrdering is enabled
+	 *
+	 * @param forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @return the offset of the third hottest field of the given object referred to by the forwarded header, return U_8_MAX if the hot field does not exist
+	 */
+	MMINLINE uint8_t
+	getHotFieldOffset3(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class* hotClass = ((J9Class *)(((uintptr_t)(forwardedHeader->getPreservedSlot())) & ~(UDATA)_delegateHeaderSlotFlagsMask));
+		if (hotClass->hotFieldsInfo != NULL) {
+			return hotClass->hotFieldsInfo->hotFieldOffset3;
+		}
+		
+		return U_8_MAX;	
+	}
+
+	/**
 	 * Return true if the object holds references to heap objects not reachable from reference graph. For
 	 * example, an object may be associated with a class and the class may have associated meta-objects
 	 * that are in the heap but not directly reachable from the root set. This method is called to
@@ -419,6 +460,19 @@ public:
 	 */
 	void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
+
+	/**
+	 * Calculate the actual object size and the size adjusted to object alignment. The calculated object size
+	 * includes any expansion bytes allocated if the object will grow when moved. TODO: Merge this with the
+	 * above calculateObjectDetailsForCopy()
+	 *
+	 * @param[in] env points to the environment for the calling thread
+	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @param[out] objectCopySizeInBytes actual object size
+	 * @param[out] objectReserveSizeInBytes size adjusted to object alignment
+	 * @param[out] doesObjectNeedHash flag that indicates if object needs hashing
+	 */
+	void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader* forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash);
 
 	/**
 	 * Constructor receives a copy of OMR's object flags mask, normalized to low order byte. Delegate

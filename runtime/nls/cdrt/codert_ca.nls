@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,7 +53,7 @@
 J9NLS.MODULE=CDRT
 J9NLS.HEADER=j9codertnls.h
 
-J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP=No es pot localitzar la correlaci\u00f3 de pila JIT - avortant VM
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP=No es pot localitzar la correlaci\u00f3 de pila JIT - s'est\u00e0 avortant la VM
 # START NON-TRANSLATABLE
 J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP.explanation=Internal error indicating inability to find JIT metadata while traversing Java stacks
 J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP.system_action=JVM will exit

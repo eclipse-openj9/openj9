@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -758,7 +758,7 @@ isAccessibleToAllModulesViaReflection(J9VMThread *currentThread, J9Class *clazz,
 			package = getPackageDefinitionWithName(currentThread, module, (U_8*) packageName, (U_16) packageNameLength, &err);
 			omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 
-			if ((ERRCODE_SUCCESS != err) || !package->exportToAll) {
+			if ((ERRCODE_SUCCESS != err) || (0 == package->exportToAll)) {
 				isAccessible = false;
 			}
 		} else {
@@ -880,7 +880,7 @@ sendFromMethodDescriptorString(J9VMThread *currentThread, J9UTF8 *descriptor, J9
 			*--currentThread->sp = (UDATA)classLoader->classLoaderObject;
 			*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(appendArgType);
 			currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-			currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPE_VMRESOLVEFROMMETHODDESCRIPTORSTRING_METHOD(vm);
+			currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODTYPEHELPER_VMRESOLVEFROMMETHODDESCRIPTORSTRING_METHOD(vm);
 			c_cInterpreter(currentThread);
 		}
 		restoreCallInFrame(currentThread);
@@ -915,7 +915,7 @@ sendResolveMethodHandle(J9VMThread *currentThread, UDATA cpIndex, J9ConstantPool
 				*--currentThread->sp = (UDATA)sigString;
 				*--currentThread->sp = (UDATA)clazz->classLoader->classLoaderObject;
 				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLE_SENDRESOLVEMETHODHANDLE_METHOD(vm);
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLERESOLVER_SENDRESOLVEMETHODHANDLE_METHOD(vm);
 				c_cInterpreter(currentThread);
 			}
 		}
@@ -940,6 +940,43 @@ sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9objec
 		restoreCallInFrame(currentThread);
 	}
 	Trc_VM_sendForGenericInvoke_Exit(currentThread);
+}
+
+void JNICALL
+sendResolveOpenJDKInvokeHandle(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature *nameAndSig)
+{
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	Trc_VM_sendResolveOpenJDKInvokeHandle_Entry(currentThread);
+	J9VMEntryLocalStorage newELS;
+	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
+		/* Convert name and signature to String objects */
+		J9JavaVM *vm = currentThread->javaVM;
+		J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
+		J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+		j9object_t nameString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), 0);
+		if (NULL != nameString) {
+			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, nameString);
+			j9object_t sigString = mmFuncs->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF), 0);
+			nameString = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+			if (NULL != sigString) {
+				/* Run the method */
+				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(ramCP->ramClass);
+				*(I_32*)--currentThread->sp = refKind;
+				*--currentThread->sp = (UDATA)J9VM_J9CLASS_TO_HEAPCLASS(resolvedClass);
+				*--currentThread->sp = (UDATA)nameString;
+				*--currentThread->sp = (UDATA)sigString;
+				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLERESOLVER_LINKCALLERMETHOD_METHOD(vm);
+				c_cInterpreter(currentThread);
+			}
+		}
+		restoreCallInFrame(currentThread);
+	}
+	Trc_VM_sendResolveOpenJDKInvokeHandle_Exit(currentThread);
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	Assert_VM_unreachable();
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
 void JNICALL
@@ -980,7 +1017,7 @@ sendResolveConstantDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDA
 				currentThread->sp -= 2;
 				*(U_64*)currentThread->sp = (U_64)(UDATA)bsmData;
 				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLE_RESOLVECONSTANTDYNAMIC_METHOD(vm);
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLERESOLVER_RESOLVECONSTANTDYNAMIC_METHOD(vm);
 				c_cInterpreter(currentThread);
 			}
 		}
@@ -1025,7 +1062,7 @@ sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA
 				currentThread->sp -= 2;
 				*(U_64*)currentThread->sp = (U_64)(UDATA)bsmData;
 				currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLE_RESOLVEINVOKEDYNAMIC_METHOD(vm);
+				currentThread->returnValue2 = (UDATA)J9VMJAVALANGINVOKEMETHODHANDLERESOLVER_RESOLVEINVOKEDYNAMIC_METHOD(vm);
 				c_cInterpreter(currentThread);
 			}
 		}

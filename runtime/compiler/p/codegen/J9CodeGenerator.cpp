@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,9 +44,20 @@
 
 extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg);
 
-J9::Power::CodeGenerator::CodeGenerator() :
-      J9::CodeGenerator()
+J9::Power::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
+      J9::CodeGenerator(comp)
    {
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
+   }
+
+void
+J9::Power::CodeGenerator::initialize()
+   {
+   self()->J9::CodeGenerator::initialize();
+
    TR::CodeGenerator *cg = self();
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (comp->fe());
@@ -119,7 +130,7 @@ J9::Power::CodeGenerator::CodeGenerator() :
       }
 
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
-      self()->setHasFixedFrameC_CallingConvention();
+      cg->setHasFixedFrameC_CallingConvention();
 
    }
 
@@ -348,10 +359,7 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
       return true;
       }
 
-   if (method == TR::java_lang_Short_reverseBytes ||
-       method == TR::java_lang_Integer_reverseBytes ||
-       method == TR::java_lang_Long_reverseBytes ||
-       method == TR::java_lang_Math_fma_D ||
+   if (method == TR::java_lang_Math_fma_D ||
        method == TR::java_lang_Math_fma_F ||
        method == TR::java_lang_StrictMath_fma_D ||
        method == TR::java_lang_StrictMath_fma_F)
@@ -395,7 +403,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
    static bool disableStringObjPrefetch = (feGetEnv("TR_DisableStringObjPrefetch") != NULL);
    bool optDisabled = false;
 
-   if (node->getOpCodeValue() == TR::aloadi ||
+   if ((node->getOpCodeValue() == TR::aloadi && !comp->target().is64Bit()) ||
         (comp->target().is64Bit() &&
          comp->useCompressedPointers() &&
          node->getOpCodeValue() == TR::l2a &&
@@ -449,16 +457,16 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
 
             if (comp->target().is64Bit() && !comp->useCompressedPointers())
                {
-               TR::MemoryReference *tempMR = new (self()->trHeapMemory()) TR::MemoryReference(targetRegister, prefetchOffset, 8, self());
+               TR::MemoryReference *tempMR = TR::MemoryReference::createWithDisplacement(self(), targetRegister, prefetchOffset, 8);
                generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, tempReg, tempMR);
                }
             else
                {
-               TR::MemoryReference *tempMR = new (self()->trHeapMemory()) TR::MemoryReference(targetRegister, prefetchOffset, 4, self());
+               TR::MemoryReference *tempMR = TR::MemoryReference::createWithDisplacement(self(), targetRegister, prefetchOffset, 4);
                generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, tempReg, tempMR);
                }
 
-            TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(tempReg, (int32_t)0, 4, self());
+            TR::MemoryReference *targetMR = TR::MemoryReference::createWithDisplacement(self(), tempReg, (int32_t)0, 4);
             targetMR->forceIndexedForm(node, self());
             generateMemInstruction(self(), TR::InstOpCode::dcbt, node, targetMR);
 
@@ -564,16 +572,16 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
                if (comp->target().is64Bit() && !comp->useCompressedPointers())
                   {
                   if (!prefetch2Ahead)
-                     generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, temp3Reg, new (self()->trHeapMemory()) TR::MemoryReference(pointerReg, (int32_t)TR::Compiler->om.sizeofReferenceField(), 8, self()));
+                     generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, temp3Reg, TR::MemoryReference::createWithDisplacement(self(), pointerReg, (int32_t)TR::Compiler->om.sizeofReferenceField(), 8));
                   else
-                     generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, temp3Reg, new (self()->trHeapMemory()) TR::MemoryReference(pointerReg, (int32_t)(TR::Compiler->om.sizeofReferenceField()*2), 8, self()));
+                     generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, temp3Reg, TR::MemoryReference::createWithDisplacement(self(), pointerReg, (int32_t)(TR::Compiler->om.sizeofReferenceField()*2), 8));
                   }
                else
                   {
                   if (!prefetch2Ahead)
-                     generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, temp3Reg, new (self()->trHeapMemory()) TR::MemoryReference(pointerReg, (int32_t)TR::Compiler->om.sizeofReferenceField(), 4, self()));
+                     generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, temp3Reg, TR::MemoryReference::createWithDisplacement(self(), pointerReg, (int32_t)TR::Compiler->om.sizeofReferenceField(), 4));
                   else
-                     generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, temp3Reg, new (self()->trHeapMemory()) TR::MemoryReference(pointerReg, (int32_t)(TR::Compiler->om.sizeofReferenceField()*2), 4, self()));
+                     generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, temp3Reg, TR::MemoryReference::createWithDisplacement(self(), pointerReg, (int32_t)(TR::Compiler->om.sizeofReferenceField()*2), 4));
                   }
 
                if (comp->getOptions()->getHeapBase() != NULL)
@@ -588,7 +596,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
                   generateTrg1Src2Instruction(self(), TR::InstOpCode::cmpl4, node, condReg, temp3Reg, tempReg);
                   generateConditionalBranchInstruction(self(), TR::InstOpCode::bgt, node, endCtrlFlowLabel, condReg);
                   }
-               TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(temp3Reg, (int32_t)0, 4, self());
+               TR::MemoryReference *targetMR = TR::MemoryReference::createWithDisplacement(self(), temp3Reg, (int32_t)0, 4);
                targetMR->forceIndexedForm(node, self());
                generateMemInstruction(self(), TR::InstOpCode::dcbt, node, targetMR); // use dcbt for prefetch next element
 
@@ -616,14 +624,14 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
 
          if (fieldName && strstr(fieldName, "Ljava/lang/String;"))
             {
-            TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(targetRegister, (int32_t)0, 4, self());
+            TR::MemoryReference *targetMR = TR::MemoryReference::createWithDisplacement(self(), targetRegister, (int32_t)0, 4);
             targetMR->forceIndexedForm(node, self());
             generateMemInstruction(self(), TR::InstOpCode::dcbt, node, targetMR);
             }
          }
       }
 
-   if (node->getOpCodeValue() == TR::aloadi ||
+   if ((node->getOpCodeValue() == TR::aloadi && !comp->target().is64Bit()) ||
          (comp->target().is64Bit() &&
           comp->useCompressedPointers() &&
           (node->getOpCodeValue() == TR::iloadi || node->getOpCodeValue() == TR::irdbari) &&
@@ -714,12 +722,12 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
             generateTrg1Src1ImmInstruction(self(), TR::InstOpCode::addi, node, tempReg, indexReg, prefetchElementStride * TR::Compiler->om.sizeofReferenceField());
             if (comp->target().is64Bit() && !comp->useCompressedPointers())
                {
-               TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(baseReg, tempReg, 8, self());
+               TR::MemoryReference *targetMR = TR::MemoryReference::createWithIndexReg(self(), baseReg, tempReg, 8);
                generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, tempReg, targetMR);
                }
             else
                {
-               TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(baseReg, tempReg, 4, self());
+               TR::MemoryReference *targetMR = TR::MemoryReference::createWithIndexReg(self(), baseReg, tempReg, 4);
                generateTrg1MemInstruction(self(), TR::InstOpCode::lwz, node, tempReg, targetMR);
                }
 
@@ -727,7 +735,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
                {
                generateShiftLeftImmediateLong(self(), node, tempReg, tempReg, TR::Compiler->om.compressedReferenceShiftOffset());
                }
-            TR::MemoryReference *target2MR =  new (self()->trHeapMemory()) TR::MemoryReference(tempReg, 0, 4, self());
+            TR::MemoryReference *target2MR =  TR::MemoryReference::createWithDisplacement(self(), tempReg, 0, 4);
             target2MR->forceIndexedForm(node, self());
             generateMemInstruction(self(), TR::InstOpCode::dcbt, node, target2MR);
             self()->stopUsingRegister(tempReg);
@@ -749,7 +757,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
       int32_t prefetchOffset = comp->findPrefetchInfo(node);
       if (prefetchOffset >= 0)
          {
-         TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(targetRegister, prefetchOffset, TR::Compiler->om.sizeofReferenceAddress(), self());
+         TR::MemoryReference *targetMR = TR::MemoryReference::createWithDisplacement(self(), targetRegister, prefetchOffset, TR::Compiler->om.sizeofReferenceAddress());
          targetMR->forceIndexedForm(node, self());
          generateMemInstruction(self(), TR::InstOpCode::dcbt, node, targetMR);
          }

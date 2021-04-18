@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,8 +151,8 @@ static void printBacktrace(struct J9JavaVM *vm, void* gpInfo);
 /* The target register is GPR2 */
 #define UNSAFE_TARGET_REGISTER 2
 #elif defined(J9VM_ARCH_RISCV)
-/* The target register is GPR1 */
-#define UNSAFE_TARGET_REGISTER 1
+/* The target register is GPR15 */
+#define UNSAFE_TARGET_REGISTER 15
 #elif defined(J9ZOS390)
 /* The target register is GPR1 */
 #define UNSAFE_TARGET_REGISTER 1
@@ -1043,7 +1043,7 @@ writeJITInfo(J9VMThread* vmThread, char* s, UDATA length, void* gpInfo)
 		return numBytesWritten;
 	}
 
-	if((vmThread->omrVMThread->vmState & J9VMSTATE_MAJOR) == J9VMSTATE_JIT_CODEGEN) {
+	if((vmThread->omrVMThread->vmState & J9VMSTATE_MAJOR) == J9VMSTATE_JIT) {
 		if(vmThread->jitMethodToBeCompiled) {
 			J9Method *ramMethod = vmThread->jitMethodToBeCompiled;
 			J9Class *clazz = J9_CLASS_FROM_METHOD(ramMethod);

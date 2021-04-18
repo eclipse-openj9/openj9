@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2018, 2019 IBM Corp. and others
+  Copyright (c) 2018, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,7 @@
   <exec command="tso delete J9CORE1.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE1.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE1$" />
-  <command>$EXE$ -Xshareclasses:name=$CACHENAME$ -XX:-ShareAnonymousClasses $CP$ $XDUMP$ $PROGRAM$</command>
+  <command>$EXE$ -Xmx4m -Xshareclasses:name=$CACHENAME$ -XX:-ShareAnonymousClasses $CP$ $XDUMP$ $PROGRAM$</command>
   <output regex="no" type="success">Moved disk 0 to 1</output>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps -->
@@ -139,7 +139,11 @@
                 <input>!shrc stats</input>
                 <input>quit</input>
         </command>
-  <output regex="no" type="success" >4 orphans</output>
+  <!-- 
+  Regex (>= 4) added for the success condition since there are additional
+  java/lang/invoke/BoundMethodHandle$Species orphan classes in OJDK MH builds.
+  -->
+  <output regex="yes" javaUtilPattern="yes" type="success" >([4-9]|[1-9][0-9]+) orphans</output>
   <output regex="no" type="failure">no shared cache</output>
   <output regex="no" type="failure">unable to read</output>
   <output regex="no" type="failure">could not read</output>
@@ -401,7 +405,7 @@
   <exec command="tso delete J9CORE2.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE2.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE2$" />
-  <command>$EXE$  -Xjit:disableAsyncCompilation,count=20 $SHARECLASSESOPTION$ $CP$ $XDUMP2$ $PROGRAM$</command>
+  <command>$EXE$ -Xmx4m -Xjit:disableAsyncCompilation,count=20 $SHARECLASSESOPTION$ $CP$ $XDUMP2$ $PROGRAM$</command>
   <output regex="no" type="success">Moved disk 0 to 1</output>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps  -->

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ struct J9SharedDataDescriptor;
  * \brief An interface to the VM's shared class cache.
  *
  * This class provides an interface to the VM's shared class cache as represented
- * by the the descriptors in J9SharedClassConfig::cacheDescriptorList.The cache
+ * by the descriptors in J9SharedClassConfig::cacheDescriptorList.The cache
  * descriptor list is a circular linked list. It is doubly linked when
  * J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is defined or singly linked otherwise.
  *

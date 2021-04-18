@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,14 +119,21 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 {
 	/* Set array object header and size (in elements) and set  description spine pointer */
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
 	J9IndexableObject *spine = (J9IndexableObject*)initializeJavaObject(env, allocatedBytes);
 	_allocateDescription.setSpine(spine);
 	if (NULL != spine) {
 		/* Set the array size */
 		if (getAllocateDescription()->isChunkedArray()) {
-			extensions->indexableObjectModel.setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
+			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
+#if defined(J9VM_ENV_DATA64)
+			indexableObjectModel->setDataAddrForDiscontiguous(spine, NULL);
+#endif /* J9VM_ENV_DATA64 */
 		} else {
-			extensions->indexableObjectModel.setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
+			indexableObjectModel->setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
+#if defined(J9VM_ENV_DATA64)
+			indexableObjectModel->setDataAddrForContiguous(spine);
+#endif /* J9VM_ENV_DATA64 */
 		}
 	}
 
@@ -267,7 +274,7 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 				 * not necessary; isArrayletDataDiscontiguous() details those cases.
 				 */
 				if (indexableObjectModel->isArrayletDataDiscontiguous(spine)) {
-					doubleMapArraylets(env, (J9Object *)spine);
+					doubleMapArraylets(env, (J9Object *)spine, NULL);
 				}
 			}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
@@ -305,12 +312,12 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 }
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-#if !(defined(LINUX) && defined(J9VM_ENV_DATA64))
+#if !((defined(LINUX) || defined(OSX)) && defined(J9VM_ENV_DATA64))
 /* Double map is only supported on LINUX 64 bit Systems for now */
 #error "Platform not supported by Double Map API"
-#endif /* !(defined(LINUX) && defined(J9VM_ENV_DATA64)) */
+#endif /* !((defined(LINUX) || defined(OSX)) && defined(J9VM_ENV_DATA64)) */
 void * 
-MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr) 
+MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr, void *preferredAddress)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	J9JavaVM *javaVM = extensions->getJavaVM();
@@ -354,10 +361,14 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 	/* Retrieve actual page size */
 	UDATA pageSize = heap->getPageSize();
 
+	/* For now we double map the entire region of all arraylet leaves. This might change in the future if hybrid regions are introduced. */
+	uintptr_t byteAmount = arrayletLeafSize * arrayletLeafCount;
+
 	/* Get heap and from there call an OMR API that will doble map everything */
-	result = heap->doubleMapArraylet(env, arrayletLeaveAddrs, count, arrayletLeafSize, _dataSize,
+	result = heap->doubleMapRegions(env, arrayletLeaveAddrs, count, arrayletLeafSize, byteAmount,
 				&firstLeafRegionDescriptor->_arrayletDoublemapID,
-				pageSize);
+				pageSize,
+				preferredAddress);
 
 	if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
 		env->getForge()->free((void *)arrayletLeaveAddrs);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,6 +69,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "env/ClassTableCriticalSection.hpp"
+#include "env/VerboseLog.hpp"
 
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
@@ -112,16 +113,14 @@
 #include "net/ClientStream.hpp"
 #include "net/LoadSSLLibs.hpp"
 #include "runtime/JITClientSession.hpp"
-#include "runtime/Listener.hpp"
-#include "runtime/JITServerStatisticsThread.hpp"
+#include "runtime/JITServerAOTCache.hpp"
 #include "runtime/JITServerIProfiler.hpp"
-#endif
+#include "runtime/JITServerSharedROMClassCache.hpp"
+#include "runtime/JITServerStatisticsThread.hpp"
+#include "runtime/Listener.hpp"
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 extern "C" int32_t encodeCount(int32_t count);
-
-#if defined(TR_HOST_POWER)
-extern TR_Processor portLibCall_getProcessorType();
-#endif
 
 extern "C" {
 struct J9RASdumpContext;
@@ -207,14 +206,20 @@ char *compilationErrorNames[]={
    "compilationAOTValidateTMFailure", //52
    "compilationILGenUnsupportedValueTypeOperationFailure", //53
    "compilationAOTRelocationRecordGenerationFailure", //54
+   "compilationAotPatchedCPConstant", //55
+   "compilationAotHasInvokeSpecialInterface", //56
+   "compilationAotValidateExceptionHookFailure", //57
+   "compilationAotBlockFrequencyReloFailure", //58
+   "compilationAotRecompQueuedFlagReloFailure", //59
+   "compilationAOTValidateOSRFailure", //60
 #if defined(J9VM_OPT_JITSERVER)
-   "compilationStreamFailure", //55
-   "compilationStreamLostMessage", // 56
-   "compilationStreamMessageTypeMismatch", // 57
-   "compilationStreamVersionIncompatible", // 58
-   "compilationStreamInterrupted", // 59
+   "compilationStreamFailure", //compilationFirstJITServerFailure=61
+   "compilationStreamLostMessage", // compilationFirstJITServerFailure+1
+   "compilationStreamMessageTypeMismatch", //compilationFirstJITServerFailure+2
+   "compilationStreamVersionIncompatible", //compilationFirstJITServerFailure+3
+   "compilationStreamInterrupted", //compilationFirstJITServerFailure+4
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   "compilationMaxError"
+   "compilationMaxError",
 };
 
 int32_t aggressiveOption = 0;
@@ -1208,6 +1213,17 @@ onLoadInternal(
 #endif
 #endif
 
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (javaVM->internalVMFunctions->isJITServerEnabled(javaVM))
+      {
+      // Use smaller caches on the server because
+      // just one method's data is going to be stored there at a time
+      jitConfig->codeCacheKB = 1024;
+      jitConfig->dataCacheKB = 1024;
+      }
+#endif
+
    if (fe->isAOT_DEPRECATED_DO_NOT_USE())
       {
       jitConfig->codeCacheTotalKB = 128 * 1024; // default limit on amount of code that can be generated (128MB)
@@ -1647,30 +1663,56 @@ onLoadInternal(
          persistentMemory->getPersistentInfo()->setRuntimeInstrumentationRecompilationEnabled(true);
       }
 
-   TR_PersistentCHTable *chtable;
 #if defined(J9VM_OPT_JITSERVER)
-   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-      {
-      chtable = new (PERSISTENT_NEW) JITServerPersistentCHTable(persistentMemory);
-      }
-   else if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-      {
-      chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory);
-      }
-   else
+   // server-side CH table is initialized per-client
+   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
 #endif
       {
-      chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
+      TR_PersistentCHTable *chtable;
+#if defined(J9VM_OPT_JITSERVER)
+      if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+         {
+         chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory);
+         }
+      else
+#endif
+         {
+         chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
+         }
+      if (chtable == NULL)
+         return -1;
+      persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
       }
-   if (chtable == NULL)
-      return -1;
-   persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
 
 #if defined(J9VM_OPT_JITSERVER)
    if (JITServer::CommunicationStream::useSSL())
       {
       if (!JITServer::loadLibsslAndFindSymbols())
          return -1;
+      }
+   else
+      {
+      bool shareROMClasses = TR::Options::_shareROMClasses &&
+                             (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER);
+      bool useAOTCache = compInfo->getPersistentInfo()->getJITServerUseAOTCache();
+
+      // ROMClass sharing and AOT cache use a hash implementation from SSL.
+      // Disable them (with an error message to vlog) if we can't load the library.
+      if ((shareROMClasses || useAOTCache) && !JITServer::loadLibsslAndFindSymbols())
+         {
+         TR::Options::_shareROMClasses = false;
+         compInfo->getPersistentInfo()->setJITServerUseAOTCache(false);
+
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            {
+            if (shareROMClasses)
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                              "ERROR: Failed to load SSL library, disabling ROMClass sharing");
+            if (useAOTCache)
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                              "ERROR: Failed to load SSL library, disabling AOT cache");
+            }
+         }
       }
 
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
@@ -1700,6 +1742,25 @@ onLoadInternal(
       else
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject = NULL;
+         }
+
+      //NOTE: This must be done only after the SSL library has been successfully loaded
+      if (TR::Options::_shareROMClasses)
+         {
+         size_t numPartitions = std::max(1, TR::Options::_sharedROMClassCacheNumPartitions);
+         auto cache = new (PERSISTENT_NEW) JITServerSharedROMClassCache(numPartitions);
+         if (!cache)
+            return -1;
+         compInfo->setJITServerSharedROMClassCache(cache);
+         }
+
+      //NOTE: This must be done only after the SSL library has been successfully loaded
+      if (compInfo->getPersistentInfo()->getJITServerUseAOTCache())
+         {
+         auto aotCacheMap = new (PERSISTENT_NEW) JITServerAOTCacheMap();
+         if (!aotCacheMap)
+            return -1;
+         compInfo->setJITServerAOTCacheMap(aotCacheMap);
          }
       }
    else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
@@ -1832,6 +1893,12 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       return -1;
       }
 
+   if (!TR::Options::getCmdLineOptions()->allowRecompilation() || !TR::Options::getAOTCmdLineOptions()->allowRecompilation())
+      {
+      TR::Options::getCmdLineOptions()->setOption(TR_DisableCHOpts);
+      TR::Options::getAOTCmdLineOptions()->setOption(TR_DisableCHOpts);
+      }
+
    // Get local var names if available (ie. classfile was compiled with -g).
    // We just check getDebug() for lack of a reliable way to check whether there are any methods being logged.
    //
@@ -1917,7 +1984,8 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
             }
          else
             {
-            TR::Compiler->relocatableTarget.cpu = TR::CPU(compInfo->reloRuntime()->getProcessorDescriptionFromSCC(fe, curThread));
+            TR::Compiler->relocatableTarget.cpu = TR::CPU::customize(compInfo->reloRuntime()->getProcessorDescriptionFromSCC(fe, curThread));
+            jitConfig->relocatableTargetProcessor = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
             }
          }
 
@@ -1976,7 +2044,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 
    UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(javaVM));
    Trc_JIT_VMInitStages_Event1(curThread);
-   Trc_JIT_portableSharedCache_enabled_or_disabled(curThread, TRUE == javaVM->sharedCacheAPI->sharedCachePortable ? 1 : 0);
+   Trc_JIT_portableSharedCache_enabled_or_disabled(curThread, J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE) ? 1 : 0);
    return 0;
    }
 

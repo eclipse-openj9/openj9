@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -70,6 +70,30 @@ enum RemoteCompilationModes
    CLIENT,
    SERVER,
    };
+
+enum ServerMemoryState
+   {
+   VERY_LOW = 0,
+   LOW,
+   NORMAL,
+   };
+
+enum CompThreadActivationPolicy
+   {
+   // Order is important, we use comparison operators
+   // on policy states and for indexing into the name array
+   SUSPEND = 0,
+   MAINTAIN,
+   SUBDUE,
+   AGGRESSIVE,
+   };
+
+static const char *compThreadActivationPolicyNames[] = {
+   "SUSPEND",
+   "MAINTAIN",
+   "SUBDUE",
+   "AGGRESSIVE",
+   };
 }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -130,11 +154,11 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
 #if defined(J9VM_OPT_JITSERVER)
-         _remoteCompilationMode(JITServer::NONE),
          _JITServerAddress("localhost"),
          _JITServerPort(38400),
          _socketTimeoutMs(2000),
          _clientUID(0),
+         _JITServerUseAOTCache(false),
 #endif /* defined(J9VM_OPT_JITSERVER) */
       OMR::PersistentInfoConnector(pm)
       {}
@@ -246,8 +270,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setInvokeExactJ2IThunkTable(TR_J2IThunkTable *table){ _invokeExactJ2IThunkTable = table; }
 
 
-   TR_PersistentCHTable * getPersistentCHTable() { return _persistentCHTable; }
-   void setPersistentCHTable(TR_PersistentCHTable *table) { _persistentCHTable = table; }
+   TR_PersistentCHTable * getPersistentCHTable();
+   void setPersistentCHTable(TR_PersistentCHTable *table);
 
    TR_RuntimeAssumptionTable *getRuntimeAssumptionTable() { return &_runtimeAssumptionTable; }
 
@@ -297,8 +321,9 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    int32_t _countForRecompile;
 
 #if defined(J9VM_OPT_JITSERVER)
-   JITServer::RemoteCompilationModes getRemoteCompilationMode() const { return _remoteCompilationMode; }
-   void setRemoteCompilationMode(JITServer::RemoteCompilationModes m) { _remoteCompilationMode = m; }
+   static JITServer::RemoteCompilationModes _remoteCompilationMode; // JITServer::NONE, JITServer::CLIENT, JITServer::SERVER
+
+   static JITServer::RemoteCompilationModes getRemoteCompilationMode() { return _remoteCompilationMode; }
    const std::string &getJITServerAddress() const { return _JITServerAddress; }
    void setJITServerAddress(char *addr) { _JITServerAddress = addr; }
    uint32_t getSocketTimeout() const { return _socketTimeoutMs; }
@@ -307,6 +332,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITServerPort(uint32_t port) { _JITServerPort = port; }
    uint64_t getClientUID() const { return _clientUID; }
    void setClientUID(uint64_t val) { _clientUID = val; }
+   bool getJITServerUseAOTCache() const { return _JITServerUseAOTCache; }
+   void setJITServerUseAOTCache(bool use) { _JITServerUseAOTCache = use; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    private:
@@ -392,11 +419,11 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
    int32_t _numLoadedClasses; ///< always increasing
 #if defined(J9VM_OPT_JITSERVER)
-   JITServer::RemoteCompilationModes _remoteCompilationMode; // JITServer::NONE, JITServer::CLIENT, JITServer::SERVER
    std::string _JITServerAddress;
    uint32_t    _JITServerPort;
    uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
    uint64_t    _clientUID;
+   bool        _JITServerUseAOTCache;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 

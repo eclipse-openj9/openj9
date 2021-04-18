@@ -54,19 +54,20 @@ protected:
 
 public:
 
-   // supportsFeature, is, isAtLeast, isAtMost and supports_feature_test will go away once the old set of cpu APIs gets removed
-   bool supportsFeature(uint32_t feature);
-   bool is(OMRProcessorArchitecture p);
-   bool isAtLeast(OMRProcessorArchitecture p);
-   bool isAtMost(OMRProcessorArchitecture p);
+   /**
+    * @brief Intialize _supportedFeatureMasks to the list of processor features that will be utilized by the compiler and set _isSupportedFeatureMasksEnabled to true
+    * @return void
+    */
+   static void enableFeatureMasks();
 
+   /** 
+    * @brief A factory method used to construct a CPU object for portable AOT compilations
+    * @param[in] omrPortLib : the port library
+    * @return TR::CPU
+    */
+   static TR::CPU detectRelocatable(OMRPortLibrary * const omrPortLib);
+   
    bool isCompatible(const OMRProcessorDesc& processorDescription);
-   OMRProcessorDesc getProcessorDescription();
-   bool getPPCSupportsVSX();
-
-private:
-   bool supports_feature_test(uint32_t feature);
-
    };
 
 }

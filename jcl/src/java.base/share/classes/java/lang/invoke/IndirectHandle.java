@@ -26,6 +26,9 @@ package java.lang.invoke;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import static java.lang.invoke.MethodHandleResolver.UNSAFE;
+import static java.lang.invoke.MethodHandleResolver.getJ9ClassFromClass;
+
 abstract class IndirectHandle extends PrimitiveHandle {
 	IndirectHandle(MethodType type, Class<?> referenceClass, String name, byte kind, int modifiers) {
 		super(type, referenceClass, name, kind, modifiers, null);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@
 
 #include "ArrayletObjectModelBase.hpp"
 #include "Bits.hpp"
+#include "ForwardedHeader.hpp"
 #include "Math.hpp"
 #include "SlotObject.hpp"
 
@@ -54,20 +55,20 @@ private:
 	void AssertBadElementSize();
 protected:
 	/* forward declare methods from parent class to avoid namespace issues */
-	MMINLINE UDATA
-	getSpineSizeWithoutHeader(ArrayLayout layout, UDATA numberArraylets, UDATA dataSize, bool alignData)
+	MMINLINE uintptr_t
+	getSpineSizeWithoutHeader(ArrayLayout layout, uintptr_t numberArraylets, uintptr_t dataSize, bool alignData)
 	{
 		return GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(layout, numberArraylets, dataSize, alignData);
 	}
 public:
 	/* forward declare methods from parent class to avoid namespace issues */
-	MMINLINE UDATA
-	arrayletSize(J9IndexableObject *objPtr, UDATA index, UDATA dataSizeInBytes, UDATA numberOfArraylets)
+	MMINLINE uintptr_t
+	arrayletSize(J9IndexableObject *objPtr, uintptr_t index, uintptr_t dataSizeInBytes, uintptr_t numberOfArraylets)
 	{
 		return GC_ArrayletObjectModelBase::arrayletSize(objPtr, index, dataSizeInBytes, numberOfArraylets);
 	}
-	MMINLINE UDATA
-	numArraylets(UDATA unadjustedDataSizeInBytes)
+	MMINLINE uintptr_t
+	numArraylets(uintptr_t unadjustedDataSizeInBytes)
 	{
 		return GC_ArrayletObjectModelBase::numArraylets(unadjustedDataSizeInBytes);
 	}
@@ -76,7 +77,7 @@ public:
 	 * Get the header size for contiguous arrays
 	 * @return header size
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	contiguousHeaderSize()
 	{
 		return compressObjectReferences() ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull);
@@ -86,7 +87,7 @@ public:
 	 * Get the header size for discontiguous arrays
 	 * @return header size
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	discontiguousHeaderSize()
 	{
 		return compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull);
@@ -98,7 +99,7 @@ public:
 	 * @return The total size in bytes of objPtr's array spine;
 	 * 			includes header, arraylet ptrs, and (if present) padding & inline data
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getSpineSize(J9IndexableObject* objPtr)
 	{
 		ArrayLayout layout = getArrayLayout(objPtr);
@@ -114,10 +115,10 @@ public:
 	 * @param alignData Should the data section be aligned
 	 * @return spineSize The actual size in byte of the spine
 	 */
-	MMINLINE UDATA
-	getSpineSize(J9Class *clazzPtr, ArrayLayout layout, UDATA numberArraylets, UDATA dataSize, bool alignData)
+	MMINLINE uintptr_t
+	getSpineSize(J9Class *clazzPtr, ArrayLayout layout, uintptr_t numberArraylets, uintptr_t dataSize, bool alignData)
 	{
-		UDATA result = getHeaderSize(clazzPtr, layout) + getSpineSizeWithoutHeader(layout, numberArraylets, dataSize, alignData);
+		uintptr_t result = getHeaderSize(clazzPtr, layout) + getSpineSizeWithoutHeader(layout, numberArraylets, dataSize, alignData);
 		return result;
 	}
 
@@ -126,7 +127,7 @@ public:
 	 * @param objPtr Pointer to an array object
 	 * @return the number of arraylets used for an array of dataSizeInBytes bytes
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	numArraylets(J9IndexableObject *objPtr)
 	{
 		return numArraylets(getDataSizeInBytes(objPtr));
@@ -148,7 +149,7 @@ public:
 	 * @param objPtr Pointer to an array object
 	 * @return the number of arraylets stored external to the spine.
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	numExternalArraylets(J9IndexableObject *objPtr)
 	{
 		ArrayLayout layout = getArrayLayout(objPtr);
@@ -156,7 +157,7 @@ public:
 			return 0;
 		}
 
-		UDATA numberArraylets = numArraylets(objPtr);
+		uintptr_t numberArraylets = numArraylets(objPtr);
 		if (layout == Hybrid) {
 			/* last arrayoid pointer points into spine (remainder data is contiguous with header) */
 			numberArraylets -= 1;
@@ -174,10 +175,10 @@ public:
 	 * @param objPtr Pointer to an array object
 	 * @return the number of bytes consumed external to the spine
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	externalArrayletsSize(J9IndexableObject *objPtr)
 	{
-		UDATA numberArraylets = numExternalArraylets(objPtr);
+		uintptr_t numberArraylets = numExternalArraylets(objPtr);
 
 		return numberArraylets * _omrVM->_arrayletLeafSize;
 	}
@@ -201,11 +202,11 @@ public:
 	 * @param index the index in question.  0<=index<numArraylets(objPtr)
 	 * @return the size of the indexth arraylet
 	 */
-	MMINLINE UDATA
-	arrayletSize(J9IndexableObject *objPtr, UDATA index)
+	MMINLINE uintptr_t
+	arrayletSize(J9IndexableObject *objPtr, uintptr_t index)
 	{
-		UDATA dataSizeInBytes = getDataSizeInBytes(objPtr);
-		UDATA numberOfArraylets = numArraylets(dataSizeInBytes);
+		uintptr_t dataSizeInBytes = getDataSizeInBytes(objPtr);
+		uintptr_t numberOfArraylets = numArraylets(dataSizeInBytes);
 		return arrayletSize(objPtr, index, dataSizeInBytes, numberOfArraylets);
 	}
 	
@@ -216,7 +217,7 @@ public:
  	 * @return The total size in bytes of objPtr's array spine;
 	 * 			includes header, arraylet ptrs, and (if present) padding & inline data
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getSpineSize(J9IndexableObject* objPtr, ArrayLayout layout)
 	{
 		return getSpineSize(J9GC_J9OBJECT_CLAZZ(objPtr, this), layout, getSizeInElements(objPtr));
@@ -230,8 +231,8 @@ public:
 	 * @return The total size in bytes of objPtr's array spine;
 	 * 			includes header, arraylet ptrs, and (if present) padding & inline data
 	 */
-	MMINLINE UDATA
-	getSpineSize(J9Class *clazzPtr, ArrayLayout layout, UDATA size)
+	MMINLINE uintptr_t
+	getSpineSize(J9Class *clazzPtr, ArrayLayout layout, uintptr_t size)
 	{
 		return getHeaderSize(clazzPtr, layout) + getSpineSizeWithoutHeader(clazzPtr, layout, size);
 	}
@@ -244,11 +245,11 @@ public:
 	 * @return The size in bytes of objPtr's array spine without header;
 	 * 			includes arraylet ptrs, padding and inline data (if any is present)
 	 */
-	MMINLINE UDATA
-	getSpineSizeWithoutHeader(J9Class *clazzPtr, ArrayLayout layout, UDATA size)
+	MMINLINE uintptr_t
+	getSpineSizeWithoutHeader(J9Class *clazzPtr, ArrayLayout layout, uintptr_t size)
 	{
-		UDATA dataSize = getDataSizeInBytes(clazzPtr, size);
-		UDATA numberArraylets = numArraylets(dataSize);
+		uintptr_t dataSize = getDataSizeInBytes(clazzPtr, size);
+		uintptr_t numberArraylets = numArraylets(dataSize);
 		bool alignData = shouldAlignSpineDataSection(clazzPtr);
 		return getSpineSizeWithoutHeader(layout, numberArraylets, dataSize, alignData);
 	}
@@ -308,16 +309,16 @@ public:
 
 	/**
 	 * We can't use memcpy because it may be not atomic for pointers, use this function instead
-	 * Copy data in UDATA words
-	 * If length is not times of UDATA one more word is copied
+	 * Copy data in uintptr_t words
+	 * If length is not times of uintptr_t one more word is copied
 	 * @param destAddr address copy to
 	 * @param sourceAddr address copy from
 	 * @param lengthInBytes requested size in bytes
 	 */
 	MMINLINE void
-	copyInWords (UDATA *destAddr, UDATA *sourceAddr, UDATA lengthInBytes)
+	copyInWords (uintptr_t *destAddr, uintptr_t *sourceAddr, uintptr_t lengthInBytes)
 	{
-		UDATA lengthInWords = lengthInBytes / sizeof(UDATA);
+		uintptr_t lengthInWords = lengthInBytes / sizeof(uintptr_t);
 		while (lengthInWords--) {
 			*destAddr++ = *sourceAddr++;
 		}
@@ -330,10 +331,10 @@ public:
 	 * @param layout Layout of the arraylet
 	 * @return Size of header in bytes
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getHeaderSize(J9Class *clazzPtr, ArrayLayout layout)
 	{
-		UDATA headerSize = contiguousHeaderSize();
+		uintptr_t headerSize = contiguousHeaderSize();
 		if (layout != InlineContiguous) {
 			headerSize = discontiguousHeaderSize();
 		}
@@ -346,7 +347,7 @@ public:
 	 * @param arrayPtr Pointer to the indexable object whose size is required
 	 * @return Aligned size in bytes excluding the header, or UDATA_MAX if an overflow occurs
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getDataSizeInBytes(J9IndexableObject *arrayPtr)
 	{
 		return getDataSizeInBytes(J9GC_J9OBJECT_CLAZZ(arrayPtr, this), getSizeInElements(arrayPtr));
@@ -359,12 +360,12 @@ public:
 	 * @param numberOfElements size from indexable object
 	 * @return Aligned size in bytes excluding the header, or UDATA_MAX if an overflow occurs
 	 */
-	MMINLINE UDATA
-	getDataSizeInBytes(J9Class *clazzPtr, UDATA numberOfElements)
+	MMINLINE uintptr_t
+	getDataSizeInBytes(J9Class *clazzPtr, uintptr_t numberOfElements)
 	{	
-		UDATA stride = J9ARRAYCLASS_GET_STRIDE(clazzPtr);
-		UDATA size = numberOfElements * stride;
-		UDATA alignedSize = UDATA_MAX;
+		uintptr_t stride = J9ARRAYCLASS_GET_STRIDE(clazzPtr);
+		uintptr_t size = numberOfElements * stride;
+		uintptr_t alignedSize = UDATA_MAX;
 		if ((size / stride) == numberOfElements) {
 			alignedSize = MM_Math::roundToSizeofUDATA(size);
 			if (alignedSize < size) {
@@ -379,7 +380,7 @@ public:
 	 * @param objPtr Pointer to an array object
 	 * @return the size
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getArraySize(J9IndexableObject *objPtr)
 	{
 		return compressObjectReferences()
@@ -402,8 +403,8 @@ public:
 		}
 
 		/* Check if the objPtr is in the allowed arraylet range. */
-		if (((UDATA)objPtr >= (UDATA)_arrayletRangeBase) && ((UDATA)objPtr < (UDATA)_arrayletRangeTop)) {
-			UDATA dataSizeInBytes = getDataSizeInBytes(objPtr);
+		if (((uintptr_t)objPtr >= (uintptr_t)_arrayletRangeBase) && ((uintptr_t)objPtr < (uintptr_t)_arrayletRangeTop)) {
+			uintptr_t dataSizeInBytes = getDataSizeInBytes(objPtr);
 			J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objPtr, this);
 			layout = getArrayletLayout(clazz, dataSizeInBytes);
 		}
@@ -411,7 +412,7 @@ public:
 	}
 
 	MMINLINE ArrayLayout
-	getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes)
+	getArrayletLayout(J9Class* clazz, uintptr_t dataSizeInBytes)
 	{
 		return getArrayletLayout(clazz, dataSizeInBytes, _largestDesirableArraySpineSize);
 	}
@@ -422,7 +423,7 @@ public:
 	 * @param dataSizeInBytes the size in bytes of the data of the array.
 	 * @param largestDesirableSpine The largest desirable spine of the arraylet.
 	 */
-	ArrayLayout getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes, UDATA largestDesirableSpine);
+	ArrayLayout getArrayletLayout(J9Class* clazz, uintptr_t dataSizeInBytes, uintptr_t largestDesirableSpine);
 
 	/**
 	 * Perform a safe memcpy of one array to another.
@@ -433,28 +434,28 @@ public:
 	{
 		if (InlineContiguous == getArrayLayout(srcObject)) {
 			/* assume that destObject must have the same shape! */
-			UDATA sizeInBytes = getSizeInBytesWithoutHeader(srcObject);
-			UDATA* srcData = (UDATA*)getDataPointerForContiguous(srcObject);
-			UDATA* destData = (UDATA*)getDataPointerForContiguous(destObject);
+			uintptr_t sizeInBytes = getSizeInBytesWithoutHeader(srcObject);
+			uintptr_t* srcData = (uintptr_t*)getDataPointerForContiguous(srcObject);
+			uintptr_t* destData = (uintptr_t*)getDataPointerForContiguous(destObject);
 			copyInWords(destData, srcData, sizeInBytes);
 		} else {
 			bool const compressed = compressObjectReferences();
-			UDATA arrayletCount = numArraylets(srcObject);
+			uintptr_t arrayletCount = numArraylets(srcObject);
 			fj9object_t *srcArraylets = getArrayoidPointer(srcObject);
 			fj9object_t *destArraylets = getArrayoidPointer(destObject);
-			for (UDATA i = 0; i < arrayletCount; i++) {
+			for (uintptr_t i = 0; i < arrayletCount; i++) {
 				GC_SlotObject srcSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(srcArraylets, i, compressed));
 				GC_SlotObject destSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(destArraylets, i, compressed));
 				void* srcLeafAddress = srcSlotObject.readReferenceFromSlot();
 				void* destLeafAddress = destSlotObject.readReferenceFromSlot();
 				
 
-				UDATA copySize = _omrVM->_arrayletLeafSize;
+				uintptr_t copySize = _omrVM->_arrayletLeafSize;
 				
 				if (i == arrayletCount - 1) {
 					copySize = arrayletSize(srcObject, i);
 				}
-				copyInWords((UDATA *)destLeafAddress, (UDATA *)srcLeafAddress, copySize);
+				copyInWords((uintptr_t *)destLeafAddress, (uintptr_t *)srcLeafAddress, copySize);
 			}
 		}
 	}
@@ -469,9 +470,9 @@ public:
 	 * @param elementCount	the number of elements of data to copy
 	 */
 	/*MMINLINE*/ void
-	memcpyFromArray(void *destData, J9IndexableObject *srcObject, I_32 elementIndex, I_32 elementCount)
+	memcpyFromArray(void *destData, J9IndexableObject *srcObject, int32_t elementIndex, int32_t elementCount)
 	{
-		UDATA elementSize = J9ARRAYCLASS_GET_STRIDE(J9GC_J9OBJECT_CLAZZ(srcObject, this));
+		uintptr_t elementSize = J9ARRAYCLASS_GET_STRIDE(J9GC_J9OBJECT_CLAZZ(srcObject, this));
 		if (isInlineContiguousArraylet(srcObject)) {
 			// If the data is stored contiguously, then a simple copy is sufficient.
 			void* srcData = getDataPointerForContiguous(srcObject);
@@ -480,9 +481,9 @@ public:
 			case 1:
 				// byte/boolean
 				{
-					U_8* srcCursor = ((U_8*)srcData) + elementIndex;
-					U_8* destCursor = (U_8*)destData;
-					I_32 count = elementCount;
+					uint8_t* srcCursor = ((uint8_t*)srcData) + elementIndex;
+					uint8_t* destCursor = (uint8_t*)destData;
+					int32_t count = elementCount;
 					while(count--) {
 						*destCursor++ = *srcCursor++;
 					}
@@ -492,9 +493,9 @@ public:
 			case 2:
 				// short/char
 				{
-					U_16* srcCursor = ((U_16*)srcData) + elementIndex;
-					U_16* destCursor = (U_16*)destData;
-					I_32 count = elementCount;
+					uint16_t* srcCursor = ((uint16_t*)srcData) + elementIndex;
+					uint16_t* destCursor = (uint16_t*)destData;
+					int32_t count = elementCount;
 					while(count--) {
 						*destCursor++ = *srcCursor++;
 					}
@@ -504,9 +505,9 @@ public:
 			case 4:
 				// int/float
 				{
-					U_32* srcCursor = ((U_32*)srcData) + elementIndex;
-					U_32* destCursor = (U_32*)destData;
-					U_32 count = elementCount;
+					uint32_t* srcCursor = ((uint32_t*)srcData) + elementIndex;
+					uint32_t* destCursor = (uint32_t*)destData;
+					uint32_t count = elementCount;
 					while(count--) {
 						*destCursor++ = *srcCursor++;
 					}
@@ -518,7 +519,7 @@ public:
 				{
 					U_64* srcCursor = ((U_64*)srcData) + elementIndex;
 					U_64* destCursor = (U_64*)destData;
-					U_32 count = elementCount;
+					uint32_t count = elementCount;
 					while(count--) {
 						*destCursor++ = *srcCursor++;
 					}
@@ -536,26 +537,26 @@ public:
 			bool const compressed = compressObjectReferences();
 			fj9object_t *srcArraylets = getArrayoidPointer(srcObject);
 			void *outerDestCursor = destData;
-			U_32 outerCount = elementCount;
-			UDATA arrayletLeafElements = _omrVM->_arrayletLeafSize / elementSize;
-			UDATA arrayletIndex = elementIndex / arrayletLeafElements;
-			UDATA arrayletElementOffset = elementIndex % arrayletLeafElements;
+			uint32_t outerCount = elementCount;
+			uintptr_t arrayletLeafElements = _omrVM->_arrayletLeafSize / elementSize;
+			uintptr_t arrayletIndex = elementIndex / arrayletLeafElements;
+			uintptr_t arrayletElementOffset = elementIndex % arrayletLeafElements;
 			while(outerCount > 0) {
 				GC_SlotObject srcSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(srcArraylets, arrayletIndex++, compressed));
 				void* srcLeafAddress = srcSlotObject.readReferenceFromSlot();
-				U_32 innerCount = outerCount;
+				uint32_t innerCount = outerCount;
 				// Can we fulfill the remainder of the copy from this page?
 				if (innerCount + arrayletElementOffset > arrayletLeafElements) {
 					// Copy as much as we can
-					innerCount = (U_32)(arrayletLeafElements - arrayletElementOffset);
+					innerCount = (uint32_t)(arrayletLeafElements - arrayletElementOffset);
 				}
 				switch(elementSize)
 				{
 				case 1:
 					// byte/boolean
 					{
-						U_8* srcCursor = ((U_8*)srcLeafAddress) + arrayletElementOffset;
-						U_8* destCursor = (U_8*)outerDestCursor;
+						uint8_t* srcCursor = ((uint8_t*)srcLeafAddress) + arrayletElementOffset;
+						uint8_t* destCursor = (uint8_t*)outerDestCursor;
 						outerCount -= innerCount;	// Decrement the outer count before looping
 						while(innerCount--) {
 							*destCursor++ = *srcCursor++;
@@ -568,8 +569,8 @@ public:
 				case 2:
 					// short/char
 					{
-						U_16* srcCursor = ((U_16*)srcLeafAddress) + arrayletElementOffset;
-						U_16* destCursor = (U_16*)outerDestCursor;
+						uint16_t* srcCursor = ((uint16_t*)srcLeafAddress) + arrayletElementOffset;
+						uint16_t* destCursor = (uint16_t*)outerDestCursor;
 						outerCount -= innerCount;	// Decrement the outer count before looping
 						while(innerCount--) {
 							*destCursor++ = *srcCursor++;
@@ -582,8 +583,8 @@ public:
 				case 4:
 					// int/float
 					{
-						U_32* srcCursor = ((U_32*)srcLeafAddress) + arrayletElementOffset;
-						U_32* destCursor = (U_32*)outerDestCursor;
+						uint32_t* srcCursor = ((uint32_t*)srcLeafAddress) + arrayletElementOffset;
+						uint32_t* destCursor = (uint32_t*)outerDestCursor;
 						outerCount -= innerCount;	// Decrement the outer count before looping
 						while(innerCount--) {
 							*destCursor++ = *srcCursor++;
@@ -628,9 +629,9 @@ public:
 	 * @param srcData		the native memory buffer to copy from
 	 */
 	MMINLINE void
-	memcpyToArray(J9IndexableObject *destObject, I_32 elementIndex, I_32 elementCount, void *srcData)
+	memcpyToArray(J9IndexableObject *destObject, int32_t elementIndex, int32_t elementCount, void *srcData)
 	{
-		UDATA elementSize = J9ARRAYCLASS_GET_STRIDE(J9GC_J9OBJECT_CLAZZ(destObject, this));
+		uintptr_t elementSize = J9ARRAYCLASS_GET_STRIDE(J9GC_J9OBJECT_CLAZZ(destObject, this));
 		if (isInlineContiguousArraylet(destObject)) {
 			// If the data is stored contiguously, then a simple copy is sufficient.
 			void* destData = getDataPointerForContiguous(destObject);
@@ -639,9 +640,9 @@ public:
 			case 1:
 				// byte/boolean
 				{
-					U_8* srcCursor = (U_8*)srcData;
-					U_8* destCursor = ((U_8*)destData) + elementIndex;
-					I_32 count = elementCount;
+					uint8_t* srcCursor = (uint8_t*)srcData;
+					uint8_t* destCursor = ((uint8_t*)destData) + elementIndex;
+					int32_t count = elementCount;
 					while(count--) {
 						*destCursor++ = *srcCursor++;
 					}
@@ -651,9 +652,9 @@ public:
 			case 2:
 				// short/char
 				{
-					U_16* srcCursor = (U_16*)srcData;
-					U_16* destCursor = ((U_16*)destData) + elementIndex;
-					I_32 count = elementCount;
+					uint16_t* srcCursor = (uint16_t*)srcData;
+					uint16_t* destCursor = ((uint16_t*)destData) + elementIndex;
+					int32_t count = elementCount;
 					while(count--) {
 						*destCursor++ = *srcCursor++;
 					}
@@ -663,9 +664,9 @@ public:
 			case 4:
 				// int/float
 				{
-					U_32* srcCursor = (U_32*)srcData;
-					U_32* destCursor = ((U_32*)destData) + elementIndex;
-					U_32 count = elementCount;
+					uint32_t* srcCursor = (uint32_t*)srcData;
+					uint32_t* destCursor = ((uint32_t*)destData) + elementIndex;
+					uint32_t count = elementCount;
 					while(count--) {
 						*destCursor++ = *srcCursor++;
 					}
@@ -677,7 +678,7 @@ public:
 				{
 					U_64* srcCursor = (U_64*)srcData;
 					U_64* destCursor = ((U_64*)destData) + elementIndex;
-					U_32 count = elementCount;
+					uint32_t count = elementCount;
 					while(count--) {
 						*destCursor++ = *srcCursor++;
 					}
@@ -695,26 +696,26 @@ public:
 			bool const compressed = compressObjectReferences();
 			fj9object_t *destArraylets = getArrayoidPointer(destObject);
 			void *outerSrcCursor = srcData;
-			U_32 outerCount = elementCount;
-			UDATA arrayletLeafElements = _omrVM->_arrayletLeafSize / elementSize;
-			UDATA arrayletIndex = elementIndex / arrayletLeafElements;
-			UDATA arrayletElementOffset = elementIndex % arrayletLeafElements;
+			uint32_t outerCount = elementCount;
+			uintptr_t arrayletLeafElements = _omrVM->_arrayletLeafSize / elementSize;
+			uintptr_t arrayletIndex = elementIndex / arrayletLeafElements;
+			uintptr_t arrayletElementOffset = elementIndex % arrayletLeafElements;
 			while(outerCount > 0) {
 				GC_SlotObject destSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(destArraylets, arrayletIndex++, compressed));
 				void* destLeafAddress = destSlotObject.readReferenceFromSlot();
-				U_32 innerCount = outerCount;
+				uint32_t innerCount = outerCount;
 				// Can we fulfill the remainder of the copy from this page?
 				if (innerCount + arrayletElementOffset > arrayletLeafElements) {
 					// Copy as much as we can
-					innerCount = (U_32)(arrayletLeafElements - arrayletElementOffset);
+					innerCount = (uint32_t)(arrayletLeafElements - arrayletElementOffset);
 				}
 				switch(elementSize)
 				{
 				case 1:
 					// byte/boolean
 					{
-						U_8* srcCursor = (U_8*)outerSrcCursor;
-						U_8* destCursor = ((U_8*)destLeafAddress) + arrayletElementOffset;
+						uint8_t* srcCursor = (uint8_t*)outerSrcCursor;
+						uint8_t* destCursor = ((uint8_t*)destLeafAddress) + arrayletElementOffset;
 						outerCount -= innerCount;	// Decrement the outer count before looping
 						while(innerCount--) {
 							*destCursor++ = *srcCursor++;
@@ -727,8 +728,8 @@ public:
 				case 2:
 					// short/char
 					{
-						U_16* srcCursor = (U_16*)outerSrcCursor;
-						U_16* destCursor = ((U_16*)destLeafAddress) + arrayletElementOffset;
+						uint16_t* srcCursor = (uint16_t*)outerSrcCursor;
+						uint16_t* destCursor = ((uint16_t*)destLeafAddress) + arrayletElementOffset;
 						outerCount -= innerCount;	// Decrement the outer count before looping
 						while(innerCount--) {
 							*destCursor++ = *srcCursor++;
@@ -741,8 +742,8 @@ public:
 				case 4:
 					// int/float
 					{
-						U_32* srcCursor = (U_32*)outerSrcCursor;
-						U_32* destCursor = ((U_32*)destLeafAddress) + arrayletElementOffset;
+						uint32_t* srcCursor = (uint32_t*)outerSrcCursor;
+						uint32_t* destCursor = ((uint32_t*)destLeafAddress) + arrayletElementOffset;
 						outerCount -= innerCount;	// Decrement the outer count before looping
 						while(innerCount--) {
 							*destCursor++ = *srcCursor++;
@@ -782,7 +783,7 @@ public:
 	 * @param arrayPtr Pointer to the indexable object whose size is required
 	 * @return Size of object in bytes excluding the header
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getSizeInBytesWithoutHeader(J9IndexableObject *arrayPtr)
 	{
 		ArrayLayout layout = getArrayLayout(arrayPtr);
@@ -796,8 +797,8 @@ public:
 	 * @param numberOfElements size from indexable object
 	 * @return Size of object in bytes including the header
 	 */
-	MMINLINE UDATA
-	getSizeInBytesWithHeader(J9Class *clazz, UDATA numberOfElements)
+	MMINLINE uintptr_t
+	getSizeInBytesWithHeader(J9Class *clazz, uintptr_t numberOfElements)
 	{
 		ArrayLayout layout = InlineContiguous; 
 		if(0 == numberOfElements) {
@@ -813,8 +814,8 @@ public:
 	 * @param numberOfElements size from indexable object
 	 * @return Size of object in bytes including the header
 	 */
-	MMINLINE UDATA
-	getSizeInBytesWithHeader(J9Class *clazz, ArrayLayout layout, UDATA numberOfElements)
+	MMINLINE uintptr_t
+	getSizeInBytesWithHeader(J9Class *clazz, ArrayLayout layout, uintptr_t numberOfElements)
 	{
 		return getSpineSize(clazz, layout, numberOfElements);
 	}
@@ -824,11 +825,344 @@ public:
 	 * @param arrayPtr Pointer to the indexable object whose size is required
 	 * @return Size of object in bytes including the header
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getSizeInBytesWithHeader(J9IndexableObject *arrayPtr)
 	{
 		ArrayLayout layout = getArrayLayout(arrayPtr);
 		return getSpineSize(J9GC_J9OBJECT_CLAZZ(arrayPtr, this), layout, getSizeInElements(arrayPtr));
+	}
+
+#if defined(J9VM_ENV_DATA64)
+
+	/**
+	 * Gets data pointer of a contiguous indexable object.
+	 * Helper to get dataAddr field of contiguous indexable objects.
+	 *
+	 * @return Pointer which points to indexable object data
+	 */
+	MMINLINE void **
+	dataAddrSlotForContiguous(J9IndexableObject *arrayPtr)
+	{
+		AssertContiguousArrayletLayout(arrayPtr);
+		bool const compressed = compressObjectReferences();
+		void **dataAddrPtr = NULL;
+		if (compressed) {
+			dataAddrPtr = &((J9IndexableObjectContiguousCompressed *)arrayPtr)->dataAddr;
+		} else {
+			dataAddrPtr = &((J9IndexableObjectContiguousFull *)arrayPtr)->dataAddr;
+		}
+		return dataAddrPtr;
+	}
+
+	/**
+	 * Gets data pointer of a discontiguous indexable object.
+	 * Helper to get dataAddr field of discontiguous indexable objects.
+	 *
+	 * @return Pointer which points to discontiguous indexable object data
+	 */
+	MMINLINE void **
+	dataAddrSlotForDiscontiguous(J9IndexableObject *arrayPtr)
+	{
+		/* If double mapping is enabled only, arraylet will have a discontiguous layout.
+		 * If sparse-heap is enabled, arraylet will have a contiguous layout. For now
+		 * we can't simply Assert only the discontiguous case because there could also
+		 * exist hybrid arraylets (which will be dicontinued in the future) */
+		bool const compressed = compressObjectReferences();
+		void **dataAddrPtr = NULL;
+		if (compressed) {
+			dataAddrPtr = &((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->dataAddr;
+		} else {
+			dataAddrPtr = &((J9IndexableObjectDiscontiguousFull *)arrayPtr)->dataAddr;
+		}
+		return dataAddrPtr;
+	}
+
+	/**
+	 * Sets data pointer of a contiguous indexable object.
+	 * Sets the data pointer of a contiguous indexable object; in this case
+	 * dataAddr will point directly into the data right after dataAddr field
+	 * (data resides in heap).
+	 *
+	 * @param arrayPtr      Pointer to the indexable object whose size is required
+	 */
+	MMINLINE void
+	setDataAddrForContiguous(J9IndexableObject *arrayPtr)
+	{
+		void **dataAddrPtr = dataAddrSlotForContiguous(arrayPtr);
+		void *dataAddr = (void *)((uintptr_t)arrayPtr + contiguousHeaderSize());
+		*dataAddrPtr = dataAddr;
+	}
+
+	/**
+	 * Sets data pointer of a discontiguous indexable object.
+	 * Sets the data pointer of a discontiguous indexable object; in this case
+	 * dataAddr will point to the contiguous representation of the data
+	 * which resides outside the heap (assuming double map/sparse-heap is enabled).
+	 * In case double map is disabled, the dataAddr will point to the first arrayoid
+	 * of the discontiguous indexable object, which also resides right after dataAddr
+	 * field.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object whose size is required
+	 * @param address       Pointer which points to indexable object data
+	 */
+	MMINLINE void
+	setDataAddrForDiscontiguous(J9IndexableObject *arrayPtr, void *address)
+	{
+		/* If double mapping is enabled only, arraylet will have a discontiguous layout.
+		 * If sparse-heap is enabled, arraylet will have a contiguous layout. For now
+		 * we can't simply Assert only the discontiguous case because there could also
+		 * exist hybrid arraylets (which will be dicontinued in the future) */
+		void *calculatedDataAddr = address;
+		void **dataAddrPtr = dataAddrSlotForDiscontiguous(arrayPtr);
+
+		/* If calculatedDataAddr is NULL then we make dataAddr point to the first arrayoid */
+		/* Later on, when sparse-heap is enabled by default, we must assert dataAddr is not NULL */
+		if (NULL == calculatedDataAddr) {
+			calculatedDataAddr = (void *)((uintptr_t)arrayPtr + discontiguousHeaderSize());
+		}
+
+		*dataAddrPtr = calculatedDataAddr;
+	}
+
+	/**
+	 * Asserts that an indexable object pointer is indeed an indexable object
+	 *
+	 * @param arrayPtr      Pointer to the indexable object
+	 */
+	void AssertArrayPtrIsIndexable(J9IndexableObject *arrayPtr);
+
+	/**
+	 * Returns data pointer associated with a contiguous Indexable object.
+	 * Data pointer will always be pointing at the arraylet data. In this
+	 * case the data pointer will be pointing to address immediately after
+	 * the header.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object whose size is required
+	 * @return data address associated with the Indexable object
+	 */
+	MMINLINE void *
+	getDataAddrForContiguous(J9IndexableObject *arrayPtr)
+	{
+		void *dataAddr = *dataAddrSlotForContiguous(arrayPtr);
+		return dataAddr;
+	}
+
+	/**
+	 * Returns data pointer associated with a discontiguous Indexable object.
+	 * Data pointer will always be pointing at the arraylet data. In this
+	 * case the data pointer will be pointing to address immediately after
+	 * the header (the arrayoid), except when double mapping or sparse-heap
+	 * is enabled. In these cases, the data pointer will point to the
+	 * contiguous representation of the data; hence returning that pointer.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object whose size is required
+	 * @return data address associated with the Indexable object
+	 */
+	MMINLINE void *
+	getDataAddrForDiscontiguous(J9IndexableObject *arrayPtr)
+	{
+		/* If double mapping is enabled only, arraylet will have a discontiguous layout.
+		 * If sparse-heap is enabled, arraylet will have a contiguous layout. For now we
+		 * Assert only the discontiguous case until sparse-heap is introduced. */
+		AssertDiscontiguousArrayletLayout(arrayPtr);
+		void *dataAddr = *dataAddrSlotForDiscontiguous(arrayPtr);
+		return dataAddr;
+	}
+
+	/**
+	 * Returns data pointer associated with the Indexable object.
+	 * Data pointer will always be pointing at the arraylet data. In all
+	 * cases the data pointer will be pointing to address immediately after
+	 * the header, except when double mapping is enabled. In this case,
+	 * if double mapping is enabled and arraylet was double mapped
+	 * successfully the data pointer will point to the contiguous
+	 * representation of the data; hence returning that pointer.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object whose size is required
+	 * @return data address associated with the Indexable object
+	 */
+	MMINLINE void *
+	getDataAddrForIndexableObject(J9IndexableObject *arrayPtr)
+	{
+		ArrayLayout layout = getArrayLayout(arrayPtr);
+		bool isDiscontiguous = (layout != InlineContiguous);
+
+		return isDiscontiguous
+			? getDataAddrForDiscontiguous(arrayPtr)
+			: getDataAddrForContiguous(arrayPtr);
+	}
+#endif /* J9VM_ENV_DATA64 */
+
+	/**
+	 * External fixup dataAddr API to update pointer of indexable objects.
+	 * Used in concurrent GCs in case of mutator and GC thread races.
+	 * Sets the dataAddr of either a contiguous or discomtiguous indexable
+	 * object.
+	 *
+	 * @param forwardedHeader Forwarded header of arrayPtr
+	 * @param arrayPtr        Pointer to the indexable object whose size is required
+	 */
+	MMINLINE void
+	fixupDataAddr(MM_ForwardedHeader *forwardedHeader, omrobjectptr_t arrayPtr)
+	{
+#if defined(J9VM_ENV_DATA64)
+		J9IndexableObject *j9ArrayPtr = (J9IndexableObject *)arrayPtr;
+
+		ArrayLayout layout = getPreservedArrayLayout(forwardedHeader);
+		bool isDiscontiguous = (layout != InlineContiguous);
+
+		if (isDiscontiguous) {
+			setDataAddrForDiscontiguous(j9ArrayPtr, NULL);
+		} else {
+			setDataAddrForContiguous(j9ArrayPtr);
+		}
+#endif /* J9VM_ENV_DATA64 */
+	}
+	/**
+	 * External fixup dataAddr API to update pointer of indexable objects.
+	 * Sets the dataAddr of either a contiguous or discomtiguous indexable
+	 * object.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object whose size is required
+	 */
+	MMINLINE void
+	fixupDataAddr(omrobjectptr_t arrayPtr)
+	{
+#if defined(J9VM_ENV_DATA64)
+		J9IndexableObject *j9ArrayPtr = (J9IndexableObject *)arrayPtr;
+		AssertArrayPtrIsIndexable(j9ArrayPtr);
+
+		ArrayLayout layout = getArrayLayout(j9ArrayPtr);
+		bool isDiscontiguous = (layout != InlineContiguous);
+
+		if (isDiscontiguous) {
+			setDataAddrForDiscontiguous(j9ArrayPtr, NULL);
+		} else {
+			setDataAddrForContiguous(j9ArrayPtr);
+		}
+#endif /* J9VM_ENV_DATA64 */
+	}
+
+	/**
+	 * Extract the class pointer from an unforwarded object.
+	 *
+	 * This method will assert if the object has been marked as forwarded.
+	 *
+	 * @param[in] pointer to forwardedHeader the MM_ForwardedHeader instance encapsulating the object
+	 * @return pointer to the J9Class from the object encapsulated by forwardedHeader
+	 * @see MM_ForwardingHeader::isForwardedObject()
+	 */
+	MMINLINE J9Class *
+	getPreservedClass(MM_ForwardedHeader *forwardedHeader)
+	{
+		return (J9Class *)((uintptr_t)(forwardedHeader->getPreservedSlot()) & J9GC_J9OBJECT_CLAZZ_ADDRESS_MASK);
+	}
+
+	/**
+	 * Get the preserved hashcode offset of forwarded header.
+	 *
+	 * @param[in]   Pointer to forwardedHeader the MM_ForwardedHeader instance encapsulating the object
+	 */
+	MMINLINE uintptr_t
+	getPreservedHashcodeOffset(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class *clazz = getPreservedClass(forwardedHeader);
+		return getHashcodeOffset(clazz, getPreservedArrayLayout(forwardedHeader), getPreservedIndexableSize(forwardedHeader));
+	}
+
+	/**
+	 * Extract the size (as getSizeInElements()) from an unforwarded object
+	 *
+	 * This method will assert if the object is not indexable or has been marked as forwarded.
+	 *
+	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @return the size (#elements) of the array encapsulated by forwardedHeader
+	 * @see MM_ForwardingHeader::isForwardedObject()
+	 */
+	MMINLINE uint32_t
+	getPreservedIndexableSize(MM_ForwardedHeader *forwardedHeader)
+	{
+		/* Asserts if object is indeed indexable */
+		ForwardedHeaderAssert(J9GC_CLASS_IS_ARRAY(getPreservedClass(forwardedHeader)));
+
+		/* in compressed headers, the size of the object is stored in the low-order half of the uintptr_t read when we read clazz
+		 * so read it from there instead of the heap (since the heap copy would have been over-written by the forwarding
+		 * pointer if another thread copied the object underneath us). In non-compressed, this field should still be readable
+		 * out of the heap.
+		 */
+		uint32_t size = 0;
+#if defined (OMR_GC_COMPRESSED_POINTERS)
+		if (compressObjectReferences()) {
+			size = forwardedHeader->getPreservedOverlap();
+		} else
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+		{
+			size = ((J9IndexableObjectContiguousFull *)forwardedHeader->getObject())->size;
+		}
+
+		if (0 == size) {
+			/* Discontiguous */
+			if (compressObjectReferences()) {
+				size = ((J9IndexableObjectDiscontiguousCompressed *)forwardedHeader->getObject())->size;
+			} else {
+				size = ((J9IndexableObjectDiscontiguousFull *)forwardedHeader->getObject())->size;
+			}
+		}
+
+		return size;
+	}
+
+	/**
+	 * Extract the array layout from preserved info in Forwarded header
+	 * (this mimics getArrayLayout())
+	 *
+	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @return the ArrayLayout for the forwarded object
+	 */
+	MMINLINE ArrayLayout
+	getPreservedArrayLayout(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class *clazz = getPreservedClass(forwardedHeader);
+		/* Asserts if object is indeed indexable */
+		ForwardedHeaderAssert(J9GC_CLASS_IS_ARRAY(clazz));
+
+		ArrayLayout layout = InlineContiguous;
+		uint32_t size = 0;
+#if defined (OMR_GC_COMPRESSED_POINTERS)
+		if (compressObjectReferences()) {
+			size = forwardedHeader->getPreservedOverlap();
+		} else
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+		{
+			size = ((J9IndexableObjectContiguousFull *)forwardedHeader->getObject())->size;
+		}
+
+		if (0 == size) {
+			/* we know we are dealing with heap object, so we don't need to check against _arrayletRangeBase/Top, like getArrayLayout does */
+			uintptr_t dataSizeInBytes = getDataSizeInBytes(clazz, getPreservedIndexableSize(forwardedHeader));
+			layout = getArrayletLayout(clazz, dataSizeInBytes);
+		}
+
+		return layout;
+	}
+
+	/**
+	 * Calculates object size in bytes with header and object's hashcode offset
+	 *
+	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @param[out] hashcodeOffset hashcode offset of object being moved
+	 *
+	 * @return object size in bytes with header
+	 */
+	MMINLINE uintptr_t
+	calculateObjectSizeAndHashcode(MM_ForwardedHeader *forwardedHeader, uintptr_t *hashcodeOffset)
+	{
+		J9Class* clazz = getPreservedClass(forwardedHeader);
+		uintptr_t numberOfElements = (uintptr_t)getPreservedIndexableSize(forwardedHeader);
+		uintptr_t dataSizeInBytes = getDataSizeInBytes(clazz, numberOfElements);
+		ArrayLayout layout = getArrayletLayout(clazz, dataSizeInBytes);
+		*hashcodeOffset = getHashcodeOffset(clazz, layout, numberOfElements);
+		return getSizeInBytesWithHeader(clazz, layout, numberOfElements);
 	}
 
 	/**
@@ -836,18 +1170,18 @@ public:
 	 * @param arrayPtr Ptr to an array for which header size will be returned
 	 * @return Size of header in bytes
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getHeaderSize(J9IndexableObject *arrayPtr)
 	{
-		UDATA headerSize = 0;
+		uintptr_t headerSize = 0;
 		if (compressObjectReferences()) {
-			UDATA size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
+			uintptr_t size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
 			headerSize = sizeof(J9IndexableObjectContiguousCompressed);
 			if (0 == size) {
 				headerSize = sizeof(J9IndexableObjectDiscontiguousCompressed);
 			}
 		} else {
-			UDATA size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
+			uintptr_t size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
 			headerSize = sizeof(J9IndexableObjectContiguousFull);
 			if (0 == size) {
 				headerSize = sizeof(J9IndexableObjectDiscontiguousFull);
@@ -864,7 +1198,7 @@ public:
 	MMINLINE fj9object_t *
 	getArrayoidPointer(J9IndexableObject *arrayPtr)
 	{
-		return (fj9object_t *)((UDATA)arrayPtr + (compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull)));
+		return (fj9object_t *)((uintptr_t)arrayPtr + (compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull)));
 	}
 
 	/**
@@ -875,7 +1209,7 @@ public:
 	MMINLINE void *
 	getDataPointerForContiguous(J9IndexableObject *arrayPtr)
 	{
-		return (void *)((UDATA)arrayPtr + contiguousHeaderSize());
+		return (void *)((uintptr_t)arrayPtr + contiguousHeaderSize());
 	}
 
 
@@ -886,8 +1220,8 @@ public:
 	 * @param numberOfElements size from indexable object
 	 * @return offset of the hashcode slot
 	 */
-	MMINLINE UDATA
-	getHashcodeOffset(J9Class *clazzPtr, UDATA numberOfElements)
+	MMINLINE uintptr_t
+	getHashcodeOffset(J9Class *clazzPtr, uintptr_t numberOfElements)
 	{
 		ArrayLayout layout = InlineContiguous; 
 		if(0 == numberOfElements) {
@@ -903,14 +1237,14 @@ public:
 	 * @param numberOfElements size from indexable object
 	 * @return offset of the hashcode slot
 	 */
-	MMINLINE UDATA
-	getHashcodeOffset(J9Class *clazzPtr, ArrayLayout layout, UDATA numberOfElements)
+	MMINLINE uintptr_t
+	getHashcodeOffset(J9Class *clazzPtr, ArrayLayout layout, uintptr_t numberOfElements)
 	{
-		/* Don't call getDataSizeInBytes() since that rounds up to UDATA. */
-		UDATA dataSize = numberOfElements * J9ARRAYCLASS_GET_STRIDE(clazzPtr);
-		UDATA numberOfArraylets = numArraylets(dataSize);
+		/* Don't call getDataSizeInBytes() since that rounds up to uintptr_t. */
+		uintptr_t dataSize = numberOfElements * J9ARRAYCLASS_GET_STRIDE(clazzPtr);
+		uintptr_t numberOfArraylets = numArraylets(dataSize);
 		bool alignData = shouldAlignSpineDataSection(clazzPtr);
-		UDATA spineSize = getSpineSize(clazzPtr, layout, numberOfArraylets, dataSize, alignData);
+		uintptr_t spineSize = getSpineSize(clazzPtr, layout, numberOfArraylets, dataSize, alignData);
 		return MM_Math::roundToSizeofU32(spineSize);
 	}
 
@@ -919,7 +1253,7 @@ public:
 	 * @param arrayPtr Pointer to the array
 	 * @return offset of the hashcode slot
 	 */
-	MMINLINE UDATA
+	MMINLINE uintptr_t
 	getHashcodeOffset(J9IndexableObject *arrayPtr)
 	{
 		ArrayLayout layout = getArrayLayout(arrayPtr);
@@ -927,10 +1261,22 @@ public:
 	}
 	
 	MMINLINE void
-	expandArrayletSubSpaceRange(MM_MemorySubSpace * subSpace, void * rangeBase, void * rangeTop, UDATA largestDesirableArraySpineSize)
+	expandArrayletSubSpaceRange(MM_MemorySubSpace * subSpace, void * rangeBase, void * rangeTop, uintptr_t largestDesirableArraySpineSize)
 	{
 		GC_ArrayletObjectModelBase::expandArrayletSubSpaceRange(subSpace, rangeBase, rangeTop, largestDesirableArraySpineSize);
 	}
+
+	/**
+	 * Updates leaf pointers that point to an address located within the indexable object.  For example,
+	 * when the array layout is either inline continuous or hybrid, there will be leaf pointers that point
+	 * to data that is contained within the indexable object.  These internal leaf pointers are updated by
+	 * calculating their offset within the source arraylet, then updating the destination arraylet pointers
+	 * to use the same offset.
+	 *
+	 * @param destinationPtr Pointer to the new indexable object
+	 * @param sourcePtr      Pointer to the original indexable object that was copied
+	 */
+	void fixupInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
 
 	/**
 	 * Initialize the receiver, a new instance of GC_ObjectModel
@@ -948,5 +1294,15 @@ public:
 	 * Asserts that an Arraylet has indeed discontiguous layout
 	 */
 	void AssertArrayletIsDiscontiguous(J9IndexableObject *objPtr);
+
+	/**
+	 * Asserts that an Arraylet has true contiguous layout
+	 */
+	void AssertContiguousArrayletLayout(J9IndexableObject *objPtr);
+
+	/**
+	 * Asserts that an Arraylet has true discontiguous layout
+	 */
+	void AssertDiscontiguousArrayletLayout(J9IndexableObject *objPtr);
 };
 #endif /* ARRAYLETOBJECTMODEL_ */

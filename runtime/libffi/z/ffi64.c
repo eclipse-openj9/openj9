@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
-   ffi.c - Copyright (c) 2000, 2007 Software AG
-           Copyright (c) 2008 Red Hat, Inc
-           Copyright (c) 2016, 2018 IBM Corp.
+   ffi64.c - Copyright (c) 2000, 2007 Software AG
+             Copyright (c) 2008 Red Hat, Inc
+             Copyright (c) 2016, 2021 IBM Corp.
  
    S390 Foreign Function Interface
  
@@ -59,6 +59,46 @@
 #define FFI390_RET_LDBLE        4
 #define FFI390_RET_INT32	5
 #define FFI390_RET_INT64        6
+
+/* Flags to control the behaviour of CEL4RO31. Used by RO31_CB->flags */
+#define FFI390_CEL4RO31_FLAG_LOAD_DLL              0x80000000
+#define FFI390_CEL4RO31_FLAG_QUERY_TARGET_FUNC     0x40000000
+#define FFI390_CEL4RO31_FLAG_EXECUTE_TARGET_FUNC   0x20000000
+
+/* Return codes for CEL4RO31 */
+#define FFI390_CEL4RO31_RETCODE_OK                                   0x0
+#define FFI390_CEL4RO31_RETCODE_ERROR_MULTITHREAD_INVOCATION         0x1
+#define FFI390_CEL4RO31_RETCODE_ERROR_STORAGE_ISSUE                  0x2
+#define FFI390_CEL4RO31_RETCODE_ERROR_FAILED_AMODE31_ENV             0x3
+#define FFI390_CEL4RO31_RETCODE_ERROR_FAILED_LOAD_TARGET_DLL         0x4
+#define FFI390_CEL4RO31_RETCODE_ERROR_FAILED_QUERY_TARGET_FUNC       0x5
+
+/* Return codes for CELQGIPB */
+#define FFI390_CELQGIPB_RETCODE_INITIAL                0xFFFFFFFF
+#define FFI390_CELQGIPB_RETCODE_OK                     0x0
+#define FFI390_CELQGIPB_RETCODE_FAILED_ALLOC           0x1
+#define FFI390_CELQGIPB_RETCODE_DEPTH_EXCEEDED         0x2
+#define FFI390_CELQGIPB_RETCODE_OTHER_THREAD_SWITCHING 0x3
+
+/* Fixed length Control Block structure CEL4RO31 */
+typedef struct ffi_cel4ro31_control_block {
+  uint32_t version;               /**< (Input) A integer which contains the version of RO31_INFO */
+  uint32_t length;                /**< (Input) A integer which contains the total length of RO31_INFO */
+  uint32_t flags;                 /**< (Input) Flags to control the behavior of CEL4RO31 */
+  uint32_t module_offset;         /**< (Input) Offset to RO31_module section from start of RO31_CB. Req'd for dll load flag. */
+  uint32_t function_offset;       /**< (Input) Offset to RO31_function section from start of RO31_CB. Req'd for dll query flag. */
+  uint32_t arguments_offset;      /**< (Input) Offset to outgoing arguments section from start of RO31_CB. Req'd for function execution flag. */
+  uint32_t dll_handle;            /**< DLL handle of target program (Input) DLL handle if dll query flag. (Output) DLL handle if dll load flag. */
+  uint32_t func_desc;             /**< Function descriptor of target program (Input) if function execution flag. (Output) if dll query flag. */
+  uint32_t gpr15_return_value;    /**< (Output) Return GPR buffer containing 32-bit GPR15 value when target program returned after execution. */
+  uint32_t gpr0_return_value;     /**< (Output) Return GPR buffer containing 32-bit GPR0 value when target program returned after execution. */
+  uint32_t gpr1_return_value;     /**< (Output) Return GPR buffer containing 32-bit GPR1 value when target program returned after execution. */
+  uint32_t gpr2_return_value;     /**< (Output) Return GPR buffer containing 32-bit GPR2 value when target program returned after execution. */
+  uint32_t gpr3_return_value;     /**< (Output) Return GPR buffer containing 32-bit GPR3 value when target program returned after execution. */
+  int32_t retcode;                /**< (Output) Return code of CEL4RO31. */
+  uint32_t arguments_length;      /**< (Input) Variable arguments length, in fullword integer (i.e. num of 4-byte slots). */
+} ffi_cel4ro31_control_block;
+
 /*===================== End of Defines ===============================*/
  
 /*====================================================================*/
@@ -85,7 +125,15 @@ extern void ffi_call_SYSV(void (*fn)(void), extended_cif *,
 			  unsigned, unsigned *, unsigned, unsigned, unsigned);
 
 extern void ffi_closure_SYSV(void);
- 
+
+/* Function descriptor of CEL4RO31 runtime call from GTCA control block */
+typedef void cel4ro31_cwi_func(void*);
+#define FFI390_CEL4RO31_FNPTR ((cel4ro31_cwi_func*)((char*)(*(int*)(((char*)__gtca())+1096))+8))
+
+/* Function descriptor of CELQGIPB runtime call from GTCA control block */
+typedef void celqgipb_cwi_func(uint32_t*, ffi_cel4ro31_control_block**, uint32_t*);
+#define FFI390_CELQGIPB_FNPTR ((celqgipb_cwi_func*)((char*)(*(int*)(((char*)__gtca())+1096))+96))
+
 /*====================== End of Externals ============================*/
  
 /*====================================================================*/
@@ -132,9 +180,438 @@ ffi_check_struct_type (ffi_type *arg)
   /* Other structs are passed via a pointer to the data.  */
   return FFI_TYPE_POINTER;
 }
- 
+
 /*======================== End of Routine ============================*/
- 
+
+/*====================================================================*/
+/*                                                                    */
+/* Name     - ffi_prep_args_cel4ro31.                                 */
+/*                                                                    */
+/* Function - Prepare parameters for call to function via CEL4RO31    */
+/*                                                                    */
+/* ffi_prep_args is called by ffi_call_CEL4RO31 after it has          */
+/* allocated argument list storage as part of its control block.      */
+/*                                                                    */
+/*====================================================================*/
+
+void
+ffi_prep_args_cel4ro31 (unsigned char *arg_list_ptr, extended_cif *ecif)
+{
+  /* The argument list is laid out in sequential fashion for all
+   * parameter types under Standard/MVS linkage.
+   */
+  int i;
+  ffi_type **type_ptr;
+  void **p_argv = ecif->avalue;
+  unsigned char* arg_ptr = arg_list_ptr;
+
+  /* A hidden first parameter pointing to a buffer needs to be
+   * added for floating point and structure return types.
+   */
+  int has_hidden_param = FFI390_RET_STRUCT == ecif->cif->flags ||
+                         FFI390_RET_FLOAT == ecif->cif->flags ||
+                         FFI390_RET_DOUBLE == ecif->cif->flags;
+
+#ifdef FFI_DEBUG
+  printf("prep_args_cel4ro31: arg_list_ptr=%x, extended_cif=%x\n", arg_list_ptr, ecif);
+#endif
+
+  if (has_hidden_param)
+  {
+    arg_ptr += sizeof(int);
+  }
+
+   /* Now for the arguments.  CEL4RO31 is targetting 31-bit callees.
+    * Slots are considered 4-bytes.
+    */
+  for (type_ptr = ecif->cif->arg_types, i = ecif->cif->nargs;
+       i > 0;
+       i--, type_ptr++, p_argv++)
+    {
+      void *arg = *p_argv;
+      int type = (*type_ptr)->type;
+      int size = (*type_ptr)->size;
+
+      /* If structure type, cop how a structure type is passed. */
+      if (type == FFI_TYPE_STRUCT)
+      {
+        memcpy(arg_ptr, (char*)p_argv, (*type_ptr)->size);
+        arg_ptr += (*type_ptr)->size;
+        continue;
+      }
+
+     /*  Now handle all primitive int/pointer/float data types.  */
+      switch (type)
+      {
+#if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE
+      case FFI_TYPE_LONGDOUBLE:
+        *(long double *) arg_ptr = * (long double *) (*p_argv);
+        break;
+#endif
+
+      case FFI_TYPE_DOUBLE:
+      case FFI_TYPE_COMPLEX:
+        *(double *) arg_ptr = * (double *) (*p_argv);
+        break;
+
+      case FFI_TYPE_FLOAT:
+        *(float *) arg_ptr = * (float *) (*p_argv);
+        break;
+
+      case FFI_TYPE_POINTER:
+        *(void **) arg_ptr = * (void**) (* p_argv);
+        break;
+
+      case FFI_TYPE_SINT64:
+        *(signed long long *) arg_ptr = * (signed long long *) (* p_argv);
+        break;
+
+      case FFI_TYPE_UINT64:
+        *(unsigned long long *) arg_ptr = * (unsigned long long *) (* p_argv);
+        break;
+
+      case FFI_TYPE_UINT32:
+        *(unsigned int *) arg_ptr = * (unsigned int *) (*p_argv);
+        break;
+
+      case FFI_TYPE_SINT32:
+      case FFI_TYPE_INT:
+        *(signed int *) arg_ptr = * (signed int *) (*p_argv);
+        break;
+
+      /* Expand the values to full 32-bit */
+      case FFI_TYPE_UINT16:
+        *(unsigned int *) arg_ptr = * (unsigned short *) (* p_argv);
+        arg_ptr += 2;
+        break;
+
+      case FFI_TYPE_SINT16:
+        *(signed int *) arg_ptr = * (signed short *) (* p_argv);
+        arg_ptr += 2;
+        break;
+
+      case FFI_TYPE_UINT8:
+        *(unsigned int *) arg_ptr = * (unsigned char *) (* p_argv);
+        arg_ptr += 3;
+        break;
+
+      case FFI_TYPE_SINT8:
+        *(signed int *) arg_ptr = * (signed char*) (* p_argv);
+        arg_ptr += 3;
+        break;
+
+      default:
+        FFI_ASSERT (0);
+        break;
+      }
+    arg_ptr += size;
+  }
+
+  if (has_hidden_param)
+  {
+    /* Update the hidden param with the address of the current arg_ptr.
+      * arg_list is guaranteed to be below-the-bar, so we can safely truncate
+      * to 32-bits.
+      */
+    *(unsigned int *) arg_list_ptr = (unsigned int) ((unsigned long long)arg_ptr & 0xFFFFFFFF);
+  }
+
+}
+
+/*======================== End of Routine ============================*/
+/*====================================================================*/
+/*                                                                    */
+/* Name     - ffi_prep_cif_machdep_cel4ro31.                          */
+/*                                                                    */
+/* Function - Perform machine dependent CIF processing for CEL4RO31.  */
+/*                                                                    */
+/*====================================================================*/
+ffi_status
+ffi_prep_cif_machdep_cel4ro31(ffi_cif *cif)
+{
+  size_t struct_size = 0;
+  int n_ov = 0;
+
+  ffi_type **ptr;
+  int i;
+
+  /* Check if LE APIs are available. */
+  if ((NULL == FFI390_CEL4RO31_FNPTR) || (NULL == FFI390_CELQGIPB_FNPTR))
+  {
+    return FFI_BAD_ABI;
+  }
+
+  /* CEL4RO31 supports only 31-bit MVS/Standard Linkage only.
+   *
+   * https://www-01.ibm.com/servers/resourcelink/svc00100.nsf/pages/zOSV2R4sa380688/$file/ceev100_v2r4.pdf (page 116-118)
+   * https://www.ibm.com/support/knowledgecenter/SSLTBW_2.4.0/com.ibm.zos.v2r4.ccrug00/mvslnkcnv.htm
+   *
+   * Linkage Summary:
+   *  - Arguments are passed via Parameter List pointed to by GPR1, with each slot 4 bytes in length.
+   *  - 32-bit integral types are returned in GPR15.  64-bit integral types are returned in GPR15:GPR0.
+   *  - Floating point and structure return values are placed in storage whose address is passed as the first parameter
+   *
+   * CEL4RO31 specific details:
+   *  - All arguments of the Parameter List are set up in the storage referenced by RO31_arguments of the RO31 control block.
+   *  - CEL4RO31 will update GPR1 to point to this storage before invoking callee function.
+   *  - Floating point arguments and return values in registers are not touched by CEL4RO31.
+   *
+   * Note: Each Slot is considered 4-bytes given the 31-bit target.
+   */
+
+  /* Determine return value handling.
+   * Integral values <=4bytes are widened and put in GPR15
+   * Integral values >4bytes and <=8bytes are widened and put in
+   * GPR15 (left most 32-bits) and GPR0 (right most 32-bits).
+   * Floating point values are returned in a buffer referenced by hidden first parameter.
+   * Aggregates are returned in a buffer pointed to by hidden first parameter.
+   */
+  switch (cif->rtype->type)
+  {
+    /* Void is easy.  */
+    case FFI_TYPE_VOID:
+      cif->flags = FFI390_RET_VOID;
+      break;
+
+    /* Structures are returned in storage pointed to by first parameter.
+      * Which will be allocated at the end of the arguments area, as we need
+      * it to be guaranteed to be below the bar storage.
+      * Capture size of return type + 1 slot for hidden param.
+      */
+    case FFI_TYPE_STRUCT:
+      struct_size = cif->rtype->size;
+      cif->flags = FFI390_RET_STRUCT;
+      n_ov = 1;
+      break;
+
+    /* Floating point and complex values in a 4-byte or 8-byte slot referenced
+      * by the first parameter.  Capture size of return type + 1 slot for hidden param.
+      */
+    case FFI_TYPE_FLOAT:
+      cif->flags = FFI390_RET_FLOAT;
+      n_ov = sizeof(float) / sizeof(int) + 1;
+      break;
+
+    case FFI_TYPE_DOUBLE:
+    case FFI_TYPE_COMPLEX:
+      cif->flags = FFI390_RET_DOUBLE;
+      n_ov = sizeof(double) / sizeof(int) + 1;
+      break;
+
+#if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE
+    case FFI_TYPE_LONGDOUBLE:
+      cif->flags = FFI390_RET_LDBLE;
+      n_ov = sizeof(long double) / sizeof(int) + 1;
+      break;
+#endif
+
+    /* 64-bit Integer values are returned in GPR15:GPR0. */
+    case FFI_TYPE_UINT64:
+    case FFI_TYPE_SINT64:
+    case FFI_TYPE_POINTER:
+      cif->flags = FFI390_RET_INT64;
+      break;
+
+    /* 32-bit Integer values are returned in GPR15. */
+    case FFI_TYPE_INT:
+    case FFI_TYPE_UINT32:
+    case FFI_TYPE_SINT32:
+    case FFI_TYPE_UINT16:
+    case FFI_TYPE_SINT16:
+    case FFI_TYPE_UINT8:
+    case FFI_TYPE_SINT8:
+      cif->flags = FFI390_RET_INT32;
+      break;
+
+    default:
+      FFI_ASSERT (0);
+      break;
+  }
+
+  /* Now for the arguments.  */
+  for (ptr = cif->arg_types, i = cif->nargs;
+       i > 0;
+       i--, ptr++)
+  {
+    int type = (*ptr)->type;
+
+    /* Now handle all primitive int/float data types. Everything
+      * gets passed via the argument list. */
+    switch (type)
+    {
+      case FFI_TYPE_STRUCT:
+        /** Structures will passed via pointer, we must reserve
+         * space to copy its data to below the bar storage, for
+         * proper call-by-value semantics.
+         */
+        struct_size += ROUND_SIZE ((*ptr)->size);
+        n_ov++;
+        break;
+
+      case FFI_TYPE_LONGDOUBLE:
+        n_ov += sizeof(long double) / sizeof(int);
+        break;
+
+      case FFI_TYPE_FLOAT:
+        n_ov += sizeof(float) / sizeof(int);
+        break;
+
+      case FFI_TYPE_DOUBLE:
+      case FFI_TYPE_COMPLEX:
+        n_ov += sizeof(double) / sizeof(int);
+        break;
+
+      /* 64-bit integer types requires two 32-bit slots. */
+      case FFI_TYPE_UINT64:
+      case FFI_TYPE_SINT64:
+      case FFI_TYPE_POINTER:
+        n_ov += 2;
+        break;
+
+      /* Everything else is as a single slot. */
+      default:
+        n_ov++;
+        break;
+    }
+  }
+
+  cif->bytes = n_ov * sizeof(int) + struct_size;
+
+  return FFI_OK;
+}
+
+/*======================== End of Routine ============================*/
+
+/*====================================================================*/
+/*                                                                    */
+/* Name     - ffi_call_CEL4RO31.                                      */
+/*                                                                    */
+/* Function - Invoke the target function via CEL4RO31 interface.      */
+/*                                                                    */
+/*====================================================================*/
+
+void
+ffi_call_CEL4RO31(void (*fn)(void), extended_cif *ecif)
+{
+  unsigned int IPB_length = sizeof(ffi_cel4ro31_control_block) + ecif->cif->bytes;;
+  unsigned int IPB_retcode = FFI390_CELQGIPB_RETCODE_INITIAL;
+  ffi_cel4ro31_control_block *control_block = NULL;
+  int is_malloc31_buffer = 0;
+  unsigned char* argument_list_ptr = NULL;
+
+  if (NULL != FFI390_CELQGIPB_FNPTR)
+  {
+    FFI390_CELQGIPB_FNPTR(&IPB_length, &control_block, &IPB_retcode);
+  }
+
+  if ((FFI390_CELQGIPB_RETCODE_OK != IPB_retcode))
+  {
+    /* IPB unavailable or request failed.  Attempt to allocate below-the-bar storage ourselves. */
+    control_block = (ffi_cel4ro31_control_block *) __malloc31(IPB_length);
+    is_malloc31_buffer = 1;
+    if (NULL == control_block)
+    {
+      FFI_ASSERT(0);
+      return;
+    }
+  }
+
+  /* Initialize the RO31 control block members and calculate the various offsets. */
+  control_block->version = 1;
+  control_block->flags = FFI390_CEL4RO31_FLAG_EXECUTE_TARGET_FUNC;
+  control_block->module_offset = 0;
+  control_block->function_offset = 0;
+  control_block->retcode = 0;
+  control_block->func_desc = (unsigned int)(((unsigned long)fn) & 0xFFFFFFFF);
+  control_block->dll_handle = 0;
+
+  /* Control block length. */
+  control_block->length = IPB_length;
+
+  /* If no arguments, arguments_offset needs to be 0.  Otherwise, it points to the memory
+   * immediately past the fixed control_block to the 'arguments_length' member.  We don't
+   * use cif->nargs here because there may be a hidden parameter for certain return types.
+   * 'arguments_length' member contains the number of fullword argument slots.
+   */
+  control_block->arguments_offset = (0 == ecif->cif->bytes)? 0 : offsetof(ffi_cel4ro31_control_block, arguments_length);
+  control_block->arguments_length = ecif->cif->bytes / sizeof(int);
+
+  /* Prepare arguments into the arg buffer directly after the fixed control block area.
+   */
+  argument_list_ptr = ((unsigned char *)control_block) + sizeof(ffi_cel4ro31_control_block);
+  ffi_prep_args_cel4ro31(argument_list_ptr, ecif);
+
+  FFI390_CEL4RO31_FNPTR(control_block);
+
+  /* Copy over return value from call into returnStorage, if retcode is valid. */
+  if (FFI390_CEL4RO31_RETCODE_OK == (control_block->retcode))
+  {
+    unsigned int *argument_list_first_parm_ptr = (unsigned int *)argument_list_ptr;
+    switch (ecif->cif->rtype->type)
+    {
+      /* Void is easy.  */
+      case FFI_TYPE_VOID:
+        break;
+
+      /* Structures are returned in storage pointed to by first parameter.
+        * which was allocated at the end of the arguments area.  Copy the member
+        * values back out to return storage.
+        */
+      case FFI_TYPE_STRUCT:
+        memcpy(ecif->rvalue, (unsigned char*)(argument_list_first_parm_ptr[0]), ecif->cif->rtype->size);
+        break;
+
+      /* Floating point and complex values in a 4-byte or 8-byte slot referenced
+        * by the first parameter.
+        */
+      case FFI_TYPE_FLOAT:
+        *((float *)ecif->rvalue) = *((float *)argument_list_first_parm_ptr[0]);
+        break;
+
+      case FFI_TYPE_DOUBLE:
+      case FFI_TYPE_COMPLEX:
+        *((double *)ecif->rvalue) = *((double *)argument_list_first_parm_ptr[0]);
+        break;
+
+#if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE
+      case FFI_TYPE_LONGDOUBLE:
+        *((long double *)ecif->rvalue) = *((long double *)argument_list_first_parm_ptr[0]);
+        break;
+#endif
+
+      /* 64-bit Integer values are returned in GPR15:GPR0. */
+      case FFI_TYPE_UINT64:
+      case FFI_TYPE_SINT64:
+      case FFI_TYPE_POINTER:
+        /* 64-bit values from 31-bit are returned via GPR15:GPR0 */
+        *((unsigned long long*)ecif->rvalue) = (((unsigned long long)(control_block->gpr15_return_value) << 32) | control_block->gpr0_return_value);
+        break;
+
+      /* 32-bit Integer values are returned in GPR15. */
+      case FFI_TYPE_INT:
+      case FFI_TYPE_UINT32:
+      case FFI_TYPE_SINT32:
+      case FFI_TYPE_UINT16:
+      case FFI_TYPE_SINT16:
+      case FFI_TYPE_UINT8:
+      case FFI_TYPE_SINT8:
+        *((unsigned long long*)ecif->rvalue) = control_block->gpr15_return_value;
+        break;
+
+      default:
+        FFI_ASSERT (0);
+        break;
+    }
+  }
+
+  if (is_malloc31_buffer)
+  {
+  free(control_block);
+  }
+}
+
+/*======================== End of Routine ============================*/
+
 /*====================================================================*/
 /*                                                                    */
 /* Name     - ffi_prep_args.                                          */
@@ -305,6 +782,13 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 
   ffi_type **ptr;
   int i;
+
+  if (FFI_CEL4RO31 == cif->abi)
+    {
+      return ffi_prep_cif_machdep_cel4ro31(cif);
+    }
+
+  /* 64-bit XPLINK handling below */
 
   /* Determine return value handling.  
      Integral values <=4bytes are widened and put in GPR3
@@ -498,7 +982,9 @@ ffi_call(ffi_cif *cif,
 	printf("called_ffi_call_sysv nargs=%d\n",cif->nargs);
 #endif
         break;
- 
+      case FFI_CEL4RO31:
+        ffi_call_CEL4RO31(fn, &ecif);
+        break;
       default:
         FFI_ASSERT (0);
         break;
@@ -727,7 +1213,7 @@ ffi_prep_closure_loc (ffi_closure *closure,
 		      void *user_data,
 		      void *codeloc)
 {
-  if (cif->abi != FFI_SYSV)
+  if (cif->abi != FFI_SYSV || cif->abi != FFI_CEL4RO31)
     return FFI_BAD_ABI;
 
 #ifndef __s390x__

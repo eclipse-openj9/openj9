@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,13 +47,6 @@ include(cmake/omr_config.cmake)
 # Get platform specific configuration stuff
 include(cmake/platform.cmake)
 
-# If we are building on windows, we want ASM_MASM not ASM
-if(OMR_OS_WINDOWS)
-	enable_language(ASM_MASM)
-else()
-	enable_language(ASM)
-endif()
-
 # Pull in definitions for omr_add_hookgen and omr_add_tracegen
 # these will be in omr/cmake/modules
 include(OmrHookgen)
@@ -78,7 +71,7 @@ include(cmake/J9vmGenAsm.cmake)
 # to explicitly tag individual targets which seems tedious.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(OMR_HOST_OS STREQUAL "osx")
+if(OMR_OS_OSX)
 	set(CMAKE_INSTALL_RPATH "@loader_path")
 else()
 	set(CMAKE_INSTALL_RPATH "\$ORIGIN")
@@ -100,11 +93,6 @@ if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
 endif()
 
-# clean up the variables we used
-set(versionStr)
-set(checkCondition)
-set(conditionalVersionString)
-
 ###
 ### Handle Generated files
 ###
@@ -113,7 +101,6 @@ configure_file(include/j9cfg.h.in j9cfg.h)
 configure_file(include/j9lib.h.in j9lib.h)
 configure_file(include/j9version.h.in j9version.h)
 configure_file(makelib/copyright.c.in copyright.c)
-
 
 # Definition of add_hookgen pulled in from omr/cmake/modules/OmrHookgen.cmake
 # Here we handle all the .hdf files which don't have a more logical home.
@@ -137,15 +124,18 @@ add_custom_target(j9vm_hookgen
 )
 
 # Generate NLS headers
+file(GLOB_RECURSE nls_files "${CMAKE_CURRENT_SOURCE_DIR}/nls/*.nls")
 add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/java.properties"
-	DEPENDS j9nls
+	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/nls.stamp"
+	DEPENDS j9nls ${nls_files}
 	COMMAND "${Java_JAVA_EXECUTABLE}" -cp "$<TARGET_PROPERTY:j9nls,JAR_FILE>" com.ibm.oti.NLSTool.J9NLS -source "${CMAKE_CURRENT_SOURCE_DIR}"
+	COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_BINARY_DIR}/nls.stamp"
+	COMMENT "Generating NLS files"
 	VERBATIM
 )
 add_custom_target(j9vm_nlsgen
 	DEPENDS
-		"${CMAKE_CURRENT_BINARY_DIR}/java.properties"
+		"${CMAKE_CURRENT_BINARY_DIR}/nls.stamp"
 )
 
 set(J9VM_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
@@ -258,6 +248,11 @@ target_sources(j9vm_interface
 		$<$<OR:${is_shlib},${is_executable}>:${CMAKE_CURRENT_BINARY_DIR}/copyright.c>
 )
 
+# If on z/OS link against omr_ascii, this is what gives us convlit(ISO8859-1) and links j9atoe
+if(OMR_OS_ZOS)
+	target_link_libraries(j9vm_interface INTERFACE omr_ascii)
+endif()
+
 target_include_directories(j9vm_interface INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/nls)
 
 add_dependencies(j9vm_interface
@@ -297,12 +292,14 @@ target_link_libraries(j9vm_main_wrapper
 # set up glue library target names
 # See https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md
 set(OMR_GC_GLUE_TARGET "j9vm_gc_glue" CACHE INTERNAL "")
+set(OMR_GC_GLUE_FULL_TARGET "j9vm_gc_glue_full" CACHE INTERNAL "")
 set(OMR_RAS_GLUE_TARGET "j9vm_ras_glue" CACHE INTERNAL "")
 set(OMR_CORE_GLUE_TARGET "j9vm_core_glue" CACHE INTERNAL "")
 set(OMR_UTIL_GLUE_TARGET "j9vm_util_glue" CACHE INTERNAL "")
 
 # setup OMR library overrides
 set(OMR_GC_LIB "j9gc" CACHE INTERNAL "")
+set(OMR_GC_FULL_LIB "j9gc_full" CACHE INTERNAL "")
 set(OMR_HOOK_LIB "j9hookable" CACHE INTERNAL "")
 set(OMR_PORT_LIB "j9prt" CACHE INTERNAL "")
 set(OMR_THREAD_LIB "j9thr" CACHE INTERNAL "")
@@ -310,11 +307,18 @@ set(OMR_TRACE_LIB "j9trc" CACHE INTERNAL "")
 
 set(OMR_DDR_SET "j9ddr" CACHE INTERNAL "")
 
-add_subdirectory(gc_glue_java)
+# Declare the GC glue interface libraries that omr might reference,
+# including the 'full' version. We'll only add sources to the 'full'
+# version in gc_glue_java, below, when appropriate.
+j9vm_add_library(${OMR_GC_GLUE_TARGET} INTERFACE)
+j9vm_add_library(${OMR_GC_GLUE_FULL_TARGET} INTERFACE)
+
 # hack to add our binary dir to omr include path
 # needed to grab the headers created by trace/hookgen
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory("${J9VM_OMR_DIR}" omr)
+
+add_subdirectory(gc_glue_java)
 
 # Configure our DDR set
 if(OMR_DDR)
@@ -392,7 +396,7 @@ endif()
 if(OMR_DDR)
 	add_subdirectory(ddr)
 endif()
-if(OMR_HOST_OS STREQUAL "win")
+if(OMR_OS_WINDOWS)
 	# TODO: need to add windows support
 	# add_subdirectory(dfix)
 endif()

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -231,6 +231,35 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 	RELEASE_CLASS_LOADER_BLOCKS_MUTEX(javaVM);
 #endif
 
+	/* Free the hot field pool and clean up global hot field class info pool if scavenger dynamicBreadthFirstScanOrdering is enabled */
+	if (javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(javaVM)) {
+		if (NULL != classLoader->hotFieldPool) {
+			if (NULL != javaVM->hotFieldClassInfoPool && J9_ARE_NO_BITS_SET(classLoader->flags, J9CLASSLOADER_ANON_CLASS_LOADER)) {
+				pool_state hotFieldClassInfoPoolState;
+				J9ClassHotFieldsInfo *hotFieldClassInfoTemp;
+				omrthread_monitor_enter(classLoader->hotFieldPoolMutex);
+				omrthread_monitor_enter(javaVM->hotFieldClassInfoPoolMutex);
+				hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_startDo(javaVM->hotFieldClassInfoPool, &hotFieldClassInfoPoolState);
+				while (NULL != hotFieldClassInfoTemp) {
+					if (hotFieldClassInfoTemp->classLoader == classLoader) {
+						pool_removeElement(javaVM->hotFieldClassInfoPool, hotFieldClassInfoTemp);
+					}
+					hotFieldClassInfoTemp = (struct J9ClassHotFieldsInfo*)pool_nextDo(&hotFieldClassInfoPoolState);
+				}
+				omrthread_monitor_exit(javaVM->hotFieldClassInfoPoolMutex);
+				omrthread_monitor_exit(classLoader->hotFieldPoolMutex);
+			}
+			pool_kill(classLoader->hotFieldPool);
+			classLoader->hotFieldPool = NULL;
+		}
+
+		/* destroy the classloader hot field pool monitor if it exists */
+		if (NULL != classLoader->hotFieldPoolMutex) {
+			omrthread_monitor_destroy(classLoader->hotFieldPoolMutex);
+			classLoader->hotFieldPoolMutex = NULL;
+		}
+	}
+	
 	/* free the class path entries allocated ofr system and non-system class loaders */
 	if (NULL != classLoader->classPathEntries) {
 		if (javaVM->systemClassLoader == classLoader) {

@@ -2563,26 +2563,29 @@ done:
 
 
 static UDATA
-lookupNativeAddressHelper(J9VMThread * currentThread, J9JVMTIData * jvmtiData, J9Method * nativeMethod, UDATA prefixOffset, UDATA retransformFlag, UDATA functionArgCount, lookupNativeAddressCallback callback)
+lookupNativeAddressHelper(J9VMThread *currentThread, J9JVMTIData *jvmtiData, J9Method *nativeMethod, UDATA prefixOffset, UDATA retransformFlag, UDATA functionArgCount, lookupNativeAddressCallback callback)
 {
-	J9JVMTIEnv * j9env;
-	J9JavaVM * vm = jvmtiData->vm;
-	J9Class * methodClass = J9_CLASS_FROM_METHOD(nativeMethod);
-	J9ClassLoader * classLoader = methodClass->classLoader;
-	J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
-	J9UTF8 * methodName = J9ROMMETHOD_NAME(romMethod);
-	J9UTF8 * methodSignature = J9ROMMETHOD_SIGNATURE(romMethod);
-	U_8 * nameData = J9UTF8_DATA(methodName);
+	J9JVMTIEnv *j9env = NULL;
+	J9JavaVM *vm = jvmtiData->vm;
+	J9Class *methodClass = J9_CLASS_FROM_METHOD(nativeMethod);
+	J9ClassLoader *classLoader = methodClass->classLoader;
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
+	J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
+	J9UTF8 *methodSignature = J9ROMMETHOD_SIGNATURE(romMethod);
+	U_8 *nameData = J9UTF8_DATA(methodName);
 	UDATA nameLength = J9UTF8_LENGTH(methodName);
 
+	Trc_JVMTI_lookupNativeAddressHelper_Entry(currentThread, nativeMethod,
+		J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
+		J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature),
+		prefixOffset, retransformFlag, functionArgCount, callback);
 	JVMTI_ENVIRONMENTS_REVERSE_DO(jvmtiData, j9env) {
 		if ((j9env->flags & J9JVMTIENV_FLAG_RETRANSFORM_CAPABLE) == retransformFlag) {
-			jint prefixCount;
-			char * prefix;
+			jint prefixCount = 0;
+			char *prefix = NULL;
 			PORT_ACCESS_FROM_JAVAVM(vm);
 
 			/* Remove the prefixes */
-
 			prefixCount = j9env->prefixCount;
 			prefix = j9env->prefixes;
 			while (prefixCount != 0) {
@@ -2593,34 +2596,42 @@ lookupNativeAddressHelper(J9VMThread * currentThread, J9JVMTIData * jvmtiData, J
 						prefixOffset += prefixLength;
 
 						/* Verify that a method of this name exists */
-
 						if (methodExists(methodClass, nameData + prefixOffset, nameLength - prefixOffset, methodSignature)) {
 							U_8 * nativeNames = vm->internalVMFunctions->buildNativeFunctionNames(vm, nativeMethod, methodClass, prefixOffset);
 
-							if (nativeNames != NULL) {
-								U_8 * longJNI = nativeNames;
-								U_8 * shortJNI = longJNI + strlen((char *) longJNI) + 1;
-								J9NativeLibrary * nativeLibrary;
+							if (NULL != nativeNames) {
+								U_8 *longJNI = nativeNames;
+								U_8 *shortJNI = longJNI + strlen((char *) longJNI) + 1;
+								J9NativeLibrary *nativeLibrary = NULL;
 
 								/* First look in JNI libraries in the native method's classLoader */
-
 								nativeLibrary = classLoader->librariesHead;
-								while (nativeLibrary != NULL) {
+								while (NULL != nativeLibrary) {
 									callback(currentThread, nativeMethod, nativeLibrary, (char*)longJNI, (char*)shortJNI, functionArgCount, TRUE);
 									if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
 										j9mem_free_memory(nativeNames);
+										Trc_JVMTI_lookupNativeAddressHelper_Bound_ClassLoader_Library(currentThread, nativeMethod, nativeLibrary, (char*)longJNI, (char*)shortJNI, functionArgCount);
 										goto done;
 									}
 									nativeLibrary = nativeLibrary->next;
 								}
+#if JAVA_SPEC_VERSION >= 15
+								/* JDK15+ load native libraries via jdk.internal.loader.NativeLibraries  */
+								callback(currentThread, nativeMethod, NULL, (char*)longJNI, (char*)shortJNI, functionArgCount, TRUE);
+								if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
+									j9mem_free_memory(nativeNames);
+									Trc_JVMTI_lookupNativeAddressHelper_Bound_Null_Library(currentThread, nativeMethod, (char*)longJNI, (char*)shortJNI, functionArgCount);
+									goto done;
+								}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 								/* Next look through the agent libraries */
-
 								nativeLibrary = jvmtiData->agentLibrariesHead;
-								while (nativeLibrary != NULL) {
+								while (NULL != nativeLibrary) {
 									callback(currentThread, nativeMethod, nativeLibrary, (char*)longJNI, (char*)shortJNI, functionArgCount, TRUE);
 									if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
 										j9mem_free_memory(nativeNames);
+										Trc_JVMTI_lookupNativeAddressHelper_Bound_Agent_Library(currentThread, nativeMethod, nativeLibrary, (char*)longJNI, (char*)shortJNI, functionArgCount);
 										goto done;
 									}
 									nativeLibrary = nativeLibrary->next;
@@ -2639,6 +2650,7 @@ lookupNativeAddressHelper(J9VMThread * currentThread, J9JVMTIData * jvmtiData, J
 
 	}
 done:
+	Trc_JVMTI_lookupNativeAddressHelper_Exit(currentThread, prefixOffset);
 	return prefixOffset;
 }
 

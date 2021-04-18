@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ leading zeros are required.
 
 ```
 > java -Xjit:vmstate=0x000501ff
-vmState [0x501ff]: {J9VMSTATE_JIT_CODEGEN} {inlining}
+vmState [0x501ff]: {J9VMSTATE_JIT} {inlining}
 ```
 
 ### JIT compiler

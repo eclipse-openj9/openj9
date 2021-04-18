@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,60 +40,19 @@
 
 extern void TEMPORARY_initJ9ARMTreeEvaluatorTable(TR::CodeGenerator *cg);
 
-J9::ARM::CodeGenerator::CodeGenerator() :
-      J9::CodeGenerator()
+J9::ARM::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
+      J9::CodeGenerator(comp)
    {
-#if 0 // taken from PPC version
-   TR::CodeGenerator *cg = self();
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *) (comp->fe());
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
+   }
 
-   cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
-
-   if (!comp->getOption(TR_MimicInterpreterFrameShape))
-      cg->setSupportsDirectJNICalls();
-
-   if (!comp->getOption(TR_DisableBDLLVersioning))
-      {
-      cg->setSupportsBigDecimalLongLookasideVersioning();
-      }
-
-   cg->setSupportsNewInstanceImplOpt();
-
-   static char *disableMonitorCacheLookup = feGetEnv("TR_disableMonitorCacheLookup");
-   if (!disableMonitorCacheLookup)
-      comp->setOption(TR_EnableMonitorCacheLookup);
-
-   cg->setSupportsPartialInlineOfMethodHooks();
-   cg->setSupportsInliningOfTypeCoersionMethods();
-
-   if (!comp->getOption(TR_DisableReadMonitors))
-      cg->setSupportsReadOnlyLocks();
-
-   static bool disableTLHPrefetch = (feGetEnv("TR_DisableTLHPrefetch") != NULL);
-
-   // Enable software prefetch of the TLH and configure the TLH prefetching
-   // geometry.
-   //
-   if (!disableTLHPrefetch && comp->getOption(TR_TLHPrefetch) && !comp->compileRelocatableCode())
-      {
-      cg->setEnableTLHPrefetching();
-      }
-
-   //This env-var does 3 things:
-   // 1. Prevents batch clear in frontend/j9/rossa.cpp
-   // 2. Prevents all allocations to nonZeroTLH
-   // 3. Maintains the old semantics zero-init and prefetch.
-   // The use of this env-var is more complete than the JIT Option then.
-   static bool disableDualTLH = (feGetEnv("TR_DisableDualTLH") != NULL);
-   // Enable use of non-zero initialized TLH for object allocations where
-   // zero-initialization is not required as detected by the optimizer.
-   //
-   if (!disableDualTLH && !comp->getOption(TR_DisableDualTLH) && !comp->compileRelocatableCode() && !comp->getOptions()->realTimeGC())
-      {
-      cg->setIsDualTLH();
-      }
-#endif
+void
+J9::ARM::CodeGenerator::initialize()
+   {
+   self()->J9::CodeGenerator::initialize();
 
    /*
     * "Statically" initialize the FE-specific tree evaluator functions.
@@ -283,19 +242,8 @@ void J9::ARM::CodeGenerator::doBinaryEncoding()
       cursorInstruction = cursorInstruction->getNext();
       if (isPrivateLinkage && cursorInstruction == j2jEntryInstruction)
          {
-         uint32_t magicWord = ((self()->getBinaryBufferCursor()-self()->getCodeStart())<<16) | static_cast<uint32_t>(comp->getReturnInfo());
-         TR_ASSERT(_returnTypeInfoInstruction && _returnTypeInfoInstruction->getOpCodeValue() == ARMOp_dd, "assertion failure");
-         ((TR::ARMImmInstruction *)_returnTypeInfoInstruction)->setSourceImmediate(magicWord);
-         *(uint32_t *)(_returnTypeInfoInstruction->getBinaryEncoding()) = magicWord;
-
-         if (recomp != NULL && recomp->couldBeCompiledAgain())
-            {
-            J9::PrivateLinkage::LinkageInfo *lkInfo = J9::PrivateLinkage::LinkageInfo::get(self()->getCodeStart());
-            if (recomp->useSampling())
-               lkInfo->setSamplingMethodBody();
-            else
-               lkInfo->setCountingMethodBody();
-            }
+         uint32_t linkageInfoWord = self()->initializeLinkageInfo(_returnTypeInfoInstruction->getBinaryEncoding());
+         ((TR::ARMImmInstruction *)_returnTypeInfoInstruction)->setSourceImmediate(linkageInfoWord);
          }
       }
    // Create exception table entries for outlined instructions.

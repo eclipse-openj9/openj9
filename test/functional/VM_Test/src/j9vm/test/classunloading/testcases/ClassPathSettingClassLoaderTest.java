@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,6 @@
 package j9vm.test.classunloading.testcases;
 
 import j9vm.test.classunloading.*;
-import java.lang.ClassPathSettingClassLoader;
 
 /**
  *		Create a ClassPathSettingClassLoader, and let it be unloaded.  This loader attempts to set a vm

@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF Sidecar19-SE & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.util.Optional;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import static java.lang.invoke.MethodType.*;
@@ -61,7 +61,7 @@ abstract class FieldVarHandle extends VarHandle {
 		int header = (isStatic ? 0 : VM.OBJECT_HEADER_SIZE);
 
 		/* The native lookupField method also modifies the definingClass field. */
-		this.vmslot = lookupField(definingClass, fieldName, MethodType.getBytecodeStringName(fieldType), fieldType, isStatic, accessClass) + header;
+		this.vmslot = lookupField(definingClass, fieldName, MethodTypeHelper.getBytecodeStringName(fieldType), fieldType, isStatic, accessClass) + header;
 
 		checkSetterFieldFinality(handleTable);
 	}
@@ -83,8 +83,8 @@ abstract class FieldVarHandle extends VarHandle {
 		this.vmslot = unreflectField(field, isStatic) + header;
 		checkSetterFieldFinality(handleTable);
 	}
-	
-	/*[IF Java12]*/
+
+	/*[IF JAVA_SPEC_VERSION >= 12]*/
 	@Override
 	public Optional<VarHandleDesc> describeConstable() {
 		VarHandleDesc result = null;
@@ -100,7 +100,7 @@ abstract class FieldVarHandle extends VarHandle {
 		}
 		return Optional.ofNullable(result);
 	}
-	/*[ENDIF] Java12 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Checks whether the field referenced by this VarHandle, is final. 
@@ -141,7 +141,7 @@ abstract class FieldVarHandle extends VarHandle {
 	 * 
 	 * @param lookupClass The class where we start the lookup of the field
 	 * @param name The field name
-	 * @param signature Equivalent of the String returned by MethodType.getBytecodeStringName
+	 * @param signature Equivalent of the String returned by MethodTypeHelper.getBytecodeStringName
 	 * @param type The exact type of the field. This must match the signature.
 	 * @param isStatic A boolean value indicating whether the field is static.
 	 * @param accessClass The class being used to look up the field.
@@ -177,7 +177,13 @@ abstract class FieldVarHandle extends VarHandle {
 		return fieldName;
 	}
 
-	public MethodType accessModeTypeUncached(AccessMode accessMode) {
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+	public VarHandle withInvokeExactBehavior() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
+	public VarHandle withInvokeBehavior() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 }

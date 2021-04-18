@@ -2,7 +2,7 @@ package com.ibm.j9.jsr292;
 
 
 /*******************************************************************************
- * Copyright (c) 2011, 2018 IBM Corp. and others
+ * Copyright (c) 2011, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ import junit.framework.TestListener;
 import junit.framework.TestResult;
 
 /**
- * Testing of the various aspects of the the MethodHandle.asType() method,
+ * Testing of the various aspects of the MethodHandle.asType() method,
  * both explicitly and as exposed by various APIs.
  */
 public class AsTypeTest {
@@ -103,8 +103,8 @@ public class AsTypeTest {
 	}
 
 	static boolean floatsEqual(float a, float b) {
-		Float f1 = new Float(a);
-		Float f2 = new Float(b);
+		Float f1 = Float.valueOf(a);
+		Float f2 = Float.valueOf(b);
 
 		if (f1.isNaN()) {
 			return f2.isNaN();
@@ -116,8 +116,8 @@ public class AsTypeTest {
 	}
 
 	static boolean floatsEqual(double a, double b) {
-		Double d1 = new Double(a);
-		Double d2 = new Double(b);
+		Double d1 = Double.valueOf(a);
+		Double d2 = Double.valueOf(b);
 
 		if (d1.isNaN()) {
 			return d2.isNaN();
@@ -957,7 +957,7 @@ public class AsTypeTest {
 		MethodHandle s;
 		MethodHandle c;
 		MethodType mt;
-		Object o = new Boolean(v);
+		Object o = Boolean.valueOf(v);
 
 		s = MethodHandles.lookup().findVirtual(AsTypeTest.class, "doTest", MethodType.fromMethodDescriptorString("(I)I", null));
 		mt = MethodType.fromMethodDescriptorString("(Lcom/ibm/j9/jsr292/AsTypeTest;Z)I", null);
@@ -1538,7 +1538,7 @@ public class AsTypeTest {
 		MethodHandle s;
 		MethodHandle c;
 		MethodType mt;
-		Object o = new Byte(v);
+		Object o = Byte.valueOf(v);
 
 		s = MethodHandles.lookup().findVirtual(AsTypeTest.class, "doTest", MethodType.fromMethodDescriptorString("(I)I", null));
 		mt = MethodType.fromMethodDescriptorString("(Lcom/ibm/j9/jsr292/AsTypeTest;B)I", null);
@@ -2000,7 +2000,7 @@ public class AsTypeTest {
 		MethodHandle s;
 		MethodHandle c;
 		MethodType mt;
-		Object o = new Short(v);
+		Object o = Short.valueOf(v);
 
 		s = MethodHandles.lookup().findVirtual(AsTypeTest.class, "doTest", MethodType.fromMethodDescriptorString("(I)I", null));
 		mt = MethodType.fromMethodDescriptorString("(Lcom/ibm/j9/jsr292/AsTypeTest;S)I", null);
@@ -2487,7 +2487,7 @@ public class AsTypeTest {
 		MethodHandle s;
 		MethodHandle c;
 		MethodType mt;
-		Object o = new Character(v);
+		Object o = Character.valueOf(v);
 
 		s = MethodHandles.lookup().findVirtual(AsTypeTest.class, "doTest", MethodType.fromMethodDescriptorString("(I)I", null));
 		mt = MethodType.fromMethodDescriptorString("(Lcom/ibm/j9/jsr292/AsTypeTest;C)I", null);
@@ -2971,7 +2971,7 @@ public class AsTypeTest {
 		MethodHandle s;
 		MethodHandle c;
 		MethodType mt;
-		Object o = new Float(v);
+		Object o = Float.valueOf(v);
 
 		s = MethodHandles.lookup().findVirtual(AsTypeTest.class, "doTest", MethodType.fromMethodDescriptorString("(I)I", null));
 		mt = MethodType.fromMethodDescriptorString("(Lcom/ibm/j9/jsr292/AsTypeTest;F)I", null);
@@ -3533,7 +3533,7 @@ public class AsTypeTest {
 		MethodHandle s;
 		MethodHandle c;
 		MethodType mt;
-		Object o = new Double(v);
+		Object o = Double.valueOf(v);
 
 		s = MethodHandles.lookup().findVirtual(AsTypeTest.class, "doTest", MethodType.fromMethodDescriptorString("(I)I", null));
 		mt = MethodType.fromMethodDescriptorString("(Lcom/ibm/j9/jsr292/AsTypeTest;D)I", null);
@@ -4119,7 +4119,7 @@ public class AsTypeTest {
 		MethodHandle s;
 		MethodHandle c;
 		MethodType mt;
-		Object o = new Integer(v);
+		Object o = Integer.valueOf(v);
 
 		s = MethodHandles.lookup().findVirtual(AsTypeTest.class, "doTest", MethodType.fromMethodDescriptorString("(I)I", null));
 		mt = MethodType.fromMethodDescriptorString("(Lcom/ibm/j9/jsr292/AsTypeTest;I)I", null);
@@ -4579,7 +4579,7 @@ public class AsTypeTest {
 		MethodHandle s;
 		MethodHandle c;
 		MethodType mt;
-		Object o = new Long(v);
+		Object o = Long.valueOf(v);
 
 		s = MethodHandles.lookup().findVirtual(AsTypeTest.class, "doTest", MethodType.fromMethodDescriptorString("(I)I", null));
 		mt = MethodType.fromMethodDescriptorString("(Lcom/ibm/j9/jsr292/AsTypeTest;J)I", null);

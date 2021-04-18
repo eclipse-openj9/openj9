@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,8 +43,8 @@ private:
 	
 	U_64 _startTime;  			  /**< timestamp of matching Metronome_Synchronous_GC_Start event */
 	
-	UDATA _classLoadersUnloadedStart; /**< Number of classLoaders unloaded just just before SyncGC started, but only for the current GC cycle */
-	UDATA _classesUnloadedStart;      /**< Number of classes unloaded just just before SyncGC started, but only for the current GC cycle */
+	UDATA _classLoadersUnloadedStart; /**< Number of classLoaders unloaded just before SyncGC started, but only for the current GC cycle */
+	UDATA _classesUnloadedStart;      /**< Number of classes unloaded just before SyncGC started, but only for the current GC cycle */
 	UDATA _classLoadersUnloadedEnd;   /**< Number of classLoaders unloaded at the end of the current GC cycle */
 	UDATA _classesUnloadedEnd;        /**< Number of classes unloaded at the end of the current GC cycle */
 	

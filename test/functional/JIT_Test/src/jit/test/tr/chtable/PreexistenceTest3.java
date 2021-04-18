@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ public class PreexistenceTest3 {
 	 }
 		
       public Object next() {
-         return new Long(cursor++);
+         return Long.valueOf(cursor++);
 	 }
 
       public void remove() {
@@ -68,7 +68,7 @@ public class PreexistenceTest3 {
 		}
 
 		public Long getValue() {
-			return new Long(value);
+			return Long.valueOf(value);
 		}
 	}
 

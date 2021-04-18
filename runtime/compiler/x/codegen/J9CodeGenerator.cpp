@@ -49,10 +49,21 @@
 
 extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg);
 
-J9::X86::CodeGenerator::CodeGenerator() :
-      J9::CodeGenerator(),
-      _stackFramePaddingSizeInBytes(0)
+J9::X86::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
+      J9::CodeGenerator(comp),
+   _stackFramePaddingSizeInBytes(0)
    {
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
+   }
+
+void
+J9::X86::CodeGenerator::initialize()
+   {
+   self()->J9::CodeGenerator::initialize();
+
    TR::CodeGenerator *cg = self();
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
@@ -85,10 +96,10 @@ J9::X86::CodeGenerator::CodeGenerator() :
    cg->setSupportsPartialInlineOfMethodHooks();
    cg->setSupportsInliningOfTypeCoersionMethods();
    cg->setSupportsNewInstanceImplOpt();
-   
+
    TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) == cg->getX86ProcessorInfo().supportsSSE4_1(), "supportsSSE4_1() failed\n");
    TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSSE3) == cg->getX86ProcessorInfo().supportsSSSE3(), "supportsSSSE3() failed\n");
-   
+
    if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) &&
        !comp->getOption(TR_DisableSIMDStringCaseConv) &&
        !TR::Compiler->om.canGenerateArraylets())
@@ -170,10 +181,9 @@ J9::X86::CodeGenerator::CodeGenerator() :
          returnInfo = TR_DoubleXMMReturn;
          break;
       }
-    comp->setReturnInfo(returnInfo);
 
+   comp->setReturnInfo(returnInfo);
    }
-
 
 TR::Recompilation *
 J9::X86::CodeGenerator::allocateRecompilationInfo()
@@ -325,7 +335,7 @@ J9::X86::CodeGenerator::generateSwitchToInterpreterPrePrologue(
    deps->addPreCondition(ediRegister, TR::RealRegister::edi, self());
 
    TR::SymbolReference *helperSymRef =
-      self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, false, false, false);
+      self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
 
    if (comp->target().is64Bit())
       {
@@ -371,7 +381,6 @@ J9::X86::CodeGenerator::nopsAlsoProcessedByRelocations()
 bool
 J9::X86::CodeGenerator::enableAESInHardwareTransformations()
    {
-   TR_ASSERT_FATAL(self()->comp()->compileRelocatableCode() || self()->comp()->isOutOfProcessCompilation() || self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AESNI) == TR::CodeGenerator::getX86ProcessorInfo().supportsAESNI(), "supportsAESNI() failed\n");
    if (self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_AESNI) && !self()->comp()->getOption(TR_DisableAESInHardware) && !self()->comp()->getCurrentMethod()->isJNINative())
       return true;
    else
@@ -395,6 +404,13 @@ J9::X86::CodeGenerator::supportsInliningOfIsAssignableFrom()
    {
    static const bool disableInliningOfIsAssignableFrom = feGetEnv("TR_disableInlineIsAssignableFrom") != NULL;
    return !disableInliningOfIsAssignableFrom;
+   }
+
+bool
+J9::X86::CodeGenerator::canEmitBreakOnDFSet()
+   {
+   static const bool enableBreakOnDFSet = feGetEnv("TR_enableBreakOnDFSet") != NULL;
+   return enableBreakOnDFSet;
    }
 
 void

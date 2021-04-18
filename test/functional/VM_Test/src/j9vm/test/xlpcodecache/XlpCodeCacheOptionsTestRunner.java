@@ -156,6 +156,7 @@ public class XlpCodeCacheOptionsTestRunner extends Runner {
 			break;
 
 		case LINUX:
+		case MAC:
 		case WINDOWS:
 			/* No -Xlp option */
 			xlpOptionsList.add(new XlpOption(null, false));

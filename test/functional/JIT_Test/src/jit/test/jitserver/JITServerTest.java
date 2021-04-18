@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,7 @@ public class JITServerTest {
 	private static Logger logger = Logger.getLogger(JITServerTest.class);
 
 	private static final int PROCESS_START_WAIT_TIME_MS = 2 * 1000;
+	private static final int PROCESS_TERMINATE_WAIT_TIME_MS = 2 * 1000;
 	private static final int SERVER_START_WAIT_TIME_MS = 5 * 1000;
 	private static final int CLIENT_TEST_TIME_MS = 45 * 1000;
 	private static final int SUCCESS_RETURN_VALUE = 0;
@@ -56,7 +57,7 @@ public class JITServerTest {
 		final String CLIENT_PROGRAM = System.getProperty("CLIENT_PROGRAM");
 		// -Xjit options may already be on the command line so add extra JIT options via TR_Options instead to avoid one overriding the other.
 		final String JIT_LOG_ENV_OPTION = "verbose={compileEnd|JITServer|heartbeat}";
-		final String JITSERVER_PORT_OPTION_FORMAT_STRING = "-XX:JITServerPort=%0$d";
+		final String JITSERVER_PORT_OPTION_FORMAT_STRING = "-XX:JITServerPort=%d";
 		// Most systems have a specified ephemeral ports range. We're not bothering to find the actual range, just choosing a range that is outside the reserved area, reasonably large, and well-behaved.
 		// The range chosen here is within the actual ephemeral range on recent Linux systems and others (at the time of writing).
 		final int EPHEMERAL_PORTS_START = 33000, EPHEMERAL_PORTS_LAST = 60000;
@@ -129,9 +130,17 @@ public class JITServerTest {
 		p.destroy();
 
 		int waitCount = 0;
-		while (p.isAlive() && (waitCount <= 3)) {
-			Thread.sleep(PROCESS_DESTROY_WAIT_TIME_MS);
+		while (!p.waitFor(PROCESS_DESTROY_WAIT_TIME_MS, TimeUnit.MILLISECONDS) && (waitCount < 6)) {
 			waitCount++;
+		}
+
+		if (p.isAlive()) {
+			// The process wasn't destroyed after PROCESS_DESTROY_WAIT_TIME_MS * waitCount,
+			// so have to destroy it forcibly now and fail the test case
+			p.destroyForcibly().waitFor();
+
+			final String errorText = "The process is still alive after waiting for " + (PROCESS_DESTROY_WAIT_TIME_MS * waitCount) + "ms.";
+			AssertJUnit.fail(errorText);
 		}
 
 		final int exitValue = p.exitValue();
@@ -146,6 +155,15 @@ public class JITServerTest {
 	}
 
 	private static Process startProcess(final ProcessBuilder builder, final String name) throws IOException, InterruptedException {
+		// If a previous test did not terminate the process, kill it here (e.g. if assert got triggered before server was terminated)
+		final String commandLine = String.join(" ", builder.command());
+		final String pkillCommandLine[] = {"pkill", "-TERM", "-f", "-x", escapeCommandLineRegexChars(commandLine)};
+		if (Runtime.getRuntime().exec(pkillCommandLine).waitFor() == SUCCESS_RETURN_VALUE) {
+			logger.info("Terminating the previous version of " + name);
+			// if there is a process to kill, wait for it to terminate
+			Thread.sleep(PROCESS_TERMINATE_WAIT_TIME_MS);
+		}
+
 		// Wrap any arguments containing whitespace in quotes for display (we have to make a copy of ProcessBuilder.command() to avoid modifying our PB's commands).
 		ArrayList<String> command = new ArrayList<String>(builder.command());
 		command.replaceAll(s -> s.matches("\\S+") ? s : "\"" + s + "\"");

@@ -90,8 +90,10 @@ public:
    bool classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * clazzPointer);
    bool isAbstractClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
    bool isInterfaceClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer);
+   bool isConcreteClass(TR::Compilation *comp, TR_OpaqueClassBlock * clazzPointer);
    bool isValueTypeClass(TR_OpaqueClassBlock *);
    bool isValueTypeClassFlattened(TR_OpaqueClassBlock *clazz);
+   bool isValueBasedOrValueTypeClass(TR_OpaqueClassBlock *);
 
    /**
     * \brief

@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2020 IBM Corp. and others
+dnl Copyright (c) 2017, 2021 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@ dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exc
 
 include(phelpers.m4)
 
-	.file "pnathelp.s"
+	START_FILE("pnathelp.s")
 
 define({CSECT_NAME},{pnathelp})
 
@@ -294,6 +294,37 @@ START_PROC($1)
 END_PROC($1)
 })
 
+dnl Helpers that are at a method invocation point.
+dnl
+dnl See definition of SAVE_C_VOLATILE_REGS in phelpers.m4
+dnl for details.
+
+undefine({MUST_PRESERVE_FPR})
+undefine({MUST_PRESERVE_VR})
+
+PICBUILDER_DUAL_MODE_HELPER(jitLookupInterfaceMethod,3)
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveInterfaceMethod,2)
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveSpecialMethod,3)
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveStaticMethod,3)
+PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveVirtualMethod,2)
+SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPC,0)
+SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPCAndRecompile,0)
+SLOW_PATH_ONLY_HELPER(jitRetranslateMethod,3)
+
+dnl jitStackOverflow is special case in that the frame size argument
+dnl is implicit (in the register file) rather than being passed as
+dnl an argument in the usual way.
+
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitStackOverflow,0)
+
+dnl Helpers that are not at a method invocation point.
+dnl
+dnl See definition of SAVE_C_VOLATILE_REGS in phelpers.m4
+dnl for details.
+
+define({MUST_PRESERVE_FPR})
+ifdef({ASM_J9VM_ENV_DATA64},{define({MUST_PRESERVE_VR})})
+
 dnl Runtime helpers
 
 DUAL_MODE_HELPER(jitNewValue,1)
@@ -305,12 +336,6 @@ DUAL_MODE_HELPER(jitANewArrayNoZeroInit,2)
 DUAL_MODE_HELPER(jitNewArray,2)
 DUAL_MODE_HELPER(jitNewArrayNoZeroInit,2)
 SLOW_PATH_ONLY_HELPER(jitAMultiNewArray,3)
-
-dnl jitStackOverflow is special case in that the frame size argument
-dnl is implicit (in the register file) rather than being passed as
-dnl an argument in the usual way.
-
-SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitStackOverflow,0)
 
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitCheckAsyncMessages,0)
 DUAL_MODE_HELPER_NO_RETURN_VALUE(jitCheckCast,2)
@@ -335,12 +360,14 @@ SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldRead,1)
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldWrite,2)
 FAST_PATH_ONLY_HELPER(jitAcmpHelper,2)
 OLD_DUAL_MODE_HELPER(jitGetFlattenableField,2)
+OLD_DUAL_MODE_HELPER(jitCloneValueType, 1)
 OLD_DUAL_MODE_HELPER(jitWithFlattenableField,3)
 OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitPutFlattenableField,3)
 OLD_DUAL_MODE_HELPER(jitGetFlattenableStaticField,2)
 OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitPutFlattenableStaticField,3)
 OLD_DUAL_MODE_HELPER(jitLoadFlattenableArrayElement,2)
 OLD_DUAL_MODE_HELPER_NO_RETURN_VALUE(jitStoreFlattenableArrayElement,3)
+SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitResolveFlattenableField,3)
 
 dnl Trap handlers
 
@@ -354,7 +381,6 @@ dnl Only called from PicBuilder
 PICBUILDER_FAST_PATH_ONLY_HELPER(jitMethodIsNative,1)
 PICBUILDER_FAST_PATH_ONLY_HELPER(jitMethodIsSync,1)
 PICBUILDER_FAST_PATH_ONLY_HELPER(jitResolvedFieldIsVolatile,3)
-PICBUILDER_DUAL_MODE_HELPER(jitLookupInterfaceMethod,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveString,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveClass,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveClassFromStaticField,3)
@@ -362,10 +388,6 @@ PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveField,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveFieldSetter,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveStaticField,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveStaticFieldSetter,3)
-PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveInterfaceMethod,2)
-PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveSpecialMethod,3)
-PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveStaticMethod,3)
-PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveVirtualMethod,2)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveMethodType,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveMethodHandle,3)
 PICBUILDER_SLOW_PATH_ONLY_HELPER(jitResolveInvokeDynamic,3)
@@ -383,7 +405,6 @@ dnl Recompilation helpers
 
 SLOW_PATH_ONLY_HELPER(jitRetranslateCaller,2)
 SLOW_PATH_ONLY_HELPER(jitRetranslateCallerWithPreparation,3)
-SLOW_PATH_ONLY_HELPER(jitRetranslateMethod,3)
 
 dnl Exception throw helpers
 
@@ -417,8 +438,6 @@ FAST_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitWriteBarrierStoreMetronome,3)
 
 dnl Misc
 
-SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPC,0)
-SLOW_PATH_ONLY_HELPER(jitInduceOSRAtCurrentPCAndRecompile,0)
 SLOW_PATH_ONLY_HELPER(jitNewInstanceImplAccessCheck,3)
 SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(jitCallCFunction,3)
 SLOW_PATH_ONLY_HELPER_NO_EXCEPTION_NO_RETURN_VALUE(jitCallJitAddPicToPatchOnClassUnload,2)
@@ -434,7 +453,6 @@ UNUSED(jitNewObjectNoTenantInit)
 UNUSED(jitPostJNICallOffloadCheck)
 UNUSED(jitPreJNICallOffloadCheck)
 UNUSED(jitFindFieldSignatureClass)
-UNUSED(icallVMprJavaSendInvokeWithArgumentsHelperL)
 UNUSED(j2iInvokeWithArguments)
 
 dnl Switch from the C stack to the java stack and jump via tempSlot

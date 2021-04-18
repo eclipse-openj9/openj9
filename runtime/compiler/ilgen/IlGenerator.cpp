@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1132,9 +1132,10 @@ TR_J9ByteCodeIlGenerator::prependEntryCode(TR::Block * firstBlock)
    TR::Node * methodEnterHook = 0;
 
    static const char* disableMethodHookForCallees = feGetEnv("TR_DisableMethodHookForCallees");
-   if ((fej9()->isMethodTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier()) ||
-        TR::Compiler->vm.canMethodEnterEventBeHooked(comp()))
-         && (isOutermostMethod() || !disableMethodHookForCallees))
+   if ((fej9()->isMethodTracingEnabled(_methodSymbol->getResolvedMethod()->getPersistentIdentifier())
+        || (!comp()->getOption(TR_FullSpeedDebug)
+            && TR::Compiler->vm.canMethodEnterEventBeHooked(comp())))
+       && (isOutermostMethod() || !disableMethodHookForCallees))
       {
       methodEnterHook = genMethodEnterHook();
       }
@@ -1210,11 +1211,10 @@ TR_J9ByteCodeIlGenerator::prependGuardedCountForRecompilation(TR::Block * origin
    else
       {
       TR::Node *loadFlagNode = TR::Node::createWithSymRef(node, TR::iload, 0, comp()->getSymRefTab()->findOrCreateCountForRecompileSymbolRef());
-#ifndef PUBLIC_BUILD
+
       if (comp()->getOption(TR_EnableGCRPatching))
          cmpFlagNode = TR::Node::createif(TR::ificmpne, loadFlagNode, TR::Node::create(node, TR::iconst, 0, 1), originalFirstBlock->getEntry());
       else
-#endif
          cmpFlagNode = TR::Node::createif(TR::ificmpeq, loadFlagNode, TR::Node::create(node, TR::iconst, 0, 0), originalFirstBlock->getEntry());
       }
    TR::TreeTop *cmpFlag = TR::TreeTop::create(comp(), cmpFlagNode);
@@ -1240,7 +1240,7 @@ TR_J9ByteCodeIlGenerator::prependGuardedCountForRecompilation(TR::Block * origin
    TR::Block *callRecompileBlock = TR::Block::createEmptyBlock(comp());
    callRecompileBlock->append(TR::TreeTop::createResetTree(comp(), node, comp()->getRecompilationInfo()->getCounterSymRef(),
                                                           comp()->getOptions()->getGCRResetCount(), NULL, true));
-#ifndef PUBLIC_BUILD
+
    // Create the instruction that will patch my cmp
    if (comp()->getOption(TR_EnableGCRPatching))
       {
@@ -1250,7 +1250,6 @@ TR_J9ByteCodeIlGenerator::prependGuardedCountForRecompilation(TR::Block * origin
                              comp()->getSymRefTab()->findOrCreateGCRPatchPointSymbolRef())));
       }
 
-#endif
    TR::TreeTop *callTree = TR::TransformUtil::generateRetranslateCallerWithPrepTrees(node, TR_PersistentMethodInfo::RecompDueToGCR, comp());
    callRecompileBlock->append(callTree);
    callRecompileBlock->setIsCold(true);

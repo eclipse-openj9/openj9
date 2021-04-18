@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,23 +32,6 @@ extern "C"
 
 #define TEST_PASS 0
 #define TEST_ERROR -1
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-IDATA
-testSCStoreWithBCITests(J9JavaVM* vm)
-{
-	const char * testName = "testSCStoreWithBCITests";
-	if (NULL == vm) {
-		/*vm is null*/
-		return TEST_ERROR;
-	}
-	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	/*Note: we do this b/c test fails on realtime currently unless there is an existing cache*/
-	j9tty_printf(PORTLIB, "Skip these tests on realtime b/c cache is readonly\n", testName);
-	return TEST_PASS;
-}
-#else
 
 static IDATA test1(J9JavaVM* vm);
 static IDATA testRunner(J9JavaVM* vm, struct TestInfo testinfo);
@@ -228,5 +211,3 @@ testRunner(J9JavaVM* vm, struct TestInfo testinfo)
 done:
 	return retval;
 }
-
-#endif /*defined(J9SHR_CACHELET_SUPPORT)*/

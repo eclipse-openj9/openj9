@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2013 IBM Corp. and others
+ * Copyright (c) 2006, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -404,11 +404,11 @@ public class SystemTrace {
         Integer getField(int offset, int length) throws IOException {
             if (offset != 0) {
                 if (length == 1) {
-                    return new Integer(space.readUnsignedByte(address + offset));
+                    return Integer.valueOf(space.readUnsignedByte(address + offset));
                 } else if (length == 2) {
-                    return new Integer(space.readUnsignedShort(address + offset));
+                    return Integer.valueOf(space.readUnsignedShort(address + offset));
                 } else {
-                    return new Integer(space.readInt(address + offset));
+                    return Integer.valueOf(space.readInt(address + offset));
                 }
             }
             return null;
@@ -527,7 +527,7 @@ public class SystemTrace {
     }
 
     private Context getContext(long tod, int pid, int ppid) {
-        Integer key = new Integer((pid << 16) | ppid);
+        Integer key = Integer.valueOf((pid << 16) | ppid);
         Context context = (Context)contextMap.get(key);
         if (context == null) {
             context = new Context(tod, pid, ppid);

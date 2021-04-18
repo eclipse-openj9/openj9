@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,13 +63,18 @@ extern "C" {
 /**
  * Prototypes for locally defined functions.
  */
-static IDATA mangledSize (U_8 * data, U_16 length);
+static IDATA mangledSize (U_8 * data, U_16 length, BOOLEAN legacyMangling);
 static void mangledData (U_8** pBuffer, U_8 * data, U_16 length);
 static void nativeSignature(J9Method* nativeMethod, char *resultBuffer);
 static UDATA nativeMethodHash(void *key, void *userData);
 static UDATA nativeMethodEqual(void *leftKey, void *rightKey, void *userData);
 static UDATA bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, char * shortJNI, UDATA bindJNINative);
-static UDATA    lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeLibrary *handle, char *longJNI, char *shortJNI, UDATA functionArgCount, UDATA bindJNINative);
+static UDATA lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeLibrary *handle, char *longJNI, char *shortJNI, UDATA functionArgCount, UDATA bindJNINative);
+
+#if JAVA_SPEC_VERSION >= 15
+J9_DECLARE_CONSTANT_UTF8(j9_findnative_sig, "(Ljava/lang/ClassLoader;Ljava/lang/String;)J");
+J9_DECLARE_CONSTANT_UTF8(j9_findnative_name, "findNative");
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 typedef struct {
 	const char *nativeName;
@@ -82,10 +87,13 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_Class_isAssignableFrom__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM },
 	{ "Java_java_lang_Class_isArray__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ARRAY },
 	{ "Java_java_lang_Class_isPrimitive__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE },
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	{ "Java_java_lang_Class_isPrimitiveClass__", J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_PRIMITIVE_CLASS },
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	{ "Java_java_lang_Class_getModifiersImpl__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL },
 	{ "Java_java_lang_Class_getComponentType__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE },
 	{ "Java_java_lang_Class_arrayTypeImpl__", J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL },
-	{ "Java_java_lang_Class_isRecord__", J9_BCLOOP_SEND_TARGET_CLASS_IS_RECORD },
+	{ "Java_java_lang_Class_isRecordImpl__", J9_BCLOOP_SEND_TARGET_CLASS_IS_RECORD_IMPL },
 	{ "Java_java_lang_Class_isSealed__", J9_BCLOOP_SEND_TARGET_CLASS_IS_SEALED },
 	{ "Java_java_lang_System_arraycopy__Ljava_lang_Object_2ILjava_lang_Object_2II", J9_BCLOOP_SEND_TARGET_INL_SYSTEM_ARRAYCOPY },
 	{ "Java_java_lang_System_currentTimeMillis__", J9_BCLOOP_SEND_TARGET_INL_SYSTEM_CURRENT_TIME_MILLIS },
@@ -269,6 +277,11 @@ static inlMapping mappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetInt__Ljava_lang_Object_2JII", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT },
 	{ "Java_jdk_internal_misc_Unsafe_allocateInstance__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE },
 	{ "Java_java_lang_Thread_onSpinWait__", J9_BCLOOP_SEND_TARGET_INL_THREAD_ON_SPIN_WAIT },
+#if JAVA_SPEC_VERSION >= 11
+	{ "Java_jdk_internal_reflect_Reflection_getClassAccessFlags__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS },
+#else /* JAVA_SPEC_VERSION >= 11 */
+	{ "Java_sun_reflect_Reflection_getClassAccessFlags__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS },
+#endif /* JAVA_SPEC_VERSION >= 11 */
 };
 
 typedef struct J9OutOfLineINLMapping {
@@ -303,7 +316,7 @@ inlIntercept(J9VMThread *currentThread, J9Method *nativeMethod, const char *symb
 		if (0 == strcmp(symbolName, mappings[i].nativeName)) {
 			Trc_VM_INLIntercepted(currentThread, symbolName);
 			nativeMethod->methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(mappings[i].sendTargetNumber);
-			nativeMethod->extra = (void*)(UDATA)-1;
+			nativeMethod->extra = reinterpret_cast<void*>(J9_JIT_NEVER_TRANSLATE);
 			rc = J9_NATIVE_METHOD_BIND_SUCCESS;
 			break;
 		}
@@ -342,7 +355,10 @@ inlIntercept(J9VMThread *currentThread, J9Method *nativeMethod, const char *symb
  * \param ramMethod The method for signature computation.
  * \param ramClass The class which contains the method.
  * \param nameOffset Buffer into which the mangled signature will be written.
- * \return A buffer containing the mangled JNI names, separated by nulls.
+ * \return A buffer containing the mangled JNI names, separated by nulls
+ *         Failure is indicated by:
+ *            NULL (failure to allocate native memory)
+ *            UDATA_MAX (identifiers are invalid)
  *
  * Sample Input:
  * 			boolean pkg.X.foo(String,int);
@@ -360,6 +376,8 @@ buildNativeFunctionNames(J9JavaVM * javaVM, J9Method* ramMethod, J9Class* ramCla
 	UDATA size, shortSize;
 	U_8 *classNameData, *methodNameData, *methodSigData;
 	U_16 classNameLength, methodNameLength, methodSigLength;
+	IDATA tempSize = 0;
+	BOOLEAN legacyMangling = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_LEGACY_MANGLING);
 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
@@ -376,22 +394,36 @@ buildNativeFunctionNames(J9JavaVM * javaVM, J9Method* ramMethod, J9Class* ramCla
 
 	/* First add the common part: Java_<cls>_<name> */
 	size = 6;
-	size += mangledSize(classNameData, classNameLength);
-	size += mangledSize(methodNameData, methodNameLength);
+	tempSize = mangledSize(classNameData, classNameLength, legacyMangling);
+	if (tempSize < 0) {
+error:
+		buffer = (U_8*)UDATA_MAX;
+		goto done;
+	}
+	size += tempSize;
+	tempSize = mangledSize(methodNameData, methodNameLength, legacyMangling);
+	if (tempSize < 0) {
+		goto error;
+	}
+	size += tempSize;
 	shortSize = size;
 	size <<= 1;
 
 	/* Now add for the signature part: __<parm1><parm2> */
 	size += 2;
-	size += mangledSize(methodSigData, methodSigLength);
+	tempSize = mangledSize(methodSigData, methodSigLength, legacyMangling);
+	if (tempSize < 0) {
+		goto error;
+	}
+	size += tempSize;
 
 	/* Null terminate both strings */
 	size += 2;
 
 	/* Allocate enough memory */
 	buffer = (U_8*)j9mem_allocate_memory(size, OMRMEM_CATEGORY_VM);
-	if(buffer == NULL) {
-		return NULL;
+	if (NULL == buffer) {
+		goto done;
 	}
 
 	/* Dump the long name */
@@ -409,7 +441,7 @@ buildNativeFunctionNames(J9JavaVM * javaVM, J9Method* ramMethod, J9Class* ramCla
 	/* Memcopy the short name from the long name */
 	memcpy(current, buffer, shortSize);
 	current[shortSize] = '\0';
-
+done:
 	return buffer;
 }
 
@@ -501,15 +533,16 @@ mangledData(U_8** pBuffer, U_8 * data, U_16 length)
  * mangled JNI name for a method.
  * \param data  Method signature in canonical UTF8 form.
  * \param length The number of bytes in data.
- * \return The number of ASCII characters required for the mangled JNI name.
+ * \return The number of ASCII characters required for the mangled JNI name, or a negative value for illegal identifiers
  */
 static IDATA
-mangledSize(U_8 * data, U_16 length)
+mangledSize(U_8 * data, U_16 length, BOOLEAN legacyMangling)
 {
 	/* Return the size in ASCII characters of the JNI mangled version of utf
 		Assumes verified canonical UTF8 strings */
 	IDATA size;
 	U_16 i, ch;
+	BOOLEAN disallow0to3 = !legacyMangling;
 
 	size = 0;
 	i = 0;
@@ -520,11 +553,12 @@ mangledSize(U_8 * data, U_16 length)
 				break;
 
 			case ')':										/* End of signature -- done */
-				return size;
+				goto done;
 
 			case '/':										/* / -> _ */
 				size += 1;
-				break;
+				disallow0to3 = !legacyMangling;
+				continue;
 
 			case '_':										/* _ -> _1 */
 			case ';':										/* ; -> _2 */
@@ -543,11 +577,19 @@ mangledSize(U_8 * data, U_16 length)
 					/* Multibyte encoding: two or three bytes? */
 					i += 1;
 					if((ch & 0xE0) == 0xE0) i += 1;
+				} else {
+					if (disallow0to3) {
+						if ((ch >= (U_16)'0') && (ch <= (U_16)'3')) {
+							size = -1;
+							goto done;
+						}
+					}
+					size += 1;
 				}
-				else size += 1;
 		}
+		disallow0to3 = FALSE;
 	}
-
+done:
 	return size;
 }
 
@@ -802,6 +844,7 @@ nativeMethodEqual(void *leftKey, void *rightKey, void *userData)
  * \warning This function may release VM access.
  * \return
  * 	J9_NATIVE_METHOD_BIND_SUCCESS on success.
+ * 	J9_NATIVE_METHOD_BIND_FAIL if native cannot be bound, or mangling is illegal.
  *  J9_NATIVE_METHOD_BIND_RECURSIVE if another thread is binding the method.
  * 	J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY if scratch space cannot be allocated.
  */
@@ -861,6 +904,8 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
 			namesBuffer = (char *) buildNativeFunctionNames(vm, nativeMethod, J9_CLASS_FROM_METHOD(nativeMethod), 0);
 			if (namesBuffer == NULL) {
 				rc = J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY;
+			} else if (namesBuffer == (char*)UDATA_MAX) {
+				rc = J9_NATIVE_METHOD_BIND_FAIL;
 			} else {
 				/* exemplar.nativeMethod already set above */
 				/* exemplar.bindThread is set below */
@@ -934,14 +979,15 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
  *   J9_NATIVE_METHOD_BIND_FAIL on failure.
  */
 static UDATA
-bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, char * shortJNI, UDATA bindJNINative)
+bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char *longJNI, char *shortJNI, UDATA bindJNINative)
 {
-	J9JavaVM * vm = currentThread->javaVM;
-	J9ClassLoader * classLoader = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader;
-	J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
+	J9JavaVM *vm = currentThread->javaVM;
+	J9ClassLoader *classLoader = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader;
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
 	U_8 argCount = romMethod->argCount;
-	J9NativeLibrary * nativeLibrary;
+	J9NativeLibrary *nativeLibrary = NULL;
 
+	Trc_VM_bindNative_Entry(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
 #if defined(J9VM_INTERP_MINIMAL_JNI)
 	/* Minimal JNI does not support all 255 arguments */
 	if (argCount > J9_INLINE_JNI_MAX_ARG_COUNT) {
@@ -957,17 +1003,34 @@ bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, ch
 		++argCount;
 	}
 
-	/* Search each shared library in the class loader for a matching native */
-	nativeLibrary = classLoader->librariesHead;
-	while (nativeLibrary != NULL) {
-		UDATA rc = lookupNativeAddress(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, argCount, bindJNINative);
-		if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
-			return J9_NATIVE_METHOD_BIND_SUCCESS;
-		} else if (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc) {
-			return rc;
+#if JAVA_SPEC_VERSION >= 15
+	if (classLoader == vm->systemClassLoader)
+#endif /* JAVA_SPEC_VERSION >= 15 */
+	{
+		/* Search each shared library in the class loader for a matching native */
+		nativeLibrary = classLoader->librariesHead;
+		while (nativeLibrary != NULL) {
+			UDATA rc = lookupNativeAddress(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, argCount, bindJNINative);
+			if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
+				Trc_VM_bindNative_NativeLibrary_Success(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, bindJNINative);
+				return J9_NATIVE_METHOD_BIND_SUCCESS;
+			} else if (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc) {
+				Trc_VM_bindNative_NativeLibrary_OOM(currentThread, nativeMethod, nativeLibrary, longJNI, shortJNI, bindJNINative);
+				return rc;
+			}
+			nativeLibrary = nativeLibrary->next;
 		}
-		nativeLibrary = nativeLibrary->next;
 	}
+#if JAVA_SPEC_VERSION >= 15
+	UDATA rc = lookupNativeAddress(currentThread, nativeMethod, NULL, longJNI, shortJNI, argCount, bindJNINative);
+	if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
+		Trc_VM_bindNative_NullNativeLibrary_Success(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
+		return J9_NATIVE_METHOD_BIND_SUCCESS;
+	} else if (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc) {
+		Trc_VM_bindNative_NullNativeLibrary_OOM(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
+		return rc;
+	}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 
 #if defined(J9VM_OPT_JVMTI)
 	/* If the native is not found in any registered library, search JVMTI agent libraries.
@@ -977,11 +1040,13 @@ bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, ch
 	if (bindJNINative) {
 		TRIGGER_J9HOOK_VM_LOOKUP_NATIVE_ADDRESS(vm->hookInterface, currentThread, nativeMethod, longJNI, shortJNI, argCount, lookupNativeAddress);
 		if (J9_NATIVE_METHOD_IS_BOUND(nativeMethod)) {
+			Trc_VM_bindNative_JVMTIAgent_Success(currentThread, nativeMethod, longJNI, shortJNI);
 			return J9_NATIVE_METHOD_BIND_SUCCESS;
 		}
 	}
 #endif
 
+	Trc_VM_bindNative_Fail(currentThread, nativeMethod, longJNI, shortJNI, bindJNINative);
 	return J9_NATIVE_METHOD_BIND_FAIL;
 }
 
@@ -997,14 +1062,36 @@ bindNative(J9VMThread *currentThread, J9Method *nativeMethod, char * longJNI, ch
  * \return 0 on success, any other value on failure.
  */
 UDATA
-lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Method *nativeMethod, char * symbolName, char * signature)
+lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Method *nativeMethod, char *symbolName, char *signature)
 {
-	UDATA lookupResult;
-	void * functionAddress;
+	UDATA lookupResult = 0;
+	void *functionAddress = NULL;
 	J9JavaVM *vm = currentThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	lookupResult = j9sl_lookup_name(nativeLibrary->handle, symbolName, (UDATA*)&functionAddress, signature);
+	Trc_VM_lookupJNINative_Entry(currentThread, nativeLibrary, nativeMethod, symbolName, signature);
+#if JAVA_SPEC_VERSION >= 15
+	if (NULL == nativeLibrary) {
+		J9MemoryManagerFunctions const * const mmFuncs = vm->memoryManagerFunctions;
+		J9NameAndSignature nas = {0};
+		nas.name = (J9UTF8 *)&j9_findnative_name;
+		nas.signature = (J9UTF8 *)&j9_findnative_sig;
+		internalAcquireVMAccess(currentThread);
+		j9object_t entryName = mmFuncs->j9gc_createJavaLangString(currentThread, (U_8*)symbolName, strlen(symbolName), 0);
+		j9object_t classLoaderObject = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader->classLoaderObject;
+		UDATA args[] = { (UDATA) classLoaderObject, (UDATA) entryName };
+		runStaticMethod(currentThread, (U_8 *)"java/lang/ClassLoader", &nas, 2, (UDATA *)args);
+		internalReleaseVMAccess(currentThread);
+		functionAddress = (UDATA *) currentThread->returnValue;
+		if ((NULL != currentThread->currentException) || (NULL == functionAddress) ) {
+			lookupResult = 1;
+		}
+		Trc_VM_lookupJNINative_NullNativeLibrary(currentThread, nativeMethod, symbolName, signature, functionAddress);
+	} else
+#endif /* JAVA_SPEC_VERSION >= 15 */
+	{
+		lookupResult = j9sl_lookup_name(nativeLibrary->handle, symbolName, (UDATA*)&functionAddress, signature);
+	}
 	if (lookupResult == 0) {
 		UDATA cpFlags = J9_STARTPC_JNI_NATIVE;
 
@@ -1014,7 +1101,7 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 		internalReleaseVMAccess(currentThread);
 #endif
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
-		if (nativeLibrary->doSwitching != 0) {
+		if ((NULL != nativeLibrary) && (0 != nativeLibrary->doSwitching)) {
 			cpFlags |= J9_STARTPC_NATIVE_REQUIRES_SWITCHING;
 			if (nativeLibrary->doSwitching & J9_NATIVE_LIBRARY_SWITCH_JDBC) {
 				J9Class* ramClass;
@@ -1037,6 +1124,7 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 		atomicOrIntoConstantPool(vm, nativeMethod, cpFlags);
 		nativeMethod->methodRunAddress = vm->jniSendTarget;
 	}
+	Trc_VM_lookupJNINative_Exit(currentThread, nativeLibrary, nativeMethod, nativeMethod->extra, symbolName, signature, lookupResult);
 
 	return lookupResult;
 }
@@ -1055,15 +1143,19 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 static UDATA   
 lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeLibrary *nativeLibrary, char *longJNI, char *shortJNI, UDATA functionArgCount, UDATA bindJNINative)
 {
-	UDATA lookupResult;
+	UDATA lookupResult = 0;
 	char argSignature[260];  /* max args is 256 + JNIEnv + jobject/jclass + return type + '\0' */
-	bool inlAllowed = J9_ARE_ANY_BITS_SET(nativeLibrary->flags, J9NATIVELIB_FLAG_ALLOW_INL);
 
-	/* If INL lookup is allowed for this library, check for C INLs */
-	if (inlAllowed) {
-		UDATA rc = inlIntercept(currentThread, nativeMethod, longJNI);
-		if ((J9_NATIVE_METHOD_BIND_SUCCESS == rc) || (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc)) {
-			return rc;
+	Trc_VM_lookupNativeAddress_Entry(currentThread, nativeLibrary, nativeMethod, longJNI, shortJNI, functionArgCount, bindJNINative);
+	if (NULL != nativeLibrary) {
+		bool inlAllowed = J9_ARE_ANY_BITS_SET(nativeLibrary->flags, J9NATIVELIB_FLAG_ALLOW_INL);
+		/* If INL lookup is allowed for this library, check for C INLs */
+		if (inlAllowed) {
+			UDATA rc = inlIntercept(currentThread, nativeMethod, longJNI);
+			if ((J9_NATIVE_METHOD_BIND_SUCCESS == rc) || (J9_NATIVE_METHOD_BIND_OUT_OF_MEMORY == rc)) {
+				Trc_VM_lookupNativeAddress_inlIntercept_Exit(currentThread, nativeLibrary, nativeMethod, longJNI, rc);
+				return rc;
+			}
 		}
 	}
 
@@ -1077,16 +1169,25 @@ lookupNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, J9NativeL
 	 */
 
 	if (bindJNINative) {
-		lookupResult = (*nativeLibrary->bind_method)(currentThread, nativeLibrary, nativeMethod, shortJNI, argSignature);
-		if (lookupResult == 0) {
+		UDATA  (*bind_method)(struct J9VMThread* vmThread, struct J9NativeLibrary* library, struct J9Method* method, char* functionName, char* argSignature) = NULL;
+		if (NULL != nativeLibrary) {
+			bind_method = nativeLibrary->bind_method;
+		} else {
+			bind_method = lookupJNINative;
+		}
+		lookupResult = bind_method(currentThread, nativeLibrary, nativeMethod, shortJNI, argSignature);
+		if (0 == lookupResult) {
+			Trc_VM_lookupNativeAddress_bindmethod_shortJNI_Exit(currentThread, nativeLibrary, nativeMethod, shortJNI, argSignature);
 			return J9_NATIVE_METHOD_BIND_SUCCESS;
 		}
-		lookupResult = (*nativeLibrary->bind_method)(currentThread, nativeLibrary, nativeMethod, longJNI, argSignature);
-		if (lookupResult == 0) {
+		lookupResult = bind_method(currentThread, nativeLibrary, nativeMethod, longJNI, argSignature);
+		if (0 == lookupResult) {
+			Trc_VM_lookupNativeAddress_bindmethod_longJNI_Exit(currentThread, nativeLibrary, nativeMethod, longJNI, argSignature);
 			return J9_NATIVE_METHOD_BIND_SUCCESS;
 		}
 	}
 
+	Trc_VM_lookupNativeAddress_fail_Exit(currentThread, nativeLibrary, nativeMethod, argSignature);
 	return J9_NATIVE_METHOD_BIND_FAIL;
 }
 

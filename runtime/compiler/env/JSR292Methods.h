@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,4 +53,7 @@
 
 #define JSR292_FieldGetterHandle "java/lang/invoke/FieldGetterHandle"
 #define JSR292_FieldSetterHandle "java/lang/invoke/FieldSetterHandle"
+
+#define JSR292_invokeCacheArrayMemberNameIndex 0
+#define JSR292_invokeCacheArrayAppendixIndex 1
 #endif

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,22 +28,7 @@
  * VARIABLE_FILE allows to run it in a custom configuration on a different server.
  *
  * Parameters:
- *   PLATFORMS: String - Comma separated platforms to build.
- *              Expected values: all or any of the following:
- *              aix_ppc-64_cmprssptrs,
- *              linux_x86-64,
- *              linux_x86-64_cmprssptrs,
- *              linux_ppc-64,
- *              linux_ppc-64_cmprssptrs_le,
- *              linux_390-64,
- *              linux_390-64_cmprssptrs,
- *              win_x86-64_cmprssptrs,
- *              win_x86 (Java 8 support only),
- *              zos_390-64_cmprssptrs (Java 11 support only),
- *              osx_x86-64 (Java 8 and Java 11 support only),
- *              osx_x86-64_cmprssptrs (Java 8 and Java 11 support only),
- *              aarch64_linux (Java 8 and Java 11 support only),
- *              aarch64_linux_xl (Java 8 and Java 11 support only)
+ *   PLATFORMS: String - Comma separated platforms to build, or `all`. For the list of platforms, see `id=` in the `.spec` files found in the buildspecs directory (the id should be the same as the spec file name without the `.spec`).
  *   OPENJ9_REPO: String - the OpenJ9 git repository URL: e.g. https://github.com/eclipse/openj9.git (default)
  *   OPENJ9_BRANCH: String - the OpenJ9 branch to clone from: e.g. master (default)
  *   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
@@ -81,56 +66,98 @@
  *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: false
  */
 
-CURRENT_RELEASES = ['8', '11', '14', '15', 'next']
+CURRENT_RELEASES = ['8', '11', '15', '16', 'next']
 
 SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          'ppc64_aix_cm' : CURRENT_RELEASES,
+         'ppc64_aix_uma' : CURRENT_RELEASES,
          'ppc64_aix_xl' : CURRENT_RELEASES,
          'ppc64_aix_xl_cm' : CURRENT_RELEASES,
+         'ppc64_aix_xl_uma' : CURRENT_RELEASES,
+         'ppc64_aix_mixed' : CURRENT_RELEASES,
          'ppc64le_linux'  : CURRENT_RELEASES,
          'ppc64le_linux_cm' : CURRENT_RELEASES - '11',
-         'ppc64le_linux_uma' : ['11'],
+         'ppc64le_linux_uma' : CURRENT_RELEASES,
          'ppc64le_linux_jit' : CURRENT_RELEASES,
          'ppc64le_linux_xl' : CURRENT_RELEASES,
          'ppc64le_linux_xl_cm' : CURRENT_RELEASES - '11',
-         'ppc64le_linux_xl_uma' : ['11'],
+         'ppc64le_linux_xl_uma' : CURRENT_RELEASES,
+         'ppc64le_linux_mixed' : CURRENT_RELEASES,
          's390x_linux'    : CURRENT_RELEASES,
          's390x_linux_cm' : CURRENT_RELEASES - '11',
-         's390x_linux_uma' : ['11'],
+         's390x_linux_uma' : CURRENT_RELEASES,
          's390x_linux_jit' : CURRENT_RELEASES,
          's390x_linux_xl' : CURRENT_RELEASES,
          's390x_linux_xl_cm' : CURRENT_RELEASES - '11',
-         's390x_linux_xl_uma' : ['11'],
+         's390x_linux_xl_uma' : CURRENT_RELEASES,
+         's390x_linux_mixed' : CURRENT_RELEASES,
          's390x_zos'      : ['11'],
          's390x_zos_cm'   : ['11'],
+         's390x_zos_uma'   : ['11'],
+         's390x_zos_xl'   : ['11'],
+         's390x_zos_xl_cm' : ['11'],
+         's390x_zos_mixed' : ['11'],
          'x86-64_linux'   : CURRENT_RELEASES,
          'x86-64_linux_cm': CURRENT_RELEASES - '11',
-         'x86-64_linux_uma' : ['11'],
+         'x86-64_linux_uma' : CURRENT_RELEASES,
          'x86-64_linux_xl': CURRENT_RELEASES,
          'x86-64_linux_xl_cm': CURRENT_RELEASES - '11',
-         'x86-64_linux_xl_uma' : ['11'],
+         'x86-64_linux_xl_uma' : CURRENT_RELEASES,
+         'x86-64_linux_mixed' : CURRENT_RELEASES,
          'x86-64_linux_jit' : CURRENT_RELEASES,
          'x86-64_linux_valhalla'   : ['next'],
+         'x86-64_linux_vt_standard' : ['next'],
          'x86-64_mac_xl'  : CURRENT_RELEASES,
          'x86-64_mac'     : CURRENT_RELEASES,
          'x86-64_mac_cm'  : CURRENT_RELEASES - '11',
          'x86-64_mac_xl_cm'  : CURRENT_RELEASES - '11',
-         'x86-64_mac_uma' : ['11'],
-         'x86-64_mac_xl_uma' : ['11'],
+         'x86-64_mac_mixed' : CURRENT_RELEASES,
+         'x86-64_mac_uma' : CURRENT_RELEASES,
+         'x86-64_mac_xl_uma' : CURRENT_RELEASES,
          'x86-32_windows' : ['8'],
          'x86-32_windows_cm' : ['8'],
+         'x86-32_windows_uma' : ['8'],
          'x86-64_windows' : CURRENT_RELEASES,
          'x86-64_windows_cm': CURRENT_RELEASES,
+         'x86-64_windows_uma': CURRENT_RELEASES,
          'x86-64_windows_xl' : CURRENT_RELEASES,
          'x86-64_windows_xl_cm': CURRENT_RELEASES,
-         'aarch64_linux' : ['8', '11'],
-         'aarch64_linux_cm': ['11'],
-         'aarch64_linux_xl' : ['8', '11'],
-         'aarch64_linux_xl_cm': ['11']]
+         'x86-64_windows_xl_uma' : CURRENT_RELEASES,
+         'x86-64_windows_mixed' : CURRENT_RELEASES,
+         'aarch64_linux' : CURRENT_RELEASES,
+         'aarch64_linux_cm': CURRENT_RELEASES,
+         'aarch64_linux_uma': CURRENT_RELEASES,
+         'aarch64_linux_xl' : CURRENT_RELEASES,
+         'aarch64_linux_xl_cm': CURRENT_RELEASES,
+         'aarch64_linux_xl_uma': CURRENT_RELEASES,
+         'aarch64_linux_mixed' : CURRENT_RELEASES,
+         'ppc64_aix_ojdk292' : CURRENT_RELEASES,
+         'ppc64_aix_xl_ojdk292' : CURRENT_RELEASES,
+         'ppc64le_linux_ojdk292' : CURRENT_RELEASES,
+         'ppc64le_linux_xl_ojdk292' : CURRENT_RELEASES,
+         's390x_linux_ojdk292' : CURRENT_RELEASES,
+         's390x_linux_xl_ojdk292' : CURRENT_RELEASES,
+         's390x_zos_ojdk292' : ['11'],
+         's390x_zos_xl_ojdk292' : ['11'],
+         'x86-64_linux_ojdk292' : CURRENT_RELEASES,
+         'x86-64_linux_xl_ojdk292' : CURRENT_RELEASES,
+         'x86-64_mac_ojdk292' : CURRENT_RELEASES,
+         'x86-64_mac_xl_ojdk292' : CURRENT_RELEASES,
+         'x86-32_windows_ojdk292' : ['8'],
+         'x86-64_windows_ojdk292' : CURRENT_RELEASES,
+         'x86-64_windows_xl_ojdk292' : CURRENT_RELEASES,
+         'aarch64_linux_ojdk292' : CURRENT_RELEASES,
+         'aarch64_linux_xl_ojdk292' : CURRENT_RELEASES,
+         'ppc64_aix_aot'      : CURRENT_RELEASES,
+         'ppc64le_linux_aot'  : CURRENT_RELEASES,
+         's390x_linux_aot'    : CURRENT_RELEASES,
+         'x86-64_linux_aot'   : CURRENT_RELEASES,
+         'x86-64_mac_aot'     : CURRENT_RELEASES,
+         'x86-64_windows_aot' : CURRENT_RELEASES]
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
-SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_linux_xl','x86-64_linux','x86-64_linux_xl','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac'],
+SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac'],
             'aix' : ['ppc64_aix'],
             'aixcm': ['ppc64_aix_cm'],
             'aixuma' : ['ppc64_aix_uma'],
@@ -138,6 +165,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'aixxl' : ['ppc64_aix_xl'],
             'aixxlcm' : ['ppc64_aix_xl_cm'],
             'aixxluma' : ['ppc64_aix_xl_uma'],
+            'aixmxd' : ['ppc64_aix_mixed'],
             'zlinux' : ['s390x_linux'],
             'zlinuxcm' : ['s390x_linux_cm'],
             'zlinuxuma' : ['s390x_linux_uma'],
@@ -146,6 +174,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'zlinuxxl' : ['s390x_linux_xl'],
             'zlinuxxlcm' : ['s390x_linux_xl_cm'],
             'zlinuxxluma' : ['s390x_linux_xl_uma'],
+            'zlinuxmxd' : ['s390x_linux_mixed'],
             'plinux' : ['ppc64le_linux'],
             'plinuxcmake' : ['ppc64le_linux_cm'],
             'plinuxcm' : ['ppc64le_linux_cm'],
@@ -155,6 +184,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'plinuxxl' : ['ppc64le_linux_xl'],
             'plinuxxlcm' : ['ppc64le_linux_xl_cm'],
             'plinuxxluma' : ['ppc64le_linux_xl_uma'],
+            'plinuxmxd' : ['ppc64le_linux_mixed'],
             'xlinuxlargeheap' : ['x86-64_linux_xl'],
             'xlinuxxl' : ['x86-64_linux_xl'],
             'xlinux' : ['x86-64_linux'],
@@ -163,17 +193,21 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'xlinuxuma' : ['x86-64_linux_uma'],
             'xlinuxxlcm' : ['x86-64_linux_xl_cm'],
             'xlinuxxluma' : ['x86-64_linux_xl_uma'],
+            'xlinuxmxd' : ['x86-64_linux_mixed'],
             'xlinuxjit' : ['x86-64_linux_jit'],
             'xlinuxval' : ['x86-64_linux_valhalla'],
+            'xlinuxvalst' : ['x86-64_linux_vt_standard'],
             'win32' : ['x86-32_windows'],
             'win32cm' : ['x86-32_windows_cm'],
             'win32uma' : ['x86-32_windows_uma'],
             'win' : ['x86-64_windows'],
             'wincm' : ['x86-64_windows_cm'],
+            'winuma' : ['x86-64_windows_uma'],
             'winlargeheap' : ['x86-64_windows_xl'],
             'winxl' : ['x86-64_windows_xl'],
             'winxlcm' : ['x86-64_windows_xl_cm'],
             'winxluma' : ['x86-64_windows_xl_uma'],
+            'winmxd' : ['x86-64_windows_mixed'],
             'osx' : ['x86-64_mac'],
             'osxlargeheap' : ['x86-64_mac_xl'],
             'osxxl' : ['x86-64_mac_xl'],
@@ -182,6 +216,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'osxxlcm': ['x86-64_mac_xl_cm'],
             'osxuma': ['x86-64_mac_uma'],
             'osxxluma': ['x86-64_mac_xl_uma'],
+            'osxmxd': ['x86-64_mac_mixed'],
             'alinux64' : ['aarch64_linux'],
             'alinux64cm' : ['aarch64_linux_cm'],
             'alinux64uma' : ['aarch64_linux_uma'],
@@ -189,9 +224,45 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'alinux64xlcm' : ['aarch64_linux_xl_cm'],
             'alinux64xluma' : ['aarch64_linux_xl_uma'],
             'alinux64largeheap' : ['aarch64_linux_xl'],
+            'alinux64mxd' : ['aarch64_linux_mixed'],
             'zos' : ['s390x_zos'],
             'zoscm' : ['s390x_zos_cm'],
-            'zosuma' : ['s390x_zos_uma']]
+            'zosuma' : ['s390x_zos_uma'],
+            'zosxl' : ['s390x_zos_xl'],
+            'zoslargeheap' : ['s390x_zos_xl'],
+            'zosxlcm' : ['s390x_zos_xl_cm'],
+            'zosmxd' : ['s390x_zos_mixed'],
+            'aixojdk292' : ['ppc64_aix_ojdk292'],
+            'aixxlojdk292' : ['ppc64_aix_xl_ojdk292'],
+            'aixlargeheapojdk292' : ['ppc64_aix_xl_ojdk292'],
+            'plinuxojdk292' : ['ppc64le_linux_ojdk292'],
+            'plinuxxlojdk292' : ['ppc64le_linux_xl_ojdk292'],
+            'plinuxlargeheapojdk292' : ['ppc64le_linux_xl_ojdk292'],
+            'zlinuxojdk292' : ['s390x_linux_ojdk292'],
+            'zlinuxxlojdk292' : ['s390x_linux_xl_ojdk292'],
+            'zlinuxlargeheapojdk292' : ['s390x_linux_xl_ojdk292'],
+            'xlinuxojdk292' : ['x86-64_linux_ojdk292'],
+            'xlinuxxlojdk292' : ['x86-64_linux_xl_ojdk292'],
+            'xlinuxlargeheapojdk292' : ['x86-64_linux_xl_ojdk292'],
+            'win32ojdk292' : ['x86-32_windows_ojdk292'],
+            'winojdk292' : ['x86-64_windows_ojdk292'],
+            'winxlojdk292' : ['x86-64_windows_xl_ojdk292'],
+            'winlargeheapojdk292' : ['x86-64_windows_xl_ojdk292'],
+            'osxojdk292' : ['x86-64_mac_ojdk292'],
+            'osxxlojdk292' : ['x86-64_mac_xl_ojdk292'],
+            'osxlargeheapojdk292' : ['x86-64_mac_xl_ojdk292'],
+            'alinux64ojdk292' : ['aarch64_linux_ojdk292'],
+            'alinux64xlojdk292' : ['aarch64_linux_xl_ojdk292'],
+            'alinux64largeheapojdk292' : ['aarch64_linux_xl_ojdk292'],
+            'zosojdk292' : ['s390x_zos_ojdk292'],
+            'zosxlojdk292' : ['s390x_zos_xl_ojdk292'],
+            'zoslargeheapojdk292' : ['s390x_zos_xl_ojdk292'],
+            'aixaot' : ['ppc64_aix_aot'],
+            'plinuxaot' : ['ppc64le_linux_aot'],
+            'zlinuxaot' : ['s390x_linux_aot'],
+            'xlinuxaot' : ['x86-64_linux_aot'],
+            'osxaot' : ['x86-64_mac_aot'],
+            'winaot' : ['x86-64_windows_aot']]
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
@@ -322,7 +393,7 @@ try {
                     def BUILD_NODES = get_node_labels(BUILD_NODE_LABELS, BUILD_SPECS.keySet())
                     def TEST_NODES = get_node_labels(TEST_NODE_LABELS, BUILD_SPECS.keySet())
 
-                    // Stash DSL file so we can quickly load it on master
+                    // Stash DSL file so we can quickly load it on Jenkins Manager node
                     if (AUTOMATIC_GENERATION != 'false') {
                         stash includes: 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy', name: 'DSL'
                     }

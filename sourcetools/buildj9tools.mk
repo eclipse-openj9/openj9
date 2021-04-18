@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2017 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ JAVAC_FLAGS := -nowarn -source $(SPEC_LEVEL) -target $(SPEC_LEVEL)
 
 JAR_TARGETS :=
 
-.PHONY : all clean default distclean
+.PHONY : all clean default distclean preprocessor
 
 default : all
 
@@ -73,6 +73,8 @@ clean :
 
 distclean : clean
 	rm -f $(JAR_TARGETS)
+
+preprocessor : $(DEST_DIR)/jpp.jar
 
 # FindAllFiles
 # ------------
@@ -104,7 +106,7 @@ JAR_TARGETS     += $$($1_TARGET)
 
 all : $$($1_TARGET)
 
-$(DEST_DIR)/$1.jar : $$($1_SOURCES) $$($1_OTHER_FILES)
+$$($1_TARGET) : $$($1_SOURCES) $$($1_OTHER_FILES)
 	@echo Building $$@
 	@rm -rf $$($1_WORK_DIR)
 	@mkdir -p $$($1_WORK_DIR)

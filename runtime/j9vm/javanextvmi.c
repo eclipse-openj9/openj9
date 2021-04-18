@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+#include <assert.h>
 #include <jni.h>
 
 #include "bcverify_api.h"
@@ -30,6 +31,26 @@
 /* Define for debug
 #define DEBUG_BCV
 */
+
+#if JAVA_SPEC_VERSION >= 16
+JNIEXPORT void JNICALL
+JVM_DefineArchivedModules(JNIEnv *env, jobject obj1, jobject obj2)
+{
+	assert(!"JVM_DefineArchivedModules unimplemented");
+}
+
+JNIEXPORT void JNICALL
+JVM_LogLambdaFormInvoker(JNIEnv *env, jstring str)
+{
+	assert(!"JVM_LogLambdaFormInvoker unimplemented");
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsDumpingClassList(JNIEnv *env)
+{
+	return JNI_FALSE;
+}
+#endif /* JAVA_SPEC_VERSION >= 16 */
 
 #if JAVA_SPEC_VERSION >= 11
 JNIEXPORT void JNICALL
@@ -79,24 +100,25 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 	J9VMThread *vmThread = (J9VMThread *)env;
 	J9JavaVM *vm = vmThread->javaVM;
 	jobject msgObjectRef = NULL;
-	
+
 	Trc_SC_GetExtendedNPEMessage_Entry(vmThread, throwableObj);
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_SHOW_EXTENDED_NPEMSG)) {
 		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 		char *npeMsg = NULL;
 		GetStackTraceElementUserData userData = {0};
-		
+
 		Trc_SC_GetExtendedNPEMessage_Entry2(vmThread, throwableObj);
 		vmFuncs->internalEnterVMFromJNI(vmThread);
 		userData.bytecodeOffset = UDATA_MAX;
-		vmFuncs->iterateStackTrace(vmThread, (j9object_t*)throwableObj, getStackTraceElementIterator, &userData, FALSE);
+		vmFuncs->iterateStackTrace(vmThread, (j9object_t*)throwableObj, getStackTraceElementIterator, &userData, TRUE);
 		if ((NULL != userData.romClass)
 			&& (NULL != userData.romMethod)
 			&& (UDATA_MAX != userData.bytecodeOffset)
 		) {
+			PORT_ACCESS_FROM_VMC(vmThread);
+			J9NPEMessageData npeMsgData = {0};
 #if defined(DEBUG_BCV)
 			{
-				PORT_ACCESS_FROM_VMC(vmThread);
 				U_8 *bytecodes = J9_BYTECODE_START_FROM_ROM_METHOD(userData.romMethod);
 				U_32 flags = 0;
 
@@ -108,9 +130,12 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 				j9bcutil_dumpBytecodes(PORTLIB, userData.romClass, bytecodes, 0, userData.bytecodeOffset, flags, (void *)cfdumpBytecodePrintFunction, PORTLIB, "");
 			}
 #endif /* defined(DEBUG_BCV) */
-			npeMsg = vmFuncs->getCompleteNPEMessage(vmThread, J9_BYTECODE_START_FROM_ROM_METHOD(userData.romMethod) + userData.bytecodeOffset, userData.romClass, npeMsg);
+			npeMsgData.npePC = userData.bytecodeOffset;
+			npeMsgData.vmThread = vmThread;
+			npeMsgData.romClass = userData.romClass;
+			npeMsgData.romMethod = userData.romMethod;
+			npeMsg = vmFuncs->getNPEMessage(&npeMsgData);
 			if (NULL != npeMsg) {
-				PORT_ACCESS_FROM_VMC(vmThread);
 				j9object_t msgObject = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread, (U_8 *)npeMsg, strlen(npeMsg), 0);
 				if (NULL != msgObject) {
 					msgObjectRef = vmFuncs->j9jni_createLocalRef(env, msgObject);
@@ -123,7 +148,21 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 		vmFuncs->internalExitVMToJNI(vmThread);
 	}
 	Trc_SC_GetExtendedNPEMessage_Exit(vmThread, msgObjectRef);
-	
+
 	return msgObjectRef;
 }
 #endif /* JAVA_SPEC_VERSION >= 14 */
+
+#if JAVA_SPEC_VERSION >= 17
+JNIEXPORT void JNICALL
+JVM_DumpClassListToFile(JNIEnv *env, jstring str)
+{
+	assert(!"JVM_DumpClassListToFile unimplemented");
+}
+
+JNIEXPORT void JNICALL
+JVM_DumpDynamicArchive(JNIEnv *env, jstring str)
+{
+	assert(!"JVM_DumpDynamicArchive unimplemented");
+}
+#endif /* JAVA_SPEC_VERSION >= 17 */

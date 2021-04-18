@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,15 +58,14 @@ def get_sources_with_authentication() {
 def get_sources() {
     // Temp workaround for Windows clones
     // See #3633 and JENKINS-54612
-    if (NODE_LABELS.contains("windows") || NODE_LABELS.contains("zos")) {
-        cleanWs()
+    if (SPEC.contains("win") || SPEC.contains("zos")) {
 
         CLONE_CMD = "git clone -b ${OPENJDK_BRANCH} ${OPENJDK_REPO} ."
         if (OPENJDK_REFERENCE_REPO) {
             CLONE_CMD += " --reference ${OPENJDK_REFERENCE_REPO}"
         }
 
-        if (USER_CREDENTIALS_ID && NODE_LABELS.contains("windows")) {
+        if (USER_CREDENTIALS_ID && SPEC.contains("win")) {
             sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
                 sh "${CLONE_CMD}"
             }
@@ -276,7 +275,8 @@ def build() {
         withEnv(BUILD_ENV_VARS_LIST) {
             dir(OPENJDK_CLONE_DIR) {
                 try {
-                    sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar=${FREEMARKER} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && make ${EXTRA_MAKE_OPTIONS} ${make_target}"
+                    def freemarker_option = FREEMARKER ? "--with-freemarker-jar=${FREEMARKER}" : ""
+                    sh "${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && make ${EXTRA_MAKE_OPTIONS} ${make_target}"
                 } catch (e) {
                     archive_diagnostics()
                     throw e
@@ -438,6 +438,8 @@ def fetchFile(src, dest) {
 }
 
 def archive_diagnostics() {
+    def datestamp = variableFile.get_date()
+    def diagnosticsFilename = "${JOB_NAME}-${BUILD_NUMBER}-${datestamp}-diagnostics.tar.gz"
     if (SPEC.contains('zos')) {
         def logContent = currentBuild.rawBuild.getLog()
         // search for each occurrence of IEATDUMP success for DSN=
@@ -467,27 +469,25 @@ def archive_diagnostics() {
             }
         }
         // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${DIAGNOSTICS_FILENAME}"
-    } else if (SPEC.endsWith("_cm")) {
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' -o -name ddr_info -o -name superset.dat -o -name j9ddr.dat -o -name '*.stub.h' -o -name '*.annt.h' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${diagnosticsFilename}"
     } else {
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' -o -name ddr_info -o -name j9ddr.dat -o -name superset.dat -o -name '*.annt.h' -o -name '*.stub.h' -o -name '*.dSYM' -o -path '*/make-support/failure-logs/*' | sed 's#^./##' | tar -zcvf ${diagnosticsFilename} -T -"
     }
     if (ARTIFACTORY_CONFIG) {
         def uploadSpec = """{
             "files":[
                 {
-                    "pattern": "${DIAGNOSTICS_FILENAME}",
+                    "pattern": "${diagnosticsFilename}",
                     "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
                     "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
                 }
             ]
         }"""
         upload_artifactory_core(ARTIFACTORY_CONFIG['defaultGeo'], uploadSpec)
-        DIAGNOSTICS_FILE_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${DIAGNOSTICS_FILENAME}"
-        currentBuild.description += "<br><a href=${DIAGNOSTICS_FILE_URL}>${DIAGNOSTICS_FILENAME}</a>"
+        DIAGNOSTICS_FILE_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${diagnosticsFilename}"
+        currentBuild.description += "<br><a href=${DIAGNOSTICS_FILE_URL}>${diagnosticsFilename}</a>"
     } else {
-        archiveArtifacts artifacts: "${DIAGNOSTICS_FILENAME}", fingerprint: false
+        archiveArtifacts artifacts: "${diagnosticsFilename}", fingerprint: false
     }
 }
 
@@ -566,26 +566,45 @@ def add_node_to_description() {
     currentBuild.description = TMP_DESC + "<a href=${JENKINS_URL}computer/${NODE_NAME}>${NODE_NAME}</a>"
 }
 
+def cleanWorkspace (KEEP_WORKSPACE) {
+    if (!KEEP_WORKSPACE) {
+        try {
+            cleanWs disableDeferredWipeout: true, deleteDirs: true
+        } catch (Exception e) {
+            try {
+                if (SPEC.contains('win')) {
+                    WORKSPACE = sh(script: "cygpath -u '${env.WORKSPACE}'", returnStdout: true).trim()
+                }
+                if (WORKSPACE) {
+                    sh "rm -fr ${WORKSPACE}/*"
+                }
+            } catch(Exception f) {
+                throw f
+            }
+        }
+    }
+}
+
 def build_all() {
     stage ('Queue') {
         timeout(time: 10, unit: 'HOURS') {
             node("${NODE}") {
                 timeout(time: 5, unit: 'HOURS') {
                     try {
-                        // Cleanup in case an old build left anything behind
-                        cleanWs()
+                        cleanWorkspace(false)
                         add_node_to_description()
-                        // Setup Artifactory now that we are on a node. This determines which server(s) we push to.
-                        variableFile.set_artifactory_config(BUILD_IDENTIFIER)
-                        // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here 
+                        // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here
                         // to correctly expand $HOME variable
                         variableFile.set_build_variables_per_node()
                         get_source()
+                        variableFile.set_sdk_variables()
+                        variableFile.set_artifactory_config(BUILD_IDENTIFIER)
+                        variableFile.set_build_custom_options()
                         build()
                         archive_sdk()
                     } finally {
-                        // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
-                        cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
+                        KEEP_WORKSPACE = (params.KEEP_WORKSPACE) ?: false
+                        cleanWorkspace(KEEP_WORKSPACE)
                     }
                 }
             }

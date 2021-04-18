@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -867,16 +867,16 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 	UDATA maxIndex = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod) + J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
 	U_32 *bytecodeMap = verifyData->bytecodeMap;
 	UDATA i = 0;
-	UDATA stackIndex;
+	UDATA stackIndex = bytecodeMap[target] >> BRANCH_INDEX_SHIFT;
 	IDATA rewalk = FALSE;
 	IDATA rc = BCV_SUCCESS;
-	UDATA *targetStackPtr, *targetStackTop, *sourceStackPtr, *sourceStackTop, *sourceStackTemps;
+	UDATA *targetStackPtr = NULL;
+	UDATA *targetStackTop = NULL;
+	UDATA *sourceStackPtr = NULL;
+	UDATA *sourceStackTop = NULL;
+	UDATA *sourceStackTemps = NULL;
 	J9BranchTargetStack *liveStack = (J9BranchTargetStack *) verifyData->liveStack;
-	J9BranchTargetStack *targetStack;
-
-
-	stackIndex = bytecodeMap[target] >> BRANCH_INDEX_SHIFT;
-	targetStack = BCV_INDEX_STACK (stackIndex);
+	J9BranchTargetStack *targetStack = BCV_INDEX_STACK(stackIndex);
 
 	Trc_BCV_mergeStacks_Entry(verifyData->vmStruct,
 			(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
@@ -905,8 +905,9 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 		goto _finished;
 
 	} else {
+		/* These variables are reused across loop iterations */
 		UDATA mergePC = (UDATA) -1;
-		U_32 resultArrayBase;
+		U_32 resultArrayBase = 0;
 
 		/* Check stack size equality */
 		if (targetStack->stackTopIndex != liveStack->stackTopIndex) {
@@ -925,7 +926,7 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 
 		/* Now we have to merge stacks */
 		targetStackPtr = targetStack->stackElements;
-		targetStackTop =  RELOAD_STACKTOP(targetStack);
+		targetStackTop = RELOAD_STACKTOP(targetStack);
 		sourceStackPtr = liveStack->stackElements;
 		sourceStackTop = RELOAD_STACKTOP(liveStack);
 
@@ -955,13 +956,12 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 					if ((sourceItem | targetItem) & (BCV_BASE_OR_SPECIAL)) {
 
 						/* Mismatch results in undefined local - rewalk if modified stack
-						 * Note: BCV_SPECIAL (specifically BCV_SPECIAL_INIT) must be reserved
-						 * to flag the uninitialized_this object existing in the stackmap frame
-						 * when invoking setInitializedThisStatus() after the stackmaps is
-						 * successfully built.
+						 * Note: BCV_SPECIAL_INIT must be reserved to flag the uninitialized_this object
+						 * existing in the stackmap frame when invoking setInitializedThisStatus() after
+						 * the stackmaps are successfully built.
 						 */
-						if ((targetItem != (UDATA) (BCV_BASE_TYPE_TOP))
-						&& ((targetItem & BCV_SPECIAL) == 0)
+						if (((UDATA)(BCV_BASE_TYPE_TOP) != targetItem)
+						&& (0 == (targetItem & BCV_SPECIAL_INIT))
 						) {
 							*targetStackPtr = (UDATA) (BCV_BASE_TYPE_TOP);
 							rewalk = TRUE;
@@ -979,7 +979,6 @@ mergeStacks (J9BytecodeVerificationData * verifyData, UDATA target)
 								*targetStackPtr = *sourceStackPtr;
 								rewalk = TRUE;
 							} else {
-
 								/* Use local mapper to check merge necessity in locals */
 								if ((verifyData->verificationFlags & J9_VERIFY_OPTIMIZE) && (maxIndex <= 32)) {
 									/* Only handle 32 locals or less */
@@ -2701,7 +2700,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 			xVerifyIndex = FIND_ARG_IN_VMARGS( EXACT_MATCH, OPT_XVERIFY, NULL);
 			xVerifyColonIndex = FIND_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, OPT_XVERIFY_COLON, NULL);
 			while (xVerifyColonIndex >= 0) {
-				/* Ignore -Xverify:<opt>'s prior to the the last -Xverify */
+				/* Ignore -Xverify:<opt>'s prior to the last -Xverify */
 				if (xVerifyColonIndex > xVerifyIndex) {
 					/* Deal with possible -Xverify:<opt>,<opt> case */
 					GET_OPTION_VALUES( xVerifyColonIndex, ':', ',', &optionValuesBufferPtr, 128 );

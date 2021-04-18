@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2019, 2019 IBM Corp. and others
+  Copyright (c) 2019, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,13 +33,15 @@
 	<property name="src" location="./src"/>
 	<property name="build" location="./org/openj9/test/bsmargs"/>
 	<property name="javaexecutable" value="${TEST_JDK_HOME}/bin/java" />
+	<property name="LIB" value="asmtools"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 	
-	<target name="generate" depends="init" description="Run with asmtools.jar to generate bytecode">
+	<target name="generate" depends="init,getDependentLibs" description="Run with asmtools.jar to generate bytecode">
 		<echo>Generating bytecode from jcod files</echo>
 		<exec executable="${javaexecutable}" dir="${build}">
 			<arg line="-jar ${LIB_DIR}/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryUtf8.jcod"/>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@
 #include "atoe.h"
 #endif
 
-/* uncomment this line if you want support the the 'simulate' option */
+/* uncomment this line if you want support the 'simulate' option */
 /*#define J9VM_MEMCHK_SIM_SUP
 */
 
@@ -463,7 +463,6 @@ memoryCheck_initialize(J9PortLibrary *j9portLibrary, char const *modeStr, char *
 	portLib->port_control					=	memoryCheck_control;
 	portLib->port_shutdown_library 			=	memoryCheck_port_shutdown_library;
 	portLib->exit_shutdown_and_exit 		=	memoryCheck_exit_shutdown_and_exit;
-	portLib->port_control 					=	memoryCheck_control;
 
 	/* Restart the portLibrary */
 	if(j9portLibrary->port_startup_library(j9portLibrary)) {

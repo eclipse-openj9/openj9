@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,8 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.structure.J9JavaClassFlags;
+import com.ibm.j9ddr.vm29.types.U32;
+import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 /**
@@ -55,11 +57,6 @@ public class ValueTypeHelper {
 	private static ValueTypeHelper helper = null;
 
 	private static class ValueTypeSupportEnabledHelper extends ValueTypeHelper {
-		private static final long J9AccValueType = J9ConstantHelper.getLong(J9JavaAccessFlags.class, "J9AccValueType", 0);
-		private static final long J9ClassIsValueType = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassIsValueType", 0);
-		private static final long J9ClassLargestAlignmentConstraintDouble = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassLargestAlignmentConstraintDouble", 0);
-		private static final long J9ClassLargestAlignmentConstraintReference = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassLargestAlignmentConstraintReference", 0);
-		private static final long J9ClassIsFlattened = J9ConstantHelper.getLong(J9JavaClassFlags.class, "J9ClassIsFlattened", 0);
 		private static final UDATA J9ClassFlagsMask = new UDATA(0xFF);
 		private static final UDATA J9ClazzInEntryMask = new UDATA(J9ClassFlagsMask.bitNot());
 		private MethodHandle getFlattenedClassCachePointer = null;
@@ -220,30 +217,25 @@ public class ValueTypeHelper {
 
 		@Override
 		public boolean isRomClassAValueType(J9ROMClassPointer romClass) throws CorruptDataException {
-			if (J9AccValueType != 0) {
-				return romClass.modifiers().allBitsIn(J9AccValueType);
-			}
-			return false;
+			return romClass.modifiers().allBitsIn(J9JavaAccessFlags.J9AccValueType);
 		}
 
 		@Override
 		public boolean isJ9ClassAValueType(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9ClassIsValueType != 0) {
-				return clazz.classFlags().allBitsIn(J9ClassIsValueType);
-			}
-			return false;
+			return clazz.classFlags().allBitsIn(J9JavaClassFlags.J9ClassIsValueType);
 		}
 
 		@Override
-		public boolean isFieldInClassFlattened(J9ClassPointer clazz, String fieldName) throws CorruptDataException {
+		public boolean isFieldInClassFlattened(J9ClassPointer clazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
 			boolean result = false;
 
 			try {
 				StructurePointer flattenedClassCache = (StructurePointer) getFlattenedClassCachePointer.invoke(clazz);
 				if (!flattenedClassCache.isNull()) {
+					String fieldName = J9UTF8Helper.stringValue(fieldShape.nameAndSignature().name());
 					J9ClassPointer flattenableClazz = findJ9ClassInFlattenedClassCacheWithFieldNameImpl(flattenedClassCache, fieldName);
 					if (!flattenableClazz.isNull()) {
-						result = isJ9ClassIsFlattened(flattenableClazz);
+						result = isJ9FieldIsFlattened(flattenableClazz, fieldShape);
 					}
 				}
 			} catch (WrongMethodTypeException | ClassCastException e) {
@@ -259,26 +251,34 @@ public class ValueTypeHelper {
 
 		@Override
 		public boolean isJ9ClassLargestAlignmentConstraintDouble(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9ClassLargestAlignmentConstraintDouble != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9ClassLargestAlignmentConstraintDouble);
-			}
-			return false;
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintDouble);
 		}
 
 		@Override
 		public boolean isJ9ClassLargestAlignmentConstraintReference(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9ClassLargestAlignmentConstraintReference != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9ClassLargestAlignmentConstraintReference);
-			}
-			return false;
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassLargestAlignmentConstraintReference);
 		}
 
 		@Override
 		public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
-			if (J9ClassIsFlattened != 0) {
-				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9ClassIsFlattened);
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassIsFlattened);
+		}
+		
+		@Override
+		public boolean isJ9FieldIsFlattened(J9ClassPointer fieldClazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
+			UDATA modifiers = fieldShape.modifiers();
+			UDATA size = fieldClazz.totalInstanceSize();
+			UDATA largeSize = new UDATA(U64.SIZEOF);
+			if (classRequires4BytePrePadding(fieldClazz)) {
+				size = size.sub(U32.SIZEOF);
 			}
-			return false;
+			return isJ9ClassIsFlattened(fieldClazz) && 
+					(!modifiers.anyBitsIn(J9JavaAccessFlags.J9AccVolatile) || (size.lte(largeSize)));
+		}
+
+		@Override
+		public boolean classRequires4BytePrePadding(J9ClassPointer clazz) throws CorruptDataException {
+			return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9JavaClassFlags.J9ClassRequiresPrePadding);
 		}
 
 		@Override
@@ -294,7 +294,7 @@ public class ValueTypeHelper {
 	private static boolean checkIfValueTypesAreSupported() {
 		/* Older builds have builds flags in camel case, newer builds have flags capitalized */
 		return J9ConstantHelper.getBoolean(J9BuildFlags.class, "J9VM_OPT_VALHALLA_VALUE_TYPES", false)
-				|| J9ConstantHelper.getBoolean(J9BuildFlags.class, "opt_valhallaValueTypes", false);
+			|| J9ConstantHelper.getBoolean(J9BuildFlags.class, "opt_valhallaValueTypes", false);
 	}
 
 	/**
@@ -399,11 +399,11 @@ public class ValueTypeHelper {
 	 * Queries whether field is flattened of not.
 	 *
 	 * @param clazz clazz containing the field
-	 * @param fieldName name of the field
+	 * @param fieldShape J9ROMFieldShapePointer
 	 * @return true if field is flattened, false otherwise
 	 * @throws CorruptDataException
 	 */
-	public boolean isFieldInClassFlattened(J9ClassPointer clazz, String fieldName) throws CorruptDataException {
+	public boolean isFieldInClassFlattened(J9ClassPointer clazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
 		return false;
 	}
 
@@ -440,6 +440,25 @@ public class ValueTypeHelper {
 	 * @return true if clazz is flattened, false otherwise
 	 */
 	public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
+		return false;
+	}
+	
+	/**
+	 * Queries if a field in a class is flattened
+	 * @param fieldClazz J9Class of the field
+	 * @param fieldShape J9ROMFieldShapePointer
+	 * @return true if the field is flattened, false otherwise
+	 */
+	public boolean isJ9FieldIsFlattened(J9ClassPointer fieldClazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
+		return false;
+	}
+	
+	/**
+	 * Queries if class is has 4byte pre-padding in the stand-alone case
+	 * @param clazz J9Class
+	 * @return true if clazz is requires pre-padding, false otherwise
+	 */
+	public boolean classRequires4BytePrePadding(J9ClassPointer clazz) throws CorruptDataException {
 		return false;
 	}
 }

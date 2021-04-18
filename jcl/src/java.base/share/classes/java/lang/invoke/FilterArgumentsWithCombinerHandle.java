@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Java12 & !OPENJDK_METHODHANDLES]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 12) & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
  * Copyright (c) 2018, 2020 IBM Corp. and others
  *
@@ -22,9 +22,9 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /* 
  * Pseudocode example:
@@ -70,14 +70,14 @@ final class FilterArgumentsWithCombinerHandle extends MethodHandle {
         return new FilterArgumentsWithCombinerHandle(this, newType);
     }
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
     @Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		relatedMHs.add(combiner);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
     private static Object[] infoAffectingThunks(MethodType combinerType, int filterPosition, int...argumentIndices) {
         MethodType thunkableType = ThunkKey.computeThunkableType(combinerType);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -327,6 +327,10 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 	Trc_PRT_shmem_j9shmem_open_Entry(rootname, size, perm);
 
 	clearPortableError(portLibrary);
+	
+	if (NULL != controlFileStatus) {
+		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
+	}
 
 	if (cacheDirName == NULL) {
 		Trc_PRT_shmem_j9shmem_open_ExitNullCacheDirName();
@@ -358,10 +362,6 @@ j9shmem_open (J9PortLibrary *portLibrary, const char* cacheDirName, uintptr_t gr
 		tmphandle->currentStorageProtectKey = getStorageKey();
 	}	
 #endif
-	
-	if (NULL != controlFileStatus) {
-		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
-	}
 
 	for (retryIfReadOnlyCount = 10; retryIfReadOnlyCount > 0; retryIfReadOnlyCount -= 1) {
 		/*Open control file with write lock*/
@@ -613,6 +613,14 @@ j9shmem_attach(struct J9PortLibrary *portLibrary, struct j9shmem_handle *handle,
 				int32_t myerrno = omrerror_last_error_number();
 				if ((J9PORT_ERROR_SYSV_IPC_SHMAT_ERROR + J9PORT_ERROR_SYSV_IPC_ERRNO_EACCES) == myerrno) {
 					omrnls_printf(J9NLS_WARNING, J9NLS_PORT_ZOS_SHMEM_STORAGE_KEY_MISMATCH, handle->controlStorageProtectKey, handle->currentStorageProtectKey);
+					/*
+					 * omrnls_printf() can change the last error, this occurs when libj9ifa29.so is APF authorized (extattr +a).
+					 * The last error may be set to -108 EDC5129I No such file or directory.
+					 * This causes cmdLineTester_shareClassesStorageKey to fail with an unexpected error code. It also shows
+					 * the incorrect last error as the reason the shared cache could not be opened, which is confusing.
+					 * Reset the last error to what it was before omrnls_printf().
+					 */
+					omrerror_set_last_error(EACCES, J9PORT_ERROR_SYSV_IPC_SHMAT_ERROR + J9PORT_ERROR_SYSV_IPC_ERRNO_EACCES);
 				}
 			}
 		}
@@ -1695,7 +1703,7 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 				}/*Any other error and we will terminate*/
 
 				/*If sXmctl fails our checks below will also fail (they use the same function) ... so we terminate with an error*/
-				Trc_PRT_shmem_j9shmem_openSharedMemory_MsgWithError("Error: shmctl failed. Can not open shared shared memory, portable errorCode = ", lastError);
+				Trc_PRT_shmem_j9shmem_openSharedMemory_MsgWithError("Error: shmctl failed. Can not open shared memory, portable errorCode = ", lastError);
 				goto failDontUnlink;
 			}
 		} else {
@@ -1742,7 +1750,7 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 					}/*Any other error and we will terminate*/
 
 					/*If sXmctl fails our checks below will also fail (they use the same function) ... so we terminate with an error*/
-					Trc_PRT_shmem_j9shmem_openSharedMemory_MsgWithError("Error: __getipc(): failed. Can not open shared shared memory, portable errorCode = ", lastError);
+					Trc_PRT_shmem_j9shmem_openSharedMemory_MsgWithError("Error: __getipc(): failed. Can not open shared memory, portable errorCode = ", lastError);
 					goto failDontUnlink;
 				}
 			} else {
@@ -1829,7 +1837,7 @@ failDontUnlink:
  * @param[in] fd of file to write info to ...
  * @param[in] isReadOnlyFD set to TRUE if control file is read-only, FALSE otherwise
  * @param[in] baseFile file being used for control file
- * @param[in] size size of the the shared memory
+ * @param[in] size size of the shared memory
  * @param[in] perm permission for the region
  * @param[in] controlinfo control file info (copy of data last written to control file)
  * @param[in] groupPerm group permission of the shared memory

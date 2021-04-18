@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,11 +28,11 @@ import com.ibm.oti.vm.VMLangAccess;
 import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
 import java.util.Objects;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.nio.ByteBuffer;
 import sun.nio.ch.DirectBuffer;
 import jdk.internal.ref.Cleaner;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 public final class Unsafe {
 
@@ -407,7 +407,7 @@ public final class Unsafe {
 	 */
 	public native void putObject(Object obj, long offset, Object value);
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Gets the value of the Object in the obj parameter referenced by offset.
 	 * This is a non-volatile operation.
@@ -427,8 +427,8 @@ public final class Unsafe {
 	 * @param value Object to store in obj
 	 */
 	public native void putReference(Object obj, long offset, Object value);
-/*[ENDIF] Java12 */
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+
 	/**
 	 * Gets the value of the Object in memory referenced by address.
 	 * This is a non-volatile operation.
@@ -599,7 +599,7 @@ public final class Unsafe {
 	public final native Object compareAndExchangeObject(Object obj, long offset, Object compareValue,
 			Object exchangeValue);
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Atomically sets the parameter value at offset in obj if the compare value 
 	 * matches the existing value in the object.
@@ -628,7 +628,7 @@ public final class Unsafe {
 	 */
 	public final native Object compareAndExchangeReference(Object obj, long offset, Object compareValue,
 			Object exchangeValue);
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Atomically gets the value of the byte in the obj parameter referenced by offset.
@@ -792,7 +792,7 @@ public final class Unsafe {
 	 */
 	public native void putObjectVolatile(Object obj, long offset, Object value);
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Atomically gets the value of the Object in the obj parameter referenced by offset.
 	 * 
@@ -810,7 +810,7 @@ public final class Unsafe {
 	 * @param value Object to store in obj
 	 */
 	public native void putReferenceVolatile(Object obj, long offset, Object value);
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Makes permit available for thread parameter.
@@ -935,8 +935,8 @@ public final class Unsafe {
 	 * @throws IllegalArgumentException if field is static
 	 */
 	private native long objectFieldOffset0(Field field);
-	
-/*[IF Java10]*/
+
+/*[IF JAVA_SPEC_VERSION >= 10]*/
 	/*
 	 * Returns byte offset to field.
 	 * 
@@ -947,7 +947,7 @@ public final class Unsafe {
 	 * @throws IllegalArgumentException if field is static
 	 */
 	private native long objectFieldOffset1(Class<?> c, String fieldName);
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
 	/* 
 	 * Returns byte offset to start of static class or interface.
@@ -1042,7 +1042,7 @@ public final class Unsafe {
 	/* @return true if machine is big endian, false otherwise */
 	private native boolean isBigEndian0();
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/**
 	 * Make sure that the virtual memory at address "addr" for length "len" has
 	 * been written back from the cache to physical memory.
@@ -1061,8 +1061,8 @@ public final class Unsafe {
 	 * @return true if cache writeback is possible, else false
 	 */
 	public static native boolean isWritebackEnabled();
-/*[ENDIF] Java14 */
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+
 	/**
 	 * Getter for unsafe instance.
 	 * 
@@ -1477,8 +1477,8 @@ public final class Unsafe {
 		Objects.requireNonNull(field);
 		return objectFieldOffset0(field);
 	}
-	
-/*[IF Java10]*/
+
+/*[IF JAVA_SPEC_VERSION >= 10]*/
 	/**
 	 * Returns byte offset to field.
 	 * 
@@ -1494,7 +1494,7 @@ public final class Unsafe {
 		Objects.requireNonNull(fieldName);
 		return objectFieldOffset1(c, fieldName);
 	}
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
 	/**
 	 * Returns byte offset to start of static class or interface.
@@ -2804,7 +2804,7 @@ public final class Unsafe {
 		return compareAndSetObject(obj, offset, compareValue, setValue);
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Atomically sets the parameter value at offset in obj if the compare value 
 	 * matches the existing value in the object.
@@ -2902,7 +2902,7 @@ public final class Unsafe {
 	public final boolean weakCompareAndSetReference(Object obj, long offset, Object compareValue, Object setValue) {
 		return compareAndSetReference(obj, offset, compareValue, setValue);
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Gets the value of the byte in the obj parameter referenced by offset using acquire semantics.
@@ -3012,7 +3012,7 @@ public final class Unsafe {
 		return getObjectVolatile(obj, offset);
 	}
 
-	/*[IF Java12]*/
+	/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Gets the value of the Object in the obj parameter referenced by offset using acquire semantics.
 	 * Preceding loads will not be reordered with subsequent loads/stores.
@@ -3024,7 +3024,7 @@ public final class Unsafe {
 	public final Object getReferenceAcquire(Object obj, long offset) {
 		return getReferenceVolatile(obj, offset);
 	}
-	/*[ENDIF] Java12 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Sets the value of the byte in the obj parameter at memory offset using acquire semantics.
@@ -3134,7 +3134,7 @@ public final class Unsafe {
 		putObjectVolatile(obj, offset, value);
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Sets the value of the Object in the obj parameter at memory offset using acquire semantics.
 	 * Preceding stores will not be reordered with subsequent loads/stores.
@@ -3146,8 +3146,8 @@ public final class Unsafe {
 	public final void putReferenceRelease(Object obj, long offset, Object value) {
 		putReferenceVolatile(obj, offset, value);
 	}
-/*[ENDIF] Java12 */
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+
 	/**
 	 * Gets the value of the byte in the obj parameter referenced by offset.
 	 * The operation is in program order, but does enforce ordering with respect to other threads.
@@ -3256,7 +3256,7 @@ public final class Unsafe {
 		return getObjectVolatile(obj, offset);
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Gets the value of the Object in the obj parameter referenced by offset.
 	 * The operation is in program order, but does enforce ordering with respect to other threads.
@@ -3268,7 +3268,7 @@ public final class Unsafe {
 	public final Object getReferenceOpaque(Object obj, long offset) {
 		return getReferenceVolatile(obj, offset);
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Sets the value of the byte in the obj parameter at memory offset.
@@ -3378,7 +3378,7 @@ public final class Unsafe {
 		putObjectVolatile(obj, offset, value);
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Sets the value of the Object in the obj parameter at memory offset.
 	 * The operation is in program order, but does enforce ordering with respect to other threads.
@@ -3390,7 +3390,7 @@ public final class Unsafe {
 	public final void putReferenceOpaque(Object obj, long offset, Object value) {
 		putReferenceVolatile(obj, offset, value);
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Get the load average in the system.
@@ -4348,7 +4348,7 @@ public final class Unsafe {
 		}
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Atomically sets value at offset in obj
 	 * and returns the value of the field prior to the update.
@@ -4408,7 +4408,7 @@ public final class Unsafe {
 			}
 		}
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/**
 	 * Atomically OR's the given value to the current value of the 
@@ -5854,7 +5854,7 @@ public final class Unsafe {
 		putCharUnaligned(obj, offset, endianValue);
 	}
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * If incoming ByteBuffer is an instance of sun.nio.ch.DirectBuffer,
 	 * and it is direct, and not a slice or duplicate,
@@ -5886,7 +5886,7 @@ public final class Unsafe {
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0704")); //$NON-NLS-1$
 		}
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 	/* 
 	 * Private methods 
@@ -6076,7 +6076,7 @@ public final class Unsafe {
 	}
 
 	/* 
-	 * Verify that that no bits are set in long past the least
+	 * Verify that no bits are set in long past the least
 	 * significant 32.
 	 * 
 	 * @return true if no bits past 32 are set, false otherwise

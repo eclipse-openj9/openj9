@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,7 +124,7 @@ public class TestLockInfo {
 		String[] names = { "className", "identityHashCode" };
 		Object[] values = {
 				/* className */new String(GOOD_CD_CLASSNAME),
-				/* identityHashCode */new Integer(GOOD_CD_IDHASHCODE) };
+				/* identityHashCode */Integer.valueOf(GOOD_CD_IDHASHCODE) };
 		CompositeType cType = createGoodLockInfoCompositeType();
 		try {
 			result = new CompositeDataSupport(cType, names, values);
@@ -147,7 +147,7 @@ public class TestLockInfo {
 		String[] names = { "className", "identityHashCode" };
 		// intentionally mix up the order of the values...
 		Object[] values = {
-				/* className */new Integer(GOOD_CD_IDHASHCODE),
+				/* className */Integer.valueOf(GOOD_CD_IDHASHCODE),
 				/* identityHashCode */new String(GOOD_CD_CLASSNAME) };
 		CompositeType cType = createBadLockInfoCompositeTypeObject();
 		try {
@@ -170,7 +170,7 @@ public class TestLockInfo {
 		CompositeData result = null;
 		String[] names = { "className", "identityHashCode" };
 		// intentionally mix up the order of the values...
-		Object[] values = { /* className */null, /* identityHashCode */new Integer(GOOD_CD_IDHASHCODE) };
+		Object[] values = { /* className */null, /* identityHashCode */Integer.valueOf(GOOD_CD_IDHASHCODE) };
 		CompositeType cType = createGoodLockInfoCompositeType();
 		try {
 			result = new CompositeDataSupport(cType, names, values);

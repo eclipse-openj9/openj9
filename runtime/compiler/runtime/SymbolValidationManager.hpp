@@ -38,6 +38,10 @@
 #include "exceptions/AOTFailure.hpp"
 #include "runtime/J9Runtime.hpp"
 
+#if defined(J9VM_OPT_JITSERVER)
+class ClientSessionData;
+#endif
+
 #define SVM_ASSERT_LOCATION_INNER(line) __FILE__ ":" #line
 #define SVM_ASSERT_LOCATION(line) SVM_ASSERT_LOCATION_INNER(line)
 
@@ -635,6 +639,15 @@ public:
 
    SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee);
 
+   struct SystemClassNotWorthRemembering
+      {
+      const char *_className;
+      TR_OpaqueClassBlock *_clazz;
+      bool _checkIsSuperClass;
+      };
+
+   #define WELL_KNOWN_CLASS_COUNT 9
+
    void populateWellKnownClasses();
    bool validateWellKnownClasses(const uintptr_t *wellKnownClassChainOffsets);
    bool isWellKnownClass(TR_OpaqueClassBlock *clazz);
@@ -757,10 +770,17 @@ public:
 
    static bool assertionsAreFatal();
 
+   static int getSystemClassesNotWorthRememberingCount();
+
 #if defined(J9VM_OPT_JITSERVER)
    std::string serializeSymbolToIDMap();
    void deserializeSymbolToIDMap(const std::string &symbolToIdStr);
+   static void populateSystemClassesNotWorthRemembering(ClientSessionData *clientData);
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
+   SystemClassNotWorthRemembering *getSystemClassNotWorthRemembering(int idx);
+
+   static const int SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT = 2;
 
 private:
 
@@ -904,7 +924,7 @@ private:
    typedef std::set<ClassFromAnyCPIndex, LessClassFromAnyCPIndex, ClassFromAnyCPIndexAlloc> ClassFromAnyCPIndexSet;
    ClassFromAnyCPIndexSet _classesFromAnyCPIndex;
 
-   TR_OpaqueClassBlock *_jlthrowable;
+   static SystemClassNotWorthRemembering _systemClassesNotWorthRemembering[];
    };
 
 }

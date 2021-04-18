@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@ public class TestUnsafeDefineAnonClass {
 	private void testIntField(String fieldName, Object anonInstance, Class<?> anonClass, boolean illegalAccess) {
 		try {
 			Field f = anonClass.getDeclaredField(fieldName);
-			f.set(anonInstance, new Integer(CORRECT_ANSWER));
+			f.set(anonInstance, Integer.valueOf(CORRECT_ANSWER));
 			AssertJUnit.assertFalse("Expected IllegalAccessExcpetion, but exception did not occur!", illegalAccess);
 			AssertJUnit.assertEquals("Field is not set to the correct value", CORRECT_ANSWER, f.getInt(anonInstance));
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException e) {

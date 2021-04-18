@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2018, 2020 IBM Corp. and others
+  Copyright (c) 2018, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +20,6 @@
 
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>String_CompactStrings</testCaseName>
@@ -29,6 +27,7 @@
 			<variation>-XX:+CompactStrings</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			--illegal-access=permit \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Test_String \
 			-groups $(TEST_GROUP) \
@@ -41,15 +40,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!--
 		The nestmate test specifically exercise the JIT$(SQ)s handling of unresolved virtual and interface private methods.
 		The JIT pibBuilder routines will have to handle virtual and interface private methods that are both JIT compiled and interpreted.
@@ -75,17 +73,16 @@
 		 -->
 	<test>
 		<testCaseName>Nestmate_virtual_private</testCaseName>
-
+		<disabled>
+			<comment>https://github.com/eclipse/openj9/issues/9167</comment>
+			<plat>.*zos.*</plat>
+		</disabled>
 		<variations>
-
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0)$(SQ)</variation>
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedJitted*,org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0),{org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*}(count=100)$(SQ)</variation>
-
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedInterpreted*}(count=0)$(SQ)</variation>
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedJitted*,org/openj9/test/nestmates/NestmatesTest$InnerInterface.innerInterfacePrivateMethod*},{org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedJitted*}(count=0),{org/openj9/test/nestmates/NestmatesTest$InnerInterface.innerInterfacePrivateMethod*}(count=100)$(SQ)</variation>
-
 		</variations>
-
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestmatesTest \
@@ -93,24 +90,20 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<!-- temporarily disable this test on zos; https://github.com/eclipse/openj9/issues/9167 -->
-		<platformRequirements>^os.zos</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
-
 	<!--
 		Following test covers scenario for both type of constant dynamics (Object and Primitives)
 		Variation 1:
@@ -145,23 +138,20 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-
 		<levels>
 			<level>sanity</level>
 		</levels>
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
-
 	<!--
 		Following test covers garbage collection of constant dynamics using several gc options.
 		Tests scenario for object, primitive and exception constant dynamics.
@@ -189,15 +179,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!--
 		Following test covers metronome garbage collection tests on linux_x86.
 		Tests scenarios for object, primitive and exception constant dynamics.
@@ -221,15 +210,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!--
 		Following test covers metronome garbage collection tests on aix.
 		Tests scenarios for object, primitive and exception constant dynamics.
@@ -253,9 +241,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -275,9 +263,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -303,9 +291,9 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

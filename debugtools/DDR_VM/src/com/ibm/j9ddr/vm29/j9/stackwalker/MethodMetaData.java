@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,12 +151,7 @@ public class MethodMetaData
 	{
 		return getImpl().getObjectArgScanCursor(walkState);
 	}
-	
-	public static U8Pointer getJitDescriptionCursor(VoidPointer stackMap, WalkState walkState) throws CorruptDataException
-	{
-		return getImpl().getJitDescriptionCursor(stackMap, walkState);
-	}
-	
+
 	public static U16 getJitNumberOfMapBytes(J9JITStackAtlasPointer sa) throws CorruptDataException
 	{
 		return getImpl().getJitNumberOfMapBytes(sa);
@@ -282,8 +277,6 @@ public class MethodMetaData
 
 		public int getJitRecompilationResolvePushes();
 
-		public U8Pointer getJitDescriptionCursor(VoidPointer stackMap, WalkState walkState) throws CorruptDataException;
-		
 		public void walkJITFrameSlotsForInternalPointers(WalkState walkState,U8Pointer jitDescriptionCursor, UDATAPointer scanCursor,VoidPointer stackMap, J9JITStackAtlasPointer gcStackAtlas) throws CorruptDataException;
 
 		public U8Pointer getJitInternalPointerMap(J9JITStackAtlasPointer sa) throws CorruptDataException;
@@ -952,12 +945,6 @@ public class MethodMetaData
 		public UDATAPointer getObjectArgScanCursor(WalkState walkState) throws CorruptDataException
 		{
 			return UDATAPointer.cast(U8Pointer.cast(walkState.bp).addOffset(J9JITStackAtlasPointer.cast(walkState.jitInfo.gcStackAtlas()).parmBaseOffset()));
-		}
-		
-		public U8Pointer getJitDescriptionCursor(VoidPointer stackMap, WalkState walkState) throws CorruptDataException
-		{ 
-			/* deprecated */
-			return U8Pointer.NULL;
 		}
 
 		public U16 getJitNumberOfMapBytes(J9JITStackAtlasPointer sa) throws CorruptDataException

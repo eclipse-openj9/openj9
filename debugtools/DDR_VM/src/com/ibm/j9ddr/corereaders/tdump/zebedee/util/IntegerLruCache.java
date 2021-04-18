@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2013 IBM Corp. and others
+ * Copyright (c) 2006, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,7 +108,7 @@ public final class IntegerLruCache extends AbstractLruCache {
             }
             put(key, value);
             if (doCheck) {
-                check.put(new Long(key), new Integer(value));
+                check.put(Long.valueOf(key), Integer.valueOf(value));
                 if (get(key) != value) {
                     throw new Error("found " + get(key) + " expected " + value);
                 }

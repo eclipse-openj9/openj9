@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package com.ibm.j9ddr;
 
 import static java.util.logging.Level.FINE;
@@ -37,6 +36,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -72,7 +72,6 @@ import com.ibm.j9ddr.blobs.IBlobFactory.Platforms;
 /**
  * Create IVMData instances for each VM found in a Process
  */
-
 public abstract class VMDataFactory {
 	private final static String STRUCTUREFILE_PROPERTY = "com.ibm.j9ddr.structurefile";
 	private final static String SEARCHEYECATCHER_PROPERTY = "com.ibm.j9ddr.searcheyecatcher";
@@ -80,7 +79,7 @@ public abstract class VMDataFactory {
 
 	/* Symbol used to find the J9RAS structure on z/OS */
 	public static final String J9RAS_SYMBOL = "_j9ras_";
-	private static final byte[] eyecatcher;
+	private static final byte[] eyecatcher = "J9VMRAS".getBytes(StandardCharsets.US_ASCII);
 	private static final long integrityCheck = 0xaa55aa55aa55aa55L;
 	private static final int BIT_PATTERNS_OFFSET = 0x8;
 	private static final int J9RAS_VERSION_OFFSET = 0x10;
@@ -88,17 +87,8 @@ public abstract class VMDataFactory {
 	private static final int MINIMUM_J9RAS_MAJOR_VERSION = 2;
 	private static long j9RASAddress;
 
-	//a process can have more than one blob present, each blob is represented as a separate IVMData
-	private static WeakValueMap<IProcess, List<IVMData>> vmDataCache = new WeakValueMap<IProcess, List<IVMData>>();
-	
-	static {
-		try {
-			eyecatcher = "J9VMRAS".getBytes("ASCII");
-		} catch (UnsupportedEncodingException e) {
-			// This shouldn't happen
-			throw new Error(e);
-		}
-	}
+	// a process can have more than one blob present, each blob is represented as a separate IVMData
+	private static WeakValueMap<IProcess, List<IVMData>> vmDataCache = new WeakValueMap<>();
 
 	/**
 	 * Returns a VMData for the first VM located in the process
@@ -107,28 +97,25 @@ public abstract class VMDataFactory {
 	 * @throws IOException
 	 */
 	public static IVMData getVMData(IProcess process) throws IOException {
-		
 		List<IVMData> cachedVMData = vmDataCache.get(process);
 
 		if ((cachedVMData != null) && (cachedVMData.size() > 0)) {
-			return cachedVMData.get(0);		//return the first VM found
+			return cachedVMData.get(0); // return the first VM found
 		}
 
 		cachedVMData = getAllVMData(process);
-		
-		if(cachedVMData.size() > 0) {
-			return cachedVMData.get(0);		//return the first VM found
-		} else {
-			return null;					//nothing was found in scan
-		}		
 
+		if (cachedVMData.size() > 0) {
+			return cachedVMData.get(0); // return the first VM found
+		} else {
+			return null; // nothing was found in scan
+		}
 	}
-	//TODO - fix this for z/OS which will require noting which RAS symbols have already been found in the core
-	
-	
+	// TODO - fix this for z/OS which will require noting which RAS symbols have already been found in the core
+
 	/**
 	 * Finds all of the blobs in a given process and wraps them in a IVMData structure.
-	 * 
+	 *
 	 * @param process process to scan
 	 * @return all located blobs
 	 * @throws IOException re-throws IOExceptions
@@ -144,19 +131,19 @@ public abstract class VMDataFactory {
 		// Get an ImageInputStream on the Structure Offset Data.  This may or may not be in the core file itself.
 		List<IVMData> data = new ArrayList<IVMData>();
 		ImageInputStream in = null;
-		boolean EOM = false;	//End Of Memory
+		boolean EOM = false; // End Of Memory
 		long address = 0;
-		j9RASAddress= 0;
-		while(!EOM) {
+		j9RASAddress = 0;
+		while (!EOM) {
 			try {
 				address = j9RASAddress + 1;
 				in = getStructureDataFile(process, address);
-				if(in != null) {
+				if (in != null) {
 					EOM = !(in instanceof IMemoryImageInputStream);
 					IVMData vmdata = getVMData(process, in);
 					data.add(vmdata);
-					if(vmdata.getClassLoader().getHeader().getCoreVersion() == 1) {
-						//version 1 does not support multiple blobs
+					if (vmdata.getClassLoader().getHeader().getCoreVersion() == 1) {
+						// version 1 does not support multiple blobs
 						EOM = true;
 						break;
 					}
@@ -164,43 +151,43 @@ public abstract class VMDataFactory {
 					EOM = true;
 				}
 			} catch (JVMNotFoundException e) {
-				//no more JVMs were found
+				// no more JVMs were found
 				EOM = true;
 			} catch (JVMNotDDREnabledException e) {
-				//an older JVM was found, so ignore that and carry on looking
-				EOM = EOM | (process.getPlatform() == Platform.ZOS);	//on z/OS a failure with the j9ras symbol resolution aborts the scan
-				continue;				
+				// an older JVM was found, so ignore that and carry on looking
+				EOM = EOM | (process.getPlatform() == Platform.ZOS); // on z/OS a failure with the j9ras symbol resolution aborts the scan
+				continue;
 			} catch (MissingDDRStructuresException e) {
-				//cannot process as the structures are missing
-				EOM = EOM | (process.getPlatform() == Platform.ZOS);	//on z/OS a failure with the j9ras symbol resolution aborts the scan
+				// cannot process as the structures are missing
+				EOM = EOM | (process.getPlatform() == Platform.ZOS); // on z/OS a failure with the j9ras symbol resolution aborts the scan
 				continue;
 			} catch (CorruptStructuresException e) {
-				//cannot process as the structures are corrupt and cannot be read
-				EOM = EOM | (process.getPlatform() == Platform.ZOS);	//on z/OS a failure with the j9ras symbol resolution aborts the scan
+				// cannot process as the structures are corrupt and cannot be read
+				EOM = EOM | (process.getPlatform() == Platform.ZOS); // on z/OS a failure with the j9ras symbol resolution aborts the scan
 				continue;
 			} catch (IOException e) {
 				continue;
 			}
-		}		
-		
-		// For Node.JS only, if we have not found a BLOb at this point we do a more expensive scan. This extra
+		}
+
+		// For Node.JS only, if we have not found a BLOB at this point we do a more expensive scan. This extra
 		// scan is switched off for Java-only applications (specifically jdmpview) via a system property.
-		if ((System.getProperty(NOEXTRASEARCHFORNODE_PROPERTY) == null) && (data.size() == 0)) {
-			StructureHeader header = null;
+		if ((data.size() == 0) && (System.getProperty(NOEXTRASEARCHFORNODE_PROPERTY) == null)) {
+			StructureHeader header;
 			try {
 				header = findNodeVersion(process);
 			} catch (Exception e) {
-				if(e instanceof IOException) {
-					throw (IOException)e;
+				if (e instanceof IOException) {
+					throw (IOException) e;
 				} else {
 					IOException ioe = new IOException();
-					ioe.initCause(e);		//avoid use of IOException(throwable) to be compatible with J5
+					ioe.initCause(e); // avoid use of IOException(throwable) to be compatible with J5
 					throw ioe;
 				}
 			}
-			if(header != null) {
+			if (header != null) {
 				in = getBlobFromLibrary(process, header);
-				if(in != null) {
+				if (in != null) {
 					IVMData vmdata = getVMData(process, in);
 					data.add(vmdata);
 				}
@@ -208,18 +195,18 @@ public abstract class VMDataFactory {
 		}
 		vmDataCache.put(process, data);
 		return data;
-		}
+	}
 
 	private static IVMData getVMData(IProcess process, ImageInputStream in) throws IOException {
 		// Create and initialize a StructureClassLoader for this VM instance
 		final StructureReader structureReader = new StructureReader(in);
 
 		J9DDRClassLoader ddrClassLoader = AccessController.doPrivileged(new PrivilegedAction<J9DDRClassLoader>() {
-
-			public J9DDRClassLoader run()
-			{
+			@Override
+			public J9DDRClassLoader run() {
 				return new J9DDRClassLoader(structureReader, VMDataFactory.class.getClassLoader());
-			}});
+			}
+		});
 
 		try {
 			// Load and instantiate a VMData object.  Load the VMData class for each core file
@@ -240,13 +227,13 @@ public abstract class VMDataFactory {
 			Method setMethod = dataTypeClazz.getDeclaredMethod("setJ9RASPointer", pointer.getClass());
 			setMethod.invoke(vmData, new Object[] { pointer });
 
-			//now add any blob fragments for this build
+			// now add any blob fragments for this build
 			addFragments(rasClazz, pointer, structureReader, vmData);
-			
-			if( !Boolean.FALSE.toString().equals(System.getProperty("com.ibm.j9ddr.symbols.from.pointers")) ) {
+
+			if (!Boolean.FALSE.toString().equals(System.getProperty("com.ibm.j9ddr.symbols.from.pointers"))) {
 				DDRSymbolFinder.addSymbols(process, j9RASAddress, structureReader);
 			}
-			
+
 			return vmData;
 		} catch (ClassNotFoundException e) {
 			Logger logger = Logger.getLogger(LoggerNames.LOGGER_STRUCTURE_READER);
@@ -273,16 +260,16 @@ public abstract class VMDataFactory {
 
 	/**
 	 * Add any blob fragments which apply to this build
-	 * 
+	 *
 	 * @param rasptr pointer to the RAS structure so that we can get the buildID
 	 */
 	private static void addFragments(Class<?> rasClazz, Object rasptr, final StructureReader structureReader, IVMData vmdata) {
 		try {
 			InputStream in = rasClazz.getResourceAsStream("/fragments/fragments.properties");
-			if(in == null) {
+			if (in == null) {
 				Logger logger = Logger.getLogger(LoggerNames.LOGGER_STRUCTURE_READER);
 				logger.log(FINE, "Failed to find fragments property file");
-				return;		//no property file found
+				return; // no property file found
 			}
 			Properties fragments = new Properties();
 			fragments.load(in);
@@ -292,29 +279,28 @@ public abstract class VMDataFactory {
 			method = u64.getClass().getMethod("getHexValue", (Class<?>[]) null);
 			Object result = method.invoke(u64, (Object[]) null);
 			String buildID = result.toString();
-			//the buildID field consists of a 4 byte platform ID followed by a 4 byte Axxon build ID
-			if(buildID.length() < 8) {
-				return;		//build ID hex string is not long enough so can't match any fragments
+			// the buildID field consists of a 4 byte platform ID followed by a 4 byte Axxon build ID
+			if (buildID.length() < 8) {
+				return; // build ID hex string is not long enough so can't match any fragments
 			}
-			//4 bytes = 8 hex chars
+			// 4 bytes = 8 hex chars
 			String shortID = buildID.substring(buildID.length() - 8);
-			String key = vmdata.getVersion() + "-" + buildID;		//default is nothing to match
-			if(hasFragmentBeenLoaded(rasClazz, fragments, structureReader, key)) {
-				return;		//loaded a fragment matched by it's full build ID
+			String key = vmdata.getVersion() + "-" + buildID; // default is nothing to match
+			if (hasFragmentBeenLoaded(rasClazz, fragments, structureReader, key)) {
+				return; // loaded a fragment matched by it's full build ID
 			}
 			key = vmdata.getVersion() + "-" + shortID;
-			if(hasFragmentBeenLoaded(rasClazz, fragments, structureReader, key)) {
-				return;		//loaded a fragment matched by it's short ID
+			if (hasFragmentBeenLoaded(rasClazz, fragments, structureReader, key)) {
+				return; // loaded a fragment matched by it's short ID
 			}
-			
 		} catch (Exception e) {
 			Logger logger = Logger.getLogger(LoggerNames.LOGGER_STRUCTURE_READER);
 			logger.log(FINE, "Failed to process blob fragments", e);
 		}
 	}
-	
+
 	private static boolean hasFragmentBeenLoaded(Class<?> rasClazz, Properties fragments, StructureReader reader, String key) throws IOException {
-		if(fragments.containsKey(key)) {
+		if (fragments.containsKey(key)) {
 			InputStream in = rasClazz.getResourceAsStream("/fragments/" + fragments.getProperty(key));
 			ImageInputStream iis = new MemoryCacheImageInputStream(in);
 			reader.addStructures(iis);
@@ -324,7 +310,7 @@ public abstract class VMDataFactory {
 			return false;
 		}
 	}
-	
+
 	private static ImageInputStream getStructureDataFile(IProcess process, long start) throws IOException {
 		try {
 			if (process.getPlatform() == Platform.ZOS) {
@@ -339,7 +325,7 @@ public abstract class VMDataFactory {
 				// for it in the blob archive
 				try {
 					return getStructureDataFromFile(structureFileName, process);
-				} catch(Exception e1) {
+				} catch (Exception e1) {
 					IOException ioe = new IOException();
 					ioe.initCause(e);
 					throw ioe;
@@ -352,7 +338,7 @@ public abstract class VMDataFactory {
 					if (System.getProperty(SEARCHEYECATCHER_PROPERTY) != null) {
 						return getStructureDataFileFromRASEyecatcher(process, start);
 					} else {
-						throw e1;		//no system property set so override
+						throw e1; // no system property set so override
 					}
 				}
 			} else {
@@ -386,7 +372,7 @@ public abstract class VMDataFactory {
 		}
 	}
 
-	//On z/OS multiple VMs could inhabit the same address space - so we can't just search the A/S for a pattern (we can't
+	// On z/OS multiple VMs could inhabit the same address space - so we can't just search the A/S for a pattern (we can't
 	// tell which enclave (process) it belongs to.
 	// On z/OS we find the RAS structure by looking for the _j9ras_ symbol
 	private static ImageInputStream getStructureDataFileFromSymbol(IProcess process) throws IOException {
@@ -435,41 +421,40 @@ public abstract class VMDataFactory {
 			if (j9RASMajorVersion < MINIMUM_J9RAS_MAJOR_VERSION) {
 				return locateInServiceVMStructure(addressSpace);
 			}
-			
+
 			long ddrDataStart = addressSpace.getPointerAt(candidateAddress + DDR_DATA_POINTER_OFFSET);
 			if (0 == ddrDataStart) {
 				// CMVC 172446 : no valid address to DDR blob, so see if we can locate it via the blob archive
 				try {
 					return locateInServiceVMStructure(addressSpace);
 				} catch (IOException e) {
-					//failed to locate a blob
+					// failed to locate a blob
 					MissingDDRStructuresException ioe = new MissingDDRStructuresException(addressSpace,
 							"System dump was generated by a DDR-enabled JVM, but did not contain embedded DDR structures. This dump cannot be analyzed by DDR. " +
 							"You can specify the location of a DDR structure file to use with the " + STRUCTUREFILE_PROPERTY + " system property");
 					ioe.initCause(e);
 					throw ioe;
 				}
-				
 			}
-			//the address may be a marker to treat it in a special way, rather than as an actual address
-			//-1 = the blob is located directly after this structure
-			//-2 = there is only a blob descriptor loaded
+			// the address may be a marker to treat it in a special way, rather than as an actual address
+			// -1 = the blob is located directly after this structure
+			// -2 = there is only a blob descriptor loaded
 			long marker = (addressSpace.bytesPerPointer() == 4) ? 0xFFFFFFFF00000000L | ddrDataStart : ddrDataStart;
-			if(marker == -2){
-				StructureHeader header = new StructureHeader((byte)1);
+			if (marker == -2) {
+				StructureHeader header = new StructureHeader((byte) 1);
 				ddrDataStart = candidateAddress + DDR_DATA_POINTER_OFFSET + (addressSpace.bytesPerPointer() * 2);
 				ImageInputStream stream = new IMemoryImageInputStream(addressSpace, ddrDataStart);
 				header.readBlobVersion(stream);
 				return getBlobFromLibrary(addressSpace, header);
 			}
-			if(marker == -1){
-				if(j9RASVersion == 0x100000) {
-					ddrDataStart = candidateAddress + DDR_DATA_POINTER_OFFSET + (addressSpace.bytesPerPointer() * 2);		//there is one pointer in the way that needs to be skipped over
+			if (marker == -1) {
+				if (j9RASVersion == 0x100000) {
+					ddrDataStart = candidateAddress + DDR_DATA_POINTER_OFFSET + (addressSpace.bytesPerPointer() * 2); // there is one pointer in the way that needs to be skipped over
 				} else {
 					MissingDDRStructuresException ioe = new MissingDDRStructuresException(addressSpace,
 							"System dump was generated by a DDR-enabled JVM, but did not contain embedded DDR structures. This dump cannot be analyzed by DDR. " +
 							"You can specify the location of a DDR structure file to use with the " + STRUCTUREFILE_PROPERTY + " system property");
-						throw ioe; 
+					throw ioe;
 				}
 			}
 
@@ -517,11 +502,11 @@ public abstract class VMDataFactory {
 				}
 			}
 
-			throw new JVMNotDDREnabledException(process,"DDR could not find VM structure data file. J9VM build ID: "	+ j9vmid
+			throw new JVMNotDDREnabledException(process, "DDR could not find VM structure data file. J9VM build ID: " + j9vmid
 					+ ". Platform: " + path
 					+ ". You can specify a structure file to use manually with the " + STRUCTUREFILE_PROPERTY
-					+ " system property." + (candidates.length() > 0 ? " Possible structure file matches: "
-							+ candidates.toString() + "." : ""));
+					+ " system property."
+					+ (candidates.length() > 0 ? " Possible structure file matches: " + candidates.toString() + "." : ""));
 		}
 	}
 
@@ -586,14 +571,7 @@ public abstract class VMDataFactory {
 	private static String getJ9VMBuildInCore(IProcess process) throws IOException {
 		try {
 			// Find J9VM build ID
-			byte[] pattern = null;
-			try {
-				pattern = "J9VM - ".getBytes("ASCII"); // "J9VM - YYYYMMDD_BUILD_FLAGS"
-			} catch (UnsupportedEncodingException e) {
-				// This shouldn't happen
-				throw new Error(e);
-			}
-
+			byte[] pattern = "J9VM - ".getBytes(StandardCharsets.US_ASCII); // "J9VM - YYYYMMDD_BUILD_FLAGS"
 			long addr = process.findPattern(pattern, 1, 0);
 			if (addr != -1) {
 				// get string between first and second underscores
@@ -608,7 +586,7 @@ public abstract class VMDataFactory {
 							for (int j = 0; j < addr + i - startBuildIDAddr; j++) {
 								buildID[j] = process.getByteAt(startBuildIDAddr + j);
 							}
-							return new String(buildID, "UTF-8");
+							return new String(buildID, StandardCharsets.UTF_8);
 						}
 					}
 				}
@@ -672,35 +650,35 @@ public abstract class VMDataFactory {
 		// shouldn't be here
 		throw new UnknownArchitectureException(process, "Could not determine platform of core file.");
 	}
-	
+
 	/**
 	 * Clear the IVMData cache
 	 */
 	public static void clearCache() {
 		vmDataCache.clear();
 	}
-	
+
 	/**
 	 * Try and determine a blob by scanning the process.
 	 * This can be very expensive and should be the last option tried.
-	 * 
+	 *
 	 * @param process process to scan
 	 * @return a blob if one can be identified, null if not
 	 */
 	private static ImageInputStream getBlobFromLibrary(IProcess process, StructureHeader header) throws JVMNotFoundException {
 		try {
-			if(header != null) {
+			if (header != null) {
 				IBlobFactory factory = BlobFactory.getInstance();
 				Platforms platform = null;
-				switch(process.getPlatform()) {
-					case LINUX :
-						platform = (process.bytesPerPointer() == 4) ? Platforms.xi32 : Platforms.xa64;
-						break;
+				switch (process.getPlatform()) {
+				case LINUX:
+					platform = (process.bytesPerPointer() == 4) ? Platforms.xi32 : Platforms.xa64;
+					break;
 				default:
 					break;
-						
+
 				}
-				if(platform != null) {
+				if (platform != null) {
 					int[] data = header.getBlobVersionArray();
 					return factory.getBlob(platform, header.getPackageID(), data[2], data[1], data[0]);
 				}
@@ -711,7 +689,6 @@ public abstract class VMDataFactory {
 		}
 	}
 
-
 	private static StructureHeader findNodeVersion(IProcess proc) throws Exception {
 		byte[] pattern = "v0.".getBytes();
 		long pos = 0;
@@ -720,29 +697,29 @@ public abstract class VMDataFactory {
 			data[0] = 0;
 			int count = 1;
 			pos = proc.findPattern(pattern, 0, pos);
-			if(pos != -1) {
-				pos += (pattern.length - 1);		//jump over the start of the pattern
+			if (pos != -1) {
+				pos += (pattern.length - 1); // jump over the start of the pattern
 				StringBuilder version = new StringBuilder();
-				while(count < 3) {
+				while (count < 3) {
 					try {
 						char b = (char) proc.getByteAt(++pos);
-						if((b >= '0') && (b <= '9')) {
-							version.append(b);	
+						if ((b >= '0') && (b <= '9')) {
+							version.append(b);
 						} else {
 							try {
 								Integer i = Integer.parseInt(version.toString());
 								data[count++] = i;
 								version = new StringBuilder();
 							} catch (NumberFormatException e) {
-								break;		//invalid number so can abort
+								break; // invalid number so can abort
 							}
 						}
 					} catch (MemoryFault e) {
-						//ignore, but treat as end of input
+						// ignore, but treat as end of input
 						break;
 					}
 				}
-				if(count == 3) {
+				if (count == 3) {
 					int blobVersion = data[0] << 16 | data[1] << 8 | data[2];
 					StructureHeader header = new StructureHeader(BlobID.node, blobVersion, "node");
 					return header;
@@ -751,6 +728,5 @@ public abstract class VMDataFactory {
 		} while (pos != -1);
 		return null;
 	}
-		
-}
 
+}

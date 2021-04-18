@@ -1,7 +1,7 @@
 package org.openj9.test.utilities;
 
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,46 +25,67 @@ package org.openj9.test.utilities;
  import org.objectweb.asm.*;
 
  public class SealedClassGenerator implements Opcodes {
-    private static String dummySubclassName = "TestSubclassGen";
+	private static String dummySubclassName = "TestSubclassGen";
+	/* sealed classes are still a preview feature as of jdk 16, and OpenJ9 requires that
+	 * major version match the latest supported version when --enable-preview flag is active
+	 */
+	private static int latestPreviewVersion;
+	static {
+		String runtimeVersion = System.getProperty("java.version");
+		int versionNum = Integer.parseInt(runtimeVersion.substring(0, 2));
+		switch (versionNum) {
+			case 15:
+				latestPreviewVersion = V15;
+				break;
+			case 16:
+				latestPreviewVersion = V16;
+				break;
+			case 17:
+				latestPreviewVersion = 61; // does ASM support jdk17 yet?
+				break;
+			default:
+				latestPreviewVersion = V16; // next release
+		}
+	}
 
-    public static byte[] generateFinalSealedClass(String className) {
-        int accessFlags = ACC_FINAL | ACC_SUPER;
+	public static byte[] generateFinalSealedClass(String className) {
+		int accessFlags = ACC_FINAL | ACC_SUPER;
 
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V15 | V_PREVIEW, accessFlags, className, null, "java/lang/Object", null);
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+		cw.visit(latestPreviewVersion | V_PREVIEW, accessFlags, className, null, "java/lang/Object", null);
 
-        /* Sealed class must have a PermittedSubclasses attribute */
-        cw.visitPermittedSubclass(dummySubclassName);
+		/* Sealed class must have a PermittedSubclasses attribute */
+		cw.visitPermittedSubclass(dummySubclassName);
 
-        cw.visitEnd();
-        return cw.toByteArray();
-    }
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
 
-    public static byte[] generateSubclassIllegallyExtendingSealedSuperclass(String className, Class<?> superClass) {
-        String superName = superClass.getName().replace('.', '/');
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V15 | V_PREVIEW, ACC_SUPER, className, null, superName, null);
-        cw.visitEnd();
-        return cw.toByteArray();
-    }
+	public static byte[] generateSubclassIllegallyExtendingSealedSuperclass(String className, Class<?> superClass) {
+		String superName = superClass.getName().replace('.', '/');
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_SUPER, className, null, superName, null);
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
 
-    public static byte[] generateSubinterfaceIllegallyExtendingSealedSuperinterface(String className, Class<?> superInterface) {
-        String[] interfaces = { superInterface.getName().replace('.', '/') };
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V15 | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", interfaces);
-        cw.visitEnd();
-        return cw.toByteArray();
-    }
+	public static byte[] generateSubinterfaceIllegallyExtendingSealedSuperinterface(String className, Class<?> superInterface) {
+		String[] interfaces = { superInterface.getName().replace('.', '/') };
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", interfaces);
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
 
-    public static byte[] generateSealedClass(String className, String[] permittedSubclassNames) {
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V15 | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", null);
+	public static byte[] generateSealedClass(String className, String[] permittedSubclassNames) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_SUPER, className, null, "java/lang/Object", null);
 
-        for (String psName : permittedSubclassNames) {
-            cw.visitPermittedSubclass(psName);
-        }
+		for (String psName : permittedSubclassNames) {
+			cw.visitPermittedSubclass(psName);
+		}
 
-        cw.visitEnd();
-        return cw.toByteArray();
-    }
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
  }

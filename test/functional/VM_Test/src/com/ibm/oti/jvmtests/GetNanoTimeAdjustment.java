@@ -4,7 +4,7 @@ package com.ibm.oti.jvmtests;
 import junit.framework.TestCase;
 
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,8 +44,8 @@ public class GetNanoTimeAdjustment extends TestCase {
 	 * Make getNanoTime returns a value similar to System.currentTimeMillis()
 	 */
 	public void test_EnsureWallClockTime() {
-		String nanoTime = new Long(SupportJVM.GetNanoTimeAdjustment(0)).toString();
-		String milliTime = new Long(System.currentTimeMillis()).toString();
+		String nanoTime = Long.valueOf(SupportJVM.GetNanoTimeAdjustment(0)).toString();
+		String milliTime = Long.valueOf(System.currentTimeMillis()).toString();
 		
 		/* accuracy of 1 second */
 		milliTime = milliTime.substring(0, milliTime.length() - 3);
@@ -59,14 +59,14 @@ public class GetNanoTimeAdjustment extends TestCase {
 	 */
 	public void test_EnsureResultIsNanoSecondGranularity() {
 		long result = SupportJVM.GetNanoTimeAdjustment(0);
-		assertEquals("GetNanoTimeAdjustment did not return 19 digits", NANO_TIME_DIGITS, new Long(result).toString().length());
+		assertEquals("GetNanoTimeAdjustment did not return 19 digits", NANO_TIME_DIGITS, Long.toString(result).length());
 	}
 	
 	/*
 	 * A positive offset subtracts the amount (in seconds) to the current nano time
 	 */
 	public void test_PositiveOffset() {
-		/* pick an offset difference larger than than the amount of time between the two method invocations */
+		/* pick an offset difference larger than the amount of time between the two method invocations */
 		long time1 = SupportJVM.GetNanoTimeAdjustment(0);
 		long time2 = SupportJVM.GetNanoTimeAdjustment(10);
 		
@@ -96,7 +96,7 @@ public class GetNanoTimeAdjustment extends TestCase {
 	 * A negative offset adds the amount (in seconds) to the current nano time
 	 */
 	public void test_NegativeOffset() {
-		/* pick an offset difference larger than than the amount of time between the two method invocations */
+		/* pick an offset difference larger than the amount of time between the two method invocations */
 		long time1 = SupportJVM.GetNanoTimeAdjustment(0);
 		long time2 = SupportJVM.GetNanoTimeAdjustment(-10);
 		

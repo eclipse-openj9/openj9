@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,8 +87,6 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
 #if defined(J9VM_OPT_JITSERVER)
    _remoteCompReq = false;
    _stream = NULL;
-   _clientOptions = NULL;
-   _clientOptionsSize = 0;
    _origOptLevel = unknownHotness;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -100,9 +98,6 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
 void
 TR_MethodToBeCompiled::shutdown()
    {
-#if defined(J9VM_OPT_JITSERVER)
-   freeJITServerAllocations();
-#endif /* defined(J9VM_OPT_JITSERVER) */
    TR::MonitorTable *table = TR::MonitorTable::get();
    if (!table) return;
    table->removeAndDestroy(_monitor);
@@ -150,15 +145,5 @@ uint64_t
 TR_MethodToBeCompiled::getClientUID() const
    {
    return _stream->getClientId();
-   }
-
-void
-TR_MethodToBeCompiled::freeJITServerAllocations()
-   {
-   if (_clientOptions)
-      {
-      _compInfoPT->getCompilationInfo()->persistentMemory()->freePersistentMemory((void *)_clientOptions);
-      _clientOptions = NULL;
-      }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */

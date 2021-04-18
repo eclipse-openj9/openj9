@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,13 +23,13 @@
 package com.ibm.dtfj.java;
 
 import java.util.Iterator;
+import java.util.Properties;
 
 import com.ibm.dtfj.image.CorruptDataException;
 import com.ibm.dtfj.image.DataUnavailable;
 import com.ibm.dtfj.image.ImagePointer;
 import com.ibm.dtfj.image.MemoryAccessException;
 import com.ibm.dtfj.runtime.ManagedRuntime;
-import java.util.Properties;
 
 /**
  * Represents a Java runtime.
@@ -42,7 +42,19 @@ public interface JavaRuntime extends ManagedRuntime {
      * @throws CorruptDataException 
      */
     public ImagePointer getJavaVM() throws CorruptDataException;
-    
+
+    /**
+     * Get a system property of the virtual machine.
+     *
+     * @param key the name of the property to retrieve
+     * @return the value of the requested system property from this VM
+     * @throws DataUnavailable if the system properties are not available
+     * @throws CorruptDataException
+     */
+    public default String getSystemProperty(String key) throws DataUnavailable, CorruptDataException {
+        throw new DataUnavailable("System properties are not available for this runtime");
+    }
+
     /**
      * Fetch the JavaVMInitArgs which were used to create this VM.
      * See JNI_CreateJavaVM in the JNI Specification for more details.
@@ -137,7 +149,7 @@ public interface JavaRuntime extends ManagedRuntime {
      * @param	address the <code>ImagePointer</code> instance representing the start address of object in the heap;
      * @return	the <code>JavaObject</code> instance representing the located object.
      * @throws 	IllegalArgumentException	if  <code>address</code> is outside the heap's boundaries, or if it doesn't point to the start location of an object;
-     * @throws 	MemoryAccessException 		if  <code>address</code> is is in the heap but it's not accessible from the dump;
+     * @throws 	MemoryAccessException 		if  <code>address</code> is in the heap but it's not accessible from the dump;
      * @throws 	CorruptDataException 		if any data needed to build the returned instance of <code>JavaObject</code> is corrupt.
      * @throws 	DataUnavailable	 			if any data needed to build the returned instance of <code>JavaObject</code> is not available.
      * @see 	com.ibm.dtfj.java.JavaObject
@@ -165,15 +177,13 @@ public interface JavaRuntime extends ManagedRuntime {
       */
      public Iterator getMemorySections(boolean includeFreed) throws DataUnavailable;
 
-    
 	/**
 	 * @param obj
 	 * @return True if the given object refers to the same Java Runtime in the image
 	 */
 	public boolean equals(Object obj);
 	public int hashCode();
-	
-	
+
 	/**
 	 * Determine if the JIT was enabled for this Java runtime.
 	 * 

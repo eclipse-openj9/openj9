@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2017 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
  *******************************************************************************/
 package com.ibm.jvm.dtfjview.tools;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -34,19 +35,24 @@ import com.ibm.jvm.dtfjview.spi.IOutputChannel;
  * Note, this class needs to be initialized first before it can be used.
  * <p>
  * @author Manqing Li, IBM
- *
  */
 public class ToolsRegistryOutputChannels extends OutputStream {
-	
+
+	private static ToolsRegistryOutputChannels instance;
+
+	private final List<IOutputChannel> channels;
+	private ByteArrayOutputStream buffer;
+	private final String charsetName;
+
 	/**
 	 * To initialize the output channels for the tools registry.
 	 */
 	public static void initialize(String charsetName) {
-		if(instance == null) {
+		if (instance == null) {
 			instance = new ToolsRegistryOutputChannels(charsetName);
 		}
 	}
-	
+
 	/**
 	 * To add an output channel.
 	 * <p>
@@ -55,18 +61,16 @@ public class ToolsRegistryOutputChannels extends OutputStream {
 	public static void addChannel(IOutputChannel out) {
 		instance.channels.add(out);
 	}
-	
+
 	/**
 	 * To remove an output channel.
 	 * <p>
 	 * @param out	The output channel to be removed.
 	 */
 	public static void removeChannel(IOutputChannel out) {
-		if(instance.channels.contains(out)) {
-			instance.channels.remove(out);
-		}
+		instance.channels.remove(out);
 	}
-	
+
 	/**
 	 * To check if an output channel is already contained.
 	 * <p>
@@ -75,66 +79,53 @@ public class ToolsRegistryOutputChannels extends OutputStream {
 	 * @return	<code>true</code> if such an output channel is found; <code>false</code> otherwise.
 	 */
 	public static boolean contains(IOutputChannel out) {
-		for(IOutputChannel channel : instance.channels) {
-			if(channel.equals(out)) {
-				return true;
-			}
-		}
-		return false;
+		return instance.channels.contains(out);
 	}
-	
+
+	@Override
 	public void write(int b) throws IOException {
-		buffer.add(Integer.valueOf(b).byteValue());		
-		if ('\n' == b || 21 == b ) { // EBCDIC systems use NL (New Line 0x15).
+		buffer.write(b);
+		if ('\n' == b || 0x15 == b) { // EBCDIC systems use NL (New Line 0x15).
 			writeBuffer();
 		}
 	}
-	
+
+	@Override
 	public void close() throws IOException {
 		writeBuffer();
-		for(IOutputChannel channel : channels) {
+		for (IOutputChannel channel : channels) {
 			channel.close();
 		}
 	}
+
+	@Override
 	public void flush() throws IOException {
 		writeBuffer();
-		for(IOutputChannel channel : channels) {
+		for (IOutputChannel channel : channels) {
 			channel.flush();
 		}
-
 	}
+
 	public static PrintStream newPrintStream() {
 		return new PrintStream(instance, true);
 	}
 
 	private ToolsRegistryOutputChannels(String charsetName) {
 		this.charsetName = charsetName;
-		channels = new ArrayList<IOutputChannel>();
-		buffer = new ArrayList<Byte>();
+		this.channels = new ArrayList<>();
+		this.buffer = new ByteArrayOutputStream();
 	}
 
 	private void writeBuffer() throws IOException {
-		if (0 == buffer.size()) {
-			return;
-		}
-		byte [] byteArray = new byte[buffer.size()];
-		for (int i = 0; i < byteArray.length; i++) {
-			byteArray[i] = buffer.get(i);
-		}
+		if (0 != buffer.size()) {
+			String content = (charsetName == null) ? buffer.toString() : buffer.toString(charsetName);
 
-		for(IOutputChannel out : channels) {
-			if(charsetName == null) {
-				out.print(new String(byteArray));
-			} else {
-				out.print(new String(byteArray, charsetName));
+			buffer = new ByteArrayOutputStream();
+
+			for (IOutputChannel out : channels) {
+				out.print(content);
 			}
 		}
-	
-		buffer = new ArrayList<Byte>();
 	}
-	private List<IOutputChannel> channels;
-	private List<Byte> buffer;
-	private String charsetName;
-	
-	private static ToolsRegistryOutputChannels instance = null;
+
 }

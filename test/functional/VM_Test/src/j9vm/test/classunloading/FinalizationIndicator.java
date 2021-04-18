@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@ import java.util.Hashtable;
  *	been finalized will indicate whether that class has been unloaded.	The name of the
  *	FinalizationIndicator instance can represent the class whose static refered to it.
  *		When intending to use an instance of this class to indicate class unloading, we must
- *	ensure that that instance is actually created.  If we intend to have the instance
+ *	ensure that an instance is actually created.  If we intend to have the instance
  *	created during class initialization, we must ensure that this class initialization
  *	does occur (a VM may defer class initialization indefinitely).  One can force
  *	initialization of a class by creating an instance of it. 
@@ -62,14 +62,14 @@ public class FinalizationIndicator {
 
 public FinalizationIndicator(String name) {
 		//System.out.println("FinalizationIndicator instantiated for " + name);
-		isInstanceFinalized.put(name, new Boolean(false));
+		isInstanceFinalized.put(name, Boolean.valueOf(false));
 		this.name = name;
 }
 public static void setLock(Counter counterLock) {
 	FinalizationIndicator.counterLock = counterLock;
 }
 protected void finalize() {
-	isInstanceFinalized.put(name, new Boolean(true));
+	isInstanceFinalized.put(name, Boolean.valueOf(true));
 	System.out.println(name + " unloaded");
 	counterLock.increment();
 	if(counterLock.atDesiredValue())

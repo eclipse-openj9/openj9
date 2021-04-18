@@ -24,3 +24,9 @@
 
 org.openj9.test.vm.Test_MsgHelp:test_loadMessages_EN AN-https://github.ibm.com/runtimes/test/issues/46 generic-all
 org.openj9.test.vmArguments.VmArgumentTests:testCrNocr 244 generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPIInValidMembers NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPIInValidHost NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPIInValidHostWrongPackage NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongPackage NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost NA generic-all
+org.openj9.test.nestmates.NestAttributeTest:testGetNestMembersAPINestMemberWrongNestHost2 NA generic-all

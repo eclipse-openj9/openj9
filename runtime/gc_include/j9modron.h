@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,6 +145,7 @@ typedef jvmtiIterationControl J9MODRON_REFERENCE_CHAIN_WALKER_CALLBACK(J9Object 
 #define J9GC_REFERENCE_TYPE_CLASS_ARRAY_CLASS -12 /**< reference to an array class' component type class */
 #define J9GC_REFERENCE_TYPE_CLASS_NAME_STRING -13 /**< reference to a class' name string */
 #define J9GC_REFERENCE_TYPE_CALL_SITE -14 /**< call site reference to an object */
+#define J9GC_REFERENCE_TYPE_CLASS_FCC -15 /**< reference to a class in flattened class cache */
 
 /**
  * #defines representing the results from j9gc_ext_check_is_valid_heap_object.

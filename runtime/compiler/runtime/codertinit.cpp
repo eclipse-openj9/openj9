@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,6 +90,8 @@ extern "C" UDATA jitPPCHandler(J9VMThread* vmThread, U_32 sigType, void* sigInfo
 extern "C" UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo);
 #elif defined(TR_HOST_X86) && defined(TR_TARGET_X86) && defined(TR_TARGET_64BIT)
 extern "C" UDATA jitAMD64Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo);
+#elif defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
+extern "C" UDATA jitARM64Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo);
 #endif
 #endif
 
@@ -217,7 +219,10 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
       }
 
    /* Should use portlib */
-#if defined(TR_HOST_X86)
+#if defined(TR_HOST_POWER)
+   // On P10+ Prefix instructions require uniform 64-byte boundary alignment.
+   jitConfig->codeCacheAlignment = 64;
+#elif defined(TR_HOST_X86)
    jitConfig->codeCacheAlignment = 32;
 #elif defined(TR_HOST_S390)
    // On IBM Z, it can generate load and store quadword instructions from 
@@ -456,35 +461,30 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
-#if defined(J9VM_OPT_JITSERVER)
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
-#endif
-      {
-      jitConfig->jitGetExceptionTableFromPC = jitGetExceptionTableFromPC;
-      jitConfig->jitGetStackMapFromPC = getStackMapFromJitPC;
-      jitConfig->jitGetInlinerMapFromPC = jitGetInlinerMapFromPC;
-      jitConfig->getJitInlineDepthFromCallSite = getJitInlineDepthFromCallSite;
-      jitConfig->getJitInlinedCallInfo = getJitInlinedCallInfo;
-      jitConfig->getStackMapFromJitPC = getStackMapFromJitPC;
-      jitConfig->getFirstInlinedCallSite = getFirstInlinedCallSite;
-      jitConfig->getNextInlinedCallSite = getNextInlinedCallSite;
-      jitConfig->hasMoreInlinedMethods = hasMoreInlinedMethods;
-      jitConfig->getInlinedMethod = getInlinedMethod;
-      jitConfig->getByteCodeIndex = getByteCodeIndex;
-      jitConfig->getByteCodeIndexFromStackMap = getByteCodeIndexFromStackMap;
-      jitConfig->getCurrentByteCodeIndexAndIsSameReceiver = getCurrentByteCodeIndexAndIsSameReceiver;
-      jitConfig->getJitRegisterMap = getJitRegisterMap;
-      jitConfig->jitReportDynamicCodeLoadEvents = jitReportDynamicCodeLoadEvents;
+   jitConfig->jitGetExceptionTableFromPC = jitGetExceptionTableFromPC;
+   jitConfig->jitGetStackMapFromPC = getStackMapFromJitPC;
+   jitConfig->jitGetInlinerMapFromPC = jitGetInlinerMapFromPC;
+   jitConfig->getJitInlineDepthFromCallSite = getJitInlineDepthFromCallSite;
+   jitConfig->getJitInlinedCallInfo = getJitInlinedCallInfo;
+   jitConfig->getStackMapFromJitPC = getStackMapFromJitPC;
+   jitConfig->getFirstInlinedCallSite = getFirstInlinedCallSite;
+   jitConfig->getNextInlinedCallSite = getNextInlinedCallSite;
+   jitConfig->hasMoreInlinedMethods = hasMoreInlinedMethods;
+   jitConfig->getInlinedMethod = getInlinedMethod;
+   jitConfig->getByteCodeIndex = getByteCodeIndex;
+   jitConfig->getByteCodeIndexFromStackMap = getByteCodeIndexFromStackMap;
+   jitConfig->getCurrentByteCodeIndexAndIsSameReceiver = getCurrentByteCodeIndexAndIsSameReceiver;
+   jitConfig->getJitRegisterMap = getJitRegisterMap;
+   jitConfig->jitReportDynamicCodeLoadEvents = jitReportDynamicCodeLoadEvents;
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-      jitConfig->jitClassesRedefined = jitClassesRedefined;
-      jitConfig->jitFlushCompilationQueue = jitFlushCompilationQueue;
+   jitConfig->jitClassesRedefined = jitClassesRedefined;
+   jitConfig->jitFlushCompilationQueue = jitFlushCompilationQueue;
 #endif
-      jitConfig->jitDiscardPendingCompilationsOfNatives = jitDiscardPendingCompilationsOfNatives;
-      jitConfig->jitMethodBreakpointed = jitMethodBreakpointed;
-      }
+   jitConfig->jitDiscardPendingCompilationsOfNatives = jitDiscardPendingCompilationsOfNatives;
+   jitConfig->jitMethodBreakpointed = jitMethodBreakpointed;
    jitConfig->jitIllegalFinalFieldModification = jitIllegalFinalFieldModification;
 
-      initializeCodertFunctionTable(javaVM);
+   initializeCodertFunctionTable(javaVM);
 
 #ifndef J9SW_NEEDS_JIT_2_INTERP_THUNKS
    jitConfig->jitSendTargetTable = &jit2InterpreterSendTargetTable;
@@ -499,6 +499,8 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
    jitConfig->jitSignalHandler = jit390Handler;
 #elif defined(TR_HOST_X86) && defined(TR_TARGET_X86) && defined(TR_TARGET_64BIT)
    jitConfig->jitSignalHandler = jitAMD64Handler;
+#elif defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
+   jitConfig->jitSignalHandler = jitARM64Handler;
 #endif
 #endif
 

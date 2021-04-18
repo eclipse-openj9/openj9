@@ -44,1239 +44,480 @@
 #include "env/annotations/GPUAnnotation.hpp"
 #include "optimizer/Dominators.hpp"
 #include "optimizer/Structure.hpp"
+#include "omrformatconsts.h"
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
-
-
-static const char * nvvmOpCodeNames[] =
-   {
-   NULL,          // TR::BadILOp
-   NULL,          // TR::aconst
-   NULL,          // TR::iconst
-   NULL,          // TR::lconst
-   NULL,          // TR::fconst
-   NULL,          // TR::dconst
-   NULL,          // TR::bconst
-   NULL,          // TR::sconst
-
-   "load",          // TR::iload
-   "load",          // TR::fload
-   "load",          // TR::dload
-   "load",          // TR::aload
-   "load",          // TR::bload
-   "load",          // TR::sload
-   "load",          // TR::lload
-   NULL,            // TR::irdbar
-   NULL,            // TR::frdbar
-   NULL,            // TR::drdbar
-   NULL,            // TR::ardbar
-   NULL,            // TR::brdbar
-   NULL,            // TR::srdbar
-   NULL,            // TR::lrdbar
-   "load",          // TR::iloadi
-   "load",          // TR::floadi
-   "load",          // TR::dloadi
-   "load",          // TR::aloadi
-   "load",          // TR::bloadi
-   "load",          // TR::sloadi
-   "load",          // TR::lloadi
-   NULL,            // TR::irdbari
-   NULL,            // TR::frdbari
-   NULL,            // TR::drdbari
-   NULL,            // TR::ardbari
-   NULL,            // TR::brdbari
-   NULL,            // TR::srdbari
-   NULL,            // TR::lrdbari
-   "store",          // TR::istore
-   "store",          // TR::lstore
-   "store",          // TR::fstore
-   "store",          // TR::dstore
-   "store",          // TR::astore
-   "store",          // TR::bstore
-   "store",          // TR::sstore
-   NULL,             // TR::iwrtbar
-   NULL,             // TR::lwrtbar
-   NULL,             // TR::fwrtbar
-   NULL,             // TR::dwrtbar
-   NULL,             // TR::awrtbar
-   NULL,             // TR::bwrtbar
-   NULL,             // TR::swrtbar
-   "store",          // TR::lstorei
-   "store",          // TR::fstorei
-   "store",          // TR::dstorei
-   "store",          // TR::astorei
-   "store",          // TR::bstorei
-   "store",          // TR::sstorei
-   "store",          // TR::istorei
-   NULL,             // TR::lwrtbari
-   NULL,             // TR::fwrtbari
-   NULL,             // TR::dwrtbari
-   NULL,             // TR::awrtbari
-   NULL,             // TR::bwrtbari
-   NULL,             // TR::swrtbari
-   NULL,             // TR::iwrtbari
-   "br",          // TR::Goto
-   "ret",          // TR::ireturn
-   "ret",          // TR::lreturn
-   "ret",          // TR::freturn
-   "ret",          // TR::dreturn
-   "ret",          // TR::areturn
-   "ret",          // TR::Return
-   NULL,          // TR::asynccheck
-   NULL,          // TR::athrow
-   NULL,          // TR::icall
-   NULL,          // TR::lcall
-   NULL,          // TR::fcall
-   NULL,          // TR::dcall
-   NULL,          // TR::acall
-   NULL,          // TR::call
-   "add",         // TR::iadd
-   "add",         // TR::ladd
-   "fadd",        // TR::fadd
-   "fadd",        // TR::dadd
-   "add",         // TR::badd
-   "add",         // TR::sadd
-
-   "sub",         // TR::isub
-   "sub",         // TR::lsub
-   "fsub",        // TR::fsub
-   "fsub",        // TR::dsub
-   "sub",         // TR::bsub
-   "sub",         // TR::ssub
-   NULL,          // TR::asub
-
-   "mul",         // TR::imul
-   "mul",         // TR::lmul
-   "fmul",        // TR::fmul
-   "fmul",        // TR::dmul
-   "mul",         // TR::bmul
-   "mul",         // TR::smul
-
-   "sdiv",        // TR::idiv
-   "sdiv",        // TR::ldiv
-   "fdiv",        // TR::fdiv
-   "fdiv",        // TR::ddiv
-   "sdiv",        // TR::bdiv
-   "sdiv",        // TR::sdiv
-   "udiv",        // TR::iudiv
-   "udiv",        // TR::ludiv
-
-   "srem",          // TR::irem
-   "srem",          // TR::lrem
-   "frem",          // TR::frem
-   "frem",          // TR::drem
-   "srem",          // TR::brem
-   "srem",          // TR::srem
-   "urem",          // TR::iurem
-   "sub",           // TR::ineg
-   "sub",           // TR::lneg
-   "fsub",          // TR::fneg
-   "fsub",          // TR::dneg
-   "sub",           // TR::bneg
-   "sub",           // TR::sneg
-
-   NULL,          // TR::iabs, implemented but this table value is unused
-   NULL,          // TR::labs, implemented but this table value is unused
-   NULL,          // TR::fabs
-   NULL,          // TR::dabs
-
-   "shl",         // TR::ishl
-   "shl",         // TR::lshl
-   "shl",         // TR::bshl
-   "shl",         // TR::sshl
-   "ashr",        // TR::ishr
-   "ashr",        // TR::lshr
-   "ashr",        // TR::bshr
-   "ashr",        // TR::sshr
-   "lshr",        // TR::iushr
-   "lshr",        // TR::lushr
-   "lshr",        // TR::bushr
-   "lshr",        // TR::sushr
-   NULL,          // TR::irol, implemented but this table value is unused
-   NULL,          // TR::lrol, implemented but this table value is unused
-
-   "and",         // TR::iand
-   "and",         // TR::land
-   "and",         // TR::band
-   "and",         // TR::sand
-   "or",          // TR::ior
-   "or",          // TR::lor
-   "or",          // TR::bor
-   "or",          // TR::sor
-   "xor",         // TR::ixor
-   "xor",         // TR::lxor
-   "xor",         // TR::bxor
-   "xor",         // TR::sxor
-   "sext",        // TR::i2l
-   "sitofp",      // TR::i2f
-   "sitofp",      // TR::i2d
-   "trunc",       // TR::i2b
-   "trunc",       // TR::i2s
-   "inttoptr",    // TR::i2a
-   "zext",        // TR::iu2l
-   "uitofp",      // TR::iu2f
-   "uitofp",      // TR::iu2d
-   "inttoptr",    // TR::iu2a
-   "trunc",       // TR::l2i
-   "sitofp",      // TR::l2f
-   "sitofp",      // TR::l2d
-   "trunc",       // TR::l2b
-   "trunc",       // TR::l2s
-   "inttoptr",    // TR::l2a
-   "uitofp",      // TR::lu2f
-   "uitofp",      // TR::lu2d
-   "inttoptr",    // TR::lu2a
-   "fptosi",      // TR::f2i
-   "fptosi",      // TR::f2l
-   "fpext",       // TR::f2d
-   "fptosi",      // TR::f2b
-   "fptosi",      // TR::f2s
-   "fptosi",      // TR::d2i
-   "fptosi",      // TR::d2l
-   "fptrunc",     // TR::d2f
-   "fptosi",      // TR::d2b
-   "fptosi",      // TR::d2s
-   "sext",        // TR::b2i
-   "sext",        // TR::b2l
-   "sitofp",      // TR::b2f
-   "sitofp",      // TR::b2d
-   "sext",        // TR::b2s
-   "inttoptr",    // TR::b2a
-   "zext",        // TR::bu2i
-   "zext",        // TR::bu2l
-   "uitofp",      // TR::bu2f
-   "uitofp",      // TR::bu2d
-   "zext",        // TR::bu2s
-   "inttoptr",    // TR::bu2a
-   "sext",        // TR::s2i
-   "sext",        // TR::s2l
-   "sitofp",      // TR::s2f
-   "sitofp",      // TR::s2d
-   "trunc",       // TR::s2b
-   "inttoptr",    // TR::s2a
-   "zext",        // TR::su2i
-   "zext",        // TR::su2l
-   "uitofp",      // TR::su2f
-   "uitofp",      // TR::su2d
-   "inttoptr",    // TR::su2a
-   "ptrtoint",    // TR::a2i
-   "ptrtoint",    // TR::a2l
-   "ptrtoint",    // TR::a2b
-   "ptrtoint",    // TR::a2s
-   "icmp eq",     // TR::icmpeq
-   "icmp ne",     // TR::icmpne
-   "icmp slt",    // TR::icmplt
-   "icmp sge",    // TR::icmpge
-   "icmp sgt",    // TR::icmpgt
-   "icmp sle",    // TR::icmple
-   "icmp ult",    // TR::iucmplt
-   "icmp uge",    // TR::iucmpge
-   "icmp ugt",    // TR::iucmpgt
-   "icmp ule",    // TR::iucmple
-   "icmp eq",     // TR::lcmpeq
-   "icmp ne",     // TR::lcmpne
-   "icmp slt",    // TR::lcmplt
-   "icmp sge",    // TR::lcmpge
-   "icmp sgt",    // TR::lcmpgt
-   "icmp sle",    // TR::lcmple
-   "icmp ult",    // TR::lucmplt
-   "icmp uge",    // TR::lucmpge
-   "icmp ugt",    // TR::lucmpgt
-   "icmp ule",    // TR::lucmple
-   "fcmp oeq",    // TR::fcmpeq
-   "fcmp one",    // TR::fcmpne
-   "fcmp olt",    // TR::fcmplt
-   "fcmp oge",    // TR::fcmpge
-   "fcmp ogt",    // TR::fcmpgt
-   "fcmp ole",    // TR::fcmple
-   "fcmp ueq",    // TR::fcmpequ
-   "fcmp une",    // TR::fcmpneu
-   "fcmp ult",    // TR::fcmpltu
-   "fcmp uge",    // TR::fcmpgeu
-   "fcmp ugt",    // TR::fcmpgtu
-   "fcmp ule",    // TR::fcmpleu
-   "fcmp oeq",    // TR::dcmpeq
-   "fcmp one",    // TR::dcmpne
-   "fcmp olt",    // TR::dcmplt
-   "fcmp oge",    // TR::dcmpge
-   "fcmp ogt",    // TR::dcmpgt
-   "fcmp ole",    // TR::dcmple
-   "fcmp ueq",    // TR::dcmpequ
-   "fcmp une",    // TR::dcmpneu
-   "fcmp ult",    // TR::dcmpltu
-   "fcmp uge",    // TR::dcmpgeu
-   "fcmp ugt",    // TR::dcmpgtu
-   "fcmp ule",    // TR::dcmpleu
-   "icmp eq",     // TR::acmpeq
-   "icmp ne",     // TR::acmpne
-   "icmp ult",    // TR::acmplt
-   "icmp uge",    // TR::acmpge
-   "icmp ugt",    // TR::acmpgt
-   "icmp ule",    // TR::acmple
-   "icmp eq",     // TR::bcmpeq
-   "icmp ne",     // TR::bcmpne
-   "icmp slt",    // TR::bcmplt
-   "icmp sge",    // TR::bcmpge
-   "icmp sgt",    // TR::bcmpgt
-   "icmp sle",    // TR::bcmple
-   "icmp ult",    // TR::bucmplt
-   "icmp uge",    // TR::bucmpge
-   "icmp ugt",    // TR::bucmpgt
-   "icmp ule",    // TR::bucmple
-   "icmp eq",     // TR::scmpeq
-   "icmp ne",     // TR::scmpne
-   "icmp slt",    // TR::scmplt
-   "icmp sge",    // TR::scmpge
-   "icmp sgt",    // TR::scmpgt
-   "icmp sle",    // TR::scmple
-   "icmp ult",    // TR::sucmplt
-   "icmp uge",    // TR::sucmpge
-   "icmp ugt",    // TR::sucmpgt
-   "icmp ule",    // TR::sucmple
-   NULL,          // TR::lcmp
-   NULL,          // TR::fcmpl
-   NULL,          // TR::fcmpg
-   NULL,          // TR::dcmpl
-   NULL,          // TR::dcmpg
-   "icmp eq",     // TR::ificmpeq
-   "icmp ne",     // TR::ificmpne
-   "icmp slt",    // TR::ificmplt
-   "icmp sge",    // TR::ificmpge
-   "icmp sgt",    // TR::ificmpgt
-   "icmp sle",    // TR::ificmple
-
-   "icmp ult",    // TR::ifiucmplt
-   "icmp uge",    // TR::ifiucmpge
-   "icmp ugt",    // TR::ifiucmpgt
-   "icmp ule",    // TR::ifiucmple
-
-   "icmp eq",     // TR::iflcmpeq
-   "icmp ne",     // TR::iflcmpne
-   "icmp slt",    // TR::iflcmplt
-   "icmp sge",    // TR::iflcmpge
-   "icmp sgt",    // TR::iflcmpgt
-   "icmp sle",    // TR::iflcmple
-   "icmp ult",    // TR::iflucmplt
-   "icmp uge",    // TR::iflucmpge
-   "icmp ugt",    // TR::iflucmpgt
-   "icmp ule",    // TR::iflucmple
-   "fcmp oeq",    // TR::iffcmpeq
-   "fcmp one",    // TR::iffcmpne
-   "fcmp olt",    // TR::iffcmplt
-   "fcmp oge",    // TR::iffcmpge
-   "fcmp ogt",    // TR::iffcmpgt
-   "fcmp ole",    // TR::iffcmple
-   "fcmp ueq",    // TR::iffcmpequ
-   "fcmp une",    // TR::iffcmpneu
-   "fcmp ult",    // TR::iffcmpltu
-   "fcmp uge",    // TR::iffcmpgeu
-   "fcmp ugt",    // TR::iffcmpgtu
-   "fcmp ule",    // TR::iffcmpleu
-   "fcmp oeq",    // TR::ifdcmpeq
-   "fcmp one",    // TR::ifdcmpne
-   "fcmp olt",    // TR::ifdcmplt
-   "fcmp oge",    // TR::ifdcmpge
-   "fcmp ogt",    // TR::ifdcmpgt
-   "fcmp ole",    // TR::ifdcmple
-   "fcmp ueq",    // TR::ifdcmpequ
-   "fcmp une",    // TR::ifdcmpneu
-   "fcmp ult",    // TR::ifdcmpltu
-   "fcmp uge",    // TR::ifdcmpgeu
-   "fcmp ugt",    // TR::ifdcmpgtu
-   "fcmp ule",    // TR::ifdcmpleu
-
-   "icmp eq",     // TR::ifacmpeq
-   "icmp ne",     // TR::ifacmpne
-   "icmp ult",    // TR::ifacmplt
-   "icmp uge",    // TR::ifacmpge
-   "icmp ugt",    // TR::ifacmpgt
-   "icmp ule",    // TR::ifacmple
-
-   "icmp eq",     // TR::ifbcmpeq
-   "icmp ne",     // TR::ifbcmpne
-   "icmp slt",    // TR::ifbcmplt
-   "icmp sge",    // TR::ifbcmpge
-   "icmp sgt",    // TR::ifbcmpgt
-   "icmp sle",    // TR::ifbcmple
-   "icmp ult",    // TR::ifbucmplt
-   "icmp uge",    // TR::ifbucmpge
-   "icmp ugt",    // TR::ifbucmpgt
-   "icmp ule",    // TR::ifbucmple
-   "icmp eq",     // TR::ifscmpeq
-   "icmp ne",     // TR::ifscmpne
-   "icmp slt",    // TR::ifscmplt
-   "icmp sge",    // TR::ifscmpge
-   "icmp sgt",    // TR::ifscmpgt
-   "icmp sle",    // TR::ifscmple
-   "icmp ult",    // TR::ifsucmplt
-   "icmp uge",    // TR::ifsucmpge
-   "icmp ugt",    // TR::ifsucmpgt
-   "icmp ule",    // TR::ifsucmple
-   NULL,          // TR::loadaddr
-   NULL,          // TR::ZEROCHK
-   NULL,          // TR::callIf
-   NULL,          // TR::iRegLoad
-   NULL,          // TR::aRegLoad
-   NULL,          // TR::lRegLoad
-   NULL,          // TR::fRegLoad
-   NULL,          // TR::dRegLoad
-   NULL,          // TR::sRegLoad
-   NULL,          // TR::bRegLoad
-   NULL,          // TR::iRegStore
-   NULL,          // TR::aRegStore
-   NULL,          // TR::lRegStore
-   NULL,          // TR::fRegStore
-   NULL,          // TR::dRegStore
-   NULL,          // TR::sRegStore
-   NULL,          // TR::bRegStore
-   NULL,          // TR::GlRegDeps
-
-   NULL,          // TR::iselect
-   NULL,          // TR::lselect
-   NULL,          // TR::bselect
-   NULL,          // TR::sselect
-   NULL,          // TR::aselect
-   NULL,          // TR::fselect
-   NULL,          // TR::dselect
-   NULL,          // TR::treetop
-   NULL,          // TR::MethodEnterHook
-   NULL,          // TR::MethodExitHook
-   NULL,          // TR::PassThrough
-   NULL,          // TR::compressedRefs
-
-   "",          // TR::BBStart
-   "",           // TR::BBEnd
-
-   NULL,          // TR::virem
-   NULL,          // TR::vimin
-   NULL,          // TR::vimax
-   NULL,          // TR::vigetelem
-   NULL,          // TR::visetelem
-   NULL,          // TR::vimergel
-   NULL,          // TR::vimergeh
-
-   NULL,          // TR::vicmpeq
-   NULL,          // TR::vicmpgt
-   NULL,          // TR::vicmpge
-   NULL,          // TR::vicmplt
-   NULL,          // TR::vicmple
-
-   NULL,          // TR::vicmpalleq
-   NULL,          // TR::vicmpallne
-   NULL,          // TR::vicmpallgt
-   NULL,          // TR::vicmpallge
-   NULL,          // TR::vicmpalllt
-   NULL,          // TR::vicmpallle
-   NULL,          // TR::vicmpanyeq
-   NULL,          // TR::vicmpanyne
-   NULL,          // TR::vicmpanygt
-   NULL,          // TR::vicmpanyge
-   NULL,          // TR::vicmpanylt
-   NULL,          // TR::vicmpanyle
-
-   NULL,          // TR::vnot
-   NULL,          // TR::vbitselect
-   NULL,          // TR::vperm
-
-   NULL,          // TR::vsplats
-   NULL,          // TR::vdmergel
-   NULL,          // TR::vdmergeh
-   NULL,          // TR::vdsetelem
-   NULL,          // TR::vdgetelem
-   NULL,          // TR::vdsel
-
-   NULL,          // TR::vdrem
-   NULL,          // TR::vdmadd
-   NULL,          // TR::vdnmsub
-   NULL,          // TR::vdmsub
-   NULL,          // TR::vdmax
-   NULL,          // TR::vdmin
-
-   NULL,          // TR::vdcmpeq
-   NULL,          // TR::vdcmpne
-   NULL,          // TR::vdcmpgt
-   NULL,          // TR::vdcmpge
-   NULL,          // TR::vdcmplt
-   NULL,          // TR::vdcmple
-
-   NULL,          // TR::vdcmpalleq
-   NULL,          // TR::vdcmpallne
-   NULL,          // TR::vdcmpallgt
-   NULL,          // TR::vdcmpallge
-   NULL,          // TR::vdcmpalllt
-   NULL,          // TR::vdcmpallle
-
-   NULL,          // TR::vdcmpanyeq
-   NULL,          // TR::vdcmpanyne
-   NULL,          // TR::vdcmpanygt
-   NULL,          // TR::vdcmpanyge
-   NULL,          // TR::vdcmpanylt
-   NULL,          // TR::vdcmpanyle
-   NULL,          // TR::vdsqrt
-   NULL,          // TR::vdlog
-
-   NULL,          // TR::vinc
-   NULL,          // TR::vdec
-   NULL,          // TR::vneg
-   NULL,          // TR::vcom
-   NULL,          // TR::vadd
-   NULL,          // TR::vsub
-   NULL,          // TR::vmul
-   NULL,          // TR::vdiv
-   NULL,          // TR::vrem
-   NULL,          // TR::vand
-   NULL,          // TR::vor
-   NULL,          // TR::vxor
-   NULL,          // TR::vshl
-   NULL,          // TR::vushr
-   NULL,          // TR::vshr
-   NULL,          // TR::vcmpeq
-   NULL,          // TR::vcmpne
-   NULL,          // TR::vcmplt
-   NULL,          // TR::vucmplt
-   NULL,          // TR::vcmpgt
-   NULL,          // TR::vucmpgt
-   NULL,          // TR::vcmple
-   NULL,          // TR::vucmple
-   NULL,          // TR::vcmpge
-   NULL,          // TR::vucmpge
-   NULL,          // TR::vload
-   NULL,          // TR::vloadi
-   NULL,          // TR::vstore
-   NULL,          // TR::vstorei
-   NULL,          // TR::vrand
-   NULL,          // TR::vreturn
-   NULL,          // TR::vcall
-   NULL,          // TR::vcalli
-   NULL,          // TR::vselect
-   NULL,          // TR::v2v
-   NULL,          // TR::vl2vd
-   NULL,          // TR::vconst
-   NULL,          // TR::getvelem
-   NULL,          // TR::vsetelem
-
-   NULL,          // TR::vbRegLoad
-   NULL,          // TR::vsRegLoad
-   NULL,          // TR::viRegLoad
-   NULL,          // TR::vlRegLoad
-   NULL,          // TR::vfRegLoad
-   NULL,          // TR::vdRegLoad
-   NULL,          // TR::vbRegStore
-   NULL,          // TR::vsRegStore
-   NULL,          // TR::viRegStore
-   NULL,          // TR::vlRegStore
-   NULL,          // TR::vfRegStore
-   NULL,          // TR::vdRegStore
-
-/*
- *END OF OPCODES REQUIRED BY OMR
- */
-   "load",          // TR::iuload
-   "load",          // TR::luload
-   "load",          // TR::buload
-   "load",          // TR::iuloadi
-   "load",          // TR::luloadi
-   "load",          // TR::buloadi
-   "store",          // TR::iustore
-   "store",          // TR::lustore
-   "store",          // TR::bustore
-   "store",          // TR::iustorei
-   "store",          // TR::lustorei
-   "store",          // TR::bustorei
-   "add",         // TR::iuadd
-   "add",         // TR::luadd
-   "add",         // TR::buadd
-   "sub",         // TR::iusub
-   "sub",         // TR::lusub
-   "sub",         // TR::busub
-   "sub",         // TR::iuneg
-   "sub",         // TR::luneg
-   "fptoui",      // TR::f2iu
-   "fptoui",      // TR::f2lu
-   "fptoui",      // TR::f2bu
-   "fptoui",      // TR::f2c
-   "fptoui",      // TR::d2iu
-   "fptoui",      // TR::d2lu
-   "fptoui",      // TR::d2bu
-   "fptoui",      // TR::d2c
-   NULL,          // TR::iuRegLoad
-   NULL,          // TR::luRegLoad
-   NULL,          // TR::iuRegStore
-   NULL,          // TR::luRegStore
-
-   "load",        // TR::cload
-   "load",        // TR::cloadi
-
-   "store",       // TR::cstore
-   "store",       // TR::cstorei
-   NULL,          // TR::monent
-   NULL,          // TR::monexit
-   NULL,          // TR::monexitfence
-   NULL,          // TR::tstart
-   NULL,          // TR::tfinish
-   NULL,          // TR::tabort
-
-   NULL,          // TR::instanceof
-   NULL,          // TR::checkcast
-   NULL,          // TR::checkcastAndNULLCHK
-   NULL,          // TR::New
-   NULL,          //TR::newvalue
-   "INVALID",       // TR::newarray
-   NULL,          // TR::anewarray
-   NULL,          // TR::variableNew
-   NULL,          // TR::variableNewArray
-   NULL,          // TR::multianewarray
-   NULL,          // TR::arraylength
-   NULL,          // TR::contigarraylength
-   NULL,          // TR::discontigarraylength
-   NULL,          // TR::icalli
-   NULL,          // TR::lcalli
-   NULL,          // TR::fcalli
-   NULL,          // TR::dcalli
-   NULL,          // TR::acalli
-   NULL,          // TR::calli
-   NULL,          // TR::fence
-   NULL,          // TR::luaddh
-   "add",        // TR::cadd
-
-  "getelementptr",          // TR::aiadd
-  "getelementptr",          // TR::aiuadd
-  "getelementptr",          // TR::aladd
-  "getelementptr",          // TR::aluadd
-
-   NULL,          // TR::lusubh
-   "sub",         // TR::csub
-
-   NULL,          // TR::imulh, implemented but this table value is unused
-   NULL,          // TR::iumulh, implemented but this table value is unused
-   NULL,          // TR::lmulh, implemented but this table value is unused
-   NULL,          // TR::lumulh, implemented but this table value is unused
-
-
-   "bitcast",     // TR::ibits2f
-   "bitcast",     // TR::fbits2i
-   "bitcast",     // TR::lbits2d
-   "bitcast",     // TR::dbits2l
-
-   "switch",      // TR::lookup
-   NULL,          // TR::trtLookup
-   NULL,          // TR::Case, implemented but this table value is unused
-   "switch",      // TR::table
-   NULL,          // TR::exceptionRangeFence
-   NULL,          // TR::dbgFence
-   NULL,          // TR::NULLCHK
-   NULL,          // TR::ResolveCHK
-   NULL,          // TR::ResolveAndNULLCHK
-   NULL,          // TR::DIVCHK
-   NULL,          // TR::Overflow
-   NULL,          // TR::UnsignedOverflowCHK
-   NULL,          // TR::BCDCHK
-   NULL,          // TR::BNDCHK
-   NULL,          // TR::ArrayCopyBNDCHK
-   NULL,          // TR::BNDCHKwithSpineCHK
-   NULL,          // TR::SpineCHK
-   NULL,          // TR::ArrayStoreCHK
-   NULL,          // TR::ArrayCHK
-   NULL,          // TR::Ret
-   NULL,          // TR::arraycopy
-   NULL,          // TR::arrayset
-   NULL,          // TR::arraytranslate
-   NULL,          // TR::arraytranslateAndTest
-   NULL,          // TR::countDigits
-   NULL,          // TR::long2String
-   NULL,          // TR::bitOpMem
-   NULL,          // TR::bitOpMemND
-   NULL,          // TR::arraycmp
-   NULL,          // TR::arraycmpWithPad
-   NULL,          // TR::allocationFence
-   NULL,          // TR::loadFence
-   NULL,          // TR::storeFence
-   NULL,          // TR::fullFence
-   NULL,          // TR::MergeNew
-   NULL,          // TR::computeCC
-   NULL,          // TR::butest
-   NULL,          // TR::sutest
-   NULL,          // TR::bucmp
-   NULL,          // TR::bcmp
-   NULL,          // TR::sucmp
-   NULL,          // TR::scmp
-   NULL,          // TR::iucmp
-   NULL,          // TR::icmp
-   NULL,          // TR::lucmp
-   NULL,          // TR::ificmpo
-   NULL,          // TR::ificmpno
-   NULL,          // TR::iflcmpo
-   NULL,          // TR::iflcmpno
-   NULL,          // TR::ificmno
-   NULL,          // TR::ificmnno
-   NULL,          // TR::iflcmno
-   NULL,          // TR::iflcmnno
-   NULL,          // TR::iuaddc
-   NULL,          // TR::luaddc
-   NULL,          // TR::iusubb
-   NULL,          // TR::lusubb
-   NULL,          // TR::icmpset
-   NULL,          // TR::lcmpset
-   NULL,          // TR::bztestnset
-   NULL,          // TR::ibatomicor
-   NULL,          // TR::isatomicor
-   NULL,          // TR::iiatomicor
-   NULL,          // TR::ilatomicor
-   NULL,          // TR::dexp
-   NULL,          // TR::branch
-   NULL,          // TR::igoto
-
-   NULL,          // TR::bexp
-   NULL,          // TR::buexp
-   NULL,          // TR::sexp
-   NULL,          // TR::cexp
-   NULL,          // TR::iexp
-   NULL,          // TR::iuexp
-   NULL,          // TR::lexp
-   NULL,          // TR::luexp
-   NULL,          // TR::fexp
-   NULL,          // TR::fuexp
-   NULL,          // TR::duexp
-
-   NULL,          // TR::ixfrs
-   NULL,          // TR::lxfrs
-   NULL,          // TR::fxfrs
-   NULL,          // TR::dxfrs
-
-   NULL,          // TR::fint
-   NULL,          // TR::dint
-   NULL,          // TR::fnint
-   NULL,          // TR::dnint
-
-   NULL,          // TR::fsqrt
-   NULL,          // TR::dsqrt
-
-   NULL,          // TR::getstack
-   NULL,          // TR::dealloca
-
-   NULL,          // TR::idoz
-
-   NULL,          // TR::dcos
-   NULL,          // TR::dsin
-   NULL,          // TR::dtan
-
-   NULL,          // TR::dcosh
-   NULL,          // TR::dsinh
-   NULL,          // TR::dtanh
-
-   NULL,          // TR::dacos
-   NULL,          // TR::dasin
-   NULL,          // TR::datan
-
-   NULL,          // TR::datan2
-
-   NULL,          // TR::dlog
-
-
-
-
-   NULL,          // TR::dfloor
-   NULL,          // TR::ffloor
-   NULL,          // TR::dceil
-   NULL,          // TR::fceil
-   NULL,          // TR::ibranch
-   NULL,          // TR::mbranch
-   NULL,          // TR::getpm
-   NULL,          // TR::setpm
-   NULL,          // TR::loadAutoOffset
-
-
-   NULL,          // TR::imax
-   NULL,          // TR::iumax
-   NULL,          // TR::lmax
-   NULL,          // TR::lumax
-   NULL,          // TR::fmax
-   NULL,          // TR::dmax
-
-   NULL,          // TR::imin
-   NULL,          // TR::iumin
-   NULL,          // TR::lmin
-   NULL,          // TR::lumin
-   NULL,          // TR::fmin
-   NULL,          // TR::dmin
-
-   NULL,          // TR::trt
-   NULL,          // TR::trtSimple
-
-
-   NULL,          // TR::ihbit,
-   NULL,          // TR::ilbit,
-   NULL,          // TR::inolz,
-   NULL,          // TR::inotz,
-   NULL,          // TR::ipopcnt,
-
-   NULL,          // TR::lhbit,
-   NULL,          // TR::llbit,
-   NULL,          // TR::lnolz,
-   NULL,          // TR::lnotz,
-   NULL,          // TR::lpopcnt,
-   NULL,          // TR::ibyteswap,
-
-   NULL,          // TR::bbitpermute,
-   NULL,          // TR::sbitpermute,
-   NULL,          // TR::ibitpermute,
-   NULL,          // TR::lbitpermute,
-
-   NULL,          // TR::Prefetch
-
-/*
- *  J9 specific opcodes
- */
-
-   NULL,          // TR::dfconst
-   NULL,          // TR::ddconst
-   NULL,          // TR::deconst
-   NULL,          // TR::dfload
-   NULL,          // TR::ddload
-   NULL,          // TR::deload
-   NULL,          // TR::dfloadi
-   NULL,          // TR::ddloadi
-   NULL,          // TR::deloadi
-   NULL,          // TR::dfstore
-   NULL,          // TR::ddstore
-   NULL,          // TR::destore
-   NULL,          // TR::dfstorei
-   NULL,          // TR::ddstorei
-   NULL,          // TR::destorei
-   NULL,          // TR::dfreturn
-   NULL,          // TR::ddreturn
-   NULL,          // TR::dereturn
-   NULL,          // TR::dfcall
-   NULL,          // TR::ddcall
-   NULL,          // TR::decall
-   NULL,          // TR::dfcalli
-   NULL,          // TR::ddcalli
-   NULL,          // TR::decalli
-   NULL,          // TR::dfadd
-   NULL,          // TR::ddadd
-   NULL,          // TR::deadd
-   NULL,          // TR::dfsub
-   NULL,          // TR::ddsub
-   NULL,          // TR::desub
-   NULL,          // TR::dfmul
-   NULL,          // TR::ddmul
-   NULL,          // TR::demul
-   NULL,          // TR::dfdiv
-   NULL,          // TR::dddiv
-   NULL,          // TR::dediv
-   NULL,          // TR::dfrem
-   NULL,          // TR::ddrem
-   NULL,          // TR::derem
-   NULL,          // TR::dfneg
-   NULL,          // TR::ddneg
-   NULL,          // TR::deneg
-   NULL,          // TR::dfabs
-   NULL,          // TR::ddabs
-   NULL,          // TR::deabs
-   NULL,          // TR::dfshl
-   NULL,          // TR::dfshr
-   NULL,          // TR::ddshl
-   NULL,          // TR::ddshr
-   NULL,          // TR::deshl
-   NULL,          // TR::deshr
-   NULL,          // TR::dfshrRounded
-   NULL,          // TR::ddshrRounded
-   NULL,          // TR::deshrRounded
-   NULL,          // TR::dfSetNegative
-   NULL,          // TR::ddSetNegative
-   NULL,          // TR::deSetNegative
-   NULL,          // TR::dfModifyPrecision
-   NULL,          // TR::ddModifyPrecision
-   NULL,          // TR::deModifyPrecision
-
-   NULL,          // TR::i2df
-   NULL,          // TR::iu2df
-   NULL,          // TR::l2df
-   NULL,          // TR::lu2df
-   NULL,          // TR::f2df
-   NULL,          // TR::d2df
-   NULL,          // TR::dd2df
-   NULL,          // TR::de2df
-   NULL,          // TR::b2df
-   NULL,          // TR::bu2df
-   NULL,          // TR::s2df
-   NULL,          // TR::su2df
-
-   NULL,          // TR::df2i
-   NULL,          // TR::df2iu
-   NULL,          // TR::df2l
-   NULL,          // TR::df2lu
-   NULL,          // TR::df2f
-   NULL,          // TR::df2d
-   NULL,          // TR::df2dd
-   NULL,          // TR::df2de
-   NULL,          // TR::df2b
-   NULL,          // TR::df2bu
-   NULL,          // TR::df2s
-   NULL,          // TR::df2c
-
-   NULL,          // TR::i2dd
-   NULL,          // TR::iu2dd
-   NULL,          // TR::l2dd
-   NULL,          // TR::lu2dd
-   NULL,          // TR::f2dd
-   NULL,          // TR::d2dd
-   NULL,          // TR::de2dd
-   NULL,          // TR::b2dd
-   NULL,          // TR::bu2dd
-   NULL,          // TR::s2dd
-   NULL,          // TR::su2dd
-
-   NULL,          // TR::dd2i
-   NULL,          // TR::dd2iu
-   NULL,          // TR::dd2l
-   NULL,          // TR::dd2lu
-   NULL,          // TR::dd2f
-   NULL,          // TR::dd2d
-   NULL,          // TR::dd2de
-   NULL,          // TR::dd2b
-   NULL,          // TR::dd2bu
-   NULL,          // TR::dd2s
-   NULL,          // TR::dd2c
-
-   NULL,          // TR::i2de
-   NULL,          // TR::iu2de
-   NULL,          // TR::l2de
-   NULL,          // TR::lu2de
-   NULL,          // TR::f2de
-   NULL,          // TR::d2de
-   NULL,          // TR::b2de
-   NULL,          // TR::bu2de
-   NULL,          // TR::s2de
-   NULL,          // TR::su2de
-
-   NULL,          // TR::de2i
-   NULL,          // TR::de2iu
-   NULL,          // TR::de2l
-   NULL,          // TR::de2lu
-   NULL,          // TR::de2f
-   NULL,          // TR::de2d
-   NULL,          // TR::de2b
-   NULL,          // TR::de2bu
-   NULL,          // TR::de2s
-   NULL,          // TR::de2c
-
-   NULL,          // TR::ifdfcmpeq
-   NULL,          // TR::ifdfcmpne
-   NULL,          // TR::ifdfcmplt
-   NULL,          // TR::ifdfcmpge
-   NULL,          // TR::ifdfcmpgt
-   NULL,          // TR::ifdfcmple
-   NULL,          // TR::ifdfcmpequ
-   NULL,          // TR::ifdfcmpneu
-   NULL,          // TR::ifdfcmpltu
-   NULL,          // TR::ifdfcmpgeu
-   NULL,          // TR::ifdfcmpgtu
-   NULL,          // TR::ifdfcmpleu
-
-   NULL,          // TR::dfcmpeq
-   NULL,          // TR::dfcmpne
-   NULL,          // TR::dfcmplt
-   NULL,          // TR::dfcmpge
-   NULL,          // TR::dfcmpgt
-   NULL,          // TR::dfcmple
-   NULL,          // TR::dfcmpequ
-   NULL,          // TR::dfcmpneu
-   NULL,          // TR::dfcmpltu
-   NULL,          // TR::dfcmpgeu
-   NULL,          // TR::dfcmpgtu
-   NULL,          // TR::dfcmpleu
-
-   NULL,          // TR::ifddcmpeq
-   NULL,          // TR::ifddcmpne
-   NULL,          // TR::ifddcmplt
-   NULL,          // TR::ifddcmpge
-   NULL,          // TR::ifddcmpgt
-   NULL,          // TR::ifddcmple
-   NULL,          // TR::ifddcmpequ
-   NULL,          // TR::ifddcmpneu
-   NULL,          // TR::ifddcmpltu
-   NULL,          // TR::ifddcmpgeu
-   NULL,          // TR::ifddcmpgtu
-   NULL,          // TR::ifddcmpleu
-
-   NULL,          // TR::ddcmpeq
-   NULL,          // TR::ddcmpne
-   NULL,          // TR::ddcmplt
-   NULL,          // TR::ddcmpge
-   NULL,          // TR::ddcmpgt
-   NULL,          // TR::ddcmple
-   NULL,          // TR::ddcmpequ
-   NULL,          // TR::ddcmpneu
-   NULL,          // TR::ddcmpltu
-   NULL,          // TR::ddcmpgeu
-   NULL,          // TR::ddcmpgtu
-   NULL,          // TR::ddcmpleu
-
-   NULL,          // TR::ifdecmpeq
-   NULL,          // TR::ifdecmpne
-   NULL,          // TR::ifdecmplt
-   NULL,          // TR::ifdecmpge
-   NULL,          // TR::ifdecmpgt
-   NULL,          // TR::ifdecmple
-   NULL,          // TR::ifdecmpequ
-   NULL,          // TR::ifdecmpneu
-   NULL,          // TR::ifdecmpltu
-   NULL,          // TR::ifdecmpgeu
-   NULL,          // TR::ifdecmpgtu
-   NULL,          // TR::ifdecmpleu
-
-   NULL,          // TR::decmpeq
-   NULL,          // TR::decmpne
-   NULL,          // TR::decmplt
-   NULL,          // TR::decmpge
-   NULL,          // TR::decmpgt
-   NULL,          // TR::decmple
-   NULL,          // TR::decmpequ
-   NULL,          // TR::decmpneu
-   NULL,          // TR::decmpltu
-   NULL,          // TR::decmpgeu
-   NULL,          // TR::decmpgtu
-   NULL,          // TR::decmpleu
-
-   NULL,          // TR::dfRegLoad
-   NULL,          // TR::ddRegLoad
-   NULL,          // TR::deRegLoad
-   NULL,          // TR::dfRegStore
-   NULL,          // TR::ddRegStore
-   NULL,          // TR::deRegStore
-
-   NULL,          // TR::dfselect
-   NULL,          // TR::ddselect
-   NULL,          // TR::deselect
-
-   NULL,          // TR::dfexp
-   NULL,          // TR::ddexp
-   NULL,          // TR::deexp
-   NULL,          // TR::dfnint
-   NULL,          // TR::ddnint
-   NULL,          // TR::denint
-   NULL,          // TR::dfsqrt
-   NULL,          // TR::ddsqrt
-   NULL,          // TR::desqrt
-
-   NULL,          // TR::dfcos
-   NULL,          // TR::ddcos
-   NULL,          // TR::decos
-   NULL,          // TR::dfsin
-   NULL,          // TR::ddsin
-   NULL,          // TR::desin
-   NULL,          // TR::dftan
-   NULL,          // TR::ddtan
-   NULL,          // TR::detan
-
-   NULL,          // TR::dfcosh
-   NULL,          // TR::ddcosh
-   NULL,          // TR::decosh
-   NULL,          // TR::dfsinh
-   NULL,          // TR::ddsinh
-   NULL,          // TR::desinh
-   NULL,          // TR::dftanh
-   NULL,          // TR::ddtanh
-   NULL,          // TR::detanh
-
-   NULL,          // TR::dfacos
-   NULL,          // TR::ddacos
-   NULL,          // TR::deacos
-   NULL,          // TR::dfasin
-   NULL,          // TR::ddasin
-   NULL,          // TR::deasin
-   NULL,          // TR::dfatan
-   NULL,          // TR::ddatan
-   NULL,          // TR::deatan
-
-   NULL,          // TR::dfatan2
-   NULL,          // TR::ddatan2
-   NULL,          // TR::deatan2
-   NULL,          // TR::dflog
-   NULL,          // TR::ddlog
-   NULL,          // TR::delog
-   NULL,          // TR::dffloor
-   NULL,          // TR::ddfloor
-   NULL,          // TR::defloor
-   NULL,          // TR::dfceil
-   NULL,          // TR::ddceil
-   NULL,          // TR::deceil
-   NULL,          // TR::dfmax
-   NULL,          // TR::ddmax
-   NULL,          // TR::demax
-   NULL,          // TR::dfmin
-   NULL,          // TR::ddmin
-   NULL,          // TR::demin
-
-   NULL,          // TR::dfInsExp
-   NULL,          // TR::ddInsExp
-   NULL,          // TR::deInsExp
-
-   NULL,          // TR::ddclean
-   NULL,          // TR::declean
-
-   NULL,          // TR::zdload
-   NULL,          // TR::zdloadi
-   NULL,          // TR::zdstore
-   NULL,          // TR::zdstorei
-
-   NULL,          // TR::pd2zd
-   NULL,          // TR::zd2pd
-
-   NULL,          // TR::zdsleLoad
-   NULL,          // TR::zdslsLoad
-   NULL,          // TR::zdstsLoad
-
-   NULL,          // TR::zdsleLoadi
-   NULL,          // TR::zdslsLoadi
-   NULL,          // TR::zdstsLoadi
-
-   NULL,          // TR::zdsleStore
-   NULL,          // TR::zdslsStore
-   NULL,          // TR::zdstsStore
-
-   NULL,          // TR::zdsleStorei
-   NULL,          // TR::zdslsStorei
-   NULL,          // TR::zdstsStorei
-
-   NULL,          // TR::zd2zdsle
-   NULL,          // TR::zd2zdsls
-   NULL,          // TR::zd2zdsts
-
-   NULL,          // TR::zdsle2pd
-   NULL,          // TR::zdsls2pd
-   NULL,          // TR::zdsts2pd
-
-   NULL,          // TR::zdsle2zd
-   NULL,          // TR::zdsls2zd
-   NULL,          // TR::zdsts2zd
-
-   NULL,          // TR::pd2zdsls
-   NULL,          // TR::pd2zdslsSetSign
-   NULL,          // TR::pd2zdsts
-   NULL,          // TR::pd2zdstsSetSign
-
-   NULL,          // TR::zd2df
-   NULL,          // TR::df2zd
-   NULL,          // TR::zd2dd
-   NULL,          // TR::dd2zd
-   NULL,          // TR::zd2de
-   NULL,          // TR::de2zd
-
-   NULL,          // TR::zd2dfAbs
-   NULL,          // TR::zd2ddAbs
-   NULL,          // TR::zd2deAbs
-
-   NULL,          // TR::df2zdSetSign
-   NULL,          // TR::dd2zdSetSign
-   NULL,          // TR::de2zdSetSign
-
-   NULL,          // TR::df2zdClean
-   NULL,          // TR::dd2zdClean
-   NULL,          // TR::de2zdClean
-
-   NULL,          // TR::udLoad
-   NULL,          // TR::udslLoad
-   NULL,          // TR::udstLoad
-
-   NULL,          // TR::udLoadi
-   NULL,          // TR::udslLoadi
-   NULL,          // TR::udstLoadi
-
-   NULL,          // TR::udStore
-   NULL,          // TR::udslStore
-   NULL,          // TR::udstStore
-
-   NULL,          // TR::udStorei
-   NULL,          // TR::udslStorei
-   NULL,          // TR::udstStorei
-
-   NULL,          // TR::pd2ud
-   NULL,          // TR::pd2udsl
-   NULL,          // TR::pd2udst
-
-   NULL,          // TR::udsl2ud
-   NULL,          // TR::udst2ud
-
-   NULL,          // TR::ud2pd
-   NULL,          // TR::udsl2pd
-   NULL,          // TR::udst2pd
-
-   NULL,          // TR::pdload
-   NULL,          // TR::pdloadi
-   NULL,          // TR::pdstore
-   NULL,          // TR::pdstorei
-   NULL,          // TR::pdadd
-   NULL,          // TR::pdsub
-   NULL,          // TR::pdmul
-   NULL,          // TR::pddiv
-   NULL,          // TR::pdrem
-   NULL,          // TR::pdneg
-   NULL,          // TR::pdabs
-   NULL,          // TR::pdshr
-   NULL,          // TR::pdshl
-   NULL,          // TR::pdshrSetSign
-   NULL,          // TR::pdshlSetSign
-   NULL,          // TR::pdshlOverflow
-   NULL,          // TR::pdchk
-   NULL,          // TR::pd2i
-   NULL,          // TR::pd2iOverflow
-   NULL,          // TR::pd2iu
-   NULL,          // TR::i2pd
-   NULL,          // TR::iu2pd
-   NULL,          // TR::pd2l
-   NULL,          // TR::pd2lOverflow
-   NULL,          // TR::pd2lu
-   NULL,          // TR::l2pd
-   NULL,          // TR::lu2pd
-   NULL,          // TR::pd2f
-   NULL,          // TR::pd2d
-   NULL,          // TR::f2pd
-   NULL,          // TR::d2pd
-   NULL,          // TR::pdcmpeq
-   NULL,          // TR::pdcmpne
-   NULL,          // TR::pdcmplt
-   NULL,          // TR::pdcmpge
-   NULL,          // TR::pdcmpgt
-   NULL,          // TR::pdcmple
-   NULL,          // TR::pdclean
-   NULL,          // TR::pdclear
-   NULL,          // TR::pdclearSetSign
-   NULL,          // TR::pdSetSign
-   NULL,          // TR::pdModifyPrecision
-   NULL,          // TR::pd2df
-   NULL,          // TR::pd2dfAbs
-   NULL,          // TR::df2pd
-   NULL,          // TR::df2pdSetSign
-   NULL,          // TR::df2pdClean
-   NULL,          // TR::pd2dd
-   NULL,          // TR::pd2ddAbs
-   NULL,          // TR::dd2pd
-   NULL,          // TR::dd2pdSetSign
-   NULL,          // TR::dd2pdClean
-   NULL,          // TR::pd2de
-   NULL,          // TR::pd2deAbs
-   NULL,          // TR::de2pd
-   NULL,          // TR::de2pdSetSign
-   NULL,          // TR::de2pdClean
-   NULL,          // TR::ircload
-   NULL,          // TR::irsload
-   NULL,          // TR::iruiload
-   NULL,          // TR::iriload
-   NULL,          // TR::irulload
-   NULL,          // TR::irlload
-   NULL,          // TR::irsstore
-   NULL,          // TR::iristore
-   NULL,          // TR::irlstore
-};
-
-static_assert(sizeof(nvvmOpCodeNames) == (TR::NumIlOps*sizeof(char*)), "Number of elements in nvvmOpCodeNames does not match the value of TR::NumIlOps");
 
 static const char* getOpCodeName(TR::ILOpCodes opcode) {
 
    TR_ASSERT(opcode < TR::NumIlOps, "Wrong opcode");
-   return nvvmOpCodeNames[opcode];
+   
+   switch(opcode)
+      {
+      case TR::iload:
+      case TR::fload:
+      case TR::dload:
+      case TR::aload:
+      case TR::bload:
+      case TR::sload:
+      case TR::lload:
+      case TR::iloadi:
+      case TR::floadi:
+      case TR::dloadi:
+      case TR::aloadi:
+      case TR::bloadi:
+      case TR::sloadi:
+      case TR::lloadi:
+      case TR::iuload:
+      case TR::luload:
+      case TR::buload:
+      case TR::iuloadi:
+      case TR::luloadi:
+      case TR::buloadi:
+      case TR::cload:
+      case TR::cloadi:
+         return "load";
+
+      case TR::istore:
+      case TR::lstore:
+      case TR::fstore:
+      case TR::dstore:
+      case TR::astore:
+      case TR::bstore:
+      case TR::sstore:
+      case TR::lstorei:
+      case TR::fstorei:
+      case TR::dstorei:
+      case TR::astorei:
+      case TR::bstorei:
+      case TR::sstorei:
+      case TR::istorei:
+      case TR::iustore:
+      case TR::lustore:
+      case TR::bustore:
+      case TR::iustorei:
+      case TR::lustorei:
+      case TR::bustorei:
+      case TR::cstore:
+      case TR::cstorei:
+         return "store";
+
+      case TR::Goto:
+         return "br";
+
+      case TR::ireturn:
+      case TR::lreturn:
+      case TR::freturn:
+      case TR::dreturn:
+      case TR::areturn:
+      case TR::Return:
+         return "ret";
+
+      case TR::iadd:
+      case TR::ladd:
+      case TR::badd:
+      case TR::sadd:
+      case TR::iuadd:
+      case TR::luadd:
+      case TR::buadd:
+      case TR::cadd:
+         return "add";
+
+      case TR::fadd:
+      case TR::dadd:
+         return "fadd";
+
+      case TR::isub:
+      case TR::lsub:
+      case TR::bsub:
+      case TR::ssub:
+      case TR::ineg:
+      case TR::lneg:
+      case TR::bneg:
+      case TR::sneg:
+      case TR::iusub:
+      case TR::lusub:
+      case TR::busub:
+      case TR::iuneg:
+      case TR::luneg:
+      case TR::csub:
+         return "sub";
+
+      case TR::dsub:
+      case TR::fsub:
+      case TR::fneg:
+      case TR::dneg:
+         return "fsub";
+
+      case TR::imul:
+      case TR::lmul:
+      case TR::bmul:
+      case TR::smul:
+         return "mul";
+
+      case TR::fmul:
+      case TR::dmul:
+         return "fmul";
+
+      case TR::idiv:
+      case TR::ldiv:
+      case TR::bdiv:
+      case TR::sdiv:
+         return "sdiv";
+
+      case TR::fdiv:
+      case TR::ddiv:
+         return "fdiv";
+
+      case TR::iudiv:
+      case TR::ludiv:
+         return "udiv";
+
+      case TR::irem:
+      case TR::lrem:
+      case TR::brem:
+      case TR::srem:
+         return "srem";
+
+      case TR::frem:
+      case TR::drem:
+         return "frem";
+
+      case TR::iurem:
+         return "urem";
+
+      case TR::ishl:
+      case TR::lshl:
+      case TR::bshl:
+      case TR::sshl:
+         return "shl";
+
+      case TR::ishr:
+      case TR::lshr:
+      case TR::bshr:
+      case TR::sshr:
+         return "ashr";
+
+      case TR::iushr:
+      case TR::lushr:
+      case TR::bushr:
+      case TR::sushr:
+         return "lshr";
+
+      case TR::iand:
+      case TR::land:
+      case TR::band:
+      case TR::sand:
+         return "and";
+
+      case TR::ior:
+      case TR::lor:
+      case TR::bor:
+      case TR::sor:
+         return "or";
+
+      case TR::ixor:
+      case TR::lxor:
+      case TR::bxor:
+      case TR::sxor:
+         return "xor";
+
+      case TR::i2l:
+      case TR::b2i:
+      case TR::b2l:
+      case TR::b2s:
+      case TR::s2i:
+      case TR::s2l:
+         return "sext";
+
+      case TR::i2f:
+      case TR::i2d:
+      case TR::l2f:
+      case TR::l2d:
+      case TR::b2f:
+      case TR::b2d:
+      case TR::s2f:
+      case TR::s2d:
+         return "sitofp";
+
+      case TR::i2b:
+      case TR::i2s:
+      case TR::l2i:
+      case TR::l2b:
+      case TR::l2s:
+      case TR::s2b:
+         return "trunc";
+
+      case TR::l2a:
+      case TR::i2a:
+      case TR::s2a:
+      case TR::b2a:
+      case TR::lu2a:
+      case TR::iu2a:
+      case TR::su2a:
+      case TR::bu2a:
+         return "inttoptr";
+
+      case TR::iu2l:
+      case TR::bu2i:
+      case TR::bu2l:
+      case TR::bu2s:
+      case TR::su2i:
+      case TR::su2l:
+         return "zext";
+         
+      case TR::iu2f:
+      case TR::iu2d:
+      case TR::lu2f:
+      case TR::lu2d:
+      case TR::bu2f:
+      case TR::bu2d:
+      case TR::su2f:
+      case TR::su2d:
+         return "uitofp";
+
+      case TR::f2i:
+      case TR::f2l:
+      case TR::f2b:
+      case TR::f2s:
+      case TR::d2i:
+      case TR::d2l:
+      case TR::d2b:
+      case TR::d2s:
+         return "fptosi";
+
+      case TR::f2d:
+         return "fpext";
+
+      case TR::d2f:
+         return "fptrunc";
+
+      case TR::a2i:
+      case TR::a2l:
+      case TR::a2b:
+      case TR::a2s:
+         return "ptrtoint";
+
+      case TR::icmpeq:
+      case TR::lcmpeq:
+      case TR::acmpeq:
+      case TR::bcmpeq:
+      case TR::scmpeq:
+      case TR::ificmpeq:
+      case TR::iflcmpeq:
+      case TR::ifacmpeq:
+      case TR::ifbcmpeq:
+      case TR::ifscmpeq:
+         return "icmp eq";
+
+      case TR::icmpne:
+      case TR::lcmpne:
+      case TR::acmpne:
+      case TR::bcmpne:
+      case TR::scmpne:
+      case TR::ificmpne:
+      case TR::iflcmpne:
+      case TR::ifacmpne:
+      case TR::ifbcmpne:
+      case TR::ifscmpne:
+         return "icmp ne";
+
+      case TR::icmplt:
+      case TR::lcmplt:
+      case TR::bcmplt:
+      case TR::scmplt:
+      case TR::ificmplt:
+      case TR::iflcmplt:
+      case TR::ifbcmplt:
+      case TR::ifscmplt:
+         return "icmp slt";
+
+      case TR::icmpge:
+      case TR::lcmpge:
+      case TR::bcmpge:
+      case TR::scmpge:
+      case TR::ificmpge:
+      case TR::iflcmpge:
+      case TR::ifbcmpge:
+      case TR::ifscmpge:
+         return "icmp sge";
+
+      case TR::icmpgt:
+      case TR::lcmpgt:
+      case TR::bcmpgt:
+      case TR::scmpgt:
+      case TR::ificmpgt:
+      case TR::iflcmpgt:
+      case TR::ifbcmpgt:
+      case TR::ifscmpgt:
+         return "icmp sgt";
+
+      case TR::icmple:
+      case TR::lcmple:
+      case TR::bcmple:
+      case TR::scmple:
+      case TR::ificmple:
+      case TR::iflcmple:
+      case TR::ifbcmple:
+      case TR::ifscmple:
+         return "icmp sle";
+
+      case TR::acmplt:
+      case TR::iucmplt:
+      case TR::lucmplt:
+      case TR::bucmplt:
+      case TR::sucmplt:
+      case TR::ifacmplt:
+      case TR::ifiucmplt:
+      case TR::iflucmplt:
+      case TR::ifbucmplt:
+      case TR::ifsucmplt:
+         return "icmp ult";
+
+      case TR::acmpge:
+      case TR::iucmpge:
+      case TR::bucmpge:
+      case TR::lucmpge:
+      case TR::sucmpge:
+      case TR::ifacmpge:
+      case TR::ifiucmpge:
+      case TR::iflucmpge:
+      case TR::ifbucmpge:
+      case TR::ifsucmpge:
+         return "icmp uge";
+
+      case TR::acmpgt:
+      case TR::iucmpgt:
+      case TR::lucmpgt:
+      case TR::bucmpgt:
+      case TR::sucmpgt:
+      case TR::ifacmpgt:
+      case TR::ifiucmpgt:
+      case TR::iflucmpgt:
+      case TR::ifbucmpgt:
+      case TR::ifsucmpgt:
+         return "icmp ugt";
+
+      case TR::acmple:
+      case TR::iucmple:
+      case TR::lucmple:
+      case TR::bucmple:
+      case TR::sucmple:
+      case TR::ifacmple:
+      case TR::ifiucmple:
+      case TR::iflucmple:
+      case TR::ifbucmple:
+      case TR::ifsucmple:
+         return "icmp ule";
+
+      case TR::fcmpeq:
+      case TR::dcmpeq:
+      case TR::iffcmpeq:
+      case TR::ifdcmpeq:
+         return "fcmp oeq";
+
+      case TR::fcmpne:
+      case TR::dcmpne:
+      case TR::iffcmpne:
+      case TR::ifdcmpne:
+         return "fcmp one";
+
+      case TR::fcmplt:
+      case TR::dcmplt:
+      case TR::iffcmplt:
+      case TR::ifdcmplt:
+         return "fcmp olt";
+
+      case TR::fcmpge:
+      case TR::dcmpge:
+      case TR::iffcmpge:
+      case TR::ifdcmpge:
+         return "fcmp oge";
+
+      case TR::fcmpgt:
+      case TR::dcmpgt:
+      case TR::iffcmpgt:
+      case TR::ifdcmpgt:
+         return "fcmp ogt";
+
+      case TR::fcmple:
+      case TR::dcmple:
+      case TR::iffcmple:
+      case TR::ifdcmple:
+         return "fcmp ole";
+
+      case TR::fcmpequ:
+      case TR::dcmpequ:
+      case TR::iffcmpequ:
+      case TR::ifdcmpequ:
+         return "fcmp ueq";
+
+      case TR::fcmpneu:
+      case TR::dcmpneu:
+      case TR::iffcmpneu:
+      case TR::ifdcmpneu:
+         return "fcmp une";
+
+      case TR::fcmpltu:
+      case TR::dcmpltu:
+      case TR::iffcmpltu:
+      case TR::ifdcmpltu:
+         return "fcmp ult";
+
+      case TR::fcmpgeu:
+      case TR::dcmpgeu:
+      case TR::iffcmpgeu:
+      case TR::ifdcmpgeu:
+         return "fcmp uge";
+
+      case TR::fcmpgtu:
+      case TR::dcmpgtu:
+      case TR::iffcmpgtu:
+      case TR::ifdcmpgtu:
+         return "fcmp ugt";
+
+      case TR::fcmpleu:
+      case TR::dcmpleu:
+      case TR::iffcmpleu:
+      case TR::ifdcmpleu:
+         return "fcmp ule";
+
+      case TR::d2c:
+      case TR::f2c:
+      case TR::f2bu:
+      case TR::f2iu:
+      case TR::f2lu:
+      case TR::d2iu:
+      case TR::d2lu:
+      case TR::d2bu:
+         return "fptoui";
+
+      case TR::aiadd:
+      case TR::aladd:
+      case TR::aiuadd:
+      case TR::aluadd:
+         return "getelementptr";
+
+      case TR::ibits2f:
+      case TR::fbits2i:
+      case TR::lbits2d:
+      case TR::dbits2l:
+         return "bitcast";
+
+      case TR::lookup:
+      case TR::table:
+         return "switch";
+
+      case TR::BBStart:
+      case TR::BBEnd:
+         return "";
+
+      case TR::newarray:
+         return "INVALID";
+
+      default:
+         return NULL;  
+      }
 
 }
 
@@ -1336,7 +577,7 @@ static void getParmName(int32_t slot, char * s, bool addr = true)
    {
    int32_t len = 0;
 
-   len = snprintf(s, MAX_NAME, "%%p%d%s", slot,  addr ? ".addr" : "");
+   len = snprintf(s, MAX_NAME, "%%p%" OMR_PRId32 "%s", slot,  addr ? ".addr" : "");
 
    TR_ASSERT(len < MAX_NAME, "Auto's or parm's name is too long\n");
    }
@@ -1348,9 +589,9 @@ static void getAutoOrParmName(TR::Symbol *sym, char * s, bool addr = true)
    TR_ASSERT(sym->isAutoOrParm(), "expecting auto or parm");
 
    if (sym->isParm())
-      len = snprintf(s, MAX_NAME, "%%p%d%s", sym->castToParmSymbol()->getSlot(),  addr ? ".addr" : "");
+      len = snprintf(s, MAX_NAME, "%%p%" OMR_PRId32 "%s", sym->castToParmSymbol()->getSlot(),  addr ? ".addr" : "");
    else
-      len = snprintf(s, MAX_NAME, "%%a%d%s", sym->castToAutoSymbol()->getLiveLocalIndex(), addr ? ".addr" : "");
+      len = snprintf(s, MAX_NAME, "%%a%" OMR_PRId32 "%s", sym->castToAutoSymbol()->getLiveLocalIndex(), addr ? ".addr" : "");
 
    TR_ASSERT(len < MAX_NAME, "Auto's or parm's name is too long\n");
    }
@@ -1421,24 +662,24 @@ static void getNodeName(TR::Node* node, char * s, TR::Compilation *comp)
          {
          case TR::Int8:
             if(isUnsigned)
-               len = snprintf(s, MAX_NAME, "%u", node->getUnsignedByte());
+               len = snprintf(s, MAX_NAME, "%" OMR_PRIu8, node->getUnsignedByte());
             else
-               len = snprintf(s, MAX_NAME, "%d", node->getByte());
+               len = snprintf(s, MAX_NAME, "%" OMR_PRId8, node->getByte());
             break;
          case TR::Int16:
-            len = snprintf(s, MAX_NAME, "%d", node->getConst<uint16_t>());
+            len = snprintf(s, MAX_NAME, "%" OMR_PRIu16, node->getConst<uint16_t>());
             break;
          case TR::Int32:
             if(isUnsigned)
-               len = snprintf(s, MAX_NAME, "%u", node->getUnsignedInt());
+               len = snprintf(s, MAX_NAME, "%" OMR_PRIu32, node->getUnsignedInt());
             else
-               len = snprintf(s, MAX_NAME, "%d", node->getInt());
+               len = snprintf(s, MAX_NAME, "%" OMR_PRId32, node->getInt());
             break;
          case TR::Int64:
             if(isUnsigned)
-               len = snprintf(s, MAX_NAME, UINT64_PRINTF_FORMAT, node->getUnsignedLongInt());
+               len = snprintf(s, MAX_NAME, "%" OMR_PRIu64, node->getUnsignedLongInt());
             else
-               len = snprintf(s, MAX_NAME, INT64_PRINTF_FORMAT, node->getLongInt());
+               len = snprintf(s, MAX_NAME, "%" OMR_PRId64, node->getLongInt());
             break;
          case TR::Float:
             union
@@ -1447,10 +688,10 @@ static void getNodeName(TR::Node* node, char * s, TR::Compilation *comp)
                int64_t                 doubleBits;
                };
             doubleValue = node->getFloat();
-            len = snprintf(s, MAX_NAME, "0x%0.16llx", doubleBits);
+            len = snprintf(s, MAX_NAME, "0x%016" OMR_PRIx64, doubleBits);
             break;
          case TR::Double:
-            len = snprintf(s, MAX_NAME, "0x%0.16llx", node->getDoubleBits());
+            len = snprintf(s, MAX_NAME, "0x%016" OMR_PRIx64, node->getDoubleBits());
             break;
          case TR::Address:
             if (node->getAddress() == 0)
@@ -1464,7 +705,7 @@ static void getNodeName(TR::Node* node, char * s, TR::Compilation *comp)
       }
    else
       {
-      len = snprintf(s, MAX_NAME, "%%%d", node->getLocalIndex());
+      len = snprintf(s, MAX_NAME, "%%%" OMR_PRIu32, node->getLocalIndex());
       }
 
    TR_ASSERT(len < MAX_NAME, "Node's name is too long\n");
@@ -2092,7 +1333,7 @@ J9::CodeGenerator::printNVVMIR(
          }
       else
          {
-         int32_t len = snprintf(name0, MAX_NAME, "%d", smsize);
+         int32_t len = snprintf(name0, MAX_NAME, "%" OMR_PRId32, smsize);
          TR_ASSERT(len < MAX_NAME, "Node's name is too long\n");
          }
 
@@ -2608,7 +1849,7 @@ J9::CodeGenerator::printNVVMIR(
                    isLongMul ? "i64" : "i32");
       }
    else if (node->getOpCodeValue() == TR::bneg || node->getOpCodeValue() == TR::sneg ||
-            node->getOpCodeValue() == TR::ineg || node->getOpCodeValue() == TR::lneg || 
+            node->getOpCodeValue() == TR::ineg || node->getOpCodeValue() == TR::lneg ||
             node->getOpCodeValue() == TR::fneg || node->getOpCodeValue() == TR::dneg)
       {
       getNodeName(node->getChild(0), name0, self()->comp());
@@ -3594,7 +2835,7 @@ J9::CodeGenerator::generateGPU()
       parm->setSymbolReference(parmSymRef);
       callNode->setAndIncChild(12, parm);
 
-      TR::SymbolReference *helper = self()->comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_callGPU, false, false, false);
+      TR::SymbolReference *helper = self()->comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_callGPU);
       helper->getSymbol()->castToMethodSymbol()->setLinkage(TR_System);
       callNode->setSymbolReference(helper);
       TR::Node *treetop = TR::Node::create(callNode, TR::treetop, 1);
@@ -3621,4 +2862,3 @@ J9::CodeGenerator::objectHeaderInvariant()
    {
    return self()->objectLengthOffset() + 4 /*length*/ ;
    }
-

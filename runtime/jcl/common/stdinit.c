@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,25 +69,33 @@ computeJCLRuntimeFlags(J9JavaVM *vm)
 
 #ifdef J9VM_INTERP_HOT_CODE_REPLACEMENT
 	flags |= JCL_RTFLAG_INTERP_HOT_CODE_REPLACEMENT;
-#endif
+#endif /* J9VM_INTERP_HOT_CODE_REPLACEMENT */
 
 #ifdef J9VM_OPT_METHOD_HANDLE
 	flags |= JCL_RTFLAG_OPT_METHOD_HANDLE;
-#endif
+#endif /* J9VM_OPT_METHOD_HANDLE */
 
 #ifdef J9VM_OPT_PANAMA
 	flags |= JCL_RTFLAG_OPT_PANAMA;
-#endif
+#endif /* J9VM_OPT_PANAMA */
 
 #ifdef J9VM_OPT_MODULE
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
 		flags |= JCL_RTFLAG_OPT_MODULE;
 	}
-#endif
+#endif /* J9VM_OPT_MODULE */
 
 #ifdef J9VM_OPT_REFLECT
 	flags |= JCL_RTFLAG_OPT_REFLECT;
-#endif
+#endif /* J9VM_OPT_REFLECT */
+
+#ifdef J9VM_OPT_METHOD_HANDLE_COMMON
+	flags |= JCL_RTFLAG_OPT_METHOD_HANDLE_COMMON;
+#endif /* J9VM_OPT_METHOD_HANDLE_COMMON */
+
+#ifdef J9VM_OPT_OPENJDK_METHODHANDLE
+	flags |= JCL_RTFLAG_OPT_OPENJDK_METHODHANDLE;
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
 
 	return flags;
 }
@@ -179,6 +187,21 @@ standardInit( J9JavaVM *vm, char *dllName)
 			result = (jint)initializeSystemThreadGroup(vm, (JNIEnv *)vmThread);
 			if (JNI_OK != result) {
 				goto _fail;
+			} else {
+#if JAVA_SPEC_VERSION >= 15
+				JNIEnv *env = (JNIEnv *)vmThread;
+				jclass clz = (*env)->FindClass(env, "jdk/internal/loader/NativeLibraries");
+				jmethodID mid = NULL;
+				if (NULL == clz) {
+					goto _fail;
+				}
+				mid = (*env)->GetStaticMethodID(env, clz, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z");
+				if (NULL == mid) {
+					goto _fail;
+				}
+				vm->nativeLibrariesLoadMethodID = (UDATA) mid;
+				Trc_JCL_init_nativeLibrariesLoadMethodID(vmThread, vm->nativeLibrariesLoadMethodID);
+#endif /* JAVA_SPEC_VERSION >= 15 */
 			}
 
 	#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@
 *
 * This file contains public function prototypes and
 * type definitions for the JEXTRACTNATIVES module.
-*
 */
 
 #include "j9.h"
@@ -56,19 +55,19 @@ extern "C" {
 void JNICALL
 Java_com_ibm_jvm_j9_dump_extract_Main_doCommand(JNIEnv *env, jobject obj, jobject dumpObj, jstring commandObject);
 
-
 /**
 * @brief
 * @param *env
 * @param obj
 * @param dumpObj
+* @param disableBuildIdCheck
 * @return jlong environment pointer
 */
 jlong JNICALL
-Java_com_ibm_jvm_j9_dump_extract_Main_getEnvironmentPointer(JNIEnv * env, jobject obj, jobject dumpObj);
+Java_com_ibm_jvm_j9_dump_extract_Main_getEnvironmentPointer(JNIEnv * env, jobject obj, jobject dumpObj, jboolean disableBuildIdCheck);
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #endif /* jextractnatives_api_h */

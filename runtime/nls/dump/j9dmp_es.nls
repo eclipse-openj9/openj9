@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -529,4 +529,73 @@ J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.explanation=User requested to exit
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.system_action=The JVM exits.
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the user.
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_ORDINARY_METHOD=El m\u00e9todo de volcado JIT que se est\u00e1 compilando es un m\u00e9todo ordinario
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_ORDINARY_METHOD.explanation=The dump has reported that the method the unhandled exception occurred in is an ordinary method.
+J9NLS_DMP_JIT_ORDINARY_METHOD.system_action=The JVM continues.
+J9NLS_DMP_JIT_ORDINARY_METHOD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_ORDINARY_METHOD.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=El volcado de JIT ha notificado todas las hebras de espera del m\u00e9todo actual que se va a compilar
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.explanation=The compilation threads waiting on the method to be compiled monitor will be notified.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.system_action=The JVM continues.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN=El volcado de JIT no ha podido asignar un nuevo plan de optimizaci\u00f3n
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.explanation=The dump could not allocate a new optimization plan for recompilation.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.system_action=The JVM will not recompile the current method and will continue.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID=Se ha producido un volcado de %1$s en la hebra de '%2$s' 0x%3$p
+# START NON-TRANSLATABLE
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.explanation=The dump is reporting which thread caused the unhandled exception.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.system_action=The JVM continues.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_1=JIT
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_2=main
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.sample_input_3=1280FF00
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_RECURSIVE_CRASH=Se ha producido un bloqueo recursivo de volcado de JIT en la hebra de diagn\u00f3stico
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_RECURSIVE_CRASH.explanation=The dump is reporting a reproduction of the original unhandled exception, with tracing.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.system_action=The JVM continues.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_RECURSIVE_CRASH.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_RECOMPILING_METHOD=El volcado de JIT se est\u00e1 volviendo a compilar %.*s.%.*s%.*s
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_RECOMPILING_METHOD.explanation=The dump is recompiling the specified method signature.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.system_action=The JVM continues.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_1=java/lang/String
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_2=equals
+J9NLS_DMP_JIT_RECOMPILING_METHOD.sample_input_3=(Ljava/lang/Object;)Z
+J9NLS_DMP_JIT_RECOMPILING_METHOD.link=
+
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD=El volcado de JIT est\u00e1 rastreando la IL del m\u00e9todo en la hebra de compilaci\u00f3n bloqueada
+# START NON-TRANSLATABLE
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.explanation=The dump is tracing the IL of the crashed thread in its current state before recompiling the method for tracing.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.system_action=The JVM continues.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.user_response=Diagnostic information, provide this information to your service representative.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.link=
+
 # END NON-TRANSLATABLE

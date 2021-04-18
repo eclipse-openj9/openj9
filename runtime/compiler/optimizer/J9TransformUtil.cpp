@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -196,8 +196,9 @@ static bool isArrayWithConstantElements(TR::SymbolReference *symRef, TR::Compila
       switch (symbol->getRecognizedField())
          {
          case TR::Symbol::Java_lang_invoke_BruteArgumentMoverHandle_extra:
-         case TR::Symbol::Java_lang_invoke_MethodType_arguments:
+         case TR::Symbol::Java_lang_invoke_MethodType_ptypes:
          case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
+         case TR::Symbol::Java_lang_invoke_MethodHandleImpl_LoopClauses_clauses:
          case TR::Symbol::Java_lang_String_value:
             return true;
          default:
@@ -444,6 +445,10 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
    else if (classNameLength >= 18 && !strncmp(className, "java/nio/ByteOrder", 18))
       return true;
    else if (classNameLength >= 13 && !strncmp(className, "java/nio/Bits", 13))
+      return true;
+   else if (classNameLength >= 20 && !strncmp(className, "jdk/incubator/vector", 20))
+      return true;
+   else if (classNameLength >= 22 && !strncmp(className, "jdk/internal/vm/vector", 22))
       return true;
 
    if (classNameLength == 16 && !strncmp(className, "java/lang/System", 16))
@@ -1350,8 +1355,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
       if (sym->getRecognizedField() == TR::Symbol::Java_lang_String_enableCompression)
          {
          // Add the flags in TR_AOTMethodHeader
-         J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-         TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
+         TR_AOTMethodHeader *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
          aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesEnableStringCompressionFolding;
          TR_ASSERT(node->getDataType() == TR::Int32, "Java_lang_String_enableCompression must be Int32");
          bool fieldValue = ((TR_J9VM *) comp->fej9())->dereferenceStaticFinalAddress(sym->castToStaticSymbol()->getStaticAddress(), TR::Int32).dataInt32Bit != 0;
@@ -1581,7 +1585,7 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
  *  actual data structure being walked matches the nodes closely enough to
  *  prevent the jit from doing something wrong.
  *
- *  This function must must verify that the structure we're loading from is
+ *  This function must verify that the structure we're loading from is
  *  of the correct type before the dereference.
  *
  *  In this narrow usage, "correct type" really means that subsequent
@@ -2353,3 +2357,197 @@ J9::TransformUtil::specializeInvokeExactSymbol(TR::Compilation *comp, TR::Node *
       }
       return false;
    }
+
+bool
+J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mhIndex, bool trace)
+   {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   auto knot = comp->getKnownObjectTable();
+   if (mhIndex == TR::KnownObjectTable::UNKNOWN ||
+       !knot ||
+       knot->isNull(mhIndex))
+      {
+      if (trace)
+         traceMsg(comp, "MethodHandle for invokeBasic n%dn %p is unknown or null\n", node->getGlobalIndex(), node);
+      return false;
+      }
+
+   TR_J9VMBase* fej9 = comp->fej9();
+   auto targetMethod = fej9->targetMethodFromMethodHandle(comp, mhIndex);
+
+   TR_ASSERT(targetMethod, "Can't get target method from MethodHandle obj%d\n", mhIndex);
+
+   auto symRef = node->getSymbolReference();
+   // Refine the call
+   auto refinedMethod = fej9->createResolvedMethod(comp->trMemory(), targetMethod, symRef->getOwningMethod(comp));
+   if (!performTransformation(comp, "O^O Refine invokeBasic n%dn %p with known MH object\n", node->getGlobalIndex(), node))
+      return false;
+
+   // Preserve NULLCHK
+   TR::TransformUtil::separateNullCheck(comp, treetop, trace);
+
+   TR::SymbolReference *newSymRef =
+       comp->getSymRefTab()->findOrCreateMethodSymbol
+       (symRef->getOwningMethodIndex(), -1, refinedMethod, TR::MethodSymbol::Static);
+
+   TR::Node::recreateWithSymRef(node, refinedMethod->directCallOpCode(), newSymRef);
+   // doNotProfile flag is used to imply whether the bytecode can OSR under voluntary OSR. Above transformation
+   // will set this flag to indicate the node cannot OSR. However, the transformation does not change the operand
+   // stack and local state before the call, hence it can OSR.
+   //
+   node->getByteCodeInfo().setDoNotProfile(false);
+
+   return true;
+#else
+   return false;
+#endif
+   }
+
+TR::MethodSymbol::Kinds getTargetMethodCallKind(TR::RecognizedMethod rm)
+   {
+   TR::MethodSymbol::Kinds callKind;
+   switch (rm)
+      {
+      case TR::java_lang_invoke_MethodHandle_invokeBasic:
+      case TR::java_lang_invoke_MethodHandle_linkToStatic:
+         callKind = TR::MethodSymbol::Static; break;
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+         callKind = TR::MethodSymbol::Special; break;
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         callKind = TR::MethodSymbol::Virtual; break;
+      case TR::java_lang_invoke_MethodHandle_linkToInterface:
+         callKind = TR::MethodSymbol::Interface; break;
+      default:
+         TR_ASSERT_FATAL(0, "Unsupported method");
+      }
+   return callKind;
+   }
+
+// Use getIndirectCall(datatype), pass in return type
+TR::ILOpCodes getTargetMethodCallOpCode(TR::RecognizedMethod rm, TR::DataType type)
+   {
+   switch (rm)
+      {
+      case TR::java_lang_invoke_MethodHandle_invokeBasic:
+      case TR::java_lang_invoke_MethodHandle_linkToStatic:
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+         return TR::ILOpCode::getDirectCall(type);
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+      case TR::java_lang_invoke_MethodHandle_linkToInterface:
+         return TR::ILOpCode::getIndirectCall(type);
+      default:
+         TR_ASSERT_FATAL(0, "Unsupported method");
+      }
+   return TR::BadILOp;
+   }
+
+bool
+J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mnIndex, bool trace)
+   {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   auto symRef = node->getSymbolReference();
+   auto rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
+   switch (rm)
+      {
+      case TR::java_lang_invoke_MethodHandle_linkToStatic:
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         break;
+      default:
+        TR_ASSERT_FATAL(false, "Unsupported method %s", symRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signature(comp->trMemory()));
+      }
+
+   auto knot = comp->getKnownObjectTable();
+   if (mnIndex == TR::KnownObjectTable::UNKNOWN ||
+       !knot ||
+       knot->isNull(mnIndex))
+      {
+      if (trace)
+         traceMsg(comp, "MethodName for linkToXXX n%dn %p is unknown or null\n", node->getGlobalIndex(), node);
+      return false;
+      }
+
+   TR_J9VMBase* fej9 = comp->fej9();
+   auto targetMethod = fej9->targetMethodFromMemberName(comp, mnIndex);
+
+   TR_ASSERT(targetMethod, "Can't get target method from MethodName obj%d\n", mnIndex);
+
+   if (!performTransformation(comp, "O^O Refine linkToXXX n%dn [%p] with known MemberName object\n", node->getGlobalIndex(), node))
+      return false;
+
+   TR::MethodSymbol::Kinds callKind = getTargetMethodCallKind(rm);
+   TR::ILOpCodes callOpCode = getTargetMethodCallOpCode(rm, node->getDataType());
+
+   TR::SymbolReference* newSymRef = NULL;
+   if (rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
+      {
+      uint32_t vTableSlot = fej9->vTableOrITableIndexFromMemberName(comp, mnIndex);
+      auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));
+      newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
+      newSymRef->setOffset(fej9->vTableSlotToVirtualCallOffset(vTableSlot));
+      }
+   else
+      {
+      uint32_t vTableSlot = 0;
+      auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));
+      newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
+      }
+
+   bool needNullChk, needVftChild, needResolveChk;
+   needNullChk = needVftChild = false;
+   switch (rm)
+      {
+      case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         needVftChild = true;
+      case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+         needNullChk = true;
+      }
+
+  if (needNullChk)
+      {
+      TR::Node::recreateWithSymRef(treetop->getNode(), TR::NULLCHK, comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(symRef->getOwningMethodSymbol(comp)));
+      }
+
+   if (needVftChild)
+      {
+      auto vftLoad = TR::Node::createWithSymRef(node, TR::aloadi, 1, node->getFirstArgument(), comp->getSymRefTab()->findOrCreateVftSymbolRef());
+      // Save all arguments of linkTo* to an array
+      int32_t numArgs = node->getNumArguments();
+      TR::Node **args= new (comp->trStackMemory()) TR::Node*[numArgs];
+      for (int32_t i = 0; i < numArgs; i++)
+         args[i] = node->getArgument(i);
+
+      node->removeLastChild();
+      // Anchor all children to a treetop before transmuting the call node
+      for (int i = 0; i <node->getNumChildren(); i++)
+         {
+         TR::TreeTop *tt = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, node->getChild(i)));
+         treetop->insertBefore(tt);
+         }
+
+      node->removeAllChildren();
+      // Recreate the node to a indirect call node
+      TR::Node::recreateWithoutProperties(node, callOpCode, numArgs, vftLoad, newSymRef);
+      // doNotProfile flag is used to imply whether the bytecode can OSR under voluntary OSR. Above transformation
+      // will set this flag to indicate the node cannot OSR. However, the transformation does not change the operand
+      // stack and local state before the call, hence it can OSR.
+      //
+      node->getByteCodeInfo().setDoNotProfile(false);
+
+      for (int32_t i = 0; i < numArgs - 1; i++)
+         node->setAndIncChild(i + 1, args[i]);
+      }
+   else
+      {
+      // VFT child is not needed, the call is direct, just need to change the symref and remove MemberName arg
+      node->setSymbolReference(newSymRef);
+      // Remove MemberName arg
+      node->removeLastChild();
+      }
+
+   return true;
+#else
+   return false;
+#endif
+   }
+

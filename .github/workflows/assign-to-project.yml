@@ -1,0 +1,55 @@
+###############################################################################
+# Copyright (c) 2020, 2020 Red Hat and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################/
+
+name: Assign labels to project
+
+on:
+  issues:
+    types: [labeled]
+  pull_request:
+    types: [labeled]
+env:
+  MY_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+# Source: https://github.com/marketplace/actions/assign-to-one-project
+jobs:
+  assign_snapshot_project:
+    runs-on: ubuntu-latest
+    name: Assign to Snapshot Project
+    if: github.event.label.name == 'snapshot'
+    steps:
+    - name: snapshot project assigner
+      uses: srggrs/assign-one-project-github-action@1.2.0
+      with:
+        project: 'https://github.com/eclipse/openj9/projects/17'
+
+  assign_mh_project:
+    runs-on: ubuntu-latest
+    name: Assign to MH Project
+    if: github.event.label.name == 'project:MH'
+    steps:
+    - name: MH project assigner
+      uses: srggrs/assign-one-project-github-action@1.2.0
+      with:
+        project: 'https://github.com/eclipse/openj9/projects/18'

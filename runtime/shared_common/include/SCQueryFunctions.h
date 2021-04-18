@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,18 +41,13 @@ extern "C"
   * Note that Microsoft compilers do not allow this attribute.
   */
 #if !defined(J9VM_SHRTEST)
-#if !defined(J9SHR_CACHELET_SUPPORT)
 static VMINLINE BOOLEAN j9shr_Query_IsCacheFull(J9JavaVM *vm)  __attribute__ ((__unused__));
 static VMINLINE BOOLEAN j9shr_Query_IsAddressInCache(J9JavaVM *vm, void *address, UDATA length)  __attribute__ ((__unused__));
 static VMINLINE BOOLEAN j9shr_Query_IsAddressInReadWriteCache(J9JavaVM *vm, void *address, UDATA length) __attribute__ ((__unused__));
-#endif /* !J9SHR_CACHELET_SUPPORT */
 static VMINLINE void j9shr_Query_PopulatePreinitConfigDefaults(J9JavaVM *vm, J9SharedClassPreinitConfig *updatedWithDefaults)  __attribute__ ((__unused__));
 #endif /* !J9VM_SHRTEST */
 #endif /* __GNUC__ */
 
-#if defined (J9VM_SHRTEST) && defined (J9SHR_CACHELET_SUPPORT)
-/*This function is not used from shrtest -Xrealtime */
-#else
 static VMINLINE BOOLEAN
 j9shr_Query_IsCacheFull(J9JavaVM *vm)
 {
@@ -65,7 +60,6 @@ j9shr_Query_IsCacheFull(J9JavaVM *vm)
 	}
 	return retval;
 }
-#endif
 
 /**
  * 	Following comment is copied from
@@ -84,9 +78,6 @@ j9shr_Query_IsCacheFull(J9JavaVM *vm)
  * @param Length of the memory segment.
  * @return TRUE if memory segment is in any cache, FALSE otherwise.
  */
-#if defined (J9VM_SHRTEST) && defined (J9SHR_CACHELET_SUPPORT)
-/*This function is not used from shrtest -Xrealtime */
-#else
 static VMINLINE BOOLEAN
 j9shr_Query_IsAddressInCache(J9JavaVM *vm, void *address, UDATA length)
 {
@@ -101,13 +92,13 @@ j9shr_Query_IsAddressInCache(J9JavaVM *vm, void *address, UDATA length)
 }
 
 /**
- * Check if an address range in in the readWrite (top layer) shared cache
+ * Check if an address range in the readWrite (top layer) shared cache
  *
  * @param[in] vm  The Java VM.
  * @param[in] address The start of the address range
  * @param[in] length The length of the address range
  *
- * @return TRUE if the the address range is in the readWrite cache. False otherwise.
+ * @return TRUE if the address range is in the readWrite cache. False otherwise.
  **/
 
 static VMINLINE BOOLEAN
@@ -122,7 +113,6 @@ j9shr_Query_IsAddressInReadWriteCache(J9JavaVM *vm, void *address, UDATA length)
 	}
 	return retval;
 }
-#endif
 
 #if !defined (J9VM_SHRTEST)
 static VMINLINE void

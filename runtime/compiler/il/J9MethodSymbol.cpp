@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -197,6 +197,15 @@ static TR::RecognizedMethod canSkipNullChecks[] =
    TR::java_lang_String_init_int_String_int_String_String,
    TR::java_lang_String_init_int_int_char_boolean,
    TR::java_lang_String_split_str_int,
+   TR::java_nio_Bits_getCharB,
+   TR::java_nio_Bits_getCharL,
+   TR::java_nio_Bits_getShortB,
+   TR::java_nio_Bits_getShortL,
+   TR::java_nio_Bits_getIntB,
+   TR::java_nio_Bits_getIntL,
+   TR::java_nio_Bits_getLongB,
+   TR::java_nio_Bits_getLongL,
+   TR::java_nio_HeapByteBuffer__get,
    TR::java_nio_HeapByteBuffer_put,
    TR::unknownMethod
    };
@@ -262,8 +271,8 @@ static TR::RecognizedMethod canSkipBoundChecks[] =
    TR::java_util_HashtableHashEnumerator_nextElement,
    TR::java_util_HashMap_getNode,
    TR::java_util_HashMap_resize,
-   TR::java_util_HashMapHashIterator_nextNode,
-   TR::java_util_HashMapHashIterator_init,
+   //TR::java_util_HashMapHashIterator_nextNode,  /* Unsafe if the Iterator is being incorrectly used (concurrent execution) */
+   TR::java_util_HashMapHashIterator_init,        /* Safe because the object is only visible by one thread when init() is executing */
    TR::java_util_EnumMap_put,
    TR::java_util_EnumMap_typeCheck,
    TR::java_util_EnumMap__init_,
@@ -280,6 +289,15 @@ static TR::RecognizedMethod canSkipBoundChecks[] =
    TR::java_util_HashMap_putImpl,
    TR::java_lang_String_init_int_String_int_String_String,
    TR::java_lang_String_init_int_int_char_boolean,
+   TR::java_nio_Bits_getCharB,
+   TR::java_nio_Bits_getCharL,
+   TR::java_nio_Bits_getShortB,
+   TR::java_nio_Bits_getShortL,
+   TR::java_nio_Bits_getIntB,
+   TR::java_nio_Bits_getIntL,
+   TR::java_nio_Bits_getLongB,
+   TR::java_nio_Bits_getLongL,
+   TR::java_nio_HeapByteBuffer__get,
    TR::java_nio_HeapByteBuffer_put,
    TR::unknownMethod
    };

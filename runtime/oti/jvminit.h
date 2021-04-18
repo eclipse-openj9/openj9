@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -383,11 +383,18 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLEPOSITIVEHASHCODE "-XX:-PositiveIdentityHash"
 #define VMOPT_XXENABLEORIGINALJDK8HEAPSIZECOMPATIBILITY "-XX:+OriginalJDK8HeapSizeCompatibilityMode"
 #define VMOPT_XXDISABLEORIGINALJDK8HEAPSIZECOMPATIBILITY "-XX:-OriginalJDK8HeapSizeCompatibilityMode"
+#define VMOPT_XXDISABLELEGACYMANGLING "-XX:-UseLegacyJNINameEscaping"
+#define VMOPT_XXENABLELEGACYMANGLING "-XX:+UseLegacyJNINameEscaping"
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define VMOPT_XXENABLEVALHALLA "-XX:+EnableValhalla"
 #define VMOPT_XXDISABLEVALHALLA "-XX:-EnableValhalla"
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+/* Option to turn on exception on synchronization on instances of value-based classes */
+#define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1 "-XX:DiagnoseSyncOnValueBasedClasses=1"
+/* Option to turn on warning on synchronization on instances of value-based classes */
+#define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS2 "-XX:DiagnoseSyncOnValueBasedClasses=2"
 
 #define VMOPT_XX_NOSUBALLOC32BITMEM "-XXnosuballoc32bitmem"
 
@@ -528,6 +535,7 @@ enum INIT_STAGE {
 #define MAPOPT_XXPARALLELCMSTHREADS_EQUALS "-XX:ParallelCMSThreads="
 #define MAPOPT_XXCONCGCTHREADS_EQUALS "-XX:ConcGCThreads="
 #define MAPOPT_XXPARALLELGCTHREADS_EQUALS "-XX:ParallelGCThreads="
+#define MAPOPT_XXPARALLELGCMAXTHREADS_EQUALS "-XX:ParallelGCMaxThreads="
 
 #define VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS "-XX:ActiveProcessorCount="
 
@@ -543,12 +551,20 @@ enum INIT_STAGE {
 #define VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSENABLE "-XX:+IdleTuningIgnoreUnrecognizedOptions"
 #define VMOPT_XCONCURRENTBACKGROUND "-Xconcurrentbackground"
 #define VMOPT_XGCTHREADS "-Xgcthreads"
+#define VMOPT_XGCMAXTHREADS "-Xgcmaxthreads"
 
 #define VMOPT_XXSHOW_EXTENDED_NPE_MESSAGE "-XX:+ShowCodeDetailsInExceptionMessages"
 #define VMOPT_XXNOSHOW_EXTENDED_NPE_MESSAGE "-XX:-ShowCodeDetailsInExceptionMessages"
 
 #define VMOPT_XXPRINTFLAGSFINALENABLE "-XX:+PrintFlagsFinal"
 #define VMOPT_XXPRINTFLAGSFINALDISABLE "-XX:-PrintFlagsFinal"
+
+#define VMOPT_XXLEGACYXLOGOPTION "-XX:+LegacyXlogOption"
+#define VMOPT_XXNOLEGACYXLOGOPTION "-XX:-LegacyXlogOption"
+#define MAPOPT_XLOG_OPT "-Xlog"
+#define MAPOPT_XLOG_OPT_COLON "-Xlog:"
+#define VMOPT_XSYSLOG_OPT "-Xsyslog"
+#define MAPOPT_XSYSLOG_OPT_COLON "-Xsyslog:"
 
 /* Modularity command line options */
 #define VMOPT_MODULE_UPGRADE_PATH "--upgrade-module-path"
@@ -563,6 +579,7 @@ enum INIT_STAGE {
 
 #define ENVVAR_IBM_MIXED_MODE_THRESHOLD "IBM_MIXED_MODE_THRESHOLD"
 #define ENVVAR_JAVA_COMPILER "JAVA_COMPILER"
+#define ENVVAR_JAVA_OPTIONS "JAVA_OPTIONS"
 #define ENVVAR_OPENJ9_JAVA_OPTIONS "OPENJ9_JAVA_OPTIONS"
 #define ENVVAR_IBM_JAVA_OPTIONS "IBM_JAVA_OPTIONS"
 #define ENVVAR_JAVA_TOOL_OPTIONS "JAVA_TOOL_OPTIONS"

@@ -1,0 +1,79 @@
+###############################################################################
+# Copyright (c) 2021, 2021 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################/
+
+name: "Auto test PR"
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  autoTestPR:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.comment.body, 'auto exclude test')
+    steps:
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: check python version
+        run: |
+          python -V
+      - name: install xml module
+        run: |
+          pip install lxml
+      - name: checkout current repo
+        uses: actions/checkout@v2
+        with:
+          path: 'tests'
+      - name: checkout TKG repo
+        uses: actions/checkout@v2
+        with:
+          repository: 'AdoptOpenJDK/TKG.git'
+          ref: 'master'
+          path: 'TKG'
+      - name: run script
+        env:
+          comment_body: ${{ github.event.comment.body }}
+        run: |
+          git config --list
+          python TKG/scripts/testBot/disable.py -m "$comment_body" -c "${{ github.event.comment.html_url }}" -d "$GITHUB_WORKSPACE/tests"
+      - name: test cannot be found
+        if: failure()
+        run: |
+          curl -u github-actions:${{ secrets.GITHUB_TOKEN }} -d '{ "body":  "The specified test cannot be excluded. Action run: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}" }' -X POST ${{ github.event.issue.comments_url }}
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          path: 'tests'
+          title: '${{ github.event.comment.body }}'
+          body: |
+            related: ${{ github.event.comment.html_url }}
+            triggered by @${{ github.event.comment.user.login }}
+            [ci skip]
+          commit-message: |
+            AUTO: ${{ github.event.comment.body }}
+            - related: ${{ github.event.comment.html_url }}
+          branch: 'autoTestPR'
+          branch-suffix: 'random'
+          signoff: 'true'
+      - name: add label
+        run: |
+          curl -u github-actions:${{ secrets.GITHUB_TOKEN }} -d '{"labels":["test excluded"]}' -X POST ${{ github.event.issue.url }}/labels

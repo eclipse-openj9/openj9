@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1478,53 +1478,55 @@ J9JITExceptionTable * jitGetExceptionTableFromPC(J9VMThread * vmThread, UDATA ji
 {
 	UDATA maskedPC = (UDATA)MASK_PC(jitPC);
 #ifdef J9JIT_ARTIFACT_SEARCH_CACHE_ENABLE
-	J9JITExceptionTable *exceptionTable = NULL;
 	TR_jit_artifact_search_cache *artifactSearchCache = vmThread->jitArtifactSearchCache;
-	TR_jit_artifact_search_cache *cacheEntry = NULL;
-	if (NULL == artifactSearchCache) {
-		TR_jit_artifact_search_cache *existingCache = NULL;
-		PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
-		artifactSearchCache = j9mem_allocate_memory(JIT_ARTIFACT_SEARCH_CACHE_SIZE * sizeof (TR_jit_artifact_search_cache), OMRMEM_CATEGORY_JIT);
+	if (J9_ARE_NO_BITS_SET((UDATA)artifactSearchCache, J9_STACKWALK_NO_JIT_CACHE)) {
+		J9JITExceptionTable *exceptionTable = NULL;
+		TR_jit_artifact_search_cache *cacheEntry = NULL;
 		if (NULL == artifactSearchCache) {
-			return jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
+			TR_jit_artifact_search_cache *existingCache = NULL;
+			PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
+			artifactSearchCache = j9mem_allocate_memory(JIT_ARTIFACT_SEARCH_CACHE_SIZE * sizeof (TR_jit_artifact_search_cache), OMRMEM_CATEGORY_JIT);
+			if (NULL == artifactSearchCache) {
+				goto noCache;
+			}
+			memset(artifactSearchCache, 0, JIT_ARTIFACT_SEARCH_CACHE_SIZE * sizeof(TR_jit_artifact_search_cache));
+			/* The vmThread parameter to this function may not be the current thread, so ensure that only a single
+			 * instance of the cache is allocated for the thread, and make sure the empty cache entries for a new
+			 * cache are visible to other threads before the cache pointer is visible.
+			 */
+			issueWriteBarrier();
+			existingCache = (TR_jit_artifact_search_cache*)compareAndSwapUDATA((uintptr_t*)&vmThread->jitArtifactSearchCache, (uintptr_t)existingCache, (uintptr_t)artifactSearchCache);
+			if (NULL != existingCache) {
+				j9mem_free_memory(artifactSearchCache);
+				artifactSearchCache = existingCache;
+			}
 		}
-		memset(artifactSearchCache, 0, JIT_ARTIFACT_SEARCH_CACHE_SIZE * sizeof(TR_jit_artifact_search_cache));
-		/* The vmThread parameter to this function may not be the current thread, so ensure that only a single
-		 * instance of the cache is allocated for the thread, and make sure the empty cache entries for a new
-		 * cache are visible to other threads before the cache pointer is visible.
-		 */
-		issueWriteBarrier();
-		existingCache = (TR_jit_artifact_search_cache*)compareAndSwapUDATA((uintptr_t*)&vmThread->jitArtifactSearchCache, (uintptr_t)existingCache, (uintptr_t)artifactSearchCache);
-		if (NULL != existingCache) {
-			j9mem_free_memory(artifactSearchCache);
-			artifactSearchCache = existingCache;
-		}
-	}
-	cacheEntry = &(artifactSearchCache[JIT_ARTIFACT_SEARCH_CACHE_HASH_RESULT(maskedPC)]);
-	if (cacheEntry->searchValue == maskedPC) {
-		exceptionTable = cacheEntry->exceptionTable;
-		/* The cache is not thread-safe - it's possible to view an inconsistent pc/metadata pair from one
-		 * thread while another thread is updating the cache entry. To counteract this, verify that the
-		 * found metadata is valid for the input PC. If not, ignore the cache and go to the underlying
-		 * hash table.
-		 */
-		if ((NULL == exceptionTable)
-		|| !(((maskedPC >= exceptionTable->startPC) && (maskedPC < exceptionTable->endWarmPC))
-			|| ((0 != exceptionTable->startColdPC) && (maskedPC >= exceptionTable->startColdPC) && (maskedPC < exceptionTable->endPC)))
-		) {
+		cacheEntry = &(artifactSearchCache[JIT_ARTIFACT_SEARCH_CACHE_HASH_RESULT(maskedPC)]);
+		if (cacheEntry->searchValue == maskedPC) {
+			exceptionTable = cacheEntry->exceptionTable;
+			/* The cache is not thread-safe - it's possible to view an inconsistent pc/metadata pair from one
+			 * thread while another thread is updating the cache entry. To counteract this, verify that the
+			 * found metadata is valid for the input PC. If not, ignore the cache and go to the underlying
+			 * hash table.
+			 */
+			if ((NULL == exceptionTable)
+			|| !(((maskedPC >= exceptionTable->startPC) && (maskedPC < exceptionTable->endWarmPC))
+				|| ((0 != exceptionTable->startColdPC) && (maskedPC >= exceptionTable->startColdPC) && (maskedPC < exceptionTable->endPC)))
+			) {
+				exceptionTable = jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
+			}
+	 	} else {
 			exceptionTable = jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
+			if (NULL != exceptionTable) {
+				cacheEntry->searchValue = maskedPC;
+				cacheEntry->exceptionTable = exceptionTable;
+			}
 		}
- 	} else {
-		exceptionTable = jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
-		if (NULL != exceptionTable) {
-			cacheEntry->searchValue = maskedPC;
-			cacheEntry->exceptionTable = exceptionTable;
-		}
+		return exceptionTable;
 	}
-	return exceptionTable;
-#else
-	return jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
+noCache:
 #endif /* J9JIT_ARTIFACT_SEARCH_CACHE_ENABLE */
+	return jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
 }
 
 
@@ -1769,6 +1771,9 @@ walkLiveMonitorSlots(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas,
 	j9object_t *objAddress;
 	U_16 i;
 	U_8 bit;
+	J9VMThread *currentThread = walkState->currentThread;
+	J9VMThread *targetThread = walkState->walkThread;
+	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
 
 	for (i = 0; i < numberOfMapBits; ++i) {
 		bit = liveMonitorMap[i >> 3] & monitorMask[i >> 3] & (1 << (i & 7));
@@ -1786,7 +1791,7 @@ walkLiveMonitorSlots(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas,
 			if (NULL != objAddress) {
 				j9object_t obj = *objAddress;
 
-				if (NULL != obj) {
+				if ((NULL != obj) && !vmFuncs->objectIsBeingWaitedOn(currentThread, targetThread, obj)) {
 					info->object = obj;
 					info->count = 1;
 					info->depth = (UDATA)walkState->userData4;
@@ -1806,6 +1811,9 @@ countLiveMonitorSlots(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas
 	IDATA monitorCount = (IDATA)walkState->userData2;
 	U_16 i;
 	U_8 bit;
+	J9VMThread *currentThread = walkState->currentThread;
+	J9VMThread *targetThread = walkState->walkThread;
+	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
 
 	for (i = 0; i < numberOfMapBits; ++i) {
 		bit = liveMonitorMap[i >> 3] & monitorMask[i >> 3];
@@ -1816,8 +1824,12 @@ countLiveMonitorSlots(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas
 			/* CMVC 188386 : if the object is stack allocates and the object is discontiguous on stack,
 			 * the jit stores a null in the slot. Skip this slot.
 			 */
-			if ((NULL != objAddress) && (NULL != *objAddress)) {
-				monitorCount += 1;
+			if (NULL != objAddress) {
+				j9object_t obj = *objAddress;
+
+				if ((NULL != obj) && !vmFuncs->objectIsBeingWaitedOn(currentThread, targetThread, obj)) {
+					monitorCount += 1;
+				}
 			}
 		}
 	}

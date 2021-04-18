@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,6 +73,10 @@ VMINLINE static J9HiddenInstanceField *initJ9HiddenField(J9HiddenInstanceField *
 
 static void fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field);
 
+/* Methods for managing hot fields when scavenger DynamicBreadthFirstScanOrdering is enabled */
+VMINLINE bool createClassLoaderHotFieldPool(J9JavaVM *javaVM, J9ClassLoader* classLoader);
+VMINLINE void createClassHotFieldsInfo(J9JavaVM *javaVM, J9Class* clazz, uint8_t fieldOffset, int32_t reducedCpuUtil, uint32_t reducedFrequency);
+VMINLINE void addOrUpdateHotField(J9JavaVM *javaVM, J9Class* clazz, uint8_t fieldOffset, int32_t reducedCpuUtil, uint32_t reducedFrequency);
 
 /*
 		Returns NULL if an exception is thrown.
@@ -143,7 +147,9 @@ findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameL
 			(const U_8 *) ".", 1,
 			fieldName, fieldNameLength, 
 			NULL, 0);
-		setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNOSUCHFIELDERROR, (UDATA*)message);
+		if (NULL != message) {
+			setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGNOSUCHFIELDERROR, (UDATA*)message);
+		}
 	}
 
 	return NULL;
@@ -578,6 +584,159 @@ addHiddenInstanceField(J9JavaVM *vm, const char *className, const char *fieldNam
 	return 0;
 }
 
+/**
+ * Report a hot field if the JIT has determined that the field has met appropriate thresholds to be determined a hot field. 
+ * Valid if dynamicBreadthFirstScanOrdering is enabled.
+ *
+ * @param javaVM[in] pointer to the J9JavaVM
+ * @param reducedCpuUtil normalized cpu utilization of the method reporting the hot field
+ * @param clazz pointer to the class where a hot field should be added/updated
+ * @param fieldOffset value of the field offset that should be added/updated as a hot field for the given class
+ * @param reducedFrequency normalized block frequency of the hot field for the method reporting the hot field
+ */
+void
+reportHotField(J9JavaVM *javaVM, int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency)
+{
+	/*
+	 * Exit if the hotFieldClassInfoPool is NULL as it should of been initialized during jvm initialization.
+	 * If the classLoader's hot field pool is null, create and initialize its hotFieldPool and hotFieldPoolMutex as it is required
+	 * for each classLoader if scavenger dynamicBreadthFirstScanOrdering is enabled.
+	 * If creating the classLoder's hotFieldPool or hotFieldPoolMutex fails, exit.
+	 */
+	if ((NULL == javaVM->hotFieldClassInfoPool) || ((NULL == clazz->classLoader->hotFieldPool) && (false == createClassLoaderHotFieldPool(javaVM, clazz->classLoader)))) {
+		return;
+	}
+	/* 
+	 * If the hotFieldsInfo pool element for the class does not exist already, create and initialize the class' hotFieldsInfo pool element
+	 * otherwise, create/update the given hot field for the class
+	 */
+	if (NULL == clazz->hotFieldsInfo) {
+		createClassHotFieldsInfo(javaVM, clazz, fieldOffset, reducedCpuUtil, reducedFrequency);
+	}
+	addOrUpdateHotField(javaVM, clazz, fieldOffset, reducedCpuUtil, reducedFrequency);
+}
+
+/**
+ * Create and initialize a classLoaders hot field pool and hot field pool monitor.
+ * Valid if dynamicBreadthFirstScanOrdering is enabled.
+ *
+ * @param javaVM[in] pointer to the J9JavaVM
+ * @param classLoader pointer to the classLoader that requires a hot field pool and hot field monitor to be created for it
+ */
+VMINLINE bool
+createClassLoaderHotFieldPool(J9JavaVM *javaVM, J9ClassLoader* classLoader)
+{
+	bool result = true;
+	omrthread_monitor_enter(javaVM->globalHotFieldPoolMutex);
+	if (NULL == classLoader->hotFieldPool) {
+		classLoader->hotFieldPool = pool_new(sizeof(J9HotField),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(javaVM->portLibrary));
+		if (NULL == classLoader->hotFieldPool || (0 != omrthread_monitor_init_with_name(&classLoader->hotFieldPoolMutex, 0, "Hot Field Pool"))) {
+			result = false;
+		}
+	}
+	omrthread_monitor_exit(javaVM->globalHotFieldPoolMutex);
+	return result;
+}
+
+/**
+ * Create and initialize a class' hotFieldsInfo pool element.
+ * Valid if dynamicBreadthFirstScanOrdering is enabled.
+ *
+ * @param javaVM[in] pointer to the J9JavaVM
+ * @param clazz pointer to the class where a hot field should be added
+ * @param fieldOffset value of the field offset that should be added as a hot field for the given class
+ * @param reducedCpuUtil normalized cpu utilization of the method reporting the hot field
+ * @param reducedFrequency normalized block frequency of the hot field for the method reporting the hot field
+ */
+VMINLINE void
+createClassHotFieldsInfo(J9JavaVM *javaVM, J9Class* clazz, uint8_t fieldOffset, int32_t reducedCpuUtil, uint32_t reducedFrequency)
+{
+	omrthread_monitor_enter(javaVM->hotFieldClassInfoPoolMutex);
+	/*
+	* Create and initialize new hotFieldsInfo pool element if it does not exist already.
+	*/
+	if (NULL == clazz->hotFieldsInfo) {
+		J9ClassHotFieldsInfo* hotFieldsInfo = (J9ClassHotFieldsInfo *)pool_newElement(javaVM->hotFieldClassInfoPool);
+		if (NULL != hotFieldsInfo) {
+			hotFieldsInfo->hotFieldListLength = 0;
+			hotFieldsInfo->consecutiveHotFieldSelections = 0;
+			hotFieldsInfo->hotFieldOffset1 = U_8_MAX;
+			hotFieldsInfo->hotFieldOffset2 = U_8_MAX;
+			hotFieldsInfo->hotFieldOffset3 = U_8_MAX;
+			hotFieldsInfo->classLoader = clazz->classLoader;
+			clazz->hotFieldsInfo = hotFieldsInfo;
+		}
+	}
+	omrthread_monitor_exit(javaVM->hotFieldClassInfoPoolMutex);
+}
+
+/**
+ * Add or update an existing hot field for a given class.
+ * Valid if dynamicBreadthFirstScanOrdering is enabled.
+ *
+ * @param clazz pointer to the class where a hot field should be added/updated
+ * @param fieldOffset value of the field offset that should be added/updated as a hot field for the given class
+ * @param reducedCpuUtil normalized cpu utilization of the method reporting the hot field
+ * @param reducedFrequency normalized block frequency of the hot field for the method reporting the hot field
+ */
+VMINLINE void
+addOrUpdateHotField(J9JavaVM *javaVM, J9Class* clazz, uint8_t fieldOffset, int32_t reducedCpuUtil, uint32_t reducedFrequency)
+{
+	if (NULL != clazz->hotFieldsInfo) {
+		J9ClassHotFieldsInfo* hotFieldsInfo = clazz->hotFieldsInfo;
+		J9ClassLoader* classLoader = clazz->classLoader;
+		omrthread_monitor_enter(classLoader->hotFieldPoolMutex);		
+		/* 
+		 * Search the hot field list of the class to check if the hot field exists already
+		 */
+		J9HotField* previous = NULL;
+		J9HotField* current = hotFieldsInfo->hotFieldListHead;
+		while (NULL != current) {
+			if (current->hotFieldOffset == fieldOffset) {
+				break;
+			}
+			previous = current;
+			current = current->next;
+		}
+		/* 
+		 * If the hot field does not exist, create and initialize the new hot field.
+		 */
+		if (NULL == current) {
+			if (hotFieldsInfo->hotFieldListLength >= javaVM->memoryManagerFunctions->j9gc_max_hot_field_list_length(javaVM)) {
+				goto releaseMutex;
+			} else {
+				current = (J9HotField *)pool_newElement(classLoader->hotFieldPool);
+				if (NULL == current) {
+					goto releaseMutex;
+				}
+				hotFieldsInfo->hotFieldListLength++;
+				current->hotFieldOffset = fieldOffset;
+				current->hotness = 0;
+				current->cpuUtil = 0;
+				current->next = NULL;
+			}
+		}
+		/*
+		 * Update the existing or newly created hot field with the newly reported hot field information.
+		 */
+		current->hotness += (reducedFrequency * reducedCpuUtil);
+		current->cpuUtil += reducedCpuUtil;
+		hotFieldsInfo->isClassHotFieldListDirty = true;		
+		/* 
+		 * Initialize hotFieldListHead if the hotFieldList for the class is empty - this is the case if the previous pointer is NULL. 
+		 * Otherwise, add the new hot field to the end of the hot field list for the class.
+		 */
+		if (NULL == previous) {
+			hotFieldsInfo->hotFieldListHead = current;
+		} else {
+			previous->next = current;
+		}
+
+releaseMutex:
+		omrthread_monitor_exit(classLoader->hotFieldPoolMutex);
+	}
+}
+
 J9ROMFieldOffsetWalkResult *
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9ROMFieldOffsetWalkState *state, U_32 flags, J9FlattenedClassCache *flattenedClassCache)
@@ -697,6 +856,8 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 
 		state->result.totalInstanceSize = fieldInfo.calculateTotalFieldsSizeAndBackfill();
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+		state->flatBackFillSize = fieldInfo.getBackfillSize();
+		state->classRequiresPrePadding = fieldInfo.doesClassRequiresPrePadding();
 		state->firstFlatDoubleOffset = fieldInfo.calculateFieldDataStart();
 		state->firstDoubleOffset = fieldInfo.addFlatDoublesArea(state->firstFlatDoubleOffset);
 		state->firstFlatObjectOffset = fieldInfo.addDoublesArea(state->firstDoubleOffset);
@@ -711,11 +872,28 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 
 
 		if (fieldInfo.isMyBackfillSlotAvailable() && fieldInfo.isBackfillSuitableFieldAvailable() ) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			BOOLEAN objectBackfillAvailable = fieldInfo.isBackfillSuitableObjectAvailable();
+			if (0 != fieldInfo.getInstanceSingleCount()) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD;
+			} else if (objectBackfillAvailable && (0 != fieldInfo.getInstanceObjectCount())) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
+			} else if (0 != fieldInfo.getFlatAlignedSingleInstanceBackfillSize()) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD;
+			} else if (objectBackfillAvailable && (0 != fieldInfo.getFlatAlignedObjectInstanceBackfillSize())) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD;
+			} else if (0 != fieldInfo.getFlatUnAlignedSingleInstanceBackfillSize()) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD;
+			} else if (objectBackfillAvailable && (0 != fieldInfo.getFlatUnAlignedObjectInstanceBackfillSize())) {
+				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD;
+			}
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 			if (fieldInfo.isBackfillSuitableInstanceSingleAvailable()) {
 				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_SINGLE_FIELD;
 			} else if (fieldInfo.isBackfillSuitableInstanceObjectAvailable()) {
 				state->walkFlags |= J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
 			}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		}
 
 		/*
@@ -906,41 +1084,76 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 			if( state->walkFlags & J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE ) {
 				{
 					if( modifiers & J9FieldFlagObject ) {
+#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
+						J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(field);
+						U_8 *fieldSigBytes = J9UTF8_DATA(fieldSig);
+						if ('Q' == *fieldSigBytes) {
+							J9Class *fieldClass = NULL;
+							fieldClass = findJ9ClassInFlattenedClassCache(state->flattenedClassCache, fieldSigBytes + 1, J9UTF8_LENGTH(fieldSig) - 2);
+							if (!J9_IS_FIELD_FLATTENED(fieldClass, field)) {
+								if (J9_ARE_ALL_BITS_SET(state->walkFlags, J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD)) {
+									Assert_VM_true(state->backfillOffsetToUse >= 0);
+									state->result.offset = state->backfillOffsetToUse;
+									state->walkFlags &= ~(UDATA)J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
+								} else {
+									state->result.offset = state->firstObjectOffset + state->objectsSeen * referenceSize;
+									state->objectsSeen++;
+								}
+							} else {
+								U_32 size = fieldClass->totalInstanceSize;
+								state->result.flattenedClass = fieldClass;
+								if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
+									if (J9CLASS_HAS_4BYTE_PREPADDING(fieldClass)) {
+										size -= sizeof(U_32);
+									}
+									state->result.offset = state->firstFlatDoubleOffset + state->currentFlatDoubleOffset;
+									Assert_VM_true((state->result.offset + referenceSize) % sizeof(U_64) == 0);
+									state->currentFlatDoubleOffset += ROUND_UP_TO_POWEROF2(size, sizeof(U_64));
+								} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
+									size = ROUND_UP_TO_POWEROF2(size, referenceSize);
+									if (J9_ARE_ALL_BITS_SET(state->walkFlags, J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD)
+										&& (state->flatBackFillSize == size)
+									) {
+										Assert_VM_true(state->backfillOffsetToUse >= 0);
+										state->result.offset = state->backfillOffsetToUse;
+										state->walkFlags &= ~(UDATA)J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD;
+									} else {
+										state->result.offset = state->firstFlatObjectOffset + state->currentFlatObjectOffset;
+										state->currentFlatObjectOffset += size;
+									}
+								} else {
+									if (J9_ARE_ALL_BITS_SET(state->walkFlags, J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD)
+										&& (state->flatBackFillSize == size)
+									) {
+										Assert_VM_true(state->backfillOffsetToUse >= 0);
+										state->result.offset = state->backfillOffsetToUse;
+										state->walkFlags &= ~(UDATA)J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_SINGLE_FIELD;
+									} else {
+										state->result.offset = state->firstFlatSingleOffset + state->currentFlatSingleOffset;
+										state->currentFlatSingleOffset += size;
+									}
+								}
+							}
+						} else {
+							if (J9_ARE_ALL_BITS_SET(state->walkFlags, J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD)) {
+								Assert_VM_true(state->backfillOffsetToUse >= 0);
+								state->result.offset = state->backfillOffsetToUse;
+								state->walkFlags &= ~(UDATA)J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
+							} else {
+								state->result.offset = state->firstObjectOffset + state->objectsSeen * referenceSize;
+								state->objectsSeen++;
+							}
+						}
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 						if (state->walkFlags & J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD) {
 							Assert_VM_true(state->backfillOffsetToUse >= 0);
 							state->result.offset = state->backfillOffsetToUse;
 							state->walkFlags &= ~(UDATA)J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD;
 						} else {
-#ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-							J9UTF8 *fieldSig = J9ROMFIELDSHAPE_SIGNATURE(field);
-							U_8 *fieldSigBytes = J9UTF8_DATA(fieldSig);
-							if ('Q' == *fieldSigBytes) {
-								J9Class *fieldClass = NULL;
-								fieldClass = findJ9ClassInFlattenedClassCache(state->flattenedClassCache, fieldSigBytes + 1, J9UTF8_LENGTH(fieldSig) - 2);
-								if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassIsFlattened)) {
-									state->result.offset = state->firstObjectOffset + state->objectsSeen * referenceSize;
-									state->objectsSeen++;
-								} else {
-									U_32 firstFieldOffset = (U_32) fieldClass->backfillOffset;
-									state->result.flattenedClass = fieldClass;
-									if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
-										state->result.offset = state->firstFlatDoubleOffset + state->currentFlatDoubleOffset - firstFieldOffset;
-										state->currentFlatDoubleOffset += ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - firstFieldOffset, sizeof(U_64));
-									} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
-										state->result.offset = state->firstFlatObjectOffset + state->currentFlatObjectOffset - firstFieldOffset;
-										state->currentFlatObjectOffset += ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - firstFieldOffset, referenceSize);
-									} else {
-										state->result.offset = state->firstFlatSingleOffset + state->currentFlatSingleOffset - firstFieldOffset;
-										state->currentFlatSingleOffset += fieldClass->totalInstanceSize - firstFieldOffset;
-									}
-								}
-							} else
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-							{
-								state->result.offset = state->firstObjectOffset + state->objectsSeen * referenceSize;
-								state->objectsSeen++;
-							}
+							state->result.offset = state->firstObjectOffset + state->objectsSeen * referenceSize;
+							state->objectsSeen++;
 						}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 						break;
 					} else if ( 0 == (state->walkFlags & J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS) ) {
 						if( modifiers & J9FieldSizeDouble ) {

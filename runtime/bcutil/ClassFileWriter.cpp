@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,6 +77,12 @@ ClassFileWriter::analyzeROMClass()
 		_buildResult = OutOfMemory;
 		return;
 	}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO)) {
+		_numOfInjectedInterfaces = getNumberOfInjectedInterfaces(_romClass);
+	}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	/* Walk ROM class adding hashtable entries for all referenced UTF8s and NASs, with index=0 */
 	analyzeConstantPool();
@@ -341,6 +347,9 @@ ClassFileWriter::analyzeInterfaces()
 {
 	J9SRP * interfaceNames = J9ROMCLASS_INTERFACES(_romClass);
 	UDATA interfaceCount = _romClass->interfaceCount;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	interfaceCount -=  _numOfInjectedInterfaces;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	for (UDATA i = 0; i < interfaceCount; i++) {
 		J9UTF8 * interfaceName = NNSRP_GET(interfaceNames[i], J9UTF8*);
 		addClassEntry(interfaceName, 0);
@@ -730,8 +739,11 @@ ClassFileWriter::writeInterfaces()
 {
 	J9SRP * interfaceNames = J9ROMCLASS_INTERFACES(_romClass);
 	UDATA interfaceCount = _romClass->interfaceCount;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	interfaceCount -= _numOfInjectedInterfaces;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
-	writeU16(U_16(_romClass->interfaceCount));
+	writeU16(U_16(interfaceCount));
 	for (UDATA i = 0; i < interfaceCount; i++) {
 		J9UTF8 * interfaceName = NNSRP_GET(interfaceNames[i], J9UTF8 *);
 		writeU16(indexForClass(interfaceName));

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,7 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/IO.hpp"
 #include "env/TRMemory.hpp"
+#include "env/VerboseLog.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "infra/Monitor.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -42,9 +43,9 @@
 
 TR::CompilationStrategy *TR::CompilationController::_compilationStrategy = NULL;
 TR::CompilationInfo *    TR::CompilationController::_compInfo = 0;
-int32_t                 TR::CompilationController::_verbose = 0;
-bool                    TR::CompilationController::_useController = false;
-
+int32_t                  TR::CompilationController::_verbose = 0;
+bool                     TR::CompilationController::_useController = false;
+bool                     TR::CompilationController::_tlsCompObjCreated = false;
 
 
 //------------------------------------ init -----------------------------------
@@ -89,6 +90,7 @@ bool TR::CompilationController::init(TR::CompilationInfo *compInfo)
    if (options->getOption(TR_EnableCompYieldStats))
       TR::Compilation::allocateCompYieldStatsMatrix();
    tlsAlloc(OMR::compilation);
+   _tlsCompObjCreated = true;
    return _useController;
    }
 
@@ -98,7 +100,8 @@ bool TR::CompilationController::init(TR::CompilationInfo *compInfo)
 // --------------------------------------------------------------------------
 void TR::CompilationController::shutdown()
    {
-   tlsFree(OMR::compilation);
+   if (_tlsCompObjCreated)
+      tlsFree(OMR::compilation);
    if (!_useController)
       return;
    // would like to free all entries in the pool of compilation plans
@@ -611,7 +614,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
       fe->acquireCompilationLock();
       bool isAlreadyBeingCompiled;
       TR_OpaqueMethodBlock *j9m = methodInfo->getMethodInfo();
-      void *currentStartPC = TR::CompilationInfo::isCompiled((J9Method*)j9m) ? (void *)TR::Compiler->mtd.startPC(j9m) : NULL;
+      void *currentStartPC = TR::CompilationInfo::getPCIfCompiled((J9Method*)j9m);
 
       // See if the method has already been compiled but we get a sample in the old body
       if (currentStartPC != startPC) // rare case
@@ -707,7 +710,7 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                   // sampled; (2) EDO; (3) PIC miss; (4) megamorphic interface call profile.
                   // EDO will have its own recompilation snippet, but in cases (3) and (4)
                   // the counter just reaches 0, and only the next sample will trigger
-                  // recompilation. These cases can be identified by the the negative counter
+                  // recompilation. These cases can be identified by the negative counter
                   // (we decrement the counter above in sampleMethod()). In contrast, if the
                   // counter is decremented through sampling, only the first thread that sees
                   // the counter 0 will recompile the method, and all the others will be
@@ -1043,11 +1046,9 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                         // Exception: bootstrap class methods that are cheap should be upgraded directly at warm
                         if (cmdLineOptions->getOption(TR_UpgradeBootstrapAtWarm) && fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)j9method))
                            {
-#ifndef PUBLIC_BUILD
                            TR_J9SharedCache *sc = TR_J9VMBase::get(jitConfig, event->_vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
                            bool expensiveComp = sc->isHint(j9method, TR_HintLargeMemoryMethodW);
                            if (!expensiveComp)
-#endif //!PUBLIC_BUILD
                               nextOptLevel = warm;
                            }
                         }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,9 @@
 #include "bcnames.h"
 
 #include "BuildResult.hpp"
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+#include "VMHelpers.hpp"
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 /*
  * It is not guaranteed that slot1 value for constantpool index=0 entry will be zero. 
@@ -809,14 +812,25 @@ class RecordComponentIterator
 
 	/*
 	 * Iterate over the constant pool indices corresponding to interface names (UTF8s).
+	 * Also iterates over the injected interface names (UTF8s) in the "extra" cp slots.
+	 * numOfInjectedInterfaces represents the number of extra slots containing the UTF8s.
 	 */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	void interfacesDo(ConstantPoolIndexVisitor *visitor, U_16 numOfInjectedInterfaces)
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	void interfacesDo(ConstantPoolIndexVisitor *visitor)
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	{
 		U_16 *end = _classFile->interfaces + getInterfacesCount();
 		for (U_16 *interface = _classFile->interfaces; interface != end; ++interface) {
 			/* Each interface is a constantClass, use slot1 to get at the underlying UTF8 */
 			visitor->visitConstantPoolIndex(U_16(_classFile->constantPool[ *interface ].slot1));
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		for (int i = 0; i < numOfInjectedInterfaces; i++) {
+			visitor->visitConstantPoolIndex(getConstantPoolCount() + i);
+		}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	}
 
 	/*
@@ -975,6 +989,11 @@ class RecordComponentIterator
 	U_16 getRecordComponentCount() const { return _recordComponentCount; }
 	bool isSealed() const { return _isSealed; }
 	U_16 getPermittedSubclassesClassCount() const { return _isSealed ? _permittedSubclassesAttribute->numberOfClasses : 0; }
+	bool isValueBased() const { return _isClassValueBased; }
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool needsIdentityInterface() const { return _isIdentityInterfaceNeeded; }
+	bool isValueType() const { return _isValueType; }
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	U_16 getPermittedSubclassesClassNameAtIndex(U_16 index) const {
 		U_16 result = 0;
@@ -1013,6 +1032,7 @@ private:
 		JAVA8_CONTENDED_ANNOTATION,
 		CONTENDED_ANNOTATION,
 		UNMODIFIABLE_ANNOTATION,
+		VALUEBASED_ANNOTATION,
 		KNOWN_ANNOTATION_COUNT
 	};
 
@@ -1063,6 +1083,11 @@ private:
 	bool _needsStaticConstantInit;
 	bool _isRecord;
 	bool _isSealed;
+	bool _isClassValueBased;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool _isIdentityInterfaceNeeded;
+	bool _isValueType;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;

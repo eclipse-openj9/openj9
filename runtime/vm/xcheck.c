@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,8 +99,16 @@ processXCheckOptions(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	noGCIndex = OMR_MAX(noGCIndex, noneIndex);
 
 	if (gcIndex > noGCIndex) {
+		const char *gccheckDLLName = J9_CHECK_GC_DLL_NAME;
+
+#if defined(OMR_MIXED_REFERENCES_MODE_STATIC)
+		if (!J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+			gccheckDLLName = J9_CHECK_GC_FULL_DLL_NAME;
+		}
+#endif /* defined(OMR_MIXED_REFERENCES_MODE_STATIC) */
+
 		j9vm_args->j9Options[gcIndex].flags |= ARG_REQUIRES_LIBRARY;
-		entry = findDllLoadInfo(loadTable, J9_CHECK_GC_DLL_NAME);
+		entry = findDllLoadInfo(loadTable, gccheckDLLName);
 		entry->loadFlags |= LOAD_BY_DEFAULT;
 	}
 

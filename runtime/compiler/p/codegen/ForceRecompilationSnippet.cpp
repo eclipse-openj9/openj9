@@ -45,7 +45,7 @@
 uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
    {
    uint8_t             *buffer = cg()->getBinaryBufferCursor();
-   TR::SymbolReference  *induceRecompilationSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinduceRecompilation, false, false, false);
+   TR::SymbolReference  *induceRecompilationSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCinduceRecompilation);
    intptr_t startPC = (intptr_t)((uint8_t*)cg()->getCodeStart());
 
    getSnippetLabel()->setCodeLocation(buffer);

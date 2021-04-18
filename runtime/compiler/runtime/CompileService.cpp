@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@
 #include "infra/CriticalSection.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#include "env/VerboseLog.hpp"
 
 // Routine called when a new connection request has been received at the server
 // Executed by the listener thread
@@ -45,5 +46,5 @@ void J9CompileDispatcher::compile(JITServer::ServerStream *stream)
          }
       } // end critical section
    // If we reached this point there was a memory allocation failure
-   stream->writeError(compilationLowPhysicalMemory);
+   stream->writeError(compilationLowPhysicalMemory, (uint64_t) JITServer::ServerMemoryState::VERY_LOW);
    }

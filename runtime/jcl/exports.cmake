@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -334,6 +334,7 @@ omr_add_exports(jclse
 	Java_java_lang_Class_getVirtualMethodCountImpl
 	Java_java_lang_Class_getVirtualMethodsImpl
 	Java_java_lang_Class_isClassADeclaredClass
+	Java_java_lang_Class_isCircularDeclaringClass
 	Java_java_lang_Class_getRecordComponentsImpl
 	Java_java_lang_Class_permittedSubclassesImpl
 	Java_java_lang_Compiler_commandImpl
@@ -361,25 +362,10 @@ omr_add_exports(jclse
 	Java_java_lang_Thread_stopImpl
 	Java_java_lang_Thread_suspendImpl
 	Java_java_lang_Thread_yield
-	Java_java_lang_invoke_InterfaceHandle_registerNatives
-	Java_java_lang_invoke_MethodHandle_getCPClassNameAt
-	Java_java_lang_invoke_MethodHandle_getCPMethodHandleAt
-	Java_java_lang_invoke_MethodHandle_getCPMethodTypeAt
-	Java_java_lang_invoke_MethodHandle_getCPTypeAt
-	Java_java_lang_invoke_MethodHandle_invoke
-	Java_java_lang_invoke_MethodHandle_invokeExact
-	Java_java_lang_invoke_MethodHandle_requestCustomThunkFromJit
-	Java_java_lang_invoke_MethodHandle_vmRefFieldOffset
-	Java_java_lang_invoke_MethodType_makeTenured
-	Java_java_lang_invoke_MutableCallSite_freeGlobalRef
-	Java_java_lang_invoke_MutableCallSite_registerNatives
-	Java_java_lang_invoke_PrimitiveHandle_lookupField
-	Java_java_lang_invoke_PrimitiveHandle_lookupMethod
-	Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromConstructor
-	Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromField
-	Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromMethod
-	Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromSpecialHandle
-	Java_java_lang_invoke_ThunkTuple_registerNatives
+	Java_java_lang_invoke_MethodHandleResolver_getCPClassNameAt
+	Java_java_lang_invoke_MethodHandleResolver_getCPMethodHandleAt
+	Java_java_lang_invoke_MethodHandleResolver_getCPMethodTypeAt
+	Java_java_lang_invoke_MethodHandleResolver_getCPTypeAt
 	Java_java_lang_ref_Finalizer_runAllFinalizersImpl
 	Java_java_lang_ref_Finalizer_runFinalizationImpl
 	Java_java_lang_ref_Reference_reprocess
@@ -397,7 +383,7 @@ omr_add_exports(jclse
 	Java_jdk_internal_misc_Unsafe_freeDBBMemory
 	Java_jdk_internal_misc_Unsafe_reallocateDBBMemory
 	Java_jdk_internal_misc_Unsafe_registerNatives
-	Java_jdk_internal_misc_Unsafe_shouldBeInitialized
+	Java_sun_misc_Unsafe_shouldBeInitialized
 	Java_jdk_internal_perf_Perf_registerNatives
 	Java_sun_misc_Perf_attach
 	Java_sun_misc_Perf_createByteArray
@@ -408,7 +394,6 @@ omr_add_exports(jclse
 	Java_sun_misc_Perf_registerNatives
 	Java_sun_misc_Unsafe_allocateDBBMemory
 	Java_sun_misc_Unsafe_allocateMemory
-	Java_sun_misc_Unsafe_allocateMemoryNoException
 	Java_sun_misc_Unsafe_copyMemory__Ljava_lang_Object_2JLjava_lang_Object_2JJ
 	Java_sun_misc_Unsafe_defineAnonymousClass
 	Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2
@@ -450,6 +435,26 @@ omr_add_exports(jclse
 	Java_sun_reflect_ConstantPool_getStringAt0
 	Java_sun_reflect_ConstantPool_getUTF8At0
 )
+
+if(J9VM_OPT_METHOD_HANDLE)
+	omr_add_exports(jclse
+		Java_java_lang_invoke_InterfaceHandle_registerNatives
+		Java_java_lang_invoke_MethodHandle_invoke
+		Java_java_lang_invoke_MethodHandle_invokeExact
+		Java_java_lang_invoke_MethodHandle_requestCustomThunkFromJit
+		Java_java_lang_invoke_MethodHandle_vmRefFieldOffset
+		Java_java_lang_invoke_MethodType_makeTenured
+		Java_java_lang_invoke_MutableCallSite_freeGlobalRef
+		Java_java_lang_invoke_MutableCallSite_registerNatives
+		Java_java_lang_invoke_PrimitiveHandle_lookupField
+		Java_java_lang_invoke_PrimitiveHandle_lookupMethod
+		Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromConstructor
+		Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromField
+		Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromMethod
+		Java_java_lang_invoke_PrimitiveHandle_setVMSlotAndRawModifiersFromSpecialHandle
+		Java_java_lang_invoke_ThunkTuple_registerNatives
+	)
+endif()
 
 if(J9VM_OPT_SIDECAR)
 	omr_add_exports(jclse
@@ -516,18 +521,25 @@ else()
 	)
 endif()
 
-
 if(JAVA_SPEC_VERSION EQUAL 8)
 	omr_add_exports(jclse Java_sun_misc_URLClassPath_getLookupCacheURLs)
 endif()
 
 # java 9+
 if(NOT JAVA_SPEC_VERSION LESS 9)
+	if(J9VM_OPT_METHOD_HANDLE)
+		omr_add_exports(jclse
+			Java_java_lang_invoke_FieldVarHandle_lookupField
+			Java_java_lang_invoke_FieldVarHandle_unreflectField
+		)
+		if(J9VM_OPT_PANAMA)
+			omr_add_exports(jclse Java_java_lang_invoke_MethodHandles_findNativeAddress)
+		endif()
+	endif()
+
 	omr_add_exports(jclse
 		Java_java_lang_StackWalker_getImpl
 		Java_java_lang_StackWalker_walkWrapperImpl
-		Java_java_lang_invoke_FieldVarHandle_lookupField
-		Java_java_lang_invoke_FieldVarHandle_unreflectField
 		Java_java_lang_invoke_VarHandle_addAndGet
 		Java_java_lang_invoke_VarHandle_compareAndExchange
 		Java_java_lang_invoke_VarHandle_compareAndExchangeAcquire
@@ -565,25 +577,57 @@ if(NOT JAVA_SPEC_VERSION LESS 9)
 		Java_jdk_internal_reflect_ConstantPool_getNameAndTypeRefInfoAt0
 		Java_jdk_internal_reflect_ConstantPool_getTagAt0
 	)
-	if(J9VM_OPT_PANAMA)
-		omr_add_exports(jclse Java_java_lang_invoke_MethodHandles_findNativeAddress)
-	endif()
 endif()
 
-#java 11+
+# java 11+
 if(NOT JAVA_SPEC_VERSION LESS 11)
 	omr_add_exports(jclse
 		Java_java_lang_Class_getNestHostImpl
 		Java_java_lang_Class_getNestMembersImpl
-		Java_java_lang_invoke_MethodHandle_getCPConstantDynamicAt
+		Java_java_lang_invoke_MethodHandleResolver_getCPConstantDynamicAt
 	)
 endif()
 
-#java 15+
+# java 15+
 if(NOT JAVA_SPEC_VERSION LESS 15)
 	omr_add_exports(jclse
 		Java_java_lang_Class_isHiddenImpl
 		Java_java_lang_ClassLoader_defineClassImpl1
-		Java_java_lang_invoke_MethodHandleNatives_checkClassBytes
+	)
+	if(J9VM_OPT_METHOD_HANDLE)
+		omr_add_exports(jclse
+			Java_java_lang_invoke_MethodHandleNatives_checkClassBytes
+		)
+	endif()
+endif()
+
+# java 16+
+if(NOT JAVA_SPEC_VERSION LESS 16)
+	omr_add_exports(jclse
+		Java_java_lang_ref_Reference_refersTo
+		Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives
+		Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0
+		Java_jdk_internal_vm_vector_VectorSupport_registerNatives
+		Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount
+	)
+endif()
+
+# OpenJDK methodhandle support
+if(J9VM_OPT_OPENJDK_METHODHANDLE)
+	omr_add_exports(jclse
+		Java_java_lang_invoke_MethodHandleNatives_init
+		Java_java_lang_invoke_MethodHandleNatives_expand
+		Java_java_lang_invoke_MethodHandleNatives_resolve
+		Java_java_lang_invoke_MethodHandleNatives_getMembers
+		Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset
+		Java_java_lang_invoke_MethodHandleNatives_staticFieldOffset
+		Java_java_lang_invoke_MethodHandleNatives_staticFieldBase
+		Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo
+		Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetNormal
+		Java_java_lang_invoke_MethodHandleNatives_setCallSiteTargetVolatile
+		Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments
+		Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext
+		Java_java_lang_invoke_MethodHandleNatives_getNamedCon
+		Java_java_lang_invoke_MethodHandleNatives_registerNatives
 	)
 endif()

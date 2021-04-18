@@ -28,6 +28,5 @@
  */
 @SuppressWarnings("module")
 module openj9.cuda {
-  requires java.base;
   exports com.ibm.cuda;
 }

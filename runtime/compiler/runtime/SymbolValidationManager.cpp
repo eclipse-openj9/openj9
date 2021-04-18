@@ -32,13 +32,32 @@
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
+#if defined(J9VM_OPT_JITSERVER)
+#include "runtime/JITClientSession.hpp"
+#endif
+
 #include "j9protos.h"
 
 #if defined (_MSC_VER) && _MSC_VER < 1900
 #define snprintf _snprintf
 #endif
 
-static const char * const jlthrowableName = "java/lang/Throwable";
+TR::SymbolValidationManager::SystemClassNotWorthRemembering
+TR::SymbolValidationManager::_systemClassesNotWorthRemembering[] = {
+
+   /* Generally, classes that inherit from java/lang/Throwable are used to indicate exception
+    * conditions; as such, they are not going be important for the performance of normal mainline
+    * code. Therefore, it is better for the AOT compiler to not be aware of these classes (and
+    * thereby lose the ability to optimize for them) rather than risk a load failure due to a code
+    * path that was unlikely to execute.
+    */
+   { "java/lang/Throwable", NULL, true },
+
+   /* Newer java code is moving towards using StringBuilder. Therefore, ignoring this class
+    * reduces load failures, while having minimal impact on steady state throughput.
+    */
+   { "java/lang/StringBuffer", NULL, false }
+};
 
 TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee)
    : _symbolID(FIRST_ID),
@@ -64,8 +83,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _idToSymbolTable(_region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region),
      _wellKnownClasses(_region),
-     _loadersOkForWellKnownClasses(_region),
-     _jlthrowable(_fej9->getSystemClassFromClassName(jlthrowableName, (int32_t)strlen(jlthrowableName)))
+     _loadersOkForWellKnownClasses(_region)
    {
    assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
 
@@ -94,7 +112,26 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
       _alreadyGeneratedRecords.insert(
          new (_region) ArrayClassFromComponentClassRecord(arrayClass, component));
       }
+
+   // Ensure that the count of classes not worth remembering is defined correctly
+   static_assert(SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT == sizeof(_systemClassesNotWorthRemembering) / sizeof(_systemClassesNotWorthRemembering[0]),
+                 "SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT doesn't match the size of _systemClassesNotWorthRemembering");
+
    }
+
+#if defined(J9VM_OPT_JITSERVER)
+void
+TR::SymbolValidationManager::populateSystemClassesNotWorthRemembering(ClientSessionData *clientData)
+   {
+   // Populate the client session with classes not worth remembering
+   auto classesNotWorthRemembering = clientData->getSystemClassesNotWorthRemembering();
+   for (int i = 0; i < SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT; ++i)
+      {
+      auto classNotWorthRemembering = &_systemClassesNotWorthRemembering[i];
+      classesNotWorthRemembering[i] = { classNotWorthRemembering->_className, NULL, classNotWorthRemembering->_checkIsSuperClass };
+      }
+   }
+#endif
 
 void
 TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType type)
@@ -108,36 +145,65 @@ TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType typ
 bool
 TR::SymbolValidationManager::isClassWorthRemembering(TR_OpaqueClassBlock *clazz)
    {
-   if (!_jlthrowable)
-      _jlthrowable = _fej9->getSystemClassFromClassName(jlthrowableName, (int32_t)strlen(jlthrowableName));
+   bool worthRemembering = true;
 
-   /* This heuristic checks whether the class being considered is, or inherits from, java/lang/Throwable.
-    * If it is, the class is deemed not worth remembering. The reason for this is to reduce the chances
-    * of an AOT load failure. Generally, classes that inherit from java/lang/Throwable are used to indicate
-    * exception conditions; as such, they are not going be important for the performance of normal mainline
-    * code. Therefore, it is better for the compiler to not be aware of these classes (and thereby lose the
-    * ability to optimize for them) rather than risk a load failure due to a code path that was unlikely to
-    * execute.
-    */
-   if (_jlthrowable && _fej9->isSameOrSuperClass((J9Class *)_jlthrowable, (J9Class *)clazz))
+   for (int i = 0; worthRemembering && i < SYSTEM_CLASSES_NOT_WORTH_REMEMBERING_COUNT; i++)
       {
-      if (_comp->getOption(TR_TraceRelocatableDataCG))
-         traceMsg(_comp, "isClassWorthRemembering: clazz %p is or inherits from jlthrowable\n", clazz);
-      return false;
+      SystemClassNotWorthRemembering *systemClassNotWorthRemembering = getSystemClassNotWorthRemembering(i);
+      if (!systemClassNotWorthRemembering->_clazz)
+         {
+         systemClassNotWorthRemembering->_clazz = _fej9->getSystemClassFromClassName(
+                  systemClassNotWorthRemembering->_className,
+                  (int32_t)strlen(systemClassNotWorthRemembering->_className));
+         }
+
+      if (systemClassNotWorthRemembering->_checkIsSuperClass)
+         {
+         if (systemClassNotWorthRemembering->_clazz &&
+             _fej9->isSameOrSuperClass((J9Class *)systemClassNotWorthRemembering->_clazz, (J9Class *)clazz))
+            {
+            if (_comp->getOption(TR_TraceRelocatableDataCG))
+               traceMsg(_comp, "isClassWorthRemembering: clazz %p is or inherits from %s (%p)\n",
+                        clazz, systemClassNotWorthRemembering->_className, systemClassNotWorthRemembering->_clazz);
+
+            worthRemembering = false;
+            }
+         }
+      else
+         {
+         worthRemembering = (clazz != systemClassNotWorthRemembering->_clazz);
+         }
       }
 
-   return true;
+   return worthRemembering;
+   }
+
+TR::SymbolValidationManager::SystemClassNotWorthRemembering *
+TR::SymbolValidationManager::getSystemClassNotWorthRemembering(int idx)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (_comp->isOutOfProcessCompilation())
+      {
+      auto classesNotWorthRemembering = _fej9->_compInfoPT->getClientData()->getSystemClassesNotWorthRemembering();
+      return &classesNotWorthRemembering[idx];
+      }
+   else
+#endif
+      {
+      return &_systemClassesNotWorthRemembering[idx];
+      }
    }
 
 void
 TR::SymbolValidationManager::populateWellKnownClasses()
    {
-#define WELL_KNOWN_CLASS_COUNT 10
-#define REQUIRED_WELL_KNOWN_CLASS_COUNT 1
+#define REQUIRED_WELL_KNOWN_CLASS_COUNT 0
 
    // Classes must have names only allowed to be defined by the bootstrap loader
    // The first REQUIRED_WELL_KNOWN_CLASS_COUNT entries are required - if any is
    // missing then the compilation will fail.
+   // Number of entries must match WELL_KNOWN_CLASS_COUNT defined in
+   // SymbolValidationManager.hpp
    static const char * const names[] =
       {
       "java/lang/Class",
@@ -146,7 +212,6 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       "java/lang/Runnable",
       "java/lang/String",
       "java/lang/StringBuilder",
-      "java/lang/StringBuffer",
       "java/lang/System",
       "java/lang/ref/Reference",
       "com/ibm/jit/JITHelpers",
@@ -201,6 +266,18 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 
    *classCount = _wellKnownClasses.size();
 
+#if defined(J9VM_OPT_JITSERVER)
+   ClientSessionData *clientData = _comp->getClientData();
+   if (clientData)
+      {
+      // This is an out-of-process compilation; check the cache in the client session first
+      _wellKnownClassChainOffsets = clientData->getCachedWellKnownClassChainOffsets(
+         includedClasses, _wellKnownClasses.size(), classChainOffsets + 1);
+      if (_wellKnownClassChainOffsets)
+         return;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    char key[128];
    snprintf(key, sizeof (key), "AOTWellKnownClasses:%x", includedClasses);
 
@@ -216,11 +293,21 @@ TR::SymbolValidationManager::populateWellKnownClasses()
          key,
          &dataDescriptor);
 
+#if defined(J9VM_OPT_JITSERVER)
+   if (_wellKnownClassChainOffsets && clientData)
+      {
+      // This is an out-of process compilation; cache the pointer to the newly created well-known
+      // class chain offsets in the client session to avoid sending repeated requests to the client
+      clientData->cacheWellKnownClassChainOffsets(includedClasses, _wellKnownClasses.size(),
+                                                  classChainOffsets + 1, _wellKnownClassChainOffsets);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    SVM_ASSERT_NONFATAL(
       _wellKnownClassChainOffsets != NULL,
       "Failed to store well-known classes' class chains");
 
-#undef WELL_KNOWN_CLASS_COUNT
+#undef REQUIRED_WELL_KNOWN_CLASS_COUNT
    }
 
 bool
@@ -601,8 +688,11 @@ TR::SymbolValidationManager::addMultipleArrayRecords(TR_OpaqueClassBlock *compon
 bool
 TR::SymbolValidationManager::addMethodRecord(TR::MethodValidationRecord *record)
    {
-   if (shouldNotDefineSymbol(record->_method))
+   if (shouldNotDefineSymbol(record->_method)
+       || !isClassWorthRemembering(_fej9->getClassOfMethod(record->_method)))
+      {
       return abandonRecord(record);
+      }
 
    if (recordExists(record))
       {
@@ -944,6 +1034,9 @@ TR::SymbolValidationManager::addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBl
 bool
 TR::SymbolValidationManager::addClassInfoIsInitializedRecord(TR_OpaqueClassBlock *clazz, bool isInitialized)
    {
+   if (!isClassWorthRemembering(clazz))
+      return false;
+
    SVM_ASSERT_ALREADY_VALIDATED(this, clazz);
    return addVanillaRecord(clazz, new (_region) ClassInfoIsInitialized(clazz, isInitialized));
    }

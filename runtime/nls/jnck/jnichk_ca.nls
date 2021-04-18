@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,7 +220,7 @@ J9NLS_JNICHK_FREED_LOCAL_REF.user_response=
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_NONFATAL_ERROR=S'ha detectat un error JNI. Continuant...
+J9NLS_JNICHK_NONFATAL_ERROR=S'ha detectat un error JNI. S'est\u00e0 continuant...
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NONFATAL_ERROR.explanation=The JNI check utility has detected a recoverable JNI error.
 J9NLS_JNICHK_NONFATAL_ERROR.system_action=The JVM continues.
@@ -228,7 +228,7 @@ J9NLS_JNICHK_NONFATAL_ERROR.user_response=Investigate the JNI check error report
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_FATAL_ERROR=S'ha detectat un error JNI. Avortant.
+J9NLS_JNICHK_FATAL_ERROR=S'ha detectat un error JNI. S'est\u00e0 avortant.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_FATAL_ERROR.explanation=The JNI check utility has detected an unrecoverable JNI error.
 J9NLS_JNICHK_FATAL_ERROR.system_action=The JVM terminates.
@@ -748,7 +748,7 @@ J9NLS_JNICHK_IGNORING_JNI_ABORT.system_action=The JVM continues.
 J9NLS_JNICHK_IGNORING_JNI_ABORT.user_response=Check and correct the JNI application code if necessary.
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_CONSIDER_JNI_ABORT=Suggeriment JNI a %s: El buffer sembla no haver estat modificat. Considereu la possibilitat d'utilitzar JNI_ABORT enlloc de mode 0.
+J9NLS_JNICHK_CONSIDER_JNI_ABORT=Suggeriment JNI a %s: La mem\u00f2ria interm\u00e8dia sembla no haver estat modificada. Considereu la possibilitat d'utilitzar JNI_ABORT enlloc de mode 0.
 J9NLS_JNICHK_CONSIDER_JNI_ABORT.sample_input_1=methodName
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_CONSIDER_JNI_ABORT.explanation=The named JNI function was called with a mode parameter set to 0.
@@ -1019,4 +1019,24 @@ J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2=Error de JNI a %1$s: l'argument #%2$d no \u00e9s una subclasse de %3$s ni %4$s
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_3=package1/Class1
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_4=package2/Class2
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# abortonerror is not translatable
+J9NLS_JNICHK_HELP_16=\tabortonerror   ha provocat un avortament en errors greus
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_15.explanation=NOTAG
+J9NLS_JNICHK_HELP_15.system_action=
+J9NLS_JNICHK_HELP_15.user_response=
 # END NON-TRANSLATABLE

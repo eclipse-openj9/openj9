@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -898,7 +898,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8.user_response=Contact the provid
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=\u7121\u6548\u7684\u65b9\u6cd5\u4fee\u98fe\u5143
+J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS=\u4e0d\u5408\u6cd5\u7684\u65b9\u6cd5\u4fee\u98fe\u5143
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1082,7 +1082,7 @@ J9NLS_CFR_ERR_FOUND_JSR_IN_CLASS_VER_51.user_response=Contact the provider of th
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=\u7121\u6548\u7684\u6b04\u4f4d\u540d\u7a31
+J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=\u4e0d\u5408\u6cd5\u7684\u6b04\u4f4d\u540d\u7a31
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1208,7 +1208,7 @@ J9NLS_CFR_ERR_METHOD_PARAMETER_NAME_NOT_UTF8.user_response=Contact the provider 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8=\u4ecb\u9762\u65b9\u6cd5\u7684\u4fee\u98fe\u5143\u7121\u6548
+J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8=\u4ecb\u9762\u65b9\u6cd5\u7684\u4fee\u98fe\u5143\u4e0d\u5408\u6cd5
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8.explanation=See the JVM spec for details of the allowed interface method modifiers
 J9NLS_CFR_ERR_INTERFACE_METHOD_JAVA_8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1307,7 +1307,7 @@ J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classf
 # END NON-TRANSLATABLE
 
 # <clinit> method at version 51.0 must be void and take no arguments
-J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=\u65b9\u6cd5 <clinit> \u5177\u6709\u7121\u6548\u7c3d\u7ae0
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=\u65b9\u6cd5 <clinit> \u5177\u6709\u4e0d\u5408\u6cd5\u7c3d\u7ae0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1482,12 +1482,7 @@ J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.user_response=Contact the provider of t
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=\u8a18\u9304\u985e\u5225\u4e0d\u80fd\u662f abstract
-# START NON-TRANSLATABLE
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=
 
 # Record is not translatable
 J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=\u8a18\u9304\u540d\u7a31\u5fc5\u9808\u662f\u5b57\u4e32
@@ -1514,12 +1509,7 @@ J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.user_response=Contact the pro
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=\u8a18\u9304\u672a\u660e\u78ba\u7d50\u675f
-# START NON-TRANSLATABLE
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=
 
 # LocalVariableTypeTable is not translatable
 # LocalVariableTable is not translatable
@@ -1561,9 +1551,11 @@ J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.system_action=The J
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=\u5bc6\u5c01\u985e\u5225\u5fc5\u9808\u81f3\u5c11\u6709\u4e00\u500b Permitted Subclass
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=
+
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1=\u4f7f\u7528 -XX:-EnableValhalla \u9078\u9805\u505c\u7528 ValueTypes
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.user_response=Contact the provider of the classfile for a corrected version.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.explanation=ValueTypes is an experimental feature and is disabled by -XX:-EnableValhalla
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.user_response=Contact the provider of the class file for a corrected version, or remove the -XX:+EnableValhalla option and retry.
 # END NON-TRANSLATABLE

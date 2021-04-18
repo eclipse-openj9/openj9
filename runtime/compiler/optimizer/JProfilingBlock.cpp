@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -856,6 +856,8 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
          // In this case we only check if we have queued for recompilation before comparing against method invocation count.
          int32_t *loadAddress = isProfilingCompilation ? blockFrequencyInfo->getIsQueuedForRecompilation() : blockFrequencyInfo->getEnableJProfilingRecompilation();
          TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(loadAddress, TR::Int32);
+         symRef->getSymbol()->setIsRecompQueuedFlag();
+         symRef->getSymbol()->setNotDataAddress();
          TR::Node *enableLoad = TR::Node::createWithSymRef(node, TR::iload, 0, symRef);
          TR::Node *enableTest = TR::Node::createif(TR::ificmpeq, enableLoad, TR::Node::iconst(node, -1), originalFirstBlock->getEntry());
          TR::TreeTop *enableTree = TR::TreeTop::create(comp(), enableTest);
@@ -988,6 +990,8 @@ int32_t TR_JProfilingBlock::perform()
 
       // add the actual counter to the block
       TR::SymbolReference *symRef = comp()->getSymRefTab()->createKnownStaticDataSymbolRef(blockFrequencyInfo->getFrequencyForBlock(block->getNumber()), TR::Int32);
+      symRef->getSymbol()->setIsBlockFrequency();
+      symRef->getSymbol()->setNotDataAddress();
       TR::TreeTop *tree = TR::TreeTop::createIncTree(comp(), block->getEntry()->getNode(), symRef, 1);
       tree->getNode()->setIsProfilingCode();
       block->prepend(tree);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,8 @@
 #include "mmomrhook_internal.h"
 
 #include "EnvironmentBase.hpp"
+#include "ForwardedHeader.hpp"
+#include "Heap.hpp"
 #include "HeapMap.hpp"
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
@@ -42,7 +44,6 @@
 #include "HeapRegionIterator.hpp"
 #include "GCExtensions.hpp"
 #include "HeapRegionManager.hpp"
-#include "ScavengerForwardedHeader.hpp"
 
 void
 globalGCReportObjectEvents(MM_EnvironmentBase *env, MM_HeapMap *markMap)
@@ -81,19 +82,20 @@ localGCReportObjectEvents(MM_EnvironmentBase *env, MM_MemorySubSpaceSemiSpace *m
 	/* Find the region associated with the evacuate allocate profile */
 	GC_MemorySubSpaceRegionIterator regionIterator(memorySubSpaceNew);
 	MM_HeapRegionDescriptor *evacuateRegion = NULL;
+	bool const compressed = extensions->compressObjectReferences();
 	while ((evacuateRegion = regionIterator.nextRegion()) != NULL) {
 		J9Object *objectPtr = (J9Object *)evacuateRegion->getLowAddress();
 		/* skip survivor regions */
 		if (memorySubSpaceNew->isObjectInEvacuateMemory(objectPtr)) {
 			MM_MemorySubSpace *evacuateMemorySubSpace = evacuateRegion->getSubSpace();
 			/* Use the object model helper to test for holes,
-			 * otherwise use ScavengerForwardedHeader to test for forwarded objects.
+			 * otherwise use ForwardedHeader to test for forwarded objects.
 			 */
 			while(objectPtr < (J9Object *)evacuateRegion->getHighAddress()) {
 				if (extensions->objectModel.isDeadObject(objectPtr)) {
 					objectPtr = (J9Object *)((U_8 *)objectPtr + extensions->objectModel.getSizeInBytesDeadObject(objectPtr));
 				} else {
-					MM_ScavengerForwardedHeader forwardHeader(objectPtr, extensions);
+					MM_ForwardedHeader forwardHeader(objectPtr, compressed);
 					if (forwardHeader.isForwardedPointer()) {
 						J9Object *forwardPtr = forwardHeader.getForwardedObject();
 						Assert_MM_true(NULL != forwardPtr);

@@ -86,7 +86,7 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
    else
       {
       TR_RuntimeHelper helper = (comp->getOption(TR_EnableNewX86PrefetchTLH)) ? TR_X86newPrefetchTLH : TR_X86prefetchTLH;
-      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+      helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(helper);
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(buffer+4, helperSymRef);
       if (fej9->needRelocationsForHelpers())
          {
@@ -232,7 +232,6 @@ uint8_t* TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t* prefetchSnippetBuf
    //
    for (int32_t lineOffset = 0; lineOffset < numLines; ++lineOffset)
       {
-      TR_ASSERT_FATAL(comp->compileRelocatableCode() || comp->isOutOfProcessCompilation() || TR::CodeGenerator::getX86ProcessorInfo().isAMD15h() == comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H), "OMR_PROCESSOR_X86_AMDFAMILY15H\n");
       prefetchSnippetBuffer[0] = 0x0F;
       if (comp->target().cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H))
          prefetchSnippetBuffer[1] = 0x0D;

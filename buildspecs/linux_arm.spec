@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2019 IBM Corp. and others
+Copyright (c) 2006, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -132,10 +132,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</source>
 	<flags>
 		<flag id="arch_arm" value="true"/>
-		<flag id="build_autobuild" value="true"/>
+		<flag id="build_autobuild" value="false"/>
 		<flag id="build_dropToHursley" value="true"/>
 		<flag id="build_j2se" value="true"/>
-		<flag id="build_java8" value="true"/>
+		<flag id="build_java8" value="false"/>
 		<flag id="build_vmContinuous" value="true"/>
 		<flag id="env_hasFPU" value="true"/>
 		<flag id="env_littleEndian" value="true"/>
@@ -228,7 +228,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_jvmti" value="true"/>
 		<flag id="opt_jxeLoadSupport" value="true"/>
 		<flag id="opt_memoryCheckSupport" value="true"/>
-		<flag id="opt_methodHandle" value="true"/>
 		<flag id="opt_multiVm" value="true"/>
 		<flag id="opt_panama" value="false"/>
 		<flag id="opt_reflect" value="true"/>

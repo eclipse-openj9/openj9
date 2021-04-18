@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+
+<!--
+  Copyright (c) 2001, 2020 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<project name="CDS Adaptor Tests" default="build" basedir=".">
+	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
+	<description>
+		Build CDSAdaptorTest 
+	</description>
+	
+	<!-- set global properties for this build -->
+	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/CDSAdaptorTest" />
+	<property name="dist" location="${DEST}"/>
+	<!--Properties for this particular build-->
+	<property name="src" location="./src"/>
+	<property name="src_resources_testBundle" location="./resources/TestBundle/src"/>
+	<property name="src_resources_weavinghookTest" location="./resources/WeavinghookTest/src"/>
+	<property name="build" location="./bin"/>
+	<property name="build_resource_testBundle" location="./bin_resource_testBundle"/>
+	<property name="build_resource_weavinghookTest" location="./bin_resource_weavinghookTest"/>
+	<property name="resources" location="./resources"/>
+	<property name="LIB" value="osgi"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
+
+	<target name="init">
+		<mkdir dir="${DEST}" />
+		<mkdir dir="${DEST}/CDSAdaptorOrphanTestBundles" />
+		<mkdir dir="${build}"/>
+		<mkdir dir="${build_resource_testBundle}"/>
+		<mkdir dir="${build_resource_weavinghookTest}"/>
+	</target>
+
+	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source " >
+    	<echo>Ant version is ${ant.version}</echo>
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
+		<javac srcdir="${src_resources_testBundle}" destdir="${build_resource_testBundle}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<classpath>
+				<fileset dir="${LIB_DIR}" casesensitive="yes">
+					<include name="org.eclipse.osgi*.jar" />
+				</fileset>
+			</classpath>
+		</javac>		
+		<javac srcdir="${src_resources_weavinghookTest}" destdir="${build_resource_weavinghookTest}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<classpath>
+				<fileset dir="${LIB_DIR}" casesensitive="yes">
+					<include name="org.eclipse.osgi*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<classpath>
+				<fileset dir="${LIB_DIR}" casesensitive="yes">
+					<include name="org.eclipse.osgi*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+  	<target name="dist" depends="compile" description="generate the distribution" >
+		<jar jarfile="${DEST}/CDSAdaptorOrphanTestBundles/org.openj9.test.testbundle_1.0.0._v1.jar" manifest="${src_resources_testBundle}/../MANIFEST.MF" filesonly="true">
+			<fileset dir="${build_resource_testBundle}" />
+		</jar>
+		<jar jarfile="${DEST}/CDSAdaptorOrphanTestBundles/org.openj9.test.weavinghooktest_1.0.0._v1.jar" manifest="${src_resources_weavinghookTest}/../MANIFEST.MF" filesonly="true">
+			<fileset dir="${build_resource_weavinghookTest}" />
+		</jar>
+		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml" />
+			<fileset dir="${src}/../" includes="*.mk" />
+			<fileset dir="${build}" />
+			<fileset dir="${resources}" />
+		</copy>
+  	</target>
+
+	<target name="clean" depends="dist" description="clean up">
+		<!-- Delete the ${build} directory trees -->
+		<delete dir="${build}" />
+		<delete dir="${build_resource_testBundle}" />
+		<delete dir="${build_resource_weavinghookTest}" />
+	</target>
+
+	<target name="build" >
+		<if>
+			<or>
+				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="openj9" />
+			</or>
+			<then>
+				<antcall target="clean" inheritall="true" />
+			</then>
+		</if>
+	</target>
+</project>

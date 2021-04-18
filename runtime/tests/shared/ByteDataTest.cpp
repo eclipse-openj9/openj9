@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -373,7 +373,7 @@ IDATA storeTest(J9JavaVM* vm, struct CachePointers* cachePointers)
 	
 	/** TEST 11 **/
 
-	/* Store private data using cache1 under under the same key as some existing public data - should succeed */
+	/* Store private data using cache1 under the same key as some existing public data - should succeed */
 	newEntry = (U_8*)testCache->storeSharedData(vm->mainThread, key2, strlen(key2), &INPUTDATA[10]);
 	if (!checkStoreValues(vm, newEntry, FALSE, INPUTDATA[10].address, oldNewEntry, FALSE, ++test)) {
 		return 1;

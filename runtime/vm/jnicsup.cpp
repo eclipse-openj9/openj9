@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1862,12 +1862,21 @@ monitorEnter(JNIEnv* env, jobject obj)
 
 	if (J9_OBJECT_MONITOR_ENTER_FAILED(monstatus)) {
 fail:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#if JAVA_SPEC_VERSION >= 16
 		if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monstatus) {
-			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, obj)->romClass);
-			setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+			J9Class* badClass = J9OBJECT_CLAZZ(vmThread, obj);
+			J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(badClass->romClass);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (J9_IS_J9CLASS_VALUETYPE(badClass)) {
+				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+			} else 
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */		
+			{
+				Assert_VM_true(J9_ARE_ALL_BITS_SET(vmThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
+				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+			}
 		} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+#endif /* JAVA_SPEC_VERSION >= 16 */
 		if (J9_OBJECT_MONITOR_OOM == monstatus) {
 			SET_NATIVE_OUT_OF_MEMORY_ERROR(vmThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
 		}
@@ -2158,6 +2167,27 @@ findJNIMethod(J9VMThread* currentThread, J9Class* clazz, char* name, char* signa
 	return result;
 }
 
+UDATA
+jniIsInternalClassRef(J9JavaVM *vm, jobject ref)
+{
+	UDATA rc = FALSE;
+	J9ClassWalkState classWalkState;
+	J9Class *clazz = allLiveClassesStartDo(&classWalkState, vm, NULL);
+	while (clazz != NULL) {
+		do {
+			if (ref == (jobject)&clazz->classObject) {
+				rc = TRUE;
+				goto done;
+			}
+			clazz = clazz->replacedClass;
+		} while (NULL != clazz);
+		clazz = allLiveClassesNextDo(&classWalkState);
+	}
+done:
+	allLiveClassesEndDo(&classWalkState);
+	return rc;
+}
+
 static jobjectRefType JNICALL
 getObjectRefType(JNIEnv *env, jobject obj)
 {
@@ -2166,8 +2196,6 @@ getObjectRefType(JNIEnv *env, jobject obj)
 	jobjectRefType rc = JNIInvalidRefType;
 	J9JNIReferenceFrame* frame;
 	J9JavaStack* stack = vmThread->stackObject;
-	J9ClassWalkState classWalkState;
-	J9Class * clazz;
 
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
@@ -2229,15 +2257,10 @@ getObjectRefType(JNIEnv *env, jobject obj)
 
 	/* Check for class refs */
 
-	clazz = allLiveClassesStartDo(&classWalkState, vm, NULL);
-	while (clazz != NULL) {
-		if (obj == (jobject) &(clazz->classObject)) {
-			rc = JNILocalRefType;
-			break;
-		}
-		clazz = allLiveClassesNextDo(&classWalkState);
+	if (jniIsInternalClassRef(vm, obj)) {
+		rc = JNILocalRefType;
+		goto done;
 	}
-	allLiveClassesEndDo(&classWalkState);
 
 done:
 	VM_VMAccess::inlineExitVMToJNI(vmThread);

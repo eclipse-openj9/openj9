@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2020 IBM Corp. and others
+ * Copyright (c) 2015, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -212,7 +212,7 @@ createPackage(J9VMThread * currentThread, J9Module * fromModule, const char *pac
 		}
 	}
 
-	/* if we failed to create the package */	
+	/* if we failed to create the package */
 	if (NULL == retval) {
 		if (NULL != j9package) {
 			freePackage(currentThread, j9package);
@@ -398,12 +398,12 @@ addMulPackageDefinitions(J9VMThread * currentThread, J9Module * fromModule, cons
 				}
 			}
 
-			/* Remove from the hash table the entries that made through. Note that the last entry (the one we are 
+			/* Remove from the hash table the entries that made through. Note that the last entry (the one we are
 			 * processing right now) was the one that failed so we don't need to worry about that one.
 			 */
 			if (ERRCODE_SUCCESS != retval) {
 				if (i > 0) {
-					--i; 
+					--i;
 					removeMulPackageDefinitions(currentThread, fromModule, packages, i);
 				}
 			}
@@ -463,8 +463,8 @@ areNoPackagesDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, co
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
 	 /*
-	 * This check will be ignored for calls to this method that occur before java.base is defined. 
-	 * Classes are loaded before java.base is created that are added to the classHashTable. 
+	 * This check will be ignored for calls to this method that occur before java.base is defined.
+	 * Classes are loaded before java.base is created that are added to the classHashTable.
 	 * These classes will eventually be fixed up to be part of java.base, but should not be considered duplicate packages
 	 * before that happens.
 	 */
@@ -510,7 +510,7 @@ exportPackageToAll(J9VMThread * currentThread, J9Module * fromModule, const char
 	UDATA retval = ERRCODE_GENERAL_FAILURE;
 	J9Package * const j9package = getPackageDefinition(currentThread, fromModule, package, &retval);
 	if (NULL != j9package) {
-		j9package->exportToAll = TRUE;
+		j9package->exportToAll = 1;
 		if (TrcEnabled_Trc_MODULE_addModuleExportsToAll) {
 			trcModulesAddModuleExportsToAll(currentThread, fromModule, package);
 		}
@@ -541,7 +541,7 @@ exportPackageToAllUnamed(J9VMThread * currentThread, J9Module * fromModule, cons
 	UDATA retval = ERRCODE_GENERAL_FAILURE;
 	J9Package * const j9package = getPackageDefinition(currentThread, fromModule, package, &retval);
 	if (NULL != j9package) {
-		j9package->exportToAllUnnamed = TRUE;
+		j9package->exportToAllUnnamed = 1;
 		if (TrcEnabled_Trc_MODULE_addModuleExportsToAllUnnamed) {
 			trcModulesAddModuleExportsToAllUnnamed(currentThread, fromModule, package);
 		}
@@ -707,7 +707,7 @@ allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Mod
 /**
  * Define a module containing the specified packages. It will create the module record in the  ClassLoader's module hash table and
  * create package records in the class loader's package hash table if necessary.
- *  
+ *
  * @throws NullPointerExceptions a if module is null.
  * @throws IllegalArgumentExceptions if
  *     - Class loader already has a module with that name
@@ -842,10 +842,10 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 									vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 								} else {
 									const char* moduleName = "openj9.sharedclasses";
-	
+
 									if (0 == strcmp(nameUTF, moduleName)) {
 										J9VMDllLoadInfo *entry = FIND_DLL_TABLE_ENTRY(J9_SHARED_DLL_NAME);
-	
+
 										if ((NULL == entry)
 											|| (J9_ARE_ALL_BITS_SET(entry->loadFlags, FAILED_TO_LOAD))
 										) {
@@ -858,9 +858,9 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 							/* first module; must be "java.base" */
 							J9ClassWalkState classWalkState;
 							J9Class* clazz = NULL;
-	
+
 							Assert_SC_true(0 == strcmp(nameUTF, JAVA_BASE_MODULE));
-	
+
 							clazz = vmFuncs->allClassesStartDo(&classWalkState, vm, vm->systemClassLoader);
 							while (NULL != clazz) {
 								Assert_SC_true(clazz->module == vm->javaBaseModule);
@@ -887,6 +887,8 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 							TRIGGER_J9HOOK_JAVA_BASE_LOADED(vm->hookInterface, currentThread);
 							Trc_MODULE_defineModule(currentThread, "java.base", j9mod);
 						}
+
+						TRIGGER_J9HOOK_VM_MODULE_LOAD(vm->hookInterface, currentThread, j9mod);
 					} else {
 						throwExceptionHelper(currentThread, rc);
 					}
@@ -910,7 +912,7 @@ done:
 			const char* packageName = packages[pkgIndex];
 			j9mem_free_memory((void *)packageName);
 		}
-		j9mem_free_memory((void *)packages);		
+		j9mem_free_memory((void *)packages);
 	}
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
@@ -925,7 +927,7 @@ done:
 }
 
 /**
- * Qualified export of package in fromModule to toModule. 
+ * Qualified export of package in fromModule to toModule.
  *
  * @todo the null toModule case is not outlined in the spec but the spec does not specify what to do in this case
  * @throws NullPointerExceptions a if toModule is null.
@@ -958,7 +960,7 @@ JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobj
 #else
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
-	
+
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
 		j9object_t stringObject = J9_JNI_UNWRAP_REFERENCE(packageObj);
@@ -1011,7 +1013,7 @@ done:
 
 /**
  * Unqualified export of package in fromModule
- *      
+ *
  * @throws IllegalArgumentExceptions if
  * 1) Module fromModule does not exist
  * 2) Package is not syntactically correct
@@ -1169,11 +1171,11 @@ JVM_AddReadsModule(JNIEnv * env, jobject fromModule, jobject toModule)
 
 /**
  * @return TRUE if:
- * 1. askModule can read srcModule or 
- * 2. if both are the same module or 
- * 3. if askModule is loose and srcModule is null. 
+ * 1. askModule can read srcModule or
+ * 2. if both are the same module or
+ * 3. if askModule is loose and srcModule is null.
  * FALSE otherwise
- *   
+ *
  * @throws IllegalArgumentExceptions if
  * 1) either askModule or srcModule is not a java.lang.reflect.Module
  */
@@ -1274,10 +1276,10 @@ JVM_AddModulePackage(JNIEnv * env, jobject module, const char *package)
 }
 
 /**
- * Marks the specified package as exported to all unnamed modules. 
+ * Marks the specified package as exported to all unnamed modules.
  *
  * @throws NullPointerExceptions if either module or package is null.
- * @throws IllegalArgumentExceptions if 
+ * @throws IllegalArgumentExceptions if
  * 1) module or package is bad or
  * 2) module is unnamed or
  * 3) package is not in module
@@ -1305,7 +1307,7 @@ JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *p
 	f_monitorEnter(vm->classLoaderModuleAndLocationMutex);
 #endif /* defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY) */
 
-	
+
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
 		j9object_t stringObject = J9_JNI_UNWRAP_REFERENCE(packageObj);
@@ -1607,7 +1609,7 @@ JVM_GetModuleByPackageName(JNIEnv *env, jobject classLoader, jstring packageName
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto exit;
 		}
-		
+
 		if (NULL != strchr((const char*)J9UTF8_DATA(packageUTF8), '.')) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "package name contains '.' instead of '/'");
 		} else {
@@ -1672,7 +1674,7 @@ JVM_GetNanoTimeAdjustment(JNIEnv *env, jclass clazz, jlong offsetSeconds)
 			}
 		}
 	}
-	
+
 	return result;
 }
 
@@ -1746,13 +1748,6 @@ done:
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 #if JAVA_SPEC_VERSION >= 15
-JNIEXPORT jlong JNICALL
-JVM_GetRandomSeedForCDSDump()
-{
-	/* OpenJ9 does not support -Xshare:dump, so we return zero unconditionally. */
-	return 0;
-}
-
 JNIEXPORT void JNICALL
 JVM_RegisterLambdaProxyClassForArchiving(JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jclass arg7)
 {
@@ -1760,7 +1755,11 @@ JVM_RegisterLambdaProxyClassForArchiving(JNIEnv *env, jclass arg1, jstring arg2,
 }
 
 JNIEXPORT jclass JNICALL
-JVM_LookupLambdaProxyClassFromArchive(JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6, jboolean arg7)
+JVM_LookupLambdaProxyClassFromArchive(JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6
+#if JAVA_SPEC_VERSION == 15
+		, jboolean arg7
+#endif /* JAVA_SPEC_VERSION == 15 */
+		)
 {
 	assert(!"JVM_LookupLambdaProxyClassFromArchive unimplemented");
 	return NULL;
@@ -1772,6 +1771,15 @@ JVM_IsCDSDumpingEnabled(JNIEnv *env)
 	/* OpenJ9 does not support -Xshare:dump, so we return false unconditionally. */
 	return JNI_FALSE;
 }
+#endif /* JAVA_SPEC_VERSION >= 15 */
+
+#if JAVA_SPEC_VERSION == 15
+JNIEXPORT jlong JNICALL
+JVM_GetRandomSeedForCDSDump()
+{
+	/* OpenJ9 does not support -Xshare:dump, so we return zero unconditionally. */
+	return 0;
+}
 
 JNIEXPORT jboolean JNICALL
 JVM_IsCDSSharingEnabled(JNIEnv *env)
@@ -1779,7 +1787,21 @@ JVM_IsCDSSharingEnabled(JNIEnv *env)
 	/* OpenJ9 does not support CDS, so we return false unconditionally. */
 	return JNI_FALSE;
 }
-#endif /* JAVA_SPEC_VERSION >= 15 */
+#elif JAVA_SPEC_VERSION >= 16
+JNIEXPORT jlong JNICALL
+JVM_GetRandomSeedForDumping()
+{
+	/* OpenJ9 does not support -Xshare:dump, so we return zero unconditionally. */
+	return 0;
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_IsSharingEnabled(JNIEnv *env)
+{
+	/* OpenJ9 does not support CDS, so we return false unconditionally. */
+	return JNI_FALSE;
+}
+#endif /* JAVA_SPEC_VERSION == 15 */
 
 JNIEXPORT jboolean JNICALL
 JVM_IsUseContainerSupport(JNIEnv *env)

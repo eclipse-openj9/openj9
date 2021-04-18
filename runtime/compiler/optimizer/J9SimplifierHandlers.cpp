@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2016,7 +2016,7 @@ static TR::Node *foldSetSignIntoGrandChild(TR::Node *setSign, TR::Block *block, 
    {
    // set sign operations are typically cheaper then the corresponding general sign moving operation (eg. zdshrSetSign vs zdshr). Although any iconst setSign value
    // would be valid in newSetSign node created below (as the pdsetsign operation dominates it) choose one that is the zone value (0xf) as this is most
-   // likely to end up being being an effective nop during code generation. In the case where the pdSetSign is itself to the zone value then this pdSetSign
+   // likely to end up being an effective nop during code generation. In the case where the pdSetSign is itself to the zone value then this pdSetSign
    // node can be removed completely.
    if (!setSign->getOpCode().isSetSign())
       {

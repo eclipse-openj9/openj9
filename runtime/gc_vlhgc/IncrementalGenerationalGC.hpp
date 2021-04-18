@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -418,7 +418,18 @@ protected:
 private:
 
 	/**
+	 * Perform collection preparation work including cache flushing and stats reporting.
+	 */
+	void partialGarbageCollectPreWork(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
+
+	/**
+	 * Perform collection end of cycle work
+	 */
+	void partialGarbageCollectPostWork(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
+
+	/**
 	 * Perform a partial garbage collection (PGC) operation.  The main (internal) entry point to running a PGC operation.
+	 * @param env[in] The main GC thread
 	 * @param allocDescription[in] The allocation request which triggered the collect.
 	 */
 	void runPartialGarbageCollect(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
@@ -442,20 +453,17 @@ private:
 	 * complete the global mark in this call
 	 */
 	void globalMarkPhase(MM_EnvironmentVLHGC *env, bool incrementalMark);
-	/**
-	 * Runs a PGC collect.  This call does report events, before and after the collection, but does not collect statistics.
-	 * @param env[in] The main GC thread
-	 * @param allocDescription[in] The allocation request which triggered the collect
-	 */
-	void partialGarbageCollect(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
 
 	/**
-	 * Runs a PGC collect using the copy forward mechanism. This call does report events, before and after the collection, but does not collect statistics.
-	 * @param env[in] The main GC thread
-	 * @param allocDescription[in] The allocation request which triggered the collect
+	 * Pre processing partial garbage collection step using the copy forward mechanism.
 	 */
-	void partialGarbageCollectUsingCopyForward(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
-	
+	void preProcessPGCUsingCopyForward(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
+
+	/**
+	 * Post processing partial garbage collection step using the copy forward mechanism.
+	 */
+	void postProcessPGCUsingCopyForward(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription);
+
 	/**
 	 * Change all unmarked regions to marked regions.
 	 * This should be called as soon as the mark map has been brought up to date for these regions.

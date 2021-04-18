@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,29 +99,30 @@ class MM_WriteOnceCompactor : public MM_BaseVirtual
 {
 	/* Data Members */
 private:
-    J9JavaVM * const _javaVM;	/**< Cached pointer to the common JavaVM instance */
-    MM_GCExtensions * const _extensions;	/**< Cached pointer to the common GCExtensions instance */
-    MM_Heap * const _heap;	/**< Cached pointer to the common Heap instance */
-    MM_ParallelDispatcher * const _dispatcher;	/**< Cached pointer to the common Dispatcher instance */
+	J9JavaVM * const _javaVM;  /**< Cached pointer to the common JavaVM instance */
+	MM_GCExtensions * const _extensions;  /**< Cached pointer to the common GCExtensions instance */
+	MM_Heap * const _heap;	/**< Cached pointer to the common Heap instance */
+	MM_ParallelDispatcher * const _dispatcher;  /**< Cached pointer to the common Dispatcher instance */
 	MM_HeapRegionManager * const _regionManager; /**< The region manager which holds the MM_HeapRegionDescriptor instances which manage the properties of the regions */
-    void * const _heapBase;	/**< The cached value of the lowest byte address which can be occupied by the heap */
-    void * const _heapTop;	/**< The cached value of the lowest byte address after the heap */
-    class WriteOnceCompactTableEntry *_compactTable;
+	void * const _heapBase;	/**< The cached value of the lowest byte address which can be occupied by the heap */
+	void * const _heapTop;	/**< The cached value of the lowest byte address after the heap */
+	class WriteOnceCompactTableEntry *_compactTable;
 	MM_CycleState _cycleState;  /**< Current cycle state information used to formulate receiver state for any operations  */
-	MM_MarkMap *_nextMarkMap;	/**< The next mark map (used as temporary storage for fixup data) */
+	MM_MarkMap *_nextMarkMap;  /**< The next mark map (used as temporary storage for fixup data) */
 	MM_InterRegionRememberedSet *_interRegionRememberedSet;	/**< A cached pointer to the  inter-region reference tracking  */
-	omrthread_monitor_t _workListMonitor;	/**< The monitor used to control work sharing of object movement/fixup tasks */
-	MM_HeapRegionDescriptorVLHGC *_readyWorkList;	/**< The root of the list of regions which can have some work done on them */
-	MM_HeapRegionDescriptorVLHGC *_readyWorkListHighPriority;	/**< Like _readyWorkList but is higher priority as it only contains regions which are compact destinations (that is, they block other move operations) */
-	MM_HeapRegionDescriptorVLHGC *_fixupOnlyWorkList;	/**< The root of the list of regions which must have their cards cleaned in order to fixup references into the compact set */
-	MM_HeapRegionDescriptorVLHGC *_rebuildWorkList;	/**< The root of the list of regions which must have their previous mark map extents rebuilt (this list is built as the object movement phase completes) */
+	omrthread_monitor_t _workListMonitor;  /**< The monitor used to control work sharing of object movement/fixup tasks */
+	MM_HeapRegionDescriptorVLHGC *_readyWorkList;  /**< The root of the list of regions which can have some work done on them */
+	MM_HeapRegionDescriptorVLHGC *_readyWorkListHighPriority;  /**< Like _readyWorkList but is higher priority as it only contains regions which are compact destinations (that is, they block other move operations) */
+	MM_HeapRegionDescriptorVLHGC *_fixupOnlyWorkList;  /**< The root of the list of regions which must have their cards cleaned in order to fixup references into the compact set */
+	MM_HeapRegionDescriptorVLHGC *_rebuildWorkList;  /**< The root of the list of regions which must have their previous mark map extents rebuilt (this list is built as the object movement phase completes) */
 	MM_HeapRegionDescriptorVLHGC *_rebuildWorkListHighPriority;	/**< Like _rebuildWorkList but is higher priority as it only contains regions which are compact destinations (that is, they block other rebuild operations) */
-	UDATA _threadsWaiting;	/**< The number of threads waiting for work on _workListMonitor */
-	bool _moveFinished;	/**< A flag set when all move work is done to allow all threads waiting for work to exit the monitor */
-	bool _rebuildFinished;	/**< A flag set when all mark map rebuilding work is done to allow all threads waiting for work to exit the monitor */
-	UDATA _lockCount; /**< Number of locks initialized for compact groups, based on NUMA. Stored for control to make sure that we deallocate same number that we allocated in initialize. */
+	UDATA _threadsWaiting;  /**< The number of threads waiting for work on _workListMonitor */
+	bool _moveFinished;  /**< A flag set when all move work is done to allow all threads waiting for work to exit the monitor */
+	bool _rebuildFinished;  /**< A flag set when all mark map rebuilding work is done to allow all threads waiting for work to exit the monitor */
+	UDATA _lockCount;  /**< Number of locks initialized for compact groups, based on NUMA. Stored for control to make sure that we deallocate same number that we allocated in initialize. */
 
-	class MM_CompactGroupDestinations {
+	class MM_CompactGroupDestinations
+	{
 		/* Fields */
 	public:
 		MM_HeapRegionDescriptorVLHGC *head; /**< Compact Group Destinations list header */
@@ -141,12 +142,12 @@ private:
 
 protected:
 public:
-    /*
-     * Page represents space can be marked by one slot(UDATA) of Compressed Mark Map
-     * In Compressed Mark Map one bit represents twice more space then one bit of regular Mark Map
-     * So, sizeof_page should be double of number of bytes represented by one UDATA in Mark Map
-     */
-    enum { sizeof_page = 2 * J9MODRON_HEAP_BYTES_PER_HEAPMAP_SLOT };
+	/*
+	 * Page represents space can be marked by one slot(UDATA) of Compressed Mark Map
+	 * In Compressed Mark Map one bit represents twice more space then one bit of regular Mark Map
+	 * So, sizeof_page should be double of number of bytes represented by one UDATA in Mark Map
+	 */
+	enum { sizeof_page = 2 * J9MODRON_HEAP_BYTES_PER_HEAPMAP_SLOT };
 
 	/* Member Functions */
 private:
@@ -185,11 +186,11 @@ private:
 	 * Note that this method is executed on only one thread while other initialization is being run by other threads.
 	 * @param env[in] A GC thread
 	 */
-    void initRegionCompactDataForCompactSet(MM_EnvironmentVLHGC *env);
+	void initRegionCompactDataForCompactSet(MM_EnvironmentVLHGC *env);
 
-    void saveForwardingPtr(J9Object* objectPtr, J9Object* forwardingPtr);
+	void saveForwardingPtr(J9Object* objectPtr, J9Object* forwardingPtr);
 
-    void fixupRoots(MM_EnvironmentVLHGC *env);
+	void fixupRoots(MM_EnvironmentVLHGC *env);
 
 	/** flush RS Lists for Compact Set and dirty card table
 	 */
@@ -197,6 +198,8 @@ private:
 	/**
 	 * Perform fixup for a single object.
 	 */
+	MMINLINE void preObjectMove(MM_EnvironmentVLHGC* env, J9Object *objectPtr, UDATA *objectSizeAfterMove);
+	MMINLINE void postObjectMove(MM_EnvironmentVLHGC* env, J9Object *newLocation, J9Object *objectPtr);
 	void fixupMixedObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache);
 	void fixupClassObject(MM_EnvironmentVLHGC* env, J9Object *classObject, J9MM_FixupCache *cache);
 	void fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object *classLoaderObject, J9MM_FixupCache *cache);
@@ -206,35 +209,34 @@ private:
 	void fixupStacks(MM_EnvironmentVLHGC *env);
 	void fixupRememberedSet(MM_EnvironmentVLHGC *env);
 	void fixupMonitorReferences(MM_EnvironmentVLHGC *env);
-	void updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
 
 	/**
-     * Return the page index for an object.
-     * long int, always positive (in particular, -1 is an invalid value)
-     */
-    MMINLINE IDATA pageIndex(J9Object* objectPtr) const
-    {
-        UDATA markIndex = (UDATA)objectPtr - (UDATA)_heapBase;
-        return markIndex / sizeof_page;
-    }
+	 * Return the page index for an object.
+	 * long int, always positive (in particular, -1 is an invalid value)
+	 */
+	MMINLINE IDATA pageIndex(J9Object* objectPtr) const
+	{
+		UDATA markIndex = (UDATA)objectPtr - (UDATA)_heapBase;
+		return markIndex / sizeof_page;
+	}
 
 	/**
 	 * Return the start of a page
 	 */
-    MMINLINE J9Object* pageStart(UDATA i) const
-    {
-        return (J9Object*) ((UDATA)_heapBase + (i * sizeof_page));
-    }
+	MMINLINE J9Object* pageStart(UDATA i) const
+	{
+		return (J9Object*) ((UDATA)_heapBase + (i * sizeof_page));
+	}
 
-    void rebuildMarkbits(MM_EnvironmentVLHGC *env);
+	void rebuildMarkbits(MM_EnvironmentVLHGC *env);
     
-    /**
-     * Rebuild mark bits within the given region
-     * 
-     * @param env[in] the current thread
-     * @param region[in] the region of the heap to be rebuilt
-     * @return If the region was fully rebuilt, this will be NULL.  Otherwise, it is the address, in another region, which must be rebuilt before rebuilding this region can proceed
-     */
+	/**
+	 * Rebuild mark bits within the given region
+	 *
+	 * @param env[in] the current thread
+	 * @param region[in] the region of the heap to be rebuilt
+	 * @return If the region was fully rebuilt, this will be NULL.  Otherwise, it is the address, in another region, which must be rebuilt before rebuilding this region can proceed
+	 */
 	void *rebuildMarkbitsInRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region);
     
 	/**

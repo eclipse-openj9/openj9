@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,46 +32,60 @@
 #include "ClassIteratorClassSlots.hpp"
 
 /**
- * @return the next slot in the class containing an object reference
- * @return NULL if there are no more such slots
+ * @return the next non-NULL class reference
+ * @return NULL if there are no more such references
  */
-J9Class **
+J9Class *
 GC_ClassIteratorClassSlots::nextSlot()
 {
-	J9Class **slotPtr;
+	J9Class *classPtr;
 
 	switch(_state) {
 	case classiteratorclassslots_state_start:
 		_state += 1;
 
 	case classiteratorclassslots_state_constant_pool:
-		slotPtr = _constantPoolClassSlotIterator.nextSlot();
-		if(NULL != slotPtr) {
-			return slotPtr;
+		classPtr = _constantPoolClassSlotIterator.nextSlot();
+		if (NULL != classPtr) {
+			return classPtr;
 		}
 		_state += 1;
 
 	case classiteratorclassslots_state_superclasses:
-		slotPtr = _classSuperclassesIterator.nextSlot();
-		if(NULL != slotPtr) {
-			return slotPtr;
+		classPtr = _classSuperclassesIterator.nextSlot();
+		if (NULL != classPtr) {
+			return classPtr;
 		}
 		_state += 1;
 
 	case classiteratorclassslots_state_interfaces:
-		slotPtr = _classLocalInterfaceIterator.nextSlot();
-		if(NULL != slotPtr) {
-			return slotPtr;
+		/*
+		 * Checking sharedITable is an optimization that only checks booleanArrayClass Interfaces
+		 * since all array claseses share the same ITable.
+		 */
+		if (_shouldScanInterfaces) {
+			classPtr = _classLocalInterfaceIterator.nextSlot();
+			if (NULL != classPtr) {
+				return classPtr;
+			}
 		}
 		_state += 1;
 
 	case classiteratorclassslots_state_array_class_slots:
-		slotPtr = _classArrayClassSlotIterator.nextSlot();
-		if(NULL != slotPtr) {
-			return slotPtr;
+		classPtr = _classArrayClassSlotIterator.nextSlot();
+		if (NULL != classPtr) {
+			return classPtr;
 		}
 		_state += 1;
-		
+
+	case classiteratorclassslots_state_flattened_class_cache_slots:
+		classPtr = _classFCCSlotIterator.nextSlot();
+		if (NULL != classPtr) {
+			return classPtr;
+		}
+		_state += 1;
+
+	case classiteratorclassslots_state_end:
 	default:
 		break;
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2020 IBM Corp. and others
+ * Copyright (c) 2002, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2312,12 +2312,27 @@ JVM_SuspendThread(jint arg0, jint arg1)
 }
 
 
-
-jobject JNICALL
-JVM_UnloadLibrary(jint arg0)
+/* NOTE this is required by JDK15+ jdk.internal.loader.NativeLibraries.unload().
+ */
+#if JAVA_SPEC_VERSION >= 15
+void JNICALL JVM_UnloadLibrary(void *handle)
+#else /* JAVA_SPEC_VERSION >= 15 */
+jobject JNICALL JVM_UnloadLibrary(jint arg0)
+#endif /* JAVA_SPEC_VERSION >= 15 */
 {
+#if JAVA_SPEC_VERSION >= 15
+	Trc_SC_UnloadLibrary_Entry(handle);
+#if defined(WIN32)
+	FreeLibrary((HMODULE)handle);
+#elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
+	dlclose(handle);
+#else /* defined(WIN32) */
+#error "Please implement J7vmi.c:JVM_UnloadLibrary(void *handle)"
+#endif /* defined(WIN32) */
+#else /* JAVA_SPEC_VERSION >= 15 */
 	assert(!"JVM_UnloadLibrary() stubbed!");
 	return NULL;
+#endif /* JAVA_SPEC_VERSION >= 15 */
 }
 
 
@@ -2582,7 +2597,7 @@ retry:
 	if (vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length) != NULL) {
 		/* Bad, we have already defined this class - fail */
 		threadEnv->monitor_exit(vm->classTableMutex);
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, (UDATA *)*(j9object_t*)className);
+		vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_DUPLICATE_CLASS_DEFINITION, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, utf8Length, utf8Name);
 		goto done;
 	}
 
@@ -2671,6 +2686,8 @@ JVM_Bind(jint arg0, jint arg1, jint arg2)
 	return NULL;
 }
 
+#if JAVA_SPEC_VERSION < 17
+
 jobject JNICALL
 JVM_DTraceActivate(jint arg0, jint arg1, jint arg2, jint arg3, jint arg4)
 {
@@ -2705,6 +2722,8 @@ JVM_DTraceIsSupported(jint arg0)
 	assert(!"JVM_DTraceIsSupported() stubbed!");
 	return NULL;
 }
+
+#endif /* JAVA_SPEC_VERSION < 17 */
 
 jobject JNICALL
 JVM_DefineClass(jint arg0, jint arg1, jint arg2, jint arg3, jint arg4, jint arg5)

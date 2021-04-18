@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,60 @@
 
 extern "C" {
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+static VMINLINE bool
+initializeMethodRunAddressMethodHandle(J9Method *method)
+{
+	void *methodRunAddress = NULL;
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	U_32 const modifiers = romMethod->modifiers;
+
+	/* The methods that require the special send target are all native. */
+	if (J9_ARE_ALL_BITS_SET(modifiers, J9AccNative)) {
+		J9UTF8 *classNameUTF = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
+		if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(classNameUTF), J9UTF8_LENGTH(classNameUTF), "java/lang/invoke/MethodHandle")) {
+			J9UTF8 *methodNameUTF = J9ROMMETHOD_NAME(romMethod);
+			UDATA methodNameLength = J9UTF8_LENGTH(methodNameUTF);
+			U_8 *methodName = J9UTF8_DATA(methodNameUTF);
+
+			switch (methodNameLength) {
+			case 11:
+				if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "invokeBasic")) {
+					methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC);
+				}
+				break;
+			case 12:
+				if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToStatic")) {
+					methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOSTATICSPECIAL);
+				}
+				break;
+			case 13:
+				if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToSpecial")) {
+					methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOSTATICSPECIAL);
+				} else if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToVirtual")) {
+					methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOVIRTUAL);
+				}
+				break;
+			case 15:
+				if (J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "linkToInterface")) {
+					methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOINTERFACE);
+				}
+				break;
+			default:
+				break;
+			}
+
+			if (NULL != methodRunAddress) {
+				method->methodRunAddress = methodRunAddress;
+			}
+		}
+	}
+
+	return (NULL != methodRunAddress);
+}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+#if defined(J9VM_OPT_METHOD_HANDLE)
 static VMINLINE bool
 initializeMethodRunAddressVarHandle(J9Method *method)
 {
@@ -149,6 +203,7 @@ initializeMethodRunAddressVarHandle(J9Method *method)
 
 	return NULL != encodedAccessMode;
 }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 void
 initializeMethodRunAddress(J9VMThread *vmThread, J9Method *method)
@@ -157,9 +212,17 @@ initializeMethodRunAddress(J9VMThread *vmThread, J9Method *method)
 
 	method->extra = (void *) J9_STARTPC_NOT_TRANSLATED;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (initializeMethodRunAddressMethodHandle(method)) {
+		return;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	if (initializeMethodRunAddressVarHandle(method)) {
 		return;
 	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_INITIALIZE_SEND_TARGET)) {
 		method->methodRunAddress = NULL;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "net/CommunicationStream.hpp"
 #include "net/LoadSSLLibs.hpp"
 #include "net/ServerStream.hpp"
@@ -184,7 +185,7 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
    }
 
 TR_Listener::TR_Listener()
-   : _listenerThread(NULL), _listenerMonitor(NULL), _listenerOSThread(NULL), 
+   : _listenerThread(NULL), _listenerMonitor(NULL), _listenerOSThread(NULL),
    _listenerThreadAttachAttempted(false), _listenerThreadExitFlag(false)
    {
    }
@@ -215,12 +216,12 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&flag, sizeof(flag)) < 0)
       {
       perror("Can't set SO_REUSEADDR");
-      exit(-1);
+      exit(1);
       }
    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flag, sizeof(flag)) < 0)
       {
       perror("Can't set SO_KEEPALIVE");
-      exit(-1);
+      exit(1);
       }
 
    struct sockaddr_in serv_addr;
@@ -296,25 +297,26 @@ TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler)
             if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeoutMsForConnection, sizeof(timeoutMsForConnection)) < 0)
                {
                perror("Can't set option SO_RCVTIMEO on connfd socket");
-               exit(-1);
+               exit(1);
                }
             if (setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeoutMsForConnection, sizeof(timeoutMsForConnection)) < 0)
                {
                perror("Can't set option SO_SNDTIMEO on connfd socket");
-               exit(-1);
+               exit(1);
                }
 
             BIO *bio = NULL;
             if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
                continue;
 
-            JITServer::ServerStream *stream = new (PERSISTENT_NEW) JITServer::ServerStream(connfd, bio);
+            JITServer::ServerStream *stream = new (TR::Compiler->persistentGlobalAllocator()) JITServer::ServerStream(connfd, bio);
             compiler->compile(stream);
             }
          } while ((-1 != connfd) && !getListenerThreadExitFlag());
       }
 
    // The following piece of code will be executed only if the server shuts down properly
+   close(sockfd);
    if (sslCtx)
       {
       (*OSSL_CTX_free)(sslCtx);
@@ -332,14 +334,14 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
    {
    J9JITConfig * jitConfig = (J9JITConfig *) entryarg;
    J9JavaVM * vm = jitConfig->javaVM;
-   TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener; 
+   TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
    J9VMThread *listenerThread = NULL;
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
 
    int rc = vm->internalVMFunctions->internalAttachCurrentThread(vm, &listenerThread, NULL,
                                   J9_PRIVATE_FLAGS_DAEMON_THREAD | J9_PRIVATE_FLAGS_NO_OBJECT |
                                   J9_PRIVATE_FLAGS_SYSTEM_THREAD | J9_PRIVATE_FLAGS_ATTACHED_THREAD,
-                                  listener->getListenerOSThread()); 
+                                  listener->getListenerOSThread());
 
    listener->getListenerMonitor()->enter();
    listener->setAttachAttempted(true);
@@ -369,7 +371,7 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
 
 void TR_Listener::startListenerThread(J9JavaVM *javaVM)
    {
-   PORT_ACCESS_FROM_JAVAVM(javaVM); 
+   PORT_ACCESS_FROM_JAVAVM(javaVM);
 
    UDATA priority;
    priority = J9THREAD_PRIORITY_NORMAL;
@@ -388,7 +390,7 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
                                                                javaVM->jitConfig,
                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
          { // cannot create the listener thread
-         j9tty_printf(PORTLIB, "Error: Unable to create JITServer Listener Thread.\n"); 
+         j9tty_printf(PORTLIB, "Error: Unable to create JITServer Listener Thread.\n");
          TR::Monitor::destroy(_listenerMonitor);
          _listenerMonitor = NULL;
          }

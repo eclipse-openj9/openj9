@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@ package org.openj9.test.util;
 public class PlatformInfo {
 	private static final String OS_NAME = "os.name"; //$NON-NLS-1$
 	private static final String osName = System.getProperty(OS_NAME);
+	private static final boolean isPlatformZOS = (osName != null) && osName.toLowerCase().startsWith("z/os"); //$NON-NLS-1$
 	private	static final boolean isOpenJ9Status = 
 			System.getProperty("java.vm.vendor").contains("OpenJ9"); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -33,6 +34,10 @@ public class PlatformInfo {
 
 	public static boolean isMacOS() {
 		return ((null != osName) && osName.startsWith("Mac OS"));
+	}
+
+	public static boolean isZOS() {
+		return isPlatformZOS;
 	}
 
 	/**

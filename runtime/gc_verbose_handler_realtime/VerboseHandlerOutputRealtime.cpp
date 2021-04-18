@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,9 @@
 #include "CycleState.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
+#include "VerboseBuffer.hpp"
 #include "VerboseHandlerRealtime.hpp"
 #include "VerboseManager.hpp"
 #include "VerboseWriterChain.hpp"
@@ -149,9 +151,9 @@ MM_VerboseHandlerOutputRealtime::getThreadName(char *buf, UDATA bufLen, OMR_VMTh
 }
 
 void
-MM_VerboseHandlerOutputRealtime::writeVmArgs(MM_EnvironmentBase* env)
+MM_VerboseHandlerOutputRealtime::writeVmArgs(MM_EnvironmentBase* env, MM_VerboseBuffer* buffer)
 {
-	MM_VerboseHandlerJava::writeVmArgs(_manager, env, static_cast<J9JavaVM*>(_omrVM->_language_vm));
+	MM_VerboseHandlerJava::writeVmArgs(env, buffer, static_cast<J9JavaVM*>(_omrVM->_language_vm));
 }
 
 const char *
@@ -174,21 +176,16 @@ MM_VerboseHandlerOutputRealtime::getCycleType(UDATA type)
 }
 
 void
-MM_VerboseHandlerOutputRealtime::handleInitializedInnerStanzas(J9HookInterface** hook, UDATA eventNum, void* eventData)
-{
-	MM_InitializedEvent* event = (MM_InitializedEvent*)eventData;
-	MM_VerboseWriterChain* writer = _manager->getWriterChain();
-	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(event->currentThread);
-
-	handleInitializedRegion(hook, eventNum, eventData);
-
-	writer->formatAndOutput(env, 1, "<metronome>");
-	writer->formatAndOutput(env, 2, "<attribute name=\"beatsPerMeasure\" value=\"%zu\" />", event->beat);
-	writer->formatAndOutput(env, 2, "<attribute name=\"timeInterval\" value=\"%zu\" />", event->timeWindow);
-	writer->formatAndOutput(env, 2, "<attribute name=\"targetUtilization\" value=\"%zu\" />", event->targetUtilization);
-	writer->formatAndOutput(env, 2, "<attribute name=\"trigger\" value=\"0x%zx\" />", event->gcTrigger);
-	writer->formatAndOutput(env, 2, "<attribute name=\"headRoom\" value=\"0x%zx\" />", event->headRoom);
-	writer->formatAndOutput(env, 1, "</metronome>");
+MM_VerboseHandlerOutputRealtime::outputInitializedInnerStanza(MM_EnvironmentBase *env, MM_VerboseBuffer *buffer){
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+	outputInitializedRegion(env, buffer);
+	buffer->formatAndOutput(env, 1, "<metronome>");	
+	buffer->formatAndOutput(env, 2, "<attribute name=\"beatsPerMeasure\" value=\"%zu\" />", extensions->beatMicro);
+	buffer->formatAndOutput(env, 2, "<attribute name=\"timeInterval\" value=\"%zu\" />", extensions->timeWindowMicro);
+	buffer->formatAndOutput(env, 2, "<attribute name=\"targetUtilization\" value=\"%zu\" />", extensions->targetUtilizationPercentage);
+	buffer->formatAndOutput(env, 2, "<attribute name=\"trigger\" value=\"0x%zx\" />", extensions->gcTrigger);
+	buffer->formatAndOutput(env, 2, "<attribute name=\"headRoom\" value=\"0x%zx\" />", extensions->headRoom);
+	buffer->formatAndOutput(env, 1, "</metronome>");
 }
 
 void

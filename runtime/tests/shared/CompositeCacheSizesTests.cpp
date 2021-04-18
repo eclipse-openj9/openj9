@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -541,17 +541,11 @@ test7(J9JavaVM* vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA retval = TEST_PASS;
-#if !defined(J9SHR_CACHELET_SUPPORT)
 	SH_CompositeCacheImpl *testCC = NULL;
 	J9SharedClassPreinitConfig* piconfig = NULL;
-#endif
 
 	const char* testName = "test7";
 	j9tty_printf(PORTLIB, "%s: create composite cache with minaot size that reserves memory more than cache size \n", testName);
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-	retval = TEST_PASS;
-#else
 
 	if (!(piconfig = (J9SharedClassPreinitConfig*)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES))) {
 		ERRPRINTF(("Failed to allocate memory for piconfig.\n"));
@@ -589,7 +583,7 @@ test7(J9JavaVM* vm)
 	done:
 	j9mem_free_memory(testCC);
 	j9mem_free_memory(piconfig);
-#endif
+
 	return retval;
 }
 
@@ -648,16 +642,10 @@ test9(J9JavaVM* vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA retval = TEST_PASS;
-#if !defined(J9SHR_CACHELET_SUPPORT)
 	SH_CompositeCacheImpl *testCC = NULL;
 	J9SharedClassPreinitConfig* piconfig = NULL;
-#endif
 	const char* testName = "test9";
 	j9tty_printf(PORTLIB, "%s: create composite cache with minjit data size that reserves memory more than cache size \n", testName);
-
-#if defined(J9SHR_CACHELET_SUPPORT)
-	retval = TEST_PASS;
-#else
 
 	if (!(piconfig = (J9SharedClassPreinitConfig*)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES))) {
 		ERRPRINTF(("Failed to allocate memory for piconfig.\n"));
@@ -695,7 +683,7 @@ test9(J9JavaVM* vm)
 	done:
 	j9mem_free_memory(testCC);
 	j9mem_free_memory(piconfig);
-#endif
+
 	return retval;
 }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,7 +100,7 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 	IDATA result;
 	U_32 resultArray[8192];
 	U_32 localsCount = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod) + J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod);
-	char environment[128] = "\0";
+	char environment[128];
 	BOOLEAN envVarDefined = FALSE;
 
 	if (0 == j9sysinfo_get_env("j9bcutil_dumpBytecodes", environment, sizeof(environment))) {
@@ -592,7 +592,3 @@ static void cfdumpBytecodePrintFunction(void *userData, char *format, ...)
 
 	j9tty_printf(PORTLIB, "%s", outputBuffer);
 }
-
-
-
-

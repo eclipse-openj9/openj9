@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,13 +20,14 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gcstructs STATIC
+set(gc_structs_sources
 	ArrayletLeafIterator.cpp
 	CallSitesIterator.cpp
 	ClassArrayClassSlotIterator.cpp
 	ClassHeapIterator.cpp
 	ClassIterator.cpp
 	ClassIteratorClassSlots.cpp
+	ClassFCCSlotIterator.cpp
 	ClassIteratorDeclarationOrder.cpp
 	ClassLoaderClassesIterator.cpp
 	ClassLoaderSegmentIterator.cpp
@@ -41,6 +42,7 @@ j9vm_add_library(j9gcstructs STATIC
 	MethodTypesIterator.cpp
 	MixedObjectDeclarationOrderIterator.cpp
 	MixedObjectIterator.cpp
+	FlattenedContiguousArrayIterator.cpp
 	PointerArrayIterator.cpp
 	SegmentIterator.cpp
 	StringTableIncrementalIterator.cpp
@@ -53,10 +55,28 @@ j9vm_add_library(j9gcstructs STATIC
 	VMThreadStackSlotIterator.cpp
 )
 
-target_link_libraries(j9gcstructs 
+j9vm_add_library(j9gcstructs STATIC
+	${gc_structs_sources}
+)
+
+target_link_libraries(j9gcstructs
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
 
 		omrgc
 )
+
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9gcstructs_full STATIC
+		${gc_structs_sources}
+	)
+
+	target_link_libraries(j9gcstructs_full
+		PRIVATE
+			j9vm_interface
+			j9vm_gc_includes
+
+			omrgc_full
+	)
+endif()

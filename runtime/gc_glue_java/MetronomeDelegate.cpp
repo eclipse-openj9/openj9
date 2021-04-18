@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -412,6 +412,13 @@ MM_MetronomeDelegate::processDyingClasses(MM_EnvironmentRealtime *env, UDATA* cl
 	J9ClassLoader *unloadLink = NULL;
 	J9Class *classUnloadList = NULL;
 	J9Class *anonymousClassUnloadList = NULL;
+
+	/*
+	 * Verify that boolean array class has been marked. Assertion is done to ensure correctness
+	 * of an optimization in ClassIteratorClassSlots that only checks booleanArrayClass Interfaces
+	 * since all array claseses share the same ITable.
+	 */
+	Assert_MM_true(_markingScheme->isMarked(_javaVM->booleanArrayClass->classObject));
 
 	/*
 	 * Walk anonymous classes and set unmarked as dying
@@ -916,10 +923,10 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 								didWork |= _markingScheme->markObject(env, *objectSlotPtr);
 							}
 
-							GC_ClassIteratorClassSlots classSlotIterator(clazz);
-							J9Class **classSlotPtr;
-							while((classSlotPtr = classSlotIterator.nextSlot()) != NULL) {
-								didWork |= markClass(env, *classSlotPtr);
+							GC_ClassIteratorClassSlots classSlotIterator(_javaVM, clazz);
+							J9Class *classPtr;
+							while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+								didWork |= markClass(env, classPtr);
 							}
 						}
 					}
@@ -945,10 +952,10 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 								didWork |= _markingScheme->markObject(env, *objectSlotPtr);
 							}
 
-							GC_ClassIteratorClassSlots classSlotIterator(clazz);
-							J9Class **classSlotPtr;
-							while((classSlotPtr = classSlotIterator.nextSlot()) != NULL) {
-								didWork |= markClass(env, *classSlotPtr);
+							GC_ClassIteratorClassSlots classSlotIterator(_javaVM, clazz);
+							J9Class *classPtr;
+							while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+								didWork |= markClass(env, classPtr);
 							}
 						}
 						_realtimeGC->condYield(env, 0);

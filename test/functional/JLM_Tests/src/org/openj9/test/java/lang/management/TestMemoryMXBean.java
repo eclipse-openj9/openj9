@@ -142,6 +142,10 @@ public class TestMemoryMXBean {
 
 	@AfterClass
 	protected void tearDown() throws Exception {
+		MemoryMXBean bean = (MemoryMXBean)ManagementFactory.getMemoryMXBean();
+		if (bean.isSetMaxHeapSizeSupported()) {
+			bean.setMaxHeapSize(bean.getMaxHeapSizeLimit());
+		}
 	}
 
 	static class ClassForTestMaxHeapSize implements Task {
@@ -260,7 +264,7 @@ public class TestMemoryMXBean {
 		// The only writable attribute of this type of bean
 		Attribute attr = null;
 		try {
-			attr = new Attribute("Verbose", new Boolean(true));
+			attr = new Attribute("Verbose", Boolean.valueOf(true));
 			mbs.setAttribute(objName, attr);
 		} catch (AttributeNotFoundException e) {
 			// An unlikely exception - if this occurs, we can't proceed with the test.
@@ -312,7 +316,7 @@ public class TestMemoryMXBean {
 			logger.debug("Exception occurred, as expected: " + e1.getMessage());
 		}
 
-		attr = new Attribute("ObjectPendingFinalizationCount", new Long(38));
+		attr = new Attribute("ObjectPendingFinalizationCount", Long.valueOf(38));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -329,7 +333,7 @@ public class TestMemoryMXBean {
 		}
 
 		// Try and set the Verbose attribute with an incorrect type.
-		attr = new Attribute("Verbose", new Long(42));
+		attr = new Attribute("Verbose", Long.valueOf(42));
 		try {
 			mbs.setAttribute(objName, attr);
 			Assert.fail("Unreacheable code: should have thrown an exception.");
@@ -346,7 +350,7 @@ public class TestMemoryMXBean {
 
 		//set Verbose back to false
 		try {
-			attr = new Attribute("Verbose", new Boolean(false));
+			attr = new Attribute("Verbose", Boolean.valueOf(false));
 			mbs.setAttribute(objName, attr);
 		} catch (AttributeNotFoundException e) {
 			// An unlikely exception - if this occurs, we can't proceed with the test.
@@ -618,7 +622,7 @@ public class TestMemoryMXBean {
 			}
 		}
 		AttributeList attList = new AttributeList();
-		Attribute heapSize = new Attribute("MaxHeapSize", new Long(newHeapSize));
+		Attribute heapSize = new Attribute("MaxHeapSize", Long.valueOf(newHeapSize));
 		attList.add(heapSize);
 		AttributeList setAttrs = null;
 		try {
@@ -648,7 +652,7 @@ public class TestMemoryMXBean {
 	public final void testSetAttributes() {
 		// Ideal scenario...
 		AttributeList attList = new AttributeList();
-		Attribute verbose = new Attribute("Verbose", new Boolean(false));
+		Attribute verbose = new Attribute("Verbose", Boolean.valueOf(false));
 		attList.add(verbose);
 		AttributeList setAttrs = null;
 		try {
@@ -665,7 +669,7 @@ public class TestMemoryMXBean {
 
 		// A failure scenario - a non-existent attribute...
 		AttributeList badList = new AttributeList();
-		Attribute garbage = new Attribute("H.R. Puffenstuff", new Long(2888));
+		Attribute garbage = new Attribute("H.R. Puffenstuff", Long.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -680,7 +684,7 @@ public class TestMemoryMXBean {
 
 		// Another failure scenario - a non-writable attribute...
 		badList = new AttributeList();
-		garbage = new Attribute("ObjectPendingFinalizationCount", new Integer(2888));
+		garbage = new Attribute("ObjectPendingFinalizationCount", Integer.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -695,7 +699,7 @@ public class TestMemoryMXBean {
 
 		// Yet another failure scenario - a wrongly-typed attribute...
 		badList = new AttributeList();
-		garbage = new Attribute("Verbose", new Long(2888));
+		garbage = new Attribute("Verbose", Long.valueOf(2888));
 		badList.add(garbage);
 		try {
 			setAttrs = mbs.setAttributes(objName, badList);
@@ -809,6 +813,8 @@ public class TestMemoryMXBean {
 			try {
 				mb.setMaxHeapSize(newHeapSize);
 				AssertJUnit.assertEquals(newHeapSize, mb.getMaxHeapSize());
+				// reset to the limit
+				mb.setMaxHeapSize(mb.getMaxHeapSizeLimit());
 			} catch (IllegalArgumentException i) {
 
 			}

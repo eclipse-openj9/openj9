@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,6 +58,9 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 		{CONTENDED_SIGNATURE, sizeof(CONTENDED_SIGNATURE)},
 #undef CONTENDED_SIGNATURE
 		{J9_UNMODIFIABLE_CLASS_ANNOTATION, sizeof(J9_UNMODIFIABLE_CLASS_ANNOTATION)},
+#define VALUEBASED_SIGNATURE "Ljdk/internal/ValueBased;"
+		{VALUEBASED_SIGNATURE, sizeof(VALUEBASED_SIGNATURE)},
+#undef VALUEBASED_SIGNATURE
 		{0, 0}
 };
 
@@ -188,9 +191,14 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_isInnerClass(false),
 	_needsStaticConstantInit(false),
 	_isRecord(false),
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	_isIdentityInterfaceNeeded(false),
+	_isValueType(false),
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
-	_isSealed(false)
+	_isSealed(false),
+	_isClassValueBased(false)
 {
 	Trc_BCU_Assert_NotEquals( classFile, NULL );
 
@@ -446,7 +454,7 @@ ClassFileOracle::walkAttributes()
 			_isSynthetic = true;
 			break;
 		case CFR_ATTRIBUTE_SourceFile:
-			if (!hasSourceFile()) {
+			if (!hasSourceFile() && _context->shouldPreserveSourceFileName()) {
 				_sourceFile = (J9CfrAttributeSourceFile *)attrib;
 				markConstantUTF8AsReferenced(_sourceFile->sourceFileIndex);
 			}
@@ -464,6 +472,7 @@ ClassFileOracle::walkAttributes()
 				knownAnnotations = addAnnotationBit(knownAnnotations, JAVA8_CONTENDED_ANNOTATION);
 			}
 			knownAnnotations = addAnnotationBit(knownAnnotations, UNMODIFIABLE_ANNOTATION);
+			knownAnnotations = addAnnotationBit(knownAnnotations, VALUEBASED_ANNOTATION);
 			_annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == _annotationsAttribute->rawDataLength) {
 				UDATA foundAnnotations = walkAnnotations(_annotationsAttribute->numberOfAnnotations, _annotationsAttribute->annotations, knownAnnotations);
@@ -472,6 +481,9 @@ ClassFileOracle::walkAttributes()
 				}
 				if (containsKnownAnnotation(foundAnnotations, UNMODIFIABLE_ANNOTATION)) {
 					_isClassUnmodifiable = true;
+				}
+				if (containsKnownAnnotation(foundAnnotations, VALUEBASED_ANNOTATION)) {
+					_isClassValueBased = true;
 				}
 			}
 			break;
@@ -502,9 +514,10 @@ ClassFileOracle::walkAttributes()
 			break;
 		}
 		case CFR_ATTRIBUTE_PermittedSubclasses: {
-			/* PermittedSubclasses verification is for Java 15 preview only. Don't record the attribute for other class versions
-			 * since it may be corrupt. */
-			if ((59 == _classFile->majorVersion) && (0 < _classFile->minorVersion)) {
+			/* PermittedSubclasses verification is for Java version >= 15 */
+			if ((_classFile->majorVersion > 59)
+			|| ((59 == _classFile->majorVersion) && (65535 == _classFile->minorVersion))
+			) {
 				_isSealed = true;
 				_permittedSubclassesAttribute = (J9CfrAttributePermittedSubclasses *)attrib;
 				for (U_16 numberOfClasses = 0; numberOfClasses < _permittedSubclassesAttribute->numberOfClasses; numberOfClasses++) {
@@ -656,6 +669,9 @@ public:
 	InterfaceVisitor(ClassFileOracle *classFileOracle, ConstantPoolMap *constantPoolMap) :
 		_classFileOracle(classFileOracle),
 		_constantPoolMap(constantPoolMap),
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		_wasIdentityInterfaceSeen(false),
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		_wasCloneableSeen(false),
 		_wasSerializableSeen(false)
 	{
@@ -675,16 +691,28 @@ public:
 			_wasSerializableSeen = true;
 		}
 #undef SERIALIZABLE_NAME
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if( _classFileOracle->isUTF8AtIndexEqualToString(cpIndex, IDENTITY_OBJECT_NAME, sizeof(IDENTITY_OBJECT_NAME)) ) {
+			_wasIdentityInterfaceSeen = true;
+		}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	}
 
 	bool wasCloneableSeen() const { return _wasCloneableSeen; }
 	bool wasSerializableSeen() const { return _wasSerializableSeen; }
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool wasIdentityInterfaceSeen() const { return _wasIdentityInterfaceSeen; }
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 private:
 	ClassFileOracle *_classFileOracle;
 	ConstantPoolMap *_constantPoolMap;
 	bool _wasCloneableSeen;
 	bool _wasSerializableSeen;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool _wasIdentityInterfaceSeen;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 };
 
 void
@@ -693,9 +721,25 @@ ClassFileOracle::walkInterfaces()
 	ROMClassVerbosePhase v(_context, ClassFileInterfacesAnalysis);
 
 	InterfaceVisitor interfaceVisitor(this, _constantPoolMap);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	interfacesDo(&interfaceVisitor, 0);
+#else
 	interfacesDo(&interfaceVisitor);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_isCloneable = interfaceVisitor.wasCloneableSeen();
 	_isSerializable = interfaceVisitor.wasSerializableSeen();
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_VALUE_TYPE)) {
+		_isValueType = true;
+	}
+	if (!isValueType()
+		&& !interfaceVisitor.wasIdentityInterfaceSeen()
+		&& (getSuperClassNameIndex() != 0) /* j.l.Object has no superClass */
+		&& (J9_ARE_NO_BITS_SET(_classFile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE))
+	) {
+		_isIdentityInterfaceNeeded = true;
+	}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 }
 
 void
@@ -906,7 +950,7 @@ ClassFileOracle::walkTypeAnnotations(U_16 annotationsCount, J9CfrTypeAnnotation 
 			 *
 			 * In this case, force the typeIndex to a null value.
 			 * This will cause the parser to throw
-			 * an error if the the VM or application tries to retrieve the annotation.
+			 * an error if the VM or application tries to retrieve the annotation.
 			 */
 			annotation->typeIndex = 0;
 		}
@@ -2394,16 +2438,29 @@ ClassFileOracle::shouldConvertInvokeVirtualToMethodHandleBytecodeForMethodRef(U_
 	J9CfrConstantPoolInfo *name = &_classFile->constantPool[nas->slot1];
 	UDATA result = 0;
 
-	/* Invoking against java.lang.invoke.MethodHandle? */
+	/* Invoking against java.lang.invoke.MethodHandle. */
 	if (J9UTF8_LITERAL_EQUALS(targetClassName->bytes, targetClassName->slot1, "java/lang/invoke/MethodHandle")) {
 		if (J9UTF8_LITERAL_EQUALS(name->bytes, name->slot1, "invokeExact")) {
 			/* MethodHandle.invokeExact */
 			result = CFR_BC_invokehandle;
 		} else if (J9UTF8_LITERAL_EQUALS(name->bytes, name->slot1, "invoke")) {
 			/* MethodHandle.invoke */
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+ 			result = CFR_BC_invokehandle;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			result = CFR_BC_invokehandlegeneric;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		}
 	}
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* Invoking against java.lang.invoke.VarHandle. */
+	if (J9UTF8_LITERAL_EQUALS(targetClassName->bytes, targetClassName->slot1, "java/lang/invoke/VarHandle")
+	&& VM_VMHelpers::isPolymorphicVarHandleMethod((const U_8 *)name->bytes, name->slot1)
+	) {
+		result = CFR_BC_invokehandle;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	return result;
 }

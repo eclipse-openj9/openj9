@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,6 +59,7 @@
 #include "optimizer/PreEscapeAnalysis.hpp"
 #include "optimizer/PostEscapeAnalysis.hpp"
 #include "optimizer/DataAccessAccelerator.hpp"
+#include "optimizer/HotFieldMarking.hpp"
 #include "optimizer/IsolatedStoreElimination.hpp"
 #include "optimizer/LoopAliasRefiner.hpp"
 #include "optimizer/MonitorElimination.hpp"
@@ -76,8 +77,11 @@
 #include "optimizer/JProfilingRecompLoopTest.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "optimizer/UnsafeFastPath.hpp"
+#include "optimizer/TreeLowering.hpp"
 #include "optimizer/VarHandleTransformer.hpp"
 #include "optimizer/StaticFinalFieldFolding.hpp"
+#include "optimizer/HandleRecompilationOps.hpp"
+#include "optimizer/MethodHandleTransformer.hpp"
 
 
 static const OptimizationStrategy J9EarlyGlobalOpts[] =
@@ -134,6 +138,7 @@ static const OptimizationStrategy fsdStrategyOptsForMethodsWithSlotSharing[] =
    { OMR::localCSE                                      },
    { OMR::treeSimplification                            },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup     },         // added for fsd gra
+   { OMR::treeLowering,          OMR::MustBeDone        },
    { OMR::globalLiveVariablesForGC                      },
    { OMR::regDepCopyRemoval                             },
    { OMR::endOpts },
@@ -201,11 +206,11 @@ static const OptimizationStrategy fsdStrategyOptsForMethodsWithoutSlotSharing[] 
    { OMR::localDeadStoreElimination,   OMR::IfEnabled }, //remove the astore if no literal pool is required
    { OMR::localCSE,                    OMR::IfEnabled },  //common up lit pool refs in the same block
    { OMR::deadTreesElimination,        OMR::IfEnabled }, // cleanup at the end
-   { OMR::prefetchInsertionGroup,      OMR::IfLoops   }, // created IL should not be moved
    { OMR::treeSimplification,          OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
    { OMR::trivialDeadTreeRemoval,      OMR::IfEnabled }, // final cleanup before opcode expansion
    { OMR::globalDeadStoreElimination,            },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, },
+   { OMR::treeLowering,                OMR::MustBeDone },
    { OMR::globalDeadStoreGroup,                  },
    { OMR::rematerialization,                     },
    { OMR::compactNullChecks,                     }, // cleanup at the end
@@ -234,6 +239,7 @@ static const OptimizationStrategy noOptStrategyOpts[] =
    { OMR::trivialDeadTreeRemoval,  OMR::IfEnabled },
    { OMR::treeSimplification                      },
    { OMR::recompilationModifier,   OMR::IfEnabled },
+   { OMR::treeLowering,           OMR::MustBeDone },
    { OMR::globalLiveVariablesForGC, OMR::IfAggressiveLiveness },
    { OMR::endOpts                                 }
    };
@@ -281,9 +287,11 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::trivialDeadTreeRemoval,                                               },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfAOTAndEnabled            },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
+   { OMR::treeLowering,                              OMR::MustBeDone            },
    { OMR::globalLiveVariablesForGC,                  OMR::IfAggressiveLiveness  },
    { OMR::profilingGroup,                            OMR::IfProfiling                },
    { OMR::regDepCopyRemoval                                                     },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
    };
 
@@ -355,7 +363,6 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::localCSE,                                  OMR::IfEnabled  },  //common up lit pool refs in the same block
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
    { OMR::signExtendLoadsGroup,                      OMR::IfEnabled                  }, // last opt before GRA
-   { OMR::prefetchInsertionGroup,                    OMR::IfLoops                    }, // created IL should not be moved
    { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
    { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                  }, // final cleanup before opcode expansion
    { OMR::globalDeadStoreElimination,                OMR::IfVoluntaryOSR            },
@@ -364,6 +371,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
+   { OMR::treeLowering,                              OMR::MustBeDone                 },
    { OMR::globalDeadStoreGroup,                                                 },
    { OMR::rematerialization                                                     },
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
@@ -373,6 +381,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::globalLiveVariablesForGC                                              },
    { OMR::profilingGroup,                            OMR::IfProfiling                },
    { OMR::regDepCopyRemoval                                                     },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
    };
 
@@ -399,7 +408,9 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
    { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
+   { OMR::treeLowering,                              OMR::MustBeDone                 },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
    };
 
@@ -431,7 +442,6 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::loopAliasRefinerGroup,                 OMR::IfLoops     },
    { OMR::recompilationModifier,                 OMR::IfEnabledAndNotProfiling },
    { OMR::sequentialStoreSimplificationGroup,                             }, // reduce sequential stores into an arrayset
-   { OMR::prefetchInsertionGroup,                OMR::IfLoops                  }, // created IL should not be moved
    { OMR::partialRedundancyEliminationGroup                               },
    { OMR::globalDeadStoreElimination,            OMR::IfLoopsAndNotProfiling   },
    { OMR::inductionVariableAnalysis,             OMR::IfLoopsAndNotProfiling   },
@@ -462,12 +472,14 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::jProfilingRecompLoopTest,              OMR::IfLoops                  },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled                },
    { OMR::jProfilingValue,                           OMR::MustBeDone           },
+   { OMR::treeLowering,                              OMR::MustBeDone           },
    { OMR::globalDeadStoreElimination,            OMR::IfMoreThanOneBlock       }, // global dead store removal
    { OMR::deadTreesElimination                                            }, // cleanup after dead store removal
    { OMR::compactNullChecks                                               }, // cleanup at the end
    { OMR::finalGlobalGroup                                                }, // done just before codegen
    { OMR::profilingGroup,                        OMR::IfProfiling              },
    { OMR::regDepCopyRemoval                                               },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                         }
    };
 
@@ -516,7 +528,6 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::recompilationModifier,                 OMR::IfEnabled   },
 
    { OMR::sequentialStoreSimplificationGroup                 }, // reduce sequential stores into an arrayset
-   { OMR::prefetchInsertionGroup,                OMR::IfLoops     }, // created IL should not be moved
    { OMR::partialRedundancyEliminationGroup                  },
    { OMR::globalDeadStoreElimination,            OMR::IfLoops     },
    { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
@@ -543,12 +554,14 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::checkcastAndProfiledGuardCoalescer      },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled   },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
+   { OMR::treeLowering,                              OMR::MustBeDone                 },
    { OMR::globalDeadStoreElimination,            OMR::IfMoreThanOneBlock }, // global dead store removal
    { OMR::deadTreesElimination                               }, // cleanup after dead store removal
    { OMR::compactNullChecks                                  }, // cleanup at the end
    { OMR::finalGlobalGroup                                   }, // done just before codegen
    { OMR::profilingGroup,                        OMR::IfProfiling },
    { OMR::regDepCopyRemoval                                  },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                            }
 #endif
    };
@@ -609,11 +622,11 @@ static const OptimizationStrategy AOTStrategyOpts[] =
    { OMR::signExtendLoadsGroup,                  OMR::IfEnabled }, // last opt before GRA
    { OMR::arraysetStoreElimination                                              },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled },
+   { OMR::treeLowering,                          OMR::MustBeDone},
    { OMR::globalCopyPropagation,                 OMR::IfMoreThanOneBlock}, // global copy propagation
    { OMR::globalDeadStoreElimination,            OMR::IfMoreThanOneBlock}, // global dead store removal
    { OMR::deadTreesElimination                             }, // cleanup after dead store removal
    { OMR::compactNullChecks                                }, // cleanup at the end
-   { OMR::prefetchInsertionGroup,                OMR::IfLoops   }, // created IL should not be moved
    { OMR::finalGlobalGroup                                 }, // done just before codegen
    { OMR::regDepCopyRemoval                                },
    { OMR::endOpts                                          }
@@ -710,6 +723,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
+   { OMR::treeLowering,                              OMR::MustBeDone                 },
    { OMR::globalDeadStoreGroup,                                                 },
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
@@ -719,6 +733,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::globalLiveVariablesForGC                                              },
    { OMR::profilingGroup,                            OMR::IfProfiling                },
    { OMR::regDepCopyRemoval                                                     },
+   { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                                               }
    };
 
@@ -789,8 +804,12 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_StringPeepholes::create, OMR::stringPeepholes);
    _opts[OMR::switchAnalyzer] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR::SwitchAnalyzer::create, OMR::switchAnalyzer);
+   _opts[OMR::treeLowering] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR::TreeLowering::create, OMR::treeLowering);
    _opts[OMR::varHandleTransformer] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_VarHandleTransformer::create, OMR::varHandleTransformer);
+   _opts[OMR::methodHandleTransformer] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_MethodHandleTransformer::create, OMR::methodHandleTransformer);
    _opts[OMR::unsafeFastPath] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_UnsafeFastPath::create, OMR::unsafeFastPath);
    _opts[OMR::idiomRecognition] =
@@ -817,6 +836,10 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_JProfilingValue::create, OMR::jProfilingValue);
    _opts[OMR::staticFinalFieldFolding] =
          new (comp->allocator()) TR::OptimizationManager(self(), TR_StaticFinalFieldFolding::create, OMR::staticFinalFieldFolding);
+   _opts[OMR::handleRecompilationOps] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_HandleRecompilationOps::create, OMR::handleRecompilationOps);
+   _opts[OMR::hotFieldMarking] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_HotFieldMarking::create, OMR::hotFieldMarking);
    // NOTE: Please add new J9 optimizations here!
 
    // initialize additional J9 optimization groups

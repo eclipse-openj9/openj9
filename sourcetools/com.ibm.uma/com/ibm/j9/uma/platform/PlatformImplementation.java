@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,7 +167,7 @@ public abstract class PlatformImplementation implements IPlatform {
 					buffer.append("extern void VMCALL " + export.getExport() + "(void);\n");
 				}		
 			} else {
-				// "We ask the the module to give us a header file name to include with the public prototypes"
+				// "We ask the module to give us a header file name to include with the public prototypes"
 				String[] prototypeHeaderFileNames = artifact.getData("prototypeHeaderFileNames");
 				if ( prototypeHeaderFileNames != null ) {
 					for ( String fnm : prototypeHeaderFileNames ) {

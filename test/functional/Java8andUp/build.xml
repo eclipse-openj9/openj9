@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@
 	<property name="src" location="./src" />
 	<property name="src_80" location="./src_80" />
 	<property name="src_90" location="./src_90" />
+	<property name="scr_DupClassNameTest" location="./scr_DupClassNameTest" />
 	<property name="build" location="./bin" />
 	<property name="build_resource" location="./resource" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
@@ -61,11 +62,16 @@
 			<property name="addModules" value="" />
 		</else>
 	</if>
+	<property name="LIB" value="asm_all,javassist,testng,jcommander,commons_cli,jaxb_api,asmtools"/>
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 		<mkdir dir="${build_resource}" />
+		<mkdir dir="${build}/DupClassNameTest" />
+		<mkdir dir="${build}/DupClassNameTest/version1" />
+		<mkdir dir="${build}/DupClassNameTest/version2" />
 	</target>
 
 	<!--compiles the NoSuchMethod test classes. Multiple steps are needed to create classes that call non-existent methods -->
@@ -138,6 +144,16 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
+		<javac srcdir="${scr_DupClassNameTest}/version1" destdir="${build}/DupClassNameTest/version1" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar" />
+			</classpath>
+		</javac>
+		<javac srcdir="${scr_DupClassNameTest}/version2" destdir="${build}/DupClassNameTest/version2" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<classpath>
+				<pathelement location="${LIB_DIR}/testng.jar" />
+			</classpath>
+		</javac>
 		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
@@ -241,7 +257,7 @@
 		</if>
 	</target>
 
-	<target name="jasm_generator" depends="init" description="prepare jasm files">
+	<target name="jasm_generator" depends="init,getDependentLibs" description="prepare jasm files">
 		<property name="jasm_class_destination" location="${build}/j9vm/test/invoker" />
 		<mkdir dir="${jasm_class_destination}" />
 		<exec executable="${TEST_JDK_HOME}/bin/java" dir="${jasm_class_destination}">
@@ -307,7 +323,7 @@
 		<move file="${build}/sun" todir="${build_resource}"/>
 	</target>
 
-	<target name="dist" depends="pack_resources,dist_functional" description="generate the distribution">
+	<target name="dist" depends="pack_resources" description="generate the distribution">
 		<jar jarfile="${DEST}/GeneralTest.jar" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}/../" includes="*.properties,*.xml" />
@@ -321,6 +337,15 @@
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml,*.policy" />
 			<fileset dir="${src}/../" includes="*.mk" />
+		</copy>
+		<mkdir dir="${DEST}/DupClassNameTest" />
+		<mkdir dir="${DEST}/DupClassNameTest/version1" />
+		<mkdir dir="${DEST}/DupClassNameTest/version2" />
+		<copy todir="${DEST}/DupClassNameTest/version1/">
+			<fileset dir="${build}/DupClassNameTest/version1" includes="*.class" />
+		</copy>
+		<copy todir="${DEST}/DupClassNameTest/version2/">
+			<fileset dir="${build}/DupClassNameTest/version2" includes="*.class" />
 		</copy>
 	</target>
 

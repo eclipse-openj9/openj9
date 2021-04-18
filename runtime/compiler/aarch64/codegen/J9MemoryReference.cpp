@@ -30,8 +30,9 @@
 J9::ARM64::MemoryReference::MemoryReference(
       TR::Node *node,
       TR::CodeGenerator *cg)
-   : OMR::MemoryReferenceConnector(node, cg)
+   : OMR::MemoryReferenceConnector(node, cg), _j9Flags(0)
    {
+   self()->setupCausesImplicitNullPointerException(cg);
    if (self()->getUnresolvedSnippet())
       self()->adjustForResolution(cg);
    }
@@ -40,10 +41,21 @@ J9::ARM64::MemoryReference::MemoryReference(
       TR::Node *node,
       TR::SymbolReference *symRef,
       TR::CodeGenerator *cg)
-   : OMR::MemoryReferenceConnector(node, symRef, cg)
+   : OMR::MemoryReferenceConnector(node, symRef, cg), _j9Flags(0)
    {
+   self()->setupCausesImplicitNullPointerException(cg);
    if (self()->getUnresolvedSnippet())
       self()->adjustForResolution(cg);
+   }
+
+void J9::ARM64::MemoryReference::setupCausesImplicitNullPointerException(TR::CodeGenerator *cg)
+   {
+   auto topNode = cg->getCurrentEvaluationTreeTop()->getNode();
+   if (cg->getHasResumableTrapHandler() &&
+      (topNode->getOpCode().isNullCheck() || topNode->chkFoldedImplicitNULLCHK()))
+      {
+      self()->setCausesImplicitNullPointerException();
+      }
    }
 
 void
@@ -79,7 +91,7 @@ J9::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstruction,
          {
          if (baseRegister->getTotalUseCount() == baseRegister->getFutureUseCount())
             {
-            if ((assignedBaseRegister = machine->findBestFreeRegister(TR_GPR, true)) == NULL)
+            if ((assignedBaseRegister = machine->findBestFreeRegister(currentInstruction, TR_GPR, true, baseRegister)) == NULL)
                {
                assignedBaseRegister = machine->freeBestRegister(currentInstruction, baseRegister);
                }
@@ -119,7 +131,7 @@ J9::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstruction,
          {
          if (indexRegister->getTotalUseCount() == indexRegister->getFutureUseCount())
             {
-            if ((assignedIndexRegister = machine->findBestFreeRegister(TR_GPR, false)) == NULL)
+            if ((assignedIndexRegister = machine->findBestFreeRegister(currentInstruction, TR_GPR, false, indexRegister)) == NULL)
                {
                assignedIndexRegister = machine->freeBestRegister(currentInstruction, indexRegister);
                }
@@ -159,7 +171,7 @@ J9::ARM64::MemoryReference::assignRegisters(TR::Instruction *currentInstruction,
          {
          if (extraRegister->getTotalUseCount() == extraRegister->getFutureUseCount())
             {
-            if ((assignedExtraRegister = machine->findBestFreeRegister(TR_GPR, false)) == NULL)
+            if ((assignedExtraRegister = machine->findBestFreeRegister(currentInstruction, TR_GPR, false, extraRegister)) == NULL)
                {
                assignedExtraRegister = machine->freeBestRegister(currentInstruction, extraRegister);
                }

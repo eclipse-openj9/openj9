@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1100,6 +1100,16 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 #endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
 #endif /* defined(J9VM_GC_VLHGC) */
 
+#if defined(J9VM_GC_MODRON_SCAVENGER) || defined(J9VM_GC_VLHGC)
+	/* If dynamicBreadthFirstScanOrdering is enabled, set scavengerScanOrdering and other required options */
+	if(try_scan(scan_start, "dynamicBreadthFirstScanOrdering")) {
+		extensions->scavengerScanOrdering = MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST;
+		/* Below options are required options for dynamicBreadthFirstScanOrdering */
+		extensions->scavengerAlignHotFields = false;
+		goto _exit;
+	}
+#endif /* defined(J9VM_GC_MODRON_SCAVENGER) || defined (J9VM_GC_VLHGC) */
+
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	if (try_scan(scan_start, "scanCacheSize=")) {
 		/* Read in restricted scan cache size */
@@ -1122,7 +1132,6 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		extensions->scavengerScanOrdering = MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_BREADTH_FIRST;
 		goto _exit;
 	}
-		
 #endif /* J9VM_GC_MODRON_SCAVENGER */
 
 	if(try_scan(scan_start, "alwaysCallWriteBarrier")) {

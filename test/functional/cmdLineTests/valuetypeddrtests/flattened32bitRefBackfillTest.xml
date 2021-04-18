@@ -1,0 +1,714 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2019, 2021 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Value Type ddr test with flattening enabled" timeout="600">
+	<variable name="ARGS" value="-XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableArrayFlattening -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
+	<variable name="JARS" value="-cp $ASMJAR$:$JCOMMANDERJAR$:$TESTNGJAR$:$VALUETYPEJAR$" />
+	<variable name="PROGRAM" value="org.openj9.test.lworld.DDRBackfillLayouTest" />
+	<variable name="DUMPFILE" value="j9core.dmp" />
+
+	<test id="Create core file">
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<exec command="rm -f $DUMPFILE$" />
+		<exec command="rm -f core*" />
+		<command showMatch="yes">$EXE$ -Xmx24m $OPT$ $ARGS$ $JARS$ $PROGRAM$</command>
+		<output regex="no" type="success" showMatch="yes">System dump written</output>
+		<saveoutput regex="no" type="required" saveName="DUMPFILE" splitIndex="1" splitBy="System dump written to ">System dump written to </saveoutput>
+		<output regex="no" type="failure">Exception caught!</output>
+	</test>
+
+ 	<test id="Run !threads">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!threads</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!stack 0x</output>
+		<saveoutput regex="no" type="required" saveName="mainThreadId" splitIndex="1" splitBy="!stack ">!stack 0x</saveoutput>
+		<output regex="no" type="failure">DDR is not enabled for this core file</output>
+ 	</test>
+
+	<test id="Run !stackslots $mainThreadId$">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!stackslots $mainThreadId$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
+		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $objectAddr$ to display container array contents">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $objectAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!J9IndexableObject 0x</output>
+		<saveoutput regex="no" type="required" saveName="flatSingleBackfillInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[0] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="objectBackfillInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[1] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="flatUnAlignedSingleBackfillInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[2] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="flatUnAlignedSingleBackfill2Instance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[3] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="flatUnAlignedObjectBackfillInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[4] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="flatUnAlignedObjectBackfill2Instance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[5] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="singleBackfillInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[6] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="objectBackfillInstance2" splitIndex="1" splitBy="= !j9object " showMatch="yes">[7] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="doubleLongInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[8] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="quadLongInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[9] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="doubleQuadLongInstance" splitIndex="1" splitBy="= !j9object " showMatch="yes">[10] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="flatUnAlignedSingleBackfill2Array" splitIndex="1" splitBy="= !j9object " showMatch="yes">[11] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="quadLongArray" splitIndex="1" splitBy="= !j9object " showMatch="yes">[12] = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $flatSingleBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatSingleBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">l (offset = 4) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">o (offset = 12) (ValueObject)</output>
+		<output regex="no" type="success" showMatch="yes">i (offset = 0) (ValueInt)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatSingleBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !flatobject $flatSingleBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $flatSingleBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434</output>
+		<output regex="no" type="success" showMatch="yes">i (offset = 0) (ValueInt)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatSingleBackfill</output>
+		<saveoutput regex="no" type="required" saveName="flatSingleBackfillInstanceO" splitIndex="1" splitBy="= !fj9object " showMatch="yes">Ljava/lang/Object; val = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !fj9object $flatSingleBackfillInstanceO$">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $flatSingleBackfillInstanceO$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $objectBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $objectBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">l (offset = 4) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">o (offset = 0) (ValueObject)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatObjectBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $objectBackfillInstance$ l">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $objectBackfillInstance$ l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">// ValueLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $objectBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $objectBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<saveoutput regex="no" type="required" saveName="objectBackfillInstanceO" splitIndex="1" splitBy="= !fj9object " showMatch="yes">Ljava/lang/Object; val = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !fj9object $objectBackfillInstanceO$">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $objectBackfillInstanceO$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $flatUnAlignedSingleBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedSingleBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">l (offset = 4) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">singles (offset = 12) (FlatUnAlignedSingle)</output>
+		<output regex="no" type="success" showMatch="yes">o (offset = 0) (ValueObject)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $flatUnAlignedSingleBackfillInstance$ l">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedSingleBackfillInstance$ l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">// ValueLong</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $flatUnAlignedSingleBackfillInstance$ singles">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedSingleBackfillInstance$ singles</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">singles.i (offset = 0) (ValueInt)</output>
+		<output regex="no" type="success" showMatch="yes">singles.i2 (offset = 4) (ValueInt)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingle</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 16;</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $flatUnAlignedSingleBackfillInstance$ o">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedSingleBackfillInstance$ o</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">// ValueObject</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 4;</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !flatobject $flatUnAlignedSingleBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $flatUnAlignedSingleBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x45456767</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill</output>
+		<saveoutput regex="no" type="required" saveName="flatUnAlignedSingleBackfillInstanceO" splitIndex="1" splitBy="= !fj9object " showMatch="yes">Ljava/lang/Object; val = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !fj9object $flatUnAlignedSingleBackfillInstanceO$">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $flatUnAlignedSingleBackfillInstanceO$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $flatUnAlignedSingleBackfill2Instance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedSingleBackfill2Instance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">l (offset = 12) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">singles (offset = 0) (FlatUnAlignedSingle)</output>
+		<output regex="no" type="success" showMatch="yes">singles2 (offset = 20) (FlatUnAlignedSingle)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !flatobject $flatUnAlignedSingleBackfill2Instance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $flatUnAlignedSingleBackfill2Instance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x45456767</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 12)</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 0)</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 20)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $flatUnAlignedObjectBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedObjectBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">objects (offset = 0) (FlatUnAlignedObject)</output>
+		<output regex="no" type="success" showMatch="yes">objects2 (offset = 20) (FlatUnAlignedObject)</output>
+		<output regex="no" type="success" showMatch="yes">l (offset = 12) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedObjectBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $flatUnAlignedObjectBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $flatUnAlignedObjectBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 0)</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 20)</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 12)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedObjectBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $flatUnAlignedObjectBackfill2Instance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedObjectBackfill2Instance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">o (offset = 0) (ValueObject)</output>
+		<output regex="no" type="success" showMatch="yes">objects (offset = 12) (FlatUnAlignedObject)</output>
+		<output regex="no" type="success" showMatch="yes">l (offset = 4) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedObjectBackfill2</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !flatobject $flatUnAlignedObjectBackfill2Instance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $flatUnAlignedObjectBackfill2Instance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 4)</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 12)</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 0)</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedObjectBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $singleBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $singleBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J l = 0xFAFBFCFD11223344 (offset = 4) (SingleBackfill)</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 12) (SingleBackfill)</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434 (offset = 0) (SingleBackfill)</output>
+		<output regex="no" type="success" showMatch="yes">// SingleBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !flatobject $singleBackfillInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $singleBackfillInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J l = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434</output>
+		<saveoutput regex="no" type="required" saveName="singleBackfillInstanceO" splitIndex="1" splitBy="= !fj9object " showMatch="yes">Ljava/lang/Object; o = !fj9object 0x</saveoutput>
+		<output regex="no" type="success" showMatch="yes">// SingleBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !fj9object $singleBackfillInstanceO$">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $singleBackfillInstanceO$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $objectBackfillInstance2$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $objectBackfillInstance2$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J l = 0xFAFBFCFD11223344 (offset = 4) (ObjectBackfill)</output>
+		<output regex="no" type="success" showMatch="yes">// ObjectBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>	
+
+	<test id="Run !flatobject $objectBackfillInstance2$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $objectBackfillInstance2$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J l = 0xFAFBFCFD11223344</output>
+		<saveoutput regex="no" type="required" saveName="objectBackfillInstance2O" splitIndex="1" splitBy="= !fj9object " showMatch="yes">Ljava/lang/Object; o = !fj9object 0x</saveoutput>
+		<output regex="no" type="success" showMatch="yes">// ObjectBackfill</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !fj9object $objectBackfillInstance2O$">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $objectBackfillInstance2O$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $doubleLongInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $doubleLongInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J l2 = 0x11551155AAEEAAEE (offset = 12) (DoubleLong)</output>
+		<output regex="no" type="success" showMatch="yes">l (offset = 4) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">// DoubleLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $doubleLongInstance$ l">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $doubleLongInstance$ l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344 (offset = 0) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>
+		<output regex="no" type="success" showMatch="yes">// ValueLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $doubleLongInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $doubleLongInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">(offset = 4)</output>
+		<output regex="no" type="success" showMatch="yes">// DoubleLong</output>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">J l2 = 0x11551155AAEEAAEE</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $doubleLongInstance$ l">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $doubleLongInstance$ l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>
+		<output regex="no" type="success" showMatch="yes">// ValueLong</output>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $quadLongInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $quadLongInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">l (offset = 4) (DoubleLong)</output>
+		<output regex="no" type="success" showMatch="yes">l2 (offset = 20) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">J l3 = 0x33773377CC00CC00 (offset = 28) (QuadLong)</output>
+		<output regex="no" type="success" showMatch="yes">// QuadLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>	
+
+	<test id="Run !j9object $quadLongInstance$ l">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $quadLongInstance$ l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>
+		<output regex="no" type="success" showMatch="yes">l.l (offset = 0) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">J l2 = 0x11551155AAEEAAEE (offset = 8) (DoubleLong)</output>
+		<output regex="no" type="success" showMatch="yes">// DoubleLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $quadLongInstance$ l.l">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $quadLongInstance$ l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>
+		<output regex="no" type="success" showMatch="yes">// ValueLong</output>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344 (offset = 0) (ValueLong)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $quadLongInstance$ l2">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $quadLongInstance$ l2</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 24;</output>
+		<output regex="no" type="success" showMatch="yes">J j = 0x22662266BBFFBBFF (offset = 0) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">// ValueLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !flatobject $quadLongInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $quadLongInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">J l2 = 0x11551155AAEEAAEE</output>
+		<output regex="no" type="success" showMatch="yes">J j = 0x22662266BBFFBBFF</output>
+		<output regex="no" type="success" showMatch="yes">J l3 = 0x33773377CC00CC00</output>
+		<output regex="no" type="success" showMatch="yes">// QuadLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $doubleQuadLongInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $doubleQuadLongInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">l (offset = 4) (QuadLong)</output>
+		<output regex="no" type="success" showMatch="yes">l2 (offset = 36) (DoubleLong)</output>
+		<output regex="no" type="success" showMatch="yes">l3 (offset = 52) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">J l4 = 0x55995599EE22EE22 (offset = 60) (DoubleQuadLong)</output>
+		<output regex="no" type="success" showMatch="yes">// DoubleQuadLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $doubleQuadLongInstance$ l to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $doubleQuadLongInstance$ l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">l.l (offset = 0) (DoubleLong)</output>
+		<output regex="no" type="success" showMatch="yes">l.l2 (offset = 16) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">J l3 = 0x33773377CC00CC00 (offset = 24) (QuadLong)</output>
+		<output regex="no" type="success" showMatch="yes">// QuadLong</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>		
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $doubleQuadLongInstance$ l.l to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $doubleQuadLongInstance$ l.l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">l.l.l (offset = 0) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">J l2 = 0x11551155AAEEAAEE (offset = 8) (DoubleLong)</output>
+		<output regex="no" type="success" showMatch="yes">// DoubleLong</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $doubleQuadLongInstance$ l.l.l to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $doubleQuadLongInstance$ l.l.l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344 (offset = 0) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>
+		<output regex="no" type="success" showMatch="yes">// ValueLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $doubleQuadLongInstance$ l2 to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $doubleQuadLongInstance$ l2</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J l2 = 0x11551155AAEEAAEE (offset = 8) (DoubleLong)</output>
+		<output regex="no" type="success" showMatch="yes">l2.l (offset = 0) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>	
+
+	<test id="Run !j9object $doubleQuadLongInstance$ l2.l to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $doubleQuadLongInstance$ l2.l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344 (offset = 0) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">// ValueLong</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $doubleQuadLongInstance$ l3 to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $doubleQuadLongInstance$ l3</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0x44884488DD11DD11 (offset = 0) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">// ValueLong</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 56;</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !flatobject $doubleQuadLongInstance$ to show the fields of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $doubleQuadLongInstance$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">J l2 = 0x11551155AAEEAAEE</output>
+		<output regex="no" type="success" showMatch="yes">J j = 0x22662266BBFFBBFF</output>
+		<output regex="no" type="success" showMatch="yes">J l3 = 0x33773377CC00CC00</output>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">J j = 0x44884488DD11DD11</output>
+		<output regex="no" type="success" showMatch="yes">J l4 = 0x55995599EE22EE22</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 4)</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 36)</output>
+		<output regex="no" type="success" showMatch="yes">(offset = 52)</output>
+		<output regex="no" type="success" showMatch="yes">// DoubleQuadLong</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $flatUnAlignedSingleBackfill2Array$ to show array">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedSingleBackfill2Array$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">[0] = !j9object 0x</output>
+		<output regex="no" type="success" showMatch="yes">[1] = !j9object 0x</output>
+		<output regex="no" type="success" showMatch="yes">[2] = !j9object 0x</output>
+		<output regex="no" type="success" showMatch="yes">U_32 size = 0x00000003;</output>
+		<output regex="no" type="success" showMatch="yes">// [L</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $flatUnAlignedSingleBackfill2Array$ [0]">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedSingleBackfill2Array$ [0]</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">[0].l (offset = 12) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">[0].singles (offset = 0) (FlatUnAlignedSingle)</output>
+		<output regex="no" type="success" showMatch="yes">[0].singles2 (offset = 20) (FlatUnAlignedSingle)</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 8;</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $flatUnAlignedSingleBackfill2Array$ [1]">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedSingleBackfill2Array$ [1]</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">[0].l (offset = 12) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">[0].singles (offset = 0) (FlatUnAlignedSingle)</output>
+		<output regex="no" type="success" showMatch="yes">[0].singles2 (offset = 20) (FlatUnAlignedSingle)</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $flatUnAlignedSingleBackfill2Array$ [1].l">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $flatUnAlignedSingleBackfill2Array$ [1].l</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344 (offset = 0) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 52;</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $flatUnAlignedSingleBackfill2Array$ [1]">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $flatUnAlignedSingleBackfill2Array$ [1]</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x45456767</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
+		<output regex="no" type="success" showMatch="yes">// FlatUnAlignedSingleBackfill2</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !j9object $quadLongArray$ [1]">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $quadLongArray$ [1]</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">[1].l (offset = 0) (DoubleLong)</output>
+		<output regex="no" type="success" showMatch="yes">[1].l2 (offset = 16) (ValueLong)</output>
+		<output regex="no" type="success" showMatch="yes">J l3 = 0x33773377CC00CC00 (offset = 24) (QuadLong)</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
+		<output regex="no" type="success" showMatch="yes">// QuadLong</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>	
+
+	<test id="Run !flatobject $quadLongArray$ [1]">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $quadLongArray$ [1]</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">J j = 0xFAFBFCFD11223344</output>
+		<output regex="no" type="success" showMatch="yes">J l2 = 0x11551155AAEEAAEE</output>
+		<output regex="no" type="success" showMatch="yes">J j = 0x22662266BBFFBBFF</output>
+		<output regex="no" type="success" showMatch="yes">J l3 = 0x33773377CC00CC00</output>
+		<output regex="no" type="success" showMatch="yes">offset in top level container = 40;</output>
+		<output regex="no" type="success" showMatch="yes">// QuadLong</output>	
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+</suite>

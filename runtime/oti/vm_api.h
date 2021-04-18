@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -523,7 +523,11 @@ getJimModules(J9VMThread *currentThread);
 * @return void
 */
 void
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *ramSuperClass, UDATA *storage, J9ROMFieldOffsetWalkState *walkState, J9ROMFieldOffsetWalkResult *walkResult, BOOLEAN hasReferences);
+#else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *ramSuperClass, UDATA *storage, J9ROMFieldOffsetWalkState *walkState, J9ROMFieldOffsetWalkResult *walkResult);
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #define NO_LOCKWORD_NEEDED (UDATA) -1
 #define LOCKWORD_NEEDED		(UDATA) -2
@@ -868,19 +872,18 @@ setClassLoadingConstraintSignatureError(J9VMThread *currentThread, J9ClassLoader
 void  
 setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newClassNameUTF, J9ClassLoader *loader1, J9UTF8 *class1NameUTF, J9ClassLoader *loader2, J9UTF8 *class2NameUTF, J9UTF8 *exceptionClassNameUTF, U_8 *methodName, UDATA methodNameLength, U_8 *signature, UDATA signatureLength);
 
+/* ---------------- extendedMessageNPE.cpp ---------------- */
+
 /**
-* Return an extended NPE message.
-*
-* Note: the caller is responsible for freeing the returned string if it is not NULL.
-*
-* @param vmThread The current J9VMThread
-* @param bcCurrentPtr The pointer to the bytecode being executed and caused the NPE
-* @param romClass The romClass of the bytecode
-* @param npeCauseMsg The cause of NPE, reserved for future use.
-* @return char* An extended NPE message or NULL if such a message can't be generated
-*/
+ * Return an extended NPE message.
+ *
+ * Note: the caller is responsible for freeing the returned string if it is not NULL.
+ *
+ * @param npeMsgData - the J9NPEMessageData structure holding romClass/romMethod/npePC
+ * @return char* An extended NPE message or NULL if such a message can't be generated
+ */
 char*
-getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romClass, const char *npeCauseMsg);
+getNPEMessage(J9NPEMessageData *npeMsgData);
 
 /* ---------------- gphandle.c ---------------- */
 
@@ -984,6 +987,15 @@ void
 initializeInitialMethods(J9JavaVM *vm);
 
 /* ---------------- jnicsup.c ---------------- */
+
+/**
+* @brief Determine if a JNI ref is an internal class ref
+* @param *vm
+* @param ref
+* @return UDATA
+*/
+UDATA
+jniIsInternalClassRef(J9JavaVM *vm, jobject ref);
 
 /**
 * @brief
@@ -1475,6 +1487,17 @@ printBytecodePairs(J9JavaVM *vm);
 BOOLEAN
 areValueTypesEnabled(J9JavaVM *vm);
 
+
+/**
+ * @brief Queries if -XX:DiagnoseSyncOnValueBasedClasses=1 or -XX:DiagnoseSyncOnValueBasedClasses=2 are found in the CML
+ * @param[in] vm pointer to the J9JavaVM
+ * @return FALSE if neither of -XX:DiagnoseSyncOnValueBasedClasses=1/-XX:DiagnoseSyncOnValueBasedClasses=2 are found in the CML.
+ * 			(i.e. neither J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION/J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING are set in 
+ * 			vm->extendedRuntimeFlags2)
+ * 			Otherwise, return TRUE.
+ */
+BOOLEAN areValueBasedMonitorChecksEnabled(J9JavaVM *vm);
+
 /**
 * @brief
 * @param vmThread
@@ -1640,10 +1663,10 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
  * @param[in] cpEntry pointer to J9ClassPathEntry to be initialized
  *
  * @return IDATA type of the entry which is one of the following
- * 		CPE_TYPE_DIRECTORY if its a a directory
- * 		CPE_TYPE_JAR if its a ZIP file, extraInfo contains the J9ZipFile
- * 		CPE_TYPE_JIMAGE if its a jimage file
- * 		CPE_TYPE_USUSABLE if its a bad entry, don't try to use it anymore
+ * 		CPE_TYPE_DIRECTORY if it's a directory
+ * 		CPE_TYPE_JAR if it's a ZIP file, extraInfo contains the J9ZipFile
+ * 		CPE_TYPE_JIMAGE if it's a jimage file
+ * 		CPE_TYPE_USUSABLE if it's a bad entry, don't try to use it anymore
  */
 IDATA
 initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry);
@@ -2238,6 +2261,19 @@ UDATA
 addHiddenInstanceField(J9JavaVM *vm, const char *className, const char *fieldName, const char *fieldSignature, UDATA *offsetReturn);
 
 /**
+ * Report a hot field if the JIT has determined that the field has met appropriate thresholds to be determined a hot field. 
+ * Valid if dynamicBreadthFirstScanOrdering is enabled.
+ *
+ * @param vm[in] pointer to the J9JavaVM
+ * @param reducedCpuUtil normalized cpu utilization of the hot field for the method being compiled
+ * @param clazz pointer to the class where a hot field should be added
+ * @param fieldOffset value of the field offset that should be added as a hot field for the given class
+ * @param reducedFrequency normalized block frequency of the hot field for the method being compiled
+ */
+void
+reportHotField(J9JavaVM *javaVM, int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency);
+
+/**
 * @brief
 * @param *vmStruct
 * @param *clazz
@@ -2362,6 +2398,39 @@ isNameOrSignatureQtype(J9UTF8 *utfWrapper);
 BOOLEAN
 isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex);
 
+/**
+ * Performs an aaload operation on an object. Handles flattened and non-flattened cases.
+ *
+ * Assumes recieverObject is not null.
+ * All AIOB exceptions must be thrown before calling.
+ *
+ * Returns null if newObjectRef retrieval fails.
+ *
+ * If fast == false, special stack frame must be built and receiverObject must be pushed onto it.
+ *
+ * @param[in] currentThread thread token
+ * @param[in] receiverObject arrayObject
+ * @param[in] index array index
+ * @param[in] fast bool for fast or slow path
+ *
+ * @return array element
+ */
+j9object_t
+loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast);
+
+/**
+ * Performs an aastore operation on an object. Handles flattened and non-flattened cases.
+ *
+ * Assumes recieverObject and paramObject are not null.
+ * All AIOB exceptions must be thrown before calling.
+ *
+ * @param[in] currentThread thread token
+ * @param[in] receiverObject arrayObject
+ * @param[in] index array index
+ * @param[in] paramObject obj arg
+ */
+void
+storeFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject);
 
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.
@@ -3004,6 +3073,14 @@ freeMemorySegmentList(J9JavaVM *javaVM,J9MemorySegmentList *segmentList);
 void
 freeMemorySegmentListEntry(J9MemorySegmentList *segmentList, J9MemorySegment *segment);
 
+/**
+* @brief Iterate through the segmentList and pass the J9MemorySegment * to the segmentCallback
+* @param segmentList The J9MemorySegmentList to iterate through.  Must not be NULL
+* @param segmentCallBack The user supplied callback that operates on the segment.  Must not be NULL.
+* @param userData A void* passed through to the callback for tracking state
+*/
+void
+allSegmentsInMemorySegmentListDo(J9MemorySegmentList *segmentList, void (* segmentCallback)(J9MemorySegment*, void*), void *userData);
 
 /**
 * @brief
@@ -4176,6 +4253,16 @@ typedef struct J9ObjectMonitorInfo {
 	IDATA depth;
 	UDATA count;
 } J9ObjectMonitorInfo;
+
+/**
+ * @brief See if an object is being waited on by targetThread
+ * @param currentThread
+ * @param targetThread
+ * @param obj
+ * @return BOOLEAN
+ */
+BOOLEAN
+objectIsBeingWaitedOn(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t obj);
 
 /**
  * @brief Get the object monitors locked by a thread

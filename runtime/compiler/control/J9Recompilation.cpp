@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@
 #include "control/Options.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"
 #if defined(J9VM_OPT_JITSERVER)
@@ -208,6 +209,12 @@ J9::Recompilation::findOrCreateProfileInfo()
    return profileInfo;
    }
 
+TR_PersistentProfileInfo *
+J9::Recompilation::getProfileInfo()
+   {
+   return _bodyInfo->getProfileInfo();
+   }
+
 void
 J9::Recompilation::startOfCompilation()
    {
@@ -328,6 +335,10 @@ J9::Recompilation::endOfCompilation()
          _bodyInfo->setDisableSampling(true);
          }
       }
+
+   // If we disallow recompilation then disable sampling
+   if (!_compilation->allowRecompilation())
+      _bodyInfo->setDisableSampling(true);
    }
 
 

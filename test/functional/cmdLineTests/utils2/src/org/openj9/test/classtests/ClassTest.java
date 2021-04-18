@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,8 @@ public class ClassTest {
     public static void main(String[] args) throws Throwable {
         ClassTest ct = new ClassTest();
         ClassTestHelper ch = new ClassTestHelper();
-        InputStream is = ct.getClass().getResourceAsStream("AnonClassAndUnsafeClassTest.class");
-        ch.func(ct.getClass(), is);
+        InputStream anonUnsafeClassStream = ct.getClass().getResourceAsStream("AnonClassAndUnsafeClassTest.class");
+        InputStream unsafeBootClassStream = ct.getClass().getResourceAsStream("UnsafeBootClass.class");
+        ch.func(ct.getClass(), anonUnsafeClassStream, unsafeBootClassStream);
     }
 }

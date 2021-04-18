@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -317,6 +317,20 @@ public class Test_String {
 		AssertJUnit.assertTrue("0x130 should compare = to 'i'", "\u0130".compareToIgnoreCase("i") == 0);
 		AssertJUnit.assertTrue("0x131 should compare = to 'i'", "\u0131".compareToIgnoreCase("i") == 0);
 
+		AssertJUnit.assertTrue("Turkish 'ı' at beginning of string returned incorrect value for first = second",
+				"\u0131\u0130j".compareToIgnoreCase("\u0069\u0049J") == 0);
+		AssertJUnit.assertTrue("Turkish 'ı' in middle of string returned incorrect value for first = second",
+				"J\u0131j".compareToIgnoreCase("j\u0130J") == 0);
+		AssertJUnit.assertTrue("Turkish 'ı' at end of string returned incorrect value for first = second",
+				"j\u0131".compareToIgnoreCase("J\u0130") == 0);
+
+		if (VersionCheck.major() >= 16) {
+			AssertJUnit.assertTrue("DESERET CAPITAL LETTER LONG I should compare == to DESERET SMALL LETTER LONG I",
+				"\ud801\udc00".compareToIgnoreCase("\ud801\udc28") == 0);
+			AssertJUnit.assertTrue("low surrogate only of a Deseret capital/small letter pair at end of string should compare unequal",
+				"A\udc00".compareToIgnoreCase("A\udc28") != 0);
+		}
+
 		Locale defLocale = Locale.getDefault();
 		try {
 			Locale.setDefault(new Locale("tr", ""));
@@ -579,6 +593,20 @@ public class Test_String {
 	@Test
 	public void test_equalsIgnoreCase() {
 		AssertJUnit.assertTrue("lc version returned unequal to uc", hwlc.equalsIgnoreCase(hwuc));
+
+		AssertJUnit.assertTrue("Turkish 'ı' at beginning of string lc version returned unequal to uc",
+				"\u0131\u0130j".equalsIgnoreCase("\u0069\u0049J"));
+		AssertJUnit.assertTrue("Turkish 'ı' in middle of string lc version returned unequal to uc",
+				"J\u0131j".equalsIgnoreCase("j\u0130J"));
+		AssertJUnit.assertTrue("Turkish 'ı' at end of string lc version returned unequal to uc",
+				"j\u0131".equalsIgnoreCase("J\u0130"));
+
+		if (VersionCheck.major() >= 16) {
+			AssertJUnit.assertTrue("DESERET CAPITAL LETTER LONG I returned unequal to DESERET SMALL LETTER LONG I",
+				"\ud801\udc00".equalsIgnoreCase("\ud801\udc28"));
+			AssertJUnit.assertFalse("low surrogate only of a Deseret capital/small letter pair at end of string should return unequal",
+				"A\udc00".equalsIgnoreCase("A\udc28"));
+		}
 	}
 
 	/**
@@ -1031,6 +1059,20 @@ public class Test_String {
 		AssertJUnit.assertTrue("Different regions returned true", !hw1.regionMatches(true, 2, bogusString, 2, 5));
 		AssertJUnit.assertTrue("identical regions failed comparison with different cases",
 				hw1.regionMatches(false, 2, hw2, 2, 5));
+
+		AssertJUnit.assertTrue("Turkish 'ı' at beginning of string failed comparison with different cases",
+				"\u0131\u0130j".regionMatches(true, 0, "\u0069\u0049J", 0, 3));
+		AssertJUnit.assertTrue("Turkish 'ı' in middle of string failed comparison with different cases",
+				"J\u0131j".regionMatches(true, 0, "j\u0130J", 0, 3));
+		AssertJUnit.assertTrue("Turkish 'ı' at end of string failed comparison with different cases",
+				"jJ\u0131".regionMatches(true, 0, "Jj\u0130", 0, 3));
+
+		if (VersionCheck.major() >= 16) {
+			AssertJUnit.assertTrue("DESERET CAPITAL LETTER LONG I and DESERET SMALL LETTER LONG I should match when case insensitive",
+				"\ud801\udc00".regionMatches(true, 0, "\ud801\udc28", 0 ,2));
+			AssertJUnit.assertFalse("low surrogate only of a Deseret capital/small letter pair at end of region should not match when case insensitive",
+				"A\udc00B".regionMatches(true, 0, "A\udc28B", 0 ,2));
+		}
 	}
 
 	/**

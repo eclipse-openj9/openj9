@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@
 #include "VerboseWriterChain.hpp"
 #include "GCExtensions.hpp"
 #include "FinalizeListManager.hpp"
+#include "VerboseBuffer.hpp"
 
 void
 MM_VerboseHandlerJava::outputFinalizableInfo(MM_VerboseManager *manager, MM_EnvironmentBase *env, UDATA indent)
@@ -63,22 +64,21 @@ MM_VerboseHandlerJava::getThreadName(char *buf, UDATA bufLen, OMR_VMThread *omrT
 }
 
 void
-MM_VerboseHandlerJava::writeVmArgs(MM_VerboseManager *manager, MM_EnvironmentBase* env, J9JavaVM *vm)
+MM_VerboseHandlerJava::writeVmArgs(MM_EnvironmentBase* env, MM_VerboseBuffer* buffer, J9JavaVM *vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	JavaVMInitArgs* vmArgs = vm->vmArgsArray->actualVMArgs;
-	MM_VerboseWriterChain* writer = manager->getWriterChain();
-	writer->formatAndOutput(env, 1, "<vmargs>");
+	buffer->formatAndOutput(env,  1, "<vmargs>");
 	for (jint i = 0; i < vmArgs->nOptions; ++i) {
 		char escapedXMLString[128];
 		UDATA optLen = strlen(vmArgs->options[i].optionString);
 		UDATA escapeConsumed = escapeXMLString(OMRPORT_FROM_J9PORT(PORTLIB), escapedXMLString, sizeof(escapedXMLString), vmArgs->options[i].optionString, optLen);
 		const char* dots = (escapeConsumed < optLen) ? "..." : "";
 		if (NULL == vmArgs->options[i].extraInfo) {
-			writer->formatAndOutput(env, 2, "<vmarg name=\"%s%s\" />", escapedXMLString, dots);
+			buffer->formatAndOutput(env, 2, "<vmarg name=\"%s%s\" />", escapedXMLString, dots);
 		} else {
-			writer->formatAndOutput(env, 2, "<vmarg name=\"%s%s\" value=\"%p\" />", escapedXMLString, dots, vmArgs->options[i].extraInfo);
+			buffer->formatAndOutput(env, 2, "<vmarg name=\"%s%s\" value=\"%p\" />", escapedXMLString, dots, vmArgs->options[i].extraInfo);
 		}
 	}
-	writer->formatAndOutput(env, 1, "</vmargs>");
+	buffer->formatAndOutput(env, 1, "</vmargs>");
 }

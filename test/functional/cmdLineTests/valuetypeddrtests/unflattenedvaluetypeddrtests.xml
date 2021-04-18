@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2019, 2019 IBM Corp. and others
+  Copyright (c) 2019, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="J9 Value Type ddr test with flattening disabled" timeout="600">
-	<variable name="ARGS" value="-Xint -XX:+EnableValhalla -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
+	<variable name="ARGS" value="-Xint -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
 	<variable name="JARS" value="-cp $ASMJAR$:$JCOMMANDERJAR$:$TESTNGJAR$:$VALUETYPEJAR$" />
 	<variable name="PROGRAM" value="org.openj9.test.lworld.DDRValueTypeTest" />
 	<variable name="DUMPFILE" value="j9core.dmp" />
@@ -35,7 +35,7 @@
 		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<exec command="rm -f $DUMPFILE$" />
 		<exec command="rm -f core*" />
-		<command showMatch="yes">$EXE$ $ARGS$ $JARS$ $PROGRAM$</command>
+		<command showMatch="yes">$EXE$ -Xmx24m $ARGS$ $JARS$ $PROGRAM$</command>
 		<output regex="no" type="success" showMatch="yes">System dump written</output>
 		<saveoutput regex="no" type="required" saveName="DUMPFILE" splitIndex="1" splitBy="System dump written to ">System dump written to </saveoutput>
 		<output regex="no" type="failure">Exception caught!</output>
@@ -93,7 +93,7 @@
 			<input>!fj9object $intAddr1$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I i = 0x7FFFFFFF (offset = 0) (ValueInt)</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x12123434 (offset = 0) (ValueInt)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -114,7 +114,7 @@
 			<input>!fj9object $intAddr2$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I i = 0xB670C61E (offset = 0) (ValueInt)</output>
+		<output regex="no" type="success" showMatch="yes">I i = 0x45456767 (offset = 0) (ValueInt)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 

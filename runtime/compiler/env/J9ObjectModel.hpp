@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,8 +62,13 @@ public:
    bool mayRequireSpineChecks();
 
    bool areValueTypesEnabled();
+   /**
+   * @brief Whether the check is enabled on monitor object being value based class type
+   */
+   bool areValueBasedMonitorChecksEnabled();
 
    int32_t sizeofReferenceField();
+   bool isHotReferenceFieldRequired();
    uintptr_t elementSizeOfBooleanArray();
    uint32_t getSizeOfArrayElement(TR::Node *node);
    int64_t maxArraySizeInElementsForAllocation(TR::Node *newArray, TR::Compilation *comp);
@@ -113,6 +118,10 @@ public:
    uintptr_t offsetOfDiscontiguousArraySizeField();
    uintptr_t objectHeaderSizeInBytes();
    uintptr_t offsetOfIndexableSizeField();
+#if defined(TR_TARGET_64BIT)
+   uintptr_t offsetOfContiguousDataAddrField();
+   uintptr_t offsetOfDiscontiguousDataAddrField();
+#endif /* TR_TARGET_64BIT */
 
    /**
    * @brief Returns the read barrier type of VM's GC

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -832,7 +832,7 @@ ClassDebugDataProvider::updateLVTWithSize(UDATA size)
 /**
  * This method is called when the ROMClass area in shared cache is full.
  * As a result no new data can be added to class debug area,
- * and the the partially filled page and unused pages can be mprotected.
+ * and the partially filled page and unused pages can be mprotected.
  * 
  * @param[in] currentThread The current J9VMThread
  * @param[in] permSetter specifies memory permission policy

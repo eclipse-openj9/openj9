@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -37,6 +36,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.imageio.stream.ImageInputStream;
 
@@ -73,11 +73,12 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 	/*[IF Sidecar19-SE]*/
 	static {
 		/* 
-		 * Even though j9ddr.jar is a resource within the module openj9.dtfj,
-		 * the classes contained within appear at runtime to be in the un-named module.
-		 * The following programmatically exports jdk.internal.org.objectweb.asm
-		 * from java.base and certain packages from openj9.dtfj to the un-named
-		 * module via reflection APIs for use by j9ddr.jar.
+		 * Even though j9ddr classes are within the module openj9.dtfj, they
+		 * appear at runtime to be in the un-named module because they're
+		 * defined by a custom class loader. The following programmatically
+		 * exports jdk.internal.org.objectweb.asm from java.base and certain
+		 * packages from openj9.dtfj to the un-named module for use by those
+		 * classes.
 		 */
 		try {
 			Module baseModule = String.class.getModule();
@@ -86,10 +87,24 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 
 			Module thisModule = ImageFactory.class.getModule();
 
+			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.dtfj.corereaders"); //$NON-NLS-1$
 			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.dtfj.image.j9"); //$NON-NLS-1$
+			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.dtfj.utils"); //$NON-NLS-1$
 			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.dtfj.utils.file"); //$NON-NLS-1$
 			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.java.diagnostics.utils"); //$NON-NLS-1$
 			Modules.addExportsToAllUnnamed(thisModule, "com.ibm.java.diagnostics.utils.commands"); //$NON-NLS-1$
+
+			// export com.ibm.j9ddr and sub-packages, but not com.ibm.j9ddr.vm29 or its sub-packages
+			Pattern include = Pattern.compile("^com\\.ibm\\.j9ddr(\\..+)?"); //$NON-NLS-1$
+			Pattern exclude = Pattern.compile("^com\\.ibm\\.j9ddr\\.vm\\d\\d.*"); //$NON-NLS-1$
+
+			for (String packageName : thisModule.getPackages()) {
+				if (include.matcher(packageName).matches()) {
+					if (!exclude.matcher(packageName).matches()) {
+						Modules.addExportsToAllUnnamed(thisModule, packageName);
+					}
+				}
+			}
 		} catch (Exception e) {
 			throw new InternalError("Failed to adjust module exports", e); //$NON-NLS-1$
 		}
@@ -195,19 +210,17 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		File core = null;
 		File meta = null;
 		if (FileManager.isArchive(imageFile)) {
-			boolean foundCoreFile = false; //flag to indicate that a core file has been found
 			CompressedFileManager archiveManager = (CompressedFileManager) manager;
 			for (ManagedImageSource candidate : candidates) {
 				if (candidate.getType().equals(ImageSourceType.CORE)) {
-					if (foundCoreFile) {
+					if (source != null) {
 						//for legacy behaviour compatibility this can only return 1 core when invoked this way
 						throw new MultipleCandidateException(candidates, imageFile);
 					}
 					source = candidate; //note the core file
-					foundCoreFile = true;
 				}
 			}
-			if (foundCoreFile) {
+			if (source != null) {
 				//if a single core file has been located then extract it and any associated meta data into a temp directory
 				File parent = getTempDirParent();
 				tmpdir = FileManager.createTempDir(parent);

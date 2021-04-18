@@ -1,6 +1,6 @@
 /*[INCLUDE-IF DAA]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2020 IBM Corp. and others
+ * Copyright (c) 2013, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -846,7 +846,7 @@ public final class DecimalData
     /**
      * Converts a Packed Decimal value in a byte array into a binary integer. If the digital part of the input Packed
      * Decimal is not valid then the digital part of the output will not be valid. The sign of the input Packed Decimal
-     * is assumed to to be positive unless the sign nibble contains one of the negative sign codes, in which case the
+     * is assumed to be positive unless the sign nibble contains one of the negative sign codes, in which case the
      * sign of the input Packed Decimal is interpreted as negative.
      * 
      * Overflow can happen if the Packed Decimal value does not fit into a binary integer. When
@@ -941,7 +941,7 @@ public final class DecimalData
     /**
      * Converts a Packed Decimal value in a byte array into a binary long. If the digital part of the input Packed
      * Decimal is not valid then the digital part of the output will not be valid. The sign of the input Packed Decimal
-     * is assumed to to be positive unless the sign nibble contains one of the negative sign codes, in which case the
+     * is assumed to be positive unless the sign nibble contains one of the negative sign codes, in which case the
      * sign of the input Packed Decimal is interpreted as negative.
      * 
      * Overflow can happen if the Packed Decimal value does not fit into a binary long. In this case, when
@@ -1044,7 +1044,7 @@ public final class DecimalData
     /**
      * Converts a Packed Decimal in a byte array into an External Decimal in another byte array. If the digital part of
      * the input Packed Decimal is not valid then the digital part of the output will not be valid. The sign of the
-     * input Packed Decimal is assumed to to be positive unless the sign nibble contains one of the negative sign codes,
+     * input Packed Decimal is assumed to be positive unless the sign nibble contains one of the negative sign codes,
      * in which case the sign of the input Packed Decimal is interpreted as negative.
      * 
      * @param packedDecimal
@@ -1150,7 +1150,7 @@ public final class DecimalData
     /**
      * Convert a Packed Decimal in a byte array to a Unicode Decimal in a char array. If the digital part of the input
      * Packed Decimal is not valid then the digital part of the output will not be valid. The sign of the input Packed
-     * Decimal is assumed to to be positive unless the sign nibble contains one of the negative sign codes, in which
+     * Decimal is assumed to be positive unless the sign nibble contains one of the negative sign codes, in which
      * case the sign of the input Packed Decimal is interpreted as negative.
      * 
      * @param packedDecimal
@@ -1330,7 +1330,7 @@ public final class DecimalData
     /**
      * Converts an External Decimal value in a byte array into a binary integer. If the digital part of the input
      * External Decimal is not valid then the digital part of the output will not be valid. The sign of the input
-     * External Decimal is assumed to to be positive unless the sign nibble or byte (depending on
+     * External Decimal is assumed to be positive unless the sign nibble or byte (depending on
      * <code>decimalType</code>) contains one of the negative sign codes, in which case the sign of the input External
      * Decimal is interpreted as negative.
      * 
@@ -1469,7 +1469,7 @@ public final class DecimalData
     /**
      * Converts an External Decimal value in a byte array into a long. If the digital part of the input External Decimal
      * is not valid then the digital part of the output will not be valid. The sign of the input External Decimal is
-     * assumed to to be positive unless the sign nibble or byte (depending on <code>decimalType</code>) contains one of
+     * assumed to be positive unless the sign nibble or byte (depending on <code>decimalType</code>) contains one of
      * the negative sign codes, in which case the sign of the input External Decimal is interpreted as negative.
      * 
      * Overflow can happen if the External Decimal value does not fit into a binary long. When
@@ -1602,7 +1602,7 @@ public final class DecimalData
     /**
      * Converts an External Decimal in a byte array to a Packed Decimal in another byte array. If the digital part of
      * the input External Decimal is not valid then the digital part of the output will not be valid. The sign of the
-     * input External Decimal is assumed to to be positive unless the sign nibble or byte (depending on
+     * input External Decimal is assumed to be positive unless the sign nibble or byte (depending on
      * <code>decimalType</code>) contains one of the negative sign codes, in which case the sign of the input External
      * Decimal is interpreted as negative.
      * 
@@ -1734,7 +1734,7 @@ public final class DecimalData
 
     /**
      * Converts an External Decimal in a byte array to a BigDecimal. The sign of the input External Decimal is assumed
-     * to to be positive unless the sign nibble or byte (depending on <code>decimalType</code>) contains one of the
+     * to be positive unless the sign nibble or byte (depending on <code>decimalType</code>) contains one of the
      * negative sign codes, in which case the sign of the input External Decimal is interpreted as negative.
      * 
      * Overflow can happen if the External Decimal value does not fit into the BigDecimal. In this case, when
@@ -1833,7 +1833,7 @@ public final class DecimalData
     
     /**
      * Converts a Unicode Decimal value in a char array into a binary integer. The sign of the input Unicode Decimal is
-     * assumed to to be positive unless the sign char contains the negative sign code, in which case the sign of the
+     * assumed to be positive unless the sign char contains the negative sign code, in which case the sign of the
      * input Unicode Decimal is interpreted as negative.
      * 
      * Overflow can happen if the Unicode Decimal value does not fit into a binary int. In this case, when
@@ -1945,7 +1945,7 @@ public final class DecimalData
 
     /**
      * Converts a Unicode Decimal value in a char array into a binary long. The sign of the input Unicode Decimal is
-     * assumed to to be positive unless the sign char contains the negative sign code, in which case the sign of the
+     * assumed to be positive unless the sign char contains the negative sign code, in which case the sign of the
      * input Unicode Decimal is interpreted as negative.
      * 
      * Overflow can happen if the Unicode Decimal value does not fit into a binary long. In this case, when
@@ -2061,7 +2061,7 @@ public final class DecimalData
     /**
      * Converts an Unicode Decimal in a char array to a Packed Decimal in a byte array. If the digital part of the input
      * Unicode Decimal is not valid then the digital part of the output will not be valid. The sign of the input Unicode
-     * Decimal is assumed to to be positive unless the sign byte contains the negative sign code, in which case the sign
+     * Decimal is assumed to be positive unless the sign byte contains the negative sign code, in which case the sign
      * of the input Unicode Decimal is interpreted as negative.
      * 
      * @param unicodeDecimal
@@ -2152,7 +2152,7 @@ public final class DecimalData
     }
 
     /**
-     * Convert a Unicode Decimal in a char array to a BigInteger. The sign of the input Unicode Decimal is assumed to to
+     * Convert a Unicode Decimal in a char array to a BigInteger. The sign of the input Unicode Decimal is assumed to
      * be positive unless the sign byte contains the negative sign code, in which case the sign of the input Unicode
      * Decimal is interpreted as negative.
      * 

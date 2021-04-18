@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2014, 2020 IBM Corp. and others
+ * Copyright (c) 2014, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,20 +25,20 @@ package com.ibm.gpu;
 import java.util.Objects;
 
 /**
- * This class is used to perform perform sorting operations of
+ * This class is used to perform sorting operations of
  * primitive arrays of type int, long, float, double
  * on any connected CUDA GPU. A successful sort operation
  * results in the array being sorted in ascending order.
  */
-/*[IF Java16]*/
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 public final class Maths {
 
 	private Maths() {
 		super();
 	}
-/*[ELSE] Java16
+/*[ELSE] JAVA_SPEC_VERSION >= 16
 public class Maths {
-/*[ENDIF] Java16*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
 
 	private static int getDefaultDevice() {
 		return CUDAManager.instanceInternal().getDefaultDevice();

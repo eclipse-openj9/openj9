@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,17 +68,28 @@
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
 
-J9::CodeGenerator::CodeGenerator() :
-      OMR::CodeGeneratorConnector(),
-   _gpuSymbolMap(TR::comp()->allocator()),
-   _stackLimitOffsetInMetaData(TR::comp()->fej9()->thisThreadGetStackLimitOffset()),
-   _uncommonedNodes(TR::comp()->trMemory(), stackAlloc),
+
+J9::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
+      OMR::CodeGeneratorConnector(comp),
+   _gpuSymbolMap(comp->allocator()),
+   _stackLimitOffsetInMetaData(comp->fej9()->thisThreadGetStackLimitOffset()),
+   _uncommonedNodes(comp->trMemory(), stackAlloc),
    _liveMonitors(NULL),
-   _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(TR::comp()->allocator())),
-   _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(TR::comp()->allocator())),
-   _monitorMapping(std::less<ncount_t>(), MonitorMapAllocator(TR::comp()->trMemory()->heapMemoryRegion())),
+   _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(comp->allocator())),
+   _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(comp->allocator())),
+   _monitorMapping(std::less<ncount_t>(), MonitorMapAllocator(comp->trMemory()->heapMemoryRegion())),
    _dummyTempStorageRefNode(NULL)
    {
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
+   }
+
+void
+J9::CodeGenerator::initialize()
+   {
+   self()->OMR::CodeGeneratorConnector::initialize();
    }
 
 TR_J9VMBase *
@@ -154,180 +165,6 @@ static TR::Node *lowerCASValues(
    }
 
 
-/**
- * @brief Add checks to skip (fast-path) acmpHelper call
- *
- * @details
- *
- * This transformation adds checks for the cases where the acmp can be performed
- * without calling the VM helper. The trasformed Trees represen the following operation:
- *
- * 1. If the address of lhs and rhs are the same, produce an eq (true) result
- *    and skip the call (note the two objects must be the same regardless of
- *    whether they are value types are reference types)
- * 2. Otherwise, do VM helper call
- *
- * The transformation looks as follows:
- *
- *  +----------------------+
- *  |ttprev                |
- *  |treetop               |
- *  |  icall acmpHelper    |
- *  |    aload lhs         |
- *  |    aload rhs         |
- *  |ificmpeq --> ...      |
- *  |  ==> icall           |
- *  |  iconst 0            |
- *  |BBEnd                 |
- *  +----------------------+
- *
- *  ...becomes...
- *
- *  +----------------------+
- *  |ttprev                |
- *  |iRegStore x           |
- *  |  iconst 1            |
- *  |ifacmpeq  -->---------*---------+
- *  |  aload lhs           |         |
- *  |  aload rhs           |         |
- *  |BBEnd                 |         |
- *  +----------------------+         |
- *  |BBStart (extension)   |         |
- *  |iRegStore x           |         |
- *  |  icall acmpHelper    |         |
- *  |    aload lhs         |         |
- *  |    aload rhs         |         |
- *  |BBEnd                 |         |
- *  +----------------------+         |
- *        |                          |
- *        +--------------------------+
- *        |
- *        v
- *  +-----------------+
- *  |BBStart
- *  |ificmpeq --> ... |
- *  |  iRegLoad x     |
- *  |  iconst 0       |
- *  |BBEnd            |
- *  +-----------------+
- *
- */
-void
-J9::CodeGenerator::fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt, const bool trace)
-   {
-   TR::Compilation* comp = self()->comp();
-   TR::CFG* cfg = comp->getFlowGraph();
-   cfg->invalidateStructure();
-
-   // anchor call node after split point to ensure the returned value goes into
-   // either a temp or a global register
-   auto* anchoredCallTT = TR::TreeTop::create(comp, tt, TR::Node::create(TR::treetop, 1, node));
-   if (trace)
-      traceMsg(comp, "Anchoring call node under treetop n%dn (0x%p)\n", anchoredCallTT->getNode()->getGlobalIndex(), anchoredCallTT->getNode());
-
-   // anchor the call arguments just before the call
-   // this ensures the values are live before the call so that we can
-   // propagate their values in global registers if needed
-   auto* anchoredCallArg1TT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node->getFirstChild()));
-   auto* anchoredCallArg2TT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node->getSecondChild()));
-   if (trace)
-      {
-      traceMsg(comp, "Anchoring call arguments n%dn and n%dn under treetops n%dn and n%dn\n",
-         node->getFirstChild()->getGlobalIndex(), node->getSecondChild()->getGlobalIndex(), anchoredCallArg1TT->getNode()->getGlobalIndex(), anchoredCallArg2TT->getNode()->getGlobalIndex());
-      }
-
-   // put non-helper call in its own block by block splitting at the
-   // next treetop and then at the current one
-   TR::Block* prevBlock = tt->getEnclosingBlock();
-   TR::Block* targetBlock = prevBlock->splitPostGRA(tt->getNextTreeTop(), cfg, true, NULL);
-   TR::Block* callBlock = prevBlock->split(tt, cfg);
-   callBlock->setIsExtensionOfPreviousBlock(true);
-   if (trace)
-      traceMsg(comp, "Isolated call node n%dn in block_%d\n", node->getGlobalIndex(), callBlock->getNumber());
-
-   // insert store of constant 1
-   // the value must go wherever the value returned by the helper call goes
-   // so that the code in the target block picks up the constant if we fast-path
-   // (i.e. jump around) the call
-   TR::Node* anchoredNode = anchoredCallTT->getNode()->getFirstChild(); // call node is under a treetop node
-   if (trace)
-      traceMsg(comp, "Anchored call has been transformed into %s node n%dn\n", anchoredNode->getOpCode().getName(), anchoredNode->getGlobalIndex());
-   auto* const1Node = TR::Node::iconst(1);
-   TR::Node* storeNode = NULL;
-   if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
-      {
-      if (trace)
-         traceMsg(comp, "Storing constant 1 in register %s\n", comp->getDebug()->getGlobalRegisterName(anchoredNode->getGlobalRegisterNumber()));
-      storeNode = TR::Node::create(TR::iRegStore, 1, const1Node);
-      storeNode->setGlobalRegisterNumber(anchoredNode->getGlobalRegisterNumber());
-      }
-   else if (anchoredNode->getOpCodeValue() == TR::iload)
-      {
-      if (trace)
-         traceMsg(comp, "Storing constant 1 to symref %d (%s)\n", anchoredNode->getSymbolReference()->getReferenceNumber(), anchoredNode->getSymbolReference()->getName(comp->getDebug()));
-      storeNode = TR::Node::create(TR::istore, 1, const1Node);
-      storeNode->setSymbolReference(anchoredNode->getSymbolReference());
-      }
-   else
-      TR_ASSERT_FATAL(false, "Anchord call has been turned into unexpected opcode %s\n", anchoredNode->getOpCode().getName());
-   prevBlock->append(TR::TreeTop::create(comp, storeNode));
-
-   // instert acmpeq for fastpath, taking care to set the proper register dependencies
-   auto* ifacmpeqNode = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), anchoredCallArg2TT->getNode()->getFirstChild(), targetBlock->getEntry());
-   if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
-      {
-      auto* depNode = TR::Node::create(TR::PassThrough, 1, storeNode->getChild(0));
-      depNode->setGlobalRegisterNumber(storeNode->getGlobalRegisterNumber());
-
-      TR::Node* glRegDeps = TR::Node::create(TR::GlRegDeps);
-      glRegDeps->addChildren(&depNode, 1);
-      ifacmpeqNode->addChildren(&glRegDeps, 1);
-
-      if (callBlock->getExit()->getNode()->getNumChildren() > 0)
-         {
-         TR::Node* expectedDeps = callBlock->getExit()->getNode()->getFirstChild();
-         for (int i = 0; i < expectedDeps->getNumChildren(); ++i)
-            {
-            TR::Node* temp = expectedDeps->getChild(i);
-            if (temp->getGlobalRegisterNumber() == depNode->getGlobalRegisterNumber())
-               continue;
-            else if (temp->getOpCodeValue() == TR::PassThrough)
-               {
-               // PassThrough nodes cannot be commoned because doing so does not
-               // actually anchor the child, causing it's lifetime to not be extended
-               TR::Node* original = temp;
-               temp = TR::Node::create(original, TR::PassThrough, 1, original->getFirstChild());
-               temp->setLowGlobalRegisterNumber(original->getLowGlobalRegisterNumber());
-               temp->setHighGlobalRegisterNumber(original->getHighGlobalRegisterNumber());
-               }
-            glRegDeps->addChildren(&temp, 1);
-            }
-         }
-      }
-   prevBlock->append(TR::TreeTop::create(comp, ifacmpeqNode));
-   }
-
-void
-J9::CodeGenerator::lowerNonhelperCallIfNeeded(TR::Node *node, TR::TreeTop *tt)
-   {
-   TR::Compilation* comp = self()->comp();
-
-   if (TR::Compiler->om.areValueTypesEnabled() &&
-       comp->getSymRefTab()->isNonHelper(
-       node->getSymbolReference(),
-       TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
-      {
-      // turn the non-helper call into a VM helper call
-      node->setSymbolReference(comp->getSymRefTab()->findOrCreateAcmpHelperSymbolRef());
-      static const bool disableAcmpFastPath =  NULL != feGetEnv("TR_DisableAcmpFastpath");
-      if (!disableAcmpFastPath)
-         {
-         self()->fastpathAcmpHelper(node, tt, comp->getOption(TR_TraceCG));
-         }
-      }
-   }
-
-
 // J9
 //
 // convert dual operators from DAG representation to cyclic representation by cloning
@@ -385,12 +222,6 @@ J9::CodeGenerator::lowerCompressedRefs(
       vcount_t visitCount,
       TR_BitVector *childrenToBeLowered)
    {
-   bool isLowMem = false;
-   if (TR::Compiler->vm.heapBaseAddress() == 0)
-      {
-      isLowMem = true;
-      }
-
    if (node->getOpCode().isCall() && childrenToBeLowered)
       {
       TR_BitVectorIterator bvi(*childrenToBeLowered);
@@ -407,8 +238,7 @@ J9::CodeGenerator::lowerCompressedRefs(
                }
 
             TR::Node *heapBase = TR::Node::create(node, TR::lconst, 0, 0);
-            heapBase->setLongInt(TR::Compiler->vm.heapBaseAddress());
-            lowerCASValues(node, nextChild, valueChild, self()->comp(), shftOffset, isLowMem, heapBase);
+            lowerCASValues(node, nextChild, valueChild, self()->comp(), shftOffset, true, heapBase);
             }
          }
 
@@ -562,10 +392,6 @@ J9::CodeGenerator::lowerCompressedRefs(
    if (TR::Compiler->om.compressedReferenceShiftOffset() > 0)
       shftOffset = TR::Node::create(loadOrStoreNode, TR::iconst, 0, TR::Compiler->om.compressedReferenceShiftOffset());
 
-   static char *pEnv = feGetEnv("TR_disableLowHeapMem");
-   if (pEnv)
-      isLowMem = false;
-
    if (isLoad)
       {
       TR::Node *newLoad = TR::Node::createWithSymRef(loadOrStoreOp, 1, 1, address, symRef);
@@ -583,45 +409,16 @@ J9::CodeGenerator::lowerCompressedRefs(
       //
       TR::Node *iu2lNode = TR::Node::create(TR::iu2l, 1, newLoad);
 
-      if (!isLowMem && (loadOrStoreNode->getVisitCount() != visitCount))
-         {
-         TR::Node *ttNode = TR::Node::create(TR::treetop, 1, iu2lNode);
-         //traceMsg(comp(), "3creating treetop %p\n", ttNode);
-         TR::TreeTop *tt = TR::TreeTop::create(self()->comp(), ttNode);
-         TR::TreeTop *prevTT = treeTop->getPrevTreeTop();
-         prevTT->join(tt);
-         tt->join(treeTop);
-         }
-
       TR::Node *addNode = iu2lNode;
       if (loadOrStoreNode->isNonNull())
          addNode->setIsNonZero(true);
 
       // if the load is known to be null or if using lowMemHeap, do not
       // generate a compression sequence
-      //
-      if (loadOrStoreNode->isNull() || isLowMem)
+      addNode = iu2lNode;
+      if (shftOffset)
          {
-         addNode = iu2lNode;
-         if (shftOffset)
-            {
-            addNode = TR::Node::create(TR::lshl, 2, iu2lNode, shftOffset);
-            addNode->setContainsCompressionSequence(true);
-            }
-         }
-      else
-         {
-         if (shftOffset)
-            {
-            addNode = TR::Node::create(TR::lshl, 2, iu2lNode, shftOffset);
-            addNode->setContainsCompressionSequence(true);
-            }
-         if (loadOrStoreNode->isNonNull())
-            addNode->setIsNonZero(true);
-         addNode = TR::Node::create(TR::ladd, 2, addNode, heapBase);
-         if (loadOrStoreNode->isNonNull())
-            addNode->setIsNonZero(true);
-
+         addNode = TR::Node::create(TR::lshl, 2, iu2lNode, shftOffset);
          addNode->setContainsCompressionSequence(true);
          }
 
@@ -649,29 +446,16 @@ J9::CodeGenerator::lowerCompressedRefs(
             isNonNull = true;
 
          TR::Node *addNode = NULL;
+         addNode = a2lNode;
 
-         if (address->isNull() || isLowMem)
+         if (shftOffset)
             {
-            addNode = a2lNode;
-            }
-         else
-            {
-            if (isNonNull)
-               a2lNode->setIsNonZero(true);
-            addNode = TR::Node::create(TR::lsub, 2, a2lNode, heapBase);
+            addNode = TR::Node::create(TR::lushr, 2, addNode, shftOffset);
             addNode->setContainsCompressionSequence(true);
-            if (isNonNull)
-               addNode->setIsNonZero(true);
             }
 
-            if (shftOffset)
-               {
-               addNode = TR::Node::create(TR::lushr, 2, addNode, shftOffset);
-               addNode->setContainsCompressionSequence(true);
-               }
-
-            if (isNonNull)
-               addNode->setIsNonZero(true);
+         if (isNonNull)
+            addNode->setIsNonZero(true);
 
          l2iNode = TR::Node::create(TR::l2i, 1, addNode);
          if (isNonNull)
@@ -908,13 +692,6 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
 
    // J9
    //
-   if (parent->getOpCodeValue() == TR::ArrayStoreCHK && TR::Compiler->om.areValueTypesEnabled())
-      {
-      self()->lowerArrayStoreCHK(parent, treeTop);
-      }
-
-   // J9
-   //
    if (self()->comp()->useCompressedPointers())
       {
       if (parent->getOpCodeValue() == TR::compressedRefs)
@@ -988,9 +765,37 @@ J9::CodeGenerator::lowerTreeIfNeeded(
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->comp()->fe());
    OMR::CodeGeneratorConnector::lowerTreeIfNeeded(node, childNumberOfNode, parent, tt);
 
-   if (node->getOpCode().isCall())
+   if (node->getOpCode().isCall() &&
+       !node->getSymbol()->castToMethodSymbol()->isHelper())
       {
-      self()->lowerNonhelperCallIfNeeded(node, tt);
+      TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
+
+      if(rm == TR::java_lang_invoke_MethodHandle_invokeBasic ||
+        rm == TR::java_lang_invoke_MethodHandle_linkToStatic ||
+        rm == TR::java_lang_invoke_MethodHandle_linkToSpecial ||
+        rm == TR::java_lang_invoke_MethodHandle_linkToVirtual ||
+        rm == TR::java_lang_invoke_MethodHandle_linkToInterface)
+         {
+         // invokeBasic and linkTo* are signature-polymorphic, so the VM needs to know the number of argument slots
+         // for the INL call in order to locate the start of the arguments on the stack. The arg slot count is stored
+         // in vmThread.tempSlot
+         TR::SymbolReference *vmThreadTempSlotSymRef = self()->comp()->getSymRefTab()->findOrCreateVMThreadTempSlotFieldSymbolRef();
+         int32_t numParameterStackSlots = node->getSymbol()->castToResolvedMethodSymbol()->getNumParameterSlots();
+         TR::Node * numArgsNode = NULL;
+         TR::Node * storeNode = NULL;
+         if (self()->comp()->target().is64Bit())
+            {
+            numArgsNode = TR::Node::lconst(node, numParameterStackSlots);
+            storeNode = TR::Node::createStore(vmThreadTempSlotSymRef, numArgsNode, TR::lstore);
+            }
+         else
+            {
+            numArgsNode = TR::Node::iconst(node, numParameterStackSlots);
+            storeNode = TR::Node::createStore(vmThreadTempSlotSymRef, numArgsNode, TR::istore);
+            }
+         storeNode->setByteCodeIndex(node->getByteCodeIndex());
+         TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), storeNode);
+         }
       }
 
    // J9
@@ -1506,144 +1311,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 
       }
 
-   }
-
-
-/*
- * If value types are enabled, and the value that is being assigned to the array
- * element might be a null reference, lower the ArrayStoreCHK by splitting the
- * block before the ArrayStoreCHK, and inserting a NULLCHK guarded by a check
- * of whether the array's component type is a value type.
- */
-void
-J9::CodeGenerator::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
-   {
-   // Pattern match the ArrayStoreCHK operands to get the source of the assignment
-   // (sourceChild) and the array to which an element will have a value assigned (destChild)
-   TR::Node *firstChild = node->getFirstChild();
-
-   TR::Node *sourceChild = firstChild->getSecondChild();
-   TR::Node *destChild = firstChild->getChild(2);
-
-   // Only need to lower if it is possible that the value is a null reference
-   if (!sourceChild->isNonNull())
-      {
-      TR::CFG * cfg = self()->comp()->getFlowGraph();
-      cfg->invalidateStructure();
-
-      TR::Block *prevBlock = tt->getEnclosingBlock();
-
-      performTransformation(self()->comp(), "%sTransforming ArrayStoreCHK n%dn [%p] by splitting block block_%d, and inserting a NULLCHK guarded with a check of whether the component type of the array is a value type\n", OPT_DETAILS, node->getGlobalIndex(), node, prevBlock->getNumber());
-
-      // Anchor the node containing the source of the array element
-      // assignment and the node that contains the destination array
-      // to ensure they are available for the ificmpeq and NULLCHK
-      TR::TreeTop *anchoredArrayTT = TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, destChild));
-      TR::TreeTop *anchoredSourceTT = TR::TreeTop::create(self()->comp(), anchoredArrayTT, TR::Node::create(TR::treetop, 1, sourceChild));
-
-      // Transform
-      //   +--------------------------------+
-      //   | ttprev                         |
-      //   | ArrayStoreCHK                  |
-      //   |   astorei/awrtbari             |
-      //   |     aladd                      |
-      //   |       <array-reference>        |
-      //   |       index-offset-calculation |
-      //   |     <value-reference>          |
-      //   +--------------------------------+
-      //
-      // into
-      //   +--------------------------------+
-      //   | treetop                        |
-      //   |   <array-reference>            |
-      //   | treetop                        |
-      //   |   <value-reference>            |
-      //   | ificmpeq  -->------------------*---------+
-      //   |   iand                         |         |
-      //   |     iloadi <isClassFlags>      |         |
-      //   |       aloadi <componentClass>  |         |
-      //   |         aloadi <vft-symbol>    |         |
-      //   |           <array-reference>    |         |
-      //   |     iconst J9ClassIsValueType  |         |
-      //   |   iconst 0                     |         |
-      //   | BBEnd                          |         |
-      //   +--------------------------------+         |
-      //   | BBStart (Extension)            |         |
-      //   | NULLCHK                        |         |
-      //   |   Passthrough                  |         |
-      //   |     <value-reference>          |         |
-      //   | BBEnd                          |         |
-      //   +--------------------------------+         |
-      //                   |                          |
-      //                   +--------------------------+
-      //                   |
-      //                   v
-      //   +--------------------------------+
-      //   | BBStart                        |
-      //   | ArrayStoreCHK                  |
-      //   |   astorei/awrtbari             |
-      //   |     aladd                      |
-      //   |       aload <array>            |
-      //   |       index-offset-calculation |
-      //   |     aload <value>              |
-      //   +--------------------------------+
-      //
-      TR::SymbolReference *vftSymRef = self()->comp()->getSymRefTab()->findOrCreateVftSymbolRef();
-      TR::SymbolReference *arrayCompSymRef = self()->comp()->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef();
-      TR::SymbolReference *classFlagsSymRef = self()->comp()->getSymRefTab()->findOrCreateClassFlagsSymbolRef();
-
-      TR::Node *vft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredArrayTT->getNode()->getFirstChild(), vftSymRef);
-      TR::Node *arrayCompClass = TR::Node::createWithSymRef(node, TR::aloadi, 1, vft, arrayCompSymRef);
-      TR::Node *loadClassFlags = TR::Node::createWithSymRef(node, TR::iloadi, 1, arrayCompClass, classFlagsSymRef);
-      TR::Node *isValueTypeNode = TR::Node::create(node, TR::iand, 2, loadClassFlags, TR::Node::iconst(node, J9ClassIsValueType));
-
-      TR::Node *ifNode = TR::Node::createif(TR::ificmpeq, isValueTypeNode, TR::Node::iconst(node, 0));
-      ifNode->copyByteCodeInfo(node);
-
-      TR::Node *passThru  = TR::Node::create(node, TR::PassThrough, 1, sourceChild);
-      TR::ResolvedMethodSymbol *currentMethod = self()->comp()->getMethodSymbol();
-
-      TR::Block *arrayStoreCheckBlock = prevBlock->splitPostGRA(tt, cfg);
-
-      ifNode->setBranchDestination(arrayStoreCheckBlock->getEntry());
-
-      // Copy register dependencies from the end of the block split before the
-      // ArrayStoreCHK to the ificmpeq that's being added to the end of that block
-      if (prevBlock->getExit()->getNode()->getNumChildren() != 0)
-         {
-         TR::Node *blkDeps = prevBlock->getExit()->getNode()->getFirstChild();
-         TR::Node *ifDeps = TR::Node::create(blkDeps, TR::GlRegDeps);
-
-         for (int i = 0; i < blkDeps->getNumChildren(); i++)
-            {
-            TR::Node *regDep = blkDeps->getChild(i);
-
-            if (regDep->getOpCodeValue() == TR::PassThrough)
-               {
-               TR::Node *orig= regDep;
-               regDep = TR::Node::create(orig, TR::PassThrough, 1, orig->getFirstChild());
-               regDep->setLowGlobalRegisterNumber(orig->getLowGlobalRegisterNumber());
-               regDep->setHighGlobalRegisterNumber(orig->getHighGlobalRegisterNumber());
-               }
-
-            ifDeps->addChildren(&regDep, 1);
-            }
-
-         ifNode->addChildren(&ifDeps, 1);
-         }
-
-      prevBlock->append(TR::TreeTop::create(self()->comp(), ifNode));
-
-      TR::Node *nullCheck = TR::Node::createWithSymRef(node, TR::NULLCHK, 1, passThru,
-                               self()->symRefTab()->findOrCreateNullCheckSymbolRef(currentMethod));
-      TR::TreeTop *nullCheckTT = prevBlock->append(TR::TreeTop::create(self()->comp(), nullCheck));
-
-      TR::Block *nullCheckBlock = prevBlock->split(nullCheckTT, cfg);
-
-      nullCheckBlock->setIsExtensionOfPreviousBlock(true);
-
-      cfg->addEdge(prevBlock, arrayStoreCheckBlock);
-      }
    }
 
 
@@ -2581,7 +2248,7 @@ J9::CodeGenerator::doInstructionSelection()
 
    self()->freeAllVariableSizeSymRefs();
 
-#if defined(TR_TARGET_S390) && !defined(PUBLIC_BUILD)
+#if defined(TR_TARGET_S390)
    // Virtual function insertInstructionPrefetches is implemented only for s390 platform,
    // for all other platforms the function is empty
    //
@@ -2816,249 +2483,333 @@ J9::CodeGenerator::populateOSRBuffer()
    self()->comp()->getOSRCompilationData()->setMaxScratchBufferSize(maxScratchBufferSize);
    }
 
+static void addValidationRecords(TR::CodeGenerator *cg)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->comp()->fe());
+
+   TR::list<TR::AOTClassInfo*>* classInfo = cg->comp()->_aotClassInfo;
+   if (!classInfo->empty())
+      {
+      for (auto info = classInfo->begin(); info != classInfo->end(); ++info)
+         {
+         traceMsg(cg->comp(), "processing AOT class info: %p in %s\n", *info, cg->comp()->signature());
+         traceMsg(cg->comp(), "ramMethod: %p cp: %p cpIndex: %x relo %d\n", (*info)->_method, (*info)->_constantPool, (*info)->_cpIndex, (*info)->_reloKind);
+         traceMsg(cg->comp(), "clazz: %p classChain: %p\n", (*info)->_clazz, (*info)->_classChain);
+
+         TR_OpaqueMethodBlock *ramMethod = (*info)->_method;
+
+         int32_t siteIndex = -1;
+
+         if (ramMethod != cg->comp()->getCurrentMethod()->getPersistentIdentifier()) // && info->_reloKind != TR_ValidateArbitraryClass)
+            {
+            int32_t i;
+            for (i = 0; i < cg->comp()->getNumInlinedCallSites(); i++)
+               {
+               TR_InlinedCallSite &ics = cg->comp()->getInlinedCallSite(i);
+               TR_OpaqueMethodBlock *inlinedMethod = fej9->getInlinedCallSiteMethod(&ics);
+
+               traceMsg(cg->comp(), "\tinline site %d inlined method %p\n", i, inlinedMethod);
+               if (ramMethod == inlinedMethod)
+                  {
+                  traceMsg(cg->comp(), "\t\tmatch!\n");
+                  siteIndex = i;
+                  break;
+                  }
+               }
+
+            if (i >= (int32_t) cg->comp()->getNumInlinedCallSites())
+               {
+               // this assumption isn't associated with a method directly in the compilation
+               // so we can't use a constant pool approach to validate: transform into TR_ValidateArbitraryClass
+               // kind of overkill for TR_ValidateStaticField, but still correct
+               (*info)->_reloKind = TR_ValidateArbitraryClass;
+               siteIndex = -1;   // invalidate main compiled method
+               traceMsg(cg->comp(), "\ttransformed into TR_ValidateArbitraryClass\n");
+               }
+            }
+
+         traceMsg(cg->comp(), "Found inlined site %d\n", siteIndex);
+
+         TR_ASSERT(siteIndex < (int32_t) cg->comp()->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
+
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(NULL,
+                                                                          (uint8_t *)(intptr_t)siteIndex,
+                                                                          (uint8_t *)(*info),
+                                                                          (*info)->_reloKind, cg),
+                                                                          __FILE__, __LINE__, NULL);
+         }
+      }
+   }
+
+static void addSVMValidationRecords(TR::CodeGenerator *cg)
+   {
+   TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = cg->comp()->getSymbolValidationManager()->getValidationRecordList();
+   if (cg->comp()->getOption(TR_UseSymbolValidationManager))
+      {
+      // Add the flags in TR_AOTMethodHeader on the compile run
+      TR_AOTMethodHeader *aotMethodHeaderEntry = cg->comp()->getAotMethodHeaderEntry();
+      aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesSymbolValidationManager;
+
+      for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
+         {
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(NULL,
+                                                                          (uint8_t *)(*it),
+                                                                          (*it)->_kind, cg),
+                                                                          __FILE__, __LINE__, NULL);
+         }
+      }
+   }
+
+static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerator *cg, TR_AOTGuardSite *site)
+   {
+   TR_ExternalRelocationTargetKind type;
+
+   switch (site->getType())
+      {
+      case TR_DirectMethodGuard:
+         if (site->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
+            type = TR_InlinedStaticMethodWithNopGuard;
+         else if (site->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
+            type = TR_InlinedSpecialMethodWithNopGuard;
+         else if (site->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
+            type = TR_InlinedVirtualMethodWithNopGuard;
+         else
+            TR_ASSERT(0, "unexpected AOTDirectMethodGuard method symbol");
+         break;
+
+      case TR_NonoverriddenGuard:
+         type = TR_InlinedVirtualMethodWithNopGuard;
+         break;
+      case TR_RemovedNonoverriddenGuard:
+         type = TR_InlinedVirtualMethod;
+         break;
+
+      case TR_InterfaceGuard:
+         type = TR_InlinedInterfaceMethodWithNopGuard;
+         break;
+      case TR_RemovedInterfaceGuard:
+         traceMsg(cg->comp(), "TR_RemovedInterfaceMethod\n");
+         type = TR_InlinedInterfaceMethod;
+         break;
+
+      case TR_AbstractGuard:
+         type = TR_InlinedAbstractMethodWithNopGuard;
+         break;
+
+      case TR_HCRGuard:
+         // devinmp: TODO/FIXME this should arrange to create an AOT
+         // relocation which, when loaded, creates a
+         // TR_PatchNOPedGuardSiteOnClassRedefinition or similar.
+         // Here we would previously create a TR_HCR relocation,
+         // which is for replacing J9Class or J9Method pointers.
+         // These would be the 'unresolved' variant
+         // (TR_RedefinedClassUPicSite), which would (hopefully) never
+         // get patched. If it were patched, it seems like it would
+         // replace code with a J9Method pointer.
+         if (!cg->comp()->getOption(TR_UseOldHCRGuardAOTRelocations))
+            type = TR_NoRelocation;
+         else
+            type = TR_HCR;
+         break;
+
+      case TR_MethodEnterExitGuard:
+         if (site->getGuard()->getCallNode()->getOpCodeValue() == TR::MethodEnterHook)
+            type = TR_CheckMethodEnter;
+         else if (site->getGuard()->getCallNode()->getOpCodeValue() == TR::MethodExitHook)
+            type = TR_CheckMethodExit;
+         else
+            TR_ASSERT(0,"Unexpected TR_MethodEnterExitGuard at site %p guard %p node %p\n",
+                              site, site->getGuard(), site->getGuard()->getCallNode());
+         break;
+
+      case TR_RemovedProfiledGuard:
+         traceMsg(cg->comp(), "TR_ProfiledInlinedMethodRelocation\n");
+         type = TR_ProfiledInlinedMethodRelocation;
+         break;
+
+      case TR_ProfiledGuard:
+         if (site->getGuard()->getTestType() == TR_MethodTest)
+            {
+            type = TR_ProfiledMethodGuardRelocation;
+            traceMsg(cg->comp(), "TR_ProfiledMethodGuardRelocation\n");
+            }
+         else if (site->getGuard()->getTestType() == TR_VftTest)
+            {
+            type = TR_ProfiledClassGuardRelocation;
+            traceMsg(cg->comp(), "TR_ProfiledClassGuardRelocation\n");
+            }
+         else
+            TR_ASSERT(false, "unexpected profiled guard test type");
+         break;
+
+      case TR_BreakpointGuard:
+         traceMsg(cg->comp(), "TR_Breakpoint\n");
+         type = TR_Breakpoint;
+         break;
+
+      default:
+         TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
+         cg->comp()->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown/non-AOT guard at AOT site");
+         break;
+      }
+
+   return type;
+   }
+
+static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable)
+   {
+   TR::list<TR_AOTGuardSite*> *aotGuardSites = cg->comp()->getAOTGuardPatchSites();
+   for(auto it = aotGuardSites->begin(); it != aotGuardSites->end(); ++it)
+      {
+      // first, figure out the appropriate relocation record type from the guard type and symbol
+      TR_ExternalRelocationTargetKind type = getReloKindFromGuardSite(cg, (*it));
+
+      switch (type)  // relocation record type
+         {
+         case TR_InlinedStaticMethodWithNopGuard:
+         case TR_InlinedSpecialMethodWithNopGuard:
+         case TR_InlinedVirtualMethodWithNopGuard:
+         case TR_InlinedInterfaceMethodWithNopGuard:
+         case TR_InlinedAbstractMethodWithNopGuard:
+         case TR_ProfiledClassGuardRelocation:
+         case TR_ProfiledMethodGuardRelocation:
+         case TR_ProfiledInlinedMethodRelocation:
+         case TR_InlinedVirtualMethod:
+         case TR_InlinedInterfaceMethod:
+            {
+            TR_ASSERT(inlinedCallSize, "TR_AOT expect inlinedCallSize to be larger than 0\n");
+            intptr_t inlinedSiteIndex = (intptr_t)(*it)->getGuard()->getCurrentInlinedSiteIndex();
+            TR_InlinedSiteLinkedListEntry *entry = (TR_InlinedSiteLinkedListEntry *)cg->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteLinkedListEntry), heapAlloc);
+
+            entry->reloType = type;
+            entry->location = (uint8_t *)(*it)->getLocation();
+            entry->destination = (uint8_t *)(*it)->getDestination();
+            entry->guard = (uint8_t *)(*it)->getGuard();
+            entry->next = NULL;
+
+            if (orderedInlinedSiteListTable[inlinedSiteIndex].first)
+               {
+               orderedInlinedSiteListTable[inlinedSiteIndex].last->next = entry;
+               orderedInlinedSiteListTable[inlinedSiteIndex].last = entry;
+               }
+            else
+               {
+               orderedInlinedSiteListTable[inlinedSiteIndex].first = entry;
+               orderedInlinedSiteListTable[inlinedSiteIndex].last = entry;
+               }
+            }
+            break;
+
+         case TR_CheckMethodEnter:
+         case TR_CheckMethodExit:
+         case TR_HCR:
+            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
+                                                                             (uint8_t *)(*it)->getDestination(),
+                                                                             type, cg),
+                             __FILE__, __LINE__, NULL);
+            break;
+
+         case TR_Breakpoint:
+            cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
+                                                                             (uint8_t *)(*it)->getGuard()->getCurrentInlinedSiteIndex(),
+                                                                             (uint8_t *)(*it)->getDestination(),
+                                                                             type, cg),
+                             __FILE__, __LINE__, NULL);
+            break;
+
+         case TR_NoRelocation:
+            break;
+
+         default:
+            TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
+            cg->comp()->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown/non-AOT guard at AOT site");
+            break;
+         }
+      }
+   }
+
+static void addInlinedSiteRelocation(TR::CodeGenerator *cg,
+                                     TR_ExternalRelocationTargetKind reloType,
+                                     uint8_t *reloLocation,
+                                     int32_t inlinedSiteIndex,
+                                     TR::SymbolReference *callSymref,
+                                     TR_OpaqueClassBlock *receiver,
+                                     uint8_t *destinationAddress)
+   {
+   TR_ASSERT_FATAL(reloType != TR_NoRelocation, "TR_NoRelocation specified as reloType for inlinedSiteIndex=%d, reloLocation=%p, callSymref=%p, receiver=%p",
+                   inlinedSiteIndex, reloLocation, callSymref, receiver);
+
+   TR_RelocationRecordInformation *info = new (cg->comp()->trHeapMemory()) TR_RelocationRecordInformation();
+   info->data1 = static_cast<uintptr_t>(inlinedSiteIndex);
+   info->data2 = reinterpret_cast<uintptr_t>(callSymref);
+   info->data3 = reinterpret_cast<uintptr_t>(receiver);
+   info->data4 = reinterpret_cast<uintptr_t>(destinationAddress);
+
+   cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(reloLocation, (uint8_t *)info, reloType, cg),
+                   __FILE__,__LINE__, NULL);
+   }
+
+static void addInliningTableRelocations(TR::CodeGenerator *cg, uint32_t inlinedCallSize, TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable)
+   {
+   // If have inlined calls, now add the relocation records in descending order
+   // of inlined site index (at relocation time, the order is reverse)
+   if (inlinedCallSize > 0)
+      {
+      for (int32_t counter = inlinedCallSize - 1; counter >= 0 ; counter--)
+         {
+         TR_InlinedSiteLinkedListEntry *currentSite = orderedInlinedSiteListTable[counter].first;
+
+         if (currentSite)
+            {
+            do
+               {
+               TR_VirtualGuard *guard = reinterpret_cast<TR_VirtualGuard *>(currentSite->guard);
+
+               addInlinedSiteRelocation(cg, currentSite->reloType, currentSite->location, counter, guard->getSymbolReference(), guard->getThisClass(), currentSite->destination);
+
+               currentSite = currentSite->next;
+               }
+            while(currentSite);
+            }
+         else
+            {
+            TR_AOTMethodInfo *methodInfo = cg->comp()->getInlinedAOTMethodInfo(counter);
+
+            addInlinedSiteRelocation(cg, methodInfo->reloKind, NULL, counter, methodInfo->callSymRef, methodInfo->receiver, NULL);
+            }
+         }
+      }
+   }
 
 void
 J9::CodeGenerator::processRelocations()
    {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->comp()->fe());
-
-   //Project neutral non-AOT processRelocation
+   // Project neutral non-AOT processRelocation
+   // This should be done first to ensure that the
+   // external relocations are generated after the
+   // code is in its final form.
    OMR::CodeGeneratorConnector::processRelocations();
-
-   int32_t missedSite = -1;
 
    if (self()->comp()->compileRelocatableCode())
       {
       uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
 
       // Create temporary hashtable for ordering AOT guard relocations
-      int32_t counter = inlinedCallSize;
-      TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable;
+      TR_InlinedSiteHastTableEntry *orderedInlinedSiteListTable = NULL;
       if (inlinedCallSize > 0)
          {
          orderedInlinedSiteListTable= (TR_InlinedSiteHastTableEntry*)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteHastTableEntry) * inlinedCallSize, heapAlloc);
          memset(orderedInlinedSiteListTable, 0, sizeof(TR_InlinedSiteHastTableEntry)*inlinedCallSize);
          }
-      else
-         orderedInlinedSiteListTable = NULL;
-
-      TR_InlinedSiteLinkedListEntry *entry = NULL;
 
       // Traverse list of AOT-specific guards and create relocation records
-      TR::list<TR_AOTGuardSite*> *aotGuardSites = self()->comp()->getAOTGuardPatchSites();
-      for(auto it = aotGuardSites->begin(); it != aotGuardSites->end(); ++it)
-         {
-         intptr_t inlinedSiteIndex = -1;
+      processAOTGuardSites(self(), inlinedCallSize, orderedInlinedSiteListTable);
 
-         // first, figure out the appropriate relocation record type from the guard type and symbol
-         TR_ExternalRelocationTargetKind type;
-         switch ((*it)->getType())
-            {
-            case TR_DirectMethodGuard:
-               if ((*it)->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isStatic())
-                  type = TR_InlinedStaticMethodWithNopGuard;
-               else if ((*it)->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isSpecial())
-                  type = TR_InlinedSpecialMethodWithNopGuard;
-               else if ((*it)->getGuard()->getSymbolReference()->getSymbol()->getMethodSymbol()->isVirtual())
-                  type = TR_InlinedVirtualMethodWithNopGuard;
-               else
-                  TR_ASSERT(0, "unexpected AOTDirectMethodGuard method symbol");
-               break;
-
-            case TR_NonoverriddenGuard:
-               type = TR_InlinedVirtualMethodWithNopGuard;
-               break;
-            case TR_RemovedNonoverriddenGuard:
-               type = TR_InlinedVirtualMethod;
-               break;
-
-            case TR_InterfaceGuard:
-               type = TR_InlinedInterfaceMethodWithNopGuard;
-               break;
-            case TR_RemovedInterfaceGuard:
-               traceMsg(self()->comp(), "TR_RemovedInterfaceMethod\n");
-               type = TR_InlinedInterfaceMethod;
-               break;
-
-            case TR_AbstractGuard:
-               type = TR_InlinedAbstractMethodWithNopGuard;
-               break;
-
-            case TR_HCRGuard:
-               // devinmp: TODO/FIXME this should arrange to create an AOT
-               // relocation which, when loaded, creates a
-               // TR_PatchNOPedGuardSiteOnClassRedefinition or similar.
-               // Here we would previously create a TR_HCR relocation,
-               // which is for replacing J9Class or J9Method pointers.
-               // These would be the 'unresolved' variant
-               // (TR_RedefinedClassUPicSite), which would (hopefully) never
-               // get patched. If it were patched, it seems like it would
-               // replace code with a J9Method pointer.
-               if (!self()->comp()->getOption(TR_UseOldHCRGuardAOTRelocations))
-                  continue;
-               type = TR_HCR;
-               break;
-
-            case TR_MethodEnterExitGuard:
-               if ((*it)->getGuard()->getCallNode()->getOpCodeValue() == TR::MethodEnterHook)
-                  type = TR_CheckMethodEnter;
-               else if ((*it)->getGuard()->getCallNode()->getOpCodeValue() == TR::MethodExitHook)
-                  type = TR_CheckMethodExit;
-               else
-                  TR_ASSERT(0,"Unexpected TR_MethodEnterExitGuard at site %p guard %p node %p\n",
-                                    *it, (*it)->getGuard(), (*it)->getGuard()->getCallNode());
-               break;
-
-            case TR_RemovedProfiledGuard:
-               traceMsg(self()->comp(), "TR_ProfiledInlinedMethodRelocation\n");
-               type = TR_ProfiledInlinedMethodRelocation;
-               break;
-
-            case TR_ProfiledGuard:
-               if ((*it)->getGuard()->getTestType() == TR_MethodTest)
-                  {
-                  type = TR_ProfiledMethodGuardRelocation;
-                  traceMsg(self()->comp(), "TR_ProfiledMethodGuardRelocation\n");
-                  }
-               else if ((*it)->getGuard()->getTestType() == TR_VftTest)
-                  {
-                  type = TR_ProfiledClassGuardRelocation;
-                  traceMsg(self()->comp(), "TR_ProfiledClassGuardRelocation\n");
-                  }
-               else
-                  TR_ASSERT(false, "unexpected profiled guard test type");
-               break;
-
-            default:
-               TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
-               break;
-            }
-
-         switch (type)  // relocation record type
-            {
-            case TR_InlinedStaticMethodWithNopGuard:
-            case TR_InlinedSpecialMethodWithNopGuard:
-            case TR_InlinedVirtualMethodWithNopGuard:
-            case TR_InlinedInterfaceMethodWithNopGuard:
-            case TR_InlinedAbstractMethodWithNopGuard:
-            case TR_ProfiledClassGuardRelocation:
-            case TR_ProfiledMethodGuardRelocation:
-            case TR_ProfiledInlinedMethodRelocation:
-            case TR_InlinedVirtualMethod:
-            case TR_InlinedInterfaceMethod:
-               TR_ASSERT(inlinedCallSize, "TR_AOT expect inlinedCallSize to be larger than 0\n");
-               inlinedSiteIndex = (intptr_t)(*it)->getGuard()->getCurrentInlinedSiteIndex();
-               entry = (TR_InlinedSiteLinkedListEntry *)self()->comp()->trMemory()->allocateMemory(sizeof(TR_InlinedSiteLinkedListEntry), heapAlloc);
-
-               entry->reloType = type;
-               entry->location = (uint8_t *)(*it)->getLocation();
-               entry->destination = (uint8_t *)(*it)->getDestination();
-               entry->guard = (uint8_t *)(*it)->getGuard();
-               entry->next = NULL;
-
-               if (orderedInlinedSiteListTable[inlinedSiteIndex].first)
-                  {
-                  orderedInlinedSiteListTable[inlinedSiteIndex].last->next = entry;
-                  orderedInlinedSiteListTable[inlinedSiteIndex].last = entry;
-                  }
-               else
-                  {
-                  orderedInlinedSiteListTable[inlinedSiteIndex].first = entry;
-                  orderedInlinedSiteListTable[inlinedSiteIndex].last = entry;
-                  }
-               break;
-
-            case TR_CheckMethodEnter:
-            case TR_CheckMethodExit:
-            case TR_HCR:
-               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
-                                                                                (uint8_t *)(*it)->getDestination(),
-                                                                                type, self()),
-                                __FILE__, __LINE__, NULL);
-               break;
-
-            default:
-               TR_ASSERT(false, "got a unknown/non-AOT guard at AOT site");
-               break;
-            }
-         }
-
-      TR::list<TR::AOTClassInfo*>* classInfo = self()->comp()->_aotClassInfo;
-      if (!classInfo->empty())
-         {
-         for (auto info = classInfo->begin(); info != classInfo->end(); ++info)
-            {
-            traceMsg(self()->comp(), "processing AOT class info: %p in %s\n", *info, self()->comp()->signature());
-            traceMsg(self()->comp(), "ramMethod: %p cp: %p cpIndex: %x relo %d\n", (*info)->_method, (*info)->_constantPool, (*info)->_cpIndex, (*info)->_reloKind);
-            traceMsg(self()->comp(), "clazz: %p classChain: %p\n", (*info)->_clazz, (*info)->_classChain);
-
-            TR_OpaqueMethodBlock *ramMethod = (*info)->_method;
-
-            int32_t siteIndex = -1;
-
-            if (ramMethod != self()->comp()->getCurrentMethod()->getPersistentIdentifier()) // && info->_reloKind != TR_ValidateArbitraryClass)
-               {
-               int32_t i;
-               for (i = 0; i < self()->comp()->getNumInlinedCallSites(); i++)
-                  {
-                  TR_InlinedCallSite &ics = self()->comp()->getInlinedCallSite(i);
-                  TR_OpaqueMethodBlock *inlinedMethod = fej9->getInlinedCallSiteMethod(&ics);
-
-                  traceMsg(self()->comp(), "\tinline site %d inlined method %p\n", i, inlinedMethod);
-                  if (ramMethod == inlinedMethod)
-                     {
-                     traceMsg(self()->comp(), "\t\tmatch!\n");
-                     siteIndex = i;
-                     break;
-                     }
-                  }
-
-               if (i >= (int32_t) self()->comp()->getNumInlinedCallSites())
-                  {
-                  // this assumption isn't associated with a method directly in the compilation
-                  // so we can't use a constant pool approach to validate: transform into TR_ValidateArbitraryClass
-                  // kind of overkill for TR_ValidateStaticField, but still correct
-                  (*info)->_reloKind = TR_ValidateArbitraryClass;
-                  siteIndex = -1;   // invalidate main compiled method
-                  traceMsg(self()->comp(), "\ttransformed into TR_ValidateArbitraryClass\n");
-                  }
-               }
-
-            traceMsg(self()->comp(), "Found inlined site %d\n", siteIndex);
-
-            TR_ASSERT(siteIndex < (int32_t) self()->comp()->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
-
-            self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                             (uint8_t *)(intptr_t)siteIndex,
-                                                                             (uint8_t *)(*info),
-                                                                             (*info)->_reloKind, self()),
-                                                                             __FILE__, __LINE__, NULL);
-            }
-         }
+      // Add non-SVM validation records
+      addValidationRecords(self());
 
       // If have inlined calls, now add the relocation records in descending order of inlined site index (at relocation time, the order is reverse)
-      if (inlinedCallSize > 0)
-         {
-         counter= inlinedCallSize - 1;
-         int numSitesAdded = 0;
-         for (; counter >= 0 ; counter--)
-            {
-            TR_InlinedSiteLinkedListEntry *currentSite = orderedInlinedSiteListTable[counter].first;
-            if (!currentSite)
-               missedSite = counter;
-
-            while (currentSite)
-               {
-               self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(currentSite->location,
-                                                                                currentSite->destination,
-                                                                                currentSite->guard,
-                                                                                currentSite->reloType, self()),
-                               __FILE__,__LINE__, NULL);
-               currentSite = currentSite->next;
-               numSitesAdded++;
-               }
-            }
-         }
+      addInliningTableRelocations(self(), inlinedCallSize, orderedInlinedSiteListTable);
       }
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -3067,30 +2818,16 @@ J9::CodeGenerator::processRelocations()
    if (self()->comp()->compileRelocatableCode())
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = self()->comp()->getSymbolValidationManager()->getValidationRecordList();
-      if (self()->comp()->getOption(TR_UseSymbolValidationManager))
-         {
-         // Add the flags in TR_AOTMethodHeader on the compile run
-         J9JITDataCacheHeader *aotMethodHeader = (J9JITDataCacheHeader *)self()->comp()->getAotMethodDataStart();
-         TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
-         aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesSymbolValidationManager;
-
-         for (auto it = validationRecords.begin(); it != validationRecords.end(); it++)
-            {
-            self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation(NULL,
-                                                                             (uint8_t *)(*it),
-                                                                             (*it)->_kind, self()),
-                                                                             __FILE__, __LINE__, NULL);
-            }
-         }
+      // Add SVM validation records
+      addSVMValidationRecords(self());
 
       // Now call the platform specific processing of relocations
       self()->getAheadOfTimeCompile()->processRelocations();
       }
 
+   // Traverse the AOT/external labels
    for (auto aotIterator = self()->getExternalRelocationList().begin(); aotIterator != self()->getExternalRelocationList().end(); ++aotIterator)
       {
-      // Traverse the AOT/external labels
       (*aotIterator)->apply(self());
       }
    }
@@ -3234,8 +2971,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
 
    // no need to rematerialize for lowMemHeap
    if (self()->comp()->useCompressedPointers() &&
-         ((TR::Compiler->vm.heapBaseAddress() != 0) ||
-         (TR::Compiler->om.compressedReferenceShift() != 0)) &&
+         (TR::Compiler->om.compressedReferenceShift() != 0) &&
          !disableRematforCP)
       {
       if (self()->comp()->getOption(TR_TraceCG))
@@ -3352,7 +3088,6 @@ J9::CodeGenerator::compressedReferenceRematerialization()
       }
 
    if (self()->comp()->useCompressedPointers() &&
-         (TR::Compiler->vm.heapBaseAddress() == 0) &&
          !disableRematforCP)
       {
       for (tt = self()->comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
@@ -3412,8 +3147,6 @@ J9::CodeGenerator::rematerializeCompressedRefs(
    bool alreadyVisitedNullCheckReference = false;
    bool alreadyVisitedReferenceInNullTest = false;
    bool alreadyVisitedReferenceInStore = false;
-
-   bool isLowMemHeap = (TR::Compiler->vm.heapBaseAddress() == 0);
 
    TR::Node *reference = NULL;
    TR::Node *address = NULL;
@@ -3501,7 +3234,6 @@ J9::CodeGenerator::rematerializeCompressedRefs(
       ((node->getFirstChild()->getOpCodeValue() == TR::ladd &&
        node->getFirstChild()->containsCompressionSequence()) ||
        ((node->getFirstChild()->getOpCodeValue() == TR::lshl) &&
-        (self()->canFoldLargeOffsetInAddressing() || (TR::Compiler->vm.heapBaseAddress() == 0)) &&
         self()->isAddressScaleIndexSupported((1 << TR::Compiler->om.compressedReferenceShiftOffset())))))
       {
       if (parent &&
@@ -3632,7 +3364,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
 
    static bool disableBranchlessPassThroughNULLCHK = feGetEnv("TR_disableBranchlessPassThroughNULLCHK") != NULL;
    if (node->getOpCode().isNullCheck() && reference &&
-          (!isLowMemHeap || self()->performsChecksExplicitly() || (disableBranchlessPassThroughNULLCHK && node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
+          (self()->performsChecksExplicitly() || (disableBranchlessPassThroughNULLCHK && node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
           ((node->getFirstChild()->getOpCodeValue() == TR::l2a) ||
            (reference->getOpCodeValue() == TR::l2a)) &&
          performTransformation(self()->comp(), "%sTransforming null check reference %p in null check node %p to be checked explicitly\n", OPT_DETAILS, reference, node))
@@ -3772,32 +3504,6 @@ J9::CodeGenerator::rematerializeCompressedRefs(
              }
           }
       }
-
-   if (self()->materializesHeapBase() &&
-       !isLowMemHeap &&
-       parent && (!parent->getOpCode().isStore()) &&
-       (node->getOpCodeValue() == TR::lconst) &&
-       (node->getLongInt() == TR::Compiler->vm.heapBaseAddress()) &&
-       performTransformation(self()->comp(), "%sTransforming heap base constant node %p to auto load \n", OPT_DETAILS, node))
-      {
-      if (!autoSymRef)
-         {
-         autoSymRef = self()->comp()->getSymRefTab()->createTemporary(self()->comp()->getMethodSymbol(), node->getDataType());
-         TR::TreeTop *startTree = self()->comp()->getStartTree();
-         TR::TreeTop *nextTree = startTree->getNextTreeTop();
-
-         TR::Node *lconstNode = TR::Node::create(node, TR::lconst, 0, 0);
-         lconstNode->setLongInt(node->getLongInt());
-         TR::Node *storeNode = TR::Node::createWithSymRef(TR::lstore, 1, 1, lconstNode, autoSymRef);
-         TR::TreeTop *tt = TR::TreeTop::create(self()->comp(), storeNode);
-         startTree->join(tt);
-         tt->join(nextTree);
-         }
-
-      TR::Node::recreate(node, TR::lload);
-      node->setSymbolReference(autoSymRef);
-      }
-
 
    if (address && node->getOpCode().isStoreIndirect())
       {
@@ -5297,6 +5003,25 @@ J9::CodeGenerator::generatePoisonNode(TR::Block *currentBlock, TR::SymbolReferen
    return storeNode;
    }
 
+uint32_t
+J9::CodeGenerator::initializeLinkageInfo(void *linkageInfoPtr)
+   {
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = (J9::PrivateLinkage::LinkageInfo *)linkageInfoPtr;
+
+   TR::Recompilation * recomp = self()->comp()->getRecompilationInfo();
+   if (recomp && recomp->couldBeCompiledAgain())
+      {
+      if (recomp->useSampling())
+         linkageInfo->setSamplingMethodBody();
+      else
+         linkageInfo->setCountingMethodBody();
+      }
+
+   linkageInfo->setReservedWord((self()->getBinaryBufferCursor() - self()->getCodeStart()));
+   linkageInfo->setReturnInfo(self()->comp()->getReturnInfo());
+
+   return linkageInfo->getWord();
+   }
 
 // I need to preserve the type information for monitorenter/exit through
 // code generation, but the secondChild is being used for other monitor
@@ -5319,22 +5044,43 @@ J9::CodeGenerator::getMonClass(TR::Node* monNode)
 TR_YesNoMaybe
 J9::CodeGenerator::isMonitorValueType(TR::Node* monNode)
    {
-   if (_monitorMapping.find(monNode->getGlobalIndex()) == _monitorMapping.end())
+   TR_OpaqueClassBlock *clazz = self()->getMonClass(monNode);
+
+   if (!clazz)
       return TR_maybe;
 
-   TR_OpaqueClassBlock *clazz = _monitorMapping[monNode->getGlobalIndex()];
    //java.lang.Object class is only set when monitor is java.lang.Object but not its subclass
    if (clazz == self()->comp()->getObjectClassPointer())
       return TR_no;
 
-   if (TR::Compiler->cls.isInterfaceClass(self()->comp(), clazz))
-      return TR_maybe;
-
-   if (TR::Compiler->cls.isAbstractClass(self()->comp(), clazz))
+   if (!TR::Compiler->cls.isConcreteClass(self()->comp(), clazz))
       return TR_maybe;
 
    if (TR::Compiler->cls.isValueTypeClass(clazz))
       return TR_yes;
 
+   return TR_no;
+   }
+
+TR_YesNoMaybe
+J9::CodeGenerator::isMonitorValueBasedOrValueType(TR::Node* monNode)
+   {
+   if (TR::Compiler->om.areValueTypesEnabled() || TR::Compiler->om.areValueBasedMonitorChecksEnabled())
+      {
+      TR_OpaqueClassBlock *clazz = self()->getMonClass(monNode);
+
+      if (!clazz)
+         return TR_maybe;
+
+      //java.lang.Object class is only set when monitor is java.lang.Object but not its subclass
+      if (clazz == self()->comp()->getObjectClassPointer())
+         return TR_no;
+
+      if (!TR::Compiler->cls.isConcreteClass(self()->comp(), clazz))
+         return TR_maybe;
+
+      if (TR::Compiler->cls.isValueBasedOrValueTypeClass(clazz))
+         return TR_yes;
+      }
    return TR_no;
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,9 +56,6 @@ MM_InterRegionRememberedSet::MM_InterRegionRememberedSet(MM_HeapRegionManager *h
 	, _overflowedListTail(NULL)
 	, _regionSize(0)
 	, _shouldFlushBuffersForDecommitedRegions(false)
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-	, _compressObjectReferences(false)
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	, _overflowedRegionCount(0)
 	, _stableRegionCount(0)
 	, _beingRebuiltRegionCount(0)
@@ -69,6 +66,9 @@ MM_InterRegionRememberedSet::MM_InterRegionRememberedSet(MM_HeapRegionManager *h
 	, _cardToRegionDisplacement(0)
 	, _cardTable(NULL)
 	, _rememberedSetCardBucketPool(NULL)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	, _compressObjectReferences(false)
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 {
 	_typeId = __FUNCTION__;
 }

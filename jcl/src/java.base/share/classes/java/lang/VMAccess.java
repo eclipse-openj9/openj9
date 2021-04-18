@@ -1,8 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
-package java.lang;
-
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +20,8 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+
+package java.lang;
 
 import java.util.Objects;
 import java.util.Properties;
@@ -220,4 +220,33 @@ final class VMAccess implements VMLangAccess {
 	public Thread createThread(Runnable runnable, String threadName, boolean isSystemThreadGroup, boolean inheritThreadLocals, boolean isDaemon, ClassLoader contextClassLoader) {
 		return new Thread(runnable, threadName, isSystemThreadGroup, inheritThreadLocals, isDaemon, contextClassLoader);
 	}
+
+	@Override
+	public void prepare(Class<?> theClass) {
+		J9VMInternals.prepare(theClass);
+	}
+
+	/*[IF JAVA_SPEC_VERSION >= 11]*/
+	/**
+	 * Returns whether the classloader name should be included in the stack trace for the provided StackTraceElement.
+	 *
+	 * @param element The StackTraceElement to check
+	 * @return true if the classloader name should be included, false otherwise
+	 */
+	@Override
+	public boolean getIncludeClassLoaderName(StackTraceElement element) {
+		return element.getIncludeClassLoaderName();
+	}
+
+	/**
+	 * Returns whether the module version should be included in the stack trace for the provided StackTraceElement.
+	 *
+	 * @param element The StackTraceElement to check
+	 * @return true if the module version should be included, false otherwise
+	 */
+	@Override
+	public boolean getIncludeModuleVersion(StackTraceElement element) {
+		return element.getIncludeModuleVersion();
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 }

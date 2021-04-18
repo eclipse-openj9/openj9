@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,17 @@
 
 omr_add_tracegen(j9vm.tdf)
 
+if(OMR_TOOLCONFIG STREQUAL "msvc")
+	# bypass omr provided warning flag handling, because we don't want
+	# the warning flags to get passed to clang.
+	# Note: the updated variables are scoped to this directory
+	set(OMR_ENHANCED_WARNINGS OFF)
+	set(OMR_WARNINGS_AS_ERRORS OFF)
+	set(OMR_BASE_WARNING_FLAGS)
+	omr_append_flags(CMAKE_C_FLAGS ${OMR_ENHANCED_WARNING_FLAG} ${OMR_WARNING_AS_ERROR_FLAG})
+	omr_append_flags(CMAKE_CXX_FLAGS ${OMR_ENHANCED_WARNING_FLAG} ${OMR_WARNING_AS_ERROR_FLAG})
+endif()
+
 set(interp_flags_to_remove) # list of flags removed when compiling the interpreter
 set(interp_new_flags) # flags to be added when compiling the interpreter
 
@@ -29,7 +40,7 @@ set(interp_new_flags) # flags to be added when compiling the interpreter
 # support building the interpreter with xlc on linux
 if(OMR_ARCH_POWER AND OMR_OS_AIX)
 	if(OMR_TOOLCONFIG STREQUAL "xlc")
-		list(APPEND interp_flags_to_remove "-O3")
+		list(APPEND interp_flags_to_remove "-O3" "-g")
 		list(APPEND interp_new_flags "-O2" "-qdebug=lincomm:ptranl:tfbagg")
 		# Note: the following code is specified in the UMA builds, however,
 		# it isn't currently reachable, so it is block commneted out ( #[[ ]] )
@@ -41,7 +52,6 @@ if(OMR_ARCH_POWER AND OMR_OS_AIX)
 		endif()
 		]]
 	endif()
-
 endif()
 
 if(interp_flags_to_remove)
@@ -198,14 +208,22 @@ if(interp_new_flags)
 endif()
 
 
-# JIT helper methods require us to disable buffer security checks on Windows
-# See https://github.com/eclipse/openj9/pull/1494 for rationale
 if(OMR_OS_WINDOWS AND (OMR_TOOLCONFIG STREQUAL "msvc"))
+	# JIT helper methods require us to disable buffer security checks on Windows
+	# See https://github.com/eclipse/openj9/pull/1494 for rationale
 	set_property(
 		SOURCE
 			cnathelp.cpp
 			SharedService.c
 		APPEND PROPERTY COMPILE_FLAGS "/GS-"
+	)
+
+	# Use J9VM_CXX compiler (aka clang) to build the interpreter
+	enable_language(J9VM_CXX)
+	set_source_files_properties(
+		${interpreter_sources}
+		PROPERTIES
+		LANGUAGE J9VM_CXX
 	)
 endif()
 
@@ -218,8 +236,18 @@ if(OMR_ARCH_X86)
 			xa64/unsafeHelper.m4
 		)
 		target_sources(j9vm PRIVATE unsafeHelper.s)
-	elseif(OMR_OS_WINDOWS AND OMR_ENV_DATA64)
-		j9vm_gen_asm(wa64/stackswap.m4)
+	elseif(OMR_OS_WINDOWS)
+		if(OMR_ENV_DATA64)
+			j9vm_gen_asm(wa64/stackswap.m4)
+		else()
+			j9vm_gen_asm(wi32/stackswap.m4)
+			target_sources(j9vm PRIVATE
+				wi32/inlineseh.c
+				safeseh.asm
+			)
+
+			set_source_files_properties(safeseh.asm PROPERTIES LANGUAGE ASM_MASM)
+		endif()
 	else()
 		message(SEND_ERROR "Unsupported platform")
 	endif()

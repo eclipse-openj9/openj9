@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,7 +72,7 @@ class JITServerHelpers
       >;
 
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory, bool serializeClass);
-   static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
+   static bool cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfo);
    static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
    static J9ROMClass *getRemoteROMClass(J9Class *, JITServer::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple);
@@ -89,7 +89,7 @@ class JITServerHelpers
 
    // Functions used for allowing the client to compile locally when server is unavailable.
    // Should be used only on the client side.
-   static void postStreamFailure(OMRPortLibrary *portLibrary);
+   static void postStreamFailure(OMRPortLibrary *portLibrary, TR::CompilationInfo *compInfo);
    static bool shouldRetryConnection(OMRPortLibrary *portLibrary);
    static void postStreamConnectionSuccess();
    static bool isServerAvailable() { return _serverAvailable; }
@@ -98,7 +98,7 @@ class JITServerHelpers
    static void printJITServerCHTableStats(J9JITConfig *, TR::CompilationInfo *);
    static void printJITServerCacheStats(J9JITConfig *, TR::CompilationInfo *);
 
-   static uint32_t serverMsgTypeCount[JITServer::MessageType_ARRAYSIZE];
+   static uint32_t serverMsgTypeCount[JITServer::MessageType_MAXTYPE];
 
    static bool isAddressInROMClass(const void *address, const J9ROMClass *romClass);
 

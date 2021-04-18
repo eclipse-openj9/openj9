@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -493,13 +493,11 @@ Java_openj9_internal_tools_attach_target_IPC_cancelNotify(JNIEnv *env, jclass cl
 jint JNICALL
 Java_openj9_internal_tools_attach_target_IPC_waitSemaphore(JNIEnv *env, jclass clazz)
 {
+	J9JavaVM *javaVM = ((J9VMThread*) env)->javaVM;
+	jint status = 0;
 
-	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
-
-	J9JavaVM* javaVM = ((J9VMThread*) env)->javaVM;
-	jint status;
-
-	Trc_JCL_attach_waitSemaphoreEntry(env);
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	Trc_JCL_attach_waitSemaphoreEntry2(env, javaVM->attachContext.semaphore);
 	status = (jint) j9shsem_wait(javaVM->attachContext.semaphore, 0, 0);
 	Trc_JCL_attach_waitSemaphoreExit(env, status);
 	return status;
@@ -511,11 +509,10 @@ Java_openj9_internal_tools_attach_target_IPC_waitSemaphore(JNIEnv *env, jclass c
 void JNICALL
 Java_openj9_internal_tools_attach_target_IPC_closeSemaphore(JNIEnv *env, jclass clazz)
 {
+	J9JavaVM *javaVM = ((J9VMThread*) env)->javaVM;
 
-	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
-
-	J9JavaVM* javaVM = ((J9VMThread*) env)->javaVM;
-
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	Trc_JCL_attach_closeSemaphoreEntry(env, javaVM->attachContext.semaphore);
 	j9shsem_close(&javaVM->attachContext.semaphore);
 	Trc_JCL_attach_closeSemaphore(env);
 	return;
@@ -527,14 +524,12 @@ Java_openj9_internal_tools_attach_target_IPC_closeSemaphore(JNIEnv *env, jclass 
 jint JNICALL
 Java_openj9_internal_tools_attach_target_IPC_destroySemaphore(JNIEnv *env, jclass clazz)
 {
-
-	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
-
 	jint status = 0; /* return success if the semaphore is already closed or destroyed */
-	struct j9shsem_handle **handle;
+	struct j9shsem_handle **handle = NULL;
+	J9JavaVM *javaVM = ((J9VMThread*) env)->javaVM;
 
-	J9JavaVM* javaVM = ((J9VMThread*) env)->javaVM;
-
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	Trc_JCL_attach_destroySemaphoreEntry(env, javaVM->attachContext.semaphore);
 	handle = &javaVM->attachContext.semaphore;
 	if (NULL != handle) {
 		status = (jint) j9shsem_destroy(handle);

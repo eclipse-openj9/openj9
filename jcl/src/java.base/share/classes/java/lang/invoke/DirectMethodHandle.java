@@ -1,5 +1,4 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9 & !OPENJDK_METHODHANDLES]*/
-
 /*******************************************************************************
  * Copyright (c) 2017, 2020 IBM Corp. and others
  *
@@ -21,7 +20,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 package java.lang.invoke;
 
 import java.util.List;
@@ -29,10 +28,9 @@ import java.util.List;
 /*
  * Stub class to compile RI j.l.i.MethodHandleImpl
  */
-
 class DirectMethodHandle extends MethodHandle {
 	MemberName member;
-	
+
 	DirectMethodHandle(MethodType mt, LambdaForm lf) {
 		super(mt, lf);
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -43,4 +41,4 @@ class DirectMethodHandle extends MethodHandle {
 		return false;
 	}
 }
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */

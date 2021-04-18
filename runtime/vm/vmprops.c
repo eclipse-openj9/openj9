@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,6 +116,8 @@ copySystemProperties(J9JavaVM* vm)
  * 		or
  * 	--<name> <value>
  *
+ * 	Note: the allocated memory of the return value needs to be freed after use.
+ *
  * @param [in] vm the J9JavaVM
  * @param [in] argIndex index of the option in the option list
  * @param [in] optionNameLen length of the option
@@ -152,6 +154,11 @@ getOptionArg(J9JavaVM *vm, IDATA argIndex, UDATA optionNameLen)
 	}
 
 _end:
+	if (NULL != optionArg) {
+		/* Convert the value string from the platform encoding to the modified UTF8 */
+		optionArg = (char *)getMUtf8String(vm, optionArg, strlen(optionArg));
+	}
+
 	return optionArg;
 }
 
@@ -179,23 +186,18 @@ _end:
 static UDATA
 addPropertyForOptionWithEqualsArg(J9JavaVM *vm, const char *optionName, UDATA optionNameLen, const char *propName)
 {
-	IDATA argIndex = -1;
 	UDATA rc = J9SYSPROP_ERROR_NONE;
+	IDATA argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, optionName, NULL);
 
-	argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, optionName, NULL);
 	if (argIndex >= 0) {
 		/* option name includes the '=' so go back one to get the option arg */
 		char *optionArg = getOptionArg(vm, argIndex, optionNameLen - 1);
 
 		if (NULL != optionArg) {
-			rc = addSystemProperty(vm, propName, optionArg, 0);
-			if (J9SYSPROP_ERROR_NONE != rc) {
-				goto _end;
-			}
+			rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_VALUE_ALLOCATED);
 		}
 	}
 
-_end:
 	return rc;
 }
 
@@ -234,7 +236,7 @@ addPropertyForOptionWithPathArg(J9JavaVM *vm, const char *optionName, UDATA opti
 		char *optionArg = getOptionArg(vm, argIndex, optionNameLen);
 
 		if (NULL != optionArg) {
-			rc = addSystemProperty(vm, propName, optionArg, 0);
+			rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_VALUE_ALLOCATED);
 			if (J9SYSPROP_ERROR_NONE != rc) {
 				goto _end;
 			}
@@ -291,6 +293,7 @@ addPropertyForOptionWithModuleListArg(J9JavaVM *vm, const char *optionName, IDAT
 					if (NULL != modulesList) {
 						strncpy(modulesList, optionArg, listSize + 1);
 					} else {
+						j9mem_free_memory(optionArg);
 						rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
 						goto _end;
 					}
@@ -303,12 +306,15 @@ addPropertyForOptionWithModuleListArg(J9JavaVM *vm, const char *optionName, IDAT
 						j9str_printf(PORTLIB, modulesList, listSize + 2, "%s,%s", prevList, optionArg);
 						j9mem_free_memory(prevList);
 					} else {
+						j9mem_free_memory(optionArg);
 						j9mem_free_memory(prevList);
 						rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
 						goto _end;
 					}
 				}
 				CONSUME_ARG(j9vm_args, argIndex);
+
+				j9mem_free_memory(optionArg);
 			} else {
 				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_PROPERTY_MODULARITY_OPTION_REQUIRES_MODULES, optionName);
 				rc = J9SYSPROP_ERROR_ARG_MISSING;
@@ -382,7 +388,7 @@ addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA 
 					goto _end;
 				}
 				j9str_printf(PORTLIB, propName, propNameLen, "%s%zu", basePropName, index);
-				rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_NAME_ALLOCATED);
+				rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_NAME_ALLOCATED | J9SYSPROP_FLAG_VALUE_ALLOCATED );
 				if (J9SYSPROP_ERROR_NONE != rc) {
 					goto _end;
 				}
@@ -468,7 +474,7 @@ addModularitySystemProperties(J9JavaVM * vm)
 	} else {
 		/* check if SYSPROP_JDK_MODULE_PATCH has been set */
 		J9VMSystemProperty *property = NULL;
-		const char* propName = SYSPROP_JDK_MODULE_PATCH"0";
+		const char *propName = SYSPROP_JDK_MODULE_PATCH "0";
 
 		if (J9SYSPROP_ERROR_NOT_FOUND != getSystemProperty(vm, propName, &property)) {
 			vm->jclFlags |= J9_JCL_FLAG_JDK_MODULE_PATCH_PROP;
@@ -477,19 +483,6 @@ addModularitySystemProperties(J9JavaVM * vm)
 
 	/* Find last --illegal-access */
 	rc = addPropertyForOptionWithEqualsArg(vm, VMOPT_ILLEGAL_ACCESS, LITERAL_STRLEN(VMOPT_ILLEGAL_ACCESS), SYSPROP_JDK_MODULE_ILLEGALACCESS);
-	if (J9SYSPROP_ERROR_NONE != rc) {
-		goto _end;
-	} else {
-		/* check if SYSPROP_JDK_MODULE_ILLEGALACCESS has been set */
-		J9VMSystemProperty *property = NULL;
-
-		if (J9SYSPROP_ERROR_NOT_FOUND != getSystemProperty(vm, SYSPROP_JDK_MODULE_ILLEGALACCESS, &property)) {
-
-			if (0 == strcmp(property->value, "deny")) {
-				vm->runtimeFlags |= J9_RUNTIME_DENY_ILLEGAL_ACCESS;
-			}
-		}
-	}
 
 _end:
 	return rc;
@@ -965,6 +958,15 @@ initializeSystemProperties(J9JavaVM * vm)
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (j2seVersion >= J2SE_V11) {
+		rc = addSystemProperty(vm, "java.lang.invoke.VarHandle.VAR_HANDLE_GUARDS", "false", J9SYSPROP_FLAG_WRITEABLE);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	/* If we get here all is good */
 	rc = J9SYSPROP_ERROR_NONE;

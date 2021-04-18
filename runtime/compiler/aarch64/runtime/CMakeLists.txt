@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@
 j9jit_files(
 	${omr_SOURCE_DIR}/compiler/aarch64/runtime/CodeSync.cpp
 	${omr_SOURCE_DIR}/compiler/aarch64/runtime/VirtualGuardRuntime.cpp
-	aarch64/runtime/ARM64ArrayCopy.spp
 	aarch64/runtime/ARM64RelocationTarget.cpp
 	aarch64/runtime/FlushICache.spp
 	aarch64/runtime/PicBuilder.spp

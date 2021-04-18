@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -291,6 +291,7 @@ public:
 		 *  - classloader is not shared classes enabled
 		 *  - cache is full
 		 *  - the class is unsafe and isUnsafeClassSharingEnabled returns false (see the function isUnsafeClassShareable() for more details)
+		 *  - the class is a hidden class and isHiddenClassSharingEnabled() returns false (Java 15 and up, see the function isHiddenClassSharingEnabled() for more details)
 		 *  - shared cache is BCI enabled and class is modified by BCI agent
 		 *  - shared cache is BCI enabled and ROMClass being store is intermediate ROMClass
 		 *  - the class is loaded from a patch path
@@ -298,10 +299,10 @@ public:
 		if (isSharedClassesEnabled()
 			&& isClassLoaderSharedClassesEnabled()
 			&& (!isClassUnsafe() || isUnsafeClassSharingEnabled())
+			&& (!isClassHidden() || isHiddenClassSharingEnabled())
 			&& !(isSharedClassesBCIEnabled()
 			&& (classFileBytesReplaced() || isCreatingIntermediateROMClass()))
 			&& (LOAD_LOCATION_PATCH_PATH != loadLocation())
-			&& (!isClassHidden()) /* Need additional work if we want to share hidden class. Turn it off now. */
 		) {
 			return true;
 		} else {
@@ -335,6 +336,20 @@ public:
 			isEnabled = true;
 		}
 		return isEnabled;
+	}
+	
+	bool isHiddenClassSharingEnabled() const {
+		/*
+		 * In java 15 and up, hidden class is introduced to replace unsafe anonymous class, so use existing CML options
+		 * -XX:[+/-]ShareAnonymousClasses to control the class sharing behaviour of hidden classes.
+		 * The command line option -XX:[+/-]ShareUnsafeClasses, combined with -XX:[+/-]ShareAnonymousClasses will have 4 different behaviours:
+		 * 1. -XX:+ShareAnonymousClasses -XX:+ShareUnsafeClasses, this will share all hidden classes
+		 * 2. -XX:+ShareAnonymousClasses -XX:-ShareUnsafeClasses, this will only share hidden classes and not other unsafe classes
+		 * 3. -XX:-ShareAnonymousClasses -XX:+ShareUnsafeClasses, this will only share unsafe classes that are not hidden classes
+		 * 4. -XX:-ShareAnonymousClasses -XX:-ShareUnsafeClasses, this will share neither.
+		 * The current default behavior is the 1st option.
+		 */
+		return J9_ARE_ALL_BITS_SET(_javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES);
 	}
 
 	/*
@@ -384,11 +399,61 @@ public:
 	{
 		if (!isRedefining() && !isRetransforming()) {
 			if (NULL != _className) {
+				U_16 classNameLenToCompare0 = (U_16)_classNameLength;
+				U_16 classNameLenToCompare1 = classNameLength;
+				BOOLEAN misMatch = FALSE;
+				BOOLEAN isInjectedInvoker = FALSE;
 				if (isClassHidden()) {
-					/* for hidden class className has ROM address appended at the end, _className does not have that */
-					classNameLength = (U_16)_classNameLength;
+					if (isROMClassShareable()) {
+						U_8* lambdaClass0 = (U_8*)getLastDollarSignOfLambdaClassName((const char*)_className, _classNameLength);
+						U_8* lambdaClass1 = (U_8*)getLastDollarSignOfLambdaClassName((const char*)className, classNameLength);
+						if ((NULL != lambdaClass0) 
+							&& (NULL != lambdaClass1)
+						) {
+							/**
+							 * Lambda class has class name: HostClassName$$Lambda$<IndexNumber>/0x0000000000000000. 
+							 * Do not need to compare the IndexNumber as it can be different from run to run.
+							 */
+							classNameLenToCompare0 = (U_16)(lambdaClass0 - _className + 1);
+							classNameLenToCompare1 = (U_16)(lambdaClass1 - className + 1);
+						} else if ((NULL == lambdaClass0) && (NULL == lambdaClass1)) {
+							/* for hidden class className has ROM address appended at the end, _className does not have that */
+							classNameLenToCompare1 = (U_16)_classNameLength;
+						} else {
+							misMatch = TRUE;
+						}
+					} else {
+						/* for hidden class className has ROM address appended at the end, _className does not have that */
+						classNameLenToCompare1 = (U_16)_classNameLength;
+					}
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+#define J9_INJECTED_INVOKER_CLASSNAME_BYTECODE "InjectedInvoker/0x0"
+#define J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS "$$InjectedInvoker"
+					if (0 == memcmp(
+							className, J9_INJECTED_INVOKER_CLASSNAME_BYTECODE,
+							LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME_BYTECODE))
+					) {
+						/* className has InjectedInvoker/0x0000000000000000. */
+						U_8 *start = _className + _classNameLength
+								- LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS);
+						if (0 == memcmp(
+								start, J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS,
+								LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS))
+						) {
+#undef J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS
+#undef J9_INJECTED_INVOKER_CLASSNAME_BYTECODE
+							/* _className has $$InjectedInvoker at the end. */
+							isInjectedInvoker = TRUE;
+						} else {
+							misMatch = TRUE;
+						}
+					}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 				}
-				if ((0 == J9UTF8_DATA_EQUALS(_className, _classNameLength, className, classNameLength))) {
+				if (!isInjectedInvoker
+					&& (misMatch
+						|| (!J9UTF8_DATA_EQUALS(_className, classNameLenToCompare0, className, classNameLenToCompare1)))
+				) {
 #define J9WRONGNAME " (wrong name: "
 					PORT_ACCESS_FROM_PORT(_portLibrary);
 					UDATA errorStringSize = _classNameLength + sizeof(J9WRONGNAME) + 1 + classNameLength;
@@ -404,7 +469,6 @@ public:
 						current += _classNameLength;
 						*current++ = (U_8) ')';
 						*current = (U_8) '\0';
-
 					}
 					recordCFRError(errorUTF);
 					return ClassNameMismatch;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,14 +56,17 @@ public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
    JITServerPersistentCHTable(TR_PersistentMemory *);
+   ~JITServerPersistentCHTable();
 
-   bool isInitialized() { return !getData().empty(); } // needs CHTable mutex in hand
+   bool isInitialized() { return !_classMap.empty(); } // needs CHTable monitor in hand
    bool initializeCHTable(TR_J9VMBase *fej9, const std::string &rawData);
    void doUpdate(TR_J9VMBase *fej9, const std::string &removeStr, const std::string &modifyStr);
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;
    virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false) override;
    virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR_FrontEnd *, bool returnClassInfoForAOT = false) override;
+
+   TR::Monitor *getCHTableMonitor() { return _chTableMonitor; }
 
 #ifdef COLLECT_CHTABLE_STATS
    // Statistical counters
@@ -79,7 +82,8 @@ private:
    void commitRemoves(const std::string &data);
    void commitModifications(const std::string &data);
 
-   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &getData();
+   PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> _classMap;
+   TR::Monitor *_chTableMonitor;
    };
 
 /**
@@ -153,7 +157,7 @@ class FlatPersistentClassInfo
    {
 public:
    static std::string serializeHierarchy(const JITClientPersistentCHTable *chTable);
-   static std::vector<TR_PersistentClassInfo*> deserializeHierarchy(const std::string& data);
+   static std::vector<TR_PersistentClassInfo*> deserializeHierarchy(const std::string& data, TR_PersistentMemory *persistentMemory);
    static size_t classSize(TR_PersistentClassInfo *clazz);
    static size_t serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info);
    static size_t deserializeClassSimple(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo *info);
@@ -200,7 +204,7 @@ public:
    virtual void setFirstSubClass(TR_SubClass *sc) override;
    virtual void setFieldInfo(TR_PersistentClassInfoForFields *i) override;
    virtual TR_SubClass *addSubClass(TR_PersistentClassInfo *subClass) override;
-   virtual void removeSubClasses() override;
+   virtual void removeSubClasses(TR_PersistentMemory *persistentMemory = ::trPersistentMemory) override;
    virtual void removeASubClass(TR_PersistentClassInfo *subClass) override;
    virtual void removeUnloadedSubClasses() override;
    virtual void setUnloaded() override;

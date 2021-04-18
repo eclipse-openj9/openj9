@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,8 +27,8 @@
 #include "j9dump.h"
 #include "j9nonbuilder.h"
 
-extern J9_CFUNC UDATA
-jitDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg);
+extern J9_CFUNC uintptr_t
+jitDumpSignalHandler(struct J9PortLibrary *portLibrary, uint32_t gpType, void *gpInfo, void *handler_arg);
 
 extern J9_CFUNC omr_error_t
 runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent);

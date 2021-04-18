@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ uint8_t *TR::J9WatchedStaticFieldSnippet::emitSnippetBody()
          __LINE__,
          node);
       }
-   else
+   else if (cg()->needClassAndMethodPointerRelocations())
       {
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor + offsetof(J9JITWatchedStaticFieldData, method), NULL, TR_RamMethod, cg()), __FILE__, __LINE__, node);
       }
@@ -74,11 +74,14 @@ uint8_t *TR::J9WatchedStaticFieldSnippet::emitSnippetBody()
    // and hence don't need to add relocation records here.
    if (isResolved)
       {
-      cg()->addExternalRelocation(
-         new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor + offsetof(J9JITWatchedStaticFieldData, fieldAddress), reinterpret_cast<uint8_t *>(node->getSymbolReference()), reinterpret_cast<uint8_t *>(node->getInlinedSiteIndex()), TR_DataAddress, cg()),
-         __FILE__,
-         __LINE__,
-         node);
+      if (cg()->needRelocationsForStatics())
+         {
+         cg()->addExternalRelocation(
+            new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor + offsetof(J9JITWatchedStaticFieldData, fieldAddress), reinterpret_cast<uint8_t *>(node->getSymbolReference()), reinterpret_cast<uint8_t *>(node->getInlinedSiteIndex()), TR_DataAddress, cg()),
+            __FILE__,
+            __LINE__,
+            node);
+         }
 
       if (cg()->comp()->getOption(TR_UseSymbolValidationManager))
          {

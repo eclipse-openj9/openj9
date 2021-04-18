@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1474,7 +1474,7 @@ J9NLS_CFR_LVTT_DUPLICATE.user_response=Contact the provider of the classfile for
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES=v\u00e1rios atributos Record
+J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES=v\u00e1rios atributos de registro
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1482,15 +1482,10 @@ J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.user_response=Contact the provider of t
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=As classes Record n\u00e3o podem ser abstratas
-# START NON-TRANSLATABLE
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=
 
 # Record is not translatable
-J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=O nome de Record deve ser uma sequ\u00eancia de caracteres
+J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=O nome do registro deve ser uma sequ\u00eancia de caracteres
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1514,12 +1509,7 @@ J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.user_response=Contact the pro
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=Record \u00e9 implicitamente final
-# START NON-TRANSLATABLE
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=
 
 # LocalVariableTypeTable is not translatable
 # LocalVariableTable is not translatable
@@ -1531,14 +1521,14 @@ J9NLS_CFR_LVTT_DOES_NOT_MATCH_LVT.user_response=Contact the provider of the clas
 # END NON-TRANSLATABLE
 
 # PermittedSubclasses is not translatable
-J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES=m\u00faltiplos atributos PermittedSubclasses
+J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES=diversos atributos PermittedSubclasses
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED=classes finais n\u00e3o podem ser seladas
+J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED=n\u00e3o \u00e9 poss\u00edvel selar classes finais
 # START NON-TRANSLATABLE
 J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1546,7 +1536,7 @@ J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.user_response=Contact the provider of the
 # END NON-TRANSLATABLE
 
 # PermittedSubclasses is not translatable
-J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8=O nome de permittedSubclasses deve ser uma sequ\u00eancia
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8=O nome de PermittedSubclasses deve ser uma sequ\u00eancia
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1554,16 +1544,18 @@ J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8.user_response=Contact the provid
 # END NON-TRANSLATABLE
 
 # PermittedSubclasses is not translatable
-J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE=A entrada de classe permittedSubclasses n\u00e3o \u00e9 um tipo de classe
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE=A entrada de classe PermittedSubclasses n\u00e3o \u00e9 um tipo de classe
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=As classes seladas devem ter pelo menos uma subclasse permitida
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=
+
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1=ValueTypes s\u00e3o desativados com a op\u00e7\u00e3o -XX:-EnableValhalla
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.user_response=Contact the provider of the classfile for a corrected version.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.explanation=ValueTypes is an experimental feature and is disabled by -XX:-EnableValhalla
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.user_response=Contact the provider of the class file for a corrected version, or remove the -XX:+EnableValhalla option and retry.
 # END NON-TRANSLATABLE

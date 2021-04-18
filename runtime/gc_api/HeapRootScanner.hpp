@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,7 +155,7 @@ public:
 	virtual void doSlot(J9Object** slotPtr) = 0;
 
 	/** General class slot handler to be reimplemented by specializing class. This handler is called for every reference to a J9Class. */
-	virtual void doClassSlot(J9Class** slotPtr);
+	virtual void doClassSlot(J9Class *classPtr);
 
 	/** General class handler to be reimplemented by specializing class. This handler is called once per class. */
 	virtual void doClass(J9Class *clazz) = 0;
@@ -224,7 +224,7 @@ public:
 #endif /* J9VM_OPT_JVMTI */
 
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);
-	virtual void doVMClassSlot(J9Class **slotPtr, GC_VMClassSlotIterator *vmClassSlotIterator);
+	virtual void doVMClassSlot(J9Class *classPtr);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
 };
 

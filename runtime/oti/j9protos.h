@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1133,6 +1133,53 @@ extern J9_CFUNC struct J9Method* jitResolveStaticMethodRef(J9VMThread *vmStruct,
 extern J9_CFUNC struct J9Method* jitResolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpOrSplitIndex, UDATA resolveFlags);
 extern J9_CFUNC struct J9Class * jitGetDeclaringClassOfROMField(J9VMThread *vmStruct, J9Class *clazz, J9ROMFieldShape *romField);
 
+typedef struct J9MethodFromSignatureWalkState {
+	const char *className;
+	U_32 classNameLength;
+	struct J9JNINameAndSignature nameAndSig;
+	struct J9VMThread *vmThread;
+	struct J9ClassLoaderWalkState classLoaderWalkState;
+} J9MethodFromSignatureWalkState;
+
+/**
+ * Cleans up the iterator after matching all methods found.
+ *
+ * @param state The inlialized iterator state
+ */
+extern J9_CFUNC void
+allMethodsFromSignatureEndDo(J9MethodFromSignatureWalkState *state);
+
+/**
+ * Advances the iterator looking for the next method matching the exact signature provided during initialization.
+ *
+ * @param state The inlialized iterator state
+ *
+ * @return      J9Method matching the exact signature provided during initialization of the iterator in the class loader
+ *              if it exists; NULL if no such method is found.
+ */
+extern J9_CFUNC struct J9Method *
+allMethodsFromSignatureNextDo(J9MethodFromSignatureWalkState *state);
+
+/**
+ * Initializes the iterator state and returns the first method matching the supplied exact (no wildcards allowed)
+ * signature from any class loader.
+ *
+ * @param state            The iterator state which will be initialized.
+ * @param vm               The VM instance to look for methods in.
+ * @param flags            The flags forwarded to class loader iterator functions
+ * @param className        The class name including the package.
+ * @param classNameLength  The length (in number of bytes) of the class name
+ * @param methodName       The method name
+ * @param methodNameLength The length (in number of bytes) of the method name
+ * @param methodSig        The method signature
+ * @param methodSigLength  The length (in number of bytes) of the method signature
+ *
+ * @return                 J9Method matching the exact signature provided in the first class loader it is found; NULL if
+ *                         no such method is found.
+ */
+extern J9_CFUNC struct J9Method *
+allMethodsFromSignatureStartDo(J9MethodFromSignatureWalkState *state, J9JavaVM* vm, UDATA flags, const char *className, U_32 classNameLength, const char *methodName, U_32 methodNameLength, const char *methodSig, U_32 methodSigLength);
+
 #endif /* J9VM_INTERP_NATIVE_SUPPORT*/
 #endif /* _J9VMJITNATIVECOMPILESUPPORT_ */
 
@@ -1211,6 +1258,7 @@ extern J9_CFUNC j9object_t resolveMethodTypeRef (J9VMThread *vmThread, J9Constan
 extern J9_CFUNC j9object_t resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMMethodTypeRef *ramCPEntry);
 extern J9_CFUNC j9object_t resolveMethodHandleRef (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 extern J9_CFUNC j9object_t resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9RAMMethodHandleRef *ramCPEntry);
+extern J9_CFUNC j9object_t resolveOpenJDKInvokeHandle (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 extern J9_CFUNC j9object_t resolveInvokeDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 extern J9_CFUNC j9object_t resolveConstantDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags);
 #endif /* _J9VMRESOLVESUPPORT_ */
@@ -1303,6 +1351,7 @@ extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructorImpl (J9VMThread *v
 extern J9_CFUNC void  JNICALL sendFromMethodDescriptorString (J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType);
 extern J9_CFUNC void  JNICALL sendResolveMethodHandle (J9VMThread *vmThread, UDATA cpIndex, J9ConstantPool *ramCP, J9Class *definingClass, J9ROMNameAndSignature* nameAndSig);
 extern J9_CFUNC void  JNICALL sendForGenericInvoke (J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg);
+extern J9_CFUNC void  JNICALL sendResolveOpenJDKInvokeHandle (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature* nameAndSig);
 extern J9_CFUNC void  JNICALL sendResolveConstantDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
 extern J9_CFUNC void  JNICALL sendResolveInvokeDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
 extern J9_CFUNC void  JNICALL jitFillOSRBuffer (struct J9VMThread *vmContext, void *osrBlock);
@@ -1330,7 +1379,6 @@ extern J9_CFUNC void  jitExclusiveVMShutdownPending (J9VMThread *vmThread);
 extern J9_CFUNC void*  getNextInlinedCallSite (J9JITExceptionTable * metaData, void * inlinedCallSite);
 extern J9_CFUNC void*  jitGetStackMapFromPC (J9JavaVM * javaVM, struct J9JITExceptionTable * exceptionTable, UDATA jitPC);
 extern J9_CFUNC void  jitAddPicToPatchOnClassUnload (void *classPointer, void *addressToBePatched);
-extern J9_CFUNC UDATA  jitSignalHandler (J9VMThread *vmStruct, U_32 gpType, void* gpInfo);
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 #endif /* _J9VMNATIVEHELPERSLARGE_ */
 

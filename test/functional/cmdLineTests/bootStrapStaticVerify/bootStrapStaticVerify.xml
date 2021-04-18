@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2016, 2020 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Bootstrap Loader Static Verification Command-Line Option Tests" timeout="300">
+	<variable name="CLASS" value="-cp $UTILSJAR$ VMBench.FibBench" />
+ 
+ 	<test id="Check that static verification is off for the bootclasspath">
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts $CLASS$</command>
+		<output type="success" regex="no">Fibonacci: iterations</output>
+		<output type="failure" regex="no">j9bcv_verifyClassStructure - class: java/lang/Class</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ 	</test>
+ 
+ 	<test id="Check that static verification is on for the bootclasspath with -Xverify:bootclasspathStatic">
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts -Xverify:bootclasspathstatic $CLASS$</command>
+		<output type="success" regex="no">Fibonacci: iterations</output>
+		<output type="required" regex="no">j9bcv_verifyClassStructure - class: VMBench/FibBench</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+ 	</test>
+ 
+	<test id="Check that static verification is on for the bootclasspath with -Xfuture">
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts -Xfuture $CLASS$</command>
+		<output type="success" regex="no">Fibonacci: iterations</output>
+		<output type="required" regex="no">j9bcv_verifyClassStructure - class: VMBench/FibBench</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+ 
+	<test id="Check that static verification is on for the bootclasspath with -Xverify:all">
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts -Xverify:all $CLASS$</command>
+		<output type="success" regex="no">Fibonacci: iterations</output>
+		<output type="required" regex="no">j9bcv_verifyClassStructure - class: VMBench/FibBench</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+ 
+	<test id="Check that static verification is on for the bootclasspath with -Xshareclasses">
+		<command>$EXE$ -Xtrace:print={j9bcverify.14} -XX:+StartupOpts -Xshareclasses:name=testBootStrapStaticVerify $CLASS$</command>
+		<output type="success" regex="no">Fibonacci: iterations</output>
+		<output type="required" regex="no">j9bcv_verifyClassStructure - class: VMBench/FibBench</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Cleanup shared classes cache">
+		<command>$EXE$ -Xshareclasses:name=testBootStrapStaticVerify,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+ 
+</suite>

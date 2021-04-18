@@ -34,13 +34,11 @@ j9vm_add_library(j9shrcommon STATIC
 	CompositeCache.cpp
 	hookhelpers.cpp
 	Manager.cpp
-	ManagerHintTable.cpp
 	Managers.cpp
 	OSCache.cpp
 	OSCacheFile.cpp
 	OSCachemmap.cpp
 	OSCachesysv.cpp
-	OSCachevmem.cpp
 	ROMClassManagerImpl.cpp
 	ROMClassResourceManager.cpp
 	SCImplementedAPI.cpp

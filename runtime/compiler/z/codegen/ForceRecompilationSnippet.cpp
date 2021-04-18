@@ -41,7 +41,7 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
    uint32_t rEP = (uint32_t) cg()->getEntryPointRegister() - 1;
-   TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390induceRecompilation, false, false, false);
+   TR::SymbolReference * glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390induceRecompilation);
 
    // Set up the start of data constants and jump to helper.
    // We generate:
@@ -58,10 +58,8 @@ TR::S390ForceRecompilationSnippet::emitSnippetBody()
    *(int32_t *) cursor = 0xDEADBEEF;
    cursor += sizeof(int32_t);
 
-#if !defined(PUBLIC_BUILD)
    // Generate RIOFF if RI is supported.
    cursor = generateRuntimeInstrumentationOnOffInstruction(cg(), cursor, TR::InstOpCode::RIOFF);
-#endif
 
    // BRCL
    *(int16_t *) cursor = 0xC0F4;
@@ -107,11 +105,7 @@ uint32_t
 TR::S390ForceRecompilationSnippet::getLength(int32_t  estimatedSnippetStart)
    {
    uint32_t length = 12;  // LARL + BRCL
-
-#if !defined(PUBLIC_BUILD)
    length += getRuntimeInstrumentationOnOffInstructionLength(cg());
-#endif
-
    return length;
    }
 

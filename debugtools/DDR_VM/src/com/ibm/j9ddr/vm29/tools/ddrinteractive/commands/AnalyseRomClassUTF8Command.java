@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,9 +119,9 @@ public class AnalyseRomClassUTF8Command extends Command {
 					long sizet = 0;
 					long dup = 1;
 					if (cpsavedSize == null) {
-						sizet = new Long(length);
+						sizet = Long.valueOf(length);
 					} else {
-						sizet = new Long(length) + cpsavedSize[0];
+						sizet = Long.valueOf(length) + cpsavedSize[0];
 						dup += cpsavedSize[1];
 					}
 					utf8global.put(csectionName, new Long[]{sizet, dup});
@@ -133,9 +133,9 @@ public class AnalyseRomClassUTF8Command extends Command {
 						String key = csectionName + "-" + cloader;
 						cpsavedSize = utf8classloader.get(key);
 						if (cpsavedSize == null) {
-							sizet = new Long(length);
+							sizet = Long.valueOf(length);
 						} else {
-							sizet = new Long(length) + cpsavedSize[0];
+							sizet = Long.valueOf(length) + cpsavedSize[0];
 							dup += cpsavedSize[1];
 						}
 						utf8classloader.put(key, new Long[] {sizet, dup});
@@ -143,9 +143,9 @@ public class AnalyseRomClassUTF8Command extends Command {
 						dup = 1;
 						cpsavedSize = utf8bootstraploader.get(csectionName);
 						if (cpsavedSize == null) {
-							sizet = new Long(length);
+							sizet = Long.valueOf(length);
 						} else {
-							sizet = new Long(length) + cpsavedSize[0];
+							sizet = Long.valueOf(length) + cpsavedSize[0];
 							dup += cpsavedSize[1];
 						}
 						utf8bootstraploader.put(csectionName, new Long[] {sizet, dup});
@@ -179,9 +179,9 @@ public class AnalyseRomClassUTF8Command extends Command {
 						long nodesize = 0;
 						long nodecount= 1;
 						if (nodecountsize == null) {
-							nodesize = new Long(entry.getValue()[0]);
+							nodesize = Long.valueOf(entry.getValue()[0]);
 						} else {
-							nodesize = new Long(entry.getValue()[0]) + nodecountsize[1];
+							nodesize = Long.valueOf(entry.getValue()[0]) + nodecountsize[1];
 							nodecount += nodecountsize[0];
 						}
 						distrmap.put(diskey, new Long[] {nodecount, nodesize});
@@ -256,9 +256,9 @@ public class AnalyseRomClassUTF8Command extends Command {
 						long nodesize = 0;
 						long nodecount= 1;
 						if (nodecountsize == null) {
-							nodesize = new Long(entry.getValue()[0]);
+							nodesize = Long.valueOf(entry.getValue()[0]);
 						} else {
-							nodesize = new Long(entry.getValue()[0]) + nodecountsize[1];
+							nodesize = Long.valueOf(entry.getValue()[0]) + nodecountsize[1];
 							nodecount += nodecountsize[0];
 						}
 						distrmap.put(diskey, new Long[] {nodecount, nodesize});
@@ -284,9 +284,9 @@ public class AnalyseRomClassUTF8Command extends Command {
 						long nodesize = 0;
 						long nodecount= 1;
 						if (nodecountsize == null) {
-							nodesize = new Long(entry.getValue()[0]);
+							nodesize = Long.valueOf(entry.getValue()[0]);
 						} else {
-							nodesize = new Long(entry.getValue()[0]) + nodecountsize[1];
+							nodesize = Long.valueOf(entry.getValue()[0]) + nodecountsize[1];
 							nodecount += nodecountsize[0];
 						}
 						distrmap.put(diskey, new Long[] {nodecount, nodesize});

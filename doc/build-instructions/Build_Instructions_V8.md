@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2017, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,6 @@ Build instructions are available for the following platforms:
 - [AIX :blue_book:](#aix)
 - [Windows :ledger:](#windows)
 - [macOS :apple:](#macOS)
-- [ARM :iphone:](#arm)
 - [AArch64](#aarch64)
 
 User documentation for the latest release of Eclipse OpenJ9 is available at the [Eclipse Foundation](https://www.eclipse.org/openj9/docs).
@@ -51,6 +50,7 @@ machine, or in a Docker container :whale:.
 If you are using a different Linux distribution, you might have to review the list of libraries that are bundled with your distribution and/or modify the instructions to use equivalent commands to the Advanced Packaging Tool (APT). For example, for Centos, substitute the `apt-get` command with `yum`.
 
 If you want to build a binary for Linux on a different architecture, such as Power Systems&trade; or z Systems&trade;, the process is very similar and any additional information for those architectures are included as Notes :pencil: as we go along.
+See also [AArch64 section](#aarch64) for building for AArch64 Linux.
 
 ### 1. Prepare your system
 :penguin:
@@ -109,17 +109,17 @@ version used in the build.
 export CC=gcc-7 CXX=g++-7
 ```
 
-3. Download and setup **freemarker.jar** into a directory. The example commands use `/root` to be consistent with the Docker instructions. If you aren't using Docker, you probably want to store the **freemarker.jar** in your home directory.
+3. Only when building with `--with-cmake=no`, download and setup `freemarker.jar` into a directory. The example commands use `/root` to be consistent with the Docker instructions. If you aren't using Docker, you probably want to store the `freemarker.jar` in your home directory.
 ```
 cd /root
 wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
+tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
 rm -f freemarker.tgz
 ```
 
 4. Download and setup the boot JDK using the latest AdoptOpenJDK v8 build.
 ```
-cd /<my_home_dir>
+cd <my_home_dir>
 wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/8/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
 tar -xzf bootjdk8.tar.gz
 rm -f bootjdk8.tar.gz
@@ -147,13 +147,21 @@ bash get_source.sh
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/usr/lib/jvm/adoptojdk-java-80
+bash configure --with-boot-jdk=/usr/lib/jvm/adoptojdk-java-80
 ```
-:warning: You must give an absolute path to freemarker.jar
+:warning: The path in the example --with-boot-jdk= option is appropriate for the Docker installation. If not using the Docker environment, set the path appropriate for your setup, such as "<my_home_dir>/bootjdk8" as setup in the previous instructions.
 
-:warning: The path in the example --with-boot-jdk= option is appropriate for the Docker installation. If not using the Docker environment, set the path appropriate for your setup, such as "/<my_home_dir>/bootjdk8" as setup in the previous instructions.
+:pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
+- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- non-compressed references (only)
+- mixed references, either compressed or non-compressed references is selected when starting Java
 
-:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
+- `--with-mixedrefs=no` create a build supporting compressed references only
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
 
@@ -164,6 +172,8 @@ bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/usr/l
   - `path_to_library` uses a custom OpenSSL library that's already built.
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
+  
+:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=/root/freemarker.jar`.
 
 ### 4. Build
 :penguin:
@@ -217,9 +227,6 @@ OpenJDK  - 27f5b8f based on jdk8u152-b03)
 ## AIX
 :blue_book:
 
-:construction:
-This section is still under construction. Further contributions expected.
-
 The following instructions guide you through the process of building an OpenJDK V8 binary that contains Eclipse OpenJ9 on AIX 7.2.
 
 ### 1. Prepare your system
@@ -241,12 +248,12 @@ yum shell yum_install_aix-ppc64.txt
 
 It is important to take the list of package dependencies from this file because it is kept right up to date by our developers.
 
-Download and setup freemarker.jar into your home directory by running the following commands:
+Only when building with `--with-cmake=no`, download and setup `freemarker.jar` into your home directory by running the following commands:
 
 ```
-cd /<my_home_dir>
+cd <my_home_dir>
 wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
+tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
 rm -f freemarker.tgz
 ```
 
@@ -271,12 +278,21 @@ bash get_source.sh
 :blue_book:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
-               --with-cups-include=<cups_include_path>
+bash configure --with-cups-include=<cups_include_path>
 ```
-where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
+where `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/freeware/include`.
 
-:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
+- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- non-compressed references (only)
+- mixed references, either compressed or non-compressed references is selected when starting Java
+
+Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
+- `--with-mixedrefs=no` create a build supporting compressed references only
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
 
@@ -287,6 +303,8 @@ where `<my_home_dir>` is the location where you stored **freemarker.jar** and `<
   - `path_to_library` uses a custom OpenSSL library that's already built.
 
     If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
+
+:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=<my_home_dir>/freemarker.jar`, where `<my_home_dir>` is the location where you stored `freemarker.jar`.
 
 ### 4. build
 :blue_book:
@@ -346,24 +364,22 @@ You must install a number of software dependencies to create a suitable build en
 - [Cygwin for 64-bit versions of Windows](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 8](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Windows SDK 7 Debugging tools](https://www.microsoft.com/download/confirmation.aspx?id=8279).
-- [Microsoft Visual Studio 2010 Professional](https://www.visualstudio.com/vs/older-downloads/).
-- [Microsoft Visual Studio 2010 Service Pack 1](https://support.microsoft.com/en-us/help/983509/description-of-visual-studio-2010-service-pack-1)
-- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
-- [Freetype2 V2.3 or newer](https://www.freetype.org/)
-- [LLVM/Clang 64bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
-- [LLVM/Clang 32bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
+- [Microsoft Visual Studio 2013 Professional](https://www.visualstudio.com/vs/older-downloads/).
+- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
+- [Freetype2 V2.5.3](https://www.freetype.org/)
+- [LLVM/Clang 64bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe) or [LLVM/Clang 32bit](http://releases.llvm.org/7.0.0/LLVM-7.0.0-win32.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
 
 Add the binary path of Clang to the `PATH` environment variable to override the older version of clang integrated in Cygwin. e.g.
 ```
-export PATH="/cygdrive/c/LLVM/bin:$PATH" (in Cygwin for 64bit)
+export PATH="/cygdrive/c/Program Files/LLVM/bin:$PATH" (in Cygwin for 64bit)
 or
-export PATH="/cygdrive/c/LLVM_32/bin:$PATH" (in Cygwin for 32bit)
+export PATH="/cygdrive/c/Program Files/LLVM_32/bin:$PATH" (in Cygwin for 32bit)
 ```
 
 Add the path to `nasm.exe` to the `PATH` environment variable to override the older version of NASM installed in Cygwin. e.g.
 ```
-export PATH="/cygdrive/c/NASM:$PATH" (in Cygwin)
+export PATH="/cygdrive/c/Program Files/NASM:$PATH" (in Cygwin)
 ```
 
 Update your `LIB` and `INCLUDE` environment variables to provide a path to the Windows debugging tools with the following commands:
@@ -373,51 +389,34 @@ set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
 set LIB=C:\Program Files\Debugging Tools for Windows (x64)\sdk\lib;%LIB%
 ```
 
-Not all of the shared libraries that are included with Visual Studio 2010 are registered during installation.
-In particular, the `msdia100.dll` libraries must be registered manually.
-To do so, execute the following from a command prompt:
+Not all of the shared libraries that are included with Visual Studio 2013 are registered during installation.
+In particular, the `msdia120.dll` libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
 ```
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 10.0\DIA SDK\bin\msdia100.dll"
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 10.0\DIA SDK\bin\amd64\msdia100.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\msdia120.dll"
+regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio 12.0\DIA SDK\bin\amd64\msdia120.dll"
 ```
 
-You can download Freemarker and Freetype manually or obtain them using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
+You can download Freetype manually or obtain it using the [wget](http://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
 
 - Open a cygwin64 terminal and change to the `/temp` directory:
 ```
 cd /cygdrive/c/temp
 ```
 
-- Run the following commands:
+- Run the following command:
 ```
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
 wget http://download.savannah.gnu.org/releases/freetype/freetype-2.5.3.tar.gz
 ```
 
-- To unpack the Freemarker and Freetype compressed files, run:
+- To unpack the Freetype archive, run:
 ```
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 tar --one-top-level=/cygdrive/c/temp/freetype --strip-components=1 -xzf freetype-2.5.3.tar.gz
 ```
 
-Note:
-In order to build Windows 32-bit, Please enure the freetype version supports win 32-bit application (e.g. freetype-2.4.7 which includes the "win32" folder)
-
-- To build the Freetype dynamic and static libraries, open the Visual Studio Command Prompt (VS2010) (see C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Microsoft Visual Studio 2010\Visual Studio Tools) and run:
-1) Win 64-bit
+- When building with `--with-cmake=no`, unpack the Freemarker archive:
 ```
-cd c:\temp
-msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:Platform=x64 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib64/" /p:IntDir="C:/temp/freetype/obj64/" > freetype.log
-msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:Platform=x64 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib64/" /p:IntDir="C:/temp/freetype/obj64/" >> freetype.log
+tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
 ```
-
-2) Win 32-bit
-```
-cd c:\temp
-msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=DynamicLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" > freetype.log
-msbuild.exe C:/temp/freetype/builds/windows/vc2010/freetype.vcxproj /p:PlatformToolset=v100 /p:Configuration="Release Multithreaded" /p:PlatformTarget=x86 /p:ConfigurationType=StaticLibrary /p:TargetName=freetype /p:OutDir="C:/temp/freetype/lib32/" /p:IntDir="C:/temp/freetype/obj32/" >> freetype.log
-```
-:pencil: Check the `freetype.log` for errors.
 
 ### 2. Get the source
 :ledger:
@@ -436,6 +435,10 @@ Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Ec
 ```
 bash get_source.sh
 ```
+:pencil: Do not check out the source code in a path which contains spaces or has a long name or is nested many levels deep.
+
+:pencil: Create the directory that is going to contain the OpenJDK clone by using the `mkdir` command in the Cygwin bash shell and not using Windows Explorer. This ensures that it will have proper Cygwin attributes, and that its children will inherit those attributes.
+
 :pencil: **OpenSSL support:** If you want to build an OpenJDK with OpenJ9 binary with OpenSSL support and you do not have a built version of OpenSSL v1.1.x available locally, you must obtain a prebuilt OpenSSL v1.1.x binary.
 
 ### 3. Configure
@@ -445,25 +448,35 @@ When you have all the source files that you need, run the configure script, whic
 ```
 bash configure --disable-ccache \
                --with-boot-jdk=/cygdrive/c/<path to_jdk8> \
-               --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
-               --with-freetype-include=/cygdrive/c/temp/freetype/include \
-               --with-freetype-lib=/cygdrive/c/temp/freetype/lib64
+               --with-freetype-src=/cygdrive/c/temp/freetype
 ```
 
 2) Win 32-bit
 ```
 bash configure --disable-ccache \
                --with-boot-jdk=/cygdrive/c/<path_to_jdk8> \
-               --with-freemarker-jar=/cygdrive/c/temp/freemarker.jar \
-               --with-freetype-include=/cygdrive/c/temp/freetype/include \
-               --with-freetype-lib=/cygdrive/c/temp/freetype/lib32  \
+               --with-freetype-src=/cygdrive/c/temp/freetype
                --with-target-bits=32
 ```
-:pencil: Modify the paths for freemarker and freetype if you manually downloaded and unpacked these dependencies into different directories.
+Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2013` option in the configure command.
 
-:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: Modify the path for freetype if you manually downloaded and unpacked this dependency into a different directory.
+
+:pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
+- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- non-compressed references (only)
+- mixed references, either compressed or non-compressed references is selected when starting Java
+
+Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
+- `--with-mixedrefs=no` create a build supporting compressed references only
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
+
+:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=/cygdrive/c/temp/freemarker.jar`.
 
 ### 4. build
 :ledger:
@@ -557,7 +570,7 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
 - [wget 1.19.5](https://formulae.brew.sh/formula/wget)
 
-[Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
+Only when building with `--with-cmake=no`, [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
 
 ```
 wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
@@ -606,15 +619,26 @@ When you have all the source files that you need, run the configure script, whic
 bash configure \
     TAR=gtar \
     --with-boot-jdk=<path_to_boot_JDK8> \
-    --with-freemarker-jar=<PATH_TO_FREEMARKER_JAR> \
     --with-freetype-include=/usr/local/include/freetype2 \
     --with-freetype-lib=/usr/local/lib \
     --with-toolchain-type=clang
 ```
 
-:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
+:pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
+- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- non-compressed references (only)
+- mixed references, either compressed or non-compressed references is selected when starting Java
+
+Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
+- `--with-mixedrefs=no` create a build supporting compressed references only
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl=path_to_library`, where `path_to_library` specifies the path to the prebuilt OpenSSL library that you obtained in **2. Get the source**. If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must also include `--enable-openssl-bundling`.
+
+:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=<path_to>/freemarker.jar`, where `<path_to>` is the location where you stored `freemarker.jar`.
 
 ### 4. build
 :apple:
@@ -667,14 +691,108 @@ JCL      - fcd436bf56 based on jdk8u192-b03)
 
 ----------------------------------
 
-## ARM
-:iphone:
-
-:construction:
-We haven't created a full build process for ARM yet? Watch this space!
-
-----------------------------------
-
 ## AArch64
 
-:construction: Build process for AArch64 (ARMv8 64-bit) Linux does not support OpenJDK V8 at the time of writing this.
+:penguin:
+The following instructions guide you through the process of building an OpenJDK V8 binary that contains Eclipse OpenJ9 for AArch64 (ARMv8 64-bit) Linux.
+
+The binary can be built on your AArch64 Linux system.  Cross-building on x86-64 Linux is not supported yet.
+
+### 1. Get the source
+:penguin:
+First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
+```
+git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
+```
+Cloning this repository can take a while because OpenJDK is a large project! When the process is complete, change directory into the cloned repository:
+```
+cd openj9-openjdk-jdk8
+```
+Now fetch additional sources from the Eclipse OpenJ9 project and its clone of Eclipse OMR:
+```
+bash get_source.sh
+```
+
+### 2. Prepare your system
+
+You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
+
+- GNU C/C++ compiler
+- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/8/ga/linux/aarch64/jdk/hotspot/normal/adoptopenjdk), which is used as the boot JDK.
+- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - Only when building with `--with-cmake=no`
+
+See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
+
+### 3. Configure
+:penguin:
+When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
+```
+bash configure --with-boot-jdk=<path_to_boot_JDK>
+```
+:pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
+- [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
+- non-compressed references (only)
+- mixed references, either compressed or non-compressed references is selected when starting Java
+
+Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
+- `--with-mixedrefs=no` create a build supporting compressed references only
+- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks 
+- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice 
+- `--with-noncompressedrefs` create a build supporting non-compressed references only
+
+:pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={system|path_to_library}`
+
+  where:
+
+  - `system` uses the package installed OpenSSL library in the system.
+  - `path_to_library` uses a custom OpenSSL library that's already built.
+
+  If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
+
+:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=<path_to>/freemarker.jar`, where `<path_to>` is the location where you stored `freemarker.jar`.
+
+### 6. Build
+:penguin:
+Now you're ready to build OpenJDK V8 with OpenJ9:
+```
+make all
+```
+:warning: If you just type `make`, rather than `make all` your build will be incomplete, because the default `make` target is `exploded-image`.
+If you want to specify `make` instead of `make all`, you must add `--default-make-target=images` when you run the configure script.
+
+Two Java builds are produced: a full developer kit (jdk) and a runtime environment (jre):
+- **build/linux-aarch64-normal-server-release/images/j2sdk-image**
+- **build/linux-aarch64-normal-server-release/images/j2re-image**
+
+### 6. Test
+:penguin:
+For a simple test, try running the `java -version` command.
+Change to your **j2re-image** directory:
+```
+cd build/linux-aarch64-normal-server-release/images/j2re-image
+```
+Run:
+```
+bin/java -version
+```
+
+Here is some sample output:
+
+```
+openjdk version "1.8.0_265-internal"
+OpenJDK Runtime Environment (build 1.8.0_265-internal-ubuntu_2020_07_28_13_28-b00)
+Eclipse OpenJ9 VM (build master-e724f249c, JRE 1.8.0 Linux aarch64-64-Bit Compressed References 20200728_000000 (JIT enabled, AOT enabled)
+OpenJ9   - e724f249c
+OMR      - 8124c1385
+JCL      - 28815f64 based on jdk8u265-b01)
+```
+
+:construction: AArch64 JIT compiler is not fully optimized at the time of writing this, compared with other platforms.
+
+:pencil: **OpenSSL support:** If you built an OpenJDK with OpenJ9 that includes OpenSSL v1.1.x support, the following acknowledgements apply in accordance with the license terms:
+
+  - *This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit. (http://www.openssl.org/).*
+  - *This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).*
+
+:penguin: *Congratulations!* :tada:

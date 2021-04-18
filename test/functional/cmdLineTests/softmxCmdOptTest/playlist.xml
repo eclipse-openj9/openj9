@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +20,6 @@
 
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_softmxCmdOpt</testCaseName>
@@ -31,7 +29,7 @@
 			<variation>Mode601</variation>
 			<variation>Mode501</variation>
 		</variations>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DTESTDIR=$(Q)$(TEST_RESROOT)$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
@@ -39,7 +37,6 @@
 	-config $(Q)$(TEST_RESROOT)$(D)softmx.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)
 	</command>
-		<platformRequirements></platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>

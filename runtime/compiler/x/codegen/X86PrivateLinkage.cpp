@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -781,6 +781,9 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          generateLabelInstruction(JMP4, cursor->getNode(), endLabel, cg());
          }
 
+      if (cg()->canEmitBreakOnDFSet())
+         cursor = generateBreakOnDFSet(cg(), cursor);
+
       if (atlas)
          {
          uint32_t  numberOfParmSlots = atlas->getNumberOfParmSlotsMapped();
@@ -1019,6 +1022,9 @@ TR::Instruction *J9::X86::PrivateLinkage::deallocateFrameIfNeeded(TR::Instructio
 
 void J9::X86::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
+   if (cg()->canEmitBreakOnDFSet())
+      cursor = generateBreakOnDFSet(cg(), cursor);
+
    TR::RealRegister* espReal = machine()->getRealRegister(TR::RealRegister::esp);
 
    cursor = cg()->generateDebugCounter(cursor, "cg.epilogues", 1, TR::DebugCounter::Expensive);
@@ -1255,7 +1261,7 @@ void TR::X86CallSite::setupVirtualGuardInfo()
                {
                TR_ResolvedMethod * method = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(), methodSymRef->getOwningMethod(comp()), comp());
                if (method &&
-                   ((method->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ||
+                   (comp()->isRecursiveMethodTarget(method) ||
                     !method->isInterpreted() ||
                     method->isJITInternalNative()))
                   {
@@ -1270,7 +1276,7 @@ void TR::X86CallSite::setupVirtualGuardInfo()
                   {
                   TR_ResolvedMethod *calleeMethod = methodSymRef->getOwningMethod(comp())->getResolvedVirtualMethod(comp(), refinedThisClass, methodSymRef->getOffset());
                   if (calleeMethod &&
-                      ((calleeMethod->isSameMethod(comp()->getCurrentMethod()) && !comp()->isDLT()) ||
+                      (comp()->isRecursiveMethodTarget(calleeMethod) ||
                        !calleeMethod->isInterpreted() ||
                        calleeMethod->isJITInternalNative()))
                      {
@@ -2496,7 +2502,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
    vtableIndexRegDeps->addPreCondition(vtableIndexReg, getProperties().getVTableIndexArgumentRegister(), cg());
    // Now things get weird.
    //
-   // We're going to generate the lastITable sequence sequence upside-down.
+   // We're going to generate the lastITable sequence upside-down.
    // We'll generate the dispatch sequence first, and THEN we'll generate
    // the test that guards that dispatch.
    //

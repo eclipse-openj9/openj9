@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ import javax.imageio.stream.ImageInputStream;
 public class ThreadCommand extends LoadCommand
 {
 
-	// thread flavors
+	// thread flavor values from <mach/i386/thread_status.h>
 	public static final int x86_THREAD_STATE32 = 1;
 	public static final int x86_FLOAT_STATE32 = 2;
 	public static final int x86_EXCEPTION_STATE32 = 3;
@@ -81,6 +81,7 @@ public class ThreadCommand extends LoadCommand
 		ByteOrder endianness;
 		Map<String, Number> registers;
 
+		//  thread state structure contents (ie registers) defined in <mach/i386/_structs.h>
 		public ThreadState(int flavor, int size, byte state[], ByteOrder endian)
 		{
 			this.flavor = flavor;
@@ -90,9 +91,11 @@ public class ThreadCommand extends LoadCommand
 			registers = new TreeMap<>();
 			switch (flavor) {
 				case x86_THREAD_STATE:
+				case x86_THREAD_STATE64:
 					fillX86ThreadRegisters();
 					break;
 				case x86_EXCEPTION_STATE:
+				case x86_EXCEPTION_STATE64:
 					fillX86ExceptionData();
 					break;
 				default:

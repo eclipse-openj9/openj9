@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,17 +36,17 @@
  * @return the next interface reference slot in the class
  * @return NULL if the class has no more interface references
  */
-J9Class **
+J9Class *
 GC_ClassLocalInterfaceIterator::nextSlot()
 {
-	J9Class **slotPtr;
-
-	if(_iTable == _superclassITable) {
-		return NULL;
+	J9Class *classPtr = NULL;
+	while (_iTable != _superclassITable) {
+		classPtr = _iTable->interfaceClass;
+		_iTable = _iTable->next;
+		if (NULL != classPtr) {
+			break;
+		}
 	}
-
-	slotPtr = &_iTable->interfaceClass;
-	_iTable = _iTable->next;
-	return slotPtr;
+	return classPtr;
 }
 

@@ -22,9 +22,9 @@
  *******************************************************************************/
 package java.lang.invoke;
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 @VMCONSTANTPOOL_CLASS
 class DynamicInvokerHandle extends MethodHandle {
@@ -41,12 +41,12 @@ class DynamicInvokerHandle extends MethodHandle {
 		this.site = originalHandle.site;
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		return false;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// {{{ JIT support
 
@@ -84,4 +84,3 @@ class DynamicInvokerHandle extends MethodHandle {
 		c.compareStructuralParameter(left.site, this.site);
 	}
 }
-

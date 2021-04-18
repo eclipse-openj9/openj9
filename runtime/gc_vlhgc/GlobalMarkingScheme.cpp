@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -774,15 +774,12 @@ MM_GlobalMarkingScheme::scanClassObject(MM_EnvironmentVLHGC *env, J9Object *clas
 			 * However we need to scan them for case of Anonymous classes. Its are unloaded on individual basis so it is important to reach each one
 			 */
 			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(classPtr), J9ClassIsAnonymous)) {
-				GC_ClassIteratorClassSlots classSlotIterator(classPtr);
-				J9Class **classSlotPtr;
-				while(NULL != (classSlotPtr = classSlotIterator.nextSlot())) {
-					/* GC_ClassIteratorClassSlots can return NULL in *classSlotPtr so it should to be filtered out */
-					if (NULL != *classSlotPtr) {
-						J9Object *value = (*classSlotPtr)->classObject;
-						markObject(env, value);
-						rememberReferenceIfRequired(env, classObject, value);
-					}
+				GC_ClassIteratorClassSlots classSlotIterator(_javaVM, classPtr);
+				J9Class *classPtr;
+				while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+					J9Object *value = classPtr->classObject;
+					markObject(env, value);
+					rememberReferenceIfRequired(env, classObject, value);
 				}
 			}
 			classPtr = classPtr->replacedClass;
@@ -1239,8 +1236,8 @@ private:
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCandidates += 1;
 		if (!_markingScheme->isMarked(objectPtr)) {
 			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCleared += 1;
-			PORT_ACCESS_FROM_ENVIRONMENT(_env);
-			j9vmem_free_memory(identifier->address, identifier->size, identifier);
+			OMRPORT_ACCESS_FROM_OMRVM(_omrVM);
+			omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
 		}
     }
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */

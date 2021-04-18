@@ -91,7 +91,7 @@ J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()
    {
    uint8_t *cursor = cg()->getBinaryBufferCursor();
    TR_RuntimeHelper helper = getHelper();
-   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+   TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(helper);
 
    getSnippetLabel()->setCodeLocation(cursor);
 

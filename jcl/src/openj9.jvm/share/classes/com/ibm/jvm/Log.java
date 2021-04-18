@@ -2,7 +2,7 @@
 package com.ibm.jvm;
 
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ public class Log {
 
 	/**
 	 * Set the log options.
-	 * Use the same syntax as the -Xlog command-line option, with the initial -Xlog: omitted.
+	 * Use the same syntax as the -Xsyslog command-line option, with the initial -Xsyslog: omitted.
 	 * 
 	 * @param options The command line log flags.
 	 * @return status 0 on success otherwise a RuntimeException is thrown

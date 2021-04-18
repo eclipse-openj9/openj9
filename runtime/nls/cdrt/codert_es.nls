@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,7 @@ J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD.user_response=File a problem r
 
 # END NON-TRANSLATABLE
 
-J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC=PC err\u00f3neo: %1$p (offset %2$p), metaData = %3$p
+J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC=PC err\u00f3neo: %1$p (desplazamiento %2$p), metaData = %3$p
 # START NON-TRANSLATABLE
 J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC.sample_input_1=0x02365295
 J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_PC.sample_input_2=0x00526831

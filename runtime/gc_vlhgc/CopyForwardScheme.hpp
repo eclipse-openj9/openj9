@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,6 +46,7 @@ class MM_CopyForwardCompactGroup;
 class MM_CopyForwardGMPCardCleaner;
 class MM_CopyForwardNoGMPCardCleaner;
 class MM_CopyForwardVerifyScanner;
+class MM_ForwardedHeader;
 class MM_ParallelDispatcher;
 class MM_HeapRegionManager;
 class MM_HeapRegionDescriptorVLHGC;
@@ -60,7 +60,6 @@ class MM_CopyForwardSchemeAbortScanner;
 class MM_CopyForwardSchemeRootScanner;
 class MM_CopyForwardSchemeRootClearer;
 class MM_CopyForwardSchemeTask;
-class MM_ScavengerForwardedHeader;
 
 /**
  * Copy Forward scheme used for highly mobile partial collection operations.
@@ -468,12 +467,6 @@ private:
 	MMINLINE bool isObjectInNurseryMemory(J9Object *objectPtr);
 
 	/**
-	 * @param doesObjectNeedHash[out]		True, if object need to store hashcode in hashslot
-	 * @param isObjectGrowingHashSlot[out]	True, if object need to grow size for hashslot
-	 */
-	MMINLINE void calculateObjectDetailsForCopy(MM_ScavengerForwardedHeader* forwardedHeader, UDATA *objectCopySizeInBytes, UDATA *objectReserveSizeInBytes, bool *doesObjectNeedHash, bool *isObjectGrowingHashSlot);
-
-	/**
 	 * Remove any remaining regions from the reserved allocation list.
 	 * @param env GC thread.
 	 */
@@ -509,7 +502,7 @@ private:
 	 * Insert the specified tail candidate into the tail candidate list.  The implementation assumes that the calling thread can modify 
 	 * regionList without locking it so the callsite either needs to have locked the list or be single-threaded.
 	 * @param env[in] The GC thread
-	 * @param regionList[in] The region list to which tailRegion should be added as a a tail candidate
+	 * @param regionList[in] The region list to which tailRegion should be added as a tail candidate
 	 * @param tailRegion[in] The region to add
 	 */
 	void insertTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC *tailRegion);
@@ -863,9 +856,21 @@ private:
 	 * @note This will respect any alignment requirements due to hot fields etc.
 	 * @return an object pointer representing the new location of the object, or the original object pointer on failure.
 	 */
-	J9Object *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader, bool leafType = false);
-	void updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
+	J9Object *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ForwardedHeader* forwardedHeader, bool leafType = false);
 	
+
+	/* Depth copy the hot fields of an object.
+	 * @param forwardedHeader - forwarded header of an object
+	 * @param destinationObjectPtr - destinationObjectPtr of the object described by the forwardedHeader
+	 */ 
+	MMINLINE void depthCopyHotFields(MM_EnvironmentVLHGC *env, J9Class *clazz, J9Object *destinationObjectPtr, MM_AllocationContextTarok *reservingContext);
+	
+	/* Copy the hot field of an object.
+	 * Valid if scavenger dynamicBreadthScanOrdering is enabled.
+	 * @param destinationObjectPtr - the object who's hot field will be copied
+	 * @param offset  - the object field offset of the hot field to be copied 
+	 */ 
+	MMINLINE void copyHotField(MM_EnvironmentVLHGC *env, J9Object *destinationObjectPtr, U_8 offset, MM_AllocationContextTarok *reservingContext);
 	/**
 	 * Push any remaining cached mark map data out before the copy scan cache is released.
 	 * @param env GC thread.
@@ -1069,11 +1074,20 @@ public:
 	void kill(MM_EnvironmentVLHGC *env);
 
 	/**
+	 * Pre Copy Forward process. Clear GC stats, pre process regions and perform any main-specific setup
+	 */
+	void copyForwardPreProcess(MM_EnvironmentVLHGC *env);
+
+	/**
+	 * Post Copy Forward process. Sets persistent flag indicating if copy forward collection was successful or not.
+	 */
+	void copyForwardPostProcess(MM_EnvironmentVLHGC *env);
+
+	/**
 	 * Run a copy forward collection operation on the already determined collection set.
 	 * @param env[in] Main thread.
-	 * @return Flag indicating if the copy forward collection was successful or not.
 	 */
-	bool copyForwardCollectionSet(MM_EnvironmentVLHGC *env);
+	void copyForwardCollectionSet(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Return true if CopyForward is running under Hybrid mode
@@ -1086,6 +1100,30 @@ public:
 	void setReservedNonEvacuatedRegions(UDATA regionCount)
 	{
 		_regionCountReservedNonEvacuated = regionCount;
+	}
+
+#if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
+	/**
+	 * Run concurrent copy forward collection increment. Contrary to regular copyForwardCollectionSet(),
+	 * this method will be called twice for each PGC cycle (whenever concurrent copy forward is
+	 * enabled), once for initial STW increment and once for the final STW increment. For each of
+	 * those increments isConcurrentCycleInProgress state/value will get updated. For initial increment,
+	 * it will change from false to true causing only preProcess step to be performed, and for the
+	 * final increment it will change from true to false causing only postProcess step to be performed.
+	 *
+	 * @param env[in] Main thread.
+	 */
+	void concurrentCopyForwardCollectionSet(MM_EnvironmentVLHGC *env);
+#endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
+
+	/**
+	 * True if concurrent CopyForward cycle is active at any point (STW or concurrent
+	 * task active, or even short gaps between STW and concurrent tasks). Equivalent to
+	 * isConcurrentCycleInProgress() from Scavenger
+	 */
+	MMINLINE bool isConcurrentCycleInProgress() {
+		/* Unimplemented */
+		return false;
 	}
 
 	friend class MM_CopyForwardGMPCardCleaner;

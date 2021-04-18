@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2019 IBM Corp. and others
+ * Copyright (c) 1999, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,11 +33,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -47,6 +47,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Stack;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 
 /**
  * This class pre-processes the contents of an input stream, providing
@@ -70,11 +71,19 @@ import java.util.StringTokenizer;
  */
 public class JavaPreprocessor {
 
-	private final Charset charset;
+	private static final Charset charset;
+
+	static {
+		if ("z/OS".equalsIgnoreCase(System.getProperty("os.name"))) { //$NON-NLS-1$ //$NON-NLS-2$
+			charset = Charset.forName("IBM-1047"); //$NON-NLS-1$
+		} else {
+			charset = StandardCharsets.US_ASCII;
+		}
+	}
 
 	private final File inFile;
 	private BufferedReader in;
-	private Stack<BufferedReader> inStack;
+	private final Stack<BufferedReader> inStack;
 	private final Writer out;
 
 	/**
@@ -96,7 +105,8 @@ public class JavaPreprocessor {
 	// Inline messages flag
 	private boolean replaceMsg_getString = false;
 	private boolean jxePreserveApi = false;
-	private Map<String, String> macros = new HashMap<>();
+	private final Map<String, String> macros = new HashMap<>();
+	private final Map<String, Integer> numericMacros = new HashMap<>();
 	private JitAttributes jitAttributes;
 	// Whether files with no INCLUDE-IF commands should be included
 	private boolean includeIfUnsure = false;
@@ -137,14 +147,13 @@ public class JavaPreprocessor {
 	private long timeTaken = 0;
 	private int numberOfBlankLines = 0;
 	// continuation of a long line
-	private boolean continuation = false;
+	private final boolean continuation = false;
 	private boolean foundCopyright = false;
-	private int year = new GregorianCalendar().get(Calendar.YEAR);
 	// name of file being processed
-	final String file = null;
+	private final String file;
 	private Writer metadataOut;
 
-	private static final String newLine = System.getProperty("line.separator", "\n");
+	private static final String newLine = System.lineSeparator();
 
 	private final MsgClassSubstituter msgClassSubstituter = new MsgClassSubstituter();
 	boolean substituteMsgClass = false;
@@ -171,14 +180,7 @@ public class JavaPreprocessor {
 	 */
 	public JavaPreprocessor(OutputStream metadataOut, File inputFile, OutputStream out, File outputFile) {
 		super();
-		
-		String osname = System.getProperty("os.name");
-		if ("z/OS".equalsIgnoreCase(osname)) {
-			charset = Charset.forName("IBM-1047");
-		} else {
-			charset = Charset.forName("US-ASCII");
-		}
-		
+		this.file = inputFile.getAbsolutePath();
 		this.inStack = new Stack<>();
 		this.inFile = inputFile;
 		this.out = new OutputStreamWriter(out, charset);
@@ -191,7 +193,7 @@ public class JavaPreprocessor {
 				this.metadataOut.write(outputFile.getAbsolutePath());
 				this.metadataOut.write(newLine);
 			} catch (IOException ex) {
-				error("IOException on write: " + ex.getMessage());
+				error("IOException on write: " + ex.getMessage(), ex);
 			}
 		}
 	}
@@ -316,7 +318,7 @@ public class JavaPreprocessor {
 			warning("Extra INCLUDE-IF directive found on line " + lineCount + " will be ignored.");
 			return;
 		}
-		if (arg.length() < 1) {
+		if (arg.isEmpty()) {
 			shouldInclude = false;
 		} else {
 			try {
@@ -326,21 +328,28 @@ public class JavaPreprocessor {
 						testBootpathJavaDocIsNeeded = true;
 					}
 				}
-				String booleanExpr = yankSpaces(arg);
-				boolean expressionResult = parseBooleanExpression(booleanExpr.toCharArray(), 0, booleanExpr.length());
+
+				ExpressionResult parseResult = ExpressionParser.parse(arg, this);
+
+				if (!parseResult.isBoolean) {
+					error(String.format("boolean expression required: '%s'", arg)); //$NON-NLS-1$
+					return;
+				}
+
+				boolean expressionResult = parseResult.value != 0;
+
 				boolean forceExclude = false;
 				if (expressionResult) {
 					for (String flag : flags) {
 						if (requiredIncludeFlags.contains(flag)) {
 							forceExclude = true;
 							int pos = -1;
-							while (pos < (booleanExpr.length() - 1)) {
-								pos = booleanExpr.indexOf(flag, pos + 1);
+							while (pos <= arg.length()) {
+								pos = arg.indexOf(flag, pos + 1);
 								if (pos == -1) {
 									break;
 								}
-								if ((pos == 0 || !isOperatorOrBracket(booleanExpr.charAt(pos - 1)))
-										&& (pos == (booleanExpr.length() - flag.length()) || !isOperatorOrBracket(booleanExpr.charAt(pos + flag.length())))) {
+								if (isWordStart(arg, pos) && isWordEnd(arg, pos + flag.length())) {
 									forceExclude = false;
 									break;
 								}
@@ -351,12 +360,37 @@ public class JavaPreprocessor {
 						}
 					}
 				}
-				shouldInclude = (!forceExclude) ? expressionResult : false;
-			} catch (java.text.ParseException pe) {
-				error(pe.toString());
+				shouldInclude = forceExclude ? false : expressionResult;
+			} catch (ParseException pe) {
+				error(pe);
 				return;
 			}
 		}
+	}
+
+	/**
+	 * Is the character at the given index the start of a word?
+	 * That is, there's only whitespace between the preceding
+	 * punctuation (if any) and that character.
+	 */
+	private static boolean isWordStart(String text, int index) {
+		while (index > 0 && Character.isWhitespace(text.charAt(index - 1))) {
+			index -= 1;
+		}
+		return (index == 0) || isOperatorOrBracket(text.charAt(index - 1));
+	}
+
+	/**
+	 * Is the character at the given index the end of a word?
+	 * That is, there's only whitespace between the following
+	 * punctuation (if any) and that character.
+	 */
+	private static boolean isWordEnd(String text, int index) {
+		int length = text.length();
+		while (index < length && Character.isWhitespace(text.charAt(index))) {
+			index += 1;
+		}
+		return (index == length) || isOperatorOrBracket(text.charAt(index));
 	}
 
 	/**
@@ -379,14 +413,20 @@ public class JavaPreprocessor {
 	private void doCommand_IF(String arg) {
 		boolean satisfied;
 
-		if (arg.length() < 1) {
+		if (arg.isEmpty()) {
 			satisfied = false;
 		} else {
 			try {
-				String booleanExpr = yankSpaces(arg);
-				satisfied = parseBooleanExpression(booleanExpr.toCharArray(), 0, booleanExpr.length());
-			} catch (java.text.ParseException pe) {
-				error(pe.toString());
+				ExpressionResult parseResult = ExpressionParser.parse(arg, this);
+
+				if (!parseResult.isBoolean) {
+					error(String.format("boolean expression required: '%s'", arg)); //$NON-NLS-1$
+					return;
+				}
+
+				satisfied = parseResult.value != 0;
+			} catch (ParseException pe) {
+				error(pe);
 				return;
 			}
 		}
@@ -422,7 +462,7 @@ public class JavaPreprocessor {
 			}
 
 			if (externalMessagesToBeAdded.containsKey(key)) {
-				if (value.equals(externalMessagesToBeAdded.get(key).toString())) {
+				if (value.equals(externalMessagesToBeAdded.get(key))) {
 					store = false;
 				} else {
 					throw new SyntaxException("\"" + key + "\" already has the value \"" + externalMessagesToBeAdded.get(key) + "\"");
@@ -460,7 +500,7 @@ public class JavaPreprocessor {
 			return;
 		}
 
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 		boolean quoted = false;
 		boolean escapeChar = false;
 		int argLength = arg.length();
@@ -524,11 +564,11 @@ public class JavaPreprocessor {
 			inStack.push(in);
 			in = includeReader;
 		} catch (FileNotFoundException e) {
-			error("Could not find #include file: " + arg);
+			error("Could not find #include file: " + arg, e);
 		} catch (IOException e) {
-			error("IO error when loading #include file: " + arg);
+			error("IO error when loading #include file: " + arg, e);
 		} catch (Exception e) {
-			error("Error when loading #include file: " + arg);
+			error("Error when loading #include file: " + arg, e);
 		}
 	}
 
@@ -602,7 +642,7 @@ public class JavaPreprocessor {
 	/**
 	 * Represents and parses MSG command arguments.
 	 */
-	static class MSGArg {
+	private static final class MSGArg {
 		private final String arg;
 		private final String key;
 		private final String value;
@@ -709,7 +749,7 @@ public class JavaPreprocessor {
 
 			int last = 0;
 			int from = 0;
-			StringBuffer result = new StringBuffer();
+			StringBuilder result = new StringBuilder();
 			while (index >= 0) {
 				int special = "\\btnfr".indexOf(value.charAt(index + 1));
 				if (special >= 0) {
@@ -760,7 +800,7 @@ public class JavaPreprocessor {
 	}
 
 	static String substringUnescaped(String str, char escapedChar, int begin, int end) {
-		StringBuffer strBuffer = new StringBuffer(str);
+		StringBuilder strBuffer = new StringBuilder(str);
 		for (int i = begin; i < end; i++) {
 			if (strBuffer.charAt(i) == '\\' && strBuffer.charAt(i + 1) == escapedChar) {
 				strBuffer.deleteCharAt(i);
@@ -779,7 +819,7 @@ public class JavaPreprocessor {
 	 * @return String the escaped version of str
 	 */
 	static String escape(String str, char charToEscape) {
-		StringBuffer buf = new StringBuffer(str);
+		StringBuilder buf = new StringBuilder(str);
 		int i = 0;
 		int lengthDiff = 0;
 		while ((i = str.indexOf(charToEscape, i)) != -1) {
@@ -800,7 +840,7 @@ public class JavaPreprocessor {
 		private int pos;
 		private int closeMethod;
 		private String lineString;
-		private StringBuffer lineBuf;
+		private StringBuilder lineBuf;
 		final boolean inlineKeys;
 		private int callIdx;
 
@@ -812,7 +852,7 @@ public class JavaPreprocessor {
 		void replaceMsg_getString() throws SyntaxException {
 			boolean argumentsSupplied = true;
 			lineString = new String(line, 0, lineLength);
-			lineBuf = new StringBuffer(lineString);
+			lineBuf = new StringBuilder(lineString);
 
 			// Determine if a reference to Msg.getString is on this line
 			// otherwise return
@@ -1097,7 +1137,7 @@ public class JavaPreprocessor {
 	 * Each preprocessor may use a single instance of this class to replace
 	 * the name of the class used to lookup messages
 	 */
-	class MsgClassSubstituter {
+	private final class MsgClassSubstituter {
 		private final static String GET_STRING = ".getString";
 		private final static String DEFAULT_MSG_CLASS = "com.ibm.oti.util.Msg";
 		private final static String DEFAULT_UNQUALIFIED_MSG_CLASS = "Msg";
@@ -1107,7 +1147,7 @@ public class JavaPreprocessor {
 		private int pos;
 		private int closeMethod;
 		private String lineString;
-		private StringBuffer lineBuf;
+		private StringBuilder lineBuf;
 		private String msgClassName;
 		private int callIdx;
 		int classEnd = 0;
@@ -1122,7 +1162,7 @@ public class JavaPreprocessor {
 
 		void replaceMsgClass() throws SyntaxException {
 			lineString = new String(line, 0, lineLength);
-			lineBuf = new StringBuffer(lineString);
+			lineBuf = new StringBuilder(lineString);
 
 			// Determine if a reference to Msg.getString is on this line
 			// otherwise
@@ -1212,7 +1252,7 @@ public class JavaPreprocessor {
 	/**
 	 * Exception class used in parsing MSG commands
 	 */
-	static class SyntaxException extends Exception {
+	private static final class SyntaxException extends Exception {
 		/**
 		 * serialVersionUID
 		 */
@@ -1230,16 +1270,430 @@ public class JavaPreprocessor {
 
 	/** ********************** end class SyntaxException ***************** */
 
+	private static final class ExpressionScanner {
+
+		static final class Token {
+
+			final int kind;
+
+			final int offset;
+
+			final String text;
+
+			Token(int kind, String text, int offset) {
+				super();
+				this.kind = kind;
+				this.offset = offset;
+				this.text = text;
+			}
+
+		}
+
+		// tokens
+		static final int TK_EOI = 0;
+		static final int TK_IDENT = 1;
+		static final int TK_NUMBER = 2;
+		static final int TK_LEFT_PAREN = 3;
+		static final int TK_RIGHT_PAREN = 4;
+		static final int TK_AND = 5;
+		static final int TK_NOT = 6;
+		static final int TK_OR = 7;
+		static final int TK_XOR = 8;
+		static final int TK_LESS_THAN = 9;
+		static final int TK_LESS_EQUAL = 10;
+		static final int TK_EQUAL = 11;
+		static final int TK_NOT_EQUAL = 12;
+		static final int TK_GREATER_EQUAL = 13;
+		static final int TK_GREATER_THAN = 14;
+
+		private int index;
+
+		private final String input;
+
+		private final int length;
+
+		private Token nextToken;
+
+		ExpressionScanner(String input) {
+			super();
+			this.input = input;
+			this.length = input.length();
+			this.nextToken = null;
+		}
+
+		private void skipWhitespace() {
+			while (index < length && Character.isWhitespace(input.charAt(index))) {
+				index += 1;
+			}
+		}
+
+		Token getNextToken() throws ParseException {
+			Token token = nextToken;
+
+			if (token != null) {
+				nextToken = null;
+				return token;
+			}
+
+			skipWhitespace();
+
+			if (index >= length) {
+				return new Token(TK_EOI, "", index);
+			}
+
+			int start = index;
+			char nextChar = input.charAt(start);
+
+			index += 1;
+
+			switch (nextChar) {
+			case '(':
+				token = new Token(TK_LEFT_PAREN, "(", start);
+				break;
+
+			case ')':
+				token = new Token(TK_RIGHT_PAREN, ")", start);
+				break;
+
+			case '&':
+				token = new Token(TK_AND, "&", start);
+				break;
+
+			case '!':
+				if (index < length && input.charAt(index) == '=') {
+					index += 1;
+					token = new Token(TK_NOT_EQUAL, "!=", start);
+				} else {
+					token = new Token(TK_NOT, "!", start);
+				}
+				break;
+
+			case '|':
+				token = new Token(TK_OR, "|", start);
+				break;
+
+			case '^':
+				token = new Token(TK_XOR, "^", start);
+				break;
+
+			case '<':
+				if (index < length && input.charAt(index) == '=') {
+					index += 1;
+					token = new Token(TK_LESS_EQUAL, "<=", start);
+				} else {
+					token = new Token(TK_LESS_THAN, "<", start);
+				}
+				break;
+
+			case '=':
+				if (index < length && input.charAt(index) == '=') {
+					index += 1;
+					token = new Token(TK_EQUAL, "==", start);
+				} else {
+					throw new ParseException("unrecognized token '='", start);
+				}
+				break;
+
+			case '>':
+				if (index < length && input.charAt(index) == '=') {
+					index += 1;
+					token = new Token(TK_GREATER_EQUAL, ">=", start);
+				} else {
+					token = new Token(TK_GREATER_THAN, ">", start);
+				}
+				break;
+
+			default:
+				if (Character.isDigit(nextChar)) {
+					while (index < length && Character.isDigit(input.charAt(index))) {
+						index += 1;
+					}
+
+					String number = input.substring(start, index);
+
+					token = new Token(TK_NUMBER, number, start);
+				} else {
+					while (index < length && !isOperatorOrBracket(input.charAt(index))) {
+						index += 1;
+					}
+
+					String id = input.substring(start, index).trim();
+
+					token = new Token(TK_IDENT, id, start);
+				}
+				break;
+			}
+
+			return token;
+		}
+
+		void pushBackToken(Token token) {
+			if (nextToken != null) {
+				throw new IllegalStateException();
+			}
+
+			nextToken = token;
+		}
+
+	}
+
+	private static final class ExpressionResult {
+
+		final boolean isBoolean;
+
+		final int value;
+
+		ExpressionResult(boolean value) {
+			super();
+			this.isBoolean = true;
+			this.value = value ? 1 : 0;
+		}
+
+		ExpressionResult(int value) {
+			super();
+			this.isBoolean = false;
+			this.value = value;
+		}
+
+	}
+
+	private static final class ExpressionParser {
+
+		/*
+		 * Expression
+		 *   : Term
+		 *   | Expression '&' Term
+		 *   | Expression '|' Term
+		 *   | Expression '^' Term
+		 *
+		 * Term
+		 *   : Primary
+		 *   | Primary '<'  Primary
+		 *   | Primary '<=' Primary
+		 *   | Primary '==' Primary
+		 *   | Primary '!=' Primary
+		 *   | Primary '>=' Primary
+		 *   | Primary '>'  Primary
+		 *
+		 * Primary
+		 *   : Identifier
+		 *   | Number
+		 *   | '!' Primary
+		 *   | '(' Expression ')'
+		 */
+		static ExpressionResult parse(String input, JavaPreprocessor processor) throws ParseException {
+			ExpressionScanner scanner = new ExpressionScanner(input);
+			ExpressionParser parser = new ExpressionParser(processor, scanner);
+			ExpressionResult result = parser.parseExpression();
+			ExpressionScanner.Token token = scanner.getNextToken();
+
+			if (token.kind == ExpressionScanner.TK_EOI) {
+				return result;
+			} else {
+				throw new ParseException("malformed expression", token.offset);
+			}
+		}
+
+		/**
+		 * Evaluate a combination of two boolean values.
+		 */
+		private static boolean combineBoolean(int lhs, int operator, int rhs) {
+			boolean lhsBool = lhs != 0;
+			boolean rhsBool = rhs != 0;
+
+			switch (operator) {
+			case ExpressionScanner.TK_AND:
+				return lhsBool & rhsBool;
+			case ExpressionScanner.TK_OR:
+				return lhsBool | rhsBool;
+			case ExpressionScanner.TK_XOR:
+				return lhsBool ^ rhsBool;
+			default:
+				throw new IllegalArgumentException();
+			}
+		}
+
+		/**
+		 * Evaluate a comparison of two numeric values.
+		 */
+		private static boolean compareNumeric(int lhs, int operator, int rhs) {
+			switch (operator) {
+			case ExpressionScanner.TK_LESS_THAN:
+				return lhs < rhs;
+			case ExpressionScanner.TK_LESS_EQUAL:
+				return lhs <= rhs;
+			case ExpressionScanner.TK_EQUAL:
+				return lhs == rhs;
+			case ExpressionScanner.TK_NOT_EQUAL:
+				return lhs != rhs;
+			case ExpressionScanner.TK_GREATER_EQUAL:
+				return lhs >= rhs;
+			case ExpressionScanner.TK_GREATER_THAN:
+				return lhs > rhs;
+			default:
+				throw new IllegalArgumentException();
+			}
+		}
+
+		private final JavaPreprocessor processor;
+
+		private final ExpressionScanner scanner;
+
+		private ExpressionParser(JavaPreprocessor processor, ExpressionScanner scanner) {
+			super();
+			this.processor = processor;
+			this.scanner = scanner;
+		}
+
+		/*
+		 * Expression
+		 *   : Term
+		 *   | Expression '&' Term
+		 *   | Expression '|' Term
+		 *   | Expression '^' Term
+		 */
+		private ExpressionResult parseExpression() throws ParseException {
+			ExpressionResult result = parseTerm();
+
+			for (;;) {
+				ExpressionScanner.Token token = scanner.getNextToken();
+
+				switch (token.kind) {
+				case ExpressionScanner.TK_AND:
+				case ExpressionScanner.TK_OR:
+				case ExpressionScanner.TK_XOR:
+					ExpressionResult rhs = parseTerm();
+
+					if (result.isBoolean & rhs.isBoolean) {
+						result = new ExpressionResult(combineBoolean(result.value, token.kind, rhs.value));
+					} else {
+						throw new ParseException(token.text + " requires boolean operands", token.offset);
+					}
+					break;
+
+				default:
+					scanner.pushBackToken(token);
+					return result;
+				}
+			}
+		}
+
+		/*
+		 * Term
+		 *   : Primary
+		 *   | Primary '<'  Primary
+		 *   | Primary '<=' Primary
+		 *   | Primary '==' Primary
+		 *   | Primary '!=' Primary
+		 *   | Primary '>=' Primary
+		 *   | Primary '>'  Primary
+		 */
+		private ExpressionResult parseTerm() throws ParseException {
+			ExpressionResult result = parsePrimary();
+			ExpressionScanner.Token token = scanner.getNextToken();
+
+			switch (token.kind) {
+			case ExpressionScanner.TK_LESS_THAN:
+			case ExpressionScanner.TK_LESS_EQUAL:
+			case ExpressionScanner.TK_EQUAL:
+			case ExpressionScanner.TK_NOT_EQUAL:
+			case ExpressionScanner.TK_GREATER_EQUAL:
+			case ExpressionScanner.TK_GREATER_THAN:
+				ExpressionResult rhs = parsePrimary();
+
+				if (result.isBoolean | rhs.isBoolean) {
+					throw new ParseException(token.text + " requires numeric operands", token.offset);
+				} else {
+					result = new ExpressionResult(compareNumeric(result.value, token.kind, rhs.value));
+				}
+				break;
+
+			default:
+				scanner.pushBackToken(token);
+				break;
+			}
+
+			return result;
+		}
+
+		/*
+		 * Primary
+		 *   : Identifier
+		 *   | Number
+		 *   | '!' Primary
+		 *   | '(' Expression ')'
+		 */
+		private ExpressionResult parsePrimary() throws ParseException {
+			ExpressionResult result;
+			ExpressionScanner.Token token = scanner.getNextToken();
+
+			switch (token.kind) {
+			case ExpressionScanner.TK_IDENT:
+				result = processor.resolve(token.text);
+				break;
+
+			case ExpressionScanner.TK_NUMBER:
+				result = new ExpressionResult(Integer.parseInt(token.text));
+				break;
+
+			case ExpressionScanner.TK_NOT:
+				result = parsePrimary();
+				if (result.isBoolean) {
+					result = new ExpressionResult(result.value == 0);
+				} else {
+					throw new ParseException(token.text + " requires a boolean operand", token.offset);
+				}
+				break;
+
+			case ExpressionScanner.TK_LEFT_PAREN:
+				result = parseExpression();
+				token = scanner.getNextToken();
+				if (token.kind != ExpressionScanner.TK_RIGHT_PAREN) {
+					throw new ParseException("expected ')'", token.offset);
+				}
+				break;
+
+			default:
+				throw new ParseException("malformed expression", token.offset);
+			}
+
+			return result;
+		}
+
+	}
+
 	/**
 	 * Print out an error message and quit.
 	 */
 	private void error(String msg) {
+		error(msg, null);
+	}
+
+	private void error(String msg, Exception cause) {
 		if (msg == null) {
 			msg = "";
 		}
 		this.error = new PreprocessorWarning(msg, lineCount, 0, lineLength);
-		writeLog(msg + " (line " + lineCount + ")");
-		throw new PreprocessorException(msg + " (line " + lineCount + ")");
+		String fullMessage = msg + " [" + file + ", line " + lineCount + ']';
+		writeLog(fullMessage);
+		PreprocessorException exception = new PreprocessorException(fullMessage);
+		if (cause != null) {
+			exception.initCause(cause);
+		}
+		throw exception;
+	}
+
+	private void error(ParseException pe) {
+		String msg = pe.getMessage();
+		if (msg == null) {
+			msg = "";
+		}
+		this.error = new PreprocessorWarning(msg, lineCount, 0, lineLength);
+		String fullMessage = msg + " [" + file + ", line " + lineCount + ", column " + pe.getErrorOffset() + ']';
+		writeLog(fullMessage);
+		PreprocessorException exception = new PreprocessorException(fullMessage);
+		exception.initCause(pe);
+		throw exception;
 	}
 
 	/**
@@ -1276,7 +1730,7 @@ public class JavaPreprocessor {
 				out.write(newLine);
 			}
 		} catch (IOException ex) {
-			error("IOException on write");
+			error("IOException on write", ex);
 		}
 	}
 
@@ -1297,7 +1751,21 @@ public class JavaPreprocessor {
 			fis = new FileInputStream(inFile);
 			this.in = new BufferedReader(new InputStreamReader(fis, charset));
 		} catch (FileNotFoundException e) {
-			error("File not found: " + inFile.getAbsolutePath());
+			error("File not found: " + inFile.getAbsolutePath(), e);
+		}
+
+		{ // populate the map of numeric macros
+			final Pattern Numeric = Pattern.compile("\\d+");
+
+			numericMacros.clear();
+
+			for (Map.Entry<String, String> entry : macros.entrySet()) {
+				String value = entry.getValue();
+
+				if (Numeric.matcher(value).matches()) {
+					numericMacros.put(entry.getKey(), Integer.valueOf(value));
+				}
+			}
 		}
 
 		/* [PR] The state machine based version was too brittle. Here is a simpler, line base version. */
@@ -1317,7 +1785,7 @@ public class JavaPreprocessor {
 					out.write(msg_comment);
 					newLine();
 				} catch (IOException e) {
-					error("IOException on write: " + e.getMessage());
+					error("IOException on write: " + e.getMessage(), e);
 				}
 				addMSGcomment = false;
 				msg_comment = "";
@@ -1402,19 +1870,10 @@ public class JavaPreprocessor {
 				this.out.flush();
 			}
 		} catch (IOException e) {
-			error(e.toString());
+			error(e.toString(), e);
 		}
 
 		return shouldInclude;
-	}
-
-	/**
-	 * Remove all whitespace from the end of the line
-	 */
-	private void trimLine() {
-		while ((lineLength != 0) && Character.isWhitespace(line[lineLength - 1])) {
-			lineLength--;
-		}
 	}
 
 	/**
@@ -1537,7 +1996,7 @@ public class JavaPreprocessor {
 				replacement = "";
 			}
 
-			StringBuffer newLine = new StringBuffer(line.length() - identifier.length() + replacement.length());
+			StringBuilder newLine = new StringBuilder(line.length() - identifier.length() + replacement.length());
 			if (posMacroStart > 0) {
 				newLine.append(line.substring(0, posMacroStart));
 			}
@@ -1598,9 +2057,9 @@ public class JavaPreprocessor {
 				}
 			}
 		} catch (IOException ex) {
-			error("IOException on read");
+			error("IOException on read", ex);
 		}
-		
+
 		return true;
 	}
 
@@ -1620,7 +2079,7 @@ public class JavaPreprocessor {
 				}
 
 				if (metadataOut != null) {
-					StringBuffer sb = new StringBuffer();
+					StringBuilder sb = new StringBuilder();
 					sb.append(lineCount);
 					sb.append(":");
 					sb.append(++outputLineCount);
@@ -1637,7 +2096,7 @@ public class JavaPreprocessor {
 					numberOfBlankLines = 0;
 				}
 			} catch (IOException ex) {
-				error("IOException on write: " + ex.getMessage());
+				error("IOException on write: " + ex.getMessage(), ex);
 			}
 		}
 	}
@@ -1700,198 +2159,16 @@ public class JavaPreprocessor {
 		return true;
 	}
 
-	/**
-	 * If str has no spaces, return it. Else return a new string will all spaces
-	 * yanked out.
-	 *
-	 * @param str String the input string to yank the spaces from
-	 */
-	private static String yankSpaces(String str) {
-		if (str.indexOf(' ') < 0) {
-			return str;
-		}
-
-		int stringLength = str.length();
-		StringBuffer sb = new StringBuffer(stringLength);
-
-		for (int i = 0; i < stringLength; i++) {
-			if (str.charAt(i) != ' ') {
-				sb.append(str.charAt(i));
-			} else if (isSpaceInFlag(str, i)) {
-				sb.append(str.charAt(i));
-			}
-		}
-
-		return sb.toString();
-	}
+	private static final String SeparatorChars = "()|!&^<=>";
 
 	/**
-	 * Checks whether the space is in the flag or not. If it is not in the flag, it is omitted afterwards.
-	 * @param str a flag string
-	 * @param index index of space
-	 * @return true if the space ' ' is in the flag, otherwise false
-	 */
-	/* [PR 120251] Preprocessor tag with imbedded space still works */
-	private static boolean isSpaceInFlag(String str, int index) {
-		String separatorChars = "()|!&";
-		boolean endsWithSeparator = true;
-		boolean startsWithSeparator = true;
-		int strlength = str.length();
-		for (int i = index; i < strlength - 1; i++) {
-			char ch = str.charAt(i + 1);
-			if (ch == ' ') {
-				continue;
-			} else if (separatorChars.indexOf(ch) == -1) {
-				endsWithSeparator = false;
-			}
-			break;
-		}
-
-		if (!endsWithSeparator) {
-			for (int j = index; j > 0; j--) {
-				char ch = str.charAt(j - 1);
-				if (ch == ' ') {
-					continue;
-				} else if (separatorChars.indexOf(ch) == -1) {
-					startsWithSeparator = false;
-				}
-				break;
-			}
-		}
-
-		return !(endsWithSeparator | startsWithSeparator);
-	}
-
-	/**
-	 * Determine the boolean value of an expression String
-	 * parseBooleanExpression will recursively call itself to determine the
-	 * boolean value of expr.
-	 *
-	 * @param expr String a boolean expression--i.e. the arg part of an if
-	 *            statement as passed by doCommand_IF
-	 * @param startPos int the beginning of the piece of expr to evaluate
-	 *            (inclusive)
-	 * @param endPos int the end of the piece of expr to evaluate (exclusive)
-	 */
-	private boolean parseBooleanExpression(char[] expr, int startPos, int endPos) throws java.text.ParseException {
-		boolean expressionValue = false; // the value of the expression between startPos and endPos
-		boolean allIdentifierParts = true;
-		// if the entire subexpression we're looking at is all identifier chars
-		// (i.e. no a boolean operators or brackets)
-
-		for (int counter = startPos; counter < endPos; counter++) {
-			if (!isOperatorOrBracket(expr[counter])) {
-				allIdentifierParts = false; // therefore there must be some operators or brackets
-				break;
-			}
-		}
-		if (allIdentifierParts) {
-			// if the expression only contains identifier parts it must be an identifier
-			expressionValue = checkFlag(new String(expr, startPos, endPos - startPos));
-		} else {
-			// try to find an operator that's not embedded in brackets
-			// we'll look for a '|', failing that a '^', failing that a '&' and
-			// failing that a '!' (to keep precedence)
-
-			int nestingAmount = 0;
-			// how far inside of braces we are
-
-			char operator = ' ';
-			// which operator we've found (or a blank space if none is found)
-
-			int operatorPosition = -1;
-			// where we've found it (-1 means none found)
-
-			boolean allNested = true;
-			// if the entire subexpression we're looking at is nested between a
-			// '(' and ')'
-
-			for (int counter = startPos; counter < endPos; counter++) {
-				if ((nestingAmount == 0) && (counter != startPos)) {
-					allNested = false;
-				}
-
-				switch (expr[counter]) {
-					case '(':
-						nestingAmount++;
-						break;
-					case ')':
-						nestingAmount--;
-						if (nestingAmount < 0) {
-							throw new java.text.ParseException("Found ')' without matching '('", counter);
-						}
-						break;
-					case '|':
-						if (nestingAmount == 0) {
-							operator = '|';
-							operatorPosition = counter;
-						}
-						break;
-					case '^':
-						if ((nestingAmount == 0) && (operator != '|')) {
-							operator = '^';
-							operatorPosition = counter;
-						}
-						break;
-					case '&':
-						if ((nestingAmount == 0) && (operator != '|') && (operator != '^')) {
-							operator = '&';
-							operatorPosition = counter;
-						}
-						break;
-					case '!':
-						if ((nestingAmount == 0) && (operator != '|') && (operator != '^') && (operator != '&')) {
-							operator = '!';
-							operatorPosition = counter;
-						}
-						break;
-					default:
-						// if it's anything else, just keep looking for an operator
-						// char--so do nothing
-						break;
-				}
-			}
-			if (nestingAmount > 0) {
-				throw new java.text.ParseException("Missing ')'", endPos);
-			}
-			if (allNested) {
-				expressionValue = parseBooleanExpression(expr, startPos + 1, endPos - 1);
-			} else {
-				// don't use short circuit evaluation here so that all flags
-				// found in source will be checked and marked as found.
-				switch (operator) {
-				case '|':
-					expressionValue = parseBooleanExpression(expr, startPos, operatorPosition)
-									| parseBooleanExpression(expr, operatorPosition + 1, endPos);
-					break;
-				case '^':
-					expressionValue = parseBooleanExpression(expr, startPos, operatorPosition)
-									^ parseBooleanExpression(expr, operatorPosition + 1, endPos);
-					break;
-				case '&':
-					expressionValue = parseBooleanExpression(expr, startPos, operatorPosition)
-									& parseBooleanExpression(expr, operatorPosition + 1, endPos);
-					break;
-				case '!':
-					expressionValue = !parseBooleanExpression(expr, startPos + 1, endPos);
-					break;
-				default:
-					break;
-				}
-			}
-		}
-
-		return expressionValue;
-	}
-
-	/**
-	 * Answer true iff the char is a boolean operator or bracket (i.e. in the
-	 * set {'&', '^', '|', '!', '(', ')'})
+	 * Answer true iff the char is an operator or bracket
+	 * (i.e. in the set { '&', '^', '|', '!', '(', ')', '<', '=', '>' })
 	 *
 	 * @param c char the char to inspect
 	 */
-	private static boolean isOperatorOrBracket(char c) {
-		return ((c != '&') && (c != '^') && (c != '|') && (c != '!') && (c != '(') && (c != ')'));
+	static boolean isOperatorOrBracket(char c) {
+		return SeparatorChars.indexOf(c) != -1;
 	}
 
 	/**
@@ -1915,6 +2192,19 @@ public class JavaPreprocessor {
 			invalidFlags.add(new PreprocessorWarning("The flag " + flag + " is not valid.", lineCount, 0, lineLength));
 		}
 		return defined(flag);
+	}
+
+	/**
+	 * Resolve the value of the given identifier.
+	 */
+	ExpressionResult resolve(String identifier) {
+		Integer macro = numericMacros.get(identifier);
+
+		if (macro != null) {
+			return new ExpressionResult(macro.intValue());
+		} else {
+			return new ExpressionResult(checkFlag(identifier));
+		}
 	}
 
 	/**
@@ -2005,8 +2295,8 @@ public class JavaPreprocessor {
 		if (flags == null) {
 			throw new IllegalArgumentException();
 		}
-		for (int i = 0; i < flags.length; i++) {
-			this.flags.add(flags[i]);
+		for (String flag : flags) {
+			this.flags.add(flag);
 		}
 	}
 
@@ -2136,15 +2426,6 @@ public class JavaPreprocessor {
 	 */
 	public void setNoWarnIncludeIf(boolean noWarnIncludeIf) {
 		this.noWarnIncludeIf = noWarnIncludeIf;
-	}
-
-	/**
-	 * Set the year to use for the copyright.
-	 *
-	 * @param       year                the copyright year
-	 */
-	public void setCopyrightYear(int year) {
-		this.year = year;
 	}
 
 	/**

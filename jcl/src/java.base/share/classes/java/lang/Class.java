@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,35 +25,36 @@ package java.lang;
 import java.io.InputStream;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
-import java.security.AllPermission;
 import java.security.Permissions;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
-/*[ENDIF] Java12*/
+import jdk.internal.reflect.ReflectionFactory;
+/*[ENDIF] JAVA_SPEC_VERSION >= 12*/
 import java.lang.reflect.*;
 import java.net.URL;
 import java.lang.annotation.*;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
+/*[IF JAVA_SPEC_VERSION >= 16]*/
 import java.util.HashSet;
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.util.Optional;
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedAction;
 import java.lang.ref.*;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 import java.lang.constant.Constable;
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
 import sun.reflect.generics.repository.ClassRepository;
 import sun.reflect.generics.factory.CoreReflectionFactory;
@@ -61,18 +62,24 @@ import sun.reflect.generics.scope.ClassScope;
 import sun.reflect.annotation.AnnotationType;
 import java.util.Arrays;
 import com.ibm.oti.vm.VM;
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
-/*[ENDIF] Java11*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
 /*[IF Sidecar19-SE]
 import jdk.internal.misc.Unsafe;
+/*[IF JAVA_SPEC_VERSION >= 15]*/
+import jdk.internal.access.SharedSecrets;
+/*[ELSE] JAVA_SPEC_VERSION >= 15
+import jdk.internal.misc.SharedSecrets;
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 import java.io.IOException;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
 import sun.misc.Unsafe;
+import sun.misc.SharedSecrets;
 import sun.reflect.Reflection;
 import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
@@ -136,9 +143,9 @@ import sun.security.util.SecurityConstants;
  * @version		initial
  */
 public final class Class<T> implements java.io.Serializable, GenericDeclaration, Type
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	, Constable, TypeDescriptor, TypeDescriptor.OfField<Class<?>>
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 	private static final long serialVersionUID = 3206093459760846163L;
 	private static ProtectionDomain AllPermissionsPD;
@@ -204,6 +211,10 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	
 	/*[PR Jazz 85476] Address locking contention on classRepository in getGeneric*() methods */
 	private transient ClassRepositoryHolder classRepoHolder;
+
+/*[IF JAVA_SPEC_VERSION >= 12]*/
+	private static ReflectionFactory reflectionFactory = null;
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 	
 	/* Helper class to hold the ClassRepository. We use a Class with a final 
 	 * field to ensure that we have both safe initialization and safe publication.
@@ -243,6 +254,19 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	 */
 	private static final class ClassReflectNullPlaceHolder {}
 
+	private static final class MetadataCache {
+		MetadataCache() {}
+
+		static long cachedCanonicalNameOffset = -1;
+		static long cachedSimpleNameOffset = -1;
+
+		SoftReference<String> cachedCanonicalName;
+		SoftReference<String> cachedSimpleName;
+	}
+
+	private transient MetadataCache metadataCache;
+	private static long metadataCacheOffset = -1;
+
 	private transient Class<?>[] cachedInterfaces;
 	private static long cachedInterfacesOffset = -1;
 
@@ -262,14 +286,19 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 		return unsafe;
 	}
 	
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private Class<?> nestHost;
-/*[ENDIF] Java11*/
-	
-/*[IF Java15]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	private transient Object classData;
-/*[ENDIF] Java15*/
-	
+/*[ENDIF] JAVA_SPEC_VERSION >= 15*/
+
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+	private transient Class<?>[] cachedPermittedSubclasses;
+	private static long cachedPermittedSubclassesOffset = -1;
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
+
 /**
  * Prevents this class from being instantiated. Instances
  * created by the virtual machine only.
@@ -328,27 +357,6 @@ private void checkNonSunProxyMemberAccess(SecurityManager security, ClassLoader 
 			security.checkPackageAccess(packageName);
 		}
 	}
-}
-
-private long getFieldOffset(String fieldName) {
-	try {
-		Field field = Class.class.getDeclaredField(fieldName);
-		return getUnsafe().objectFieldOffset(field);
-	} catch (NoSuchFieldException e) {
-		throw newInternalError(e);
-	}
-}
-
-/**
- * This helper method atomically writes the given {@code fieldValue} to the
- * field specified by the {@code fieldOffset}
- */
-private void writeFieldValue(long fieldOffset, Object fieldValue) {
-	/*[IF Sidecar19-SE]*/
-	getUnsafe().putObjectRelease(this, fieldOffset, fieldValue);
-	/*[ELSE]*/
-	getUnsafe().putOrderedObject(this, fieldOffset, fieldValue);
-	/*[ENDIF]*/
 }
 
 private static void forNameAccessCheck(final SecurityManager sm, final Class<?> callerClass, final Class<?> foundClass) {
@@ -957,11 +965,28 @@ public Field getDeclaredField(String name) throws NoSuchFieldException, Security
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 	}
+	return getDeclaredFieldInternal(name, true);
+}
 
-	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
-	Field cachedField = lookupCachedField(name);
-	if (cachedField != null && cachedField.getDeclaringClass() == this) {
-		return cachedField;
+/**
+ * A private helper method for getDeclaredField().
+ * This is for internal usage, no security check required,
+ * and if doCache is false, the field is to be retrieved without caching
+ * which can avoid circular dependency at JVM bootstrapping phase.
+ *
+ * @param		name		The name of the field to look for.
+ * @param		doCache		The flag to determine if caching the field.
+ * @return		the field in the receiver named by the argument.
+ * @throws		NoSuchFieldException if the requested field could not be found
+ */
+@CallerSensitive
+private Field getDeclaredFieldInternal(String name, boolean doCache) throws NoSuchFieldException {
+	if (doCache) {
+		/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
+		Field cachedField = lookupCachedField(name);
+		if (cachedField != null && cachedField.getDeclaringClass() == this) {
+			return cachedField;
+		}
 	}
 
 	/*[PR CMVC 192714,194493] prepare the class before attempting to access members */
@@ -974,7 +999,12 @@ public Field getDeclaredField(String name) throws NoSuchFieldException, Security
 	if (0 == fields.length) {
 		throw new NoSuchFieldException(name);
 	}
-	return cacheField(fields[0]);
+	
+	if (doCache) {
+		return cacheField(fields[0]);
+	} else {
+		return fields[0];
+	}
 }
 
 /**
@@ -1035,7 +1065,7 @@ public Field[] getDeclaredFields() throws SecurityException {
  */
 private native Field[] getDeclaredFieldsImpl();
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 /**
  * Answers a list of method objects which represent the public methods
  * described by the arguments. Note that the associated method may not 
@@ -1108,7 +1138,7 @@ private List<Method> cacheDeclaredPublicMethods(List<Method> methods, CacheKey c
 	}
 	return methods;
 }
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /**
  * A helper method for reflection debugging
@@ -1256,12 +1286,34 @@ public Class<?> getDeclaringClass() {
 			declaringClass.checkMemberAccess(security, callerClassLoader, MEMBER_INVALID_TYPE);
 		}
 		return declaringClass;
+	} else if (this.isClassADeclaredClass(declaringClass) || this.isClassADeclaredClass(this) || this.isCircularDeclaringClass()) {
+		/* The execution of VM shouldn't be interrupted by corrupted InnerClasses attributes such as circular entries.
+		 * To be specific, Class A is the declaringClass of B, Class B is the declaringClass of C, ..., Class Z is the
+		 * declaringClass of A, which forms a circle in the entries, whether or not the relationships between two classes
+		 * literally exist. e.g.
+		 * The specified declaringClass is fake one (intentionally set in the class file) which actually has no
+		 * relationship with current class but the current class is the declaring class of the specified declaringClass.
+		 * Thus, there are 3 cases:
+		 * 1) A --> B (real/fake) --> A: B is the declaring class of A and is one of the inner classes of A.
+		 * 2) B --> A --> A: B is the declaring class of A while A is one of the inner classes of A itself.
+		 * 3) A --> B --> C --> ... Z --> A: keep fetching the declaring class from A ends up wit A itself.
+		 */
+		return null;
 	}
 	
 	/*[MSG "K0555", "incompatible InnerClasses attribute between \"{0}\" and \"{1}\""]*/
 	throw new IncompatibleClassChangeError(
 			com.ibm.oti.util.Msg.getString("K0555", this.getName(),	declaringClass.getName())); //$NON-NLS-1$
 }
+
+/**
+ * Returns true if a cycle exists from the current class to itself by repeatedly searching the declaring classes.
+ *
+ * @return		true if the cycle exists, false otherwise.
+ *
+ */
+private native boolean isCircularDeclaringClass();
+
 /**
  * Returns true if the class passed in to the method is a declared class of
  * this class. 
@@ -1633,8 +1685,19 @@ private Method getMostSpecificMethodFromAllInterfacesOfCurrentClass(HashMap<Clas
 		} else {
 			for (Method m: mi.jlrMethods) {
 				bestMethod = getMostSpecificInterfaceMethod(name, parameterTypes, bestMethod, m);
+				/*[IF JAVA_SPEC_VERSION == 8]*/
+				// Java 8 returns any matching method found
+				if (bestMethod != null) {
+					break;
+				}
+				/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 			}
 		}
+		/*[IF JAVA_SPEC_VERSION == 8]*/
+		if (bestMethod != null) {
+			break;
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	}
 
 	return bestMethod;
@@ -1909,7 +1972,7 @@ private native boolean getStaticMethodsImpl(Method[] array, int start, int count
 private native Object[] allocateAndFillArray(int size);
 
 /**
- * Answers an integer which which is the receiver's modifiers. 
+ * Answers an integer which is the receiver's modifiers. 
  * Note that the constants which describe the bits which are
  * returned are implemented in class java.lang.reflect.Modifier
  * which may not be available on the target.
@@ -2312,6 +2375,16 @@ public boolean isInterface() {
  */
 public native boolean isPrimitive();
 
+/*[IF INLINE-TYPES]*/
+/**
+ * Answers true if the receiver represents a primitive class type. Array classes
+ * return false.
+ *
+ * @return	true if reciever is primitive class type, and false otherwise.
+ */
+public native boolean isPrimitiveClass();
+/*[ENDIF] INLINE-TYPES */
+
 /**
  * Answers a new instance of the class represented by the
  * receiver, created by invoking the default (i.e. zero-argument)
@@ -2337,7 +2410,32 @@ public T newInstance() throws IllegalAccessException, InstantiationException {
 		checkNonSunProxyMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
 
+/*[IF JAVA_SPEC_VERSION >= 12]*/
+	Class<?> callerClazz = getStackClass(1);
+	if (callerClazz.classLoader == ClassLoader.bootstrapClassLoader) {
+		/* newInstanceImpl() is required for all bootstrap classes to avoid an infinite loop
+		 * when calling copyConstructor.invoke() in cacheConstructor() at the bootstrap stage
+		 * as the constructors of bootstrap classes are not yet cached for use at that time.
+		 */
+		return (T)J9VMInternals.newInstanceImpl(this);
+	} else {
+		try {
+			Constructor<?> ctr = getDeclaredConstructor();
+			if (reflectionFactory == null) {
+				reflectionFactory = AccessController.doPrivileged(new ReflectionFactory.GetReflectionFactoryAction());
+			}
+			return (T)reflectionFactory.newInstance(ctr, null, callerClazz);
+		} catch (NoSuchMethodException  e) {
+			InstantiationException instantiationEx = new InstantiationException();
+			throw (InstantiationException)instantiationEx.initCause(e);
+		} catch (InvocationTargetException e) {
+			getUnsafe().throwException(e.getCause());
+			return null;  //unreachable but required in compilation
+		}
+	}
+/*[ELSE] JAVA_SPEC_VERSION >= 12*/
 	return (T)J9VMInternals.newInstanceImpl(this);
+/*[ENDIF] JAVA_SPEC_VERSION >= 12*/
 }
 
 /**
@@ -2434,10 +2532,10 @@ public String toGenericString() {
 		kindOfType = "interface "; //$NON-NLS-1$
 	} else if ((!isArray) && ((modifiers & ENUM) != 0) && (getSuperclass() == Enum.class)) {
 		kindOfType = "enum "; //$NON-NLS-1$
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	} else if (isRecord()) {
 		kindOfType = "record "; //$NON-NLS-1$
-/*[ENDIF]*/
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 	} else {
 		kindOfType = "class "; //$NON-NLS-1$	
 	}
@@ -2489,7 +2587,7 @@ private void appendTypeParameters(StringBuilder nameBuilder) {
 			if (comma) nameBuilder.append(',');
 			nameBuilder.append(t);
 			comma = true;
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 			Type[] types = t.getBounds();
 			if (types.length == 1 && types[0].equals(Object.class)) {
 				// skip in case the only bound is java.lang.Object
@@ -2500,7 +2598,7 @@ private void appendTypeParameters(StringBuilder nameBuilder) {
 					prefix = " & "; //$NON-NLS-1$
 				}
 			}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 		}
 		nameBuilder.append('>');
 	}
@@ -2829,33 +2927,34 @@ public Annotation[] getDeclaredAnnotations() {
 }
 
 /**
- * 
- * Terms used for annotations :
- * Repeatable Annotation : 
- * 		An annotation which can be used more than once for the same class declaration.
- * 		Repeatable annotations are annotated with Repeatable annotation which tells the 
- * 		container annotation for this repeatable annotation.
- * 		Example = 
- * 
- * 		@interface ContainerAnnotation {RepeatableAnn[] value();}
- * 		@Repeatable(ContainerAnnotation.class)
- * Container Annotation: 
- * 		Container annotation stores the repeated annotations in its array-valued element. 
- * 		Using repeatable annotations more than once makes them stored in their container annotation. 
- * 		In this case, container annotation is visible directly on class declaration, but not the repeated annotations.   
- * Repeated Annotation:
- * 		A repeatable annotation which is used more than once for the same class. 
- * Directly Declared Annotation :
- * 		All non repeatable annotations are directly declared annotations.
- * 		As for repeatable annotations, they can be directly declared annotation if and only if they are used once. 
- * 		Repeated annotations are not directly declared in class declaration, but their container annotation does. 
- * 
- * -------------------------------------------------------------------------------------------------------
- * 
  * Gets the specified type annotations of this class. 
- * If the specified type is not repeatable annotation, then returned array size will be 0 or 1.
- * If specified type is repeatable annotation, then all the annotations of that type will be returned. Array size might be 0, 1 or more.
- * 
+ * <br>
+ * Terms used for annotations :<br><br>
+ * Repeatable Annotation :
+ * 		<p>An annotation which can be used more than once for the same class declaration.
+ * 		Repeatable annotations are annotated with Repeatable annotation which tells the
+ * 		container annotation for this repeatable annotation.</p>
+ * 		Example
+ * 		<pre><code>
+ * 		{@literal @}interface ContainerAnnotation {RepeatableAnn[] value();}
+ * 		{@literal @}Repeatable(ContainerAnnotation.class)
+ * 		</code></pre>
+ * Container Annotation:
+ * 		<p>Container annotation stores the repeated annotations in its array-valued element.
+ * 		Using repeatable annotations more than once makes them stored in their container annotation.
+ * 		In this case, container annotation is visible directly on class declaration, but not the repeated annotations.</p>
+ * Repeated Annotation:
+ * 		<p>A repeatable annotation which is used more than once for the same class.</p>
+ * Directly Declared Annotation :
+ * 		<p>All non repeatable annotations are directly declared annotations.
+ * 		As for repeatable annotations, they can be directly declared annotation if and only if they are used once.
+ * 		Repeated annotations are not directly declared in class declaration, but their container annotation does.</p>
+ *
+ * -------------------------------------------------------------------------------------------------------
+ *
+ * <p>If the specified type is not repeatable annotation, then returned array size will be 0 or 1.
+ * If specified type is repeatable annotation, then all the annotations of that type will be returned. Array size might be 0, 1 or more.</p>
+ *
  * It does not search through super classes. 
  * 
  * @param annotationClass the annotation type to search for
@@ -3007,6 +3106,81 @@ private MethodHandle getValueMethod(final Class<? extends Annotation> containedT
 	return valueMethod;
 }
 
+private MetadataCache getMetadataCache() {
+	if (metadataCache == null) {
+		/*[IF JAVA_SPEC_VERSION >= 11]
+		metadataCacheOffset = getUnsafe().objectFieldOffset(Class.class, "metadataCache"); //$NON-NLS-1$
+		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
+		try {
+			Field field = Class.class.getDeclaredFieldInternal("metadataCache", false); //$NON-NLS-1$
+			metadataCacheOffset = getUnsafe().objectFieldOffset(field);
+		} catch (NoSuchFieldException e) {
+			throw newInternalError(e);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+		writeFieldValue(metadataCacheOffset, new MetadataCache());
+	}
+	return metadataCache;
+}
+
+private String cacheSimpleName(String simpleName) {
+	MetadataCache cache = getMetadataCache();
+
+	if (cache.cachedSimpleName == null || cache.cachedSimpleName.get() == null) {
+		MetadataCache.cachedSimpleNameOffset = getFieldOffset(
+			MetadataCache.class, "cachedSimpleName", MetadataCache.cachedSimpleNameOffset); //$NON-NLS-1$
+
+		writeFieldValue(cache, MetadataCache.cachedSimpleNameOffset, new SoftReference<>(simpleName));
+	}
+
+	return simpleName;
+}
+
+private String cacheCanonicalName(String canonicalName) {
+	MetadataCache cache = getMetadataCache();
+
+	if (cache.cachedCanonicalName == null || cache.cachedCanonicalName.get() == null) {
+		MetadataCache.cachedCanonicalNameOffset = getFieldOffset(
+				MetadataCache.class, "cachedCanonicalName", MetadataCache.cachedCanonicalNameOffset); //$NON-NLS-1$
+
+		writeFieldValue(cache, MetadataCache.cachedCanonicalNameOffset, new SoftReference<>(canonicalName));
+	}
+
+	return canonicalName;
+}
+
+/**
+ * This helper method atomically writes the given {@code fieldValue} to the
+ * field specified by the {@code fieldOffset} of the {@code target} object
+ */
+private static void writeFieldValue(Object target, long fieldOffset, Object fieldValue) {
+	/*[IF JAVA_SPEC_VERSION >= 11]
+	getUnsafe().putObjectRelease(target, fieldOffset, fieldValue);
+	/*[ELSE] JAVA_SPEC_VERSION >= 11 */
+	getUnsafe().putOrderedObject(target, fieldOffset, fieldValue);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+}
+
+private void writeFieldValue(long fieldOffset, Object fieldValue) {
+	writeFieldValue(this, fieldOffset, fieldValue);
+}
+
+private static long getFieldOffset(Class<?> hostClass, String fieldName, long initialOffset) {
+	if (initialOffset == -1) {
+		try {
+			Field field = hostClass.getDeclaredField(fieldName);
+			return getUnsafe().objectFieldOffset(field);
+		} catch (NoSuchFieldException e) {
+			throw newInternalError(e);
+		}
+	}
+	return initialOffset;
+}
+
+private static long getFieldOffset(String fieldName) {
+	return getFieldOffset(Class.class, fieldName, -1);
+}
+
 /**
  * Gets the array of containedType from the value() method.
  * 
@@ -3015,7 +3189,7 @@ private MethodHandle getValueMethod(final Class<? extends Annotation> containedT
  * @param containedType the annotationType() stored in the container
  * @return Annotation array if the given annotation has a value() method which returns an array of the containedType. Otherwise, return null.
  */
-private Annotation[] getAnnotationsArrayFromValue(Annotation container, Class<? extends Annotation> containerType, Class<? extends Annotation> containedType) {
+private static Annotation[] getAnnotationsArrayFromValue(Annotation container, Class<? extends Annotation> containerType, Class<? extends Annotation> containedType) {
 	try {
 		MethodHandle valueMethod = containerType.getValueMethod(containedType);
 		if (valueMethod != null) {
@@ -3088,7 +3262,7 @@ private AnnotationCache getAnnotationCache() {
 			Annotation[] directAnnotations = sun.reflect.annotation.AnnotationParser.toArray(
 						sun.reflect.annotation.AnnotationParser.parseAnnotations(
 								annotationsData,
-								new Access().getConstantPool(this),
+								getConstantPool(),
 								this));
 			
 			LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap = new LinkedHashMap<>(directAnnotations.length * 4 / 3);
@@ -3557,6 +3731,14 @@ private native String getSimpleNameImpl();
  * @see #isAnonymousClass()
  */
 public String getSimpleName() {
+	MetadataCache cache = getMetadataCache();
+	if (cache.cachedSimpleName != null) {
+		String cachedSimpleName = cache.cachedSimpleName.get();
+		if (cachedSimpleName != null) {
+			return cachedSimpleName;
+		}
+	}
+
 	int arrayCount = 0;
 	Class<?> baseType = this;
 	if (isArray()) {
@@ -3621,7 +3803,7 @@ public String getSimpleName() {
 		}
 		return result.toString();
 	}
-	return simpleName;
+	return cacheSimpleName(simpleName);
 }
 
 /**
@@ -3637,6 +3819,14 @@ public String getSimpleName() {
  * @see #isLocalClass()
  */
 public String getCanonicalName() {
+	MetadataCache cache = getMetadataCache();
+	if (cache.cachedCanonicalName != null) {
+		String cachedCanonicalName = cache.cachedCanonicalName.get();
+		if (cachedCanonicalName != null) {
+			return cachedCanonicalName;
+		}
+	}
+
 	int arrayCount = 0;
 	Class<?> baseType = this;
 	if (isArray()) {
@@ -3645,12 +3835,12 @@ public String getCanonicalName() {
 			arrayCount++;
 		}
 	}
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	if (baseType.isHidden()) {
 		/* Canonical name is always null for hidden classes. */
 		return null;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 	if (baseType.getEnclosingObjectClass() != null) {
 		// local or anonymous class
 		return null;
@@ -3675,7 +3865,7 @@ public String getCanonicalName() {
 		}
 		return result.toString();
 	}
-	return canonicalName;
+	return cacheCanonicalName(canonicalName);
 }
 
 /**
@@ -4056,9 +4246,11 @@ private static final class CacheKey {
 	static CacheKey newMethodKey(String methodName, Class<?>[] parameterTypes, Class<?> returnType) {
 		return new CacheKey(methodName, parameterTypes, returnType);
 	}
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 	static CacheKey newDeclaredPublicMethodsKey(String methodName, Class<?>[] parameterTypes) {
 		return new CacheKey("#m" + methodName, parameterTypes, null);	//$NON-NLS-1$
 	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	static final CacheKey PublicConstructorsKey = new CacheKey("/c", EmptyParameters, null); //$NON-NLS-1$
 	static final CacheKey PublicFieldsKey = newFieldKey("/f", null); //$NON-NLS-1$
@@ -4648,10 +4840,11 @@ Object setMethodHandleCache(Object cache) {
 	return result;
 }
 
-/*[IF Sidecar19-SE]*/
 ConstantPool getConstantPool() {
-	return new Access().getConstantPool(this);
+	return SharedSecrets.getJavaLangAccess().getConstantPool(this);
 }
+
+/*[IF Sidecar19-SE]*/
 Map<Class<? extends Annotation>, Annotation> getDeclaredAnnotationMap() {
 	throw new Error("Class.getDeclaredAnnotationMap() unimplemented"); //$NON-NLS-1$
 }
@@ -4666,7 +4859,7 @@ static byte[] getExecutableTypeAnnotationBytes(Executable exec) {
 }
 /*[ENDIF] Sidecar19-SE*/
 
-/*[IF Java11]*/
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 /**
  * Answers the host class of the receiver's nest.
  *
@@ -4742,14 +4935,20 @@ public boolean isNestmateOf(Class<?> that) {
  * Answers the nest member classes of the receiver's nest host.
  *
  * @throws SecurityException if a SecurityManager is present and package access is not allowed
+/*[IF JAVA_SPEC_VERSION < 15]
  * @throws LinkageError if there is any problem loading or validating a nest member or the nest host
+/*[ENDIF]
  * @throws SecurityException if a returned class is not the current class, a security manager is enabled,
  *	the caller's class loader is not the same or an ancestor of that returned class, and the
  * 	checkPackageAccess() denies access
  * @return the host class of the receiver.
  */
 @CallerSensitive
-public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
+public Class<?>[] getNestMembers() throws
+/*[IF JAVA_SPEC_VERSION < 15] */
+LinkageError,
+/*[ENDIF] JAVA_SPEC_VERSION < 15 */
+SecurityException {
 	if (isArray() || isPrimitive()) {
 		/* By spec, Class objects representing array types or primitive types
 		 * belong to the nest consisting only of itself.
@@ -4776,9 +4975,9 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 
 	return members;
 }
-/*[ENDIF] Java11 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
-/*[IF Java12]*/
+/*[IF JAVA_SPEC_VERSION >= 12]*/
 	/**
 	 * Create class of an array. The component type will be this Class instance.
 	 * 
@@ -4812,7 +5011,7 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	 * @return Optional with a nominal descriptor of Class instance
 	 */
 	public Optional<ClassDesc> describeConstable() {
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 		Class<?> clazz = this;
 		if (isArray()) {
 			clazz = getComponentType();
@@ -4824,8 +5023,8 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 			/* It is always an empty Optional for hidden classes. */
 			return Optional.empty(); 
 		}
-/*[ENDIF] Java15 */		
-		
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
 		ClassDesc classDescriptor = ClassDesc.ofDescriptor(this.descriptorString());
 		return Optional.of(classDescriptor);
 	}
@@ -4836,7 +5035,7 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	 * @return field descriptor of Class instance
 	 */
 	public String descriptorString() {
-		/* see MethodType.getBytecodeStringName */
+		/* see MethodTypeHelper.getBytecodeStringName */
 
 		if (this.isPrimitive()) {
 			if (this == int.class) {
@@ -4860,7 +5059,7 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 			}
 		}
 		String name = this.getName().replace('.', '/');
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 		Class<?> clazz = this;
 		if (isArray()) {
 			clazz = getComponentType();
@@ -4873,21 +5072,30 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 			int index = name.lastIndexOf('/');
 			name = name.substring(0, index)+ '.' + name.substring(index + 1,name.length());
 		}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		if (this.isArray()) {
 			return name;
 		}
 		return "L"+ name + ";"; //$NON-NLS-1$ //$NON-NLS-2$
 	}
-/*[ENDIF] Java12 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
-/*[IF Java14]*/
+/*[IF JAVA_SPEC_VERSION >= 14]*/
 	/**
 	 * Returns true if the class instance is a record.
 	 * 
 	 * @return true for a record class, false otherwise
 	 */
-	public native boolean isRecord();
+	public boolean isRecord() {
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+		Class superclazz = getSuperclass();
+		return ((superclazz == Record.class) && isRecordImpl());
+/*[ELSE] JAVA_SPEC_VERSION >= 16*/
+		return isRecordImpl();
+/*[ENDIF] JAVA_SPEC_VERSION >= 16*/
+	}
+	
+	private native boolean isRecordImpl();
 
 	/**
 	 * Returns an array of RecordComponent objects for a record class.
@@ -4914,39 +5122,15 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	}
 
 	private native RecordComponent[] getRecordComponentsImpl();
-/*[ENDIF] Java14 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/**
 	 * Returns true if class or interface is sealed.
 	 * 
 	 * @return true if class is sealed, false otherwise
 	 */
 	public native boolean isSealed();
-
-	/**
-	 * Returns an array of permitted subclasses as ClassDesc objects related to the calling class.
-	 * 
-	 * @return array of ClassDesc objects.
-	 * For a class that is not sealed, an empty array is returned.
-	 */
-	@CallerSensitive
-	public ClassDesc[] permittedSubclasses() {
-		if (!isSealed()) {
-			return new ClassDesc[0];
-		}
-
-		String[] permittedSubclassesNames = permittedSubclassesImpl();
-		ClassDesc[] permittedSubclasses = new ClassDesc[permittedSubclassesNames.length];
-
-		for (int i = 0; i < permittedSubclassesNames.length; i++) {
-			String subclassName = permittedSubclassesNames[i];
-			permittedSubclasses[i] = ClassDesc.of(permittedSubclassesNames[i]);
-		}
-		return permittedSubclasses;
-	}
-
-	private native String[] permittedSubclassesImpl();
 
 	private native boolean isHiddenImpl();
 	/**
@@ -4966,5 +5150,73 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	Object getClassData() {
 		return classData;
 	}
-/*[ENDIF] Java15 */
+
+	private native String[] permittedSubclassesImpl();
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+
+/*[IF JAVA_SPEC_VERSION >= 16]*/
+	/**
+	 * Returns the permitted subclasses related to the calling sealed class as an array
+	 * of Class objects. If the calling class is not a sealed class, is an array class,
+	 * or is primitive, then this method returns null instead.
+	 * The order of any classes returned in the array is unspecified, and any classes
+	 * that cannot be loaded are not included in the returned array. The returned array
+	 * may be empty if there are no permitted subclasses.
+	 * 
+	 * @return array of Class objects if permitted subclasses exist or null if not a sealed class.
+	 * 
+	 * @throws SecurityException if access to any of the classes returned in the array is denied
+	 * 
+	 * @since 16
+	 */
+	@CallerSensitive
+	public Class<?>[] getPermittedSubclasses() throws SecurityException {
+		if (!isSealed()) {
+			return null;
+		}
+		Class<?>[] localPermittedSubclasses = cachedPermittedSubclasses;
+		if (null == localPermittedSubclasses) {
+			String[] permittedSubclassesNames = permittedSubclassesImpl();
+			ArrayList<Class<?>> permittedSubclasses = new ArrayList<>(permittedSubclassesNames.length);
+
+			for (int i = 0; i < permittedSubclassesNames.length; i++) {
+				String subclassName = permittedSubclassesNames[i];
+				try {
+					Class<?> permitted = forNameImpl(subclassName, false, this.classLoader);
+					permittedSubclasses.add(permitted);
+				} catch (ClassNotFoundException e) {
+					// do nothing if class not found
+				}
+			}
+			localPermittedSubclasses = permittedSubclasses.toArray(new Class<?>[0]);
+
+			long localPermittedSubclassesCacheOffset = cachedPermittedSubclassesOffset;
+			if (-1 == localPermittedSubclassesCacheOffset) {
+				localPermittedSubclassesCacheOffset = getUnsafe().objectFieldOffset(Class.class, "cachedPermittedSubclasses");
+				cachedPermittedSubclassesOffset = localPermittedSubclassesCacheOffset;
+			}
+			getUnsafe().putObjectRelease(this, localPermittedSubclassesCacheOffset, localPermittedSubclasses);
+		}
+
+		SecurityManager sm = System.getSecurityManager();
+		if (null != sm) {
+			HashSet<String> packages = new HashSet<>();
+			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
+			for (int i = 0; i < localPermittedSubclasses.length; i++) {
+				ClassLoader subClassLoader = localPermittedSubclasses[i].internalGetClassLoader();
+				if (sun.reflect.misc.ReflectUtil.needsPackageAccessCheck(callerClassLoader, subClassLoader)) {
+					String pkgName = localPermittedSubclasses[i].getPackageName();
+					if ((pkgName != null) && (pkgName != "")) {
+						packages.add(pkgName);
+					}
+				}
+			}
+			for (String pkgName : packages) {
+				sm.checkPackageAccess(pkgName);
+			}
+		}
+
+		return localPermittedSubclasses;
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 }

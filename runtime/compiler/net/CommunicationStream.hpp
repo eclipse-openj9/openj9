@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,12 +24,10 @@
 #define COMMUNICATION_STREAM_H
 
 #include <unistd.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 #include "net/LoadSSLLibs.hpp"
 #include "net/Message.hpp"
 #include "infra/Statistics.hpp"
-
+#include "env/VerboseLog.hpp"
 
 namespace JITServer
 {
@@ -46,7 +44,7 @@ public:
    static void initSSL();
 
 #ifdef MESSAGE_SIZE_STATS
-   static TR_Stats collectMsgStat[JITServer::MessageType_ARRAYSIZE];
+   static TR_Stats collectMsgStat[JITServer::MessageType_MAXTYPE];
 #endif
 
    static void initConfigurationFlags();
@@ -61,15 +59,14 @@ public:
       return Message::buildFullVersion(getJITServerVersion(), CONFIGURATION_FLAGS);
       }
 
-protected:
-   CommunicationStream() :
-      _ssl(NULL),
-      _connfd(-1)
+   static void printJITServerVersion()
       {
-      static_assert(
-         sizeof(messageNames) / sizeof(messageNames[0]) == MessageType_ARRAYSIZE,
-         "wrong number of message names");
+      // print the human-readable version string
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer version: %u.%u.%u", MAJOR_NUMBER, MINOR_NUMBER, PATCH_NUMBER);
       }
+
+protected:
+   CommunicationStream() : _ssl(NULL), _connfd(-1) { }
 
    virtual ~CommunicationStream()
       {
@@ -95,14 +92,14 @@ protected:
    void writeMessage(Message &msg);
 
    int getConnFD() const { return _connfd; }
-   
+
    BIO *_ssl; // SSL connection, null if not using SSL
    int _connfd;
    ServerMessage _sMsg;
    ClientMessage _cMsg;
 
    static const uint8_t MAJOR_NUMBER = 1;
-   static const uint16_t MINOR_NUMBER = 10;
+   static const uint16_t MINOR_NUMBER = 24;
    static const uint8_t PATCH_NUMBER = 0;
    static uint32_t CONFIGURATION_FLAGS;
 
@@ -178,7 +175,6 @@ private:
       writeBlocking(&val, sizeof(T));
       }
 
- 
    void writeBlocking(const char* data, size_t size)
       {
       if (_ssl)

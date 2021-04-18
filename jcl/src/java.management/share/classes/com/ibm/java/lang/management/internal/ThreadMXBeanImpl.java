@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2019 IBM Corp. and others
+ * Copyright (c) 2007, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -306,7 +306,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 		return getThreadInfoCommon(ids, lockedMonitors, lockedSynchronizers, Integer.MAX_VALUE);
 	}
 
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	@Override
 	public ThreadInfo[] getThreadInfo(long[] ids, boolean lockedMonitors,
 			boolean lockedSynchronizers, int maxDepth) {
@@ -316,7 +316,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 		}
 		return getThreadInfoCommon(ids, lockedMonitors, lockedSynchronizers, maxDepth);
 	}
-	/*[ENDIF]*/ // Java10
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
 	private ThreadInfo[] getThreadInfoCommon(long[] ids, boolean lockedMonitors,
 			boolean lockedSynchronizers, int maxDepth) {
@@ -680,7 +680,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 		return makeThreadInfos(threadInfoBaseArray);
 	}
 
-	/*[IF Java10]*/
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
 	/**
 	 * {@inheritDoc}
 	 */
@@ -693,7 +693,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 		}
 		return dumpAllThreadsCommon(lockedMonitors, lockedSynchronizers, maxDepth);
 	}
-	/*[ENDIF]*/ // Java10
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
 	/**
 	 * @param lockedMonitors

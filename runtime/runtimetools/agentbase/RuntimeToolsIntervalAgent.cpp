@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2017 IBM Corp. and others
+ * Copyright (c) 2011, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,7 +149,7 @@ void RuntimeToolsIntervalAgent::vmStart(jvmtiEnv *jvmti_env,JNIEnv* env)
 		}
 	}
 
-	/* create a new thread which will wake up and and call runAction at the appropriate interval */
+	/* create a new thread which will wake up and call runAction at the appropriate interval */
 	RuntimeToolsIntervalAgent* agent = this;
 	J9JavaVM *vm = getJavaVM();
 	createrc = vm->internalVMFunctions->createThreadWithCategory(

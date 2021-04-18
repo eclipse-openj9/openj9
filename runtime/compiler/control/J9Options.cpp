@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,6 +45,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "env/jittypes.h"
 #include "infra/SimpleRegex.hpp"
 #include "control/CompilationRuntime.hpp"
@@ -121,6 +122,13 @@ int32_t J9::Options::_bigAppSampleThresholdAdjust = 3; //amount to shift the hot
 int32_t J9::Options::_availableCPUPercentage = 100;
 int32_t J9::Options::_cpuCompTimeExpensiveThreshold = 4000;
 uintptr_t J9::Options::_compThreadAffinityMask = 0;
+#if defined(J9VM_OPT_JITSERVER)
+int64_t J9::Options::_oldAge = 1000*60*1000; // 1000 minutes
+int64_t J9::Options::_oldAgeUnderLowMemory = 1000*60*5; // 5 minute
+int64_t J9::Options::_timeBetweenPurges = 1000*60*1; // 1 minute
+bool J9::Options::_shareROMClasses = false;
+int32_t J9::Options::_sharedROMClassCacheNumPartitions = 16;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 int32_t J9::Options::_interpreterSamplingThreshold = 300;
 int32_t J9::Options::_interpreterSamplingDivisor = TR_DEFAULT_INTERPRETER_SAMPLING_DIVISOR;
@@ -445,7 +453,7 @@ static const struct vmX vmStateArray[] =
       {J9VMSTATE_GC, "J9VMSTATE_GC", 0},                                                  //2  0x20000
       {J9VMSTATE_GROW_STACK, "J9VMSTATE_GROW_STACK", 0},                                  //3  0x30000
       {J9VMSTATE_JNI, "special", 2},                                                      //4  0x40000
-      {J9VMSTATE_JIT_CODEGEN, "J9VMSTATE_JIT_CODEGEN", 0},                                //5  0x50000
+      {J9VMSTATE_JIT, "J9VMSTATE_JIT", 0},                                                //5  0x50000
       {J9VMSTATE_BCVERIFY, "J9VMSTATE_BCVERIFY", 0},                                      //6  0x60000
       {J9VMSTATE_RTVERIFY, "J9VMSTATE_RTVERIFY", 0},                                      //7  0x70000
       {J9VMSTATE_SHAREDCLASS_FIND, "special", 12},                                        //8  0x80000
@@ -517,15 +525,15 @@ Options::vmStateOption(char * option, void * base, TR::OptionTable *entry)
                      }
                   }
                break;
-            case ((J9VMSTATE_JIT_CODEGEN>>16) & 0xF):
+            case ((J9VMSTATE_JIT >> 16) & 0xF):
                {
                if ((state & 0xFF00) == 0) // ILGeneratorPhase
                   {
                   j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {ILGeneration}\n", state, vmStateArray[index]._xname);
                   }
-               else if ((state & 0xFF) == 0xFF) // optimizationPhase
+               else if ((state & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
                   {
-                  OMR::Optimizations opts = (OMR::Optimizations)((state >> 8) & 0xFF);
+                  OMR::Optimizations opts = static_cast<OMR::Optimizations>((state & 0xFF00) >> 8);
                   if (opts < OMR::numOpts)
                      {
                       j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {%s}\n", state, vmStateArray[index]._xname, OMR::Optimizer::getOptimizationName(opts));
@@ -533,9 +541,9 @@ Options::vmStateOption(char * option, void * base, TR::OptionTable *entry)
                   else
                      j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {Illegal optimization number}\n", state, vmStateArray[index]._xname);
                   }
-               else if ((state & 0xFF00) == 0xFF00) //codegenPhase
+               else if ((state & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
                   {
-                  TR::CodeGenPhase::PhaseValue phase = (TR::CodeGenPhase::PhaseValue)(state & 0xFF);
+                  TR::CodeGenPhase::PhaseValue phase = static_cast<TR::CodeGenPhase::PhaseValue>(state & 0xFF);
                   if ( phase < TR::CodeGenPhase::getNumPhases())
                      j9tty_printf(PORTLIB, "vmState [0x%x]: {%s} {%s}\n", state, vmStateArray[index]._xname, TR::CodeGenPhase::getName(phase));
                   else
@@ -902,6 +910,12 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numDLTBufferMatchesToEagerlyIssueCompReq, 0, "F%d", NOT_IN_SUBSET},
    {"numInterpCompReqToExitIdleMode=", "M<nnn>\tNumber of first time comp. req. that takes the JIT out of idle mode",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numFirstTimeCompilationsToExitIdleMode, 0, "F%d", NOT_IN_SUBSET },
+#if defined(J9VM_OPT_JITSERVER)
+   {"oldAge=", " \tDefines what an old JITServer cache entry means", 
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAge,  0, " %d"},
+   {"oldAgeUnderLowMemory=", " \tDefines what an old JITServer cache entry means when memory is low",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAgeUnderLowMemory,  0, " %d" },
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"profileAllTheTime=",    "R<nnn>\tInterpreter profiling will be on all the time",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_profileAllTheTime, 0, " %d", NOT_IN_SUBSET},
    {"queuedInvReqThresholdToDowngradeOptLevel=", "M<nnn>\tDowngrade opt level if too many inv req",
@@ -947,6 +961,12 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_secondaryClassLoadingPhaseThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"seriousCompFailureThreshold=",     "M<nnn>\tnumber of srious compilation failures after which we write a trace point in the snap file",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_seriousCompFailureThreshold, 0, "F%d", NOT_IN_SUBSET},
+#if defined(J9VM_OPT_JITSERVER)
+   {"sharedROMClassCacheNumPartitions=", " \tnumber of JITServer ROMClass cache partitions (each has its own monitor)",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_sharedROMClassCacheNumPartitions, 0, "F%d", NOT_IN_SUBSET},
+   {"shareROMClasses", " \tstore a single copy of each distinct ROMClass shared by all clients at JITServer",
+        TR::Options::setStaticBool, (intptr_t)&TR::Options::_shareROMClasses, 1, "F", NOT_IN_SUBSET},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"singleCache", "C\tallow only one code cache and one data cache to be allocated", RESET_JITCONFIG_RUNTIME_FLAG(J9JIT_GROW_CACHES) },
    {"smallMethodBytecodeSizeThreshold=", "O<nnn> Threshold for determining small methods\t "
                                          "(measured in number of bytecodes)",
@@ -961,7 +981,11 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_statisticsFrequency, 0, "F%d", NOT_IN_SUBSET},
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"testMode",           "D\tcompile but do not run the compiled code",  SET_JITCONFIG_RUNTIME_FLAG(J9JIT_TESTMODE) },
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
+#if defined(J9VM_OPT_JITSERVER)
+   {"timeBetweenPurges=", " \tDefines how often we are willing to scan for old entries to be purged", 
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_timeBetweenPurges,  0, " %d"},
+#endif /* defined(J9VM_OPT_JITSERVER) */
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_ARM64)
    {"tlhPrefetchBoundaryLineCount=",    "O<nnn>\tallocation prefetch boundary line for allocation prefetch",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_TLHPrefetchBoundaryLineCount, 0, "P%d", NOT_IN_SUBSET},
    {"tlhPrefetchLineCount=",    "O<nnn>\tallocation prefetch line count for allocation prefetch",
@@ -1045,9 +1069,13 @@ bool J9::Options::showPID()
 #if defined(J9VM_OPT_JITSERVER)
 static std::string readFileToString(char *fileName)
    {
-   I_32 fileId = j9jit_fopen_existing(fileName);
-   if (fileId == -1)
+   PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
+   FILE *f = fopen(fileName, "rb");
+   if (!f)
+      {
+      j9tty_printf(PORTLIB, "Fatal Error: Unable to open file (%s)\n", fileName);
       return "";
+      }
    const uint32_t BUFFER_SIZE = 4096; // 4KB
    const uint32_t MAX_FILE_SIZE_IN_PAGES = 16; // 64KB
    char buf[BUFFER_SIZE];
@@ -1055,31 +1083,44 @@ static std::string readFileToString(char *fileName)
    int readSize = 0;
    int iter = 0;
    do {
-      readSize = j9jit_fread(fileId, buf, BUFFER_SIZE);
-      fileStr.append(buf, readSize);
+      readSize = fread(buf, 1, BUFFER_SIZE, f);
+      fileStr = fileStr.append(buf, readSize);
       ++iter;
-   } while ((readSize == BUFFER_SIZE) && (iter < MAX_FILE_SIZE_IN_PAGES));
-   j9jit_fcloseId(fileId);
+   } while ((readSize == BUFFER_SIZE) && (iter <= MAX_FILE_SIZE_IN_PAGES));
+   fclose(f);
 
-   if (iter < MAX_FILE_SIZE_IN_PAGES)
+   if (iter <= MAX_FILE_SIZE_IN_PAGES)
+      {
       return fileStr;
+      }
    else
+      {
+      j9tty_printf(
+         PORTLIB,
+         "Fatal Error: File (%s) is too large, max allowed size is %dKB\n",
+         fileName,
+         BUFFER_SIZE * MAX_FILE_SIZE_IN_PAGES / 1000);
       return "";
+      }
    }
 
-static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compInfo)
+static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compInfo)
    {
    const char *xxJITServerPortOption = "-XX:JITServerPort=";
    const char *xxJITServerTimeoutOption = "-XX:JITServerTimeout=";
    const char *xxJITServerSSLKeyOption = "-XX:JITServerSSLKey=";
    const char *xxJITServerSSLCertOption = "-XX:JITServerSSLCert=";
    const char *xxJITServerSSLRootCertsOption = "-XX:JITServerSSLRootCerts=";
+   const char *xxJITServerUseAOTCacheOption = "-XX:+JITServerUseAOTCache";
+   const char *xxDisableJITServerUseAOTCacheOption = "-XX:-JITServerUseAOTCache";
 
    int32_t xxJITServerPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerPortOption, 0);
    int32_t xxJITServerTimeoutArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTimeoutOption, 0);
    int32_t xxJITServerSSLKeyArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLKeyOption, 0);
    int32_t xxJITServerSSLCertArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLCertOption, 0);
    int32_t xxJITServerSSLRootCertsArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLRootCertsOption, 0);
+   int32_t xxJITServerUseAOTCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerUseAOTCacheOption, 0);
+   int32_t xxDisableJITServerUseAOTCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerUseAOTCacheOption, 0);
 
    if (xxJITServerPortArgIndex >= 0)
       {
@@ -1112,6 +1153,10 @@ static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
          compInfo->addJITServerSslKey(key);
          compInfo->addJITServerSslCert(cert);
          }
+      else
+         {
+         return false;
+         }
       }
 
    if (xxJITServerSSLRootCertsArgIndex >= 0)
@@ -1121,7 +1166,14 @@ static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
       std::string cert = readFileToString(fileName);
       if (!cert.empty())
          compInfo->setJITServerSslRootCerts(cert);
+      else
+         return false;
       }
+
+   if (xxJITServerUseAOTCacheArgIndex > xxDisableJITServerUseAOTCacheArgIndex)
+      compInfo->getPersistentInfo()->setJITServerUseAOTCache(true);
+
+   return true;
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -1227,6 +1279,12 @@ J9::Options::fePreProcess(void * base)
       self()->setIsVariableHeapBaseForBarrierRange0(true);
       self()->setIsVariableHeapSizeForBarrierRange0(true);
       self()->setIsVariableActiveCardTableBase(true);
+      }
+
+   if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
+      {
+      // Disable any fixed-size heap optimizations under portable shared cache mode
+      self()->setIsVariableHeapSizeForBarrierRange0(true);
       }
 
 #if defined(TR_TARGET_64BIT) && defined(J9ZOS390)
@@ -1804,11 +1862,13 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM64)
    bool preferTLHPrefetch;
 #if defined(TR_HOST_POWER)
    preferTLHPrefetch = TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P6) && TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_PPC_P7);
 #elif defined(TR_HOST_S390)
+   preferTLHPrefetch = true;
+#elif defined(TR_HOST_ARM64)
    preferTLHPrefetch = true;
 #else // TR_HOST_X86
    preferTLHPrefetch = true;
@@ -1973,7 +2033,7 @@ J9::Options::fePreProcess(void * base)
       JITServerAlreadyParsed = true;
       if (vm->internalVMFunctions->isJITServerEnabled(vm))
          {
-         compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::SERVER);
+         J9::PersistentInfo::_remoteCompilationMode = JITServer::SERVER;
          // Increase the default timeout value for JITServer.
          // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
          compInfo->getPersistentInfo()->setSocketTimeout(30000);
@@ -1985,20 +2045,20 @@ J9::Options::fePreProcess(void * base)
          const char *xxUseJITServerOption = "-XX:+UseJITServer";
          const char *xxDisableUseJITServerOption = "-XX:-UseJITServer";
 
-         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxUseJITServerOption, 0);
-         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableUseJITServerOption, 0);
+         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxUseJITServerOption, 0);
+         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableUseJITServerOption, 0);
 
          // Check if option is at all specified
          if (xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex)
             {
-            compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::CLIENT);
+            J9::PersistentInfo::_remoteCompilationMode = JITServer::CLIENT;
 
             // Check if the technology preview message should be displayed.
             const char *xxJITServerTechPreviewMessageOption = "-XX:+JITServerTechPreviewMessage";
             const char *xxDisableJITServerTechPreviewMessageOption = "-XX:-JITServerTechPreviewMessage";
 
-            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTechPreviewMessageOption, 0);
-            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
+            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerTechPreviewMessageOption, 0);
+            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
 
             if (xxJITServerTechPreviewMessageArgIndex >= xxDisableJITServerTechPreviewMessageArgIndex)
                {
@@ -2016,7 +2076,12 @@ J9::Options::fePreProcess(void * base)
                }
             }
          }
-      JITServerParseCommonOptions(vm, compInfo);
+      if (!JITServerParseCommonOptions(vm, compInfo))
+         {
+         // Could not parse JITServer options successfully
+         return false;
+         }
+
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
          // Generate a random identifier for this JITServer instance.
@@ -2092,7 +2157,6 @@ J9::Options::setupJITServerOptions()
        compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       self()->setOption(TR_DisableSamplingJProfiling);
-      self()->setIsVariableHeapBaseForBarrierRange0(true);
       self()->setOption(TR_DisableProfiling); // JITServer limitation, JIT profiling data is not available to remote compiles yet
       self()->setOption(TR_DisableEDO); // JITServer limitation, EDO counters are not relocatable yet
       self()->setOption(TR_DisableMethodIsCold); // Shady heuristic; better to disable to reduce client/server traffic
@@ -2118,6 +2182,7 @@ J9::Options::setupJITServerOptions()
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       {
+      JITServer::CommunicationStream::printJITServerVersion();
       TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
       if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
          {
@@ -2261,25 +2326,6 @@ J9::Options::fePostProcessAOT(void * base)
    return true;
    }
 
-static inline bool jvmpiInterface(J9JavaVM * javaVM)
-   {
-   #ifdef J9VM_PROF_JVMPI
-      return javaVM->jvmpiInterface != 0;
-   #else
-      return false;
-   #endif
-   }
-
-static inline UDATA jvmpiExtensions(J9JITConfig * jitConfig)
-   {
-   #ifdef J9VM_PROF_JVMPI
-      //return javaVM->jvmpiInterface != 0 ? jitConfig->jvmpiExtensions : 0;
-      return enableCompiledMethodLoadHookOnly ? 0 : jitConfig->jvmpiExtensions;
-   #else
-      return 0;
-   #endif
-   }
-
 bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    {
    // vmPostProcess is called indirectly from the JIT_INITIALIZED phase
@@ -2332,11 +2378,16 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_PUT_STATIC_FIELD) ||
        (*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_SINGLE_STEP))
       {
-        static bool TR_DisableFullSpeedDebug = feGetEnv("TR_DisableFullSpeedDebug")?1:0;
-      #if defined(J9VM_JIT_FULL_SPEED_DEBUG)
+         static bool TR_DisableFullSpeedDebug = (feGetEnv("TR_DisableFullSpeedDebug") != NULL);
+         static bool TR_DisableFullSpeedDebugAOT = (feGetEnv("TR_DisableFullSpeedDebugAOT") != NULL);
+#if defined(J9VM_JIT_FULL_SPEED_DEBUG)
          if (TR_DisableFullSpeedDebug)
             {
             return false;
+            }
+         else if (TR_DisableFullSpeedDebugAOT)
+            {
+            doAOT = false;
             }
 
          self()->setOption(TR_FullSpeedDebug);
@@ -2346,10 +2397,9 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
          //setOption(TR_DisableInterpreterProfiling, true);
 
          initializeFSD(javaVM);
-         doAOT = false;
-      #else
+#else
          return false;
-      #endif
+#endif
       }
 
    bool exceptionEventHooked = false;
@@ -2366,27 +2416,23 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       {
       self()->setOption(TR_DisableThrowToGoto);
       self()->setReportByteCodeInfoAtCatchBlock();
-      doAOT = false;
       }
 
    // Determine whether or not to generate method enter and exit hooks
    //
-   if (!jvmpiInterface(javaVM) || (jvmpiExtensions(jitConfig) & J9JIT_JVMPI_GEN_COMPILED_ENTRY_EXIT))
+   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_ENTER))
       {
-      if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_ENTER))
-         {
-         self()->setOption(TR_ReportMethodEnter);
+      self()->setOption(TR_ReportMethodEnter);
 #if !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !defined(TR_HOST_X86)
-         doAOT = false;
+      doAOT = false;
 #endif
-         }
-      if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_RETURN))
-         {
-         self()->setOption(TR_ReportMethodExit);
+      }
+   if ((*vmHooks)->J9HookDisable(vmHooks, J9HOOK_VM_METHOD_RETURN))
+      {
+      self()->setOption(TR_ReportMethodExit);
 #if !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !defined(TR_HOST_X86)
-         doAOT = false;
+      doAOT = false;
 #endif
-         }
       }
 
    // Determine whether or not to disable allocation inlining
@@ -2537,9 +2583,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
                }
             }
          }
-
-      if (self()->getOption(TR_FullSpeedDebug))
-         TR::Options::getAOTCmdLineOptions()->setOption(TR_MimicInterpreterFrameShape);
       }
 #endif
 
@@ -2630,11 +2673,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       }
 
 #if defined(TR_HOST_ARM64)
-   // Internal Pointers support is not available in AArch64 yet.
-   // OpenJ9 issue #6367 tracks the work to enable.
-   //
-   self()->setOption(TR_DisableInternalPointers);
-
    // ArraySet support is not available in AArch64 yet.
    // OpenJ9 issue #6443 tracks the work to enable.
    //

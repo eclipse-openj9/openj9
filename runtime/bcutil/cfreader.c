@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,9 +43,9 @@
  */
 #include "attrlookup.h"
 
-static I_32 checkAttributes (J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 attributesCount, U_8* segment, I_32 maxBootstrapMethodIndex, U_32 extra, U_32 flags);
+static I_32 checkAttributes (J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 attributesCount, U_8* segment, I_32 maxBootstrapMethodIndex, U_32 extra, U_32 flags);
 static I_32 readAttributes (J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 attributesCount, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags, UDATA * syntheticFound);
-static I_32 checkFields (J9CfrClassFile * classfile, U_8 * segment, U_32 flags);
+static I_32 checkFields (J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U_32 flags);
 static U_8 attributeTagFor (J9CfrConstantPoolInfo *utf8, BOOLEAN stripDebugAttributes);
 static I_32 readAnnotations (J9CfrClassFile * classfile, J9CfrAnnotation * pAnnotations, U_32 annotationCount, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
 static I_32 readTypeAnnotation (J9CfrClassFile * classfile, J9CfrTypeAnnotation * pAnnotations, U_8 * data, U_8 * dataEnd, U_8 * segment, U_8 * segmentEnd, U_8 ** pIndex, U_8 ** pFreePointer, U_32 flags);
@@ -59,7 +59,7 @@ static I_32 checkDuplicateMembers (J9PortLibrary* portLib, J9CfrClassFile * clas
 static I_32 checkPool (J9CfrClassFile* classfile, U_8* segment, U_8* poolStart, I_32 *maxBootstrapMethodIndex, U_32 flags);
 static I_32 checkClass (J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32 endOfConstantPool, U_32 vmVersionShifted, U_32 flags);
 static I_32 readFields (J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* segmentEnd, U_8** pIndex, U_8** pFreePointer, U_32 flags);
-static I_32 checkMethods (J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags);
+static I_32 checkMethods (J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags);
 static BOOLEAN memberEqual (J9CfrClassFile * classfile, J9CfrMember* a, J9CfrMember* b);
 static void sortMethodIndex(J9CfrConstantPoolInfo* constantPool, J9CfrMethod *list, IDATA start, IDATA end);
 static IDATA compareMethodIDs(J9CfrConstantPoolInfo* constantPool, J9CfrMethod *a, J9CfrMethod *b);
@@ -183,7 +183,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 		NEXT_U32(length, index);
 		end = index + length;
 
-		if ((!name) || (name > classfile->constantPoolCount)) {
+		if ((!name) || (name >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			offset = address;
 			goto _errorFound;
@@ -447,6 +447,17 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			} else if ((BCT_ERR_NO_ERROR != result) || (0 == length) || (index != end)) {
 				U_32 cursor = 0;
 				Trc_BCU_MalformedAnnotation(address);
+
+				/* Capture the errors with type_name_index & const_name_index in enum_const_value against the VM Spec */
+				if (BCT_ERR_INVALID_ANNOTATION_BAD_CP_INDEX_OUT_OF_RANGE == result) {
+					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+					offset = address;
+					goto _errorFound;
+				} else if (BCT_ERR_INVALID_ANNOTATION_BAD_CP_UTF8_STRING == result) {
+					errorCode = J9NLS_CFR_ERR_BAD_NAME_INDEX__ID;
+					offset = address;
+					goto _errorFound;
+				}
 
 				if (0 == length) {
 					/* rawDataLength should be zero to indicate an error. Add an extra byte to the annotation 
@@ -1217,9 +1228,11 @@ readPool(J9CfrClassFile* classfile, U_8* data, U_8* dataEnd, U_8* segment, U_8* 
 				return -2;
 			}
 			CHECK_EOF(size);
-			verifyResult = j9bcutil_verifyCanonisizeAndCopyUTF8(info->bytes, index, size);
+			verifyResult = j9bcutil_verifyCanonisizeAndCopyUTF8(info->bytes, index, size, &(info->flags1));
 			info->slot1 = (U_32) verifyResult;
-			if (verifyResult < 0) {
+			if ((verifyResult < 0) ||
+				(J9_ARE_ALL_BITS_SET(info->flags1, CFR_FOUND_CHARS_IN_EXTENDED_MUE_FORM) && (classfile->majorVersion >= 48))
+			) {
 				errorCode = J9NLS_CFR_ERR_BAD_UTF8__ID;
 				offset = (U_32) (index - data - 1);
 				goto _errorFound;
@@ -1589,7 +1602,7 @@ _errorFound:
 	Returns 0 on success, non-zero on failure.
 */
 static I_32 
-checkFields(J9CfrClassFile * classfile, U_8 * segment, U_32 flags)
+checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U_32 flags)
 {
 	J9CfrField *field;
 	U_32 value, maskedValue, errorCode, offset = 0;
@@ -1628,7 +1641,7 @@ checkFields(J9CfrClassFile * classfile, U_8 * segment, U_32 flags)
 
 		offset = 2;
 		value = field->nameIndex;
-		if ((!value) || (value > classfile->constantPoolCount)) {
+		if ((!value) || (value >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			goto _errorFound;
 		}
@@ -1640,7 +1653,7 @@ checkFields(J9CfrClassFile * classfile, U_8 * segment, U_32 flags)
 
 		offset = 4;
 		value = field->descriptorIndex;
-		if ((!value) || (value > classfile->constantPoolCount)) {
+		if ((!value) || (value >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			goto _errorFound;
 		}
@@ -1651,7 +1664,7 @@ checkFields(J9CfrClassFile * classfile, U_8 * segment, U_32 flags)
 		/* field signature checked in j9bcv_verifyClassStructure */
 		
 		/* Check the attributes. */
-		if (checkAttributes(classfile, field->attributes, field->attributesCount, segment, -1, OUTSIDE_CODE, flags)) {
+		if (checkAttributes(portLib, classfile, field->attributes, field->attributesCount, segment, -1, OUTSIDE_CODE, flags)) {
 			return -1;
 		}
 
@@ -1696,7 +1709,7 @@ _errorFound:
 */
 
 static I_32 
-checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags)
+checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_32 flags)
 {
 	J9CfrMethod* method;
 	U_32 value = 0;
@@ -1713,7 +1726,7 @@ checkMethods(J9CfrClassFile* classfile, U_8* segment, U_32 vmVersionShifted, U_3
 		/* Can we trust the name index? */
 		nameIndexOK = TRUE;
 		value = method->nameIndex;
-		if ((!value) || (value > classfile->constantPoolCount)) {
+		if ((!value) || (value >= classfile->constantPoolCount)) {
 			nameIndexOK = FALSE;
 		} else if (classfile->constantPool[value].tag != CFR_CONSTANT_Utf8) {
 			nameIndexOK = FALSE;
@@ -1846,7 +1859,7 @@ _nameCheck:
 		/* Name check. */
 		value = method->nameIndex;
 		if (!nameIndexOK) {
-			if ((!value) || (value > classfile->constantPoolCount)) {
+			if ((!value) || (value >= classfile->constantPoolCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -1860,7 +1873,7 @@ _nameCheck:
 		offset = 4;
 		/* Check signature. */
 		value = method->descriptorIndex;
-		if ((!value) || (value > classfile->constantPoolCount)) {
+		if ((!value) || (value >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			goto _errorFound;
 		}
@@ -1870,7 +1883,7 @@ _nameCheck:
 		}	
 		/* staticverify.c checks the method signature */
 		/* Check the attributes. */
-		if (checkAttributes(classfile, method->attributes, method->attributesCount, segment, -1, OUTSIDE_CODE, flags)) {
+		if (checkAttributes(portLib, classfile, method->attributes, method->attributesCount, segment, -1, OUTSIDE_CODE, flags)) {
 			return -1;
 		}
 
@@ -1902,7 +1915,7 @@ _errorFound:
 	@return 0 on success, non-zero on failure.
 */
 static I_32 
-checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 attributesCount, U_8* segment, I_32 maxBootstrapMethodIndex, U_32 extra, U_32 flags)
+checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 attributesCount, U_8* segment, I_32 maxBootstrapMethodIndex, U_32 extra, U_32 flags)
 {
 	J9CfrAttribute* attrib;
 	J9CfrAttributeCode* code;
@@ -1916,6 +1929,9 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 	UDATA foundStackMap = FALSE;
 	BOOLEAN bootstrapMethodAttributeRead = FALSE;
 	BOOLEAN enablePermittedSubclassErrors = FALSE;
+	I_32* innerClassArrayIndexTable = NULL;
+
+	PORT_ACCESS_FROM_PORT(portLib);
 
 	errorType = CFR_ThrowClassFormatError;
 	cpBase = classfile->constantPool;
@@ -1926,7 +1942,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 		switch(attrib->tag) {
 		case CFR_ATTRIBUTE_SourceFile:
 			value = ((J9CfrAttributeSourceFile*)attrib)->sourceFileIndex;
-			if((!value)||(value > cpCount)) {
+			if((!value)||(value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}				
@@ -1938,7 +1954,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 
 		case CFR_ATTRIBUTE_Signature:
 			value = ((J9CfrAttributeSignature*)attrib)->signatureIndex;
-			if((0 == value)||(value > cpCount)) {
+			if((0 == value)||(value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}				
@@ -1950,7 +1966,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 
 		case CFR_ATTRIBUTE_ConstantValue:
 			value = ((J9CfrAttributeConstantValue*)attrib)->constantValueIndex;
-			if((0 == value)||(value > cpCount)) {
+			if((0 == value)||(value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -1978,7 +1994,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			for(j = 0; j < code->exceptionTableLength; j++) {
 				exception = &(code->exceptionTable[j]);
 				value = exception->catchType;
-				if(value > cpCount) {
+				if(value >= cpCount) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -1988,7 +2004,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}
 			}
 					
-			if(checkAttributes(classfile, code->attributes, code->attributesCount, segment, -1, code->codeLength, flags)) {
+			if(checkAttributes(portLib, classfile, code->attributes, code->attributesCount, segment, -1, code->codeLength, flags)) {
 					return -1;
 			}
 			break;
@@ -1997,7 +2013,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			exceptions = (J9CfrAttributeExceptions*)attrib;
 			for(j = 0; j < exceptions->numberOfExceptions; j++) {
 				value = exceptions->exceptionIndexTable[j];
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2037,7 +2053,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}							
 
 				value = ((J9CfrAttributeLocalVariableTable*)attrib)->localVariableTable[j].nameIndex;
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2053,7 +2069,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}
 
 				value = ((J9CfrAttributeLocalVariableTable*)attrib)->localVariableTable[j].descriptorIndex;
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2086,7 +2102,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}							
 
 				value = ((J9CfrAttributeLocalVariableTypeTable*)attrib)->localVariableTypeTable[j].nameIndex;
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2102,7 +2118,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				}
 
 				value = ((J9CfrAttributeLocalVariableTypeTable*)attrib)->localVariableTypeTable[j].signatureIndex;
-				if((0 == value)||(value > cpCount)) {
+				if((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2116,57 +2132,101 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			break;
 
 		case CFR_ATTRIBUTE_InnerClasses:
+		{
+			BOOLEAN cycleOfInnerClassFound = FALSE;
+
 			if (classes != NULL) {
 				errorCode = J9NLS_CFR_ERR_MULTIPLE_INNER_CLASS_ATTRIBUTES__ID;
 				goto _errorFound;
 			}
+
+			innerClassArrayIndexTable = j9mem_allocate_memory(cpCount * sizeof(I_32), J9MEM_CATEGORY_CLASSES);
+			if (NULL == innerClassArrayIndexTable) {
+				Trc_BCU_j9bcutil_readClassFileBytes_Exit(-2);
+				return -2;
+			}
+			memset(innerClassArrayIndexTable, -1, cpCount * sizeof(I_32));
+
 			classes = (J9CfrAttributeInnerClasses*)attrib;
-			for(j = 0; j < classes->numberOfClasses; j++) {
+			for (j = 0; j < classes->numberOfClasses; j++) {
 				value = classes->classes[j].innerClassInfoIndex;
-				if((0 == value)||(value > cpCount)) {
+				if ((0 == value)||(value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
-				if(cpBase[value].tag != CFR_CONSTANT_Class) {
+				if (cpBase[value].tag != CFR_CONSTANT_Class) {
 					errorCode = J9NLS_CFR_ERR_INNER_CLASS_NOT_CLASS__ID;
 					goto _errorFound;
 				}
 				/* Check class name integrity? */
 
+				innerClassArrayIndexTable[value] = j;
+
 				value = classes->classes[j].outerClassInfoIndex;
-				if((0 != value) && (value > cpCount)) {
+				if ((0 != value) && (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
-				if(value&&(cpBase[value].tag != CFR_CONSTANT_Class)) {
+				if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Class)) {
 					errorCode = J9NLS_CFR_ERR_OUTER_CLASS_NOT_CLASS__ID;
 					goto _errorFound;
 				}
 				/* Check class name integrity? */
 
 				value = classes->classes[j].innerNameIndex;
-				if((0 != value) && (value > cpCount)) {
+				if ((0 != value) && (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
-				if((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
+				if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
 					errorCode = J9NLS_CFR_ERR_INNER_NAME_NOT_UTF8__ID;
 					goto _errorFound;
 				}
 				/* Check class name integrity? */
 			}
 
-			/* Duplicate class check */
-			for(j = 0; j < classes->numberOfClasses; j++) {
-				for(k = j + 1; k < classes->numberOfClasses; k++) {
-					if (classes->classes[j].innerClassInfoIndex == classes->classes[k].innerClassInfoIndex) {
-						errorCode = J9NLS_CFR_ERR_DUPLICATE_INNER_CLASS_ENTRY__ID;
-						goto _errorFound;
+			/* Detect whether the cycle of the same inner class exists in the InnerClass attribute */
+			for (j = 0; ((j < classes->numberOfClasses) && !cycleOfInnerClassFound); j++) {
+				U_32 valueInnerClassInfoIndex = classes->classes[j].innerClassInfoIndex;
+				U_32 valueOuterClassInfoIndex = classes->classes[j].outerClassInfoIndex;
+				J9CfrConstantPoolInfo* innerClassInfoUtf8 = &cpBase[cpBase[valueInnerClassInfoIndex].slot1];
+				J9CfrConstantPoolInfo* outerClassInfoUtf8 = &cpBase[cpBase[valueOuterClassInfoIndex].slot1];
+				I_32 nextInnerClassArrayIndex = -1;
+
+				while (!cycleOfInnerClassFound) {
+					if (utf8EqualUtf8(innerClassInfoUtf8, outerClassInfoUtf8)) {
+						cycleOfInnerClassFound = TRUE;
+						break;
+					}
+
+					nextInnerClassArrayIndex = innerClassArrayIndexTable[valueOuterClassInfoIndex];
+					if (nextInnerClassArrayIndex >= 0) {
+						valueOuterClassInfoIndex = classes->classes[nextInnerClassArrayIndex].outerClassInfoIndex;
+						outerClassInfoUtf8 = &cpBase[cpBase[valueOuterClassInfoIndex].slot1];
+					} else {
+						break;
 					}
 				}
 			}
-			break;
 
+			/* Duplicate class check only when the cycle of the same inner class doesn't exist in the InnerClass attribute */
+			if (!cycleOfInnerClassFound) {
+				for (j = 0; j < classes->numberOfClasses; j++) {
+					for (k = j + 1; k < classes->numberOfClasses; k++) {
+						if (classes->classes[j].innerClassInfoIndex == classes->classes[k].innerClassInfoIndex) {
+							errorCode = J9NLS_CFR_ERR_DUPLICATE_INNER_CLASS_ENTRY__ID;
+							goto _errorFound;
+						}
+					}
+				}
+			}
+
+			if (NULL != innerClassArrayIndexTable) {
+				j9mem_free_memory(innerClassArrayIndexTable);
+				innerClassArrayIndexTable = NULL;
+			}
+			break;
+		}
 		case CFR_ATTRIBUTE_EnclosingMethod:
 			if (enclosing != NULL) {
 				errorCode = J9NLS_CFR_ERR_MULTIPLE_ENCLOSING_METHOD_ATTRIBUTES__ID;
@@ -2174,7 +2234,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			}
 			enclosing = (J9CfrAttributeEnclosingMethod*)attrib;
 			value = enclosing->classIndex;
-			if ((0 == value) || (value > cpCount)) {
+			if ((0 == value) || (value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -2184,7 +2244,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			}
 
 			value = enclosing->methodIndex;
-			if(value > cpCount) {
+			if(value >= cpCount) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -2207,7 +2267,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					U_16 numberOfBootstrapArguments = 0;
 					J9CfrBootstrapMethod *bsm = &bootstrapMethods->bootstrapMethods[j];
 					value = bsm->bootstrapMethodIndex;
-					if ((0 == value) || (value > cpCount)) {
+					if ((0 == value) || (value >= cpCount)) {
 						errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 						goto _errorFound;
 					}
@@ -2221,7 +2281,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 						U_8 cpValueTag = 0;
 						value = bsm->bootstrapArguments[k];
 
-						if ((0 == value) || (value > cpCount)) {
+						if ((0 == value) || (value >= cpCount)) {
 							errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 							goto _errorFound;
 						}
@@ -2267,19 +2327,8 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			break;
 
 		case CFR_ATTRIBUTE_Record:
-			/* record classes cannot be abstract */
-			if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT)) {
-				errorCode = J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT__ID;
-				goto _errorFound;
-			}
-			/* record classes must be final */
-			if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
-				errorCode = J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL__ID;
-				goto _errorFound;
-			}
-
 			value = ((J9CfrAttributeRecord*)attrib)->nameIndex;
-			if ((0 == value) || (value > cpCount)) {
+			if ((0 == value) || (value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -2291,7 +2340,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			for (j = 0; j < ((J9CfrAttributeRecord*)attrib)->numberOfRecordComponents; j++) {
 				J9CfrRecordComponent* recordComponent = &(((J9CfrAttributeRecord*)attrib)->recordComponents[j]);
 				value = recordComponent->nameIndex;
-				if ((0 == value) || (value > cpCount)) {
+				if ((0 == value) || (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2300,7 +2349,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					goto _errorFound;
 				}
 				value = recordComponent->descriptorIndex;
-				if ((0 == value) || (value > cpCount)) {
+				if ((0 == value) || (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2308,7 +2357,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					errorCode = J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8__ID;
 					goto _errorFound;
 				}
-				if (checkAttributes(classfile, recordComponent->attributes, recordComponent->attributesCount, segment, -1, OUTSIDE_CODE, flags)) {
+				if (checkAttributes(portLib, classfile, recordComponent->attributes, recordComponent->attributesCount, segment, -1, OUTSIDE_CODE, flags)) {
 					return -1;
 				}
 			}
@@ -2316,8 +2365,10 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			break;
 
 		case CFR_ATTRIBUTE_PermittedSubclasses:
-			/* PermittedSubclasses verification is for Java 15 preview only. */
-			if ((59 == classfile->majorVersion) && (0 < classfile->minorVersion)) {
+			/* PermittedSubclasses verification is for Java version >= 15 */
+			if ((classfile->majorVersion > 59) 
+			|| ((59 == classfile->majorVersion) && (65535 == classfile->minorVersion))
+			) {
 				enablePermittedSubclassErrors = TRUE;
 			}
 
@@ -2331,7 +2382,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			}
 			
 			value = ((J9CfrAttributePermittedSubclasses*)attrib)->nameIndex;
-			if ((0 == value) || (value > cpCount)) {
+			if ((0 == value) || (value >= cpCount)) {
 				if (enablePermittedSubclassErrors) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
@@ -2346,18 +2397,9 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				break;
 			}
 
-			value = ((J9CfrAttributePermittedSubclasses*)attrib)->numberOfClasses;
-			if (0 >= value) {
-				if (enablePermittedSubclassErrors) {
-					errorCode = J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES__ID;
-					goto _errorFound;
-				}
-				break;
-			}
-
 			for (j = 0; j < ((J9CfrAttributePermittedSubclasses*)attrib)->numberOfClasses; j++) {
 				value = ((J9CfrAttributePermittedSubclasses*)attrib)->classes[j];
-				if ((0 == value) || (value > cpCount)) {
+				if ((0 == value) || (value >= cpCount)) {
 					if (enablePermittedSubclassErrors) {
 						errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 						goto _errorFound;
@@ -2377,7 +2419,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 #if JAVA_SPEC_VERSION >= 11
 		case CFR_ATTRIBUTE_NestHost:
 			value = ((J9CfrAttributeNestHost*)attrib)->hostClassIndex;
-			if ((!value) || (value > cpCount)) {
+			if ((!value) || (value >= cpCount)) {
 				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 				goto _errorFound;
 			}
@@ -2391,7 +2433,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 			U_16 nestMembersCount = ((J9CfrAttributeNestMembers*)attrib)->numberOfClasses;
 			for (j = 0; j < nestMembersCount; j++) {
 				value = ((J9CfrAttributeNestMembers*)attrib)->classes[j];
-				if ((0 == value) || (value > cpCount)) {
+				if ((0 == value) || (value >= cpCount)) {
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
@@ -2425,6 +2467,10 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 	return 0;
 
 _errorFound:
+	if (NULL != innerClassArrayIndexTable) {
+		j9mem_free_memory(innerClassArrayIndexTable);
+		innerClassArrayIndexTable = NULL;
+	}
 
 	buildError((J9CfrError *) segment, errorCode, errorType, attrib->romAddress);
 	return -1;
@@ -2525,7 +2571,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 		goto _errorFound;
 	}
 
-	if((value & CFR_ACC_FINAL)&&(value & CFR_ACC_ABSTRACT)) {
+	if ((value & CFR_ACC_FINAL)&&(value & CFR_ACC_ABSTRACT)) {
 		errorCode = J9NLS_CFR_ERR_FINAL_ABSTRACT_CLASS__ID;
 		offset = endOfConstantPool;
 		goto _errorFound;
@@ -2540,43 +2586,51 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 	}
 
 	value = classfile->thisClass;
-	if((!value)||(value > classfile->constantPoolCount)) {
+	if ((!value)||(value >= classfile->constantPoolCount)) {
 		errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 		offset = endOfConstantPool + 2;
 		goto _errorFound;
 	}
 
-	if((classfile->constantPool)&&(classfile->constantPool[value].tag != CFR_CONSTANT_Class)) {
+	if ((classfile->constantPool) && (classfile->constantPool[value].tag != CFR_CONSTANT_Class)) {
 		errorCode = J9NLS_CFR_ERR_NOT_CLASS__ID;
 		offset = endOfConstantPool + 2;
 		goto _errorFound;
 	}
+	if ((classfile->constantPool) && (CFR_CONSTANT_Class == classfile->constantPool[value].tag)) {
+		value = classfile->constantPool[classfile->thisClass].slot1;
+		if (J9_ARE_ALL_BITS_SET(classfile->constantPool[value].flags1, CFR_FOUND_SEPARATOR_IN_MUE_FORM) && (classfile->majorVersion < 48)) {
+			errorCode = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
+			offset = endOfConstantPool + 2;
+			goto _errorFound;
+		}
+	}
 
 	value = classfile->superClass;
-	if(value > classfile->constantPoolCount) {
+	if (value >= classfile->constantPoolCount) {
 		errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 		offset = endOfConstantPool + 4;
 		goto _errorFound;
 	}
 
-	if(value == 0) {
+	if (0 == value) {
 		/* Check against j.l.O. */
 		if(!utf8Equal(&classfile->constantPool[classfile->constantPool[classfile->thisClass].slot1], "java/lang/Object", 16)) {
 			errorCode = J9NLS_CFR_ERR_NULL_SUPER__ID;
 			offset = endOfConstantPool + 4;
 			goto _errorFound;
 		}
-	} else if(classfile->constantPool[value].tag != CFR_CONSTANT_Class) {
+	} else if (classfile->constantPool[value].tag != CFR_CONSTANT_Class) {
 		errorCode = J9NLS_CFR_ERR_SUPER_NOT_CLASS__ID;
 		offset = endOfConstantPool + 4;
 		goto _errorFound;
 	} 
 
-	for(i = 0; i < classfile->interfacesCount; i++) {
+	for (i = 0; i < classfile->interfacesCount; i++) {
 		U_32 j;
 		J9CfrConstantPoolInfo* cpInfo;
 		value = classfile->interfaces[i];
-		if((!value)||(value > classfile->constantPoolCount)) {
+		if((!value)||(value >= classfile->constantPoolCount)) {
 			errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 			offset = endOfConstantPool + 4 + (i << 1);
 			goto _errorFound;
@@ -2600,7 +2654,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 	}
 
 	/* Check that interfaces subclass object. */
-	if(classfile->accessFlags & CFR_ACC_INTERFACE) {
+	if (classfile->accessFlags & CFR_ACC_INTERFACE) {
 		/* Check against j.l.O. */
 		if(!utf8Equal(&classfile->constantPool[classfile->constantPool[classfile->superClass].slot1], "java/lang/Object", 16)) {
 			errorCode = J9NLS_CFR_ERR_INTERFACE_SUPER_NOT_OBJECT__ID;
@@ -2609,11 +2663,11 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 		}
 	}
 
-	if(checkFields(classfile, segment, flags)) {
+	if (checkFields(portLib, classfile, segment, flags)) {
 		return -1;
 	}
 
-	if(checkMethods(classfile, segment, vmVersionShifted, flags)) {
+	if (checkMethods(portLib, classfile, segment, vmVersionShifted, flags)) {
 		return -1;
 	}
 
@@ -2625,7 +2679,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 		return -1;
 	}
 
-	if(checkAttributes(classfile, classfile->attributes, classfile->attributesCount, segment, maxBootstrapMethodIndex, OUTSIDE_CODE, flags)) {
+	if (checkAttributes(portLib, classfile, classfile->attributes, classfile->attributesCount, segment, maxBootstrapMethodIndex, OUTSIDE_CODE, flags)) {
 		return -1;
 	}
 
@@ -2813,11 +2867,11 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	 * to this will be required.
 	 */
 
-	/* class files with the ACC_VALUE_TYPE can only be loaded if -XX:+EnableValhalla is set */
+	/* class files with the ACC_VALUE_TYPE can only be loaded if -XX:+EnableValhalla is set, which is on by default. */
 	if (J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_VALUE_TYPE)
 		&& J9_ARE_NO_BITS_SET(flags, BCT_ValueTypesEnabled)
 	) {
-		errorCode = J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED__ID;
+		errorCode = J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1__ID;
 		offset = index - data - 2;
 		goto _errorFound;
 	}
@@ -3470,6 +3524,12 @@ readAnnotationElement(J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnn
 		break;
 			
 	case 'e':
+	{
+		J9CfrConstantPoolInfo* cpBase = classfile->constantPool;
+		U_16 cpCount = classfile->constantPoolCount;
+		U_16 typeNameIndex = 0;
+		U_16 constNameIndex = 0;
+
 		if (!ALLOC_CAST(element, J9CfrAnnotationElementEnum, J9CfrAnnotationElement)) {
 			return -2;
 		}
@@ -3477,8 +3537,17 @@ readAnnotationElement(J9CfrClassFile * classfile, J9CfrAnnotationElement ** pAnn
 		CHECK_EOF(4);
 		NEXT_U16(((J9CfrAnnotationElementEnum *)element)->typeNameIndex, index);
 		NEXT_U16(((J9CfrAnnotationElementEnum *)element)->constNameIndex, index);
+		
+		typeNameIndex = ((J9CfrAnnotationElementEnum *)element)->typeNameIndex;
+		constNameIndex = ((J9CfrAnnotationElementEnum *)element)->constNameIndex;
+		if ((0 == typeNameIndex) || (typeNameIndex >= cpCount) || (0 == constNameIndex) || (constNameIndex >= cpCount)) {
+			return BCT_ERR_INVALID_ANNOTATION_BAD_CP_INDEX_OUT_OF_RANGE;
+		}
+		if ((CFR_CONSTANT_Utf8 != cpBase[typeNameIndex].tag) || (CFR_CONSTANT_Utf8 != cpBase[constNameIndex].tag)) {
+			return BCT_ERR_INVALID_ANNOTATION_BAD_CP_UTF8_STRING;
+		}
 		break;
-
+	}
 	case 'c':
 		if (!ALLOC_CAST(element, J9CfrAnnotationElementClass, J9CfrAnnotationElement)) {
 			return -2;

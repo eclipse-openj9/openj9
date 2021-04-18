@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -236,6 +236,10 @@ j9shsem_deprecated_open (struct J9PortLibrary *portLibrary, const char* cacheDir
 	Trc_PRT_shsem_j9shsem_open_Entry(semname, setSize, permission);
 
 	clearPortableError(portLibrary);
+	
+	if (NULL != controlFileStatus) {
+		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
+	}
 
 	if (cacheDirName == NULL) {
 		Trc_PRT_shsem_j9shsem_deprecated_open_ExitNullCacheDirName();
@@ -254,10 +258,6 @@ j9shsem_deprecated_open (struct J9PortLibrary *portLibrary, const char* cacheDir
 		return J9PORT_ERROR_SHSEM_OPFAILED;
 	}
 	tmphandle->baseFile = (char *) (((char *) tmphandle) + handleStructLength);
-
-	if (NULL != controlFileStatus) {
-		memset(controlFileStatus, 0, sizeof(J9ControlFileStatus));
-	}
 
 	for (retryIfReadOnlyCount = 10; retryIfReadOnlyCount > 0; retryIfReadOnlyCount -= 1) {
 		/*Open control file with write lock*/
@@ -971,7 +971,7 @@ createSemaphore(struct J9PortLibrary *portLibrary, intptr_t fd, BOOLEAN isReadOn
 			
 		sem_union.val = SEMMARKER_INITIALIZED;
 		if (semctlWrapper(portLibrary, TRUE, semid, setSize, SETVAL, sem_union) == -1) {
-			Trc_PRT_shsem_j9shsem_createsemaphore_ExitWithMessage("Could not mark semaphore as initialized initialized.");
+			Trc_PRT_shsem_j9shsem_createsemaphore_ExitWithMessage("Could not mark semaphore as initialized.");
 			/* The code should never ever fail here b/c we just created, and obviously own the new semaphore.
 			 * If semctl call below fails we are already in an error condition, so 
 			 * don't worry about failure here.
@@ -1123,7 +1123,7 @@ openSemaphore(struct J9PortLibrary *portLibrary, intptr_t fd, char *baseFile, j9
 					}/*Any other error and we will terminate*/
 
 					/*If sXmctl fails our checks below will also fail (they use the same function) ... so we terminate with an error*/
-					Trc_PRT_shsem_j9shsem_opensemaphore_MsgWithError("Error: __getipc() failed. Can not open shared shared semaphore, portable errorCode = ", lastError);
+					Trc_PRT_shsem_j9shsem_opensemaphore_MsgWithError("Error: __getipc() failed. Can not open shared semaphore, portable errorCode = ", lastError);
 					goto failDontUnlink;
 				}
 			} else {

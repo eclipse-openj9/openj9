@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -580,15 +580,19 @@ variableInfoNextDo(J9VariableInfoWalkState *state)
 		return NULL;
 	}
 
+	state->values.nameSrp = (J9SRP *)state->variableTablePtr;
 	state->values.name = READ_SRP(state->variableTablePtr, J9UTF8*);
 	state->variableTablePtr += sizeof(J9SRP);
+	state->values.signatureSrp = (J9SRP *)state->variableTablePtr;
 	state->values.signature = READ_SRP(state->variableTablePtr, J9UTF8*);
 	state->variableTablePtr += sizeof(J9SRP);
 
 	if (state->values.visibilityLength & J9_ROMCLASS_OPTINFO_VARIABLE_TABLE_HAS_GENERIC) {
+		state->values.genericSignatureSrp = (J9SRP *)state->variableTablePtr;
 		state->values.genericSignature = READ_SRP(state->variableTablePtr, J9UTF8*);
 		state->variableTablePtr += sizeof(J9SRP);
 	} else {
+		state->values.genericSignatureSrp = 0;
 		state->values.genericSignature = NULL;
 	}
 
@@ -701,6 +705,17 @@ getNumberOfRecordComponents(J9ROMClass *romClass)
 
 	return *SRP_PTR_GET(ptr, U_32*);
 }
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+U_32
+getNumberOfInjectedInterfaces(J9ROMClass *romClass) {
+	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_INJECTED_INTERFACE_INFO);
+
+	Assert_VMUtil_true(ptr != NULL);
+
+	return *SRP_PTR_GET(ptr, U_32*);
+}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 BOOLEAN
 recordComponentHasSignature(J9ROMRecordComponentShape* recordComponent)

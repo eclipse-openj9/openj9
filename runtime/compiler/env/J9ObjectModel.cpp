@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,12 +116,42 @@ J9::ObjectModel::areValueTypesEnabled()
    }
 
 
+bool
+J9::ObjectModel::areValueBasedMonitorChecksEnabled()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+	   return J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION | J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   J9JavaVM * javaVM = TR::Compiler->javaVM;
+   return javaVM->internalVMFunctions->areValueBasedMonitorChecksEnabled(javaVM);
+   }
+
+
 int32_t
 J9::ObjectModel::sizeofReferenceField()
    {
    if (compressObjectReferences())
       return sizeof(uint32_t);
    return sizeof(uintptr_t);
+   }
+
+
+bool
+J9::ObjectModel::isHotReferenceFieldRequired()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_isHotReferenceFieldRequired;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return TR::Compiler->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(TR::Compiler->javaVM);
    }
 
 
@@ -472,6 +502,24 @@ J9::ObjectModel::offsetOfDiscontiguousArraySizeField()
    return compressObjectReferences() ? offsetof(J9IndexableObjectDiscontiguousCompressed, size) : offsetof(J9IndexableObjectDiscontiguousFull, size);
    }
 
+#if defined(TR_TARGET_64BIT)
+uintptr_t
+J9::ObjectModel::offsetOfContiguousDataAddrField()
+   {
+   return compressObjectReferences()
+		? offsetof(J9IndexableObjectContiguousCompressed, dataAddr)
+		: offsetof(J9IndexableObjectContiguousFull, dataAddr);
+   }
+
+uintptr_t
+J9::ObjectModel::offsetOfDiscontiguousDataAddrField()
+   {
+   return compressObjectReferences()
+		? offsetof(J9IndexableObjectDiscontiguousCompressed, dataAddr)
+		: offsetof(J9IndexableObjectDiscontiguousFull, dataAddr);
+   }
+#endif /* TR_TARGET_64BIT */
+
 
 uintptr_t
 J9::ObjectModel::objectHeaderSizeInBytes()
@@ -588,7 +636,7 @@ J9::ObjectModel::getArrayLengthInElements(TR::Compilation* comp, uintptr_t objec
 uintptr_t
 J9::ObjectModel::decompressReference(TR::Compilation* comp, uintptr_t compressedReference)
    {
-   return (compressedReference << TR::Compiler->om.compressedReferenceShift()) + TR::Compiler->vm.heapBaseAddress();
+   return (compressedReference << TR::Compiler->om.compressedReferenceShift());
    }
 
 bool

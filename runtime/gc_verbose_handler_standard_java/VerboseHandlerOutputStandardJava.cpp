@@ -112,9 +112,9 @@ MM_VerboseHandlerOutputStandardJava::getThreadName(char *buf, UDATA bufLen, OMR_
 }
 
 void
-MM_VerboseHandlerOutputStandardJava::writeVmArgs(MM_EnvironmentBase* env)
+MM_VerboseHandlerOutputStandardJava::writeVmArgs(MM_EnvironmentBase* env, MM_VerboseBuffer* buffer)
 {
-	MM_VerboseHandlerJava::writeVmArgs(_manager, env, static_cast<J9JavaVM*>(_omrVM->_language_vm));
+	MM_VerboseHandlerJava::writeVmArgs(env, buffer, static_cast<J9JavaVM*>(_omrVM->_language_vm));
 }
 
 void

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2018, 2018 IBM Corp. and others
+  Copyright (c) 2018, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,32 +27,51 @@
 <suite id="J9 modularity ddr command Tests" timeout="600">
 
 	<variable name="PROGRAM" value="-version" />
-	<variable name="DUMPFILE" value="j9core.dmp" />
+	<variable name="DUMPFILE" value="j9corep.dmp" />
+	<variable name="DUMPFILE_DENY" value="j9cored.dmp" />
 	<variable name="DUMPDIR" value="dumpdir" />
 	<variable name="XDUMP" value="-Xdump:system:file=$DUMPFILE$,events=vmstop" />
+	<variable name="XDUMP_DENY" value="-Xdump:system:file=$DUMPFILE_DENY$,events=vmstop" />
 
 	<!-- override the -Xdump command on z/OS -->
 	<variable name="XDUMP" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORE.DMP,events=vmstop,request=exclusive+compact" platforms="zos.*" />
+ 	<variable name="XDUMP_DENY" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORED.DMP,events=vmstop,request=exclusive+compact" platforms="zos.*" />
  
- <test id="Create core file">
+ <test id="Create core file --illegal-access=permit">
   <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE$" />
-  <command>$EXE$ $XDUMP$ $PROGRAM$</command>
+  <command>$EXE$ -Xmx4m $XDUMP$ --illegal-access=permit $PROGRAM$</command>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps -->
   <output regex="no" type="failure">0001.dmp</output>
  </test>
  
- <test id="Run !findallmodules">
+ <test id="Create core file --illegal-access=deny">
+  <exec command="tso delete J9CORED.DMP.*" platforms="zos_390-64.*" />
+  <exec command="tso delete J9CORED.DMP" platforms="zos_390-31.*" />
+  <exec command="rm -f $DUMPFILE_DENY$" />
+  <command>$EXE$ -Xmx4m $XDUMP_DENY$ --illegal-access=deny $PROGRAM$</command>
+  <output regex="no" type="success">System dump written</output>
+  <!-- check for unexpected core dumps -->
+  <output regex="no" type="failure">0001.dmp</output>
   <exec command="sh" capture="LOGNAME" platforms="zos.*" >
     <arg>-c</arg>
     <arg>echo $$LOGNAME</arg>
   </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+ </test>
+
+ <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
+ <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
+ <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+ <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+
+ <exec command="cp //'$LOGNAME$.J9CORED.DMP.X001' $DUMPFILE_DENY$" platforms="zos_390-64.*" />
+ <exec command="cp //'$LOGNAME$.J9CORED.DMP' $DUMPFILE_DENY$" platforms="zos_390-31.*" />
+ <exec command="tso delete J9CORED.DMP.*" platforms="zos_390-64.*" />
+ <exec command="tso delete J9CORED.DMP" platforms="zos_390-31.*" />
+
+ <test id="Run !findallmodules">
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!findallmodules</input>
@@ -64,14 +83,6 @@
  </test>
  
  <test id="Run !findmodulebyname">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!findmodulebyname java.base</input>
@@ -85,14 +96,6 @@
  </test>
  
  <test id="Verify !findmodulebyname">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>echo $moduleAddr$</input>
@@ -109,14 +112,6 @@
  </test>
  
  <test id="Run !findmodulebyname find non-existing module">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!findmodulebyname thisdoesnotexist</input>
@@ -129,14 +124,6 @@
  </test>
  
  <test id="Run !dumpmoduleexports">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!dumpmoduleexports $moduleAddr$</input>
@@ -151,14 +138,6 @@
  </test>
  
  <test id="Verify !dumpmoduleexports">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!j9package $packageAddr$</input>
@@ -175,14 +154,6 @@
  </test>
  
  <test id="Run !dumpmodulereads">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!dumpmodulereads $moduleAddr$</input>
@@ -197,14 +168,6 @@
  </test>
  
  <test id="Verify !dumpmodulereads">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!j9module $readModuleAddr$</input>
@@ -220,14 +183,6 @@
  </test>
  
  <test id="Run !dumpmoduleexports">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!dumpmoduleexports $moduleAddr$</input>
@@ -242,14 +197,6 @@
  </test>
  
  <test id="Verify !dumpmoduleexports">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!j9package $packageAddr$</input>
@@ -266,14 +213,6 @@
  </test>
  
  <test id="Run !dumpmodulereads">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!dumpmodulereads $moduleAddr$</input>
@@ -288,14 +227,6 @@
  </test>
  
  <test id="Verify !dumpmodulereads">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!j9module $readModuleAddr$</input>
@@ -311,14 +242,6 @@
  </test>
  
  <test id="Run !findallreads">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!findallreads $readModuleAddr$</input>
@@ -332,14 +255,6 @@
  </test>
  
  <test id="Run !dumpmoduledirectedexports">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!dumpmoduledirectedexports $packageAddr$</input>
@@ -353,14 +268,6 @@
  </test>
  
  <test id="Run !dumpallclassesinmodule">
-  <exec command="sh" capture="LOGNAME" platforms="zos.*" >
-    <arg>-c</arg>
-    <arg>echo $$LOGNAME</arg>
-  </exec>
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-  <exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-  <exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-  <exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
         <command command="$JDMPVIEW_EXE$">
                 <arg>-core $DUMPFILE$</arg>
                 <input>!dumpallclassesinmodule $moduleAddr$</input>
@@ -375,14 +282,6 @@
 
 	<!-- Test !findmodules and all options -->
 	<test id="Run !findmodules">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -395,14 +294,6 @@
 	</test>
 
 	<test id="Run !findmodules all">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -415,15 +306,7 @@
 		<output regex="no" type="failure">DDRInteractiveCommandException</output>
 	</test>
 
-	<test id="Run !findmodules name">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+	<test id="Run !findmodules name --illegal-access=permit">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -436,15 +319,20 @@
 		<output regex="no" type="failure">DDRInteractiveCommandException</output>
 	</test>
 
+	<test id="Run !findmodules name --illegal-access=deny">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE_DENY$</arg>
+			<input>!findmodules name java.base</input>
+			<input>quit</input>
+		</command>
+		<saveoutput regex="no" type="success" saveName="javaBaseModuleAddrDeny" splitIndex="1" splitBy="!j9module ">!j9module 0x</saveoutput>
+		<output regex="no" type="required">java.base</output>
+		<output regex="no" type="required">Found 1 module</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
 	<test id="Verify !findmodules name">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -460,14 +348,6 @@
 	</test>
 
 	<test id="Run !findmodules name on non-existing module">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -480,14 +360,6 @@
 	</test>
 
 	<test id="Run !findmodules requires">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -500,14 +372,6 @@
 	 </test>
 
 	 <test id="Run !findmodules requires on non-existing module">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -520,14 +384,6 @@
 	</test>
 
 	<test id="Run !findmodules package">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -541,14 +397,6 @@
 	</test>
 
 	<test id="Run !findmodules package on non-existing package">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -561,14 +409,6 @@
 	</test>
 
 	<test id="Run !findmodules help">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -585,14 +425,6 @@
 	</test>
 
 	<test id="Run !findmodules with an invalid subcommand">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -609,14 +441,6 @@
 	</test>
 
 	<test id="Run !findmodules with too many arguments">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -633,15 +457,7 @@
 	</test>
 
 	<!-- Test !dumpmodule and all options-->
-	<test id="Run !dumpmodule">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+	<test id="Run !dumpmodule --illegal-access=permit">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -660,15 +476,27 @@
 		<output regex="no" type="failure">DDRInteractiveCommandException</output>
 	</test>
 
+	<!-- Test !dumpmodule and all options-->
+	<test id="Run !dumpmodule --illegal-access=deny">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE_DENY$</arg>
+			<input>!dumpmodule $javaBaseModuleAddrDeny$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Module:</output>
+		<output regex="no" type="required">Exports:</output>
+		<output regex="no" type="required">Requires:</output>
+		<output regex="no" type="required">Exports java/nio/file/spi</output>
+		<output regex="no" type="required">!j9package 0x</output>
+		<output regex="no" type="required">Exports com/ibm/gpu/spi</output>
+		<output regex="no" type="required">to openj9.gpu</output>
+		<output regex="no" type="required">!j9module 0x</output>
+		<output regex="no" type="failure">to ALL-UNNAMED</output>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
 	<test id="Run !dumpmodule packages">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -681,14 +509,6 @@
 	</test>
 
 	<test id="Verify !dumpmodule package">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -705,14 +525,6 @@
 	</test>
 
 	<test id="Run !dumpmodule classes">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -726,14 +538,6 @@
 	</test>
 
 	<test id="Run !dumpmodule requires">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -747,14 +551,6 @@
 	</test>
 
 	<test id="Verify !dumpmodule requires">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -769,15 +565,7 @@
 		<output regex="no" type="failure">&lt;FAULT&gt;</output>
 	</test>
 
-	<test id="Run !dumpmodule exports">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+	<test id="Run !dumpmodule exports --illegal-access=permit">
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -794,15 +582,24 @@
 		<output regex="no" type="failure">DDRInteractiveCommandException</output>
 	</test>
 
+	<test id="Run !dumpmodule exports --illegal-access=deny">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core</arg>
+			<arg>$DUMPFILE_DENY$</arg>
+			<input>!dumpmodule exports $javaBaseModuleAddrDeny$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success">Exports java/nio/file/spi</output>
+		<output regex="no" type="required">!j9package 0x</output>
+		<output regex="no" type="required">Exports com/ibm/gpu/spi</output>
+		<output regex="no" type="required">to openj9.gpu</output>
+		<output regex="no" type="required">!j9module 0x</output>
+		<output regex="no" type="failure">to ALL-UNNAMED</output>
+		<saveoutput regex="no" type="required" saveName="limitedExportPackageDeny" splitIndex="1" splitBy="!j9package ">com/ibm/gpu/spi </saveoutput>
+		<output regex="no" type="failure">DDRInteractiveCommandException</output>
+	</test>
+
 	<test id="Verify !dumpmodule exports">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -818,14 +615,6 @@
 	</test>
 
 	<test id="Run !dumpmodule help">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -843,14 +632,6 @@
 	</test>
 
 	<test id="Run !dumpmodule with an invalid subcommand">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -868,14 +649,6 @@
 	</test>
 
 	<test id="Run !dumpmodule with too many arguments">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -893,14 +666,6 @@
 	</test>
 
 	<test id="Run !dumpmodule with a non-numeric module address">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -912,14 +677,6 @@
 	</test>
 
 	<test id="Run !dumpmodule with an invalid module address">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -933,14 +690,6 @@
 
 	<!-- Test !dumppackage and all options-->
 	<test id="Run !dumppackage on a globally exported package">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -952,14 +701,6 @@
 	</test>
 
 	<test id="Run !dumppackage on a package exported to specific modules">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -973,14 +714,6 @@
 	</test>
 
 	<test id="Run !dumppackage classes">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -993,14 +726,6 @@
 	</test>
 
 	<test id="Verify !dumppackage classes">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -1016,14 +741,6 @@
 	</test>
 
 	<test id="Run !dumppackage help">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -1039,14 +756,6 @@
 	</test>
 
 	<test id="Run !dumppackage with an invalid subcommand">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -1062,14 +771,6 @@
 	</test>
 
 	<test id="Run !dumppackage with too many arguments">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -1085,14 +786,6 @@
 	</test>
 
 	<test id="Run !dumppackage with a non-numeric package address">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>
@@ -1104,14 +797,6 @@
 	</test>
 
 	<test id="Run !dumppackage with an invalid package address">
-		<exec command="sh" capture="LOGNAME" platforms="zos.*" >
-			<arg>-c</arg>
-			<arg>echo $$LOGNAME</arg>
-		</exec>
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP.X001' $DUMPFILE$" platforms="zos_390-64.*" />
-		<exec command="cp //'$LOGNAME$.J9CORE.DMP' $DUMPFILE$" platforms="zos_390-31.*" />
-		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
-		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
 		<command command="$JDMPVIEW_EXE$">
 			<arg>-core</arg>
 			<arg>$DUMPFILE$</arg>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,7 +27,6 @@ import java.util.NoSuchElementException;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.DataType;
-import com.ibm.j9ddr.vm29.j9.J9ConstantHelper;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
 import com.ibm.j9ddr.vm29.pointer.I32Pointer;
@@ -159,11 +158,11 @@ public class J9ObjectHelper
 			try {
 				getObjectField(objPointer, getFieldOffset(objPointer, "value", "[B"));
 
-				isStringBackedByByteArray = new Boolean(true);
+				isStringBackedByByteArray = Boolean.valueOf(true);
 			} catch (NoSuchElementException e) {
 				getObjectField(objPointer, getFieldOffset(objPointer, "value", "[C"));
 
-				isStringBackedByByteArray = new Boolean(false);
+				isStringBackedByByteArray = Boolean.valueOf(false);
 			}
 		}
 		
@@ -193,7 +192,13 @@ public class J9ObjectHelper
 		} else {
 			stringLength = getIntField(objPointer, getFieldOffset(objPointer, "count", "I"));
 
-			boolean enableCompression = getBooleanField(objPointer, getFieldOffset(objPointer, "enableCompression", "Z"));
+			String enableCompressionFieldName;
+			if (AlgorithmVersion.getVersionOf(AlgorithmVersion.JAVA_LANG_STRING_VERSION).getAlgorithmVersion() >= 1) {
+				enableCompressionFieldName = "COMPACT_STRINGS";
+			} else {
+				enableCompressionFieldName = "enableCompression";
+			}
+			boolean enableCompression = getBooleanField(objPointer, getFieldOffset(objPointer, enableCompressionFieldName, "Z"));
 
 			if (enableCompression) {
 				if (stringLength >= 0) {

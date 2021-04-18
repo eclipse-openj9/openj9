@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2017 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -263,7 +263,7 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 	 * @param environ The pointer to look for.
 	 * @param addressSpace1 The candidate address space.
 	 * @param process1 The candidate process.
-	 * @return true if this looks like the right process for the the environment.
+	 * @return true if this looks like the right process for the environment.
 	 */
 	private boolean isProcessForEnvironment(long environ,
 			ImageAddressSpace addressSpace1, ImageProcess process1) {

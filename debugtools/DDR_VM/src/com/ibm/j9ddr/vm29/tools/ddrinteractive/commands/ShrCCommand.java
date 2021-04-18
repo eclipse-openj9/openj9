@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,6 @@ import com.ibm.j9ddr.tools.ddrinteractive.CommandUtils;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.vm29.j9.DataType;
-import com.ibm.j9ddr.vm29.j9.J9ConstantHelper;
 import com.ibm.j9ddr.vm29.pointer.*;
 import com.ibm.j9ddr.vm29.pointer.generated.*;
 import com.ibm.j9ddr.vm29.pointer.helper.*;
@@ -78,9 +77,6 @@ public class ShrCCommand extends Command
 	
 	private static final String rangeDelim = "..";
 	private static long cacheTotalSize = 0;
-	private static final long TYPE_PREREQ_CACHE = J9ConstantHelper.getLong(ShcdatatypesConstants.class, "TYPE_PREREQ_CACHE", -1);
-	private static final long J9SHR_DATA_TYPE_STARTUP_HINTS = J9ConstantHelper.getLong(ShCFlags.class, "J9SHR_DATA_TYPE_STARTUP_HINTS", -1);
-
 
 	public ShrCCommand()
 	{
@@ -1077,7 +1073,7 @@ public class ShrCCommand extends Command
 						++numCacheletsNoSegments;
 					}
 					++numCachelets;
-				} else if (itemType.eq(TYPE_PREREQ_CACHE)) { 
+				} else if (itemType.eq(TYPE_PREREQ_CACHE)) {
 					utf8 = J9UTF8Pointer.cast(ShcItemHelper.ITEMDATA(it));
 					scopeMetaLen += ShcItem.SIZEOF + ShcItemHdr.SIZEOF;
 					scopeDataLen += J9UTF8Helper.J9UTF8_HEADER_SIZE + utf8.length().longValue();
@@ -1206,9 +1202,14 @@ public class ShrCCommand extends Command
 					/*  _ccHead -------------> ccNext ---------> ccNext --------> ........---------> ccTail
 					 * (top layer)         (middle layer)     (middle layer)      ........         (layer 0)
 					 */
-					SH_CompositeCacheImplPointer compositeCacheImpl = cacheMap._ccTail();
-					for (int tmplayer = 0; tmplayer < layer; tmplayer++) {
-						compositeCacheImpl = compositeCacheImpl._previous();
+					SH_CompositeCacheImplPointer compositeCacheImpl;
+					try {
+						compositeCacheImpl = cacheMap._ccTail();
+						for (int tmplayer = 0; tmplayer < layer; tmplayer++) {
+							compositeCacheImpl = compositeCacheImpl._previous();
+						}
+					} catch (NoSuchFieldError | NoSuchMethodError e) {
+						compositeCacheImpl = cacheMap._cc();
 					}
 					if (compositeCacheImpl.notNull()) {
 						cacheStartAddress[layer] = compositeCacheImpl._theca();

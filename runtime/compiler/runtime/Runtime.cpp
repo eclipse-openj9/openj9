@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,10 @@
 #include "runtime/codertinit.hpp"
 #include "env/VMJ9.h"
 #include "runtime/J9RuntimeAssumptions.hpp"
+#if defined(J9VM_OPT_JITSERVER) && defined(TR_HOST_POWER)
+#include "control/CompilationRuntime.hpp"
+#include "control/MethodToBeCompiled.hpp"
+#endif
 
 extern J9JITConfig *jitConfig;
 extern "C" int32_t _getnumRTHelpers();  /* 390 asm stub */
@@ -167,6 +171,25 @@ void* TR_RuntimeHelperTable::getFunctionPointer(TR_RuntimeHelper h)
 
 void* TR_RuntimeHelperTable::getFunctionEntryPointOrConst(TR_RuntimeHelper h)
    {
+#if defined(J9VM_OPT_JITSERVER) && defined(TR_HOST_POWER)
+   // Fetch helper address directly from the client.
+   // We only need to do this for Power because other platforms
+   // can relocate helper addresses, while Power might need to store
+   // the address in gr12 register and it cannot relocate helpers stored
+   // in non-call instructions.
+   TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      auto compInfoPT = TR::compInfoPT;
+      if (compInfoPT)
+         {
+         auto stream = compInfoPT->getMethodBeingCompiled()->_stream;
+         auto vmInfo = compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+         return vmInfo->_helperAddresses[h];
+         }
+      return NULL;
+      }
+#endif
    if (h < TR_numRuntimeHelpers)
       {
       if (_linkage[h] == TR_CHelper || _linkage[h] == TR_Helper)
@@ -203,7 +226,6 @@ JIT_HELPER(icallVMprJavaSendInvokeExactJ);
 JIT_HELPER(icallVMprJavaSendInvokeExactL);
 JIT_HELPER(icallVMprJavaSendInvokeExactF);
 JIT_HELPER(icallVMprJavaSendInvokeExactD);
-JIT_HELPER(icallVMprJavaSendInvokeWithArgumentsHelperL);
 JIT_HELPER(initialInvokeExactThunk_unwrapper);
 
 JIT_HELPER(estimateGPU);
@@ -433,10 +455,18 @@ JIT_HELPER(__postP10ForwardCopy);
 JIT_HELPER(__postP10GenericCopy);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
-JIT_HELPER(ECP256MUL_PPC);
-JIT_HELPER(ECP256MOD_PPC);
-JIT_HELPER(ECP256addNoMod_PPC);
-JIT_HELPER(ECP256subNoMod_PPC);
+#if defined(OMR_GC_FULL_POINTERS)
+JIT_HELPER(ECP256MUL_PPC_full);
+JIT_HELPER(ECP256MOD_PPC_full);
+JIT_HELPER(ECP256addNoMod_PPC_full);
+JIT_HELPER(ECP256subNoMod_PPC_full);
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+JIT_HELPER(ECP256MUL_PPC_compressed);
+JIT_HELPER(ECP256MOD_PPC_compressed);
+JIT_HELPER(ECP256addNoMod_PPC_compressed);
+JIT_HELPER(ECP256subNoMod_PPC_compressed);
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 #endif
 
 #ifndef LINUX
@@ -450,10 +480,6 @@ JIT_HELPER(__arrayTranslateTRTO);
 JIT_HELPER(__arrayTranslateTRTO255);
 JIT_HELPER(__arrayTranslateTROT255);
 JIT_HELPER(__arrayTranslateTROT);
-JIT_HELPER(__arrayCmpVMX);
-JIT_HELPER(__arrayCmpLenVMX);
-JIT_HELPER(__arrayCmpScalar);
-JIT_HELPER(__arrayCmpLenScalar);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 JIT_HELPER(AESKeyExpansion_PPC);
@@ -461,8 +487,14 @@ JIT_HELPER(AESEncryptVMX_PPC);
 JIT_HELPER(AESDecryptVMX_PPC);
 JIT_HELPER(AESEncrypt_PPC);
 JIT_HELPER(AESDecrypt_PPC);
-JIT_HELPER(AESCBCDecrypt_PPC);
-JIT_HELPER(AESCBCEncrypt_PPC);
+#if defined(OMR_GC_FULL_POINTERS)
+JIT_HELPER(AESCBCDecrypt_PPC_full);
+JIT_HELPER(AESCBCEncrypt_PPC_full);
+#endif /* OMR_GC_FULL_POINTERS */
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+JIT_HELPER(AESCBCDecrypt_PPC_compressed);
+JIT_HELPER(AESCBCEncrypt_PPC_compressed);
+#endif /* OMR_GC_COMPRESSED_POINTERS */
 #endif
 
 #elif defined(TR_HOST_ARM)
@@ -585,7 +617,6 @@ JIT_HELPER(_longShiftRight);
 JIT_HELPER(_longUShiftRight);
 JIT_HELPER(_interpreterUnresolvedStaticGlue);
 JIT_HELPER(_interpreterUnresolvedSpecialGlue);
-JIT_HELPER(_interpreterUnresolvedDirectVirtualGlue);
 JIT_HELPER(_interpreterUnresolvedClassGlue);
 JIT_HELPER(_interpreterUnresolvedClassGlue2);
 JIT_HELPER(_interpreterUnresolvedStringGlue);
@@ -606,18 +637,9 @@ JIT_HELPER(icallVMprJavaSendVirtual1);
 JIT_HELPER(icallVMprJavaSendVirtualJ);
 JIT_HELPER(icallVMprJavaSendVirtualF);
 JIT_HELPER(icallVMprJavaSendVirtualD);
-JIT_HELPER(_interpreterVoidStaticGlue);
-JIT_HELPER(_interpreterSyncVoidStaticGlue);
-JIT_HELPER(_interpreterIntStaticGlue);
-JIT_HELPER(_interpreterSyncIntStaticGlue);
-JIT_HELPER(_interpreterLongStaticGlue);
-JIT_HELPER(_interpreterSyncLongStaticGlue);
-JIT_HELPER(_interpreterFloatStaticGlue);
-JIT_HELPER(_interpreterSyncFloatStaticGlue);
-JIT_HELPER(_interpreterDoubleStaticGlue);
-JIT_HELPER(_interpreterSyncDoubleStaticGlue);
 JIT_HELPER(_jitResolveConstantDynamic);
 JIT_HELPER(_nativeStaticHelper);
+JIT_HELPER(_interpreterStaticSpecialCallGlue);
 JIT_HELPER(jitLookupInterfaceMethod);
 JIT_HELPER(jitMethodIsNative);
 JIT_HELPER(jitMethodIsSync);
@@ -941,7 +963,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_icallVMprJavaSendInvokeExactL,                    (void *)icallVMprJavaSendInvokeExactL,               TR_Helper);
    SET(TR_icallVMprJavaSendInvokeExactF,                    (void *)icallVMprJavaSendInvokeExactF,               TR_Helper);
    SET(TR_icallVMprJavaSendInvokeExactD,                    (void *)icallVMprJavaSendInvokeExactD,               TR_Helper);
-   SET(TR_icallVMprJavaSendInvokeWithArguments,             (void *)icallVMprJavaSendInvokeWithArgumentsHelperL, TR_Helper);
    SET(TR_icallVMprJavaSendNativeStatic,                    (void *)icallVMprJavaSendNativeStatic,               TR_Helper);
    SET_CONST(TR_initialInvokeExactThunk_unwrapper,          (void *)initialInvokeExactThunk_unwrapper);
 
@@ -1008,25 +1029,24 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)) && defined(J9VM_JIT_NEW_DUAL_HELPERS)
    SET(TR_newObject,                  (void *)jitNewObject,              TR_CHelper);
-   SET(TR_newValue,                   (void *)jitNewValue,              TR_CHelper);
    SET(TR_newArray,                   (void *)jitNewArray,               TR_CHelper);
    SET(TR_aNewArray,                  (void *)jitANewArray,              TR_CHelper);
 
-   SET(TR_newObjectNoZeroInit,        (void *)jitNewObjectNoZeroInit, TR_CHelper);
-   SET(TR_newValueNoZeroInit,        (void *)jitNewValueNoZeroInit, TR_CHelper);
-   SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,  TR_CHelper);
-   SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit, TR_CHelper);
+   SET(TR_newObjectNoZeroInit,        (void *)jitNewObjectNoZeroInit,    TR_CHelper);
+   SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,     TR_CHelper);
+   SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit,    TR_CHelper);
 #else
    SET(TR_newObject,                  (void *)jitNewObject,              TR_Helper);
-   SET(TR_newValue,                  (void *)jitNewValue,              TR_Helper);
    SET(TR_newArray,                   (void *)jitNewArray,               TR_Helper);
    SET(TR_aNewArray,                  (void *)jitANewArray,              TR_Helper);
 
-   SET(TR_newObjectNoZeroInit,        (void *)jitNewObjectNoZeroInit, TR_Helper);
-   SET(TR_newValueNoZeroInit,        (void *)jitNewValueNoZeroInit, TR_Helper);
-   SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,  TR_Helper);
-   SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit, TR_Helper);
+   SET(TR_newObjectNoZeroInit,        (void *)jitNewObjectNoZeroInit,    TR_Helper);
+   SET(TR_newArrayNoZeroInit,         (void *)jitNewArrayNoZeroInit,     TR_Helper);
+   SET(TR_aNewArrayNoZeroInit,        (void *)jitANewArrayNoZeroInit,    TR_Helper);
 #endif
+
+   SET(TR_newValue,                   (void *)jitNewValue,               TR_CHelper);
+   SET(TR_newValueNoZeroInit,         (void *)jitNewValueNoZeroInit,     TR_CHelper);
 
    SET(TR_getFlattenableField,        (void *)jitGetFlattenableField, TR_Helper);
    SET(TR_withFlattenableField,        (void *)jitWithFlattenableField, TR_Helper);
@@ -1120,8 +1140,20 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_PPCAESDecryptVMX,   (void *) AESDecryptVMX_PPC,   TR_Helper);
    SET(TR_PPCAESEncrypt,      (void *) AESEncrypt_PPC,      TR_Helper);
    SET(TR_PPCAESDecrypt,      (void *) AESDecrypt_PPC,      TR_Helper);
-   SET(TR_PPCAESCBCDecrypt,   (void *) AESCBCDecrypt_PPC,   TR_Helper);
-   SET(TR_PPCAESCBCEncrypt,   (void *) AESCBCEncrypt_PPC,   TR_Helper);
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      SET(TR_PPCAESCBCDecrypt,   (void *) AESCBCDecrypt_PPC_compressed,   TR_Helper);
+      SET(TR_PPCAESCBCEncrypt,   (void *) AESCBCEncrypt_PPC_compressed,   TR_Helper);
+      }
+   else
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+      {
+#if defined(OMR_GC_FULL_POINTERS)
+      SET(TR_PPCAESCBCDecrypt,   (void *) AESCBCDecrypt_PPC_full,   TR_Helper);
+      SET(TR_PPCAESCBCEncrypt,   (void *) AESCBCEncrypt_PPC_full,   TR_Helper);
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+      }
 #else
    SET(TR_isAESSupportedByHardware,    (void *) 0, TR_Helper);
    SET(TR_doAESInHardwareInner,        (void *) 0, TR_Helper);
@@ -1133,7 +1165,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_jitRetranslateCaller,         (void *)jitRetranslateCaller,                TR_Helper);
    SET(TR_jitRetranslateCallerWithPrep, (void *)jitRetranslateCallerWithPreparation, TR_Helper);
 
-#if !defined(TR_CROSS_COMPILE_ONLY)
 #ifdef TR_HOST_X86
 
    // --------------------------------- X86 ------------------------------------
@@ -1334,10 +1365,24 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_PPCpostP10GenericCopy,           (void *) __postP10GenericCopy,           TR_Helper);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
-   SET(TR_PPCP256Multiply,                 (void *) ECP256MUL_PPC);
-   SET(TR_PPCP256Mod,                      (void *) ECP256MOD_PPC);
-   SET(TR_PPCP256addNoMod,                 (void *) ECP256addNoMod_PPC);
-   SET(TR_PPCP256subNoMod,                 (void *) ECP256subNoMod_PPC);
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      SET(TR_PPCP256Multiply,                 (void *) ECP256MUL_PPC_compressed);
+      SET(TR_PPCP256Mod,                      (void *) ECP256MOD_PPC_compressed);
+      SET(TR_PPCP256addNoMod,                 (void *) ECP256addNoMod_PPC_compressed);
+      SET(TR_PPCP256subNoMod,                 (void *) ECP256subNoMod_PPC_compressed);
+      }
+   else
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+      {
+#if defined(OMR_GC_FULL_POINTERS)
+      SET(TR_PPCP256Multiply,                 (void *) ECP256MUL_PPC_full);
+      SET(TR_PPCP256Mod,                      (void *) ECP256MOD_PPC_full);
+      SET(TR_PPCP256addNoMod,                 (void *) ECP256addNoMod_PPC_full);
+      SET(TR_PPCP256subNoMod,                 (void *) ECP256subNoMod_PPC_full);
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+      }
 #endif
 
 #ifndef LINUX
@@ -1349,17 +1394,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #endif
    SET(TR_PPCreferenceArrayCopy,           (void *) __referenceArrayCopy,           TR_Helper);
    SET(TR_PPCgeneralArrayCopy,             (void *) __generalArrayCopy,             TR_Helper);
-#if 1
-   SET(TR_PPCarrayCmpVMX,                 (void *) 0, TR_Helper);
-   SET(TR_PPCarrayCmpLenVMX,              (void *) 0, TR_Helper);
-   SET(TR_PPCarrayCmpScalar,              (void *) 0, TR_Helper);
-   SET(TR_PPCarrayCmpLenScalar,           (void *) 0, TR_Helper);
-#else
-   SET(TR_PPCarrayCmpVMX,                 (void *) __arrayCmpVMX,                 TR_Helper);
-   SET(TR_PPCarrayCmpLenVMX,              (void *) __arrayCmpLenVMX,              TR_Helper);
-   SET(TR_PPCarrayCmpScalar,              (void *) __arrayCmpScalar,              TR_Helper);
-   SET(TR_PPCarrayCmpLenScalar,           (void *) __arrayCmpLenScalar,           TR_Helper);
-#endif
    SET(TR_PPCarrayTranslateTRTO,       (void *) __arrayTranslateTRTO,    TR_Helper);
    SET(TR_PPCarrayTranslateTRTO255,    (void *) __arrayTranslateTRTO255, TR_Helper);
    SET(TR_PPCarrayTranslateTROT255,    (void *) __arrayTranslateTROT255, TR_Helper);
@@ -1566,7 +1600,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_S390longUShiftRight,                            (void *) 0,                                              TR_Helper);
    SET(TR_S390interpreterUnresolvedStaticGlue,            (void *) _interpreterUnresolvedStaticGlue,               TR_Helper);
    SET(TR_S390interpreterUnresolvedSpecialGlue,           (void *) _interpreterUnresolvedSpecialGlue,              TR_Helper);
-   SET(TR_S390interpreterUnresolvedDirectVirtualGlue,     (void *) _interpreterUnresolvedDirectVirtualGlue,        TR_Helper);
    SET(TR_S390interpreterUnresolvedClassGlue,             (void *) _interpreterUnresolvedClassGlue,                TR_Helper);
    SET(TR_S390interpreterUnresolvedClassGlue2,            (void *) _interpreterUnresolvedClassGlue2,               TR_Helper);
    SET(TR_S390interpreterUnresolvedStringGlue,            (void *) _interpreterUnresolvedStringGlue,               TR_Helper);
@@ -1608,16 +1641,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_S390jitResolveSpecialMethod,                    (void *) jitResolveSpecialMethod,                        TR_Helper);
    SET(TR_S390jitResolveStaticMethod,                     (void *) jitResolveStaticMethod,                         TR_Helper);
 
-   SET(TR_S390interpreterVoidStaticGlue,              (void *) _interpreterVoidStaticGlue,       TR_Helper);
-   SET(TR_S390interpreterSyncVoidStaticGlue,          (void *) _interpreterSyncVoidStaticGlue,   TR_Helper);
-   SET(TR_S390interpreterIntStaticGlue,               (void *) _interpreterIntStaticGlue,        TR_Helper);
-   SET(TR_S390interpreterSyncIntStaticGlue,           (void *) _interpreterSyncIntStaticGlue,    TR_Helper);
-   SET(TR_S390interpreterLongStaticGlue,              (void *) _interpreterLongStaticGlue,       TR_Helper);
-   SET(TR_S390interpreterSyncLongStaticGlue,          (void *) _interpreterSyncLongStaticGlue,   TR_Helper);
-   SET(TR_S390interpreterFloatStaticGlue,             (void *) _interpreterFloatStaticGlue,      TR_Helper);
-   SET(TR_S390interpreterSyncFloatStaticGlue,         (void *) _interpreterSyncFloatStaticGlue,  TR_Helper);
-   SET(TR_S390interpreterDoubleStaticGlue,            (void *) _interpreterDoubleStaticGlue,     TR_Helper);
-   SET(TR_S390interpreterSyncDoubleStaticGlue,        (void *) _interpreterSyncDoubleStaticGlue, TR_Helper);
+   SET(TR_S390interpreterStaticSpecialCallGlue,       (void *) _interpreterStaticSpecialCallGlue,TR_Helper);
    SET(TR_S390nativeStaticHelper,                     (void *) _nativeStaticHelper,              TR_Helper);
    SET(TR_S390arrayCopyHelper,                        (void *) 0,                                TR_Helper);
    SET(TR_S390referenceArrayCopyHelper,               (void *) __referenceArrayCopyHelper,       TR_Helper);
@@ -1662,8 +1686,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
       a  = runtimeHelpers.getFunctionEntryPointOrConst(h);
       fprintf(stderr,"TR_S390interfaceCallHelperSingleDynamicSlot= _helpers[%d]=0x%p \n",h,a);
       }
-#endif
-
 #endif
 
    #undef SET
@@ -2059,7 +2081,6 @@ bool isOrderedPair(U_8 recordType)
    switch ((recordType & TR_ExternalRelocationTargetKindMask))
       {
       case TR_AbsoluteMethodAddressOrderedPair:
-      case TR_ConstantPoolOrderedPair:
 #if defined(TR_HOST_POWER) || defined(TR_HOST_ARM)
       case TR_ClassAddress:
       case TR_MethodObject:

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,10 +25,14 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#include "env/StackMemoryRegion.hpp"
 #include "infra/CriticalSection.hpp"
 #include "infra/Statistics.hpp"
 #include "net/CommunicationStream.hpp"
-
+#include "OMR/Bytes.hpp"// for OMR::alignNoCheck()
+#include "runtime/JITServerSharedROMClassCache.hpp"
+#include "romclasswalk.h"
+#include "util_api.h"// for allSlotsInROMClassDo()
 
 
 uint32_t     JITServerHelpers::serverMsgTypeCount[] = {};
@@ -37,66 +41,331 @@ bool         JITServerHelpers::_serverAvailable = true;
 uint64_t     JITServerHelpers::_nextConnectionRetryTime = 0;
 TR::Monitor *JITServerHelpers::_clientStreamMonitor = NULL;
 
+
+// To ensure that the length fields in UTF8 strings appended at the end of the
+// packed ROMClass are properly aligned, we must pad the strings accordingly.
+// This function returns the total size of a UTF8 string with the padding.
 static size_t
-methodStringsLength(J9ROMMethod *method)
+getUTF8Size(const J9UTF8 *str)
    {
-   J9UTF8 *name = J9ROMMETHOD_NAME(method);
-   J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(method);
-   return (name->length + sig->length + (2 * sizeof(U_16)));
+   return OMR::alignNoCheck(J9UTF8_TOTAL_SIZE(str), sizeof(*str));
+   }
+
+// Copies a UTF8 string and returns its total size including the padding.
+// src doesn't have to be padded, dst is padded.
+static size_t
+copyUTF8(J9UTF8 *dst, const J9UTF8 *src)
+   {
+   size_t size = J9UTF8_TOTAL_SIZE(src);
+   memcpy(dst, src, size);
+   static_assert(sizeof(*src) == 2, "UTF8 header is not 2 bytes large");
+   // If the length is not aligned, pad the destination string with a zero
+   if (!OMR::alignedNoCheck(size, sizeof(*src)))
+      dst->data[src->length] = '\0';
+   return getUTF8Size(src);
+   }
+
+// State maintained while iterating over UTF8 strings in a ROMClass
+struct ROMClassPackContext
+   {
+   ROMClassPackContext(TR_Memory *trMemory, size_t origSize) :
+      _origSize(origSize), _callback(NULL), _stringsSize(0),
+      _utf8SectionStart((const uint8_t *)-1), _utf8SectionEnd(NULL), _utf8SectionSize(0),
+      _strToOffsetMap(decltype(_strToOffsetMap)::allocator_type(trMemory->currentStackRegion())),
+      _packedRomClass(NULL), _cursor(NULL) {}
+
+   bool isInline(const void *address, const J9ROMClass *romClass)
+      {
+      return (address >= romClass) && (address < (uint8_t *)romClass + _origSize);
+      }
+
+   typedef void (*Callback)(const J9ROMClass *, const J9SRP *, const char *, ROMClassPackContext &);
+
+   const size_t _origSize;
+   Callback _callback;
+   size_t _stringsSize;
+   const uint8_t *_utf8SectionStart;
+   const uint8_t *_utf8SectionEnd;// only needed for assertions
+   size_t _utf8SectionSize;// only needed for assertions
+   // Maps original strings to their offsets from UTF8 section start in the packed ROMClass
+   // Offset value -1 signifies that the string is skipped
+   UnorderedMap<const J9UTF8 *, size_t> _strToOffsetMap;
+   J9ROMClass *_packedRomClass;
+   uint8_t *_cursor;
+   };
+
+static bool
+shouldSkipSlot(const char *slotName)
+   {
+   // Skip variable names and signatures in method debug info; only their slot names have prefix "variable"
+   static const char prefix[] = "variable";
+   return strncmp(slotName, prefix, sizeof(prefix) - 1) == 0;
+   }
+
+// Updates size info and maps original string to its future location in the packed ROMClass
+static void
+sizeInfoCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *slotName, ROMClassPackContext &ctx)
+   {
+   // Skip SRPs stored outside of the ROMClass bounds such as the ones in out-of-line
+   // method debug info, and the ones that point to strings not used by the JIT.
+   bool skip = !ctx.isInline(origSrp, romClass) || shouldSkipSlot(slotName);
+   auto str = NNSRP_PTR_GET(origSrp, const J9UTF8 *);
+   auto it = ctx._strToOffsetMap.find(str);
+   if (it != ctx._strToOffsetMap.end())// duplicate - already visited
+      {
+      if (!skip && (it->second == (size_t)-1))
+         {
+         // Previously visited SRPs to this string were skipped, but this one isn't
+         it->second = ctx._stringsSize;
+         ctx._stringsSize += getUTF8Size(str);
+         }
+      return;
+      }
+
+   ctx._strToOffsetMap.insert(it, { str, skip ? (size_t)-1 : ctx._stringsSize });
+   size_t size = getUTF8Size(str);
+   ctx._stringsSize += skip ? 0 : size;
+
+   if (ctx.isInline(str, romClass))
+      {
+      ctx._utf8SectionStart = std::min(ctx._utf8SectionStart, (const uint8_t *)str);
+      ctx._utf8SectionEnd = std::max(ctx._utf8SectionEnd, (const uint8_t *)str + size);
+      ctx._utf8SectionSize += size;
+      }
+   }
+
+// Copies original string into its location in the packed ROMClass and updates the SRP to it
+static void
+packCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *slotName, ROMClassPackContext &ctx)
+   {
+   // Skip SRPs stored outside of the ROMClass bounds such as the ones in out-of-line method debug info
+   if (!ctx.isInline(origSrp, romClass))
+      return;
+
+   auto str = NNSRP_PTR_GET(origSrp, const J9UTF8 *);
+   auto srp = (J9SRP *)((uint8_t *)ctx._packedRomClass + ((uint8_t *)origSrp - (uint8_t *)romClass));
+
+   // Zero out skipped string SRPs
+   if (shouldSkipSlot(slotName))
+      {
+      TR_ASSERT(ctx._strToOffsetMap.find(str) != ctx._strToOffsetMap.end(),
+                "UTF8 slot %s not visited in 1st pass", slotName);
+      *srp = 0;
+      return;
+      }
+
+   auto it = ctx._strToOffsetMap.find(str);
+   TR_ASSERT(it != ctx._strToOffsetMap.end(), "UTF8 slot %s not visited in 1st pass", slotName);
+   auto dst = (uint8_t *)ctx._packedRomClass + (ctx._utf8SectionStart - (uint8_t *)romClass) + it->second;
+
+   NNSRP_PTR_SET(srp, dst);
+   if (dst == ctx._cursor)
+      ctx._cursor += copyUTF8((J9UTF8 *)dst, str);
+   else
+      TR_ASSERT((dst < ctx._cursor) && (memcmp(dst, str, J9UTF8_TOTAL_SIZE(str)) == 0), "Must be already copied");
+   }
+
+static void
+utf8SlotCallback(const J9ROMClass *romClass, const J9SRP *srp, const char *slotName, void *userData)
+   {
+   auto &ctx = *(ROMClassPackContext *)userData;
+   if (*srp)
+      ctx._callback(romClass, srp, slotName, ctx);
+   }
+
+// Invoked for each slot in a ROMClass. Calls ctx._callback for all non-null SRPs to UTF8 strings.
+static void
+slotCallback(J9ROMClass *romClass, uint32_t slotType, void *slotPtr, const char *slotName, void *userData)
+   {
+   switch (slotType)
+      {
+      case J9ROM_UTF8:
+         utf8SlotCallback(romClass, (const J9SRP *)slotPtr, slotName, userData);
+         break;
+
+      case J9ROM_NAS:
+         if (auto nas = SRP_PTR_GET(slotPtr, const J9ROMNameAndSignature *))
+            {
+            utf8SlotCallback(romClass, &nas->name, slotName, userData);
+            utf8SlotCallback(romClass, &nas->signature, slotName, userData);
+            }
+         break;
+      }
+   }
+
+static bool
+isArrayROMClass(const J9ROMClass *romClass)
+   {
+   if (!J9ROMCLASS_IS_ARRAY(romClass))
+      return false;
+
+   auto name = J9ROMCLASS_CLASSNAME(romClass);
+   TR_ASSERT((name->length == 2) && (name->data[0] == '['),
+             "Unexpected array ROMClass name: %.*s", name->length, name->data);
+   return true;
+   }
+
+// Array ROMClasses have a different layout (see runtime/vm/romclasses.c):
+// they all share the same SRP array of interfaces, which breaks the generic
+// packing implementation. Instead, we manually pack all the data stored
+// outside of the ROMClass header: class name, superclass name, interfaces.
+// This function returns the total size of the packed array ROMClass.
+static size_t
+getArrayROMClassPackedSize(const J9ROMClass *romClass)
+   {
+   size_t totalSize = sizeof(*romClass);
+   totalSize += getUTF8Size(J9ROMCLASS_CLASSNAME(romClass));
+   totalSize += getUTF8Size(J9ROMCLASS_SUPERCLASSNAME(romClass));
+
+   totalSize += romClass->interfaceCount * sizeof(J9SRP);
+   for (size_t i = 0; i < romClass->interfaceCount; ++i)
+      {
+      auto name = NNSRP_GET(J9ROMCLASS_INTERFACES(romClass)[i], const J9UTF8 *);
+      totalSize += getUTF8Size(name);
+      }
+
+   return OMR::alignNoCheck(totalSize, sizeof(uint64_t));
+   }
+
+static void
+packUTF8(const J9UTF8 *str, J9SRP &srp, ROMClassPackContext &ctx)
+   {
+   NNSRP_SET(srp, ctx._cursor);
+   ctx._cursor += copyUTF8((J9UTF8 *)ctx._cursor, str);
+   }
+
+// Packs the data stored outside of the array ROMClass header
+static void
+packArrayROMClassData(const J9ROMClass *romClass, ROMClassPackContext &ctx)
+   {
+   NNSRP_SET(ctx._packedRomClass->interfaces, ctx._cursor);
+   ctx._cursor += ctx._packedRomClass->interfaceCount * sizeof(J9SRP);
+
+   packUTF8(J9ROMCLASS_CLASSNAME(romClass), ctx._packedRomClass->className, ctx);
+   packUTF8(J9ROMCLASS_SUPERCLASSNAME(romClass), ctx._packedRomClass->superclassName, ctx);
+
+   for (size_t i = 0; i < romClass->interfaceCount; ++i)
+      {
+      auto name = NNSRP_GET(J9ROMCLASS_INTERFACES(romClass)[i], const J9UTF8 *);
+      packUTF8(name, J9ROMCLASS_INTERFACES(ctx._packedRomClass)[i], ctx);
+      }
    }
 
 // Packs a ROMClass into a std::string to be transferred to the server.
-// The name and signature of all methods are appended to the end of the cloned class body and the
-// self referential pointers to them are updated to deal with possible interning. The method names
-// and signature are needed on the server but may be interned globally on the client.
+// UTF8 strings that a ROMClass refers to can be interned and stored outside of
+// the ROMClass body. This function puts all the strings (including interned ones)
+// at the end of the cloned ROMClass in deterministic order and updates the SRPs
+// to them. It also removes some of the data that is not used by the JIT compiler.
+//
+// Note that the strings that were stored inside of the original ROMClass body
+// do not keep their offsets in the serialized ROMClass (in the general case).
+// The order in which the strings are serialized is determined by the ROMClass
+// walk, not by their original locations.
+//
+// Packing involves 2 passes over all the strings that a ROMClass refers to:
+// 1. Compute total size and map original strings to their locations in the packed ROMClass.
+// 2. Copy each original string to its location in the packed ROMClass.
+//
+// This implementation makes (and checks at runtime) the following assumptions:
+// - Intermediate class data is either stored at the end of the ROMClass, or points
+//   to the ROMClass itself, or is interned (i.e. points outside of the ROMClass).
+// - All non-interned strings are stored in a single contiguous range (the UTF8 section)
+//   located at the end of the ROMClass (can only be followed by intermediate class data).
+// - ROMClass walk visits all the strings that the ROMClass references.
+//
 static std::string
-packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
+packROMClass(J9ROMClass *romClass, TR_Memory *trMemory)
    {
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
-   size_t classNameSize = className->length + sizeof(U_16);
+   auto name = J9ROMCLASS_CLASSNAME(romClass);
+   // Primitive ROMClasses have different layout (see runtime/vm/romclasses.c): the last
+   // ROMClass includes all the others' UTF8 name strings in its romSize, which breaks the
+   // generic packing implementation. Pretend that its romSize only includes the header.
+   size_t origRomSize = J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass) ? sizeof(*romClass) : romClass->romSize;
+   size_t totalSize = origRomSize;
 
-   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(origRomClass);
-   size_t totalSize = origRomClass->romSize + classNameSize;
-   for (size_t i = 0; i < origRomClass->romMethodCount; ++i)
+   // Remove intermediate class data (not used by JIT)
+   uint8_t *icData = J9ROMCLASS_INTERMEDIATECLASSDATA(romClass);
+   if (JITServerHelpers::isAddressInROMClass(icData, romClass) && (icData != (uint8_t *)romClass))
       {
-      totalSize += methodStringsLength(romMethod);
-      romMethod = nextROMMethod(romMethod);
+      TR_ASSERT_FATAL(icData + romClass->intermediateClassDataLength == (uint8_t *)romClass + romClass->romSize,
+                      "Intermediate class data not stored at the end of ROMClass %.*s", name->length, name->data);
+      totalSize -= romClass->intermediateClassDataLength;
       }
 
-   J9ROMClass *romClass = (J9ROMClass *)trMemory->allocateHeapMemory(totalSize);
-   if (!romClass)
+   // All allocated memory is only used in this function
+   TR::StackMemoryRegion stackMemoryRegion(*trMemory);
+   ROMClassPackContext ctx(trMemory, origRomSize);
+
+   size_t copySize = 0;
+   if (isArrayROMClass(romClass))
+      {
+      copySize = sizeof(*romClass);
+      totalSize = getArrayROMClassPackedSize(romClass);
+      }
+   else
+      {
+      // 1st pass: iterate all strings in the ROMClass to compute its total size (including
+      // interned strings) and map the strings to their locations in the packed ROMClass
+      ctx._callback = sizeInfoCallback;
+      allSlotsInROMClassDo(romClass, slotCallback, NULL, NULL, &ctx);
+      // Handle the case when all strings are interned
+      auto classEnd = (const uint8_t *)romClass + totalSize;
+      ctx._utf8SectionStart = std::min(ctx._utf8SectionStart, classEnd);
+
+      auto end = ctx._utf8SectionEnd ? ctx._utf8SectionEnd : classEnd;
+      TR_ASSERT_FATAL(ctx._utf8SectionSize == end - ctx._utf8SectionStart,
+                      "Missed strings in ROMClass %.*s UTF8 section: %zu != %zu",
+                      name->length, name->data, ctx._utf8SectionSize, end - ctx._utf8SectionStart);
+      end = (const uint8_t *)OMR::alignNoCheck((uintptr_t)end, sizeof(uint64_t));
+      TR_ASSERT_FATAL(end == classEnd, "UTF8 section not stored at the end of ROMClass %.*s: %p != %p",
+                      name->length, name->data, end, classEnd);
+
+      copySize = ctx._utf8SectionStart - (const uint8_t *)romClass;
+      totalSize = OMR::alignNoCheck(copySize + ctx._stringsSize, sizeof(uint64_t));
+      }
+
+   ctx._packedRomClass = (J9ROMClass *)trMemory->allocateStackMemory(totalSize);
+   if (!ctx._packedRomClass)
       throw std::bad_alloc();
-   memcpy(romClass, origRomClass, origRomClass->romSize);
+   memcpy(ctx._packedRomClass, romClass, copySize);
+   ctx._packedRomClass->romSize = totalSize;
+   ctx._cursor = (uint8_t *)ctx._packedRomClass + copySize;
 
-   uint8_t *curPos = ((uint8_t *)romClass) + romClass->romSize;
+   // Zero out SRP to intermediate class data
+   ctx._packedRomClass->intermediateClassData = 0;
+   ctx._packedRomClass->intermediateClassDataLength = 0;
 
-   memcpy(curPos, className, classNameSize);
-   NNSRP_SET(romClass->className, curPos);
-   curPos += classNameSize;
-
-   romMethod = J9ROMCLASS_ROMMETHODS(romClass);
-   J9ROMMethod *origRomMethod = J9ROMCLASS_ROMMETHODS(origRomClass);
-   for (size_t i = 0; i < romClass->romMethodCount; ++i)
+   // Zero out SRPs to out-of-line method debug info
+   J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(ctx._packedRomClass);
+   for (size_t i = 0; i < ctx._packedRomClass->romMethodCount; ++i)
       {
-      J9UTF8 *field = J9ROMMETHOD_NAME(origRomMethod);
-      size_t fieldLen = field->length + sizeof(U_16);
-      memcpy(curPos, field, fieldLen);
-      NNSRP_SET(romMethod->nameAndSignature.name, curPos);
-      curPos += fieldLen;
-
-      field = J9ROMMETHOD_SIGNATURE(origRomMethod);
-      fieldLen = field->length + sizeof(U_16);
-      memcpy(curPos, field, fieldLen);
-      NNSRP_SET(romMethod->nameAndSignature.signature, curPos);
-      curPos += fieldLen;
-
+      if (J9ROMMETHOD_HAS_DEBUG_INFO(romMethod))
+         {
+         auto debugInfo = methodDebugInfoFromROMMethod(romMethod);
+         if (!(debugInfo->srpToVarInfo & 1))
+            debugInfo->srpToVarInfo = 0;
+         }
       romMethod = nextROMMethod(romMethod);
-      origRomMethod = nextROMMethod(origRomMethod);
       }
 
-   std::string romClassStr((char *) romClass, totalSize);
-   trMemory->freeMemory(romClass, heapAlloc);
-   return romClassStr;
+   if (isArrayROMClass(romClass))
+      {
+      packArrayROMClassData(romClass, ctx);
+      }
+   else
+      {
+      // 2nd pass: copy all strings to their locations in the packed ROMClass
+      ctx._callback = packCallback;
+      allSlotsInROMClassDo(romClass, slotCallback, NULL, NULL, &ctx);
+      }
+
+   // Pad to required alignment
+   auto end = (uint8_t *)OMR::alignNoCheck((uintptr_t)ctx._cursor, sizeof(uint64_t));
+   TR_ASSERT(end == (uint8_t *)ctx._packedRomClass + totalSize, "Invalid final cursor position: %p != %p",
+             end, (uint8_t *)ctx._packedRomClass + totalSize);
+   memset(ctx._cursor, 0, end - ctx._cursor);
+
+   return std::string((char *)ctx._packedRomClass, totalSize);
    }
 
 // insertIntoOOSequenceEntryList needs to be executed with sequencingMonitor in hand.
@@ -133,7 +402,7 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::Compilation
    j9tty_printf(PORTLIB, "\t\tTypeName\n");
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
-      for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
+      for (int i = 0; i < JITServer::MessageType_MAXTYPE; ++i)
          {
          if (JITServerHelpers::serverMsgTypeCount[i] > 0)
             {
@@ -155,7 +424,7 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::Compilation
       // to print in server, run ./jitserver -Xdump:jit:events=user
       // then kill -3 <pidof jitserver>
 #ifdef MESSAGE_SIZE_STATS  
-      for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
+      for (int i = 0; i < JITServer::MessageType_MAXTYPE; ++i)
          {
          if (JITServer::CommunicationStream::collectMsgStat[i].samples() > 0)
             { 
@@ -217,7 +486,7 @@ JITServerHelpers::printJITServerCacheStats(J9JITConfig *jitConfig, TR::Compilati
       }
    }
 
-void 
+bool 
 JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple)
    {
    ClientSessionData::ClassInfo classInfo;
@@ -226,7 +495,9 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    if (it == clientSessionData->getROMClassMap().end())
       {
       JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple, classInfo);
+      return true;
       }
+   return false;
    }
 
 void
@@ -334,10 +605,13 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
 J9ROMClass *
 JITServerHelpers::romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory)
    {
+   if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+      return cache->getOrCreate((const J9ROMClass *)romClassStr.data());
+
    auto romClass = (J9ROMClass *)(trMemory->allocatePersistentMemory(romClassStr.size(), TR_Memory::ROMClass));
    if (!romClass)
       throw std::bad_alloc();
-   memcpy(romClass, &romClassStr[0], romClassStr.size());
+   memcpy(romClass, romClassStr.data(), romClassStr.size());
    return romClass;
    }
 
@@ -588,7 +862,7 @@ JITServerHelpers::romMethodOfRamMethod(J9Method* method)
    }
 
 void
-JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary)
+JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::CompilationInfo *compInfo)
    {
    OMR::CriticalSection postStreamFailure(getClientStreamMonitor());
 
@@ -600,6 +874,17 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary)
       }
    _nextConnectionRetryTime = current_time + _waitTimeMs;
    _serverAvailable = false;
+
+   // Reset the activation policy flag in case we never reconnect to the server
+   // and client compiles locally or connects to a new server
+   compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::AGGRESSIVE);
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads) ||
+        TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                     "t=%6u client has lost connection, resetting activation policy to AGGRESSIVE",
+                                     (uint32_t) compInfo->getPersistentInfo()->getElapsedTime());
+      }
    }
 
 void

@@ -160,7 +160,6 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_NO_COREMMAP "noCoreMmap"
 #define OPTION_UTILITIES "utilities"
 #define OPTION_YES "yes"
-#define OPTION_NESTED "grow"
 #define OPTION_VERIFY_TREE "verifyInternTree"
 #define OPTION_TEST_BAD_BUILDID "testBadBuildID"
 #if defined(AIXPPC)

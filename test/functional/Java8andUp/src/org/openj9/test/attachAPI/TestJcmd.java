@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -138,6 +138,8 @@ public class TestJcmd extends AttachApiTest {
 			args.add(getVmId());
 			args.add(command);
 			args.add(new File(userDir, "my" + command + "Dump").getAbsolutePath());
+			args.add("request=something");
+			args.add("opts=else");
 			args.add("wrongargument");
 			List<String> jcmdOutput = runCommandAndLogOutput(args);
 			String expectedString = commandExpectedOutputs.getOrDefault(command, "Test error: expected output not defined");
@@ -200,8 +202,15 @@ public class TestJcmd extends AttachApiTest {
 
 	@Test
 	public void testDumps() throws IOException {
-		String[][] commandsAndDumpTypes = {{DUMP_HEAP, "Heap"}, {GC_HEAP_DUMP, "Heap"}, {DUMP_JAVA, "Java"}, {DUMP_SNAP, "Snap"}, {DUMP_SYSTEM, "System"}};
-		for (String[] commandAndDumpName : commandsAndDumpTypes) {
+		List<String[]> commandsAndDumpTypesList = new ArrayList<String[]>();
+		commandsAndDumpTypesList.add(new String[] {DUMP_HEAP, "Heap"});
+		commandsAndDumpTypesList.add(new String[] {GC_HEAP_DUMP, "Heap"});
+		commandsAndDumpTypesList.add(new String[] {DUMP_JAVA, "Java"});
+		commandsAndDumpTypesList.add(new String[] {DUMP_SNAP, "Snap"});
+		if (!PlatformInfo.isZOS()) {
+			commandsAndDumpTypesList.add(new String[] {DUMP_SYSTEM, "System"});
+		}
+		for (String[] commandAndDumpName : commandsAndDumpTypesList.toArray(new String[0][0])) {
 			TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
 					Collections.singletonList("-Xmx10M"), Collections.emptyList());
 			tgt.syncWithTarget();
@@ -238,6 +247,55 @@ public class TestJcmd extends AttachApiTest {
 		}
 	}
 
+	@Test
+	public void testDumpsWithOptions() throws IOException {
+		List<String[]> commandsAndDumpTypesList = new ArrayList<String[]>();
+		commandsAndDumpTypesList.add(new String[] {DUMP_HEAP, "Heap", "request=exclusive+compact+prepwalk,opts=CLASSIC"});
+		commandsAndDumpTypesList.add(new String[] {GC_HEAP_DUMP, "Heap", "opts=PHD"});
+		commandsAndDumpTypesList.add(new String[] {DUMP_JAVA, "Java", "request=serial"});
+		commandsAndDumpTypesList.add(new String[] {DUMP_SNAP, "Snap", "request=exclusive"});
+		if (!PlatformInfo.isZOS()) {
+			commandsAndDumpTypesList.add(new String[] {DUMP_SYSTEM, "System", "request=exclusive+compact+prepwalk"});
+		}
+		for (String[] commandAndDumpName : commandsAndDumpTypesList.toArray(new String[0][0])) {
+			TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
+					Collections.singletonList("-Xmx10M"), Collections.emptyList());
+			tgt.syncWithTarget();
+			String targetId = tgt.targetId;
+			assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
+			String dumpType = commandAndDumpName[1];
+			String options = commandAndDumpName[2];
+			File dumpFileLocation = new File(userDir, "my" + dumpType + "Dump");
+			dumpFileLocation.delete();
+			try {
+				String dumpFilePath = dumpFileLocation.getAbsolutePath();
+				List<String> args = new ArrayList<>();
+				args.add(targetId);
+				String command = commandAndDumpName[0];
+				log("test " + command);
+				args.add(command);
+				args.add(dumpFilePath);
+				args.add(options);
+				List<String> jcmdOutput = runCommandAndLogOutput(args);
+
+				assertTrue(dumpFileLocation.exists(), "dump file " + dumpFilePath + "missing");
+				String expectedString = JCMD_OUTPUT_START_STRING + dumpFilePath;
+				log("Expected jcmd output string: " + expectedString);
+				Optional<String> searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
+				assertTrue(searchResult.isPresent(), ERROR_EXPECTED_STRING_NOT_FOUND + " in jcmd output: " + expectedString);
+				log(EXPECTED_STRING_FOUND + " in jcmd output: " + expectedString);
+
+				expectedString = dumpType + TARGET_DUMP_WRITTEN_STRING + dumpFilePath;
+				searchResult = StringUtilities.searchSubstring(expectedString,tgt.getTargetErrReader().lines());
+				assertTrue(searchResult.isPresent(), ERROR_EXPECTED_STRING_NOT_FOUND + " in target standard error: " + expectedString);
+				log(EXPECTED_STRING_FOUND + " in target standard error: " + expectedString);
+			} finally {
+				tgt.terminateTarget();
+				dumpFileLocation.delete();
+			}
+		}
+	}
+
 	static void cleanupFile(String output) {
 		if (output.indexOf(JCMD_OUTPUT_START_STRING) != -1) {
 			String filePathName = output.substring(JCMD_OUTPUT_START_STRING.length()).trim();
@@ -251,8 +309,15 @@ public class TestJcmd extends AttachApiTest {
 
 	@Test
 	public void testDumpsDefaultSettings() throws IOException {
-		String[][] commandsAndDefaultDumpNames = {{DUMP_HEAP, "heapdump"}, {GC_HEAP_DUMP, "heapdump"}, {DUMP_JAVA, "javacore"}, {DUMP_SNAP, "Snap"}, {DUMP_SYSTEM, "core"}};
-		for (String[] commandAndDumpName : commandsAndDefaultDumpNames) {
+		List<String[]> commandAndDumpNameList = new ArrayList<String[]>();
+		commandAndDumpNameList.add(new String[] {DUMP_HEAP, "heapdump"});
+		commandAndDumpNameList.add(new String[] {GC_HEAP_DUMP, "heapdump"});
+		commandAndDumpNameList.add(new String[] {DUMP_JAVA, "javacore"});
+		commandAndDumpNameList.add(new String[] {DUMP_SNAP, "Snap"});
+		if (!PlatformInfo.isZOS()) {
+			commandAndDumpNameList.add(new String[] {DUMP_SYSTEM, "core"});
+		}
+		for (String[] commandAndDumpName : commandAndDumpNameList.toArray(new String[0][0])) {
 			TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
 				Collections.singletonList("-Xmx10M"), Collections.emptyList());
 			tgt.syncWithTarget();

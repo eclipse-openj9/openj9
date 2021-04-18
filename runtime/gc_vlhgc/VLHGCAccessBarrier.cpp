@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@
 #include "JNICriticalRegion.hpp"
 #include "ObjectModel.hpp"
 #include "SublistFragment.hpp"
-#include "ScavengerForwardedHeader.hpp"
+#include "ForwardedHeader.hpp"
 
 MM_VLHGCAccessBarrier *
 MM_VLHGCAccessBarrier::newInstance(MM_EnvironmentBase *env)
@@ -450,7 +450,7 @@ MM_VLHGCAccessBarrier::copyStringCritical(J9VMThread *vmThread, GC_ArrayObjectMo
 	} else {
 		if (isCompressed) {
 			for (jint i = 0; i < length; i++) {
-				*data[i] = (jchar)J9JAVAARRAYOFBYTE_LOAD(vmThread, (j9object_t)valueObject, i) & (jchar)0xFF;
+				*data[i] = (jchar)(U_8)J9JAVAARRAYOFBYTE_LOAD(vmThread, (j9object_t)valueObject, i);
 			}
 		} else {
 			if (J9_ARE_ANY_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
@@ -613,7 +613,7 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 bool
 MM_VLHGCAccessBarrier::preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *srcAddress)
 {
-	MM_ScavengerForwardedHeader forwardedHeader(*srcAddress, compressObjectReferences());
+	MM_ForwardedHeader forwardedHeader(*srcAddress, compressObjectReferences());
 	J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
 	if (NULL != forwardedPtr) {
 		*srcAddress = forwardedPtr;
@@ -625,7 +625,7 @@ MM_VLHGCAccessBarrier::preWeakRootSlotRead(J9VMThread *vmThread, j9object_t *src
 bool
 MM_VLHGCAccessBarrier::preWeakRootSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
 {
-	MM_ScavengerForwardedHeader forwardedHeader(*srcAddress, compressObjectReferences());
+	MM_ForwardedHeader forwardedHeader(*srcAddress, compressObjectReferences());
 	J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
 	if (NULL != forwardedPtr) {
 		*srcAddress = forwardedPtr;

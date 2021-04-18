@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -224,9 +224,9 @@ MM_VerboseHandlerOutputVLHGC::getThreadName(char *buf, UDATA bufLen, OMR_VMThrea
 }
 
 void
-MM_VerboseHandlerOutputVLHGC::writeVmArgs(MM_EnvironmentBase* env)
+MM_VerboseHandlerOutputVLHGC::writeVmArgs(MM_EnvironmentBase* env, MM_VerboseBuffer* buffer)
 {
-	MM_VerboseHandlerJava::writeVmArgs(_manager, env, static_cast<J9JavaVM*>(_omrVM->_language_vm));
+	MM_VerboseHandlerJava::writeVmArgs(env, buffer, static_cast<J9JavaVM*>(_omrVM->_language_vm));
 }
 
 void
@@ -288,9 +288,8 @@ MM_VerboseHandlerOutputVLHGC::outputReferenceInfo(MM_EnvironmentBase *env, UDATA
 }
 
 void
-MM_VerboseHandlerOutputVLHGC::handleInitializedInnerStanzas(J9HookInterface** hook, UDATA eventNum, void* eventData)
-{
-	handleInitializedRegion(hook, eventNum, eventData);
+MM_VerboseHandlerOutputVLHGC::outputInitializedInnerStanza(MM_EnvironmentBase *env, MM_VerboseBuffer *buffer){
+	outputInitializedRegion(env, buffer);
 }
 
 void
@@ -462,25 +461,15 @@ MM_VerboseHandlerOutputVLHGC::handleConcurrentEndInternal(J9HookInterface** hook
 	MM_VerboseWriterChain* writer = _manager->getWriterChain();
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(event->currentThread);
 
-	const char *reasonForTermination = NULL;
+	uint64_t duration = 0;
+	MM_MarkVLHGCStats *markStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats;
+	bool deltaTimeSuccess = getTimeDeltaInMicroSeconds(&duration, markStats->_startTime, markStats->_endTime);
+
+	handleGCOPOuterStanzaStart(env, "mark increment", stats->_cycleID, duration, deltaTimeSuccess);
+
 	UDATA bytesScanned = stats->_bytesScanned;
-	bool didComplete = bytesScanned >= stats->_scanTargetInBytes;
-	if (stats->_terminationWasRequested) {
-		if (didComplete) {
-			reasonForTermination = "Work target met and termination requested";
-		} else {
-			reasonForTermination = "Termination requested";
-		}
-	} else {
-		if (didComplete) {
-			reasonForTermination = "Work target met";
-		} else {
-			reasonForTermination = "Completed all work in GC phase";
-		}
-	}
-
-	writer->formatAndOutput(env, 1, "<concurrent-mark-end bytesScanned=\"%zu\" reasonForTermination=\"%s\" />", bytesScanned, reasonForTermination);
-
+	writer->formatAndOutput(env, 1, "<trace-info scanbytes=\"%zu\" />", bytesScanned);
+	handleGCOPOuterStanzaEnd(env);
 }
 
 void
@@ -744,6 +733,30 @@ MM_VerboseHandlerOutputVLHGC::getCycleType(UDATA type)
 	}
 
 	return cycleType;
+}
+
+const char *
+MM_VerboseHandlerOutputVLHGC::getConcurrentTerminationReason(MM_ConcurrentPhaseStatsBase *stats)
+{
+	const char *reasonForTermination = NULL;
+	UDATA bytesScanned = stats->_bytesScanned;
+	bool didComplete = bytesScanned >= stats->_scanTargetInBytes;
+
+	if (stats->_terminationWasRequested) {
+		if (didComplete) {
+			reasonForTermination = "Work target met and termination requested";
+		} else {
+			reasonForTermination = "Termination requested";
+		}
+	} else {
+		if (didComplete) {
+			reasonForTermination = "Work target met";
+		} else {
+			reasonForTermination = "Completed all work in GC phase";
+		}
+	}
+
+	return reasonForTermination;
 }
 
 void

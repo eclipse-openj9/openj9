@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,6 +59,7 @@ class TR_RelocationRuntime;
 namespace TR { class IlGenRequest; }
 #ifdef J9VM_OPT_JITSERVER
 struct SerializedRuntimeAssumption;
+class ClientSessionData;
 #endif
 
 #define COMPILATION_AOT_HAS_INVOKEHANDLE -9
@@ -145,6 +146,8 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    void * getAotMethodDataStart() const { return _aotMethodDataStart; }
    void setAotMethodDataStart(void *p) { _aotMethodDataStart = p; }
+
+   TR_AOTMethodHeader * getAotMethodHeaderEntry();
 
    TR::Node *findNullChkInfo(TR::Node *node);
 
@@ -275,7 +278,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    TR_CHTable *getCHTable() const { return _transientCHTable; }
 
    // Inliner
+   using OMR::CompilationConnector::incInlineDepth;
+   bool incInlineDepth(TR::ResolvedMethodSymbol *, TR_ByteCodeInfo &, int32_t cpIndex, TR::SymbolReference *callSymRef, bool directCall, TR_PrexArgInfo *argInfo = 0);
+
    bool isGeneratedReflectionMethod(TR_ResolvedMethod *method);
+
+   TR_ExternalRelocationTargetKind getReloTypeForMethodToBeInlined(TR_VirtualGuardSelection *guard, TR::Node *callNode, TR_OpaqueClassBlock *receiverClass);
 
    // cache J9 VM pointers
    TR_OpaqueClassBlock *getObjectClassPointer();
@@ -323,6 +331,18 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    bool isRemoteCompilation() const { return _remoteCompilation; } // client side
    void setRemoteCompilation() { _remoteCompilation = true; }
    TR::list<SerializedRuntimeAssumption*>& getSerializedRuntimeAssumptions() { return _serializedRuntimeAssumptions; }
+   ClientSessionData *getClientData() const { return _clientData; }
+   void setClientData(ClientSessionData *clientData) { _clientData = clientData; }
+   void switchToPerClientMemory()
+      {
+      _trMemory = _perClientMemory;
+      }
+   void switchToGlobalMemory()
+      {
+      _trMemory = &_globalMemory;
+      }
+
+   TR::list<TR_OpaqueMethodBlock *>& getMethodsRequiringTrampolines() { return _methodsRequiringTrampolines; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
@@ -424,6 +444,17 @@ private:
    // The following flag is set when a request to complete this compilation
    // has been sent to a remote VM (client side in JITServer)
    bool _remoteCompilation;
+   // Client session data for the client that requested this out-of-process
+   // compilation (at the JITServer); unused (always NULL) at the client side
+   ClientSessionData *_clientData;
+
+   TR_Memory *_perClientMemory;
+   TR_Memory _globalMemory;
+   // This list contains RAM method pointers of resolved methods
+   // that require method trampolines.
+   // It needs to be sent to the client at the end of compilation
+   // so that trampolines can be reserved there.
+   TR::list<TR_OpaqueMethodBlock *> _methodsRequiringTrampolines;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *_symbolValidationManager;

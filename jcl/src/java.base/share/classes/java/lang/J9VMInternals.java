@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package java.lang;
 
 import com.ibm.oti.vm.J9UnmodifiableClass;
@@ -34,13 +33,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
 import java.security.AccessControlContext;
+import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
+import java.net.URL;
 /*[IF Sidecar19-SE]*/
 import jdk.internal.ref.CleanerShutdown;
 import jdk.internal.ref.CleanerImpl;
@@ -64,16 +62,16 @@ final class J9VMInternals {
 	// AA - vm version, BB - jcl version, CCCC - master version
 	// Up the JCL version (BB) when adding functionality
 	/*[ENDIF]*/
-	
+
 	private static final int j9Version = 0x06040270;
-	
+
 	private static final long j9Config = 0x7363617237306200L;	// 'scar70b\0'
 
 	/*[REM] this field will be folded into methods compiled by the JIT and is needed for the fastIdentityHashCode optimization below */
 	/*[REM] the real value of this field is set in the System.afterClinitInitialization since this class starts too early */
 	/*[REM] do NOT set this field to null or javac can fold the null into fastIdentityHashCode and defeat the optimization */
 	static final com.ibm.jit.JITHelpers jitHelpers = com.ibm.jit.JITHelpers.getHelpers();
-	
+
 	// cannot create any instances in <clinit> in this special class
 	private static Map exceptions;
 
@@ -93,13 +91,13 @@ final class J9VMInternals {
 
 		ClassLoader.completeInitialization();
 		Thread.currentThread().completeInitialization();
-		
+
 		/*[IF Sidecar19-SE]*/
 		if (Boolean.getBoolean("ibm.java9.forceCommonCleanerShutdown")) {//$NON-NLS-1$
 			Runnable runnable = () -> {
 
 				CleanerShutdown.shutdownCleaner();
-				ThreadGroup threadGroup = Thread.currentThread().group; // the system ThreadGroup				 
+				ThreadGroup threadGroup = Thread.currentThread().group; // the system ThreadGroup
 				ThreadGroup threadGroups[] = new ThreadGroup[threadGroup.numGroups];
 				threadGroup.enumerate(threadGroups, false); /* non-recursive enumeration */
 				for (ThreadGroup tg : threadGroups) {
@@ -110,31 +108,31 @@ final class J9VMInternals {
 							if (t.getName().equals("Common-Cleaner")) { //$NON-NLS-1$
 								t.interrupt();
 			 					try {
-			 						/* Need to wait for the Common-Cleaner thread to die before 
-			 						 * continuing. If not this will result in a race condition where 
-			 						 * the VM might attempt to shutdown before Common-Cleaner has a 
-			 						 * chance to stop properly. This will result in an unsuccessful 
-			 						 * shutdown and we will not release vm resources. 
+			 						/* Need to wait for the Common-Cleaner thread to die before
+			 						 * continuing. If not this will result in a race condition where
+			 						 * the VM might attempt to shutdown before Common-Cleaner has a
+			 						 * chance to stop properly. This will result in an unsuccessful
+			 						 * shutdown and we will not release vm resources.
 			 						 */
 				 					 t.join(3000);
 				 					 /* giving this a 3sec timeout. If it works it should work fairly
-				 					  * quickly, 3 seconds should be more than enough time. If it doesn't 
+				 					  * quickly, 3 seconds should be more than enough time. If it doesn't
 				 					  * work it may block indefinitely. Turning on -verbose:shutdown will
 				 					  * let us know if it worked or not
 				 					  */
 			 					} catch (Throwable e) {
-			 						/* empty block  */
+			 						/* empty block */
 			 					}
 							}
 						}
 					}
-				}			
+				}
 			};
 			Runtime.getRuntime().addShutdownHook(new Thread(runnable, "CommonCleanerShutdown", true, false, false, null)); //$NON-NLS-1$
 		}
 		/*[ENDIF]*/
 	}
-	
+
 	/**
 	 * Initialize a Class. See chapter
 	 * 2.17.5 of the JVM Specification (2nd ed)
@@ -155,7 +153,7 @@ final class J9VMInternals {
 	 * to initialize a Class which has previously failed initialization.
 	 */
 	private static void initializationAlreadyFailed(Class clazz) {
-		/*[PR 118650] CLDC 1.1 includes java.lang.NoClassDefFoundError */ 
+		/*[PR 118650] CLDC 1.1 includes java.lang.NoClassDefFoundError */
 		/*[PR 118653, CMVC 111503] Throw better NoClassDefFoundError for failed Class initialization */
 		NoClassDefFoundError notFound = new NoClassDefFoundError(clazz.getName() + " (initialization failure)"); //$NON-NLS-1$
 		// if exceptions is null, we're initializing and running single threaded
@@ -183,7 +181,7 @@ final class J9VMInternals {
 	private static void recordInitializationFailure(Class clazz, Throwable err) {
 		if (initialized) {
 			// if exceptions is null, we're initializing and running single threaded
-			if (exceptions == null) 
+			if (exceptions == null)
 				exceptions = new WeakHashMap();
 			synchronized(exceptions) {
 				Throwable cause = err;
@@ -208,9 +206,9 @@ final class J9VMInternals {
 		if (err instanceof Error) {
 			throw (Error)err;
 		}
-		throw new ExceptionInInitializerError(err);		
+		throw new ExceptionInInitializerError(err);
 	}
-	
+
 	private static native Throwable newInstance(Class exceptionClass, Class constructorClass);
 
 	private static Throwable cloneThrowable(final Throwable throwable, final HashMap hashMapThrowable) {
@@ -233,10 +231,10 @@ final class J9VMInternals {
 								} else {
 									value = fields[i].get(throwable);
 									//	Only copy throwable fields whose stacktrace might be kept within Map exceptions
-									//	The throwable stored within Map exceptions as WeakReference could be retrieved (before being GCed) later 
+									//	The throwable stored within Map exceptions as WeakReference could be retrieved (before being GCed) later
 									if (value instanceof Throwable) {
 										value = copyThrowable((Throwable)value, hashMapThrowable);
-									} 
+									}
 								}
 								fields[i].set(clone, value);
 							}
@@ -253,13 +251,13 @@ final class J9VMInternals {
 	}
 
 	/**
-	 * Entry method to copy the specified Throwable, invoke copyThrowable(Throwable, HashMap) 
+	 * Entry method to copy the specified Throwable, invoke copyThrowable(Throwable, HashMap)
 	 * to check loop such that we don't go infinite.
-	 * 
+	 *
 	 * @param throwable the Throwable to copy
-	 * 
+	 *
 	 * @return a copy of the Throwable
-	 */ 
+	 */
 	private static Throwable copyThrowable(Throwable throwable) {
 		HashMap hashMapThrowable = new HashMap();
 		/*[PR CMVC 199629] Exception During Class Initialization Not Handled Correctly */
@@ -269,12 +267,12 @@ final class J9VMInternals {
 	/**
 	 * Copy the specified Throwable, wrapping the stack trace for each
 	 * Throwable. Check for loops so we don't go infinite.
-	 * 
+	 *
 	 * @param throwable the Throwable to copy
 	 * @param hashMapThrowable the Throwables already cloned
-	 * 
+	 *
 	 * @return a copy of the Throwable or itself if it has been cloned already
-	 */ 
+	 */
 	private static Throwable copyThrowable(Throwable throwable, HashMap hashMapThrowable) {
 		if (hashMapThrowable.get(throwable) != null) {
 			//	stop recursive call here when the throwable has been cloned
@@ -339,7 +337,7 @@ final class J9VMInternals {
 						/*[PR CMVC 198986] Fix proxies */
 						ClassLoader	cl = clazz.getClassLoaderImpl();
 						sun.reflect.misc.ReflectUtil.checkProxyPackageAccess(cl, clazz.getInterfaces());
-					}					
+					}
 					return null;
 				}
 			}, new AccessControlContext(pdArray));
@@ -347,7 +345,7 @@ final class J9VMInternals {
 	}
 
 	/*[PR CMVC 104341] Exceptions in Object.finalize() not ignored */
-		
+
 	private static void runFinalize(Object obj) {
 		try {
 			obj.finalize();
@@ -361,7 +359,7 @@ final class J9VMInternals {
 	/**
 	 * Prepare the specified Class. Fill in initial field values, and send
 	 * the class prepare event.
-	 * 
+	 *
 	 * @param clazz the Class to prepare
 	 */
 	static void prepare(Class clazz) {
@@ -429,7 +427,7 @@ final class J9VMInternals {
 		if (h.is32Bit()) {
 			int ptr = h.getIntFromObject(anObject, 0L);
 			if ((ptr & com.ibm.oti.vm.VM.OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS) != 0) {
-                                if (!h.isArray(anObject)) {
+				if (!h.isArray(anObject)) {
 					int j9class = ptr & com.ibm.oti.vm.VM.J9_JAVA_CLASS_MASK;
 					return h.getIntFromObject(anObject, h.getBackfillOffsetFromJ9Class32(j9class));
 				}
@@ -445,7 +443,7 @@ final class J9VMInternals {
 		}
 		return identityHashCode(anObject);
 	}
-	
+
 	/**
 	 * Answers an integer hash code for the parameter.
 	 * The hash code returned is the same one that would
@@ -481,7 +479,7 @@ final class J9VMInternals {
 	static final class ClassInitializationLock {
 		Class theClass;
 	}
-	
+
 	/**
 	 * Native used to dump a string to the system console for debugging.
 	 *
@@ -489,36 +487,50 @@ final class J9VMInternals {
 	 *					the String to display
 	 */
 	public static native void dumpString(String str);
-	
-	
+
+
 	private static String[] getClassInfoStrings(final Class<?> clazz, String classPath){
-		String classLoader;
-		
-		if (classPath != null) {
-			classLoader = "<Bootstrap Loader>";
-		} else {
-			classLoader = clazz.getClassLoader().toString();
-			classPath = (String)AccessController.doPrivileged(new PrivilegedAction() {
-				public Object run() {
-					String path = null;
-					try {
-						path = clazz.getProtectionDomain().getCodeSource().getLocation().toString();
-					} catch (Exception e) {
-						path = "<Unknown>";
+		String classLoaderStr = "<Bootstrap Loader>"; //$NON-NLS-1$
+		String cpResult = "<Unknown>"; //$NON-NLS-1$
+
+		if (classPath == null) {
+			ClassLoader classLoader = clazz.getClassLoader();
+			if (classLoader != null) {
+				classLoaderStr = classLoader.toString();
+				classPath = AccessController.doPrivileged(new PrivilegedAction<String>() {
+					@Override
+					public String run() {
+						String path = null;
+						try {
+							ProtectionDomain pd = clazz.getProtectionDomain();
+							if (pd != null) {
+								CodeSource cs = pd.getCodeSource();
+								if (cs != null) {
+									URL loc = cs.getLocation();
+									if (loc != null) {
+										path = loc.toString();
+									}
+								}
+							}
+						} catch (Exception e) {
+						}
+						return path;
 					}
-					return path;
-				}
-			});
+				});
+			}
 		}
-		String [] strings = {classPath, classLoader};
+		if (classPath != null) {
+			cpResult = classPath;
+		}
+		String [] strings = {cpResult, classLoaderStr};
 		return strings;
 	}
-	
+
 	/**
 	 * Format a message to be used when creating a NoSuchMethodException from the VM.
 	 * On failure returns methodSig ie the old style of NoSuchMethodException message
 	 * @param methodSig String representation of the signature of the called method
-	 * @param clazz1 The calling class, 
+	 * @param clazz1 The calling class,
 	 * @param classPath1 Classpath used to load calling class. Only set when class is loaded by bootstrap loader
 	 * @param clazz2 The called class.
 	 * @param classPath2 Classpath used to load calling class. Only set when class is loaded by bootstrap loader
@@ -532,7 +544,7 @@ final class J9VMInternals {
 			calledClassInfo = getClassInfoStrings(clazz2, classPath2);
 
 			String[] args = {
-					methodSig, callingClassInfo[0], callingClassInfo[1], 
+					methodSig, callingClassInfo[0], callingClassInfo[1],
 					clazz2.toString(), calledClassInfo[0], calledClassInfo[1]
 			};
 

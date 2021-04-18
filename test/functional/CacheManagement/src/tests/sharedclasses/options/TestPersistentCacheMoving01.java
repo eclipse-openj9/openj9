@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ public class TestPersistentCacheMoving01 extends TestUtils {
 	  }
 	  String currentCacheDir = getCacheDir();
 
-	  if ( null == currentCacheDir && isOpenJ9() ) {
+	  if ( null == currentCacheDir && false == isIbmJava8() ) {
 		  // Persistent cachefile without groupaccess are generated under HOME directory
 		  // Current directory is under /tmp. Move a file from HOME directory to /tmp may not succeed on some platforms. 
 		return;

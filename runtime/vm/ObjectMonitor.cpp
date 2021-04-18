@@ -309,14 +309,30 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 {
 	UDATA result = (UDATA)object;
 	j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, object);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) || (JAVA_SPEC_VERSION >= 16)
+	J9Class * objClass = J9OBJECT_CLAZZ(currentThread, object);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) || (JAVA_SPEC_VERSION >= 16) */
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	J9Class * objClass = J9OBJECT_CLAZZ(currentThread, object);
 	if (J9_IS_J9CLASS_VALUETYPE(objClass)) {
 		result = J9_OBJECT_MONITOR_VALUE_TYPE_IMSE;
 		goto done;
 	}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */	
+#if JAVA_SPEC_VERSION >= 16
+	if (J9_IS_J9CLASS_VALUEBASED(objClass)) {
+		U_32 runtimeFlags2 = currentThread->javaVM->extendedRuntimeFlags2;
+		if (J9_ARE_ALL_BITS_SET(runtimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION)) {
+			result = J9_OBJECT_MONITOR_VALUE_TYPE_IMSE;
+			goto done;	
+		} else if (J9_ARE_ALL_BITS_SET(runtimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING)) {
+			PORT_ACCESS_FROM_VMC(currentThread);
+			const J9UTF8* className = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(currentThread, object)->romClass);
+			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 16 */
+	
 restart:
 	if (NULL == lwEA) {
 		/* out of memory */

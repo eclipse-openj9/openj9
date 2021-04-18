@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -168,6 +168,34 @@ getCurrentClassLoader(J9VMThread *currentThread)
 		} else {
 			/* use the sender (native method) classloader */
 			classLoader = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader;
+#if JAVA_SPEC_VERSION >= 15
+			/* special case - if jdk/internal/loader/NativeLibraries.load(NativeLibraryImpl impl, String name, boolean isBuiltin, boolean isJNI)
+			 * is the current native method, use the class loader of "impl.fromClass".
+			 * This nativeMethod can't be cached cause HCR might make it invalid.
+			 */
+			if (J9VMJDKINTERNALLOADERNATIVELIBRARIES_LOAD_METHOD(currentThread->javaVM) == nativeMethod) {
+				/* The current native method has a NativeLibraryImpl instance as its first argument */
+				j9object_t nativeLibraryImplObject = (j9object_t)(currentThread->arg0EA[0]);
+				Trc_VM_findNativeLibrariesLoad_nativeMethod(currentThread, nativeMethod, nativeLibraryImplObject, classLoader);
+				/* Handle the object reference being redirected by the stack grower */
+				if (J9_ARE_ANY_BITS_SET((UDATA)nativeLibraryImplObject, 1)) {
+					nativeLibraryImplObject = *(j9object_t*)((UDATA)nativeLibraryImplObject - 1);
+				}
+				if (NULL != nativeLibraryImplObject) {
+					Trc_VM_findNativeLibrariesLoad_nativeLibraryImplObject(currentThread, nativeLibraryImplObject);
+					j9object_t fromClassObj = J9VMJDKINTERNALLOADERNATIVELIBRARIESNATIVELIBRARYIMPL_FROMCLASS(currentThread, nativeLibraryImplObject);
+					if (NULL != fromClassObj) {
+						Trc_VM_findNativeLibrariesLoad_fromClassObj(currentThread, fromClassObj);
+						J9Class *fromClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, fromClassObj);
+						Trc_VM_findNativeLibrariesLoad_fromClass(currentThread, fromClass);
+						if ((NULL != fromClass) && (NULL != fromClass->classLoader)) {
+							classLoader = fromClass->classLoader;
+						}
+					}
+				}
+				Trc_VM_findNativeLibrariesLoad_classLoader(currentThread, classLoader);
+			}
+#endif /* JAVA_SPEC_VERSION >= 15 */
 		}
 	}
 	return classLoader;
@@ -709,7 +737,7 @@ getStringChars(JNIEnv *env, jstring string, jboolean *isCopy)
 
 			if (IS_STRING_COMPRESSED(currentThread, stringObject)) {
 				for (UDATA i = 0; i < length; ++i) {
-					((jchar*)chars)[i] = (jchar)J9JAVAARRAYOFBYTE_LOAD(currentThread, charArray, i);
+					((jchar*)chars)[i] = (jchar)(U_8)J9JAVAARRAYOFBYTE_LOAD(currentThread, charArray, i);
 				}
 			} else {
 				VM_ArrayCopyHelpers::memcpyFromArray(currentThread, charArray, (UDATA)1, 0, length, (void*)chars);
@@ -945,7 +973,7 @@ outOfBounds:
 		JAVA_OFFLOAD_SWITCH_ON_WITH_REASON_IF_LIMIT_EXCEEDED(currentThread, J9_JNI_OFFLOAD_SWITCH_GET_STRING_REGION, byteCount);
 		if (IS_STRING_COMPRESSED(currentThread, stringObject)) {
 			for (jsize i = 0; i < len; ++i) {
-				buf[i] = (jchar)J9JAVAARRAYOFBYTE_LOAD(currentThread, charArray, i + start);
+				buf[i] = (jchar)(U_8)J9JAVAARRAYOFBYTE_LOAD(currentThread, charArray, i + start);
 			}
 		} else {
 			/* No guarantee of native memory alignment, so copy byte-wise */

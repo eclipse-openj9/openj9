@@ -22,3 +22,6 @@
 
 # Override cmake default of ".a" for shared libs on aix
 set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
+
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-G,-brtl,-bernotok,-bnoentry,-bnolibpath")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-brtl")

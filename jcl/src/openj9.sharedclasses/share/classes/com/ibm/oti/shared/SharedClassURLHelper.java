@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,18 +27,18 @@ import java.net.URL;
 
 /**
  * <p>SharedClassHelper API that stores and finds classes by using URL paths.</p>
- * <h3>Description</h3>
+ * <h2>Description</h2>
  * <p>A SharedClassURLHelper is obtained by calling getURLHelper(ClassLoader) on a SharedClassHelperFactory.</p>
  * <p>The SharedClassURLHelper is designed for ClassLoaders that load classes from many different locations, without the concept of a classpath.
  * A ClassLoader may find and store classes in the cache using any URL.</p>
- * <h3>Usage</h3>
+ * <h2>Usage</h2>
  * <p>The ClassLoader should call findSharedClass after looking in its local cache and asking its parent (if one exists).
  * If findSharedClass does not return null, the ClassLoader calls defineClass on the byte[] that is returned.</p>
  * <p>The ClassLoader calls storeSharedClass immediately after a class is defined, unless the class that is being defined was loaded from the shared cache.</p>
  * <p>If partitions are required, the ClassLoader is responsible for coordinating the creation and use of partition Strings.</p>
  * <p>Classes can be stored only by using URLs that have file or jar protocols, and that refer to existing resources.
  * The presence of any other protocol in a URL prevents SharedClassURLHelper from locating and storing classes in the shared cache.</p>
- * <h3>Dynamic Cache Updates</h3> 
+ * <h2>Dynamic Cache Updates</h2> 
  * <p>Because the shared cache persists beyond the lifetime of a JVM, classes in the shared cache can become out of date (stale).</p>
  * Classes in the cache are automatically kept up to date by default:<br>
  * <p>If findSharedClass is called for a class that exists in the cache but which has been updated on the filesystem since it was stored,
@@ -48,24 +48,24 @@ import java.net.URL;
  * <p>(This behaviour can be disabled by using the correct command-line option. See -Xshareclasses:help)</p>
  * <p>It is also assumed that the ClassLoader maintains a read lock on jar/zip files opened during its lifetime, preventing their modification.
  * This prevents the cache from having to constantly check for updates.</p>
- * <h3>Partitions</h3>
+ * <h2>Partitions</h2>
  * <p>A partition can be used when finding or storing a class, which allows modified versions of the same class
  *   to be stored in the cache, effectively creating <q>partitions</q> in the cache.</p>
  * <p>Partitions are designed for bytecode modification such as the use of Aspects. It is the responsibility of the ClassLoader
  *   to create partitions that describe the type of modification performed on the class bytes.</p>
  * <p>If a class is updated on the filesystem and automatic dynamic updates are enabled, then all versions of the class across
  *   all partitions will be marked stale.</p>
- * <h3>Class metadata</h3>
+ * <h2>Class metadata</h2>
  * <p>A ClassLoader might create metadata when loading and defining classes, such as a jar manifest or security data.
  * None of this metadata can be stored in the cache, so if a ClassLoader is finding classes in the shared cache, it must load
  *   any metadata that it needs from disk before defining the classes.</p>
- * <h3>Security</h3>
+ * <h2>Security</h2>
  * <p>A SharedClassHelper will only allow classes that were defined by the ClassLoader that owns the SharedClassHelper to be stored in the cache.</p>
  * <p>If a SecurityManager is installed, SharedClassPermissions must be used to permit read/write access to the shared class cache.
  * Permissions are granted by ClassLoader classname in the java.policy file and are fixed when the SharedClassHelper is created.</p>
  * <p>Note also that if the createClassLoader RuntimePermission is not granted, ClassLoaders cannot be created, 
  * which in turn means that SharedClassHelpers cannot be created.</p>
- * <h3>Compatibility with other SharedClassHelpers</h3>
+ * <h2>Compatibility with other SharedClassHelpers</h2>
  * <p>Classes stored by using the SharedClassURLHelper can be retrieved by using the SharedClassURLClasspathHelper and vice versa.
  * This is also true for partitions that can be used across these two helpers.</p>
  * 

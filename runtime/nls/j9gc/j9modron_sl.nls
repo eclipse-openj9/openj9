@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ J9NLS_GC_INTERNAL_ERROR_OUT_OF_MEMORY.user_response=This may indicate a native m
 
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP=Primerka kopice ni bilo mogo\u010de izdelati
 # START NON-TRANSLATABLE
-J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.explanation=The JVM was unable to allocate memory for the object heap
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.explanation=The JVM was unable to allocate memory for the object heap 
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.system_action=The JVM will terminate
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.user_response=Specify a smaller heap value using the -Xmx command line option
 
@@ -57,7 +57,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.user_response=Specify a smaller heap value u
 # Note %2$s is qualifier for number of bytes (e.g. "M")
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED=Primerka kopice ni bilo mogo\u010de izdelati. Zahtevan %1$zu%2$s
 # START NON-TRANSLATABLE
-J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for the object heap
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for the object heap 
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.system_action=The JVM will terminate
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.user_response=Specify a smaller heap value using the -Xmx command line option
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.sample_input_1=256
@@ -71,7 +71,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER=Odpremnika nalog ni bilo mogo\u01
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.explanation=The JVM was unable to instantiate the task dispatcher used for distributing tasks among different worker threads
 J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -79,7 +79,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR=Globalnega zbiralnika od
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.explanation=The JVM was unable to instantiate the global garbage collector structures
 J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -95,7 +95,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY=Inicializacija ni uspela, zmanjkalo 
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -111,7 +111,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS=Inicializacija pripon modula ni 
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -119,7 +119,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX=Inicializacija predmeta mutex za statistike 
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.explanation=The garbage collector failed to initialize due to insufficient system resources
 J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -128,7 +128,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT=Inicializacija upravljanja fi
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -136,7 +136,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES=Inicializacija podro\u010dja 
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -144,7 +144,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS=Dodelitev pomnilni\u0161kih odsek
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -152,7 +152,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS=Dodelitev predmetnih pomni
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -160,7 +160,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS=Dodelitev odsekov pomnilni\
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -168,7 +168,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE=Dodelitev privzetega pomnilni\u
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -177,7 +177,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT=Dodelitev pre\u017eivelega odseka v
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -233,7 +233,7 @@ J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP.sample_input_1=-Xms
 # Note %2$s memoryParameter (e.g. "-Xmos")
 J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR=%1$s mora biti enako %2$s
 # START NON-TRANSLATABLE
-J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.explanation=The specified options must be equal if both are specified
+J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.explanation=The specified options must be equal if both are specified 
 J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.system_action=The JVM will terminate
 J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.user_response=Adjust the garbage collector options
 J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.sample_input_1=-Xms
@@ -297,7 +297,7 @@ J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES=-Xverbosegclog ni 
 # START NON-TRANSLATABLE
 J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.system_action=The JVM will terminate
-J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -424,7 +424,7 @@ J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE.sample_input_2=0
 # Note %2$zu valid value (e.g. 0)
 J9NLS_GC_OPTIONS_VALUE_MUST_BE=%1$s ni podprt z vrednostmi, ki niso %2$zu
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTIONS_VALUE_MUST_BE.explanation=The specified option only supports the specified value
+J9NLS_GC_OPTIONS_VALUE_MUST_BE.explanation=The specified option only supports the specified value 
 J9NLS_GC_OPTIONS_VALUE_MUST_BE.system_action=The JVM will terminate
 J9NLS_GC_OPTIONS_VALUE_MUST_BE.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTIONS_VALUE_MUST_BE.sample_input_1=-Xgcthreads
@@ -435,7 +435,7 @@ J9NLS_GC_OPTIONS_VALUE_MUST_BE.sample_input_2=0
 # Note %s memoryParameter (e.g. "-Xmx")
 J9NLS_GC_OPTIONS_VALUE_OVERFLOWED=vrednost %s je prevelika
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large
+J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large 
 J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.system_action=The JVM will terminate
 J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xmx
@@ -446,7 +446,7 @@ J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xmx
 # Note %2$s new parameter (e.g. "-Xtgc:excessivegc")
 J9NLS_GC_OPTION_DEPRECATED=%1$s je opu\u0161\u010dena, namesto tega uporabite %2$s
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTION_DEPRECATED.explanation=The specified option is deprecated and is no longer supportd
+J9NLS_GC_OPTION_DEPRECATED.explanation=The specified option is deprecated and is no longer supportd 
 J9NLS_GC_OPTION_DEPRECATED.system_action=The JVM will terminate
 J9NLS_GC_OPTION_DEPRECATED.user_response=Replace the deprecated option with the suggested replacement
 J9NLS_GC_OPTION_DEPRECATED.sample_input_1=-Xgc:excessiveGCdebug=
@@ -458,7 +458,7 @@ J9NLS_GC_OPTION_DEPRECATED.sample_input_2=-Xtgc:excessivegc
 # e.g. java -Xgc:foo
 J9NLS_GC_OPTION_UNKNOWN=Neznana mo\u017enost: %s
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTION_UNKNOWN.explanation=The specified option is not recognized
+J9NLS_GC_OPTION_UNKNOWN.explanation=The specified option is not recognized 
 J9NLS_GC_OPTION_UNKNOWN.system_action=The JVM will terminate
 J9NLS_GC_OPTION_UNKNOWN.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTION_UNKNOWN.sample_input_1=foo
@@ -466,11 +466,11 @@ J9NLS_GC_OPTION_UNKNOWN.sample_input_1=foo
 # END NON-TRANSLATABLE
 
 # Note %s parameter
-# Note fvtest is a command line option. It should not be translated.
+# Note fvtest is a command line option. It should not be translated. 
 # e.g. java -Xgc:fvtest=foo
 J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE=Neznan tip fvtest: %s
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.explanation=The specified option is not recognized
+J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.explanation=The specified option is not recognized 
 J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.system_action=The JVM will terminate
 J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.sample_input_1=foo
@@ -631,13 +631,13 @@ J9NLS_GC_OPTIONS_MUST_BE_NO_GREATER_THAN.sample_input_2=scvTiltRatioMax=
 #
 
 # Realtime
-# Note immortal memory is a technical term referring to memory which is not garbage collected. It is
+# Note immortal memory is a technical term referring to memory which is not garbage collected. It is 
 # defined by the Real-Time Specification for Java (JSR 001)
 J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE=Dodelitev trajnega pomnilni\u0161kega prostora ni uspela
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -676,7 +676,7 @@ J9NLS_GC_VERB_SIZES_SCOPED.user_response=None
 #Note "power of two" refers to the mathematical concept (e.g. 2^1 = 2, 2^2 = 4, 2^3 = 8, . . .)
 J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO=Vrednost %s mora biti druga potenca
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.explanation=The value of the specified option must be a power of 2 (e.g. 2, 4, 8, 16, . . .)
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.explanation=The value of the specified option must be a power of 2 (e.g. 2, 4, 8, 16, . . .) 
 J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.system_action=The JVM will terminate
 J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.sample_input_1=heapBytesPerRemsetCard=
@@ -685,7 +685,7 @@ J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.sample_input_1=heapBytesPerRemsetCar
 
 J9NLS_GC_UNABLE_TO_OPEN_FILE=Datoteke '%s' ni mogo\u010de odpreti za pisanje
 # START NON-TRANSLATABLE
-J9NLS_GC_UNABLE_TO_OPEN_FILE.explanation=The specified file could not be opened for writing
+J9NLS_GC_UNABLE_TO_OPEN_FILE.explanation=The specified file could not be opened for writing 
 J9NLS_GC_UNABLE_TO_OPEN_FILE.system_action=No log file will be produced
 J9NLS_GC_UNABLE_TO_OPEN_FILE.user_response=Check the permissions on the file system or specify a different file name
 J9NLS_GC_UNABLE_TO_OPEN_FILE.sample_input_1=filename.log
@@ -731,7 +731,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_SPLIT_HEAP.sample_input_5=M
 # END NON-TRANSLATABLE
 
 # Exception thrown on return from wait interruptible primitive wrapper rtsj_waitScopeReferenceCountLock for ScopedMemory.join and .joinAndEnter
-J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN=ScopedMemory.join/joinAndEnter je bil prekinjen
+J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN=ScopedMemory.join/joinAndEnter je bil prekinjen 
 # START NON-TRANSLATABLE
 J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN.explanation=Interrupt has broken the wait in ScopedMemory.join/joinAndEnter
 J9NLS_GC_AIE_THROW_DURING_SCOPED_MEMORY_JOIN.system_action=A java/lang/InterruptedException will be thrown
@@ -914,7 +914,7 @@ J9NLS_GC_VERB_SIZES_XMCRS.user_response=None
 # Note %2$s is qualifier for number of bytes (e.g. "M")
 J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED=Izdelava primerka stisnjenih metapodatkov za sklice ni bila uspe\u0161na; zahtevano je %1$zu%2$s
 # START NON-TRANSLATABLE
-J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for compressed references metadata
+J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for compressed references metadata 
 J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.system_action=The JVM will terminate
 J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.user_response=Specify a smaller compressed references metadata initial size value using the -Xmcrs command line option
 J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.sample_input_1=256

@@ -33,8 +33,6 @@ namespace J9 { typedef CPU CPUConnector; }
 #endif
 
 #include "env/OMRCPU.hpp"
-#include "j9port.h"
-#include "infra/Assert.hpp"                         // for TR_ASSERT
 
 namespace J9
 {
@@ -45,16 +43,43 @@ protected:
    CPU() : OMR::CPUConnector() {}
    CPU(const OMRProcessorDesc& processorDescription) : OMR::CPUConnector(processorDescription) {}
 
+   /**
+    * @brief Contains the list of processor features exploited by the compiler, initialized via TR::CPU::initializeFeatureMasks()
+    */
+   static OMRProcessorDesc _supportedFeatureMasks;
+
+   /**
+    * @brief _isSupportedFeatureMasksEnabled tells you whether _supportedFeatureMasks was used for masking out unused processor features
+    */
+   static bool _isSupportedFeatureMasksEnabled;
+
 public:
 
-   J9ProcessorDesc *TO_PORTLIB_getJ9ProcessorDesc();
+   /** 
+    * @brief A factory method used to construct a CPU object based on the underlying hardware
+    * @param[in] omrPortLib : the port library
+    * @return TR::CPU
+    */
+   static TR::CPU detect(OMRPortLibrary * const omrPortLib);
 
-   const char *getProcessorVendorId() { TR_ASSERT(false, "Vendor ID not defined for this platform!"); return NULL; }
-   uint32_t getProcessorSignature() { TR_ASSERT(false, "Processor Signature not defined for this platform!"); return 0; }
+   /** 
+    * @brief A factory method used to construct a CPU object based on user customized processorDescription
+    * @param[in] OMRProcessorDesc : the processor description
+    * @return TR::CPU
+    */
+   static TR::CPU customize(OMRProcessorDesc processorDescription);
 
-   OMRProcessorArchitecture getProcessor() { return _processorDescription.processor; }
+   /**
+    * @brief Intialize _supportedFeatureMasks to the list of processor features that will be exploited by the compiler and set _isSupportedFeatureMasksEnabled to true
+    * @return void
+    */
+   static void enableFeatureMasks();
+
+   bool supportsFeature(uint32_t feature);
+   
+   const char *getProcessorVendorId();
+   uint32_t getProcessorSignature();
    };
 }
-
 
 #endif

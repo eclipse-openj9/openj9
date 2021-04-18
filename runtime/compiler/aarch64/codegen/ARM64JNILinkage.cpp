@@ -282,11 +282,13 @@ void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tear
       // leave a bunch of pinned garbage behind that screws up the gc quality forever
       TR::LabelSymbol      *refPoolRestartLabel = generateLabelSymbol(cg());
       TR::LabelSymbol      *refPoolSnippetLabel = generateLabelSymbol(cg());
-      TR::SymbolReference *collapseSymRef = cg()->getSymRefTab()->findOrCreateRuntimeHelper(TR_ARM64jitCollapseJNIReferenceFrame, false, false, false);
+      TR::SymbolReference *collapseSymRef = cg()->getSymRefTab()->findOrCreateRuntimeHelper(TR_ARM64jitCollapseJNIReferenceFrame);
       TR::Snippet *snippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, refPoolSnippetLabel, collapseSymRef, refPoolRestartLabel);
       cg()->addSnippet(snippet);
       generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg, new (trHeapMemory()) TR::MemoryReference(javaStackReg, fej9->constJNICallOutFrameFlagsOffset(), cg()));
-      generateTestImmInstruction(cg(), callNode, scratchReg, fej9->constJNIReferenceFrameAllocatedFlags(), true);
+
+      TR_ASSERT_FATAL(fej9->constJNIReferenceFrameAllocatedFlags() == 0x30000, "constJNIReferenceFrameAllocatedFlags must be 0x30000");
+      generateTestImmInstruction(cg(), callNode, scratchReg, 0x401, false); // 0x401 is immr:imms for 0x30000
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, callNode, refPoolSnippetLabel, TR::CC_NE);
       generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, refPoolRestartLabel);
       }

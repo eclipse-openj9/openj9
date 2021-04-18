@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
+#include "env/VerboseLog.hpp"
 #include "infra/Monitor.hpp"
 #include "infra/CriticalSection.hpp"
 #include "runtime/J9RuntimeAssumptions.hpp"
@@ -37,6 +38,7 @@
 #include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
 #endif
+#include "omrformatconsts.h"
 
 extern TR::Monitor *assumptionTableMutex;
 
@@ -108,14 +110,14 @@ TR_PersistentClassInfo::removeASubClass(TR_PersistentClassInfo *subClassToRemove
 
 
 void
-TR_PersistentClassInfo::removeSubClasses()
+TR_PersistentClassInfo::removeSubClasses(TR_PersistentMemory *persistentMemory)
    {
    TR_SubClass *scl = _subClasses.getFirst();
    _subClasses.setFirst(0);
    while (scl)
       {
       TR_SubClass *nextScl = scl->getNext();
-      jitPersistentFree(scl);
+      persistentMemory->freePersistentMemory(scl);
       scl = nextScl;
       }
    }
@@ -321,7 +323,7 @@ void TR_RuntimeAssumptionTable::purgeAssumptionListHead(OMR::RuntimeAssumption *
    assumptionList->compensate(fe, 0, 0);
 
    OMR::RuntimeAssumption *next = assumptionList->getNextEvenIfDead();
-   printf("Freeing Assumption 0x%x and next assumption is 0x%x \n", assumptionList, next);
+   printf("Freeing Assumption 0x%" OMR_PRIxPTR " and next assumption is 0x%" OMR_PRIxPTR "\n", (uintptr_t)assumptionList, (uintptr_t)next);
 
    assumptionList->dequeueFromListOfAssumptionsForJittedBody();
    incReclaimedAssumptionCount(assumptionList->getAssumptionKind());
@@ -1070,6 +1072,37 @@ TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bool is
    }
 
 void
+TR_RuntimeAssumptionTable::notifyMethodBreakpointed(TR_FrontEnd *fe, TR_OpaqueMethodBlock *method)
+   {
+   OMR::CriticalSection notifyMutableCallSiteChangeEvent(assumptionTableMutex);
+
+   bool reportDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions);
+
+   OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnMethodBreakPoint, hashCode((uintptr_t)method));
+   TR_PatchNOPedGuardSiteOnMethodBreakPoint *cursor = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)(*headPtr);
+   while (cursor)
+      {
+      TR_PatchNOPedGuardSiteOnMethodBreakPoint *next = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)cursor->getNext();
+
+      if (cursor->matches((uintptr_t)method))
+         {
+         if (reportDetails)
+            {
+            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::write(TR_Vlog_RA,"compensating key (breakpointed method) " UINT64_PRINTF_FORMAT_HEX " ", method);
+            cursor->dumpInfo();
+            TR_VerboseLog::writeLine("");
+            TR_VerboseLog::vlogRelease();
+            }
+         cursor->compensate(fe, 0, 0);
+         markForDetachFromRAT(cursor);
+         }
+
+      cursor = next;
+      }
+   }
+
+void
 TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe, uintptr_t cookie)
    {
    OMR::CriticalSection notifyMutableCallSiteChangeEvent(assumptionTableMutex);
@@ -1095,6 +1128,7 @@ TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe, uin
          cursor->compensate(fe, 0, 0);
          markForDetachFromRAT(cursor);
          }
+
       cursor = next;
       }
    }
@@ -1282,9 +1316,9 @@ J9::PersistentInfo::addUnloadedClass(
    }
 
 #if defined(J9VM_OPT_JITSERVER)
-void TR_AddressSet::destroy()
+void TR_AddressSet::destroy(TR_PersistentMemory *persistentMemory)
    {
-   jitPersistentFree(_addressRanges);
+   persistentMemory->freePersistentMemory(_addressRanges);
    }
 
 void TR_AddressSet::getRanges(std::vector<TR_AddressRange> &ranges)
@@ -1520,7 +1554,7 @@ void TR_AddressSet::add(uintptr_t start, uintptr_t end)
          {
          fprintf(stderr, "UAR:    ");
          for (int j = 0; (j < 4) && (i+j < _numAddressRanges); j++)
-            fprintf(stderr, " %4d [%p - %p]", i+j, _addressRanges[i+j].getStart(), _addressRanges[i+j].getEnd());
+            fprintf(stderr, " %4d [%#" OMR_PRIxPTR " - %#" OMR_PRIxPTR "]", i+j, _addressRanges[i+j].getStart(), _addressRanges[i+j].getEnd());
          fprintf(stderr, "\n");
          }
       }
@@ -1577,5 +1611,3 @@ int32_t TR_AddressSet::firstHigherAddressRangeIndex(uintptr_t address)
 
    return result;
    }
-
-

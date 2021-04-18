@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -497,7 +497,7 @@ void jitGetMapsFromPC(J9JavaVM * javaVM, J9TR_MethodMetaData * methodMetaData, U
       initializeIterator(&i, methodMetaData);
       }
 
-   /* try to speed the loop up by by versioning it based on the value of 'fourByteOffsets'. Assume that the compiler
+   /* try to speed the loop up by versioning it based on the value of 'fourByteOffsets'. Assume that the compiler
     * will inline the call and do constant propagation
     */
 

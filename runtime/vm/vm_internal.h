@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -202,7 +202,7 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 /* ---------------- logsupport.c ---------------- */
 /**
 * @brief
-* Process the -Xlog: options.
+* Process the -Xsyslog: options.
 * @param vm
 * @return JNI_ERR on error, JNI_OK on success.
 */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2020 IBM Corp. and others
+ * Copyright (c) 2013, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,7 @@ getX86Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
  *							Hypervisor Vendor String
  *              cpuInfo[2] 	For EAX = 0x1, the 31st bit of ECX tells if its
  *              			running on Hypervisor or not,For EAX = 0x40000000 holds the second
- *							4 characters of the the Hypervisor Vendor String
+ *							4 characters of the Hypervisor Vendor String
  *              cpuInfo[3]	For EAX = 0x40000000 hold the last 4 characters of the
  *              			Hypervisor Vendor String
  *

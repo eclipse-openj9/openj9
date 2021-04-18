@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -369,7 +369,7 @@ J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL.system_action=The JVM will th
 J9NLS_JCL_PRIVATE_INTERFACE_REQUIRES_INVOKESPECIAL.user_response=Use the correct invoke bytecode to access private interface methods.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT=Carregant violaci\u00f3 de restricci\u00f3: %2$.*1$s no \u00e9s visible des de %4$.*3$s
+J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT=S'est\u00e0 carregant la violaci\u00f3 de restricci\u00f3: %2$.*1$s no \u00e9s visible des de %4$.*3$s
 # START NON-TRANSLATABLE
 J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_1=SomeClassloader
 J9NLS_JCL_METHODTYPE_CLASS_LOADING_CONSTRAINT.sample_input_2=2
@@ -436,3 +436,11 @@ J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.system_action=The JVM will thro
 J9NLS_JCL_NEST_MEMBER_CLAIMS_DIFFERENT_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION=S'ha trobat una definici\u00f3 de classe duplicada per a %2$.*1$s
+# START NON-TRANSLATABLE
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.sample_input_1=3
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.sample_input_2=Foo
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.explanation=A duplicated class definition is found.
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.system_action=The JVM will throw a LinkageError.
+J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.user_response=Ensure there is no duplicate definition for the class in the message and try again.
+# END NON-TRANSLATABLE

@@ -1,4 +1,4 @@
-!! Copyright (c) 2000, 2020 IBM Corp. and others
+!! Copyright (c) 2000, 2021 IBM Corp. and others
 !!
 !! This program and the accompanying materials are made available under
 !! the terms of the Eclipse Public License 2.0 which accompanies this
@@ -630,7 +630,7 @@ _interpreterUnresolvedInstanceDataGlue:
 	cmpi    cr0, 0, r28, 0                                  ! and check if we are in a load sequence.
         lis     r9, lwz_r3_high                                 ! if so then use lwz r3,0(r11)
 	beq     .L_LoadTemplateInstruction                      !
-	lis     r9, stw_r4_high                                 ! else else use stw r4,0(r11)
+	lis     r9, stw_r4_high                                 ! else use stw r4,0(r11)
 .L_LoadTemplateInstruction:
 	lwz	r8, 2*ALen+8(r7)				! Load the template instruction
 	add	r3, r3, r4					! Add to the returned result
@@ -652,7 +652,7 @@ _interpreterUnresolvedInstanceDataGlue:
         cmpi    cr0, 0, r28, 0                                  ! and check if we are in a load sequence.
         lis     r9, lwz_r4_high                                 ! if so then use lwz r4,0(r11)
         beq     .L_lwz                                          !
-        lis     r9, stw_r5_high                                 ! else else use stw r5,0(r11)
+        lis     r9, stw_r5_high                                 ! else use stw r5,0(r11)
 .L_lwz:
         addi    r3, r3, 4                                       ! prepare immediate offset of upper word of long mem ref
         rlwimi  r9, r3, 0, 0x0000ffff                           ! r9 contains the instruction for upper word of long mem ref

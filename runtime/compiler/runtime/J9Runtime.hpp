@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -152,9 +152,10 @@ typedef enum
 *     2.0    Java7
 *     2.1    Java7
 *     3.0    Java 8
+*     4.0    Java 8+ with OSR
 */
 
-#define TR_AOTMethodHeader_MajorVersion   3
+#define TR_AOTMethodHeader_MajorVersion   4
 #define TR_AOTMethodHeader_MinorVersion   0
 
 typedef struct TR_AOTMethodHeader {
@@ -163,12 +164,18 @@ typedef struct TR_AOTMethodHeader {
    uint32_t  offsetToRelocationDataItems;
    uint32_t  offsetToExceptionTable;
    uint32_t  offsetToPersistentInfo;
+   uint32_t  flags;
    uintptr_t compileMethodCodeStartPC;
    uintptr_t compileMethodCodeSize;
    uintptr_t compileMethodDataStartPC;
    uintptr_t compileMethodDataSize;
    uintptr_t unused;
-   uint32_t flags;
+   struct
+      {
+      uintptr_t _frameSizeInBytes;
+      uintptr_t _scratchBufferSizeInBytes;
+      uintptr_t _stackFrameSizeInBytes;
+      } _osrBufferInfo;
    } TR_AOTMethodHeader;
 
 
@@ -181,6 +188,8 @@ typedef struct TR_AOTMethodHeader {
 #define TR_AOTMethodHeader_UsesSymbolValidationManager               0x00000020
 #define TR_AOTMethodHeader_TMDisabled                                0x00000040
 #define TR_AOTMethodHeader_CompressedMethodInCache                   0x00000080
+#define TR_AOTMethodHeader_IsNotCapableOfExceptionHook               0x00000100
+#define TR_AOTMethodHeader_UsesOSR                                   0x00000200
 
 
 

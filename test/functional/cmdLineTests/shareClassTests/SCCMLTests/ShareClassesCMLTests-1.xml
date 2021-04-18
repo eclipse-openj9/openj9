@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2020 IBM Corp. and others
+  Copyright (c) 2012, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,8 +46,10 @@
  	<variable name="PROGRAM_LAMBDA" value="org.openj9.test.lambdatests.Test1" />
 	<variable name="PROGRAM_UNSAFE" value="org.openj9.test.classtests.ClassTest" />
  	<variable name="BOOTSTRAP_CLASS" value="java/lang/Object" />
- 	
+
 	<variable name="EXPORTS" value="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
+	<!-- set variable EXPORTS to an empty string on Java 8. JDK version is passed in before bits -->
+	<exec command="echo " capture="EXPORTS" platforms="8_bits.*" />
 	
  	<variable name="AGENT_NOCLASSMODIFICATION" value="-agentlib:jvmtitest=test:ecflh001,args:noModify" />
  	<variable name="AGENT_RETRANSFORM" value="-agentlib:jvmtitest=test:rtc001" />
@@ -62,7 +64,7 @@
 	<variable name="NON_64BIT_PLATFORMS" value=".*bits\.3[12]" />
 	<variable name="64BIT_PLATFORMS" value=".*bits\.64" />
 
-		
+
 	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
 	
 	<echo value=" "/>
@@ -1058,9 +1060,9 @@
 	
 	<test id="Test 57-a: Make sure that lambda classes work and get stored in the shared class cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} $CP_HANOI$ $PROGRAM_LAMBDA$ 0</command>
-		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
     
    		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
    		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1068,10 +1070,11 @@
 	</test>
 
 	<test id="Test 57-b: Make sure that lambda classes are stored in the cache as orphans" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printstats=orphan</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) at</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) at</output>
+		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) at</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) at</output>
 	    
+	    <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) at</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1080,11 +1083,11 @@
 	
 	<test id="Test 57-c: Make sure that when the program runs again lambda classes are used from the cache and not stored again" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 0</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 	    
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1095,9 +1098,9 @@
 	<test id="Test 58: Make sure that when the program runs again without the first lambda class, the second lambda class is still used from the cache and not stored again" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 1</command>
 		<output type="success" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 	    
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1120,9 +1123,9 @@
 	
 	<test id="Test 59-a: Run and store 10 lambda classes in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} $CP_HANOI$ $PROGRAM_LAMBDA$ 2</command>
-		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 	    
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -1132,11 +1135,11 @@
 	
 	<test id="Test 59-b: Do not run the first lambda class to check if a class with 1 digit index number gets matched to the one stored in the cache but with 2 digits index number (10th class in the previous run will be matched to 9th in this run)" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 3</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 	    
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1159,10 +1162,10 @@
 	
 	<test id="Test 60-a: Make sure that lambda classes work and get stored in the cache when another function with lambda classes in another file is being called from the current file" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} $CP_HANOI$ $PROGRAM_LAMBDA$ 4</command>
-		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(00000000|0000000000000000) </output>
-		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 	    
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -1170,15 +1173,15 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-	<test id="Test 60-b: Make sure that the classes are used from the cache when the the program is being run again" timeout="600" runPath=".">
+	<test id="Test 60-b: Make sure that the classes are used from the cache when the program is being run again" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 4</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000)'</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 	    
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1203,7 +1206,7 @@
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} -XX:-ShareAnonymousClasses $CP_HANOI$ $PROGRAM_LAMBDA$ 0</command>
 		<output type="success" caseSensitive="yes" regex="no">Lambda test done!</output>
 
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) </output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1211,10 +1214,10 @@
 	</test>
 	
 	<test id="Test 61-b: Make sure that no lambda classes are in the cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printstats=orphan</command>
+		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/lambdatests/Test1 at</output>
 
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(00000000|0000000000000000) at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) at</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1235,11 +1238,12 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
 
-	<test id="Test 62-a: Store the Anonymous Class and the Unsafe Class in the cache" timeout="600" runPath=".">
+	<test id="Test 62-a: Store the Anonymous Class and the Unsafe Classes (via app classloader and bootstrap classloader) in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ $EXPORTS$ $CP_HANOI$ $PROGRAM_UNSAFE$</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Test</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Hello</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">running UnsafeBootClass.bar()</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -1248,11 +1252,15 @@
 	</test>
 
 	<test id="Test 62-b: Check whether they have been stored correctly" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printstats=orphan</command>
+		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/ClassTest at</output>		
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(00000000|0000000000000000) at</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/UnsafeBootClass at</output>
 	    
+	    <output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/UnsafeBootClass at</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1264,11 +1272,15 @@
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Test</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Hello</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">running UnsafeBootClass.bar()</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest'</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(00000000|0000000000000000)'</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000)'</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/UnsafeBootClass'</output>
+		
 		
 		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/AnonClassAndUnsafeClassTest </output>
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(00000000|0000000000000000) </output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) </output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/UnsafeBootClass </output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1282,10 +1294,10 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Another Test</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">World</output>		
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 0 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest'</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 0 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(00000000|0000000000000000)'</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 0 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000)'</output>
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest'</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(00000000|0000000000000000)'</output>	
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000)'</output>	
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1311,6 +1323,7 @@
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Test</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Hello</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">running UnsafeBootClass.bar()</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -1319,11 +1332,13 @@
 	</test>
 
 	<test id="Test 63-b: Check whether the Anonymous Class has been stored correctly" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printstats=orphan</command>
+		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/ClassTest at</output>	
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(00000000|0000000000000000) at</output>
-	    
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
+
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/UnsafeBootClass at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1349,6 +1364,7 @@
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Test</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Hello</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">running UnsafeBootClass.bar()</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -1357,11 +1373,14 @@
 	</test>
 
 	<test id="Test 64-b: Check whether the Unsafe class has been stored correctly" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printstats=orphan</command>
+		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/ClassTest at</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/UnsafeBootClass at</output>
 
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(00000000|0000000000000000) at</output>	    
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/UnsafeBootClass at</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1387,6 +1406,7 @@
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Test</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Hello</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">running UnsafeBootClass.bar()</output>
 		
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -1395,11 +1415,12 @@
 	</test>
 
 	<test id="Test 65-b: Make sure none of the classes has been stored in the cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printstats=orphan</command>
+		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/ClassTest at</output>
 	    
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(00000000|0000000000000000) at</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/UnsafeBootClass at</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1407,11 +1428,11 @@
 	</test>
 
 	<test id="Test 66: Processor Features PrintStats Test : Ensure -Xshareclasses:printStats cache contains processor feature info" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms=".*x86.*">Processor Features[\s]*= null</output>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms=".*x86.*">Processor Features[\s]*= .*</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms=".*ppc.*,.*390.*,.*aarch64.*">Processor Features[\s]*= .*</output>
-		<output type="success" caseSensitive="yes" regex="no" platforms=".*ppc.*,.*390.*,.*aarch64.*">Current statistics for cache</output>
+		<command>$JAVA_EXE$ $currentMode$,printStats</command>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms=".*x86.*,.*ppc.*,.*390.*">Processor Features[\s]*= null</output>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms=".*x86.*,.*ppc.*,.*390.*">Processor Features[\s]*= .*</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms=".*aarch64.*">Processor Features[\s]*= .*</output>
+		<output type="success" caseSensitive="yes" regex="no" platforms=".*aarch64.*">Current statistics for cache</output>
 	</test>
 
 	<test id="At end destroy cache for cleanup" timeout="600" runPath=".">

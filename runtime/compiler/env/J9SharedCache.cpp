@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined (_MSC_VER) && (_MSC_VER < 1900)
+#define snprintf _snprintf
+#endif
+
 #include "env/J9SharedCache.hpp"
 
 #include <algorithm>
@@ -35,6 +39,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "exceptions/PersistenceFailure.hpp"
 #include "infra/CriticalSection.hpp"
 #include "runtime/CodeRuntime.hpp"
@@ -107,8 +112,7 @@ TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::Compilation
 const CCVResult
 TR_J9SharedCache::getCachedCCVResult(TR_OpaqueClassBlock *clazz)
    {
-   if (TR::Options::getCmdLineOptions()->allowRecompilation()
-       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       {
       TR::ClassTableCriticalSection cacheResult(_fe);
       TR_PersistentCHTable *table = _compInfo->getPersistentInfo()->getPersistentCHTable();
@@ -121,8 +125,7 @@ TR_J9SharedCache::getCachedCCVResult(TR_OpaqueClassBlock *clazz)
 bool
 TR_J9SharedCache::cacheCCVResult(TR_OpaqueClassBlock *clazz, CCVResult result)
    {
-   if (TR::Options::getCmdLineOptions()->allowRecompilation()
-       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
       {
       TR::ClassTableCriticalSection cacheResult(_fe);
       TR_PersistentCHTable *table = _compInfo->getPersistentInfo()->getPersistentCHTable();
@@ -217,7 +220,7 @@ TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
    SCCHint result;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-   J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+   J9ROMMethod * romMethod = fe()->getROMMethodFromRAMMethod(method);
 
    J9SharedDataDescriptor descriptor;
    descriptor.address = (U_8 *)&result;
@@ -297,7 +300,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    if (newHint)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-      J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+      J9ROMMethod * romMethod = fej9->getROMMethodFromRAMMethod(method);
       J9VMThread * vmThread = fej9->getCurrentVMThread();
 
       char methodSignature[500];
@@ -1303,7 +1306,7 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
        * assert and conveniently, updates the location referred to by the cacheOffset
        * pointer passed in as a parameter.
        *
-       * If the ptr isn't in the the SCC, then the current method will abort the
+       * If the ptr isn't in the SCC, then the current method will abort the
        * compilation. If the ptr is in the SCC, then the cacheOffset will be updated.
        */
       if (!isPointerInSharedCache(classChainIdentifyingLoaderForClazz, &classChainOffsetInSharedCache))
@@ -1367,11 +1370,7 @@ TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, bool create)
       OMR::CriticalSection classChainDataMapMonitor(clientData->getClassChainDataMapMonitor());
       auto it = cache.find(clazz);
       if (it != cache.end())
-         {
-         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Chain exists (%p) so nothing to store \n", it->second);
          return it->second;
-         }
       }
    _stream->write(JITServer::MessageType::SharedCache_rememberClass, clazz, create);
    UDATA * chainData = std::get<0>(_stream->read<UDATA *>());

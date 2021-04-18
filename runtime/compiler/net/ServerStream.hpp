@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,6 @@
 #include "control/CompilationThread.hpp" // for TR::compInfoPT->getCompThreadId()
 #include "control/Options.hpp"
 #include "runtime/JITClientSession.hpp"
-#include <openssl/ssl.h>
 
 class SSLOutputStream;
 class SSLInputStream;
@@ -217,14 +216,14 @@ public:
    /**
       @brief Function invoked by server when compilation is aborted
    */
-   void writeError(uint32_t statusCode)
+   void writeError(uint32_t statusCode, uint64_t otherData = -1)
       {
       try
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d MessageType::compilationFailure: statusCode %u",
                   TR::compInfoPT->getCompThreadId(), statusCode);
-         write(MessageType::compilationFailure, statusCode);
+         write(MessageType::compilationFailure, statusCode, otherData);
          }
       catch (std::exception &e)
          {
@@ -267,7 +266,6 @@ private:
    uint64_t _clientId;  // UID of client connected to this communication stream
    ClientSessionData *_pClientSessionData;
    };
-
 
 }
 

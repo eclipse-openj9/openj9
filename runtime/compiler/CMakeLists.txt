@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,18 @@ if(OMR_ARCH_X86)
 		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/i386/runtime/"
 	)
 	omr_append_flags(CMAKE_ASM_NASM_FLAGS ${asm_inc_dirs})
+	# For whatever reason cmake does not apply compile definitions when building nasm objects.
+	# The if guard is here in case they ever start doing so.
+	if(NOT CMAKE_ASM_NASM_COMPILE_OBJECT MATCHES "<DEFINES>")
+		# Tack on defines immediately following the compiler name.
+		string(REPLACE
+			"<CMAKE_ASM_NASM_COMPILER>"
+			"<CMAKE_ASM_NASM_COMPILER> <DEFINES>"
+			CMAKE_ASM_NASM_COMPILE_OBJECT
+			"${CMAKE_ASM_NASM_COMPILE_OBJECT}"
+		)
+
+	endif()
 endif()
 
 # Using the linker option -static-libgcc results in an error on OSX. The option -static-libstdc++ is unused. Therefore
@@ -142,6 +154,7 @@ endif()
 # Some files in OMR provide duplicate or extra functionality not needed
 # in J9, so we need to remove them
 set(REMOVED_OMR_FILES
+	${omr_SOURCE_DIR}/compiler/codegen/CCData.cpp
 	${omr_SOURCE_DIR}/compiler/control/CompileMethod.cpp
 	${omr_SOURCE_DIR}/compiler/control/CompilationController.cpp
 	${omr_SOURCE_DIR}/compiler/env/FEBase.cpp
@@ -184,7 +197,7 @@ set(TARGET_DEFINES
 # though that would also involve teaching MASM2GAS and
 # PASM2ASM about target includes.
 #
-# In the mean time, like the makefiles, this is is using
+# In the mean time, like the makefiles, this is using
 # the includes from the SDK
 set(J9_INCLUDES
 	# From jitinclude.mk
@@ -219,8 +232,7 @@ set(J9_CXXFLAGS
 	${OMR_PLATFORM_CXX_COMPILE_OPTIONS}
 )
 if(OMR_OS_LINUX OR OMR_OS_OSX)
-	set(J9_SHAREDFLAGS
-		${J9_SHAREDFLAGS}
+	list(APPEND J9_SHAREDFLAGS
 		-fno-strict-aliasing
 		-Wno-deprecated
 		-Wno-enum-compare
@@ -233,31 +245,24 @@ if(OMR_OS_LINUX OR OMR_OS_OSX)
 
 	# Platform specific CXX flags, also derived from the
 	# Makefiles
-	set(J9_CXXFLAGS
-		${J9_CXXFLAGS}
+	list(APPEND J9_CXXFLAGS
 		-fno-threadsafe-statics
 		-Wno-invalid-offsetof
 	)
 	if(NOT J9VM_OPT_JITSERVER)
-		set(J9_CXXFLAGS
-			${J9_CXXFLAGS}
-			-fno-rtti
-		)
+		list(APPEND J9_CXXFLAGS -fno-rtti)
 	endif()
 
-	set(J9_CFLAGS
-		${J9_CFLAGS}
-		-std=gnu89
-	)
+	list(APPEND J9_CFLAGS -std=gnu89)
 elseif(OMR_OS_WINDOWS)
-	set(J9_SHAREDFLAGS
+	list(APPEND J9_SHAREDFLAGS
 		-D_WIN32
 		-DWIN32
 		-DSUPPORTS_THREAD_LOCAL
 		-DWINDOWS
 	)
 elseif(OMR_OS_AIX)
-	set(J9_SHAREDFLAGS
+	list(APPEND J9_SHAREDFLAGS
 		-DAIXPPC
 		-DRS6000
 		-D_XOPEN_SOURCE_EXTENDED=1
@@ -265,15 +270,23 @@ elseif(OMR_OS_AIX)
 		-DSUPPORTS_THREAD_LOCAL
 	)
 	if(OMR_ENV_DATA64)
-		set(J9_SHAREDFLAGS -q64)
+		list(APPEND J9_SHAREDFLAGS -q64)
 		if(OMR_TOOLCONFIG STREQUAL "xlc")
 			# Modify the arch tuning value we inherit from omr
 			list(REMOVE_ITEM TR_COMPILE_OPTIONS "-qarch=pwr7")
 			list(APPEND TR_COMPILE_OPTIONS "-qarch=ppc64grsq")
+
+			if(CMAKE_C_COMPILER_IS_XLCLANG)
+				# xlclang/xlclang++ options
+				list(APPEND SPP_FLAGS -qlanglvl=extc99)
+				set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++")
+			endif()
 		endif()
 	else()
-		set(J9_SHAREDFLAGS -q32)
+		list(APPEND J9_SHAREDFLAGS -q32)
 	endif()
+elseif(OMR_OS_ZOS)
+	# Nothing to do here.
 else()
 	message(SEND_ERROR "unsupported platform")
 endif()

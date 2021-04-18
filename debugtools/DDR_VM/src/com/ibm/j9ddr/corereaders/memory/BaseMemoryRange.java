@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,52 +23,50 @@ package com.ibm.j9ddr.corereaders.memory;
 
 /**
  * Abstract base class containing common logic for IMemoryRange
- * 
+ *
  * @author andhall
- * 
  */
-public abstract class BaseMemoryRange implements IMemoryRange
-{	
+public abstract class BaseMemoryRange implements IMemoryRange {
 	private final boolean fastPathContains;
 	private int alignment;
 	private long baseAddressTestValue;
-	
+
 	protected final long baseAddress;
 	protected final long size;
-	
-	protected BaseMemoryRange(long baseAddress,long size)
-	{
-		//For ranges that are as wide as they are aligned, we can fast-path the contains() operation with an and().
+
+	protected BaseMemoryRange(long baseAddress, long size) {
+		// For ranges that are as wide as they are aligned, we can fast-path the contains() operation with an and().
 		this.baseAddress = baseAddress;
 		this.size = size;
-		
+
 		alignment = 0;
-		
+
 		long workingAddress = baseAddress;
-		for (int i=0; i < 64; i++) {
+		for (int i = 0; i < 64; i++) {
 			if ((workingAddress & 1) == 0) {
 				alignment++;
 			} else {
 				break;
 			}
-			
+
 			workingAddress >>>= 1;
 		}
-		
+
 		baseAddressTestValue = baseAddress >>> alignment;
-		
+
 		long topAddress = getTopAddress();
-		
-		fastPathContains = (baseAddressTestValue == (topAddress >>> alignment) && baseAddressTestValue != ((topAddress + 1) >>> alignment));
+
+		fastPathContains = (baseAddressTestValue == (topAddress >>> alignment)
+				&& baseAddressTestValue != ((topAddress + 1) >>> alignment));
 	}
-	
+
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see com.ibm.dtfj.j9ddr.corereaders.memory.IMemoryRange#contains(long)
 	 */
-	public boolean contains(long address)
-	{
+	@Override
+	public boolean contains(long address) {
 		if (fastPathContains) {
 			return baseAddressTestValue == address >>> alignment;
 		} else {
@@ -77,17 +75,15 @@ public abstract class BaseMemoryRange implements IMemoryRange
 		}
 	}
 
-	public int compareTo(IMemoryRange o)
-	{
-
+	@Override
+	public int compareTo(IMemoryRange o) {
 		if (o.getAddressSpaceId() != this.getAddressSpaceId()) {
 			return this.getAddressSpaceId() - o.getAddressSpaceId();
 		}
 
 		if (Addresses.greaterThan(this.getBaseAddress(), o.getBaseAddress())) {
 			return 1;
-		} else if (Addresses
-				.lessThan(this.getBaseAddress(), o.getBaseAddress())) {
+		} else if (Addresses.lessThan(this.getBaseAddress(), o.getBaseAddress())) {
 			return -1;
 		} else {
 			if (Addresses.greaterThan(this.getTopAddress(), o.getTopAddress())) {
@@ -99,12 +95,11 @@ public abstract class BaseMemoryRange implements IMemoryRange
 			}
 		}
 	}
-	
+
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		
+
 		buffer.append("MemoryRange ");
 		buffer.append(this.getClass().getName());
 		buffer.append(" from ");
@@ -114,43 +109,43 @@ public abstract class BaseMemoryRange implements IMemoryRange
 
 		return buffer.toString();
 	}
-	
-	public boolean isSubRange(IMemoryRange other)
-	{
+
+	@Override
+	public boolean isSubRange(IMemoryRange other) {
 		boolean baseAddressInRange = Addresses.greaterThanOrEqual(other.getBaseAddress(), this.getBaseAddress());
 		boolean topAddressInRange = Addresses.greaterThanOrEqual(this.getTopAddress(), other.getTopAddress());
 		return baseAddressInRange && topAddressInRange;
 	}
 
-	public boolean overlaps(IMemoryRange other)
-	{
+	@Override
+	public boolean overlaps(IMemoryRange other) {
 		return this.contains(other.getBaseAddress())
-		|| this.contains(other.getTopAddress())
-		|| other.contains(this.getBaseAddress())
-		|| other.contains(this.getTopAddress());
+			|| this.contains(other.getTopAddress())
+			|| other.contains(this.getBaseAddress())
+			|| other.contains(this.getTopAddress());
 	}
 
-	public final long getBaseAddress()
-	{
+	@Override
+	public final long getBaseAddress() {
 		return baseAddress;
 	}
 
-	public final long getSize()
-	{
+	@Override
+	public final long getSize() {
 		return size;
 	}
 
-	public final long getTopAddress()
-	{
-		if( size == 0 ) {
+	@Override
+	public final long getTopAddress() {
+		if (size == 0) {
 			return baseAddress;
 		}
 		return baseAddress + size - 1;
 	}
 
-	public boolean isBacked()
-	{
+	@Override
+	public boolean isBacked() {
 		return true;
 	}
-	
+
 }

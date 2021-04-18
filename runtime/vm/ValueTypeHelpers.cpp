@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,7 +85,7 @@ defaultValueWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *claz
 	for (UDATA index = 0; index < length; index++) {
 		entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, index);
 		entryClazz = J9_VM_FCC_CLASS_FROM_ENTRY(entry);
-		if (!J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry) && J9_ARE_NO_BITS_SET(J9ClassIsFlattened, entryClazz->classFlags)) {
+		if (!J9_VM_FCC_ENTRY_IS_STATIC_FIELD(entry) && !J9_IS_FIELD_FLATTENED(entryClazz, entry->field)) {
 			objectAccessBarrier.inlineMixedObjectStoreObject(currentThread,
 												instance,
 												entry->offset + objectHeaderSize,
@@ -177,9 +177,7 @@ isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field)
 {
         Assert_VM_notNull(fieldOwner);
         Assert_VM_notNull(field);
-
-        J9Class* clazz = getFlattenableFieldType(fieldOwner, field);
-        BOOLEAN fieldFlattened = J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened);
+        BOOLEAN fieldFlattened = J9_IS_FIELD_FLATTENED(getFlattenableFieldType(fieldOwner, field), field);
 
         return fieldFlattened;
 }
@@ -207,8 +205,7 @@ getFlattenableFieldSize(J9VMThread *currentThread, J9Class *fieldOwner, J9ROMFie
 
         UDATA instanceSize = J9VMTHREAD_REFERENCE_SIZE(currentThread);
         if (isFlattenableFieldFlattened(fieldOwner, field)) {
-                J9Class* clazz = getFlattenableFieldType(fieldOwner, field);
-                instanceSize = (clazz)->totalInstanceSize - (clazz)->backfillOffset;
+                instanceSize = J9_VALUETYPE_FLATTENED_SIZE(getFlattenableFieldType(fieldOwner, field));
         }
         return instanceSize;
 }
@@ -218,6 +215,27 @@ arrayElementSize(J9ArrayClass* arrayClass)
 {
         Assert_VM_notNull(arrayClass);
         return arrayClass->flattenedElementSize;
+}
+
+void
+storeFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject)
+{
+        MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+        VM_ValueTypeHelpers::storeFlattenableArrayElement(currentThread, objectAccessBarrier, receiverObject, index, paramObject);
+}
+
+j9object_t
+loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast)
+{
+        MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+        MM_ObjectAllocationAPI objectAllocate(currentThread);
+        return VM_ValueTypeHelpers::loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, receiverObject, index, fast != false);
+}
+
+BOOLEAN
+areValueBasedMonitorChecksEnabled(J9JavaVM *vm)
+{
+	return J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION | J9_EXTENDED_RUNTIME2_VALUE_BASED_WARNING);
 }
 
 } /* extern "C" */

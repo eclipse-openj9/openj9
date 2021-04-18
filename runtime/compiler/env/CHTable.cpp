@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
+#include "env/VerboseLog.hpp"
 #include "il/MethodSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
@@ -617,12 +618,17 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
       TR_ResolvedMethod *breakpointedMethod = comp->getInlinedResolvedMethod(info->getCalleeIndex());
       TR_OpaqueMethodBlock *method = breakpointedMethod->getPersistentIdentifier();
       if (comp->fej9()->isMethodBreakpointed(method))
-         nopAssumptionIsValid = false;
-      ListIterator<TR_VirtualGuardSite> it(&sites);
-      for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
          {
-         TR_PatchNOPedGuardSiteOnMethodBreakPoint
-            ::make(comp->fe(), comp->trPersistentMemory(), method, site->getLocation(), site->getDestination(), comp->getMetadataAssumptionList());
+         nopAssumptionIsValid = false;
+         }
+      else
+         {
+         ListIterator<TR_VirtualGuardSite> it(&sites);
+         for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
+            {
+            TR_PatchNOPedGuardSiteOnMethodBreakPoint
+               ::make(comp->fe(), comp->trPersistentMemory(), method, site->getLocation(), site->getDestination(), comp->getMetadataAssumptionList());
+            }
          }
       }
    else if (info->getKind() == TR_ArrayStoreCheckGuard)
@@ -920,7 +926,7 @@ CollectImplementors::visitSubclass(TR_PersistentClassInfo *cl)
    {
    TR_OpaqueClassBlock *classId = cl->getClassId();
    // verify that our subclass meets all conditions
-   if (!TR::Compiler->cls.isAbstractClass(comp(), classId) && !TR::Compiler->cls.isInterfaceClass(comp(), classId))
+   if (TR::Compiler->cls.isConcreteClass(comp(), classId))
       {
       int32_t length;
       char *clazzName = TR::Compiler->cls.classNameChars(comp(), classId, length);

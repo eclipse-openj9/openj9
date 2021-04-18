@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,11 +20,14 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gc SHARED
-	OUTPUT_NAME j9gc${J9VM_VERSION_SUFFIX}
+set(gc_sources
 	dllinit.c
 	gctable.c
+)
 
+j9vm_add_library(j9gc SHARED
+	OUTPUT_NAME j9gc${J9VM_VERSION_SUFFIX}
+	${gc_sources}
 )
 
 if(OMR_TOOLCONFIG STREQUAL "msvc")
@@ -73,7 +76,7 @@ if(OMR_NEED_LIBRT)
 	target_link_libraries(j9gc PRIVATE rt)
 endif()
 
-if(OMR_HOST_OS STREQUAL "linux")
+if(OMR_OS_LINUX)
 	target_link_libraries(j9gc PRIVATE pthread)
 endif()
 
@@ -95,3 +98,76 @@ install(
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
+
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9gc_full SHARED
+		OUTPUT_NAME j9gc_full${J9VM_VERSION_SUFFIX}
+		${gc_sources}
+	)
+
+	if(OMR_TOOLCONFIG STREQUAL "msvc")
+		target_compile_options(j9gc_full PRIVATE /w34189)
+	endif()
+
+	target_link_libraries(j9gc_full
+		PRIVATE
+			j9vm_interface
+
+			j9util
+			j9utilcore
+			j9avl
+			j9thr
+			j9stackmap
+			j9pool
+			omrgc_full #LINKING HACK
+			j9hookable
+			j9gcbase_full
+			j9gcstructs_full
+			j9gcstats_full
+			j9gcapi_full
+			j9modronstartup_full
+			j9gctrc_full
+			j9gctrcstandard_full
+			j9gctrcvlhgc_full
+			j9realtime_full
+			j9gcvlhgc_full
+			omrgc_full #LINKING HACK
+
+			#TODO: this is hack to make linking work.
+			# Need to figure out why we need this in CMake but not UMA
+			j9modronstandard_full
+			j9gcbase_full
+			j9hashtable
+			j9gcbase_full
+			j9modronstandard_full
+			j9realtime_full
+			j9gcvlhgc_full
+			j9gcbase_full
+
+			j9thr
+	)
+
+	if(OMR_NEED_LIBRT)
+		target_link_libraries(j9gc_full PRIVATE rt)
+	endif()
+
+	if(OMR_OS_LINUX)
+		target_link_libraries(j9gc_full PRIVATE pthread)
+	endif()
+
+	target_include_directories(j9gc_full
+		PUBLIC
+			$<TARGET_PROPERTY:omrgc_full,INTERFACE_INCLUDE_DIRECTORIES>
+	)
+
+	omr_add_exports(j9gc_full
+		JVM_OnLoad
+		J9VMDllMain
+	)
+
+	install(
+		TARGETS j9gc_full
+		LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+		RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
+	)
+endif()

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,6 +129,7 @@ public:
    static TR::DataType             unsafeDataTypeForObject(TR::RecognizedMethod rm);
    static bool                     isVarHandleOperationMethod(TR::RecognizedMethod rm);
    virtual bool                    isVarHandleAccessMethod(TR::Compilation * = NULL);
+   virtual bool                    isSignaturePolymorphicMethod(TR::Compilation * = NULL);
 
    virtual bool                    isUnsafeWithObjectArg( TR::Compilation * comp = NULL);
    virtual bool                    isUnsafeCAS(TR::Compilation * = NULL);
@@ -350,6 +351,8 @@ public:
    virtual bool                    validateArbitraryClass( TR::Compilation *comp, J9Class *clazz);
 
    virtual char *                  getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length);
+   virtual char *                  getMethodSignatureFromConstantPool(int32_t cpIndex, int32_t & len);
+   virtual char *                  getMethodNameFromConstantPool(int32_t cpIndex, int32_t & len);
    virtual TR::DataType            getLDCType(int32_t cpIndex);
    virtual bool                    isClassConstant(int32_t cpIndex);
    virtual bool                    isStringConstant(int32_t cpIndex);
@@ -428,7 +431,7 @@ public:
 
    static TR_OpaqueClassBlock  * definingClassFromCPFieldRef(TR::Compilation *comp, J9ConstantPool *constantPool, int32_t cpIndex, bool isStatic);
    static TR_OpaqueClassBlock  * definingClassAndFieldShapeFromCPFieldRef(TR::Compilation *comp, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic, J9ROMFieldShape **field);
-   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic);
+   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic, TR_OpaqueClassBlock** fromResolvedJ9Method = NULL);
 
    virtual char *                  fieldNameChars(int32_t cpIndex, int32_t & len);
    virtual char *                  staticNameChars(int32_t cpIndex, int32_t & len);
@@ -446,6 +449,9 @@ public:
 
    virtual bool                    isCompilable(TR_Memory *);
 
+   // Check if a method at cpIndex has to be compile time resolved
+   //
+   virtual bool                    shouldCompileTimeResolveMethod(I_32 cpIndex);
    static TR_OpaqueMethodBlock *   getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex, UDATA *vTableOffset, bool *unresolvedInCP);
    static TR_OpaqueClassBlock  *   getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, uintptr_t *pITableIndex);
 
@@ -591,7 +597,7 @@ public:
 
    virtual bool                    staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
 
-   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic);
+   virtual TR_OpaqueClassBlock * definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic, TR_OpaqueClassBlock** fromResolvedJ9Method = NULL);
 
    virtual int32_t                 virtualCallSelector(uint32_t cpIndex);
    virtual char *                  fieldSignatureChars(int32_t cpIndex, int32_t & len);

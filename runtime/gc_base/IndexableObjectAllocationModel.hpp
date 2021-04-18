@@ -140,7 +140,7 @@ public:
 	 * @param objectPtr indexable object spine
 	 * @return the contiguous address pointer
 	 */
-	void *doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr);
+	void *doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr, void *preferredAddress);
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	/**

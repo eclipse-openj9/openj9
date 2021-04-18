@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@
 #include "runtime/JITServerStatisticsThread.hpp"
 #include "runtime/JITClientSession.hpp" // for purgeOldDataIfNeeded()
 #include "env/VMJ9.h" // for TR_JitPrivateConfig
+#include "env/VerboseLog.hpp"
 #include "control/CompilationRuntime.hpp" // for CompilatonInfo
 
 JITServerStatisticsThread::JITServerStatisticsThread()
@@ -74,6 +75,7 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
    uint64_t crtTime = j9time_current_time_millis();
    uint64_t lastStatsTime = crtTime;
    uint64_t lastPurgeTime = crtTime;
+   uint64_t lastCpuUpdate = crtTime;
 
    persistentInfo->setStartTime(crtTime);
    persistentInfo->setElapsedTime(0);
@@ -95,15 +97,16 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
             lastPurgeTime = crtTime;
             OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
             compInfo->getClientSessionHT()->purgeOldDataIfNeeded();
-            }
+            }     
 
          // Print operational statistics to vlog if enabled
+         CpuUtilization *cpuUtil = compInfo->getCpuUtil(); 
          if ((statsThreadObj->getStatisticsFrequency() != 0) && ((crtTime - lastStatsTime) > statsThreadObj->getStatisticsFrequency()))
             {
             int32_t cpuUsage = 0, avgCpuUsage = 0, vmCpuUsage = 0;
-            CpuUtilization *cpuUtil = compInfo->getCpuUtil();
             if (cpuUtil->isFunctional())
                {
+               lastCpuUpdate = crtTime;
                cpuUtil->updateCpuUtil(jitConfig);
                cpuUsage = cpuUtil->getCpuUsage();
                avgCpuUsage = cpuUtil->getAvgCpuUsage();
@@ -113,12 +116,20 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Number of clients : %u", compInfo->getClientSessionHT()->size());
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Total compilation threads : %d", compInfo->getNumUsableCompilationThreads());
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Active compilation threads : %d",compInfo->getNumCompThreadsActive());
+            bool incompleteInfo;
+            TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Physical memory available: %llu MB", compInfo->computeAndCacheFreePhysicalMemory(incompleteInfo) >> 20);
             if (cpuUtil->isFunctional())
                {
                TR_VerboseLog::writeLine(TR_Vlog_JITServer, "CpuLoad %d%% (AvgUsage %d%%) JvmCpu %d%%", cpuUsage, avgCpuUsage, vmCpuUsage);
                }
             TR_VerboseLog::vlogRelease();
             lastStatsTime = crtTime;
+            }
+            
+         if (cpuUtil->isFunctional() && TR::Options::isAnyVerboseOptionSet() && ((crtTime - lastCpuUpdate) >= 500))
+            {
+            lastCpuUpdate = crtTime;
+            cpuUtil->updateCpuUtil(jitConfig);
             }
          }
       // This thread has been interrupted or StatisticsThreadExitFlag flag was set
@@ -153,7 +164,7 @@ JITServerStatisticsThread::startStatisticsThread(J9JavaVM *javaVM)
                                                                &statisticsThreadProc,
                                                                javaVM->jitConfig,
                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
-         { 
+         {
          // cannot create the statistics thread
          TR::Monitor::destroy(_statisticsThreadMonitor);
          _statisticsThreadMonitor = NULL;
@@ -189,7 +200,7 @@ JITServerStatisticsThread::stopStatisticsThread(J9JITConfig * jitConfig)
       getStatisticsThreadMonitor()->exit();
 
       //Monitor is no longer needed
-      getStatisticsThreadMonitor()->destroy();
+      TR::Monitor::destroy(_statisticsThreadMonitor);
       _statisticsThreadMonitor = NULL;
       }
    }

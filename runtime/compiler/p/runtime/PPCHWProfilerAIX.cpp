@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@
 #include "p/runtime/PPCHWProfiler.hpp"
 #include "p/runtime/PPCHWProfilerPrivate.hpp"
 #include "control/CompilationThread.hpp"
+#include "env/VerboseLog.hpp"
 
 #include <dlfcn.h>
 #include <pmapi.h>
@@ -260,16 +261,6 @@ TR_PPCHWProfiler::initializeThread(J9VMThread *vmThread)
    if (IS_THREAD_RI_INITIALIZED(vmThread))
       return true;
 
-#if 0
-   PORT_ACCESS_FROM_VMC(vmThread);
-
-   j9ri_initialize(vmThread->riParameters);
-   if (IS_THREAD_RI_INITIALIZED(vmThread))
-      {
-      VERBOSE("J9VMThread=%p initialized for HW profiling.", vmThread);
-      return true;
-      }
-#else
    // If we've already hit our memory budget don't even try to go further
    if (_ppcHWProfilerBufferMemoryAllocated >= _ppcHWProfilerBufferMaximumMemory)
       return false;
@@ -459,7 +450,6 @@ fail:
       VERBOSE("Failure on J9VMThread=%p was critical. HW profiling will be unavailable from now on.", vmThread);
       setHWProfilingAvailable(false);
       }
-#endif
    return false;
    }
 
@@ -469,11 +459,6 @@ TR_PPCHWProfiler::deinitializeThread(J9VMThread *vmThread)
    if (!IS_THREAD_RI_INITIALIZED(vmThread))
       return true;
 
-#if 0
-   PORT_ACCESS_FROM_VMC(vmThread);
-
-   j9ri_deinitialize(vmThread->riParameters);
-#else
    const TR_PPCHWProfilerPMUConfig *configs = TR_PPCHWProfilerPMUConfig::getPMUConfigs();
 
    const uint64_t freeze = MMCR0_FC;
@@ -502,7 +487,6 @@ TR_PPCHWProfiler::deinitializeThread(J9VMThread *vmThread)
       VERBOSE("Failed to delete PMAPI program for J9VMThread=%p, rc: %d, %s", vmThread, rc, pmapi.pm_strerror("pm_delete_program_mythread", rc));
 
    vmThread->riParameters->flags &= ~J9PORT_RI_INITIALIZED;
-#endif
    vmThread->riParameters->controlBlock = NULL;
 
    return !IS_THREAD_RI_INITIALIZED(vmThread);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -595,7 +595,7 @@ validateLocalSlot(J9VMThread *currentThread, J9Method *ramMethod, U_32 offsetPC,
 		return J9_SLOT_VALIDATE_ERROR_NATIVE_METHOD;
 	}
 
-	/* Make sure the the slot number is in range of the args and temps */
+	/* Make sure the slot number is in range of the args and temps */
 
 	if ((slotSignature == 'D') || (slotSignature == 'J')) {
 		if ((slot + 1) >= argTempCount) {

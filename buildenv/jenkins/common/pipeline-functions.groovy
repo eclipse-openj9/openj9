@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,7 +163,7 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
         $class: "GitHubCommitStatusSetter",
         reposSource: [$class: "ManuallyEnteredRepositorySource", url: REPO],
         contextSource: [$class: "ManuallyEnteredCommitContextSource", context: CONTEXT],
-        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+        errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "SUCCESS"]],
         commitShaSource: [$class: "ManuallyEnteredShaSource", sha: SHA ],
         statusBackrefSource: [$class: "ManuallyEnteredBackrefSource", backref: URL],
         statusResultSource: [$class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: MESSAGE, state: STATE]] ]
@@ -423,14 +423,20 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             def testJobName = get_test_job_name(id, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
             def PARALLEL = "None"
-            if (testJobName.contains("special.system")) {
-                PARALLEL = "Subdir"
-            }
 
             def NUM_MACHINES = ""
             if (testJobName.contains("functional")) {
                 PARALLEL = "Dynamic"
                 NUM_MACHINES = "2"
+            } else if (testJobName.contains("sanity.system") || testJobName.contains("extended.system")) {
+                PARALLEL = "Dynamic"
+                NUM_MACHINES = "3"
+            } else if (testJobName.contains("special.system")) {
+                PARALLEL = "Dynamic"
+                NUM_MACHINES = "5"
+            } else if (testJobName.contains("jck_s390x_zos")) {
+                PARALLEL = "Dynamic"
+                NUM_MACHINES = "4"
             }
             testJobs[id] = {
                 if (params.ghprbPullId) {
@@ -775,7 +781,7 @@ def move_spec_suffix_to_id(spec, id) {
     def spec_id = [:]
     spec_id['spec'] = spec
     spec_id['id'] = id
-    for (suffix in ['cm', 'jit', 'valhalla', 'uma']) {
+    for (suffix in ['aot', 'cm', 'jit', 'valhalla', 'uma', 'ojdk292', 'vt_standard']) {
         if (spec.contains("_${suffix}")) {
             spec_id['spec'] = spec - "_${suffix}"
             spec_id['id'] = "${suffix}_" + id

@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2019 IBM Corp. and others
+// Copyright (c) 2006, 2021 IBM Corp. and others
 //	
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -348,7 +348,7 @@ TraceEvent=Trc_JCL_attach_chmod Overhead=1 Level=1 Template="Java_com_ibm_tools_
 TraceEvent=Trc_JCL_attach_createSharedResourcesDir Overhead=1 Level=1 Template="createSharedResourcesDir %s, status=%d"
 TraceEvent=Trc_JCL_attach_openSemaphore Overhead=1 Level=1 Template="openSemaphore name=%s, control director = %s, status=%d"
 TraceEvent=Trc_JCL_attach_notifyVm obsolete Overhead=1 Noenv Level=1 Template="notifyVm on semphore %s, control director = %s, status=%d"
-TraceEntry=Trc_JCL_attach_waitSemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl waiting on semaphore"
+TraceEntry=Trc_JCL_attach_waitSemaphoreEntry Obsolete Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl waiting on semaphore"
 TraceExit=Trc_JCL_attach_waitSemaphoreExit Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl received post on semaphore, status = %d"
 TraceEvent=Trc_JCL_attach_closeSemaphore Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_closeSemaphoreImpl"
 TraceEvent=Trc_JCL_attach_destroySemaphore Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_destroySemaphoreImpl status = %d"
@@ -628,8 +628,8 @@ TraceException=Trc_JCL_stringConversionFailed Overhead=1 Level=1 Template="JCL: 
 
 TraceException=Trc_JCL_heapStatisticsOOM Overhead=1 Level=1 Template="JCL: memory allocation failed creating heap statistics"
 
-TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleEntry Overhead=1 Level=3 Template="initializeRequiredClasses: Adding jdk.management.agent as root module"
-TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty Overhead=1 Level=3 Template="initializeRequiredClasses: Adding property %s=jdk.management.agent"
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleEntry Obsolete Overhead=1 Level=3 Template="initializeRequiredClasses: Adding jdk.management.agent as root module"
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty Obsolete Overhead=1 Level=3 Template="initializeRequiredClasses: Adding property %s=jdk.management.agent"
 TraceException=Trc_JCL_initializeRequiredClasses_addAgentModuleOutOfMemory Overhead=1 Level=1 Template="initializeRequiredClasses: Could not allocate propNameBuffer"
 
 TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_Entry Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Entering"
@@ -638,3 +638,44 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyCla
 TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_ExitError_Event Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Creating new classpath entries failed. Exiting with -1."
 TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_Exit Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Exiting"
 TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_ExitUrlCountZero Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Exiting because URL count is 0"
+
+TraceEntry=Trc_JCL_attach_waitSemaphoreEntry2 Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_waitSemaphoreImpl waiting on semaphore (%p)"
+TraceEntry=Trc_JCL_attach_closeSemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_closeSemaphoreImpl closing semaphore (%p)"
+TraceEntry=Trc_JCL_attach_destroySemaphoreEntry Overhead=1 Level=1 Template="Java_com_ibm_tools_attach_javaSE_IPC_destroySemaphoreImpl destroying semaphore (%p)"
+
+TraceEvent=Trc_JCL_init_nativeLibrariesLoadMethodID Overhead=1 Level=3 Template="init nativeLibrariesLoadMethodID (0x%zx)"
+
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_initImpl_setData Overhead=1 Level=3 Template="Set MemberName data: flags=0x%08X, name=%p, type=%p, clazz=%p, vmindex=%lld, target=%lld"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_init_Entry Overhead=1 Level=3 Template="MethodHandleNatives_init Enter: self = %p, ref = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_init_Exit Overhead=1 Level=3 Template="MethodHandleNatives_init Exit"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Entry Overhead=1 Level=3 Template="MethodHandleNatives_expand Enter: self = %p"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Data Overhead=1 Level=3 Template="MethodHandleNatives_expand Data: membername = %p, flags = 0x%08X, vmindex = %lld"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Exit Overhead=1 Level=3 Template="MethodHandleNatives_expand Exit"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Entry Overhead=1 Level=3 Template="MethodHandleNatives_resolve Enter: self = %p, caller = %p, speculativeResolve = %s"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Data Overhead=1 Level=3 Template="MethodHandleNatives_resolve Data: membername = %p, caller = %p, flags = 0x%08X, vmindex = %lld, target = %lld"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_NAS Overhead=1 Level=3 Template="MethodHandleNatives_resolve NAS: name = %.*s, signature = %.*s"
+TraceEvent=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_resolved Overhead=1 Level=3 Template="MethodHandleNatives_resolve Resolved to: vmindex = %lld, target = %lld, class = %p, flags = 0x%08X"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_resolve_Exit Overhead=1 Level=3 Template="MethodHandleNatives_resolve Exit"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMembers_Entry Overhead=1 Level=3 Template="MethodHandleNatives_getMembers Enter: defc = %p, matchName = %p, matchSig = %p, matchFlags = 0x%08X, caller = %p, skip = %d, results = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMembers_Exit Overhead=1 Level=3 Template="MethodHandleNatives_getMembers Exit: result = %d"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_objectFieldOffset_Entry Overhead=1 Level=3 Template="MethodHandleNatives_objectFieldOffset Enter: self = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_objectFieldOffset_Exit Overhead=1 Level=3 Template="MethodHandleNatives_objectFieldOffset Exit: result = %lld"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_staticFieldOffset_Entry Overhead=1 Level=3 Template="MethodHandleNatives_staticFieldOffset Enter: self = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_staticFieldOffset_Exit Overhead=1 Level=3 Template="MethodHandleNatives_staticFieldOffset Exit: result = %lld"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_staticFieldBase_Entry Overhead=1 Level=3 Template="MethodHandleNatives_staticFieldBase Enter: self = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_staticFieldBase_Exit Overhead=1 Level=3 Template="MethodHandleNatives_staticFieldBase Exit: result = %p"
+
+TraceEntry=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMemberVMInfo_Entry Overhead=1 Level=3 Template="MethodHandleNatives_getMemberVMInfo Enter: self = %p"
+TraceExit=Trc_JCL_java_lang_invoke_MethodHandleNatives_getMemberVMInfo_Exit Overhead=1 Level=3 Template="MethodHandleNatives_getMemberVMInfo Exit: result = %p"
+
+TraceException=Trc_JCL_initializeRequiredClasses_moduleForPackageNotFound Overhead=1 Level=1 Template="initializeRequiredClasses: module containing package %s not found"
+TraceException=Trc_JCL_initializeRequiredClasses_unexpectedModuleForPackage Overhead=1 Level=1 Template="initializeRequiredClasses: package %s found in module %s (expected %s) - not loading"
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleEntry Overhead=1 Level=3 Template="initializeRequiredClasses: Adding %s as root module"
+TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty Overhead=1 Level=3 Template="initializeRequiredClasses: Adding property %s=%s"

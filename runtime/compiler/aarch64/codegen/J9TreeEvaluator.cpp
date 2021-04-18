@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include <cmath>
+#include <iterator>
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/ARM64JNILinkage.hpp"
 #include "codegen/ARM64OutOfLineCodeSection.hpp"
@@ -35,12 +36,14 @@
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/TreeEvaluator.hpp"
+#include "compile/VirtualGuard.hpp"
 #include "il/AutomaticSymbol.hpp"
 #include "il/DataTypes.hpp"
 #include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/OMRDataTypes_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 
 /*
  * J9 ARM64 specific tree evaluator table overrides
@@ -188,7 +191,7 @@ generateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg, bool isArdbar
    // TR_softwareReadBarrier helper expects the vmThread in x0.
    generateMovInstruction(cg, node, x0Reg, vmThreadReg);
 
-   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier, false, false, false);
+   TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier);
    generateImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), deps, helperSym, NULL);
 
    generateTrg1MemInstruction(cg, loadOp, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(locationReg, 0, cg));
@@ -297,33 +300,359 @@ J9::ARM64::TreeEvaluator::ardbariEvaluator(TR::Node *node, TR::CodeGenerator *cg
       return generateSoftwareReadBarrier(node, cg, true);
    }
 
-static void wrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, bool srcNonNull, bool needDeps, TR::CodeGenerator *cg)
+/**
+ * @brief Generates inlined code for card marking and branch to wrbar helper
+ * @details
+ *    This method generates code for write barrier for generational GC policies.
+ *    It generates inlined code for
+ *    - checking whether the destination object is tenured
+ *    - checking if concurrent mark thread is active (for gc_modron_wrtbar_cardmark_and_oldcheck)
+ *    - card marking (for gc_modron_wrtbar_cardmark_and_oldcheck)
+ *    - checking if source object is in new space
+ *    - checking if remembered bit is set in object header
+ *
+ * @param node:       node
+ * @param dstReg:     register holding owning object
+ * @param srcReg:     register holding source object
+ * @param srm:        scratch register manager
+ * @param doneLabel:  done label
+ * @param wbRef:      symbol reference for write barrier helper
+ * @param cg:         code generator
+ */
+static void
+VMnonNullSrcWrtBarCardCheckEvaluator(
+      TR::Node *node,
+      TR::Register *dstReg,
+      TR::Register *srcReg,
+      TR_ARM64ScratchRegisterManager *srm,
+      TR::LabelSymbol *doneLabel,
+      TR::SymbolReference *wbRef ,
+      TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   // assuming gcMode == gc_modron_wrtbar_always;
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always);
+   bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark_and_oldcheck);
+   //We need to do a runtime check on cardmarking for gencon policy if our dstReg is in tenure
+
+   if (gcMode != gc_modron_wrtbar_always)
+      {
+      /*
+       * Generating code checking whether an object is tenured
+       *
+       * movzx temp1Reg, #heapBase
+       * subx  temp1Reg, dstReg, temp1Reg
+       * movzx temp2Reg, #heapSize
+       * cmpx  temp1Reg, temp2Reg
+       * b.cs  doneLabel
+       *
+       */
+      TR::Register *temp1Reg = srm->findOrCreateScratchRegister();
+      TR::Register *temp2Reg = srm->findOrCreateScratchRegister();
+      TR::Register *metaReg = cg->getMethodMetaDataRegister();
+
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator"), *srm);
+
+      if (comp->getOptions()->isVariableHeapBaseForBarrierRange0() || comp->compileRelocatableCode())
+         {
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapBaseForBarrierRange0), cg));
+         }
+      else
+         {
+         uintptr_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
+         loadAddressConstant(cg, node, heapBase, temp1Reg);
+         }
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, temp1Reg, dstReg, temp1Reg);
+
+      if (comp->getOptions()->isVariableHeapSizeForBarrierRange0())
+         {
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp2Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapSizeForBarrierRange0), cg));
+         }
+      else
+         {
+         uintptr_t heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
+         loadConstant64(cg, node, heapSize, temp2Reg);
+         }
+      generateCompareInstruction(cg, node, temp1Reg, temp2Reg, true);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_CS);
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator:01oldCheckDone"), *srm);
+
+      TR::LabelSymbol *noChkLabel = generateLabelSymbol(cg);
+      if (doCrdMrk)
+         {
+         /*
+          * Check if J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE flag is set.
+          * If not, skip card dirtying.
+          *
+          *   ldrimmx temp2Reg, [vmThread, #privateFlag]
+          *   tbz     temp2Reg, #20, crdMrkDoneLabel
+          *   ldrimmx temp2Reg, [vmThread, #activeCardTableBase]
+          *   addx    temp2Reg, temp2Reg, temp1Reg, LSR #card_size_shift ; At this moment, temp1Reg contains (dstReg - #heapBase)
+          *   movzx   temp1Reg, 1
+          *   strbimm temp1Reg, [temp2Reg, 0]
+          *
+          * crdMrkDoneLabel:
+          */
+         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator:02cardmark"), *srm);
+
+         static_assert(J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE == (1 << 20), "We assume that J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE is 0x100000");
+         TR::LabelSymbol *crdMrkDoneLabel = generateLabelSymbol(cg);
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp2Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, privateFlags), cg));
+         generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, temp2Reg, 20, crdMrkDoneLabel);
+
+         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator:03markThreadActiveCheckDone"), *srm);
+
+         uintptr_t card_size_shift = trailingZeroes((uint64_t)comp->getOptions()->getGcCardSize());
+         if (comp->getOptions()->isVariableActiveCardTableBase() || comp->compileRelocatableCode())
+            {
+            generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp2Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, activeCardTableBase), cg));
+            }
+         else
+            {
+            uintptr_t activeCardTableBase = comp->getOptions()->getActiveCardTableBase();
+            loadAddressConstant(cg, node, activeCardTableBase, temp2Reg);
+            }
+         generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, temp2Reg, temp2Reg, temp1Reg, TR::SH_LSR, card_size_shift);
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, temp1Reg, 1);
+         generateMemSrc1Instruction(cg, TR::InstOpCode::strbimm, node, new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, 0, cg), temp1Reg);
+
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, crdMrkDoneLabel);
+
+         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator:04cardmarkDone"), *srm);
+         }
+
+      /*
+       * Generating code checking whether the src is in new space
+       *
+       *   movzx temp1Reg, #heapBase
+       *   subx  temp1Reg, srcReg, temp1Reg
+       *   movzx temp2Reg, #heapSize
+       *   cmpx  temp1Reg, temp2Reg
+       *   b.cc  doneLabel
+       */
+      if (comp->getOptions()->isVariableHeapBaseForBarrierRange0() || comp->compileRelocatableCode())
+         {
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapBaseForBarrierRange0), cg));
+         }
+      else
+         {
+         uintptr_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
+         loadAddressConstant(cg, node, heapBase, temp1Reg);
+         }
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, temp1Reg, srcReg, temp1Reg);
+
+      // If doCrdMrk is false, then temp2Reg still contains heapSize
+      if (doCrdMrk)
+         {
+         if (comp->getOptions()->isVariableHeapSizeForBarrierRange0())
+            {
+            generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp2Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapSizeForBarrierRange0), cg));
+            }
+         else
+            {
+            uintptr_t heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
+            loadConstant64(cg, node, heapSize, temp2Reg);
+            }
+         }
+
+      generateCompareInstruction(cg, node, temp1Reg, temp2Reg, true);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_CC);
+
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator:05sourceCheckDone"), *srm);
+
+      /*
+       * Generating code checking whether the remembered bit is set
+       *
+       *   ldrimmx temp1Reg, [dstReg, #offsetOfHeaderFlags]
+       *   tstimmw temp1Reg, J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST
+       *   b.ne    doneLabel
+       *   bl      jitWriteBarrierGenerational
+       */
+      static_assert(J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST == 0xf0, "We assume that J9_OBJECT_HEADER_REMEMBERED_MASK_FOR_TEST is 0xf0");
+      generateTrg1MemInstruction(cg, (TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx), node, temp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(dstReg, TR::Compiler->om.offsetOfHeaderFlags(), cg));
+      generateTestImmInstruction(cg, node, temp1Reg, 0x703, false); // 0x703 is immr:imms for 0xf0
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_NE);
+
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:010VMnonNullSrcWrtBarCardCheckEvaluator:06rememberedBitCheckDone"), *srm);
+
+      srm->reclaimScratchRegister(temp1Reg);
+      srm->reclaimScratchRegister(temp2Reg);
+      }
+   generateImmSymInstruction(cg, TR::InstOpCode::bl, node, reinterpret_cast<uintptr_t>(wbRef->getMethodAddress()), NULL, wbRef, NULL);
+   cg->machine()->setLinkRegisterKilled(true);
+   }
+
+/**
+ * @brief Generates inlined code for card marking
+ * @details
+ *    This method generates code for write barrier for optavgpause/balanced GC policies.
+ *    It generates inlined code for
+ *    - checking if concurrent mark thread is active (for optavgpause)
+ *    - checking whether the destination object is in heap
+ *    - card marking
+ *
+ * @param node:       node
+ * @param dstReg:     register holding owning object
+ * @param srm:        scratch register manager
+ * @param doneLabel:  done label
+ * @param cg:         code generator
+ */
+static void
+VMCardCheckEvaluator(
+      TR::Node *node,
+      TR::Register *dstReg,
+      TR_ARM64ScratchRegisterManager *srm,
+      TR::LabelSymbol *doneLabel,
+      TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   TR::Register *temp1Reg = srm->findOrCreateScratchRegister();
+   TR::Register *metaReg = cg->getMethodMetaDataRegister();
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:020VMCardCheckEvaluator"), *srm);
+   // If gcpolicy is balanced, we must always do card marking
+   if (gcMode != gc_modron_wrtbar_cardmark_incremental)
+      {
+      /*
+       * Check if J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE flag is set.
+       * If not, skip card dirtying.
+       *
+       *   ldrimmx temp1Reg, [vmThread, #privateFlag]
+       *   tbz     temp1Reg, #20, doneLabel
+       */
+
+      static_assert(J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE == (1 << 20), "We assume that J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE is 0x100000");
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, privateFlags), cg));
+      generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, temp1Reg, 20, doneLabel);
+
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:020VMCardCheckEvaluator:01markThreadActiveCheckDone"), *srm);
+      }
+
+   TR::Register *temp2Reg = srm->findOrCreateScratchRegister();
+      /*
+       * Generating code checking whether an object is in heap
+       *
+       * movzx temp1Reg, #heapBase
+       * subx  temp1Reg, dstReg, temp1Reg
+       * movzx temp2Reg, #heapSize
+       * cmpx  temp1Reg, temp2Reg
+       * b.cs  doneLabel
+       *
+       */
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:020VMCardCheckEvaluator:020heapCheck"), *srm);
+
+   if (comp->getOptions()->isVariableHeapBaseForBarrierRange0() || comp->compileRelocatableCode())
+      {
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapBaseForBarrierRange0), cg));
+      }
+   else
+      {
+      uintptr_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
+      loadAddressConstant(cg, node, heapBase, temp1Reg);
+      }
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, temp1Reg, dstReg, temp1Reg);
+
+   // If we know the object is definitely in heap, then we skip the check.
+   if (!node->isHeapObjectWrtBar())
+      {
+      if (comp->getOptions()->isVariableHeapSizeForBarrierRange0())
+         {
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp2Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapSizeForBarrierRange0), cg));
+         }
+      else
+         {
+         uintptr_t heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
+         loadConstant64(cg, node, heapSize, temp2Reg);
+         }
+      generateCompareInstruction(cg, node, temp1Reg, temp2Reg, true);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_CS);
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:020VMCardCheckEvaluator:03heapCheckDone"), *srm);
+      }
+
+   /*
+    *  Generating card dirtying sequence.
+    *  We don't call out to VM helpers.
+    *
+    *  ldrimmx temp2Reg, [vmThread, #activeCardTableBase]
+    *  addx    temp2Reg, temp2Reg, temp1Reg, LSR #card_size_shift ; At this moment, temp1Reg contains (dstReg - #heapBase)
+    *  movzx   temp1Reg, 1
+    *  strbimm temp1Reg, [temp2Reg, 0]
+    *
+    */
+   uintptr_t card_size_shift = trailingZeroes((uint64_t)comp->getOptions()->getGcCardSize());
+   if (comp->getOptions()->isVariableActiveCardTableBase() || comp->compileRelocatableCode())
+      {
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp2Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, activeCardTableBase), cg));
+      }
+   else
+      {
+      uintptr_t activeCardTableBase = comp->getOptions()->getActiveCardTableBase();
+      loadAddressConstant(cg, node, activeCardTableBase, temp2Reg);
+      }
+   generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, temp2Reg, temp2Reg, temp1Reg, TR::SH_LSR, card_size_shift);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, temp1Reg, 1);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::strbimm, node, new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, 0, cg), temp1Reg);
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:020VMCardCheckEvaluator:04cardmarkDone"), *srm);
+   }
+
+static void wrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, bool srcNonNull, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR::Instruction * cursor;
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   bool doWrtBar = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always);
+   bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark ||gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental);
+
+   if ((node->getOpCode().isWrtBar() && node->skipWrtBar()) || node->isNonHeapObjectWrtBar())
+      return;
+
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-   TR::RegisterDependencyConditions *conditions = NULL;
 
-   if (needDeps)
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator"), *srm);
+
+   if (doWrtBar) // generational or gencon
       {
-      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-      TR::addDependency(conditions, dstReg,  TR::RealRegister::x0, TR_GPR, cg);
-      TR::addDependency(conditions, srcReg,  TR::RealRegister::x1, TR_GPR, cg);
+      TR::SymbolReference *wbRef = (gcMode == gc_modron_wrtbar_always) ?
+         comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef() :
+         // use jitWriteBarrierStoreGenerational for both generational and gencon, because we inline card marking.
+         comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef();
+
+      if (!srcNonNull)
+         {
+         // If object is NULL, done
+         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:000srcNullChk"), *srm);
+         generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel);
+         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:000srcNullChk:NonNull"), *srm);
+         }
+      // Inlines cardmarking and remembered bit check for gencon.
+      VMnonNullSrcWrtBarCardCheckEvaluator(node, dstReg, srcReg, srm, doneLabel, wbRef, cg);
+
+      }
+   else if (doCrdMrk)
+      {
+      TR::SymbolReference *wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
+      if (!srcNonNull)
+         {
+         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:000srcNullChk"), *srm);
+         generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel);
+         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:000srcNullChk:NonNull"), *srm);
+         }
+      VMCardCheckEvaluator(node, dstReg, srm, doneLabel, cg);
       }
 
-   TR::SymbolReference *wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
-   // nullcheck store - skip write barrier if null being written in
-   if (!srcNonNull)
-      {
-      generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel);
-      }
-   generateImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)wbRef->getMethodAddress(),
-                                        new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg->trMemory()),
-                                        wbRef, NULL);
-
+   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2 + srm->numAvailableRegisters(), cg->trMemory());
+   conditions->addPostCondition(dstReg, doWrtBar ? TR::RealRegister::x0 : TR::RealRegister::NoReg);
+   conditions->addPostCondition(srcReg, doWrtBar ? TR::RealRegister::x1 : TR::RealRegister::NoReg);
+   srm->addScratchRegistersToDependencyList(conditions);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions, NULL);
 
-   cg->machine()->setLinkRegisterKilled(true);
+   srm->stopUsingRegisters();
    }
 
 TR::Register *
@@ -423,7 +752,11 @@ J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
 
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, tempMR, sourceRegister, NULL);
-   wrtbarEvaluator(node, sourceRegister, destinationRegister, firstChild->isNonNull(), true, cg);
+
+   if (needSync)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF);
+
+   wrtbarEvaluator(node, sourceRegister, destinationRegister, firstChild->isNonNull(), cg);
 
    if (killSource)
       cg->stopUsingRegister(sourceRegister);
@@ -454,44 +787,12 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    if (comp->useCompressedPointers() && (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) && (node->getSecondChild()->getDataType() != TR::Address))
       {
-      // pattern match the sequence
-      //     awrtbari f    awrtbari f         <- node
-      //       aload O       aload O
-      //     value           l2i
-      //                       lshr         <- translatedNode
-      //                         lsub
-      //                           a2l
-      //                             value   <- secondChild
-      //                           lconst HB
-      //                         iconst shftKonst
-      //
-      // -or- if the field is known to be null or usingLowMemHeap
-      // awrtbari f
-      //    aload O
-      //    l2i
-      //      a2l
-      //        value  <- secondChild
-      //
-      TR::Node *translatedNode = secondChild;
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
+      usingCompressedPointers = true;
 
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 || secondChild->isNull())
-         usingLowMemHeap = true;
-
-      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
-         usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
-         {
-         while (secondChild->getNumChildren() && secondChild->getOpCodeValue() != TR::a2l)
-            secondChild = secondChild->getFirstChild();
-         if (secondChild->getNumChildren())
-            secondChild = secondChild->getFirstChild();
-         }
+      while (secondChild->getNumChildren() && secondChild->getOpCodeValue() != TR::a2l)
+         secondChild = secondChild->getFirstChild();
+      if (secondChild->getNumChildren())
+         secondChild = secondChild->getFirstChild();
       }
 
    if (secondChild->getReferenceCount() > 1 && secondChild->getRegister() != NULL)
@@ -522,7 +823,10 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    generateMemSrc1Instruction(cg, storeOp, node, tempMR, translatedSrcReg);
 
-   wrtbarEvaluator(node, sourceRegister, destinationRegister, secondChild->isNonNull(), true, cg);
+   if (needSync)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF);
+
+   wrtbarEvaluator(node, sourceRegister, destinationRegister, secondChild->isNonNull(), cg);
 
    if (killSource)
       cg->stopUsingRegister(sourceRegister);
@@ -573,6 +877,40 @@ J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return NULL;
    }
 
+/**
+ * @brief Generates instructions to load j9class from object pointer
+ *
+ * @param[in]       node: node
+ * @param[in] j9classReg: register j9class value is assigned to
+ * @param[in]     objReg: register holding object pointer
+ * @param[in]         cg: code generator
+ */
+static void
+generateLoadJ9Class(TR::Node *node, TR::Register *j9classReg, TR::Register *objReg, TR::CodeGenerator *cg)
+   {
+   generateTrg1MemInstruction(cg, TR::Compiler->om.compressObjectReferences() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx, node, j9classReg,
+      new (cg->trHeapMemory()) TR::MemoryReference(objReg, static_cast<int32_t>(TR::Compiler->om.offsetOfObjectVftField()), cg));
+   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, j9classReg);
+   }
+
+void
+J9::ARM64::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *temp1Reg, TR::Register *temp2Reg, TR::CodeGenerator *cg, int32_t classFlag)
+{
+   // get class of object
+   generateLoadJ9Class(node, temp1Reg, objReg, cg);
+
+   // get memory reference to class flags
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::MemoryReference *classFlagsMemRef = new (cg->trHeapMemory()) TR::MemoryReference(temp1Reg, static_cast<uintptr_t>(fej9->getOffsetOfClassFlags()), cg);
+
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, temp1Reg, classFlagsMemRef);
+   loadConstant32(cg, node, classFlag, temp2Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::andw, node, temp1Reg, temp1Reg, temp2Reg);
+
+   // If obj is value type or value based class instance, call VM helper and throw IllegalMonitorState exception, else continue as usual
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, helperCallLabel, TR::CC_NE);
+}
+
 TR::Register *
 J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -580,9 +918,11 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
    TR::InstOpCode::Mnemonic op;
+   TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
    if (comp->getOption(TR_OptimizeForSpace) ||
        comp->getOption(TR_FullSpeedDebug) ||
+       (isMonitorValueBasedOrValueType == TR_yes) ||
        comp->getOption(TR_DisableInlineMonExit) ||
        lwOffset <= 0)
       {
@@ -610,9 +950,31 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::LabelSymbol *decLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
+   // If object is not known to be value type or value based class at compile time, check at run time
+   if (isMonitorValueBasedOrValueType == TR_maybe)
+      {
+      generateCheckForValueMonitorEnterOrExit(node, callLabel, objReg, tempReg, dataReg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+      }
+
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, lwOffset);
    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx;
-   generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+   auto faultingInstruction = generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+
+   // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
+   // In this case, nullcheck reference register is objReg, but the memory reference does not use it,
+   // thus we need to explicitly set implicit exception point here.
+   if (cg->getHasResumableTrapHandler() && cg->getCurrentEvaluationTreeTop()->getNode()->getOpCode().isNullCheck())
+      {
+      if (cg->getImplicitExceptionPoint() == NULL)
+         {
+         if (comp->getOption(TR_TraceCG))
+            {
+            traceMsg(comp, "Instruction %p throws an implicit NPE, node: %p NPE node: %p\n", faultingInstruction, node, objNode);
+            }
+         cg->setImplicitExceptionPoint(faultingInstruction);
+         }
+      }
+
    generateCompareInstruction(cg, node, dataReg, metaReg, true);
 
    generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, decLabel, TR::CC_NE);
@@ -675,29 +1037,810 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
 TR::Register *
 J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   // Call helper
-   TR::ILOpCodes opCode = node->getOpCodeValue();
-   TR::Node::recreate(node, TR::icall);
-   TR::Register *targetRegister = directCallEvaluator(node, cg);
-   TR::Node::recreate(node, opCode);
-   return targetRegister;
+   return VMinstanceofEvaluator(node, cg);
+   }
+
+/**
+ *  @brief Generates Superclass Test for checkcast/instanceof/ArrayStoreCHK nodes.
+ *  @details
+ *    It will generate pseudocode as follows.
+ *    if (objectClassDepth <= castClassDepth) call Helper
+ *    else
+ *    load superClassArrReg,superClassOfObjectClass
+ *    cmp superClassArrReg[castClassDepth], castClass
+ *    Here It sets up the condition code for callee to react on.
+ *
+ *  @param[in] node:                           node
+ *  @param[in] instanceClassReg:               register contains instance class
+ *  @param[in] instanceClassRegCanBeReclaimed: if true, instanceClassReg is reclaimed
+ *  @param[in] castClassReg:                   register contains cast class
+ *  @param[in] castClassDepth:                 class depth of the cast class. If -1 is passed, depth is loaded at runtime
+ *  @param[in] falseLabel:                     label to jump when test fails
+ *  @param[in] srm:                            scratch register manager
+ *  @param[in] cg:                             code generator
+ */
+static
+void genSuperClassTest(TR::Node *node, TR::Register *instanceClassReg, bool instanceClassRegCanBeReclaimed, TR::Register *castClassReg, int32_t castClassDepth,
+                                            TR::LabelSymbol *falseLabel, TR_ARM64ScratchRegisterManager *srm, TR::CodeGenerator *cg)
+   {
+   // Compare the instance class depth to the cast class depth. If the instance class depth is less than or equal to
+   // to the cast class depth then the cast class cannot be a superclass of the instance class.
+   //
+   TR::Register *instanceClassDepthReg = srm->findOrCreateScratchRegister();
+   TR::Register *castClassDepthReg = NULL;
+   static_assert(J9AccClassDepthMask == 0xffff, "J9_JAVA_CLASS_DEPTH_MASK must be 0xffff");
+   // load lower 16bit of classDepthAndFlags
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, instanceClassDepthReg,
+                              new (cg->trHeapMemory()) TR::MemoryReference(instanceClassReg, offsetof(J9Class, classDepthAndFlags), cg));
+   if (castClassDepth != -1)
+      {
+      // castClassDepth is known at compile time
+      if (constantIsUnsignedImm12(castClassDepth))
+         {
+         generateCompareImmInstruction(cg, node, instanceClassDepthReg, castClassDepth);
+         }
+      else
+         {
+         castClassDepthReg = srm->findOrCreateScratchRegister();
+         loadConstant32(cg, node, castClassDepth, castClassDepthReg);
+         generateCompareInstruction(cg, node, instanceClassDepthReg, castClassDepthReg);
+         }
+      }
+   else
+      {
+      // castClassDepth needs to be loaded from castClass
+      castClassDepthReg = srm->findOrCreateScratchRegister();
+      // load lower 16bit of classDepthAndFlags
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhimm, node, castClassDepthReg,
+                              new (cg->trHeapMemory()) TR::MemoryReference(castClassReg, offsetof(J9Class, classDepthAndFlags), cg));
+      generateCompareInstruction(cg, node, instanceClassDepthReg, castClassDepthReg);
+      }
+   srm->reclaimScratchRegister(instanceClassDepthReg);
+   instanceClassDepthReg = NULL; // prevent re-using this register by error
+
+   // if objectClassDepth is less than or equal to castClassDepth, then call Helper
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, falseLabel, TR::CC_LE);
+
+   // Load the superclasses array of the instance class and check if the superclass that appears at the depth of the cast class is in fact the cast class.
+   // If not, the instance class and cast class are not in the same hierarchy.
+   //
+   TR::Register *instanceClassSuperClassesArrayReg = srm->findOrCreateScratchRegister();
+
+   generateTrg1MemInstruction(cg,TR::InstOpCode::ldrimmx, node, instanceClassSuperClassesArrayReg,
+                              new (cg->trHeapMemory()) TR::MemoryReference(instanceClassReg, offsetof(J9Class, superclasses), cg));
+
+   if (instanceClassRegCanBeReclaimed)
+      {
+      srm->reclaimScratchRegister(instanceClassReg);
+      instanceClassReg = NULL; // prevent re-using this register by error
+      }
+
+   TR::Register *instanceClassSuperClassReg = srm->findOrCreateScratchRegister();
+
+   int32_t castClassDepthOffset = castClassDepth * TR::Compiler->om.sizeofReferenceAddress();
+   if ((castClassDepth != -1) && constantIsUnsignedImm12(castClassDepthOffset))
+      {
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, instanceClassSuperClassReg,
+                                 new (cg->trHeapMemory()) TR::MemoryReference(instanceClassSuperClassesArrayReg, castClassDepthOffset, cg));
+      }
+   else
+      {
+      if (!castClassDepthReg)
+         {
+         castClassDepthReg = srm->findOrCreateScratchRegister();
+         loadConstant32(cg, node, castClassDepth, castClassDepthReg);
+         }
+      generateLogicalShiftLeftImmInstruction(cg, node, castClassDepthReg, castClassDepthReg, 3, false);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldroffx, node, instanceClassSuperClassReg, new (cg->trHeapMemory()) TR::MemoryReference(instanceClassSuperClassesArrayReg, castClassDepthReg, cg));
+      }
+   generateCompareInstruction(cg, node, instanceClassSuperClassReg, castClassReg, true);
+
+   if (castClassDepthReg)
+      srm->reclaimScratchRegister(castClassDepthReg);
+   srm->reclaimScratchRegister(instanceClassSuperClassesArrayReg);
+   srm->reclaimScratchRegister(instanceClassSuperClassReg);
+
+   // At this point EQ flag will be set if the cast class is a superclass of the instance class. Caller is responsible for acting on the result.
+   }
+
+/** 
+ * @brief Generates Arbitrary Class Test for instanceOf or checkCast node
+ */
+static
+void genInstanceOfOrCheckCastArbitraryClassTest(TR::Node *node, TR::Register *instanceClassReg, TR_OpaqueClassBlock *arbitraryClass,
+                                                TR_ARM64ScratchRegisterManager *srm, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR::Register *arbitraryClassReg = srm->findOrCreateScratchRegister();
+   TR_J9VMBase *fej9 = static_cast<TR_J9VMBase *>(comp->fe());
+
+   if (comp->compileRelocatableCode())
+      {
+      loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, TR_ClassPointer);
+      }
+   else
+      {
+      bool isUnloadAssumptionRequired = fej9->isUnloadAssumptionRequired(arbitraryClass, comp->getCurrentMethod());
+
+      if (isUnloadAssumptionRequired)
+         {
+         loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, TR_NoRelocation, true); 
+         }
+      else
+         {
+         loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, NULL, true);
+         }
+      }
+   generateCompareInstruction(cg, node, instanceClassReg, arbitraryClassReg, true);
+   
+   srm->reclaimScratchRegister(arbitraryClassReg);
+
+   // At this point EQ flag will be set if the cast class matches the arbitrary class. Caller is responsible for acting on the result.
+   }
+
+/** 
+ * @brief Generates ArrayOfJavaLangObjectTest (object class is reference array) for instanceOf or checkCast node
+ * @details
+ *    scratchReg1 = load (objectClassReg+offset_romClass)
+ *    scratchReg1 = load (ROMClass+J9ROMClass+modifiers)
+ *    tstImmediate with J9AccClassArray(0x10000)
+ *    If not Array -> Branch to Fail Label
+ *    testerReg = load (objectClassReg + leafcomponent_offset)
+ *    testerReg = load (objectClassReg + offset_romClass)
+ *    testerReg = load (objectClassReg + offset_modifiers)
+ *    tstImmediate with J9AccClassInternalPrimitiveType(0x20000)
+ *    // if branchOnPrimitiveTypeCheck is true
+ *    If arrays of primitive -> Branch to Fail Label
+ *    // else
+ *    if not arrays of primitive set condition code to Zero indicating true result
+ */
+static
+void genInstanceOfOrCheckCastObjectArrayTest(TR::Node *node, TR::Register *instanceClassReg, TR::LabelSymbol *falseLabel, bool useTBZ,
+                                             TR_ARM64ScratchRegisterManager *srm, TR::CodeGenerator *cg)
+   {
+   // Load the object ROM class and test the modifiers to see if this is an array.
+   //
+   TR::Register *scratchReg = srm->findOrCreateScratchRegister();
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, scratchReg, new (cg->trHeapMemory()) TR::MemoryReference(instanceClassReg, offsetof(J9Class, romClass), cg));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, scratchReg, new (cg->trHeapMemory()) TR::MemoryReference(scratchReg, offsetof(J9ROMClass, modifiers), cg));
+   static_assert(J9AccClassArray == 0x10000, "J9AccClassArray must be 0x10000");
+   // If not array, branch to falseLabel
+   if (useTBZ)
+      {
+      generateTestBitBranchInstruction(cg, TR::InstOpCode::tbz, node, scratchReg, 16, falseLabel);
+      }
+   else
+      {
+      generateTestImmInstruction(cg, node, scratchReg, 0x400); // 0x400 is immr:imms for 0x10000
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, falseLabel, TR::CC_EQ);
+      }
+
+   // If it's an array, load the component ROM class and test the modifiers to see if this is a primitive array.
+   //
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, scratchReg, new (cg->trHeapMemory()) TR::MemoryReference(instanceClassReg, offsetof(J9ArrayClass, componentType), cg));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, scratchReg, new (cg->trHeapMemory()) TR::MemoryReference(scratchReg, offsetof(J9Class, romClass), cg));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, scratchReg, new (cg->trHeapMemory()) TR::MemoryReference(scratchReg, offsetof(J9ROMClass, modifiers), cg));
+
+   static_assert(J9AccClassInternalPrimitiveType == 0x20000, "J9AccClassInternalPrimitiveType must be 0x20000");
+   generateTestImmInstruction(cg, node, scratchReg, 0x3c0); // 0x3c0 is immr:imms for 0x20000
+
+   srm->reclaimScratchRegister(scratchReg);
+
+   // At this point EQ flag will be set if this is not a primitive array. Caller is responsible acting on the result.
+   }
+
+template<class It>
+bool
+isTerminalSequence(It it, It itEnd)
+   {
+   return (it + 1) == itEnd;
+   }
+
+template<class It>
+bool
+isNextItemGoToTrue(It it, It itEnd)
+   {
+   return (!isTerminalSequence(it, itEnd)) && *(it + 1) == J9::TreeEvaluator::GoToTrue;
+   }
+
+template<class It>
+bool
+isNextItemGoToFalse(It it, It itEnd)
+   {
+   return (!isTerminalSequence(it, itEnd)) && *(it + 1) == J9::TreeEvaluator::GoToFalse;
+   }
+
+template<class It>
+bool
+isNextItemHelperCall(It it, It itEnd)
+   {
+   return (!isTerminalSequence(it, itEnd)) && *(it + 1) == J9::TreeEvaluator::HelperCall;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation                      *comp = cg->comp();
+   TR_OpaqueClassBlock                  *compileTimeGuessClass;
+   int32_t                               maxProfiledClasses = comp->getOptions()->getCheckcastMaxProfiledClassTests();
+   traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
+   TR_ASSERT_FATAL(maxProfiledClasses <= 4, "Maximum 4 profiled classes per site allowed because we use a fixed stack allocated buffer for profiled classes\n");
+   InstanceOfOrCheckCastSequences        sequences[InstanceOfOrCheckCastMaxSequences];
+   bool                                  topClassWasCastClass = false;
+   float                                 topClassProbability = 0.0;
+
+   bool                                  profiledClassIsInstanceOf;
+   InstanceOfOrCheckCastProfiledClasses  profiledClassesList[4];
+   uint32_t                              numberOfProfiledClass;
+   uint32_t                              numSequencesRemaining = calculateInstanceOfOrCheckCastSequences(node, sequences, &compileTimeGuessClass, cg, profiledClassesList, &numberOfProfiledClass, maxProfiledClasses, &topClassProbability, &topClassWasCastClass);
+
+
+   TR::Node                       *objectNode = node->getFirstChild();
+   TR::Node                       *castClassNode = node->getSecondChild();
+   TR::Register                   *objectReg = cg->evaluate(objectNode);
+   TR::Register                   *castClassReg = NULL;
+   TR::Register                   *resultReg = cg->allocateRegister();
+
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *callHelperLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *nextSequenceLabel = generateLabelSymbol(cg);
+
+   TR::Instruction *gcPoint;
+
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+   TR::Register                 *objectClassReg = NULL;
+
+   // initial result is false
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 0);
+
+   auto itBegin = std::begin(sequences);
+   const auto itEnd = std::next(itBegin, numSequencesRemaining);
+   
+   for (auto it = itBegin; it != itEnd; it++)
+      {
+      auto current = *it;
+      switch (current)
+         {
+         case EvaluateCastClass:
+            TR_ASSERT(!castClassReg, "Cast class already evaluated");
+            castClassReg = cg->gprClobberEvaluate(castClassNode);
+            break;
+         case LoadObjectClass:
+            TR_ASSERT(!objectClassReg, "Object class already loaded");
+            objectClassReg = srm->findOrCreateScratchRegister();
+            generateLoadJ9Class(node, objectClassReg, objectReg, cg);
+            break;
+         case NullTest:
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
+            TR_ASSERT(!objectNode->isNonNull(), "Object is known to be non-null, no need for a null test");
+            if (isNextItemGoToTrue(it, itEnd))
+               {
+               generateCompareImmInstruction(cg, node, objectReg, 0, true);
+               generateCSetInstruction(cg, node, resultReg, TR::CC_NE);
+               // consume GoToTrue
+               it++;
+               }
+            else
+               {
+               auto nullLabel = isNextItemHelperCall(it, itEnd) ? callHelperLabel : doneLabel;
+               // branch to doneLabel to return false
+               generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, objectReg, nullLabel);
+               }
+            break;
+         case GoToTrue:
+            TR_ASSERT_FATAL(isTerminalSequence(it, itEnd), "GoToTrue should be the terminal sequence");
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting GoToTrue\n", node->getOpCode().getName());
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 1);
+            break;
+         case GoToFalse:
+            TR_ASSERT_FATAL(isTerminalSequence(it, itEnd), "GoToFalse should be the terminal sequence");
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting GoToFalse\n", node->getOpCode().getName());
+            break;
+         case ClassEqualityTest:
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ClassEqualityTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/Equality", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            generateCompareInstruction(cg, node, objectClassReg, castClassReg, true);
+            generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
+            break;
+         case SuperClassTest:
+            {
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting SuperClassTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/SuperClassTest", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
+            auto falseLabel = isNextItemGoToFalse(it, itEnd) ? doneLabel : (isNextItemHelperCall(it, itEnd) ? callHelperLabel : nextSequenceLabel);
+            genSuperClassTest(node, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
+            generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
+            }
+            break;
+         case ProfiledClassTest:
+            {
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ProfiledClassTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/Profile", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            auto profiledClassesIt = std::begin(profiledClassesList);
+            auto profiledClassesItEnd = std::next(profiledClassesIt, numberOfProfiledClass);
+            while (profiledClassesIt != profiledClassesItEnd)
+               {
+               if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: ProfiledClassTest: profiledClass = %p, isProfiledClassInstanceOfCastClass = %s\n",
+                                                         node->getOpCode().getName(), profiledClassesIt->profiledClass,
+                                                         (profiledClassesIt->isProfiledClassInstanceOfCastClass) ? "true" : "false");
+
+               genInstanceOfOrCheckCastArbitraryClassTest(node, objectClassReg, profiledClassesIt->profiledClass, srm, cg);
+               /**
+                *  At this point EQ flag will be set if the profiledClass matches the cast class.
+                *  Set resultReg to 1 if isProfiledClassInstanceOfCastClass is true
+                */ 
+               if (profiledClassesIt->isProfiledClassInstanceOfCastClass)
+                  {
+                  generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
+                  }
+               profiledClassesIt++;
+               if (profiledClassesIt != profiledClassesItEnd)
+                  {
+                  generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+                  }
+               }
+            }
+            break;
+         case CompileTimeGuessClassTest:
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CompileTimeGuessClassTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/compTimeGuess", comp->signature()),1,TR::DebugCounter::Undetermined);
+ 
+            genInstanceOfOrCheckCastArbitraryClassTest(node, objectClassReg, compileTimeGuessClass, srm, cg);
+            generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
+
+            break;
+         case CastClassCacheTest:
+            {
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CastClassCacheTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/CastClassCache", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            /**
+             * Compare the cast class against the cache on the instance class.
+             * If they are the same the cast is successful.
+             * If not it's either because the cache class does not match the cast class, 
+             * or it does match except the cache class has the low bit set, which means the cast is not successful.
+             */
+            TR::Register *castClassCacheReg = srm->findOrCreateScratchRegister();
+            generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, castClassCacheReg,
+                              new (cg->trHeapMemory()) TR::MemoryReference(objectClassReg, offsetof(J9Class, castClassCache), cg));
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::eorx, node, castClassCacheReg, castClassCacheReg, castClassReg);
+            generateCompareImmInstruction(cg, node, castClassCacheReg, 1, true);
+
+            /**
+             *  At this point LT flag will be set if the cast is successful, EQ flag will be set if the cast is unsuccessful,
+             *  and GT flag will be set if the cache class did not match the cast class.
+             */ 
+            generateCSetInstruction(cg, node, resultReg, TR::CC_LT);
+            srm->reclaimScratchRegister(castClassCacheReg);
+            }
+            break;
+         case ArrayOfJavaLangObjectTest:
+            {
+            TR_ASSERT_FATAL(isNextItemGoToFalse(it, itEnd), "ArrayOfJavaLangObjectTest is always followed by GoToFalse");
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/ArrayTest", comp->signature()),1,TR::DebugCounter::Undetermined);
+            genInstanceOfOrCheckCastObjectArrayTest(node, objectClassReg, doneLabel, true, srm, cg);
+            generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
+            }
+            break;
+         case DynamicCacheObjectClassTest:
+            TR_ASSERT_FATAL(false, "%s: DynamicCacheObjectClassTest is not implemented on aarch64\n", node->getOpCode().getName());
+            break;
+         case DynamicCacheDynamicCastClassTest:
+            TR_ASSERT_FATAL(false, "%s: DynamicCacheDynamicCastClassTest is not implemented on aarch64\n", node->getOpCode().getName());
+            break;
+         case HelperCall:
+            {
+            TR_ASSERT_FATAL(isTerminalSequence(it, itEnd), "HelperCall should be the terminal sequence");
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting HelperCall\n", node->getOpCode().getName());
+            TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::icall, resultReg, callHelperLabel, doneLabel, cg);
+
+            cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+            if (it == itBegin)
+               {
+               // If HelperCall is only the item in the sequence, branch to OOL
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
+            }
+            break;
+         }
+
+      switch (current)
+         {
+         case ClassEqualityTest:
+         case SuperClassTest:
+         case ProfiledClassTest:
+         case CompileTimeGuessClassTest:
+         case ArrayOfJavaLangObjectTest:
+            /**
+             * For those tests, EQ flag is set if the cache hit
+             */
+            if (isNextItemHelperCall(it, itEnd))
+               {
+               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callHelperLabel, TR::CC_NE);
+               }
+            else if (!isNextItemGoToFalse(it, itEnd))
+               {
+               // If other tests follow, branch to doneLabel
+               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+               }          
+            break;
+         case CastClassCacheTest:
+            if (isNextItemHelperCall(it, itEnd))
+               {
+               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callHelperLabel, TR::CC_GT);
+               }
+            else if (!isNextItemGoToFalse(it, itEnd))
+               {
+               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_LE);
+               } 
+            break;
+         case NullTest:
+            break;
+         default:
+            if (isNextItemHelperCall(it, itEnd))
+               {
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
+            break;
+         }
+
+      if (!isTerminalSequence(it, itEnd))
+         {
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, nextSequenceLabel);
+         nextSequenceLabel = generateLabelSymbol(cg);
+         }
+
+      }
+
+   if (objectClassReg)
+      srm->reclaimScratchRegister(objectClassReg);
+   
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3 + srm->numAvailableRegisters(), cg->trMemory());
+   srm->addScratchRegistersToDependencyList(deps);
+
+   deps->addPostCondition(resultReg, TR::RealRegister::NoReg);
+   deps->addPostCondition(objectReg, TR::RealRegister::NoReg);
+
+   if (castClassReg)
+      {
+      deps->addPostCondition(castClassReg, TR::RealRegister::NoReg);
+      }
+   
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast/%s/fastPath",
+                                                               node->getOpCode().getName()),
+                            *srm);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast.perMethod/%s/(%s)/%d/%d/fastPath",
+                                                               node->getOpCode().getName(), comp->signature(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeInfo().getByteCodeIndex()),
+                            *srm);
+
+
+   cg->decReferenceCount(objectNode);
+   cg->decReferenceCount(castClassNode);
+   // Stop using every reg in the deps except these ones.
+   //
+   TR::Register *nodeRegs[2] = {objectReg, resultReg};
+   auto nodeRegsBegin = std::begin(nodeRegs);
+   deps->stopUsingDepRegs(cg, nodeRegsBegin, std::next(nodeRegsBegin, 2));
+
+   node->setRegister(resultReg);
+
+   return resultReg;
+   }
+
+/**
+ * @brief Generates null test instructions
+ * 
+ * @param[in]         cg: code generator
+ * @param[in]     objReg: register holding object
+ * @param[in]       node: null check node
+ * @param[in] nullSymRef: symbol reference of null check
+ * 
+ */
+static
+void generateNullTest(TR::CodeGenerator *cg, TR::Register *objReg, TR::Node *node, TR::SymbolReference *nullSymRef = NULL)
+   {
+   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+   TR::Compilation *comp = cg->comp();
+   if (nullSymRef == NULL)
+      {
+      nullSymRef = comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol());
+      }
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, nullSymRef, NULL);
+   cg->addSnippet(snippet);
+
+   TR::Instruction *cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, objReg, snippetLabel);
+   cbzInstruction->setNeedsGCMap(0xffffffff);
+   snippet->gcMap().setGCRegisterMask(0xffffffff);
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation                      *comp = cg->comp();
+   TR_OpaqueClassBlock                  *compileTimeGuessClass;
+   int32_t                               maxProfiledClasses = comp->getOptions()->getCheckcastMaxProfiledClassTests();
+   traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
+   TR_ASSERT_FATAL(maxProfiledClasses <= 4, "Maximum 4 profiled classes per site allowed because we use a fixed stack allocated buffer for profiled classes\n");
+   InstanceOfOrCheckCastSequences        sequences[InstanceOfOrCheckCastMaxSequences];
+   bool                                  topClassWasCastClass = false;
+   float                                 topClassProbability = 0.0;
+
+   bool                                  profiledClassIsInstanceOf;
+   InstanceOfOrCheckCastProfiledClasses  profiledClassesList[4];
+   uint32_t                              numberOfProfiledClass;
+   uint32_t                              numSequencesRemaining = calculateInstanceOfOrCheckCastSequences(node, sequences, &compileTimeGuessClass, cg, profiledClassesList, &numberOfProfiledClass, maxProfiledClasses, &topClassProbability, &topClassWasCastClass);
+
+
+   TR::Node                       *objectNode = node->getFirstChild();
+   TR::Node                       *castClassNode = node->getSecondChild();
+   TR::Register                   *objectReg = cg->evaluate(objectNode);
+   TR::Register                   *castClassReg = NULL;
+
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *callHelperLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *nextSequenceLabel = generateLabelSymbol(cg);
+
+   TR::Instruction *gcPoint;
+
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+   TR::Register                 *objectClassReg = NULL;
+
+   auto itBegin = std::begin(sequences);
+   const auto itEnd = std::next(itBegin, numSequencesRemaining);
+   
+   for (auto it = itBegin; it != itEnd; it++)
+      {
+      auto current = *it;
+      switch (current)
+         {
+         case EvaluateCastClass:
+            TR_ASSERT(!castClassReg, "Cast class already evaluated");
+            castClassReg = cg->gprClobberEvaluate(castClassNode);
+            break;
+         case LoadObjectClass:
+            TR_ASSERT(!objectClassReg, "Object class already loaded");
+            objectClassReg = srm->findOrCreateScratchRegister();
+            generateLoadJ9Class(node, objectClassReg, objectReg, cg);
+            break;
+         case NullTest:
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
+            TR_ASSERT(!objectNode->isNonNull(), "Object is known to be non-null, no need for a null test");
+            if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
+               {
+               TR::Node *nullChkInfo = comp->findNullChkInfo(node);
+               generateNullTest(cg, objectReg, nullChkInfo);
+               }
+            else
+               {
+               if (isNextItemHelperCall(it, itEnd) || isNextItemGoToFalse(it, itEnd))
+                  {
+                  generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, objectReg, callHelperLabel);
+                  }
+               else
+                  {
+                  // branch to doneLabel if object is null
+                  generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, objectReg, doneLabel);
+                  }
+               }
+            break;
+         case GoToTrue:
+            TR_ASSERT_FATAL(isTerminalSequence(it, itEnd), "GoToTrue should be the terminal sequence");
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting GoToTrue\n", node->getOpCode().getName());
+            break;
+         case ClassEqualityTest:
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ClassEqualityTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/Equality", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            generateCompareInstruction(cg, node, objectClassReg, castClassReg, true);
+            break;
+         case SuperClassTest:
+            {
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting SuperClassTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/SuperClassTest", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
+            auto falseLabel = (isNextItemGoToFalse(it, itEnd) || isNextItemHelperCall(it, itEnd)) ? callHelperLabel : nextSequenceLabel;
+            genSuperClassTest(node, objectClassReg, false, castClassReg, castClassDepth, falseLabel, srm, cg);
+            }
+            break;
+         /**
+          *    Following switch case generates sequence of instructions for profiled class test for this checkCast node
+          *    arbitraryClassReg1 <= profiledClass
+          *    if (arbitraryClassReg1 == objClassReg)
+          *       JMP DoneLabel
+          *    else
+          *       continue to NextTest
+          */
+         case ProfiledClassTest:
+            {
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ProfiledClassTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/Profile", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            auto profiledClassesIt = std::begin(profiledClassesList);
+            auto profiledClassesItEnd = std::next(profiledClassesIt, numberOfProfiledClass);
+            while (profiledClassesIt != profiledClassesItEnd)
+               {
+               if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: ProfiledClassTest: profiledClass = %p, isProfiledClassInstanceOfCastClass = %s\n",
+                                                         node->getOpCode().getName(), profiledClassesIt->profiledClass,
+                                                         (profiledClassesIt->isProfiledClassInstanceOfCastClass) ? "true" : "false");
+
+               genInstanceOfOrCheckCastArbitraryClassTest(node, objectClassReg, profiledClassesIt->profiledClass, srm, cg);
+               /**
+                *  At this point EQ flag will be set if the profiledClass matches the cast class.
+                */ 
+               profiledClassesIt++;
+               if (profiledClassesIt != profiledClassesItEnd)
+                  {
+                  generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+                  }
+               }
+            }
+            break;
+         case CompileTimeGuessClassTest:
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CompileTimeGuessClassTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/compTimeGuess", comp->signature()),1,TR::DebugCounter::Undetermined);
+ 
+            genInstanceOfOrCheckCastArbitraryClassTest(node, objectClassReg, compileTimeGuessClass, srm, cg);
+            break;
+         /**
+          *    Following switch case generates sequence of instructions for cast class cache test for this checkCast node
+          *    Load castClassCacheReg, offsetOf(J9Class,castClassCache)
+          *    if castClassCacheReg == castClassReg
+          *       JMP DoneLabel
+          *    else
+          *       continue to NextTest
+          */
+         case CastClassCacheTest:
+            {
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CastClassCacheTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/CastClassCache", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            /**
+             * Compare the cast class against the cache on the instance class.
+             * If they are the same the cast is successful.
+             * If not it's either because the cache class does not match the cast class, 
+             * or it does match except the cache class has the low bit set, which means the cast is not successful.
+             * In those cases, we need to call out to helper.
+             */
+            TR::Register *castClassCacheReg = srm->findOrCreateScratchRegister();
+            generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, castClassCacheReg,
+                              new (cg->trHeapMemory()) TR::MemoryReference(objectClassReg, offsetof(J9Class, castClassCache), cg));
+            generateCompareInstruction(cg, node, castClassCacheReg, castClassReg, true);
+            /**
+             *  At this point, EQ flag will be set if the cast is successful.
+             */ 
+            srm->reclaimScratchRegister(castClassCacheReg);
+            }
+            break;
+         case ArrayOfJavaLangObjectTest:
+            {
+            TR_ASSERT_FATAL(isNextItemGoToFalse(it, itEnd), "ArrayOfJavaLangObjectTest is always followed by GoToFalse");
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/ArrayTest", comp->signature()),1,TR::DebugCounter::Undetermined);
+
+            /*
+             * In this case, the false label is in the OOLCodeSection, and it can be placed far away from here.
+             * The offset of tbz/tbnz instruction must be within +-32KB range, so we do not use tbz/tbnz.
+             */
+            genInstanceOfOrCheckCastObjectArrayTest(node, objectClassReg, callHelperLabel, false, srm, cg);
+            }
+            break;
+         case DynamicCacheObjectClassTest:
+            TR_ASSERT_FATAL(false, "%s: DynamicCacheObjectClassTest is not implemented on aarch64\n", node->getOpCode().getName());
+            break;
+         case DynamicCacheDynamicCastClassTest:
+            TR_ASSERT_FATAL(false, "%s: DynamicCacheDynamicCastClassTest is not implemented on aarch64\n", node->getOpCode().getName());
+            break;
+         case GoToFalse:
+         case HelperCall:
+            {
+            auto seq = (current == GoToFalse) ? "GoToFalse" : "HelperCall";
+            TR_ASSERT_FATAL(isTerminalSequence(it, itEnd), "%s should be the terminal sequence", seq);
+            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting %s\n", node->getOpCode().getName(), seq);
+            TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, callHelperLabel, doneLabel, cg);
+
+            cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+            if (it == itBegin)
+               {
+               // If HelperCall or GoToFalse is the only item in the sequence, branch to OOL
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
+            }
+            break;
+         }
+
+      switch (current)
+         {
+         case ClassEqualityTest:
+         case SuperClassTest:
+         case ProfiledClassTest:
+         case CompileTimeGuessClassTest:
+         case CastClassCacheTest:
+         case ArrayOfJavaLangObjectTest:
+            /**
+             * For those tests, EQ flag is set if the cast is successful
+             */
+            if (isNextItemHelperCall(it, itEnd) || isNextItemGoToFalse(it, itEnd))
+               {
+               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callHelperLabel, TR::CC_NE);
+               }
+            else
+               {
+               // When other tests follow, branch to doneLabel if EQ flag is set
+               generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+               }
+            break;
+         case NullTest:
+            break;
+         default:
+            if (isNextItemHelperCall(it, itEnd) || isNextItemGoToFalse(it, itEnd))
+               {
+               generateLabelInstruction(cg, TR::InstOpCode::b, node, callHelperLabel);
+               }
+         }
+
+      if (!isTerminalSequence(it, itEnd))
+         {
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, nextSequenceLabel);
+         nextSequenceLabel = generateLabelSymbol(cg);
+         }
+
+      }
+
+   if (objectClassReg)
+      srm->reclaimScratchRegister(objectClassReg);
+   
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3 + srm->numAvailableRegisters(), cg->trMemory());
+   srm->addScratchRegistersToDependencyList(deps);
+
+   deps->addPostCondition(objectReg, TR::RealRegister::NoReg);
+
+   if (castClassReg)
+      {
+      deps->addPostCondition(castClassReg, TR::RealRegister::NoReg);
+      }
+   
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast/%s/fastPath",
+                                                               node->getOpCode().getName()),
+                            *srm);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast.perMethod/%s/(%s)/%d/%d/fastPath",
+                                                               node->getOpCode().getName(), comp->signature(), node->getByteCodeInfo().getCallerIndex(), node->getByteCodeInfo().getByteCodeIndex()),
+                            *srm);
+
+
+   cg->decReferenceCount(objectNode);
+   cg->decReferenceCount(castClassNode);
+   // Stop using every reg in the deps except objectReg
+   //
+   deps->stopUsingDepRegs(cg, objectReg);
+
+   node->setRegister(NULL);
+
+   return NULL;
    }
 
 TR::Register *
 J9::ARM64::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   return checkcastEvaluator(node, cg);
+   return VMcheckcastEvaluator(node, cg);
    }
 
 TR::Register *
 J9::ARM64::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::ILOpCodes opCode = node->getOpCodeValue();
-   TR::Node::recreate(node, TR::call);
-   TR::Register *targetRegister = directCallEvaluator(node, cg);
-   TR::Node::recreate(node, opCode);
-
-   return targetRegister;
+   return VMcheckcastEvaluator(node, cg);
    }
 
 TR::Register *
@@ -709,8 +1852,9 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       {
       if (!node->canOmitSync())
          {
-         // Data synchronization barrier -- 0xF to turn on option for both reads and writes
-         generateSynchronizationInstruction(cg, TR::InstOpCode::dsb, node, 0xF);
+         // StoreStore barrier is required after publishing new object reference to other threads.
+         // dmb ishst (Inner Shareable store barrier)
+         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xA);
          }
       }
    else
@@ -718,23 +1862,44 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       uint32_t imm;
       if (op == TR::loadFence)
          {
-         // 0xD to turn on option for reads
-         imm = 0xD;
+         // TR::loadFence is used for both loadLoadFence and acquireFence.
+         // Loads before the barrier are ordered before loads/stores after the barrier.
+         // dmb ishld (Inner Shareable load barrier)
+         imm = 0x9;
          }
       else if (op == TR::storeFence)
          {
-         // 0xE to turn on option for writes
-         imm = 0xE;
+         // TR::storeFence is used for both storeStoreFence and releaseFence.
+         // Loads/Stores before the barrier are ordered before stores after the barrier.
+         // dmb ish (Inner Shareable full barrier)
+         imm = 0xB;
          }
       else
          {
-         // 0xF to turn on option for both reads and writes
-         imm = 0xF;
+         // TR::fullFence is used for fullFence.
+         // dmb ish (Inner Shareable full barrier)
+         imm = 0xB;
          }
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dsb, node, imm);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, imm);
       }
 
    return NULL;
+   }
+
+/**
+ * Helper template function to get value clamped between low and high.
+ * std::clamp is unavailable for C++11.
+ */
+template<typename T>
+const T clamp(const T& value, const T& low, const T& high)
+   {
+   return std::min(std::max(value, low), high);
+   }
+
+template<typename T>
+const T clamp(const int& value, const T& low, const T& high)
+   {
+   return static_cast<T>(std::min(std::max(value, static_cast<int>(low)), static_cast<int>(high)));
    }
 
 /**
@@ -762,10 +1927,28 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
    TR::Register *lengthReg, TR::Register *heapTopReg, TR::Register *tempReg, TR::Register *dataSizeReg, TR::RegisterDependencyConditions *conditions,
    TR::LabelSymbol *callLabel)
    {
+   static const char *pTLHPrefetchThresholdSize = feGetEnv("TR_AArch64PrefetchThresholdSize");
+   static const char *pTLHPrefetchArrayLineCount = feGetEnv("TR_AArch64PrefetchArrayLineCount");
+   static const char *pTLHPrefetchType = feGetEnv("TR_AArch64PrefetchType");
+   static const char *pTLHPrefetchTarget = feGetEnv("TR_AArch64PrefetchTarget");
+   static const char *pTLHPrefetchPolicy = feGetEnv("TR_AArch64PrefetchPolicy");
+   static const int cacheLineSize = (TR::Options::_TLHPrefetchLineSize > 0) ? TR::Options::_TLHPrefetchLineSize : 64;
+   static const int tlhPrefetchLineCount = (TR::Options::_TLHPrefetchLineCount > 0) ? TR::Options::_TLHPrefetchLineCount : 1;
+   static const int tlhPrefetchStaggeredLineCount = (TR::Options::_TLHPrefetchStaggeredLineCount > 0) ? TR::Options::_TLHPrefetchStaggeredLineCount : 4;
+   static const int tlhPrefetchThresholdSize = (pTLHPrefetchThresholdSize) ? atoi(pTLHPrefetchThresholdSize) : 64;
+   static const int tlhPrefetchArrayLineCount = (pTLHPrefetchArrayLineCount) ? atoi(pTLHPrefetchArrayLineCount) : 4;
+   static const ARM64PrefetchType tlhPrefetchType = (pTLHPrefetchType) ? clamp(atoi(pTLHPrefetchType), ARM64PrefetchType::LOAD, ARM64PrefetchType::STORE)
+                                                                  : ARM64PrefetchType::STORE;
+   static const ARM64PrefetchTarget tlhPrefetchTarget = (pTLHPrefetchTarget) ? clamp(atoi(pTLHPrefetchTarget), ARM64PrefetchTarget::L1, ARM64PrefetchTarget::L3)
+                                                                  : ARM64PrefetchTarget::L3;
+   static const ARM64PrefetchPolicy tlhPrefetchPolicy = (pTLHPrefetchPolicy) ? clamp(atoi(pTLHPrefetchPolicy), ARM64PrefetchPolicy::KEEP, ARM64PrefetchPolicy::STRM)
+                                                                  : ARM64PrefetchPolicy::STRM;
+
    TR::Compilation *comp = cg->comp();
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
    uint32_t maxSafeSize = cg->getMaxObjectSizeGuaranteedNotToOverflow();
+   bool isTooSmallToPrefetch = false;
 
    static_assert(offsetof(J9VMThread, heapAlloc) < 32760, "Expecting offset to heapAlloc fits in imm12");
    static_assert(offsetof(J9VMThread, heapTop) < 32760, "Expecting offset to heapTop fits in imm12");
@@ -777,7 +1960,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
        *
        * cmp      lengthReg, #maxObjectSizeInElements
        * b.hi     callLabel
-       * 
+       *
        * uxtw     tempReg, lengthReg
        * ldrimmx  resultReg, [metaReg, offsetToHeapAlloc]
        * lsl      tempReg, lengthReg, #shiftValue
@@ -788,7 +1971,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
        * cselx    dataSizeReg, tempReg, tempReg2, ne
        * ldrimmx  heapTopReg, [metaReg, offsetToHeapTop]
        * addimmx  tempReg, resultReg, dataSizeReg
-       * 
+       *
        * # check for overflow
        * cmp      tempReg, heapTopReg
        * b.gt     callLabel
@@ -797,7 +1980,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
        *
        */
       // Detect large or negative number of elements in case addr wrap-around
-      // 
+      //
       // The GC will guarantee that at least 'maxObjectSizeGuaranteedNotToOverflow' bytes
       // of slush will exist between the top of the heap and the end of the address space.
       //
@@ -863,7 +2046,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
             }
          loadConstant64(cg, node, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), heapTopReg);
 
-         generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselx, node, dataSizeReg, tempReg, heapTopReg, TR::CC_NE); 
+         generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselx, node, dataSizeReg, tempReg, heapTopReg, TR::CC_NE);
          }
       else
          {
@@ -886,6 +2069,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
       }
    else
       {
+      isTooSmallToPrefetch = allocSize < tlhPrefetchThresholdSize;
       /*
        * Instructions for allocating heap for fixed length `new/newarray/anewarray`.
        *
@@ -942,6 +2126,18 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
    generateCompareInstruction(cg, node, tempReg, heapTopReg, true);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_GT, conditions);
 
+   if (comp->getOption(TR_TLHPrefetch) && (!isTooSmallToPrefetch))
+      {
+      int offset = tlhPrefetchStaggeredLineCount * cacheLineSize;
+      int loopCount = (node->getOpCodeValue() == TR::New) ? tlhPrefetchLineCount : tlhPrefetchArrayLineCount;
+
+      for (int i = 0; i < loopCount; i++)
+         {
+         generateMemImmInstruction(cg, TR::InstOpCode::prfmimm, node,
+            new (cg->trHeapMemory()) TR::MemoryReference(tempReg, offset, cg), toPrefetchOp(tlhPrefetchType, tlhPrefetchTarget, tlhPrefetchPolicy));
+         offset += cacheLineSize;
+         }
+      }
    //Done, write back to heapAlloc here.
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
          new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg), tempReg);
@@ -1143,10 +2339,12 @@ genZeroInitObject(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uin
  * @param[in] clazz:      class pointer to store in the object header
  * @param[in] objectReg:  the register that holds object address
  * @param[in] classReg:   the register that holds class
+ * @param[in] zeroReg:    the register whose value is zero
  * @param[in] tempReg1:   temporary register 1
+ * @param[in] isTLHHasNotBeenCleared: true if TLH has not been cleared
  */
 static void
-genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *tempReg1)
+genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *zeroReg, TR::Register *tempReg1, bool isTLHHasNotBeenCleared)
    {
    TR_ASSERT(clazz, "Cannot have a null OpaqueClassBlock\n");
    TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
@@ -1191,60 +2389,101 @@ genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *
    // Store the class
    generateMemSrc1Instruction(cg, TR::Compiler->om.generateCompressedObjectHeaders() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
       node, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), clzReg);
+
+   int32_t lwOffset = fej9->getByteOffsetToLockword(clazz);
+   if (clazz && (lwOffset > 0))
+      {
+      int32_t lwInitialValue = fej9->getInitialLockword(clazz);
+
+      if ((0 != lwInitialValue) || isTLHHasNotBeenCleared)
+         {
+         bool isCompressedLockWord = fej9->generateCompressedLockWord();
+         if (0 != lwInitialValue)
+            {
+            loadConstant64(cg, node, lwInitialValue, tempReg1);
+            generateMemSrc1Instruction(cg, isCompressedLockWord ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
+                  node, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, lwOffset, cg), tempReg1);
+            }
+         else
+            {
+            generateMemSrc1Instruction(cg, isCompressedLockWord ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
+                  node, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, lwOffset, cg), zeroReg);
+            }
+         }
+      }
    }
 
 /**
  * @brief Generates instructions for initializing array header for newarray/anewarray
  *
- * @param[in] node:       node
- * @param[in] cg:         code generator
- * @param[in] clazz:      class pointer to store in the object header
- * @param[in] objectReg:  the register that holds object address
- * @param[in] classReg:   the register that holds class
- * @param[in] sizeReg:    the register that holds array length.
- * @param[in] zeroReg:    the register whose value is zero
- * @param[in] tempReg1:   temporary register 1
+ * @param[in] node:                   node
+ * @param[in] cg:                     code generator
+ * @param[in] clazz:                  class pointer to store in the object header
+ * @param[in] objectReg:              the register that holds object address
+ * @param[in] classReg:               the register that holds class
+ * @param[in] sizeReg:                the register that holds array length.
+ * @param[in] zeroReg:                the register whose value is zero
+ * @param[in] tempReg1:               temporary register 1
+ * @param[in] isBatchClearTLHEnabled: true if BatchClearTLH is enabled 
+ * @param[in] isTLHHasNotBeenCleared: true if TLH has not been cleared
  */
 static void
-genInitArrayHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *sizeReg, TR::Register *zeroReg, TR::Register *tempReg1)
+genInitArrayHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *clazz, TR::Register *objectReg, TR::Register *classReg, TR::Register *sizeReg, TR::Register *zeroReg, TR::Register *tempReg1,
+                  bool isBatchClearTLHEnabled, bool isTLHHasNotBeenCleared)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
 
-   genInitObjectHeader(node, cg, clazz, objectReg, classReg, tempReg1);
+   genInitObjectHeader(node, cg, clazz, objectReg, classReg, zeroReg, tempReg1, isTLHHasNotBeenCleared);
    if (node->getFirstChild()->getOpCode().isLoadConst() && (node->getFirstChild()->getInt() == 0))
       {
-      // constant zero length array
-      // Zero length arrays are discontiguous (i.e. they also need the discontiguous length field to be 0) because
-      // they are indistinguishable from non-zero length discontiguous arrays
-      if (TR::Compiler->om.generateCompressedObjectHeaders())
+      // If BatchClearTLH is enabled, we do not need to write 0 into the header.
+      if (!isBatchClearTLHEnabled)
          {
-         // `mustBeZero` and `size` field of J9IndexableObjectDiscontiguousCompressed must be cleared.
-         // We cannot use `strimmx` in this case because offset would be 4 bytes, which cannot be encoded as imm12 of `strimmx`.
-         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
-                                    new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
-                                    zeroReg);
-         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
-                                    new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg),
-                                    zeroReg);
-         }
-      else
-         {
-         // `strimmx` can be used as offset is 8 bytes.
-         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
-                                    new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
-                                    zeroReg);
+         // constant zero length array
+         // Zero length arrays are discontiguous (i.e. they also need the discontiguous length field to be 0) because
+         // they are indistinguishable from non-zero length discontiguous arrays
+         if (TR::Compiler->om.generateCompressedObjectHeaders())
+            {
+            // `mustBeZero` and `size` field of J9IndexableObjectDiscontiguousCompressed must be cleared.
+            // We cannot use `strimmx` in this case because offset would be 4 bytes, which cannot be encoded as imm12 of `strimmx`.
+            generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                                       new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
+                                       zeroReg);
+            generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                                       new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg),
+                                       zeroReg);
+            }
+         else
+            {
+            // `strimmx` can be used as offset is 8 bytes.
+            generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node,
+                                       new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() - 4, cg),
+                                       zeroReg);
+            }
          }
       }
    else
       {
       // Store the array size
-      // In the compressedrefs build, size field of discontigous array header is cleared by instructions generated by genZeroInit().
+      // If the size field of contiguous array header is 0, the array is discontiguous and
+      // the size of discontiguous array must be in the size field of discontiguous array header.
+      // For now, we do not create non-zero length discontigous array,
+      // so it is safe to write 0 into the size field of discontiguous array header.
+      //
+      // In the compressedrefs build, the size field of discontigous array header is cleared by instructions generated by genZeroInit().
       // In the large heap build, we must clear size and mustBeZero field here
       if (TR::Compiler->om.generateCompressedObjectHeaders())
          {
          generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
                                     new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfContiguousArraySizeField(), cg),
                                     sizeReg);
+         if (!isTLHHasNotBeenCleared)
+            {
+            // If BatchClearTLH is not enabled and TLH has not been cleared, write 0 into the size field of J9IndexableObjectDiscontiguousCompressed.
+            generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                           new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg),
+                           zeroReg);
+            }
          }
       else
          {
@@ -1326,7 +2565,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    else
       {
       elementSize = TR::Compiler->om.getSizeOfArrayElement(node);
- 
+
       // If the array cannot be allocated as a contiguous array, then comp->canAllocateInline should have returned -1.
       // The only exception is when the array length is 0.
       headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
@@ -1375,17 +2614,25 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
 
    // 7. Initialize the allocated memory area with zero
-   // TODO selectively initialize necessary slots
-   genZeroInitObject(node, cg, isVariableLength, objectSize, headerSize, resultReg, tempReg3, zeroReg, tempReg1, tempReg2);
+   const bool isBatchClearTLHEnabled = fej9->tlhHasBeenCleared();
+   if (!isBatchClearTLHEnabled)
+      {
+      // TODO selectively initialize necessary slots
+      if (!node->canSkipZeroInitialization())
+         {
+         genZeroInitObject(node, cg, isVariableLength, objectSize, headerSize, resultReg, tempReg3, zeroReg, tempReg1, tempReg2);
+         }
+      }
+   const bool tlhHasNotBeenCleared = (!isBatchClearTLHEnabled) && node->canSkipZeroInitialization();
 
    // 8. Initialize Object Header
    if (isArrayNew)
       {
-      genInitArrayHeader(node, cg, clazz, resultReg, classReg, lengthReg, zeroReg, tempReg1);
+      genInitArrayHeader(node, cg, clazz, resultReg, classReg, lengthReg, zeroReg, tempReg1, isBatchClearTLHEnabled, tlhHasNotBeenCleared);
       }
    else
       {
-      genInitObjectHeader(node, cg, clazz, resultReg, classReg, tempReg1);
+      genInitObjectHeader(node, cg, clazz, resultReg, classReg, zeroReg, tempReg1, tlhHasNotBeenCleared);
       }
 
    // 9. Setup AOT relocation
@@ -1532,9 +2779,11 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
    TR::InstOpCode::Mnemonic op;
+   TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
    if (comp->getOption(TR_OptimizeForSpace) ||
        comp->getOption(TR_FullSpeedDebug) ||
+       (isMonitorValueBasedOrValueType == TR_yes) ||
        comp->getOption(TR_DisableInlineMonEnt) ||
        lwOffset <= 0)
       {
@@ -1563,11 +2812,32 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::LabelSymbol *loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
+   // If object is not known to be value type or value based class at compile time, check at run time
+   if (isMonitorValueBasedOrValueType == TR_maybe)
+      {
+      generateCheckForValueMonitorEnterOrExit(node, callLabel, objReg, tempReg, dataReg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+      }
+
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, lwOffset); // ldxr/stxr instructions does not take immediate offset
    generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
 
    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldxrw : TR::InstOpCode::ldxrx;
-   generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+   auto faultingInstruction = generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+
+   // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
+   // In this case, nullcheck reference register is objReg, but the memory reference does not use it,
+   // thus we need to explicitly set implicit exception point here.
+   if (cg->getHasResumableTrapHandler() && cg->getCurrentEvaluationTreeTop()->getNode()->getOpCode().isNullCheck())
+      {
+      if (cg->getImplicitExceptionPoint() == NULL)
+         {
+         if (comp->getOption(TR_TraceCG))
+            {
+            traceMsg(comp, "Instruction %p throws an implicit NPE, node: %p NPE node: %p\n", faultingInstruction, node, objNode);
+            }
+         cg->setImplicitExceptionPoint(faultingInstruction);
+         }
+      }
    generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, incLabel);
 
    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::stxrw : TR::InstOpCode::stxrx;
@@ -1694,6 +2964,35 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       {
       src1Reg = cg->evaluate(firstChild);
 
+      // If this BNDCHK is combined with previous NULLCHK, there is
+      // an instruction that will cause a hardware trap if the exception is to be
+      // taken. If this method may catch the exception, a GC stack map must be
+      // created for this instruction. All registers are valid at this GC point
+      // TODO - if the method may not catch the exception we still need to note
+      // that the GC point exists, since maps before this point and after it cannot
+      // be merged.
+      //
+      if (cg->getHasResumableTrapHandler() && node->hasFoldedImplicitNULLCHK())
+         {
+         TR::Compilation *comp = cg->comp();
+         TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
+         if (comp->getOption(TR_TraceCG))
+            {
+            traceMsg(comp, "\nNode %p has foldedimplicitNULLCHK, and a faulting instruction of %p\n", node, faultingInstruction);
+            }
+
+         if (faultingInstruction)
+            {
+            faultingInstruction->setNeedsGCMap(0xffffffff);
+            cg->machine()->setLinkRegisterKilled(true);
+
+            TR_Debug * debugObj = cg->getDebug();
+            if (debugObj)
+               {
+               debugObj->addInstructionComment(faultingInstruction, "Throws Implicit Null Pointer Exception");
+               }
+            }
+         }
       if ((secondChild->getOpCode().isLoadConst())
             && (NULL == secondChild->getRegister()))
          {
@@ -1736,45 +3035,111 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return (NULL);
    }
 
-static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::CodeGenerator *cg)
+/**
+ * @brief Generate instruction sequence for array store check
+ * 
+ * @param[in] node:            node
+ * @param[in] srcReg:          register contains source object
+ * @param[in] dstReg:          register contains destination array
+ * @param[in] srm:             scratch register manager
+ * @param[in] doneLabel:       label to jump when check is successful
+ * @param[in] helperCallLabel: label to jump when helper call is needed
+ * @param[in] cg:              code generator
+ */
+static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR_ARM64ScratchRegisterManager *srm,
+                                     TR::LabelSymbol *doneLabel, TR::LabelSymbol *helperCallLabel, TR::CodeGenerator *cg)
    {
-   TR::SymbolReference *arrayStoreChkHelper = node->getSymbolReference();
-
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-   TR::addDependency(deps, dstReg, TR::RealRegister::x0, TR_GPR, cg);
-   TR::addDependency(deps, srcReg, TR::RealRegister::x1, TR_GPR, cg);
-
-   TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
-                                                        (uintptr_t)arrayStoreChkHelper->getMethodAddress(),
-                                                        deps, arrayStoreChkHelper, NULL);
-   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
-
-   cg->machine()->setLinkRegisterKilled(true);
-   }
-
-static void VMoutlinedHelperWrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::CodeGenerator *cg)
-   {
-   auto gcMode = TR::Compiler->om.writeBarrierType();
-   if (gcMode == gc_modron_wrtbar_none)
-      return;
-
    TR::Compilation *comp = cg->comp();
-   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-   TR::SymbolReference *wbref = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
+   TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
+   TR::Register *sourceClassReg = srm->findOrCreateScratchRegister();
+   TR::Register *destArrayClassReg = srm->findOrCreateScratchRegister();
 
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
-   TR::addDependency(deps, dstReg, TR::RealRegister::x0, TR_GPR, cg);
-   TR::addDependency(deps, srcReg, TR::RealRegister::x1, TR_GPR, cg);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator"), *srm);
 
-   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel);
+   generateLoadJ9Class(node, sourceClassReg, srcReg, cg);
+   generateLoadJ9Class(node, destArrayClassReg, dstReg, cg);
 
-   TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
-                                                        (uintptr_t)wbref->getMethodAddress(),
-                                                        new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg->trMemory()),
-                                                        wbref, NULL);
-   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+   TR::Register *destComponentClassReg = srm->findOrCreateScratchRegister();
+   TR_Debug *debugObj = cg->getDebug();
 
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+   auto instr = generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, destComponentClassReg,
+         new (cg->trHeapMemory()) TR::MemoryReference(destArrayClassReg, static_cast<int32_t>(offsetof(J9ArrayClass, componentType)), cg));
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "load component type of the destination array");
+      }
+   srm->reclaimScratchRegister(destArrayClassReg);
+   destArrayClassReg = NULL; // prevent re-using this register by error
+
+   generateCompareInstruction(cg, node, destComponentClassReg, sourceClassReg, true);
+   instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "done if component type of the destination array equals to source object class");
+      }
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:01ClassEqualityCheckDone"), *srm);
+
+   TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16, true);
+   /*
+    * objectClass is used for Object arrays check optimization: when we are storing to Object arrays we can skip all other array store checks
+    * However, TR_J9SharedCacheVM::getSystemClassFromClassName can return 0 when it's impossible to relocate j9class later for AOT loads
+    * in that case we don't want to generate the Object arrays check
+    */
+   bool doObjectArrayCheck = objectClass != NULL;
+   if (doObjectArrayCheck)
+      {
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:02JavaLangObjectCheck"), *srm);
+
+      TR::Register *javaLangObjectClassReg = srm->findOrCreateScratchRegister();
+      if (cg->wantToPatchClassPointer(objectClass, node) || cg->needClassAndMethodPointerRelocations())
+         {
+         loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(objectClass), javaLangObjectClassReg, TR_ClassPointer);
+         }
+      else
+         {
+         loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(objectClass), javaLangObjectClassReg);
+         }
+      generateCompareInstruction(cg, node, javaLangObjectClassReg, destComponentClassReg, true);
+      instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(instr, "done if component type of the destination array equals to java/lang/Object");
+         }
+      srm->reclaimScratchRegister(javaLangObjectClassReg);
+
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:03JavaLangObjectCheckDone"), *srm);
+      }
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:04CastClassCacheCheck"), *srm);
+
+   TR::Register *castClassCacheReg = srm->findOrCreateScratchRegister();
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, castClassCacheReg,
+                              new (cg->trHeapMemory()) TR::MemoryReference(sourceClassReg, offsetof(J9Class, castClassCache), cg));
+   generateCompareInstruction(cg, node, castClassCacheReg, destComponentClassReg, true);
+   instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "done if component type of the destination array equals to castClassCache of source object class");
+      }
+   srm->reclaimScratchRegister(castClassCacheReg);
+   castClassCacheReg = NULL; // prevent re-using this register by error
+
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:05CastClassCacheCheckDone"), *srm);
+
+
+   genSuperClassTest(node, sourceClassReg, true, destComponentClassReg, -1, helperCallLabel, srm, cg);
+   srm->reclaimScratchRegister(destComponentClassReg);
+
+   // prevent re-using these registers by error
+   sourceClassReg = NULL;
+   destComponentClassReg = NULL;
+
+   instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, helperCallLabel, TR::CC_NE);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "Call helper if super class test fails");
+      }
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:06SuperClassTestDone"), *srm);
 
    cg->machine()->setLinkRegisterKilled(true);
    }
@@ -1790,93 +3155,92 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
    bool usingCompressedPointers = false;
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
       {
-      // pattern match the sequence
-      // ArrayStoreCHK     ArrayStoreCHK
-      //   awrtbari          awrtbari               <- firstChild
-      //     aladd             aladd
-      //       ...               ...
-      //     value             l2i
-      //     aload               lshr
-      //                           lsub
-      //                             a2l
-      //                               value        <- sourceChild
-      //                             lconst HB
-      //                           iconst shftKonst
-      //                       aload                <- dstNode
-      //
-      // -or- if the value is known to be null
-      // ArrayStoreCHK
-      //    awrtbari
-      //      aladd
-      //        ...
-      //      l2i
-      //        a2l
-      //          value  <- sourceChild
-      //      aload      <- dstNode
-      //
-      TR::Node *translatedNode = sourceChild;
-      if (translatedNode->getOpCode().isConversion())
-         translatedNode = translatedNode->getFirstChild();
-      if (translatedNode->getOpCode().isRightShift()) // optional
-         translatedNode = translatedNode->getFirstChild();
+      usingCompressedPointers = true;
 
-      bool usingLowMemHeap = false;
-      if (TR::Compiler->vm.heapBaseAddress() == 0 || sourceChild->isNull())
-         usingLowMemHeap = true;
-
-      if ((translatedNode->getOpCode().isSub()) || usingLowMemHeap)
-         usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
-         {
-         while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
-            sourceChild = sourceChild->getFirstChild();
-         if (sourceChild->getOpCodeValue() == TR::a2l)
-            sourceChild = sourceChild->getFirstChild();
-         }
+      while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
+         sourceChild = sourceChild->getFirstChild();
+      if (sourceChild->getOpCodeValue() == TR::a2l)
+         sourceChild = sourceChild->getFirstChild();
       }
 
-   TR::Register *srcReg;
+   TR::Register *srcReg = cg->evaluate(sourceChild);
    TR::Register *dstReg = cg->evaluate(dstNode);
-   bool stopUsingSrc = false;
-   if (sourceChild->getReferenceCount() > 1 && (srcReg = sourceChild->getRegister()) != NULL)
-      {
-      TR::Register *tempReg = cg->allocateCollectedReferenceRegister();
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
 
-      // Source must be an object.
-      TR_ASSERT(!srcReg->containsInternalPointer(), "Stored value is an internal pointer");
-      generateMovInstruction(cg, node, tempReg, srcReg);
-      srcReg = tempReg;
-      stopUsingSrc = true;
-      }
-   else
-      {
-      srcReg = cg->evaluate(sourceChild);
-      }
-   if (!sourceChild->isNull())
-      {
-      VMoutlinedHelperArrayStoreCHKEvaluator(node, srcReg, dstReg, cg);
-      }
-   TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
-   TR::Register *translatedSrcReg = usingCompressedPointers ? cg->evaluate(firstChild->getSecondChild()) : srcReg;
-
-   TR::MemoryReference *storeMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, cg);
-   generateMemSrc1Instruction(cg, storeOp, node, storeMR, translatedSrcReg);
+   TR::LabelSymbol *wbLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *OOLMergeLabel = generateLabelSymbol(cg);
+   TR_Debug * debugObj = cg->getDebug();
 
    if (!sourceChild->isNull())
       {
-      VMoutlinedHelperWrtbarEvaluator(firstChild, srcReg, dstReg, cg);
+      bool disableArrayStoreCHKOpts = feGetEnv("TR_AArch64DisableArrayStoreCHKOpts") != NULL;
+      TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
+      TR::LabelSymbol *helperCallLabel = generateLabelSymbol(cg);
+      // Since ArrayStoreCHK doesn't have the shape of the corresponding helper call we have to create this tree
+      // so we can have it evaluated out of line
+      TR::Node *helperCallNode = TR::Node::createWithSymRef(node, TR::call, 2, node->getSymbolReference());
+      helperCallNode->setAndIncChild(0, sourceChild);
+      helperCallNode->setAndIncChild(1, dstNode);
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "%s: Creating and evaluating the following tree to generate the necessary helper call for this node\n", node->getOpCode().getName());
+         cg->getDebug()->print(comp->getOutFile(), helperCallNode);
+         }
+
+      bool nopASC = node->getArrayStoreClassInNode() && comp->performVirtualGuardNOPing() &&
+                     (!fej9->classHasBeenExtended(node->getArrayStoreClassInNode())) && (!disableArrayStoreCHKOpts);
+      if (nopASC)
+         {
+         // Speculatively NOP the array store check if VP is able to prove that the ASC
+         // would always succeed given the current state of the class hierarchy.
+         //
+         TR_VirtualGuard *virtualGuard = TR_VirtualGuard::createArrayStoreCheckGuard(comp, node, node->getArrayStoreClassInNode());
+         TR::Instruction *vgnopInstr = generateVirtualGuardNOPInstruction(cg, node, virtualGuard->addNOPSite(), NULL, helperCallLabel);
+         }
+      else
+         {
+         // If source is null, we can skip array store check.
+         auto cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, wbLabel);
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(cbzInstruction, "jump past array store check");
+            }
+         if (!disableArrayStoreCHKOpts)
+            {
+            VMarrayStoreCHKEvaluator(node, srcReg, dstReg, srm, wbLabel, helperCallLabel, cg);
+            }
+         else
+            {
+            generateLabelInstruction(cg, TR::InstOpCode::b, node, helperCallLabel);
+            }
+         }
+
+      TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(helperCallNode, TR::call, NULL, helperCallLabel, OOLMergeLabel, cg);
+      cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+      cg->decReferenceCount(helperCallNode->getFirstChild());
+      cg->decReferenceCount(helperCallNode->getSecondChild());
+      }
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2 + srm->numAvailableRegisters(), cg->trMemory());
+   srm->addScratchRegistersToDependencyList(deps);
+
+   deps->addPostCondition(srcReg, TR::RealRegister::NoReg);
+   deps->addPostCondition(dstReg, TR::RealRegister::NoReg);
+   auto instr = generateLabelInstruction(cg, TR::InstOpCode::label, node, wbLabel);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "ArrayStoreCHK Done");
+      }
+   instr = generateLabelInstruction(cg, TR::InstOpCode::label, node, OOLMergeLabel, deps);
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(instr, "OOL merge point");
       }
 
-   if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
-      firstChild->setStoreAlreadyEvaluated(true);
+   srm->stopUsingRegisters();
 
-   cg->decReferenceCount(firstChild->getSecondChild());
-   cg->decReferenceCount(dstNode);
-   storeMR->decNodeReferenceCounts(cg);
+   cg->evaluate(firstChild);
+
    cg->decReferenceCount(firstChild);
-   if (stopUsingSrc)
-      cg->stopUsingRegister(srcReg);
 
    return NULL;
    }
@@ -2003,6 +3367,32 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       {
       switch (methodSymbol->getRecognizedMethod())
          {
+         case TR::java_nio_Bits_keepAlive:
+         case TR::java_lang_ref_Reference_reachabilityFence:
+            {
+
+            // The only purpose of these functions is to prevent an otherwise
+            // unreachable object from being garbage collected, because we don't
+            // want its finalizer to be called too early.  There's no need to
+            // generate a full-blown call site just for this purpose.  
+
+            TR::Node *paramNode = node->getFirstChild();
+            TR::Register *paramReg = cg->evaluate(paramNode);
+
+            // In theory, a value could be kept alive on the stack, rather than in
+            // a register.  It is unfortunate that the following deps will force
+            // the value into a register for no reason.  However, in many common
+            // cases, this label will have no effect on the generated code, and
+            // will only affect GC maps.
+            //
+            TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, 1, cg->trMemory());
+            TR::addDependency(conditions, paramReg, TR::RealRegister::NoReg, TR_GPR, cg);
+            TR::LabelSymbol *label = generateLabelSymbol(cg);
+            generateLabelInstruction(cg, TR::InstOpCode::label, node, label, conditions);
+            cg->decReferenceCount(paramNode);
+            resultReg = NULL;
+            return true;
+            }
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             {
             if (!methodSymbol->isNative())
@@ -2223,16 +3613,36 @@ J9::ARM64::TreeEvaluator::resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGen
 TR::Register *
 J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool needsResolve, TR::CodeGenerator *cg)
    {
-   TR::Node *firstChild = node->getFirstChild();
+   // NOTE:
+   // If no code is generated for the null check, just evaluate the
+   // child and decrement its use count UNLESS the child is a pass-through node
+   // in which case some kind of explicit test or indirect load must be generated
+   // to force the null check at this point.
+   TR::Node * const firstChild = node->getFirstChild();
    TR::ILOpCode &opCode = firstChild->getOpCode();
    TR::Node *reference = NULL;
    TR::Compilation *comp = cg->comp();
+   TR::Node *n = firstChild;
+   bool hasCompressedPointers = false;
 
+   // NULLCHK has a special case with compressed pointers.
+   // In the scenario where the first child is TR::l2a, the
+   // node to be null checked is not the iloadi, but its child.
+   // i.e. aload, aRegLoad, etc.
    if (comp->useCompressedPointers() && firstChild->getOpCodeValue() == TR::l2a)
       {
+      // pattern match the sequence under the l2a
+      // NULLCHK        NULLCHK                     <- node
+      //    aloadi f      l2a
+      //       aload O      lshl
+      //                       iu2l
+      //                          iloadi/irdbari f <- n
+      //                             aload O        <- reference
+      //                       iconst shftKonst
+      //
+      hasCompressedPointers = true;
       TR::ILOpCodes loadOp = cg->comp()->il.opCodeForIndirectLoad(TR::Int32);
       TR::ILOpCodes rdbarOp = cg->comp()->il.opCodeForIndirectReadBarrier(TR::Int32);
-      TR::Node *n = firstChild;
       while ((n->getOpCodeValue() != loadOp) && (n->getOpCodeValue() != rdbarOp))
          n = n->getFirstChild();
       reference = n->getFirstChild();
@@ -2240,19 +3650,234 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
    else
       reference = node->getNullCheckReference();
 
-   /* TODO: Resolution */
-   /* if(needsResolve) ... */
+   // Skip the NULLCHK for TR::loadaddr nodes.
+   //
+   if (cg->getHasResumableTrapHandler()
+         && reference->getOpCodeValue() == TR::loadaddr)
+      {
+      cg->evaluate(firstChild);
+      cg->decReferenceCount(firstChild);
+      return NULL;
+      }
 
-   // Only explicit test needed for now.
-   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), NULL);
-   cg->addSnippet(snippet);
-   TR::Register *referenceReg = cg->evaluate(reference);
-   TR::Instruction *cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, referenceReg, snippetLabel);
-   cbzInstruction->setNeedsGCMap(0xffffffff);
-   snippet->gcMap().setGCRegisterMask(0xffffffff);
-   // ARM64HelperCallSnippet generates "bl" instruction
-   cg->machine()->setLinkRegisterKilled(true);
+   bool needExplicitCheck  = true;
+   bool needLateEvaluation = true;
+   bool firstChildEvaluated = false;
+
+   // Add the explicit check after this instruction
+   //
+   TR::Instruction *appendTo = NULL;
+
+   // determine if an explicit check is needed
+   if (cg->getHasResumableTrapHandler())
+      {
+      if (n->getOpCode().isLoadVar()
+            || (opCode.getOpCodeValue() == TR::l2i))
+         {
+         TR::SymbolReference *symRef = NULL;
+
+         if (opCode.getOpCodeValue() == TR::l2i)
+            symRef = n->getFirstChild()->getSymbolReference();
+         else
+            symRef = n->getSymbolReference();
+
+         // We prefer to generate an explicit NULLCHK vs an implicit one
+         // to prevent potential costs of a cache miss on an unnecessary load.
+         if (n->getReferenceCount() == 1
+               && !n->getSymbolReference()->isUnresolved())
+            {
+            // If the child is only used here, we don't need to evaluate it
+            // since all we need is the grandchild which will be evaluated by
+            // the generation of the explicit check below.
+            needLateEvaluation = false;
+
+            // at this point, n is the raw iloadi (created by lowerTrees) and
+            // reference is the aload of the object. node->getFirstChild is the
+            // l2a sequence; as a result, n's refCount will always be 1.
+            //
+            if (hasCompressedPointers
+                  && node->getFirstChild()->getReferenceCount() >= 2)
+               {
+               // In this case, the result of load is used in other places, so we need to evaluate it here
+               //
+               needLateEvaluation = true;
+
+               // Check if offset from a NULL reference will fall into the inaccessible bytes,
+               // resulting in an implicit trap being raised.
+               if (symRef
+                   && ((symRef->getSymbol()->getOffset() + symRef->getOffset()) < cg->getNumberBytesReadInaccessible()))
+                  {
+                  needExplicitCheck = false;
+                  }
+               }
+            }
+
+         // Check if offset from a NULL reference will fall into the inaccessible bytes,
+         // resulting in an implicit trap being raised.
+         else if (symRef
+                  && ((symRef->getSymbol()->getOffset() + symRef->getOffset()) < cg->getNumberBytesReadInaccessible()))
+            {
+            needExplicitCheck = false;
+
+            // If the child is an arraylength which has been reduced to an iiload,
+            // and is only going to be used immediately in a BNDCHK, combine the checks.
+            //
+            TR::TreeTop *nextTreeTop = cg->getCurrentEvaluationTreeTop()->getNextTreeTop();
+            if (n->getReferenceCount() == 2 && nextTreeTop)
+               {
+               TR::Node *nextTopNode = nextTreeTop->getNode();
+
+               if (nextTopNode)
+                  {
+                  if (nextTopNode->getOpCode().isBndCheck())
+                     {
+                     if ((nextTopNode->getOpCode().isSpineCheck() && (nextTopNode->getChild(2) == n))
+                           || (!nextTopNode->getOpCode().isSpineCheck() && (nextTopNode->getFirstChild() == n)))
+                        {
+                        needLateEvaluation = false;
+                        nextTopNode->setHasFoldedImplicitNULLCHK(true);
+                        if (comp->getOption(TR_TraceCG))
+                           {
+                           traceMsg(comp, "\nMerging NULLCHK [%p] and BNDCHK [%p] of load child [%p]\n", node, nextTopNode, n);
+                           }
+                        }
+                     }
+                  else if (nextTopNode->getOpCode().isIf()
+                        && nextTopNode->isNonoverriddenGuard()
+                        && nextTopNode->getFirstChild() == firstChild)
+                     {
+                     needLateEvaluation = false;
+                     needExplicitCheck = true;
+                     }
+                  }
+               }
+            }
+         }
+      else if (opCode.isStore())
+         {
+         TR::SymbolReference *symRef = n->getSymbolReference();
+         if (n->getOpCode().hasSymbolReference()
+               && (symRef->getSymbol()->getOffset() + symRef->getOffset() < cg->getNumberBytesWriteInaccessible()))
+            {
+            needExplicitCheck = false;
+            }
+         }
+      else if (opCode.isCall()
+            && opCode.isIndirect()
+            && (cg->getNumberBytesReadInaccessible() > TR::Compiler->om.offsetOfObjectVftField()))
+         {
+         TR::SymbolReference *methodSymRef = firstChild->getSymbolReference();
+         TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+         // Currently, we do not have instructions to access receiver for interface calls in main line code.
+         // Thus, we need to do null check explictly.
+         if (!methodSymbol->isInterface())
+            {
+            needExplicitCheck = false;
+            }
+         else
+            {
+            if (comp->getOption(TR_TraceCG))
+               {
+               traceMsg(comp, "\nExcplicit NULLCHK on interface call [%p]\n", firstChild);
+               }
+            }
+         }
+      else if (opCode.getOpCodeValue() == TR::iushr
+            && (cg->getNumberBytesReadInaccessible() > cg->fe()->getOffsetOfContiguousArraySizeField()))
+         {
+         // If the child is an arraylength which has been reduced to an iushr,
+         // we must evaluate it here so that the implicit exception will occur
+         // at the right point in the program.
+         //
+         // This can occur when the array length is represented in bytes, not elements.
+         // The optimizer must intervene for this to happen.
+         //
+         cg->evaluate(n->getFirstChild());
+         needExplicitCheck = false;
+         }
+      else if (opCode.getOpCodeValue() == TR::monent
+            || opCode.getOpCodeValue() == TR::monexit)
+         {
+         // The child may generate inline code that provides an implicit null check
+         // but we won't know until the child is evaluated.
+         //
+         needLateEvaluation = false;
+         cg->evaluate(reference);
+         appendTo = cg->getAppendInstruction();
+         cg->evaluate(firstChild);
+         firstChildEvaluated = true;
+         if (cg->getImplicitExceptionPoint()
+               && (cg->getNumberBytesReadInaccessible() > cg->fe()->getOffsetOfContiguousArraySizeField()))
+            {
+            needExplicitCheck = false;
+            }
+         }
+      }
+
+   // Generate the code for the null check
+   //
+   if(needExplicitCheck)
+      {
+      TR::Register * targetRegister = NULL;
+      /* TODO: Resolution */
+      /* if(needsResolve) ... */
+
+      TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+      TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), NULL);
+      cg->addSnippet(snippet);
+      TR::Register *referenceReg = cg->evaluate(reference);
+      TR::Instruction *cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, referenceReg, snippetLabel, appendTo);
+      cbzInstruction->setNeedsGCMap(0xffffffff);
+      snippet->gcMap().setGCRegisterMask(0xffffffff);
+      // ARM64HelperCallSnippet generates "bl" instruction
+      cg->machine()->setLinkRegisterKilled(true);
+      }
+
+   // If we need to evaluate the child, do so. Otherwise, if we have
+   // evaluated the reference node, then decrement its use count.
+   // The use count of the child is decremented when we are done
+   // evaluating the NULLCHK.
+   //
+   if (needLateEvaluation)
+      {
+      cg->evaluate(firstChild);
+      firstChildEvaluated = true;
+      }
+   // If the firstChild is evaluated, we simply call decReferenceCount.
+   // Otherwise, we need to call recursivelyDecReferenceCount so that the ref count of
+   // child nodes of the firstChild is properly decremented when the ref count of the firstChild is 1.
+   if (firstChildEvaluated)
+      {
+      cg->decReferenceCount(firstChild);
+      }
+   else
+      {
+      cg->recursivelyDecReferenceCount(firstChild);
+      }
+
+   // If an explicit check has not been generated for the null check, there is
+   // an instruction that will cause a hardware trap if the exception is to be
+   // taken. If this method may catch the exception, a GC stack map must be
+   // created for this instruction. All registers are valid at this GC point
+   // TODO - if the method may not catch the exception we still need to note
+   // that the GC point exists, since maps before this point and after it cannot
+   // be merged.
+   //
+   if (cg->getHasResumableTrapHandler() && !needExplicitCheck)
+      {
+      TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
+      if (faultingInstruction)
+         {
+         faultingInstruction->setNeedsGCMap(0xffffffff);
+         cg->machine()->setLinkRegisterKilled(true);
+
+         TR_Debug * debugObj = cg->getDebug();
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(faultingInstruction, "Throws Implicit Null Pointer Exception");
+            }
+         }
+      }
 
    if (comp->useCompressedPointers()
          && reference->getOpCodeValue() == TR::l2a)
@@ -2270,44 +3895,6 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
       }
 
    reference->setIsNonNull(true);
-
-   /*
-   * If the first child is a load with a ref count of 1, just decrement the reference count on the child.
-   * If the first child does not have a register, it means it was never evaluated.
-   * As a result, the grandchild (the variable reference) needs to be decremented as well.
-   *
-   * In other cases, evaluate the child node.
-   *
-   * Under compressedpointers, the first child will have a refCount of at least 2 (the other under an anchor node).
-   */
-   if (opCode.isLoad() && firstChild->getReferenceCount() == 1
-         && !(firstChild->getSymbolReference()->isUnresolved()))
-      {
-      cg->decReferenceCount(firstChild);
-      if (firstChild->getRegister() == NULL)
-         {
-         cg->decReferenceCount(reference);
-         }
-      }
-   else
-      {
-      if (comp->useCompressedPointers())
-         {
-         bool fixRefCount = false;
-         if (firstChild->getOpCode().isStoreIndirect()
-               && firstChild->getReferenceCount() > 1)
-            {
-            cg->decReferenceCount(firstChild);
-            fixRefCount = true;
-            }
-         cg->evaluate(firstChild);
-         if (fixRefCount)
-            firstChild->incReferenceCount();
-         }
-      else
-         cg->evaluate(firstChild);
-      cg->decReferenceCount(firstChild);
-      }
 
    return NULL;
    }

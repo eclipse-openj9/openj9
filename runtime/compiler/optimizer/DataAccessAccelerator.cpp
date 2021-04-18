@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -469,7 +469,7 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
    bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !comp()->target().cpu.isZ())
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
       {
       printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -497,8 +497,8 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
       // Default case is impossible due to previous checks
       switch (sourceNumBytes)
          {
-         case 4: op = requiresByteSwap ? TR::iriload : TR::floadi; break;
-         case 8: op = requiresByteSwap ? TR::irlload : TR::dloadi; break;
+         case 4: op = requiresByteSwap ? TR::iloadi : TR::floadi; break;
+         case 8: op = requiresByteSwap ? TR::lloadi : TR::dloadi; break;
          }
 
       // Default case is impossible due to previous checks
@@ -515,8 +515,8 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
          // Default case is impossible due to previous checks
          switch (sourceNumBytes)
             {
-            case 4: valueNode = TR::Node::create(TR::ibits2f, 1, valueNode); break;
-            case 8: valueNode = TR::Node::create(TR::lbits2d, 1, valueNode); break;
+            case 4: valueNode = TR::Node::create(TR::ibits2f, 1, TR::Node::create(TR::ibyteswap, 1, valueNode)); break;
+            case 8: valueNode = TR::Node::create(TR::lbits2d, 1, TR::Node::create(TR::lbyteswap, 1, valueNode)); break;
             }
          }
 
@@ -565,7 +565,7 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalSetIntrinsic(TR::TreeTop* callT
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
    bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !comp()->target().cpu.isZ())
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
       {
       printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -600,8 +600,8 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalSetIntrinsic(TR::TreeTop* callT
       // Default case is impossible due to previous checks
       switch (targetNumBytes)
          {
-         case 4: op = requiresByteSwap ? TR::iristore : TR::fstorei; break;
-         case 8: op = requiresByteSwap ? TR::irlstore : TR::dstorei; break;
+         case 4: op = requiresByteSwap ? TR::istorei : TR::fstorei; break;
+         case 8: op = requiresByteSwap ? TR::lstorei : TR::dstorei; break;
          }
 
       // Create the proper conversion if the source and target sizes are different
@@ -615,8 +615,8 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalSetIntrinsic(TR::TreeTop* callT
          // Default case is impossible due to previous checks
          switch (targetNumBytes)
             {
-            case 4: valueNode = TR::Node::create(TR::fbits2i, 1, valueNode); break;
-            case 8: valueNode = TR::Node::create(TR::dbits2l, 1, valueNode); break;
+            case 4: valueNode = TR::Node::create(TR::ibyteswap, 1, TR::Node::create(TR::fbits2i, 1, valueNode)); break;
+            case 8: valueNode = TR::Node::create(TR::lbyteswap, 1, TR::Node::create(TR::dbits2l, 1, valueNode)); break;
             }
          }
 
@@ -749,15 +749,6 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
       return NULL;
       }
 
-   // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
-
-   if (requiresByteSwap && !comp()->target().cpu.isZ())
-      {
-      printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
-      return NULL;
-      }
-
    bool needUnsignedConversion = false;
 
    // This check indicates that the sourceNumBytes value is specified on the callNode, so we must extract it
@@ -800,6 +791,15 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
       sourceNumBytes = targetNumBytes;
       }
 
+   // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
+   bool requiresByteSwap = sourceNumBytes != 1 && comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
+      {
+      printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
+      return NULL;
+      }
+
    if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: genSimpleGetBinary call: %p inlined.\n", callNode))
       {
       insertByteArrayNULLCHK(callTreeTop, callNode, byteArrayNode);
@@ -820,14 +820,15 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
          }
 
       TR::ILOpCodes op = TR::BadILOp;
+      TR::ILOpCodes byteswapOp = TR::BadILOp;
 
       // Default case is impossible due to previous checks
       switch (sourceNumBytes)
          {
          case 1: op = TR::bloadi; break;
-         case 2: op = requiresByteSwap ? TR::irsload : TR::sloadi; break;
-         case 4: op = requiresByteSwap ? TR::iriload : TR::iloadi; break;
-         case 8: op = requiresByteSwap ? TR::irlload : TR::lloadi; break;
+         case 2: op = TR::sloadi; byteswapOp = TR::sbyteswap; break;
+         case 4: op = TR::iloadi; byteswapOp = TR::ibyteswap; break;
+         case 8: op = TR::lloadi; byteswapOp = TR::lbyteswap; break;
          }
 
       // Default case is impossible due to previous checks
@@ -840,6 +841,11 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
          }
 
       TR::Node* valueNode = TR::Node::createWithSymRef(op, 1, 1, createByteArrayElementAddress(callTreeTop, callNode, byteArrayNode, offsetNode), comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
+
+      if (requiresByteSwap)
+         {
+         valueNode = TR::Node::create(byteswapOp, 1, valueNode);
+         }
 
       if (sourceDataType != targetDataType)
          {
@@ -869,15 +875,6 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
    if (!bigEndianNode->getOpCode().isLoadConst())
       {
       printInliningStatus (false, callNode, "bigEndianNode is not constant.");
-      return NULL;
-      }
-
-   // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
-
-   if (requiresByteSwap && !comp()->target().cpu.isZ())
-      {
-      printInliningStatus (false, callNode, "Marshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
       }
 
@@ -911,6 +908,15 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
       targetNumBytes = sourceNumBytes;
       }
 
+   // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
+   bool requiresByteSwap = targetNumBytes != 1 && comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+
+   if (requiresByteSwap && !comp()->cg()->supportsByteswap())
+      {
+      printInliningStatus (false, callNode, "Marshalling is not supported because ByteSwap IL evaluators are not implemented.");
+      return NULL;
+      }
+
    if (performTransformation(comp(), "O^O TR_DataAccessAccelerator: genSimplePutBinary call: %p inlined.\n", callNode))
       {
       insertByteArrayNULLCHK(callTreeTop, callNode, byteArrayNode);
@@ -940,20 +946,26 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
          }
 
       TR::ILOpCodes op = TR::BadILOp;
+      TR::ILOpCodes byteswapOp = TR::BadILOp;
 
       // Default case is impossible due to previous checks
       switch (targetNumBytes)
          {
          case 1: op = TR::bstorei; break;
-         case 2: op = requiresByteSwap ? TR::irsstore : TR::sstorei; break;
-         case 4: op = requiresByteSwap ? TR::iristore : TR::istorei; break;
-         case 8: op = requiresByteSwap ? TR::irlstore : TR::lstorei; break;
+         case 2: op = TR::sstorei; byteswapOp = TR::sbyteswap; break;
+         case 4: op = TR::istorei; byteswapOp = TR::ibyteswap; break;
+         case 8: op = TR::lstorei; byteswapOp = TR::lbyteswap; break;
          }
 
       // Create the proper conversion if the source and target sizes are different
       if (sourceDataType != targetDataType)
          {
          valueNode = TR::Node::create(TR::ILOpCode::getProperConversion(sourceDataType, targetDataType, false), 1, valueNode);
+         }
+
+      if (requiresByteSwap)
+         {
+         valueNode = TR::Node::create(byteswapOp, 1, valueNode);
          }
 
       return TR::Node::createWithSymRef(op, 2, 2, createByteArrayElementAddress(callTreeTop, callNode, byteArrayNode, offsetNode), valueNode, comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0));
@@ -1217,7 +1229,7 @@ bool TR_DataAccessAccelerator::generateI2PD(TR::TreeTop* treeTop, TR::Node* call
        * AddrNode1 and AddrNode2 were the same node, the LocalCSE would not consider AddrNode1 an alternative replacement
        * of AddrNode3 because the BCDCHK's symbol canGCAndReturn().
        *
-       * With AddrNode2 and AddrNode3 commoned up, the LocalCSE is able to copy propagate pdshlOverflow to the the pd2zd
+       * With AddrNode2 and AddrNode3 commoned up, the LocalCSE is able to copy propagate pdshlOverflow to the pd2zd
        * tree and replace its pdloadi.
        */
       TR::Node * outOfLineCopyBackAddr = constructAddressNode(callNode, pdNode, offsetNode);

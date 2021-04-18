@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -206,7 +206,7 @@ public class J9ClassHelper
 	
 	private static HashMap<String, J9ObjectFieldOffset> getFieldOffsetCache(J9ClassPointer clazz)
 	{
-		Long classAddr = new Long(clazz.getAddress());
+		Long classAddr = Long.valueOf(clazz.getAddress());
 		HashMap<String, J9ObjectFieldOffset> fieldOffsetCache = classToFieldOffsetCacheMap.get(classAddr);
 		
 		if(null != fieldOffsetCache) { 

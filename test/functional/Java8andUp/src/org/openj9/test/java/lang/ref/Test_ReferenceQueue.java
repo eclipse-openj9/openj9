@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.ref;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ public class Test_ReferenceQueue {
 			synchronized (rq) {
 				// store in a static so it won't be gc'ed because the jit
 				// optimized it out
-				integer = new Integer(667);
+				integer = Integer.valueOf(667);
 				SoftReference sr = new SoftReference(integer, rq);
 				sr.enqueue();
 				rq.notify();
@@ -74,7 +74,7 @@ public class Test_ReferenceQueue {
 	public void test_poll() {
 		// store in a static so it won't be gc'ed because the jit
 		// optimized it out
-		b = new Boolean(true);
+		b = Boolean.valueOf(true);
 		//SM
 		SoftReference sr = new SoftReference(b, rq);
 		sr.enqueue();
@@ -96,7 +96,7 @@ public class Test_ReferenceQueue {
 	public void test_remove() {
 		// store in a static so it won't be gc'ed because the jit
 		// optimized it out
-		b = new Boolean(true);
+		b = Boolean.valueOf(true);
 		//SM
 		SoftReference sr = new SoftReference(b, rq);
 		sr.enqueue();

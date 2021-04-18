@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,7 @@
 set(OMR_ENHANCED_WARNINGS OFF)
 add_tracegen(j9vrb.tdf)
 
-j9vm_add_library(j9vrb SHARED
-	OUTPUT_NAME j9vrb${J9VM_VERSION_SUFFIX}
+set(verbose_sources
 	errormessage_internal.c
 	errormessagebuffer.c
 	errormessageframeworkcfr.c
@@ -40,6 +39,11 @@ j9vm_add_library(j9vrb SHARED
 	${j9vm_SOURCE_DIR}/compiler/runtime/MethodMetaData.c
 
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vrb.c
+)
+
+j9vm_add_library(j9vrb SHARED
+	OUTPUT_NAME j9vrb${J9VM_VERSION_SUFFIX}
+	${verbose_sources}
 )
 
 # Note: OMR_TOOLCONFIG=gnu also captures gnu-like compilers, such as clang
@@ -98,3 +102,59 @@ install(
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
+
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9vrb_full SHARED
+		OUTPUT_NAME j9vrb_full${J9VM_VERSION_SUFFIX}
+		${verbose_sources}
+	)
+
+	target_include_directories(j9vrb_full
+		PRIVATE
+			${CMAKE_CURRENT_BINARY_DIR}
+			${j9vm_SOURCE_DIR}/compiler/runtime
+			${j9vm_SOURCE_DIR}/compiler/codegen
+			${omr_SOURCE_DIR}/compiler/codegen
+			${omr_SOURCE_DIR}/compiler
+			${j9vm_SOURCE_DIR}/compiler
+			${j9vm_SOURCE_DIR}/shared_common/include
+	)
+
+	target_link_libraries(j9vrb_full
+		PRIVATE
+			j9vm_interface
+			j9vm_gc_includes
+			j9vm_compiler_defines
+
+			j9stackmap
+			j9verutil
+			j9pool
+			j9modronstartup_full
+			j9gcvrbjava_full
+			j9gcvrbold_full
+			j9gcvrbevents_full
+			j9gcvrbhdlrstandardjava_full
+			j9gcvrbhdlrrealtime_full
+			j9gcvrbhdlrvlhgc_full
+			j9zip
+			j9utilcore
+	)
+
+	target_compile_definitions(j9vrb_full
+		PRIVATE
+			-DJ9VM_INTERP_STACKWALK_TRACING
+			-DJ9VM_INTERP_LINEAR_STACKWALK_TRACING
+	)
+
+	omr_add_exports(j9vrb_full
+		JVM_OnLoad
+		JVM_OnUnload
+		J9VMDllMain
+	)
+
+	install(
+		TARGETS j9vrb_full
+		LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+		RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
+	)
+endif()

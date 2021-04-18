@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1345,8 +1345,8 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
    if (hint)
       {
       TR_ASSERT( !childReg->isInitialized() || hint != childReg->getStorageReference(),"bcd conversion operands will overlap\n");
-      destSize = hint->getSymbolSize(); // may be be larger than the node->getSize() so take this opportunity to widen as part of the PACK
-      destPrecision = TR::DataType::getBCDPrecisionFromSize(node->getDataType(), destSize); // may be be larger than the node->getSize() so take this opportunity to widen as part of the PACK
+      destSize = hint->getSymbolSize(); // may be larger than the node->getSize() so take this opportunity to widen as part of the PACK
+      destPrecision = TR::DataType::getBCDPrecisionFromSize(node->getDataType(), destSize); // may be larger than the node->getSize() so take this opportunity to widen as part of the PACK
       targetStorageReference = hint;
       }
    else
@@ -1711,7 +1711,7 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
    if (hint)
       {
       TR_ASSERT( !childReg->isInitialized() || hint != childReg->getStorageReference(),"bcd conversion operands will overlap\n");
-      destSize = hint->getSymbolSize(); // may be be larger than the node->getSize() so take this opportunity to widen as part of the UNPK
+      destSize = hint->getSymbolSize(); // may be larger than the node->getSize() so take this opportunity to widen as part of the UNPK
       targetStorageReference = hint;
       }
    else
@@ -2629,8 +2629,9 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node* callParamRoot = isVariableParam ? pdopNode : node;
    for (uint32_t i = firstCallParamIndex; i < callParamRoot->getNumChildren(); ++i)
       {
-      if (!callParamRoot->getChild(i)->isSingleRefUnevaluated())
-         cg->evaluate(callParamRoot->getChild(i));
+      TR::Node* callArg = callParamRoot->getChild(i);
+      if (callArg->getReferenceCount() != 1 || callArg->getRegister() != NULL)
+         cg->evaluate(callArg);
       }
 
    /*
@@ -4737,7 +4738,7 @@ J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenera
    // generateVSIInstruction() API will call separateIndexRegister() to separate the index
    // register by emitting an LA instruction. If there's a need for large displacement adjustment,
    // LAY will be emitted instead.
-   TR::MemoryReference* sourceMR = generateS390MemoryReference(node, cg, false);
+   TR::MemoryReference* sourceMR = TR::MemoryReference::create(cg, node);
 
    // Index of the first byte to load, counting from the right ranging from 0-15.
    uint8_t indexFromTheRight = TR_VECTOR_REGISTER_SIZE - 1;
@@ -5780,7 +5781,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    // generateVSIInstruction() API will call separateIndexRegister() to separate the index
    // register by emitting an LA instruction. If there's a need for large displacement adjustment,
    // LAY will be emitted instead.
-   TR::MemoryReference * targetMR = generateS390MemoryReference(node, cg, false);
+   TR::MemoryReference * targetMR = TR::MemoryReference::create(cg, node);;
 
    // 0 we store 1 byte, 15 we store 16 bytes
    uint8_t lengthToStore = TR_VECTOR_REGISTER_SIZE - 1;
@@ -7519,7 +7520,8 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
             firstChild->getOpCodeValue() == TR::pdmul ||
             firstChild->getOpCodeValue() == TR::pddiv ||
             firstChild->getOpCodeValue() == TR::pdrem) &&
-           firstChild->isSingleRefUnevaluated();
+            firstChild->getReferenceCount() == 1 &&
+            firstChild->getRegister() == NULL;
 
    int32_t shiftAmount = (int32_t)shiftAmountNode->get64bitIntegralValue();
    uint8_t decimalPrecision = node->getDecimalPrecision();

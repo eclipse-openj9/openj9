@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Copyright (c) 2021, 2021 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+<playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
+	<test>
+		<testCaseName>Jep397Tests</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+            -cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+            org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep397Tests \
+            -groups $(TEST_GROUP) \
+            -excludegroups $(DEFAULT_EXCLUDE); \
+            $(TEST_STATUS)
+        </command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>16+</version>
+		</versions>
+	</test>
+	
+	<test>
+		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentModule</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			-cp $(Q)$(TEST_RESROOT)$(D)module_bin$(D)org.openj9test.modularity.moduleX$(Q) \
+			-cp $(Q)$(TEST_RESROOT)$(D)module_bin$(D)org.openj9test.modularity.moduleY$(Q) \
+			--module-path $(Q)$(TEST_RESROOT)$(D)module_bin$(Q) \
+			--add-modules org.openj9test.modularity.moduleX,org.openj9test.modularity.moduleY \
+			--add-exports org.openj9test.modularity.moduleX/org.openj9.test.modularity.pkgA=ALL-UNNAMED \
+			--add-exports org.openj9test.modularity.moduleY/org.openj9.test.modularity.pkgB=ALL-UNNAMED \
+			--add-reads org.openj9test.modularity.moduleX=ALL-UNNAMED \
+			--add-reads org.openj9test.modularity.moduleY=ALL-UNNAMED \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testSubClassOfSealedSuperFromDifferentModule.xml$(Q) -testnames Jep397Tests_testSubClassOfSealedSuperFromDifferentModule \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>16+</version>
+		</versions>
+	</test>
+	
+	<test>
+		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule.xml$(Q) -testnames Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>16+</version>
+		</versions>
+	</test>
+	
+	<test>
+		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameNamedModule</testCaseName>
+		<variations>
+			<variation>--enable-preview</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+			-cp $(Q)$(TEST_RESROOT)$(D)module_bin$(D)org.openj9test.modularity.moduleX$(Q) \
+			--module-path $(Q)$(TEST_RESROOT)$(D)module_bin$(Q) \
+			--add-modules org.openj9test.modularity.moduleX \
+			--add-exports org.openj9test.modularity.moduleX/org.openj9.test.modularity.pkgA=ALL-UNNAMED \
+			--add-exports org.openj9test.modularity.moduleX/org.openj9.test.modularity.pkgD=ALL-UNNAMED \
+			--add-reads org.openj9test.modularity.moduleX=ALL-UNNAMED \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testSubClassOfSealedSuperFromDifferentPackageInSameNamedModule.xml$(Q) -testnames Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameNamedModule \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>16+</version>
+		</versions>
+	</test>
+</playlist>

@@ -1,5 +1,5 @@
 <!-- 
-	Copyright (c) 2009, 2018 IBM Corp. and others
+	Copyright (c) 2009, 2020 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 <exports group="sun_misc_Unsafe">
 		<export name="Java_sun_misc_Unsafe_registerNatives" />
 		<export name="Java_jdk_internal_misc_Unsafe_registerNatives" />
-		<export name="Java_jdk_internal_misc_Unsafe_shouldBeInitialized" />
+		<export name="Java_sun_misc_Unsafe_shouldBeInitialized" />
 		<export name="Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2" />
 		<export name="Java_sun_misc_Unsafe_pageSize" />
 		<export name="Java_sun_misc_Unsafe_getLoadAverage" />

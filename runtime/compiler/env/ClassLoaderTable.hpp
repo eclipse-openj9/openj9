@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,53 +23,47 @@
 #ifndef CLASSLOADERTABLE_INCL
 #define CLASSLOADERTABLE_INCL
 
-#include "compile/Compilation.hpp"
-#include "env/SharedCache.hpp"
-#include "infra/Link.hpp"
-#include "infra/List.hpp"
-#include "infra/Array.hpp"
-#include "runtime/RuntimeAssumptions.hpp"
+#include "env/TRMemory.hpp"
 
-class TR_Debug;
-class TR_DebugExt;
 
-#define   CLASSLOADERTABLE_SIZE   2053
+#define CLASSLOADERTABLE_SIZE 2053
 
+class TR_J9SharedCache;
 struct TR_ClassLoaderInfo;
 
 class TR_PersistentClassLoaderTable
    {
-   public:
+public:
 
-   TR_ALLOC(TR_Memory::PersistentCHTable)
-   TR_PersistentClassLoaderTable(TR_PersistentMemory *);
+   TR_PERSISTENT_ALLOC(TR_Memory::PersistentCHTable)
+   TR_PersistentClassLoaderTable(TR_PersistentMemory *persistentMemory);
 
-   void associateClassLoaderWithClass(void *classLoaderPointer, TR_OpaqueClassBlock *clazz);
-   void *lookupClassLoaderAssociatedWithClassChain(void *classChainPointer);
-   void *lookupClassChainAssociatedWithClassLoader(void *classLoaderPointer);
-   void removeClassLoader(void *classLoaderPointer);
+   void associateClassLoaderWithClass(J9VMThread *vmThread, void *loader, TR_OpaqueClassBlock *clazz);
+   void *lookupClassChainAssociatedWithClassLoader(void *loader) const;
+   void *lookupClassLoaderAssociatedWithClassChain(void *chain) const;
+#if defined(J9VM_OPT_JITSERVER)
+   // JIT client needs to associate each class loader with the name of its first loaded class
+   // in order to support AOT method serialization (and caching at JITServer) and deserialization.
+   std::pair<void *, void *>// loader, chain
+   lookupClassLoaderAndChainAssociatedWithClassName(const uint8_t *data, size_t length) const;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   void removeClassLoader(J9VMThread *vmThread, void *loader);
 
-   void setSharedCache(TR_SharedCache *sharedCache) { _sharedCache = sharedCache; }
+   void setSharedCache(TR_J9SharedCache *sharedCache) { _sharedCache = sharedCache; }
 
-   private:
+private:
 
    friend class TR_Debug;
    friend class TR_DebugExt;
 
-   TR_PersistentMemory *trPersistentMemory() { return _trPersistentMemory; }
+   TR_PersistentMemory *const _persistentMemory;
+   TR_J9SharedCache *_sharedCache;
 
-
-   int32_t hashLoader(void *classLoaderPointer);
-   int32_t hashClassChain(void *classChain);
-
-   TR_ClassLoaderInfo * _loaderTable[CLASSLOADERTABLE_SIZE];
-   TR_ClassLoaderInfo * _classChainTable[CLASSLOADERTABLE_SIZE];
-   TR_PersistentMemory *_trPersistentMemory;
-
-   TR_SharedCache *sharedCache() { return _sharedCache; }
-   TR_SharedCache *_sharedCache;
-
-   static int32_t _numClassLoaders;
+   TR_ClassLoaderInfo *_loaderTable[CLASSLOADERTABLE_SIZE];
+   TR_ClassLoaderInfo *_chainTable[CLASSLOADERTABLE_SIZE];
+#if defined(J9VM_OPT_JITSERVER)
+   TR_ClassLoaderInfo *_nameTable[CLASSLOADERTABLE_SIZE];
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 #endif

@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2020 IBM Corp. and others
+// Copyright (c) 2006, 2021 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -500,7 +500,7 @@ TraceExit-Exception=Trc_JNIinv_DestroyJavaVM_verifyCurrentThreadAttached_Exit Ob
 TraceEntry=Trc_JNIinv_protectedDestroyJavaVM_Entry NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_StartingThreadWait NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM waiting for Java threads to stop"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_FinishedThreadWait NoEnv Overhead=1 Level=3 Template="protectedDestoryJavaVM all Java threads have stopped"
-TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmCleanupDone NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM protectedDestroyJavaVM vmCleanup complete"
+TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmCleanupDone NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM vmCleanup complete"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmShutdownHookFired NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM VM Shutting Down Hook Fired"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_HeapManagementShutdown NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM GC HeapManagement Shutdown"
 TraceEvent=Trc_JNIinv_protectedDestroyJavaVM_vmShutdownDone NoEnv Overhead=1 Level=3 Template="protectedDestroyJavaVM vmShutdown returned"
@@ -575,7 +575,7 @@ TraceEvent=Trc_VM_sendTclinit_forClass Overhead=1 Level=3 Template="sendTclinit 
 
 TraceAssert=Assert_VM_true_Level9 noEnv Overhead=1 Level=9 Assert="(P1)"
 
-TraceEntry=Trc_VM_romClassLoadFromCookie_Entry1 Overhead=1 Level=3 Template="romClassLoadFromCookie vmStruct=%p clsName=%p clsNameLength=%d romClassBytes=%p romClassLength=%d"
+TraceEntry=Trc_VM_romClassLoadFromCookie_Entry1 Obsolete Overhead=1 Level=3 Template="romClassLoadFromCookie vmStruct=%p clsName=%p clsNameLength=%d romClassBytes=%p romClassLength=%d"
 
 TraceEvent=Trc_VM_resolveKnownClass_SkipResolveOfStringBytesFieldRef Overhead=1 Level=1 Template="Skipping resolve of char[] java.lang.String#value. String compression is enabled. Instance field ref %u for known class %zu (%p)"
 TraceEvent=Trc_VM_resolveKnownClass_SkipResolveOfStringBytesCompressedFieldRef Overhead=1 Level=1 Template="Skipping resolve of Object java.lang.String#value. String compression is disabled. Instance field ref %u for known class %zu (%p)"
@@ -641,7 +641,7 @@ TraceEntry=Trc_VM_sendTenantInitializationAlreadyFailed_Entry Overhead=1 Level=3
 TraceExit=Trc_VM_sendTenantInitializationAlreadyFailed_Exit Overhead=1 Level=3 Template="sendTenantInitializationAlreadyFailed"
 
 TraceEntry=Trc_VM_classInitStateMachine_Entry Group=classinit Overhead=1 Level=3 Template="classInitStateMachine for %.*s (%p) loader=%p up to %s"
-TraceEvent=Trc_VM_classInitStateMachine_noLock Group=classinit Overhead=1 Level=3 Template="initializationLock is NULL - class if fully initialized"
+TraceEvent=Trc_VM_classInitStateMachine_noLock Group=classinit Overhead=1 Level=3 Template="initializationLock is NULL - class is fully initialized"
 TraceEvent=Trc_VM_classInitStateMachine_status Group=classinit Overhead=1 Level=3 Template="status is %p (%s)"
 TraceEvent=Trc_VM_classInitStateMachine_stateChanged Group=classinit Overhead=1 Level=3 Template="state changed after acquiring lock - loop and check state again"
 TraceEvent=Trc_VM_classInitStateMachine_markVerificationInProgress Group=classinit Overhead=1 Level=3 Template="marking class as verifying in current thread"
@@ -786,7 +786,7 @@ TraceEvent=Trc_VM_classInitStateMachine_verifyFlattenableField Group=classinit O
 TraceEvent=Trc_VM_classInitStateMachine_prepareFlattenableField Group=classinit Overhead=1 Level=3 Template="prepare flattenable field clazz=%p"
 TraceEvent=Trc_VM_classInitStateMachine_initFlattenableField Group=classinit Overhead=1 Level=3 Template="initialize flattenable field clazz=%p"
 
-TraceEntry=Trc_VM_GetCompleteNPEMessage_Entry Overhead=1 Level=3 Template="GetCompleteNPEMessage - bcCurrentPtr (0x%p) bcCurrent (0x%x) romClass (0x%p) npeCauseMsg (%s)"
+TraceEntry=Trc_VM_GetCompleteNPEMessage_Entry Overhead=1 Level=3 Template="GetCompleteNPEMessage - bcCurrentPtr (0x%p) romClass (0x%p) bcCurrent (0x%x) npeCauseMsg (%s) isMethodFlag (%d)"
 TraceException=Trc_VM_GetCompleteNPEMessage_Unreachable Overhead=1 Level=1 Template="GetCompleteNPEMessage - Unreachable error occurred : bcCurrent (0x%x)"
 TraceEvent=Trc_VM_GetCompleteNPEMessage_UnexpectedCPType Overhead=1 Level=1 Template="GetCompleteNPEMessage - unexpected CP type (0x%x) at bcCurrent(0x%x)"
 TraceEvent=Trc_VM_GetCompleteNPEMessage_Field_Index Overhead=1 Level=3 Template="GetCompleteNPEMessage - field index (0x%x)"
@@ -798,3 +798,82 @@ TraceException=Trc_VM_CreateRAMClassFromROMClass_circularity2 noEnv Overhead=1 L
 
 TraceException=Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperclass Overhead=1 Level=1 Template="Superclass (RAM class=%p) does not include %.*s in PermittedSubclasses list"
 TraceException=Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperinterface Overhead=1 Level=1 Template="Superinterface (RAM class=%p) does not include %.*s in PermittedSubclasses list"
+
+TraceEntry=Trc_VM_bindNative_Entry Overhead=1 Level=3 Template="bindNative - nativeMethod (%p) longJNI (%s) shortJNI (%s) bindJNINative (%zu)"
+TraceEvent=Trc_VM_bindNative_NativeLibrary_Success Overhead=1 Level=3 Template="bindNative success - nativeMethod (%p) nativeLibrary (%p) longJNI (%s) shortJNI (%s) bindJNINative (%zu)"
+TraceEvent=Trc_VM_bindNative_NativeLibrary_OOM Overhead=1 Level=3 Template="bindNative OOM - nativeMethod (%p) nativeLibrary (%p) longJNI (%s) shortJNI (%s) bindJNINative (%zu)"
+TraceEvent=Trc_VM_bindNative_NullNativeLibrary_Success Overhead=1 Level=3 Template="bindNative success (NULL Native Library) - nativeMethod (%p) longJNI (%s) shortJNI (%s) bindJNINative (%zu)"
+TraceEvent=Trc_VM_bindNative_NullNativeLibrary_OOM Overhead=1 Level=3 Template="bindNative OOM (NULL Native Library) - nativeMethod (%p) longJNI (%s) shortJNI (%s) bindJNINative (%zu)"
+TraceEvent=Trc_VM_bindNative_JVMTIAgent_Success Overhead=1 Level=3 Template="bindNative success (JVMTI Agent) - nativeMethod (%p) longJNI (%s) shortJNI (%s)"
+TraceEvent=Trc_VM_bindNative_Fail Overhead=1 Level=3 Template="bindNative fail - nativeMethod (%p) longJNI (%s) shortJNI (%s) bindJNINative (%zu)"
+TraceEntry=Trc_VM_lookupJNINative_Entry Overhead=1 Level=3 Template="lookupJNINative - nativeLibrary (%p) nativeMethod (%p) symbolName (%s) signature (%s)"
+TraceEvent=Trc_VM_lookupJNINative_NullNativeLibrary Overhead=1 Level=3 Template="lookupJNINative (null native library) - nativeMethod (%p) symbolName (%s) signature (%s) functionAddress (%p)"
+TraceExit=Trc_VM_lookupJNINative_Exit Overhead=1 Level=3 Template="lookupJNINative - nativeLibrary (%p) nativeMethod (%p) nativeMethod->extra (%p) symbolName (%s) signature (%s) lookupResult (%zu)"
+TraceEntry=Trc_VM_lookupNativeAddress_Entry Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) shortJNI (%s) functionArgCount (%zu) bindJNINative (%zu)"
+TraceExit=Trc_VM_lookupNativeAddress_inlIntercept_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) rc (%zu)"
+TraceExit=Trc_VM_lookupNativeAddress_bindmethod_shortJNI_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) shortJNI (%s) argSignature (%s)"
+TraceExit=Trc_VM_lookupNativeAddress_bindmethod_longJNI_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) argSignature (%s)"
+TraceExit=Trc_VM_lookupNativeAddress_fail_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) argSignature (%s)"
+
+TraceEntry=Trc_VM_registerBootstrapLibrary_Entry Overhead=1 Level=3 Template="registerBootstrapLibrary - libName (%s) libraryPtr (%p)"
+TraceExit=Trc_VM_registerBootstrapLibrary_Exit Overhead=1 Level=3 Template="registerBootstrapLibrary - libName (%s) libraryPtr (%p) result (%zu)"
+
+TraceEvent=Trc_VM_ConvertToJavaFullyQualifiedName_Get_ClassName Overhead=1 Level=4 Template="ConvertToJavaFullyQualifiedName - get result (%s) from %.*s"
+TraceEvent=Trc_VM_ConvertMethodSignature_Malformed_Signature Overhead=1 Level=1 Template="ConvertMethodSignature - malformed signature %.*s at index i = %d"
+TraceEvent=Trc_VM_ConvertMethodSignature_Signature_BufferSize Overhead=1 Level=4 Template="ConvertMethodSignature - signature %.*s has bufferSize %d"
+TraceEvent=Trc_VM_ConvertMethodSignature_Signature_Result Overhead=1 Level=4 Template="ConvertMethodSignature - result (%s) with resultLength %zu"
+
+TraceEvent=Trc_VM_initializeModulesPathEntry_loadJImageFailed NoEnv Overhead=1 Level=1 Template="initializeModulesPathEntry - attempt to load %.*s as jimage file failed with error=%d"
+
+TraceEvent=Trc_VM_GetCompleteNPEMessage_Not_Required Overhead=1 Level=3 Template="GetCompleteNPEMessage - No message generated for new NullPointerException().getMessage()"
+TraceEntry=Trc_VM_ComputeNPEMsgAtPC_Entry Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : romClass (%p) romMethod (%p) temps (%p) bytecodeOffset (%p) bcCurrent (0x%x) npePC (%u) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
+TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Constants Overhead=1 Level=4 Template="ComputeNPEMsgAtPC - constants : bcCurrent (0x%x) constNum (%d) numLen (%u) npeMsgTemp (%s)"
+TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Operators Overhead=1 Level=4 Template="ComputeNPEMsgAtPC - operators : bcCurrent (0x%x) npeMsgTemp (%s) msgLen (%u)"
+TraceEvent=Trc_VM_ComputeNPEMsgAtPC_NotScalarType Overhead=1 Level=1 Template="ComputeNPEMsgAtPC - NOT scalar type : romClass (%p) romMethod (%p) constantPool (%p) aaloadIndex (%zu) info (%p) cpType (0x%x)"
+TraceEvent=Trc_VM_ComputeNPEMsgAtPC_Constants_UnexpectedBC Overhead=1 Level=1 Template="ComputeNPEMsgAtPC - constants unexpected bytecode : bcCurrent (0x%x)"
+TraceEvent=Trc_VM_ComputeNPEMsgAtPC_SkippedBC Overhead=1 Level=1 Template="ComputeNPEMsgAtPC - skipped bytecode : bcCurrent (0x%x) npeFinalFlag (%d)"
+TraceExit=Trc_VM_ComputeNPEMsgAtPC_Exit Overhead=1 Level=3 Template="ComputeNPEMsgAtPC : bcCurrent (0x%x) npePC (%u) npeFlag (%d) isMethodFlag (%d) npeMsg (%s)"
+TraceEvent=Trc_VM_SimulateStack_BranchTarget Overhead=1 Level=3 Template="simulateStack - bytecodeMap[%zu] (0x%x) is BRANCH_TARGET with bcPos (%zu)"
+TraceEvent=Trc_VM_SimulateStack_JustLoadedStack Overhead=1 Level=3 Template="simulateStack - justLoadedStack bytecodeMap[%zu] (0x%x) stackIndex (%zu) bcIndex (%p) currentBytecode (0x%zx) npePC (%zu)"
+TraceEvent=Trc_VM_SimulateStack_AlreadyWalked Overhead=1 Level=3 Template="simulateStack - already walked, try next one in the queue : bytecodeMap[%zu] (0x%x) currentBytecode (0x%zx) npePC (%zu)"
+TraceEvent=Trc_VM_SimulateStack_SkippedBC Overhead=1 Level=3 Template="simulateStack - skipped currentBytecode (0x%zx) pc (%zu) action (%zu)"
+TraceEvent=Trc_VM_SimulateStack_UnimplementedBC Overhead=1 Level=1 Template="simulateStack - RTV_UNIMPLEMENTED detected at currentBytecode (0x%zx) pc (%zu) action (%zu)"
+TraceEvent=Trc_VM_SimulateStack_MalformedStack_One Overhead=1 Level=1 Template="simulateStack - malformed stack (stackTop(%p) - popCount(%zx)) < stackBase(%p)"
+TraceEvent=Trc_VM_SimulateStack_MalformedStack_Two Overhead=1 Level=1 Template="simulateStack - malformed stack stackTop(%p) < stackBase(%p)"
+TraceEvent=Trc_VM_SimulateStack_RtvPushNew_SkippedBC Overhead=1 Level=3 Template="simulateStack - skipped bytecode (0x%x)"
+TraceExit=Trc_VM_SimulateStack_Exit Overhead=1 Level=3 Template="simulateStack exits - npeMsg (%s)"
+TraceExit=Trc_VM_GetMsgWithAllocation_Exit Overhead=1 Level=3 Template="GetMsgWithAllocation : msgTemplate (%s) resultMsg (%s)"
+TraceEntry=Trc_VM_GetFullyQualifiedMethodName_Entry Overhead=1 Level=3 Template="GetFullyQualifiedMethodName bc (0x%x) index (%u) bcIndex (%p)"
+TraceExit=Trc_VM_GetFullyQualifiedMethodName_Exit Overhead=1 Level=3 Template="GetFullyQualifiedMethodName index (%u) info (%p) className (%s) methodSig (%s) result (%s)"
+TraceEvent=Trc_VM_GetLocalsName_LocalVar Overhead=1 Level=3 Template="getLocalsName localVar (%u) temps[localVar] (%zu)"
+TraceExit=Trc_VM_GetLocalsName_Exit Overhead=1 Level=3 Template="GetLocalsName result (%s) localVar (%d)  bcIndex (%u) temps (%p) methodInfo (%p)"
+TraceExit=Trc_VM_PushViaSiganature_Exit Overhead=1 Level=4 Template="PushViaSiganature *signature (%c) stackTop (%p) bcPos (%zu)"
+TraceEvent=Trc_VM_CopyToTargetStack_Copy Overhead=1 Level=3 Template="copyToTargetStack npeMsgData->unwalkedQueueTail (%zu) bytecodeMap[%zu] (0x%x)"
+TraceEvent=Trc_VM_CopyToTargetStack_BranchTarget Overhead=1 Level=3 Template="copyToTargetStack BranchTarget at liveStackBaseIndexTemp (%zu) liveStack: (%zu) targetStack: (%zu)"
+TraceEvent=Trc_VM_CopyToTargetStack_Mismatched_StackShape Overhead=1 Level=1 Template="copyToTargetStack mismatched stack shape: liveStack (%zd, %zd) targetStack (%zd, %zd)"
+TraceEvent=Trc_VM_CopyToTargetStack_DumpLiveStack Overhead=1 Level=4 Test Template="copyToTargetStack - liveStack->stackBaseIndex (%zu) liveStack->stackTopIndex (%zu)"
+TraceEvent=Trc_VM_CopyToTargetStack_DumpTargetStack Overhead=1 Level=4 Test Template="copyToTargetStack - targetStack->stackBaseIndex (%zu) targetStack->stackTopIndex (%zu)"
+TraceExit=Trc_VM_CopyToTargetStack_Exit Overhead=1 Level=4 Template="copyToTargetStack bytecodeMap[%zu] (0x%x) targetStack (%p) liveStack (%p) targetStack->stackTopIndex (%zu) liveStack->stackTopIndex (%zu)"
+TraceEvent=Trc_VM_InitStackFromMethodSignature_Result Overhead=1 Level=3 Template="InitStackFromMethodSignature - *stackTopPtr (%p) stackTop (%p) argCount (%zu)"
+
+TraceEvent=Trc_VM_findNativeLibrariesLoad_nativeMethod Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad nativeMethod (0x%p) nativeLibraryImplObject (0x%p) classLoader (0x%p)"
+TraceEvent=Trc_VM_findNativeLibrariesLoad_nativeLibraryImplObject Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad nativeLibraryImplObject (0x%p)"
+TraceEvent=Trc_VM_findNativeLibrariesLoad_fromClassObj Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad fromClassObj (0x%p)"
+TraceEvent=Trc_VM_findNativeLibrariesLoad_fromClass Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad fromClass (0x%p)"
+TraceEvent=Trc_VM_findNativeLibrariesLoad_classLoader Overhead=1 Level=3 Template="getCurrentClassLoader - find NativeLibrariesLoad classLoader (0x%p)"
+
+TraceAssert=Trc_VM_Assert_ShouldNeverHappen NoEnv Overhead=1 Level=1 Assert="(0 /* Fatal VM error */)"
+
+TraceEntry=Trc_VM_resolveInvokeHandle_Entry Overhead=1 Level=3 Template="resolveOpenJDKInvokeHandle(ramCP=%p, cpIndex=%zu, flags=%zx)"
+TraceExit=Trc_VM_resolveInvokeHandle_Exit Overhead=1 Level=3 Template="resolveOpenJDKInvokeHandle --> result=%p"
+
+TraceEntry=Trc_VM_resolveInvokeDynamic_Entry Overhead=1 Level=3 Template="resolveInvokeDynamic(callSiteIndex=%zu, bsmIndex=%zu, flags=%zx)"
+TraceEvent=Trc_VM_resolveInvokeDynamic_Resolved Overhead=1 Level=3 Template=" callsite %zu resolved to %p"
+TraceExit=Trc_VM_resolveInvokeDynamic_Exit Overhead=1 Level=3 Template="resolveInvokeDynamic --> result=%p"
+
+TraceEntry=Trc_VM_sendResolveOpenJDKInvokeHandle_Entry Overhead=1 Level=2 Template="sendResolveOpenJDKInvokeHandle"
+TraceExit=Trc_VM_sendResolveOpenJDKInvokeHandle_Exit Overhead=1 Level=2 Template="sendResolveOpenJDKInvokeHandle"
+TraceEntry=Trc_VM_romClassLoadFromCookie_Entry2 Overhead=1 Level=3 Template="romClassLoadFromCookie vmStruct=%p clsNamePtr=%p clsName=%.*s romClassBytes=%p romClassLength=%d"
+
+TraceException=Trc_VM_CreateRAMClassFromROMClass_sealedSuperFromDifferentModule Overhead=1 Level=1 Template="The sealed super class/interface (RAM class=%p) is not in the same module as %.*s"
+TraceException=Trc_VM_CreateRAMClassFromROMClass_sealedSuperFromDifferentPackage Overhead=1 Level=1 Template="The sealed super class/interface (RAM class=%p) is not in the same package as %.*s (non-public)"

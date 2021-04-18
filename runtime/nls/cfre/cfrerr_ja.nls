@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -814,7 +814,7 @@ J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8.user_response=Contact the provider of
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX=\u540d\u524d\u3068\u578b\u304c\u4e88\u671f\u3055\u308c\u3066\u3044\u307e\u3059
+J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX=\u540d\u524d\u3068\u578b\u304c\u5fc5\u8981\u3067\u3059
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1482,12 +1482,7 @@ J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES.user_response=Contact the provider of t
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=Record \u30af\u30e9\u30b9\u3092 abstract \u306b\u3059\u308b\u3053\u3068\u306f\u3067\u304d\u307e\u305b\u3093
-# START NON-TRANSLATABLE
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT=
 
 # Record is not translatable
 J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8=Record \u540d\u306f\u30b9\u30c8\u30ea\u30f3\u30b0\u3067\u306a\u3051\u308c\u3070\u306a\u308a\u307e\u305b\u3093
@@ -1514,12 +1509,7 @@ J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8.user_response=Contact the pro
 # END NON-TRANSLATABLE
 
 # Record is not translatable
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=Record \u306f\u6697\u9ed9\u306b final \u3067\u3059
-# START NON-TRANSLATABLE
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
-# END NON-TRANSLATABLE
+J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL=
 
 # LocalVariableTypeTable is not translatable
 # LocalVariableTable is not translatable
@@ -1538,7 +1528,7 @@ J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.system_action=The JVM will
 J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED=final \u30af\u30e9\u30b9\u3092\u78ba\u5b9a\u3067\u304d\u307e\u305b\u3093
+J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED=final \u30af\u30e9\u30b9\u306f sealed \u306b\u306f\u3067\u304d\u307e\u305b\u3093
 # START NON-TRANSLATABLE
 J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1554,16 +1544,18 @@ J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8.user_response=Contact the provid
 # END NON-TRANSLATABLE
 
 # PermittedSubclasses is not translatable
-J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE=PermittedSubclasses \u30af\u30e9\u30b9\u30fb\u30a8\u30f3\u30c8\u30ea\u30fc\u304c\u30af\u30e9\u30b9\u578b\u3067\u306f\u3042\u308a\u307e\u305b\u3093
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE=PermittedSubclasses \u30af\u30e9\u30b9\u30fb\u30a8\u30f3\u30c8\u30ea\u30fc\u306f class \u30bf\u30a4\u30d7\u3067\u306f\u3042\u308a\u307e\u305b\u3093
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=Sealed \u30af\u30e9\u30b9\u306b\u306f\u5c11\u306a\u304f\u3068\u30821\u3064\u306e\u8a31\u53ef\u3055\u308c\u305f\u30b5\u30d6\u30af\u30e9\u30b9\u304c\u5fc5\u8981\u3067\u3059
+J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES=
+
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1=ValueTypes \u306f -XX:-EnableValhalla \u30aa\u30d7\u30b7\u30e7\u30f3\u3068\u4e00\u7dd2\u306e\u5834\u5408\u306f\u7121\u52b9\u306b\u306a\u308a\u307e\u3059
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
-J9NLS_CFR_ERR_SEALED_CLASS_HAS_INVALID_NUMBER_SUBCLASSES.user_response=Contact the provider of the classfile for a corrected version.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.explanation=ValueTypes is an experimental feature and is disabled by -XX:-EnableValhalla
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.user_response=Contact the provider of the class file for a corrected version, or remove the -XX:+EnableValhalla option and retry.
 # END NON-TRANSLATABLE

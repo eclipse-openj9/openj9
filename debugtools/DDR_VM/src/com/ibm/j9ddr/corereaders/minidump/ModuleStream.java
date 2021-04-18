@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -428,7 +428,7 @@ class ModuleStream extends LateInitializedStream
 					
 		//note that it is this first directory which we are interested in since
 		//it is the export dir
-		//read that pointer and size and calculate where to seek to to begin work
+		//read that pointer and size and calculate where to seek to begin work
 		//again
 		int exportRVA = as.getIntAt(nextRead); // DWORD VirtualAddress;
 		nextRead+=4;

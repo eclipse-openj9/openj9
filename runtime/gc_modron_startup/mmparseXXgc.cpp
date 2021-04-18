@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -715,7 +715,146 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-#if defined(J9VM_GC_MODRON_SCAVENGER)
+/* Start of options relating to dynamicBreadthFirstScanOrdering */
+#if defined(J9VM_GC_MODRON_SCAVENGER) || defined (J9VM_GC_VLHGC)	
+		if(try_scan(&scan_start, "dbfGcCountBetweenHotFieldSort=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfGcCountBetweenHotFieldSort=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 10) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfGcCountBetweenHotFieldSort=", (UDATA)0, (UDATA)10);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->gcCountBetweenHotFieldSort = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfGcCountBetweenHotFieldSortMax=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfGcCountBetweenHotFieldSortMax=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 50) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfGcCountBetweenHotFieldSortMax=", (UDATA)0, (UDATA)50);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->gcCountBetweenHotFieldSortMax = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfDisableAdaptiveGcCountBetweenHotFieldSort")) {
+			extensions->adaptiveGcCountBetweenHotFieldSort = false;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfDisableDepthCopyTwoPaths")) {
+			extensions->depthCopyTwoPaths = false;
+			continue;
+		}
+		
+		if(try_scan(&scan_start, "dbfDepthCopyThreePaths")) {
+			extensions->depthCopyThreePaths = true;
+			continue;
+		}
+		
+		if(try_scan(&scan_start, "dbfEnableAlwaysDepthCopyFirstOffset")) {
+			extensions->alwaysDepthCopyFirstOffset = true;
+			continue;
+		} 
+
+		if(try_scan(&scan_start, "dbfEnablePermanantHotFields")) {
+			extensions->allowPermanantHotFields = true;
+			continue;
+		}
+		
+		if(try_scan(&scan_start, "dbfMaxConsecutiveHotFieldSelections=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfMaxConsecutiveHotFieldSelections=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 50) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfMaxConsecutiveHotFieldSelections=", (UDATA)0, (UDATA)50);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->maxConsecutiveHotFieldSelections = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfEnableHotFieldResetting")) {
+			extensions->hotFieldResettingEnabled = true;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfGcCountBetweenHotFieldReset=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfGcCountBetweenHotFieldReset=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 5000) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfGcCountBetweenHotFieldReset=", (UDATA)0, (UDATA)5000);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->gcCountBetweenHotFieldReset = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfDepthCopyMax=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfDepthCopyMax=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 10) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfDepthCopyMax=", (UDATA)0, (UDATA)10);
+				returnValue = JNI_EINVAL;
+				break;
+			}	
+			extensions->depthCopyMax = value;
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfMaxHotFieldListLength=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfMaxHotFieldListLength=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 20) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfMaxHotFieldListLength=", (UDATA)0, (UDATA)20);
+				returnValue = JNI_EINVAL;
+				break;
+			}	
+			extensions->maxHotFieldListLength = ((uint32_t)value);
+			continue;
+		}
+
+		if(try_scan(&scan_start, "dbfMinCpuUtil=")) {
+			UDATA value;
+			if(!scan_udata_helper(vm, &scan_start, &value, "dbfMinCpuUtil=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if(value > 15) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "dbfMinCpuUtil=", (UDATA)0, (UDATA)15);
+				returnValue = JNI_EINVAL;
+				break;
+			}	
+			extensions->minCpuUtil = value;
+			continue;
+		}
+#endif /* defined(J9VM_GC_MODRON_SCAVENGER) || defined (J9VM_GC_VLHGC) */
+/* End of options relating to dynamicBreadthFirstScanOrdering */
+
+#if defined(J9VM_GC_MODRON_SCAVENGER)	
 		if (try_scan(&scan_start, "scanCacheMinimumSize=")) {
 			/* Read in restricted scan cache size */
 			if(!scan_udata_helper(vm, &scan_start, &extensions->scavengerScanCacheMinimumSize, "scanCacheMinimumSize=")) {
@@ -791,7 +930,41 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			}
 			extensions->aliasInhibitingThresholdPercentage = ((double)percentage) / 100.0;
 
-			continue ;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "adaptiveThreadingSensitivityFactor=")) {
+			UDATA sensitivityFactor = 0;
+			if (!scan_udata_helper(vm, &scan_start, &sensitivityFactor, "adaptiveThreadingSensitivityFactor=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->adaptiveThreadingSensitivityFactor = ((float)sensitivityFactor) / 10.0f;
+
+			continue;
+		}
+
+		if (try_scan(&scan_start, "adaptiveThreadingWeightActiveThreads=")) {
+			UDATA adaptiveThreadingWeightActiveThreads = 0;
+			if (!scan_udata_helper(vm, &scan_start, &adaptiveThreadingWeightActiveThreads, "adaptiveThreadingWeightActiveThreads=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+
+			extensions->adaptiveThreadingWeightActiveThreads = ((float)adaptiveThreadingWeightActiveThreads) / 100.0f;
+
+			continue;
+		}
+
+		if (try_scan(&scan_start, "adaptiveThreadBooster=")) {
+			UDATA adaptiveThreadBooster = 0;
+			if (!scan_udata_helper(vm, &scan_start, &adaptiveThreadBooster, "adaptiveThreadBooster=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->adaptiveThreadBooster = ((float)adaptiveThreadBooster) / 100.0f;
+
+			continue;
 		}
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
@@ -1092,10 +1265,6 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
-		if(try_scan(&scan_start, "dirtCardDuringRSScan")) {
-			extensions->dirtCardDuringRSScan = true;
-			continue;
-		}
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
 
 #if defined (J9VM_GC_HEAP_CARD_TABLE)

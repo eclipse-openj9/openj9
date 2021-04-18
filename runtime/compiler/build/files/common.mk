@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,8 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/PreEscapeAnalysis.cpp \
     compiler/optimizer/PostEscapeAnalysis.cpp \
     compiler/optimizer/FearPointAnalysis.cpp \
+    compiler/optimizer/HandleRecompilationOps.cpp \
+    compiler/optimizer/HotFieldMarking.cpp \
     compiler/optimizer/HCRGuardAnalysis.cpp \
     compiler/optimizer/IdiomRecognition.cpp \
     compiler/optimizer/IdiomRecognitionUtils.cpp \
@@ -65,7 +67,9 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/StringPeepholes.cpp \
     compiler/optimizer/UnsafeFastPath.cpp \
     compiler/optimizer/VarHandleTransformer.cpp \
+    compiler/optimizer/MethodHandleTransformer.cpp \
     compiler/optimizer/VPBCDConstraint.cpp \
+    compiler/optimizer/TreeLowering.cpp \
     omr/compiler/codegen/Analyser.cpp \
     omr/compiler/codegen/CodeGenGC.cpp \
     omr/compiler/codegen/CodeGenPrep.cpp \
@@ -216,7 +220,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/OSRDefAnalysis.cpp \
     omr/compiler/optimizer/PartialRedundancy.cpp \
     omr/compiler/optimizer/PreExistence.cpp \
-    omr/compiler/optimizer/PrefetchInsertion.cpp \
     omr/compiler/optimizer/Reachability.cpp \
     omr/compiler/optimizer/ReachingDefinitions.cpp \
     omr/compiler/optimizer/RedundantAsyncCheckRemoval.cpp \
@@ -293,6 +296,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/env/J9JitMemory.cpp \
     compiler/env/J9KnownObjectTable.cpp \
     compiler/env/J9ObjectModel.cpp \
+    compiler/env/J9PersistentInfo.cpp \
     compiler/env/J9SegmentAllocator.cpp \
     compiler/env/J9SegmentCache.cpp \
     compiler/env/J9SegmentProvider.cpp \
@@ -401,7 +405,10 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/net/ServerStream.cpp \
     compiler/runtime/CompileService.cpp \
     compiler/runtime/JITClientSession.cpp \
+    compiler/runtime/JITServerAOTCache.cpp \
     compiler/runtime/JITServerIProfiler.cpp \
+    compiler/runtime/JITServerROMClassHash.cpp \
+    compiler/runtime/JITServerSharedROMClassCache.cpp \
     compiler/runtime/JITServerStatisticsThread.cpp \
     compiler/runtime/Listener.cpp
 endif

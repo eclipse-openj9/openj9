@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1000,7 +1000,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
    TR_BDChain *prevInChain = NULL;
    TR_BDChain *firstInChain = NULL;
    if ((node->getOpCodeValue() == TR::acall) &&
-       !node->getSymbolReference()->isUnresolved() &&
+        node->getSymbolReference()->getSymbol()->isResolvedMethod() &&
        ((node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_valueOf) ||
         (node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_math_BigDecimal_valueOf_J)))
       {
@@ -1525,7 +1525,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
 
 //-------------------------- detectPattern ----------------------------------
 // Collects stats about string peepholes patterns
-// tt is the the treetop that has the TR::New opcode ( for new(StringBuffer) )
+// tt is the treetop that has the TR::New opcode ( for new(StringBuffer) )
 // Will return 0 if it cannot apply the transformation
 //---------------------------------------------------------------------------
 TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt, bool useStringBuffer)
@@ -2050,8 +2050,14 @@ bool TR_StringPeepholes::classesRedefined()
 
 bool TR_StringPeepholes::classRedefined(TR_OpaqueClassBlock *clazz)
    {
-   if (!clazz)
-      return true;
+   // The class in question may not have been loaded yet. For example in JDK11 the JCL removed most (all?) uses of the
+   // StringBuffer class, thus this class is never loaded until `main` is reached. If the class is not loaded it could
+   // not have been redefined, so we return false here.
+   if (clazz == NULL)
+      {
+      return false;
+      }
+
    TR_PersistentClassInfo *clazzInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, fe());
    return !clazzInfo || clazzInfo->classHasBeenRedefined();
    }

@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -145,7 +145,7 @@ public class Test_Class {
 	 */
 	@Test
 	public void test_forName() {
-		// Test for method java.lang.Class java.lang.Class.forName(java.lang.String)
+		// Test for method java.lang.Class.forName(java.lang.String)
 		try {
 			AssertJUnit.assertTrue("Class for name failed for java.lang.Object",
 					Class.forName("java.lang.Object") == java.lang.Object.class);
@@ -457,6 +457,35 @@ public class Test_Class {
 		Method specificMethod = clz.getMethod("foo");
 		Assert.assertEquals(java.util.List.class, specificMethod.getReturnType(), 
 			"Expected method return type: " + java.util.List.class + " but got: " + specificMethod.getReturnType());
+	}
+	abstract class ClzParent {}
+	class ClzChild extends ClzParent {}
+	class ClzImpl implements InterFaceLayerOne {
+		@Override
+		public ClzChild getType() {
+			return null;
+		}
+	}
+	interface InterFaceLayerOne extends InterfaceLayerTwoA<ClzChild>, InterfaceLayerTwoB {}
+	interface InterfaceLayerTwoA<S> extends InterfaceLayerThreeA<ClzChild>, InterfaceLayerThreeB {}
+	interface InterfaceLayerTwoB {
+		ClzParent getType();
+	}
+	interface InterfaceLayerThreeA<S> {
+		S getType();
+	}
+	interface InterfaceLayerThreeB {
+		ClzParent getType();
+	}
+	@Test
+	public void test_getMethods_subtest8() throws Exception {
+		ClzImpl clzImpl = new ClzImpl();
+		for (Method method : clzImpl.getClass().getMethods()) {
+			for (Class<?> anInterface : method.getDeclaringClass().getInterfaces()) {
+				Method intfMethod = anInterface.getMethod(method.getName(), method.getParameterTypes());
+				Assert.assertEquals(intfMethod.toString(), "public abstract java.lang.Object org.openj9.test.java.lang.Test_Class$InterfaceLayerThreeA.getType()");
+			}
+		}
 	}
 	
 	class TestSpecificMethodsCL extends ClassLoader {
@@ -857,7 +886,7 @@ public class Test_Class {
 	 */
 	@Test
 	public void test_getComponentType() {
-		// Test for method java.lang.Class java.lang.Class.getComponentType()
+		// Test for method java.lang.Class.getComponentType()
 		AssertJUnit.assertTrue("int array does not have int component type",
 				int[].class.getComponentType() == int.class);
 		AssertJUnit.assertTrue("Object array does not have Object component type",
@@ -904,7 +933,7 @@ public class Test_Class {
 	 */
 	@Test
 	public void test_getDeclaredClasses() {
-		int len = 66;
+		int len = 74;
 		// Test for method java.lang.Class [] java.lang.Class.getDeclaredClasses()
 		Class[] declaredClasses = Test_Class.class.getDeclaredClasses();
 		if (declaredClasses.length != len) {
@@ -1048,7 +1077,7 @@ public class Test_Class {
 	 */
 	@Test
 	public void test_getDeclaringClass() {
-		// Test for method java.lang.Class java.lang.Class.getDeclaringClass()
+		// Test for method java.lang.Class.getDeclaringClass()
 		AssertJUnit.assertTrue(ClassTest.class.getDeclaringClass().equals(Test_Class.class));
 	}
 
@@ -1416,7 +1445,7 @@ public class Test_Class {
 	 */
 	@Test
 	public void test_getSuperclass() {
-		// Test for method java.lang.Class java.lang.Class.getSuperclass()
+		// Test for method java.lang.Class.getSuperclass()
 
 		AssertJUnit.assertTrue("Object has a superclass???", Object.class.getSuperclass() == null);
 		AssertJUnit.assertTrue("Normal class has bogus superclass",

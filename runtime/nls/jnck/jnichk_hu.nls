@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -244,7 +244,7 @@ J9NLS_JNICHK_FATAL_ERROR_ADVICE.user_response=As required, add the -Xcheck:jni:n
 # END NON-TRANSLATABLE
 
 # JNI, JNIEnv, -Xcheck:jni:nonfatal and JVM are not translatable
-J9NLS_JNICHK_INVALID_ENV=JNI hiba a(z) %s belsej\u00e9ben: a JNIEnv nem t\u0171nik \u00e9rv\u00e9nyes sz\u00e1lnak, a mem\u00f3ria s\u00e9r\u00fclt, vagy ez nem egy J9 virtu\u00e1lis g\u00e9p
+J9NLS_JNICHK_INVALID_ENV=A(z) %s JNI hib\u00e1t tartalmaz: a JNIEnv nem t\u0171nik \u00e9rv\u00e9nyes sz\u00e1lnak, a mem\u00f3ria s\u00e9r\u00fclt, vagy ez nem egy J9 virtu\u00e1lis g\u00e9p
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_INVALID_ENV.sample_input_1=methodName
 J9NLS_JNICHK_INVALID_ENV.explanation=Validation of the JNIEnv passed on the named JNI function has failed.
@@ -253,7 +253,7 @@ J9NLS_JNICHK_INVALID_ENV.user_response=Check that the JNIEnv pointer passed in t
 # END NON-TRANSLATABLE
 
 # JNI, JNIEnv, -Xcheck:jni:nonfatal and JVM are not translatable
-J9NLS_JNICHK_WRONG_ENV=JNI hiba a(z) %s belsej\u00e9ben: a JNIEnv nem az akt\u00edv sz\u00e1l JNIEnv strukt\u00far\u00e1ja
+J9NLS_JNICHK_WRONG_ENV=A(z) %s JNI hib\u00e1t tartalmaz: a JNIEnv nem az akt\u00edv sz\u00e1l JNIEnv strukt\u00far\u00e1ja
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_WRONG_ENV.sample_input_1=methodName
 J9NLS_JNICHK_WRONG_ENV.explanation=Validation of the JNIEnv passed on the named JNI function has failed.
@@ -262,7 +262,7 @@ J9NLS_JNICHK_WRONG_ENV.user_response=Check that the JNIEnv pointer passed in the
 # END NON-TRANSLATABLE
 
 # JNI, -Xcheck:jni:nonfatal and JVM are not translatable
-J9NLS_JNICHK_PENDING_EXCEPTION=JNI hiba %s belsej\u00e9ben: Ez a f\u00fcggv\u00e9ny nem h\u00edvhat\u00f3 meg f\u00fcgg\u0151ben l\u00e9v\u0151 kiv\u00e9tel k\u00f6zben
+J9NLS_JNICHK_PENDING_EXCEPTION=A(z) %s JNI hib\u00e1t tartalmaz: Ez a f\u00fcggv\u00e9ny nem h\u00edvhat\u00f3 meg f\u00fcgg\u0151ben l\u00e9v\u0151 kiv\u00e9tel k\u00f6zben
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_PENDING_EXCEPTION.sample_input_1=methodName
 J9NLS_JNICHK_PENDING_EXCEPTION.explanation=The named JNI function has been called when there is an exception pending.
@@ -271,7 +271,7 @@ J9NLS_JNICHK_PENDING_EXCEPTION.user_response=Correct the JNI application code to
 # END NON-TRANSLATABLE
 
 # JNI, -Xcheck:jni:nonfatal and JVM are not translatable
-J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR=JNI hiba %s belsej\u00e9ben: Ez a f\u00fcggv\u00e9ny nem h\u00edvhat\u00f3 meg kritikus szakaszban
+J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR=A(z) %s JNI hib\u00e1t tartalmaz: Ez a f\u00fcggv\u00e9ny nem h\u00edvhat\u00f3 meg kritikus szakaszban
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.sample_input_1=methodName
 J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.explanation=The named JNI function has been called within a JNI critical section.
@@ -1019,4 +1019,24 @@ J9NLS_JNICHK_STATIC_FIELDID_PASSED.sample_input_1=methodName
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.explanation=Validation of the field ID passed on the named JNI function has failed.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_STATIC_FIELDID_PASSED.user_response=Check that the field ID passed in the function is correct.
+# END NON-TRANSLATABLE
+
+# JNI is not translatable
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2=JNI hiba %1$s belsej\u00e9ben: a(z) #%2$d argumentum nem %3$s vagy %4$s aloszt\u00e1lya
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_1=methodName
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_2=3
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_3=package1/Class1
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.sample_input_4=package2/Class2
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.explanation=The named JNI function has been called with an incorrect parameter type.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
+J9NLS_JNICHK_ARGUMENT_IS_NOT_SUBCLASS2.user_response=Correct the JNI function call.
+# END NON-TRANSLATABLE
+
+# abortonerror is not translatable
+J9NLS_JNICHK_HELP_16=\tabortonerror   megszak\u00edt\u00e1st eredm\u00e9nyez v\u00e9gzetes hib\u00e1kn\u00e1l
+# START NON-TRANSLATABLE
+J9NLS_JNICHK_HELP_15.explanation=NOTAG
+J9NLS_JNICHK_HELP_15.system_action=
+J9NLS_JNICHK_HELP_15.user_response=
 # END NON-TRANSLATABLE

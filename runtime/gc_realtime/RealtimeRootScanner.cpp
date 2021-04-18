@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,10 +56,10 @@ MM_RealtimeRootScanner::doClass(J9Class *clazz)
 		/* discard volatile since we must be in stop-the-world mode */
 		doSlot((j9object_t*)objectSlotPtr);
 	}
-	GC_ClassIteratorClassSlots classSlotIterator(clazz);
-	J9Class **classSlotPtr;
-	while((classSlotPtr = classSlotIterator.nextSlot()) != NULL) {
-		doClassSlot(classSlotPtr);
+	GC_ClassIteratorClassSlots classSlotIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm), clazz);
+	J9Class *classPtr;
+	while (NULL != (classPtr = classSlotIterator.nextSlot())) {
+		doClassSlot(classPtr);
 	}
 }
 
@@ -67,9 +67,9 @@ MM_RealtimeRootScanner::doClass(J9Class *clazz)
  * 
  */
 void
-MM_RealtimeRootScanner::doClassSlot(J9Class **clazzPtr)
+MM_RealtimeRootScanner::doClassSlot(J9Class *classPtr)
 {
-	_realtimeGC->getRealtimeDelegate()->markClass(_env, *clazzPtr);
+	_realtimeGC->getRealtimeDelegate()->markClass(_env, classPtr);
 }
 
 MM_RootScanner::CompletePhaseCode

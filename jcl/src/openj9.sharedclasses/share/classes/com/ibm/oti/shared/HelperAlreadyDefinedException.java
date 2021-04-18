@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ package com.ibm.oti.shared;
 
 /**
  * Exception thrown if a factory is asked to get multiple helpers for a ClassLoader.
- * <p>
  */
 public class HelperAlreadyDefinedException extends Exception {
 	private static final long serialVersionUID = -356665797623954170L;

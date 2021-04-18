@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gccheck STATIC
+set(gc_check_sources
 	Check.cpp
 	CheckClassHeap.cpp
 	CheckClassLoaders.cpp
@@ -46,6 +46,10 @@ j9vm_add_library(j9gccheck STATIC
 	ScanFormatter.cpp
 )
 
+j9vm_add_library(j9gccheck STATIC
+	${gc_check_sources}
+)
+
 target_include_directories(j9gccheck
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}
@@ -60,3 +64,24 @@ target_link_libraries(j9gccheck
 		j9gcstructs
 		j9gcstats
 )
+
+if(OMR_MIXED_REFERENCES_MODE_STATIC)
+	j9vm_add_library(j9gccheck_full STATIC
+		${gc_check_sources}
+	)
+
+	target_include_directories(j9gccheck_full
+		PUBLIC
+			${CMAKE_CURRENT_SOURCE_DIR}
+	)
+
+	target_link_libraries(j9gccheck_full
+		PRIVATE
+			j9vm_interface
+
+			omrgc_full
+			j9gcbase_full
+			j9gcstructs_full
+			j9gcstats_full
+	)
+endif()

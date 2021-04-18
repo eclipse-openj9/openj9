@@ -24,9 +24,9 @@ package java.lang.invoke;
 
 import com.ibm.oti.util.Msg;
 import java.lang.reflect.Array;
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 import java.util.List;
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 /* CollectHandle is a MethodHandle subclass used to call another MethodHandle.  
  * It accepts the incoming arguments and collects the requested number
@@ -53,7 +53,7 @@ final class CollectHandle extends MethodHandle {
 		this.collectArraySize = collectArraySize;
 		this.next = next;
 		if (collectArraySize == 0) {
-			emptyArray = Array.newInstance(next.type.arguments[collectPosition].getComponentType(), 0);
+			emptyArray = Array.newInstance(next.type.parameterType(collectPosition).getComponentType(), 0);
 		} else {
 			emptyArray = null;
 		}
@@ -101,13 +101,13 @@ final class CollectHandle extends MethodHandle {
 		return new CollectHandle(this, newType);
 	}
 
-/*[IF Java15]*/
+/*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {
 		relatedMHs.add(next);
 		return true;
 	}
-/*[ENDIF] Java15 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
 	// {{{ JIT support
 
@@ -120,7 +120,7 @@ final class CollectHandle extends MethodHandle {
 
 	private static final Object allocateArray(CollectHandle mh) {
 		return Array.newInstance(
-			mh.next.type.arguments[mh.collectPosition].getComponentType(),
+			mh.next.type.parameterType(mh.collectPosition).getComponentType(),
 			mh.collectArraySize);
 	}
 
@@ -163,4 +163,3 @@ final class CollectHandle extends MethodHandle {
 		c.compareChildHandle(left.next, this.next);
 	}
 }
-

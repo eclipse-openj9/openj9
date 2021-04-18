@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,8 +55,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::CHelperLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
-J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
-   : TR::Linkage(codeGen,elc,lc)
+J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_LinkageConventions elc)
+   : TR::Linkage(codeGen,elc)
    {
    TR::Compilation *comp = codeGen->comp();
 

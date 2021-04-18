@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,7 +20,6 @@
 
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<include>java8andUpSettings.mk</include>
 	<test>
@@ -43,7 +41,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>truncatedReturnTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -61,9 +58,8 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		</impls>		
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>regressionFastresolve_mode110</testCaseName>
 		<variations>
@@ -84,9 +80,8 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		</impls>		
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>regressionFastresolve_mode150</testCaseName>
 		<variations>
@@ -107,9 +102,8 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		</impls>		
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>regressionBucketDefault</testCaseName>
 		<variations>
@@ -132,9 +126,8 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		</impls>		
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jsr335_interfacePrivateMethod</testCaseName>
 		<variations>
@@ -156,9 +149,8 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		</impls>		
+		</impls>
 	</test>
-
 	<!-- Attach API tests -->
 	<test>
 		<testCaseName>AttachAPISanity_SE80</testCaseName>
@@ -176,15 +168,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>AttachAPISanity</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -202,15 +193,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestAttachAPI_SE80</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
@@ -235,11 +225,10 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 	</test>
-
 	<test>
 		<testCaseName>TestAttachAPI</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
@@ -264,11 +253,10 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 	</test>
-
 	<test>
 		<testCaseName>TestAttachAPIEnabling_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -283,15 +271,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestAttachAPIEnabling</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -309,17 +296,20 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestAttachErrorHandling_SE80</testCaseName>
+		<disabled>
+			<comment>https://github.com/eclipse/openj9/issues/3081</comment>
+			<plat>.*aix.*</plat>
+		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
@@ -334,17 +324,20 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestAttachErrorHandling</testCaseName>
+		<disabled>
+			<comment>https://github.com/eclipse/openj9/issues/3081</comment>
+			<plat>.*aix.*</plat>
+		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
@@ -359,15 +352,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestSunAttachClasses_SE80</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
@@ -392,15 +384,15 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 	</test>
-
 	<test>
 		<testCaseName>TestSunAttachClasses</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--illegal-access=permit \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -422,11 +414,10 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 	</test>
-
 	<test>
 		<testCaseName>TestManagementAgent_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -443,18 +434,18 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestManagementAgent</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--illegal-access=permit \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -468,16 +459,15 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
 	<!-- Attach API tests -->
-
 	<test>
 		<testCaseName>TestJps_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -495,14 +485,13 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestJps</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -520,15 +509,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestJstack_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -546,14 +534,13 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestJstack</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -573,15 +560,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestJmap_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -599,14 +585,13 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
-		 </impls>
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestJmap</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -627,15 +612,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		 </impls>
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestJcmd</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -655,9 +639,8 @@
 		</groups>
 		<impls>
 			<impl>openj9</impl>
-		 </impls>
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestJcmd_ibm</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -675,14 +658,13 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>ibm</impl>
-		 </impls>
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestJstat</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -701,9 +683,8 @@
 		</groups>
 		<impls>
 			<impl>openj9</impl>
-		 </impls>
+		</impls>
 	</test>
-	
 	<test>
 		<testCaseName>TestJstat_ibm</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -720,14 +701,13 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>ibm</impl>
-		 </impls>
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestFileLocking_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -743,18 +723,18 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestFileLocking</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=no \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestFileLocking \
@@ -767,15 +747,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		</impls>		
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>gcNotificationTest_GenCon</testCaseName>
 		<variations>
@@ -797,9 +776,8 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		</impls>		
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>gcNotificationTest_Optthruput</testCaseName>
 		<variations>
@@ -823,7 +801,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>gcNotificationTest_OptAvgpause</testCaseName>
 		<variations>
@@ -847,7 +824,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>gcNotificationTest_Balanced</testCaseName>
 		<variations>
@@ -871,7 +847,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>gcNotificationTest_Metronome</testCaseName>
 		<variations>
@@ -895,7 +870,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>gcPolicyNogcTest</testCaseName>
 		<variations>
@@ -917,7 +891,7 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		 </impls>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>gcPolicyNogcOOMTest</testCaseName>
@@ -940,13 +914,12 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
-		 </impls>
+		</impls>
 	</test>
-
 	<test>
 		<testCaseName>ContendedFieldsTests_80</testCaseName>
 		<variations>
-			<variation></variation>
+			<variation>NoOptions</variation>
 			<variation>-XX:-RestrictContended</variation>
 			<variation>-XX:+RestrictContended</variation>
 			<variation>-XX:-EnableContended</variation>
@@ -972,15 +945,14 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 	</test>
-
 	<test>
 		<testCaseName>ContendedFieldsTests_90</testCaseName>
 		<variations>
-			<variation></variation>
+			<variation>NoOptions</variation>
 			<variation>-XX:-RestrictContended</variation>
 			<variation>-XX:+RestrictContended</variation>
 			<variation>-XX:-EnableContended</variation>
@@ -1007,11 +979,10 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 	</test>
-
 	<test>
 		<testCaseName>CtorBCVTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1031,7 +1002,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test</testCaseName>
 		<variations>
@@ -1040,7 +1010,7 @@
 			<variation>-XX:+CompactStrings</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
-	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
+	--illegal-access=permit -Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.util=ALL-UNNAMED \
@@ -1080,16 +1050,15 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<aot>nonapplicable</aot>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_Native</testCaseName>
 		<variations>
@@ -1122,9 +1091,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<aot>nonapplicable</aot>
 		<types>
 			<type>native</type>
@@ -1134,7 +1103,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_none_SCC</testCaseName>
 		<variations>
@@ -1142,7 +1110,7 @@
 			<variation>-Xshareclasses:none -XX:RecreateClassfileOnload</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
-	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
+	--illegal-access=permit -Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.util=ALL-UNNAMED \
@@ -1182,16 +1150,15 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<aot>nonapplicable</aot>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_none_SCC_Native</testCaseName>
 		<variations>
@@ -1224,9 +1191,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<aot>nonapplicable</aot>
 		<types>
 			<type>native</type>
@@ -1236,7 +1203,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_OutOfMemoryError</testCaseName>
 		<variations>
@@ -1268,15 +1234,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_SE80</testCaseName>
 		<variations>
@@ -1314,16 +1279,15 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 		<aot>nonapplicable</aot>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_SE80_Native</testCaseName>
 		<variations>
@@ -1345,9 +1309,9 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<types>
 			<type>native</type>
 		</types>
@@ -1357,7 +1321,6 @@
 		</impls>
 		<aot>nonapplicable</aot>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_OutOfMemoryError_SE80</testCaseName>
 		<variations>
@@ -1380,15 +1343,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>J9VMInternals_Test</testCaseName>
 		<variations>
@@ -1412,15 +1374,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>J9VMInternals_Test_SE80</testCaseName>
 		<variations>
@@ -1445,15 +1406,15 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-<!--
+	<!--
 	Java 8 specific test case.
 	Java 9 and above require VM options not available in Java 8.
 -->
@@ -1478,16 +1439,15 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
-<!--
+	<!--
 	Java 9 and above.
 -->
 	<test>
@@ -1520,15 +1480,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_JITHelpers_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1538,9 +1497,9 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -1558,19 +1517,18 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_JITHelpers</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --illegal-access=permit --add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
 	--add-opens=java.base/com.ibm.jit=ALL-UNNAMED -Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_JITHelpers \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -1588,7 +1546,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_TEST_MathMethods</testCaseName>
 		<variations>
@@ -1612,7 +1569,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>VmArgumentTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1633,7 +1589,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>threadMXBeanTestSuite1</testCaseName>
 		<variations>
@@ -1669,7 +1624,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>threadMXBeanTestSuite2</testCaseName>
 		<variations>
@@ -1698,7 +1652,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>threadMXBeanTimedParkTest</testCaseName>
 		<variations>
@@ -1727,7 +1680,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>threadMXBeanTimersTest</testCaseName>
 		<variations>
@@ -1756,7 +1708,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestArrayCopy</testCaseName>
 		<variations>
@@ -1784,7 +1735,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestArrayCopy_openj9_none_SCC</testCaseName>
 		<variations>
@@ -1811,7 +1761,6 @@
 			<impl>openj9</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestArrayCopy_none_SCC</testCaseName>
 		<variations>
@@ -1834,14 +1783,13 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>11+</subset>
-		</subsets>
+		<versions>
+			<version>11+</version>
+		</versions>
 		<impls>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>memoryCategories</testCaseName>
 		<command>$(MKDIR) -p $(REPORTDIR); \
@@ -1869,7 +1817,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>HashConsistency</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -1891,7 +1838,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>HashPerformance</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1000M \
@@ -1913,7 +1859,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
 	<test>
 		<testCaseName>HashPerformance_zlinux</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xmx1000M \
@@ -1935,7 +1880,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>jniOnLoadExceptions</testCaseName>
 		<variations>
@@ -1967,7 +1911,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>badUTF8inJNI</testCaseName>
 		<variations>
@@ -1997,7 +1940,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>pthreadDestructor</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2030,7 +1972,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testReflectInvoke</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2052,7 +1993,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testInvokeSpecialInsideInterface</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2073,7 +2013,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testContendedClassLoading</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2094,7 +2033,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testClassLoadingDelegation</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2116,7 +2054,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testvmcheck</testCaseName>
 		<variations>
@@ -2146,7 +2083,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestSoftMxCallBackOOM</testCaseName>
 		<variations>
@@ -2176,7 +2112,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>TestSoftMxCallBackExtend</testCaseName>
 		<variations>
@@ -2206,7 +2141,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>reflect</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2227,7 +2161,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>NoSuchMethodTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2248,7 +2181,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>reattachAfterExit</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2258,7 +2190,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
-	<platformRequirements>^os.win</platformRequirements>
+		<platformRequirements>^os.win</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -2273,7 +2205,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>JCL_Test_Package</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2296,7 +2227,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>hanoiTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
@@ -2317,7 +2247,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<!--hanoiTM_* tests : This is the same regular hanoi test but we set JAVA_THREAD_MODEL
 	before the test. These tests were added just to make sure the VM will not fail to
 	start when the customer sets JAVA_THREAD_MODEL (PR 100512)-->
@@ -2343,7 +2272,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>hanoiTestTM_MEDIUM</testCaseName>
 		<command>JAVA_THREAD_MODEL=MEDIUM \
@@ -2366,7 +2294,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>hanoiTestTM_HEAVY</testCaseName>
 		<command>JAVA_THREAD_MODEL=HEAVY \
@@ -2389,7 +2316,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
 	<!-- This test should fail, so a wrapper is used to wrap the return non-zero code -->
 	<test>
 		<testCaseName>hanoiTestTM_SHOULDFAIL</testCaseName>
@@ -2414,7 +2340,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>memleaksTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2436,7 +2361,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>fibTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint -Xdump \
@@ -2457,7 +2381,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>testStringInterning</testCaseName>
 		<variations>
@@ -2482,7 +2405,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
 	<test>
 		<testCaseName>testStringStreams</testCaseName>
 		<variations>
@@ -2506,7 +2428,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
 	<test>
 		<testCaseName>floatSanityTests</testCaseName>
 		<variations>
@@ -2532,7 +2453,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>memoryMXBeanShutdownTest</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2553,7 +2473,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
 	<test>
 		<testCaseName>FileSystem-isAccessUserOnlyTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2570,15 +2489,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<versions>
+			<version>9+</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
 	<test>
 		<testCaseName>FileSystem-isAccessUserOnlyTests_SE80</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2594,15 +2512,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
+		<versions>
+			<version>8</version>
+		</versions>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
 	<test>
 		<testCaseName>loadLegacyLibrary</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2617,6 +2534,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<levels>
 			<level>sanity</level>
 		</levels>
@@ -2624,7 +2545,6 @@
 			<group>functional</group>
 		</groups>
 	</test>
-
 	<test>
 		<testCaseName>classRelationshipVerifierTests</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2650,7 +2570,6 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
 	<test>
 		<testCaseName>LoadClassWithUTF8PkgNameTest</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -2672,5 +2591,25 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-
+	<test>
+		<testCaseName>DupClassNameTest</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:name=DupClassNameTest,reset \
+			-cp $(Q)$(TESTNG)$(P)$(TEST_RESROOT)$(D)DupClassNameTest$(D)version1$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) \
+			-testclass DupClassNameTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)
+		</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>

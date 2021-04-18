@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2020 IBM Corp. and others
+ * Copyright (c) 2002, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3639,6 +3639,8 @@ JVM_LoadSystemLibrary(const char *libName)
  *	successful, returns the file handle, otherwise returns NULL.
  *
  *	@param libName a null terminated string containing the libName.
+ *	  For Windows platform, this incoming libName is encoded as J9STR_CODE_WINDEFAULTACP,
+ *	  and is required to be converted to J9STR_CODE_MUTF8 for internal usages.
  *
  *	@return the shared library's handle if successful, throws java/lang/UnsatisfiedLinkError on failure
  *
@@ -3646,29 +3648,70 @@ JVM_LoadSystemLibrary(const char *libName)
  */
 
 /* NOTE this is required by JDK15+ jdk.internal.loader.NativeLibraries.load().
- *  it is only invoked by jdk.internal.loader.BootLoader.loadLibrary(),
+ *  it is only invoked by jdk.internal.loader.BootLoader.loadLibrary().
  */
 
 void* JNICALL
-JVM_LoadLibrary(const char* libName)
+JVM_LoadLibrary(const char *libName)
 {
-	void* result = NULL;
-	J9NativeLibrary* nativeLibrary = NULL;
-	J9JavaVM* javaVM = (J9JavaVM*)BFUjavaVM;
-	J9InternalVMFunctions* vmFuncs = javaVM->internalVMFunctions;
-	J9VMThread* currentThread = vmFuncs->currentVMThread(javaVM);
+	void *result = NULL;
+	J9JavaVM *javaVM = (J9JavaVM*)BFUjavaVM;
 
-	Trc_SC_LoadLibrary_Entry(libName);
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	/* registerBootstrapLibrary can't have VM access */
-	vmFuncs->internalReleaseVMAccess(currentThread);
-	if (vmFuncs->registerBootstrapLibrary(currentThread, libName, &nativeLibrary, FALSE) == J9NATIVELIB_LOAD_OK) {
-		result = (void*)nativeLibrary->handle;
+#if defined(WIN32)
+	char *libNameConverted = NULL;
+	UDATA libNameLen = strlen(libName);
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+	UDATA libNameLenConverted = j9str_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8, libName, libNameLen, NULL, 0);
+	if (libNameLenConverted > 0) {
+		libNameLenConverted += 1; /* adding an extra byte for null */
+		libNameConverted = j9mem_allocate_memory(libNameLenConverted, OMRMEM_CATEGORY_VM);
+		if (NULL != libNameConverted) {
+			libNameLenConverted = j9str_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8, libName, libNameLen, libNameConverted, libNameLenConverted);
+			if (libNameLenConverted > 0) {
+				/* j9str_convert null-terminated the string */
+				libName = libNameConverted;
+			}
+		}
 	}
-	vmFuncs->internalAcquireVMAccess(currentThread);
-	vmFuncs->internalExitVMToJNI(currentThread);
+	if (libName == libNameConverted) {
+#endif /* defined(WIN32) */
+		Trc_SC_LoadLibrary_Entry(libName);
+		if (NULL == javaVM->applicationClassLoader) {
+			J9NativeLibrary *nativeLibrary = NULL;
+			J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
+			J9VMThread *currentThread = vmFuncs->currentVMThread(javaVM);
+			Assert_SC_notNull(currentThread);
+			vmFuncs->internalEnterVMFromJNI(currentThread);
+			vmFuncs->internalReleaseVMAccess(currentThread);
+			if (vmFuncs->registerBootstrapLibrary(currentThread, libName, &nativeLibrary, FALSE) == J9NATIVELIB_LOAD_OK) {
+				result = (void*)nativeLibrary->handle;
+			}
+			vmFuncs->internalAcquireVMAccess(currentThread);
+			vmFuncs->internalExitVMToJNI(currentThread);
+			Trc_SC_LoadLibrary_BootStrap(libName);
+		} else {
+			PORT_ACCESS_FROM_JAVAVM(javaVM);
+			UDATA handle = 0;
+			UDATA flags = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION) ? J9PORT_SLOPEN_LAZY : 0;
+			UDATA slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags);
 
+			Trc_SC_LoadLibrary_OpenShared(libName);
+			if (0 != slOpenResult) {
+				slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags | J9PORT_SLOPEN_DECORATE);
+				Trc_SC_LoadLibrary_OpenShared_Decorate(libName);
+			}
+			if (0 == slOpenResult) {
+				result = (void*)handle;
+			}
+		}
+#if defined(WIN32)
+	}
+	if (NULL != libNameConverted) {
+		j9mem_free_memory(libNameConverted);
+	}
+#endif /* defined(WIN32) */
 	Trc_SC_LoadLibrary_Exit(result);
+
 	return result;
 }
 
@@ -5434,6 +5477,7 @@ JVM_InitClassName
 }
 
 
+#if JAVA_SPEC_VERSION < 17
 /**
  * Return the JVM_INTERFACE_VERSION. This function should not lock, gc or throw exception.
  * @return JVM_INTERFACE_VERSION, JDK8 - 4, JDK11+ - 6.
@@ -5451,7 +5495,7 @@ JVM_GetInterfaceVersion(void)
 
 	return result;
 }
-
+#endif /* JAVA_SPEC_VERSION < 17 */
 
 
 /* jclass parameter 2 is apparently not used */

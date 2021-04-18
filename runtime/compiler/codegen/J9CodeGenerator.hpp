@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,14 +20,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_J9_CODEGENERATORBASE_INCL
-#define TR_J9_CODEGENERATORBASE_INCL
+#ifndef J9_CODEGENERATOR_INCL
+#define J9_CODEGENERATOR_INCL
 
 /*
  * The following #define and typedef must appear before any #includes in this file
  */
-#ifndef TRJ9_CODEGENERATORBASE_CONNECTOR
-#define TRJ9_CODEGENERATORBASE_CONNECTOR
+#ifndef J9_CODEGENERATOR_CONNECTOR
+#define J9_CODEGENERATOR_CONNECTOR
 
 namespace J9 { class CodeGenerator; }
 namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
@@ -63,9 +63,14 @@ namespace J9
 
 class OMR_EXTENSIBLE CodeGenerator : public OMR::CodeGeneratorConnector
    {
+
+protected:
+
+   CodeGenerator(TR::Compilation *comp);
+
 public:
 
-   CodeGenerator();
+   void initialize();
 
    TR_J9VMBase *fej9();
 
@@ -79,14 +84,7 @@ public:
 
    void lowerTreeIfNeeded(TR::Node *node, int32_t childNumber, TR::Node *parent, TR::TreeTop *tt);
 
-   void lowerNonhelperCallIfNeeded(TR::Node *node, TR::TreeTop *tt);
-   void fastpathAcmpHelper(TR::Node *node, TR::TreeTop *tt, bool trace);
-
    void lowerDualOperator(TR::Node *parent, int32_t childNumber, TR::TreeTop *treeTop);
-
-private:
-
-   void lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt);
 
 public:
 
@@ -327,6 +325,17 @@ public:
     *    TR_maybe It is unknown whether the monitor object is identity type or value type
     */
    TR_YesNoMaybe isMonitorValueType(TR::Node* monNode);
+   /*
+    * \brief
+    *    Whether a monitor object is of value based class type or value type.
+    *    This API checks if value based or value type is enabled first.
+    *
+    * \return
+    *    TR_yes The monitor object is definitely value based class type or value type
+    *    TR_no The monitor object is definitely not value based class type or value type
+    *    TR_maybe It is unknown whether the monitor object is value based class type or value type
+    */
+   TR_YesNoMaybe isMonitorValueBasedOrValueType(TR::Node* monNode);
 
 protected:
 
@@ -576,6 +585,15 @@ public:
     * \brief Determines whether the code generator supports stack allocations
     */
    bool supportsStackAllocations() { return false; }
+
+   /**
+    * \brief Initializes the Linkage Info word found before the interpreter entry point.
+    *
+    * \param[in] linkageInfo : pointer to the linkage info word
+    *
+    * \return Linkage Info word
+    */
+   uint32_t initializeLinkageInfo(void *linkageInfoPtr);
 
 private:
 

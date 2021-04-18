@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,9 +56,20 @@ extern void TEMPORARY_initJ9S390TreeEvaluatorTable(TR::CodeGenerator *cg);
 //Forward declarations
 bool nodeMightClobberAccumulatorBeforeUse(TR::Node *);
 
-J9::Z::CodeGenerator::CodeGenerator() :
-      J9::CodeGenerator()
+J9::Z::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
+      J9::CodeGenerator(comp)
    {
+   /**
+    * Do not add CodeGenerator initialization logic here.
+    * Use the \c initialize() method instead.
+    */
+   }
+
+void
+J9::Z::CodeGenerator::initialize()
+   {
+   self()->J9::CodeGenerator::initialize();
+
    TR::CodeGenerator *cg = self();
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -182,15 +193,9 @@ J9::Z::CodeGenerator::CodeGenerator() :
 
    cg->getS390Linkage()->initS390RealRegisterLinkage();
 
-   const bool accessStaticsIndirectly =
-         comp->getOption(TR_DisableDirectStaticAccessOnZ) ||
-         (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager));
-
-   cg->setAccessStaticsIndirectly(accessStaticsIndirectly);
-
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       {
-      self()->setHasFixedFrameC_CallingConvention();
+      cg->setHasFixedFrameC_CallingConvention();
       }
 
    cg->setIgnoreDecimalOverflowException(false);
@@ -3610,7 +3615,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
 
    TR::ResolvedMethodSymbol* methodSymbol = comp->getJittedMethodSymbol();
 
-   TR::SymbolReference* helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, false, false, false);
+   TR::SymbolReference* helperSymRef = self()->symRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition);
 
    // AOT relocation for the helper address
    TR::S390EncodingRelocation* encodingRelocation = new (self()->trHeapMemory()) TR::S390EncodingRelocation(TR_AbsoluteHelperAddress, helperSymRef);
@@ -3780,10 +3785,7 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
       return true;
       }
 
-   if (method == TR::java_lang_Long_reverseBytes  ||
-       method == TR::java_lang_Integer_reverseBytes  ||
-       method == TR::java_lang_Short_reverseBytes ||
-       method == TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet ||
+   if (method == TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet ||
        method == TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd ||
        method == TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement ||
        method == TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement ||
@@ -3833,10 +3835,6 @@ extern TR::Register *inlineHighestOneBit(TR::Node *node, TR::CodeGenerator *cg, 
 extern TR::Register *inlineNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator * cg, bool isLong);
 extern TR::Register *inlineNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg, int32_t subfconst);
 extern TR::Register *inlineTrailingZerosQuadWordAtATime(TR::Node *node, TR::CodeGenerator *cg);
-
-extern TR::Register *inlineLongReverseBytes(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register *inlineIntegerReverseBytes(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register *inlineShortReverseBytes(TR::Node *node, TR::CodeGenerator *cg);
 
 extern TR::Register *inlineBigDecimalConstructor(TR::Node *node, TR::CodeGenerator *cg, bool isLong, bool exp);
 extern TR::Register *inlineBigDecimalBinaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, bool scaled);
@@ -4172,22 +4170,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
                break;
             }
          }
-
-
-     switch (methodSymbol->getRecognizedMethod())
-        {
-        case TR::java_lang_Long_reverseBytes:
-            resultReg = inlineLongReverseBytes(node, cg);
-            return true;
-        case TR::java_lang_Integer_reverseBytes:
-            resultReg = inlineIntegerReverseBytes(node, cg);
-            return true;
-        case TR::java_lang_Short_reverseBytes:
-            resultReg = inlineShortReverseBytes(node, cg);
-            return true;
-        default:
-           break;
-        }
 
    if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) &&
        comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))

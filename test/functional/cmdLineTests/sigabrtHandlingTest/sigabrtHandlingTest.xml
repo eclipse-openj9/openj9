@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2020, 2020 IBM Corp. and others
+  Copyright (c) 2020, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,73 +26,110 @@
 
 <suite id="SIGABRT Handling Tests" timeout="2400">
  <variable name="CP" value="-cp $Q$$RESJAR$$Q$ VMBench.GPTests.GPTest" />
- 
- <!-- 
+
+ <!--
    The system, JIT, snap and heap dumps are disabled to reduce the memory footprint of
    the tests. Only a Java dump will be generated when the JVM abort handler is invoked.
    This should be sufficient to test the -XX:[+|-]HandleSIGABRT option.
  -->
  <variable name="DUMP" value="-Xdump:system+heap+snap+jit:none" />
+ <variable name="LIMT_HEAPSIZE" value="-Xmx20m" />
+ <variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*,osx.*" />
+ <variable name="WINDOWS_PLATFORMS" value="win.*" />
 
  <test id="Default">
-  <command>$EXE$ $DUMP$ $CP$ abort</command>
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ $CP$ abort</command>
   <output type="success" regex="no">Processing dump event "abort"</output>
   <output type="required" regex="no">Processed dump event "abort"</output>
  </test>
 
  <test id="-XX:+HandleSIGABRT">
-  <command>$EXE$ $DUMP$ -XX:+HandleSIGABRT $CP$ abort</command>
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:+HandleSIGABRT $CP$ abort</command>
   <output type="success" regex="no">Processing dump event "abort"</output>
   <output type="required" regex="no">Processed dump event "abort"</output>
  </test>
 
  <test id="-XX:-HandleSIGABRT -XX:+HandleSIGABRT">
-  <command>$EXE$ $DUMP$ -XX:-HandleSIGABRT -XX:+HandleSIGABRT $CP$ abort</command>
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT -XX:+HandleSIGABRT $CP$ abort</command>
   <output type="success" regex="no">Processing dump event "abort"</output>
   <output type="required" regex="no">Processed dump event "abort"</output>
  </test>
 
- <test id="-XX:-HandleSIGABRT">
-  <command>$EXE$ $DUMP$ -XX:-HandleSIGABRT $CP$ abort</command>
+ <test id="-XX:-HandleSIGABRT" platforms="$WINDOWS_PLATFORMS$">
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT $CP$ abort</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
 
- <test id="-XX:+HandleSIGABRT -XX:-HandleSIGABRT">
-  <command>$EXE$ $DUMP$ -XX:+HandleSIGABRT -XX:-HandleSIGABRT $CP$ abort</command>
+ <test id="-XX:-HandleSIGABRT" platforms="$NON_WINDOWS_PLATFORMS$">
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT $CP$ abort'</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+
+ <test id="-XX:+HandleSIGABRT -XX:-HandleSIGABRT" platforms="$WINDOWS_PLATFORMS$">
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:+HandleSIGABRT -XX:-HandleSIGABRT $CP$ abort</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+
+ <test id="-XX:+HandleSIGABRT -XX:-HandleSIGABRT" platforms="$NON_WINDOWS_PLATFORMS$">
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:+HandleSIGABRT -XX:-HandleSIGABRT $CP$ abort'</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
 
  <test id="-XX:+HandleSIGABRT -Xrs">
-  <command>$EXE$ $DUMP$ -XX:+HandleSIGABRT -Xrs $CP$ abort</command>
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:+HandleSIGABRT -Xrs $CP$ abort</command>
   <output type="success" regex="no">-XX:+HandleSIGABRT is not supported with -Xrs</output>
   <output type="failure" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
 
  <test id="-XX:+HandleSIGABRT -Xrs:sync">
-  <command>$EXE$ $DUMP$ -XX:+HandleSIGABRT -Xrs:sync $CP$ abort</command>
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:+HandleSIGABRT -Xrs:sync $CP$ abort</command>
   <output type="success" regex="no">-XX:+HandleSIGABRT is not supported with -Xrs</output>
   <output type="failure" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
 
- <test id="-Xrs">
-  <command>$EXE$ $DUMP$ -Xrs $CP$ abort</command>
+ <test id="-Xrs" platforms="$WINDOWS_PLATFORMS$">
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ -Xrs $CP$ abort</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
- 
- <test id="-XX:-HandleSIGABRT -Xrs">
-  <command>$EXE$ $DUMP$ -XX:-HandleSIGABRT -Xrs $CP$ abort</command>
+
+ <test id="-Xrs" platforms="$NON_WINDOWS_PLATFORMS$">
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -Xrs $CP$ abort'</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
- 
- <test id="-XX:-HandleSIGABRT -Xrs:sync">
-  <command>$EXE$ $DUMP$ -XX:-HandleSIGABRT -Xrs:sync $CP$ abort</command>
+
+ <test id="-XX:-HandleSIGABRT -Xrs" platforms="$WINDOWS_PLATFORMS$">
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT -Xrs $CP$ abort</command>
   <output type="success" regex="no">Invoking abort!</output>
   <output type="failure" regex="no">Processing dump event "abort"</output>
  </test>
+
+ <test id="-XX:-HandleSIGABRT -Xrs" platforms="$NON_WINDOWS_PLATFORMS$">
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT -Xrs $CP$ abort'</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+
+ <test id="-XX:-HandleSIGABRT -Xrs:sync" platforms="$WINDOWS_PLATFORMS$">
+  <command>$EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT -Xrs:sync $CP$ abort</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+
+ <test id="-XX:-HandleSIGABRT -Xrs:sync" platforms="$NON_WINDOWS_PLATFORMS$">
+  <command>bash -c 'ulimit -c 0 ; $EXE$ $LIMT_HEAPSIZE$ $DUMP$ -XX:-HandleSIGABRT -Xrs:sync $CP$ abort'</command>
+  <output type="success" regex="no">Invoking abort!</output>
+  <output type="failure" regex="no">Processing dump event "abort"</output>
+ </test>
+
+ <!-- Remove any core file created by the OS -->
+ <exec command="bash -c 'rm core.*'" />
+
 </suite>

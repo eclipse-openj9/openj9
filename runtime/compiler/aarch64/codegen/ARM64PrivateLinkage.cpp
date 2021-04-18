@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@
 #include "codegen/CallSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
+#include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage_inlines.hpp"
@@ -40,13 +41,13 @@
 #include "env/CompilerEnv.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/StackMemoryRegion.hpp"
-#include "exceptions/JITShutDown.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
+#include "runtime/Runtime.hpp"
 
 uint32_t J9::ARM64::PrivateLinkage::_globalRegisterNumberToRealRegisterMap[] =
    {
@@ -476,6 +477,89 @@ J9::ARM64::PrivateLinkage::calculatePreservedRegisterSaveSize(
    return numGPRsSaved*8;
    }
 
+/**
+ * @brief Generates instructions for initializing local variable and internal pointer slots in prologue
+ *
+ * @param[in] cursor                          : instruction cursor
+ * @param[in] numSlotsToBeInitialized         : number of slots to be initialized
+ * @param[in] offsetToFirstSlotFromAdjustedSP : offset to first slot from adjusted Java SP
+ * @param[in] zeroReg                         : zero register (x31)
+ * @param[in] baseReg                         : base register (x10)
+ * @param[in] javaSP                          : Java SP register (x20)
+ * @param[in] cg                              : Code Generator
+ *
+ * @return instruction cursor
+ */
+static TR::Instruction* initializeLocals(TR::Instruction *cursor, uint32_t numSlotsToBeInitialized, int32_t offsetToFirstSlotFromAdjustedSP,
+                              TR::RealRegister *zeroReg, TR::RealRegister *baseReg, TR::RealRegister *javaSP, TR::CodeGenerator *cg)
+   {
+   auto loopCount = numSlotsToBeInitialized / 2;
+   // stp instruction has 7bit immediate offset which is scaled by 8 for 64bit registers.
+   // If the offset to the last 2 slots cleared by stp instruction does not fit in imm7,
+   // we use x10 as base register.
+   const bool isImm7OffsetOverflow = (loopCount > 0) &&
+         !constantIsImm7((offsetToFirstSlotFromAdjustedSP + (loopCount - 1) * 2 * TR::Compiler->om.sizeofReferenceAddress()) >> 3);
+
+   auto offset = offsetToFirstSlotFromAdjustedSP;
+   if (isImm7OffsetOverflow)
+      {
+      if (!constantIsImm7(offset >> 3))
+         {
+         // If offset does not fit in imm7, update baseReg and reset offset to 0
+         if (constantIsUnsignedImm12(offset))
+            {
+            cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, NULL, baseReg, javaSP, offset, cursor);
+            }
+         else
+            {
+            cursor = loadConstant32(cg, NULL, offset, baseReg, cursor);
+            cursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, NULL, baseReg, javaSP, baseReg, cursor);
+            }
+         offset = 0;
+         }
+      else
+         {
+         // mov baseReg, javaSP
+         cursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::orrx, NULL, baseReg, zeroReg, javaSP, cursor);
+         }
+
+
+      for (int32_t i = 0; i < loopCount; i++)
+         {
+         if (!constantIsImm7(offset >> 3))
+            {
+            // If offset does not fit in imm7, update baseReg and reset offset to 0
+            cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, NULL, baseReg, baseReg, offset, cursor);
+            offset = 0;
+            }
+         TR::MemoryReference *localMR = new (cg->trHeapMemory()) TR::MemoryReference(baseReg, offset, cg);
+         cursor = generateMemSrc2Instruction(cg, TR::InstOpCode::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
+         offset += (TR::Compiler->om.sizeofReferenceAddress() * 2);
+         }
+      if (numSlotsToBeInitialized % 2)
+         {
+         // clear residue
+         TR::MemoryReference *localMR = new (cg->trHeapMemory()) TR::MemoryReference(baseReg, offset, cg);
+         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
+         }
+      }
+   else
+      {
+      for (int32_t i = 0; i < loopCount; i++, offset += (TR::Compiler->om.sizeofReferenceAddress() * 2))
+         {
+         TR::MemoryReference *localMR = new (cg->trHeapMemory()) TR::MemoryReference(javaSP, offset, cg);
+         cursor = generateMemSrc2Instruction(cg, TR::InstOpCode::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
+         }
+      if (numSlotsToBeInitialized % 2)
+         {
+         // clear residue
+         TR::MemoryReference *localMR = new (cg->trHeapMemory()) TR::MemoryReference(javaSP, offset, cg);
+         cursor = generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
+         }
+      }
+
+   return cursor;
+   }
 
 void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    {
@@ -627,6 +711,19 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
       cg()->addSnippet(new (cg()->trHeapMemory()) TR::ARM64StackCheckFailureSnippet(cg(), NULL, stackOverflowRestartLabel, stackOverflowSnippetLabel));
       }
+   else
+      {
+      // If StackCheckFailureSnippet is not added to the end of the snippet list and no data snippets exist,
+      // we might have a HelperCallSnippet at the end of the method.
+      // HelperCallSnippets add a GCMap to the instruction next to the `bl` instruction to the helper,
+      // and if a HelperCallSnippet is at the end of the method, GCMap is added to the address beyond the range of the method.
+      // To avoid that, we add a dummy ConstantDataSnippet. (Data snippets are emitted after normal snippets.)
+      if (!cg()->hasDataSnippets())
+         {
+         auto snippet = cg()->findOrCreate4ByteConstant(NULL, 0);
+         snippet->setReloType(TR_NoRelocation);
+         }
+      }
 
    // --------------------------------------------------------------------------
    // Preserve GPRs
@@ -679,55 +776,21 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          int32_t initializedLocalsOffsetFromAdjustedJavaSP = alignedFrameSizeIncludingReturnAddress + atlas->getLocalBaseOffset() + firstLocalOffset;
 
          TR::RealRegister *zeroReg = machine->getRealRegister(TR::RealRegister::RegNum::xzr);
-         auto loopCount = numLocalsToBeInitialized / 2;
-         // stp instruction has 7bit immediate offset which is scaled by 8 for 64bit registers.
-         // If the offset to the last 2 slots cleared by stp instruction does not fit in imm7,
-         // we use x10 as base register.
-         const bool isImm7OffsetOverflow = (loopCount > 0) &&
-               !constantIsImm7((initializedLocalsOffsetFromAdjustedJavaSP + (loopCount - 1) * 2 * TR::Compiler->om.sizeofReferenceAddress()) >> 3);
+         TR::RealRegister *baseReg = machine->getRealRegister(TR::RealRegister::RegNum::x10);
 
-         if (isImm7OffsetOverflow)
-            {
-            TR::RealRegister *baseReg = machine->getRealRegister(TR::RealRegister::RegNum::x10);
-            // mov x10, javaSP
-            cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::orrx, NULL, baseReg, zeroReg, javaSP, cursor);
-            for (int32_t i = 0; i < loopCount; i++)
-               {
-               if (!constantIsImm7(initializedLocalsOffsetFromAdjustedJavaSP >> 3))
-                  {
-                  // If offset does not fit in imm7, update baseReg and reset offset to 0
-                  cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, NULL, baseReg, baseReg, initializedLocalsOffsetFromAdjustedJavaSP, cursor);
-                  initializedLocalsOffsetFromAdjustedJavaSP = 0;
-                  }
-               TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(baseReg, initializedLocalsOffsetFromAdjustedJavaSP, cg());
-               cursor = generateMemSrc2Instruction(cg(), TR::InstOpCode::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
-               initializedLocalsOffsetFromAdjustedJavaSP += (TR::Compiler->om.sizeofReferenceAddress() * 2);
-               }
-            if (numLocalsToBeInitialized % 2)
-               {
-               // clear residue
-               TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(baseReg, initializedLocalsOffsetFromAdjustedJavaSP, cg());
-               cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
-               }
-            }
-         else
-            {
-            for (int32_t i = 0; i < loopCount; i++, initializedLocalsOffsetFromAdjustedJavaSP += (TR::Compiler->om.sizeofReferenceAddress() * 2))
-               {
-               TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, initializedLocalsOffsetFromAdjustedJavaSP, cg());
-               cursor = generateMemSrc2Instruction(cg(), TR::InstOpCode::stpoffx, NULL, localMR, zeroReg, zeroReg, cursor);
-               }
-            if (numLocalsToBeInitialized % 2)
-               {
-               // clear residue
-               TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, initializedLocalsOffsetFromAdjustedJavaSP, cg());
-               cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
-               }
-            }
+         cursor = initializeLocals(cursor, numLocalsToBeInitialized, initializedLocalsOffsetFromAdjustedJavaSP, 
+                              zeroReg, baseReg, javaSP, cg());
 
          if (atlas->getInternalPointerMap())
             {
-            TR_ASSERT_FATAL(0, "internal pointer initialization not available yet");
+            // Total number of slots to be initialized is number of pinning arrays +
+            // number of derived internal pointer stack slots
+            //
+            int32_t numSlotsToBeInitialized = atlas->getNumberOfDistinctPinningArrays() + atlas->getInternalPointerMap()->getNumInternalPointers();
+            int32_t offsetToFirstInternalPointerFromAdjustedJavaSP = alignedFrameSizeIncludingReturnAddress + atlas->getOffsetOfFirstInternalPointer() + firstLocalOffset;
+
+            cursor = initializeLocals(cursor, numSlotsToBeInitialized, offsetToFirstInternalPointerFromAdjustedJavaSP, 
+                              zeroReg, baseReg, javaSP, cg());
             }
          }
       }
@@ -842,6 +905,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
    int32_t argIndex = 0;
    int32_t numMemArgs = 0;
    int32_t memArgSize = 0;
+   int32_t firstExplicitArg = 0;
    int32_t from, to, step;
    int32_t argSize = -getOffsetToFirstParm();
    int32_t totalSize = 0;
@@ -892,10 +956,6 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       case TR::java_lang_invoke_ComputedCalls_dispatchVirtual:
          specialArgReg = getProperties().getVTableIndexArgumentRegister();
          break;
-      case TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper:
-         numIntArgRegs   = 0;
-         numFloatArgRegs = 0;
-         break;
       }
    if (specialArgReg != TR::RealRegister::NoReg)
       {
@@ -907,6 +967,14 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
          }
       // Skip the special arg in the first loop
       from += step;
+      }
+
+   // C helpers have an implicit first argument (the VM thread) that we have to account for
+   if (linkage == TR_CHelper)
+      {
+      TR_ASSERT(numIntArgRegs > 0, "This code doesn't handle passing this implicit arg on the stack");
+      numIntegerArgs++;
+      totalSize += TR::Compiler->om.sizeofReferenceAddress();
       }
 
    for (int32_t i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step)
@@ -959,6 +1027,19 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
 
    numIntegerArgs = 0;
    numFloatArgs = 0;
+
+   // C helpers have an implicit first argument (the VM thread) that we have to account for
+   if (linkage == TR_CHelper)
+      {
+      TR_ASSERT(numIntArgRegs > 0, "This code doesn't handle passing this implicit arg on the stack");
+      TR::Register *vmThreadArgRegister = cg()->allocateRegister();
+      generateMovInstruction(cg(), callNode, vmThreadArgRegister, cg()->getMethodMetaDataRegister());
+      dependencies->addPreCondition(vmThreadArgRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
+      if (resType.getDataType() == TR::NoType)
+         dependencies->addPostCondition(vmThreadArgRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
+      numIntegerArgs++;
+      firstExplicitArg = 1;
+      }
 
    // Helper linkage preserves all argument registers except the return register
    // TODO: C helper linkage does not, this code needs to make sure argument registers are killed in post dependencies
@@ -1021,7 +1102,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                      generateMovInstruction(cg(), callNode, tempReg, argRegister);
                      argRegister = tempReg;
                      }
-                  if (numIntegerArgs == 0)
+                  if (numIntegerArgs == firstExplicitArg)
                      {
                      // the first integer argument
                      TR::Register *resultReg;
@@ -1029,8 +1110,10 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                         resultReg = cg()->allocateCollectedReferenceRegister();
                      else
                         resultReg = cg()->allocateRegister();
-                     dependencies->addPreCondition(argRegister, TR::RealRegister::x0);
+                     dependencies->addPreCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
                      dependencies->addPostCondition(resultReg, TR::RealRegister::x0);
+                     if (firstExplicitArg == 1)
+                        dependencies->addPostCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
                      }
                   else
                      {

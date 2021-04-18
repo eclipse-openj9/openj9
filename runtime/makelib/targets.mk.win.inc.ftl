@@ -1,5 +1,5 @@
 <#--
-Copyright (c) 1998, 2020 IBM Corp. and others
+Copyright (c) 1998, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -153,7 +153,7 @@ endif
   CFLAGS+=-D_X86_=1
   CXXFLAGS+=-D_X86_=1
   ifdef USE_CLANG
-    CLANG_CXXFLAGS+=-D_X86_=1 -DJ9X86 -march=pentium4 -mtune=prescott -msse2
+    CLANG_CXXFLAGS+=-D_X86_=1 -DJ9X86 -m32 -march=pentium4 -mtune=prescott -msse2
   endif
 </#if>
 

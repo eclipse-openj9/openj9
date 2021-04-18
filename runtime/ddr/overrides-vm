@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,10 +82,9 @@ typeoverride.J9AnnotationInfoEntry.annotationType=J9SRP(J9UTF8)
 typeoverride.J9AnnotationInfoEntry.memberName=J9SRP(J9UTF8)
 typeoverride.J9AnnotationInfoEntry.memberSignature=J9SRP(J9UTF8)
 
-typeoverride.J9EnclosingObject.nameAndSignature=J9SRP(J9ROMNameAndSignature)
+typeoverride.J9MethodParameter.name=J9SRP(J9UTF8)
 
-typeoverride.J9Package.exportToAll=UDATA
-typeoverride.J9Package.exportToAllUnnamed=UDATA
+typeoverride.J9EnclosingObject.nameAndSignature=J9SRP(J9ROMNameAndSignature)
 
 typeoverride.J9ROMClass.className=J9SRP(J9UTF8)
 typeoverride.J9ROMClass.cpShapeDescription=J9SRP(U32)
@@ -157,6 +156,8 @@ typeoverride.J9ROMNameAndSignature.name=J9SRP(J9UTF8)
 typeoverride.J9ROMNameAndSignature.signature=J9SRP(J9UTF8)
 
 typeoverride.J9ROMMethodTypeRef.signature=J9SRP(J9UTF8)
+
+typeoverride.J9ROMConstantDynamicRef.nameAndSignature=J9SRP(J9ROMNameAndSignature)
 
 # AVL leftChild and rightChild pointers aren't regular wide pointers.
 # They have AVL balance data encoded in them - so treat

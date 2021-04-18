@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2020 IBM Corp. and others
+Copyright (c) 2006, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,7 +91,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/ref/Reference"/>
 	<classref name="java/lang/ref/SoftReference"/>
 	<classref name="java/util/concurrent/locks/AbstractOwnableSynchronizer"/>
-	<classref name="java/lang/invoke/MethodHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/PrimitiveHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/NativeMethodHandle" flags="opt_panama"/>
 	<classref name="java/lang/invoke/ReceiverBoundHandle" flags="opt_methodHandle"/>
@@ -108,8 +107,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/invoke/SpreadHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/VolatileCallSite" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/MutableCallSite" flags="opt_methodHandle"/>
-	<classref name="java/lang/invoke/MethodType" flags="opt_methodHandle"/>
-	<classref name="java/lang/invoke/WrongMethodTypeException" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/PassThroughHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/InsertHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/PermuteHandle" flags="opt_methodHandle"/>
@@ -128,10 +125,34 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="com/ibm/oti/vm/VM"/>
 	<classref name="java/lang/System"/>
 	<classref name="java/lang/Module" flags="opt_module" versions="9-"/>
-	<classref name="java/lang/invoke/VarHandle" versions="9-"/>
-	<classref name="java/lang/invoke/VarHandleInvokeHandle" versions="9-"/>
-	<classref name="java/lang/invoke/FieldVarHandle" versions="9-"/>
+	<classref name="java/lang/invoke/VarHandle" versions="9-" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/VarHandleInvokeHandle" versions="9-" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/FieldVarHandle" versions="9-" flags="opt_methodHandle"/>
 
+	<!-- Common class references shared between OpenJ9 and OpenJDK MethodHandles. -->
+	<classref name="java/lang/invoke/MethodType" flags="opt_methodHandleCommon"/>
+	<classref name="java/lang/invoke/MethodHandle" flags="opt_methodHandleCommon"/>
+	<classref name="java/lang/invoke/WrongMethodTypeException" flags="opt_methodHandleCommon"/>
+	<classref name="java/lang/invoke/MethodTypeHelper" flags="opt_methodHandleCommon"/>
+	<classref name="java/lang/invoke/MethodHandleResolver" flags="opt_methodHandleCommon"/>
+
+	<!-- Class references needed to support OpenJDK MethodHandles. -->
+	<classref name="java/lang/invoke/MemberName" flags="opt_openjdkMethodhandle"/>
+	<classref name="java/lang/invoke/MethodTypeForm" flags="opt_openjdkMethodhandle"/>
+	<classref name="java/lang/invoke/LambdaForm" flags="opt_openjdkMethodhandle"/>
+
+	<classref name="jdk/internal/loader/NativeLibraries" versions="15-"/>
+	<classref name="jdk/internal/loader/NativeLibraries$NativeLibraryImpl" versions="15-"/>
+
+<!--
+	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
+	whether or not to attempt the class load.  The flags sepcified on the fields are ignored.
+	The field flags are only documentation to help map which feature (as expressed on the class) requires
+	the particular field.
+
+	This is a limitation of the tool as it would otherwise need to encode the class multiple times - once
+	for each combination of field flags.
+-->
 	<fieldref class="java/lang/ClassLoader" name="parent" signature="Ljava/lang/ClassLoader;"/>
 	<fieldref class="java/lang/ClassLoader" name="vmRef" signature="J" cast="struct J9ClassLoader *"/>
 	<fieldref class="java/lang/ClassLoader" name="isParallelCapable" signature="Z"/>
@@ -154,12 +175,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<fieldalias name="value" signature="[C" versions="8"/>
 	</fieldref>
 	<fieldref class="java/lang/String" name="count" signature="I" versions="8"/>
-	<fieldref class="java/lang/String" name="hashCode" signature="I"/>
+	<fieldref class="java/lang/String" name="hash" signature="I"/>
 	<fieldref class="java/lang/String" name="coder" signature="B" versions="9-"/>
 	<fieldref class="java/lang/StackTraceElement" name="moduleName" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
 	<fieldref class="java/lang/StackTraceElement" name="moduleVersion" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
 	<fieldref class="java/lang/StackTraceElement" name="declaringClass" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/StackTraceElement" name="classLoaderName" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
+	<fieldref class="java/lang/StackTraceElement" name="includeClassLoaderName" signature="Z" flags="opt_module" versions="9-"/>
+	<fieldref class="java/lang/StackTraceElement" name="includeModuleVersion" signature="Z" flags="opt_module" versions="9-"/>
 	<fieldref class="java/lang/StackTraceElement" name="methodName" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/StackTraceElement" name="fileName" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/StackTraceElement" name="lineNumber" signature="I"/>
@@ -259,7 +282,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/ThreadGroup" name="childrenThreads" signature="[Ljava/lang/Thread;"/>
 	<fieldref class="java/lang/ThreadGroup" name="childrenGroups" signature="[Ljava/lang/ThreadGroup;"/>
 	<fieldref class="java/lang/ThreadGroup" name="isDaemon" signature="Z"/>
-	<fieldref class="java/lang/ThreadGroup" name="memorySpace" signature="J" cast="void *"/>
 	<fieldref class="java/lang/ThreadGroup" name="childrenGroupsLock" signature="Ljava/lang/Object;"/>
 	<fieldref class="java/lang/ThreadGroup" name="childrenThreadsLock" signature="Ljava/lang/Object;"/>
 	<fieldref class="java/lang/ref/Reference" name="referent" signature="Ljava/lang/Object;"/>
@@ -271,7 +293,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/PrimitiveHandle" name="referenceClass" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/PrimitiveHandle" name="rawModifiers" signature="I" cast="U_32" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/PrimitiveHandle" name="defc" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodHandle" name="type" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/MethodHandle" name="kind" signature="B" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/MethodHandle" name="previousAsType" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/NativeMethodHandle" name="J9NativeCalloutDataRef" signature="J" cast="J9NativeCalloutData *" flags="opt_panama"/>
@@ -295,11 +316,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/SpreadHandle" name="arrayClass" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/SpreadHandle" name="spreadCount" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/SpreadHandle" name="spreadPosition" signature="I" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="arguments" signature="[Ljava/lang/Class;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="returnType" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/MethodType" name="argSlots" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/MethodType" name="stackDescriptionBits" signature="[I" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="methodDescriptor" signature="Ljava/lang/String;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/DynamicInvokerHandle" name="site" signature="Ljava/lang/invoke/CallSite;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FilterReturnHandle" name="filter" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/VarargsCollectorHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
@@ -322,16 +340,16 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/ConstantLongHandle" name="value" signature="J" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/ConstantDoubleHandle" name="value" signature="D" cast="U_64" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/InvokeGenericHandle" name="castType" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/VarHandle" name="handleTable" signature="[Ljava/lang/invoke/MethodHandle;" versions="9-"/>
-	<fieldref class="java/lang/invoke/VarHandle" name="modifiers" signature="I" versions="9-"/>
+	<fieldref class="java/lang/invoke/VarHandle" name="handleTable" signature="[Ljava/lang/invoke/MethodHandle;" versions="9-" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/VarHandle" name="modifiers" signature="I" versions="9-" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="foldPosition" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="filterPosition" signature="I" flags="opt_methodHandle" versions="12-"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle" versions="12-"/>
 	<fieldref class="java/lang/invoke/MethodHandleCache" name="directHandlesHead" signature="Lcom/ibm/oti/util/WeakReferenceNode;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="operation" signature="I" versions="9-"/>
-	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="accessModeType" signature="Ljava/lang/invoke/MethodType;" versions="9-"/>
-	<fieldref class="java/lang/invoke/FieldVarHandle" name="definingClass" signature="Ljava/lang/Class;" versions="9-"/>
+	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="operation" signature="I" versions="9-" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="accessModeType" signature="Ljava/lang/invoke/MethodType;" versions="9-" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/FieldVarHandle" name="definingClass" signature="Ljava/lang/Class;" versions="9-" flags="opt_methodHandle"/>
 
 	<fieldref class="java/lang/Module" name="loader" signature="Ljava/lang/ClassLoader;" flags="opt_module" versions="9-"/>
 	<fieldref class="java/lang/Module" name="name" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
@@ -340,17 +358,37 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<fieldref class="com/ibm/oti/util/WeakReferenceNode" name="next" signature="Lcom/ibm/oti/util/WeakReferenceNode;" flags="opt_methodHandle"/>
 
+	<!-- Common field references shared between OpenJ9 and OpenJDK MethodHandles. -->
+	<fieldref class="java/lang/invoke/MethodType" name="methodDescriptor" signature="Ljava/lang/String;" flags="opt_methodHandleCommon"/>
+	<fieldref class="java/lang/invoke/MethodHandle" name="type" signature="Ljava/lang/invoke/MethodType;" flags="opt_methodHandleCommon"/>
+	<fieldref class="java/lang/invoke/MethodType" name="ptypes" signature="[Ljava/lang/Class;" flags="opt_methodHandleCommon"/>
+	<fieldref class="java/lang/invoke/MethodType" name="rtype" signature="Ljava/lang/Class;" flags="opt_methodHandleCommon"/>
+
+	<!-- Field references needed to support OpenJDK MethodHandles. -->
+	<fieldref class="java/lang/invoke/MemberName" name="clazz" signature="Ljava/lang/Class;" flags="opt_openjdkMethodhandle"/>
+	<fieldref class="java/lang/invoke/MemberName" name="name" signature="Ljava/lang/String;" flags="opt_openjdkMethodhandle"/>
+	<fieldref class="java/lang/invoke/MemberName" name="type" signature="Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
+	<fieldref class="java/lang/invoke/MemberName" name="flags" signature="I" flags="opt_openjdkMethodhandle"/>
+	<fieldref class="java/lang/invoke/MemberName" name="resolution" signature="Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
+	<fieldref class="java/lang/invoke/LambdaForm" name="vmentry" signature="Ljava/lang/invoke/MemberName;" flags="opt_openjdkMethodhandle"/>
+	<fieldref class="java/lang/invoke/MethodHandle" name="form" signature="Ljava/lang/invoke/LambdaForm;" flags="opt_openjdkMethodhandle"/>
+
+	<fieldref class="jdk/internal/loader/NativeLibraries$NativeLibraryImpl" name="fromClass" signature="Ljava/lang/Class;" versions="15-"/>
+
+<!--
+	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
+	whether or not to attempt the class load.  The flags sepcified on the methods are ignored.
+	The method flags are only documentation to help map which feature (as expressed on the class) requires
+	the particular method.
+
+	This is a limitation of the tool as it would otherwise need to encode the class multiple times - once
+	for each combination of method flags.
+-->
 	<staticmethodref class="java/lang/J9VMInternals" name="completeInitialization" signature="()V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="checkPackageAccess" signature="(Ljava/lang/Class;Ljava/security/ProtectionDomain;)V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="threadCleanup" signature="(Ljava/lang/Thread;)V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="newInstanceImpl" signature="(Ljava/lang/Class;)Ljava/lang/Object;" flags="jit_newInstancePrototype"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="formatNoSuchMethod" signature="(Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;"/>
-	<staticmethodref class="java/lang/invoke/MethodType" name="vmResolveFromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" versions="11-" flag="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="invokeWithArgumentsHelper" signature="(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/>
-	<staticmethodref class="java/lang/invoke/MethodHandle" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="forGenericInvoke" signature="(Ljava/lang/invoke/MethodType;Z)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="returnFilterPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="foldHandlePlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
@@ -366,6 +404,18 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<!-- Class initialization in C -->
 	<staticmethodref class="java/lang/J9VMInternals" name="initializationAlreadyFailed" signature="(Ljava/lang/Class;)V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="recordInitializationFailure" signature="(Ljava/lang/Class;Ljava/lang/Throwable;)V"/>
+
+	<!-- Static method references needed to support OpenJ9 and OpenJDK MethodHandles. -->
+	<staticmethodref class="java/lang/invoke/MethodTypeHelper" name="vmResolveFromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandleCommon"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandleCommon"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" flags="opt_methodHandleCommon"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" versions="11-" flag="opt_methodHandleCommon"/>
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="constructorPlaceHolder" signature="(Ljava/lang/Object;)Ljava/lang/Object;" flags="opt_methodHandleCommon"/>
+
+	<!-- Static method references needed to support OpenJDK MethodHandles. -->
+	<staticmethodref class="java/lang/invoke/MethodHandleResolver" name="linkCallerMethod" signature="(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
+
+	<staticmethodref class="jdk/internal/loader/NativeLibraries" name="load" signature="(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z" versions="15-"/>
 
 	<!-- Security manager check -->
 	<staticfieldref class="java/lang/System" name="security" signature="Ljava/lang/SecurityManager;"/>

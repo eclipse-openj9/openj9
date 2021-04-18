@@ -25,6 +25,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
+#include "runtime/JITClientSession.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
@@ -301,6 +302,12 @@ J9::ClassEnv::isInterfaceClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz
    }
 
 bool
+J9::ClassEnv::isConcreteClass(TR::Compilation *comp, TR_OpaqueClassBlock * clazzPointer)
+   {
+   return comp->fej9()->isConcreteClass(clazzPointer);
+   }
+
+bool
 J9::ClassEnv::isEnumClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazzPointer, TR_ResolvedMethod *method)
    {
    return comp->fej9()->isEnumClass(clazzPointer, method);
@@ -509,6 +516,13 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
       ListIterator<TR_VMField> iter(fieldsInfo.getFields());
       for (TR_VMField *childField = iter.getFirst(); childField; childField = iter.getNext())
          {
+         IDATA offsetBaseForChild = field->offset + offsetBase;
+         /* Types with fields (flat or non-flat) that require double (64bit) alignment are pre-padded if there isn't
+          * a smaller type that can be used as pre-padding. Pre-padding is eliminated when a type is flattened within
+          * its container. As a result pre-padding must be subtracted from the base offset of the flattened field.
+          */
+         offsetBaseForChild -= J9CLASS_PREPADDING_SIZE(fieldClass);
+
          addEntryForFieldImpl(childField, tlb, region, fieldClass, prefixForChild, prefixLengthForChild, offsetBaseForChild, comp);
          }
       }
@@ -577,13 +591,40 @@ static void addEntryForField(TR_VMField *field, TR::TypeLayoutBuilder &tlb, TR::
 const TR::TypeLayout*
 J9::ClassEnv::enumerateFields(TR::Region &region, TR_OpaqueClassBlock *opaqueClazz, TR::Compilation *comp)
    {
-   TR_VMFieldsInfo fieldsInfo(comp, reinterpret_cast<J9Class*>(opaqueClazz), 1, stackAlloc);
-   ListIterator<TR_VMField> iter(fieldsInfo.getFields());
    TR::TypeLayoutBuilder tlb(region);
-   for (TR_VMField *field = iter.getFirst(); field; field = iter.getNext())
+#if defined(J9VM_OPT_JITSERVER)
+   if (comp->isOutOfProcessCompilation())
       {
-      addEntryForField(field, tlb, region, opaqueClazz, comp);
+      auto stream = TR::CompilationInfo::getStream();
+      stream->write(JITServer::MessageType::ClassEnv_enumerateFields, opaqueClazz);
+      auto recv = stream->read<std::vector<TR::TypeLayoutEntry>, std::vector<std::string>, std::vector<std::string>>();
+      auto entries = std::get<0>(recv);
+      auto fieldNames = std::get<1>(recv);
+      auto typeSignatures = std::get<2>(recv);
+      for (int32_t idx = 0; idx < entries.size(); ++idx)
+         {
+         TR::TypeLayoutEntry entry = entries[idx];
+         char *fieldname = new (region) char[fieldNames[idx].length() + 1];
+         memcpy(fieldname, fieldNames[idx].c_str(), fieldNames[idx].length() + 1);
+         entry._fieldname = fieldname;
+         char *typeSignature = new (region) char[typeSignatures[idx].length() + 1];
+         memcpy(typeSignature, typeSignatures[idx].c_str(), typeSignatures[idx].length() + 1);
+         entry._typeSignature = typeSignature;
+         tlb.add(entry);
+         }
+
       }
+   else
+#endif
+      {
+      TR_VMFieldsInfo fieldsInfo(comp, reinterpret_cast<J9Class*>(opaqueClazz), 1, stackAlloc);
+      ListIterator<TR_VMField> iter(fieldsInfo.getFields());
+      for (TR_VMField *field = iter.getFirst(); field; field = iter.getNext())
+         {
+         addEntryForField(field, tlb, region, opaqueClazz, comp);
+         }
+      }
+   
    return tlb.build();
    }
 
@@ -785,6 +826,29 @@ J9::ClassEnv::isValueTypeClassFlattened(TR_OpaqueClassBlock *clazz)
    }
 
 bool
+J9::ClassEnv::isValueBasedOrValueTypeClass(TR_OpaqueClassBlock *clazz)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      uintptr_t classFlags = 0;
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
+#ifdef DEBUG
+      stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, clazz);
+      uintptr_t classFlagsRemote = std::get<0>(stream->read<uintptr_t>());
+      // Check that class flags from remote call is equal to the cached ones
+      classFlags = classFlags & J9_CLASS_DISALLOWS_LOCKING_FLAGS;
+      classFlagsRemote = classFlagsRemote & J9_CLASS_DISALLOWS_LOCKING_FLAGS;
+      TR_ASSERT_FATAL(classFlags == classFlagsRemote, "remote call class flags is not equal to cached class flags");
+#endif
+      return J9_ARE_ANY_BITS_SET(classFlags, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
+   return J9_ARE_ANY_BITS_SET(j9class->classFlags, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+   }
+
+bool
 J9::ClassEnv::isZeroInitializable(TR_OpaqueClassBlock *clazz)
    {
 #if defined(J9VM_OPT_JITSERVER)
@@ -829,7 +893,7 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
             }
          else
             {
-            if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
+            if (TR::Compiler->cls.isConcreteClass(comp, clazz))
                {
                if (++count > 1)
                   return false;
@@ -841,7 +905,7 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
       for (TR_PersistentClassInfo *ptClassInfo = i.getFirst(); ptClassInfo; ptClassInfo = i.getNext())
          {
          TR_OpaqueClassBlock *clazz = ptClassInfo->getClassId();
-         if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
+         if (TR::Compiler->cls.isConcreteClass(comp, clazz))
             {
             if (++count > 1)
                return false;
@@ -855,7 +919,7 @@ J9::ClassEnv::containsZeroOrOneConcreteClass(TR::Compilation *comp, List<TR_Pers
       for (TR_PersistentClassInfo *ptClassInfo = i.getFirst(); ptClassInfo; ptClassInfo = i.getNext())
          {
          TR_OpaqueClassBlock *clazz = ptClassInfo->getClassId();
-         if (!TR::Compiler->cls.isInterfaceClass(comp, clazz) && !TR::Compiler->cls.isAbstractClass(comp, clazz))
+         if (TR::Compiler->cls.isConcreteClass(comp, clazz))
             {
             if (++count > 1)
                return false;

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2020, 2020 IBM Corp. and others
+# Copyright (c) 2020, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,3 +37,6 @@ endif()
 # add -U_FORTIFY_SOURCE and -D_FORTIFY_SOURCE=1
 omr_append_flags(CMAKE_C_FLAGS ${OMR_STRNCPY_FORTIFY_OPTIONS})
 omr_append_flags(CMAKE_CXX_FLAGS ${OMR_STRNCPY_FORTIFY_OPTIONS})
+if(J9VM_USE_RDYNAMIC AND OMR_OS_LINUX)
+	omr_append_flags(CMAKE_SHARED_LINKER_FLAGS "-rdynamic")
+endif()

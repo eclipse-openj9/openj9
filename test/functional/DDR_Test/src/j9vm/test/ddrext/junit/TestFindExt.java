@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,14 +40,11 @@ public class TestFindExt extends DDRExtTesterBase {
 		String j9methodOut = exec("j9method", new String[] { j9methodAddr });
 		String j9rommethodAddr = extractJ9RomMethodAddress(j9methodOut);
 
-		long longAddr = 0;
 		try {
 			boolean is64BitPlatform = is64BitPlatform();
-			longAddr = CommandUtils.parsePointer(j9rommethodAddr,
-					is64BitPlatform);
-			longAddr = longAddr + 1;
+			long longAddr = CommandUtils.parsePointer(j9rommethodAddr, is64BitPlatform);
 			String findMethodFromPCOut = exec(Constants.FINDMETHODFROMPC_CMD,
-					new String[] { String.valueOf(longAddr) });
+					new String[] { String.valueOf(longAddr + 1) });
 			assertTrue(validate(findMethodFromPCOut,
 					Constants.FINDMETHODFROMPC_SUCCESS_KEY,
 					Constants.FINDMETHODFROMPC_FAILURE_KEY, true));
@@ -60,8 +57,8 @@ public class TestFindExt extends DDRExtTesterBase {
 	// Findnext command will find match in the search initiated by find, it must
 	// issue right after find command
 	public void testFindAndFindnext() {
-		// !find udata b1234567 will return the address of first occurrence of
-		// string "b1234567"
+		// !find u32 b1234567 will return the address of first occurrence
+		// of the value 0xb1234567
 		String findOutput = exec(Constants.FIND_CMD, new String[] { "u32",
 				"b1234567" });
 		assertTrue(validate(findOutput, Constants.FIND_SUCCESS_KEY,
@@ -76,9 +73,10 @@ public class TestFindExt extends DDRExtTesterBase {
 		// find address of j9vmthread
 		String threadOutput = exec(Constants.THREAD_CMD, new String[0]);
 		if (threadOutput == null) {
-			fail("threads output is null. Can not proceed with testStack");
+			fail("threads output is null. Cannot proceed with testStack");
 			return;
 		}
+
 		String threadAddress = getAddressForThreads(Constants.J9VMTHREAD_CMD,
 				threadOutput);
 
@@ -86,14 +84,13 @@ public class TestFindExt extends DDRExtTesterBase {
 		if (threadAddress == null) {
 			fail("Error parsing Threads output for stack address");
 			return;
-		} else {
-			String findheaderOutput = exec(Constants.FINDHEADER_CMD,
-					new String[] { threadAddress });
-			assertTrue(validate(findheaderOutput,
-					Constants.FINDHEADER_SUCCESS_KEY,
-					Constants.FINDHEADER_FAILURE_KEY, true));
 		}
 
+		String findheaderOutput = exec(Constants.FINDHEADER_CMD,
+				new String[] { threadAddress });
+		assertTrue(validate(findheaderOutput,
+				Constants.FINDHEADER_SUCCESS_KEY,
+				Constants.FINDHEADER_FAILURE_KEY, true));
 	}
 
 	public void testFindvm() {
@@ -103,11 +100,10 @@ public class TestFindExt extends DDRExtTesterBase {
 	}
 
 	public void testFindpattern() {
-
 		String findOutput = exec(Constants.FIND_CMD,
-				new String[] { "u32", "b1" });
+				new String[] { "u8", "b1" });
 		if (findOutput == null) {
-			fail("find output is null. Can not proceed with Findpattern");
+			fail("find output is null. Cannot proceed with Findpattern");
 			return;
 		}
 		String patternAddress = extractPatternAddr(findOutput,
@@ -121,11 +117,11 @@ public class TestFindExt extends DDRExtTesterBase {
 			patternAddress = patternAddress.substring(0,
 					patternAddress.length() - 3)
 					+ "000";
-			// searching pattern on AIX core dump is very slow, provide start
-			// address and search byte to speed up searching.
-			// start to search pattern b1 at patternAddress and only search
-			// 10000000000
-			// byte. Since UDATA.MAX (32bit)=4294967295, expect it will search
+			// Searching for a pattern in a core dump is very slow on AIX,
+			// provide start address and search byte to speed up searching.
+			// Start to search pattern b1 at patternAddress and only search
+			// 10000000000 bytes.
+			// Since UDATA.MAX (32bit)=4294967295, expect it will search
 			// on all memory space.
 			String findpatternOutput = exec(Constants.FINDPATTERN_CMD,
 					new String[] { "b1,4," + patternAddress + ",10000000000" });
@@ -136,10 +132,8 @@ public class TestFindExt extends DDRExtTesterBase {
 	}
 
 	public void testFindstackvalue() {
-
 		String methodForNameOut = exec(Constants.METHODFORNAME_CMD,
 				new String[] { Constants.METHODFORNAME_METHOD });
-
 		String j9methodAddr = MethodForNameOutputParser.extractMethodAddress(methodForNameOut, "JI");
 
 		if (j9methodAddr == null) {
@@ -147,24 +141,22 @@ public class TestFindExt extends DDRExtTesterBase {
 			log.info(methodForNameOut);
 			fail("Error parsing methodforname sleep output.");
 			return;
-		} else {
-			String findstackvalueOutput = exec(Constants.FINDSTACKVALUE_CMD,
-					new String[] { j9methodAddr });
-			assertTrue(validate(findstackvalueOutput,
-					Constants.FINDSTACKVALUE_SUCCESS_KEY,
-					Constants.FINDSTACKVALUE_FAILURE_KEY, true));
 		}
+
+		String findstackvalueOutput = exec(Constants.FINDSTACKVALUE_CMD,
+				new String[] { j9methodAddr });
+		assertTrue(validate(findstackvalueOutput,
+				Constants.FINDSTACKVALUE_SUCCESS_KEY,
+				Constants.FINDSTACKVALUE_FAILURE_KEY, true));
 	}
 
-	private String extractJ9RomMethodAddress(String j9methodOut) {
+	private static String extractJ9RomMethodAddress(String j9methodOut) {
 		String[] outputLines = j9methodOut.split("!j9rommethod");
 		String[] lineSplit = outputLines[1].split(System.getProperty("line.separator"));
 		return lineSplit[0].trim();
 	}
 
-
-	public String extractPatternAddr(String output, String key, int addrIndex) {
-
+	private static String extractPatternAddr(String output, String key, int addrIndex) {
 		String[] outputLines = output.split(Constants.NL);
 		for (String aLine : outputLines) {
 			if (aLine.contains(key)) {
@@ -173,13 +165,5 @@ public class TestFindExt extends DDRExtTesterBase {
 		}
 		return null;
 	}
-	/*
-	 * private String defaultPattern(){
-	 * 
-	 * String pattern = null; if (java.nio.ByteOrder.nativeOrder() ==
-	 * ByteOrder.LITTLE_ENDIAN){ pattern = "674523b1" ; }else{ pattern =
-	 * "b1234567"; }
-	 * 
-	 * return pattern; }
-	 */
+
 }

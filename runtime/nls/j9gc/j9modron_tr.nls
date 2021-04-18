@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,7 +71,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER=G\u00f6rev da\u011f\u0131t\u0131c
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.explanation=The JVM was unable to instantiate the task dispatcher used for distributing tasks among different worker threads
 J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INSTANTIATE_TASK_DISPATCHER.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -79,7 +79,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR=Genel at\u0131k toplay\u
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.explanation=The JVM was unable to instantiate the global garbage collector structures
 J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INSTANTIATE_GLOBAL_GARBAGE_COLLECTOR.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -95,7 +95,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY=Kullan\u0131ma haz\u0131rlanamad\u01
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_OUT_OF_MEMORY.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -111,7 +111,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS=Mod\u00fcl eklentileri kullan\u0
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_MODULE_EXTENSIONS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -119,7 +119,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX=GC istatistikleri i\u00e7in muteks kullan\u0
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.explanation=The garbage collector failed to initialize due to insufficient system resources
 J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_MUTEX.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -128,7 +128,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT=Kesinle\u015ftirme y\u00f6net
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_FINALIZER_MANAGEMENT.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -136,7 +136,7 @@ J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES=Bellek alanlar\u0131 havuzu k
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_INITIALIZE_POOL_OF_MEMORYSPACES.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -144,7 +144,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS=VM bellek kesimleri ayr\u0131lama
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -152,7 +152,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS=VM nesne belle\u011fi kesi
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_OBJECT_MEMORY_SEGMENTS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -160,7 +160,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS=VM s\u0131n\u0131f belle\u0
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -168,7 +168,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE=Varsay\u0131lan bellek yeri ayr
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_DEFAULT_MEMORY_SPACE.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -177,7 +177,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT=Varsay\u0131lan bellek yerinde kurt
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_SURVIVOR_SEGMENT.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -297,7 +297,7 @@ J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES=-Xverbosegclog i\u
 # START NON-TRANSLATABLE
 J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.system_action=The JVM will terminate
-J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_XVERBOSEGCLOG_FAILED_TO_ALLOCATE_INTERNAL_STRUCTURES.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -398,7 +398,7 @@ J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE.sample_input_3=100
 # END NON-TRANSLATABLE
 
 # Note %s memoryParameter (e.g. "-Xmx")
-J9NLS_GC_OPTIONS_MUST_BE_NUMBER=%s de\u011fi\u015ftirgesini bir say\u0131 izlemelidir
+J9NLS_GC_OPTIONS_MUST_BE_NUMBER=%s parametresini bir say\u0131 izlemelidir
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_MUST_BE_NUMBER.explanation=The specified option must be immediately followed by a number
 J9NLS_GC_OPTIONS_MUST_BE_NUMBER.system_action=The JVM will terminate
@@ -444,7 +444,7 @@ J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xmx
 
 # Note %1$s deprecated parameter (e.g. "-Xgc:excessiveGCdebug=")
 # Note %2$s new parameter (e.g. "-Xtgc:excessivegc")
-J9NLS_GC_OPTION_DEPRECATED=%1$s kullan\u0131mdan kald\u0131r\u0131ld\u0131; %2$s de\u011fi\u015ftirgesini kullan\u0131n
+J9NLS_GC_OPTION_DEPRECATED=%1$s kullan\u0131mdan kald\u0131r\u0131ld\u0131; %2$s parametresini kullan\u0131n
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTION_DEPRECATED.explanation=The specified option is deprecated and is no longer supportd
 J9NLS_GC_OPTION_DEPRECATED.system_action=The JVM will terminate
@@ -637,7 +637,7 @@ J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE=Yok edilmez bellek alan\u0131 
 # START NON-TRANSLATABLE
 J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.explanation=The garbage collector failed to initialize due to an out of memory condition
 J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.system_action=The JVM will terminate
-J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.user_response=Ensure the the system has sufficient memory available
+J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE.user_response=Ensure the system has sufficient memory available
 
 # END NON-TRANSLATABLE
 
@@ -833,7 +833,7 @@ J9NLS_GC_OPTIONS_XLP_LARGE_PAGE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_3=pagea
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER='%1$s', '%2$s' se\u00e7ene\u011finde birinci de\u011fi\u015ftirge olarak belirtilmedi
+J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER='%1$s', '%2$s' se\u00e7ene\u011finde birinci parametre olarak belirtilmedi
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.explanation=Either a required parameter is not specified, or it is not in specified in required order
 J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.system_action=The JVM will terminate
@@ -843,7 +843,7 @@ J9NLS_GC_OPTIONS_XLP_PAGESIZE_NOT_FIRST_PARAMETER.sample_input_2=-Xlp:objectheap
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION='%1$s' se\u00e7ene\u011fi tamamlanmad\u0131, '%2$s' de\u011fi\u015ftirgesi belirtilmelidir.
+J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION='%1$s' se\u00e7ene\u011fi tamamlanmad\u0131, '%2$s' parametresi belirtilmelidir.
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.explanation=Specified option is not complete, it requires more parameters
 J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.system_action=The JVM will terminate
@@ -853,7 +853,7 @@ J9NLS_GC_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_2=[non]pageable
 
 # END NON-TRANSLATABLE
 
-J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION=Sistem yap\u0131lan\u0131\u015f\u0131 '-Xlp' se\u00e7ene\u011findeki '%.*s' de\u011fi\u015ftirgesini  desteklemiyor
+J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION=Sistem yap\u0131lan\u0131\u015f\u0131 '-Xlp' se\u00e7ene\u011findeki '%.*s' parametresini  desteklemiyor
 # START NON-TRANSLATABLE
 J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.explanation=Specified parameter is not recognized in -Xlp option
 J9NLS_GC_OPTIONS_XLP_UNRECOGNIZED_OPTION.system_action=The JVM will terminate

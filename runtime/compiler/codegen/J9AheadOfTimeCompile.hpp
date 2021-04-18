@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,16 +50,29 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
       {
       }
 
-   uint8_t* emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBlock* classToRemember);
    uintptr_t getClassChainOffset(TR_OpaqueClassBlock* classToRemember);
    uintptr_t findCorrectInlinedSiteIndex(void *constantPool, uintptr_t currentInlinedSiteIndex);
 
    void dumpRelocationData();
    uint8_t* dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose);
 
-   uint8_t *initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationRecord *reloRecord);
+   /**
+    * @brief Initializes the common fields in the raw relocation record header. It then delegates
+    *        to initializePlatformSpecificAOTRelocationHeader which must be implemented on all
+    *        platforms that support AOT.
+    *
+    * @param relocation pointer to the iterated external relocation
+    * @return pointer into the buffer right after the fields of the header (ie the offsets section)
+    */
+   virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
+
+   void initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t targetKind)
+      { TR_ASSERT_FATAL(false, "Should not be called!\n"); return; }
 
    static void interceptAOTRelocation(TR::ExternalRelocation *relocation);
+
+   uint32_t getSizeOfAOTRelocationHeader(TR_ExternalRelocationTargetKind k) { return TR_RelocationRecord::getSizeOfAOTRelocationHeader(k); }
+   uint32_t *setAOTRelocationKindToHeaderSizeMap(uint32_t *p) { TR_ASSERT_FATAL(false, "Should not be called!\n"); return 0; }
 
    /**
     * Return true if an ExternalRelocation of kind TR_ClassAddress is expected
@@ -88,7 +101,7 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
     * assert and conveniently, updates the location referred to by the cacheOffset
     * pointer passed in as a parameter.
     *
-    * If the ptr isn't in the the SCC, then the current method will abort the
+    * If the ptr isn't in the SCC, then the current method will abort the
     * compilation. If the ptr is in the SCC, then the cacheOffset will be updated.
     *
     * @param sharedCache pointer to the TR_SharedCache object
@@ -115,6 +128,17 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
     * @return The offset into the SCC of ptr
     */
    uintptr_t offsetInSharedCacheFromPointer(TR_SharedCache *sharedCache, void *ptr);
+
+   /**
+    * @brief Initialization of relocation record headers for whom data for the fields are acquired
+    *        in a manner that is common on all platforms
+    *
+    * @param relocation pointer to the iterated external relocation
+    * @param reloTarget pointer to the TR_RelocationTarget object
+    * @param reloRecord pointer to the associated TR_RelocationRecord API object
+    * @param kind the TR_ExternalRelocationTargetKind enum value
+    */
+   void initializeCommonAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t kind);
    };
 
 }

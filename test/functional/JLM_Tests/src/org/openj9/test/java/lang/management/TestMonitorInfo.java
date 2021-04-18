@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,8 +220,8 @@ public class TestMonitorInfo {
 		// i.e. lockedStackDepth and lockedStackFrame have been switched around
 		Object[] values = {
 				/* className */new String(GOOD_CD_CLASSNAME),
-				/* identityHashCode */new Integer(GOOD_CD_IDHASHCODE),
-				/* lockedStackDepth */new Integer(GOOD_CD_STACKDEPTH),
+				/* identityHashCode */Integer.valueOf(GOOD_CD_IDHASHCODE),
+				/* lockedStackDepth */Integer.valueOf(GOOD_CD_STACKDEPTH),
 				/* lockedStackFrame */createGoodStackTraceElementCompositeData() };
 		CompositeType cType = createBadMonitorInfoCompositeTypeObject();
 		try {
@@ -267,9 +267,9 @@ public class TestMonitorInfo {
 		String[] names = { "className", "identityHashCode", "lockedStackFrame", "lockedStackDepth" };
 		Object[] values = {
 				/* className */new String(GOOD_CD_CLASSNAME),
-				/* identityHashCode */new Integer(GOOD_CD_IDHASHCODE),
+				/* identityHashCode */Integer.valueOf(GOOD_CD_IDHASHCODE),
 				/* lockedStackFrame */null,
-				/* lockedStackDepth */new Integer(GOOD_CD_STACKDEPTH) };
+				/* lockedStackDepth */Integer.valueOf(GOOD_CD_STACKDEPTH) };
 		CompositeType cType = createGoodMonitorInfoCompositeType();
 		try {
 			result = new CompositeDataSupport(cType, names, values);
@@ -284,9 +284,9 @@ public class TestMonitorInfo {
 		String[] names = { "className", "identityHashCode", "lockedStackFrame", "lockedStackDepth" };
 		Object[] values = {
 				/* className */null,
-				/* identityHashCode */new Integer(GOOD_CD_IDHASHCODE),
+				/* identityHashCode */Integer.valueOf(GOOD_CD_IDHASHCODE),
 				/* lockedStackFrame */createGoodStackTraceElementCompositeData(),
-				/* lockedStackDepth */new Integer(GOOD_CD_STACKDEPTH) };
+				/* lockedStackDepth */Integer.valueOf(GOOD_CD_STACKDEPTH) };
 		CompositeType cType = createGoodMonitorInfoCompositeType();
 		try {
 			result = new CompositeDataSupport(cType, names, values);
@@ -342,9 +342,9 @@ public class TestMonitorInfo {
 		String[] names = { "className", "identityHashCode", "lockedStackFrame", "lockedStackDepth" };
 		Object[] values = {
 				/* className */new String(GOOD_CD_CLASSNAME),
-				/* identityHashCode */new Integer(GOOD_CD_IDHASHCODE),
+				/* identityHashCode */Integer.valueOf(GOOD_CD_IDHASHCODE),
 				/* lockedStackFrame */createGoodStackTraceElementCompositeData(),
-				/* lockedStackDepth */new Integer(GOOD_CD_STACKDEPTH) };
+				/* lockedStackDepth */Integer.valueOf(GOOD_CD_STACKDEPTH) };
 		CompositeType cType = createGoodMonitorInfoCompositeType();
 		try {
 			result = new CompositeDataSupport(cType, names, values);
@@ -370,8 +370,8 @@ public class TestMonitorInfo {
 					new String("foo.bar.Blobby"),
 					new String("takeOverWorld"),
 					new String("Blobby.java"),
-					new Integer(2100),
-					new Boolean(false),
+					Integer.valueOf(2100),
+					Boolean.valueOf(false),
 					new String("myModuleName"),
 					new String("myModuleVersion"),
 					new String("myClassLoaderName") };
@@ -383,8 +383,8 @@ public class TestMonitorInfo {
 					new String("foo.bar.Blobby"),
 					new String("takeOverWorld"),
 					new String("Blobby.java"),
-					new Integer(2100),
-					new Boolean(false) };
+					Integer.valueOf(2100),
+					Boolean.valueOf(false) };
 			names = namesTmp;
 			values = valuesTmp;
 		}

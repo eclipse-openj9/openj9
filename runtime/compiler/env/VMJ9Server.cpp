@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,14 +123,21 @@ TR_J9ServerVM::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock *
    }
 
 TR_ResolvedMethod *
+TR_J9ServerVM::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod,
+                                    TR_ResolvedMethod * owningMethod, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueClassBlock *classForNewInstance)
+   {
+   return createResolvedMethodWithSignature(trMemory, aMethod, classForNewInstance, NULL, -1, owningMethod, methodInfo);
+   }
+
+TR_ResolvedMethod *
 TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
-                                                 char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod)
+                                                 char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    {
    TR_ResolvedJ9Method *result = NULL;
    if (isAOT_DEPRECATED_DO_NOT_USE())
       {
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-      result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(aMethod, this, trMemory, owningMethod);
+      result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(aMethod, this, trMemory, owningMethod, vTableSlot);
       TR::Compilation *comp = _compInfoPT->getCompilation();
       if (comp && comp->getOption(TR_UseSymbolValidationManager))
          {
@@ -142,7 +149,39 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
       }
    else
       {
-      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod(aMethod, this, trMemory, owningMethod);
+      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod(aMethod, this, trMemory, owningMethod, vTableSlot);
+      if (classForNewInstance)
+         {
+         result->setClassForNewInstance((J9Class*)classForNewInstance);
+         TR_ASSERT(result->isNewInstanceImplThunk(), "createResolvedMethodWithSignature: if classForNewInstance is given this must be a thunk");
+         }
+      }
+   if (signature)
+      result->setSignature(signature, signatureLength, trMemory);
+   return result;
+   }
+
+TR_ResolvedMethod *
+TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
+                                                 char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
+   {
+   TR_ResolvedJ9Method *result = NULL;
+   if (_compInfoPT->getCompilation()->compileRelocatableCode())
+      {
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
+      result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(aMethod, this, trMemory, methodInfo, owningMethod);
+      TR::Compilation *comp = _compInfoPT->getCompilation();
+      if (comp && comp->getOption(TR_UseSymbolValidationManager))
+         {
+         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+         if (!svm->isAlreadyValidated(result->containingClass()))
+            return NULL;
+         }
+#endif
+      }
+   else
+      {
+      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod(aMethod, this, trMemory, methodInfo, owningMethod);
       if (classForNewInstance)
          {
          result->setClassForNewInstance((J9Class*)classForNewInstance);
@@ -244,6 +283,14 @@ TR_J9ServerVM::canMethodExitEventBeHooked()
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
    return vmInfo->_canMethodExitEventBeHooked;
+   }
+
+bool
+TR_J9ServerVM::canExceptionEventBeHooked()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_canExceptionEventBeHooked;
    }
 
 TR_OpaqueClassBlock *
@@ -674,6 +721,32 @@ TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
    return std::get<0>(stream->read<UDATA>());
    }
 
+bool
+TR_J9ServerVM::ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
+   {
+   UDATA osrGlobalBufferSize = sizeof(J9JITDecompilationInfo);
+   // ROUND_TO in the base implementation calls OMR::align
+   osrGlobalBufferSize += OMR::align((UDATA) osrFrameSizeInBytes, sizeof(UDATA));
+   osrGlobalBufferSize += OMR::align((UDATA) osrScratchBufferSizeInBytes, sizeof(UDATA));
+   osrGlobalBufferSize += OMR::align((UDATA) osrStackFrameSizeInBytes, sizeof(UDATA));
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+
+   if (osrGlobalBufferSize > vmInfo->_osrGlobalBufferSize)
+      {
+      stream->write(JITServer::MessageType::VM_increaseOSRGlobalBufferSize, osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
+      auto recv = stream->read<bool, UDATA>();
+      bool result = std::get<0>(recv);
+      // if re-allocated the buffer successfully, updated the cached value
+      if (result)
+         vmInfo->_osrGlobalBufferSize = std::get<1>(recv);
+      return result;
+      }
+
+   return true;
+   }
+
 int32_t
 TR_J9ServerVM::getByteOffsetToLockword(TR_OpaqueClassBlock * clazz)
    {
@@ -772,6 +845,14 @@ TR_J9ServerVM::getObjectClass(uintptr_t objectPointer)
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getObjectClassAt(uintptr_t objectAddress)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getObjectClassAt, objectAddress);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
+
 uintptr_t
 TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
@@ -863,18 +944,13 @@ TR_J9ServerVM::sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_
    // in the superclass it would be null if it was not needed, but here we always need it.
    // so we just get it out of the compilation.
    TR_Memory *trMemory = _compInfoPT->getCompilation()->trMemory();
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getClassNameSignatureFromMethod, (J9Method*) aMethod);
-   auto recv = stream->read<std::string, std::string, std::string>();
-   const std::string str_className = std::get<0>(recv);
-   const std::string str_name = std::get<1>(recv);
-   const std::string str_signature = std::get<2>(recv);
-   J9UTF8 * className = str2utf8((char*)&str_className[0], str_className.length(), trMemory, heapAlloc);
-   J9UTF8 * name = str2utf8((char*)&str_name[0], str_name.length(), trMemory, heapAlloc);
-   J9UTF8 * signature = str2utf8((char*)&str_signature[0], str_signature.length(), trMemory, heapAlloc);
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf(getClassOfMethod(aMethod)));
+   J9ROMMethod *romMethod = JITServerHelpers::romMethodOfRamMethod(reinterpret_cast<J9Method *>(aMethod));
+   J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
+   J9UTF8 *signature = J9ROMMETHOD_SIGNATURE(romMethod);
 
-   int32_t len = J9UTF8_LENGTH(className)+J9UTF8_LENGTH(name)+J9UTF8_LENGTH(signature)+3;
-   char * s = len <= bufLen ? buf : (trMemory ? (char*)trMemory->allocateHeapMemory(len) : NULL);
+   int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
+   char *s = len <= bufLen ? buf : (trMemory ? (char *)trMemory->allocateHeapMemory(len) : NULL);
    if (s)
       sprintf(s, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
    return s;
@@ -1362,8 +1438,19 @@ TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void 
 void
 TR_J9ServerVM::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t alignFromStart)
    {
+   if (!TR::Compiler->om.isHotReferenceFieldRequired() && !comp->compileRelocatableCode())
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_markClassForTenuredAlignment, clazz, alignFromStart);
+      stream->read<JITServer::Void>();
+      }
+   }
+
+void
+TR_J9ServerVM::reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency)
+   {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_markClassForTenuredAlignment, clazz, alignFromStart);
+   stream->write(JITServer::MessageType::VM_reportHotField, reducedCpuUtil, clazz, fieldOffset, reducedFrequency);
    stream->read<JITServer::Void>();
    }
 
@@ -1555,9 +1642,6 @@ TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *com
       && (method->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
          || method->isArchetypeSpecimen()))
       {
-      if (isAOT_DEPRECATED_DO_NOT_USE()) // While we're here... we need an AOT relocation for this call
-         comp->cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *) callNode, (uint8_t *) methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
-
       char terseSignature[260]; // 256 args + 1 return type + null terminator
       TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
       thunkTable->getTerseSignature(terseSignature, sizeof(terseSignature), methodSymbol->getMethod()->signatureChars());
@@ -1798,9 +1882,18 @@ TR_J9ServerVM::getClassFromCP(J9ConstantPool *cp)
    }
 
 void
-TR_J9ServerVM::reserveTrampolineIfNecessary(TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding)
+TR_J9ServerVM::reserveTrampolineIfNecessary(TR::Compilation *comp, TR::SymbolReference *symRef, bool inBinaryEncoding)
    {
-   // Not necessary in JITServer server mode
+   // We only need to reserve trampolines on the client when
+   // we need a resolved trampoline for a non-AOT compilation
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   if (!comp->compileRelocatableCode()
+       && _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_needsMethodTrampolines
+       && !symRef->isUnresolved())
+      {
+      TR_OpaqueMethodBlock *ramMethod = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
+      comp->getMethodsRequiringTrampolines().push_front(ramMethod);
+      }
    }
 
 intptr_t
@@ -1912,6 +2005,212 @@ TR_J9ServerVM::getObjectSizeClass(uintptr_t objectSize)
    return std::get<0>(stream->read<UDATA>());
 #endif
    return 0;
+   }
+
+bool
+TR_J9ServerVM::acquireClassTableMutex()
+   {
+   // Acquire per-client class table lock
+   TR::Monitor *classTableMonitor = static_cast<JITServerPersistentCHTable *>(_compInfoPT->getClientData()->getCHTable())->getCHTableMonitor();
+   TR_ASSERT_FATAL(classTableMonitor, "CH table and its monitor must be initialized");
+   classTableMonitor->enter();
+   // The return value indicates whether this method acquired VM access.
+   // Always return false since this version doesn't use VM access.
+   return false;
+   }
+
+void
+TR_J9ServerVM::releaseClassTableMutex(bool releaseVMAccess)
+   {
+   // Release per-cient class table lock
+   TR::Monitor *classTableMonitor = static_cast<JITServerPersistentCHTable *>(_compInfoPT->getClientData()->getCHTable())->getCHTableMonitor();
+   TR_ASSERT_FATAL(classTableMonitor, "CH table and its monitor must be initialized");
+   classTableMonitor->exit();
+   }
+
+bool
+TR_J9ServerVM::getNurserySpaceBounds(uintptr_t *base, uintptr_t *top)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   *base = _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_nurserySpaceBoundsBase;
+   *top = _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_nurserySpaceBoundsTop;
+   return true;
+   }
+
+UDATA
+TR_J9ServerVM::getLowTenureAddress()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   return _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_lowTenureAddress;
+   }
+
+UDATA
+TR_J9ServerVM::getHighTenureAddress()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   return _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_highTenureAddress;
+   }
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+TR_OpaqueMethodBlock*
+TR_J9ServerVM::targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_targetMethodFromMemberName, objIndex);
+      return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+      }
+   return NULL;
+   }
+
+TR_OpaqueMethodBlock*
+TR_J9ServerVM::targetMethodFromMemberName(uintptr_t memberName)
+   {
+   TR_ASSERT_FATAL(false, "targetMethodFromMemberName must not be called on JITServer");
+   return NULL;
+   }
+
+TR_OpaqueMethodBlock*
+TR_J9ServerVM::targetMethodFromMethodHandle(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_targetMethodFromMethodHandle, objIndex);
+      return std::get<0>(stream->read<TR_OpaqueMethodBlock *>());
+      }
+   return NULL;
+   }
+
+TR_OpaqueMethodBlock*
+TR_J9ServerVM::targetMethodFromMethodHandle(uintptr_t methodHandle)
+   {
+   TR_ASSERT_FATAL(false, "targetMethodFromMethodHandle must not be called on JITServer");
+   return NULL;
+   }
+
+TR::KnownObjectTable::Index
+TR_J9ServerVM::getKnotIndexOfInvokeCacheArrayAppendixElement(TR::Compilation *comp, uintptr_t *invokeCacheArray)
+   {
+   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+   if (!knot) return TR::KnownObjectTable::UNKNOWN;
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(
+      JITServer::MessageType::VM_getKnotIndexOfInvokeCacheArrayAppendixElement,
+      invokeCacheArray
+      );
+   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+   TR::KnownObjectTable::Index idx = std::get<0>(recv);
+   knot->updateKnownObjectTableAtServer(idx, std::get<1>(recv));
+   return idx;
+   }
+
+TR_ResolvedMethod *
+TR_J9ServerVM::targetMethodFromInvokeCacheArrayMemberNameObj(TR::Compilation *comp, TR_ResolvedMethod *owningMethod, uintptr_t *invokeCacheArray)
+   {
+   TR_OpaqueMethodBlock *targetMethodObj = 0;
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(
+      JITServer::MessageType::VM_targetMethodFromInvokeCacheArrayMemberNameObj,
+      static_cast<TR_ResolvedJ9JITServerMethod *>(owningMethod)->getRemoteMirror(),
+      invokeCacheArray
+      );
+   auto recv = stream->read<TR_OpaqueMethodBlock*, TR_ResolvedJ9JITServerMethodInfo>();
+   targetMethodObj = std::get<0>(recv);
+   auto &methodInfo = std::get<1>(recv);
+   return createResolvedMethod(comp->trMemory(), targetMethodObj, owningMethod, methodInfo);
+   }
+
+TR::SymbolReference*
+TR_J9ServerVM::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation *comp, TR::SymbolReference *originalSymRef, uintptr_t *invokeCacheArray)
+   {
+   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+   if (!knot) return originalSymRef;
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(
+      JITServer::MessageType::VM_refineInvokeCacheElementSymRefWithKnownObjectIndex,
+      invokeCacheArray
+      );
+   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+   TR::KnownObjectTable::Index idx = std::get<0>(recv);
+   knot->updateKnownObjectTableAtServer(idx, std::get<1>(recv));
+   return comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(originalSymRef, idx);
+   }
+
+J9JNIMethodID*
+TR_J9ServerVM::jniMethodIdFromMemberName(uintptr_t memberName)
+   {
+   TR_ASSERT_FATAL(false, "jniMethodIdFromMemberName must not be called on JITServer");
+   return NULL;
+   }
+
+J9JNIMethodID*
+TR_J9ServerVM::jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   // This could be made to work on JITServer, however we would need to receive a copy of J9JNIMethodID
+   // and put it in some sort of cache, to avoid memory allocation every time this method is called.
+   // Since the only parameter of J9JNIMethodID currently accessed is vTableIndex, we just use
+   // vTableOrITableIndexFromMemberName to get the index from the client directly.
+   TR_ASSERT_FATAL(false, "jniMethodIdFromMemberName must not be called on JITServer");
+   return NULL;
+   }
+
+int32_t
+TR_J9ServerVM::vTableOrITableIndexFromMemberName(uintptr_t memberName)
+   {
+   TR_ASSERT_FATAL(false, "vTableOrITableIndexFromMemberName must not be called on JITServer");
+   return 0;
+   }
+
+int32_t
+TR_J9ServerVM::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
+   {
+   auto knot = comp->getKnownObjectTable();
+   if (objIndex != TR::KnownObjectTable::UNKNOWN &&
+       knot &&
+       !knot->isNull(objIndex))
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::VM_vTableOrITableIndexFromMemberName, objIndex);
+      return std::get<0>(stream->read<int32_t>());
+      }
+   return -1;
+   }
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+TR::KnownObjectTable::Index
+TR_J9ServerVM::getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, char *fieldName)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex, mhIndex, std::string(fieldName));
+   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+
+   TR::KnownObjectTable::Index mnIndex = std::get<0>(recv);
+   comp->getKnownObjectTable()->updateKnownObjectTableAtServer(mnIndex, std::get<1>(recv));
+   return mnIndex;
+   }
+
+bool
+TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_isLambdaFormGeneratedMethod, method);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_ResolvedMethod *method)
+   {
+   return static_cast<TR_ResolvedJ9JITServerMethod *>(method)->isLambdaFormGeneratedMethod();
    }
 
 bool
@@ -2241,9 +2540,9 @@ TR_J9SharedCacheServerVM::canMethodExitEventBeHooked()
    }
 
 bool
-TR_J9SharedCacheServerVM::methodsCanBeInlinedEvenIfEventHooksEnabled()
+TR_J9SharedCacheServerVM::methodsCanBeInlinedEvenIfEventHooksEnabled(TR::Compilation *comp)
    {
-   return true;
+   return !comp->getOption(TR_FullSpeedDebug);
    }
 
 int32_t
@@ -2417,7 +2716,7 @@ TR_J9SharedCacheServerVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
 TR_OpaqueMethodBlock *
 TR_J9SharedCacheServerVM::getInlinedCallSiteMethod(TR_InlinedCallSite *ics)
    {
-   return (TR_OpaqueMethodBlock *)((TR_AOTMethodInfo *)(ics->_vmMethodInfo))->resolvedMethod->getPersistentIdentifier();
+   return ics->_methodInfo;
    }
 
 uintptr_t
@@ -2517,6 +2816,21 @@ TR_J9SharedCacheServerVM::getClassForAllocationInlining(TR::Compilation *comp, T
       return TR_J9VM::getClassForAllocationInlining(comp, classSymRef);
    else
       return (J9Class *) classSymRef->getOwningMethod(comp)->getClassFromConstantPool(comp, classSymRef->getCPIndex(), returnClassForAOT);
+   }
+
+bool
+TR_J9SharedCacheServerVM::ensureOSRBufferSize(TR::Compilation *comp, uintptr_t osrFrameSizeInBytes, uintptr_t osrScratchBufferSizeInBytes, uintptr_t osrStackFrameSizeInBytes)
+   {
+   bool valid = TR_J9ServerVM::ensureOSRBufferSize(comp, osrFrameSizeInBytes, osrScratchBufferSizeInBytes, osrStackFrameSizeInBytes);
+   if (valid)
+      {
+      TR_AOTMethodHeader *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
+      aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesOSR;
+      aotMethodHeaderEntry->_osrBufferInfo._frameSizeInBytes = osrFrameSizeInBytes;
+      aotMethodHeaderEntry->_osrBufferInfo._scratchBufferSizeInBytes = osrScratchBufferSizeInBytes;
+      aotMethodHeaderEntry->_osrBufferInfo._stackFrameSizeInBytes = osrStackFrameSizeInBytes;
+      }
+   return valid;
    }
 
 // Multiple codeCache support

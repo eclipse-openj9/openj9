@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,6 @@
 #include "control/CompilationController.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "compile/CompilationException.hpp"
-#include "exceptions/JITShutDown.hpp"
 #include "env/exports.h"
 #include "env/CompilerEnv.hpp"
 #include "env/CHTable.hpp"
@@ -126,7 +125,7 @@ TR_J9VMBase::initializeSystemProperties()
    {
    initializeProcessorType();
 
-   #if defined(TR_TARGET_POWER) || defined(TR_TARGET_S390) || defined(TR_TARGET_X86)
+   #if defined(TR_TARGET_POWER) || defined(TR_TARGET_S390) || defined(TR_TARGET_X86) || defined(TR_TARGET_ARM64)
    initializeHasResumableTrapHandler();
    initializeHasFixedFrameC_CallingConvention();
    #endif
@@ -154,178 +153,6 @@ TR_J9VMBase::hasFPU()
    return portLibCall_sysinfo_has_floating_point_unit();
    }
 
-
-// -----------------------------------------------------------------------------
-
-TR_Processor
-portLibCall_getProcessorType()
-   {
-   J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   return mapJ9Processor(processorDesc->processor);
-   }
-
-TR_Processor
-portLibCall_getPhysicalProcessorType()
-   {
-   J9ProcessorDesc *processorDesc = TR::Compiler->target.cpu.TO_PORTLIB_getJ9ProcessorDesc();
-   return mapJ9Processor(processorDesc->physicalProcessor);
-   }
-
-TR_Processor mapJ9Processor(J9ProcessorArchitecture j9processor)
-   {
-   TR_Processor tp = TR_NullProcessor;
-
-   switch(j9processor)
-      {
-      case PROCESSOR_UNDEFINED:
-         tp = TR_NullProcessor;
-         break;
-
-      case PROCESSOR_S390_UNKNOWN:
-         tp = TR_Default390Processor;
-         break;
-      case PROCESSOR_S390_GP6:
-         tp = TR_s370gp6;
-         break;
-      case PROCESSOR_S390_GP7:
-         tp = TR_s370gp7;
-         break;
-      case PROCESSOR_S390_GP8:
-         tp = TR_s370gp8;
-         break;
-      case PROCESSOR_S390_GP9:
-         tp = TR_s370gp9;
-         break;
-      case PROCESSOR_S390_GP10:
-         tp = TR_s370gp10;
-         break;
-      case PROCESSOR_S390_GP11:
-         tp = TR_s370gp11;
-         break;
-      case PROCESSOR_S390_GP12:
-         tp = TR_s370gp12;
-         break;
-
-      case PROCESSOR_PPC_UNKNOWN:
-         tp = TR_DefaultPPCProcessor;
-         break;
-      case PROCESSOR_PPC_7XX:
-         tp = TR_PPC7xx;
-         break;
-      case PROCESSOR_PPC_GP:
-         tp = TR_PPCgp;
-         break;
-      case PROCESSOR_PPC_GR:
-         tp = TR_PPCgr;
-         break;
-      case PROCESSOR_PPC_NSTAR:
-         tp = TR_PPCnstar;
-         break;
-      case PROCESSOR_PPC_PULSAR:
-         tp = TR_PPCpulsar;
-         break;
-      case PROCESSOR_PPC_PWR403:
-         tp = TR_PPCpwr403;
-         break;
-      case PROCESSOR_PPC_PWR405:
-         tp = TR_PPCpwr405;
-         break;
-      case PROCESSOR_PPC_PWR440:
-         tp = TR_PPCpwr440;
-         break;
-      case PROCESSOR_PPC_PWR601:
-         tp = TR_PPCpwr601;
-         break;
-      case PROCESSOR_PPC_PWR602:
-         tp = TR_PPCpwr602;
-         break;
-      case PROCESSOR_PPC_PWR603:
-         tp = TR_PPCpwr603;
-         break;
-      case PROCESSOR_PPC_PWR604:
-         tp = TR_PPCpwr604;
-         break;
-      case PROCESSOR_PPC_PWR620:
-         tp = TR_PPCpwr620;
-         break;
-      case PROCESSOR_PPC_PWR630:
-         tp = TR_PPCpwr630;
-         break;
-      case PROCESSOR_PPC_RIOS1:
-         tp = TR_PPCrios1;
-         break;
-      case PROCESSOR_PPC_RIOS2:
-         tp = TR_PPCrios2;
-         break;
-      case PROCESSOR_PPC_P6:
-         tp = TR_PPCp6;
-         break;
-      case PROCESSOR_PPC_P7:
-         tp = TR_PPCp7;
-         break;
-      case PROCESSOR_PPC_P8:
-         tp = TR_PPCp8;
-         break;
-      case PROCESSOR_PPC_P9:
-         tp = TR_PPCp9;
-         break;
-      case PROCESSOR_PPC_P10:
-         // P10 support is not yet well-tested, so it's currently gated behind an environment
-         // variable to prevent it from being used by accident by users who use old versions of
-         // OpenJ9 once P10 chips become available.
-         if (jitConfig)
-            {
-            static bool enableP10 = feGetEnv("TR_EnableExperimentalPower10Support");
-            tp = enableP10 ? TR_PPCp10 : TR_PPCp9;
-            }
-         else
-            {
-            tp = TR_PPCp9;
-            }
-         break;
-
-      case PROCESSOR_X86_UNKNOWN:
-         tp = TR_DefaultX86Processor;
-         break;
-      case PROCESSOR_X86_INTELPENTIUM:
-         tp = TR_X86ProcessorIntelPentium;
-         break;
-      case PROCESSOR_X86_INTELP6:
-         tp = TR_X86ProcessorIntelP6;
-         break;
-      case PROCESSOR_X86_INTELPENTIUM4:
-         tp = TR_X86ProcessorIntelPentium4;
-         break;
-      case PROCESSOR_X86_INTELCORE2:
-         tp = TR_X86ProcessorIntelCore2;
-         break;
-      case PROCESSOR_X86_INTELTULSA:
-         tp = TR_X86ProcessorIntelTulsa;
-         break;
-      case PROCESSOR_X86_AMDK5:
-         tp = TR_X86ProcessorAMDK5;
-         break;
-      case PROCESSOR_X86_AMDK6:
-         tp = TR_X86ProcessorAMDK6;
-         break;
-      case PROCESSOR_X86_AMDATHLONDURON:
-         tp = TR_X86ProcessorAMDAthlonDuron;
-         break;
-      case PROCESSOR_X86_AMDOPTERON:
-         tp = TR_X86ProcessorAMDOpteron;
-         break;
-      case PROCESSOR_X86_INTELNEHALEM:             //Not yet mapped in TR_Processor.
-      case PROCESSOR_X86_INTELWESTMERE:
-      case PROCESSOR_X86_INTELSANDYBRIDGE:
-      case PROCESSOR_X86_INTELHASWELL:
-         tp = TR_X86ProcessorAMDOpteron;
-         break;
-      default:
-        return tp;
-      }
-
-   return tp;
-   }
 
 static TR_Processor
 portLibCall_getX86ProcessorType(const char *vendor, uint32_t processorSignature)
@@ -469,22 +296,6 @@ portLibCall_getARM64ProcessorType()
    return TR_DefaultARM64Processor;
    }
 
-TR_Processor
-TR_J9VMBase::getPPCProcessorType()
-   {
-   return portLibCall_getProcessorType();
-   }
-
-bool
-TR_J9VMBase::getPPCSupportsVSXRegisters()
-   {
-#if defined(TR_TARGET_POWER)
-   return TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX);
-#else
-   return false;
-#endif // TR_TARGET_POWER
-   }
-
 // -----------------------------------------------------------------------------
 
 // For Verbose Log
@@ -496,73 +307,73 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
 
    if (TR::Compiler->target.cpu.isPower())
       {
-      switch(portLibCall_getProcessorType())
+      switch (TR::Compiler->target.cpu.getProcessorDescription().processor)
          {
-         case TR_PPCpwr604:
+         case OMR_PROCESSOR_PPC_PWR604:
             sourceString = "PPCPWR604";
             break;
 
-         case TR_PPCpwr630:
+         case OMR_PROCESSOR_PPC_PWR630:
             sourceString = "PPCpwr630 ";
             break;
 
-         case TR_PPCgp:
+         case OMR_PROCESSOR_PPC_GP:
             sourceString = "PPCgp";
             break;
 
-         case TR_PPCgr:
+         case OMR_PROCESSOR_PPC_GR:
             sourceString = "PPCgr";
             break;
 
-         case TR_PPCp6:
+         case OMR_PROCESSOR_PPC_P6:
             sourceString = "PPCp6";
             break;
 
-         case TR_PPCp7:
+         case OMR_PROCESSOR_PPC_P7:
             sourceString = "PPCp7";
             break;
 
-         case TR_PPCp8:
+         case OMR_PROCESSOR_PPC_P8:
             sourceString = "PPCp8";
             break;
 
-         case TR_PPCp9:
+         case OMR_PROCESSOR_PPC_P9:
             sourceString = "PPCp9";
             break;
 
-         case TR_PPCp10:
+         case OMR_PROCESSOR_PPC_P10:
             sourceString = "PPCp10";
             break;
 
-         case TR_PPCpulsar:
+         case OMR_PROCESSOR_PPC_PULSAR:
             sourceString = "PPCpulsar";
             break;
 
-         case TR_PPCnstar:
+         case OMR_PROCESSOR_PPC_NSTAR:
             sourceString = "PPCnstar";
             break;
 
-         case TR_PPCpwr403:
+         case OMR_PROCESSOR_PPC_PWR403:
             sourceString = "PPCPWR403";
             break;
 
-         case TR_PPCpwr601:
+         case OMR_PROCESSOR_PPC_PWR601:
             sourceString = "PPCPWR601";
             break;
 
-         case TR_PPCpwr603:
+         case OMR_PROCESSOR_PPC_PWR603:
             sourceString = "PPCPWR603";
             break;
 
-         case  TR_PPC82xx:
+         case OMR_PROCESSOR_PPC_82XX:
             sourceString = "PPCP82xx";
             break;
 
-         case  TR_PPC7xx:
+         case OMR_PROCESSOR_PPC_7XX:
             sourceString = "PPC7xx";
             break;
 
-         case TR_PPCpwr440:
+         case OMR_PROCESSOR_PPC_PWR440:
             sourceString = "PPCPWR440";
             break;
 
@@ -583,49 +394,125 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
       return returnValue;
       }
 
-#if defined(TR_TARGET_S390)
    if (TR::Compiler->target.cpu.isZ())
       {
-      int32_t machineId = TR::Compiler->target.cpu.TO_PORTLIB_get390MachineId();
+      switch (TR::Compiler->target.cpu.getProcessorDescription().processor)
+         {
+         case OMR_PROCESSOR_S390_Z900:
+            sourceString = "z900";
+            break;
 
-      return snprintf(processorName, stringLength, "%s (%d)", TR::Compiler->target.cpu.getProcessorName(machineId), machineId);
+         case OMR_PROCESSOR_S390_Z990:
+            sourceString = "z990";
+            break;
+
+         case OMR_PROCESSOR_S390_Z9:
+            sourceString = "z9";
+            break;
+
+         case OMR_PROCESSOR_S390_Z10:
+            sourceString = "z10";
+            break;
+
+         case OMR_PROCESSOR_S390_Z196:
+            sourceString = "z196";
+            break;
+
+         case OMR_PROCESSOR_S390_ZEC12:
+            sourceString = "zec12";
+            break;
+
+         case OMR_PROCESSOR_S390_Z13:
+            sourceString = "z13";
+            break;
+
+         case OMR_PROCESSOR_S390_Z14:
+            sourceString = "z14";
+            break;
+
+         case OMR_PROCESSOR_S390_Z15:
+            sourceString = "z15";
+            break;
+
+         case OMR_PROCESSOR_S390_ZNEXT:
+            sourceString = "zNext";
+            break;
+         }
+      returnValue = strlen(sourceString);
+      strncpy(processorName, sourceString, stringLength);
+      return returnValue;
       }
-#endif
 
    if (TR::Compiler->target.cpu.isX86())
       {
-      switch(TR::Compiler->target.cpu.id())
+      switch (TR::Compiler->target.cpu.getProcessorDescription().processor)
          {
-         case TR_X86ProcessorIntelPentium:
+         case OMR_PROCESSOR_X86_INTELPENTIUM:
             sourceString = "X86 Intel Pentium";
             break;
 
-         case TR_X86ProcessorIntelP6:
+         case OMR_PROCESSOR_X86_INTELP6:
             sourceString = "X86 Intel P6";
             break;
 
-         case TR_X86ProcessorIntelPentium4:
+         case OMR_PROCESSOR_X86_INTELPENTIUM4:
             sourceString = "X86 Intel Netburst Microarchitecture";
             break;
 
-         case TR_X86ProcessorIntelCore2:
+         case OMR_PROCESSOR_X86_INTELCORE2:
             sourceString = "X86 Intel Core2 Microarchitecture";
             break;
 
-         case TR_X86ProcessorIntelTulsa:
+         case OMR_PROCESSOR_X86_INTELTULSA:
             sourceString = "X86 Intel Tulsa";
             break;
 
-         case TR_X86ProcessorAMDK5:
+         case OMR_PROCESSOR_X86_INTELNEHALEM:
+            sourceString = "X86 Intel Nehalem";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELWESTMERE:
+            sourceString = "X86 Intel Westmere";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELSANDYBRIDGE:
+            sourceString = "X86 Intel Sandy Bridge";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELIVYBRIDGE:
+            sourceString = "X86 Intel Ivy Bridge";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELHASWELL:
+            sourceString = "X86 Intel Haswell";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELBROADWELL:
+            sourceString = "X86 Intel Broadwell";
+            break;
+
+         case OMR_PROCESSOR_X86_INTELSKYLAKE:
+            sourceString = "X86 Intel Skylake";
+            break;
+
+         case OMR_PROCESSOR_X86_AMDK5:
             sourceString = "X86 AMDK5";
             break;
 
-         case TR_X86ProcessorAMDAthlonDuron:
+         case OMR_PROCESSOR_X86_AMDK6:
+            sourceString = "X86 AMDK6";
+            break;
+
+         case OMR_PROCESSOR_X86_AMDATHLONDURON:
             sourceString = "X86 AMD Athlon-Duron";
             break;
 
-         case TR_X86ProcessorAMDOpteron:
+         case OMR_PROCESSOR_X86_AMDOPTERON:
             sourceString = "X86 AMD Opteron";
+            break;
+
+         case OMR_PROCESSOR_X86_AMDFAMILY15H:
+            sourceString = "X86 AMD Family 15h";
             break;
 
          default:
@@ -635,7 +522,6 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
       returnValue = strlen(sourceString);
       strncpy(processorName, sourceString, stringLength);
       return returnValue;
-
       }
    sourceString = "Unknown Processor";
    returnValue = strlen(sourceString);
@@ -648,67 +534,55 @@ void
 TR_J9VM::initializeProcessorType()
    {
    TR_ASSERT(_compInfo,"compInfo not defined");
-   TR::Compiler->target.cpu.applyUserOptions();
-
+   
    if (TR::Compiler->target.cpu.isZ())
       {
-#if defined(TR_HOST_S390)
-      initializeS390ProcessorFeatures();
+      OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
+      if (processorDescription.processor >= OMR_PROCESSOR_S390_Z10 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ10))
+         processorDescription.processor = OMR_PROCESSOR_S390_FIRST;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z196 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ196))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z10;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_ZEC12 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZEC12))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z196;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z13 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ13))
+         processorDescription.processor = OMR_PROCESSOR_S390_ZEC12;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z14 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ14))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z13;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_Z15 && TR::Options::getCmdLineOptions()->getOption(TR_DisableZ15))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z14;
+      else if (processorDescription.processor >= OMR_PROCESSOR_S390_ZNEXT && TR::Options::getCmdLineOptions()->getOption(TR_DisableZNext))
+         processorDescription.processor = OMR_PROCESSOR_S390_Z15;
 
+      TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
 #if defined(J9ZOS390)
       // Cache whether current process is running in Supervisor State (i.e. Control Region of WAS).
       if (!_isPSWInProblemState())
          _compInfo->setIsInZOSSupervisorState();
 #endif
-#endif
+      }
+   else if (TR::Compiler->target.cpu.isPower())
+      {
+      OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
+      TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
+      }
+   else if (TR::Compiler->target.cpu.isX86())
+      {
+      OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
+      OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+      if (feGetEnv("TR_DisableAVX"))
+         {
+         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_OSXSAVE, FALSE);
+         }
+      
+      TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
 
-#ifdef TR_TARGET_S390
-      // For AOT shared classes cache processor compatibility purposes, the following
-      // processor settings should not be modified.
-      if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp14);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z15))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp13);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z14))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp12);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z13))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp11);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp10);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp9);
-         }
-      else if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_S390_Z10))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp8);
-         }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z9))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp7);
-         }
-      else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z990))
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp6);
-         }
-      else
-         {
-         TR::Compiler->target.cpu.setProcessor(TR_s370gp5);
-         }
-#endif
+      const char *vendor = TR::Compiler->target.cpu.getProcessorVendorId();
+      uint32_t processorSignature = TR::Compiler->target.cpu.getProcessorSignature();
 
-      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_First390Processor
-             && TR::Compiler->target.cpu.id() <= TR_Last390Processor, "Not a valid 390 Processor Type");
+      TR::Compiler->target.cpu.setProcessor(portLibCall_getX86ProcessorType(vendor, processorSignature));
+
+      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstX86Processor
+             && TR::Compiler->target.cpu.id() <= TR_LastX86Processor, "Not a valid X86 Processor Type");
       }
    else if (TR::Compiler->target.cpu.isARM())
       {
@@ -724,59 +598,11 @@ TR_J9VM::initializeProcessorType()
       TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstARM64Processor
              && TR::Compiler->target.cpu.id() <= TR_LastARM64Processor, "Not a valid ARM64 Processor Type");
       }
-   else if (TR::Compiler->target.cpu.isPower())
-      {
-      //We can have a "reported" processor and a "underlying" processor.
-      //See design 28980
-      TR_Processor tp_reported;
-      TR_Processor tp_underlying;
-
-      if( isAOT_DEPRECATED_DO_NOT_USE() )
-         TR::Compiler->target.cpu.setProcessor( TR_DefaultPPCProcessor );
-      else
-         {
-         tp_reported    = portLibCall_getProcessorType();
-         tp_underlying  = portLibCall_getPhysicalProcessorType();
-#if defined(TR_TARGET_POWER)
-         TR::Compiler->target.cpu.setProcessor(tp_reported);
-#endif
-         }
-
-      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstPPCProcessor
-             && TR::Compiler->target.cpu.id() <= TR_LastPPCProcessor, "Not a valid PPC Processor Type");
-
-      #if defined(DEBUG)
-      _compInfo->setProcessorByDebugOption();
-      #endif
-      }
-   else if (TR::Compiler->target.cpu.isX86())
-      {
-      const char *vendor = TR::Compiler->target.cpu.getProcessorVendorId();
-      uint32_t processorSignature = TR::Compiler->target.cpu.getProcessorSignature();
-
-      TR::Compiler->target.cpu.setProcessor(portLibCall_getX86ProcessorType(vendor, processorSignature));
-
-      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstX86Processor
-             && TR::Compiler->target.cpu.id() <= TR_LastX86Processor, "Not a valid X86 Processor Type");
-      }
    else
       {
       TR_ASSERT(0,"Unknown target");
       }
-   }
 
-// -----------------------------------------------------------------------------
-
-#if defined(TR_TARGET_S390)
-void
-TR_J9VMBase::initializeS390ProcessorFeatures()
-   {
-   TR::Compiler->target.cpu.initializeS390ProcessorFeatures();
+   _jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
+   _jitConfig->relocatableTargetProcessor = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
    }
-
-void
-TR_J9SharedCacheVM::initializeS390ProcessorFeatures()
-   {
-   return;
-   }
-#endif

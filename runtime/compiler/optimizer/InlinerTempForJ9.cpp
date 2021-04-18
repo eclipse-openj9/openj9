@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -395,6 +395,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
+      case TR::sun_misc_Unsafe_copyMemory:
          return !calleeMethod->isNative();
       default:
          break;
@@ -1835,7 +1836,7 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
        !comp()->fej9()->traceableMethodsCanBeInlined())
       return false;
 
-   if ((TR::Compiler->vm.canAnyMethodEventsBeHooked(comp()) && !comp()->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled()) ||
+   if ((TR::Compiler->vm.canAnyMethodEventsBeHooked(comp()) && !comp()->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled(comp())) ||
        (comp()->fej9()->isAnyMethodTracingEnabled(calleeSymbol->getResolvedMethod()->getPersistentIdentifier()) &&
        !comp()->fej9()->traceableMethodsCanBeInlined()))
       return false;
@@ -2066,7 +2067,7 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
       return false;
       }
 
-   if ((TR::Compiler->vm.canAnyMethodEventsBeHooked(comp) && !comp->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled()) ||
+   if ((TR::Compiler->vm.canAnyMethodEventsBeHooked(comp) && !comp->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled(comp)) ||
        (comp->fej9()->isAnyMethodTracingEnabled(method->getPersistentIdentifier()) &&
         !comp->fej9()->traceableMethodsCanBeInlined()))
       return false;
@@ -2506,8 +2507,6 @@ int32_t TR_Inliner::perform()
       comp()->getFlowGraph()->setFrequencies();
       }
 
-   comp()->setSupressEarlyInlining(false);
-
    return 1; // cost??
    }
 
@@ -2735,7 +2734,7 @@ TR_MultipleCallTargetInliner::eliminateTailRecursion(
 
    //please don't move this if. It needs to be done after all early exits but exactly before
    //we do any transformations
-   if (!comp()->incInlineDepth(calleeSymbol, callNode->getByteCodeInfo(), callNode->getSymbolReference()->getCPIndex(), callNode->getSymbolReference(), !callNode->getOpCode().isCallIndirect(), 0))
+   if (!comp()->incInlineDepth(calleeSymbol, callNode, !callNode->getOpCode().isCallIndirect(), guard, calleeResolvedMethod->classOfMethod(), 0))
       {
       return false;
       }
@@ -3285,7 +3284,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
    }
 
    for (TR_CallTarget *target = _callTargets.getFirst(); target; target = target->getNext())
-      getUtil()->computePrexInfo(target);
+      target->_prexArgInfo = getUtil()->computePrexInfo(target);
 
    if (prevCallStack == 0)
       {
@@ -4460,7 +4459,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
 
 bool TR_J9InlinerPolicy::canInlineMethodWhileInstrumenting(TR_ResolvedMethod *method)
    {
-   if ((TR::Compiler->vm.isSelectiveMethodEnterExitEnabled(comp()) && !comp()->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled()) ||
+   if ((TR::Compiler->vm.isSelectiveMethodEnterExitEnabled(comp()) && !comp()->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled(comp())) ||
          (comp()->fej9()->isAnyMethodTracingEnabled(method->getPersistentIdentifier()) &&
          !comp()->fej9()->traceableMethodsCanBeInlined()))
       return false;
@@ -5099,7 +5098,7 @@ TR_PrexArgInfo* TR_PrexArgInfo::argInfoFromCaller(TR::Node* callNode, TR_PrexArg
    int32_t numArgs = callNode->getNumArguments();
    int32_t numChildren = callNode->getNumChildren();
 
-   TR_PrexArgInfo* argInfo = new (compilation->trStackMemory()) TR_PrexArgInfo(numArgs, compilation->trMemory());
+   TR_PrexArgInfo* argInfo = new (compilation->trHeapMemory()) TR_PrexArgInfo(numArgs, compilation->trMemory());
 
    for (int32_t i = firstArgIndex; i < numChildren; i++)
       {
@@ -5117,50 +5116,24 @@ TR_PrexArgInfo* TR_PrexArgInfo::argInfoFromCaller(TR::Node* callNode, TR_PrexArg
 TR_PrexArgInfo *
 TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target, TR_PrexArgInfo *callerArgInfo)
    {
-   TR_CallSite *site = target->_myCallSite;
-   if (!site)
+   if (comp()->getOption(TR_DisableInlinerArgsPropagation))
       return NULL;
 
-   if (!site->_callNode)
+   TR_CallSite *site = target->_myCallSite;
+   if (!site || !site->_callNode)
       return NULL;
 
    bool tracePrex = comp()->trace(OMR::inlining) || comp()->trace(OMR::invariantArgumentPreexistence);
-   if (callerArgInfo)
+
+   auto prexArgInfoFromTarget = createPrexArgInfoForCallTarget(target->_guard, target->_calleeMethod);
+   auto prexArgInfoFromCallSite = TR_J9InlinerUtil::computePrexInfo(inliner(), site, callerArgInfo);
+   auto prexArgInfo = TR_PrexArgInfo::enhance(prexArgInfoFromTarget, prexArgInfoFromCallSite, comp());
+
+   if (tracePrex && prexArgInfo)
       {
-      if (tracePrex)
-         traceMsg(comp(), "PREX.inl: Propagating prex argInfo from caller for [%p] %s %s\n",
-                  site->_callNode,
-                  site->_callNode->getOpCode().getName(),
-                  site->_callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(trMemory(), stackAlloc));
-
-      TR_PrexArgInfo* argsFromCaller = TR_PrexArgInfo::argInfoFromCaller(site->_callNode, callerArgInfo);
-      target->_prexArgInfo = TR_PrexArgInfo::enhance(target->_prexArgInfo, argsFromCaller, comp());
+      traceMsg(comp(), "PREX.inl:    argInfo for target %p\n", target);
+      prexArgInfo->dumpTrace();
       }
-
-   return computePrexInfo(target);
-   }
-
-TR_PrexArgInfo *
-TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target)
-   {
-   TR_CallSite *site = target->_myCallSite;
-   if (!site)
-      return NULL;
-
-   if (!site->_callNode)
-      return NULL;
-
-   // We want to avoid degrading info we already have from another source like VP.
-   // Unfortunately that desire mucks up this function with a lot of logic that
-   // looks like constraint merging, and is redundant with what VP already does.
-   //
-   TR_PrexArgInfo *argInfo = target->_prexArgInfo;
-   if (!argInfo)
-      argInfo = new (inliner()->trStackMemory()) TR_PrexArgInfo(site->_callNode->getNumArguments(), trMemory());
-
-   bool tracePrex = comp()->trace(OMR::inlining) || comp()->trace(OMR::invariantArgumentPreexistence);
-   if (tracePrex)
-      traceMsg(comp(), "PREX.inl: Populating prex argInfo for [%p] %s %s\n", site->_callNode, site->_callNode->getOpCode().getName(), site->_callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(trMemory(), stackAlloc));
 
    // At this stage, we can improve the type of the virtual guard we are going to use
    // For a non-overridden guard or for an interface guard, if it makes sense, try to use a vft-test
@@ -5169,120 +5142,256 @@ TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target)
    bool disablePreexForChangedGuard = false;
    TR_PersistentCHTable * chTable = comp()->getPersistentInfo()->getPersistentCHTable();
    TR_PersistentClassInfo *thisClassInfo = chTable->findClassInfoAfterLocking(target->_receiverClass, comp());
-   if (target->_calleeSymbol->hasThisCalls() && target->_receiverClass && !TR::Compiler->cls.isAbstractClass(comp(), target->_receiverClass) &&
-         !fe()->classHasBeenExtended(target->_receiverClass) &&
-         thisClassInfo && thisClassInfo->isInitialized() &&
-         ((target->_guard->_kind == TR_NonoverriddenGuard && target->_guard->_type == TR_NonoverriddenTest) ||
-          (target->_guard->_kind == TR_InterfaceGuard)))
+   if (target->_calleeSymbol->hasThisCalls() &&
+       target->_receiverClass &&
+       !TR::Compiler->cls.isAbstractClass(comp(), target->_receiverClass) &&
+       !fe()->classHasBeenExtended(target->_receiverClass) &&
+       thisClassInfo &&
+       thisClassInfo->isInitialized() &&
+       ((target->_guard->_kind == TR_NonoverriddenGuard && target->_guard->_type == TR_NonoverriddenTest) ||
+        (target->_guard->_kind == TR_InterfaceGuard)) &&
+       performTransformation(comp(), "O^O VIRTUAL GUARD IMPROVE: Changed guard kind %s type %s to use VFT test\n", tracer()->getGuardKindString(target->_guard), tracer()->getGuardTypeString(target->_guard)))
       {
       target->_guard->_type = TR_VftTest;
       target->_guard->_thisClass = target->_receiverClass;
-      disablePreexForChangedGuard = true;
       }
 
-   int32_t firstArgIndex = site->_callNode->getFirstArgumentIndex();
-   for (int32_t c = site->_callNode->getNumChildren() -1; c >= firstArgIndex; c--)
+   return prexArgInfo;
+   }
+
+TR_PrexArgInfo *
+TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target)
+   {
+   return computePrexInfo(target, NULL);
+   }
+
+/** \brief
+ *     Find the def to an auto or parm before treetop in a extended basic block
+ *
+ *  \return
+ *     The treetop containing the def (the store)
+ */
+static TR::TreeTop*
+defToAutoOrParmInEBB(TR::Compilation* comp, TR::TreeTop* treetop, TR::SymbolReference* symRef, TR::Node** valueNode)
+   {
+   for (;treetop != NULL; treetop= treetop->getPrevTreeTop())
+      {
+      auto ttNode = treetop->getNode();
+      if (ttNode->getOpCodeValue() == TR::BBStart)
+         {
+         auto block = ttNode->getBlock();
+         if (!block->isExtensionOfPreviousBlock())
+            return NULL;
+         else
+            continue;
+         }
+
+      auto storeNode = ttNode->getStoreNode();
+      if (storeNode &&
+          storeNode->getOpCode().isStoreDirect() &&
+          storeNode->getSymbolReference() == symRef)
+         {
+         auto child = storeNode->getFirstChild();
+         // If the child is also an auto, keep walking the trees to find the child's def
+         if (child->getOpCode().hasSymbolReference() &&
+             child->getSymbolReference()->getSymbol()->isAuto() &&
+             !child->getSymbolReference()->hasKnownObjectIndex())
+            {
+            symRef = child->getSymbolReference();
+            continue;
+            }
+
+         if (valueNode)
+            *valueNode = child;
+
+         return treetop;
+         }
+      }
+
+   return NULL;
+   }
+
+TR_PrexArgInfo *
+TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR_PrexArgInfo *callerArgInfo)
+   {
+   TR::Compilation* comp = inliner->comp();
+
+   if (comp->getOption(TR_DisableInlinerArgsPropagation))
+      return NULL;
+
+   if (!site->_callNode)
+      return NULL;
+
+   auto callNode = site->_callNode;
+
+   // We want to avoid degrading info we already have from another source like VP.
+   // Unfortunately that desire mucks up this function with a lot of logic that
+   // looks like constraint merging, and is redundant with what VP already does.
+   //
+   TR_PrexArgInfo *prexArgInfo = NULL;
+   // Interface call doesn't have a resolved _intialCalleeMethod, so callee can be NULL
+   auto callee = site->_initialCalleeMethod;
+
+   bool tracePrex = comp->trace(OMR::inlining) || comp->trace(OMR::invariantArgumentPreexistence);
+   if (tracePrex)
+      traceMsg(comp, "PREX.inl: Populating prex argInfo for [%p] %s %s\n", callNode, callNode->getOpCode().getName(), callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(inliner->trMemory(), stackAlloc));
+
+   int32_t firstArgIndex = callNode->getFirstArgumentIndex();
+   for (int32_t c = callNode->getNumChildren() -1; c >= firstArgIndex; c--)
       {
       int32_t argOrdinal = c - firstArgIndex;
 
-      TR_PrexArgument *prexArgument = argInfo->get(argOrdinal);
-      PrexKnowledgeLevel priorKnowledge = TR_PrexArgument::knowledgeLevel(prexArgument);
-
-      TR::Node *argument = site->_callNode->getChild(c);
+      TR::Node *argument = callNode->getChild(c);
       if (tracePrex)
          {
-         traceMsg(comp(), "PREX.inl:    Child %d [%p] arg %p %s%s %s\n",
-            c, argument, prexArgument, TR_PrexArgument::priorKnowledgeStrings[priorKnowledge],
+         traceMsg(comp, "PREX.inl:    Child %d [%p] n%dn %s %s\n",
+            c, argument,
+            argument->getGlobalIndex(),
             argument->getOpCode().getName(),
-            argument->getOpCode().hasSymbolReference()? argument->getSymbolReference()->getName(comp()->getDebug()) : "");
+            argument->getOpCode().hasSymbolReference()? argument->getSymbolReference()->getName(comp->getDebug()) : "");
          }
 
-      if (c == site->_callNode->getFirstArgumentIndex()) // if the argument is the this-child
+      if (!argument->getOpCode().hasSymbolReference() || argument->getDataType() != TR::Address)
+         continue;
+
+      auto symRef = argument->getSymbolReference();
+      auto symbol = symRef->getSymbol();
+
+      TR_PrexArgument* prexArg = NULL;
+
+      if (c == callNode->getFirstArgumentIndex() &&
+          callee &&
+          callee->convertToMethod()->isArchetypeSpecimen() &&
+          callee->getMethodHandleLocation() &&
+          comp->getOrCreateKnownObjectTable())
          {
-         if (target->_guard->_type == TR_VftTest && !disablePreexForChangedGuard)
+         // Here's a situation where inliner is taking it upon itself to draw
+         // conclusions about known objects.  VP won't get a chance to figure this
+         // out before we go ahead and do the inlining, so we'd better populate
+         // the prex info now.
+         //
+         // (If VP did this stuff instead of inliner, it might work a bit more naturally.)
+         //
+         TR::KnownObjectTable::Index methodHandleIndex = comp->getKnownObjectTable()->getOrCreateIndexAt(callee->getMethodHandleLocation());
+         prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(methodHandleIndex, comp);
+         if (tracePrex)
             {
-            if (priorKnowledge < FIXED_CLASS)
-               {
-               argInfo->set(0, new (inliner()->trStackMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsFixed, target->_guard->_thisClass));
-               if (tracePrex)
-                  {
-                  char *sig = TR::Compiler->cls.classSignature(comp(), target->_guard->_thisClass, trMemory());
-                  traceMsg(comp(), "PREX.inl:      %p: class is fixed class %p %s\n", argInfo->get(0), target->_guard->_thisClass, sig);
-                  }
-               }
-            continue;
-            }
-         else if (target->_calleeSymbol->getResolvedMethod()->convertToMethod()->isArchetypeSpecimen()
-                  && target->_calleeSymbol->getResolvedMethod()->getMethodHandleLocation()
-                  && comp()->getOrCreateKnownObjectTable())
-            {
-            // Here's a situation where inliner is taking it upon itself to draw
-            // conclusions about known objects.  VP won't get a chance to figure this
-            // out before we go ahead and do the inlining, so we'd better populate
-            // the prex info now.
-            //
-            // (If VP did this stuff instead of inliner, it might work a bit more naturally.)
-            //
-            if (priorKnowledge < KNOWN_OBJECT)
-               {
-               TR::KnownObjectTable::Index methodHandleIndex = comp()->getKnownObjectTable()->getOrCreateIndexAt(target->_calleeSymbol->getResolvedMethod()->getMethodHandleLocation());
-               TR_PrexArgument *prexArg = new (inliner()->trStackMemory()) TR_PrexArgument(methodHandleIndex, comp());
-               if (target->_guard->_kind == TR_MutableCallSiteTargetGuard)
-                  prexArg->setTypeInfoForInlinedBody();
-               argInfo->set(0, prexArg);
-               if (tracePrex)
-                  {
-                  TR::Node *call     = site->_callNode;
-                  TR::Node *mh = call->getArgument(0);
-                  traceMsg(comp(), "PREX.inl:      %p: %p is known object obj%d in inlined call [%p]\n", argInfo->get(0), mh, methodHandleIndex, call);
-                  }
-               }
+            TR::Node *mh = callNode->getArgument(0);
+            traceMsg(comp, "PREX.inl:      %p: %p is known object obj%d in inlined call [%p]\n", prexArg, mh, methodHandleIndex, callNode);
             }
          }
-
-      if (argument->getOpCode().hasSymbolReference() && argument->getSymbolReference()->hasKnownObjectIndex())
+      else if (symRef->hasKnownObjectIndex())
          {
-         if (priorKnowledge < KNOWN_OBJECT)
-            {
-            argInfo->set(argOrdinal, new (inliner()->trStackMemory()) TR_PrexArgument(argument->getSymbolReference()->getKnownObjectIndex(), comp()));
-            if (tracePrex)
-               traceMsg(comp(), "PREX.inl:      %p: is known object obj%d\n", argInfo->get(argOrdinal), argument->getSymbolReference()->getKnownObjectIndex());
-            }
+         prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(symRef->getKnownObjectIndex(), comp);
+         if (tracePrex)
+            traceMsg(comp, "PREX.inl:      %p: is known object obj%d\n", prexArg, symRef->getKnownObjectIndex());
          }
       else if (argument->getOpCodeValue() == TR::aload)
          {
-         OMR::ParameterSymbol *parmSymbol = argument->getSymbolReference()->getSymbol()->getParmSymbol();
-         if (parmSymbol && !argInfo->get(argOrdinal))
+         OMR::ParameterSymbol *parmSymbol = symbol->getParmSymbol();
+         if (parmSymbol && !prexArg)
             {
             if (parmSymbol->getFixedType())
                {
-               if (priorKnowledge < FIXED_CLASS)
+               prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsFixed, (TR_OpaqueClassBlock *) parmSymbol->getFixedType());
+               if (tracePrex)
                   {
-                  argInfo->set(argOrdinal, new (inliner()->trStackMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsFixed, (TR_OpaqueClassBlock *) parmSymbol->getFixedType()));
-                  if (tracePrex)
-                     {
-                     char *sig = TR::Compiler->cls.classSignature(comp(), (TR_OpaqueClassBlock*)parmSymbol->getFixedType(),trMemory());
-                     traceMsg(comp(), "PREX.inl:      %p: is load of parm with fixed class %p %s\n", argInfo->get(argOrdinal), parmSymbol->getFixedType(), sig);
-                     }
+                  char *sig = TR::Compiler->cls.classSignature(comp, (TR_OpaqueClassBlock*)parmSymbol->getFixedType(), inliner->trMemory());
+                  traceMsg(comp, "PREX.inl:      %p: is load of parm with fixed class %p %s\n", prexArg, parmSymbol->getFixedType(), sig);
                   }
                }
             if (parmSymbol->getIsPreexistent())
                {
-               if (priorKnowledge < PREEXISTENT)
+               int32_t len = 0;
+               const char *sig = parmSymbol->getTypeSignature(len);
+               TR_OpaqueClassBlock *clazz = comp->fe()->getClassFromSignature(sig, len, site->_callerResolvedMethod);
+
+               if (clazz)
                   {
-                  argInfo->set(argOrdinal, new (inliner()->trStackMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsPreexistent));
+                  prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsPreexistent, clazz);
                   if (tracePrex)
-                     traceMsg(comp(), "PREX.inl:      %p: is preexistent\n", argInfo->get(argOrdinal));
+                     traceMsg(comp, "PREX.inl:      %p: is preexistent\n", prexArg);
                   }
                }
             }
+         else if (symbol->isAuto())
+            {
+            TR::Node* valueNode = NULL;
+            defToAutoOrParmInEBB(comp, site->_callNodeTreeTop, symRef, &valueNode);
+            if (valueNode &&
+                valueNode->getOpCode().hasSymbolReference() &&
+                valueNode->getSymbolReference()->hasKnownObjectIndex())
+               {
+               prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(valueNode->getSymbolReference()->getKnownObjectIndex(), comp);
+               if (tracePrex)
+                  traceMsg(comp, "PREX.inl:      %p: is known object obj%d, argument n%dn has def from n%dn %s %s\n",
+                           prexArg,
+                           prexArg->getKnownObjectIndex(),
+                           argument->getGlobalIndex(),
+                           valueNode->getGlobalIndex(),
+                           valueNode->getOpCode().getName(),
+                           valueNode->getSymbolReference()->getName(comp->getDebug()));
+               }
+            }
+         }
+      else if (symRef == comp->getSymRefTab()->findJavaLangClassFromClassSymbolRef())
+         {
+         TR::Node *argFirstChild = argument->getFirstChild();
+         if (argFirstChild->getOpCodeValue() == TR::loadaddr &&
+             argFirstChild->getSymbol()->isStatic() &&
+             !argFirstChild->getSymbolReference()->isUnresolved() &&
+             argFirstChild->getSymbol()->isClassObject() &&
+             argFirstChild->getSymbol()->castToStaticSymbol()->getStaticAddress())
+            {
+            uintptr_t objectReferenceLocation = (uintptr_t)argFirstChild->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress();
+            TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+            if (knot)
+               {
+               TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+               auto knownObjectIndex = knot->getOrCreateIndexAt((uintptr_t*)(objectReferenceLocation + fej9->getOffsetOfJavaLangClassFromClassField()));
+               prexArg = new (comp->trHeapMemory()) TR_PrexArgument(knownObjectIndex, comp);
+               if (tracePrex)
+                  traceMsg(comp, "PREX.inl is known java/lang/Class obj%d\n", prexArg, knownObjectIndex);
+               }
+            }
+         }
+
+      if (prexArg)
+         {
+         if (!prexArgInfo)
+            prexArgInfo =  new (inliner->trHeapMemory()) TR_PrexArgInfo(callNode->getNumArguments(), inliner->trMemory());
+         prexArgInfo->set(argOrdinal, prexArg);
          }
       }
-   if (tracePrex)
-      traceMsg(comp(), "PREX.inl: Done populating prex argInfo for %s %p\n", site->_callNode->getOpCode().getName(), site->_callNode);
 
-   target->_prexArgInfo = argInfo;
-   return argInfo;
+   if (tracePrex)
+      traceMsg(comp, "PREX.inl: Done populating prex argInfo for %s %p\n", callNode->getOpCode().getName(), callNode);
+
+   if (tracePrex && prexArgInfo)
+      {
+      traceMsg(comp, "PREX.inl:    argInfo for callsite %p\n", site);
+      prexArgInfo->dumpTrace();
+      }
+
+   if (callerArgInfo)
+      {
+      if (tracePrex)
+         traceMsg(comp, "PREX.inl: Propagating prex argInfo from caller for [%p] %s %s\n",
+                  callNode,
+                  callNode->getOpCode().getName(),
+                  callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(inliner->trMemory(), stackAlloc));
+
+      TR_PrexArgInfo* argsFromCaller = TR_PrexArgInfo::argInfoFromCaller(callNode, callerArgInfo);
+      prexArgInfo = TR_PrexArgInfo::enhance(prexArgInfo, argsFromCaller, comp);
+
+      if (tracePrex)
+         {
+         traceMsg(comp, "PREX.inl:    argInfo for callsite %p after propagating argInfo from caller\n", site);
+         prexArgInfo->dumpTrace();
+         }
+      }
+
+   return prexArgInfo;
    }
 
 bool TR_J9InlinerUtil::needTargetedInlining(TR::ResolvedMethodSymbol *callee)
@@ -5433,32 +5542,6 @@ TR_PrexArgInfo* TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(TR::ResolvedMeth
    }
 
 
-static TR_PrexArgument *stronger(TR_PrexArgument *left, TR_PrexArgument *right, TR::Compilation *comp)
-   {
-   if (TR_PrexArgument::knowledgeLevel(left) > TR_PrexArgument::knowledgeLevel(right))
-      return left;
-   else if (TR_PrexArgument::knowledgeLevel(right) > TR_PrexArgument::knowledgeLevel(left))
-      return right;
-   else if (left && right)
-      {
-      if (left->getClass() && right->getClass())
-         {
-         if (comp->fe()->isInstanceOf(left->getClass(), right->getClass(), true, true, true))
-            return left;
-         else if (comp->fe()->isInstanceOf(right->getClass(), left->getClass(), true, true, true))
-            return right;
-         }
-      else if (left->getClass())
-         return left;
-      else if (right->getClass())
-         return right;
-
-      return NULL;
-      }
-   else
-      return left ? left : right;  // Return non-null prex argument when possible
-   }
-
 static void populateClassNameSignature(TR::Method *m, TR_ResolvedMethod* caller, TR_OpaqueClassBlock* &c, char* &nc, int32_t &nl, char* &sc, int32_t &sl)
    {
    int32_t len = m->classNameLength();
@@ -5476,89 +5559,112 @@ static char* classSignature (TR::Method * m, TR::Compilation* comp) //tracer hel
    return classNameToSignature(m->classNameChars(), len /*don't care, cos this gives us a null terminated string*/, comp);
    }
 
-TR::Node* TR_PrexArgInfo::getCallNode (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite, TR_LogTracer* tracer)
+static bool treeMatchesCallSite(TR::TreeTop* tt, TR::ResolvedMethodSymbol* callerSymbol, TR_CallSite* callsite, TR_LogTracer* tracer)
+   {
+   if (tt->getNode()->getNumChildren()>0 &&
+       tt->getNode()->getFirstChild()->getOpCode().isCall() &&
+       tt->getNode()->getFirstChild()->getByteCodeIndex() == callsite->_bcInfo.getByteCodeIndex())
+      {
+      TR::Node* callNode =  tt->getNode()->getFirstChild();
+
+      TR::MethodSymbol* callNodeMS = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol();
+      TR_ASSERT(callNodeMS, "isCall returned true!");
+
+      if (callNodeMS->isHelper())
+         {
+         return false;
+         }
+
+      TR_OpaqueClassBlock *callSiteClass, *callNodeClass;
+
+      char *callSiteNameChars, *callNodeNameChars,
+           *callSiteSignatureChars, *callNodeSignatureChars;
+
+      int32_t callSiteNameLength, callNodeNameLength,
+              callSiteSignatureLength, callNodeSignatureLength;
+
+
+      populateClassNameSignature (callsite->_initialCalleeMethod ?
+            callsite->_initialCalleeMethod->convertToMethod() : //TR_ResolvedMethod doesn't extend TR::Method
+            callsite->_interfaceMethod,
+         callerSymbol->getResolvedMethod(),
+         callSiteClass,
+         callSiteNameChars, callSiteNameLength,
+         callSiteSignatureChars, callSiteSignatureLength
+      );
+
+
+      populateClassNameSignature (callNodeMS->getMethod(),
+         callerSymbol->getResolvedMethod(),
+         callNodeClass,
+         callNodeNameChars, callNodeNameLength,
+         callNodeSignatureChars, callNodeSignatureLength
+      );
+
+
+
+      //make sure classes are compatible
+
+      if (!callNodeClass || !callSiteClass || callerSymbol->getResolvedMethod()->fe()->isInstanceOf (callNodeClass, callSiteClass, true, true, true) != TR_yes)
+         {
+         if (tracer->heuristicLevel())
+            {
+            TR::Compilation* comp = TR::comp(); //won't be evaluated unless tracing is on
+            heuristicTrace(tracer, "ARGS PROPAGATION: Incompatible classes: callSiteClass %p (%s) callNodeClass %p (%s)",
+               callSiteClass,
+               classSignature(callsite->_initialCalleeMethod ?
+                  callsite->_initialCalleeMethod->convertToMethod() :
+                  callsite->_interfaceMethod,
+                  comp),
+               callNodeClass,
+               classSignature(callNodeMS->getMethod(), comp)
+            );
+            }
+         return false;
+         }
+
+      //compare names and signatures
+      if (callSiteNameLength != callNodeNameLength ||
+          strncmp(callSiteNameChars, callNodeNameChars, callSiteNameLength) ||
+          callSiteSignatureLength != callNodeSignatureLength ||
+          strncmp(callSiteSignatureChars, callNodeSignatureChars, callSiteSignatureLength))
+          {
+          heuristicTrace(tracer, "ARGS PROPAGATION: Signature mismatch: callSite class %.*s callNode class %.*s",
+            callSiteNameLength, callSiteNameChars, callNodeNameLength, callNodeNameChars);
+          return false;
+          }
+
+      //heuristicTrace(tracer, "ARGS PROPAGATION: matched the node!!!");
+      return true;
+      }
+
+   return false;
+   }
+
+TR::TreeTop* TR_PrexArgInfo::getCallTree(TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite, TR_LogTracer* tracer)
+   {
+   if (callsite->_callNodeTreeTop)
+      return callsite->_callNodeTreeTop;
+
+   for (TR::TreeTop* tt = methodSymbol->getFirstTreeTop(); tt; tt=tt->getNextTreeTop())
+      {
+      if (treeMatchesCallSite(tt, methodSymbol, callsite, tracer))
+         return tt;
+      }
+
+   heuristicTrace(tracer, "ARGS PROPAGATION: Couldn't find a matching node for callsite %p bci %d", callsite, callsite->_bcInfo.getByteCodeIndex());
+   return NULL;
+   }
+
+TR::Node* TR_PrexArgInfo::getCallNode(TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite, TR_LogTracer* tracer)
    {
    if (callsite->_callNode)
       return callsite->_callNode;
 
    for (TR::TreeTop* tt = methodSymbol->getFirstTreeTop(); tt; tt=tt->getNextTreeTop())
       {
-      if (tt->getNode()->getNumChildren()>0 &&
-          tt->getNode()->getFirstChild()->getOpCode().isCall() &&
-          tt->getNode()->getFirstChild()->getByteCodeIndex() == callsite->_bcInfo.getByteCodeIndex())
-         {
-         TR::Node* callNode =  tt->getNode()->getFirstChild();
-
-         TR::MethodSymbol* callNodeMS = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol();
-         TR_ASSERT(callNodeMS, "isCall returned true!");
-
-         if (callNodeMS->isHelper())
-            {
-            continue; //don't give up, there can be multiple calls sharing the same bci
-            }
-
-         TR_OpaqueClassBlock *callSiteClass, *callNodeClass;
-
-         char *callSiteNameChars, *callNodeNameChars,
-              *callSiteSignatureChars, *callNodeSignatureChars;
-
-         int32_t callSiteNameLength, callNodeNameLength,
-                 callSiteSignatureLength, callNodeSignatureLength;
-
-
-         populateClassNameSignature (callsite->_initialCalleeMethod ?
-               callsite->_initialCalleeMethod->convertToMethod() : //TR_ResolvedMethod doesn't extend TR::Method
-               callsite->_interfaceMethod,
-            methodSymbol->getResolvedMethod(),
-            callSiteClass,
-            callSiteNameChars, callSiteNameLength,
-            callSiteSignatureChars, callSiteSignatureLength
-         );
-
-
-         populateClassNameSignature (callNodeMS->getMethod(),
-            methodSymbol->getResolvedMethod(),
-            callNodeClass,
-            callNodeNameChars, callNodeNameLength,
-            callNodeSignatureChars, callNodeSignatureLength
-         );
-
-
-
-         //make sure classes are compatible
-
-         if (!callNodeClass || !callSiteClass || methodSymbol->getResolvedMethod()->fe()->isInstanceOf (callNodeClass, callSiteClass, true, true, true) != TR_yes)
-            {
-            if (tracer->heuristicLevel())
-               {
-               TR::Compilation* comp = TR::comp(); //won't be evaluated unless tracing is on
-               heuristicTrace(tracer, "ARGS PROPAGATION: Incompatible classes: callSiteClass %p (%s) callNodeClass %p (%s)",
-                  callSiteClass,
-                  classSignature(callsite->_initialCalleeMethod ?
-                     callsite->_initialCalleeMethod->convertToMethod() :
-                     callsite->_interfaceMethod,
-                     comp),
-                  callNodeClass,
-                  classSignature(callNodeMS->getMethod(), comp)
-               );
-               }
-            continue;
-            }
-
-         //compare names and signatures
-         if (callSiteNameLength != callNodeNameLength ||
-             strncmp(callSiteNameChars, callNodeNameChars, callSiteNameLength) ||
-             callSiteSignatureLength != callNodeSignatureLength ||
-             strncmp(callSiteSignatureChars, callNodeSignatureChars, callSiteSignatureLength))
-             {
-             heuristicTrace(tracer, "ARGS PROPAGATION: Signature mismatch: callSite class %.*s callNode class %.*s",
-               callSiteNameLength, callSiteNameChars, callNodeNameLength, callNodeNameChars);
-             continue;
-      }
-
-         //heuristicTrace(tracer, "ARGS PROPAGATION: matched the node!!!");
-         return callNode;
-         }
+      if (treeMatchesCallSite(tt, methodSymbol, callsite, tracer))
+         return tt->getNode()->getFirstChild();
       }
 
    heuristicTrace(tracer, "ARGS PROPAGATION: Couldn't find a matching node for callsite %p bci %d", callsite, callsite->_bcInfo.getByteCodeIndex());
@@ -5772,25 +5878,6 @@ void TR_PrexArgInfo::propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSym
       for (int i = 0; i < callsite->numTargets(); i++)
          callsite->getTarget(i)->_ecsPrexArgInfo->dumpTrace();
       }
-   }
-
-TR_PrexArgInfo *
-TR_PrexArgInfo::enhance(TR_PrexArgInfo *dest, TR_PrexArgInfo *source, TR::Compilation *comp)
-   {
-   if (!dest)
-      return source;
-   else if (!source)
-      return dest;
-
-   int32_t numArgsToEnhance = std::min(dest->getNumArgs(), source->getNumArgs());
-   for (int32_t i = 0; i < numArgsToEnhance; i++)
-      {
-      TR_PrexArgument* result = stronger(dest->get(i), source->get(i), comp);
-      if (result)
-         dest->set(i, result);
-      }
-
-   return dest;
    }
 
 void
@@ -6284,7 +6371,11 @@ TR_J9InlinerUtil::createPrexArgInfoForCallTarget(TR_VirtualGuardSelection *guard
           implementer->getMethodHandleLocation() &&
           comp()->getOrCreateKnownObjectTable())
          {
-         myPrexArgInfo->set(0, new (comp()->trHeapMemory()) TR_PrexArgument(comp()->getKnownObjectTable()->getOrCreateIndexAt(implementer->getMethodHandleLocation()), comp()));
+
+         auto prexArg = new (comp()->trHeapMemory()) TR_PrexArgument(comp()->getKnownObjectTable()->getOrCreateIndexAt(implementer->getMethodHandleLocation()), comp());
+         if (guard->_kind == TR_MutableCallSiteTargetGuard)
+            prexArg->setTypeInfoForInlinedBody();
+         myPrexArgInfo->set(0, prexArg);
          }
       }
    return myPrexArgInfo;
