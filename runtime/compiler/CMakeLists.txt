@@ -296,6 +296,10 @@ else()
 	message(SEND_ERROR "unsupported platform")
 endif()
 
+# Add optional user-specified compiler flags that only apply to the JIT
+list(APPEND J9_CFLAGS ${J9JIT_EXTRA_CFLAGS})
+list(APPEND J9_CXXFLAGS ${J9JIT_EXTRA_CXXFLAGS})
+
 # Note: J9_CFLAGS and J9_CXXFLAGS are appended after J9_SHAREDFLAGS so that
 #       OMR_PLATFORM_C_COMPILE_OPTIONS and OMR_PLATFORM_CXX_COMPILE_OPTIONS
 #       end up after OMR_PLATFORM_COMPILE_OPTIONS, which matches the rest
