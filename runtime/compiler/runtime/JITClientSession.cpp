@@ -478,11 +478,10 @@ ClientSessionData::destroyJ9SharedClassCacheDescriptorList()
 void
 ClientSessionData::clearCaches()
    {
-      {
-      OMR::CriticalSection clearCache(getClassMapMonitor());
-      _classBySignatureMap.clear();
-      }
-   OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
+   TR_ASSERT(!_inUse || _sequencingMonitor->owned_by_self(), "Must have sequencing monitor");
+   TR_ASSERT(_numActiveThreads == 0, "Must have no active threads");
+
+   _classBySignatureMap.clear();
 
    if (_unloadedClassAddresses)
       {
@@ -490,7 +489,7 @@ ClientSessionData::clearCaches()
       _persistentMemory->freePersistentMemory(_unloadedClassAddresses);
       _unloadedClassAddresses = NULL;
       }
-  _requestUnloadedClasses = true;
+   _requestUnloadedClasses = true;
 
    // Free memory for all hashtables with IProfiler info
    for (auto& it : _J9MethodMap)
@@ -519,6 +518,7 @@ ClientSessionData::clearCaches()
    _romClassMap.clear();
 
    _classChainDataMap.clear();
+   _constantPoolToClassMap.clear();
 
    _registeredJ2IThunksMap.clear();
    _registeredInvokeExactJ2IThunksSet.clear();
