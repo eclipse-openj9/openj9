@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@
 static const char* getOpCodeName(TR::ILOpCodes opcode) {
 
    TR_ASSERT(opcode < TR::NumIlOps, "Wrong opcode");
-   
+
    switch(opcode)
       {
       case TR::iload:
@@ -265,7 +265,7 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
       case TR::su2i:
       case TR::su2l:
          return "zext";
-         
+
       case TR::iu2f:
       case TR::iu2d:
       case TR::lu2f:
@@ -494,8 +494,6 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
 
       case TR::aiadd:
       case TR::aladd:
-      case TR::aiuadd:
-      case TR::aluadd:
          return "getelementptr";
 
       case TR::ibits2f:
@@ -516,7 +514,7 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
          return "INVALID";
 
       default:
-         return NULL;  
+         return NULL;
       }
 
 }

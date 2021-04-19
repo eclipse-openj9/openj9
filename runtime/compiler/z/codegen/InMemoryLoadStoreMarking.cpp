@@ -591,29 +591,6 @@ void traceBCDOpportunities(TR::Node *node, TR::Compilation *comp)
               node->getFirstChild()->getFirstChild()->getOpCode().getName());
       }
 
-   if (node->getOpCodeValue() == TR::arraycmpWithPad)
-      {
-      TR::Node *cmpChildOne = node->getChild(0);
-      TR::Node *cmpLenOne = node->getChild(1);
-      TR::Node *cmpChildTwo = node->getChild(2);
-      TR::Node *cmpLenTwo = node->getChild(3);
-      TR::Node *padChar = node->getChild(4);
-      bool cmpChildOneIsLit = false;
-      bool cmpChildTwoIsLit = false;
-      if (cmpChildOneIsLit || cmpChildTwoIsLit)
-         {
-         traceMsg(comp,"x^x : found arraycmpWithPad with lit cmpOps (oneIsLit=%s,twoIsLit=%s) -- node %s (%p) lenOne %d, lenTwo %d, padCharIsLit=%s (0x%x) line_no=%d\n",
-            cmpChildOneIsLit?"yes":"no",
-            cmpChildTwoIsLit?"yes":"no",
-            node->getOpCode().getName(),node,
-            cmpLenOne->getOpCode().isLoadConst() ? (int32_t)cmpLenOne->get64bitIntegralValue() : -1,
-            cmpLenTwo->getOpCode().isLoadConst() ? (int32_t)cmpLenTwo->get64bitIntegralValue() : -1,
-            padChar?"yes":"no",
-            padChar->getOpCode().isLoadConst() ? (int32_t)padChar->get64bitIntegralValue() : 0,
-            comp->getLineNumber(node));
-         }
-      }
-
    // csubexp.cbl line_no=304 ADD EL15(5I, 5J, 5K) EL25(5I, 5J, 5L) GIVING 5A
    if (node->getOpCode().isConversion() &&
        node->getType().isAnyZoned() &&

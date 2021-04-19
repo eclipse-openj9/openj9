@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/codegen/SystemLinkage.cpp \
     omr/compiler/z/codegen/SystemLinkageLinux.cpp \
     omr/compiler/z/codegen/SystemLinkagezOS.cpp \
-    omr/compiler/z/codegen/TranslateEvaluator.cpp \
     omr/compiler/z/codegen/UnaryEvaluator.cpp \
     omr/compiler/z/codegen/snippet/PPA1Snippet.cpp \
     omr/compiler/z/codegen/snippet/PPA2Snippet.cpp \
