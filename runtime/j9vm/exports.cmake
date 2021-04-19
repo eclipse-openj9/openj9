@@ -356,13 +356,7 @@ if(NOT JAVA_SPEC_VERSION LESS 15)
 	)
 endif()
 
-if(JAVA_SPEC_VERSION EQUAL 15)
-	jvm_add_exports(jvm
-		# Java 15 only
-		JVM_GetRandomSeedForCDSDump
-		JVM_IsCDSSharingEnabled
-	)
-elseif(NOT JAVA_SPEC_VERSION LESS 16)
+if(NOT JAVA_SPEC_VERSION LESS 16)
 	jvm_add_exports(jvm
 		# Additions for Java 16 (General)
 		JVM_DefineArchivedModules

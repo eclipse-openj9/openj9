@@ -1773,21 +1773,7 @@ JVM_IsCDSDumpingEnabled(JNIEnv *env)
 }
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
-#if JAVA_SPEC_VERSION == 15
-JNIEXPORT jlong JNICALL
-JVM_GetRandomSeedForCDSDump()
-{
-	/* OpenJ9 does not support -Xshare:dump, so we return zero unconditionally. */
-	return 0;
-}
-
-JNIEXPORT jboolean JNICALL
-JVM_IsCDSSharingEnabled(JNIEnv *env)
-{
-	/* OpenJ9 does not support CDS, so we return false unconditionally. */
-	return JNI_FALSE;
-}
-#elif JAVA_SPEC_VERSION >= 16
+#if JAVA_SPEC_VERSION >= 16
 JNIEXPORT jlong JNICALL
 JVM_GetRandomSeedForDumping()
 {
