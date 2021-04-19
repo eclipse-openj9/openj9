@@ -672,11 +672,6 @@ MM_ScavengerDelegate::private_shouldPercolateGarbageCollect_activeJNICriticalReg
 }
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-bool
-MM_ScavengerDelegate::shouldYield() {
-	return (J9_XACCESS_PENDING == ((J9JavaVM*)_omrVM->_language_vm)->exclusiveAccessState);
-}
-
 void
 MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 {
