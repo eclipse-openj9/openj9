@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,7 +83,6 @@ class OMR_EXTENSIBLE MonitorTable : public OMR::MonitorTableConnector
    TR_LinkHead0<TR::Monitor> _monitors;
 
    TR::Monitor _tableMonitor;
-   TR::Monitor _j9MemoryAllocMonitor;
    TR::Monitor _j9ScratchMemoryPoolMonitor;
    J9::RWMonitor _classUnloadMonitor;
    TR::Monitor _classTableMutex;  // JavaVM's class table mutex

@@ -142,7 +142,6 @@ cgOnClassUnloading(void *loaderPtr)
    #endif
    }
 
-extern TR::Monitor *memoryAllocMonitor;
 extern TR::Monitor *assumptionTableMutex;
 
 extern volatile bool shutdownSamplerThread;

@@ -31,8 +31,6 @@
 
 TR::MonitorTable *OMR::MonitorTable::_instance = 0;
 
-TR::Monitor *memoryAllocMonitor = NULL;
-
 TR::Monitor *
 J9::Monitor::create(char *name)
    {
