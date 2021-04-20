@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,6 @@
 #include "j9thread.h"
 #include "j9port.h"
 
-extern TR::Monitor *memoryAllocMonitor;
 
 // allocated during codert_onload
 TR::MonitorTable *
@@ -57,8 +56,7 @@ J9::MonitorTable::init(
    table->_classUnloadMonitorHolders = NULL;
 
    // Initialize the Monitors
-   if (!table->_tableMonitor.init      ("JIT-MonitorTableMonitor")) return 0;
-   if (!table->_j9MemoryAllocMonitor.init("JIT-MemoryAllocMonitor")) return 0;
+   if (!table->_tableMonitor.init("JIT-MonitorTableMonitor")) return 0;
    if (!table->_j9ScratchMemoryPoolMonitor.init("JIT-ScratchMemoryPoolMonitor")) return 0;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
    if (!table->_classUnloadMonitor.initFromVMMutex(javaVM->classUnloadMutex)) return 0;
@@ -70,7 +68,6 @@ J9::MonitorTable::init(
    // Setup a wrapper for VM's monitors that the JIT can acquire
    if (!table->_classTableMutex.initFromVMMutex(javaVM->classTableMutex)) return 0;
 
-   memoryAllocMonitor = table->_memoryAllocMonitor = &table->_j9MemoryAllocMonitor;
    table->_scratchMemoryPoolMonitor = &table->_j9ScratchMemoryPoolMonitor; // export this value
 
    OMR::MonitorTable::_instance = table;
@@ -187,7 +184,6 @@ J9::MonitorTable::isThreadInSafeMonitorState(J9VMThread *vmThread)
    {
    // If we hold any of the following locks, return failure.
    if (_tableMonitor.owned_by_self()               ||
-       _j9MemoryAllocMonitor.owned_by_self()       ||
        _j9ScratchMemoryPoolMonitor.owned_by_self() ||
        _classTableMutex.owned_by_self()            ||
        _iprofilerPersistenceMonitor.owned_by_self()
@@ -214,8 +210,6 @@ J9::MonitorTable::monitorHeldByCurrentThread()
    // If we hold any of the following locks, return failure.
    if (_tableMonitor.owned_by_self())
       return &_tableMonitor;
-   if (_j9MemoryAllocMonitor.owned_by_self())
-      return &_j9MemoryAllocMonitor;
    if (_j9ScratchMemoryPoolMonitor.owned_by_self())
       return &_j9ScratchMemoryPoolMonitor;
    if (_classTableMutex.owned_by_self())
