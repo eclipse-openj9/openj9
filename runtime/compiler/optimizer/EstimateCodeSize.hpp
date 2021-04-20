@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,6 +93,7 @@ class TR_EstimateCodeSize
 
    TR::Compilation *comp()              { return _inliner->comp(); }
    TR_InlinerTracer *tracer()          { return _tracer; }
+   TR_InlinerBase* getInliner()        { return _inliner; }
 
    protected:
 
