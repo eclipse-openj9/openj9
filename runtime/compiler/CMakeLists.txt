@@ -286,7 +286,13 @@ elseif(OMR_OS_AIX)
 		list(APPEND J9_SHAREDFLAGS -q32)
 	endif()
 elseif(OMR_OS_ZOS)
-	# Nothing to do here.
+	list(APPEND TARGET_DEFINES
+		J9VM_TIERED_CODE_CACHE
+		COMPRESS_AOT_DATA
+		MAXMOVE
+	)
+	list(APPEND J9_SHAREDFLAGS -I/usr/lpp/hzc/include)
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L/usr/lpp/hzc/lib")
 else()
 	message(SEND_ERROR "unsupported platform")
 endif()
