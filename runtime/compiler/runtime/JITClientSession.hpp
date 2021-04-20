@@ -164,7 +164,7 @@ struct J9MethodNameAndSignature
 
 class ClientSessionData
    {
-   public:
+public:
    /**
       @class ClassInfo
       @brief Struct that holds cached data about a class loaded on the JITClient.
@@ -406,7 +406,9 @@ class ClientSessionData
    bool isInStartupPhase() const { return _isInStartupPhase; }
    void setIsInStartupPhase(bool isInStartupPhase) { _isInStartupPhase = isInStartupPhase; }
  
-   private:
+private:
+   void destroyMonitors();
+
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
    TR_PersistentMemory *_persistentMemory;
