@@ -639,7 +639,11 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             }
          bool cached = JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
          if (!cached)
+            {
             clientSession->persistentMemory()->freePersistentMemory(romClass);
+            romClass = JITServerHelpers::getRemoteROMClassIfCached(clientSession, clazz);
+            }
+         TR_ASSERT_FATAL(romClass, "ROM class of J9Class=%p must be cached at this point", clazz);
          }
 
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);
