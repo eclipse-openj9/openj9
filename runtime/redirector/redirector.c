@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -805,12 +805,12 @@ JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args)
 #endif
 
 #ifdef DEBUG
-	fprintf(stdout, "Calling... args=%d, pvm=%p(%p), penv=%p(%p)\n", args, pvm, *pvm, penv, *penv);
+	fprintf(stdout, "Calling... args=%p, pvm=%p(%p), penv=%p(%p)\n", args, pvm, *pvm, penv, *penv);
 	fflush(stdout);
 #endif
 	result = globalCreateVM(pvm, penv, args);
 #ifdef DEBUG
-	fprintf(stdout, "Finished, result=%d args=%d, pvm=%p(%p), penv=%p(%p)\n", result, pvm, *pvm, penv, *penv);
+	fprintf(stdout, "Finished, result=%d args=%p, pvm=%p(%p), penv=%p(%p)\n", result, args, pvm, *pvm, penv, *penv);
 	fflush(stdout);
 #endif
 
