@@ -28,6 +28,7 @@
 #include "jitprotos.h"
 #include "j9protos.h"
 #include "omrcomp.h"
+#include "omrformatconsts.h"
 #include "rommeth.h"
 #include "env/jittypes.h"
 
@@ -333,7 +334,9 @@ static void printMetaData(J9TR_MethodMetaData * methodMetaData)
    for (index = 0; index < iter._stackAtlas->numberOfMaps; ++index)
       {
       getNextMap(&iter, fourByteOffsets);
-      printf("index: %d map address: %p rangeStartOffset: %x rangeEndOffset: %x is inlineMap? %s\n", index, iter._currentMap, iter._rangeStartOffset, iter._rangeEndOffset, IS_BYTECODEINFO_MAP(fourByteOffsets, iter._currentMap) ? "yes" : "no");
+      printf("index: %d map address: %p rangeStartOffset: %" OMR_PRIxPTR " rangeEndOffset: %" OMR_PRIxPTR " is inlineMap? %s\n",
+             index, iter._currentMap, iter._rangeStartOffset, iter._rangeEndOffset,
+             IS_BYTECODEINFO_MAP(fourByteOffsets, iter._currentMap) ? "yes" : "no");
       }
    }
 
@@ -342,10 +345,13 @@ static void printMapTable(TR_StackMapTable * stackMapTable, U_8 * addressOfFirst
    int index = 0;
 
    printf("\nMapTable dump:\n");
-   printf("MapTable size is: %lu\n", stackMapTable->_tableSize);
+   printf("MapTable size is: %u\n", stackMapTable->_tableSize);
    for (index = 0; index <= stackMapTable->_tableSize; ++index)
       {
-      printf("index: %d map address: %p lowCodeOffset: %x stackMapOffset: %x mapCount: %u\n", index, stackMapTable->_table[index]._stackMapOffset + addressOfFirstMap, stackMapTable->_table[index]._lowCodeOffset, stackMapTable->_table[index]._stackMapOffset, stackMapTable->_table[index]._mapCount);
+      printf("index: %d map address: %p lowCodeOffset: %" OMR_PRIxPTR " stackMapOffset: %" OMR_PRIxPTR " mapCount: %u\n",
+             index, stackMapTable->_table[index]._stackMapOffset + addressOfFirstMap,
+             stackMapTable->_table[index]._lowCodeOffset, stackMapTable->_table[index]._stackMapOffset,
+             stackMapTable->_table[index]._mapCount);
       }
    }
 
