@@ -141,10 +141,12 @@ add_custom_target(j9vm_nlsgen
 set(J9VM_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
 file(MAKE_DIRECTORY "${J9VM_INCLUDE_DIR}")
 
+
+# Note: the following does not appear to be needed anymore. It is left here in case we need it in the future.
 # On z/OS, some generated files must be converted to EBCDIC for consistency.
 # This macro is intended to be used as a replacement for add_custom_command
 # for those files.
-if(OMR_OS_ZOS)
+if("FALSE" AND OMR_OS_ZOS)
 	macro(add_custom_ascii_command)
 		set(options)
 		set(singleValueArgs OUTPUT WORKING_DIRECTORY)
