@@ -8378,8 +8378,20 @@ done:
 			return THROW_NPE;
 		}
 
-		J9Class *receiverClass = J9OBJECT_CLAZZ(currentThread, receiverObject);
-		_sendMethod = *(J9Method **)(((UDATA)receiverClass) + methodID->vTableIndex);
+		/* vmindexOffset (J9JNIMethodID) is initialized using jnicsup.cpp::initializeMethodID.
+		 * initializeMethodID will set J9JNIMethodID->vTableIndex to 0 for private interface
+		 * methods and j.l.Object methods. When J9JNIMethodID->vTableIndex is 0, then
+		 * vmtargetOffset (J9Method) is the _sendMethod, and it will point to the private
+		 * interface method or j.l.Object method. When J9JNIMethodID->vTableIndex is not 0,
+		 * then it is either a vTable offset or an iTable index.
+		 */
+		UDATA vTableOffset = methodID->vTableIndex;
+		if (0 == vTableOffset) {
+			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		} else {
+			J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
+			_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
+		}
 
 		if (fromJIT) {
 			/* Restore SP to before popping memberNameObject. */
@@ -8428,7 +8440,7 @@ done:
 			return THROW_NPE;
 		}
 
-		J9Class *receiverClass = J9OBJECT_CLAZZ(currentThread, receiverObject);
+		J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
 		J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
 		UDATA vTableOffset = methodID->vTableIndex;
 
