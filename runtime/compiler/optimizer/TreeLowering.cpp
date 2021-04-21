@@ -567,7 +567,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::PreorderNodeIterator& nodeIter, TR::Nod
    // Move exit GlRegDeps in callBlock.
    // The correct dependencies should have been inserted by splitPostGRA,
    // so they just need to be moved from the BBEnd to the Goto.
-   if (callBlock->getEntry()->getNode()->getNumChildren() > 0)
+   if (callBlock->getExit()->getNode()->getNumChildren() > 0)
       {
       auto* const bbEnd = callBlock->getExit()->getNode();
       auto* glRegDeps = bbEnd->getChild(0);
