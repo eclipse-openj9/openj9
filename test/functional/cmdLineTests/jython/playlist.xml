@@ -23,6 +23,12 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_jython</testCaseName>
+		<disabled>
+			<comment>runtimes/backlog issues 514</comment>
+			<variation>Mode616</variation>
+			<version>8</version>
+			<impl>ibm</impl>
+		</disabled>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode108</variation>
@@ -30,6 +36,7 @@
 			<variation>Mode116</variation>
 			<variation>Mode608</variation>
 			<variation>Mode609</variation>
+			<variation>Mode616</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
 	-DJARPATH=$(Q)$(LIB_DIR)$(D)jython-standalone.jar$(P)$(TEST_RESROOT)$(D)cmdLineTester_jython.jar$(Q) \
