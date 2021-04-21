@@ -1100,6 +1100,7 @@ InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessf
 
       _currentCallSite = NULL;
       _currentCallMethod = NULL;
+      _currentCallMethodUnrefined = NULL;
 
       if (_InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::bbStart))
          {
@@ -1210,6 +1211,7 @@ InterpreterEmulator::visitInvokedynamic()
       // Add callsite handle to known object table
       knot->getOrCreateIndexAt((uintptr_t*)entryLocation);
       _currentCallMethod = comp()->fej9()->createMethodHandleArchetypeSpecimen(this->trMemory(), entryLocation, owningMethod);
+      _currentCallMethodUnrefined = _currentCallMethod;
       bool allconsts= false;
 
       heuristicTrace(tracer(),"numberOfExplicitParameters = %d  _pca.getNumPrevConstArgs = %d\n", _currentCallMethod->numberOfExplicitParameters() , _pca.getNumPrevConstArgs(_currentCallMethod->numberOfExplicitParameters()));
@@ -1364,6 +1366,7 @@ InterpreterEmulator::visitInvokevirtual()
    // Calls in thunk archetype won't be executed by interpreter, so they may appear as unresolved
    bool ignoreRtResolve = _callerIsThunkArchetype;
    _currentCallMethod = calleeMethod->getResolvedPossiblyPrivateVirtualMethod(comp(), cpIndex, ignoreRtResolve, &isUnresolvedInCP);
+   _currentCallMethodUnrefined = _currentCallMethod;
    Operand *result = NULL;
    if (isCurrentCallUnresolvedOrCold(_currentCallMethod, isUnresolvedInCP))
       {
@@ -1454,6 +1457,7 @@ InterpreterEmulator::visitInvokespecial()
    int32_t cpIndex = next2Bytes();
    bool isUnresolvedInCP;
    _currentCallMethod = _calltarget->_calleeMethod->getResolvedSpecialMethod(comp(), (current() == J9BCinvokespecialsplit)?cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
+   _currentCallMethodUnrefined = _currentCallMethod;
    if (isCurrentCallUnresolvedOrCold(_currentCallMethod, isUnresolvedInCP))
       {
       debugUnresolvedOrCold(_currentCallMethod);
@@ -1486,6 +1490,7 @@ InterpreterEmulator::visitInvokestatic()
    int32_t cpIndex = next2Bytes();
    bool isUnresolvedInCP;
    _currentCallMethod = _calltarget->_calleeMethod->getResolvedStaticMethod(comp(), (current() == J9BCinvokestaticsplit) ? cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
+   _currentCallMethodUnrefined = _currentCallMethod;
    if (isCurrentCallUnresolvedOrCold(_currentCallMethod, isUnresolvedInCP))
       {
       debugUnresolvedOrCold(_currentCallMethod);
@@ -1564,6 +1569,7 @@ InterpreterEmulator::visitInvokeinterface()
    int32_t cpIndex = next2Bytes();
    auto calleeMethod = (TR_ResolvedJ9Method*)_calltarget->_calleeMethod;
    _currentCallMethod = calleeMethod->getResolvedImproperInterfaceMethod(comp(), cpIndex);
+   _currentCallMethodUnrefined = _currentCallMethod;
    bool isIndirectCall = true;
    bool isInterface = true;
    if (_currentCallMethod)

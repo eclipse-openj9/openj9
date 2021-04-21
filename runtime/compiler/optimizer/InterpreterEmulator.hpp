@@ -253,6 +253,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
          _localObjectInfos = NULL;
          _currentCallSite = NULL;
          _currentCallMethod = NULL;
+         _currentCallMethodUnrefined = NULL;
          _numSlots = 0;
          _callerIsThunkArchetype = _calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen();
          }
@@ -445,6 +446,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       TR_CallSite ** _callSites;
       TR_CallSite * _currentCallSite; // Store created callsite if visiting invoke* bytecodes
       TR_ResolvedMethod * _currentCallMethod; // Resolved method for invoke* bytecodes, some calls won't have call site created due to coldness info
+      TR_ResolvedMethod * _currentCallMethodUnrefined; // Call method without any refinement applied to it
       TR::CFG* _cfg;
       TR_ByteCodeInfo *_newBCInfo;
       int32_t _recursionDepth;
