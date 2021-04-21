@@ -252,6 +252,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
          _currentLocalObjectInfo = NULL;
          _localObjectInfos = NULL;
          _currentCallSite = NULL;
+         _currentCallMethod = NULL;
          _numSlots = 0;
          _callerIsThunkArchetype = _calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen();
          }

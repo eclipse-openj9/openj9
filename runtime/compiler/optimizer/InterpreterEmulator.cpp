@@ -1099,6 +1099,7 @@ InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessf
       heuristicTrace(tracer(), "%4d: %s\n", _bcIndex, comp()->fej9()->getByteCodeName(_code[_bcIndex]));
 
       _currentCallSite = NULL;
+      _currentCallMethod = NULL;
 
       if (_InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::bbStart))
          {
