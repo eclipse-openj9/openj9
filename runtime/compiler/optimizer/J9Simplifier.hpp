@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,16 @@ class Simplifier : public OMR::Simplifier
 
    bool isRecognizedPowMethod(TR::Node *node);
    bool isRecognizedAbsMethod(TR::Node *node);
+
+   /**
+    * \brief Checks whether this node represents a call to the value
+    * comparison non-helper
+    * \param node Call node to check
+    * \return \c true if \c node is a call to the value
+    *         comparison non-helper;
+    *         \c false, otherwise.
+    */
+   bool isObjectEqualityComparison(TR::Node *node);
 
    TR::Node *getUnsafeIorByteChild(TR::Node * child, TR::ILOpCodes b2iOpCode, int32_t mulConst);
    TR::Node *getLastUnsafeIorByteChild(TR::Node * child);
