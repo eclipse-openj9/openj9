@@ -1450,6 +1450,10 @@ Only available on zOS</description>
 		<description>Enables compilation of the j9vm module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
+	<flag id="module_j9vm31">
+		<description>Enables compilation of the j9vm31 module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
 	<flag id="module_j9vmtest">
 		<description>Enables compilation of the j9vmtest module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
