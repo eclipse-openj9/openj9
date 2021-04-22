@@ -144,6 +144,10 @@ TR::TreeLowering::lowerValueTypeOperations(TR::PreorderNodeIterator& nodeIter, T
                                                             comp()->signature(), node->getByteCodeIndex());
             TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
 
+            TR_ASSERT_FATAL_WITH_NODE(tt->getNode(),
+                                      (tt->getNode()->getOpCodeValue() == TR::treetop) || (tt->getNode()->getOpCodeValue() == TR::NULLCHK),
+                                      "lowerLoadArrayElement cannot process the treetop node that is neither a treetop nor a NULLCHK\n");
+
             lowerLoadArrayElement(nodeIter, node, tt);
             }
          }
@@ -155,6 +159,9 @@ TR::TreeLowering::lowerValueTypeOperations(TR::PreorderNodeIterator& nodeIter, T
                                                             comp()->signature(), node->getByteCodeIndex());
             TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
 
+            TR_ASSERT_FATAL_WITH_NODE(tt->getNode(),
+                                      (tt->getNode()->getOpCodeValue() == TR::treetop) || (tt->getNode()->getOpCodeValue() == TR::NULLCHK),
+                                      "lowerStoreArrayElement cannot process the treetop node that is neither a treetop nor a NULLCHK\n");
             lowerStoreArrayElement(nodeIter, node, tt);
             }
          }
@@ -1387,6 +1394,10 @@ TR::TreeLowering::lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR:
    arraylengthNode->setArrayStride(dataWidth);
 
    //ILGen for array element store already generates a NULLCHK
+   //If the helper call node is anchored under NULLCHK due to compactNullChecks, the NULLCHK is split into the helper call block.
+   //The NULLCHK is required for regular array block.
+   if (!anchoredArrayBaseAddressNode->isNonNull() && tt->getNode()->getOpCodeValue() == TR::NULLCHK)
+      arrayStoreCHKTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, arraylengthNode, comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol()))));
 
    arrayStoreCHKTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arraylengthNode, anchoredElementIndexNode, comp->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp->getMethodSymbol()))));
 

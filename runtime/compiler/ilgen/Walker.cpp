@@ -7729,7 +7729,7 @@ TR_J9ByteCodeIlGenerator::storeArrayElement(TR::DataType dataType, TR::ILOpCodes
          genTreeTop(nullchk);
          }
       auto* helperSymRef = comp()->getSymRefTab()->findOrCreateStoreFlattenableArrayElementSymbolRef();
-      TR::TreeTop *storeHelperCallTT = genTreeTop(TR::Node::createWithSymRef(TR::acall, 3, 3, value, elementIndex, arrayBaseAddress, helperSymRef));
+      TR::TreeTop *storeHelperCallTT = genTreeTop(TR::Node::createWithSymRef(TR::call, 3, 3, value, elementIndex, arrayBaseAddress, helperSymRef));
 
       const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/generated/aastore/(%s)/bc=%d",
                                                       comp()->signature(), currentByteCodeIndex());
