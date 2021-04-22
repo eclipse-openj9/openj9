@@ -169,7 +169,7 @@ MutableCallsiteTargetOperand::merge1(Operand* other)
    MutableCallsiteTargetOperand* otherMutableCallsiteTarget = other->asMutableCallsiteTargetOperand();
    if (otherMutableCallsiteTarget &&
        this->mutableCallsiteIndex== otherMutableCallsiteTarget->mutableCallsiteIndex &&
-       this->methodHandleIndex && otherMutableCallsiteTarget->methodHandleIndex)
+       this->methodHandleIndex == otherMutableCallsiteTarget->methodHandleIndex)
       return this;
    else
       return NULL;
