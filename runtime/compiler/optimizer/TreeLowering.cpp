@@ -710,13 +710,7 @@ TR::TreeLowering::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
       //   |     aload <value>              |
       //   +--------------------------------+
       //
-      TR::SymbolReference *vftSymRef = comp()->getSymRefTab()->findOrCreateVftSymbolRef();
-      TR::SymbolReference *arrayCompSymRef = comp()->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef();
-
-      TR::Node *vft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredArrayTT->getNode()->getFirstChild(), vftSymRef);
-      TR::Node *arrayCompClass = TR::Node::createWithSymRef(node, TR::aloadi, 1, vft, arrayCompSymRef);
-      TR::Node *testIsValueTypeNode = comp()->fej9()->testIsClassValueType(arrayCompClass);
-      TR::Node *ifNode = TR::Node::createif(TR::ificmpeq, testIsValueTypeNode, TR::Node::iconst(node, 0));
+      TR::Node *ifNode = comp()->fej9()->checkArrayCompClassValueType(anchoredArrayTT->getNode()->getFirstChild(), TR::ificmpeq);
 
       TR::Node *passThru  = TR::Node::create(node, TR::PassThrough, 1, sourceChild);
       TR::ResolvedMethodSymbol *currentMethod = comp()->getMethodSymbol();
@@ -1088,16 +1082,9 @@ TR::TreeLowering::lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::
 
    ///////////////////////////////////////
    // 9. Create ificmpne node that checks classFlags
-   TR::SymbolReference *vftSymRef = comp->getSymRefTab()->findOrCreateVftSymbolRef();
-   TR::SymbolReference *arrayCompSymRef = comp->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef();
-   TR::SymbolReference *classFlagsSymRef = comp->getSymRefTab()->findOrCreateClassFlagsSymbolRef();
-
-   TR::Node *vft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredArrayBaseAddressNode, vftSymRef);
-   TR::Node *arrayCompClass = TR::Node::createWithSymRef(node, TR::aloadi, 1, vft, arrayCompSymRef);
-   TR::Node *testIsValueTypeNode = comp->fej9()->testIsClassValueType(arrayCompClass);
 
    // The branch destination will be set up later
-   TR::Node *ifNode = TR::Node::createif(TR::ificmpne, testIsValueTypeNode, TR::Node::iconst(node, 0));
+   TR::Node *ifNode = comp->fej9()->checkArrayCompClassValueType(anchoredArrayBaseAddressNode, TR::ificmpne);
 
    // Copy register dependency to the ificmpne node that's being appended to the current block
    copyRegisterDependency(arrayElementLoadBlock->getExit()->getNode(), ifNode);
@@ -1409,16 +1396,9 @@ TR::TreeLowering::lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR:
 
    ///////////////////////////////////////
    // 8. Create the ificmpne node that checks classFlags
-   TR::SymbolReference *vftSymRef = comp->getSymRefTab()->findOrCreateVftSymbolRef();
-   TR::SymbolReference *arrayCompSymRef = comp->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef();
-   TR::SymbolReference *classFlagsSymRef = comp->getSymRefTab()->findOrCreateClassFlagsSymbolRef();
-
-   TR::Node *vft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredArrayBaseAddressNode, vftSymRef);
-   TR::Node *arrayCompClass = TR::Node::createWithSymRef(node, TR::aloadi, 1, vft, arrayCompSymRef);
-   TR::Node *testIsValueTypeNode = comp->fej9()->testIsClassValueType(arrayCompClass);
 
    // The branch destination will be set up later
-   TR::Node *ifNode = TR::Node::createif(TR::ificmpne, testIsValueTypeNode, TR::Node::iconst(node, 0));
+   TR::Node *ifNode = comp->fej9()->checkArrayCompClassValueType(anchoredArrayBaseAddressNode, TR::ificmpne);
 
    // Copy register dependency to the ificmpne node that's being appended to the current block
    copyRegisterDependency(arrayElementStoreBlock->getExit()->getNode(), ifNode);

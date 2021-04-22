@@ -3063,6 +3063,20 @@ TR_J9VMBase::testIsClassValueType(TR::Node *j9ClassRefNode)
    return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassIsValueType);
    }
 
+TR::Node *
+TR_J9VMBase::checkArrayCompClassValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp)
+   {
+   TR::SymbolReference *vftSymRef = TR::comp()->getSymRefTab()->findOrCreateVftSymbolRef();
+   TR::SymbolReference *arrayCompSymRef = TR::comp()->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef();
+
+   TR::Node *vft = TR::Node::createWithSymRef(TR::aloadi, 1, 1, arrayBaseAddressNode, vftSymRef);
+   TR::Node *arrayCompClass = TR::Node::createWithSymRef(TR::aloadi, 1, 1, vft, arrayCompSymRef);
+   TR::Node *testIsValueTypeNode = testIsClassValueType(arrayCompClass);
+   TR::Node *ifNode = TR::Node::createif(ifCmpOp, testIsValueTypeNode, TR::Node::iconst(arrayBaseAddressNode, 0));
+
+   return ifNode;
+   }
+
 TR::TreeTop *
 TR_J9VMBase::lowerAsyncCheck(TR::Compilation * comp, TR::Node * root, TR::TreeTop * treeTop)
    {
