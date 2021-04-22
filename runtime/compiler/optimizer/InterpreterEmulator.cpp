@@ -190,7 +190,7 @@ InterpreterEmulator::printOperandArray(OperandArray* operands)
    }
 
 // Merge second OperandArray into the first one
-// The merge does an intersect
+// The merge does a union
 //
 void InterpreterEmulator::mergeOperandArray(OperandArray *first, OperandArray *second)
    {
