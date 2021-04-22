@@ -1442,6 +1442,10 @@ Only available on zOS</description>
 		<description>Enables compilation of the include module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
+	<flag id="module_include31">
+		<description>Enables compilation of the include module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
 	<flag id="module_j9vm">
 		<description>Enables compilation of the j9vm module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
