@@ -4195,60 +4195,9 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
    else
       {
-      isSignManipulation = true;
-      if (cg->traceBCDCodeGen())
-         traceMsg(comp,"\ttargetReg has possibly invalid sign so generate memory based decode sequence\n");
-
-      TR::Register *sourceSign = cg->allocateRegister();
-      TR::Register *regMask = NULL;
-
-      generateRXInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::LLGC : TR::InstOpCode::LLC,
-           node, sourceSign, reuseS390LeftAlignedMemoryReference(sourceMR, srcNode, srcReg->getStorageReference(), cg, 1));
-
-      uint8_t signCodes[TR_NUM_DECIMAL_CODES];
-      for (int32_t i = 0; i < TR_NUM_DECIMAL_CODES; i++)
-         {
-         TR_BCDSignCode normalizedSign = decimalSignCodeMap[i];
-         if (normalizedSign == bcd_invalid_sign)
-            signCodes[i] = i;
-         else if (normalizedSign == bcd_plus || normalizedSign == bcd_unsigned)
-            signCodes[i] = TR::DataType::getPreferredMinusCode();
-         else if (normalizedSign == bcd_minus)
-            signCodes[i] = TR::DataType::getPreferredPlusCode();
-         else
-            TR_ASSERT(false,"unexpected normalized sign for raw sign 0x%x\n",i);
-         }
-      size_t paddingLitPoolOffset = cg->findOrCreateLiteral(signCodes, TR_NUM_DECIMAL_CODES);
-      TR::Register *litPoolBaseReg = NULL;
-      if(cg->isLiteralPoolOnDemandOn())
-         {
-         litPoolBaseReg = cg->allocateRegister();
-         generateLoadLiteralPoolAddress(cg, node, litPoolBaseReg);
-         }
-      else
-         {
-         litPoolBaseReg = cg->allocateRegister();
-         generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, litPoolBaseReg, cg->getLitPoolRealRegister());
-         }
-
-      generateRIInstruction(cg, TR::InstOpCode::NILL, node, sourceSign, 0x0F);
-
-      generateRRInstruction(cg, comp->target().is64Bit() ? TR::InstOpCode::ALGR : TR::InstOpCode::ALR, node, litPoolBaseReg, sourceSign);
-
-      if (targetReg->getDataType() == TR::PackedDecimal && targetReg->isEvenPrecision())
-         cg->genZeroLeftMostDigitsIfNeeded(node, targetReg, targetReg->getSize(), 1, destMR);
-
-      int32_t mvnSize = 1;
-      generateSS1Instruction(cg, TR::InstOpCode::MVN, node,
-                             mvnSize-1,
-                             reuseS390LeftAlignedMemoryReference(destMR, node, targetReg->getStorageReference(), cg, 1),
-                             generateS390MemoryReference(litPoolBaseReg, paddingLitPoolOffset, cg));
-
-      cg->stopUsingRegister(sourceSign);
-      if (regMask)
-         cg->stopUsingRegister(regMask);
-      if (litPoolBaseReg)
-         cg->stopUsingRegister(litPoolBaseReg);
+      // This path used to contain a call to an API which would have returned a garbage result. Rather than 100% of the
+      // time generating an invalid sequence here which is guaranteed to crash if executed, we fail the compilation.
+      cg->comp()->failCompilation<TR::CompilationException>("Existing code relied on an unimplemented API and is thus not safe. See eclipse/omr#5937.");
       }
 
    if (isSignManipulation)
