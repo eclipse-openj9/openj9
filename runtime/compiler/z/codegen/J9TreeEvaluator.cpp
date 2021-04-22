@@ -5298,12 +5298,11 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
 
    if (!sourceChild->isNonNull())
       {
-      // If we have an actionable wrtbar and a NULL ptr, branch around the wrt bar
-      // as it needs not be exec'd
-      TR::InstOpCode::Mnemonic compareAndBranchMnemonic = usingCompressedPointers ? TR::InstOpCode::C : TR::InstOpCode::getCmpOpCode();
-
-      generateS390CompareAndBranchInstruction(cg, compareAndBranchMnemonic, node, srcReg, 0, TR::InstOpCode::COND_BE, (doWrtBar || doCrdMrk)?simpleStoreLabel:wbLabel, false, true);
+      // Note the use of 64-bit compare for compressedRefs and use of the decompressed `srcReg` register
+      // Compare object with NULL. If NULL, branch around ASC, WrtBar and CrdMrk as they are not required
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, srcReg, 0, TR::InstOpCode::COND_BE, (doWrtBar || doCrdMrk)?simpleStoreLabel:wbLabel, false, true);
       }
+
    J9::Z::CHelperLinkage *helperLink = static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
    if (nopASC)
       {
