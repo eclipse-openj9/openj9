@@ -1466,6 +1466,8 @@ public class ValueTypeTests {
 	 * Create a valueType with four valueType members including 2 volatile.  
 	 * 
 	 * value valueWithVolatile {
+	 *  flattened ValueInt i;
+	 *  flattened ValueInt i2;
 	 *  flattened Point2D point;   <--- 8 bytes, will be flattened.
 	 *  volatile Point2D vpoint;   <--- volatile 8 bytes, will be flattened.
 	 *  flattened Line2D 1ine;     <--- 16 bytes, will be flattened.
@@ -1474,9 +1476,10 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=3)
 	static public Object createValueTypeWithVolatileFields() throws Throwable {
-		String fields[] = {"point:QPoint2D;:value", "vpoint:QPoint2D;:volatile", "line:QFlattenedLine2D;:value", "vline:QFlattenedLine2D;:volatile"};
+		String fields[] = {"i:QValueInt;:value", "i2:QValueInt;:value", "point:QPoint2D;:value", "vpoint:QPoint2D;:volatile", "line:QFlattenedLine2D;:value", "vline:QFlattenedLine2D;:volatile"};
 		Class ValueTypeWithVolatileFieldsClass = ValueTypeGenerator.generateValueClass("ValueTypeWithVolatileFields", fields);
-		MethodHandle valueWithVolatile = lookup.findStatic(ValueTypeWithVolatileFieldsClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class, Object.class));
+		MethodHandle valueWithVolatile = lookup.findStatic(ValueTypeWithVolatileFieldsClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class, 
+				Object.class, Object.class, Object.class));
 		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(ValueTypeWithVolatileFieldsClass, fields);
 		Object valueWithVolatileObj = createAssorted(valueWithVolatile, fields);
 		checkFieldAccessMHOfAssortedType(getterAndWither, valueWithVolatileObj, fields, true);

@@ -58,6 +58,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
+import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.types.IDATA;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
@@ -214,7 +215,21 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 							J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(instanceClass, J9ROMFieldShapeHelper.getName(localField));
 							if (valueTypeHelper.isJ9FieldIsFlattened(fieldClass, localField)) {
 								UDATA size = null;
-								if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)) {
+								boolean forceDoubleAlignment;
+								if (fj9object_t_SizeOf == U32.SIZEOF) {
+									UDATA instanceSize = fieldClass.totalInstanceSize();
+									UDATA doubleSize = new UDATA(U64.SIZEOF);
+									if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
+										instanceSize = instanceSize.sub(U32.SIZEOF);
+									}
+									forceDoubleAlignment = modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile)
+											&& instanceSize.eq(doubleSize);
+								} else {
+									forceDoubleAlignment = true;
+								}
+								if (forceDoubleAlignment
+									|| valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)
+								) {
 									size = fieldClass.totalInstanceSize();
 									if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
 										size = size.sub(U32.SIZEOF);

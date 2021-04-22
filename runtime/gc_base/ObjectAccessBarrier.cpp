@@ -1527,7 +1527,35 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 			} else {
 				UDATA srcAddress = (UDATA)srcObject + srcOffset + offset;
 				UDATA destAddress = (UDATA)destObject + destOffset + offset;
-				if (sizeof(uint32_t) == referenceSize) {
+				bool copy64Bits = false;
+				UDATA descriptionBitsNext = descriptionBits;
+				const UDATA *descriptionPtrNext = descriptionPtr;
+				UDATA descriptionIndexNext = descriptionIndex;
+				if (isValueType
+					&& (sizeof(uint32_t) == referenceSize)
+					&& (0 == (srcAddress & 7))
+					&& ((offset + referenceSize) < limit)
+				) {
+					descriptionBitsNext >>= 1;
+					if (descriptionIndexNext-- == 0) {
+						descriptionBitsNext = *(descriptionPtrNext++);
+						descriptionIndexNext = J9_OBJECT_DESCRIPTION_SIZE - 1;
+					}
+					if (0 == (descriptionBitsNext & 1)) {
+						copy64Bits = true;
+					}
+				}
+				if (copy64Bits) {
+					*(uint64_t *)destAddress = *(uint64_t *)srcAddress;
+					descriptionBits = descriptionBitsNext;
+					descriptionPtr = descriptionPtrNext;
+					descriptionIndex = descriptionIndexNext;
+					/**
+					 * When doing 64-bit copy, offset needs to be advanced 8 bytes. referenceSize is 4 bytes here.
+					 * Advance offset 4 bytes here. Another 4 bytes are advanced at the end of the while loop below.
+					 */
+					offset += referenceSize;
+				} else if (sizeof(uint32_t) == referenceSize) {
 					*(uint32_t *)destAddress = *(uint32_t *)srcAddress;
 				} else {
 					*(uintptr_t *)destAddress = *(uintptr_t *)srcAddress;
@@ -1542,16 +1570,19 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 		}
 	} else {
 		/* no instanceDescription bits needed on this path */
-
 		while (offset < limit) {
 			UDATA srcAddress = (UDATA)srcObject + srcOffset + offset;
 			UDATA destAddress = (UDATA)destObject + destOffset + offset;
-			if (sizeof(uint32_t) == referenceSize) {
-				*(uint32_t *)destAddress = *(uint32_t *)srcAddress;
+			/* prefer to copy 64 bits at a time if possible */
+			if ((sizeof(uint64_t) == referenceSize)
+				|| (isValueType && (0 == (srcAddress & 7)) && ((offset + referenceSize) < limit))
+			) {
+				*(uint64_t *)destAddress = *(uint64_t *)srcAddress;
+				offset += sizeof(uint64_t);
 			} else {
-				*(uintptr_t *)destAddress = *(uintptr_t *)srcAddress;
+				*(uint32_t *)destAddress = *(uint32_t *)srcAddress;
+				offset += sizeof(uint32_t);
 			}
-			offset += referenceSize;
 		}
 	}
 
