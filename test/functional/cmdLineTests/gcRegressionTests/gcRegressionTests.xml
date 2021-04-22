@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2001, 2020 IBM Corp. and others
+  Copyright (c) 2001, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
  
  <!-- Arguments specific to the class unloading tests -->
  <variable name="PROGRAM" value="com.ibm.tests.garbagecollector.TestClassLoaderMain" />
- <variable name="MEM" value="4m" />
+ <variable name="MEM" value="8m" />
  <variable name="VMARGS" value="-Xmx$MEM$ -Xms$MEM$ -Xalwaysclassgc -Xdisableexcessivegc" />
  <variable name="EXTRAVMARG" value="-Xgc:fvtest=forceFinalizeClassLoaders" />
  <variable name="EXCESSIVE_STRING" value="excessive gc activity detected, will fail on allocate" />
