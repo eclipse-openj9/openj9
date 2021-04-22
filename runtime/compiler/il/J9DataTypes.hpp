@@ -95,8 +95,6 @@ public:
    using OMR::DataTypeConnector::getName;
 
    inline bool isFloatingPoint();
-   bool isLongDouble()              { return _type == TR::DecimalLongDouble; }
-   bool isDFP()                     { return _type == TR::DecimalFloat|| _type == TR::DecimalDouble|| _type == TR::DecimalLongDouble; }
    bool isBCD()                     { return (_type >= TR::FirstBCDType) && (_type <= TR::LastBCDType); }
    bool isAnyPacked()               { return _type == TR::PackedDecimal; }
    bool isAnyZoned()                { return (_type >= TR::FirstZonedType) && (_type <= TR::LastZonedType); }
@@ -121,10 +119,6 @@ public:
    inline bool isTrailingSign();
    inline bool isSignless();
    inline bool hasExposedConstantAddress();
-
-   static inline int32_t getMaxShortDFPPrecision()    { return 7; }
-   static inline int32_t getMaxLongDFPPrecision()     { return 16; }
-   static inline int32_t getMaxExtendedDFPPrecision() { return 34; }
 
    // NOTE: getMaxPackedDecimalSize is derived from TR_MAX_DECIMAL_PRECISION but left as a constant
    //       to aid in static char declarations see packedDecimalPrecisionToByteLength for the formula
@@ -198,8 +192,6 @@ public:
    static bool isValidZonedData(char  *lit, int32_t start, int32_t end);
    static bool isValidUnicodeData(char  *lit, int32_t start, int32_t end);
    static bool isValidBCDLiteral(char *lit, size_t litSize, TR::DataType dt, bool isEvenPrecision);
-
-   static TR::DataType getDFPTypeFromPrecision(int32_t precision);
 
    bool canGetMaxPrecisionFromType();
    int32_t getMaxPrecisionFromType();

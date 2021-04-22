@@ -3913,19 +3913,7 @@ TR_J9VMBase::getCompiledMethodReceiverKnownObjectIndex(TR::Compilation *comp)
 bool
 TR_J9VMBase::methodMayHaveBeenInterpreted(TR::Compilation *comp)
    {
-   if ((!TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) &&
-        !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP)) &&
-       (comp->target().cpu.supportsDecimalFloatingPoint()
-#ifdef TR_TARGET_S390
-       || comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP)
-#endif
-         ))
-      {
-      if (comp->getJittedMethodSymbol()->getResolvedMethod()->convertToMethod()->isBigDecimalMethod(comp) ||
-          comp->getJittedMethodSymbol()->getResolvedMethod()->convertToMethod()->isBigDecimalConvertersMethod(comp))
-         return false;
-      }
-   else if (comp->ilGenRequest().details().isMethodHandleThunk())
+   if (comp->ilGenRequest().details().isMethodHandleThunk())
       return false;
    else
       {

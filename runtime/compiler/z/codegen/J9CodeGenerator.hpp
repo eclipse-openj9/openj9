@@ -88,12 +88,6 @@ public:
    int32_t getPDMulEncodedPrecision(TR::Node *pdmul, TR_PseudoRegister *multiplicand, TR_PseudoRegister *multiplier);
    int32_t getPDMulEncodedPrecision(TR::Node *pdmul);
    int32_t getPDMulEncodedPrecision(TR::Node *pdmul, int32_t exponent);
-   uint32_t getPackedToDecimalFloatFixedSize();
-   uint32_t getPackedToDecimalDoubleFixedSize();
-   uint32_t getPackedToDecimalLongDoubleFixedSize();
-   uint32_t getDecimalFloatToPackedFixedSize();
-   uint32_t getDecimalDoubleToPackedFixedSize();
-   uint32_t getDecimalLongDoubleToPackedFixedSize();
    bool callUsesHelperImplementation(TR::Symbol *sym);
 
    uint32_t getLongToPackedFixedSize()               { return TR_LONG_TO_PACKED_SIZE; }

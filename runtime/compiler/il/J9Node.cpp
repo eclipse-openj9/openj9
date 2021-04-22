@@ -166,18 +166,11 @@ J9::Node::copyValidProperties(TR::Node *fromNode, TR::Node *toNode)
          {
          case HasDecimalInfo:
 #if !defined(ENABLE_RECREATE_WITH_COPY_VALID_PROPERTIES_COMPLETE)
-            // TODO there is still confusion for DFP types what properties they have
-            // eg a TR::deModifyPrecision has a DFPPrecision, but a TR::pd2df does not
-            // where is this declared in the opcode?
-
             // for now have to copy forward all decimalInfo properties
             toNode->_unionPropertyB._decimalInfo = fromNode->_unionPropertyB._decimalInfo;
 #else
             // _decimalPrecision
-            if (toNode->getType().isDFP() && fromNode->getType().isDFP())
-               // the above test is not enough to determine whether the node hasDFPPrecision
-               toNode->setDFPPrecision(fromNode->getDFPPrecision());
-            else if (toNode->hasDecimalPrecision() && fromNode->hasDecimalPrecision())
+            if (toNode->hasDecimalPrecision() && fromNode->hasDecimalPrecision())
                toNode->setDecimalPrecision(fromNode->getDecimalPrecision());
 
             // _decimalSourcePrecisionOrDividend
@@ -617,7 +610,6 @@ J9::Node::isTruncating()
       else
          return false;
       }
-   // eg. dd2pd <prec=9, sourcePrecision=12> -> ddadd: truncation since the ddadd may have up to 12 non-zero digits
    else if (self()->getType().isBCD() && self()->getOpCode().isConversion() && self()->getNumChildren() >= 1 && !self()->getValueChild()->getType().isBCD())
       {
       if (self()->hasSourcePrecision() && self()->getDecimalPrecision() < self()->getSourcePrecision())
@@ -862,17 +854,6 @@ J9::Node::getStorageReferenceSize()
       {
       return self()->getSize();
       }
-   else if (self()->getType().isAnyZoned() && self()->getOpCode().isConversion() && self()->getFirstChild()->getType().isDFP())
-      {
-      if (self()->hasSourcePrecision() && self()->getSourcePrecision() <= TR::DataType::getMaxExtendedDFPPrecision())
-         {
-         return std::max<int32_t>(self()->getDecimalPrecision(), self()->getSourcePrecision());
-         }
-      else if (self()->getDataType() == TR::DecimalFloat || self()->getDataType() == TR::DecimalDouble)
-         return TR::DataType::getMaxLongDFPPrecision();
-      else
-         return TR::DataType::getMaxExtendedDFPPrecision();
-      }
    else if (self()->getOpCode().isBCDToNonBCDConversion())
       {
       return self()->getStorageReferenceSourceSize();
@@ -935,18 +916,7 @@ J9::Node::getStorageReferenceSourceSize()
          size = comp->cg()->getPackedToIntegerFixedSize();
          break;
       default:
-         if (self()->getOpCode().isConversion() &&
-                  self()->getType().isDFP() &&
-                  (
-                   self()->getFirstChild()->getType().isAnyZoned() ||
-                   self()->getFirstChild()->getType().isAnyPacked()))
-            {
-            size = self()->getFirstChild()->getSize();
-            }
-         else
-            {
             TR_ASSERT(false, "node %p and type %s not supported in getStorageReferenceSourceSize\n", self(), self()->getDataType().toString());
-            }
          break;
       }
    return size;
@@ -1236,23 +1206,6 @@ J9::Node::setStorageReferenceHint(TR_StorageReference *s)
 
 #endif
 
-#ifdef SUPPORT_DFP
-
-long double
-J9::Node::setLongDouble(long double d)
-   {
-   self()->freeExtensionIfExists();
-   return (*(long double *)_unionBase._unionedWithChildren._constData= d);
-   }
-
-long double
-J9::Node::getLongDouble()
-   {
-   return *(long double *)_unionBase._unionedWithChildren._constData;
-   }
-
-#endif
-
 /**
  * Node field functions end
  */
@@ -1275,10 +1228,8 @@ J9::Node::hasDecimalInfo()
    // _decimalInfo is used for those languages that return true as determined by the code below
    return
       // Any node with a BCD type (pdloadi, pdadd, zd2pd, pdstorei etc)
-      self()->getType().isBCD() ||
-      // Any node with DFP type (dfadd, dfloadi, deconst etc) for the result precision digits
-      self()->getType().isDFP()
-      // Conversions from a BCD type to a float to encode # of fractional digits (pd2f, pd2d, pd2de etc)
+      self()->getType().isBCD()
+      // Conversions from a BCD type to a float to encode # of fractional digits (pd2f, pd2d, etc)
       || self()->getOpCode().isConversionWithFraction()
       // BCD types and also any BCD ifs and compares (e.g. ifpdcmpxx, pdcmpxx)
       || self()->chkOpsCastedToBCD();
@@ -1385,38 +1336,6 @@ J9::Node::setPDAddSubPrecision()
    TR_ASSERT(self()->getNumChildren() >= 2, "expecting >= 2 children and not %d children on a packed add/sub node\n", self()->getNumChildren());
    self()->setDecimalPrecision(std::max(self()->getFirstChild()->getDecimalPrecision(), self()->getSecondChild()->getDecimalPrecision())+1);
    }
-
-
-
-bool
-J9::Node::isDFPModifyPrecision()
-   {
-   TR_ASSERT(self()->getType().isDFP(), "opcode not supported for isDFPModifyPrecision on node %p\n", self());
-   if (self()->getOpCodeValue() == TR::ILOpCode::modifyPrecisionOpCode(self()->getDataType()))
-      return true;
-   return false;
-   }
-
-void
-J9::Node::setDFPPrecision(int32_t p)
-   {
-   TR_ASSERT(self()->getType().isDFP(), "opcode not supported for setDFPPrecision on node %p\n", self());
-   TR_ASSERT(p > 0 && p <= TR_MAX_DECIMAL_PRECISION, "unexpected DFP precision %d on node %p\n", p, self());
-   TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalPrecision field for node %s %p that does not have it", self()->getOpCode().getName(), self());
-   _unionPropertyB._decimalInfo._decimalPrecision = (uint32_t)p;
-   }
-
-uint8_t
-J9::Node::getDFPPrecision()
-   {
-   TR_ASSERT(self()->getType().isDFP(), "opcode not supported for getDFPPrecision on node %s %p\n", self()->getOpCode().getName(), self());
-   TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalPrecision field for node %s %p that does not have it", self()->getOpCode().getName(), self());
-   TR_ASSERT(_unionPropertyB._decimalInfo._decimalPrecision > 0 && _unionPropertyB._decimalInfo._decimalPrecision <= TR_MAX_DECIMAL_PRECISION,
-             "unexpected DFP precision %d on node %s %p\n", _unionPropertyB._decimalInfo._decimalPrecision, self()->getOpCode().getName(), self());
-   return _unionPropertyB._decimalInfo._decimalPrecision;
-   }
-
-
 
 void
 J9::Node::setDecimalAdjust(int32_t a)
@@ -2666,13 +2585,6 @@ J9::Node::isArrayCopyCall()
    }
 
    return OMR::Node::isArrayCopyCall();
-   }
-
-
-bool
-J9::Node::requiresRegisterPair(TR::Compilation *comp)
-   {
-   return self()->getType().isLongDouble() || OMR::NodeConnector::requiresRegisterPair(comp);
    }
 
 bool

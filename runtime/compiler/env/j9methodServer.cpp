@@ -1532,13 +1532,6 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(TR_Resolved
       bool isSystemClassLoader = false;
       J9Method *j9method = (J9Method *) method;
 
-      if (comp->getOption(TR_DisableDFP) ||
-          (!(comp->target().cpu.supportsDecimalFloatingPoint()
-#ifdef TR_TARGET_S390
-          || comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP)
-#endif
-            ) ||
-             !TR_J9MethodBase::isBigDecimalMethod(j9method)))
          {
          // Check if same classloader
          J9Class *j9clazz = (J9Class *) J9_CLASS_FROM_CP(((J9RAMConstantPoolItem *) J9_CP_FROM_METHOD(((J9Method *)j9method))));

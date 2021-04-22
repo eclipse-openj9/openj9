@@ -58,7 +58,7 @@ namespace ILProp4
       ConversionHasFraction            = 0x00000020,
       // Available                     = 0x00000040,
       PackedArithmeticOverflowMessage  = 0x00000080,
-      DFPTestDataClass                 = 0x00000100,
+      // Available                     = 0x00000100,
       CanHaveStorageReferenceHint      = 0x00000200,
       CanHavePaddingAddress            = 0x00000400,
       CanUseStoreAsAnAccumulator       = 0x00000800,

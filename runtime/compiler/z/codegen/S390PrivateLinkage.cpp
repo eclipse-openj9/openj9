@@ -933,29 +933,6 @@ J9::Z::PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol
             break;
          case TR::Float:
          case TR::Double:
-         case TR::DecimalFloat:
-            if (numFloatArgs < self()->getNumFloatArgumentRegisters())
-               {
-               index = numFloatArgs;
-               }
-            numFloatArgs++;
-            break;
-         case TR::DecimalLongDouble:
-            // On zLinux Long Double is passed in memory using a pointer to buffer
-            if(comp()->target().isLinux())
-               {
-               if(numIntArgs < self()->getNumIntegerArgumentRegisters())
-                  index = numIntArgs++;
-               break;
-               }
-            if ((numFloatArgs & 0x1) !=0)  // if there are odd number of fp args in before a long double arg, need to skip one
-               numFloatArgs++;
-            if (numFloatArgs < self()->getNumFloatArgumentRegisters())
-               {
-               index = numFloatArgs;
-               }
-            numFloatArgs +=2;
-            break;
          case TR::PackedDecimal:
          case TR::ZonedDecimal:
          case TR::ZonedDecimalSignLeadingEmbedded:
@@ -3294,8 +3271,6 @@ J9::Z::PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
          break;
       case TR::fcall:
       case TR::dcall:
-      case TR::dfcall:
-      case TR::ddcall:
          returnRegister = dependencies->searchPostConditionRegister(getFloatReturnRegister());
          break;
       case TR::call:
@@ -3379,14 +3354,7 @@ J9::Z::PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
          break;
       case TR::fcalli:
       case TR::dcalli:
-      case TR::dfcalli:
-      case TR::ddcalli:
          returnRegister = dependencies->searchPostConditionRegister(getFloatReturnRegister());
-         break;
-      case TR::decalli:
-         highReg = dependencies->searchPostConditionRegister(getLongDoubleReturnRegister0());
-         lowReg = dependencies->searchPostConditionRegister(getLongDoubleReturnRegister2());
-         returnRegister = cg()->allocateFPRegisterPair(lowReg, highReg);
          break;
       case TR::calli:
          returnRegister = NULL;

@@ -369,7 +369,6 @@ private:
 
       bool _sharedCacheIsFull;
 
-      static bool useDFPHardware(TR_FrontEnd *fe);
       static uintptr_t generateFeatureFlags(TR_FrontEnd *fe);
 
       static const char aotHeaderKey[];

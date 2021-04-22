@@ -276,7 +276,6 @@ private:
    bool         genJNIIL();
    bool         genNewInstanceImplThunk();
    void         genJavaLangSystemIdentityHashCode();
-   void         genDFPGetHWAvailable();
    void         genHWOptimizedStrProcessingAvailable();
    void         genJITIntrinsicsEnabled();
    void         genIsORBDeepCopyAvailable();

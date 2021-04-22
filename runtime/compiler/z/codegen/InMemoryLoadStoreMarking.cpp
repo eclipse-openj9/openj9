@@ -458,7 +458,7 @@ void traceBCDOpportunities(TR::Node *node, TR::Compilation *comp)
             first->getOpCode().getName(),first->getDecimalPrecision(),
             second->getOpCode().getName(),second->getDecimalPrecision(),
             comp->getLineNumber(node),
-            node->getDecimalPrecision()<=TR::getMaxSignedPrecision<TR::Int64>() ? "intOpp" : (node->getDecimalPrecision()<=TR::DataType::getMaxExtendedDFPPrecision() ?"dfpOpp" : "noOpp"));
+            node->getDecimalPrecision()<=TR::getMaxSignedPrecision<TR::Int64>() ? "intOpp" : "noOpp");
          }
       }
 
@@ -482,13 +482,6 @@ void traceBCDOpportunities(TR::Node *node, TR::Compilation *comp)
             node->getFirstChild(),
             node->getFirstChild()->getFirstChild());
          }
-      }
-
-   if (node->getOpCode().isConversion() &&
-       node->getFirstChild()->getOpCode().isLoadConst() &&
-       (node->getType().isLongDouble() || node->getFirstChild()->getType().isLongDouble()))
-      {
-      traceMsg(comp,"x^x : long double const conv -- %s (%p)\n",node->getOpCode().getName(),node);
       }
 
    if (node->getOpCode().isConversion() &&
@@ -521,12 +514,6 @@ void traceBCDOpportunities(TR::Node *node, TR::Compilation *comp)
        node->getFirstChild()->getOpCode().isLoadConst())
       {
       traceMsg(comp,"x^x : BCD const conv -- %s (%p)\n",node->getOpCode().getName(),node);
-      }
-
-   if (node->getType().isLongDouble() && node->getOpCode().isArithmetic() && node->getNumChildren() == 2 &&
-       node->getFirstChild()->getOpCode().isLoadConst() && node->getSecondChild()->getOpCode().isLoadConst())
-      {
-      traceMsg(comp,"x^x : long double const arith -- %s (%p)\n",node->getOpCode().getName(),node);
       }
 
    if (node->getOpCode().isBasicOrSpecialPackedArithmetic())
@@ -644,49 +631,5 @@ void traceBCDOpportunities(TR::Node *node, TR::Compilation *comp)
          node->getFirstChild(),
          node->getFirstChild()->getDecimalPrecision());
       }
-
-   // ddModifyPrecision <prec=4>
-   //    pd2dd
-   //       pdsub <prec=31 (len=16)>
-   //
-   // on < ARCH(11) the pd2ddEvaluator will have to use the longDouble conversion instruction as the double conv instruction only converts 15 digits
-   // and >= 16 digits are needed
-   // When > 16 digits are needed then an NILL to clear the 17 digit has to be done before returning the pd2dd result
-   //
-   // In this case it would be good to insert a pdModPrec to some odd amount (byte boundary) > the ddModPrec value under the pd2dd as this will avoid the
-   // NILL and also loading more data then needed in the pd2ddEvaluator
-   //
-   if (!comp->cg()->supportsFastPackedDFPConversions() &&
-       node->getOpCodeValue() == TR::ddModifyPrecision &&
-       node->getFirstChild()->getOpCodeValue() == TR::pd2dd)
-      {
-      TR::Node *ddModPrec = node;
-      TR::Node *pd2dd = ddModPrec->getFirstChild();
-      TR::Node *pd2ddChild = pd2dd->getFirstChild();
-      if (pd2ddChild->getDecimalPrecision() >= TR::DataType::getMaxLongDFPPrecision() &&
-          ddModPrec->getDFPPrecision() < TR::DataType::getMaxLongDFPPrecision())
-         {
-         traceMsg(comp,"x^x : found larger srcLoad and/or redundant 17th digit correction about to happen in pd2ddEvaluator -- %s (%p) prec = %d with grandChild %s (%p) prec = %d on line_no=%d (offset %06X)\n",
-            ddModPrec->getOpCode().getName(),
-            ddModPrec,
-            ddModPrec->getDFPPrecision(),
-            pd2ddChild->getFirstChild()->getOpCode().getName(),
-            pd2ddChild,
-            pd2ddChild->getDecimalPrecision(),
-            comp->getLineNumber(ddModPrec),
-            comp->getLineNumber(ddModPrec));
-         }
-      }
-/*
-   if ((node->getOpCode().isDiv() || node->getOpCode().isRem()) &&
-       node->getType().isIntegral() &&
-       node->getSecondChild()->getOpCode().isLoadConst() &&
-       isPositivePowerOfTen(node->getSecondChild()->get64bitIntegralValue()))
-      {
-      traceMsg(comp,"x^x : found %s with power of ten divisor -- node (%p), divisor %lld (%d digits)\n",
-         node->getOpCode().getName(),node,node->getSecondChild()->get64bitIntegralValue(),trailingZeroes(node->getSecondChild()->get64bitIntegralValue()));
-      }
-*/
-
    }
 // ----------- BCDOpportunities end

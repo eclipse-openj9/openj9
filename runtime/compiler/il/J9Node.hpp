@@ -149,11 +149,6 @@ public:
    TR_StorageReference *setStorageReferenceHint(TR_StorageReference *s);
 #endif
 
-#ifdef SUPPORT_DFP
-   long double             setLongDouble(long double d);
-   long double             getLongDouble();
-#endif
-
    /**
     * Node field functions end
     */
@@ -174,10 +169,6 @@ public:
    // generators
    void    setPDMulPrecision();
    void    setPDAddSubPrecision();
-
-   bool    isDFPModifyPrecision();
-   void    setDFPPrecision(int32_t p);
-   uint8_t getDFPPrecision();
 
    void    setDecimalAdjust(int32_t a);
    int32_t getDecimalAdjust();
@@ -356,13 +347,6 @@ public:
 
 
    bool isArrayCopyCall();
-
-   /**
-    * Node flag functions end
-    */
-
-   inline float            getFloat();
-   inline float            setFloat(float f);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    bool processJNICryptoMethodCall(TR::ResolvedMethodSymbol *methodSymbol, TR::Compilation *comp);
