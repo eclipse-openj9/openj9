@@ -5710,9 +5710,10 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
 
    if (TR::Options::isAnyVerboseOptionSet())
       {
+      OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
       char timestamp[32];
       bool incomplete;
-      j9str_ftime(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", persistentInfo->getStartTime());
+      omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", persistentInfo->getStartTime(), OMRSTR_FTIME_FLAG_LOCAL);
       TR_VerboseLog::vlogAcquire();
       TR_VerboseLog::writeLine(TR_Vlog_INFO, "StartTime: %s", timestamp);
       uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);

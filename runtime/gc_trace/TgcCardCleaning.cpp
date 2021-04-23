@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,12 +52,13 @@ printCardCleaningStats(OMR_VMThread *omrVMThread)
 	J9VMThread *currentThread = (J9VMThread *)MM_EnvironmentBase::getEnvironment(omrVMThread)->getLanguageVMThread();
 	MM_TgcExtensions *tgcExtensions = MM_TgcExtensions::getExtensions(currentThread);
 	PORT_ACCESS_FROM_VMC(currentThread);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 	char timestamp[32];
 	
 	U_64 totalTime = 0;
 	UDATA totalCardsCleaned = 0;
 	
-	j9str_ftime(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", j9time_current_time_millis());
+	omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", j9time_current_time_millis(), OMRSTR_FTIME_FLAG_LOCAL);
 	tgcExtensions->printf("<cardcleaning timestamp=\"%s\">\n", timestamp);
 	
 	GC_VMThreadListIterator threadIterator(currentThread);

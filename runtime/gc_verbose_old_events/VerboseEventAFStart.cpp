@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,12 +66,13 @@ void
 MM_VerboseEventAFStart::formattedOutput(MM_VerboseOutputAgent *agent)
 {
 	PORT_ACCESS_FROM_JAVAVM(((J9VMThread*)_omrThread->_language_vmthread)->javaVM);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 	char timestamp[32];
 	UDATA indentLevel = _manager->getIndentLevel();
-	U_64 timeInMicroSeconds;
-	U_64 prevTime;	
-	
-	j9str_ftime(timestamp, sizeof(timestamp), VERBOSEGC_DATE_FORMAT, _timeInMilliSeconds);
+	U_64 timeInMicroSeconds = 0;
+	U_64 prevTime = 0;
+
+	omrstr_ftime_ex(timestamp, sizeof(timestamp), VERBOSEGC_DATE_FORMAT, _timeInMilliSeconds, OMRSTR_FTIME_FLAG_LOCAL);
 	switch(_subSpaceType) {
 		case 0:
 			agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), indentLevel, "<af type=\"UNKNOWN!!\" />");
