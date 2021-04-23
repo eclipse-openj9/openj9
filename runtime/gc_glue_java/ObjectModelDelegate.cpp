@@ -54,36 +54,6 @@ GC_ObjectModelDelegate::initializeAllocation(MM_EnvironmentBase *env, void *allo
 void
 GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *reservedObjectSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor)
 {
-	GC_ObjectModel *objectModel = &(env->getExtensions()->objectModel);
-	J9Class* clazz = objectModel->getPreservedClass(forwardedHeader);
-	uintptr_t actualObjectCopySizeInBytes = 0;
-	uintptr_t hashcodeOffset = 0;
-
-	if (objectModel->isIndexable(clazz)) {
-		uint32_t size = getArrayObjectModel()->getPreservedIndexableSize(forwardedHeader);
-		*objectCopySizeInBytes = getArrayObjectModel()->getSizeInBytesWithHeader(clazz, size);
-		hashcodeOffset = getArrayObjectModel()->getHashcodeOffset(clazz, size);
-	} else {
-		*objectCopySizeInBytes = clazz->totalInstanceSize + J9GC_OBJECT_HEADER_SIZE(this);
-		hashcodeOffset = getMixedObjectModel()->getHashcodeOffset(clazz);
-	}
-
-	if (hashcodeOffset == *objectCopySizeInBytes) {
-		if (objectModel->hasBeenMoved(objectModel->getPreservedFlags(forwardedHeader))) {
-			*objectCopySizeInBytes += sizeof(uintptr_t);
-		} else if (objectModel->hasBeenHashed(objectModel->getPreservedFlags(forwardedHeader))) {
-			actualObjectCopySizeInBytes += sizeof(uintptr_t);
-		}
-	}
-	actualObjectCopySizeInBytes += *objectCopySizeInBytes;
-	*reservedObjectSizeInBytes = objectModel->adjustSizeInBytes(actualObjectCopySizeInBytes);
-	*hotFieldAlignmentDescriptor = clazz->instanceHotFieldDescription;
-}
-#endif /* defined(OMR_GC_MODRON_SCAVENGER) */
-
-void
-GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader* forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash)
-{
 	/* NOTE: the size is fetched by hand from the class in the mixed case because a forwarding pointer could have been substituted into the clazz slot.
 	 * the class pointer passed into this routine is guaranteed to have been checked
 	 */
@@ -101,7 +71,6 @@ GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, M
 
 	/* IF the object has been hashed and has not been moved, then we need generate hash from the old address */
 	uintptr_t forwardedHeaderPreservedFlags = objectModel->getPreservedFlags(forwardedHeader);
-	*doesObjectNeedHash = (objectModel->hasBeenHashed(forwardedHeaderPreservedFlags) && !objectModel->hasBeenMoved(forwardedHeaderPreservedFlags));
 
 	if (hashcodeOffset == *objectCopySizeInBytes) {
 		if (objectModel->hasBeenMoved(forwardedHeaderPreservedFlags)) {
@@ -111,5 +80,7 @@ GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, M
 		}
 	}
 	actualObjectCopySizeInBytes += *objectCopySizeInBytes;
-	*objectReserveSizeInBytes = objectModel->adjustSizeInBytes(actualObjectCopySizeInBytes);
+	*reservedObjectSizeInBytes = objectModel->adjustSizeInBytes(actualObjectCopySizeInBytes);
+	*hotFieldAlignmentDescriptor = clazz->instanceHotFieldDescription;
 }
+#endif /* defined(OMR_GC_MODRON_SCAVENGER) */

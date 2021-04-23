@@ -1904,30 +1904,27 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 
 		result = object;
 	} else {
-		UDATA hotFieldAlignmentDescriptor = 0;
+		UDATA hotFieldsDescriptor = 0;
+		UDATA hotFieldsAlignment = 0;
 		UDATA* hotFieldPadBase = NULL;
 		UDATA hotFieldPadSize = 0;
 		MM_CopyScanCacheVLHGC *copyCache = NULL;
 		void *newCacheAlloc = NULL;
-		bool doesObjectNeedHash = false;
 		GC_ObjectModel *objectModel = &_extensions->objectModel;
 		
 		/* Object is in the evacuate space but not forwarded. */
-		_extensions->objectModel.calculateObjectDetailsForCopy(env, forwardedHeader, &objectCopySizeInBytes, &objectReserveSizeInBytes, &doesObjectNeedHash);
+		objectModel->calculateObjectDetailsForCopy(env, forwardedHeader, &objectCopySizeInBytes, &objectReserveSizeInBytes, &hotFieldsDescriptor);
 
 		Assert_MM_objectAligned(env, objectReserveSizeInBytes);
 
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 		/* adjust the reserved object's size if we are aligning hot fields and this class has a known hot field */
-		if (_extensions->scavengerAlignHotFields) {
-			UDATA checkDescriptor = objectModel->getPreservedClass(forwardedHeader)->instanceHotFieldDescription;
+		if (_extensions->scavengerAlignHotFields && HOTFIELD_SHOULD_ALIGN(hotFieldsDescriptor)) {
 			/* set the descriptor field if we should be aligning (since assuming that 0 means no is not safe) */
-			if (HOTFIELD_SHOULD_ALIGN(checkDescriptor)) {
-				hotFieldAlignmentDescriptor = checkDescriptor;
-				/* for simplicity, add the maximum padding we could need (and back off after allocation) */
-				objectReserveSizeInBytes += (_cacheLineAlignment - _objectAlignmentInBytes);
-				Assert_MM_objectAligned(env, objectReserveSizeInBytes);
-			}
+			hotFieldsAlignment = hotFieldsDescriptor;
+			/* for simplicity, add the maximum padding we could need (and back off after allocation) */
+			objectReserveSizeInBytes += (_cacheLineAlignment - _objectAlignmentInBytes);
+			Assert_MM_objectAligned(env, objectReserveSizeInBytes);
 		}
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
@@ -1949,9 +1946,9 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 
 			/* now correct for the hot field alignment */
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
-			if (0 != hotFieldAlignmentDescriptor) {
+			if (0 != hotFieldsAlignment) {
 				UDATA remainingInCacheLine = _cacheLineAlignment - ((UDATA)destinationObjectPtr % _cacheLineAlignment);
-				UDATA alignmentBias = HOTFIELD_ALIGNMENT_BIAS(hotFieldAlignmentDescriptor, _objectAlignmentInBytes);
+				UDATA alignmentBias = HOTFIELD_ALIGNMENT_BIAS(hotFieldsAlignment, _objectAlignmentInBytes);
 				/* do alignment only if the object cannot fit in the remaining space in the cache line */
 				if ((remainingInCacheLine < objectCopySizeInBytes) && (alignmentBias < remainingInCacheLine)) {
 					hotFieldPadSize = ((remainingInCacheLine + _cacheLineAlignment) - (alignmentBias % _cacheLineAlignment)) % _cacheLineAlignment;
@@ -2000,15 +1997,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 					_extensions->indexableObjectModel.fixupDataAddr(destinationObjectPtr);
 				}
 
-				/* IF the object has been hashed and has not been moved then we must store the previous
-				 * address into the hashcode slot at hashcode offset.
-				 */
-				if (doesObjectNeedHash) {
-					UDATA hashOffset = objectModel->getHashcodeOffset(destinationObjectPtr);
-					U_32 *hashCodePointer = (U_32*)((U_8*)destinationObjectPtr + hashOffset);
-					*hashCodePointer = objectModel->computeObjectHash(forwardedHeader);
-					objectModel->setObjectHasBeenMoved(destinationObjectPtr);
-				}
+				objectModel->fixupHashFlagsAndSlot(forwardedHeader, destinationObjectPtr);
 
 				/* Update any mark maps and transfer card table data as appropriate for a successful copy */
 				updateMarkMapAndCardTableOnCopy(env, forwardedHeader->getObject(), destinationObjectPtr, copyCache);
