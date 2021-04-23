@@ -30,7 +30,7 @@
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 J9::CompilerEnv::CompilerEnv(J9JavaVM *vm, TR::RawAllocator raw, const TR::PersistentAllocatorKit &persistentAllocatorKit) :
-#if defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
+#if defined(TR_HOST_ARM)
    OMR::CompilerEnvConnector(raw, persistentAllocatorKit),
 #else
    OMR::CompilerEnvConnector(raw, persistentAllocatorKit, OMRPORT_FROM_J9PORT(vm->portLibrary)),

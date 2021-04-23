@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,32 +23,42 @@
 #include "env/CompilerEnv.hpp"
 #include "env/CPU.hpp"
 
+TR::CPU
+J9::ARM64::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
+   {
+   if (omrPortLib == NULL)
+      return TR::CPU();
+
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc portableProcessorDescription;
+   omrsysinfo_get_processor_description(&portableProcessorDescription);
+
+   return TR::CPU::customize(portableProcessorDescription);
+   }
+
 bool
 J9::ARM64::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {
-   return self()->getProcessorDescription().processor == processorDescription.processor;
+   for (int i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
+      {
+      if ((processorDescription.features[i] & self()->getProcessorDescription().features[i]) != processorDescription.features[i])
+         return false;
+      }
+   return true;
    }
 
-OMRProcessorDesc
-J9::ARM64::CPU::getProcessorDescription()
+void
+J9::ARM64::CPU::enableFeatureMasks()
    {
-   static bool initialized = false;
-   if (!initialized)
+   // Only enable the features that compiler currently uses
+   const uint32_t utilizedFeatures [] = {OMR_FEATURE_ARM64_FP, OMR_FEATURE_ARM64_ASIMD, OMR_FEATURE_ARM64_LSE};
+
+   memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
+   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
+   for (size_t i = 0; i < sizeof(utilizedFeatures)/sizeof(uint32_t); i++)
       {
-      memset(_processorDescription.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
-      switch (self()->id())
-         {
-         case TR_DefaultARM64Processor:
-            _processorDescription.processor = OMR_PROCESSOR_ARM64_UNKNOWN;
-            break;
-         case TR_ARMv8_A:
-            _processorDescription.processor = OMR_PROCESSOR_ARM64_V8_A;
-            break;
-         default:
-            TR_ASSERT_FATAL(false, "Invalid ARM64 Processor ID");
-         }
-      _processorDescription.physicalProcessor = _processorDescription.processor;
-      initialized = true;
+      omrsysinfo_processor_set_feature(&_supportedFeatureMasks, utilizedFeatures[i], TRUE);
       }
-   return _processorDescription;
+
+   _isSupportedFeatureMasksEnabled = true;
    }
