@@ -309,10 +309,13 @@ TR_J9ServerVM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
    }
 
 void *
-TR_J9ServerVM::getClassLoader(TR_OpaqueClassBlock * classPointer)
+TR_J9ServerVM::getClassLoader(TR_OpaqueClassBlock *clazz)
    {
-   TR_ASSERT(false, "The server vm should not call getClassLoader.");
-   return NULL;
+   void *loader = NULL;
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream,
+                                             JITServerHelpers::CLASSINFO_CLASS_LOADER, &loader);
+   return loader;
    }
 
 TR_OpaqueClassBlock *
