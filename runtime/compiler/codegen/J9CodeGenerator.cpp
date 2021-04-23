@@ -780,23 +780,50 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          {
          // invokeBasic and linkTo* are signature-polymorphic, so the VM needs to know the number of argument slots
          // for the INL call in order to locate the start of the arguments on the stack. The arg slot count is stored
-         // in vmThread.tempSlot
-         TR::SymbolReference *vmThreadTempSlotSymRef = self()->comp()->getSymRefTab()->findOrCreateVMThreadTempSlotFieldSymbolRef();
+         // in vmThread.tempSlot.
+         //
+         // Furthermore, for unresolved invokedynamic and invokehandle bytecodes, we create a call to linkToStatic.
+         // The appendix object in the invoke cache array entry could be NULL, which we cannot determine at compile
+         // time when the callSite/invokeCache table entries are unresolved. The VM would have to remove the appendix
+         // object, which would require knowing the number of args of the method. To pass that information, we store to
+         // vmThread.floatTemp1 field. The name of the field is misleading, as it is an lconst/iconst being stored. This
+         // is also done for linkToSpecial, as it shares the same bytecode handler as linkToStatic.
          int32_t numParameterStackSlots = node->getSymbol()->castToResolvedMethodSymbol()->getNumParameterSlots();
+         int32_t numArgs = node->getNumArguments();
          TR::Node * numArgsNode = NULL;
-         TR::Node * storeNode = NULL;
-         if (self()->comp()->target().is64Bit())
+         TR::Node * numArgSlotsNode = NULL;
+         TR::Node * tempSlotStoreNode = NULL;
+         TR::Node * floatTemp1StoreNode = NULL;
+         bool is64Bit = self()->comp()->target().is64Bit();
+         TR::ILOpCodes storeOpCode;
+
+         if (is64Bit)
             {
-            numArgsNode = TR::Node::lconst(node, numParameterStackSlots);
-            storeNode = TR::Node::createStore(vmThreadTempSlotSymRef, numArgsNode, TR::lstore);
+            storeOpCode = TR::lstore;
+            numArgSlotsNode = TR::Node::lconst(node, numParameterStackSlots);
             }
          else
             {
-            numArgsNode = TR::Node::iconst(node, numParameterStackSlots);
-            storeNode = TR::Node::createStore(vmThreadTempSlotSymRef, numArgsNode, TR::istore);
+            storeOpCode = TR::istore;
+            numArgSlotsNode = TR::Node::iconst(node, numParameterStackSlots);
             }
-         storeNode->setByteCodeIndex(node->getByteCodeIndex());
-         TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), storeNode);
+         tempSlotStoreNode = TR::Node::createStore(self()->comp()->getSymRefTab()->findOrCreateVMThreadTempSlotFieldSymbolRef(),
+                                                   numArgSlotsNode,
+                                                   storeOpCode);
+         tempSlotStoreNode->setByteCodeIndex(node->getByteCodeIndex());
+         TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), tempSlotStoreNode);
+
+         if (rm == TR::java_lang_invoke_MethodHandle_linkToStatic || rm ==  TR::java_lang_invoke_MethodHandle_linkToSpecial)
+            {
+            numArgsNode = is64Bit ? TR::Node::lconst(node, numArgs) :
+                                    TR::Node::iconst(node, numArgs);
+
+            floatTemp1StoreNode = TR::Node::createStore(self()->comp()->getSymRefTab()->findOrCreateVMThreadFloatTemp1SymbolRef(),
+                                                      numArgsNode,
+                                                      storeOpCode);
+            floatTemp1StoreNode->setByteCodeIndex(node->getByteCodeIndex());
+            TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), floatTemp1StoreNode);
+            }
          }
       }
 
