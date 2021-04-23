@@ -502,7 +502,16 @@ JITServerAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *recor
       return false;
       }
 
-   uintptr_t offset = _sharedCache->offsetInSharedCacheFromPointer(chain);
+   uintptr_t offset = (uintptr_t)-1;
+   if (!_sharedCache->isPointerInSharedCache(chain, &offset))
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Failed to get SCC offset for class chain %p ID %zu for class %.*s ID %zu",
+            chain, record->id(), ROMCLASS_NAME(ramClasses[0]->romClass), record->list().ids()[0]
+         );
+      return false;
+      }
    uintptr_t chainLength = chain[0] / sizeof(chain[0]) - 1;
    uintptr_t *chainItems = chain + 1;
 
@@ -575,15 +584,24 @@ JITServerAOTDeserializer::cacheRecord(const WellKnownClassesSerializationRecord 
                                    .type = J9SHR_DATA_TYPE_JITHINT };
 
    // Store the "well-known classes" object in the local SCC or find the existing one
-   auto offsets = _sharedCache->storeSharedData(comp->j9VMThread(), key, &desc);
-   if (!offsets)
+   const void *wkcOffsets = _sharedCache->storeSharedData(comp->j9VMThread(), key, &desc);
+   if (!wkcOffsets)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Failed to get well-known class chain offsets");
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Failed to get well-known classes ID %zu",
+                                        record->id());
       return false;
       }
 
-   uintptr_t offset = _sharedCache->offsetInSharedCacheFromPointer((void *)offsets);
+   uintptr_t offset = (uintptr_t)-1;
+   if (!_sharedCache->isPointerInSharedCache((void *)wkcOffsets, &offset))
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: Failed to get SCC offset for well-known classes %p ID %zu", wkcOffsets, record->id()
+         );
+      return false;
+      }
    _wellKnownClassesMap.insert(it, { record->id(), offset });
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
