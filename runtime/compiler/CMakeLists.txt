@@ -228,7 +228,6 @@ set(J9_CFLAGS
 	${OMR_PLATFORM_C_COMPILE_OPTIONS}
 )
 set(J9_CXXFLAGS
-	${OMR_PLATFORM_COMPILE_OPTIONS}
 	${OMR_PLATFORM_CXX_COMPILE_OPTIONS}
 )
 if(OMR_OS_LINUX OR OMR_OS_OSX)
@@ -297,8 +296,20 @@ else()
 	message(SEND_ERROR "unsupported platform")
 endif()
 
-omr_stringify(J9_CFLAGS_STR ${J9_CFLAGS} ${J9_SHAREDFLAGS})
-omr_stringify(J9_CXXFLAGS_STR ${J9_CXXFLAGS} ${J9_SHAREDFLAGS})
+# Add optional user-specified compiler flags that only apply to the JIT
+list(APPEND J9_CFLAGS ${J9JIT_EXTRA_CFLAGS})
+list(APPEND J9_CXXFLAGS ${J9JIT_EXTRA_CXXFLAGS})
+
+# Note: J9_CFLAGS and J9_CXXFLAGS are appended after J9_SHAREDFLAGS so that
+#       OMR_PLATFORM_C_COMPILE_OPTIONS and OMR_PLATFORM_CXX_COMPILE_OPTIONS
+#       end up after OMR_PLATFORM_COMPILE_OPTIONS, which matches the rest
+#       of the VM build (see cmake/modules/OmrPlatform.cmake in OMR).
+#       This allows the user to pass extra compiler options via
+#       OMR_PLATFORM_C_COMPILE_OPTIONS and OMR_PLATFORM_CXX_COMPILE_OPTIONS
+#       to override the defaults specified by OMR_PLATFORM_COMPILE_OPTIONS,
+#       e.g. in order to produce a debug build.
+omr_stringify(J9_CFLAGS_STR ${J9_SHAREDFLAGS} ${J9_CFLAGS})
+omr_stringify(J9_CXXFLAGS_STR ${J9_SHAREDFLAGS} ${J9_CXXFLAGS})
 
 # Note: This is explicitly overriding what's provided by
 #       the VM CMakeLists, as they pass -fno-exceptions
