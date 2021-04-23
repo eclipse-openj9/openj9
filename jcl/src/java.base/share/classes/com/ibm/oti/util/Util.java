@@ -1,6 +1,4 @@
 /*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
-package com.ibm.oti.util;
-
 /*******************************************************************************
  * Copyright (c) 1998, 2021 IBM Corp. and others
  *
@@ -22,6 +20,7 @@ package com.ibm.oti.util;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.util;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -29,13 +28,18 @@ import java.io.PrintWriter;
 import java.io.UTFDataFormatException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.Set;
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.lang.module.ResolvedModule;
+import java.util.Collections;
 import java.util.Optional;
+import jdk.internal.module.ModuleHashes;
 import jdk.internal.module.ModuleReferenceImpl;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11*/
 
@@ -44,36 +48,33 @@ import com.ibm.oti.vm.VMLangAccess;
 
 public final class Util {
 
-	private static final String defaultEncoding;
+	private static final Charset defaultEncoding;
 	private static final VMLangAccess vmLangAccess;
 
 	static {
 		vmLangAccess = VM.getVMLangAccess();
 		String encoding = vmLangAccess.internalGetProperties().getProperty("os.encoding"); //$NON-NLS-1$
+		Charset charset = null;
 		if (encoding != null) {
 			try {
-				"".getBytes(encoding); //$NON-NLS-1$
-			} catch (java.io.UnsupportedEncodingException e) {
-				encoding = null;
+				charset = Charset.forName(encoding);
+			} catch (IllegalArgumentException e) {
+				// illegal or unsupported
 			}
 		}
-		defaultEncoding = encoding;
+		defaultEncoding = charset;
 	}
 
 public static byte[] getBytes(String name) {
 	if (defaultEncoding != null) {
-		try {
-			return name.getBytes(defaultEncoding);
-		} catch (java.io.UnsupportedEncodingException e) {}
+		return name.getBytes(defaultEncoding);
 	}
 	return name.getBytes();
 }
 
 public static String toString(byte[] bytes) {
 	if (defaultEncoding != null) {
-		try {
-			return new String(bytes, 0, bytes.length, defaultEncoding);
-		} catch (java.io.UnsupportedEncodingException e) {}
+		return new String(bytes, 0, bytes.length, defaultEncoding);
 	}
 	return new String(bytes, 0, bytes.length);
 }
@@ -117,13 +118,13 @@ public static String convertUTF8WithBuf(byte[] buf, char[] out, int offset, int 
  * This class contains a utility method for converting a string to the format
  * required by the <code>application/x-www-form-urlencoded</code> MIME content type.
  * <p>
- * All characters except letters ('a'..'z', 'A'..'Z') and numbers ('0'..'9') 
+ * All characters except letters ('a'..'z', 'A'..'Z') and numbers ('0'..'9')
  * and special characters are converted into their hexidecimal value prepended
  * by '%'.
  * <p>
  * For example: '#' -> %23
  * <p>
- *		
+ *
  * @return the string to be converted, will be identical if no characters are
  * converted
  * @param s		the converted string
@@ -154,7 +155,7 @@ public static String urlEncode(String s) {
 		modified = true;
 		convert(s.substring(start, s.length()), buf);
 	}
-	return modified ? buf.toString() : s;		
+	return modified ? buf.toString() : s;
 }
 
 private static void convert(String s, StringBuilder buf) {
@@ -173,15 +174,16 @@ private static void convert(String s, StringBuilder buf) {
 	}
 }
 
-public static boolean startsWithDriveLetter(String path){
+public static boolean startsWithDriveLetter(String path) {
 	// returns true if the string starts with <letter>:, example, d:
-	if (!(path.charAt(1) == ':')) {
-		return false;
-	}
-	char c = path.charAt(0);
-	c = Character.toLowerCase( c );
-	if (c >= 'a' && c <= 'z') {
-		return true;
+	if (path.length() >= 2) {
+		if (path.charAt(1) == ':') {
+			char c = path.charAt(0);
+			c = Character.toLowerCase(c);
+			if (('a' <= c) && (c <= 'z')) {
+				return true;
+			}
+		}
 	}
 	return false;
 }
@@ -189,25 +191,29 @@ public static boolean startsWithDriveLetter(String path){
 /*[PR 134399] jar:file: URLs should get canonicalized */
 public static String canonicalizePath(String file) {
 	int dirIndex;
-	while ((dirIndex = file.indexOf("/./")) >= 0) //$NON-NLS-1$
+	while ((dirIndex = file.indexOf("/./")) >= 0) { //$NON-NLS-1$
 		file = file.substring(0, dirIndex + 1) + file.substring(dirIndex + 3);
-	if (file.endsWith("/.")) file = file.substring(0, file.length() - 1); //$NON-NLS-1$
+	}
+	if (file.endsWith("/.")) { //$NON-NLS-1$
+		file = file.substring(0, file.length() - 1);
+	}
 	while ((dirIndex = file.indexOf("/../")) >= 0) { //$NON-NLS-1$
 		if (dirIndex != 0) {
 			file = file.substring(0, file.lastIndexOf('/', dirIndex - 1)) + file.substring(dirIndex + 3);
-		} else
+		} else {
 			file = file.substring(dirIndex + 3);
+		}
 	}
-	if (file.endsWith("/..") && file.length() > 3) //$NON-NLS-1$
+	if (file.endsWith("/..") && file.length() > 3) { //$NON-NLS-1$
 		file = file.substring(0, file.lastIndexOf('/', file.length() - 4) + 1);
-	
+	}
 	return file;
 }
 
 /**
  * This class contains a utility method which checks if one class loader is in
  * the ancestry of another.
- * 
+ *
  * @param currentLoader classloader whose ancestry is being checked
  * @param requestedLoader classloader who may be an ancestor of currentLoader
  * @return true if currentClassLoader is the same or a child of the requestLoader
@@ -244,8 +250,8 @@ public static void appendTo(Appendable buf, CharSequence s) {
 	}
 }
 
-@SuppressWarnings("all")
-private static final String digitChars[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ 
+private static final String digitChars[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
+
 /**
  * Helper method for output with PrintStream and PrintWriter
  * @param buf Buffer to receive string
@@ -273,7 +279,7 @@ public static void appendTo(Appendable buf, int number) {
  * @param indents number of tabs to prepend
  */
 public static void appendTo(Appendable buf, CharSequence s, int indents) {
-	for (int i=0; i<indents; i++) {
+	for (int i = 0; i < indents; i++) {
 		appendTo(buf, "\t"); //$NON-NLS-1$
 	}
 	appendTo(buf, s);
@@ -283,7 +289,7 @@ public static void appendTo(Appendable buf, CharSequence s, int indents) {
  * Helper method to print text without constructing new String objects
  * @param buf destination for new text
  */
-public static void appendLnTo(Appendable buf) {		
+public static void appendLnTo(Appendable buf) {
 	if (buf instanceof PrintStream) {
 		((PrintStream)buf).println();
 	} else if (buf instanceof PrintWriter) {
@@ -309,7 +315,7 @@ public static void printStackTraceElement(StackTraceElement e, Object elementSou
 	 * or if it is the "app" classloader and the calling class is Throwable/StackFrame.
 	 */
 	if ((null != classLoaderName)
-			&& (!classLoaderName.isEmpty())
+			&& !classLoaderName.isEmpty()
 			&& (includeExtendedInfo || includeClassLoaderName(e))
 	) {
 		classLoaderNameIncluded = true;
@@ -318,7 +324,7 @@ public static void printStackTraceElement(StackTraceElement e, Object elementSou
 	}
 
 	final String modName = e.getModuleName();
-	if ((null == modName) || (modName.isEmpty())) {
+	if ((null == modName) || modName.isEmpty()) {
 		/* If the classloader name was included but there is no module name, note the empty module in the trace */
 		if (classLoaderNameIncluded) {
 			appendTo(buf, "/"); //$NON-NLS-1$
@@ -328,7 +334,7 @@ public static void printStackTraceElement(StackTraceElement e, Object elementSou
 		appendTo(buf, modName);
 		if (includeExtendedInfo || includeModuleVersion(e)) {
 			String mVer = e.getModuleVersion();
-			if ((null != mVer) && (!mVer.isEmpty())) {
+			if ((null != mVer) && !mVer.isEmpty()) {
 				/* Append the module version if it exists */
 				appendTo(buf, "@"); //$NON-NLS-1$
 				appendTo(buf, mVer);
@@ -429,8 +435,13 @@ private static final class NonUpgradeableModules {
 		ResolvedModule resolvedJavaBaseModule = ModuleLayer.boot().configuration().findModule("java.base") //$NON-NLS-1$
 				.orElseThrow(() -> new InternalError("java.base module could not be found")); //$NON-NLS-1$
 		ModuleReferenceImpl javaBaseModuleRef = (ModuleReferenceImpl) resolvedJavaBaseModule.reference();
+		ModuleHashes hashes = javaBaseModuleRef.recordedHashes();
 
-		moduleNames = javaBaseModuleRef.recordedHashes().names();
+		if (hashes == null) {
+			moduleNames = Collections.singleton("java.base"); //$NON-NLS-1$
+		} else {
+			moduleNames = hashes.names();
+		}
 	}
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 11*/
