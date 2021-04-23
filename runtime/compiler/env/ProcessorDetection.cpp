@@ -289,13 +289,6 @@ portLibCall_getARMProcessorType()
    return tp;
    }
 
-static TR_Processor
-portLibCall_getARM64ProcessorType()
-   {
-   // ToDo: Add code for detecting processor type (Issue #6637)
-   return TR_DefaultARM64Processor;
-   }
-
 // -----------------------------------------------------------------------------
 
 // For Verbose Log
@@ -389,6 +382,25 @@ int32_t TR_J9VM::getCompInfo(char *processorName, int32_t stringLength)
    if (TR::Compiler->target.cpu.isARM())
       {
       sourceString = "Unknown ARM processor";
+      returnValue = strlen(sourceString);
+      strncpy(processorName, sourceString, stringLength);
+      return returnValue;
+      }
+
+   if (TR::Compiler->target.cpu.isARM64())
+      {
+      switch (TR::Compiler->target.cpu.getProcessorDescription().processor)
+         {
+         case OMR_PROCESSOR_ARM64_UNKNOWN:
+            sourceString = "Unknown ARM64 processor";
+            break;
+         case OMR_PROCESSOR_ARM64_V8_A:
+            sourceString = "ARMv8-A processor";
+            break;
+         default:
+            sourceString = "Unknown ARM64 processor";
+            break;
+         }
       returnValue = strlen(sourceString);
       strncpy(processorName, sourceString, stringLength);
       return returnValue;
@@ -593,10 +605,8 @@ TR_J9VM::initializeProcessorType()
       }
    else if (TR::Compiler->target.cpu.isARM64())
       {
-      TR::Compiler->target.cpu.setProcessor(portLibCall_getARM64ProcessorType());
-
-      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstARM64Processor
-             && TR::Compiler->target.cpu.id() <= TR_LastARM64Processor, "Not a valid ARM64 Processor Type");
+      OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
+      TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
       }
    else
       {
