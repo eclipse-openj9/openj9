@@ -123,6 +123,30 @@ class TR_MethodHandleTransformer : public TR::Optimization
    //
    void process_java_lang_invoke_MethodHandle_linkTo(TR::TreeTop* tt, TR::Node* node);
 
+   /** \brief
+    *    Transforms calls to java/lang/invoke/Invokers.checkExactType to ZEROCHK, or eliminated
+    *    entirely if the check can be performed at compile time
+    *
+    *  \param tt
+    *    The treetop of the call node
+    *
+    *  \param node
+    *    The call node representing the call to java/lang/invoke/Invokers.checkExactType
+    */
+   void process_java_lang_invoke_Invokers_checkExactType(TR::TreeTop* tt, TR::Node* node);
+
+   /** \brief
+    *    Eliminates calls to java/lang/invoke/Invokers.checkCustomized when its argument
+    *    is a known object
+    *
+    *  \param tt
+    *    The treetop of the call node
+    *
+    *  \param node
+    *    The call node representing the call to java/lang/invoke/Invokers.checkCustomized
+    */
+   void process_java_lang_invoke_Invokers_checkCustomized(TR::TreeTop* tt, TR::Node* node);
+
    private:
    int32_t _numLocals; // Number of parms, autos and temps
    ObjectInfo * _currentObjectInfo;  // Object info for current block being processed
