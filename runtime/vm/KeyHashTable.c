@@ -523,10 +523,6 @@ hashClassTableNextDo(J9HashTableState *walkState)
 	return (NULL == next) ? NULL : next->ramClass;
 }
 
-/**
- * Find the package ID for the given name and length.
- * NOTE: You must own the class table mutex before calling this function.
- */
 UDATA
 hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, IDATA entryIndex, I_32 locationType)
 {
@@ -553,7 +549,7 @@ hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *
 			result = growClassHashTable(javaVM, classLoader, &key);
 		}
 		if (NULL != result) {
-			packageID = *(UDATA *)result;
+			packageID = result->packageID.taggedROMClass;
 			if (isSystemClassLoader && J9_ARE_ALL_BITS_SET(result->tag, TAG_GENERATED_PACKAGE)) {
 				if (J9_ARE_NO_BITS_SET(key.tag, TAG_GENERATED_PACKAGE)) {
 					/* Below function removes the TAG_GENERATED_PACKAGE bit from the hash table entry after adding
@@ -584,6 +580,18 @@ hashPkgTableAt(J9ClassLoader *classLoader, J9ROMClass *romClass)
 		result = hashTableFind(table, &key);
 	}
 	return (NULL != result) ? &result->packageID : NULL;
+}
+
+void
+hashPkgTableDelete(J9ClassLoader *classLoader, J9ROMClass *romClass)
+{
+	J9PackageIDTableEntry *entry = hashPkgTableAt(classLoader, romClass);
+	if (NULL != entry) {
+		if ((entry->taggedROMClass & ~(UDATA)(TAG_ROM_CLASS | TAG_GENERATED_PACKAGE)) == (UDATA)romClass) {
+			uint32_t rc = hashTableRemove(classLoader->classHashTable, entry);
+			Assert_VM_true(0 == rc);
+		}
+	}
 }
 
 J9PackageIDTableEntry *
