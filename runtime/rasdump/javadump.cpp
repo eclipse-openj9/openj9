@@ -21,9 +21,16 @@
  *******************************************************************************/
 
 /* Includes */
+#if defined(J9ZOS390)
+#define _LARGE_TIME_API
+#endif /* defined(J9ZOS390) */
+#include <time.h>
+#if defined(AIXPPC)
+#include <sys/time.h>
+#endif /* defined(AIXPPC) */
 #include <string.h>
 #include <stdlib.h>
-#ifdef WIN32
+#if defined(WIN32)
 #include <malloc.h>
 #elif defined(LINUX) || defined(AIXPPC)
 #include <alloca.h>
@@ -384,7 +391,7 @@ const int JavaCoreDumpWriter::_MaximumMonitorInfosPerThread(32);
 
 class sectionClosure {
 private:
-	sectionClosure() {};
+	sectionClosure() {}
 
 public:
 	void (JavaCoreDumpWriter::*sectionFunction)(void);
@@ -393,7 +400,7 @@ public:
 	sectionClosure(void (JavaCoreDumpWriter::*func)(void), JavaCoreDumpWriter *writer) :
 		sectionFunction(func),
 		jcw(writer)
-	{};
+	{}
 
 	void invoke(void) {
 		(jcw->*sectionFunction)();
@@ -407,7 +414,6 @@ struct walkClosure {
 	/* used for both J9ThreadWalkState and J9StackWalkState */
 	void *state;
 };
-
 
 #define CALL_PROTECT(section, retVal) \
 	do { \
@@ -581,6 +587,8 @@ JavaCoreDumpWriter::writeHeader(void)
 	);
 }
 
+static const char TIMESTAMP_FORMAT[] = "%Y/%m/%d at %H:%M:%S";
+
 /**************************************************************************************************/
 /*                                                                                                */
 /* JavaCoreDumpWriter::writeTitleSection() method implementation                                  */
@@ -596,6 +604,7 @@ JavaCoreDumpWriter::writeTitleSection(void)
 	);
 
 	PORT_ACCESS_FROM_JAVAVM(_VirtualMachine);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	char cset[64];
 	IDATA getCSet = j9file_get_text_encoding(cset, sizeof(cset));
@@ -613,27 +622,101 @@ JavaCoreDumpWriter::writeTitleSection(void)
 		writeEventDrivenTitle();
 	}
 
-	/* Write the date and time that the dump was generated */
-	U_64 now = j9time_current_time_millis();
-	RasDumpGlobalStorage* dump_storage;
-	struct J9StringTokens* stringTokens;
+	/* write the date and time that the dump was generated */
+	char timeStamp[_MaximumTimeStampLength + 1];
+	int64_t now = j9time_current_time_millis();
 
-	dump_storage = (RasDumpGlobalStorage*)_VirtualMachine->j9rasdumpGlobalStorage;
+	omrstr_ftime_ex(timeStamp, _MaximumTimeStampLength, TIMESTAMP_FORMAT, now, OMRSTR_FTIME_FLAG_UTC);
+	timeStamp[_MaximumTimeStampLength] = '\0';
 
-	/* lock access to the tokens */
-	omrthread_monitor_enter(dump_storage->dumpLabelTokensMutex);
-	stringTokens = (struct J9StringTokens*)dump_storage->dumpLabelTokens;
-	j9str_set_time_tokens(stringTokens, now);
-	/* release access to the tokens */
-	omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
+	_OutputStream.writeCharacters("1TIDATETIMEUTC Date: ");
+	_OutputStream.writeCharacters(timeStamp);
+	_OutputStream.writeInteger(now % 1000, ":%03d"); /* add the milliseconds */
+	_OutputStream.writeCharacters(" (UTC)\n");
 
-	char timeStamp[_MaximumTimeStampLength];
+	{
+		RasDumpGlobalStorage *dump_storage = (RasDumpGlobalStorage *)_VirtualMachine->j9rasdumpGlobalStorage;
+		struct J9StringTokens *stringTokens = (struct J9StringTokens *)dump_storage->dumpLabelTokens;
 
-	j9str_subst_tokens(timeStamp, _MaximumTimeStampLength, "%Y/%m/%d at %H:%M:%S", stringTokens);
+		/* lock access to the tokens */
+		omrthread_monitor_enter(dump_storage->dumpLabelTokensMutex);
+
+		j9str_set_time_tokens(stringTokens, now);
+
+		/* release access to the tokens */
+		omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
+	}
+
+	omrstr_ftime_ex(timeStamp, _MaximumTimeStampLength, TIMESTAMP_FORMAT, now, OMRSTR_FTIME_FLAG_LOCAL);
+	timeStamp[_MaximumTimeStampLength] = '\0';
 
 	_OutputStream.writeCharacters("1TIDATETIME    Date: ");
 	_OutputStream.writeCharacters(timeStamp);
 	_OutputStream.writeInteger(now % 1000, ":%03d"); /* add the milliseconds */
+	_OutputStream.writeCharacters("\n");
+
+	bool zoneAvailable = false;
+	int32_t zoneSecondsEast = 0;
+	const char *zoneName = NULL;
+
+#if defined(WIN32)
+	/* until a reliable mechanism is found, don't report timezone */
+#elif defined(J9ZOS390) /* defined(WIN32) */
+	time64_t timeNow = time64(NULL);
+	struct tm utc;
+	struct tm local;
+
+	if ((NULL != gmtime64_r(&timeNow, &utc)) && (NULL != localtime64_r(&timeNow, &local))) {
+		zoneAvailable = true;
+		zoneSecondsEast = (int32_t)difftime64(timeNow, mktime64(&utc));
+		if (0 == local.tm_isdst) {
+			zoneName = tzname[0];
+		} else if (local.tm_isdst > 0) {
+			zoneName = tzname[1];
+			/* compensate for DST because difftime64() doesn't appear to do so */
+			zoneSecondsEast += 60 * 60;
+		}
+	}
+#else /* defined(WIN32) */
+	time_t timeNow = time(NULL);
+	struct tm utc;
+	struct tm local;
+
+	if ((NULL != gmtime_r(&timeNow, &utc)) && (NULL != localtime_r(&timeNow, &local))) {
+		zoneAvailable = true;
+		zoneSecondsEast = (int32_t)difftime(timeNow, mktime(&utc));
+		if (0 == local.tm_isdst) {
+			zoneName = tzname[0];
+		} else if (local.tm_isdst > 0) {
+			zoneName = tzname[1];
+			/* compensate for DST because difftime() doesn't appear to do so */
+			zoneSecondsEast += 60 * 60;
+		}
+	}
+#endif  /* defined(WIN32) */
+
+	_OutputStream.writeCharacters("1TITIMEZONE    Timezone: ");
+	if (!zoneAvailable) {
+		_OutputStream.writeCharacters("(unavailable)");
+	} else {
+		_OutputStream.writeCharacters("UTC");
+		if (0 != zoneSecondsEast) {
+			const char *format = (zoneSecondsEast > 0) ? "+%d" : "-%d";
+			uint32_t offset = ((uint32_t)((zoneSecondsEast > 0) ? zoneSecondsEast : -zoneSecondsEast)) / 60;
+			uint32_t hours = offset / 60;
+			uint32_t minutes = offset % 60;
+
+			_OutputStream.writeInteger(hours, format);
+			if (0 != minutes) {
+				_OutputStream.writeInteger(minutes, ":%02d");
+			}
+		}
+		if ((NULL != zoneName) && ('\0' != *zoneName)) {
+			_OutputStream.writeCharacters(" (");
+			_OutputStream.writeCharacters(zoneName);
+			_OutputStream.writeCharacters(")");
+		}
+	}
 	_OutputStream.writeCharacters("\n");
 
 	_OutputStream.writeCharacters("1TINANOTIME    System nanotime: ");
@@ -1125,9 +1208,10 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	/* release access to the tokens */
 	omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
 
-	char timeStamp[_MaximumTimeStampLength];
+	char timeStamp[_MaximumTimeStampLength + 1];
 
-	j9str_subst_tokens(timeStamp, _MaximumTimeStampLength, "%Y/%m/%d at %H:%M:%S", stringTokens);
+	j9str_subst_tokens(timeStamp, _MaximumTimeStampLength, TIMESTAMP_FORMAT, stringTokens);
+	timeStamp[_MaximumTimeStampLength] = '\0';
 
 	_OutputStream.writeCharacters("1CISTARTTIME   JVM start time: ");
 	_OutputStream.writeCharacters(timeStamp);
@@ -1515,7 +1599,7 @@ static UDATA
 countMemoryCategoriesCallback (U_32 categoryCode, const char * categoryName, UDATA liveBytes, UDATA liveAllocations, BOOLEAN isRoot, U_32 parentCategoryCode, OMRMemCategoryWalkState * state)
 {
 	(*(U_32 *)state->userData1)++;
-	
+
 	memcategory_max_indexes *max_indexes = (memcategory_max_indexes *)state->userData2;
 	if (categoryCode > OMRMEM_LANGUAGE_CATEGORY_LIMIT) {
 		U_32 omrCode = OMRMEM_OMR_CATEGORY_INDEX_FROM_CODE(categoryCode);
@@ -2063,7 +2147,8 @@ void
 JavaCoreDumpWriter::writeHookInfo(struct OMRHookInfo4Dump *hookInfo)
 {
 	char timeStamp[_MaximumTimeStampLength + 1];
-	OMRPORT_ACCESS_FROM_OMRVM(_VirtualMachine->omrVM);
+	PORT_ACCESS_FROM_JAVAVM(_VirtualMachine);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
 	_OutputStream.writeCharacters("4HKCALLSITE        ");
 	if (NULL != hookInfo->callsite) {
@@ -2075,8 +2160,8 @@ JavaCoreDumpWriter::writeHookInfo(struct OMRHookInfo4Dump *hookInfo)
 	_OutputStream.writeCharacters("4HKSTARTTIME       Start Time: ");
 	/* convert time from microseconds to milliseconds */
 	uint64_t startTimeMs = hookInfo->startTime / 1000;
-	omrstr_ftime(timeStamp, _MaximumTimeStampLength, "%Y-%m-%dT%H:%M:%S", startTimeMs);
-	/* nul-terminate timestamp in case omrstr_ftime didn't have enough room to do so */
+	omrstr_ftime_ex(timeStamp, _MaximumTimeStampLength, "%Y-%m-%dT%H:%M:%S", startTimeMs, OMRSTR_FTIME_FLAG_LOCAL);
+	/* nul-terminate timestamp in case omrstr_ftime_ex didn't have enough room to do so */
 	timeStamp[_MaximumTimeStampLength] = '\0';
 	_OutputStream.writeCharacters(timeStamp);
 	_OutputStream.writeInteger64(startTimeMs % 1000, ".%03llu");
@@ -4453,7 +4538,6 @@ JavaCoreDumpWriter::writeThread(J9VMThread* vmThread, J9PlatformThread *nativeTh
 									_OutputStream.writeCharacters("3XMTHREADINFO3           No Java callstack associated with throwable\n");
 								}
 							}
-
 						} else {
 							_OutputStream.writeCharacters("3XMTHREADINFO3           No Java callstack associated with this thread\n");
 						}

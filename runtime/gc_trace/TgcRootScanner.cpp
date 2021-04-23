@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,7 +104,8 @@ printRootScannerStats(OMR_VMThread *omrVMThread)
 	
 	/* print only if at least one thread reported stats on at least one of its roots */
 	if (extensions->rootScannerStatsUsed) {
-		j9str_ftime(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", j9time_current_time_millis());
+		OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+		omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", j9time_current_time_millis(), OMRSTR_FTIME_FLAG_LOCAL);
 		tgcExtensions->printf("<scan timestamp=\"%s\">\n", timestamp);
 
 		GC_VMThreadListIterator threadIterator(currentThread);

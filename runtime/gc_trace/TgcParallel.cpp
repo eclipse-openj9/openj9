@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2021 IBM Corp. and others
  *
@@ -248,10 +247,11 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	J9VMThread *walkThread;
 	uint64_t scavengeTotalTime;
 	PORT_ACCESS_FROM_VMC(vmThread);
-	
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
 	char timestamp[32];
 	int64_t timeInMillis = j9time_current_time_millis();
-	j9str_ftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S", timeInMillis);
+	omrstr_ftime_ex(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%S", timeInMillis, OMRSTR_FTIME_FLAG_LOCAL);
 	tgcExtensions->printf("\n");
 	tgcExtensions->printf("Scavenger parallel and progress stats, timestamp=\"%s.%ld\"\n", timestamp, timeInMillis % 1000);
 

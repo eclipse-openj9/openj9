@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -239,8 +239,6 @@ printSharedCache(void* element, void* param)
 	SH_OSCache_Info* currentItem = (SH_OSCache_Info*) element;
 	if (((state->printCompatibleCache == true) && (currentItem->isCompatible))
 			|| ((state->printIncompatibleCache == true) && (!currentItem->isCompatible))) {
-		char addrmodeStr[10];
-
 		PORT_ACCESS_FROM_JAVAVM(state->vm);
 
 		Trc_SHR_CLM_printSharedCache_Entry();
@@ -257,16 +255,16 @@ printSharedCache(void* element, void* param)
 		}
 
 		if (state->printHeader) {
-			j9tty_printf(PORTLIB, "%-16s\t", "Cache name");
-			j9tty_printf(PORTLIB, "%-14s", "level");
+			j9tty_printf(PORTLIB, "%-20s", "Cache name");
+			j9tty_printf(PORTLIB, "%-15s", "level");
 			j9tty_printf(PORTLIB, "%-16s", "cache-type");
-			j9tty_printf(PORTLIB, "%-16s", "feature");
-			j9tty_printf(PORTLIB, "%-12s", "layer");
+			j9tty_printf(PORTLIB, "%-9s", "feature");
+			j9tty_printf(PORTLIB, "%-7s", "layer");
 #if !defined(WIN32)
 			j9tty_printf(PORTLIB, "%-15s", "OS shmid");
 			j9tty_printf(PORTLIB, "%-15s", "OS semid");
 #endif
-			j9tty_printf(PORTLIB, "%-15s", "last detach time\n");
+			j9tty_printf(PORTLIB, "%s", "last detach time\n");
 			state->printHeader = 0;
 			if (currentItem->isCompatible) {
 				state->printCompatibleHeader = 1;
@@ -274,7 +272,7 @@ printSharedCache(void* element, void* param)
 				state->printIncompatibleHeader = 1;
 			}
 		}
-		
+
 		if (!currentItem->isCompatible && state->printIncompatibleHeader == 0) {
 			state->printIncompatibleHeader = 1;
 		}
@@ -288,12 +286,15 @@ printSharedCache(void* element, void* param)
 			j9tty_printf(PORTLIB, "\nIncompatible shared caches\n");
 			state->printIncompatibleHeader = 2;
 		}
-		j9tty_printf(PORTLIB, "%-16s\t", currentItem->name);
+		j9tty_printf(PORTLIB, "%-20s", currentItem->name);
 		char jclLevelStr[10];
 		memset(jclLevelStr, 0, sizeof(jclLevelStr));
 		getStringForShcModlevel(PORTLIB, currentItem->versionData.modlevel, jclLevelStr, sizeof(jclLevelStr));
+		char addrmodeStr[10];
 		getStringForShcAddrmode(PORTLIB, currentItem->versionData.addrmode, addrmodeStr);
-		j9tty_printf(PORTLIB, "%s %s  ", jclLevelStr, addrmodeStr);
+		char levelStr[20];
+		j9str_printf(PORTLIB, levelStr, sizeof(levelStr), "%s %s", jclLevelStr, addrmodeStr);
+		j9tty_printf(PORTLIB, "%-15s", levelStr);
 		if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == currentItem->versionData.cacheType) {
 			j9tty_printf(PORTLIB, "%-16s", "persistent");
 		} else if (J9PORT_SHR_CACHE_TYPE_SNAPSHOT == currentItem->versionData.cacheType) {
@@ -304,16 +305,16 @@ printSharedCache(void* element, void* param)
 			j9tty_printf(PORTLIB, "%-16s", "non-persistent");
 		}
 		if (J9_ARE_ALL_BITS_SET(currentItem->versionData.feature, J9SH_FEATURE_COMPRESSED_POINTERS)) {
-			j9tty_printf(PORTLIB, "%-16s", "cr");
+			j9tty_printf(PORTLIB, "%-9s", "cr");
 		} else if (J9_ARE_ALL_BITS_SET(currentItem->versionData.feature, J9SH_FEATURE_NON_COMPRESSED_POINTERS)) {
-			j9tty_printf(PORTLIB, "%-16s", "non-cr");
+			j9tty_printf(PORTLIB, "%-9s", "non-cr");
 		} else {
-			j9tty_printf(PORTLIB, "%-16s", "default");
+			j9tty_printf(PORTLIB, "%-9s", "default");
 		}
 		if (currentItem->layer >= 0) {
-			j9tty_printf(PORTLIB, "%-12d", currentItem->layer);
+			j9tty_printf(PORTLIB, "%-7d", currentItem->layer);
 		} else {
-			j9tty_printf(PORTLIB, "%-12s", "");
+			j9tty_printf(PORTLIB, "%-7s", "");
 		}
 #if !defined(WIN32)
 		if (currentItem->os_shmid != (UDATA)J9SH_OSCACHE_UNKNOWN) {
@@ -329,29 +330,24 @@ printSharedCache(void* element, void* param)
 #endif
 		if (currentItem->nattach == 0) {
 			if (J9SH_OSCACHE_UNKNOWN == currentItem->lastdetach) {
-				j9tty_printf(PORTLIB, "%-15s\n", "Unknown");
+				j9tty_printf(PORTLIB, "%s\n", "Unknown");
 			} else {
-				time_t t;
-
-				t = (time_t) (currentItem->lastdetach/1000);
-
-				/*
-				 *	For now we will use ctime function - we need to modify str_ftime to take in the time at some point
-				 *	j9str_ftime(formatted, 30, "%d %b %Y %H:%m", currentItem->lastdetach * 1000);
-				 *  j9tty_printf(PORTLIB, "%-15s", formatted);
-				 */
-
-				j9tty_printf(PORTLIB, "%-15s", ctime(&t));
+				OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+#define FORMAT "%a %b %d %H:%M:%S %Y"
+				char buffer[sizeof(FORMAT) + 1 + 1 + 2]; /* %a and %b expand to 1 extra char each, %Y to 2 extra */
+				omrstr_ftime_ex(buffer, sizeof(buffer), FORMAT, currentItem->lastdetach, OMRSTR_FTIME_FLAG_LOCAL);
+				j9tty_printf(PORTLIB, "%s\n", buffer);
+#undef FORMAT
 			}
 		} else if ((currentItem->nattach == J9SH_OSCACHE_UNKNOWN) || (currentItem->lastdetach == J9SH_OSCACHE_UNKNOWN)) {
 			if (J9PORT_SHR_CACHE_TYPE_SNAPSHOT == currentItem->versionData.cacheType) {
 				/* no last detach time for snapshot,  currentItem->nattach and currentItem->lastdetach are both J9SH_OSCACHE_UNKNOWN */
-				j9tty_printf(PORTLIB,"\n");
+				j9tty_printf(PORTLIB, "\n");
 			} else {
-				j9tty_printf(PORTLIB, "%-15s\n", "Unknown");
+				j9tty_printf(PORTLIB, "%s\n", "Unknown");
 			}
 		} else {
-			j9tty_printf(PORTLIB, "%-15s\n", "In use");
+			j9tty_printf(PORTLIB, "%s\n", "In use");
 		}
 	}
 	Trc_SHR_CLM_printSharedCache_Exit();

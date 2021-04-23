@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1035,8 +1035,9 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 							((node->stopOnCount < node->startOnCount) || (newCount <= node->stopOnCount))) {
 						if (printed == 0) {
 							if (node->dumpFn != doSilentDump) {
+								OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 								char dateStamp[64];
-								j9str_ftime(dateStamp, sizeof(dateStamp), "%Y/%m/%d %H:%M:%S", now);
+								omrstr_ftime_ex(dateStamp, sizeof(dateStamp), "%Y/%m/%d %H:%M:%S", now, OMRSTR_FTIME_FLAG_LOCAL);
 								j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR | J9NLS_VITAL, J9NLS_DMP_PROCESSING_EVENT_TIME, mapDumpEvent(eventFlags), detailLength, detailData, dateStamp);
 								printed = 1;
 							}
