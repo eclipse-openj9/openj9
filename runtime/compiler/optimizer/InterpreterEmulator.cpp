@@ -1069,7 +1069,6 @@ InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessf
    {
    heuristicTrace(tracer(),"Find and create callsite %s\n", withState ? "with state" : "without state");
 
-   TR::Region findCallsitesRegion(comp()->region());
    if (withState)
       initializeIteratorWithState();
    _wasPeekingSuccessfull = wasPeekingSuccessfull;
