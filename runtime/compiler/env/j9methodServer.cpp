@@ -2454,6 +2454,30 @@ TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, bool o
    }
 
 void *
+TR_ResolvedRelocatableJ9JITServerMethod::getConstantDynamicTypeFromCP(int32_t cpIndex)
+   {
+   return NULL;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::isConstantDynamic(int32_t cpIndex)
+   {
+   return TR_ResolvedJ9JITServerMethod::isConstantDynamic(cpIndex);
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedConstantDynamic(int32_t cpIndex)
+   {
+   return true;
+   }
+
+void *
+TR_ResolvedRelocatableJ9JITServerMethod::dynamicConstant(int32_t cpIndex, uintptr_t *obj)
+   {
+   return NULL;
+   }
+
+void *
 TR_ResolvedRelocatableJ9JITServerMethod::methodTypeConstant(I_32 cpIndex)
    {
    TR_ASSERT(false, "should be unreachable");
@@ -2479,6 +2503,42 @@ TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedMethodHandle(I_32 cpIndex)
    {
    TR_ASSERT(false, "should be unreachable");
    return true;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex)
+   {
+   return true;
+   }
+
+void *
+TR_ResolvedRelocatableJ9JITServerMethod::callSiteTableEntryAddress(int32_t callSiteIndex)
+   {
+   return NULL;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedMethodTypeTableEntry(int32_t cpIndex)
+   {
+   return true;
+   }
+
+void *
+TR_ResolvedRelocatableJ9JITServerMethod::methodTypeTableEntryAddress(int32_t cpIndex)
+   {
+   return NULL;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex)
+   {
+   return true;
+   }
+
+void *
+TR_ResolvedRelocatableJ9JITServerMethod::varHandleMethodTypeTableEntryAddress(int32_t cpIndex)
+   {
+   return NULL;
    }
 
 TR_OpaqueClassBlock *

@@ -296,10 +296,24 @@ class TR_ResolvedRelocatableJ9JITServerMethod : public TR_ResolvedJ9JITServerMet
    virtual bool                  validateClassFromConstantPool(TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass) override;
    virtual bool                  validateArbitraryClass(TR::Compilation *comp, J9Class *clazz) override;
    virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
+
+   virtual void *                getConstantDynamicTypeFromCP(int32_t cpIndex) override;
+   virtual bool                  isConstantDynamic(int32_t cpIndex) override;
+   virtual bool                  isUnresolvedConstantDynamic(int32_t cpIndex) override;
+   virtual void *                dynamicConstant(int32_t cpIndex, uintptr_t *obj) override;
+
    virtual void *                methodTypeConstant(int32_t cpIndex) override;
    virtual bool                  isUnresolvedMethodType(int32_t cpIndex) override;
    virtual void *                methodHandleConstant(int32_t cpIndex) override;
    virtual bool                  isUnresolvedMethodHandle(int32_t cpIndex) override;
+
+   virtual bool                  isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) override;
+   virtual void *                callSiteTableEntryAddress(int32_t callSiteIndex) override;
+   virtual bool                  isUnresolvedMethodTypeTableEntry(int32_t cpIndex) override;
+   virtual void *                methodTypeTableEntryAddress(int32_t cpIndex) override;
+   virtual bool                  isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex) override;
+   virtual void *                varHandleMethodTypeTableEntryAddress(int32_t cpIndex) override;
+
    virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override;
    virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod(TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP) override;
    virtual bool                  getUnresolvedFieldInCP(I_32 cpIndex) override;
