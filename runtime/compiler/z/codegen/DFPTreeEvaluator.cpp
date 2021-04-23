@@ -1760,71 +1760,9 @@ l2dfp64(TR::Node * node, TR::CodeGenerator * cg)
 inline TR::Register *
 lu2dfp64(TR::Node * node, TR::CodeGenerator * cg)
    {
-   TR::Node * firstChild = node->getFirstChild();
-   TR::Register * srcReg = cg->evaluate(firstChild);
-   TR::Register * tempReg = cg->allocateRegister();
-   TR::Register * tempDEReg = NULL;
-   TR::Compilation *comp = cg->comp();
-
-   generateRRInstruction(cg, TR::InstOpCode::LGR, node, tempReg, srcReg);
-   // subtract (INTMAX + 1) from the upper 32 bit register using x_or operation.
-   generateRILInstruction(cg, TR::InstOpCode::XIHF, node, tempReg, 0x80000000);
-
-   TR::Register * targetReg;
-   if( node->getDataType() != TR::DecimalLongDouble)
-      {
-      targetReg = cg->allocateRegister(TR_FPR);
-      tempDEReg = cg->allocateFPRegisterPair();
-      generateRRInstruction(cg, TR::InstOpCode::CXGTR, node, tempDEReg, tempReg);
-      }
-   else
-      {
-      targetReg = cg->allocateFPRegisterPair();
-      generateRRInstruction(cg, TR::InstOpCode::CXGTR, node, targetReg, tempReg);
-      }
-
-   // add back (INTMAX + 1)
-   int64_t value1 = 0x2208000000000000LL;
-   int64_t value2 = 0x948DF20DA5CFD42ELL;
-
-   size_t offset1 = cg->findOrCreateLiteral(&value1, 8);
-   size_t offset2 = cg->findOrCreateLiteral(&value2, 8);
-
-   TR::Register * litReg = cg->allocateRegister();
-   generateLoadLiteralPoolAddress(cg, node, litReg);
-
-   TR::MemoryReference * mrHi = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset1, cg);
-   TR::MemoryReference * mrLo = new (cg->trHeapMemory()) TR::MemoryReference(litReg, offset2, cg);
-
-   TR::Register * tempMaxReg = cg->allocateFPRegisterPair();
-   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getHighOrder(), mrHi);
-   generateRXInstruction(cg, TR::InstOpCode::LD, node, tempMaxReg->getLowOrder(), mrLo);
-   TR::Register * tempTgtReg = NULL;
-
-   if( node->getDataType() != TR::DecimalLongDouble)
-      {
-      generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, tempDEReg, tempDEReg, tempMaxReg);
-      uint8_t m3 = 0x0, m4 =0x0;
-      tempTgtReg = cg->allocateFPRegisterPair();
-      generateRRFInstruction(cg, TR::InstOpCode::LDXTR, node, tempTgtReg, tempDEReg, m3, m4);
-      generateRRInstruction(cg, TR::InstOpCode::LDR, node, targetReg, tempTgtReg->getHighOrder());
-      }
-   else
-      generateRRRInstruction(cg, TR::InstOpCode::AXTR, node, targetReg, targetReg, tempMaxReg);
-
-   cg->stopUsingRegister(tempReg);
-   cg->stopUsingRegister(tempMaxReg);
-   mrHi->stopUsingMemRefRegister(cg);
-   mrLo->stopUsingMemRefRegister(cg);
-   if( node->getDataType() != TR::DecimalLongDouble)
-      {
-      cg->stopUsingRegister(tempDEReg);
-      cg->stopUsingRegister(tempTgtReg);
-      }
-
-   node->setRegister(targetReg);
-   cg->decReferenceCount(firstChild);
-   return targetReg;
+   // This path used to contain a call to an API which would have returned a garbage result. Rather than 100% of the
+   // time generating an invalid sequence here which is guaranteed to crash if executed, we fail the compilation.
+   cg->comp()->failCompilation<TR::CompilationException>("Existing code relied on an unimplemented API and is thus not safe. See eclipse/omr#5937.");
    }
 
 /************************************************************************************************
