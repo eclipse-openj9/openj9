@@ -34,6 +34,7 @@
 #include "env/IO.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
+#include "env/VMAccessCriticalSection.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
 #include "il/MethodSymbol.hpp"
@@ -487,6 +488,12 @@ void TR_MethodHandleTransformer::visitCall(TR::TreeTop* tt, TR::Node* node)
       case TR::java_lang_invoke_MethodHandle_linkToStatic:
          process_java_lang_invoke_MethodHandle_linkTo(tt, node);
          break;
+      case TR::java_lang_invoke_Invokers_checkCustomized:
+         process_java_lang_invoke_Invokers_checkCustomized(tt, node);
+         break;
+      case TR::java_lang_invoke_Invokers_checkExactType:
+         process_java_lang_invoke_Invokers_checkExactType(tt, node);
+         break;
       }
    }
 
@@ -600,5 +607,125 @@ TR_MethodHandleTransformer::process_java_lang_invoke_MethodHandle_linkTo(TR::Tre
                                                                                comp()->signature(),
                                                                                comp()->getHotnessName(comp()->getMethodHotness())),
                                                                                tt);
+      }
+   }
+
+/*
+Transforms calls to java/lang/invoke/Invokers.checkExactType to the more performant ZEROCHK.
+
+Blocks before transformation: ==>
+
+start Block_A
+...
+treetop
+        call  java/lang/invoke/Invokers.checkExactType(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)
+           ==>aload
+           ==>aload
+...
+end Block_A
+
+Blocks after transformation: ==>
+
+If MethodHandle and expected type are known objects at compile time and match: ==>
+
+start Block_A
+...
+treetop
+        PassThrough
+          aload <MethodHandle>
+...
+end Block_A
+
+else: ==>
+
+start Block_A
+...
+treetop
+        ZEROCHK
+          acmpeq
+             ==>aload <expected type>
+             aloadi <MethodHandle.type>
+               ==>aload <MethodHandle>
+...
+end Block_A
+
+*/
+void
+TR_MethodHandleTransformer::process_java_lang_invoke_Invokers_checkExactType(TR::TreeTop* tt, TR::Node* node)
+   {
+   auto methodHandleNode = node->getArgument(0);
+   auto expectedTypeNode = node->getArgument(1);
+   TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
+
+   TR::KnownObjectTable::Index mhIndex = getObjectInfoOfNode(methodHandleNode);
+   TR::KnownObjectTable::Index expectedTypeIndex = getObjectInfoOfNode(expectedTypeNode);
+   auto knot = comp()->getKnownObjectTable();
+   if (knot && isKnownObject(mhIndex) && isKnownObject(expectedTypeIndex))
+      {
+      TR::VMAccessCriticalSection vmAccess(fej9);
+      uintptr_t mhObject = knot->getPointer(mhIndex);
+      uintptr_t mtObject = fej9->getReferenceField(mhObject, "type", "Ljava/lang/invoke/MethodType;");
+      uintptr_t etObject = knot->getPointer(expectedTypeIndex);
+
+      if (etObject == mtObject && performTransformation(comp(), "%sChanging checkExactType call node n%dn to PassThrough\n", optDetailString(), node->getGlobalIndex()))
+         {
+         TR::TransformUtil::transformCallNodeToPassThrough(this, node, tt, node->getFirstArgument());
+         return;
+         }
+      }
+   if (!performTransformation(comp(), "%sChanging checkExactType call node n%dn to ZEROCHK\n", optDetailString(), node->getGlobalIndex()))
+      return;
+   uint32_t typeOffset = fej9->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/MethodHandle;", "type", "Ljava/lang/invoke/MethodType;", comp()->getCurrentMethod());
+   auto typeSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
+                                                                                         TR::Symbol::Java_lang_invoke_MethodHandle_type,
+                                                                                         TR::Address,
+                                                                                         typeOffset,
+                                                                                         false,
+                                                                                         true,
+                                                                                         true,
+                                                                                         "java/lang/invoke/MethodHandle.type Ljava/lang/invoke/MethodType;");
+   auto handleTypeNode = TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1, methodHandleNode, typeSymRef);
+   auto cmpEqNode = TR::Node::create(node, TR::acmpeq, 2, expectedTypeNode, handleTypeNode);
+   prepareToReplaceNode(node);
+   TR::Node::recreate(node, TR::ZEROCHK);
+   node->setSymbolReference(comp()->getSymRefTab()->findOrCreateMethodTypeCheckSymbolRef(comp()->getMethodSymbol()));
+   node->setNumChildren(1);
+   node->setAndIncChild(0, cmpEqNode);
+   }
+
+/*
+java/lang/invoke/Invokers.checkCustomized is redundant if its argument is a known object. This transformation
+transforms calls to java/lang/invoke/Invokers.checkCustomized to a PassThrough.
+
+Blocks before transformation: ==>
+
+start Block_A
+...
+treetop
+        call  java/lang/invoke/Invokers.checkCustomized(Ljava/lang/invoke/MethodHandle;)V
+          aload  <MethodHandle>
+...
+end Block_A
+
+Blocks after transformation ==>
+start Block_A
+...
+treetop
+        PassThrough
+          aload <MethodHandle>
+...
+end Block_A
+
+*/
+void
+TR_MethodHandleTransformer::process_java_lang_invoke_Invokers_checkCustomized(TR::TreeTop* tt, TR::Node* node)
+   {
+   TR::KnownObjectTable::Index objIndex = getObjectInfoOfNode(node->getFirstArgument());
+   auto knot = comp()->getKnownObjectTable();
+   if (isKnownObject(objIndex) && knot && !knot->isNull(objIndex))
+      {
+      if (!performTransformation(comp(), "%sRemoving checkCustomized call node n%dn as it is now redundant as MethodHandle has known object index\n", optDetailString(), node->getGlobalIndex()))
+         return;
+      TR::TransformUtil::transformCallNodeToPassThrough(this, node, tt, node->getFirstArgument());
       }
    }
