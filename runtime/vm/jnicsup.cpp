@@ -165,6 +165,31 @@ static jobject JNICALL getModule(JNIEnv *env, jclass clazz);
 #define RELEASE_FLOAT_ARRAY_ELEMENTS ((void (JNICALL *)(JNIEnv *env, jfloatArray array, jfloat * elems, jint mode))releaseArrayElements)
 #define RELEASE_DOUBLE_ARRAY_ELEMENTS ((void (JNICALL *)(JNIEnv *env, jdoubleArray array, jdouble * elems, jint mode))releaseArrayElements)
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+#define GET_BOOLEAN_ARRAY_ELEMENTS31 ((jboolean * (JNICALL *)(JNIEnv *env, jbooleanArray array, jboolean * isCopy))getArrayElements31)
+#define GET_BYTE_ARRAY_ELEMENTS31 ((jbyte * (JNICALL *)(JNIEnv *env, jbyteArray array, jboolean * isCopy))getArrayElements31)
+#define GET_CHAR_ARRAY_ELEMENTS31 ((jchar * (JNICALL *)(JNIEnv *env, jcharArray array, jboolean * isCopy))getArrayElements31)
+#define GET_SHORT_ARRAY_ELEMENTS31 ((jshort * (JNICALL *)(JNIEnv *env, jshortArray array, jboolean * isCopy))getArrayElements31)
+#define GET_INT_ARRAY_ELEMENTS31 ((jint * (JNICALL *)(JNIEnv *env, jintArray array, jboolean * isCopy))getArrayElements31)
+#define GET_LONG_ARRAY_ELEMENTS31 ((jlong * (JNICALL *)(JNIEnv *env, jlongArray array, jboolean * isCopy))getArrayElements31)
+#define GET_FLOAT_ARRAY_ELEMENTS31 ((jfloat * (JNICALL *)(JNIEnv *env, jfloatArray array, jboolean * isCopy))getArrayElements31)
+#define GET_DOUBLE_ARRAY_ELEMENTS31 ((jdouble * (JNICALL *)(JNIEnv *env, jdoubleArray array, jboolean * isCopy))getArrayElements31)
+#define GET_PRIMITIVE_ARRAY_CRITICAL31 ((void * (JNICALL *)(JNIEnv *env, jarray array, jboolean * isCopy))getArrayElements31)
+
+#define RELEASE_BOOLEAN_ARRAY_ELEMENTS31 ((void (JNICALL *)(JNIEnv *env, jbooleanArray array, jboolean * elems, jint mode))releaseArrayElements31)
+#define RELEASE_BYTE_ARRAY_ELEMENTS31 ((void (JNICALL *)(JNIEnv *env, jbyteArray array, jbyte * elems, jint mode))releaseArrayElements31)
+#define RELEASE_CHAR_ARRAY_ELEMENTS31 ((void (JNICALL *)(JNIEnv *env, jcharArray array, jchar * elems, jint mode))releaseArrayElements31)
+#define RELEASE_SHORT_ARRAY_ELEMENTS31 ((void (JNICALL *)(JNIEnv *env, jshortArray array, jshort * elems, jint mode))releaseArrayElements31)
+#define RELEASE_INT_ARRAY_ELEMENTS31 ((void (JNICALL *)(JNIEnv *env, jintArray array, jint * elems, jint mode))releaseArrayElements31)
+#define RELEASE_LONG_ARRAY_ELEMENTS31 ((void (JNICALL *)(JNIEnv *env, jlongArray array, jlong * elems, jint mode))releaseArrayElements31)
+#define RELEASE_FLOAT_ARRAY_ELEMENTS31 ((void (JNICALL *)(JNIEnv *env, jfloatArray array, jfloat * elems, jint mode))releaseArrayElements31)
+#define RELEASE_DOUBLE_ARRAY_ELEMENTS31 ((void (JNICALL *)(JNIEnv *env, jdoubleArray array, jdouble * elems, jint mode))releaseArrayElements31)
+#define RELEASE_PRIMITIVE_ARRAY_CRITICAL31 ((void (JNICALL *)(JNIEnv *env, jarray carray, void * elems, jint mode))releaseArrayElements31)
+
+#define GET_STRING_CRITICAL31 ((const jchar * (JNICALL *)(JNIEnv *env, jstring string, jboolean *isCopy))getStringChars31)
+#define RELEASE_STRING_CRITICAL31 ((void (JNICALL *)(JNIEnv *env, jstring string, const jchar *carray))releaseStringChars31)
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 #define GET_BOOLEAN_ARRAY_REGION ((void (JNICALL *)(JNIEnv *env, jbooleanArray array, jsize start, jsize len, jboolean *buf))getArrayRegion)
 #define GET_BYTE_ARRAY_REGION ((void (JNICALL *)(JNIEnv *env, jbyteArray array, jsize start, jsize len, jbyte *buf))getArrayRegion)
 #define GET_CHAR_ARRAY_REGION ((void (JNICALL *)(JNIEnv *env, jcharArray array, jsize start, jsize len, jchar *buf))getArrayRegion)
@@ -1521,6 +1546,99 @@ void  initializeJNITable(J9JavaVM *vm)
 	vm->jniFunctionTable = GLOBAL_TABLE(EsJNIFunctions);
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+/**
+* A utility routine invoked once by libjvm31 shim library to return
+* a JNINativeInterface_ function table in below-the-bar storage.
+* Certain entries that require customized handling for 31-bit callers
+* are updated in the table, otherwise, will reuse 64-bit functions.
+*
+*@param[in] env The JNIEnv* of the current thread.
+*@return Below-the-bar JNINativeInterface_ function table.
+*/
+JNINativeInterface_* JNICALL
+J9VM_initializeJNI31Table(JNIEnv *env)
+{
+	PORT_ACCESS_FROM_VMC((J9VMThread *) env);
+	/* This 64-bit XPLINK function pointer table of JNI native functions needs to be accessible by 31-bit shim library. */
+	JNINativeInterface_ *EsJNI31Functions = (JNINativeInterface_*) j9mem_allocate_memory32(sizeof(JNINativeInterface_), OMRMEM_CATEGORY_VM);
+
+	/* Majority of 64-bit JNI functions are common for 31-bit shim library.
+	 * Update the specific entries for 31-bit customized functions below.
+	 */
+	memcpy(EsJNI31Functions, &EsJNIFunctions, sizeof(JNINativeInterface_));
+
+	/* Macros defined in jnicimap.h for Call<type>Method<args> */
+	EsJNI31Functions->CallObjectMethodV = CALL_VIRTUAL_OBJECT_METHOD_V31;
+	EsJNI31Functions->CallBooleanMethodV = CALL_VIRTUAL_BOOLEAN_METHOD_V31;
+	EsJNI31Functions->CallByteMethodV = CALL_VIRTUAL_BYTE_METHOD_V31;
+	EsJNI31Functions->CallCharMethodV = CALL_VIRTUAL_CHAR_METHOD_V31;
+	EsJNI31Functions->CallShortMethodV = CALL_VIRTUAL_SHORT_METHOD_V31;
+	EsJNI31Functions->CallIntMethodV = CALL_VIRTUAL_INT_METHOD_V31;
+	EsJNI31Functions->CallLongMethodV = CALL_VIRTUAL_LONG_METHOD_V31;
+	EsJNI31Functions->CallFloatMethodV = CALL_VIRTUAL_FLOAT_METHOD_V31;
+	EsJNI31Functions->CallDoubleMethodV = CALL_VIRTUAL_DOUBLE_METHOD_V31;
+	EsJNI31Functions->CallVoidMethodV = CALL_VIRTUAL_VOID_METHOD_V31;
+
+	/* Macros defined in jnicimap.h for CallNonvirtual<type>Method<args> */
+	EsJNI31Functions->CallNonvirtualObjectMethodV = CALL_NONVIRTUAL_OBJECT_METHOD_V31;
+	EsJNI31Functions->CallNonvirtualBooleanMethodV = CALL_NONVIRTUAL_BOOLEAN_METHOD_V31;
+	EsJNI31Functions->CallNonvirtualByteMethodV = CALL_NONVIRTUAL_BYTE_METHOD_V31;
+	EsJNI31Functions->CallNonvirtualCharMethodV = CALL_NONVIRTUAL_CHAR_METHOD_V31;
+	EsJNI31Functions->CallNonvirtualShortMethodV = CALL_NONVIRTUAL_SHORT_METHOD_V31;
+	EsJNI31Functions->CallNonvirtualIntMethodV = CALL_NONVIRTUAL_INT_METHOD_V31;
+	EsJNI31Functions->CallNonvirtualLongMethodV = CALL_NONVIRTUAL_LONG_METHOD_V31;
+	EsJNI31Functions->CallNonvirtualFloatMethodV = CALL_NONVIRTUAL_FLOAT_METHOD_V31;
+	EsJNI31Functions->CallNonvirtualDoubleMethodV = CALL_NONVIRTUAL_DOUBLE_METHOD_V31;
+	EsJNI31Functions->CallNonvirtualVoidMethodV = CALL_NONVIRTUAL_VOID_METHOD_V31;
+
+	/* Macros defined in jnicimap.h for CallStatic<type>Method<args> */
+	EsJNI31Functions->CallStaticObjectMethodV = CALL_STATIC_OBJECT_METHOD_V31;
+	EsJNI31Functions->CallStaticBooleanMethodV = CALL_STATIC_BOOLEAN_METHOD_V31;
+	EsJNI31Functions->CallStaticByteMethodV = CALL_STATIC_BYTE_METHOD_V31;
+	EsJNI31Functions->CallStaticCharMethodV = CALL_STATIC_CHAR_METHOD_V31;
+	EsJNI31Functions->CallStaticShortMethodV = CALL_STATIC_SHORT_METHOD_V31;
+	EsJNI31Functions->CallStaticIntMethodV = CALL_STATIC_INT_METHOD_V31;
+	EsJNI31Functions->CallStaticLongMethodV = CALL_STATIC_LONG_METHOD_V31;
+	EsJNI31Functions->CallStaticFloatMethodV = CALL_STATIC_FLOAT_METHOD_V31;
+	EsJNI31Functions->CallStaticDoubleMethodV = CALL_STATIC_DOUBLE_METHOD_V31;
+	EsJNI31Functions->CallStaticVoidMethodV = CALL_STATIC_VOID_METHOD_V31;
+
+	EsJNI31Functions->GetBooleanArrayElements = GET_BOOLEAN_ARRAY_ELEMENTS31;
+	EsJNI31Functions->GetByteArrayElements = GET_BYTE_ARRAY_ELEMENTS31;
+	EsJNI31Functions->GetCharArrayElements = GET_CHAR_ARRAY_ELEMENTS31;
+	EsJNI31Functions->GetShortArrayElements = GET_SHORT_ARRAY_ELEMENTS31;
+	EsJNI31Functions->GetIntArrayElements = GET_INT_ARRAY_ELEMENTS31;
+	EsJNI31Functions->GetLongArrayElements = GET_LONG_ARRAY_ELEMENTS31;
+	EsJNI31Functions->GetFloatArrayElements = GET_FLOAT_ARRAY_ELEMENTS31;
+	EsJNI31Functions->GetDoubleArrayElements = GET_DOUBLE_ARRAY_ELEMENTS31;
+	EsJNI31Functions->ReleaseBooleanArrayElements = RELEASE_BOOLEAN_ARRAY_ELEMENTS31;
+	EsJNI31Functions->ReleaseByteArrayElements = RELEASE_BYTE_ARRAY_ELEMENTS31;
+	EsJNI31Functions->ReleaseCharArrayElements = RELEASE_CHAR_ARRAY_ELEMENTS31;
+	EsJNI31Functions->ReleaseShortArrayElements = RELEASE_SHORT_ARRAY_ELEMENTS31;
+	EsJNI31Functions->ReleaseIntArrayElements = RELEASE_INT_ARRAY_ELEMENTS31;
+	EsJNI31Functions->ReleaseLongArrayElements = RELEASE_LONG_ARRAY_ELEMENTS31;
+	EsJNI31Functions->ReleaseFloatArrayElements = RELEASE_FLOAT_ARRAY_ELEMENTS31;
+	EsJNI31Functions->ReleaseDoubleArrayElements = RELEASE_DOUBLE_ARRAY_ELEMENTS31;
+
+	EsJNI31Functions->GetStringChars = getStringChars31;
+	EsJNI31Functions->ReleaseStringChars = releaseStringChars31;
+	EsJNI31Functions->GetStringUTFChars = getStringUTFChars31;
+	EsJNI31Functions->ReleaseStringUTFChars = releaseStringCharsUTF31;
+
+	EsJNI31Functions->NewObjectV = newObjectV31;
+
+	/* Critical routines are mapped to the non-critical versions, as the Java objects
+	 * are not directly accessible to AMODE31 callers.
+	 */
+	EsJNI31Functions->GetPrimitiveArrayCritical = GET_PRIMITIVE_ARRAY_CRITICAL31;
+	EsJNI31Functions->ReleasePrimitiveArrayCritical = RELEASE_PRIMITIVE_ARRAY_CRITICAL31;
+	EsJNI31Functions->GetStringCritical = GET_STRING_CRITICAL31;
+	EsJNI31Functions->ReleaseStringCritical = RELEASE_STRING_CRITICAL31;
+
+	return EsJNI31Functions;
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 /*
  * 1) Private routine.  Used to delete a jni global reference from an actual object pointer.

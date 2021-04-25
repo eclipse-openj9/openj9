@@ -175,6 +175,67 @@ jniArrayFreeMemory32FromThread(J9VMThread* vmThread, void* location);
 
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
 /**
+* @brief
+* @param env
+* @param array
+* @param isCopy
+* @return void*
+*/
+void* JNICALL
+getArrayElements31(JNIEnv *env, jarray array, jboolean *isCopy);
+
+/**
+* @brief
+* @param env
+* @param array
+* @param elems
+* @param mode
+* @return void
+*/
+void JNICALL
+releaseArrayElements31(JNIEnv *env, jarray array, void * elems, jint mode);
+
+/**
+* @brief
+* @param env
+* @param string
+* @param isCopy
+* @return const jchar*
+*/
+const jchar* JNICALL
+getStringChars31(JNIEnv *env, jstring string, jboolean *isCopy);
+
+/**
+* @brief
+* @param env
+* @param string
+* @param chars
+* @return void
+*/
+void JNICALL
+releaseStringChars31(JNIEnv *env, jstring string, const jchar * chars);
+
+/**
+* @brief
+* @param env
+* @param string
+* @param isCopy
+* @return const char*
+*/
+const char* JNICALL
+getStringUTFChars31(JNIEnv *env, jstring string, jboolean *isCopy);
+
+/**
+* @brief
+* @param env
+* @param string
+* @param chars
+* @return void
+*/
+void JNICALL
+releaseStringCharsUTF31(JNIEnv *env, jstring string, const char * chars);
+
+/**
  * Helper function to query the matching 31-bit JNIEnv* for the given J9VMThread
  * parameter.  The 31-bit JNIEnv* is needed to pass as the JNIEnv* parameter into
  * cross-AMODE31 JNI natives.  Upon success, the 31-bit JNIEnv pointer will be
@@ -198,7 +259,6 @@ queryJavaVM31(J9JavaVM* vm);
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 /* ---------------- vmifunc.c ---------------- */
-
 /**
 * @brief
 * @param vm
