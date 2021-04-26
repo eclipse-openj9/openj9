@@ -29,7 +29,7 @@
 bool
 J9::DataType::isFloatingPoint()
    {
-   return self()->isBFPorHFP() || self()->isDFP();
+   return self()->isBFPorHFP();
    }
 
 bool

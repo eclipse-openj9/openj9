@@ -95,8 +95,6 @@ public:
    using OMR::DataTypeConnector::getName;
 
    inline bool isFloatingPoint();
-   bool isLongDouble()              { return _type == TR::DecimalLongDouble; }
-   bool isDFP()                     { return _type == TR::DecimalFloat|| _type == TR::DecimalDouble|| _type == TR::DecimalLongDouble; }
    bool isBCD()                     { return (_type >= TR::FirstBCDType) && (_type <= TR::LastBCDType); }
    bool isAnyPacked()               { return _type == TR::PackedDecimal; }
    bool isAnyZoned()                { return (_type >= TR::FirstZonedType) && (_type <= TR::LastZonedType); }

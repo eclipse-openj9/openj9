@@ -483,13 +483,6 @@ void traceBCDOpportunities(TR::Node *node, TR::Compilation *comp)
       }
 
    if (node->getOpCode().isConversion() &&
-       node->getFirstChild()->getOpCode().isLoadConst() &&
-       (node->getType().isLongDouble() || node->getFirstChild()->getType().isLongDouble()))
-      {
-      traceMsg(comp,"x^x : long double const conv -- %s (%p)\n",node->getOpCode().getName(),node);
-      }
-
-   if (node->getOpCode().isConversion() &&
        node->getType().isIntegral() &&
        node->getFirstChild()->getType().isBCD() &&
        node->getFirstChild()->getOpCode().isSetSign())
@@ -519,12 +512,6 @@ void traceBCDOpportunities(TR::Node *node, TR::Compilation *comp)
        node->getFirstChild()->getOpCode().isLoadConst())
       {
       traceMsg(comp,"x^x : BCD const conv -- %s (%p)\n",node->getOpCode().getName(),node);
-      }
-
-   if (node->getType().isLongDouble() && node->getOpCode().isArithmetic() && node->getNumChildren() == 2 &&
-       node->getFirstChild()->getOpCode().isLoadConst() && node->getSecondChild()->getOpCode().isLoadConst())
-      {
-      traceMsg(comp,"x^x : long double const arith -- %s (%p)\n",node->getOpCode().getName(),node);
       }
 
    if (node->getOpCode().isBasicOrSpecialPackedArithmetic())

@@ -76,11 +76,6 @@
 //                     0123
 
 #define TR_DFP_TO_PACKED_DEFAULT_MASK_ARCH10       (0x0) ///< Encode plus sign as 0xc
-// RTC 93015: Using TypeReduction to treat all pdnegs as arith ops at ARCH(11) means that a tree with ipdstore -> pdneg -> pdX would get
-// converted to ipdstore -> dd2pd -> ddneg -> ddX. Since the dd2pd could generate a CPDT that stores in place (rather than using a ZAP),
-// this could mean that a ddneg producing a negative zero won't get cleaned; we'll use an LCDFR to flip the sign bit in DFP, then use a CPDT
-// to write the final value. If we've decided to clean on the store, the clean isn't being generated, so we end up with a negative zero.
-// The simplest solution is to *ALWAYS* clean the sign on the CPDT at ARCH(11), as there's no performance penalty in doing so.
 #define TR_DFP_TO_PACKED_DEFAULT_MASK_ARCH11       (0x9) ///< Result has a sign field (S=1), encode plus sign as 0xc (P=0) and clean (F=1)
 #define TR_DFP_TO_PACKED_UNSIGNED_ARCH10           (0x1) ///< P: encode plus sign as 0xc (P=0) or as 0xf (P=1).
 #define TR_DFP_TO_PACKED_UNSIGNED_ARCH11           (0x2) ///< P: encode plus sign as 0xc (P=0) or as 0xf (P=1).

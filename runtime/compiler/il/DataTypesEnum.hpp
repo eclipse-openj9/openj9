@@ -22,10 +22,7 @@
 
 /* data types in TR */
 FirstJ9Type = NumOMRTypes,
-DecimalFloat = FirstJ9Type,
-DecimalDouble,
-DecimalLongDouble,
-FirstBCDType,    // do not insert any non-BCD types between FirstBCDType and LastBCDType
+FirstBCDType = FirstJ9Type,    // do not insert any non-BCD types between FirstBCDType and LastBCDType
 PackedDecimal = FirstBCDType,
 FirstZonedType,
 ZonedDecimal = FirstZonedType,

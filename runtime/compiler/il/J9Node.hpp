@@ -170,7 +170,6 @@ public:
    void    setPDMulPrecision();
    void    setPDAddSubPrecision();
 
-   bool    isDFPModifyPrecision();
    void    setDFPPrecision(int32_t p);
    uint8_t getDFPPrecision();
 

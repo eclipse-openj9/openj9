@@ -2413,10 +2413,7 @@ TR::Node *pdshlSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
                 firstChild->getOpCodeValue() == TR::pdSetSign ||
                 firstChild->getOpCodeValue() == TR::pdclear ||
                 firstChild->getOpCodeValue() == TR::pdclearSetSign ||
-                firstChild->getOpCodeValue() == TR::pdneg ||
-                firstChild->getOpCodeValue() == TR::df2pd ||
-                firstChild->getOpCodeValue() == TR::dd2pd ||
-                firstChild->getOpCodeValue() == TR::de2pd) &&
+                firstChild->getOpCodeValue() == TR::pdneg) &&
                (firstChild->getReferenceCount() == 1) &&
                isTruncation &&
                performTransformation(s->comp(), "%sRemove simple truncating %s [" POINTER_PRINTF_FORMAT "] of %s child [" POINTER_PRINTF_FORMAT "] by 0 and set child precision to %d\n",
