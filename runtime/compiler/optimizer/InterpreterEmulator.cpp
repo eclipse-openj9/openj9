@@ -513,9 +513,12 @@ InterpreterEmulator::setupMethodEntryLocalObjectState()
              else
                 (*_currentLocalObjectInfo)[slotIndex] = _unknownOperand;
              }
-         char buffer[OPERAND_STR_BUF_SIZE];
-         printToString(comp(), (*_currentLocalObjectInfo)[slotIndex], buffer, sizeof (buffer));
-         heuristicTrace(tracer(), "Creating operand %s for parm %d slot %d from PrexArgument %p", buffer, ordinal, slotIndex, prexArgument);
+         if (tracer()->heuristicLevel())
+            {
+            char buffer[OPERAND_STR_BUF_SIZE];
+            printToString(comp(), (*_currentLocalObjectInfo)[slotIndex], buffer, sizeof (buffer));
+            heuristicTrace(tracer(), "Creating operand %s for parm %d slot %d from PrexArgument %p", buffer, ordinal, slotIndex, prexArgument);
+            }
          }
       }
    }
@@ -875,6 +878,9 @@ InterpreterEmulator::maintainStackForCall()
 void
 InterpreterEmulator::dumpStack()
    {
+   if (!tracer()->debugLevel())
+      return;
+
    debugTrace(tracer(), "operandStack after bytecode %d : %s ", _bcIndex, comp()->fej9()->getByteCodeName(nextByte(0)));
    for (int i = 0; i < _stack->size(); i++ )
       {
