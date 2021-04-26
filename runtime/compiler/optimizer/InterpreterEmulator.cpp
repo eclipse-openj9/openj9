@@ -62,21 +62,7 @@ KnownObjOperand::getClass()
    if (!knot || knot->isNull(knownObjIndex))
       return NULL;
 
-#if defined(J9VM_OPT_JITSERVER)
-   // TODO: add JITServer support
-   if (comp->isOutOfProcessCompilation())
-      return NULL;
-   else
-#endif
-      {
-      TR::VMAccessCriticalSection KnownObjOperandCriticalSection(comp,
-                                                                 TR::VMAccessCriticalSection::tryToAcquireVMAccess);
-
-      if (KnownObjOperandCriticalSection.hasVMAccess())
-         {
-         _clazz = TR::Compiler->cls.objectClass(comp, knot->getPointer(knownObjIndex));
-         }
-      }
+   _clazz = comp->fej9()->getObjectClassFromKnownObjectIndex(comp, knownObjIndex);
 
    return _clazz;
    }
@@ -868,10 +854,7 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
          TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
          if (knot && mhIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(mhIndex))
             {
-            TR::VMAccessCriticalSection dereferenceKnownObjectField(comp()->fej9());
-            uintptr_t mhObjectAddress = knot->getPointer(mhIndex);
-            uintptr_t memberAddress = comp()->fej9()->getReferenceField(mhObjectAddress, "member", "Ljava/lang/invoke/MemberName;");
-            TR::KnownObjectTable::Index memberIndex = knot->getOrCreateIndex(memberAddress);
+            TR::KnownObjectTable::Index memberIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "member");
             debugTrace(tracer(), "Known internal member name koi %d\n", memberIndex);
             result = new (trStackMemory()) KnownObjOperand(memberIndex);
             }
@@ -885,10 +868,7 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
          TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
          if (knot && mhIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(mhIndex))
             {
-            TR::VMAccessCriticalSection dereferenceKnownObjectField(comp()->fej9());
-            uintptr_t mhObjectAddress = knot->getPointer(mhIndex);
-            uintptr_t memberNameObject = comp()->fej9()->getReferenceField(mhObjectAddress, "initMethod", "Ljava/lang/invoke/MemberName;");
-            TR::KnownObjectTable::Index memberIndex = knot->getOrCreateIndex(memberNameObject);
+            TR::KnownObjectTable::Index memberIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "initMethod");
             debugTrace(tracer(), "Known internal member name koi %d\n", memberIndex);
             result = new (trStackMemory()) KnownObjOperand(memberIndex);
             }
@@ -1131,7 +1111,7 @@ InterpreterEmulator::visitInvokedynamic()
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    if (owningMethod->isUnresolvedCallSiteTableEntry(callSiteIndex)
          || comp()->compileRelocatableCode()
-      ) return; // do nothing if unresolved, is AOT or JITServer compilation
+      ) return; // do nothing if unresolved, is AOT compilation
    uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->callSiteTableEntryAddress(callSiteIndex);
    updateKnotAndCreateCallSiteUsingInvokeCacheArray(owningMethod, invokeCacheArray, -1);
 #else

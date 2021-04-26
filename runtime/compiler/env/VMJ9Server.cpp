@@ -856,6 +856,14 @@ TR_J9ServerVM::getObjectClassAt(uintptr_t objectAddress)
    return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
    }
 
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::KnownObjectTable::Index idx)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getObjectClassFromKnownObjectIndex, idx);
+   return std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+   }
+
 uintptr_t
 TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {

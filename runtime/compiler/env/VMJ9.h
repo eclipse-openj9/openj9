@@ -534,6 +534,7 @@ public:
 
    virtual TR_OpaqueClassBlock *getObjectClass(uintptr_t objectPointer);
    virtual TR_OpaqueClassBlock *getObjectClassAt(uintptr_t objectAddress);
+   virtual TR_OpaqueClassBlock *getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::KnownObjectTable::Index idx);
    virtual uintptr_t           getReferenceFieldAt(uintptr_t objectPointer, uintptr_t offsetFromHeader);
    virtual uintptr_t           getVolatileReferenceFieldAt(uintptr_t objectPointer, uintptr_t offsetFromHeader);
    virtual uintptr_t           getReferenceFieldAtAddress(uintptr_t fieldAddress);
