@@ -48,8 +48,6 @@
 
 #define OPT_DETAILS "O^O IN MEMORY LOAD/STORE MARKING: "
 
-void traceBCDOpportunities(TR::Node *node, TR::Compilation *comp);
-
 void InMemoryLoadStoreMarking::perform()
    {
 
@@ -81,8 +79,6 @@ void InMemoryLoadStoreMarking::perform()
       // depth first search on children to populate the commoned nodes lists
       visitChildren(node, tt, visitCount);
 
-      traceBCDOpportunities(node, comp());
-
       // after descending to look at the children (and add to the lists) now see if the current treetop
       // is a possible def and any nodes have to be removed from the lists
       handleDef(node, tt);
@@ -108,7 +104,6 @@ void InMemoryLoadStoreMarking::visitChildren(TR::Node *parent, TR::TreeTop *tt, 
       if (child->getVisitCount() != visitCount)
          {
          visitChildren(child, tt, visitCount);
-         traceBCDOpportunities(child, comp());
          examineFirstReference(child, tt);
          }
       else
@@ -407,204 +402,3 @@ char *InMemoryLoadStoreMarking::_TR_NodeListTypeNames[NodeList_NumTypes] =
    "ConditionalCleanLoadList",
    "StoreList"
    };
-
-// ----------- BCDOpportunities start
-// BCDOpportunities tracing has nothing to do with in memory load/store marking but this is a convenient place (late node walk) to do this
-bool isBCDReductionOpportunity(TR::Node *node)
-   {
-   if (node->getOpCode().isLoadConst())
-      return true;
-
-   if (node->getOpCodeValue() == TR::i2pd || node->getOpCodeValue() == TR::l2pd)
-      return true;
-
-   if (node->getNumChildren() > 0 &&
-       !node->getOpCode().isLoadVar() &&
-       !node->getOpCode().isBasicPackedArithmetic() &&
-       !node->getOpCode().isExponentiation() &&
-       isBCDReductionOpportunity(node->getFirstChild()))
-      {
-      return true;
-      }
-
-   return false;
-   }
-
-void traceBCDOpportunities(TR::Node *node, TR::Compilation *comp)
-   {
-   if (!comp->cg()->traceBCDCodeGen())
-      return;
-
-   if (comp->getOption(TR_DisableBCDOppTracing))
-      return;
-
-   if (node->getOpCode().isBasicPackedArithmetic())
-      {
-      TR::Node *first = node->getFirstChild();
-      TR::Node *second = node->getSecondChild();
-
-      if (first == second)
-         {
-         traceMsg(comp,"x^x : found arith with identical children -- node %s (%p) with child (%p)\n",
-            node->getOpCode().getName(),node,second);
-         }
-
-      if (isBCDReductionOpportunity(first) && isBCDReductionOpportunity(second))
-         {
-         traceMsg(comp,"x^x : binaryReduction possibility -- node %s p=%d (%p) with op1 %s p=%d, op2 %s p=%d - line_no=%d (%s)\n",
-            node->getOpCode().getName(),node->getDecimalPrecision(),node,
-            first->getOpCode().getName(),first->getDecimalPrecision(),
-            second->getOpCode().getName(),second->getDecimalPrecision(),
-            comp->getLineNumber(node),
-            node->getDecimalPrecision()<=TR::getMaxSignedPrecision<TR::Int64>() ? "intOpp" : (node->getDecimalPrecision()<=TR::DataType::getMaxExtendedDFPPrecision() ?"dfpOpp" : "noOpp"));
-         }
-      }
-
-   if (node->getOpCode().isBasicOrSpecialPackedArithmetic() ||
-       node->getOpCodeValue() == TR::pdneg ||
-       node->getOpCodeValue() == TR::pdabs ||
-       node->getOpCode().isPackedArithmeticOverflowMessage() ||
-       (node->getOpCode().isConversion() && node->getType().isIntegral() && node->getFirstChild()->getType().isAnyPacked()) ||
-       (node->getOpCode().isIf() && node->getFirstChild()->getType().isAnyPacked()))
-      {
-      if (node->getFirstChild()->getOpCode().isSetSign() &&
-          node->getFirstChild()->getFirstChild()->getOpCode().isConversion() &&
-          node->getFirstChild()->getFirstChild()->getType().isAnyPacked() &&
-          node->getFirstChild()->getFirstChild()->getFirstChild()->getType().isAnyZoned())
-         {
-         traceMsg(comp,"x^x : found ascii pack opp -- %s/%s/%s (%p/%p/%p)\n",
-            node->getOpCode().getName(),
-            node->getFirstChild()->getOpCode().getName(),
-            node->getFirstChild()->getFirstChild()->getOpCode().getName(),
-            node,
-            node->getFirstChild(),
-            node->getFirstChild()->getFirstChild());
-         }
-      }
-
-   if (node->getOpCode().isConversion() &&
-       node->getType().isIntegral() &&
-       node->getFirstChild()->getType().isBCD() &&
-       node->getFirstChild()->getOpCode().isSetSign())
-      {
-      traceMsg(comp,"x^x : intAbs for setSign -- %s (%p) of %s (%p)\n",
-         node->getOpCode().getName(),node,node->getFirstChild()->getOpCode().getName(),node->getFirstChild());
-      }
-
-   if ((node->getOpCodeValue() == TR::pd2l || node->getOpCodeValue() == TR::pd2i) &&
-       node->getNumChildren() >= 1 &&
-       isBCDReductionOpportunity(node->getFirstChild()))
-      {
-      traceMsg(comp,"x^x : binaryReduction possibility -- node %s (%p) with op1 %s p=%d - line_no=%d\n",
-         node->getOpCode().getName(),node,
-         node->getFirstChild()->getOpCode().getName(),node->getFirstChild()->getDecimalPrecision(),
-         comp->getLineNumber(node));
-      }
-
-   // checking for lshl to see if the VP handler for this opt should have reduceLongOpToIntegerOp case
-   if (node->getOpCodeValue() == TR::lshl)
-      {
-      traceMsg(comp,"x^x : lshl for VP opp -- %s (%p)\n",node->getOpCode().getName(),node);
-      }
-
-   if (node->getOpCode().isConversion() &&
-       (node->getOpCode().isBinaryCodedDecimalOp()) &&
-       node->getFirstChild()->getOpCode().isLoadConst())
-      {
-      traceMsg(comp,"x^x : BCD const conv -- %s (%p)\n",node->getOpCode().getName(),node);
-      }
-
-   if (node->getOpCode().isBasicOrSpecialPackedArithmetic())
-      {
-      // setsign should be removed in this case as it isn't needed if first/second->getFirstChild() is already fixing up sign
-      TR::Node *first = node->getFirstChild();
-      TR::Node *second = node->getOpCode().isBasicPackedArithmetic() ? node->getSecondChild() : NULL;
-      if (first->getOpCodeValue() == TR::pdSetSign && first->getFirstChild()->getOpCode().isBasicOrSpecialPackedArithmetic())
-         {
-         traceMsg(comp,"x^x : found arith with setsign first child over other arith -- node %s (%p), otherArith %s (%p)\n",
-            node->getOpCode().getName(),node,first->getFirstChild()->getOpCode().getName(),first->getFirstChild());
-         }
-      else if (second && second->getOpCodeValue() == TR::pdSetSign && second->getFirstChild()->getOpCode().isBasicOrSpecialPackedArithmetic())
-         {
-         traceMsg(comp,"x^x : found arith with setsign second child over other arith -- node %s (%p), otherArith %s (%p)\n",
-            node->getOpCode().getName(),node,second->getFirstChild()->getOpCode().getName(),second->getFirstChild());
-         }
-      }
-
-   if (node->getOpCode().isPackedShift() && node->getFirstChild()->getOpCode().isPackedShift())
-      {
-      traceMsg(comp,"x^x : found shift %d over shift %d -- parent %s (%p), child %s (%p)\n",
-         node->getDecimalAdjust(),node->getFirstChild()->getDecimalAdjust(),
-         node->getOpCode().getName(),node,node->getFirstChild()->getOpCode().getName(),node->getFirstChild());
-      }
-
-   // should fold pdshl/pdsetsign to pdshlSetSign to get better codegen -- common reason for missing this is lack of folding with child refCount > 1
-   if (node->getOpCode().isPackedShift() && !node->getOpCode().isSetSign() && node->getFirstChild()->getOpCode().isSetSign())
-      {
-      traceMsg(comp,"x^x : found shift over setSign -- parent %s (%p), child %s (%p)\n",
-         node->getOpCode().getName(),node,node->getFirstChild()->getOpCode().getName(),node->getFirstChild());
-      }
-
-   if (node->getOpCode().isSetSign() && node->getFirstChild()->getOpCode().isSetSign())
-      {
-      traceMsg(comp,"x^x : found setsign over setsign -- parent %s (%p), child %s (%p)\n",
-         node->getOpCode().getName(),node,node->getFirstChild()->getOpCode().getName(),node->getFirstChild());
-      }
-
-   if (node->getOpCode().isPackedLeftShift() && node->getOpCode().isSetSign())
-      {
-      traceMsg(comp,"x^x : found pdshlSetSign by %d (%s) -- node %s (%p)\n",
-         node->getDecimalAdjust(),isOdd(node->getDecimalAdjust())?"odd":"even",node->getOpCode().getName(),node);
-      }
-
-   if (node->getOpCode().isConversion() && node->getType().isIntegral() &&
-       node->getFirstChild()->getOpCode().isConversion() && node->getFirstChild()->getType().isAnyPacked() &&
-       node->getFirstChild()->getFirstChild()->getType().isAnyZoned())
-      {
-      traceMsg(comp,"x^x : found zoned to packed to binary conversion (task 59856) - node %s (%p), child %s, grandchild %s\n",
-              node->getOpCode().getName(),
-              node,
-              node->getFirstChild()->getOpCode().getName(),
-              node->getFirstChild()->getFirstChild()->getOpCode().getName());
-      }
-   else if (node->getOpCode().isConversion() && node->getType().isAnyZoned() &&
-            node->getFirstChild()->getOpCode().isConversion() && node->getFirstChild()->getType().isAnyPacked() &&
-            node->getFirstChild()->getFirstChild()->getType().isIntegral())
-      {
-      traceMsg(comp,"x^x : found binary to packed to zoned (task 59856) - node %s (%p), child %s, grandchild %s\n",
-              node->getOpCode().getName(),
-              node,
-              node->getFirstChild()->getOpCode().getName(),
-              node->getFirstChild()->getFirstChild()->getOpCode().getName());
-      }
-
-   // csubexp.cbl line_no=304 ADD EL15(5I, 5J, 5K) EL25(5I, 5J, 5L) GIVING 5A
-   if (node->getOpCode().isConversion() &&
-       node->getType().isAnyZoned() &&
-       node->getFirstChild()->getType().isAnyPacked() &&
-       node->getFirstChild()->getOpCode().isShift() &&
-       node->getFirstChild()->getOpCode().isSetSign())
-      {
-      traceMsg(comp,"x^x : found pd2zdshlSetSign opp - node %s (%p) child %s (%p)\n",
-         node->getOpCode().getName(),node,node->getFirstChild()->getOpCode().getName(),node->getFirstChild());
-      }
-
-   if ((node->getOpCodeValue() == TR::pdSetSign || node->getOpCode().isPackedModifyPrecision()) &&
-        node->getFirstChild()->getOpCode().isConversion() && node->getFirstChild()->getFirstChild()->getType().isIntegral() &&
-        node->getDecimalPrecision() < node->getFirstChild()->getDecimalPrecision() &&
-        node->isEvenPrecision() && node->getFirstChild()->isEvenPrecision())
-      {
-      // in the below case both the pdModPrec and the l2pd will generate an NI to correct the top nibble when only the pdModPrec NI is needed
-      // pdModPrec p = 4
-      //    l2pd p = 18
-      //
-      traceMsg(comp,"x^x : found double even correction -- %s (%p) prec = %d with child %s (%p) prec = %d\n",
-         node->getOpCode().getName(),
-         node,
-         node->getDecimalPrecision(),
-         node->getFirstChild()->getOpCode().getName(),
-         node->getFirstChild(),
-         node->getFirstChild()->getDecimalPrecision());
-      }
-   }
-// ----------- BCDOpportunities end

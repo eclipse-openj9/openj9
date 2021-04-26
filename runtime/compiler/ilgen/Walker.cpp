@@ -54,17 +54,6 @@
 #include "env/j9methodServer.hpp"
 #endif
 
-#define BDCLASSLEN 20
-#define BDCLASS "java/math/BigDecimal"
-#define BDFIELDLEN 6
-#define BDFIELD "laside"
-#define BDDFPHWAVAIL "java/math/BigDecimal.DFPHWAvailable()Z"
-#define BDDFPHWAVAILLEN 38
-#define BDDFPPERFORMHYS "java/math/BigDecimal.DFPPerformHysteresis()Z"
-#define BDDFPPERFORMHYSLEN 44
-#define BDDFPUSEDFP "java/math/BigDecimal.DFPUseDFP()Z"
-#define BDDFPUSEDFPLEN 33
-
 #define JAVA_SERIAL_CLASS_NAME "Ljava/io/ObjectInputStream;"
 #define JAVA_SERIAL_CLASS_NAME_LEN 27
 #define JAVA_SERIAL_CALLEE_METHOD_NAME_LEN 10
@@ -4052,26 +4041,11 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
       return node;
       }
 
-   // if optimizing for 390 or PPC hw that supports DFP instructions
-   // make sure to replace 3 recognized calls with load constants
-
-   /* Strategy on DFP HW is as follows:
-
-      -Xdfpbd  -Xhysteresis  Meaning                DFPHWAvail     DFPPerformHys     DFPUseDFP
-      ---------------------------------------------------------------------------------------
-      0        0             DisableDFP+DisableHys  0              0                 n/a             (default)
-      0        1             invalid                n/a            n/a               n/a             (invalid)
-      1        0             EnableDFP+DisableHys   1              0                 1               (enableDFP, disableHys)
-      1        1             EnableDFP+EnableHys    1              1                 n/a             (enableDFP, enableHys)
-
-    */
-
 #define DAA_PRINT(a) \
 case a: \
    if(trace()) \
       traceMsg(comp(), "DAA Method found: %s\n", #a); \
 break
-
 
    //print out the method name and ILCode from the
    switch (symbol->getRecognizedMethod())

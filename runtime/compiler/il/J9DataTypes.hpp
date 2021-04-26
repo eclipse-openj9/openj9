@@ -120,10 +120,6 @@ public:
    inline bool isSignless();
    inline bool hasExposedConstantAddress();
 
-   static inline int32_t getMaxShortDFPPrecision()    { return 7; }
-   static inline int32_t getMaxLongDFPPrecision()     { return 16; }
-   static inline int32_t getMaxExtendedDFPPrecision() { return 34; }
-
    // NOTE: getMaxPackedDecimalSize is derived from TR_MAX_DECIMAL_PRECISION but left as a constant
    //       to aid in static char declarations see packedDecimalPrecisionToByteLength for the formula
    // an assume in the TR::Compilation constructor will fire if there is a mismatch
@@ -196,8 +192,6 @@ public:
    static bool isValidZonedData(char  *lit, int32_t start, int32_t end);
    static bool isValidUnicodeData(char  *lit, int32_t start, int32_t end);
    static bool isValidBCDLiteral(char *lit, size_t litSize, TR::DataType dt, bool isEvenPrecision);
-
-   static TR::DataType getDFPTypeFromPrecision(int32_t precision);
 
    bool canGetMaxPrecisionFromType();
    int32_t getMaxPrecisionFromType();

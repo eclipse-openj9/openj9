@@ -1344,30 +1344,6 @@ TR_J9ByteCodeIlGenerator::genJNIIL()
    }
 
 void
-TR_J9ByteCodeIlGenerator::genDFPGetHWAvailable()
-   {
-   static int32_t constToLoad = -1;
-   initialize();
-   int32_t firstIndex = _bcIndex;
-   setIsGenerated(_bcIndex);
-
-   loadConstant(TR::iconst, 0);
-
-   setIsGenerated(++_bcIndex);
-   _bcIndex = genReturn(method()->returnOpCode(), method()->isSynchronized());
-   TR::Block * block = blocks(firstIndex);
-   cfg()->addEdge(cfg()->getStart(), block);
-   block->setVisitCount(_blockAddedVisitCount);
-   block->getExit()->getNode()->copyByteCodeInfo(block->getLastRealTreeTop()->getNode());
-   cfg()->insertBefore(block, 0);
-   _bcIndex = 0;
-   _methodSymbol->setFirstTreeTop(blocks(0)->getEntry());
-   prependEntryCode(blocks(0));
-
-   dumpOptDetails(comp(), "\tOverriding default return value with %d.\n", constToLoad);
-   }
-
-void
 TR_J9ByteCodeIlGenerator::genHWOptimizedStrProcessingAvailable()
    {
    static int32_t constToLoad = -1;

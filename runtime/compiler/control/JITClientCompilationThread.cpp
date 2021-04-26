@@ -1544,18 +1544,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, *std::get<0>(recv) == *std::get<1>(recv));
          }
          break;
-      case MessageType::ResolvedMethod_isBigDecimalMethod:
-         {
-         J9Method *j9method = std::get<0>(client->getRecvData<J9Method*>());
-         client->write(response, TR_J9MethodBase::isBigDecimalMethod(j9method));
-         }
-         break;
-      case MessageType::ResolvedMethod_isBigDecimalConvertersMethod:
-         {
-         J9Method *j9method = std::get<0>(client->getRecvData<J9Method*>());
-         client->write(response, TR_J9MethodBase::isBigDecimalConvertersMethod(j9method));
-         }
-         break;
       case MessageType::ResolvedMethod_isInlineable:
          {
          TR_ResolvedJ9Method *mirror = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());

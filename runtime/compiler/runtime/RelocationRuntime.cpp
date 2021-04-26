@@ -899,14 +899,6 @@ TR_SharedCacheRelocationRuntime::initializeCacheDeltas()
    _codeCacheDelta = 0;
    }
 
-
-bool
-TR_SharedCacheRelocationRuntime::useDFPHardware(TR_FrontEnd *fe)
-   {
-   return false;
-   }
-
-
 void
 TR_SharedCacheRelocationRuntime::incompatibleCache(U_32 module_name, U_32 reason, char *assumeMessage)
    {
@@ -942,8 +934,6 @@ TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_AOTHeader *hdrInCache, i
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_SMP_MISMATCH, "AOT header validation failed: SMP feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_UsesCompressedPointers) != (hdrInCache->featureFlags & TR_FeatureFlag_UsesCompressedPointers))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH, "AOT header validation failed: Compressed references feature mismatch.");
-   if ((featureFlags & TR_FeatureFlag_UseDFPHardware) != (hdrInCache->featureFlags & TR_FeatureFlag_UseDFPHardware))
-      defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_DFP_MISMATCH, "AOT header validation failed: DFP hardware feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_DisableTraps) != (hdrInCache->featureFlags & TR_FeatureFlag_DisableTraps))
       defaultMessage = generateError(J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH, "AOT header validation failed: Use of trap instruction feature mismatch.");
    if ((featureFlags & TR_FeatureFlag_TLHPrefetch) != (hdrInCache->featureFlags & TR_FeatureFlag_TLHPrefetch))
@@ -1264,9 +1254,6 @@ TR_SharedCacheRelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
 
    if (TR::Options::useCompressedPointers())
       featureFlags |= TR_FeatureFlag_UsesCompressedPointers;
-
-   if (useDFPHardware(fe))
-      featureFlags |= TR_FeatureFlag_UseDFPHardware;
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_DisableTraps))
       featureFlags |= TR_FeatureFlag_DisableTraps;

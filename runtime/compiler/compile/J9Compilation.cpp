@@ -1500,10 +1500,6 @@ J9::Compilation::notYetRunMeansCold()
                              self()->getOptions()->getInitialBCount() :
                              self()->getOptions()->getInitialCount();
 
-   if (currentMethod->convertToMethod()->isBigDecimalMethod() ||
-       currentMethod->convertToMethod()->isBigDecimalConvertersMethod())
-       initialCount = 0;
-
     switch (currentMethod->getRecognizedMethod())
        {
        case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:

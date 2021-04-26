@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -954,7 +954,7 @@ J9::Node::pdshrRoundIsConstantZero()
       }
    else
       {
-      TR_ASSERT(false, "only packed and DFP shift right operations have a round node (op %d)\n", self()->getOpCodeValue());
+      TR_ASSERT(false, "Only packed shift right operations have a round node (op %d)\n", self()->getOpCodeValue());
       }
    return false;
    }
@@ -1336,25 +1336,6 @@ J9::Node::setPDAddSubPrecision()
    TR_ASSERT(self()->getNumChildren() >= 2, "expecting >= 2 children and not %d children on a packed add/sub node\n", self()->getNumChildren());
    self()->setDecimalPrecision(std::max(self()->getFirstChild()->getDecimalPrecision(), self()->getSecondChild()->getDecimalPrecision())+1);
    }
-
-void
-J9::Node::setDFPPrecision(int32_t p)
-   {
-   TR_ASSERT(p > 0 && p <= TR_MAX_DECIMAL_PRECISION, "unexpected DFP precision %d on node %p\n", p, self());
-   TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalPrecision field for node %s %p that does not have it", self()->getOpCode().getName(), self());
-   _unionPropertyB._decimalInfo._decimalPrecision = (uint32_t)p;
-   }
-
-uint8_t
-J9::Node::getDFPPrecision()
-   {
-   TR_ASSERT(self()->hasDecimalInfo(), "attempting to access _decimalPrecision field for node %s %p that does not have it", self()->getOpCode().getName(), self());
-   TR_ASSERT(_unionPropertyB._decimalInfo._decimalPrecision > 0 && _unionPropertyB._decimalInfo._decimalPrecision <= TR_MAX_DECIMAL_PRECISION,
-             "unexpected DFP precision %d on node %s %p\n", _unionPropertyB._decimalInfo._decimalPrecision, self()->getOpCode().getName(), self());
-   return _unionPropertyB._decimalInfo._decimalPrecision;
-   }
-
-
 
 void
 J9::Node::setDecimalAdjust(int32_t a)

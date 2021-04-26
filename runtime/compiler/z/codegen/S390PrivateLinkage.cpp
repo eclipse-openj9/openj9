@@ -3360,14 +3360,7 @@ J9::Z::PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
          break;
       case TR::fcalli:
       case TR::dcalli:
-      case TR::dfcalli:
-      case TR::ddcalli:
          returnRegister = dependencies->searchPostConditionRegister(getFloatReturnRegister());
-         break;
-      case TR::decalli:
-         highReg = dependencies->searchPostConditionRegister(getLongDoubleReturnRegister0());
-         lowReg = dependencies->searchPostConditionRegister(getLongDoubleReturnRegister2());
-         returnRegister = cg()->allocateFPRegisterPair(lowReg, highReg);
          break;
       case TR::calli:
          returnRegister = NULL;

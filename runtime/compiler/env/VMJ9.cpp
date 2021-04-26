@@ -411,10 +411,6 @@ TR_J9VMBase::isAnyMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    return isMethodTracingEnabled(method);
    }
 
-
-bool TR_J9VMBase::cachedStaticDFPAvailField = false;
-int32_t * TR_J9VMBase::staticDFPHWAvailField = NULL;
-
 int32_t * TR_J9VMBase::staticStringEnableCompressionFieldAddr = NULL;
 
 bool
@@ -5982,26 +5978,6 @@ TR_J9VMBase::argumentCanEscapeMethodCall(TR::MethodSymbol * method, int32_t argI
       }
 
    return true;
-   }
-
-#define BDCLASSLEN 20
-const char * recognizedBigDecimalClasses [] =
-   {
-   "java/math/BigDecimal" //length = BDCLASSLEN
-   };
-
-bool
-TR_J9VMBase::isBigDecimalClass(J9UTF8 * className)
-   {
-   return (J9UTF8_LENGTH(className) == BDCLASSLEN &&
-           !strcmp(utf8Data(className), recognizedBigDecimalClasses[0]));
-   }
-
-bool
-TR_J9VMBase::isBigDecimalConvertersClass(J9UTF8 * className)
-   {
-   return (J9UTF8_LENGTH(className) == 32 &&
-           !strcmp(utf8Data(className), "com/ibm/BigDecimalConverters"));
    }
 
 bool

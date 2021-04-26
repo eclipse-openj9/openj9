@@ -66,24 +66,6 @@
 #include "z/codegen/S390Register.hpp"
 #include "z/codegen/SystemLinkage.hpp"
 
-#define TR_PACKED_TO_DFP_NOABS   (0x8)
-#define TR_PACKED_TO_DFP_ABS     (0x9)
-
-// mask at arch(10) is ---P
-//                     0123
-//
-// mask at arch(11) is S-PF
-//                     0123
-
-#define TR_DFP_TO_PACKED_DEFAULT_MASK_ARCH10       (0x0) ///< Encode plus sign as 0xc
-#define TR_DFP_TO_PACKED_DEFAULT_MASK_ARCH11       (0x9) ///< Result has a sign field (S=1), encode plus sign as 0xc (P=0) and clean (F=1)
-#define TR_DFP_TO_PACKED_UNSIGNED_ARCH10           (0x1) ///< P: encode plus sign as 0xc (P=0) or as 0xf (P=1).
-#define TR_DFP_TO_PACKED_UNSIGNED_ARCH11           (0x2) ///< P: encode plus sign as 0xc (P=0) or as 0xf (P=1).
-#define TR_DFP_TO_PACKED_CLEAN_ARCH11              (0x1) ///< F: force positive zero (F=1)
-
-#define TR_MAX_DFP_PACKED_FAST_SIZE  (32) ///< these conversion instructions slow down when the actual length is > 32
-#define TR_MAX_DFP_PACKED_SIZE       (34) ///< max actual length (<=34) these conversion instructions can handle
-
 TR::MemoryReference *
 J9::Z::TreeEvaluator::asciiAndUnicodeToPackedHelper(TR::Node *node,
                                                     TR_PseudoRegister *targetReg,
@@ -1957,20 +1939,6 @@ J9::Z::TreeEvaluator::pd2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    return targetReg;
    }
 
-// mask is SZPF
-//         0123
-
-#define TR_DFP_TO_ZONED_SIGN           (0x8) ///< S: does target zoned operand have a sign field (S=0 no, S=1 yes)
-#define TR_DFP_TO_ZONED_ZONE           (0x4) ///< Z: encode zone field as 0xf (Z=0) or as 0x3 (Z=1)
-#define TR_DFP_TO_ZONED_PLUS           (0x2) ///< P: encode plus sign as 0xc (P=0) or as 0xf (P=1). Ignored when S=0 and sign is then determined by Z.
-#define TR_DFP_TO_ZONED_FORCE_CLEAN    (0x1) ///< F: force negative zero to positive zero when F=1. The plus sign 0xc vs 0xf is determined by P.  Ignored when S=0.
-
-#define TR_MAX_DFP_ZONED_FAST_SIZE  (32) ///< these conversion instructions slow down when the actual length is > 32
-#define TR_MAX_DFP_ZONED_SIZE       (34) ///< max actual length (<=34) these conversion instructions can handle
-
-#define TR_ZONED_TO_DFP_SIGNED   (0x8)
-#define TR_ZONED_TO_DFP_UNSIGNED (0x0)
-
 bool
 J9::Z::TreeEvaluator::isZonedOperationAnEffectiveNop(TR::Node * node, int32_t shiftAmount, bool isTruncation, TR_PseudoRegister *srcReg, bool isSetSign, int32_t signToSet, TR::CodeGenerator * cg)
    {
@@ -2559,33 +2527,6 @@ TR::Register *J9::Z::TreeEvaluator::pdcmpleEvaluator(TR::Node *node, TR::CodeGen
 
    cg->traceBCDExit("pdcmple",node);
    return targetReg;
-   }
-
-TR::RegisterDependencyConditions *
-setupPackedDFPConversionGPRs(TR::Register *&gpr64, TR::Register *&gpr64Hi,
-                             TR::Register *&gpr64Lo, bool isLongDouble, TR::CodeGenerator *cg)
-   {
-   TR::RegisterDependencyConditions *deps = NULL;
-   if (isLongDouble)
-      {
-      gpr64 = cg->allocateConsecutiveRegisterPair(cg->allocateRegister(), cg->allocateRegister());
-      gpr64Hi = gpr64->getHighOrder(); // 0-63
-      gpr64Lo = gpr64->getLowOrder();  // 64-127
-      }
-   else
-      {
-      gpr64Hi = cg->allocateRegister();
-      gpr64 = gpr64Hi;
-      }
-
-   if (isLongDouble)
-      {
-      deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
-      deps->addPostCondition(gpr64, TR::RealRegister::EvenOddPair);
-      deps->addPostCondition(gpr64Hi, TR::RealRegister::LegalEvenOfPair);
-      deps->addPostCondition(gpr64Lo, TR::RealRegister::LegalOddOfPair);
-      }
-   return deps;
    }
 
 TR::Register *

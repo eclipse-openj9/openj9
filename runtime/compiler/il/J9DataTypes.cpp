@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -454,13 +454,6 @@ J9::DataType::isValidBCDLiteral(char *lit, size_t litSize, TR::DataType dt, bool
          return false;
          }
       }
-   }
-
-TR::DataType
-J9::DataType::getDFPTypeFromPrecision(int32_t precision)
-   {
-   if (precision < 1 || precision > J9::DataType::getMaxExtendedDFPPrecision())
-      return  TR::NoType;
    }
 
 bool
