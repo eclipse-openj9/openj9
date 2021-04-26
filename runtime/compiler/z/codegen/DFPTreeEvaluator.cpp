@@ -1307,8 +1307,6 @@ inlineBigDecimalUnscaledValue(
    return retRegister;
    }
 
-// bool DFPConvertPackedToDFP(long longPack, int scale, boolean sign)
-// method signature: TR::java_math_BigDecimal_DFPConvertPackedToDFP, "DFPConvertPackedToDFP", "(JIZ)Z"
 extern TR::Register *
 inlineBigDecimalFromPackedConverter(
       TR::Node * node,

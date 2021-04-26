@@ -210,15 +210,6 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
    TR::RecognizedMethod recognizedMethod = _methodSymbol->getRecognizedMethod();
    if (recognizedMethod != TR::unknownMethod)
       {
-      if (recognizedMethod == TR::java_math_BigDecimal_DFPGetHWAvailable)
-         {
-         if (performTransformation(comp(), "O^O IlGenerator: Generate java/math/BigDecimal.DFPGetHWAvailable\n"))
-            {
-            genDFPGetHWAvailable();
-            return true;
-            }
-         }
-
       if (recognizedMethod == TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion && !TR::Compiler->om.canGenerateArraylets())
          {
          if (performTransformation(comp(), "O^O IlGenerator: Generate com/ibm/jit/JITHelpers.supportsIntrinsicCaseConversion\n"))

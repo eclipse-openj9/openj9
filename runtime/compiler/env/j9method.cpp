@@ -1240,43 +1240,6 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
    if (count < 0 || count > initialCount)
       return false;
 
-   // if compiling a BigDecimal method, block isn't cold
-   if ((!comp->getOption(TR_DisableDFP)) &&
-       (
-#ifdef TR_TARGET_S390
-       comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP) ||
-#endif
-       comp->target().cpu.supportsDecimalFloatingPoint()) && sym != NULL)
-      {
-      TR::MethodSymbol * methodSymbol = sym->getMethodSymbol();
-      switch(methodSymbol->getRecognizedMethod())
-         {
-         case TR::java_math_BigDecimal_DFPIntConstructor:
-         case TR::java_math_BigDecimal_DFPLongConstructor:
-         case TR::java_math_BigDecimal_DFPLongExpConstructor:
-         case TR::java_math_BigDecimal_DFPAdd:
-         case TR::java_math_BigDecimal_DFPSubtract:
-         case TR::java_math_BigDecimal_DFPMultiply:
-         case TR::java_math_BigDecimal_DFPScaledAdd:
-         case TR::java_math_BigDecimal_DFPScaledSubtract:
-         case TR::java_math_BigDecimal_DFPScaledMultiply:
-         case TR::java_math_BigDecimal_DFPRound:
-         case TR::java_math_BigDecimal_DFPSignificance:
-         case TR::java_math_BigDecimal_DFPExponent:
-         case TR::java_math_BigDecimal_DFPCompareTo:
-         case TR::java_math_BigDecimal_DFPBCDDigits:
-         case TR::java_math_BigDecimal_DFPUnscaledValue:
-         case TR::java_math_BigDecimal_DFPSetScale:
-         case TR::java_math_BigDecimal_DFPScaledDivide:
-         case TR::java_math_BigDecimal_DFPDivide:
-         case TR::java_math_BigDecimal_DFPConvertPackedToDFP:
-         case TR::java_math_BigDecimal_DFPConvertDFPToPacked:
-            return false;
-         default:
-            break;
-         }
-      }
-
    if (comp->isDLT() || fej9()->compiledAsDLTBefore(this))
       return false;
 
@@ -2894,16 +2857,6 @@ void TR_ResolvedJ9Method::construct()
 
       {x(TR::com_ibm_dataaccess_DecimalData_translateArray, "translateArray",   "([BII[BI[BII)V")},
 
-
-      {x(TR::com_ibm_dataaccess_DecimalData_DFPFacilityAvailable,  "DFPFacilityAvailable",        "()Z")},
-      {x(TR::com_ibm_dataaccess_DecimalData_DFPUseDFP,             "DFPUseDFP",             "()Z")},
-      {x(TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP, "DFPConvertPackedToDFP", "(Ljava/math/BigDecimal;JIZ)Z")},
-      {x(TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked, "DFPConvertDFPToPacked", "(JZ)J")},
-      {x(TR::com_ibm_dataaccess_DecimalData_createZeroBigDecimal, "createZeroBigDecimal", "()Ljava/math/BigDecimal;")},
-      {x(TR::com_ibm_dataaccess_DecimalData_getlaside, "getlaside", "(Ljava/math/BigDecimal;)J")},
-      {x(TR::com_ibm_dataaccess_DecimalData_setlaside, "setlaside", "(Ljava/math/BigDecimal;J)V")},
-      {x(TR::com_ibm_dataaccess_DecimalData_getflags, "getflags", "(Ljava/math/BigDecimal;)I")},
-      {x(TR::com_ibm_dataaccess_DecimalData_setflags, "setflags", "(Ljava/math/BigDecimal;I)V")},
       {x(TR::com_ibm_dataaccess_DecimalData_slowSignedPackedToBigDecimal, "slowSignedPackedToBigDecimal", "([BIIIZ)Ljava/math/BigDecimal;")},
       {x(TR::com_ibm_dataaccess_DecimalData_slowBigDecimalToSignedPacked, "slowBigDecimalToSignedPacked", "(Ljava/math/BigDecimal;[BIIZ)V")},
 
@@ -2992,30 +2945,6 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_math_BigDecimal_longAdd,               "longAdd",               "(Ljava/math/BigDecimal;Ljava/math/BigDecimal;Ljava/math/MathContext;Z)Ljava/math/BigDecimal;")},
       {x(TR::java_math_BigDecimal_slAdd,                  "slAdd",                 "(Ljava/math/BigDecimal;Ljava/math/BigDecimal;Ljava/math/MathContext;Z)Ljava/math/BigDecimal;")},
       {x(TR::java_math_BigDecimal_getLaside,             "getLaside",             "()J")},
-      {x(TR::java_math_BigDecimal_DFPPerformHysteresis,  "DFPPerformHysteresis",  "()Z")},
-      {x(TR::java_math_BigDecimal_DFPUseDFP,             "DFPUseDFP",             "()Z")},
-      {x(TR::java_math_BigDecimal_DFPHWAvailable,        "DFPHWAvailable",        "()Z")},
-      {x(TR::java_math_BigDecimal_DFPIntConstructor,     "DFPIntConstructor",     "(IIII)Z")},
-      {x(TR::java_math_BigDecimal_DFPLongConstructor,    "DFPLongConstructor",    "(JIII)Z")},
-      {x(TR::java_math_BigDecimal_DFPLongExpConstructor, "DFPLongExpConstructor", "(JIIIIZ)Z")},
-      {x(TR::java_math_BigDecimal_DFPAdd,                "DFPAdd",                "(JJIII)Z")},
-      {x(TR::java_math_BigDecimal_DFPSubtract,           "DFPSubtract",           "(JJIII)Z")},
-      {x(TR::java_math_BigDecimal_DFPMultiply,           "DFPMultiply",           "(JJIII)Z")},
-      {x(TR::java_math_BigDecimal_DFPDivide,             "DFPDivide",             "(JJZIII)I")},
-      {x(TR::java_math_BigDecimal_DFPScaledAdd,          "DFPScaledAdd",          "(JJI)Z")},
-      {x(TR::java_math_BigDecimal_DFPScaledSubtract,     "DFPScaledSubtract",     "(JJI)Z")},
-      {x(TR::java_math_BigDecimal_DFPScaledMultiply,     "DFPScaledMultiply",     "(JJI)Z")},
-      {x(TR::java_math_BigDecimal_DFPScaledDivide,       "DFPScaledDivide",       "(JJIII)I")},
-      {x(TR::java_math_BigDecimal_DFPRound,              "DFPRound",              "(JII)Z")},
-      {x(TR::java_math_BigDecimal_DFPSetScale,           "DFPSetScale",           "(JIZIZ)I")},
-      {x(TR::java_math_BigDecimal_DFPCompareTo,          "DFPCompareTo",          "(JJ)I")},
-      {x(TR::java_math_BigDecimal_DFPSignificance,       "DFPSignificance",       "(J)I")},
-      {x(TR::java_math_BigDecimal_DFPExponent,           "DFPExponent",           "(J)I")},
-      {x(TR::java_math_BigDecimal_DFPBCDDigits,          "DFPBCDDigits",          "(J)J")},
-      {x(TR::java_math_BigDecimal_DFPUnscaledValue,      "DFPUnscaledValue",      "(J)J")},
-      {x(TR::java_math_BigDecimal_DFPConvertPackedToDFP, "DFPConvertPackedToDFP", "(JIZ)Z")},
-      {x(TR::java_math_BigDecimal_DFPConvertDFPToPacked, "DFPConvertDFPToPacked", "(JZ)J")},
-      {x(TR::java_math_BigDecimal_DFPGetHWAvailable,     "DFPGetHWAvailable",     "()Z")},
       {x(TR::java_math_BigDecimal_doubleValue,     "doubleValue",     "()D")},
       {x(TR::java_math_BigDecimal_floatValue,     "floatValue",       "()F")},
       {x(TR::java_math_BigDecimal_storeTwoCharsFromInt,  "storeTwoCharsFromInt",  "([CII)V")},

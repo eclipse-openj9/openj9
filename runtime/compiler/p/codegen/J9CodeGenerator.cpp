@@ -322,31 +322,6 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
       }
 #endif
 
-   if (!comp->compileRelocatableCode() &&
-       !comp->getOption(TR_DisableDFP) &&
-       comp->target().cpu.supportsDecimalFloatingPoint())
-      {
-      if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
-          method == TR::java_math_BigDecimal_DFPLongConstructor ||
-          method == TR::java_math_BigDecimal_DFPLongExpConstructor ||
-          method == TR::java_math_BigDecimal_DFPAdd ||
-          method == TR::java_math_BigDecimal_DFPSubtract ||
-          method == TR::java_math_BigDecimal_DFPMultiply ||
-          method == TR::java_math_BigDecimal_DFPDivide ||
-          method == TR::java_math_BigDecimal_DFPScaledAdd ||
-          method == TR::java_math_BigDecimal_DFPScaledSubtract ||
-          method == TR::java_math_BigDecimal_DFPScaledMultiply ||
-          method == TR::java_math_BigDecimal_DFPScaledDivide ||
-          method == TR::java_math_BigDecimal_DFPRound ||
-          method == TR::java_math_BigDecimal_DFPSetScale ||
-          method == TR::java_math_BigDecimal_DFPCompareTo ||
-          method == TR::java_math_BigDecimal_DFPSignificance ||
-          method == TR::java_math_BigDecimal_DFPExponent ||
-          method == TR::java_math_BigDecimal_DFPBCDDigits ||
-          method == TR::java_math_BigDecimal_DFPUnscaledValue)
-            return true;
-      }
-
    if ((method==TR::java_util_concurrent_atomic_AtomicBoolean_getAndSet) ||
       (method==TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd) ||
       (method==TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement) ||

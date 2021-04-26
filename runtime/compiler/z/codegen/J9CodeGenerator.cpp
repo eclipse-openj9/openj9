@@ -3728,39 +3728,6 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    if (self()->isMethodInAtomicLongGroup(method))
       return true;
 
-   if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) && comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
-      {
-      if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
-          method == TR::java_math_BigDecimal_DFPLongConstructor ||
-          method == TR::java_math_BigDecimal_DFPLongExpConstructor ||
-          method == TR::java_math_BigDecimal_DFPAdd ||
-          method == TR::java_math_BigDecimal_DFPSubtract ||
-          method == TR::java_math_BigDecimal_DFPMultiply ||
-          method == TR::java_math_BigDecimal_DFPDivide ||
-          method == TR::java_math_BigDecimal_DFPScaledAdd ||
-          method == TR::java_math_BigDecimal_DFPScaledSubtract ||
-          method == TR::java_math_BigDecimal_DFPScaledMultiply ||
-          method == TR::java_math_BigDecimal_DFPScaledDivide ||
-          method == TR::java_math_BigDecimal_DFPRound ||
-          method == TR::java_math_BigDecimal_DFPSetScale ||
-          method == TR::java_math_BigDecimal_DFPCompareTo ||
-          method == TR::java_math_BigDecimal_DFPSignificance ||
-          method == TR::java_math_BigDecimal_DFPExponent ||
-          method == TR::java_math_BigDecimal_DFPBCDDigits ||
-          method == TR::java_math_BigDecimal_DFPUnscaledValue ||
-          method == TR::java_math_BigDecimal_DFPConvertPackedToDFP ||
-          method == TR::java_math_BigDecimal_DFPConvertDFPToPacked)
-         {
-         return true;
-         }
-
-      if (method == TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP ||
-          method == TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked)
-         {
-         return true;
-         }
-      }
-
    if (self()->getSupportsVectorRegisters()){
       if (method == TR::java_lang_Math_fma_D ||
           method == TR::java_lang_StrictMath_fma_D)
@@ -4170,79 +4137,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
                break;
             }
          }
-
-   if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) &&
-       comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
-      {
-      TR_ASSERT( methodSymbol, "require a methodSymbol for DFP on Z\n");
-      if (methodSymbol)
-         {
-         switch(methodSymbol->getMandatoryRecognizedMethod())
-            {
-            case TR::java_math_BigDecimal_DFPIntConstructor:
-               resultReg = inlineBigDecimalConstructor(node, cg, false, false);
-               return true;
-            case TR::java_math_BigDecimal_DFPLongConstructor:
-               resultReg = inlineBigDecimalConstructor(node, cg, true, false);
-               return true;
-            case TR::java_math_BigDecimal_DFPLongExpConstructor:
-               resultReg = inlineBigDecimalConstructor(node, cg, true, true);
-               return true;
-            case TR::java_math_BigDecimal_DFPAdd:
-               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::ADTR, false);
-               return true;
-            case TR::java_math_BigDecimal_DFPSubtract:
-               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::SDTR, false);
-               return true;
-            case TR::java_math_BigDecimal_DFPMultiply:
-               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::MDTR, false);
-               return true;
-            case TR::java_math_BigDecimal_DFPScaledAdd:
-               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::ADTR, true);
-               return true;
-            case TR::java_math_BigDecimal_DFPScaledSubtract:
-               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::SDTR, true);
-               return true;
-            case TR::java_math_BigDecimal_DFPScaledMultiply:
-               resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::MDTR, true);
-               return true;
-            case TR::java_math_BigDecimal_DFPRound:
-               resultReg = inlineBigDecimalRound(node, cg);
-               return true;
-            case TR::java_math_BigDecimal_DFPSignificance:
-               resultReg = inlineBigDecimalUnaryOp(node, cg, TR::InstOpCode::ESDTR);
-               return true;
-            case TR::java_math_BigDecimal_DFPExponent:
-               resultReg = inlineBigDecimalUnaryOp(node, cg, TR::InstOpCode::EEDTR);
-               return true;
-            case TR::java_math_BigDecimal_DFPCompareTo:
-               resultReg = inlineBigDecimalCompareTo(node, cg);
-               return true;
-            case TR::java_math_BigDecimal_DFPBCDDigits:
-               resultReg = inlineBigDecimalUnaryOp(node, cg, TR::InstOpCode::CUDTR);
-               return true;
-            case TR::java_math_BigDecimal_DFPUnscaledValue:
-               resultReg = inlineBigDecimalUnscaledValue(node, cg);
-               return true;
-            case TR::java_math_BigDecimal_DFPSetScale:
-               resultReg = inlineBigDecimalSetScale(node, cg);
-               return true;
-            case TR::java_math_BigDecimal_DFPDivide:
-               resultReg = inlineBigDecimalDivide(node, cg);
-               return true;
-            case TR::java_math_BigDecimal_DFPConvertPackedToDFP:
-            case TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP:
-               resultReg = inlineBigDecimalFromPackedConverter(node, cg);
-               return true;
-            case TR::java_math_BigDecimal_DFPConvertDFPToPacked:
-            case TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked:
-               resultReg = inlineBigDecimalToPackedConverter(node, cg);
-               return true;
-            default:
-               break;
-            }
-         }
-      }
 
    TR::MethodSymbol * symbol = node->getSymbol()->castToMethodSymbol();
    if ((symbol->isVMInternalNative() || symbol->isJITInternalNative()) || isKnownMethod(methodSymbol))

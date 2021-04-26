@@ -2822,13 +2822,6 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
          case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToUnicodeDecimal_:
          case TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToPackedDecimal_:
 
-         //BigDecimal related DFP methods
-         case TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP:
-         case TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked:
-            if (!comp->getOption(TR_DisablePackedDecimalIntrinsics))
-               dontInlineRecognizedMethod = true;
-            break;
-
          case TR::java_math_BigDecimal_noLLOverflowAdd:
          case TR::java_math_BigDecimal_noLLOverflowMul:
          case TR::java_math_BigDecimal_slowSubMulSetScale:
