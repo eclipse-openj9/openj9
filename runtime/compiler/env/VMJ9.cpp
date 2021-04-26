@@ -1125,6 +1125,16 @@ TR_J9VMBase::getObjectClassAt(uintptr_t objectAddress)
    return getObjectClass(getStaticReferenceFieldAtAddress(objectAddress));
    }
 
+TR_OpaqueClassBlock *
+TR_J9VMBase::getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::KnownObjectTable::Index idx)
+   {
+   TR::VMAccessCriticalSection getObjectClassFromKnownObjectIndex(comp, TR::VMAccessCriticalSection::tryToAcquireVMAccess);
+   TR_OpaqueClassBlock *clazz = NULL;
+   if (getObjectClassFromKnownObjectIndex.hasVMAccess())
+      clazz = getObjectClass(comp->getKnownObjectTable()->getPointer(idx));
+   return clazz;
+   }
+
 uintptr_t
 TR_J9VMBase::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
