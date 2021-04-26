@@ -71,6 +71,8 @@ class TreeLowering : public TR::Optimization
 
       const char* optDetailString() { return _treeLoweringOpt->optDetailString(); }
 
+      void prepareToReplaceNode(TR::Node * node) { _treeLoweringOpt->prepareToReplaceNode(node); }
+      
       /**
        * @brief Main callback method to apply a transformation.
        *
@@ -259,12 +261,7 @@ class TreeLowering : public TR::Optimization
    TR::Block* splitForFastpath(TR::Block* const block, TR::TreeTop* const splitPoint, TR::Block* const targetBlock);
 
    // helpers related to Valhalla value type lowering
-   void lowerValueTypeOperations(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
-   void fastpathAcmpHelper(TR::PreorderNodeIterator& nodeIter, TR::Node* const node, TR::TreeTop* const tt);
-   void lowerArrayStoreCHK(TR::Node* node, TR::TreeTop* tt);
-
-   void lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
-   void lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
+   void lowerValueTypeOperations(TransformationManager& transformation, TR::Node* node, TR::TreeTop* tt);
 
    template <typename T>
    Transformer* getTransformer() { return new (comp()->region()) T(this); }
