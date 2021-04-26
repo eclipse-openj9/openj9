@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -858,7 +858,6 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
             !((temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch()
               && !temp->asBlock()->getLastRealTreeTop()->getNode()->getByteCodeInfo().doNotProfile()) ||
              temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
-             temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::trtLookup ||
              temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))
       {
       if (_seenNodes->isSet(temp->getNumber()))
@@ -928,7 +927,6 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
       }
    else if (temp->asBlock()->getEntry() &&
             (temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
-             temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::trtLookup ||
              temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))
       {
       startFrequency = _externalProfiler->getSumSwitchCount(temp->asBlock()->getLastRealTreeTop()->getNode(), comp());
@@ -1107,7 +1105,6 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
             }
          else if (node->asBlock()->getEntry() &&
                   (node->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
-                   node->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::trtLookup ||
                    node->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))
             {
             _seenNodesInCycle->empty();
@@ -1184,7 +1181,6 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
                  succ->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch()) ||
                 (succ->asBlock()->getEntry() &&
                   (succ->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
-                   succ->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::trtLookup ||
                    succ->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))))
                {
                setBlockFrequency ( succ, edge->getFrequency(), true);
@@ -1305,7 +1301,6 @@ J9::CFG::computeInitialBlockFrequencyBasedOnExternalProfiler(TR::Compilation *co
             !((temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch()
               && !temp->asBlock()->getLastRealTreeTop()->getNode()->getByteCodeInfo().doNotProfile()) ||
              temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
-             temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::trtLookup ||
              temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))
       {
       if (_seenNodes->isSet(temp->getNumber()))
@@ -1356,7 +1351,6 @@ J9::CFG::computeInitialBlockFrequencyBasedOnExternalProfiler(TR::Compilation *co
       }
    else if (temp->asBlock()->getEntry() &&
             (temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
-             temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::trtLookup ||
              temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))
       {
       startFrequency = _externalProfiler->getSumSwitchCount(temp->asBlock()->getLastRealTreeTop()->getNode(), comp);

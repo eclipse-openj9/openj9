@@ -595,7 +595,6 @@ extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::arraylength] =           TR::TreeEvaluator::arraylengthEvaluator;
    tet[TR::lookup] =                TR::TreeEvaluator::lookupEvaluator;
    tet[TR::exceptionRangeFence] =   TR::TreeEvaluator::exceptionRangeFenceEvaluator;
-   tet[TR::dbgFence] =              TR::TreeEvaluator::exceptionRangeFenceEvaluator;
    tet[TR::NULLCHK] =               TR::TreeEvaluator::NULLCHKEvaluator;
    tet[TR::ZEROCHK] =               TR::TreeEvaluator::ZEROCHKEvaluator;
    tet[TR::ResolveCHK] =            TR::TreeEvaluator::resolveCHKEvaluator;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1530,17 +1530,6 @@ void TR_EscapeAnalysis::findCandidates()
 
       if (!node->getNumChildren())
          continue;
-
-      // Don't muck about with allocations that have already been merged into
-      // a multiple allocation. Set their visit counts to make sure they are
-      // not picked up later by mistake.
-      //
-      if (node->getOpCodeValue() == TR::MergeNew)
-         {
-         for (i = 0; i < node->getNumChildren(); i++)
-            visited.add(node);
-         continue;
-         }
 
       node = node->getFirstChild();
 

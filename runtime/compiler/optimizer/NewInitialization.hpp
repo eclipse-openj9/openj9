@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,8 +72,6 @@ class TR_NewInitialization : public TR::Optimization
       TR_BitVector             *uninitializedWords;
       TR_BitVector             *initializedBytes;
       TR_BitVector             *uninitializedBytes;
-      TR::TreeTop               *firstGCTree;
-      TR::Node                  *offsetReference;
 
       TR_LinkHead<NodeEntry>    localStores;
       TR_LinkHead<NodeEntry>    localLoads;
@@ -85,11 +83,7 @@ class TR_NewInitialization : public TR::Optimization
       int32_t                   numInitializedBytes;
       int32_t                   numUninitializedBytes;
 
-      bool                      canBeMerged;
-      bool                      firstMergeCandidate;
-      bool                      GCPointFoundBeforeNextCandidate;
       bool                      isArrayNew;
-      bool                      isDoubleSizeArray;
       bool                      isInSniffedMethod;
       };
 
@@ -97,7 +91,7 @@ class TR_NewInitialization : public TR::Optimization
    bool    doAnalysisOnce(int32_t iteration);
 
    // Methods for finding the allocation node candidates and for scanning the
-   // trees for explicit initializations and merge opportunities
+   // trees for explicit initializations
    //
    //
    void     findNewCandidates();
@@ -106,7 +100,6 @@ class TR_NewInitialization : public TR::Optimization
    bool     sniffCall(TR::TreeTop *callTree);
    TR::ResolvedMethodSymbol *findInlinableMethod(TR::TreeTop *callTree);
 
-   void     setGCPoint(TR::TreeTop *treeTop, TR::Node *node = NULL);
    TR::Node *resolveNode(TR::Node *node);
    bool     matchLocalLoad(TR::Node *node, Candidate *c);
    Candidate *findBaseOfIndirection(TR::Node *directBase);
@@ -129,14 +122,11 @@ class TR_NewInitialization : public TR::Optimization
    void    inlineCalls();
    void    modifyTrees(Candidate *candidate);
    int32_t buildInitializationInfo(Candidate *c, TR_BitVector *wordsToBeInitialized, int32_t startWord);
-   void    modifyReferences(Candidate *candidate, Candidate *startOfNextMergeSequence, Candidate *, TR::TreeTop *mergeTree);
-   void    modifyReferences(Candidate *candidate, Candidate *startOfNextMergeSequence, Candidate *, TR::Node *node);
 
    virtual int32_t getValueNumber(TR::Node *n) = 0;
 
    TR::TreeTop                   *_outermostCallSite;
    TR_Array<TR::Node*>           *_parms;
-   Candidate                    *_firstMergeCandidate;
    Candidate                    *_firstActiveCandidate;
 
    TR_LinkHead<TreeTopEntry>     _inlinedCallSites;
@@ -147,7 +137,6 @@ class TR_NewInitialization : public TR::Optimization
    int32_t                       _maxTotalInlinedBytecodeSize;
    int32_t                       _totalInlinedBytecodeSize;
 
-   bool                          _allowMerge;
    bool                          _sniffConstructorsOnly;
    bool                          _sniffCalls;
    bool                          _removeZeroStores;
@@ -170,5 +159,3 @@ class TR_LocalNewInitialization : public TR_NewInitialization
    };
 
 #endif
-
-
