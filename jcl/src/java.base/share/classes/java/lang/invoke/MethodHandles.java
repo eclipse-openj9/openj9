@@ -170,8 +170,12 @@ public class MethodHandles {
 		private static final String INVOKE = "invoke"; //$NON-NLS-1$
 		
 		/*[IF JAVA_SPEC_VERSION >= 15]*/
-		private static final int CLASSOPTION_FLAG_NESTMATE = 1;
-		private static final int CLASSOPTION_FLAG_STRONG = 2;
+		/* Should match OJDK's j.l.i.MethodHandleNatives.Constants.NESTMATE_CLASS (0x1). */
+		private static final int CLASSOPTION_FLAG_NESTMATE = 0x1;
+		/* Should match OJDK's j.l.i.MethodHandleNatives.Constants.HIDDEN_CLASS (0x2). */
+		private static final int CLASSOPTION_FLAG_HIDDEN = 0x2;
+		/* Should match OJDK's j.l.i.MethodHandleNatives.Constants.STRONG_LOADER_LINK (0x4). */
+		private static final int CLASSOPTION_FLAG_STRONG = 0x4;
 		/*[ENDIF] JAVA_SPEC_VERSION >= 15*/
 
 		static final int VARARGS = 0x80;
@@ -2438,12 +2442,12 @@ public class MethodHandles {
 		}
 
 		ClassDefiner makeHiddenClassDefiner(String name, byte[] template) {
-			ClassDefiner definer = new ClassDefiner(name, template, this);
+			ClassDefiner definer = new ClassDefiner(name, template, this, CLASSOPTION_FLAG_HIDDEN);
 			return definer;
 		}
 		
 		ClassDefiner makeHiddenClassDefiner(String name, byte[] template, int flag) {
-			ClassDefiner definer = new ClassDefiner(name, template, this, flag);
+			ClassDefiner definer = new ClassDefiner(name, template, this, flag | CLASSOPTION_FLAG_HIDDEN);
 			return definer;
 		}
 		
