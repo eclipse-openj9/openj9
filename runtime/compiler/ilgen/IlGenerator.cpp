@@ -1350,30 +1350,8 @@ TR_J9ByteCodeIlGenerator::genDFPGetHWAvailable()
    initialize();
    int32_t firstIndex = _bcIndex;
    setIsGenerated(_bcIndex);
-   if (constToLoad == -1)
-      {
-      bool dfpbd = comp()->getOption(TR_DisableHysteresis);
-      bool nodfpbd =  comp()->getOption(TR_DisableDFP);
-      bool isPOWERDFP = comp()->target().cpu.isPower() && comp()->target().cpu.supportsDecimalFloatingPoint();
 
-      bool is390DFP =
-#ifdef TR_TARGET_S390
-         comp()->target().cpu.isZ() && comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP);
-#else
-         false;
-#endif
-
-      if ((isPOWERDFP || is390DFP) && ((!dfpbd && !nodfpbd) || dfpbd))
-         {
-         constToLoad = 1;
-         }
-      else
-         {
-         constToLoad = 0;
-         }
-      }
-
-   loadConstant(TR::iconst, constToLoad);
+   loadConstant(TR::iconst, 0);
 
    setIsGenerated(++_bcIndex);
    _bcIndex = genReturn(method()->returnOpCode(), method()->isSynchronized());

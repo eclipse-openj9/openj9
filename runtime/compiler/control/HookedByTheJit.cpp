@@ -417,21 +417,6 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
 
    int32_t count = -1; // means we didn't set the value yet
 
-   // compile BigDecimal methods containing DFP stubs right away
-   // we want to encode an initial count of 0 for those methods
-   //
-   if (!optionsJIT->getOption(TR_DisableDFP) && !optionsAOT->getOption(TR_DisableDFP)
-       && (TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
-#ifdef TR_TARGET_S390
-       || TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_DFP)
-#endif
-       )
-       && TR_J9MethodBase::isBigDecimalMethod(method)
-      )
-      {
-      count = 0;
-      }
-   else
       {
       J9ROMClass *declaringClazz = J9_CLASS_FROM_METHOD(method)->romClass;
       J9UTF8 * className = J9ROMCLASS_CLASSNAME(declaringClazz);

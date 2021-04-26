@@ -5141,30 +5141,6 @@ TR_J9ByteCodeIlGenerator::loadInstance(TR::SymbolReference * symRef)
    TR::ILOpCodes op = _generateReadBarriersForFieldWatch ? comp()->il.opCodeForIndirectReadBarrier(type): comp()->il.opCodeForIndirectLoad(type);
    dummyLoad = load = TR::Node::createWithSymRef(op, 1, 1, address, symRef);
 
-   // loading cleanroom BigDecimal long field?
-   // performed only when DFP isn't disabled, and the target
-   // is DFP enabled (i.e. Power6, zSeries6)
-   if (!comp()->compileRelocatableCode() && !comp()->getOption(TR_DisableDFP) &&
-       ((comp()->target().cpu.isPower() && comp()->target().cpu.supportsDecimalFloatingPoint())
-#ifdef TR_TARGET_S390
-         || (comp()->target().cpu.isZ() && comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
-#endif
-         ))
-      {
-      char * className = NULL;
-      className = _methodSymbol->getResolvedMethod()->classNameChars();
-      if (className != NULL && BDCLASSLEN == strlen(className) &&
-             !strncmp(className, BDCLASS, BDCLASSLEN))
-         {
-         int32_t fieldLen=0;
-         char * fieldName =  _methodSymbol->getResolvedMethod()->fieldNameChars(symRef->getCPIndex(), fieldLen);
-         if (fieldName != NULL && BDFIELDLEN == strlen(fieldName) && !strncmp(fieldName, BDFIELD, BDFIELDLEN))
-            {
-            load->setIsBigDecimalLoad();
-            comp()->setContainsBigDecimalLoad(true);
-            }
-         }
-      }
    TR::Node * treeTopNode = 0;
 
    if (symRef->isUnresolved())
