@@ -21,7 +21,6 @@
 ################################################################################
 
 j9jit_files(
-	z/codegen/DFPTreeEvaluator.cpp
 	z/codegen/ForceRecompilationSnippet.cpp
 	z/codegen/InMemoryLoadStoreMarking.cpp
 	z/codegen/J9AheadOfTimeCompile.cpp

@@ -57,7 +57,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/z/env/OMRCPU.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/z/codegen/DFPTreeEvaluator.cpp \
     compiler/z/codegen/ForceRecompilationSnippet.cpp \
     compiler/z/codegen/InMemoryLoadStoreMarking.cpp \
     compiler/z/codegen/J9AheadOfTimeCompile.cpp \
