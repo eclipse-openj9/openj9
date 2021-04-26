@@ -3803,18 +3803,6 @@ extern TR::Register *inlineNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerato
 extern TR::Register *inlineNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg, int32_t subfconst);
 extern TR::Register *inlineTrailingZerosQuadWordAtATime(TR::Node *node, TR::CodeGenerator *cg);
 
-extern TR::Register *inlineBigDecimalConstructor(TR::Node *node, TR::CodeGenerator *cg, bool isLong, bool exp);
-extern TR::Register *inlineBigDecimalBinaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, bool scaled);
-extern TR::Register *inlineBigDecimalScaledDivide(TR::Node * node, TR::CodeGenerator *cg);
-extern TR::Register *inlineBigDecimalDivide(TR::Node * node, TR::CodeGenerator *cg);
-extern TR::Register *inlineBigDecimalRound(TR::Node * node, TR::CodeGenerator *cg);
-extern TR::Register *inlineBigDecimalCompareTo(TR::Node * node, TR::CodeGenerator * cg);
-extern TR::Register *inlineBigDecimalUnaryOp(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op);
-extern TR::Register *inlineBigDecimalSetScale(TR::Node * node, TR::CodeGenerator * cg);
-extern TR::Register *inlineBigDecimalUnscaledValue(TR::Node * node, TR::CodeGenerator * cg);
-extern TR::Register *inlineBigDecimalFromPackedConverter(TR::Node * node, TR::CodeGenerator * cg);
-extern TR::Register *inlineBigDecimalToPackedConverter(TR::Node * node, TR::CodeGenerator * cg);
-
 extern TR::Register *toUpperIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 extern TR::Register *toLowerIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 

@@ -11182,15 +11182,6 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
    return;
    }
 
-extern TR::Register *inlineBigDecimalConstructor(TR::Node *node, TR::CodeGenerator *cg, bool isLong, bool exp);
-extern TR::Register *inlineBigDecimalBinaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, bool scaled);
-extern TR::Register *inlineBigDecimalDivide(TR::Node * node, TR::CodeGenerator *cg);
-extern TR::Register *inlineBigDecimalRound(TR::Node * node, TR::CodeGenerator *cg);
-extern TR::Register *inlineBigDecimalCompareTo(TR::Node * node, TR::CodeGenerator * cg);
-extern TR::Register *inlineBigDecimalUnaryOp(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op, bool precision);
-extern TR::Register *inlineBigDecimalSetScale(TR::Node * node, TR::CodeGenerator * cg);
-extern TR::Register *inlineBigDecimalUnscaledValue(TR::Node * node, TR::CodeGenerator * cg);
-
 bool
 J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
