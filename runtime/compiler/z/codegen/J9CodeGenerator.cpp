@@ -3328,54 +3328,6 @@ J9::Z::CodeGenerator::getPDMulEncodedPrecision(TR::Node *pdmul, int32_t exponent
    return TR::DataType::byteLengthToPackedDecimalPrecisionFloor(self()->getPDMulEncodedSize(pdmul, exponent));
    }
 
-uint32_t
-J9::Z::CodeGenerator::getPackedToDecimalFloatFixedSize()
-   {
-   if (self()->supportsFastPackedDFPConversions())
-      return TR_PACKED_TO_DECIMAL_FLOAT_SIZE_ARCH11;
-   return TR_PACKED_TO_DECIMAL_FLOAT_SIZE;
-   }
-
-uint32_t
-J9::Z::CodeGenerator::getPackedToDecimalDoubleFixedSize()
-   {
-   if (self()->supportsFastPackedDFPConversions())
-      return TR_PACKED_TO_DECIMAL_DOUBLE_SIZE_ARCH11;
-   return TR_PACKED_TO_DECIMAL_DOUBLE_SIZE;
-   }
-
-uint32_t
-J9::Z::CodeGenerator::getPackedToDecimalLongDoubleFixedSize()
-   {
-   if (self()->supportsFastPackedDFPConversions())
-      return TR_PACKED_TO_DECIMAL_LONG_DOUBLE_SIZE_ARCH11;
-   return TR_PACKED_TO_DECIMAL_LONG_DOUBLE_SIZE;
-   }
-
-uint32_t
-J9::Z::CodeGenerator::getDecimalFloatToPackedFixedSize()
-   {
-   if (self()->supportsFastPackedDFPConversions())
-      return TR_DECIMAL_FLOAT_TO_PACKED_SIZE_ARCH11;
-   return TR_DECIMAL_FLOAT_TO_PACKED_SIZE;
-   }
-
-uint32_t
-J9::Z::CodeGenerator::getDecimalDoubleToPackedFixedSize()
-   {
-   if (self()->supportsFastPackedDFPConversions())
-      return TR_DECIMAL_DOUBLE_TO_PACKED_SIZE_ARCH11;
-   return TR_DECIMAL_DOUBLE_TO_PACKED_SIZE;
-   }
-
-uint32_t
-J9::Z::CodeGenerator::getDecimalLongDoubleToPackedFixedSize()
-   {
-   if (self()->supportsFastPackedDFPConversions())
-      return TR_DECIMAL_LONG_DOUBLE_TO_PACKED_SIZE_ARCH11;
-   return TR_DECIMAL_LONG_DOUBLE_TO_PACKED_SIZE;
-   }
-
 /**
  * Motivating example for the packedAddSubSize
  * pdsub p=3,s=2     // correct answer is 12111-345 truncated to 3 digits = (11)766
