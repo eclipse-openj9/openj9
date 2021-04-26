@@ -43,6 +43,8 @@ TR::TreeLowering::perform()
       return 0;
       }
 
+   TransformationManager transformations(comp()->region());
+
    TR::ResolvedMethodSymbol* methodSymbol = comp()->getMethodSymbol();
    for (TR::PreorderNodeIterator nodeIter(methodSymbol->getFirstTreeTop(), comp()); nodeIter != NULL; ++nodeIter)
       {
@@ -51,6 +53,8 @@ TR::TreeLowering::perform()
 
       lowerValueTypeOperations(nodeIter, node, tt);
       }
+
+   transformations.doTransformations();
 
    return 0;
    }
