@@ -27,6 +27,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
+#include "infra/deque.hpp"
 #include "infra/ILWalk.hpp"
 #include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
@@ -48,6 +49,125 @@ namespace TR
  */
 class TreeLowering : public TR::Optimization
    {
+   public:
+
+   /**
+    * @brief Abstract class serving as interface for callbacks that apply a transformation.
+    *
+    * Transformations use this class as an interface to invoke Transformer callbacks. Callbacks
+    * should be implemented by extending this class and overriding lower().
+    */
+   class Transformer
+      {
+      public:
+      explicit Transformer(TR::TreeLowering* treeLoweringOpt)
+         : _comp(treeLoweringOpt->comp())
+         , _treeLoweringOpt(treeLoweringOpt)
+         {}
+
+      TR::Compilation* comp() { return _comp; }
+
+      bool trace() { return _treeLoweringOpt->trace(); }
+
+      const char* optDetailString() { return _treeLoweringOpt->optDetailString(); }
+
+      /**
+       * @brief Main callback method to apply a transformation.
+       *
+       * Derived classes must override this method with the appropriate code
+       * to apply the transformation given some input.
+       *
+       * @param node the node where the transformation will happen
+       * @param tt the \ref TR::TreeTop instance at the root of the tree containing the node
+       */
+      virtual void lower(TR::Node* const node, TR::TreeTop* const tt) = 0;
+
+      private:
+      TR::Compilation* _comp;
+      TR::TreeLowering* _treeLoweringOpt;
+      };
+
+   private:
+   /**
+    * @brief A class for collecting transformations to be performed.
+    *
+    * This class encapsulates the basic functionality for "delaying"
+    * transformations in TreeLowering. It allows "future transformations"
+    * to be collected and then performed consecutively in bulk later on.
+    */
+   class TransformationManager
+      {
+      public:
+
+      /**
+       * @brief Construct a new TransformationManager object
+       *
+       * @param allocator is the \ref TR::Region instance used to do allocations internally
+       */
+      explicit TransformationManager(TR::Region& allocator) : _transformationQueue(allocator) {}
+
+      /**
+       * @brief Add a transformation to be performed
+       *
+       * @param transformer the Transformer object that acts as callback for the transformation
+       * @param node the node where the transformation will happen
+       * @param tt the \ref TR::TreeTop instance at the root of the tree containing the node
+       */
+      void addTransformation(Transformer* transformer, TR::Node* const node, TR::TreeTop* const tt)
+         {
+         _transformationQueue.push_back(Transformation{transformer, node, tt});
+         }
+
+      /**
+       * @brief Perform all accumulated transformations.
+       *
+       * The transformations are performed in sequence but no guarantees are made
+       * about the exact order in which it happens.
+       */
+      void doTransformations()
+         {
+         while (!_transformationQueue.empty())
+            {
+            auto transformation = _transformationQueue.front();
+            _transformationQueue.pop_front();
+            transformation.doTransformation();
+            }
+         }
+
+      private:
+
+      /**
+       * @brief A class representing an IL transformation.
+       * 
+       * This class encapsulates the different pieces needed to represent
+       * and perform a transformation.
+       *
+       * Conceptually, a transformation is made up of two parts:
+       * 
+       * 1. A function (callback) that applies the transformation
+       *    given some input.
+       * 2. The set of input arguments for the given transformation.
+       *
+       * Collectively, these pieces form a closure that will perform the
+       * transformation when invoked.
+       *
+       * In this implementation, the callback is represented by an instance
+       * of Transformer. The arguments are the \ref TR::Node and
+       * \ref TR::TreeTop instances. The transformation is performed by
+       * invoking doTransformation().
+       */
+      struct Transformation
+         {
+         Transformer* transformer;
+         TR::Node* node;
+         TR::TreeTop* tt;
+
+         inline void doTransformation();
+         };
+
+      TR::deque<Transformation, TR::Region&> _transformationQueue;
+      };
+
    public:
 
    explicit TreeLowering(TR::OptimizationManager* manager)
@@ -107,7 +227,16 @@ class TreeLowering : public TR::Optimization
 
    void lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
    void lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
+
+   template <typename T>
+   Transformer* getTransformer() { return new (comp()->region()) T(this); }
    };
+
+void
+TR::TreeLowering::TransformationManager::Transformation::doTransformation()
+   {
+   transformer->lower(node, tt);
+   }
 
 }
 
