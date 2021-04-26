@@ -95,17 +95,6 @@
 #define ORB_REPLACE_METHOD_NAME_LEN 20
 #define ORB_REPLACE_METHOD_NAME "redirectedReadObject"
 
-#define BD_DFP_HW_AVAILABLE_FLAG "DFP_HW_AVAILABLE"
-#define BD_DFP_HW_AVAILABLE_FLAG_LEN 16
-#define BD_DFP_HW_AVAILABLE_FLAG_SIG "Z"
-#define BD_DFP_HW_AVAILABLE_FLAG_SIG_LEN 1
-#define BD_DFP_HW_AVAILABLE_GET_STATIC_FIELD_ADDR_FLAG 4
-
-#define BD_EXT_FACILITY_AVAILABLE "com/ibm/dataaccess/DecimalData.DFPFacilityAvailable()Z"
-#define BD_EXT_FACILITY_AVAILABLE_LEN 57
-#define BD_EXT_USE_DFP "com/ibm/dataaccess/DecimalData.DFPUseDFP()Z"
-#define BD_EXT_USE_DFP_LEN 46
-
 #define JSR292_ILGenMacros    "java/lang/invoke/ILGenMacros"
 #define JSR292_placeholder    "placeholder"
 #define JSR292_placeholderSig "(I)I"
