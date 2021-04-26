@@ -51,7 +51,7 @@ import com.ibm.j9ddr.logging.LoggerNames;
 // TODO: Lazy initializing has been removed.  Need to decide if it stays out.
 public class StructureReader {
 	public static final int VERSION = 1;
-	public static final int J9_STRUCTURES_EYECATCHER = 0xFACEDEB8;	// eyecatcher / magic identifier for a J9 structure file
+	public static final int J9_STRUCTURES_EYECATCHER = 0xFACEDEB8; // eyecatcher / magic identifier for a J9 structure file
 	private Map<String, StructureDescriptor> structures = null;
 
 	private String packageDotBaseName;
@@ -119,6 +119,7 @@ public class StructureReader {
 		setStream();
 		applyAliases();
 		addCompatibilityConstants();
+		loadAuxFieldInfo();
 		typeManager = new StructureTypeManager(getStructures());
 	}
 
@@ -317,6 +318,95 @@ public class StructureReader {
 		}
 
 		return Collections.unmodifiableMap(aliasMap);
+	}
+
+	private void loadAuxFieldInfo() throws IOException {
+		String resource = "/com/ibm/j9ddr/AuxFieldInfo" + getPackageVersion() + ".dat";
+
+		try (InputStream stream = StructureReader.class.getResourceAsStream(resource)) {
+			if (stream != null) {
+				loadAuxFieldInfo(stream);
+			}
+		}
+	}
+
+	public void loadAuxFieldInfo(InputStream stream) throws IOException {
+		Map<String, Map<String, String>> fieldMap = new HashMap<>();
+		Pattern fieldPattern = Pattern.compile("(.+?)\\.(.+?)=(.+)$", Pattern.MULTILINE);
+		String text = stripComments(loadUTF8(stream));
+
+		for (Matcher matcher = fieldPattern.matcher(text); matcher.find();) {
+			String typeName = matcher.group(1).trim();
+			String fieldName = matcher.group(2).trim();
+			String fieldType = matcher.group(3).trim();
+
+			if (typeName.isEmpty() || fieldName.isEmpty() || fieldType.isEmpty()) {
+				throw new IOException("Malformed field: " + matcher.group());
+			}
+
+			Map<String, String> infoMap = fieldMap.get(typeName);
+
+			if (infoMap == null) {
+				infoMap = new HashMap<>();
+				fieldMap.put(typeName, infoMap);
+			}
+
+			String previous = infoMap.put(fieldName, fieldType);
+
+			if (previous != null) {
+				throw new IOException("Duplicate field: " + matcher.group());
+			}
+		}
+
+		boolean debug = Boolean.getBoolean("aux.field.info.debug");
+
+		for (StructureDescriptor structure : structures.values()) {
+			String typeName = structure.getName();
+			Map<String, String> infoMap = fieldMap.get(typeName);
+
+			if (infoMap == null) {
+				// No required or optional fields for this structure.
+				continue;
+			}
+
+			List<FieldDescriptor> fields = structure.getFields();
+
+			// Mark required fields and remove corresponding entries from infoMap.
+			for (FieldDescriptor field : fields) {
+				String fieldName = field.getName();
+				String fieldType = infoMap.remove(fieldName);
+
+				if (fieldType == null) {
+					// No auxilliary information for this field.
+				} else if (fieldType.equals("required")) {
+					field.required = true;
+				} else {
+					field.optional = true;
+					if (debug) {
+						field.declaredType = fieldType;
+						field.type = fieldType;
+					}
+				}
+			}
+
+			// Remaining entries in infoMap are for missing fields.
+			for (Map.Entry<String, String> entry : infoMap.entrySet()) {
+				String fieldName = entry.getKey();
+				String fieldType = entry.getValue();
+				FieldDescriptor field;
+
+				if (fieldType.equals("required")) {
+					field = new FieldDescriptor(0, "?", "?", fieldName, fieldName);
+					field.required = true;
+				} else {
+					field = new FieldDescriptor(0, fieldType, fieldType, fieldName, fieldName);
+					field.optional = true;
+				}
+
+				field.present = false;
+				fields.add(field);
+			}
+		}
 	}
 
 	private static String stripComments(String mapData) {
@@ -779,14 +869,20 @@ public class StructureReader {
 		String name;		  // Name as declared in Java
 		String declaredName;  // Name as declared in C or C++
 		int offset;
+		boolean optional;
+		boolean present;
+		boolean required;
 
 		public FieldDescriptor(int offset, String type, String declaredType, String name, String declaredName) {
 			super();
 			this.type = type;
 			this.declaredType = declaredType;
 			this.name = name;
-			this.offset = offset;
 			this.declaredName = declaredName;
+			this.offset = offset;
+			this.optional = false;
+			this.present = true;
+			this.required = false;
 		}
 
 		public void applyAliases(Map<String, String> aliasMap) {
@@ -853,6 +949,18 @@ public class StructureReader {
 
 		public int getOffset() {
 			return offset;
+		}
+
+		public final boolean isOptional() {
+			return optional;
+		}
+
+		public final boolean isPresent() {
+			return present;
+		}
+
+		public final boolean isRequired() {
+			return required;
 		}
 
 		@Override
