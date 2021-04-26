@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -207,25 +207,6 @@ bool TR_DynamicLiteralPool::visitTreeTop(TR::TreeTop * tt, TR::Node *grandParent
          dumpOptDetails(comp(), "looking at const node %p (%s)\n", node, opCode.getName());
          transformLitPoolConst(grandParent, parent,node);
          }
-#if defined(TR_TARGET_S390)
-      // This will get turned into an exp() call.  The first parm is a dummy.
-      else if (opCodeValue == TR::dexp)
-         {
-         TR::Node * child=node->getChild(0);
-         if (child->getOpCode().isLoadConst() && child->getDouble() == exp(1.0))
-            {
-            firstChild = 1;
-            }
-         }
-      else if (opCodeValue == TR::fexp)
-         {
-         TR::Node * child=node->getChild(0);
-         if (child->getOpCode().isLoadConst() && child->getFloat() == exp(1.0))
-            {
-            firstChild = 1;
-            }
-         }
-#endif
       else if (opCode.hasSymbolReference() &&
                node->getSymbol()->isStatic() &&
                !node->getSymbolReference()->isLiteralPoolAddress() &&
