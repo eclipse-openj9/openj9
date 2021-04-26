@@ -36,6 +36,14 @@
 #include "env/j9methodServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+#include <stdio.h>
+
+#if defined (_MSC_VER) && (_MSC_VER < 1900)
+#define snprintf _snprintf
+#endif
+
+#define OPERAND_STR_BUF_SIZE 128
+
 const char* Operand::KnowledgeStrings[] = {"NONE", "OBJECT", "MUTABLE_CALLSITE_TARGET", "PREEXISTENT", "FIXED_CLASS", "KNOWN_OBJECT", "ICONST" };
 
 char*
@@ -175,14 +183,64 @@ MutableCallsiteTargetOperand::merge1(Operand* other)
       return NULL;
    }
 
+int
+Operand::printToString(char *buffer, size_t size)
+   {
+   return snprintf(buffer, size, "(unknown)");
+   }
+
+int
+IconstOperand::printToString(char *buffer, size_t size)
+   {
+   return snprintf(buffer, size, "(iconst=%d)", intValue);
+   }
+
+int
+ObjectOperand::printToString(char *buffer, size_t size)
+   {
+   return snprintf(buffer, size, "(%s=clazz%p)", KnowledgeStrings[getKnowledgeLevel()], getClass());
+   }
+
+int
+KnownObjOperand::printToString(char *buffer, size_t size)
+   {
+   return snprintf(buffer, size, "(obj%d)", getKnownObjectIndex());
+   }
+
+int
+MutableCallsiteTargetOperand::printToString(char *buffer, size_t size)
+   {
+   return snprintf(buffer, size, "(mh=%d, mcs=%d)", getMethodHandleIndex(), getMutableCallsiteIndex());
+   }
+
+static void printToString(TR::Compilation *comp, Operand *operand, char *buffer, size_t size)
+   {
+   TR_ASSERT_FATAL(size >= 1, "undersized buffer has no space for the NUL terminator");
+
+   int len = operand->printToString(buffer, size);
+
+   // If the formatted length is > size, MSVC _snprintf() returns a negative
+   // value instead of the length, so check for len < 0 as well.
+   if (len < 0 || len >= size)
+      {
+      // When the formatted length is >= size, MSVC _snprintf() fails to
+      // NUL-terminate.
+      buffer[size - 1] = '\0';
+
+      // Warn that the output has been truncated. Do not assert here, since
+      // that risks producing less diagnostic information.
+      traceMsg(comp, "warning: Operand::printToString() result is truncated: %s\n", buffer);
+      }
+   }
+
 void
 InterpreterEmulator::printOperandArray(OperandArray* operands)
    {
    int32_t size = operands->size();
    for (int32_t i = 0; i < size; i++)
       {
-      char buffer[20];
-      (*operands)[i]->printToString(buffer);
+      char buffer[OPERAND_STR_BUF_SIZE];
+      printToString(comp(), (*operands)[i], buffer, sizeof (buffer));
       traceMsg(comp(), "[%d]=%s, ", i, buffer);
       }
    if (size > 0)
@@ -455,8 +513,8 @@ InterpreterEmulator::setupMethodEntryLocalObjectState()
              else
                 (*_currentLocalObjectInfo)[slotIndex] = _unknownOperand;
              }
-         char buffer[50];
-         (*_currentLocalObjectInfo)[slotIndex]->printToString(buffer);
+         char buffer[OPERAND_STR_BUF_SIZE];
+         printToString(comp(), (*_currentLocalObjectInfo)[slotIndex], buffer, sizeof (buffer));
          heuristicTrace(tracer(), "Creating operand %s for parm %d slot %d from PrexArgument %p", buffer, ordinal, slotIndex, prexArgument);
          }
       }
@@ -821,8 +879,8 @@ InterpreterEmulator::dumpStack()
    for (int i = 0; i < _stack->size(); i++ )
       {
       Operand *x = (*_stack)[i];
-      char buffer[50];
-      x->printToString(buffer);
+      char buffer[OPERAND_STR_BUF_SIZE];
+      printToString(comp(), x, buffer, sizeof (buffer));
       debugTrace(tracer(), "[%d]=%s", i, buffer);
       }
    }
