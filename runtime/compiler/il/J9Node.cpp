@@ -1236,23 +1236,6 @@ J9::Node::setStorageReferenceHint(TR_StorageReference *s)
 
 #endif
 
-#ifdef SUPPORT_DFP
-
-long double
-J9::Node::setLongDouble(long double d)
-   {
-   self()->freeExtensionIfExists();
-   return (*(long double *)_unionBase._unionedWithChildren._constData= d);
-   }
-
-long double
-J9::Node::getLongDouble()
-   {
-   return *(long double *)_unionBase._unionedWithChildren._constData;
-   }
-
-#endif
-
 /**
  * Node field functions end
  */

@@ -149,11 +149,6 @@ public:
    TR_StorageReference *setStorageReferenceHint(TR_StorageReference *s);
 #endif
 
-#ifdef SUPPORT_DFP
-   long double             setLongDouble(long double d);
-   long double             getLongDouble();
-#endif
-
    /**
     * Node field functions end
     */

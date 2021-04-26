@@ -308,29 +308,6 @@ J9::Z::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node* parent, TR::TreeTop *
          parent->setChild(0, pdopNode);
          }
       }
-
-#if defined(SUPPORT_DFP)
-   // Conversion from DFP to packed generates some ugly code. It is currently more efficient to go from
-   // DFP to zoned to packed on systems supporting CZDT (arch(10) and higher).
-
-   // If we have a truncating dd2zd node, we can use CZDT to truncate, but that will generate
-   // an overflow exception unless decimal overflow is suppressed. If it is not, we generate
-   // a non-truncating CZDT followed by an MVC. It seems more efficient to do the truncation
-   // in DFP, so this code inserts a truncating dfpModifyPrecision operation below the dd2zd
-   // and sets the source precision on the dd2zd to the truncated value.
-   if (parent != NULL &&
-       parent->getOpCode().isConversion() &&
-       parent->getType().isAnyZoned() &&
-       parent->getFirstChild()->getType().isDFP() &&
-       parent->isTruncating())
-      {
-      TR::Node *ddMod = TR::Node::create(parent, TR::ILOpCode::modifyPrecisionOpCode(parent->getFirstChild()->getDataType()), 1);
-      ddMod->setDFPPrecision(parent->getDecimalPrecision());
-      ddMod->setChild(0, parent->getFirstChild());
-      parent->setAndIncChild(0, ddMod);
-      parent->setSourcePrecision(parent->getDecimalPrecision());
-      }
-#endif
    }
 
 void
