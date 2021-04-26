@@ -91,25 +91,6 @@ static TR::Node *foldSetSignIntoNode(TR::Node *setSign, bool setSignIsTheChild, 
 static TR::Node *foldAndReplaceDominatedSetSign(TR::Node *setSign, bool setSignIsTheChild, TR::Node *other, TR::Block * block, TR::Simplifier * s);
 static TR::Node *createSetSignForKnownSignChild(TR::Node *node, TR::Block * block, TR::Simplifier * s);
 
-static TR::Node *removeUnnecessaryDFPClean(TR::Node *child, TR::Node *parent, TR::Block *block, TR::Simplifier *s)
-   {
-   TR::ILOpCodes dfpCleanOp = TR::ILOpCode::cleanOpCode(child->getDataType());
-   if (child->getOpCodeValue() == dfpCleanOp &&
-       performTransformation(s->comp(), "%s%s [" POINTER_PRINTF_FORMAT "] does not need DFP cleaning child %s [" POINTER_PRINTF_FORMAT "] -- remove child [" POINTER_PRINTF_FORMAT "]\n",
-         s->optDetailString(),parent->getOpCode().getName(),parent,child->getOpCode().getName(),child,child))
-      {
-      // Transform:
-      // dd2zdSetSign (or ifdxcmpxx)
-      //    ddclean
-      //       ddX
-      // to:
-      // dd2zdSetSign (or ifdxcmpxx)
-      //    ddX
-      child = s->replaceNodeWithChild(child, child->getFirstChild(), s->_curTree, block);
-      }
-   return child;
-   }
-
 static void propagateNonNegativeFlagForArithmetic(TR::Node *node, TR::Simplifier *s)
    {
    if (!node->isNonNegative() &&
@@ -118,28 +99,6 @@ static void propagateNonNegativeFlagForArithmetic(TR::Node *node, TR::Simplifier
       {
       node->setIsNonNegative(true);
       }
-   }
-
-// Find a DFP setsign op (ddabs or ddSetNegative) that's below a parent
-// node without any intermediate nodes that make use of the sign (eg. add)
-static TR::Node *getRedundantDFPSetSignDescendant(TR::Node *node, TR::Node **parent)
-   {
-   TR::ILOpCodes op = node->getOpCodeValue();
-
-   if (!node->getType().isDFP() || node->getReferenceCount() > 1)
-      return NULL;
-   if (op == TR::dfabs || op == TR::ddabs || op == TR::deabs || op == TR::dfSetNegative || op == TR::ddSetNegative || op == TR::deSetNegative)
-      return node;
-   if (node->getOpCode().isConversion())
-      return NULL;
-   if (node->getOpCode().isAdd() || node->getOpCode().isSub() || node->getOpCode().isMul() || node->getOpCode().isDiv())
-      return NULL;
-
-   if (node->getNumChildren() < 1)
-      return NULL;
-
-   *parent = node;
-   return getRedundantDFPSetSignDescendant(node->getFirstChild(), parent);
    }
 
 static TR::Node *foldSetSignFromGrandChild(TR::Node *node, TR::Block *block, TR::Simplifier *s)
@@ -979,309 +938,6 @@ TR::Node *pd2zdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
    child = node->setChild(0,removeOperandWidening(node->getFirstChild(), node, block, s));
 
-   if (!s->comp()->getOption(TR_DisableZonedToDFPReduction) &&
-       s->cg()->supportsZonedDFPConversions() &&
-       child->getOpCodeValue() == TR::pdclean &&
-       child->getFirstChild()->getOpCode().isConversion() &&
-       child->getFirstChild()->getFirstChild()->getType().isDFP() &&
-       child->getFirstChild()->getDecimalFraction() == 0 &&
-       !child->getFirstChild()->useCallForFloatToFixedConversion())
-      {
-      // pd2zd
-      //    pdclean
-      //       de2pd
-      //          deX
-      // to:
-      // de2zdClean
-      //    deX
-      //
-      TR::ILOpCodes convOp = TR::ILOpCode::dfpToZonedCleanOp(child->getFirstChild()->getFirstChild()->getDataType(), node->getDataType());
-      if (convOp != TR::BadILOp &&
-          !node->hasIntermediateTruncation() &&
-          performTransformation(s->comp(), "%sFold %s (0x%p) and dfpToZoned cleaning child %s (0x%p) to ",s->optDetailString(),
-            node->getOpCode().getName(),node,child->getOpCode().getName(),child))
-         {
-         int32_t fraction = child->getFirstChild()->getDecimalFraction();
-         TR::ILOpCode newOp;
-         newOp.setOpCodeValue(convOp);
-         dumpOptDetails(s->comp(), "%s (0x%p)\n",newOp.getName(),node);
-         removePaddingNode(node, s);
-         TR::Node::recreate(node, convOp);    // pd2zd -> de2zdClean (momentarily type incorrect but not exposed outside this simplifier));
-         node->setFlags(0);
-         //dumpOptDetails(s->comp(), "%s\n",node->getOpCode().getName());
-         // pd2zd (de2zdClean)
-         //    pdclean
-         //       de2pd
-         //          deX
-         // to
-         // pd2zd (de2zdClean)
-         //    de2pd
-         //       deX
-         // correctBCDPrecision=false trunc checks already done and top level prec is being maintained (false is needed so pdclean doesn't just get changed to a pdModPrec)
-         node->setChild(0, s->replaceNodeWithChild(node->getFirstChild(), node->getFirstChild()->getFirstChild(), s->_curTree, block, false));
-         // pd2zd  (de2zdClean)
-         //    de2pd
-         //      deX
-         // to
-         // pd2zd (de2zdClean)
-         //    deX
-         // correctBCDPrecision=false trunc checks already done and top level prec is being maintained (false is needed so de2pd doesn't just get changed to a pdModPrec)
-         node->setChild(0, s->replaceNodeWithChild(node->getFirstChild(), node->getFirstChild()->getFirstChild(), s->_curTree, block, false));
-         node->setHasKnownCleanSign(true);
-         node->setUseCallForFloatToFixedConversion(false);
-         node->setDecimalFraction(fraction);
-         if (child->getFirstChild()->hasSourcePrecision())
-            node->setSourcePrecision(child->getFirstChild()->getSourcePrecision());
-         return node;
-         }
-      }
-
-   if (!s->comp()->getOption(TR_DisableZonedToDFPReduction) &&
-       s->cg()->supportsZonedDFPConversions() &&
-       child->getOpCode().isConversion() &&
-       child->getFirstChild()->getType().isDFP() &&
-       child->getDecimalFraction() == 0 &&
-       !child->useCallForFloatToFixedConversion())
-      {
-      // pd2zd
-      //    de2pd/de2pdSetSign/de2pdClean
-      //       deX
-      // to:
-      // de2zd/de2zdSetSign/de2zdClean
-      //    deX
-      //
-      bool isSetSign = child->getOpCode().isSetSignOnNode();
-      bool isClean = (child->getOpCodeValue() == TR::ILOpCode::dfpToPackedCleanOp(child->getFirstChild()->getDataType(), child->getDataType()));
-      TR_RawBCDSignCode sign = node->getKnownOrAssumedSignCode();
-
-      TR::ILOpCodes convOp = TR::ILOpCode::dfpToZonedOp(child->getFirstChild()->getDataType(), node->getDataType());
-      if (isSetSign)
-         convOp = TR::ILOpCode::dfpToZonedSetSignOp(child->getFirstChild()->getDataType(), node->getDataType());
-      if (isClean)
-         convOp = TR::ILOpCode::dfpToZonedCleanOp(child->getFirstChild()->getDataType(), node->getDataType());
-
-      if (!isSetSign || (sign != raw_bcd_sign_unknown))
-         {
-         // could generalize the <= prec check below but would have to start looking at DFP max precision in replaceNodeWithChild
-         // e.g. the de2pd could be truncating if the result pd precision is less than the max possible from a de
-         // but for now just handle the common case of <= (this is safe as a truncation on top of another truncation is ok)
-         if (convOp != TR::BadILOp &&
-             node->getDecimalPrecision() <= child->getDecimalPrecision() && // don't lose a truncation
-             performTransformation(s->comp(), "%sFold %s (0x%p) and dfpToPacked child %s (0x%p) to ",s->optDetailString(),
-               node->getOpCode().getName(),node,child->getOpCode().getName(),child))
-            {
-            int32_t fraction = child->getDecimalFraction();
-            TR::ILOpCode newOp;
-            newOp.setOpCodeValue(convOp);
-            dumpOptDetails(s->comp(), "%s (0x%p)\n",newOp.getName(),node);
-            removePaddingNode(node, s);
-            TR::Node::recreate(node, convOp);    // pd2zd -> de2zd (momentarily type incorrect but not exposed outside this simplifier)
-            node->setFlags(0);
-            if (isSetSign)
-               {
-               node->resetSignState();
-               node->setSetSign(sign);
-               }
-            // pd2zd (de2zd/de2zdSetSign)
-            //    de2pd/de2pdSetSign
-            //       deX
-            // to
-            // pd2zd (de2zd/de2zdSetSign)
-            //    deX
-            // correctBCDPrecision=false trunc checks already done and top level prec is being maintained (false is needed so pdclean doesn't just get changed to a pdModPrec)
-            node->setChild(0, s->replaceNodeWithChild(node->getFirstChild(), node->getFirstChild()->getFirstChild(), s->_curTree, block, false));
-            node->setUseCallForFloatToFixedConversion(false);
-            node->setDecimalFraction(fraction);
-            if (child->hasSourcePrecision())
-               node->setSourcePrecision(child->getSourcePrecision());
-            return node;
-            }
-         }
-      }
-   return node;
-   }
-
-// Convert a pdshX/pdshXSetSign/pdSetSign -> dd2pd -> ddX to dd2pd/dd2pdSetSign -> [ddshX] -> ddX.
-// With other simplifications, this may prevent a conversion from DFP to packed after performing math in DFP.
-// DFP is often used for trees storing to and rooted in zoned, as the conversion is faster than going to packed.
-static TR::Node *lowerPackedShiftOrSetSignBelowDFPConv(TR::Node *node, TR::Block *block, TR::Simplifier *s)
-   {
-   TR::ILOpCodes op = node->getOpCodeValue();
-   TR_ASSERT(op == TR::pdshl || op == TR::pdshr || op == TR::pdshlSetSign || op == TR::pdshrSetSign || op == TR::pdSetSign,
-             "Node %s [0x%x] isn't a packed shift/setSign in lowerPackedShiftOrSetSignBelowDFPConv\n",
-             node->getOpCode().getName(), node);
-
-   TR::Node *firstChild = node->getFirstChild();
-
-   if (firstChild->getOpCode().isConversion() &&
-       firstChild->getFirstChild()->getType().isDFP() &&
-       !node->hasIntermediateTruncation())
-      {
-      TR::Node *roundNode = NULL;
-      TR::Node *signNode = NULL;
-      bool isSetSign = node->getOpCode().isSetSign();
-      bool isShift = node->getOpCode().isShift();
-      bool hasRoundNode = node->getOpCode().isRightShift();
-
-      if (hasRoundNode)
-         roundNode = node->getChild(2);
-      if (isSetSign)
-         signNode = node->getChild(TR::ILOpCode::getSetSignValueIndex(node->getOpCodeValue()));
-
-      if (hasRoundNode && !roundNode->getOpCode().isLoadConst())
-         return node;
-
-      if (isSetSign && !signNode->getOpCode().isLoadConst())
-         return node;
-
-      // If the shift node widens, moving it below the conversion might require it to be a different DFP type than dfpNode.
-      // Find the DFP types needed to represent the shift and conv nodes, and if they're not the same, insert a dX2dY node.
-      // A shift could also widen and then truncate in one op, so we want to use the DFP type that fits the max precision
-      // out of the node's precision, the child's precision, and the shifted amount, to ensure that truncation only
-      // happens on the final DFP-to-packed conversion.
-      TR::Node *dfpSourceNode = firstChild->getFirstChild();
-      TR::DataType convType = dfpSourceNode->getDataType();
-      TR::DataType resultType = convType;
-
-      TR_ASSERT(convType.canGetMaxPrecisionFromType(),"cannot get max precision from type %s on node %s %p\n",
-         TR::DataType::getName(convType),dfpSourceNode->getOpCode().getName(),dfpSourceNode);
-      int32_t dfpSourcePrecision = 0;
-      if (firstChild->hasSourcePrecision())
-         dfpSourcePrecision = firstChild->getSourcePrecision();
-      else
-         dfpSourcePrecision = convType.getMaxPrecisionFromType();
-
-      int32_t maxDFPPrecision = std::max<int32_t>(node->getDecimalPrecision(), dfpSourcePrecision);
-      int32_t round = hasRoundNode ? roundNode->get32bitIntegralValue() : 0;
-      int32_t roundAmountBump = (round == 5) ? 1 : 0;
-      if (isShift)
-         maxDFPPrecision = std::max(firstChild->getDecimalPrecision() + node->getDecimalAdjust() + roundAmountBump, maxDFPPrecision);
-
-      if (maxDFPPrecision > TR::DataType::getMaxExtendedDFPPrecision())
-         {
-         if (s->trace() || s->comp()->cg()->traceBCDCodeGen())
-            traceMsg(s->comp(),"z^z : maxDFPPrecision %d > TR::DataType::getMaxExtendedDFPPrecision() %d in attempting to create a dfp shift from %s (%p) at line_no=%d (offset=%06X)\n",
-               maxDFPPrecision,TR::DataType::getMaxExtendedDFPPrecision(),node->getOpCode().getName(),node,s->comp()->getLineNumber(node),s->comp()->getLineNumber(node));
-         return node;
-         }
-
-      resultType = TR::DataType::getDFPTypeFromPrecision(maxDFPPrecision);
-      if (resultType == TR::DecimalFloat && convType != TR::DecimalFloat)
-         resultType = TR::DecimalDouble;
-
-      int32_t sign = isSetSign ? signNode->get32bitIntegralValue() : 0xc; // Default of + is safe here; sign will only be set if isSetSign is true
-
-      if ((round == 0 || round == 5) &&
-          resultType != TR::NoType && convType != TR::NoType &&
-          (!isSetSign || TR::DataType::isSupportedRawSign(sign)) &&
-          performTransformation(s->comp(), "%sMoving %s [" POINTER_PRINTF_FORMAT "] below child %s [" POINTER_PRINTF_FORMAT "]\n",
-                                s->optDetailString(),node->getOpCode().getName(),node,firstChild->getOpCode().getName(),firstChild))
-         {
-         TR::Node *shift = node, *newShift = NULL, *conv = firstChild, *newConv, *dfpNode = conv->getFirstChild(), *shiftAmountNode = node->getSecondChild();
-
-         // Without rounding, pdshX[SetSign] becomes ddshX
-         if (isShift)
-            {
-            if (round == 0)
-               {
-               newShift = TR::Node::create(node, TR::ILOpCode::dfpOpForBCDOp(node->getOpCode().isRightShift() ? TR::pdshr : TR::pdshl, resultType), 2);
-               }
-            else if (round == 5)
-               {
-               // With rounding, pdshX[SetSign] becomes ddshXRounded
-               newShift = TR::Node::create(node, TR::ILOpCode::shiftRightRoundedOpCode(resultType), 3);
-
-               // Better codegen by using a ddconst and converting to de instead of using a deconst
-               TR::DataType roundType = resultType;
-               if (roundType == TR::DecimalLongDouble)
-                  roundType = TR::DecimalDouble;
-
-               TR::Node *roundNode = TR::Node::create(node, TR::ILOpCode::constOpCode(roundType));
-               if (roundType == TR::DecimalFloat)
-                  {
-                  char numbers[4] = { 0x22, 0x50, 0x00, 0x01 };
-                  roundNode->setFloat(*(float *)numbers);
-                  }
-               else if (roundType == TR::DecimalDouble)
-                  {
-                  char numbers[8] = { 0x22, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 };
-                  roundNode->setDouble(*(double *)numbers);
-                  }
-
-               if (roundType != resultType)
-                  {
-                  TR::Node *t = TR::Node::create(node, TR::ILOpCode::getProperConversion(roundType, resultType, false), 1);
-                  t->setAndIncChild(0, roundNode);
-                  dumpOptDetails(s->comp(),"Created conv %s [" POINTER_PRINTF_FORMAT "] on child round %s [" POINTER_PRINTF_FORMAT "]\n",
-                                 t->getOpCode().getName(),t, roundNode->getOpCode().getName(),roundNode);
-                  roundNode = t;
-                  }
-
-               newShift->setAndIncChild(2, roundNode);
-               dumpOptDetails(s->comp(),"Created dfp shift %s [" POINTER_PRINTF_FORMAT "] and child round %s [" POINTER_PRINTF_FORMAT "]\n",
-                              newShift->getOpCode().getName(),newShift, roundNode->getOpCode().getName(),roundNode);
-               }
-
-            if (resultType != convType)
-               {
-               TR::Node *dfpConv = TR::Node::create(node, TR::ILOpCode::getProperConversion(convType, resultType, false), 1);
-               dfpConv->setAndIncChild(0, dfpNode);
-               newShift->setAndIncChild(0, dfpConv);
-               dumpOptDetails(s->comp(),"%sCreated node %s [" POINTER_PRINTF_FORMAT "] on top of %s [" POINTER_PRINTF_FORMAT "] to preserve shift precision\n",s->optDetailString(),
-                  dfpConv->getOpCode().getName(),dfpConv,dfpNode->getOpCode().getName(),dfpNode);
-               }
-            else
-               newShift->setAndIncChild(0, dfpNode); // dd2pd -> ddshX -> ddX
-
-            newShift->setAndIncChild(1, shiftAmountNode);
-
-            dumpOptDetails(s->comp(),"%screate newShift %s [" POINTER_PRINTF_FORMAT "] of %s [" POINTER_PRINTF_FORMAT "] by %s [" POINTER_PRINTF_FORMAT "]\n",s->optDetailString(),
-               newShift->getOpCode().getName(),newShift,
-               newShift->getFirstChild()->getOpCode().getName(),newShift->getFirstChild(),
-               newShift->getSecondChild()->getOpCode().getName(),newShift->getSecondChild());
-            }
-         else
-            {
-            // Just a setsign: de2pd -> dd2de -> ddX
-            if (resultType != convType)
-               {
-               TR::Node *dfpConv = TR::Node::create(node, TR::ILOpCode::getProperConversion(convType, resultType, false), 1);
-               dfpConv->setAndIncChild(0, dfpNode);
-               newShift = dfpConv;
-               dumpOptDetails(s->comp(),"%sCreated node %s [" POINTER_PRINTF_FORMAT "] to preserve shift precision\n",s->optDetailString(),dfpConv->getOpCode().getName(),dfpConv);
-               }
-            else
-               newShift = dfpNode; // dd2pd -> ddX
-            }
-
-         if (isSetSign)
-            {
-            newConv = TR::Node::create(node, TR::ILOpCode::dfpToPackedSetSignOp(resultType, TR::PackedDecimal), 1);
-            newConv->setSetSign(TR::DataType::getSupportedRawSign(sign));
-            }
-         else
-            {
-            newConv = TR::Node::create(node, TR::ILOpCode::getProperConversion(resultType, TR::PackedDecimal, false), 1);
-            }
-         newConv->setAndIncChild(0, newShift);
-         newConv->setDecimalPrecision(shift->getDecimalPrecision());
-
-         // srcPrecision on the new conversion node needs to account for the fact that
-         // shifting below the conversion increases the number of non-leading-zero digits eg.
-         // pdshl <p=9, adj=4>        dd2pd <p=9,srcP=7>
-         //   dd2pd <p=5,srcP=3>        ddshl <adj=4, p=3 implied>
-         //     ddX <p=3 implied>         ddX <p=3 implied>
-         //   iconst 4                    iconst 4
-         if (conv->hasSourcePrecision() && conv->getSourcePrecision() + shift->getDecimalAdjust() + roundAmountBump > 0)
-            newConv->setSourcePrecision(conv->getSourcePrecision() + shift->getDecimalAdjust() + roundAmountBump);
-         dumpOptDetails(s->comp(),"%sReplacing %s [" POINTER_PRINTF_FORMAT "] and child %s [" POINTER_PRINTF_FORMAT "] with %s [" POINTER_PRINTF_FORMAT "]\n",s->optDetailString(),
-                        shift->getOpCode().getName(),shift,conv->getOpCode().getName(),conv,
-                        newConv->getOpCode().getName(),newConv);
-
-         s->replaceNode(shift, newConv, s->_curTree, false);
-         return newConv;
-         }
-      }
    return node;
    }
 
@@ -1522,201 +1178,6 @@ static TR::Node *reduceShiftLeftOverShiftRight(TR::Node * node, TR::Block * bloc
             }
          }
       }
-   return node;
-   }
-
-// TypeReduction can convert packed math to DFP math. If the packed math is used in cases where integer math might overflow,
-// we could end up with something like pd2l -> dd2pd -> ddadd. Converting DFP to packed is expensive, so we should go
-// directly from DFP to binary. Sometimes, due to commoning, we may also end up with a tree like
-// pd2i -> zd2pd -> dd2zdSetSign (with this node commoned) -> ddX. In this case, it's still faster to break commoning and
-// go from DFP to integer directly, setting the sign as needed.
-static TR::Node *cancelDFPtoBCDtoBinaryConversion(TR::Node *node, TR::Block *block, TR::Simplifier *s)
-   {
-   TR::ILOpCodes op = node->getOpCodeValue();
-   TR_ASSERT(op == TR::pd2l || op == TR::pd2lu || op == TR::pd2i || op == TR::pd2iu, "Node %s [0x%x] isn't a packed to binary conversion in cancelDFPtoBCDtoBinaryConversion\n",
-           node->getOpCode().getName(), node);
-
-   TR::Node *firstChild = node->getFirstChild();
-
-   if (firstChild->getOpCode().isConversion() && firstChild->getType().isBCD())
-      {
-      // See if there's any truncation
-      int32_t targetPrec = std::min<int32_t>(node->getDataType().TR::DataType::getMaxPrecisionFromType() - 1, firstChild->getDecimalPrecision());
-      int32_t sourcePrec = TR::getMaxSigned<TR::Int32>();
-      TR::Node *setSignNode = NULL;
-      bool truncAndSetSign = false;
-
-      if (firstChild->getOpCode().isSetSign() || firstChild->getOpCode().isSetSignOnNode())
-         setSignNode = firstChild;
-
-      if (firstChild->hasSourcePrecision())
-         {
-         targetPrec = std::min(targetPrec, firstChild->getSourcePrecision());
-         sourcePrec = firstChild->getSourcePrecision();
-         }
-
-      if (firstChild->getFirstChild()->getOpCode().isConversion() && firstChild->getFirstChild()->getType().isBCD())
-         {
-         firstChild = firstChild->getFirstChild();
-         targetPrec = std::min<int32_t>(targetPrec, firstChild->getDecimalPrecision());
-         sourcePrec = firstChild->getDecimalPrecision();
-         if (firstChild->hasSourcePrecision())
-            {
-            targetPrec = std::min(targetPrec, firstChild->getSourcePrecision());
-            sourcePrec = firstChild->getSourcePrecision();
-            }
-
-         if (setSignNode == NULL && (firstChild->getOpCode().isSetSign() || firstChild->getOpCode().isSetSignOnNode()))
-            setSignNode = firstChild;
-         }
-
-      TR::Node *child = firstChild->getFirstChild();
-
-      TR_RawBCDSignCode sign = raw_bcd_sign_unknown;
-      if (setSignNode != NULL)
-         {
-         if (setSignNode->getOpCode().isSetSignOnNode())
-            {
-            sign = setSignNode->getSetSign();
-            }
-         else
-            {
-            TR::Node *signNode = setSignNode->getSetSignValueNode();
-            if (!signNode->getOpCode().isIntegralConst())
-               return node;
-            int32_t rawSign = signNode->get32bitIntegralValue();
-            if (rawSign == TR::DataType::getIgnoredSignCode())
-               return node;
-
-            sign = rawSignCodeMap[rawSign];
-            }
-         }
-
-      if (!child->getType().isDFP() ||
-          !performTransformation(s->comp(), "%sFold %s [0x%p] with child %s [0x%p]",
-            s->optDetailString(),node->getOpCode().getName(),node,
-            firstChild->getOpCode().getName(),firstChild))
-         {
-         return node;
-         }
-
-      // Only use a ddabs at ARCH(10) or below if we're not also truncating.
-      // At ARCH(11), iabs is always faster; at ARCH(10) while truncating,
-      // irem and ibs is faster
-      bool useddabs = true;
-      if (sourcePrec > targetPrec && setSignNode != NULL)
-         useddabs = false;
-      else if (s->comp()->cg()->supportsFastPackedDFPConversions())
-         useddabs = false;
-
-      TR::DataType intermediateType = TR::NoType;
-      TR::Node *newConv = NULL;
-
-      // Truncation is always fastest in binary. Ideally, we can convert to the final integral type and use a rem to truncate.
-      // If necessary, we'll convert to a larger type, use rem, and then convert to a smaller type. intermediateType contains
-      // the type used for the rem; if no rem is needed, it contains the final integral type.
-      // Using a DFP modify precision is too slow, so bail out in that case.
-      if (sourcePrec > targetPrec)
-         {
-         intermediateType = TR::DataType::getIntegralTypeFromPrecision(sourcePrec);
-         if (intermediateType == TR::Int8 || intermediateType == TR::Int16)
-            intermediateType = TR::Int32;
-
-         if (intermediateType == TR::NoType)
-            return node;
-         }
-      else
-         {
-         // If there's no truncation, the intermediate type and final type will be the same
-         intermediateType = node->getDataType();
-         }
-
-      // We may have to generate none, one, or both of an abs/setNegative and a rem. A binary setNegative
-      // is done with an ineg followed by an iabs. We always do the abs  first, in DFP on ARCH(10) for
-      // performance, or using intermediateType on ARCH(11), because we need to generate a load positive
-      // in the irem evaluator and we don't want to generate another for the iabs. Then we do the rem and
-      // convert to the final type. Lastly, if we need an ineg, we generate that.
-      if (setSignNode != NULL)
-         {
-         // Setting the sign to positive is fastest on ARCH(10) in DFP when we don't also have to truncate
-         if (useddabs && (sign == raw_bcd_sign_0xf || sign == raw_bcd_sign_0xc))
-            {
-            TR::Node *newSSNode = TR::Node::create(node, TR::ILOpCode::absOpCode(child->getDataType()), 1);
-            newSSNode->setAndIncChild(0, child);
-            newSSNode->setIsNonNegative(true);
-            child = newSSNode;
-            }
-         else if (sign == raw_bcd_sign_0xf || sign == raw_bcd_sign_0xc || sign == raw_bcd_sign_0xd)
-            {
-            // For all other cases, generate the setsign in binary. Always do the iabs first. If we also need
-            // an ineg, do it after the irem.
-            if (intermediateType != child->getDataType())
-               {
-               newConv = TR::Node::create(node, TR::ILOpCode::getProperConversion(child->getDataType(), intermediateType, node->getOpCode().isUnsigned()), 1);
-               newConv->setAndIncChild(0, child);
-               child = newConv;
-               }
-
-            TR::Node *newSSNode = TR::Node::create(node, TR::ILOpCode::absOpCode(intermediateType), 1);
-            newSSNode->setAndIncChild(0, child);
-            newSSNode->setIsNonNegative(true);
-            child = newSSNode;
-            }
-         else
-            {
-            TR_ASSERT(false, "Invalid sign on node %s (0x%x)\n", firstChild->getOpCode().getName(), firstChild);
-            return node;
-            }
-         }
-
-      // Truncate using an irem or lrem
-      if (sourcePrec > targetPrec)
-         {
-         TR::Node *dd2l = child;
-         if (intermediateType != child->getDataType())
-            {
-            dd2l = TR::Node::create(node, TR::ILOpCode::getProperConversion(child->getDataType(), intermediateType, node->getOpCode().isUnsigned()), 1);
-            dd2l->setAndIncChild(0, child);
-            if (child->isNonNegative())
-               dd2l->setIsNonNegative(true);
-            }
-
-         TR::Node *lrem = TR::Node::create(node, TR::ILOpCode::remainderOpCode(intermediateType), 2);
-         lrem->setAndIncChild(0, dd2l);
-         switch (intermediateType)
-            {
-            case TR::Int64:
-               lrem->setAndIncChild(1, TR::Node::lconst( node, (int64_t)computePositivePowerOfTen(targetPrec)));
-               break;
-            case TR::Int32:
-               lrem->setAndIncChild(1, TR::Node::iconst(node, (int32_t)computePositivePowerOfTen(targetPrec)));
-               break;
-            }
-
-         child = lrem;
-         }
-
-      // Convert to the final type if needed
-      if (child->getDataType() != node->getDataType())
-         {
-         newConv = TR::Node::create(node, TR::ILOpCode::getProperConversion(child->getDataType(), node->getDataType(), node->getOpCode().isUnsigned()), 1);
-         newConv->setAndIncChild(0, child);
-         child = newConv;
-         }
-
-      if (setSignNode != NULL && sign == raw_bcd_sign_0xd)
-         {
-         TR::Node *inegNode = TR::Node::create(node, TR::ILOpCode::negateOpCode(child->getDataType()), 1);
-         inegNode->setAndIncChild(0, child);
-         inegNode->setIsNonPositive(true);
-         child = inegNode;
-         }
-
-      s->replaceNode(node, child, s->_curTree, true);
-      dumpOptDetails(s->comp(), "\tinto %s [0x%x]\n", child->getOpCode().getName(), child);
-      return child;
-      }
-
    return node;
    }
 
@@ -2161,10 +1622,6 @@ TR::Node *pd2iSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    if (newNode)
       return newNode;
 
-   newNode = cancelDFPtoBCDtoBinaryConversion(node, block, s);
-   if (newNode != node)
-      return newNode;
-
    firstChild = node->getFirstChild();
    if (firstChild->getOpCodeValue() == TR::pdclean)
       firstChild = node->setChild(0, s->replaceNodeWithChild(firstChild, firstChild->getFirstChild(), s->_curTree, block));
@@ -2201,10 +1658,6 @@ TR::Node *pd2lSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s)
    TR::ILOpCodes reverseOp = TR::l2pd;
    TR::Node *newNode = cancelPackedToIntegralConversion(node, reverseOp, block, s);
    if (newNode)
-      return newNode;
-
-   newNode = cancelDFPtoBCDtoBinaryConversion(node, block, s);
-   if (newNode != node)
       return newNode;
 
    firstChild = node->getFirstChild();
@@ -2415,13 +1868,6 @@ TR::Node *pdshrSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
    TR::Node *child = node->getFirstChild();
 
-   if (node->getOpCodeValue() == TR::pdshr)
-      {
-      TR::Node *newNode = lowerPackedShiftOrSetSignBelowDFPConv(node, block, s);
-      if (newNode != node)
-         return newNode;
-      }
-
    if (child->getOpCodeValue() == TR::pdSetSign)
       {
       TR::Node *newNode = foldSetSignIntoNode(child, true /* setSignIsTheChild */, node, true /* removeSetSign */, block, s);
@@ -2603,13 +2049,6 @@ TR::Node *pdSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier
 
    TR::ILOpCodes originalOp = node->getOpCodeValue();
 
-   if (node->getOpCodeValue() == TR::pdSetSign)
-      {
-      newNode = lowerPackedShiftOrSetSignBelowDFPConv(node, block, s);
-      if (newNode != node)
-         return newNode;
-      }
-
    if (node->getOpCodeValue() != originalOp)
       return s->simplify(node, block);
 
@@ -2663,87 +2102,6 @@ TR::Node *pdcleanSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
          child->resetSignState();
          child->setHasKnownCleanSign(true);
          return s->replaceNodeWithChild(node, child, s->_curTree, block);
-         }
-      }
-
-   // Fold pdclean over de2pd into de2pdClean at odd precisions only on ARCH(11). For even precisions, if the leftmost nibble
-   // is non-zero, we won't clear it out until after the CPDT or CPXT, so they won't have the chance to clean the sign.
-   if (s->comp()->cg()->supportsFastPackedDFPConversions() &&
-       !node->hasIntermediateTruncation() &&
-       child->getOpCode().isConversion() &&
-       child->getFirstChild()->getType().isDFP() &&
-       child->getDecimalFraction() == 0 &&
-       !child->useCallForFloatToFixedConversion() &&
-       (node->isOddPrecision() || (!node->isTruncating() && !child->isTruncating())))
-      {
-      //    pdclean
-      //       de2pd
-      //          deX
-      // to:
-      // de2pdClean
-      //    deX
-      //
-      TR::ILOpCodes convOp = TR::ILOpCode::dfpToPackedCleanOp(child->getFirstChild()->getDataType(), node->getDataType());
-      if (convOp != TR::BadILOp &&
-          performTransformation(s->comp(), "%sFold %s (0x%p) above %s (0x%p) to ",s->optDetailString(),
-            node->getOpCode().getName(),node,child->getOpCode().getName(),child))
-         {
-         TR::Node::recreate(node, convOp);
-         dumpOptDetails(s->comp(), "%s\n",node->getOpCode().getName());
-         node->setChild(0, s->replaceNodeWithChild(child, child->getFirstChild(), s->_curTree, block, false));
-         if (child->hasSourcePrecision())
-            node->setSourcePrecision(child->getSourcePrecision());
-         return node;
-         }
-      }
-
-   // since only oddPrecision cases can be handled for supportsFastPackedDFPConversions with de2pdClean in the transformation above
-   // attempt to swing the pdclean below to a ddclean/declean regardless of supportsFastPackedDFPConversions
-   if ((child->getOpCodeValue() == TR::de2pd || child->getOpCodeValue() == TR::dd2pd) && // avoid doing for de2pdClean/dd2pdClean
-       !child->getFirstChild()->isNonNegative() &&
-       !child->isTruncating()) // otherwise will need a post clean anyway so no point inserting a declean/ddclean
-      {
-      bool isSubtractSpecialCase = false;
-      if (child->getFirstChild()->getOpCode().isSub() &&
-          child->getFirstChild()->getFirstChild()->isNonNegative() &&
-          child->getFirstChild()->getSecondChild()->isNonNegative())
-         {
-         // Although the ddsub cannot be marked with isNonNegative itself there still will not be a negative zero for this case
-         // when dd2pd is not truncated (already checked above)
-         // dd2pd  (not truncating)
-         //   ddsub
-         //     ddX X>=0
-         //     ddY X>=0
-
-         isSubtractSpecialCase = true;
-         }
-
-      TR::ILOpCodes cleanOp = TR::ILOpCode::cleanOpCode(child->getFirstChild()->getDataType());
-      if (cleanOp != TR::BadILOp &&
-          !isSubtractSpecialCase &&
-          performTransformation(s->comp(), "%sInsert dfpClean under %s (0x%p) and remove %s (0x%p)\n",s->optDetailString(),
-            child->getOpCode().getName(),child,node->getOpCode().getName(),node))
-         {
-         // change:
-         //
-         // pdclean
-         //    de2pd
-         //       deX
-         //
-         // to:
-         //
-         // pdclean (and remove this node)
-         //    de2pd
-         //       declean
-         //          deX
-         //
-         TR::Node *dfpClean = TR::Node::create(child, cleanOp, 1);
-         dumpOptDetails(s->comp(),"%sCreate new %s (0x%p) and setHasKnownCleanSign on %s (0x%p)\n",
-            s->optDetailString(),dfpClean->getOpCode().getName(),dfpClean,child->getOpCode().getName(),child);
-         dfpClean->setChild(0, child->getFirstChild());
-         child->setAndIncChild(0, dfpClean);
-         child->setHasKnownCleanSign(true);
-         return s->replaceNodeWithChild(node, child, s->_curTree, block); // pdclean no longer needed
          }
       }
 
@@ -3009,13 +2367,6 @@ TR::Node *pdshlSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
    bool isShift = node->getOpCode().isShift();
    bool isModifyPrecision = node->getOpCode().isModifyPrecision();
 
-   if (node->getOpCodeValue() == TR::pdshl)
-      {
-      TR::Node *newNode = lowerPackedShiftOrSetSignBelowDFPConv(node, block, s);
-      if (newNode != node)
-         return newNode;
-      }
-
    TR::Node * secondChild = isShift ? node->getSecondChild() : NULL;
 
    int32_t shiftAmount = -1;
@@ -3159,13 +2510,6 @@ TR::Node *pdshlSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
       firstChild = node->setChild(0, s->replaceNodeWithChild(firstChild, firstChild->getFirstChild(), s->_curTree, block));
       }
 
-   if (node->getOpCodeValue() == TR::pdshlSetSign)
-      {
-      TR::Node *newNode = lowerPackedShiftOrSetSignBelowDFPConv(node, block, s);
-      if (newNode != node)
-         return newNode;
-      }
-
    if (node->getSecondChild()->getOpCode().isLoadConst() &&
        node->getSecondChild()->get64bitIntegralValue() == 0 &&
        node->getThirdChild()->getOpCode().isLoadConst())
@@ -3208,13 +2552,6 @@ TR::Node *pdshrSetSignSimplifier(TR::Node * node, TR::Block * block, TR::Simplif
    node->setChild(0, propagateTruncationToConversionChild(node,s,block));
 
    TR::Node *firstChild = node->getFirstChild();
-
-   if (node->getOpCodeValue() == TR::pdshrSetSign)
-      {
-      TR::Node *newNode = lowerPackedShiftOrSetSignBelowDFPConv(node, block, s);
-      if (newNode != node)
-         return newNode;
-      }
 
    if (firstChild->getOpCodeValue() == TR::pdSetSign &&
        firstChild->hasKnownOrAssumedSignCode() &&
