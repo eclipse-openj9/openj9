@@ -52,6 +52,7 @@
    java_lang_Character_isAlphabetic,
    java_lang_Character_isUpperCase,
    java_lang_Character_isLowerCase,
+   java_lang_Character_toLowerCase,
    java_lang_Class_newInstance,
    java_lang_Class_newInstanceImpl,
    java_lang_Class_newInstancePrototype,
@@ -202,11 +203,24 @@
    java_lang_String_getChars_charArray,
    java_lang_String_getChars_byteArray,
 
+   java_lang_String_checkIndex,
+   java_lang_String_coder,
+   java_lang_String_decodeUTF8_UTF16,
+   java_lang_String_isLatin1,
+   java_lang_String_startsWith,
+
    java_lang_StringLatin1_indexOf,
 
+   java_lang_StringUTF16_charAt,
+   java_lang_StringUTF16_checkIndex,
+   java_lang_StringUTF16_compareCodePointCI,
+   java_lang_StringUTF16_compareToCIImpl,
+   java_lang_StringUTF16_compareValues,
    java_lang_StringUTF16_getChar,
    java_lang_StringUTF16_indexOf,
+   java_lang_StringUTF16_length,
    java_lang_StringUTF16_newBytesFor,
+   java_lang_StringUTF16_putChar,
    java_lang_StringUTF16_toBytes,
 
    java_lang_StringBuffer_append,
