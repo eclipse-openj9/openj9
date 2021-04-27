@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -138,7 +138,7 @@ int main(int argc, char ** argv, char ** envp)
 	 * At the same time:
 	 * 	-parse the -G options that don't get converted to a JVM option
 	 * 	figure out where the main class is
-	 * 
+	 *
 	 */
 	for (i = 2; i < argc; i++) {
 		if (0 == strncmp(argv[i], "-", 1)) {
@@ -211,7 +211,7 @@ int main(int argc, char ** argv, char ** envp)
 		} else if (0 == strcmp(argv[i], "-cp")) {
 			/* convert "-cp classpath" to "-Djava.class.path=classpath" */
 			i++; /* the next option is the classpath itself */
-			tmp = malloc(strlen("-Djava.class.path=") + strlen(argv[i]));
+			tmp = malloc(strlen("-Djava.class.path=") + strlen(argv[i]) + 1);
 			sprintf(tmp, "%s%s", "-Djava.class.path=", argv[i]);
 			args[jvmOptionCount].optionString = tmp;
 		} else {
