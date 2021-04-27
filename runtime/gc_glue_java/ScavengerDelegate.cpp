@@ -750,9 +750,9 @@ MM_ScavengerDelegate::signalThreadsToFlushCaches(MM_EnvironmentBase *currentEnvB
 	J9InternalVMFunctions const * const vmFuncs = _javaVM->internalVMFunctions;
 	J9VMThread *walkThread = NULL;
 
-	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
-
 	GC_VMInterface::lockVMThreadList(_extensions);
+
+	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
 
 	while((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
 		vmFuncs->J9SignalAsyncEvent(_javaVM, walkThread, _flushCachesAsyncCallbackKey);
