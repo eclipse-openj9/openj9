@@ -154,3 +154,5 @@ option(J9VM_RAS_DUMP_AGENTS "Support multiple dump agents, instead of just conso
 option(J9VM_RAS_EYE_CATCHERS "Add eyecatcher blocks to key structures")
 
 option(J9VM_USE_RDYNAMIC "Link using the -rdynamic option (Linux only)" ON)
+
+option(J9VM_ZOS_3164_INTEROPERABILITY "Enables support for 64-bit zOS to interoperate with 31-bit JNI native targets.")

@@ -349,6 +349,10 @@ typedef struct {
 	char data[LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION)];
 } J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA;
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+#define J9_IS_31BIT_INTEROP_TARGET(handle) J9_ARE_ALL_BITS_SET((UDATA)(handle), OMRPORT_SL_ZOS_31BIT_TARGET_HIGHTAG)
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 #if 0 /* Until compile error are resolved */
 #if defined(__cplusplus)
 /* Hide the asserts from DDR */

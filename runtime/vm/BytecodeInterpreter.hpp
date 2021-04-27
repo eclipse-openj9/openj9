@@ -2390,9 +2390,23 @@ done:
 #endif /* FFI_NATIVE_RAW_API */
 		}
 		{
-			args[0] = &ffi_type_pointer;
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+			if (J9_IS_31BIT_INTEROP_TARGET(function)) {
+				/* For 31-bit cross-amode targets, we need to return the correponding
+				 * 31-bit JNIEnv* pointer instead.
+				 */
+				args[0] = &ffi_type_sint32;
+				if (0 == _currentThread->jniEnv31) {
+					queryJNIEnv31(_currentThread);
+				}
+				values[0] = (void*)&(_currentThread->jniEnv31);
+			} else
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+			{
+				args[0] = &ffi_type_pointer;
+				values[0] = (void *)&_currentThread;
+			}
 			args[1] = &ffi_type_pointer;
-			values[0] = (void *)&_currentThread;
 			values[1] = &receiverAddress;
 
 			javaArgs = javaArgs + 1;
@@ -2426,7 +2440,15 @@ done:
 
 			ffi_cif cif_t;
 			ffi_cif * const cif = &cif_t;
-			if (FFI_OK != ffi_prep_cif(cif, FFI_DEFAULT_ABI, argCount + extraArgs, ffiReturnType, args)) {
+			ffi_abi abi = FFI_DEFAULT_ABI;
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+			if (J9_IS_31BIT_INTEROP_TARGET(function)) {
+				abi = FFI_CEL4RO31;
+			}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
+			if (FFI_OK != ffi_prep_cif(cif, abi, argCount + extraArgs, ffiReturnType, args)) {
 				ret = ffiFailed;
 				goto ffi_exit;
 			}

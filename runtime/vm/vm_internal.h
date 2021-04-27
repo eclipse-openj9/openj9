@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,9 +140,125 @@ void
 sidecarShutdown(J9VMThread* shutdownThread);
 #endif /* J9VM_OPT_SIDECAR */
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+/**
+* Helper function to invoke 31-bit target vm->exitHook via CEL4RO31.
+* @param vm J9JavaVM instance
+* @param rc The return code passed to exitHook
+* @return void
+*/
+void
+execute31BitExitHook(J9JavaVM * vm, jint rc);
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
+/* ---------------- jnimem.c ----------------- */
+
+/**
+* @brief
+* @param vmThread
+* @param sizeInBytes
+* @return void*
+*/
+void*
+jniArrayAllocateMemory32FromThread(J9VMThread* vmThread, UDATA sizeInBytes);
+
+/**
+* @brief
+* @param vmThread
+* @param location
+* @return void
+*/
+void
+jniArrayFreeMemory32FromThread(J9VMThread* vmThread, void* location);
+
+/* ---------------- jnimisc.cpp -------------- */
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+/**
+* @brief
+* @param env
+* @param array
+* @param isCopy
+* @return void*
+*/
+void* JNICALL
+getArrayElements31(JNIEnv *env, jarray array, jboolean *isCopy);
+
+/**
+* @brief
+* @param env
+* @param array
+* @param elems
+* @param mode
+* @return void
+*/
+void JNICALL
+releaseArrayElements31(JNIEnv *env, jarray array, void * elems, jint mode);
+
+/**
+* @brief
+* @param env
+* @param string
+* @param isCopy
+* @return const jchar*
+*/
+const jchar* JNICALL
+getStringChars31(JNIEnv *env, jstring string, jboolean *isCopy);
+
+/**
+* @brief
+* @param env
+* @param string
+* @param chars
+* @return void
+*/
+void JNICALL
+releaseStringChars31(JNIEnv *env, jstring string, const jchar * chars);
+
+/**
+* @brief
+* @param env
+* @param string
+* @param isCopy
+* @return const char*
+*/
+const char* JNICALL
+getStringUTFChars31(JNIEnv *env, jstring string, jboolean *isCopy);
+
+/**
+* @brief
+* @param env
+* @param string
+* @param chars
+* @return void
+*/
+void JNICALL
+releaseStringCharsUTF31(JNIEnv *env, jstring string, const char * chars);
+
+/**
+ * Helper function to query the matching 31-bit JNIEnv* for the given J9VMThread
+ * parameter.  The 31-bit JNIEnv* is needed to pass as the JNIEnv* parameter into
+ * cross-AMODE31 JNI natives.  Upon success, the 31-bit JNIEnv pointer will be
+ * stored into vmThread->jniEnv31.
+ *
+ * @param[in]  vmThread The J9VMThread to query
+ */
+void
+queryJNIEnv31(J9VMThread* vmThread);
+
+/**
+ * Helper function to query the matching 31-bit JavaVM* for the given J9JavaVM
+ * parameter.  The 31-bit JavaVM* is needed to pass as the JavaVM* parameter into
+ * cross-AMODE31 JNI natives.  Upon success, the 31-bit JavaVM pointer will be
+ * stored into vm->javaVM31.
+ *
+ * @param[in]  vm The J9JavaVM to query
+ */
+void
+queryJavaVM31(J9JavaVM* vm);
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 /* ---------------- vmifunc.c ---------------- */
-
 /**
 * @brief
 * @param vm

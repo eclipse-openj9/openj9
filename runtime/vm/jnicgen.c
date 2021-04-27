@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,14 @@ void JNICALL callVirtualVoidMethodV (JNIEnv *env, jobject receiver, jmethodID me
 	return;
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+void JNICALL callVirtualVoidMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return;
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 void JNICALL callVirtualVoidMethodA (JNIEnv *env, jobject receiver, jmethodID methodID, jvalue *args)
 {
 	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, (U_8*)args + 1);
@@ -64,6 +72,14 @@ jobject JNICALL callVirtualObjectMethodV (JNIEnv *env, jobject receiver, jmethod
 	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, VA_PTR(va));
 	return *(jobject*)(&((J9VMThread*)env)->returnValue);
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jobject JNICALL callVirtualObjectMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jobject*)(&((J9VMThread*)env)->returnValue);
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 jobject JNICALL callVirtualObjectMethodA (JNIEnv *env, jobject receiver, jmethodID methodID, jvalue *args)
 {
@@ -86,6 +102,14 @@ jint JNICALL callVirtualIntMethodV (JNIEnv *env, jobject receiver, jmethodID met
 	return *(jint*)(&(((J9VMThread*)env)->returnValue));
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jint JNICALL callVirtualIntMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jint*)(&(((J9VMThread*)env)->returnValue));
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 jint JNICALL callVirtualIntMethodA (JNIEnv *env, jobject receiver, jmethodID methodID, jvalue *args)
 {
 	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, (U_8*)args + 1);
@@ -106,6 +130,14 @@ jlong JNICALL callVirtualLongMethodV (JNIEnv *env, jobject receiver, jmethodID m
 	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, VA_PTR(va));
 	return *(jlong*)(&((J9VMThread*)env)->returnValue);
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jlong JNICALL callVirtualLongMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jlong*)(&((J9VMThread*)env)->returnValue);
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 jlong JNICALL callVirtualLongMethodA (JNIEnv *env, jobject receiver, jmethodID methodID, jvalue *args)
 {
@@ -128,6 +160,14 @@ jfloat JNICALL callVirtualFloatMethodV (JNIEnv *env, jobject receiver, jmethodID
 	return *(jfloat*)(&(((J9VMThread*)env)->returnValue));
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jfloat JNICALL callVirtualFloatMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jfloat*)(&(((J9VMThread*)env)->returnValue));
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 jfloat JNICALL callVirtualFloatMethodA (JNIEnv *env, jobject receiver, jmethodID methodID, jvalue *args)
 {
 	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, (U_8*)args + 1);
@@ -148,6 +188,14 @@ jdouble JNICALL callVirtualDoubleMethodV (JNIEnv *env, jobject receiver, jmethod
 	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, VA_PTR(va));
 	return *(jdouble*)(&((J9VMThread*)env)->returnValue);
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jdouble JNICALL callVirtualDoubleMethodV31 (JNIEnv *env, jobject receiver, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, NULL, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jdouble*)(&((J9VMThread*)env)->returnValue);
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 jdouble JNICALL callVirtualDoubleMethodA (JNIEnv *env, jobject receiver, jmethodID methodID, jvalue *args)
 {
@@ -170,6 +218,14 @@ void JNICALL callNonvirtualVoidMethodV (JNIEnv *env, jobject receiver, jclass cl
 	return;
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+void JNICALL callNonvirtualVoidMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return;
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 void JNICALL callNonvirtualVoidMethodA (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, jvalue *args)
 {
 	RUN_CALLIN_METHOD(env, receiver, cls, methodID, (U_8*)args + 1);
@@ -190,6 +246,14 @@ jobject JNICALL callNonvirtualObjectMethodV (JNIEnv *env, jobject receiver, jcla
 	RUN_CALLIN_METHOD(env, receiver, cls, methodID, VA_PTR(va));
 	return *(jobject*)(&((J9VMThread*)env)->returnValue);
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jobject JNICALL callNonvirtualObjectMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jobject*)(&((J9VMThread*)env)->returnValue);
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 jobject JNICALL callNonvirtualObjectMethodA (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, jvalue *args)
 {
@@ -212,6 +276,14 @@ jint JNICALL callNonvirtualIntMethodV (JNIEnv *env, jobject receiver, jclass cls
 	return *(jint*)(&(((J9VMThread*)env)->returnValue));
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jint JNICALL callNonvirtualIntMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jint*)(&(((J9VMThread*)env)->returnValue));
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 jint JNICALL callNonvirtualIntMethodA (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, jvalue *args)
 {
 	RUN_CALLIN_METHOD(env, receiver, cls, methodID, (U_8*)args + 1);
@@ -232,6 +304,14 @@ jlong JNICALL callNonvirtualLongMethodV (JNIEnv *env, jobject receiver, jclass c
 	RUN_CALLIN_METHOD(env, receiver, cls, methodID, VA_PTR(va));
 	return *(jlong*)(&((J9VMThread*)env)->returnValue);
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jlong JNICALL callNonvirtualLongMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jlong*)(&((J9VMThread*)env)->returnValue);
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 jlong JNICALL callNonvirtualLongMethodA (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, jvalue *args)
 {
@@ -254,6 +334,14 @@ jfloat JNICALL callNonvirtualFloatMethodV (JNIEnv *env, jobject receiver, jclass
 	return *(jfloat*)(&(((J9VMThread*)env)->returnValue));
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jfloat JNICALL callNonvirtualFloatMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jfloat*)(&(((J9VMThread*)env)->returnValue));
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 jfloat JNICALL callNonvirtualFloatMethodA (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, jvalue *args)
 {
 	RUN_CALLIN_METHOD(env, receiver, cls, methodID, (U_8*)args + 1);
@@ -274,6 +362,14 @@ jdouble JNICALL callNonvirtualDoubleMethodV (JNIEnv *env, jobject receiver, jcla
 	RUN_CALLIN_METHOD(env, receiver, cls, methodID, VA_PTR(va));
 	return *(jdouble*)(&((J9VMThread*)env)->returnValue);
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jdouble JNICALL callNonvirtualDoubleMethodV31 (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, receiver, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jdouble*)(&((J9VMThread*)env)->returnValue);
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 jdouble JNICALL callNonvirtualDoubleMethodA (JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, jvalue *args)
 {
@@ -296,6 +392,14 @@ void JNICALL callStaticVoidMethodV (JNIEnv *env, jclass cls, jmethodID methodID,
 	return;
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+void JNICALL callStaticVoidMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return;
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 void JNICALL callStaticVoidMethodA (JNIEnv *env, jclass cls, jmethodID methodID, jvalue *args)
 {
 	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)args + 1);
@@ -316,6 +420,14 @@ jobject JNICALL callStaticObjectMethodV (JNIEnv *env, jclass cls, jmethodID meth
 	RUN_CALLIN_METHOD(env, NULL, cls, methodID, VA_PTR(va));
 	return *(jobject*)(&((J9VMThread*)env)->returnValue);
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jobject JNICALL callStaticObjectMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jobject*)(&((J9VMThread*)env)->returnValue);
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 jobject JNICALL callStaticObjectMethodA (JNIEnv *env, jclass cls, jmethodID methodID, jvalue *args)
 {
@@ -338,6 +450,14 @@ jint JNICALL callStaticIntMethodV (JNIEnv *env, jclass cls, jmethodID methodID, 
 	return *(jint*)(&(((J9VMThread*)env)->returnValue));
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jint JNICALL callStaticIntMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jint*)(&(((J9VMThread*)env)->returnValue));
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 jint JNICALL callStaticIntMethodA (JNIEnv *env, jclass cls, jmethodID methodID, jvalue *args)
 {
 	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)args + 1);
@@ -358,6 +478,14 @@ jlong JNICALL callStaticLongMethodV (JNIEnv *env, jclass cls, jmethodID methodID
 	RUN_CALLIN_METHOD(env, NULL, cls, methodID, VA_PTR(va));
 	return *(jlong*)(&((J9VMThread*)env)->returnValue);
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jlong JNICALL callStaticLongMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jlong*)(&((J9VMThread*)env)->returnValue);
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 jlong JNICALL callStaticLongMethodA (JNIEnv *env, jclass cls, jmethodID methodID, jvalue *args)
 {
@@ -380,6 +508,14 @@ jfloat JNICALL callStaticFloatMethodV (JNIEnv *env, jclass cls, jmethodID method
 	return *(jfloat*)(&(((J9VMThread*)env)->returnValue));
 }
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jfloat JNICALL callStaticFloatMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jfloat*)(&(((J9VMThread*)env)->returnValue));
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 jfloat JNICALL callStaticFloatMethodA (JNIEnv *env, jclass cls, jmethodID methodID, jvalue *args)
 {
 	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)args + 1);
@@ -400,6 +536,15 @@ jdouble JNICALL callStaticDoubleMethodV (JNIEnv *env, jclass cls, jmethodID meth
 	RUN_CALLIN_METHOD(env, NULL, cls, methodID, VA_PTR(va));
 	return *(jdouble*)(&((J9VMThread*)env)->returnValue);
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+jdouble JNICALL callStaticDoubleMethodV31 (JNIEnv *env, jclass cls, jmethodID methodID, va_list va)
+{
+	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)(VA_PTR(va)) + 2);
+	return *(jdouble*)(&((J9VMThread*)env)->returnValue);
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 
 jdouble JNICALL callStaticDoubleMethodA (JNIEnv *env, jclass cls, jmethodID methodID, jvalue *args)
 {
