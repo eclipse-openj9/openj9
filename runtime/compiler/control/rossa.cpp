@@ -1508,10 +1508,15 @@ onLoadInternal(
    else
       compInfo->getCpuUtil()->updateCpuUtil(jitConfig);
 
-#ifdef TR_TARGET_S390
    // Need to let VM know that we will be using a machines vector facility (so it can save/restore preserved regs),
    // early in JIT startup to prevent subtle FP bugs
+#ifdef TR_TARGET_S390
    if (TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY) && !TR::Options::getCmdLineOptions()->getOption(TR_DisableSIMD))
+      {
+      javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
+      }
+#elif defined(TR_TARGET_POWER) && defined(TR_TARGET_64BIT)
+   if(TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) && TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) && !TR::Options::getCmdLineOptions()->getOption(TR_DisableSIMD))
       {
       javaVM->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
       }
