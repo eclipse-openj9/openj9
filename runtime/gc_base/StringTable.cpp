@@ -524,6 +524,39 @@ j9gc_stringHashFn(void *key, void *userData)
 	return stringHashFn(key, userData);
 }
 
+/**
+ * Assuming incoming UTF8 byte stream contains only ISO-8859-1/Latin-1 characters.
+ * Decode data & store to byteArray.
+ * 
+ * @param vmThread[in] the VM thread
+ * @param data[in] the UTF8 byte stream
+ * @param length[in] the length of incoming UTF8 byte stream
+ * @param byteArray[out] the target byte array to store the data
+ * @param translateSlashes[in] the flag to translate slashes
+ * 
+ * @return last slash position to be restored to `/` for anonymous classes
+ */
+MMINLINE static UDATA
+storeLatin1ByteArrayhelper(J9VMThread *vmThread, U_8 *data, UDATA length, j9object_t byteArray, bool translateSlashes)
+{
+	UDATA lastSlash = 0;
+	UDATA index = 0;
+	while (0 != length) {
+		U_16 unicode = 0;
+		UDATA consumed = VM_VMHelpers::decodeUTF8CharN(data, &unicode, length);
+		Assert_GC_true_with_message2(MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread), 0 != consumed, "Invalid UTF8 character at %p, %zu", data, length);
+		data += consumed;
+		length -= consumed;
+		if (translateSlashes && ('/' == unicode)) {
+			lastSlash = index;
+			unicode = '.';
+		}
+		J9JAVAARRAYOFBYTE_STORE(vmThread, byteArray, index, unicode);
+		index += 1;
+	}
+	return lastSlash;
+}
+
 j9object_t
 j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags)
 {
@@ -542,6 +575,8 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 	/* Determine if the string contains only ASCII (<= 0x7F) characters */
 	bool isASCII = true;
+	/* Determine if the string contains only Latin-1 (<= 0xFF) characters */
+	bool isASCIIorLatin1 = true;
 	if (isUnicode) {
 		/* Translation and anon class name are not currently supported for unicode input */
 		Assert_MM_false(translateSlashes || anonClassName);
@@ -553,17 +588,35 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			for (UDATA i = 0; i < length; ++i) {
 				if (unicodeData[i] > 0x7F) {
 					isASCII = false;
+					if (J2SE_VERSION(vm) >= J2SE_V17) {
+						for (UDATA j = i; j < length; ++j) {
+							if (unicodeData[j] > 0xFF) {
+								isASCIIorLatin1 = false;
+								break;
+							}
+						}
+					} else {
+						isASCIIorLatin1 = false;
+					}
 					break;
 				}
 			}
 		} else {
 			/* For future safety, ensure isASCII is false if not computed correctly */
 			isASCII = false;
+			isASCIIorLatin1 = false;
 		}
 	} else {
 		for (UDATA i = 0; i < length; ++i) {
 			if (data[i] > 0x7F) {
 				isASCII = false;
+				if (compressStrings && (J2SE_VERSION(vm) >= J2SE_V17)) {
+					U_8 *dataTmp = data + i;
+					UDATA lengthTmp = length - i;
+					isASCIIorLatin1 = VM_VMHelpers::isLatin1String(dataTmp, lengthTmp);
+				} else {
+					isASCIIorLatin1 = false;
+				}
 				break;
 			}
 		}
@@ -634,7 +687,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, result);
 
 		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
-			if (compressStrings && isASCII) {
+			if (compressStrings && isASCIIorLatin1) {
 				charArray = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength, allocateFlags);
 			} else {
 				charArray = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength * 2, allocateFlags);
@@ -656,7 +709,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		if (isUnicode) {
 			U_16 * unicodeData = (U_16 *) data;
 
-			if (compressStrings && isASCII) {
+			if (compressStrings && isASCIIorLatin1) {
 				for (UDATA i = 0; i < unicodeLength; ++i) {
 					J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (I_8)unicodeData[i]);
 				}
@@ -666,20 +719,28 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				}
 			}
 		} else {
-			if (compressStrings && isASCII) {
+			if (compressStrings && isASCIIorLatin1) {
 				UDATA lastSlash = 0;
 				if (translateSlashes) {
-					for (UDATA i = 0; i < length; ++i) {
-						U_8 c = data[i];
-						if ('/' == c) {
-							lastSlash = i;
-							c = '.';
+					if (isASCII) {
+						for (UDATA i = 0; i < length; ++i) {
+							U_8 c = data[i];
+							if ('/' == c) {
+								lastSlash = i;
+								c = '.';
+							}
+							J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, c);
 						}
-						J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, c);
+					} else {
+						lastSlash = storeLatin1ByteArrayhelper(vmThread, data, length, charArray, true);
 					}
 				} else {
-					for (UDATA i = 0; i < length; ++i) {
-						J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, data[i]);
+					if (isASCII) {
+						for (UDATA i = 0; i < length; ++i) {
+							J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, data[i]);
+						}
+					} else {
+						lastSlash = storeLatin1ByteArrayhelper(vmThread, data, length, charArray, false);
 					}
 				}
 
@@ -738,7 +799,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		J9VMJAVALANGSTRING_SET_VALUE(vmThread, result, charArray);
 
 		if (compressStrings) {
-			if (isASCII) {
+			if (isASCIIorLatin1) {
 				if (J2SE_VERSION(vm) >= J2SE_V11) {
 					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 0);
 				} else {

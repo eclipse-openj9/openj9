@@ -287,6 +287,7 @@ public final class System {
 			unsafe.putObject(unsafe.staticFieldBase(f2), unsafe.staticFieldOffset(f2), com.ibm.jit.JITHelpers.getHelpers());
 		} catch (NoSuchFieldException e) { }
 
+		/*[IF JAVA_SPEC_VERSION < 17]*/
 		/**
 		 * When the System Property == true, then disable sharing (i.e. arraycopy the underlying value array) in
 		 * String.substring(int) and String.substring(int, int) methods whenever offset is zero. Otherwise, enable
@@ -300,11 +301,12 @@ public final class System {
 		/*[PR JAZZ 58297] - continue with the rules defined by JAZZ 57070 - Build a Java 8 J9 JCL using the SIDECAR18 preprocessor configuration */
 		// Check the default encoding
 		/*[Bug 102075] J2SE Setting -Dfile.encoding=junk fails to run*/
-		/*[IF Sidecar19-SE]*/
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		StringCoding.encode(String.LATIN1, new byte[1]);
 		/*[ELSE]*/
 		StringCoding.encode(new char[1], 0, 1);
-		/*[ENDIF]*/
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 
 		/*[IF Sidecar18-SE-OpenJ9]*/
 		Properties props = internalGetProperties();

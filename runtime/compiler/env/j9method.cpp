@@ -3175,6 +3175,11 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_split_str_int,       "split",               "(Ljava/lang/String;I)[Ljava/lang/String;")},
       {x(TR::java_lang_String_getChars_charArray,  "getChars",            "(II[CI)V")},
       {x(TR::java_lang_String_getChars_byteArray,  "getChars",            "(II[BI)V")},
+      {x(TR::java_lang_String_checkIndex,          "checkIndex",          "(II)V")},
+      {x(TR::java_lang_String_coder,               "coder",               "()B")},
+      {x(TR::java_lang_String_decodeUTF8_UTF16,    "decodeUTF8_UTF16",    "([BII[BIZ)I")},
+      {x(TR::java_lang_String_isLatin1,            "isLatin1",            "()Z")},
+      {x(TR::java_lang_String_startsWith,          "startsWith",          "(Ljava/lang/String;I)Z")},
       {  TR::unknownMethod}
       };
 
@@ -3195,7 +3200,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_StringCoding_implEncodeISOArray, "implEncodeISOArray", "([BI[BII)I")},
       {x(TR::java_lang_StringCoding_encode8859_1,       "encode8859_1",       "(B[B)[B")},
       {x(TR::java_lang_StringCoding_encodeASCII,        "encodeASCII",        "(B[B)[B")},
-      {x(TR::java_lang_StringCoding_encodeUTF8,         "encodeUTF8",         "(B[B)[B")},
+      {x(TR::java_lang_StringCoding_encodeUTF8,         "encodeUTF8",         "(B[BZ)[B")},
       {  TR::unknownMethod}
       };
 
@@ -3560,10 +3565,17 @@ void TR_ResolvedJ9Method::construct()
 
    static X StringUTF16Methods[] =
       {
-      { x(TR::java_lang_StringUTF16_getChar,                                  "getChar",        "([BI)C")},
-      { x(TR::java_lang_StringUTF16_indexOf,                                  "indexOf",        "([BI[BII)I")},
-      { x(TR::java_lang_StringUTF16_newBytesFor,                              "newBytesFor",    "(I)[B")},
-      { x(TR::java_lang_StringUTF16_toBytes,                                  "toBytes",        "([CII)[B")},
+      { x(TR::java_lang_StringUTF16_charAt,                                   "charAt",             "([BI)C")},
+      { x(TR::java_lang_StringUTF16_checkIndex,                               "checkIndex",         "(I[B)V")},
+      { x(TR::java_lang_StringUTF16_compareCodePointCI,                       "compareCodePointCI", "(II)I")},
+      { x(TR::java_lang_StringUTF16_compareToCIImpl,                          "compareToCIImpl",    "([BII[BII)I")},
+      { x(TR::java_lang_StringUTF16_compareValues,                            "compareValues",      "([B[BII)I")},
+      { x(TR::java_lang_StringUTF16_getChar,                                  "getChar",            "([BI)C")},
+      { x(TR::java_lang_StringUTF16_indexOf,                                  "indexOf",            "([BI[BII)I")},
+      { x(TR::java_lang_StringUTF16_length,                                   "length",             "([B)I")},
+      { x(TR::java_lang_StringUTF16_newBytesFor,                              "newBytesFor",        "(I)[B")},
+      { x(TR::java_lang_StringUTF16_putChar,                                  "putChar",            "([BII)V")},
+      { x(TR::java_lang_StringUTF16_toBytes,                                  "toBytes",            "([CII)[B")},
       { TR::unknownMethod }
       };
 
@@ -3637,6 +3649,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Character_isLowerCase,         "isLowerCase",          "(I)Z")},
       {x(TR::java_lang_Character_isWhitespace,        "isWhitespace",         "(I)Z")},
       {x(TR::java_lang_Character_isAlphabetic,        "isAlphabetic",         "(I)Z")},
+      {x(TR::java_lang_Character_toLowerCase,         "toLowerCase",          "(I)I")},
       {  TR::unknownMethod}
       };
 

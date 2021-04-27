@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright (c) 2007, 2021 IBM Corp. and others
  *
@@ -366,10 +366,18 @@ final class Access implements JavaLangAccess {
 
 /*[IF JAVA_SPEC_VERSION >= 10]*/
 	public String newStringUTF8NoRepl(byte[] bytes, int offset, int length) {
+		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.newStringUTF8NoRepl(bytes, offset, length);
+		/*[ELSE] JAVA_SPEC_VERSION < 17 */
+		return String.newStringUTF8NoRepl(bytes, offset, length);
+		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
 	public byte[] getBytesUTF8NoRepl(String str) {
+		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.getBytesUTF8NoRepl(str);
+		/*[ELSE] JAVA_SPEC_VERSION < 17 */
+		return String.getBytesUTF8NoRepl(str);
+		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 
@@ -378,10 +386,18 @@ final class Access implements JavaLangAccess {
 		Thread.blockedOn(interruptible);
 	}
 	public byte[] getBytesNoRepl(String str, Charset charset) throws CharacterCodingException {
+		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.getBytesNoRepl(str, charset);
+		/*[ELSE] JAVA_SPEC_VERSION < 17 */
+		return String.getBytesNoRepl(str, charset);
+		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
 	public String newStringNoRepl(byte[] bytes, Charset charset) throws CharacterCodingException {
+		/*[IF JAVA_SPEC_VERSION < 17]*/
 		return StringCoding.newStringNoRepl(bytes, charset);
+		/*[ELSE] JAVA_SPEC_VERSION < 17 */
+		return String.newStringNoRepl(bytes, charset);
+		/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 

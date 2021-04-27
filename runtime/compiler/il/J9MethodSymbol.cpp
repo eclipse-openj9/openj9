@@ -177,10 +177,16 @@ static TR::RecognizedMethod canSkipNullChecks[] =
    TR::java_lang_String_equalsIgnoreCase,
    TR::java_lang_String_indexOf_fast,
    TR::java_lang_String_isCompressed,
+   TR::java_lang_String_coder,
+   TR::java_lang_String_isLatin1,
+   TR::java_lang_String_startsWith,
    TR::java_lang_StringBuffer_capacityInternal,
    TR::java_lang_StringBuffer_lengthInternalUnsynchronized,
    TR::java_lang_StringBuilder_capacityInternal,
    TR::java_lang_StringBuilder_lengthInternal,
+   TR::java_lang_StringUTF16_charAt,
+   TR::java_lang_StringUTF16_checkIndex,
+   TR::java_lang_StringUTF16_length,
    TR::java_util_Hashtable_clone,
    TR::java_util_Hashtable_contains,
    TR::java_util_HashtableHashEnumerator_hasMoreElements,
@@ -234,6 +240,7 @@ static TR::RecognizedMethod canSkipBoundChecks[] =
    //TR::java_util_ArrayList_remove,
    //TR::java_util_ArrayList_ensureCapacity,
    //TR::java_util_ArrayList_get,
+   TR::java_lang_Character_toLowerCase,
    TR::java_lang_invoke_FilterArgumentsHandle_invokeExact,
    TR::java_lang_invoke_CollectHandle_invokeExact,
    TR::java_lang_String_trim,
@@ -260,6 +267,12 @@ static TR::RecognizedMethod canSkipBoundChecks[] =
    TR::java_lang_String_hashCodeImplDecompressed,
    TR::java_lang_String_unsafeCharAt,
    TR::java_lang_String_split_str_int,
+   TR::java_lang_String_startsWith,
+   TR::java_lang_StringUTF16_charAt,
+   TR::java_lang_StringUTF16_checkIndex,
+   TR::java_lang_StringUTF16_compareCodePointCI,
+   TR::java_lang_StringUTF16_compareToCIImpl,
+   TR::java_lang_StringUTF16_compareValues,
    TR::java_util_Hashtable_get,
    TR::java_util_Hashtable_put,
    TR::java_util_Hashtable_clone,
@@ -455,6 +468,7 @@ static TR::RecognizedMethod canSkipChecksOnArrayCopies[] =
    // NOTE!! add methods whose checks can be skipped by sov library to the beginning of the list (see stopMethod below)
    //TR::java_util_ArrayList_ensureCapacity,
    //TR::java_util_ArrayList_remove,   /* ArrayList is NOT synchronized and therefore it's unsafe to remove checks! */
+   TR::java_lang_Character_toLowerCase,
    TR::java_lang_String_concat,
    TR::java_lang_String_replace,
    TR::java_lang_String_toLowerCase,
@@ -513,6 +527,7 @@ J9::MethodSymbol::safeToSkipChecksOnArrayCopies()
 //
 static TR::RecognizedMethod canSkipZeroInitializationOnNewarrays[] =
    {
+   TR::java_lang_Character_toLowerCase,
    TR::java_lang_String_init,
    TR::java_lang_String_init_int_int_char_boolean,
    TR::java_lang_String_concat,

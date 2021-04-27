@@ -368,6 +368,9 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::java_lang_String_charAt:
       case TR::java_lang_String_charAtInternal_I:
       case TR::java_lang_String_charAtInternal_IB:
+      case TR::java_lang_String_checkIndex:
+      case TR::java_lang_String_coder:
+      case TR::java_lang_String_isLatin1:
       case TR::java_lang_String_length:
       case TR::java_lang_String_lengthInternal:
       case TR::java_lang_String_isCompressed:
@@ -375,6 +378,9 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::java_lang_StringBuffer_lengthInternalUnsynchronized:
       case TR::java_lang_StringBuilder_capacityInternal:
       case TR::java_lang_StringBuilder_lengthInternal:
+      case TR::java_lang_StringUTF16_charAt:
+      case TR::java_lang_StringUTF16_checkIndex:
+      case TR::java_lang_StringUTF16_length:
       case TR::java_lang_StringUTF16_newBytesFor:
       case TR::java_util_HashMap_get:
       case TR::java_util_HashMap_getNode:
@@ -2442,6 +2448,7 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
       case TR::java_lang_String_charAtInternal_IB:
       case TR::java_lang_String_lengthInternal:
       case TR::java_lang_String_isCompressed:
+      case TR::java_lang_StringUTF16_length:
       case TR::java_lang_StringBuffer_capacityInternal:
       case TR::java_lang_StringBuffer_lengthInternalUnsynchronized:
       case TR::java_lang_StringBuilder_capacityInternal:
@@ -4932,6 +4939,7 @@ TR_InlinerFailureReason
       case TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64:
       case TR::com_ibm_jit_JITHelpers_getClassInitializeStatus:
       case TR::java_lang_StringUTF16_getChar:
+      case TR::java_lang_StringUTF16_putChar:
       case TR::java_lang_StringUTF16_toBytes:
       case TR::java_lang_invoke_MethodHandle_asType:
             return DontInline_Callee;

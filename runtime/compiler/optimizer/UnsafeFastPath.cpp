@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -311,6 +311,7 @@ static bool needUnsignedConversion(TR::RecognizedMethod methodToReduce)
       case TR::com_ibm_jit_JITHelpers_getCharFromArrayByIndex:
       case TR::com_ibm_jit_JITHelpers_getCharFromArrayVolatile:
       case TR::java_lang_StringUTF16_getChar:
+      case TR::java_lang_StringUTF16_putChar:
          return true;
       }
 
@@ -531,6 +532,7 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::com_ibm_jit_JITHelpers_putObjectInArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_putObjectInArray:
             case TR::java_lang_StringUTF16_getChar:
+            case TR::java_lang_StringUTF16_putChar:
                isArrayOperation = true;
                break;
             default:
