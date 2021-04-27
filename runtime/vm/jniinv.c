@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,6 +42,10 @@
 
 #include "ut_j9vm.h"
 #include "jvmri.h"
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+#include "ffi.h"
+#endif
 
 static J9JavaVM * vmList = NULL;
 
@@ -413,7 +417,14 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 		Trc_JNIinv_protectedDestroyJavaVM_CallingExitHookSecondary();
 		
 		if (vm->exitHook) {
-			vm->exitHook(0);
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+			if (J9_IS_31BIT_INTEROP_TARGET(vm->exitHook)) {
+				execute31BitExitHook(vm, 0);
+			} else
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+			{
+				vm->exitHook(0);
+			}
 		}
 
 		return JNI_ERR;
@@ -440,7 +451,14 @@ protectedDestroyJavaVM(J9PortLibrary* portLibrary, void * userData)
 	Trc_JNIinv_protectedDestroyJavaVM_CallingExitHook();
 
 	if (vm->exitHook) {
-		vm->exitHook(0);
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+		if (J9_IS_31BIT_INTEROP_TARGET(vm->exitHook)) {
+			execute31BitExitHook(vm, 0);
+		} else
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+		{
+			vm->exitHook(0);
+		}
 	}
 
 	freeJavaVM(vm);
@@ -1321,6 +1339,26 @@ J9_GetInterface(J9_INTERFACE_SELECTOR interfaceSelector, J9PortLibrary* portLib,
 	Assert_VM_unreachable();
 	return NULL;
 }
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+void
+execute31BitExitHook(J9JavaVM * vm, jint rc)
+{
+	Assert_VM_true(J9_IS_31BIT_INTEROP_TARGET(vm->exitHook));
+
+	ffi_type* args[1];
+	void* values[1];
+	ffi_cif cif_t;
+	ffi_cif * const cif = &cif_t;
+
+	args[0]= &ffi_type_sint32;
+	values[0] = (void*)&(rc);
+
+	if (FFI_OK == ffi_prep_cif(cif, FFI_CEL4RO31, 1, &ffi_type_void, args)) {
+		ffi_call(cif, FFI_FN(vm->exitHook), NULL, values);
+	}
+}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
 #endif /* J9VM_OPT_SIDECAR */
 

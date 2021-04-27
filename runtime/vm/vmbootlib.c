@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,10 @@
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 #include "vmaccess.h"
+
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+#include "ffi.h"
+#endif
 
 #ifdef BREW
 #define MAX_PATH_SIZE 40
@@ -144,14 +148,49 @@ sendLifecycleEventCallback(struct J9VMThread* vmThread, struct J9NativeLibrary* 
 	if (0 == j9sl_lookup_name(library->handle, (char*)functionName, (void*)&JNI_Load, "VLL")) {
 		Trc_VM_sendLifecycleEventCallback_Event1(vmThread, functionName, library->handle);
 
-		/* Check whether the return type for the callee lifecycle event is void; return 0 to indicate 
-		 * success instead of an undefined return value.
-		 */
-		if (0 == strncmp(functionName, J9DYNAMIC_ONUNLOAD, J9DYNAMIC_ONUNLOAD_LENGTH)) {
-			JNI_Load((JavaVM*)vmThread->javaVM, NULL);
-			result = 0;
-		} else {
-			result = JNI_Load((JavaVM*)vmThread->javaVM, NULL);
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+		if (J9_IS_31BIT_INTEROP_TARGET(JNI_Load)) {
+			ffi_type* args[2];
+			void* values[2];
+			U_32 nullSecondParam = 0;
+			UDATA returnValue = 0;
+			ffi_cif cif_t;
+			ffi_cif * const cif = &cif_t;
+
+			if (0 == vmThread->javaVM->javaVM31) {
+				queryJavaVM31(vmThread->javaVM);
+			}
+			args[0]= &ffi_type_sint32;
+			args[1]= &ffi_type_sint32;
+			values[0] = (void*)&(vmThread->javaVM->javaVM31);
+			values[1] = (void*)&nullSecondParam;
+
+			/* Check whether the return type for the callee lifecycle event is void; return 0 to indicate
+			 * success instead of an undefined return value.
+			 */
+			if (0 == strncmp(functionName, J9DYNAMIC_ONUNLOAD, J9DYNAMIC_ONUNLOAD_LENGTH)) {
+				if (FFI_OK == ffi_prep_cif(cif, FFI_CEL4RO31, 2, &ffi_type_void, args)) {
+					ffi_call(cif, FFI_FN(JNI_Load), NULL, values);
+					result = 0;
+				}
+			} else {
+				if (FFI_OK == ffi_prep_cif(cif, FFI_CEL4RO31, 2, &ffi_type_sint32, args)) {
+					ffi_call(cif, FFI_FN(JNI_Load), &returnValue, values);
+					result = returnValue;
+				}
+			}
+		} else
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+		{
+			/* Check whether the return type for the callee lifecycle event is void; return 0 to indicate
+			 * success instead of an undefined return value.
+			 */
+			if (0 == strncmp(functionName, J9DYNAMIC_ONUNLOAD, J9DYNAMIC_ONUNLOAD_LENGTH)) {
+				JNI_Load((JavaVM*)vmThread->javaVM, NULL);
+				result = 0;
+			} else {
+				result = JNI_Load((JavaVM*)vmThread->javaVM, NULL);
+			}
 		}
 	}
 
@@ -204,6 +243,13 @@ openNativeLibrary(J9JavaVM* vm, J9ClassLoader * classLoader, const char * libNam
 	/* If a library path was specified and the library name is not an absolute path,
    * search all entries in the library path for the library */
 
+	UDATA flags = lazy;
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_3164_INTEROPERABILITY)) {
+		flags |= OMRPORT_SLOPEN_ATTEMPT_31BIT_OPEN;
+	}
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
 	if (libraryPath && (!isAbsolutePath(libName))) {
 		char classPathSeparator = (char) j9sysinfo_get_classpathSeparator();
 		J9VMSystemProperty *classpathSeparatorProperty = NULL;
@@ -248,9 +294,9 @@ openNativeLibrary(J9JavaVM* vm, J9ClassLoader * classLoader, const char * libNam
 					fullPathBufferLength = expectedPathLength;
 				}
 				j9str_printf(PORTLIB, fullPathPtr, expectedPathLength, "%.*s%s%s", pathLength, libraryPath, dirSeparator, libName);
-				result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, lazy | J9PORT_SLOPEN_DECORATE | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
+				result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, flags | J9PORT_SLOPEN_DECORATE | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
 				if(result == J9NATIVELIB_LOAD_ERR_NOT_FOUND) {
-					result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, lazy | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
+					result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, flags | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
 					if(result != J9NATIVELIB_LOAD_ERR_NOT_FOUND) {
 						goto exit;
 					}
@@ -279,9 +325,9 @@ openNativeLibrary(J9JavaVM* vm, J9ClassLoader * classLoader, const char * libNam
 
 	/* No library path specified, just add the extension and try that */
 	/* temp fix.  Remove the second openFunc call once apps like javah have bootLibraryPaths */
-	result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, lazy);
+	result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, flags);
 	if(result == J9NATIVELIB_LOAD_ERR_NOT_FOUND) {
-		result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, lazy | J9PORT_SLOPEN_DECORATE);
+		result = openFunction(userData, classLoader, libName, (char *)libName, libraryPtr, errorBuffer, bufferLength, flags | J9PORT_SLOPEN_DECORATE);
 	}
 	
 exit:

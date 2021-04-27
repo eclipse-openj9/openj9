@@ -119,6 +119,11 @@
 		<variations>
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:disableAsyncCompilation,count=1</variation>
+			<variation>-Xjit:count=0,disableZ196</variation>
+			<variation>-Xjit:count=0,disableZEC12</variation>
+			<variation>-Xjit:count=0,disableZ13</variation>
+			<variation>-Xjit:count=0,disableZ14</variation>
+			<variation>-Xjit:count=0,disableZ15</variation>
 		</variations>
 		<command> $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \

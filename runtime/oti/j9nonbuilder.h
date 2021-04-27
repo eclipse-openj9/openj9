@@ -4966,6 +4966,10 @@ typedef struct J9VMThread {
 	U_32 riPadTo8;
 #endif /* !J9VM_ENV_DATA64 */
 #endif /* J9VM_JIT_RUNTIME_INSTRUMENTATION */
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+	U_32 jniEnv31;
+	U_32 jniEnvPadTo8; /* Possible to optimize with future guarded U_32 member in ENV_DATA64. */
+#endif /* J9VM_ZOS_3164_INTEROPERABILITY */
 	UDATA* osrJittedFrameCopy;
 	struct J9OSRBuffer* osrBuffer;
 	void* osrReturnAddress;
@@ -5489,6 +5493,10 @@ typedef struct J9JavaVM {
 	UDATA vmindexOffset;
 	UDATA vmtargetOffset;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+	U_32 javaVM31;
+	U_32 javaVM31PadTo8; /* Possible to optimize with future guarded U_32 member in ENV_DATA64. */
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

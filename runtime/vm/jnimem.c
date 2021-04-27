@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,6 +51,10 @@ void* jniArrayAllocateMemoryFromThread(J9VMThread* vmThread, UDATA sizeInBytes) 
 #endif
 }
 
+void* jniArrayAllocateMemory32FromThread(J9VMThread* vmThread, UDATA sizeInBytes) {
+	PORT_ACCESS_FROM_VMC(vmThread);
+	return j9mem_allocate_memory32(sizeInBytes, J9MEM_CATEGORY_JNI);
+}
 
 void jniArrayFreeMemoryFromThread(J9VMThread* vmThread, void* location) {
 	PORT_ACCESS_FROM_VMC(vmThread);
@@ -79,6 +83,10 @@ void jniArrayFreeMemoryFromThread(J9VMThread* vmThread, void* location) {
 #endif
 }
 
+void jniArrayFreeMemory32FromThread(J9VMThread* vmThread, void* location) {
+	PORT_ACCESS_FROM_VMC(vmThread);
+	j9mem_free_memory32(location);
+}
 
 #if (defined(J9VM_GC_JNI_ARRAY_CACHE)) 
 void cleanupVMThreadJniArrayCache(J9VMThread *vmThread) {

@@ -62,6 +62,10 @@ static UDATA throwConditionException(J9VMThread *vmThread, struct ConditionExcep
 #include "omrsig.h"
 #endif /* defined(J9VM_PORT_OMRSIG_SUPPORT) */
 
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+#include "ffi.h"
+#endif
+
 #define J9DO_NOT_WRITE_DUMP "J9NO_DUMPS"
 #define INFO_COLS 4
 
@@ -1316,7 +1320,19 @@ executeAbortHook(struct J9PortLibrary* portLibrary, void* userData)
 	J9JavaVM* vm = data->javaVM;
 
 	if (vm->abortHook) {
-		vm->abortHook();
+#if defined(J9VM_ZOS_3164_INTEROPERABILITY)
+		if (J9_IS_31BIT_INTEROP_TARGET(vm->abortHook)) {
+			ffi_cif cif_t;
+			ffi_cif * const cif = &cif_t;
+
+			if (FFI_OK == ffi_prep_cif(cif, FFI_CEL4RO31, 0, &ffi_type_void, NULL)) {
+				ffi_call(cif, FFI_FN(vm->abortHook), NULL, NULL);
+			}
+		} else
+#endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+		{
+			vm->abortHook();
+		}
 	}
 
 	return 0;
