@@ -1466,8 +1466,6 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
 void
 J9::CodeGenerator::doInstructionSelection()
    {
-   self()->setNextAvailableBlockIndex(self()->comp()->getFlowGraph()->getNextNodeNumber() + 1);
-
    J9::SetMonitorStateOnBlockEntry::LiveMonitorStacks liveMonitorStacks(
       (J9::SetMonitorStateOnBlockEntry::LiveMonitorStacksComparator()),
       J9::SetMonitorStateOnBlockEntry::LiveMonitorStacksAllocator(self()->comp()->trMemory()->heapMemoryRegion()));
@@ -1626,7 +1624,6 @@ J9::CodeGenerator::doInstructionSelection()
          fixedUpBlock = false;
          TR::Block *block = node->getBlock();
          self()->setCurrentEvaluationBlock(block);
-         self()->setCurrentBlockIndex(block->getNumber());
          self()->resetMethodModifiedByRA();
 
          liveMonitorStack = (liveMonitorStacks.find(block->getNumber()) != liveMonitorStacks.end()) ?
