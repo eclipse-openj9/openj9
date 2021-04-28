@@ -3366,6 +3366,10 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
    TR::CodeGenerator *cg = self();
    TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
 
+   if (OMR::CodeGeneratorConnector::inlineDirectCall(node, resultReg))
+      {
+      return true;
+      }
    if (methodSymbol)
       {
       switch (methodSymbol->getRecognizedMethod())

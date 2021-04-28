@@ -388,6 +388,12 @@ ddr_add_headers(j9jit
 )
 ddr_set_add_targets(omrddr j9jit)
 
+
+if(OMR_OS_ZOS)
+	# Make sure that -Wc,EXPORTALL is applied
+	omr_process_exports(j9jit)
+endif()
+
 install(
 	TARGETS j9jit
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
