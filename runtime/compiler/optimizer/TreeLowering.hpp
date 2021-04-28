@@ -223,43 +223,6 @@ class TreeLowering : public TR::Optimization
    virtual const char * optDetailString() const throw();
 
    private:
-
-   /**
-    * @brief Moves a node down to the end of a block
-    *
-    * Any stores of the value of the node are also moved down.
-    *
-    * This can be useful to do after a call to splitPostGRA where, as part of un-commoning,
-    * it is possible that code to store the anchored node into a register or temp-slot is
-    * appended to the original block.
-    *
-    * @param block is the block containing the TreeTop to be moved
-    * @param tt is a pointer to the TreeTop to be moved
-    * @param isAddress shows if the node is address, otherwise it is assumed to be an integer
-    */
-   void moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node, bool isAddress);
-
-   /**
-    * @brief Split a block after having inserted a fastpath branch
-    *
-    * The function should be used to split a block after a branch has been inserted.
-    * After the split, the resulting fall-through block is marked as an extension of
-    * the previous block (the original block that was split), which implies that 
-    * uncommoning is not required. The cfg is also updated with an edge going from
-    * the original block to some target block, which should be the same as the
-    * target of the branch inserted before the split.
-    *
-    * Note that this function does not call TR::CFG::invalidateStructure() as it assumes
-    * the caller is using this function in a context where TR::CFG::invalidateStructure()
-    * is likely to have already been called.
-    *
-    * @param block is the block that will be split
-    * @param splitPoint is the TreeTop within block at which the split must happen
-    * @param targetBlock is the target block of the branch inserted before the split point
-    * @return TR::Block* the (fallthrough) block created from the split
-    */
-   TR::Block* splitForFastpath(TR::Block* const block, TR::TreeTop* const splitPoint, TR::Block* const targetBlock);
-
    // helpers related to Valhalla value type lowering
    void lowerValueTypeOperations(TransformationManager& transformation, TR::Node* node, TR::TreeTop* tt);
 
