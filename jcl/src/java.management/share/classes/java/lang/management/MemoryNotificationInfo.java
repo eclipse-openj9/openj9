@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2017 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,9 +89,20 @@ public class MemoryNotificationInfo {
 	 *            {@link #MEMORY_COLLECTION_THRESHOLD_EXCEEDED} notifications,
 	 *            this will be the number of times that the collection usage
 	 *            threshold was passed.
+	 * @throws NullPointerException
+	 *            when poolName or usage is null
 	 */
 	public MemoryNotificationInfo(String poolName, MemoryUsage usage, long count) {
-		super();
+		if (poolName == null) {
+			/*[MSG "K0D02", "Null poolName"]*/
+			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K0D02")); //$NON-NLS-1$
+		}
+
+		if (usage == null) {
+			/*[MSG "K0D03", "Null usage"]*/
+			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K0D03")); //$NON-NLS-1$
+		}
+
 		this.poolName = poolName;
 		this.usage = usage;
 		this.count = count;

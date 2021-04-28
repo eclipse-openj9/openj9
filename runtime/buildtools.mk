@@ -1,7 +1,7 @@
 # buildtools Makefile
 
 ###############################################################################
-# Copyright (c) 1998, 2020 IBM Corp. and others
+# Copyright (c) 1998, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -173,6 +173,7 @@ OMRGLUE_INCLUDES = \
 
 j9includegen : uma
 	$(MAKE) -C include j9include_generate
+	$(MAKE) -C include31 j9include31_generate
 
 configure : j9includegen
 	$(MAKE) -C omr -f run_configure.mk 'SPEC=$(SPEC)' 'OMRGLUE=$(OMRGLUE)' 'CONFIG_INCL_DIR=$(CONFIG_INCL_DIR)' 'OMRGLUE_INCLUDES=$(OMRGLUE_INCLUDES)' 'EXTRA_CONFIGURE_ARGS=$(EXTRA_CONFIGURE_ARGS)'
