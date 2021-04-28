@@ -666,8 +666,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
       const TR_YesNoMaybe isLhsValue = isValue(lhs);
       const TR_YesNoMaybe isRhsValue = isValue(rhs);
-      const bool areSameRef = getValueNumber(lhsNode) == getValueNumber(rhsNode)
-        || lhs != NULL && rhs != NULL && lhs->mustBeEqual(rhs, this);
+      const bool areSameRef = (getValueNumber(lhsNode) == getValueNumber(rhsNode))
+                              || (lhs != NULL && rhs != NULL && lhs->mustBeEqual(rhs, this));
 
       // Non-helper equality comparison call is not needed if either operand
       // is definitely not an instance of a value type or if both operands
@@ -1511,86 +1511,89 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 TR_YesNoMaybe
 J9::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint)
    {
-   TR_YesNoMaybe isValueType = TR_maybe;
-
    if (!TR::Compiler->om.areValueTypesEnabled())
       {
-      isValueType = TR_no;
+      return TR_no;
       }
+
    // If there's no constraint for the array operand, or no information
    // is available about the class of the array, or the operand is not
    // even definitely known to be an array, VP has to assume that it might
    // have a component type that is a value type
    //
-   else if (!(arrayConstraint && arrayConstraint->getClass()
+   if (!(arrayConstraint && arrayConstraint->getClass()
               && arrayConstraint->getClassType()->isArray() == TR_yes))
       {
-      isValueType = TR_maybe;
+      return TR_maybe;
       }
-   else
+
+   TR_OpaqueClassBlock *arrayComponentClass = fe()->getComponentClassFromArrayClass(arrayConstraint->getClass());
+
+   // Cases to consider:
+   //
+   //   - Is no information available about the component type of the array?
+   //     If not, assume it might be a value type.
+   //   - Is the component type definitely a value type?
+   //   - Is the component type an array class (i.e., is this an array of
+   //     arrays)?  If so, it's definitely not a value type.
+   //   - Is the component type either an abstract class or an interface
+   //     (i.e., not a concrete class)?  If so, it might be a value type.
+   //   - Is the array an array of java/lang/Object?  See below.
+   //   - Otherwise, it must be a concrete class known not to be a value
+   //     type
+   //
+   // Future refinements:
+   //   The JVM will have classes whose instances must be identity
+   //   objects implement the java/lang/IdentityObject interface, including
+   //   array classes.  Once that happens, the check for isClassArray can
+   //   be replaced with a test of whether the component class implements
+   //   IdentityObject, and the test of !isConcreteClass can be refined
+   //   to distinguish abstract classes that implement IdentityObject from
+   //   those that do not, as well as interfaces that extend IdentityObject.
+   //
+   //   Another potential improvement would be to look for fixed class
+   //   arrays of an interface type
+   //
+   if (!arrayComponentClass)
       {
-      TR_OpaqueClassBlock *arrayComponentClass = fe()->getComponentClassFromArrayClass(arrayConstraint->getClass());
-
-      // Cases to consider:
-      //
-      //   - Is no information available about the component type of the array?
-      //     If not, assume it might be a value type.
-      //   - Is the component type definitely a value type?
-      //   - Is the component type an array class (i.e., is this an array of
-      //     arrays)?  If so, it's definitely not a value type.
-      //   - Is the component type either an abstract class or an interface
-      //     (i.e., not a concrete class)?  If so, it might be a value type.
-      //   - Is the array an array of java/lang/Object?  See below.
-      //
-      // Future refinements:
-      //   The JVM will have classes whose instances must be identity
-      //   objects implement the java/lang/IdentityObject interface, including
-      //   array classes.  Once that happens, the check for isClassArray can
-      //   be replaced with a test of whether the component class implements
-      //   IdentityObject, and the test of !isConcreteClass can be refined
-      //   to distinguish abstract classes that implement IdentityObject from
-      //   those that do not, as well as interfaces that extend IdentityObject.
-      //
-      //   Another potential improvement would be to look for fixed class
-      //   arrays of an interface type
-      //
-      if (!arrayComponentClass)
-         {
-         isValueType = TR_maybe;
-         }
-      else if (TR::Compiler->cls.isValueTypeClass(arrayComponentClass))
-         {
-         isValueType = TR_yes;
-         }
-      else if (TR::Compiler->cls.isClassArray(comp(), arrayComponentClass))
-         {
-         isValueType = TR_no;
-         }
-      else if (!TR::Compiler->cls.isConcreteClass(comp(), arrayComponentClass))
-         {
-         isValueType = TR_maybe;
-         }
-      else
-         {
-         int32_t len;
-         const char *sig = arrayConstraint->getClassSignature(len);
-
-         // If the array's class is a fixed array of java/lang/Object, the
-         // component type is not a value type (though it can still hold
-         // references to instances of value types).
-         if (sig && arrayConstraint->isFixedClass() && sig[0] == '[' && len == 19
-             && !strncmp(sig, "[Ljava/lang/Object;", 19))
-            {
-            isValueType = TR_no;
-            }
-         else
-            {
-            isValueType = TR_maybe;
-            }
-         }
+      return TR_maybe;
       }
 
-   return isValueType;
+   if (TR::Compiler->cls.isValueTypeClass(arrayComponentClass))
+      {
+      return TR_yes;
+      }
+
+   if (TR::Compiler->cls.isClassArray(comp(), arrayComponentClass))
+      {
+      return TR_no;
+      }
+
+   if (!TR::Compiler->cls.isConcreteClass(comp(), arrayComponentClass))
+      {
+      return TR_maybe;
+      }
+
+   int32_t len;
+   const char *sig = arrayConstraint->getClassSignature(len);
+
+   // If the array is an array of java/lang/Object, and it is fixed to
+   // that type, the component type is not a value type (though it
+   // can still hold references to instances of value types).  If it is
+   // an array of java/lang/Object, but not fixed to that type, the
+   // component type could sometimes be a value type.
+   //
+   if (sig && sig[0] == '[' && len == 19
+       && !strncmp(sig, "[Ljava/lang/Object;", 19))
+      {
+      return (arrayConstraint->isFixedClass()) ? TR_no : TR_maybe;
+      }
+
+   // If we get to this point, we know this is not an array of
+   // java/lang/Object, and we know the component must be a concrete
+   // class that is not a value type.
+   //
+   return TR_no;
    }
 
 void
@@ -1673,14 +1676,6 @@ J9::ValuePropagation::doDelayedTransformations()
 
       TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddress(comp(), arrayRefNode, indexNode, TR::Address);
 
-      if (valueNode != NULL)
-         {
-         valueNode->decReferenceCount();
-         }
-
-      indexNode->decReferenceCount();
-      arrayRefNode->decReferenceCount();
-
       const int32_t width = comp()->useCompressedPointers() ? TR::Compiler->om.sizeofReferenceField()
                                                             : TR::Symbol::convertTypeToSize(TR::Address);
 
@@ -1709,6 +1704,9 @@ J9::ValuePropagation::doDelayedTransformations()
       else
          {
          TR::Node *oldAnchorNode = callTree->getNode();
+
+         TR_ASSERT_FATAL_WITH_NODE(oldAnchorNode, (oldAnchorNode->getNumChildren() == 1) && oldAnchorNode->getFirstChild() == callNode, "Expected call node n%un for jitStoreFlattenableArrayElement was anchored under node n%un\n", callNode->getGlobalIndex(), oldAnchorNode->getGlobalIndex());
+
          TR::Node *elementStoreNode = TR::Node::recreateWithoutProperties(callNode, TR::awrtbari, 3, elementAddressNode,
                                                    valueNode, arrayRefNode, elementSymRef);
 
@@ -1724,6 +1722,8 @@ J9::ValuePropagation::doDelayedTransformations()
             callTree->setNode(elementStoreNode);
             }
 
+         // The old anchor node is no longer needed.  Remove what was previously a child
+         // call node from it.
          oldAnchorNode->removeAllChildren();
 
          if (comp()->useCompressedPointers())
@@ -1732,6 +1732,17 @@ J9::ValuePropagation::doDelayedTransformations()
             callTree->insertAfter(TR::TreeTop::create(comp(), compressNode));
             }
          }
+
+      // The indexNode, arrayRefNode and valueNode (if any), were referenced by the
+      // original callNode.  Now that the call node has been recreated with either
+      // an aloadi, awrtbari or ArrayStoreCHK, we need to decrement their references.
+      if (valueNode != NULL)
+         {
+         valueNode->recursivelyDecReferenceCount();
+         }
+
+      indexNode->recursivelyDecReferenceCount();
+      arrayRefNode->recursivelyDecReferenceCount();
       }
 
    _valueTypesHelperCallsToBeFolded.deleteAll();
