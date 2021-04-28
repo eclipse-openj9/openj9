@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,6 +79,23 @@ typedef double jdouble;
 typedef jint jsize;
 
 #ifdef __cplusplus
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`dnl
+typedef long long jobject;
+typedef long long jweak;
+typedef long long jclass;
+typedef long long jstring;
+typedef long long jthrowable;
+typedef long long jarray;
+typedef long long jobjectArray;
+typedef long long jbooleanArray;
+typedef long long jbyteArray;
+typedef long long jcharArray;
+typedef long long jshortArray;
+typedef long long jintArray;
+typedef long long jlongArray;
+typedef long long jfloatArray;
+typedef long long jdoubleArray;
+',`dnl
 class _jobject {};
 class _jweak : public _jobject {};
 class _jclass : public _jobject {};
@@ -109,9 +126,14 @@ typedef _jintArray * jintArray;
 typedef _jlongArray * jlongArray;
 typedef _jfloatArray * jfloatArray;
 typedef _jdoubleArray * jdoubleArray;
+')dnl
 #else
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`dnl
+typedef long long jobject;
+',`dnl
 struct _jobject;
 typedef struct _jobject * jobject;
+')dnl
 typedef jobject jweak;
 typedef jobject jclass;
 typedef jobject jstring;
@@ -128,10 +150,15 @@ typedef jarray jfloatArray;
 typedef jarray jdoubleArray;
 #endif
 
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`dnl
+typedef long long jfieldID;
+typedef long long jmethodID;
+',`dnl
 struct _jfieldID;
 typedef struct _jfieldID *jfieldID;
 struct _jmethodID;
 typedef struct _jmethodID *jmethodID;
+')dnl
 
 /* Used for CallXXXMethodA API */
 typedef union jvalue {
@@ -672,16 +699,21 @@ ifelse(eval(JAVA_SPEC_VERSION >= 9), 1, `	jobject GetModule(jclass clazz) { retu
 /* 1.1 Args */
 typedef struct JDK1_1InitArgs {
 	jint version;
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedPropertiesPadding;')
 	char **properties;
-	jint checkSource; 
+	jint checkSource;
 	jint nativeStackSize;
 	jint javaStackSize;
 	jint minHeapSize;
 	jint maxHeapSize;
 	jint verifyMode;
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedClasspathPadding;')
 	const char *classpath;
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedVfprintfHookPadding;')
 	jint (JNICALL * vfprintf)(FILE *fp, const char *format, va_list args);
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedExitHookPadding;')
 	void (JNICALL * exit)(jint code);
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedAbortHookPadding;')
 	void (JNICALL * abort)(void);
 	jint enableClassGC;
 	jint enableVerboseGC;
@@ -696,18 +728,23 @@ typedef struct JDK1_1AttachArgs {
 
 /* 1.2 args */
 typedef struct JavaVMOption {
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedOptionStringPadding;')
 	char *optionString;
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedExtraInfoPadding;')
 	void *extraInfo;
 } JavaVMOption;
 typedef struct JavaVMInitArgs {
 	jint version;
 
 	jint nOptions;
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedOptionsPadding;')
 	JavaVMOption *options;
 	jboolean ignoreUnrecognized;
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedAlignmentPadding;')
 } JavaVMInitArgs;
 typedef struct {
 	jint version;
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`	void *reservedNamePadding;')
 	char *name;
 	jobject group;
 } JavaVMAttachArgs;
@@ -736,6 +773,7 @@ struct JavaVM_ {
 #endif
 };
 
+ifdef(`J9_ZOS_3164_INTEROPERABILITY',`',`dnl
 struct JVMExtensionInterface_ {
 	char eyecatcher[4];
 	jint length;
@@ -761,6 +799,7 @@ typedef  JVMExt_ JVMExt;
 #else
 typedef const struct JVMExtensionInterface_ *JVMExt;
 #endif
+')dnl
 
 jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *);
 jint JNICALL JNI_CreateJavaVM(JavaVM **, void **, void *);
