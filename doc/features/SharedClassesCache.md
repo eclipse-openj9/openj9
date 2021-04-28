@@ -27,7 +27,7 @@ data between JVMs. For more information see [1].
 
 The JIT Compiler uses the SCC to store both AOT code as well as data either
 necessary for AOT 
-(e.g. [Class Chains](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/ClassChains.md)),
+(e.g. [Class Chains](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/ClassChains.md)),
 or for performace (e.g. IProfiler data). The JIT interfaces with the SCC via
 the `TR_J9SharedCache` class.
 

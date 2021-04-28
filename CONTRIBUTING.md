@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2017, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,9 +27,9 @@ Thank you for your interest in Eclipse OpenJ9!
 We welcome and encourage all kinds of contributions to the project, not only
 code. This includes bug reports, user experience feedback, assistance in
 reproducing issues and more. Contributions to the website
-(https://github.com/eclipse/openj9-website), to the user documentation
-(https://github.com/eclipse/openj9-docs), to the system verification tests
-(https://github.com/eclipse/openj9-systemtest), or to Eclipse OMR
+(https://github.com/eclipse-openj9/openj9-website), to the user documentation
+(https://github.com/eclipse-openj9/openj9-docs), to the system verification tests
+(https://github.com/eclipse-openj9/openj9-systemtest), or to Eclipse OMR
 (https://github.com/eclipse/omr), which is an integral part of OpenJ9 are all
 also welcome.
 
@@ -53,7 +53,7 @@ Following these guidelines will help us merge your pull requests smoothly:
 
 4. If your contribution introduces an external change that requires an update
    to the [user documentation](https://www.eclipse.org/openj9/docs/), add the
-   label `doc:externals` and open an  [issue](https://github.com/eclipse/openj9-docs/issues/new?template=new-documentation-change.md)
+   label `doc:externals` and open an  [issue](https://github.com/eclipse-openj9/openj9-docs/issues/new?template=new-documentation-change.md)
    at the user documentation repository. Examples of an external change include
    a new command line option, a change in behavior, or a restriction.
 
@@ -63,7 +63,7 @@ Following these guidelines will help us merge your pull requests smoothly:
    
 ## Building and testing
 
-In order to build OpenJ9, see the [build instructions](https://github.com/eclipse/openj9/tree/master/doc/build-instructions).
+In order to build OpenJ9, see the [build instructions](https://github.com/eclipse-openj9/openj9/tree/master/doc/build-instructions).
 Once the build system is prepared, building consists of a few simple steps. If
 building the original source fails, check the [level of the compiler](https://eclipse.github.io/openj9-docs/openj9_support/)
 being used. 
@@ -75,7 +75,7 @@ committers from pull requests. You can see the latest results on the
 [Eclipse OpenJ9 Jenkins instance](https://ci.eclipse.org/openj9/).
 
 The tests can also be run manually on your own machine, refer to the
-[OpenJ9 test quick start guide](https://github.com/eclipse/openj9/blob/master/test/README.md).
+[OpenJ9 test quick start guide](https://github.com/eclipse-openj9/openj9/blob/master/test/README.md).
 
 
 ## Commit Guidelines

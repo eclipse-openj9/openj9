@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,7 @@ public class rtc001
 			}
 			
 			/* JDK12 disallows direct field reflection on java.lang.reflect.Method.methodAccessor 
-			 * (refer https://github.com/eclipse/openj9/issues/4658#issuecomment-461913909 for details), 
+			 * (refer https://github.com/eclipse-openj9/openj9/issues/4658#issuecomment-461913909 for details), 
 			 * this is a workaround via reflection of package access method java.lang.reflect.Method.getMethodAccessor().
 			 */
 			Method getMethodAccessor = method.getClass().getDeclaredMethod("getMethodAccessor");

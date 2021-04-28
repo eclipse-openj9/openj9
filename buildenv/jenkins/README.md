@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2017, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,7 +106,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 - Request sanity.system test on all platforms and multiple versions
     - `Jenkins test sanity.system all jdk8,jdk11`
 
-You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj9](https://github.com/eclipse/openj9) - or the Extensions OpenJDK\* for Eclipse OpenJ9 repositories:
+You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj9](https://github.com/eclipse-openj9/openj9) - or the Extensions OpenJDK\* for Eclipse OpenJ9 repositories:
 
 - openj9-openjdk-jdk: https://github.com/ibmruntimes/openj9-openjdk-jdk
 - openj9-openjdk-jdk`<version>`: `https://github.com/ibmruntimes/openj9-openjdk-jdk<version>`
@@ -250,7 +250,7 @@ Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/
 - Mirror-OMR-to-OpenJ9-OMR
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Mirror-OMR-to-OpenJ9-OMR)](https://ci.eclipse.org/openj9/job/Mirror-OMR-to-OpenJ9-OMR)
     - Description:
-        - Mirrors [eclipse/omr/master](https://github.com/eclipse/omr/tree/master) to [eclipse/openj9-omr/master](https://github.com/eclipse/openj9-omr/tree/master)
+        - Mirrors [eclipse/omr/master](https://github.com/eclipse/omr/tree/master) to [eclipse/openj9-omr/master](https://github.com/eclipse-openj9/openj9-omr/tree/master)
         - Triggers `Pipeline-OMR-Acceptance` when there is new content
     - Trigger:
         - Build periodically, 15 minutes
@@ -265,7 +265,7 @@ Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/
 - Mirror-OpenJ9-Website-to-Eclipse
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Mirror-OpenJ9-Website-to-Eclipse)](https://ci.eclipse.org/openj9/job/Mirror-OpenJ9-Website-to-Eclipse)
     - Description:
-        - Mirrors [github.com/eclipse/openj9-website](https://github.com/eclipse/openj9-website/tree/master) to the Eclipse.org repo
+        - Mirrors [github.com/eclipse-openj9/openj9-website](https://github.com/eclipse-openj9/openj9-website/tree/master) to the Eclipse.org repo
     - Trigger:
         - Poll Github repo for changes
 

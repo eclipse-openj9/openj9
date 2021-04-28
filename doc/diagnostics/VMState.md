@@ -32,7 +32,7 @@ javacore dump (in which it is referred to as "VM flags"), and serves
 as a first-order indicator of the failing component during problem
 determination. 
 
-[1]: https://github.com/eclipse/openj9/blob/master/runtime/oti/j9nonbuilder.h
+[1]: https://github.com/eclipse-openj9/openj9/blob/master/runtime/oti/j9nonbuilder.h
 
 ## Decoding
 
@@ -80,7 +80,7 @@ active component is likely to be in the compiler initialization or
 the IL generator.
 
 [2]: https://github.com/eclipse/omr/blob/master/compiler/optimizer/Optimizations.hpp
-[3]: https://github.com/eclipse/openj9/blob/master/runtime/compiler/codegen/J9CodeGenPhaseEnum.hpp
+[3]: https://github.com/eclipse-openj9/openj9/blob/master/runtime/compiler/codegen/J9CodeGenPhaseEnum.hpp
 
 ## Finding the VM state examples
 

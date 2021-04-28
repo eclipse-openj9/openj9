@@ -113,9 +113,9 @@ Release:
             OPENJDKNEXT_REPO:
                 - "https://github.com/ibmruntimes/openj9-openjdk-jdk.git"
             OPENJ9_REPO:
-                - "https://github.com/eclipse/openj9.git"
+                - "https://github.com/eclipse-openj9/openj9.git"
             OMR_REPO:
-                - "https://github.com/eclipse/openj9-omr.git"
+                - "https://github.com/eclipse-openj9/openj9-omr.git"
             BUILD_IDENTIFIER:
                 - "Release"
                 - "Custom"
@@ -129,7 +129,7 @@ PullRequest-OpenJ9:
     job_name: "PullRequest-OpenJ9"
     job_description: "<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3<p>This job defines the OpenJ9 Pull Requests Build<p>This job is defined in wrapper_template and wrapper_variables.yml in the openj9 repo, if you wish to change it modify that</p>"
     build_discarder_logs: 20
-    github_project: "https://github.com/eclipse/openj9/"
+    github_project: "https://github.com/eclipse-openj9/openj9/"
     triggers:
         pull_request_builder:
             trigger_phrase: .*\bjenkins\s+(compile|test)\b.*
@@ -163,6 +163,6 @@ general:
         PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,ppc64le_linux_xl,s390x_linux,s390x_linux_xl,x86-64_windows,x86-32_windows,x86-64_mac"
         RESTART_TIMEOUT: "Time allowed to restart a job"
         TIMEOUT_TIME: "Overall build timeout"
-    repository_url: "https://github.com/eclipse/openj9.git"
+    repository_url: "https://github.com/eclipse-openj9/openj9.git"
     repository_branch: "refs/heads/master"
     pipeline_script_path: "buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-All.groovy"

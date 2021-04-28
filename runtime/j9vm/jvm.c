@@ -6154,6 +6154,6 @@ checkZOSThrWeightEnvVar(void)
 void JNICALL
 JVM_BeforeHalt()
 {
-	/* To be implemented via https://github.com/eclipse/openj9/issues/1459 */
+	/* To be implemented via https://github.com/eclipse-openj9/openj9/issues/1459 */
 }
 

@@ -260,7 +260,7 @@ public abstract class ClassLoader {
 		/* 
 		 * Following code ensures that the field jdk.internal.reflect.langReflectAccess 
 		 * is initialized before any usage references. This is a workaround.
-		 * More details are at https://github.com/eclipse/openj9/issues/3399#issuecomment-459004840.
+		 * More details are at https://github.com/eclipse-openj9/openj9/issues/3399#issuecomment-459004840.
 		 */
 		Modifier.isPublic(Modifier.PUBLIC);
 		/*[IF JAVA_SPEC_VERSION >= 10]*/

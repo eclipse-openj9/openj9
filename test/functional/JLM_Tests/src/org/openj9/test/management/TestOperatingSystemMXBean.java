@@ -75,7 +75,7 @@ public class TestOperatingSystemMXBean {
 
 	private static boolean isPhysicalMemoryTestExcluded() {
 		/* Exclude when running in a docker container
-		 * https://github.com/eclipse/openj9/issues/12038
+		 * https://github.com/eclipse-openj9/openj9/issues/12038
 		 */
 		if (inContainer == ContainerStatus.NOT_FOUND) {
 			return false;

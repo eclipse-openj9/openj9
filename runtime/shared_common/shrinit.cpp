@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4914,7 +4914,7 @@ j9shr_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
 	if (J9VM_PHASE_NOT_STARTUP == phase) {
 		J9JavaVM* vm = currentThread->javaVM;
 
-		/* OpenJ9 issue; https://github.com/eclipse/openj9/issues/3743
+		/* OpenJ9 issue; https://github.com/eclipse-openj9/openj9/issues/3743
 		 * GC decides whether to calls vm->sharedClassConfig->storeGCHints() to store the GC hints into the shared cache. */
 		storeStartupHintsToSharedCache(currentThread);
 		if (J9_ARE_NO_BITS_SET(vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP)) {

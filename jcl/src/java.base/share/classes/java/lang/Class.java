@@ -2227,7 +2227,7 @@ private boolean useModularSearch(String absoluteResName, Module thisModule, Clas
 
 	if (thisModule.isNamed()) {
 		// When the caller class is null, assuming it is loaded by module java.base.
-		// See https://github.com/eclipse/openj9/issues/8993 for more info.
+		// See https://github.com/eclipse-openj9/openj9/issues/8993 for more info.
 		final Module callerModule = callerClass == null ? Class.class.getModule() : callerClass.getModule();
 		visible = (thisModule == callerModule);
 		if (!visible) {

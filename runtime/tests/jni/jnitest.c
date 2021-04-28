@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,7 @@
 #include "vmi.h"
 /*
  * jvm.h is required by MemoryAllocator_allocateMemory:
- * https://github.com/eclipse/openj9/issues/1377
+ * https://github.com/eclipse-openj9/openj9/issues/1377
  */
 #include "../j9vm/jvm.h"
 #if defined(WIN32)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ public class PutStaticDuringClinit {
 	public static boolean passed = true;
 
 	public static void jitWrite(String x) {
-		// https://github.com/eclipse/openj9/pull/2794
+		// https://github.com/eclipse-openj9/openj9/pull/2794
 		// The write to the static field causes jitResolveClassFromStaticField to be called on
 		// certain GC policies. On older VMs, this caused the CP entry to be resolved, meaning
 		// the call to jitResolveStaticField succeeds without the class init check.

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -137,7 +137,7 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 			j9clazz = J9_CURRENT_CLASS(j9clazz);
 		}
 	} else {
-		/* Should link the class, see https://github.com/eclipse/openj9/issues/10297 */
+		/* Should link the class, see https://github.com/eclipse-openj9/openj9/issues/10297 */
 		vmFuncs->prepareClass(currentThread, j9clazz);
 	}
 

@@ -52,7 +52,7 @@ can be inlined at runtime to improve performance.
 The OpenJ9 VM supports a number of different write barriers depending on which
 GC policy has been selected. All possible write barriers required by the GC are
 defined in
-[gc_include/j9modron.h](https://github.com/eclipse/openj9/blob/f0a4235ef0e2e6e1a8d476c4cf8dbf1ea1bc1cdf/runtime/gc_include/j9modron.h#L42-L51).
+[gc_include/j9modron.h](https://github.com/eclipse-openj9/openj9/blob/f0a4235ef0e2e6e1a8d476c4cf8dbf1ea1bc1cdf/runtime/gc_include/j9modron.h#L42-L51).
 
 In summary:
 
@@ -213,7 +213,7 @@ object checks can be eliminated or if the write barrier can be skipped entirely.
 
 The ultimate reference for the operation of each write barrier kind is the
 garbage collector code itself. These implementations can be found in
-[gc_include/ObjectAccessBarrierAPI.hpp](https://github.com/eclipse/openj9/blob/master/runtime/gc_include/ObjectAccessBarrierAPI.hpp).
+[gc_include/ObjectAccessBarrierAPI.hpp](https://github.com/eclipse-openj9/openj9/blob/master/runtime/gc_include/ObjectAccessBarrierAPI.hpp).
 
 The following pseudocode is derived largely from those implementations.
 

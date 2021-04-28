@@ -307,7 +307,7 @@
 	<test>
 		<testCaseName>TestAttachErrorHandling_SE80</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/3081</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/3081</comment>
 			<plat>.*aix.*</plat>
 		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -335,7 +335,7 @@
 	<test>
 		<testCaseName>TestAttachErrorHandling</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/3081</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/3081</comment>
 			<plat>.*aix.*</plat>
 		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \

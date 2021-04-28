@@ -74,7 +74,7 @@
 	<test>
 		<testCaseName>Nestmate_virtual_private</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/9167</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/9167</comment>
 			<plat>.*zos.*</plat>
 		</disabled>
 		<variations>

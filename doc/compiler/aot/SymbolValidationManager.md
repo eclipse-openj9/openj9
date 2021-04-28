@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,7 +119,7 @@ validated; fail otherwise
 Class Chains are a core component of AOT validation; they ensure that
 the shape of a class is the same as that during the compile run. For
 technical details about Class Chains, see 
-[AOT Class Chains](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/AOTClassChains.md).
+[AOT Class Chains](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/AOTClassChains.md).
 Thus, for every validation record involving classes, a Class Chain
 Validation Record is also created (unless a record for that class
 already exists).

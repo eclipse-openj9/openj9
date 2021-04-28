@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 #ifdef LINUX
 /* kludge to work around known issue in glibc pre 2.25
  * https://sourceware.org/bugzilla/show_bug.cgi?id=16628
- * https://github.com/eclipse/openj9/issues/3672
+ * https://github.com/eclipse-openj9/openj9/issues/3672
  * Add a dummy pthread call to force libpthread to initialize.
  */
 #include <pthread.h>

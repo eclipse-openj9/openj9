@@ -21,7 +21,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 
 <p align="center">
-<img src="https://github.com/eclipse/openj9/blob/master/artwork/OpenJ9.svg" alt="OpenJ9 logo" align="middle" width="50%" height="50%" />
+<img src="https://github.com/eclipse-openj9/openj9/blob/master/artwork/OpenJ9.svg" alt="OpenJ9 logo" align="middle" width="50%" height="50%" />
 <p>
 
 Welcome to the Eclipse OpenJ9 repository
@@ -33,11 +33,11 @@ Welcome to the Eclipse OpenJ9 repository
 We're not sure which route you might have taken on your way here, but we're really pleased to see you! If you came directly from our website, you've probably already learned a lot about Eclipse OpenJ9 and how it fits in to the OpenJDK ecosystem. If you came via some other route, here are a few key links to get you started:
 
 - [Eclipse OpenJ9 website](http://www.eclipse.org/openj9) - Learn about this high performance, enterprise-grade Java Virtual Machine (JVM) and why we think you want to get involved in its development.
-- Build instructions for [JDK8](https://github.com/eclipse/openj9/blob/master/doc/build-instructions/Build_Instructions_V8.md), [JDK11](https://github.com/eclipse/openj9/blob/master/doc/build-instructions/Build_Instructions_V11.md), and [More](https://github.com/eclipse/openj9/blob/master/doc/build-instructions) - Here's how you can build an OpenJDK with OpenJ9 yourself.
+- Build instructions for [JDK8](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions/Build_Instructions_V8.md), [JDK11](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions/Build_Instructions_V11.md), and [More](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions) - Here's how you can build an OpenJDK with OpenJ9 yourself.
 
 If you're looking for ways to help out at the project (thanks!), we have:
-- [Beginner issues](https://github.com/eclipse/openj9/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner)
-- [Help Wanted issues](https://github.com/eclipse/openj9/issues?utf8=%E2%9C%93&q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)
+- [Beginner issues](https://github.com/eclipse-openj9/openj9/issues?q=is%3Aopen+is%3Aissue+label%3Abeginner)
+- [Help Wanted issues](https://github.com/eclipse-openj9/openj9/issues?utf8=%E2%9C%93&q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)
 
 If you're here to learn more about the project, read on ...
 
@@ -57,10 +57,10 @@ the J9 JVM as "Eclipse OpenJ9" at the Eclipse Foundation. Significant parts of J
 at the [Eclipse OMR project](https://github.com/eclipse/omr). OpenJ9 has a permissive license (Apache
 License 2.0 or Eclipse Public License 2.0 with a secondary compatibility license for the OpenJDK project's
 GPLv2 license) that is designed to allow OpenJDK to be built with the OpenJ9 JVM.  Please see our
-[LICENSE file](https://github.com/eclipse/openj9/blob/master/LICENSE) for more details.
+[LICENSE file](https://github.com/eclipse-openj9/openj9/blob/master/LICENSE) for more details.
 
 Eclipse OpenJ9 is a source code project that can be built alongside Java class libraries. See the
-[build instructions](https://github.com/eclipse/openj9/blob/master/doc/build-instructions). Eclipse
+[build instructions](https://github.com/eclipse-openj9/openj9/blob/master/doc/build-instructions). Eclipse
 Foundation projects are not permitted to distribute, market or promote JDK binaries unless they have
 passed a Java SE Technology Compatibility Kit licensed from Oracle, to which the OpenJ9 project does
 not currently have access. See the [Eclipse Adoptium Project Charter](https://projects.eclipse.org/projects/adoptium/charter).
@@ -88,13 +88,13 @@ If you think you want to contribute but you're not ready to sign the Eclipse Con
 
 What repos are part of the project?
 ===================================
-- https://github.com/eclipse/openj9 : OpenJ9 main code base
-- https://github.com/eclipse/openj9-omr : Eclipse OMR clone to stage temporary OMR changes.  (None so far!)
-- https://github.com/eclipse/openj9-systemtest : OpenJ9-specific system tests
-- https://github.com/eclipse/openj9-website : OpenJ9 website repo
-- https://github.com/eclipse/openj9-docs : OpenJ9 documentation repo
-- https://github.com/eclipse/build-openj9 : OpenJ9 GitHub actions repo
-- https://github.com/eclipse/openj9-utils : OpenJ9 utility programs / tools repo, a place to develop community around the tools
+- https://github.com/eclipse-openj9/openj9 : OpenJ9 main code base
+- https://github.com/eclipse-openj9/openj9-omr : Eclipse OMR clone to stage temporary OMR changes.  (None so far!)
+- https://github.com/eclipse-openj9/openj9-systemtest : OpenJ9-specific system tests
+- https://github.com/eclipse-openj9/openj9-website : OpenJ9 website repo
+- https://github.com/eclipse-openj9/openj9-docs : OpenJ9 documentation repo
+- https://github.com/eclipse-openj9/build-openj9 : OpenJ9 GitHub actions repo
+- https://github.com/eclipse-openj9/openj9-utils : OpenJ9 utility programs / tools repo, a place to develop community around the tools
 
 
 Where can I learn more?

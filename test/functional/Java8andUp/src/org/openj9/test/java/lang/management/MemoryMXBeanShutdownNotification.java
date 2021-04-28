@@ -37,7 +37,7 @@ import org.testng.log4testng.Logger;
  * verifies that IllegalStateException is now caught and the VM shuts
  * down properly.
  *
- * [1] https://github.com/eclipse/openj9/issues/932
+ * [1] https://github.com/eclipse-openj9/openj9/issues/932
  */
 @Test(groups = { "level.extended" })
 public final class MemoryMXBeanShutdownNotification {

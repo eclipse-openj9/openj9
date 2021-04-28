@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -379,7 +379,7 @@ public class Test_System {
 	 */
 	@Test
 	public void test_setSecurityManager3() {
-		/* https://github.com/eclipse/openj9/issues/6661 */
+		/* https://github.com/eclipse-openj9/openj9/issues/6661 */
 		try {
 			String helperName = "org.openj9.test.java.lang.Test_System$TestSecurityManagerNonPublicConstructor";
 			String output = Support_Exec.execJava(new String[] { "-Djava.security.manager=" + helperName, helperName },
