@@ -429,41 +429,43 @@ J9::CodeGenerator::lowerCompressedRefs(
       }
    else
       {
-      TR::Node *l2iNode = NULL;
-      if ((address->getOpCodeValue() == TR::aconst) && (address->getAddress() == 0))
+      // All evaluators makes an assumption that if we are loading or storing
+      // object references they will have decompression or compression sequence for
+      // the child being loaded or stored respectively. In case of storing
+      // object reference, in some cases it might need actual object decompressed
+      // address. 
+      // Due to above assumptions made by the codegen we should not do any
+      // optimization here on compression/decompression sequence which could
+      // break this assumption and lead to undefined behaviour.
+      // See openj9#12597 for more details
+      
+      // -J9JIT_COMPRESSED_POINTER-
+      // if the value is known to be null or if using lowMemHeap, do not
+      // generate a compression sequence
+      //
+      TR::Node *a2lNode = TR::Node::create(TR::a2l, 1, address);
+      bool isNonNull = false;
+      if (address->isNonNull())
+         isNonNull = true;
+
+      TR::Node *addNode = NULL;
+      addNode = a2lNode;
+
+      if (shftOffset)
          {
-         l2iNode = TR::Node::create(address, TR::iconst, 0, 0);
+         addNode = TR::Node::create(TR::lushr, 2, addNode, shftOffset);
+         addNode->setContainsCompressionSequence(true);
          }
-      else
-         {
-         // -J9JIT_COMPRESSED_POINTER-
-         // if the value is known to be null or if using lowMemHeap, do not
-         // generate a compression sequence
-         //
-         TR::Node *a2lNode = TR::Node::create(TR::a2l, 1, address);
-         bool isNonNull = false;
-         if (address->isNonNull())
-            isNonNull = true;
 
-         TR::Node *addNode = NULL;
-         addNode = a2lNode;
+      if (isNonNull)
+         addNode->setIsNonZero(true);
 
-         if (shftOffset)
-            {
-            addNode = TR::Node::create(TR::lushr, 2, addNode, shftOffset);
-            addNode->setContainsCompressionSequence(true);
-            }
+      TR::Node *l2iNode = TR::Node::create(TR::l2i, 1, addNode);
+      if (isNonNull)
+         l2iNode->setIsNonZero(true);
 
-         if (isNonNull)
-            addNode->setIsNonZero(true);
-
-         l2iNode = TR::Node::create(TR::l2i, 1, addNode);
-         if (isNonNull)
-            l2iNode->setIsNonZero(true);
-
-         if (address->isNull())
-            l2iNode->setIsNull(true);
-         }
+      if (address->isNull())
+         l2iNode->setIsNull(true);
 
       // recreating an arrayset node will replace the TR::arrayset with an istorei, which is undesired
       // as arrayset nodes can set indirect references

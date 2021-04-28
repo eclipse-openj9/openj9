@@ -5210,20 +5210,20 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
       {
       usingCompressedPointers = true;
-
-      if (usingCompressedPointers)
+      while (sourceChild->getNumChildren() > 0 
+         && sourceChild->getOpCodeValue() != TR::a2l)
          {
-         while ((sourceChild->getNumChildren() > 0) &&
-                  (sourceChild->getOpCodeValue() != TR::a2l))
-            sourceChild = sourceChild->getFirstChild();
-         if (sourceChild->getOpCodeValue() == TR::a2l)
-            sourceChild = sourceChild->getFirstChild();
-         // artificially bump up the refCount on the value so
-         // that different registers are allocated for the actual
-         // and compressed values
-         //
-         sourceChild->incReferenceCount();
+         sourceChild = sourceChild->getFirstChild();
          }
+      if (sourceChild->getOpCodeValue() == TR::a2l)
+         {
+         sourceChild = sourceChild->getFirstChild();
+         }
+      // artificially bump up the refCount on the value so
+      // that different registers are allocated for the actual
+      // and compressed values
+      //
+      sourceChild->incReferenceCount();
       }
    TR::Node * memRefChild = firstChild->getFirstChild();
 
