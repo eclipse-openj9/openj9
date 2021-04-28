@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -248,26 +248,23 @@ void J9::ARM::CodeGenerator::doBinaryEncoding()
       }
    // Create exception table entries for outlined instructions.
    //
-   if (!comp->getOption(TR_DisableOOL))
+   ListIterator<TR_ARMOutOfLineCodeSection> oiIterator(&self()->getARMOutOfLineCodeSectionList());
+   TR_ARMOutOfLineCodeSection *oiCursor = oiIterator.getFirst();
+
+   while (oiCursor)
       {
-      ListIterator<TR_ARMOutOfLineCodeSection> oiIterator(&self()->getARMOutOfLineCodeSectionList());
-      TR_ARMOutOfLineCodeSection *oiCursor = oiIterator.getFirst();
+      uint32_t startOffset = oiCursor->getFirstInstruction()->getBinaryEncoding() - self()->getCodeStart();
+      uint32_t endOffset   = oiCursor->getAppendInstruction()->getBinaryEncoding() - self()->getCodeStart();
 
-      while (oiCursor)
-         {
-         uint32_t startOffset = oiCursor->getFirstInstruction()->getBinaryEncoding() - self()->getCodeStart();
-         uint32_t endOffset   = oiCursor->getAppendInstruction()->getBinaryEncoding() - self()->getCodeStart();
+      TR::Block * block = oiCursor->getBlock();
+      bool needsETE = oiCursor->getFirstInstruction()->getNode()->getOpCode().hasSymbolReference() &&
+                        oiCursor->getFirstInstruction()->getNode()->getSymbolReference() &&
+                        oiCursor->getFirstInstruction()->getNode()->getSymbolReference()->canCauseGC();
 
-         TR::Block * block = oiCursor->getBlock();
-         bool needsETE = oiCursor->getFirstInstruction()->getNode()->getOpCode().hasSymbolReference() &&
-                         oiCursor->getFirstInstruction()->getNode()->getSymbolReference() &&
-                         oiCursor->getFirstInstruction()->getNode()->getSymbolReference()->canCauseGC();
+      if (needsETE && block && !block->getExceptionSuccessors().empty())
+         block->addExceptionRangeForSnippet(startOffset, endOffset);
 
-         if (needsETE && block && !block->getExceptionSuccessors().empty())
-            block->addExceptionRangeForSnippet(startOffset, endOffset);
-
-         oiCursor = oiIterator.getNext();
-         }
+      oiCursor = oiIterator.getNext();
       }
    }
 
