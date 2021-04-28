@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -946,17 +946,11 @@ wrappedAgentThreadStart(J9PortLibrary* portLib, void * entryArg)
 	jvmtiEnv * jvmti_env = args->jvmti_env;
 	jvmtiStartFunction proc = args->proc;
 	const void * arg = args->arg;
-	UDATA osStackFree;
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	j9mem_free_memory(args);
 
-	/* Determine the thread's free OS stack size (the default value has already been set if the query fails) */
-
-	osStackFree = omrthread_current_stack_free();
-	if (osStackFree != 0) {
-		vmThread->currentOSStackFree = osStackFree - (osStackFree / J9VMTHREAD_RESERVED_C_STACK_FRACTION);
-	}
+	initializeCurrentOSStackFree(vmThread, vmThread->osThread, vm->defaultOSStackSize);
 
 	vm->internalVMFunctions->threadAboutToStart(vmThread);
 

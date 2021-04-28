@@ -877,3 +877,6 @@ TraceEntry=Trc_VM_romClassLoadFromCookie_Entry2 Overhead=1 Level=3 Template="rom
 
 TraceException=Trc_VM_CreateRAMClassFromROMClass_sealedSuperFromDifferentModule Overhead=1 Level=1 Template="The sealed super class/interface (RAM class=%p) is not in the same module as %.*s"
 TraceException=Trc_VM_CreateRAMClassFromROMClass_sealedSuperFromDifferentPackage Overhead=1 Level=1 Template="The sealed super class/interface (RAM class=%p) is not in the same package as %.*s (non-public)"
+
+TraceEvent=Trc_VM_callin_stackFree Overhead=1 Level=5 Template="OS Stack free=%zi, current native sp=%p"
+
