@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,9 +49,8 @@ public class J9VTablesCommand extends Command
 	{
 		addCommand("j9vtables", "<ramclass>", "dump interpreter and jit vtables for given ram class.");
 	}
-	
 
-	public void run(String command, String[] args, Context context, final PrintStream out) throws DDRInteractiveCommandException 
+	public void run(String command, String[] args, Context context, final PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
 			final J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
@@ -69,7 +68,12 @@ public class J9VTablesCommand extends Command
 
 			if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
 				J9VTableHeaderPointer vTableHeader = J9ClassHelper.vTableHeader(ramClass);
-				vTableMethodCount = vTableHeader.size();
+				try {
+					vTableMethodCount = vTableHeader.size();
+				} catch (NoSuchFieldException e) {
+					// J9VTableHeader should have the 'size' field given the algorithm version check above
+					throw new CorruptDataException(e);
+				}
 				vTable = J9ClassHelper.vTable(vTableHeader);
 				jitVTableOffset = ((vTableMethodCount.longValue() - 1) * UDATA.SIZEOF) + J9VTableHeader.SIZEOF;
 				startIndex = 0;
@@ -80,26 +84,26 @@ public class J9VTablesCommand extends Command
 				startIndex = 2;
 			}
 
-			if(J9BuildFlags.interp_nativeSupport) {
+			if (J9BuildFlags.interp_nativeSupport) {
 				if (!vm.jitConfig().isNull()) {
 					jitVTable = UDATAPointer.cast(U8Pointer.cast(ramClass).sub(jitVTableOffset));
 				}
 			}
-	
+
 			CommandUtils.dbgPrint(out, String.format("VTable for j9class %s  (size=%d - 1 for skipped resolve method)\n", ramClass.getHexAddress(), vTableMethodCount.longValue()));
 			CommandUtils.dbgPrint(out, String.format("\tInterpreted%s\n", (!jitVTable.isNull()) ? "\t\tJitted\n" : ""));
-			
+
 			/* Start from the first element after vTable header which is the first virtual method reference.
-			 * 
+			 *
 			 * For Old VTable:
 			 * 		First entry in vtable is the vtable count.
 			 * 		Second entry is the magic method reference.
 			 * 		Skip both and start from the third element in vTable which is the first virtual method reference.
 			 */
 			for (long i = startIndex; i < vTableMethodCount.longValue(); i++) {
-				String name = J9MethodHelper.getName(J9MethodPointer.cast(vTable.at(i)));		    	
+				String name = J9MethodHelper.getName(J9MethodPointer.cast(vTable.at(i)));
 				String intAddr = U8Pointer.cast(vTable.at(i)).getHexAddress();
-				if (!jitVTable.isNull()) {		            
+				if (!jitVTable.isNull()) {
 					String jitAddr = U8Pointer.cast(jitVTable.at(vTableMethodCount.sub(i))).getHexAddress();
 					CommandUtils.dbgPrint(out, String.format(" %d\t!j9method %s\t%s\t%s\n", i, intAddr, jitAddr, name));
 				} else {

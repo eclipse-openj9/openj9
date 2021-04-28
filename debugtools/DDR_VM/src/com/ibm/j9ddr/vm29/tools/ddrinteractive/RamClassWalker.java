@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,6 @@ import java.util.Iterator;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
-import com.ibm.j9ddr.vm29.types.I64;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.J9ObjectFieldOffset;
@@ -102,6 +101,7 @@ import com.ibm.j9ddr.vm29.structure.J9ROMFieldOffsetWalkState;
 import com.ibm.j9ddr.vm29.structure.J9VTableHeader;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.IClassWalkCallbacks.SlotType;
+import com.ibm.j9ddr.vm29.types.I64;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -121,38 +121,38 @@ import com.ibm.j9ddr.vm29.types.UDATA;
  * -iTable
  * -StaticSplitTable<br>
  * -SpecialSplitTable<br>
- * @author jeanpb
  *
+ * @author jeanpb
  */
 public class RamClassWalker extends ClassWalker {
 
 	private final J9ClassPointer ramClass;
 	private final Context context;
-	
+
 	public RamClassWalker(StructurePointer clazz, Context context) {
 		this.clazz = clazz;
 		this.context = context;
 		if (clazz instanceof J9ClassPointer) {
-			this.ramClass = (J9ClassPointer)clazz;
+			this.ramClass = (J9ClassPointer) clazz;
 		} else {
 			this.ramClass = J9ClassPointer.NULL;
 		}
 
 		fillDebugExtMap();
 	}
-	
+
 	public Context getContext() {
 		return context;
 	}
-	
-	public void allSlotsInObjectDo(IClassWalkCallbacks classWalker) throws CorruptDataException{
+
+	public void allSlotsInObjectDo(IClassWalkCallbacks classWalker) throws CorruptDataException {
 
 		this.classWalkerCallback = classWalker;
 		if (ramClass.isNull()) {
 			throw new CorruptDataException("The StructurePointer clazz is not an instance of J9ClassPointer");
 		}
 		this.classWalkerCallback = classWalker;
-		
+
 		allSlotsInJitVTablesDo();
 		allSlotsInRAMHeaderDo();
 		allSlotsInVTableDo();
@@ -184,7 +184,7 @@ public class RamClassWalker extends ClassWalker {
 		}
 		classWalkerCallback.addSection(clazz, superclasses, classDepth * PointerPointer.SIZEOF, "Superclasses", false);
 	}
-	
+
 	private void allSlotsInStaticSplitTableDo() throws CorruptDataException {
 		int count = ramClass.romClass().staticSplitMethodRefCount().intValue();
 		PointerPointer splitTable = ramClass.staticSplitMethodTable();
@@ -193,7 +193,7 @@ public class RamClassWalker extends ClassWalker {
 		}
 		classWalkerCallback.addSection(clazz, splitTable, count * PointerPointer.SIZEOF, "StaticSplitTable", false);
 	}
-	
+
 	private void allSlotsInSpecialSplitTableDo() throws CorruptDataException {
 		int count = ramClass.romClass().specialSplitMethodRefCount().intValue();
 		PointerPointer splitTable = ramClass.specialSplitMethodTable();
@@ -245,9 +245,7 @@ public class RamClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, ramClass.iTable(), interfaceSize, "iTable", false);
 	}
 
-	private void allSlotsInInstanceDescriptionBitsDo()
-			throws CorruptDataException {
-
+	private void allSlotsInInstanceDescriptionBitsDo() throws CorruptDataException {
 		/*
 		 * The instanceDescription bits can be stored inline or can be a pointer
 		 * to an array of instanceDescription bits. If the last bit is 1, the
@@ -256,9 +254,7 @@ public class RamClassWalker extends ClassWalker {
 		 */
 		if (!ramClass.instanceDescription().allBitsIn(1)) {
 			final int totalInstanceSize = ramClass.totalInstanceSize().intValue();
-			
-			final int fj9object_t_SizeOf =
-				J9ObjectHelper.compressObjectReferences ? U32.SIZEOF : UDATA.SIZEOF;
+			final int fj9object_t_SizeOf = J9ObjectHelper.compressObjectReferences ? U32.SIZEOF : UDATA.SIZEOF;
 			final long totalSize = totalInstanceSize / fj9object_t_SizeOf;
 
 			/* calculate number of slots required to store description bits */
@@ -302,7 +298,7 @@ public class RamClassWalker extends ClassWalker {
 			 * erroneous to cast it to an int as it might change in the future.
 			 */
 			long slotType = cpDescription & J9_CP_DESCRIPTION_MASK;
-			
+
 			if ((slotType == J9CPTYPE_STRING) || (slotType == J9CPTYPE_ANNOTATION_UTF8)) {
 				J9RAMStringRefPointer ref = J9RAMStringRefPointer.cast(cpEntry);
 
@@ -335,7 +331,6 @@ public class RamClassWalker extends ClassWalker {
 				}
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.unusedEA(), "unused");
 				classWalkerCallback.addSection(clazz, ref, J9RAMMethodHandleRef.SIZEOF, "J9CPTYPE_METHODHANDLE", false);
-
 			} else if (slotType == J9CPTYPE_CLASS) {
 				J9RAMClassRefPointer ref = J9RAMClassRefPointer.cast(cpEntry);
 				if (ref.value().notNull()) {
@@ -347,30 +342,30 @@ public class RamClassWalker extends ClassWalker {
 				classWalkerCallback.addSection(clazz, ref, J9RAMClassRef.SIZEOF, "J9CPTYPE_CLASS", false);
 			} else if (slotType == J9CPTYPE_INT) {
 				J9RAMConstantRefPointer ref = J9RAMConstantRefPointer.cast(cpEntry);
-				
+
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.slot1EA(), "cpFieldInt");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.slot2EA(), "cpFieldIntUnused");
 				classWalkerCallback.addSection(clazz, ref, J9RAMConstantRef.SIZEOF, "J9CPTYPE_INT", false);
 			} else if (slotType == J9CPTYPE_FLOAT) {
 				J9RAMConstantRefPointer ref = J9RAMConstantRefPointer.cast(cpEntry);
-				
+
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.slot1EA(), "cpFieldFloat");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.slot2EA(), "cpFieldIntUnused");
 				classWalkerCallback.addSection(clazz, ref, J9RAMConstantRef.SIZEOF, "J9CPTYPE_FLOAT", false);
 			} else if (slotType == J9CPTYPE_LONG) {
 				J9RAMConstantRefPointer ref = J9RAMConstantRefPointer.cast(cpEntry);
-				
+
 				classWalkerCallback.addSlot(clazz, SlotType.J9_I64, I64Pointer.cast(cpEntry), "J9CPTYPE_LONG");
 				classWalkerCallback.addSection(clazz, ref, J9RAMConstantRef.SIZEOF, "J9CPTYPE_LONG", false);
 			} else if (slotType == J9CPTYPE_DOUBLE) {
 				J9RAMConstantRefPointer ref = J9RAMConstantRefPointer.cast(cpEntry);
-				
+
 				classWalkerCallback.addSlot(clazz, SlotType.J9_I64, I64Pointer.cast(cpEntry), "J9CPTYPE_DOUBLE");
 				classWalkerCallback.addSection(clazz, ref, I64.SIZEOF, "J9CPTYPE_DOUBLE", false);
 			} else if (slotType == J9CPTYPE_FIELD) {
 				J9RAMFieldRefPointer ref = J9RAMFieldRefPointer.cast(cpEntry);
 				J9RAMStaticFieldRefPointer staticRef = J9RAMStaticFieldRefPointer.cast(cpEntry);
-				
+
 				/* if the field ref is resolved static, it has 'flagsAndClass', for other cases (unresolved and resolved instance) it has 'flags'. */
 				if ((staticRef.flagsAndClass().longValue() > 0) && !staticRef.valueOffset().eq(UDATA.MAX)) {
 					classWalkerCallback.addSlot(clazz, SlotType.J9_IDATA, staticRef.flagsAndClassEA(), "flagsAndClass");
@@ -379,18 +374,18 @@ public class RamClassWalker extends ClassWalker {
 				}
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.valueOffsetEA(), "valueOffset");
 				classWalkerCallback.addSection(clazz, ref, J9RAMFieldRef.SIZEOF, "J9CPTYPE_FIELD", false);
-				
+
 			} else if (slotType == J9CPTYPE_INTERFACE_METHOD) {
 				J9RAMInterfaceMethodRefPointer ref = J9RAMInterfaceMethodRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.interfaceClassEA(), "interfaceClass", "!j9class");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.methodIndexAndArgCountEA(), "methodIndexAndArgCount");
-				
+
 				classWalkerCallback.addSection(clazz, ref, J9RAMInterfaceMethodRef.SIZEOF, "J9CPTYPE_INTERFACE_METHOD", false);
 			} else if (slotType == J9CPTYPE_STATIC_METHOD) {
 				J9RAMStaticMethodRefPointer ref = J9RAMStaticMethodRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.methodEA(), "method", "!j9method");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.methodIndexAndArgCountEA(), "unused");
-			
+
 				classWalkerCallback.addSection(clazz, ref, J9RAMStaticMethodRef.SIZEOF, "J9CPTYPE_STATIC_METHOD", false);
 			} else if ((slotType == J9CPTYPE_UNUSED) || (slotType == J9CPTYPE_UNUSED8)) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, cpEntry, "unused");
@@ -405,7 +400,7 @@ public class RamClassWalker extends ClassWalker {
 				J9RAMMethodRefPointer ref = J9RAMMethodRefPointer.cast(cpEntry);
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.methodIndexAndArgCountEA(), "methodTypeIndexAndArgCount");
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, ref.methodEA(), "unused");
-	
+
 				classWalkerCallback.addSection(clazz, ref, J9RAMMethodRef.SIZEOF, "J9CPTYPE_HANDLE_METHOD", false);
 			}
 			cpEntry = cpEntry.addOffset(J9RAMConstantPoolItem.SIZEOF);
@@ -429,20 +424,20 @@ public class RamClassWalker extends ClassWalker {
 		while (ofoIterator.hasNext()) {
 			fields = (J9ObjectFieldOffset) ofoIterator.next();
 			J9ROMFieldShapePointer field = fields.getField();
-			
+
 			String info = fields.getName();
 			UDATA modifiers = field.modifiers();
 			UDATAPointer fieldAddress = ramClass.ramStatics().addOffset(fields.getOffsetOrAddress());
-			
+
 			String additionalInfo = modifiers.anyBitsIn(J9FieldFlagObject) ? "!j9object" : "";
-			
+
 			if (modifiers.anyBitsIn(J9FieldSizeDouble)) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_I64, I64Pointer.cast(fieldAddress), info, additionalInfo);
 			} else {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, fieldAddress, info, additionalInfo);
 			}
 		}
-		
+
 		UDATA staticSlotCount = ramClass.romClass().objectStaticCount().add(ramClass.romClass().singleScalarStaticCount());
 		if (J9BuildFlags.env_data64) {
 			staticSlotCount = staticSlotCount.add(ramClass.romClass().doubleScalarStaticCount());
@@ -472,18 +467,18 @@ public class RamClassWalker extends ClassWalker {
 		final J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
 
 		/* add in size of method trace array if extended method block active */
-		if(vm.runtimeFlags().allBitsIn(J9Consts.J9_RUNTIME_EXTENDED_METHOD_BLOCK)) {
+		if (vm.runtimeFlags().allBitsIn(J9Consts.J9_RUNTIME_EXTENDED_METHOD_BLOCK)) {
 			long extendedMethodBlockSize = 0;
 			int romMethodCount = ramClass.romClass().romMethodCount().intValue();
 			extendedMethodBlockSize = romMethodCount + (UDATA.SIZEOF - 1);
 			extendedMethodBlockSize &= ~(UDATA.SIZEOF - 1);
-		
+
 			/*
 			 * Gets the start address of the extended methods. It is just before the ramMethods.
 			 */
 			U8Pointer extendedMethodStartAddr = U8Pointer.cast(ramClass.ramMethods()).sub(extendedMethodBlockSize);
-			classWalkerCallback.addSection(clazz,extendedMethodStartAddr, romMethodCount, "Extended method block", false);
-			
+			classWalkerCallback.addSection(clazz, extendedMethodStartAddr, romMethodCount, "Extended method block", false);
+
 			while (romMethodCount-- > 0) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, extendedMethodStartAddr.add(romMethodCount), "method flag", "!j9extendedmethodflaginfo");
 			}
@@ -494,16 +489,29 @@ public class RamClassWalker extends ClassWalker {
 		/* Check vTable algorithm version */
 		if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
 			J9VTableHeaderPointer vTableHeader = J9ClassHelper.vTableHeader(ramClass);
-			final long vTableMethods = vTableHeader.size().longValue();
+			final long vTableMethods;
+			try {
+				vTableMethods = vTableHeader.size().longValue();
+			} catch (NoSuchFieldException e) {
+				// J9VTableHeader should have the 'size' field given the algorithm version check above
+				throw new CorruptDataException(e);
+			}
 			long vTableSize = UDATA.SIZEOF;
 			UDATAPointer vTable = J9ClassHelper.vTable(vTableHeader);
 
 			classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTableHeader, "VTable size");
-			
+
 			if (vTableMethods > 0) {
 				vTableSize = J9VTableHeader.SIZEOF + (vTableMethods * UDATA.SIZEOF);
 				/* First print the vTableHeader default methods */
-				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTableHeader.initialVirtualMethod(), "magic method", "!j9method");
+				J9MethodPointer initialVirtualMethod;
+				try {
+					initialVirtualMethod = vTableHeader.initialVirtualMethod();
+				} catch (NoSuchFieldException e) {
+					// J9VTableHeader should have the 'initialVirtualMethod' field given the algorithm version check above
+					throw new CorruptDataException(e);
+				}
+				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, initialVirtualMethod, "magic method", "!j9method");
 				for (int i = 0; i < vTableMethods; i++) {
 					classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTable.add(i), "method", "!j9method");
 				}
@@ -511,7 +519,7 @@ public class RamClassWalker extends ClassWalker {
 			classWalkerCallback.addSection(clazz, vTableHeader, vTableSize, "vTable", true);
 		} else {
 			UDATAPointer vTable = J9ClassHelper.oldVTable(ramClass);
-			final long vTableSlots = Math.max(1,vTable.at(0).longValue());
+			final long vTableSlots = Math.max(1, vTable.at(0).longValue());
 
 			classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, vTable, "VTable size");
 
@@ -526,28 +534,32 @@ public class RamClassWalker extends ClassWalker {
 			}
 			classWalkerCallback.addSection(clazz, vTable, vTableSlots * UDATA.SIZEOF, "vTable", true);
 		}
-		
 	}
 
 	private void allSlotsInJitVTablesDo() throws CorruptDataException {
 		J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
-		if(!vm.jitConfig().isNull()) {
+		if (!vm.jitConfig().isNull()) {
 			long jitvTableSlots;
 			long jitvTableSlotsLength;
 
 			/* Check vTable algorithm version */
 			if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
-				jitvTableSlots = J9ClassHelper.vTableHeader(ramClass).size().longValue();
+				try {
+					jitvTableSlots = J9ClassHelper.vTableHeader(ramClass).size().longValue();
+				} catch (NoSuchFieldException e) {
+					// J9VTableHeader should have a 'size' given the algorithm version check above
+					throw new CorruptDataException(e);
+				}
 				jitvTableSlotsLength = ((jitvTableSlots - 1) * UDATA.SIZEOF) + J9VTableHeader.SIZEOF;
 			} else {
 				jitvTableSlots = J9ClassHelper.oldVTable(ramClass).at(0).longValue();
 				jitvTableSlotsLength = jitvTableSlots * UDATA.SIZEOF;
 			}
-			
+
 			for (int i = 0; i < jitvTableSlots; i++) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_UDATA, UDATAPointer.cast(ramClass.subOffset(jitvTableSlotsLength)).add(i), "send target", "");
 			}
-			
+
 			/*
 			 * The vTable is before the RAMClass, to get the starting address,
 			 * the length of the vTable is subtracted from the pointer of the
@@ -559,7 +571,7 @@ public class RamClassWalker extends ClassWalker {
 
 	private void allSlotsInRAMHeaderDo() throws CorruptDataException {
 		classWalkerCallback.addSection(clazz, clazz, J9Class.SIZEOF, "ramHeader", true);
-		
+
 		if (J9ClassHelper.isArrayClass(ramClass)) {
 			addObjectsasSlot(J9ArrayClassPointer.cast(ramClass));
 		} else {
@@ -571,7 +583,7 @@ public class RamClassWalker extends ClassWalker {
 			addObjectsasSlot(ramClass);
 		}
 	}
-	
+
 	@Override
 	protected void fillDebugExtMap() {
 		debugExtMap.put("romClass", "!dumpromclasslinear");

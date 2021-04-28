@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,53 +22,61 @@
 package com.ibm.j9ddr.vm29.pointer.helper;
 
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.pointer.I32Pointer;
+import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ShrOffsetPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.ScopedROMClassWrapperPointer;
-import com.ibm.j9ddr.vm29.pointer.I32Pointer;
-import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class ScopedROMClassWrapperHelper {
-//	#define RCWMODCONTEXT(srcw) (J9SHR_READSRP(srcw->modContextOffset) ? (((U_8*)(srcw)) + J9SHR_READSRP((srcw)->modContextOffset)) : 0)
+	// #define RCWMODCONTEXT(srcw) (J9SHR_READSRP(srcw->modContextOffset) ? (((U_8*)(srcw)) + J9SHR_READSRP((srcw)->modContextOffset)) : 0)
 	public static U8Pointer RCWMODCONTEXT(ScopedROMClassWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
 		PointerPointer modContextOffset = ptr.modContextOffsetEA();
 		if (null == cacheHeader) {
-			I32 modContextOffsetI32 = I32Pointer.cast(modContextOffset.getAddress()).at(0);
-			if (modContextOffsetI32.eq(0)) {
-				return U8Pointer.NULL;
-			} else {
+			I32 modContextOffsetI32 = I32Pointer.cast(modContextOffset).at(0);
+			if (!modContextOffsetI32.isZero()) {
 				return U8Pointer.cast(ptr).add(modContextOffsetI32);
 			}
 		} else {
-			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(modContextOffset);
-			UDATA offset = j9shrOffset.offset();
-			if (offset.eq(0)) {
-				return U8Pointer.NULL;
+			try {
+				J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(modContextOffset);
+				UDATA offset = j9shrOffset.offset();
+				if (!offset.isZero()) {
+					int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+					return cacheHeader[layer].add(offset);
+				}
+			} catch (NoClassDefFoundError | NoSuchFieldException e) {
+				// J9ShrOffset didn't exist in the VM that created this core file
+				// even though it appears to support a multi-layer cache.
+				throw new CorruptDataException(e);
 			}
-			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
-			return cacheHeader[layer].add(offset);
 		}
+		return U8Pointer.NULL;
 	}
 
 	public static U8Pointer RCWPARTITION(ScopedROMClassWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
 		PointerPointer partitionOffset = ptr.partitionOffsetEA();
 		if (null == cacheHeader) {
-			I32 partitionOffsetI32 = I32Pointer.cast(partitionOffset.getAddress()).at(0);
-			if (partitionOffsetI32.eq(0)) {
-				return U8Pointer.NULL;
-			} else {
+			I32 partitionOffsetI32 = I32Pointer.cast(partitionOffset).at(0);
+			if (!partitionOffsetI32.isZero()) {
 				return U8Pointer.cast(ptr).add(partitionOffsetI32);
 			}
 		} else {
-			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(partitionOffset);
-			UDATA offset = j9shrOffset.offset();
-			if (offset.eq(0)) {
-				return U8Pointer.NULL;
+			try {
+				J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(partitionOffset);
+				UDATA offset = j9shrOffset.offset();
+				if (!offset.isZero()) {
+					int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+					return cacheHeader[layer].add(offset);
+				}
+			} catch (NoClassDefFoundError | NoSuchFieldException e) {
+				// J9ShrOffset didn't exist in the VM that created this core file
+				// even though it appears to support a multi-layer cache.
+				throw new CorruptDataException(e);
 			}
-			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
-			return cacheHeader[layer].add(offset);
 		}
+		return U8Pointer.NULL;
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -262,7 +262,7 @@ public class J9ClassHelper
 		return pointer;
 	}
 
-	public static UDATA size(J9ClassPointer clazz, J9JavaVMPointer vm) throws CorruptDataException 
+	public static UDATA size(J9ClassPointer clazz, J9JavaVMPointer vm) throws CorruptDataException
 	{
 		/*
 		 * Size includes up to 7 fragments:
@@ -276,15 +276,20 @@ public class J9ClassHelper
 		 * 
 		 * Array classes omit 1, 3, 5 and 6.
 		 */
-		
+
 		// Fragment 0. RAM class header = J9Class struct + vTable + JIT vTable
 		UDATA size = new UDATA(J9Class.SIZEOF);
 		UDATA vTableSlotCount;
 		/* Check vTable algorithm version */
-		if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() >= 1) {
-			vTableSlotCount = vTableHeader(clazz).size().add(J9VTableHeader.SIZEOF / UDATA.SIZEOF);
-		} else {
+		if (AlgorithmVersion.getVersionOf(AlgorithmVersion.VTABLE_VERSION).getAlgorithmVersion() < 1) {
 			vTableSlotCount = oldVTable(clazz).at(0);
+		} else {
+			try {
+				vTableSlotCount = vTableHeader(clazz).size().add(J9VTableHeader.SIZEOF / UDATA.SIZEOF);
+			} catch (NoSuchFieldException e) {
+				// J9VTableHeader should have the 'size' field given the algorithm version check above
+				throw new CorruptDataException(e);
+			}
 		}
 		size = size.add(Scalar.convertSlotsToBytes(vTableSlotCount));
 		if (vm.jitConfig().notNull()) {
