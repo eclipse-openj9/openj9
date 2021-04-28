@@ -8652,6 +8652,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
             }
 
+         uint64_t proposedScratchMemoryLimit = static_cast<uint64_t>(TR::Options::getScratchSpaceLimit());
+
          // Finally, set JitDump specific options as the last step of options adjustments
          if (details.isJitDumpMethod() && options->getDebug())
             {
@@ -8694,6 +8696,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
             options->setOption(TR_TraceAll);
             options->setOption(TR_EnableParanoidOptCheck);
+
+            // Tracing higher optimization level compilations may put us past the allocation limit and result in an
+            // std::bad_alloc exception being thrown. To maximize our chances of getting a trace log we artificially
+            // inflate the scratch space memory for JitDump compilations.
+            proposedScratchMemoryLimit = UINT_MAX;
 
             // Trace crashing optimization or the codegen depending on where we crashed
             UDATA vmState = that->_compInfo.getVMStateOfCrashedThread();
@@ -8783,8 +8790,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 #endif
          if (compiler)
             {
-            uint64_t proposedScratchMemoryLimit = (uint64_t)TR::Options::getScratchSpaceLimit();
-
             bool isJSR292 = TR::CompilationInfo::isJSR292(details.getMethod());
 
             // Check if the method to be compiled is a JSR292 method
