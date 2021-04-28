@@ -58,6 +58,7 @@
 #include "mmhook.h"
 #include "jvminit.h"
 #include "sunvmi_api.h"
+#include "omrformatconsts.h"
 #ifdef J9VM_OPT_ZIP_SUPPORT
 #include "vmi.h"
 #include "vmzipcachehook.h"
@@ -83,12 +84,6 @@
 #define DBG_MSG(x) printf x
 #else
 #define DBG_MSG(x)
-#endif
-
-#if defined(WIN32)
-#define J9PRIz "I"
-#else
-#define J9PRIz "z"
 #endif
 
 #if defined(LINUX) && !defined(J9VM_ENV_DATA64)
@@ -1320,7 +1315,7 @@ printVmArgumentsList(J9VMInitArgs *argList)
 		if (NULL == envVar) {
 			envVar = "N/A";
 		}
-		fprintf(stderr, "Option %" J9PRIz "d optionString=\"%s\" extraInfo=%p from environment variable =\"%s\"\n", i,
+		fprintf(stderr, "Option %" OMR_PRIuPTR " optionString=\"%s\" extraInfo=%p from environment variable =\"%s\"\n", i,
 				actualArgs->options[i].optionString,
 				actualArgs->options[i].extraInfo,
 				envVar);
@@ -1847,7 +1842,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 #else
 			UDATA actualSize = portGetSizeFn(&portLibraryVersion);
 #endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
-			fprintf(stderr,"Error: Port Library failed to initialize: expected library size %" J9PRIz "u, actual size is %" J9PRIz "u\n",
+			fprintf(stderr,"Error: Port Library failed to initialize: expected library size %" OMR_PRIuPTR ", actual size is %" OMR_PRIuPTR "\n",
 					expectedLibrarySize, actualSize);
 			break;
 		}
@@ -1965,7 +1960,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 				BOOLEAN conversionSucceed = FALSE;
 				int32_t size = 0;
 				UDATA pathLen = strlen(specialArgs.executableJarPath);
-			
+
 				PORT_ACCESS_FROM_PORT(&j9portLibrary);
 				/* specialArgs.executableJarPath is retrieved from JavaVMInitArgs.options[i].optionString
 				 * which was set by Java Launcher in system default code page encoding.
@@ -1985,7 +1980,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 					result = JNI_ERR;
 					goto exit;
 				}
-				/* specialArgs.executableJarPath was assigned with javaCommandValue which is 
+				/* specialArgs.executableJarPath was assigned with javaCommandValue which is
 				 * args->options[argCursor].optionString + strlen(javaCommand) within initialArgumentScan().
 				 * The optionString will be freed later at destroyJvmInitArgs().
 				 * Hence overwriting specialArgs.executableJarPath won't cause memory leak.
@@ -2163,7 +2158,7 @@ exit:
 #if defined(WIN32)
 	if (NULL != executableJarPath) {
 		PORT_ACCESS_FROM_PORT(&j9portLibrary);
-		/* specialArgs.executableJarPath (overwritten with executableJarPath) is only used by 
+		/* specialArgs.executableJarPath (overwritten with executableJarPath) is only used by
 		 * addJarArguments(... specialArgs.executableJarPath, ...) which uses the path to load the jar files
 		 * and doesn't require the path afterwards.
 		 * So executableJarPath can be freed after that usage.
