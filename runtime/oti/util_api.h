@@ -1753,6 +1753,16 @@ isSameOrSuperInterfaceOf(J9Class *superInterface, J9Class *baseInterface);
 J9VMThread *
 getVMThreadFromOMRThread(J9JavaVM *vm, omrthread_t omrthread);
 
+/**
+ * @brief Initialize the currentOSStackFree field in the J9VMThread. Must be called by
+ *	running thread, not thread creating the new vmThread.
+ * @param currentThread vmThread token
+ * @param osThread omrThread token
+ * @param osStackSize requested stack size, determined by -Xmso or J9_OS_STACK_SIZE
+ */
+void
+initializeCurrentOSStackFree(J9VMThread *currentThread, omrthread_t osThread, UDATA osStackSize);
+
 /* ---------------- thrinfo.c ---------------- */
 
 /**
