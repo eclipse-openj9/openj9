@@ -1084,6 +1084,14 @@ public:
     */
    TR::Node * testIsClassValueType(TR::Node *j9ClassRefNode);
 
+   /**
+    * \brief Check whether or not the array component class is value type
+    * \param arrayBaseAddressNode A node representing a reference to the array base address
+    * \param ifCmpOp If comparison opCode such as ifcmpeq or ificmpne
+    * \return \ref TR::Node that compares the array component class J9ClassIsValueType flag to a zero integer
+    */
+   TR::Node * checkArrayCompClassValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp);
+
    virtual J9JITConfig *getJ9JITConfig() { return _jitConfig; }
 
    virtual int32_t getCompThreadIDForVMThread(void *vmThread);
