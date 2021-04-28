@@ -476,6 +476,14 @@ final class Access implements JavaLangAccess {
 	public void inflateBytesToChars(byte[] srcBytes, int srcOffset, char[] dstChars, int dstOffset, int length) {
 		StringLatin1.inflate(srcBytes, srcOffset, dstChars, dstOffset, length);
 	}
+
+	/*[IF OPENJDK_METHODHANDLES]*/
+	// This JPP flag is used to workaround the issue that latest 
+	// String update hasn't been promoted into openj9 branch. 
+	public String join(String prefix, String suffix, String delimiter, String[] elements, int size) {
+		return String.join(prefix, suffix, delimiter, elements, size);
+	}
+	/*[ENDIF] OPENJDK_METHODHANDLES*/
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 /*[ENDIF] Sidecar19-SE */
