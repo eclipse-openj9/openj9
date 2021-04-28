@@ -34,6 +34,11 @@ If you suddenly discover a crash on the server that you haven't seen before, it'
 for JITServer. If that's the case, the crash should be in the newly added code. You should find the commit that introduced it, and rewrite it in such a way
 that accounts for JITServer, i.e. do not dereference client pointers directly but fetch the result from the client first.
 
+If you want the client to terminate immediately once the server crashes, pass it `-XX:+JITServerRequireServer` option. This will cause the client
+to exit if a remote compilation fails with `compilationStreamFailure` error code, which indicates that the server is missing/crashed or a network error has occured.
+This option can be useful when you are running a suite of tests, e.g. `_sanity.functional` and want to detect any server crashes. Once the crash happens,
+the current and all subsequent tests will fail, and you will be able to determine which test caused the server to crash.
+
 ## Client-side crashes
 If the client crashes in `handleServerMessage` after receiving some bad data from the server, you will need to find out what the server was doing when it sent the message. The easiest way to do this is by running both the server and client in gdb, then sending the server a Ctrl-C after the client crashes. From the gdb prompt on the server you can type `thread apply all backtrace` and find the appropriate compilation thread to determine where the server was.
 
