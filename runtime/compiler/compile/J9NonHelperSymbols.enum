@@ -1,0 +1,64 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2021 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at http://eclipse.org/legal/epl-2.0
+ * or the Apache License, Version 2.0 which accompanies this distribution
+ * and is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the
+ * Eclipse Public License, v. 2.0 are satisfied: GNU General Public License,
+ * version 2 with the GNU Classpath Exception [1] and GNU General Public
+ * License, version 2 with the OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+/*
+ * This file will be included within an enum.  Only comments, preprocessor macros,
+ * and enumerator definitions are permitted.
+ */
+
+   #include "compile/OMRNonHelperSymbols.enum"
+
+   J9firstNonhelperSymbol,
+
+   classRomPtrSymbol = J9firstNonhelperSymbol,
+   ramStaticsFromClassSymbol,
+   componentClassAsPrimitiveSymbol,
+   initializeStatusFromClassSymbol,
+   threadPrivateFlagsSymbol,  // private flags slot on j9vmthread
+   arrayletSpineFirstElementSymbol,// address of contiguous arraylet spine first element
+   dltBlockSymbol,            // DLT Block field in j9vmthread
+   classFromJavaLangClassAsPrimitiveSymbol,
+   javaVMSymbol,
+   j9methodExtraFieldSymbol,
+   j9methodConstantPoolSymbol,
+   startPCLinkageInfoSymbol,
+   instanceShapeFromROMClassSymbol,
+
+   /** \brief
+    * This symbol represents the tempSlot field in j9vmthread. It will provide a mechanism for the compiler
+    * to insert temporary information that the VM can use - such as the number of args when calling
+    * signature-polymorphic methods that are implemented in the VM as internal natives. The VM can use that
+    * information in a number of ways, such as locating items on the stack.
+    *
+    * \code
+    *    istore  <j9VMThreadTempSlotField>
+    *       iconst <number of args for the call to the signature-polymorphic VM internal native method>
+    *    icall <VM internal native method>
+    *       <object the VM needs to locate>
+    *       <parm1>
+    *       <parm2>
+    *       .
+    *       .
+    * \endcode
+    */
+   j9VMThreadTempSlotFieldSymbol,
+
+   J9lastNonhelperSymbol = j9VMThreadTempSlotFieldSymbol,
