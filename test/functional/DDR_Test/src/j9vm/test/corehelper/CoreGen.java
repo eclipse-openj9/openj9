@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@ package j9vm.test.corehelper;
 		SimpleThread st = new SimpleThread();
 
 		/* Fork a thread for TestJITExt that is guaranteed to have a JIT frame
-		 * at the top of the stack. Fix until  https://github.com/eclipse/openj9/issues/5966 
+		 * at the top of the stack. Fix until  https://github.com/eclipse-openj9/openj9/issues/5966 
 		 * is resolved.
 		 */
 		Compiler.compileClass(j9vm.test.corehelper.TestJITExtHelperThread.class);

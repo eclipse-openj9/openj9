@@ -639,8 +639,8 @@ create_git_cache() {
   add_git_remote jdk11   https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
   add_git_remote jdk16   https://github.com/ibmruntimes/openj9-openjdk-jdk16.git
   add_git_remote jdknext https://github.com/ibmruntimes/openj9-openjdk-jdk.git
-  add_git_remote omr     https://github.com/eclipse/openj9-omr.git
-  add_git_remote openj9  https://github.com/eclipse/openj9.git
+  add_git_remote omr     https://github.com/eclipse-openj9/openj9-omr.git
+  add_git_remote openj9  https://github.com/eclipse-openj9/openj9.git
   echo " && echo Fetching repository cache... \\"
   echo " && git fetch jdk16 \\"
   echo " && git fetch --all \\"

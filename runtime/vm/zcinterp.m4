@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2020 IBM Corp. and others
+dnl Copyright (c) 2017, 2021 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -175,9 +175,9 @@ dnl    code will be functionally incorrect we force a crash here so we fail fast
 dnl    and can manually debug.
 dnl
 dnl See the following PRs for more details:
-dnl eclipse/openj9#2545
-dnl eclipse/openj9#2790
-dnl eclipse/openj9#3763
+dnl eclipse-openj9/openj9#2545
+dnl eclipse-openj9/openj9#2790
+dnl eclipse-openj9/openj9#3763
     TM J9TR_VMThread_gsParameters_GSECI(J9VMTHREAD),128
     JZ LABEL_NAME(L_GS_CALL_HELPER)
     TM J9TR_VMThread_gsParameters_GSECI(J9VMTHREAD),64

@@ -1738,7 +1738,7 @@ public class MethodHandles {
 			Class<?> declaringClass = field.getDeclaringClass();
 			Class<?> fieldType = field.getType();
 			String fieldName = field.getName();
-			/* https://github.com/eclipse/openj9/issues/3175
+			/* https://github.com/eclipse-openj9/openj9/issues/3175
 			 * Setters are allowed on instance final instance fields if they have been set accessible.
 			 */
 			if (Modifier.isFinal(modifiers) && 

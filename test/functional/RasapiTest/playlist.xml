@@ -28,7 +28,7 @@
 			<plat>.*mac.*</plat>
 		</disabled>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/11800</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/11800</comment>
 			<version>16+</version>
 		</disabled>
 		<command>

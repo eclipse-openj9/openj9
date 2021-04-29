@@ -24,7 +24,7 @@
 	<test>
 		<testCaseName>cmdLineTester_forceLazySymbolResolution</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/11076</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/11076</comment>
 			<version>15+</version>
 		</disabled>
 		<variations>

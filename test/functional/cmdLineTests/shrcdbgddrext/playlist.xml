@@ -24,7 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test>
 		<testCaseName>cmdLineTester_shrcdbgddrext</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/1511</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
 			<plat>.*zos.*</plat>
 		</disabled>
 		<variations>
@@ -57,7 +57,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test>
 		<testCaseName>cmdLineTester_shrcdbgddrext_zos</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/1511</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
 		</disabled>
 		<variations>
 			<variation>NoOptions</variation>

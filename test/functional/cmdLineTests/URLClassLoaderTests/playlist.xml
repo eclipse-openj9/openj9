@@ -53,7 +53,7 @@
 	<test>
 		<testCaseName>SCURLClassLoaderTests</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/11965#issuecomment-778413238</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/11965#issuecomment-778413238</comment>
 			<variation>Mode110</variation>
 			<plat>.*aarch.*</plat>
 		</disabled>

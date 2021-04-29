@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,8 @@
 // Assumes OPENJ9_SHA, OMR_SHA, and NEW_BRANCH_NAME are passed in Jenkins parameters
 
 HTTP = 'https://'
-OMR_REPO = 'github.com/eclipse/openj9-omr.git'
-OPENJ9_REPO = 'github.com/eclipse/openj9.git'
+OMR_REPO = 'github.com/eclipse-openj9/openj9-omr.git'
+OPENJ9_REPO = 'github.com/eclipse-openj9/openj9.git'
 
 DEFAULT_SPLIT_OPENJ9 = 'remotes/origin/master'
 DEFAULT_SPLIT_OMR = 'remotes/origin/openj9'

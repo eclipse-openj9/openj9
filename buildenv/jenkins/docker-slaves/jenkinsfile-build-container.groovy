@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ if ("${BUILD_OPTS}" == "") {
 }
 
 def NODE = (params.NODE) ? params.NODE : "sw.tool.docker && hw.arch.${ARCH}"
-def NAMESPACE = (params.NAMESPACE) ? params.NAMESPACE : "eclipse"
+def NAMESPACE = (params.NAMESPACE) ? params.NAMESPACE : "eclipse-openj9"
 def FOLDER = (params.FOLDER) ? "/" + params.FOLDER : ""
 def REPOSITORY = "${NAMESPACE}${FOLDER}/openj9-jenkins-agent-${ARCH}-${OS}"
 

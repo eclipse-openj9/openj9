@@ -409,7 +409,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         echo "Using VENDOR_TEST_REPOS = ${VENDOR_TEST_REPOS}, VENDOR_TEST_BRANCHES = ${VENDOR_TEST_BRANCHES}, VENDOR_TEST_SHAS = ${VENDOR_TEST_SHAS}, VENDOR_TEST_DIRS = ${VENDOR_TEST_DIRS}"
 
         // For PullRequest Builds, overwrite the OpenJ9 sha for test jobs so they checkout the PR (OpenJ9 PRs only)
-        if (params.ghprbPullId && params.ghprbGhRepository == 'eclipse/openj9') {
+        if (params.ghprbPullId && params.ghprbGhRepository == 'eclipse-openj9/openj9') {
             SHAS['OPENJ9'] = "origin/pr/${params.ghprbPullId}/merge"
         }
 

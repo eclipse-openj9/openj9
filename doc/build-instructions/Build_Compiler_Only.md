@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2019, 2019 IBM Corp. and others
+Copyright (c) 2019, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ component; cross component work will require a full JVM rebuild.
 ## Steps
 
 First, build OpenJ9 as per the instructions 
-in https://github.com/eclipse/openj9/tree/master/doc/build-instructions.
+in https://github.com/eclipse-openj9/openj9/tree/master/doc/build-instructions.
 Then, to build only the Compiler component, set up your environment as 
 follows:
 

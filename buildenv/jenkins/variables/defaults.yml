@@ -43,7 +43,7 @@ openjdk:
 # OpenJ9 & OMR Repos (used by ref repo updater)
 openj9:
   default:
-    repoUrl: 'https://github.com/eclipse/openj9.git'
+    repoUrl: 'https://github.com/eclipse-openj9/openj9.git'
 omr:
   default:
     repoUrl: 'https://github.com/eclipse/omr.git'

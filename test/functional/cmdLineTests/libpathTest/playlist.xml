@@ -25,7 +25,7 @@
 	<test>
 		<testCaseName>cmdLineTester_libpathTestRtf</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/3787</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/3787</comment>
 			<plat>.*mac.*</plat>
 		</disabled>
 		<variations>
@@ -38,7 +38,7 @@
 	-xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
-		<!-- temporarily disable this test on osx; https://github.com/eclipse/openj9/issues/3787 -->
+		<!-- temporarily disable this test on osx; https://github.com/eclipse-openj9/openj9/issues/3787 -->
 		<platformRequirements>bits.64,^os.zos</platformRequirements>
 		<levels>
 			<level>sanity</level>
@@ -54,7 +54,7 @@
 	<test>
 		<testCaseName>cmdLineTester_libpathTestRtfChild</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/3787</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/3787</comment>
 			<plat>.*mac.*</plat>
 		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(JAVA_COMMAND) -DEXTRA_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DJAVATEST_ROOT=$(JAVATEST_ROOT) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) \

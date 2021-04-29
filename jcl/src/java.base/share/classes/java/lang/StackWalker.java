@@ -399,7 +399,7 @@ public final class StackWalker {
 			 * Disable including classloader name and module version in stack trace output
 			 * until StackWalker StackTraceElement include info flags can be set properly.
 			 *
-			 * See: https://github.com/eclipse/openj9/issues/11774
+			 * See: https://github.com/eclipse-openj9/openj9/issues/11774
 			 */
 			element.disableIncludeInfoFlags();
 

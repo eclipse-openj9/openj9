@@ -106,7 +106,7 @@ git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
 
 cd openj9-openjdk-jdk8
 
-bash get_source.sh -openj9-repo=https://github.com/eclipse/openj9.git -omr-repo=https://github.com/eclipse/openj9-omr.git
+bash get_source.sh -openj9-repo=https://github.com/eclipse-openj9/openj9.git -omr-repo=https://github.com/eclipse-openj9/openj9-omr.git
 
 bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/root/bootjdk8 --enable-jitserver
 
@@ -114,7 +114,7 @@ make all
 ```
 Depending on where you want to fetch OpenJ9 sources from, you could use your own repository as shown below:
 ```
-bash get_source.sh -openj9-repo=https://github.com/<Your GitHub UserID>/openj9.git -omr-repo=https://github.com/eclipse/openj9-omr.git
+bash get_source.sh -openj9-repo=https://github.com/<Your GitHub UserID>/openj9.git -omr-repo=https://github.com/eclipse-openj9/openj9-omr.git
 ```
 See https://www.eclipse.org/openj9/oj9_build.html for more detail.
 

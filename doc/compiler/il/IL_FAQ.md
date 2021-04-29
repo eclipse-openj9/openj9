@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2000, 2018 IBM Corp. and others
+Copyright (c) 2000, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,7 +29,7 @@ etc.  Over time this will become a comprehensive overview of TR IL.
 ## Do `monenter` & `monexit` trees have to be anchored to a 'treetop'?
 
 ### Detailed question:
-From [issue 475](https://github.com/eclipse/openj9/issues/475):
+From [issue 475](https://github.com/eclipse-openj9/openj9/issues/475):
 A log of `java/lang/StringBuffer.length()I` shows:
 ```
 n13n      monent  jitMethodMonitorEntry[#178  helper Method]

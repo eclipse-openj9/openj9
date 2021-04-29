@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2020 IBM Corp. and others
+Copyright (c) 2017, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,21 +106,21 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 - Request sanity.system test on all platforms and multiple versions
     - `Jenkins test sanity.system all jdk8,jdk11`
 
-You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj9](https://github.com/eclipse/openj9) - or the Extensions OpenJDK\* for Eclipse OpenJ9 repositories:
+You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj9](https://github.com/eclipse-openj9/openj9) - or the Extensions OpenJDK\* for Eclipse OpenJ9 repositories:
 
 - openj9-openjdk-jdk: https://github.com/ibmruntimes/openj9-openjdk-jdk
 - openj9-openjdk-jdk`<version>`: `https://github.com/ibmruntimes/openj9-openjdk-jdk<version>`
 
 ##### Dependent Changes
 
-- If you have dependent change(s) in either eclipse/omr, eclipse/openj9-omr, or ibmruntimes/openj9-openjdk-jdk\*, you can build & test with all needed changes
+- If you have dependent change(s) in either eclipse/omr, eclipse-openj9/openj9-omr, or ibmruntimes/openj9-openjdk-jdk\*, you can build & test with all needed changes
 - Request a build by including the PR ref or branch name in your trigger comment
 - Ex. Dependent change in OMR Pull Request `#123`
     - `Jenkins test sanity xlinux jdk8 depends eclipse/omr#123`
 - Ex. Dependent change in eclipse/omr master branch (useful if a dependent OMR PR is already merged)
     - `Jenkins test sanity xlinux jdk8 depends eclipse/omr#master`
 - Ex. Dependent change in OpenJ9-OMR Pull Request `#456`
-    - `Jenkins test sanity xlinux jdk8 depends eclipse/openj9-omr#456`
+    - `Jenkins test sanity xlinux jdk8 depends eclipse-openj9/openj9-omr#456`
 - Ex. Dependent change in OpenJDK Pull Request `#789`
     - `Jenkins test sanity xlinux jdk8 depends ibmruntimes/openj9-openjdk-jdk8#789`
 - Ex. Dependent changes in OMR and OpenJDK
@@ -134,7 +134,7 @@ You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj
 
 - If you have a PR against a release branch, it can be tested with a PR build that specifies the OMR and Extensions repos.
 - Ex. Release PR against the `v0.20.0-release` branch specifying both OMR and Extensions
-    - `Jenkins compile plinux jdk11 depends eclipse/openj9-omr#v0.20.0-release ibmruntimes/openj9-openjdk-jdk11#openj9-0.20.0`
+    - `Jenkins compile plinux jdk11 depends eclipse-openj9/openj9-omr#v0.20.0-release ibmruntimes/openj9-openjdk-jdk11#openj9-0.20.0`
 
 ##### Testing Changes to Pipeline code
 
@@ -250,7 +250,7 @@ Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/
 - Mirror-OMR-to-OpenJ9-OMR
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Mirror-OMR-to-OpenJ9-OMR)](https://ci.eclipse.org/openj9/job/Mirror-OMR-to-OpenJ9-OMR)
     - Description:
-        - Mirrors [eclipse/omr/master](https://github.com/eclipse/omr/tree/master) to [eclipse/openj9-omr/master](https://github.com/eclipse/openj9-omr/tree/master)
+        - Mirrors [eclipse/omr/master](https://github.com/eclipse/omr/tree/master) to [eclipse-openj9/openj9-omr/master](https://github.com/eclipse-openj9/openj9-omr/tree/master)
         - Triggers `Pipeline-OMR-Acceptance` when there is new content
     - Trigger:
         - Build periodically, 15 minutes
@@ -258,14 +258,14 @@ Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/
 - Promote_OMR
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Promote_OMR)](https://ci.eclipse.org/openj9/job/Promote_OMR)
     - Description:
-        - Promotes eclipse/openj9-omr branch master to branch openj9
+        - Promotes eclipse-openj9/openj9-omr branch master to branch openj9
     - Trigger:
         - Last step of `Pipeline-OMR-Acceptance`
 
 - Mirror-OpenJ9-Website-to-Eclipse
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Mirror-OpenJ9-Website-to-Eclipse)](https://ci.eclipse.org/openj9/job/Mirror-OpenJ9-Website-to-Eclipse)
     - Description:
-        - Mirrors [github.com/eclipse/openj9-website](https://github.com/eclipse/openj9-website/tree/master) to the Eclipse.org repo
+        - Mirrors [github.com/eclipse-openj9/openj9-website](https://github.com/eclipse-openj9/openj9-website/tree/master) to the Eclipse.org repo
     - Trigger:
         - Poll Github repo for changes
 

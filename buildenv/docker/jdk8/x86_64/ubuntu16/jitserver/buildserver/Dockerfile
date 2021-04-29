@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,8 +32,8 @@
 
 FROM openj9:latest AS jitserver_build
 
-ARG openj9_repo=https://github.com/eclipse/openj9.git
-ARG omr_repo=https://github.com/eclipse/openj9-omr.git
+ARG openj9_repo=https://github.com/eclipse-openj9/openj9.git
+ARG omr_repo=https://github.com/eclipse-openj9/openj9-omr.git
 
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \

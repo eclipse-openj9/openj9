@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@
 #
 #   Follow both README in these two links
 #   https://www.eclipse.org/openj9/oj9_build.html
-#   https://github.com/eclipse/openj9/blob/master/test/README.md
+#   https://github.com/eclipse-openj9/openj9/blob/master/test/README.md
 #
 #   Highly recommend mounting folders to Docker container rather
 #   than cloning them within Docker container. e.g.

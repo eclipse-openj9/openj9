@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2020 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,16 +50,16 @@ build can be launched by making a comment in the PR with the following format
 Jenkins build docker <ARCH> <OS>
 ```
 Both jobs will push the Docker images to Docker Hub under the repo
-`eclipse/openj9-jenkins-agent-<ARCH>-<OS>:<TAG>`
+`eclipse-openj9/openj9-jenkins-agent-<ARCH>-<OS>:<TAG>`
 If a manual build is run the tag will be the build number of
 the job, as well as the `latest` tag. If a PR build is run the
 tag will contain `PR` followed by the ID of the pull request used to
 build the job.
 ## Using containers from a terminal
 If you have [docker installed](https://docs.docker.com/install/) then you can run
-`docker pull eclipse/openj9-jenkins-agent-<ARCH>-<OS>:<TAG>` to pull
+`docker pull eclipse-openj9/openj9-jenkins-agent-<ARCH>-<OS>:<TAG>` to pull
 a docker image of the specified architecture and os.
-You can use `docker run -it eclipse/openj9-jenkins-agent-<ARCH>-<OS>:<TAG> /bin/bash`
+You can use `docker run -it eclipse-openj9/openj9-jenkins-agent-<ARCH>-<OS>:<TAG> /bin/bash`
 to start up a new container and enter it. Once inside of a
 container, run `su - jenkins` to switch to the jenkins user.
 This way when you run your code you won't have root privileges.
@@ -67,7 +67,7 @@ If the container is capable of building openj9 it will also have
 reference repos and bootJDKs. The reference repos can be used to
 improve clone times, and the bootJDKs can be used for compiling
 openj9. The locations of the reference repos and bootJDKs can be
-found [here](https://github.com/eclipse/openj9/blob/master/buildenv/jenkins/variables/defaults.yml).
+found [here](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/jenkins/variables/defaults.yml).
 A full list of docker commands for managing/using containers can
 be found [here](https://docs.docker.com/engine/reference/commandline/docker/).
 ## Docker and Jenkins

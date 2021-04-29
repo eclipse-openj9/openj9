@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2020, 2020 IBM Corp. and others
+Copyright (c) 2020, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,9 +51,9 @@ method already exists in the SCC and loads that instead.
 2. [Introduction to AOT](https://blog.openj9.org/2018/10/10/intro-to-ahead-of-time-compilation/)
 3. [AOT: Relocation](https://blog.openj9.org/2018/10/26/ahead-of-time-compilation-relocation/)
 4. [AOT: Validation](https://blog.openj9.org/2018/11/08/ahead-of-time-compilation-validation/)
-5. [Class Chains](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/ClassChains.md)
-6. [Symbol Validation Manager](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/SymbolValidationManager.md)
-7. [Inlined Methods](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/InlinedMethods.md)
+5. [Class Chains](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/ClassChains.md)
+6. [Symbol Validation Manager](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/SymbolValidationManager.md)
+7. [Inlined Methods](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/InlinedMethods.md)
 
 
 <hr/>

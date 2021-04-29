@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@ timestamps {
     timeout(time: 1, unit: 'HOURS') {
         def HTTP = 'https://'
         def SRC_REPO = 'github.com/eclipse/omr.git'
-        def TARGET_REPO = 'github.com/eclipse/openj9-omr.git'
+        def TARGET_REPO = 'github.com/eclipse-openj9/openj9-omr.git'
         def ARCHIVE_FILE = "OMR_COMMIT"
 
         stage("Mirror") {
