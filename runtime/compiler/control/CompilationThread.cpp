@@ -5245,7 +5245,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
    // entries while the JitDump process (in a crashed thread) is happening. This is because one compilation thread
    // must always be active, and there is a timing hole between purging of the queue in the JitDump process, and when
    // the diagnostic thread is resumed. This means a non-diagnostic thread could attempt to pick up a JitDump
-   // compilation request (see eclipse/openj9#11772 for details). We must ensure that this does not happen and simply
+   // compilation request (see eclipse-openj9/openj9#11772 for details). We must ensure that this does not happen and simply
    // skip the request if we are a non-diagnostic thread attempting to process a JitDump compilation.
    if (compInfoPT->isDiagnosticThread())
       {
@@ -7387,7 +7387,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             // for a method body that's already in the SCC
             && entry->_methodIsInSharedCache != TR_yes
 
-            // See eclipse/openj9#11879 for details
+            // See eclipse-openj9/openj9#11879 for details
             && (!TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)
                 || !entry->_oldStartPC)
 

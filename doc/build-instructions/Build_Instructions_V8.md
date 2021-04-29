@@ -68,7 +68,7 @@ If you want to build a binary by using a Docker container, follow these steps to
 Download the docker build script to your local system or copy and paste the following command:
 
 ```
-wget https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/mkdocker.sh
+wget https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/docker/mkdocker.sh
 ```
 
 3. Next, run the following command to build a Docker image, called **openj9**:

@@ -19,7 +19,7 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
-# Copyright (c) 2020, 2020 IBM Corp. and others
+# Copyright (c) 2020, 2021 IBM Corp. and others
 ###############################################################################
 ---
 - name: Create a build folder
@@ -32,7 +32,7 @@
 - name: Get script to build docker image
   get_url:
     dest: "{{ build_dir }}/mkdocker.sh"
-    url: "https://raw.githubusercontent.com/eclipse/openj9/master/buildenv/docker/mkdocker.sh"
+    url: "https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/docker/mkdocker.sh"
     mode: 0644
     validate_certs: no
   tags:

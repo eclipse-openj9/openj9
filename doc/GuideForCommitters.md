@@ -138,7 +138,7 @@ possible between them.
     recently (generally within a day of a successful build).
     
     It is strongly recommended that you check that the tips of the
-    `eclipse/openj9-omr` [`master`](https://github.com/eclipse-openj9/openj9-omr/tree/master)
+    `eclipse-openj9/openj9-omr` [`master`](https://github.com/eclipse-openj9/openj9-omr/tree/master)
     and [`openj9`](https://github.com/eclipse-openj9/openj9-omr/tree/openj9)
     branches are the same before proceeding.  If they are different,
     be aware that you will be introducing other OMR changes that have
@@ -157,7 +157,7 @@ possible between them.
 5.  Launch a ["Mirror-OMR-To-OpenJ9-OMR Build"](https://ci.eclipse.org/openj9/job/Mirror-OMR-to-OpenJ9-OMR/)
     job in the Eclipse OpenJ9 project by clicking "Build Now".  This will
     pull the latest Eclipse OMR project `master` branch into the
-    [`eclipse/openj9-omr`](https://github.com/eclipse-openj9/openj9-omr) repo's
+    [`eclipse-openj9/openj9-omr`](https://github.com/eclipse-openj9/openj9-omr) repo's
     `master` branch and automatically launch an OMR Acceptance Build at
     OpenJ9 Jenkins.
     
@@ -166,7 +166,7 @@ possible between them.
     necessary to wait for this build to finish because an equivalent 
     of the OMR Acceptance Build was already tested in Step 1.
     
-7.  Verify that the `master` branch of the `eclipse/openj9-omr` repo
+7.  Verify that the `master` branch of the `eclipse-openj9/openj9-omr` repo
     contains the Eclipse OMR commit you merged in Step 3.  Make note
     of the commit SHA for Step 8.
 
@@ -181,15 +181,15 @@ possible between them.
     | TARGET_BRANCH  | `openj9`                                    |
 
     This will cause the OMR commit to be promoted from the
-    `master` branch into the `openj9` branch of the `eclipse/openj9-omr`
+    `master` branch into the `openj9` branch of the `eclipse-openj9/openj9-omr`
     repo.
     
 9.  When the Promotion Build in Step 8 completes, merge the OpenJ9
     commit.
     
     At this point, the OMR commit should now be in the `openj9` branch of
-    the `eclipse/openj9-omr` repo, and the OpenJ9 commit should now be
-    in the `master` branch of the `eclipse/openj9` repo.
+    the `eclipse-openj9/openj9-omr` repo, and the OpenJ9 commit should now be
+    in the `master` branch of the `eclipse-openj9/openj9` repo.
     
 10. Announce in the `#committers-public` Slack channel that the coordinated
     merge has completed.

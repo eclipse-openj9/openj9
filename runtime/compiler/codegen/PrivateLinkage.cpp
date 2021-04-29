@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ J9::PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
       // This is a slightly convoluted way of enforcing the JVM specification which states that long and double 
       // variables take up two stack slots. A stack slot in OpenJ9 is a `uintptr_t`, so on 64-bit int variables
       // are still placed in 64-bit stack slots, hence the need to check for 64-bit in the query below. For more
-      // details please see eclipse/openj9#8360.
+      // details please see eclipse-openj9/openj9#8360.
       int32_t slotMultiplier = is64Bit && paramCursor->getDataType() != TR::Address ? 2 : 1;
 
       paramCursor->setParameterOffset(offsetToFirstArg -

@@ -25,7 +25,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 ## A Quick Start Demo on Building JITServer for JDK8 in Ubuntu 18.04 on x86_64
 1. Retrieve OpenJ9 Repo
    ```
-   git clone git@github.com:eclipse/openj9.git
+   git clone git@github.com:eclipse-openj9/openj9.git
    OR
    git clone https://github.com/eclipse-openj9/openj9.git
 

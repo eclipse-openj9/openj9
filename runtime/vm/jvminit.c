@@ -3077,7 +3077,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 			/*
 			* On Linux on Z libj9jit dynamically loads libj9zlib as it is used for AOT method data compression
 			* which is currently only enabled on Z platform. We want to ensure that when the JVM loads libj9jit,
-			* libj9zlib is already loaded. See eclipse/openj9#8561 for more details.
+			* libj9zlib is already loaded. See eclipse-openj9/openj9#8561 for more details.
 			*/
 #if (defined(S390) && defined(LINUX))
 			{
