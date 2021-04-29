@@ -1317,7 +1317,6 @@ TR::MemoryReference *J9::Power::PrivateLinkage::getOutgoingArgumentMemRef(int32_
 
 void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
-   int32_t                   blockNumber = cursor->getNext()->getBlockIndex();
    TR::Machine *machine = cg()->machine();
    const TR::PPCLinkageProperties& properties = getProperties();
    TR::ResolvedMethodSymbol      *bodySymbol = comp()->getJittedMethodSymbol();
