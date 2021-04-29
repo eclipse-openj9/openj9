@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,14 +58,12 @@ public:
 	 * @param objectPtr the array object to be processed
 	 */
 	GC_PointerArrayIterator(J9JavaVM *javaVM, J9Object *objectPtr)
-		: _contiguousArrayIterator(javaVM->omrVM)
-		, _pointerArrayletIterator(javaVM)
+		: GC_PointerArrayIterator(javaVM)
 	{
 		initialize(javaVM, objectPtr);
 	}
 
 	GC_PointerArrayIterator(J9JavaVM *javaVM)
-		/* It is unnecessary to initialize one of those iterators */
 		: _contiguousArrayIterator(javaVM->omrVM)
 		, _pointerArrayletIterator(javaVM)
 	{
