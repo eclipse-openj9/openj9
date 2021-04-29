@@ -58,7 +58,8 @@ public:
 	 * @param objectPtr the array object to be processed
 	 */
 	GC_PointerArrayIterator(J9JavaVM *javaVM, J9Object *objectPtr)
-		: GC_PointerArrayIterator(javaVM)
+		: _contiguousArrayIterator(javaVM->omrVM)
+		, _pointerArrayletIterator(javaVM)
 	{
 		initialize(javaVM, objectPtr);
 	}

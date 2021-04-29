@@ -245,14 +245,24 @@ public:
 		, _descriptionPtr(NULL)
 		, _description(0)
 		, _descriptionIndex(0)
-	{}
+	{
+	}
 
 	/**
 	 * @param vm[in] pointer to the JVM
 	 * @param objectPtr[in] the object to be processed
 	 */
 	GC_MixedObjectIterator(OMR_VM *omrVM, J9Object *objectPtr)
-		: GC_MixedObjectIterator(omrVM)
+		: _slotObject(GC_SlotObject(omrVM, NULL))
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM))
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+		, _objectPtr(NULL)
+		, _scanPtr(NULL)
+		, _endPtr(NULL)
+		, _descriptionPtr(NULL)
+		, _description(0)
+		, _descriptionIndex(0)
 	{
 		initialize(omrVM, objectPtr);
 	}
