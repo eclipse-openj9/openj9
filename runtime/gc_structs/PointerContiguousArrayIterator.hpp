@@ -96,10 +96,10 @@ public:
 	}
 
 	GC_PointerContiguousArrayIterator(OMR_VM *omrVM)
-		:	_arrayPtr(NULL)
-		,	_slotObject(GC_SlotObject(omrVM, NULL))
-		,	_scanPtr(NULL)
-		,	_endPtr(NULL)
+		: _arrayPtr(NULL)
+		, _slotObject(GC_SlotObject(omrVM, NULL))
+		, _scanPtr(NULL)
+		, _endPtr(NULL)
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
 		, _compressObjectReferences(OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM))
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
@@ -111,7 +111,14 @@ public:
 	 * @param objectPtr the array object to be processed
 	 */
 	GC_PointerContiguousArrayIterator(OMR_VM *omrVM, J9Object *objectPtr)
-		: GC_PointerContiguousArrayIterator(omrVM)
+		: _arrayPtr(NULL)
+		, _slotObject(GC_SlotObject(omrVM, NULL))
+		, _scanPtr(NULL)
+		, _endPtr(NULL)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM))
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+		, _omrVM(omrVM)
 	{
 		initialize(objectPtr);
 	}
