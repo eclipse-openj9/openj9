@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2019 IBM Corp. and others
+dnl Copyright (c) 1991, 2021 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -308,12 +308,21 @@ define({SAVE_C_VOLATILE_REGS},{
 	mov qword ptr J9TR_cframe_r9[_rsp],r9
 	mov qword ptr J9TR_cframe_r10[_rsp],r10
 	mov qword ptr J9TR_cframe_r11[_rsp],r11
+ifdef({METHOD_INVOCATION},{
 	movq qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp],xmm0
 	movq qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp],xmm1
 	movq qword ptr J9TR_cframe_jitFPRs+(2*8)[_rsp],xmm2
 	movq qword ptr J9TR_cframe_jitFPRs+(3*8)[_rsp],xmm3
 	movq qword ptr J9TR_cframe_jitFPRs+(4*8)[_rsp],xmm4
 	movq qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp],xmm5
+},{ dnl METHOD_INVOCATION
+	movdqa J9TR_cframe_jitFPRs+(0*16)[_rsp],xmm0
+	movdqa J9TR_cframe_jitFPRs+(1*16)[_rsp],xmm1
+	movdqa J9TR_cframe_jitFPRs+(2*16)[_rsp],xmm2
+	movdqa J9TR_cframe_jitFPRs+(3*16)[_rsp],xmm3
+	movdqa J9TR_cframe_jitFPRs+(4*16)[_rsp],xmm4
+	movdqa J9TR_cframe_jitFPRs+(5*16)[_rsp],xmm5
+}) dnl METHOD_INVOCATION
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
@@ -324,15 +333,24 @@ define({RESTORE_C_VOLATILE_REGS},{
 	mov r9,qword ptr J9TR_cframe_r9[_rsp]
 	mov r10,qword ptr J9TR_cframe_r10[_rsp]
 	mov r11,qword ptr J9TR_cframe_r11[_rsp]
+ifdef({METHOD_INVOCATION},{
 	movq xmm0,qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp]
 	movq xmm1,qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp]
 	movq xmm2,qword ptr J9TR_cframe_jitFPRs+(2*8)[_rsp]
 	movq xmm3,qword ptr J9TR_cframe_jitFPRs+(3*8)[_rsp]
 	movq xmm4,qword ptr J9TR_cframe_jitFPRs+(4*8)[_rsp]
 	movq xmm5,qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp]
+},{ dnl METHOD_INVOCATION
+	movdqa xmm0,J9TR_cframe_jitFPRs+(0*16)[_rsp]
+	movdqa xmm1,J9TR_cframe_jitFPRs+(1*16)[_rsp]
+	movdqa xmm2,J9TR_cframe_jitFPRs+(2*16)[_rsp]
+	movdqa xmm3,J9TR_cframe_jitFPRs+(3*16)[_rsp]
+	movdqa xmm4,J9TR_cframe_jitFPRs+(4*16)[_rsp]
+	movdqa xmm5,J9TR_cframe_jitFPRs+(5*16)[_rsp]
+}) dnl METHOD_INVOCATION
 })
 
-dnl No need to save/restore xmm9-15 - the stack walker will never need to read
+dnl No need to save/restore xmm8-15 - the stack walker will never need to read
 dnl or modify them (no preserved FPRs in the JIT private linkage).  xmm6-7
 dnl are preserved as they are JIT FP arguments which may need to be read
 dnl in order to decompile.  They do not need to be restored.
@@ -349,16 +367,12 @@ define({SAVE_C_NONVOLATILE_REGS},{
 	mov qword ptr J9TR_cframe_r13[_rsp],r13
 	mov qword ptr J9TR_cframe_r14[_rsp],r14
 	mov qword ptr J9TR_cframe_r15[_rsp],r15
-	movq qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp],xmm6
-	movq qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp],xmm7
-})
-
+ifdef({METHOD_INVOCATION},{
 dnl xmm6-7 are preserved as they are JIT FP arguments which may need
 dnl to be read in order to decompile.  They do not need to be restored.
-
-define({SAVE_C_NONVOLATILE_JIT_FP_ARG_REGS},{
 	movq qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp],xmm6
 	movq qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp],xmm7
+}) dnl METHOD_INVOCATION
 })
 
 define({RESTORE_C_NONVOLATILE_REGS},{
@@ -383,6 +397,7 @@ define({SAVE_C_VOLATILE_REGS},{
 	mov qword ptr J9TR_cframe_r9[_rsp],r9
 	mov qword ptr J9TR_cframe_r10[_rsp],r10
 	mov qword ptr J9TR_cframe_r11[_rsp],r11
+ifdef({METHOD_INVOCATION},{
 	movq qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp],xmm0
 	movq qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp],xmm1
 	movq qword ptr J9TR_cframe_jitFPRs+(2*8)[_rsp],xmm2
@@ -391,14 +406,24 @@ define({SAVE_C_VOLATILE_REGS},{
 	movq qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp],xmm5
 	movq qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp],xmm6
 	movq qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp],xmm7
-	movq qword ptr J9TR_cframe_jitFPRs+(8*8)[_rsp],xmm8
-	movq qword ptr J9TR_cframe_jitFPRs+(9*8)[_rsp],xmm9
-	movq qword ptr J9TR_cframe_jitFPRs+(10*8)[_rsp],xmm10
-	movq qword ptr J9TR_cframe_jitFPRs+(11*8)[_rsp],xmm11
-	movq qword ptr J9TR_cframe_jitFPRs+(12*8)[_rsp],xmm12
-	movq qword ptr J9TR_cframe_jitFPRs+(13*8)[_rsp],xmm13
-	movq qword ptr J9TR_cframe_jitFPRs+(14*8)[_rsp],xmm14
-	movq qword ptr J9TR_cframe_jitFPRs+(15*8)[_rsp],xmm15
+},{ dnl METHOD_INVOCATION
+	movdqa J9TR_cframe_jitFPRs+(0*16)[_rsp],xmm0
+	movdqa J9TR_cframe_jitFPRs+(1*16)[_rsp],xmm1
+	movdqa J9TR_cframe_jitFPRs+(2*16)[_rsp],xmm2
+	movdqa J9TR_cframe_jitFPRs+(3*16)[_rsp],xmm3
+	movdqa J9TR_cframe_jitFPRs+(4*16)[_rsp],xmm4
+	movdqa J9TR_cframe_jitFPRs+(5*16)[_rsp],xmm5
+	movdqa J9TR_cframe_jitFPRs+(6*16)[_rsp],xmm6
+	movdqa J9TR_cframe_jitFPRs+(7*16)[_rsp],xmm7
+	movdqa J9TR_cframe_jitFPRs+(8*16)[_rsp],xmm8
+	movdqa J9TR_cframe_jitFPRs+(9*16)[_rsp],xmm9
+	movdqa J9TR_cframe_jitFPRs+(10*16)[_rsp],xmm10
+	movdqa J9TR_cframe_jitFPRs+(11*16)[_rsp],xmm11
+	movdqa J9TR_cframe_jitFPRs+(12*16)[_rsp],xmm12
+	movdqa J9TR_cframe_jitFPRs+(13*16)[_rsp],xmm13
+	movdqa J9TR_cframe_jitFPRs+(14*16)[_rsp],xmm14
+	movdqa J9TR_cframe_jitFPRs+(15*16)[_rsp],xmm15
+}) dnl METHOD_INVOCATION
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
@@ -411,6 +436,7 @@ define({RESTORE_C_VOLATILE_REGS},{
 	mov r9,qword ptr J9TR_cframe_r9[_rsp]
 	mov r10,qword ptr J9TR_cframe_r10[_rsp]
 	mov r11,qword ptr J9TR_cframe_r11[_rsp]
+ifdef({METHOD_INVOCATION},{
 	movq xmm0,qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp]
 	movq xmm1,qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp]
 	movq xmm2,qword ptr J9TR_cframe_jitFPRs+(2*8)[_rsp]
@@ -419,14 +445,24 @@ define({RESTORE_C_VOLATILE_REGS},{
 	movq xmm5,qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp]
 	movq xmm6,qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp]
 	movq xmm7,qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp]
-	movq xmm8,qword ptr J9TR_cframe_jitFPRs+(8*8)[_rsp]
-	movq xmm9,qword ptr J9TR_cframe_jitFPRs+(9*8)[_rsp]
-	movq xmm10,qword ptr J9TR_cframe_jitFPRs+(10*8)[_rsp]
-	movq xmm11,qword ptr J9TR_cframe_jitFPRs+(11*8)[_rsp]
-	movq xmm12,qword ptr J9TR_cframe_jitFPRs+(12*8)[_rsp]
-	movq xmm13,qword ptr J9TR_cframe_jitFPRs+(13*8)[_rsp]
-	movq xmm14,qword ptr J9TR_cframe_jitFPRs+(14*8)[_rsp]
-	movq xmm15,qword ptr J9TR_cframe_jitFPRs+(15*8)[_rsp]
+},{ dnl METHOD_INVOCATION
+	movdqa xmm0,J9TR_cframe_jitFPRs+(0*16)[_rsp]
+	movdqa xmm1,J9TR_cframe_jitFPRs+(1*16)[_rsp]
+	movdqa xmm2,J9TR_cframe_jitFPRs+(2*16)[_rsp]
+	movdqa xmm3,J9TR_cframe_jitFPRs+(3*16)[_rsp]
+	movdqa xmm4,J9TR_cframe_jitFPRs+(4*16)[_rsp]
+	movdqa xmm5,J9TR_cframe_jitFPRs+(5*16)[_rsp]
+	movdqa xmm6,J9TR_cframe_jitFPRs+(6*16)[_rsp]
+	movdqa xmm7,J9TR_cframe_jitFPRs+(7*16)[_rsp]
+	movdqa xmm8,J9TR_cframe_jitFPRs+(8*16)[_rsp]
+	movdqa xmm9,J9TR_cframe_jitFPRs+(9*16)[_rsp]
+	movdqa xmm10,J9TR_cframe_jitFPRs+(10*16)[_rsp]
+	movdqa xmm11,J9TR_cframe_jitFPRs+(11*16)[_rsp]
+	movdqa xmm12,J9TR_cframe_jitFPRs+(12*16)[_rsp]
+	movdqa xmm13,J9TR_cframe_jitFPRs+(13*16)[_rsp]
+	movdqa xmm14,J9TR_cframe_jitFPRs+(14*16)[_rsp]
+	movdqa xmm15,J9TR_cframe_jitFPRs+(15*16)[_rsp]
+}) dnl METHOD_INVOCATION
 })
 
 define({SAVE_C_NONVOLATILE_REGS},{
@@ -487,28 +523,36 @@ define({SAVE_C_VOLATILE_REGS},{
 	mov dword ptr J9TR_cframe_rax[_rsp],eax
 	mov dword ptr J9TR_cframe_rcx[_rsp],ecx
 	mov dword ptr J9TR_cframe_rdx[_rsp],edx
-	movq qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp],xmm0
-	movq qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp],xmm1
-	movq qword ptr J9TR_cframe_jitFPRs+(2*8)[_rsp],xmm2
-	movq qword ptr J9TR_cframe_jitFPRs+(3*8)[_rsp],xmm3
-	movq qword ptr J9TR_cframe_jitFPRs+(4*8)[_rsp],xmm4
-	movq qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp],xmm5
-	movq qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp],xmm6
-	movq qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp],xmm7
+ifdef({METHOD_INVOCATION},{
+dnl No FP parameter registers
+},{ dnl METHOD_INVOCATION
+	movdqa J9TR_cframe_jitFPRs+(0*16)[_rsp],xmm0
+	movdqa J9TR_cframe_jitFPRs+(1*16)[_rsp],xmm1
+	movdqa J9TR_cframe_jitFPRs+(2*16)[_rsp],xmm2
+	movdqa J9TR_cframe_jitFPRs+(3*16)[_rsp],xmm3
+	movdqa J9TR_cframe_jitFPRs+(4*16)[_rsp],xmm4
+	movdqa J9TR_cframe_jitFPRs+(5*16)[_rsp],xmm5
+	movdqa J9TR_cframe_jitFPRs+(6*16)[_rsp],xmm6
+	movdqa J9TR_cframe_jitFPRs+(7*16)[_rsp],xmm7
+}) dnl METHOD_INVOCATION
 })
 
 define({RESTORE_C_VOLATILE_REGS},{
 	mov eax,dword ptr J9TR_cframe_rax[_rsp]
 	mov ecx,dword ptr J9TR_cframe_rcx[_rsp]
 	mov edx,dword ptr J9TR_cframe_rdx[_rsp]
-	movq xmm0,qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp]
-	movq xmm1,qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp]
-	movq xmm2,qword ptr J9TR_cframe_jitFPRs+(2*8)[_rsp]
-	movq xmm3,qword ptr J9TR_cframe_jitFPRs+(3*8)[_rsp]
-	movq xmm4,qword ptr J9TR_cframe_jitFPRs+(4*8)[_rsp]
-	movq xmm5,qword ptr J9TR_cframe_jitFPRs+(5*8)[_rsp]
-	movq xmm6,qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp]
-	movq xmm7,qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp]
+ifdef({METHOD_INVOCATION},{
+dnl No FP parameter registers
+},{ dnl METHOD_INVOCATION
+	movdqa xmm0,J9TR_cframe_jitFPRs+(0*16)[_rsp]
+	movdqa xmm1,J9TR_cframe_jitFPRs+(1*16)[_rsp]
+	movdqa xmm2,J9TR_cframe_jitFPRs+(2*16)[_rsp]
+	movdqa xmm3,J9TR_cframe_jitFPRs+(3*16)[_rsp]
+	movdqa xmm4,J9TR_cframe_jitFPRs+(4*16)[_rsp]
+	movdqa xmm5,J9TR_cframe_jitFPRs+(5*16)[_rsp]
+	movdqa xmm6,J9TR_cframe_jitFPRs+(6*16)[_rsp]
+	movdqa xmm7,J9TR_cframe_jitFPRs+(7*16)[_rsp]
+}) dnl METHOD_INVOCATION
 })
 
 define({SAVE_C_NONVOLATILE_REGS},{
@@ -568,12 +612,9 @@ ifdef({FASTCALL_INDIRECT_WITH_VMTHREAD},,{define({FASTCALL_INDIRECT_WITH_VMTHREA
 
 ifdef({FASTCALL_EXTERN},,{define({FASTCALL_EXTERN},{DECLARE_EXTERN(FASTCALL_SYMBOL($1,$2))})})
 
-ifdef({SAVE_C_NONVOLATILE_JIT_FP_ARG_REGS},,{define({SAVE_C_NONVOLATILE_JIT_FP_ARG_REGS},{})})
-
 define({SAVE_ALL_REGS},{
 	SAVE_C_VOLATILE_REGS($1)
 	SAVE_C_NONVOLATILE_REGS($1)
-	SAVE_C_NONVOLATILE_JIT_FP_ARG_REGS
 })
 
 define({RESTORE_ALL_REGS},{
