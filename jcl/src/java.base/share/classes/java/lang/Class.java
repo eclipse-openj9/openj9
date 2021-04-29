@@ -2051,10 +2051,14 @@ public ProtectionDomain getProtectionDomain() {
 	if (security != null) {
 		security.checkPermission(sun.security.util.SecurityConstants.GET_PD_PERMISSION);
 	}
+	return getProtectionDomainInternal();
+}
 
+ProtectionDomain getProtectionDomainInternal() {
 	ProtectionDomain result = getPDImpl();
-	if (result != null) return result;
-
+	if (result != null) {
+		return result;
+	}
 	if (AllPermissionsPD == null) {
 		allocateAllPermissionsPD();
 	}

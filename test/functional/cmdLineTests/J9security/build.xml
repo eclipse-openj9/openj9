@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,8 +49,19 @@
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 	
+		<if>
+			<equals arg1="${JDK_VERSION}" arg2="8"/>
+			<then>
+				<property name="addExports" value="" />
+			</then>
+			<else>
+				<property name="addExports" value="--add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED" />
+			</else>
+		</if>
+
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}" />
+			<compilerarg line="${addExports}" />
 			<classpath>
 				<pathelement location="${LIB_DIR}/asm-all.jar" />
 			</classpath>
@@ -65,7 +76,14 @@
 		<jar jarfile="${DEST}/CodeTrusted.jar" filesonly="true">
 			<fileset dir="${build}" includes="com/ibm/j9/security/bootpath/**"/>
 		</jar>
-		
+
+		<jar jarfile="${DEST}/TestJSR292Security.jar" filesonly="true">
+			<fileset dir="${build}" includes="com/ibm/j9/jsr292/indyn/TestJSR292*"/>
+		</jar>
+		<jar jarfile="${DEST}/CodeNotTrusted.jar" filesonly="true">
+			<fileset dir="${build}" includes="com/ibm/j9/jsr292/indyn/bootpath/CodeNotTrusted*"/>
+		</jar>
+
 		<jar jarfile="${DEST}/j9JEP140CodeTrusted.jar" filesonly="true">
 			<fileset dir="${build}" excludes="**/TestImplies*.class,**/JEP140Tests.class"/>
 			<fileset dir="${src}" excludes="**/TestImplies*.java,**/JEP140Tests.java"/>
@@ -78,6 +96,7 @@
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml" />
 			<fileset dir="${src}/../" includes="*.mk" />
+			<fileset dir="${src}/../" includes="*.policy" />
 		</copy>
 	</target>
 	
