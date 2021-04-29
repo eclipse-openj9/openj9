@@ -52,6 +52,16 @@ if(OMR_ARCH_POWER AND OMR_OS_AIX)
 		endif()
 		]]
 	endif()
+elseif(OMR_OS_ZOS)
+	#TODO need to handle optimized debug info
+	list(APPEND interp_flags_to_remove "-O3" "-g" "-qdebug=nohook")
+
+	list(APPEND interp_new_flags
+		-O2
+		"\"-Wc,TBYDBG(-qdebug=MRABIG)\""
+		"\"-Wc,TBYDBG(-qdebug=lincomm:ptranl:tfbagg)\""
+		"\"-Wc,FEDBG(-qxflag=InlineDespiteVolatileInArgs)\""
+	)
 endif()
 
 if(interp_flags_to_remove)
