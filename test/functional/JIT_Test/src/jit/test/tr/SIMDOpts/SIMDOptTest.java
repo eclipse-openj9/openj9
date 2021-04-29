@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ public class SIMDOptTest{
 	 * Apart from the ASSERT. This test aims to verify that specific transformation done by the
 	 * SIMD Optimization is functionally correct.
 	 *
-	 * For more details see eclipse/openj9#9446
+	 * For more details see eclipse-openj9/openj9#9446
 	 */
 	private void testSimpleLoopSIMD(){
 		final int token = returnCachedRandomNumber();

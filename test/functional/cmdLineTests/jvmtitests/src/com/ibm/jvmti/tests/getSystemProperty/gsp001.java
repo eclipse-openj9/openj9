@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ public class gsp001 {
 	 *   java.vm.info
 	 *   java.library.path
 	 *   java.class.path
-	 * Requested by https://github.com/eclipse/openj9/issues/5565, following system property is added as well:
+	 * Requested by https://github.com/eclipse-openj9/openj9/issues/5565, following system property is added as well:
 	 *   java.vm.specification.version
 	 */
 	private static String[] sysPropNames = {

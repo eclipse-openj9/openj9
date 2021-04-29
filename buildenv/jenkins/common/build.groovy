@@ -213,7 +213,7 @@ def checkout_pullrequest() {
     // Checkout dependent PRs, if any were specified
     if (openj9_bool) {
         dir ('openj9') {
-            checkout_pullrequest(OPENJ9_PR, 'eclipse/openj9')
+            checkout_pullrequest(OPENJ9_PR, 'eclipse-openj9/openj9')
         }
     }
 

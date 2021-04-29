@@ -24,12 +24,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 The OpenJ9 JVM is composed of two code repositories:
 
-* OpenJ9 https://github.com/eclipse/openj9
-* OMR https://github.com/eclipse/openj9-omr
+* OpenJ9 https://github.com/eclipse-openj9/openj9
+* OMR https://github.com/eclipse-openj9/openj9-omr
 
 and one has an external test repo:
 
-* https://github.com/eclipse/openj9-systemtest
+* https://github.com/eclipse-openj9/openj9-systemtest
 
 OpenJ9 needs to be combined with code from OpenJDK to create a Java SDK.
 The OpenJDK code is managed in separate github repos referred to as the 

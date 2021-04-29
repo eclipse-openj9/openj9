@@ -24,7 +24,7 @@
 	<!--
 		TODO: The following test cases specific to Lookup are temporarily excluded in Java 14
 		as there is no backward compatibility of these APIs since Java 14 due to the new changes
-		required at https://github.com/eclipse/openj9/issues/8571. These test cases here
+		required at https://github.com/eclipse-openj9/openj9/issues/8571. These test cases here
 		(mainly used prior to OpenJ9) will be re-evaluated against the Java 14 Spec and copied
 		as a new version with modification to meet the new scenarios in Java 14.
 	-->

@@ -1153,7 +1153,7 @@ public abstract class MethodHandle
 /*[IF Sidecar18-SE-OpenJ9]*/
 	void customize() {
 		// this is an empty implementation to satisfy RI specific method calls
-		// https://github.com/eclipse/openj9/issues/7080
+		// https://github.com/eclipse-openj9/openj9/issues/7080
 	}
 /*[ENDIF]*/
 

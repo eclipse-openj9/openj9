@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,7 +209,7 @@ public class APITestJava10 extends ThreadMXBeanTestCase {
 
 	/* ThreadInfo objects contain MonitorInfo objects which carry stack depth info that can be higher than
 	 * max depth passed to dumpAllThreads. dumpAllThreads should still produce the ThreadInfo objects.
-	 * See https://github.com/eclipse/openj9/issues/10796
+	 * See https://github.com/eclipse-openj9/openj9/issues/10796
 	 */
 	@Test(groups = { "level.extended" })
 	public void testDumpWithMonitorDepthHigherThanLimit() {

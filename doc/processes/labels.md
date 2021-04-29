@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,7 +95,7 @@ Label to indicate that a PR or issue requires external documentation (new featur
 
 * `doc:externals`
 
-**Note:** When you use this label, you must open an [issue](https://github.com/eclipse/openj9-docs/issues/new?template=new-documentation-change.md) in the OpenJ9 documentation repo.
+**Note:** When you use this label, you must open an [issue](https://github.com/eclipse-openj9/openj9-docs/issues/new?template=new-documentation-change.md) in the OpenJ9 documentation repo.
 
 End User issues
 ---

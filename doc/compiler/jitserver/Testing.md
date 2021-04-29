@@ -32,9 +32,9 @@ These are the steps to run the tests on your machine.
 1. Compile a build of openj9 from scratch. (Optional: compile a debug build if you need it. To do this pass the flag `--with-debug-level=slowdebug` to `configure`.
    Please note that debug build is much slower and the tests will take very long time to finish).
 
-2. Install [prerequisites](https://github.com/eclipse/openj9/blob/master/test/docs/Prerequisites.md)
+2. Install [prerequisites](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/Prerequisites.md)
 
-   An example of how to install the prerequisites can be found [here](https://github.com/eclipse/openj9/blob/master/buildenv/docker/test/Dockerfile#L57-L68). Make sure that JAVA_HOME and JAVA_BIN are set (E.g. `export JAVA_HOME=/root/openj9-openjdk-jdk11/build/linux-x86_64-normal-server-release/images/jdk` and `export JAVA_BIN=/root/openj9-openjdk-jdk11/build/linux-x86_64-normal-server-release/images/jdk/bin`). Basically you want to test on the jdk you build, so point the environment variable to your personal build of jdk.
+   An example of how to install the prerequisites can be found [here](https://github.com/eclipse-openj9/openj9/blob/master/buildenv/docker/test/Dockerfile#L57-L68). Make sure that JAVA_HOME and JAVA_BIN are set (E.g. `export JAVA_HOME=/root/openj9-openjdk-jdk11/build/linux-x86_64-normal-server-release/images/jdk` and `export JAVA_BIN=/root/openj9-openjdk-jdk11/build/linux-x86_64-normal-server-release/images/jdk/bin`). Basically you want to test on the jdk you build, so point the environment variable to your personal build of jdk.
 3. Compile  the tests (only need to compile once):
    ```
    cd $OPENJ9_DIR/openj9/test
@@ -92,7 +92,7 @@ These are the steps to run the tests on your machine.
    make <name_of_the_test>
    ```
 
-For more advanced testing features, refer to [this guide](https://github.com/eclipse/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
+For more advanced testing features, refer to [this guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
 
 ## DOCKER
 

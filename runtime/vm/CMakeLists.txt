@@ -221,7 +221,7 @@ endif()
 
 if(OMR_OS_WINDOWS AND (OMR_TOOLCONFIG STREQUAL "msvc"))
 	# JIT helper methods require us to disable buffer security checks on Windows
-	# See https://github.com/eclipse/openj9/pull/1494 for rationale
+	# See https://github.com/eclipse-openj9/openj9/pull/1494 for rationale
 	set_property(
 		SOURCE
 			cnathelp.cpp

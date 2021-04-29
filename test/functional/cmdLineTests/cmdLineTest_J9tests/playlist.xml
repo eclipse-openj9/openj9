@@ -113,7 +113,7 @@
 	<test>
 		<testCaseName>cmdLineTest_J9test_native</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/3212;https://github.com/eclipse/openj9/issues/3560</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/3212;https://github.com/eclipse-openj9/openj9/issues/3560</comment>
 			<plat>.*windows.*</plat>
 		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
 import org.testng.Assert;
 
 /*
- * Test for this change: https://github.com/eclipse/openj9/pull/10687
+ * Test for this change: https://github.com/eclipse-openj9/openj9/pull/10687
  * There are 2 classes with the same name (DupClassNameTest), which are loaded by 2 different class loaders.
  * This file is under directory version1, the other version of DupClassNameTest is under directory version2.
  */

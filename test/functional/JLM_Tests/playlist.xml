@@ -436,7 +436,7 @@
 	<test>
 		<testCaseName>testSoftMxRemote</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/480</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
 		</disabled>
 		<variations>
 			<variation>Mode110</variation>
@@ -469,7 +469,7 @@
 	<test>
 		<testCaseName>testSoftMxRemote_zlinux_64</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/480</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
 		</disabled>
 		<variations>
 			<variation>Mode110</variation>
@@ -502,7 +502,7 @@
 	<test>
 		<testCaseName>testSoftMxRemote_zlinux_31</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/480</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
 		</disabled>
 		<variations>
 			<variation>Mode110</variation>
@@ -535,7 +535,7 @@
 	<test>
 		<testCaseName>testSoftMxRemote_LP4k</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/480</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
 		</disabled>
 		<variations>
 			<variation>Mode110</variation>
@@ -568,7 +568,7 @@
 	<test>
 		<testCaseName>testSoftMxRemote_LP64k</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/480</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
 		</disabled>
 		<variations>
 			<variation>Mode110</variation>
@@ -1133,7 +1133,7 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	<!-- Exclude testOpenJ9DiagnosticsMXBean test on win32: https://github.com/eclipse/openj9/issues/2213-->
+	<!-- Exclude testOpenJ9DiagnosticsMXBean test on win32: https://github.com/eclipse-openj9/openj9/issues/2213-->
 	<test>
 		<testCaseName>testOpenJ9DiagnosticsMXBean</testCaseName>
 		<variations>
@@ -1266,7 +1266,7 @@
 	<test>
 		<testCaseName>testSoftMxUserScenario</testCaseName>
 		<disabled>
-			<comment>github.com/eclipse/openj9/issues/8967</comment>
+			<comment>github.com/eclipse-openj9/openj9/issues/8967</comment>
 			<plat>aarch64.*</plat>
 		</disabled>
 		<variations>

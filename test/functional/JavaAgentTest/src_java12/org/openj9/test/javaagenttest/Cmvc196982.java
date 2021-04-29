@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,7 +77,7 @@ public class Cmvc196982 {
 		logger.info("Cmvc196982 is setting up... ");
 
 		/* Java 12 disallows direct field reflection on java.lang.reflect.Method
-		 * (refer https://github.com/eclipse/openj9/issues/4658#issuecomment-461913909 for details), 
+		 * (refer https://github.com/eclipse-openj9/openj9/issues/4658#issuecomment-461913909 for details), 
 		 * this is a workaround via reflection of package access methods.
 		 */
 		getMethodAnnotationBytes = Method.class.getDeclaredMethod("getAnnotationBytes");

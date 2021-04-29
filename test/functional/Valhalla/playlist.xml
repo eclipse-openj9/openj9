@@ -58,7 +58,7 @@
 	<test>
 		<testCaseName>ValueTypeTestsJIT</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/pull/9392#issuecomment-661246648</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/pull/9392#issuecomment-661246648</comment>
 			<variation>-Xjit:count=0</variation>
 		</disabled>
 		<variations>

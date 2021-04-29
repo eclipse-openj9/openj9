@@ -100,7 +100,7 @@ If the inlined method has a guard assocated with it, then the Inlined Method
 with NOP Guard / Profiled Inlined Method with Guard relocations are 
 generated. If not, then the Inlined Method / Profiled Inlined Method
 relocations are generated. Additionally, unless the 
-[SVM](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/SymbolValidationManager.md)
+[SVM](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/SymbolValidationManager.md)
 is enabled, the inlined method external relocations are the
 last entries added to the list; if the SVM is enabled, the SVM validation
 records are added next - part of the validation that would've been done by
@@ -134,8 +134,8 @@ which
 
 1. Materializes the class of the inlined method:
     * If the SVM is enabled, the class ID in the relocation record is used.
-    * If the SVM is disabled, the process described [here](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/ClassChains.md#finding-a-candidate-j9class) is used, specifically the section about using the class chain of the first class loaded by the classloader that loaded the class of the inlined method.
-2. Validates the [Class Chain](https://github.com/eclipse/openj9/blob/master/doc/compiler/aot/ClassChains.md)  of the class from 1.
+    * If the SVM is disabled, the process described [here](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/ClassChains.md#finding-a-candidate-j9class) is used, specifically the section about using the class chain of the first class loaded by the classloader that loaded the class of the inlined method.
+2. Validates the [Class Chain](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/ClassChains.md)  of the class from 1.
 3. Materializes the inlined method from the class from 1 using the method index stored in the relocation record.
 4. Checks if the inlined site can be activated because of debug or other JVM restrictions.
 

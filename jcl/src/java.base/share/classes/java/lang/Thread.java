@@ -194,7 +194,7 @@ private Thread(String vmName, Object vmThreadGroup, int vmPriority, boolean vmIs
 		 * to lookup native address when not found within systemClassLoader native libraries.
 		 * This requires bootstrapClassLoader is initialized via initialize(booting, threadGroup, null, null, true) above before
 		 * invoking a native method not present within systemClassLoader native libraries such as following setNameImpl modified
-		 * via JVMTI agent SetNativeMethodPrefix (https://github.com/eclipse/openj9/issues/11181).
+		 * via JVMTI agent SetNativeMethodPrefix (https://github.com/eclipse-openj9/openj9/issues/11181).
 		 * After bootstrapClassLoader initialization, setNameImpl can be invoked before initialize() to set thread name earlier.
 		 */
 		setNameImpl(threadRef, threadName);

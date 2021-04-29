@@ -76,7 +76,7 @@ e.g.,
     export JDK_IMPL=openj9
 ```
 
-Please refer *.spec files in [buildspecs](https://github.com/eclipse/openj9/tree/master/buildspecs)
+Please refer *.spec files in [buildspecs](https://github.com/eclipse-openj9/openj9/tree/master/buildspecs)
 for possible SPEC values.
 
 #### Dependent libs for tests
@@ -99,10 +99,10 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
 
 #### For new functionality
 
-- If you have added new features to OpenJ9, you will likely need to add new tests. Check out [openj9/test/functional/TestExample/src/org/openj9/test/MyTest.java](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/src/org/openj9/test/example/MyTest.java) for
+- If you have added new features to OpenJ9, you will likely need to add new tests. Check out [openj9/test/functional/TestExample/src/org/openj9/test/MyTest.java](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample/src/org/openj9/test/example/MyTest.java) for
 the format to use.
 
-- If you have many new test cases to add and special build requirements, then you may want to copy the [TestExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample) update the build.xml and playlist.xml files to match your new Test class names. The playlist.xml format is defined in TKG/playlist.xsd.
+- If you have many new test cases to add and special build requirements, then you may want to copy the [TestExample](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample) update the build.xml and playlist.xml files to match your new Test class names. The playlist.xml format is defined in TKG/playlist.xsd.
 
 - A test can be tagged with following elements:
       - level:   [sanity|extended|special] (extended default value)
@@ -183,9 +183,9 @@ e.g.,
     make _sanity.functional.native
 ```
 
-#### Run a specific individual test target (where test targets are defined in playlist files, see [testExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L27)<br />
+#### Run a specific individual test target (where test targets are defined in playlist files, see [testExample](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample/playlist.xml#L27)<br />
 make _testTargetName_xxx <br />
-e.g., the [1st variation in playlist](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L29) is suffixed by _0, 2nd variation by _1, and so forth
+e.g., the [1st variation in playlist](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample/playlist.xml#L29) is suffixed by _0, 2nd variation by _1, and so forth
 ```
     make _testExample_0
 ```
@@ -197,7 +197,7 @@ e.g.,
 ```
     make _testExample
 ```
-Above command will run [all possible variations in _testExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L28-L30)
+Above command will run [all possible variations in _testExample](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample/playlist.xml#L28-L30)
 target
 
 #### Run a list of tests <br />
@@ -221,7 +221,7 @@ make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
 
 `<impl>` and `<version>` elements are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable).  
 
-For example, adding a `<versions><version>8</version></versions>` block into the [target definition of TestExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L26-L49) would mean that test would only get run against jdk8 and would be skipped for other JDK versions.  If `<versions>` or `<impls>` are not included in the target definition, then it is assumed that ALL versions and implementations are valid for that test target.
+For example, adding a `<versions><version>8</version></versions>` block into the [target definition of TestExample](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample/playlist.xml#L26-L49) would mean that test would only get run against jdk8 and would be skipped for other JDK versions.  If `<versions>` or `<impls>` are not included in the target definition, then it is assumed that ALL versions and implementations are valid for that test target.
 
 
 #### Rerun the failed tests from the last run
@@ -606,7 +606,7 @@ A common scenario is that automated testing finds a failure and a developer is a
 * implementation the test fails against (JDK_IMPL)
 * SDK build that was used by the test (in the console output of the Jenkins job, there is java -version info and a link to the SDK used)
 
-A specific example, [Issue 6555](https://github.com/eclipse/openj9/issues/6555) Test_openjdk13_j9_sanity.system_ppc64le_linux TestIBMJlmRemoteMemoryAuth_0 crash 
+A specific example, [Issue 6555](https://github.com/eclipse-openj9/openj9/issues/6555) Test_openjdk13_j9_sanity.system_ppc64le_linux TestIBMJlmRemoteMemoryAuth_0 crash 
 we get the following info (captured in the name of the issue):
 * TARGET = TestIBMJlmRemoteMemoryAuth_0
 * BUILD_LIST = system
@@ -618,4 +618,4 @@ Since only a link to the Jenkins job was provided in the example issue 6555, we 
 
 For more details on launching a Grinder job, you can see these instructions on [how to run a grinder job](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins).  
 
-To try and reproduce the failure locally, please check out this [wiki for guidance on reproducing failures locally](https://github.com/eclipse/openj9/wiki/Reproducing-Test-Failures-Locally) for details.
+To try and reproduce the failure locally, please check out this [wiki for guidance on reproducing failures locally](https://github.com/eclipse-openj9/openj9/wiki/Reproducing-Test-Failures-Locally) for details.

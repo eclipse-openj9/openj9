@@ -24,15 +24,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test>
 		<testCaseName>cmdLineTester_jep178_staticLinking_SE80</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/3212</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
 			<plat>.*windows.*</plat>
 		</disabled>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/11854</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/11854</comment>
 			<plat>ppc64le.*</plat>
 		</disabled>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/12050</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/12050</comment>
 			<plat>aarch64.*</plat>
 		</disabled>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -73,10 +73,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<test>
 		<testCaseName>cmdLineTester_jep178_staticLinking</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/3560</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/3560</comment>
 		</disabled>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/3212</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
 			<plat>.*windows.*</plat>
 		</disabled>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \

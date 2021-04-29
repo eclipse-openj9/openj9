@@ -847,7 +847,7 @@ extern "C" {
 
 /*
  * These constants are declared only so that they are available in core files to retain
- * compatibility with old DTFJ plugins, see https://github.com/eclipse/openj9/issues/6316.
+ * compatibility with old DTFJ plugins, see https://github.com/eclipse-openj9/openj9/issues/6316.
  *
  * They should not be used for any other purpose.
  */

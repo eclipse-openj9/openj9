@@ -201,7 +201,7 @@
 	<test>
 		<testCaseName>xlpTests</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/11374</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/11374</comment>
 			<plat>.*mac.*</plat>
 		</disabled>
 		<variations>
@@ -227,7 +227,7 @@
 	<test>
 		<testCaseName>xlpCodeCacheTests</testCaseName>
 		<disabled>
-			<comment>https://github.com/eclipse/openj9/issues/11104</comment>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/11104</comment>
 			<plat>.*aix.*</plat>
 		</disabled>
 		<variations>

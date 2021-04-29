@@ -42,7 +42,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
 			${TEST_STATUS}
 		</command>
-		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse/openj9/issues/1511 for updates -->
+		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse-openj9/openj9/issues/1511 for updates -->
 		<platformRequirements>^os.zos</platformRequirements>
 		<levels>
 			<level>extended</level>
@@ -79,7 +79,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
 			${TEST_STATUS}
 		</command>
-		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse/openj9/issues/1511 for updates -->
+		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse-openj9/openj9/issues/1511 for updates -->
 		<platformRequirements>^os.zos</platformRequirements>
 		<levels>
 			<level>extended</level>
@@ -117,7 +117,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
 			${TEST_STATUS}
 		</command>
-		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse/openj9/issues/1511 for updates -->
+		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse-openj9/openj9/issues/1511 for updates -->
 		<platformRequirements>^os.zos</platformRequirements>
 		<levels>
 			<level>extended</level>
@@ -155,7 +155,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
 			${TEST_STATUS}
 		</command>
-		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse/openj9/issues/1511 for updates -->
+		<!-- Tests excluded on zos because it does not support DDR yet. Please see https://github.com/eclipse-openj9/openj9/issues/1511 for updates -->
 		<platformRequirements>^os.zos</platformRequirements>
 		<levels>
 			<level>extended</level>

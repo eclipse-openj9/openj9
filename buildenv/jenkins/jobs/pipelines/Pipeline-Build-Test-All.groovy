@@ -29,10 +29,10 @@
  *
  * Parameters:
  *   PLATFORMS: String - Comma separated platforms to build, or `all`. For the list of platforms, see `id=` in the `.spec` files found in the buildspecs directory (the id should be the same as the spec file name without the `.spec`).
- *   OPENJ9_REPO: String - the OpenJ9 git repository URL: e.g. https://github.com/eclipse/openj9.git (default)
+ *   OPENJ9_REPO: String - the OpenJ9 git repository URL: e.g. https://github.com/eclipse-openj9/openj9.git (default)
  *   OPENJ9_BRANCH: String - the OpenJ9 branch to clone from: e.g. master (default)
  *   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
- *   OMR_REPO: String - the OMR git repository URL: e.g. https://github.com/eclipse/openj9-omr.git (default)
+ *   OMR_REPO: String - the OMR git repository URL: e.g. https://github.com/eclipse-openj9/openj9-omr.git (default)
  *   OMR_BRANCH: String - the OMR branch to clone from: e.g. openj9 (default)
  *   OMR_SHA: String - the last commit SHA of the OMR repository
  *   ADOPTOPENJDK_REPO: String - the AdoptOpenJDK testing repository URL: e.g. https://github.com/AdoptOpenJDK/openjdk-tests.git
@@ -310,7 +310,7 @@ echo "ghprbActualCommit:'${ghprbActualCommit}'"
 // If custom repo/branch/refspec is passed, use it,
 // elif build is OpenJ9 PR, use pr merge-ref/refspec,
 // else use eclipse/master/blank for defaults respectively.
-SCM_REPO = 'https://github.com/eclipse/openj9.git'
+SCM_REPO = 'https://github.com/eclipse-openj9/openj9.git'
 if (params.SCM_REPO) {
     SCM_REPO = params.SCM_REPO
 }

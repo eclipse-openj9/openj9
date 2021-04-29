@@ -43,7 +43,7 @@ export CMAKE_BUILD_DIR=$PWD/build
 export LLVM_CONFIG=llvm-config-3.8 CLANG=clang++-3.8 CXX_PATH=clang++-3.8 CXX=clang++-3.8
 
 cd $J9SRC
-git clone --depth 1 --branch openj9 https://github.com/eclipse/openj9-omr.git omr
+git clone --depth 1 --branch openj9 https://github.com/eclipse-openj9/openj9-omr.git omr
 cd ..
 
 # We need some generated headers for the linter to run properly
