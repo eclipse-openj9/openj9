@@ -71,7 +71,7 @@ inline char *nextSignatureArgument(char *currentArgument)
    char *result = currentArgument;
    while (*result == '[')
       result++;
-   if (*result == 'L')
+   if (*result == 'L' || *result == 'Q')
       while (*result != ';')
          result++;
    return result+1;

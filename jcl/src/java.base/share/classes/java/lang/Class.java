@@ -5074,9 +5074,18 @@ SecurityException {
 		}
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 		if (this.isArray()) {
-			return name;
 		}
-		return "L"+ name + ";"; //$NON-NLS-1$ //$NON-NLS-2$
+/*[IF INLINE-TYPES]*/
+		else if (this.isPrimitiveClass()) {
+			name = new StringBuilder(name.length() + 2).
+				append('Q').append(name).append(';').toString();
+		}
+/*[ENDIF] INLINE-TYPES */
+		else {
+			name = new StringBuilder(name.length() + 2).
+				append('L').append(name).append(';').toString();
+		}
+		return name;
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 

@@ -292,10 +292,10 @@ public class ValueTypeTests {
 		
 		makePoint2D = lookup.findStatic(point2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		
-		getX = generateGenericGetter(point2DClass, "x");
-		withX = generateGenericWither(point2DClass, "x");
-		getY = generateGenericGetter(point2DClass, "y");
-		withY = generateGenericWither(point2DClass, "y");
+		getX = generateGetter(point2DClass, "x", int.class);
+		withX = generateWither(point2DClass, "x", int.class);
+		getY = generateGetter(point2DClass, "y", int.class);
+		withY = generateWither(point2DClass, "y", int.class);
 
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -455,10 +455,10 @@ public class ValueTypeTests {
 		
 		MethodHandle makePoint2DComplex = lookup.findStatic(point2DComplexClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 
-		MethodHandle getD = generateGenericGetter(point2DComplexClass, "d");
-		MethodHandle withD = generateGenericWither(point2DComplexClass, "d");
-		MethodHandle getJ = generateGenericGetter(point2DComplexClass, "j");
-		MethodHandle withJ = generateGenericWither(point2DComplexClass, "j");
+		MethodHandle getD = generateGetter(point2DComplexClass, "d", double.class);
+		MethodHandle withD = generateWither(point2DComplexClass, "d", double.class);
+		MethodHandle getJ = generateGetter(point2DComplexClass, "j", long.class);
+		MethodHandle withJ = generateWither(point2DComplexClass, "j", long.class);
 		
 		double d = Double.MAX_VALUE;
 		long j = Long.MAX_VALUE;
@@ -502,10 +502,10 @@ public class ValueTypeTests {
 		
 		makeLine2D = lookup.findStatic(line2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		
-		MethodHandle getSt = generateGenericGetter(line2DClass, "st");
- 		MethodHandle withSt = generateGenericWither(line2DClass, "st");
- 		MethodHandle getEn = generateGenericGetter(line2DClass, "en");
- 		MethodHandle withEn = generateGenericWither(line2DClass, "en");
+		MethodHandle getSt = generateGetter(line2DClass, "st", point2DClass);
+ 		MethodHandle withSt = generateWither(line2DClass, "st", point2DClass);
+ 		MethodHandle getEn = generateGetter(line2DClass, "en", point2DClass);
+ 		MethodHandle withEn = generateWither(line2DClass, "en", point2DClass);
  		
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -559,10 +559,10 @@ public class ValueTypeTests {
 				
 		makeFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
 		
-		getFlatSt = generateGenericGetter(flattenedLine2DClass, "st");
- 		withFlatSt = generateGenericWither(flattenedLine2DClass, "st");
- 		getFlatEn = generateGenericGetter(flattenedLine2DClass, "en");
- 		withFlatEn = generateGenericWither(flattenedLine2DClass, "en");
+		getFlatSt = generateGetter(flattenedLine2DClass, "st", point2DClass);
+ 		withFlatSt = generateWither(flattenedLine2DClass, "st", point2DClass);
+ 		getFlatEn = generateGetter(flattenedLine2DClass, "en", point2DClass);
+ 		withFlatEn = generateWither(flattenedLine2DClass, "en", point2DClass);
  		
 		int x = 0xFFEEFFEE;
 		int y = 0xAABBAABB;
@@ -1273,12 +1273,12 @@ public class ValueTypeTests {
 
 		makeTriangle2D = lookup.findStatic(triangle2DClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
 
-		getV1 = generateGenericGetter(triangle2DClass, "v1");
-		MethodHandle withV1 = generateGenericWither(triangle2DClass, "v1");
-		getV2 = generateGenericGetter(triangle2DClass, "v2");
-		MethodHandle withV2 = generateGenericWither(triangle2DClass, "v2");
-		getV3 = generateGenericGetter(triangle2DClass, "v3");
-		MethodHandle withV3 = generateGenericWither(triangle2DClass, "v3");
+		getV1 = generateGetter(triangle2DClass, "v1", flattenedLine2DClass);
+		MethodHandle withV1 = generateWither(triangle2DClass, "v1", flattenedLine2DClass);
+		getV2 = generateGetter(triangle2DClass, "v2", flattenedLine2DClass);
+		MethodHandle withV2 = generateWither(triangle2DClass, "v2", flattenedLine2DClass);
+		getV3 = generateGetter(triangle2DClass, "v3", flattenedLine2DClass);
+		MethodHandle withV3 = generateWither(triangle2DClass, "v3", flattenedLine2DClass);
 
 		MethodHandle[][] getterAndWither = {{getV1, withV1}, {getV2, withV2}, {getV3, withV3}};
 		Object triangle2D = createTriangle2D(defaultTrianglePositions);
@@ -1336,8 +1336,8 @@ public class ValueTypeTests {
 		makeValueLong = lookup.findStatic(valueLongClass, "makeValueGeneric",
 				MethodType.methodType(Object.class, Object.class));
 
-		getLong = generateGenericGetter(valueLongClass, "j");
-		withLong = generateGenericWither(valueLongClass, "j");
+		getLong = generateGetter(valueLongClass, "j", long.class);
+		withLong = generateWither(valueLongClass, "j", long.class);
 
 		long j = Long.MAX_VALUE;
 		long jNew = Long.MIN_VALUE;
@@ -1363,8 +1363,8 @@ public class ValueTypeTests {
 
 		makeValueInt = lookup.findStatic(valueIntClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class));
 
-		getInt = generateGenericGetter(valueIntClass, "i");
-		withInt = generateGenericWither(valueIntClass, "i");
+		getInt = generateGetter(valueIntClass, "i", int.class);
+		withInt = generateWither(valueIntClass, "i", int.class);
 
 		int i = Integer.MAX_VALUE;
 		int iNew = Integer.MIN_VALUE;
@@ -1391,8 +1391,8 @@ public class ValueTypeTests {
 		makeValueDouble = lookup.findStatic(valueDoubleClass, "makeValueGeneric",
 				MethodType.methodType(Object.class, Object.class));
 
-		getDouble = generateGenericGetter(valueDoubleClass, "d");
-		withDouble = generateGenericWither(valueDoubleClass, "d");
+		getDouble = generateGetter(valueDoubleClass, "d", double.class);
+		withDouble = generateWither(valueDoubleClass, "d", double.class);
 
 		double d = Double.MAX_VALUE;
 		double dNew = Double.MIN_VALUE;
@@ -1419,8 +1419,8 @@ public class ValueTypeTests {
 		makeValueFloat = lookup.findStatic(valueFloatClass, "makeValueGeneric",
 				MethodType.methodType(Object.class, Object.class));
 
-		getFloat = generateGenericGetter(valueFloatClass, "f");
-		withFloat = generateGenericWither(valueFloatClass, "f");
+		getFloat = generateGetter(valueFloatClass, "f", float.class);
+		withFloat = generateWither(valueFloatClass, "f", float.class);
 
 		float f = Float.MAX_VALUE;
 		float fNew = Float.MIN_VALUE;
@@ -1451,8 +1451,8 @@ public class ValueTypeTests {
 		Object val = (Object)0xEEFFEEFF;
 		Object valNew = (Object)0xFFEEFFEE;
 
-		getObject = generateGenericGetter(valueObjectClass, "val");
-		withObject = generateGenericWither(valueObjectClass, "val");
+		getObject = generateGetter(valueObjectClass, "val", Object.class);
+		withObject = generateWither(valueObjectClass, "val", Object.class);
 
 		Object valueObject = makeValueObject.invoke(val);
 
@@ -1555,15 +1555,15 @@ public class ValueTypeTests {
 		String singleBackfill[] = {"l:J", "o:Ljava/lang/Object;", "i:I"};
 		singleBackfillClass = ValueTypeGenerator.generateValueClass("SingleBackfill", singleBackfill);
 		makeSingleBackfillClass = lookup.findStatic(singleBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class, Object.class));
-		getSingleI = generateGenericGetter(singleBackfillClass, "i");
-		getSingleO = generateGenericGetter(singleBackfillClass, "o");
-		getSingleL = generateGenericGetter(singleBackfillClass, "l");
+		getSingleI = generateGetter(singleBackfillClass, "i", int.class);
+		getSingleO = generateGetter(singleBackfillClass, "o", Object.class);
+		getSingleL = generateGetter(singleBackfillClass, "l", long.class);
 		
 		String objectBackfill[] = {"l:J", "o:Ljava/lang/Object;"};
 		objectBackfillClass = ValueTypeGenerator.generateValueClass("ObjectBackfill", objectBackfill);
 		makeObjectBackfillClass = lookup.findStatic(objectBackfillClass, "makeValueGeneric", MethodType.methodType(Object.class, Object.class, Object.class));
-		getObjectO = generateGenericGetter(objectBackfillClass, "o");
-		getObjectL = generateGenericGetter(objectBackfillClass, "l");
+		getObjectO = generateGetter(objectBackfillClass, "o", Object.class);
+		getObjectL = generateGetter(objectBackfillClass, "l", long.class);
 	}
 	
 	@Test(priority=3, invocationCount=2)
@@ -3076,6 +3076,22 @@ public class ValueTypeTests {
 		String fields[] = {"longField:J"};
 		Class refClass = ValueTypeGenerator.generateRefClass("testIsPrimitiveOnRefArrayClass", fields);
 		assertFalse(refClass.arrayType().isPrimitiveClass());
+	}
+
+	@Test(priority=1)
+	static public void testMethodTypeDescriptorRef() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class refClass = ValueTypeGenerator.generateRefClass("testMethodTypeDescriptorRef", fields);
+		assertEquals(MethodType.methodType(refClass).toMethodDescriptorString(), "()LtestMethodTypeDescriptorRef;");
+		assertEquals(refClass.descriptorString(), "LtestMethodTypeDescriptorRef;");
+	}
+
+	@Test(priority=1)
+	static public void testMethodTypeDescriptorValue() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class valueClass = ValueTypeGenerator.generateValueClass("testMethodTypeDescriptorValue", fields);
+		assertEquals(MethodType.methodType(valueClass).toMethodDescriptorString(), "()QtestMethodTypeDescriptorValue;");
+		assertEquals(valueClass.descriptorString(), "QtestMethodTypeDescriptorValue;");
 	}
 
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
