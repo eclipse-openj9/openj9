@@ -1313,17 +1313,6 @@ J9::Options::fePreProcess(void * base)
    // } RTSJ Support End
 
    int32_t argIndex;
-   if (FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xdfpbd", 0) < 0)
-      {
-      // Disable DFP and hysteresis mechanism by default
-      self()->setOption(TR_DisableDFP);
-      self()->setOption(TR_DisableHysteresis);
-      }
-   else if (FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xhysteresis", 0) < 0)
-      {
-      self()->setOption(TR_DisableHysteresis);
-      }
-
    if (FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xnoclassgc", 0) >= 0)
       self()->setOption(TR_NoClassGC);
 

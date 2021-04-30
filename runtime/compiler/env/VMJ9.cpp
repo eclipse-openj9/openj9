@@ -411,10 +411,6 @@ TR_J9VMBase::isAnyMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    return isMethodTracingEnabled(method);
    }
 
-
-bool TR_J9VMBase::cachedStaticDFPAvailField = false;
-int32_t * TR_J9VMBase::staticDFPHWAvailField = NULL;
-
 int32_t * TR_J9VMBase::staticStringEnableCompressionFieldAddr = NULL;
 
 bool
@@ -2832,13 +2828,6 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
          case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToUnicodeDecimal_:
          case TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToPackedDecimal_:
 
-         //BigDecimal related DFP methods
-         case TR::com_ibm_dataaccess_DecimalData_DFPConvertPackedToDFP:
-         case TR::com_ibm_dataaccess_DecimalData_DFPConvertDFPToPacked:
-            if (!comp->getOption(TR_DisablePackedDecimalIntrinsics))
-               dontInlineRecognizedMethod = true;
-            break;
-
          case TR::java_math_BigDecimal_noLLOverflowAdd:
          case TR::java_math_BigDecimal_noLLOverflowMul:
          case TR::java_math_BigDecimal_slowSubMulSetScale:
@@ -3937,19 +3926,7 @@ TR_J9VMBase::getCompiledMethodReceiverKnownObjectIndex(TR::Compilation *comp)
 bool
 TR_J9VMBase::methodMayHaveBeenInterpreted(TR::Compilation *comp)
    {
-   if ((!TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) &&
-        !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP)) &&
-       (comp->target().cpu.supportsDecimalFloatingPoint()
-#ifdef TR_TARGET_S390
-       || comp->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP)
-#endif
-         ))
-      {
-      if (comp->getJittedMethodSymbol()->getResolvedMethod()->convertToMethod()->isBigDecimalMethod(comp) ||
-          comp->getJittedMethodSymbol()->getResolvedMethod()->convertToMethod()->isBigDecimalConvertersMethod(comp))
-         return false;
-      }
-   else if (comp->ilGenRequest().details().isMethodHandleThunk())
+   if (comp->ilGenRequest().details().isMethodHandleThunk())
       return false;
    else
       {
@@ -6025,26 +6002,6 @@ TR_J9VMBase::argumentCanEscapeMethodCall(TR::MethodSymbol * method, int32_t argI
       }
 
    return true;
-   }
-
-#define BDCLASSLEN 20
-const char * recognizedBigDecimalClasses [] =
-   {
-   "java/math/BigDecimal" //length = BDCLASSLEN
-   };
-
-bool
-TR_J9VMBase::isBigDecimalClass(J9UTF8 * className)
-   {
-   return (J9UTF8_LENGTH(className) == BDCLASSLEN &&
-           !strcmp(utf8Data(className), recognizedBigDecimalClasses[0]));
-   }
-
-bool
-TR_J9VMBase::isBigDecimalConvertersClass(J9UTF8 * className)
-   {
-   return (J9UTF8_LENGTH(className) == 32 &&
-           !strcmp(utf8Data(className), "com/ibm/BigDecimalConverters"));
    }
 
 bool

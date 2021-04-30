@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@ namespace ILTypeProp
     */
    enum
       {
-      DFP                               = LastOMRILTypeProp << 1,
+      // Available                      = LastOMRILTypeProp << 1,
       PackedDecimal                     = LastOMRILTypeProp << 2,
       UnicodeDecimal                    = LastOMRILTypeProp << 3,
       UnicodeDecimalSignLeading         = LastOMRILTypeProp << 4,
@@ -58,7 +58,7 @@ namespace ILProp4
       ConversionHasFraction            = 0x00000020,
       // Available                     = 0x00000040,
       PackedArithmeticOverflowMessage  = 0x00000080,
-      DFPTestDataClass                 = 0x00000100,
+      // Available                     = 0x00000100,
       CanHaveStorageReferenceHint      = 0x00000200,
       CanHavePaddingAddress            = 0x00000400,
       CanUseStoreAsAnAccumulator       = 0x00000800,

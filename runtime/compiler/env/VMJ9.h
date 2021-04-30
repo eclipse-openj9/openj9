@@ -288,13 +288,6 @@ public:
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
    static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, int32_t, char *, char *, bool suffix=false);
 
-   static bool isBigDecimalClass(J9UTF8 * className);
-   bool isCachedBigDecimalClassFieldAddr(){ return cachedStaticDFPAvailField; }
-   void setCachedBigDecimalClassFieldAddr(){ cachedStaticDFPAvailField = true; }
-   void setBigDecimalClassFieldAddr(int32_t *addr) { staticDFPHWAvailField = addr; }
-   int32_t *getBigDecimalClassFieldAddr() { return staticDFPHWAvailField; }
-   static bool isBigDecimalConvertersClass(J9UTF8 * className);
-
    int32_t *getStringClassEnableCompressionFieldAddr(TR::Compilation *comp, bool isVettedForAOT);
    virtual bool stringEquals(TR::Compilation * comp, uintptr_t* stringLocation1, uintptr_t* stringLocation2, int32_t& result);
    virtual bool getStringHashCode(TR::Compilation * comp, uintptr_t* stringLocation, int32_t& result);

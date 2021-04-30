@@ -75,12 +75,6 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
             node->getType().isBCD() && 
             !firstChild->getType().isBCD())
       {
-      // illegal to fold an intermediate truncation:
-      // dd2zd p=20 srcP=13
-      //   zd2dd (no p specified, but by data type, must be <= 16 and by srcP must be <= 13)
-      //     zdX p=20
-      // Folding gives an incorrect result if either srcP or the implied p of the zd2dd is 
-      // less than p on the dd2zd
       int32_t nodeP = node->getDecimalPrecision();
       int32_t childP = TR::DataType::getMaxPackedDecimalPrecision();
       int32_t grandChildP = firstChild->getFirstChild()->getDecimalPrecision();
@@ -101,12 +95,6 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
             !node->getType().isBCD() && 
             !firstChild->getType().isBCD())
       {
-      // illegal to fold an intermediate truncation:
-      // dd2l
-      //   l2dd
-      //     lX
-      // Folding could give an incorrect result because the max precision of a dd is 16 
-      // and the max precision of an l is 19
       if (node->getDataType().canGetMaxPrecisionFromType() && 
           firstChild->getDataType().canGetMaxPrecisionFromType() &&
           node->getDataType().getMaxPrecisionFromType() > firstChild->getDataType().getMaxPrecisionFromType())
@@ -175,44 +163,6 @@ J9::Simplifier::unaryCancelOutWithChild(TR::Node *node, TR::Node *firstChild, TR
                origOrigGrandChild->getOpCode().getName(),
                origOrigGrandChild,
                TR::DataType::getValue(alwaysGeneratedSign));
-         }
-      }
-   else if (node->getType().isDFP() && firstChild->getType().isBCD())
-      {
-      // zd2dd
-      //   dd2zd p=12 srcP=13
-      //     ddX (p possibly unknown but <= 16)
-      // Folding gives an incorrect result if the truncation on the dd2zd isn't preserved
-      int32_t nodeP = TR::DataType::getMaxPackedDecimalPrecision();
-      int32_t childP = firstChild->getDecimalPrecision();
-      int32_t grandChildP = TR::DataType::getMaxPackedDecimalPrecision();
-
-      if (node->getDataType().canGetMaxPrecisionFromType())
-         {
-         nodeP = node->getDataType().getMaxPrecisionFromType();
-         grandChildP = nodeP;
-         }
-      if (firstChild->hasSourcePrecision())
-         grandChildP = firstChild->getSourcePrecision();
-
-      if (childP < nodeP && childP < grandChildP)
-         {
-         TR::Node *origOrigGrandChild = grandChild;
-         TR::Node *origGrandChild = grandChild;
-         grandChild = TR::Node::create(TR::ILOpCode::modifyPrecisionOpCode(grandChild->getDataType()), 1, origGrandChild);
-         origGrandChild->decReferenceCount(); // inc'd an extra time when creating modPrecision node above
-         grandChild->incReferenceCount();
-         grandChild->setDFPPrecision(childP);
-         dumpOptDetails(comp(), "%sCreate %s [" POINTER_PRINTF_FORMAT "] to reconcile precision mismatch between node %s [" POINTER_PRINTF_FORMAT "] grandChild %s [" POINTER_PRINTF_FORMAT "] (%d != %d)\n",
-               optDetailString(),
-               grandChild->getOpCode().getName(),
-               grandChild,
-               node->getOpCode().getName(),
-               node,
-               origOrigGrandChild->getOpCode().getName(),
-               origOrigGrandChild,
-               nodeP,
-               childP);
          }
       }
 

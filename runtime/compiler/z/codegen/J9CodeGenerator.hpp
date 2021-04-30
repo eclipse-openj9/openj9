@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,12 +88,6 @@ public:
    int32_t getPDMulEncodedPrecision(TR::Node *pdmul, TR_PseudoRegister *multiplicand, TR_PseudoRegister *multiplier);
    int32_t getPDMulEncodedPrecision(TR::Node *pdmul);
    int32_t getPDMulEncodedPrecision(TR::Node *pdmul, int32_t exponent);
-   uint32_t getPackedToDecimalFloatFixedSize();
-   uint32_t getPackedToDecimalDoubleFixedSize();
-   uint32_t getPackedToDecimalLongDoubleFixedSize();
-   uint32_t getDecimalFloatToPackedFixedSize();
-   uint32_t getDecimalDoubleToPackedFixedSize();
-   uint32_t getDecimalLongDoubleToPackedFixedSize();
    bool callUsesHelperImplementation(TR::Symbol *sym);
 
    uint32_t getLongToPackedFixedSize()               { return TR_LONG_TO_PACKED_SIZE; }

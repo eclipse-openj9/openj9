@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -149,11 +149,6 @@ public:
    TR_StorageReference *setStorageReferenceHint(TR_StorageReference *s);
 #endif
 
-#ifdef SUPPORT_DFP
-   long double             setLongDouble(long double d);
-   long double             getLongDouble();
-#endif
-
    /**
     * Node field functions end
     */
@@ -174,10 +169,6 @@ public:
    // generators
    void    setPDMulPrecision();
    void    setPDAddSubPrecision();
-
-   bool    isDFPModifyPrecision();
-   void    setDFPPrecision(int32_t p);
-   uint8_t getDFPPrecision();
 
    void    setDecimalAdjust(int32_t a);
    int32_t getDecimalAdjust();

@@ -4752,8 +4752,6 @@ isDecimalFormatPattern(TR::Compilation *comp, TR_ResolvedMethod *method)
    //
 
    TR_J9ByteCodeIterator bci(0, static_cast<TR_ResolvedJ9Method *> (method), comp->fej9(), comp);
-   ///traceMsg(comp, "DFP signature: %s\n", traceSignature(method));
-   ///traceMsg(comp, "DFP: maxbytecodeindex = %d\n", bci.maxByteCodeIndex());
 
    // maxbytecode could be 12 or 13 depending on whether
    // doubleValue or floatValue is called
