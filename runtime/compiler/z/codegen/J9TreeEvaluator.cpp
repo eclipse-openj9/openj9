@@ -2147,28 +2147,14 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
       TR_ASSERT( comp->target().is32Bit(), "ICM can be used for 32bit code-gen only!");
 
       static char * dontUseTM = feGetEnv("TR_DONTUSETMFORASYNC");
-      if (comp->getOption(TR_DisableOOL))
-         {
-         reStartLabel->setEndInternalControlFlow();
-         }
       if (firstChild->getReferenceCount()>1 || dontUseTM)
          {
          generateRSInstruction(cg, TR::InstOpCode::ICM, firstChild, testRegister, (uint32_t) 0xF, tempMR);
-         if (comp->getOption(TR_DisableOOL))
-            {
-            generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
-            cFlowRegionStart->setStartInternalControlFlow();
-            }
          gcPoint = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, snippetLabel);
          }
       else
          {
          generateSIInstruction(cg, TR::InstOpCode::TM, firstChild, tempMR, 0xFF);
-         if (comp->getOption(TR_DisableOOL))
-            {
-            generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
-            cFlowRegionStart->setStartInternalControlFlow();
-            }
          gcPoint = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BO, node, snippetLabel);
          }
 
@@ -2177,11 +2163,6 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
       }
    else
       {
-
-      if (comp->getOption(TR_DisableOOL))
-         {
-         reStartLabel->setEndInternalControlFlow();
-         }
       if (value >= MIN_IMMEDIATE_VAL && value <= MAX_IMMEDIATE_VAL)
          {
          TR::MemoryReference * tempMR = TR::MemoryReference::create(cg, firstChild);
@@ -2221,11 +2202,6 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
          TR::Register * tempReg = cg->evaluate(secondChild);
          generateRRInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, src1Reg, tempReg);
          }
-      if (comp->getOption(TR_DisableOOL))
-         {
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
-         cFlowRegionStart->setStartInternalControlFlow();
-         }
       gcPoint = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, snippetLabel);
       }
 
@@ -2245,43 +2221,34 @@ J9::Z::TreeEvaluator::asynccheckEvaluator(TR::Node * node, TR::CodeGenerator * c
 
    dependencies->addPostCondition(rRA, cg->getReturnAddressRegister());
 
-   if (!comp->getOption(TR_DisableOOL))
-      {
-      TR_Debug * debugObj = cg->getDebug();
-      if (debugObj)
-         debugObj->addInstructionComment(gcPoint, "Branch to OOL asyncCheck sequence");
+   TR_Debug * debugObj = cg->getDebug();
+   if (debugObj)
+      debugObj->addInstructionComment(gcPoint, "Branch to OOL asyncCheck sequence");
 
-      // starts OOL sequence, replacing the helper call snippet
-      TR_S390OutOfLineCodeSection *outlinedHelperCall = NULL;
-      outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(snippetLabel, reStartLabel, cg);
-      cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
-      outlinedHelperCall->swapInstructionListsWithCompilation();
+   // starts OOL sequence, replacing the helper call snippet
+   TR_S390OutOfLineCodeSection *outlinedHelperCall = NULL;
+   outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(snippetLabel, reStartLabel, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+   outlinedHelperCall->swapInstructionListsWithCompilation();
 
-      // snippetLabel : OOL Start label
-      TR::Instruction * cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, snippetLabel);
-      if (debugObj)
-         debugObj->addInstructionComment(cursor, "Denotes start of OOL asyncCheck sequence");
+   // snippetLabel : OOL Start label
+   TR::Instruction * cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, snippetLabel);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Denotes start of OOL asyncCheck sequence");
 
-      // BRASL R14, VMHelper, gc stack map on BRASL
-      gcPoint = generateDirectCall(cg, node, false, node->getSymbolReference(), dependencies, cursor);
-      gcPoint->setDependencyConditions(dependencies);
+   // BRASL R14, VMHelper, gc stack map on BRASL
+   gcPoint = generateDirectCall(cg, node, false, node->getSymbolReference(), dependencies, cursor);
+   gcPoint->setDependencyConditions(dependencies);
 
-      cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, reStartLabel);
-      if (debugObj)
-         debugObj->addInstructionComment(cursor, "Denotes end of OOL asyncCheck sequence: return to mainline");
+   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, reStartLabel);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Denotes end of OOL asyncCheck sequence: return to mainline");
 
-      // Done using OOL with manual code generation
-      outlinedHelperCall->swapInstructionListsWithCompilation();
-      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, reStartLabel);
-      if (debugObj)
-         debugObj->addInstructionComment(cursor, "OOL asyncCheck return label");
-      }
-   else
-      {
-      TR::Snippet * snippet = new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), reStartLabel);
-      cg->addSnippet(snippet);
-      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, reStartLabel, dependencies);
-      }
+   // Done using OOL with manual code generation
+   outlinedHelperCall->swapInstructionListsWithCompilation();
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, reStartLabel);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "OOL asyncCheck return label");
 
    gcPoint->setNeedsGCMap(0x0000FFFF);
 
@@ -2599,7 +2566,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
          case ClassEqualityTest:
             if (comp->getOption(TR_TraceCG))
                traceMsg(comp, "%s: Emitting Class Equality Test\n", node->getOpCode().getName());
-            if (outLinedTest && !comp->getOption(TR_DisableOOL))
+            if (outLinedTest)
                {
                // This is the case when we are going to have an Internal Control Flow in the OOL
                startOOLLabel = generateLabelSymbol(cg);
@@ -2750,7 +2717,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
       if (comp->getOption(TR_TraceCG))
          traceMsg(comp, "%s: Emitting helper call%s\n", node->getOpCode().getName(),helperCallForFailure?" for failure":"");
       //Following code is needed to put the Helper Call Outlined.
-      if (!comp->getOption(TR_DisableOOL) && !outlinedSlowPath)
+      if (!outlinedSlowPath)
          {
          // As SuperClassTest is the costliest test and is guaranteed to give results for checkCast node. Hence it will always be second last test
          // in iter array followed by GoToFalse as last test for checkCastNode
@@ -5203,7 +5170,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
 
    bool nopASC = false;
    if (comp->performVirtualGuardNOPing() && node->getArrayStoreClassInNode() &&
-      !comp->getOption(TR_DisableOOL) && !fej9->classHasBeenExtended(node->getArrayStoreClassInNode()))
+      !fej9->classHasBeenExtended(node->getArrayStoreClassInNode()))
       nopASC = true;
 
    bool usingCompressedPointers = false;
@@ -6033,20 +6000,12 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
    instr = generateS390CompareAndBranchInstruction(cg, compareOp, node, valReg, monitorReg,
       TR::InstOpCode::COND_BNE, resLabel, false, false);
 
-   if (!comp->getOption(TR_DisableOOL))
-      {
-      helperReturnOOLLabel = generateLabelSymbol(cg);
-      doneOOLLabel = generateLabelSymbol(cg);
-      if (debugObj)
-         debugObj->addInstructionComment(instr, "Branch to OOL reservation enter sequence");
-      outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(resLabel, doneOOLLabel, cg);
-      cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
-      }
-   else
-      {
-      TR_ASSERT(0, "Not implemented- Lock reservation with Disable OOL yet.");
-      //Todo: Call VM helper maybe?
-      }
+   helperReturnOOLLabel = generateLabelSymbol(cg);
+   doneOOLLabel = generateLabelSymbol(cg);
+   if (debugObj)
+      debugObj->addInstructionComment(instr, "Branch to OOL reservation enter sequence");
+   outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(resLabel, doneOOLLabel, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
 
    cg->generateDebugCounter("LockEnt/LR/LRSuccessfull", 1, TR::DebugCounter::Undetermined);
    if (!isPrimitive)
@@ -6265,17 +6224,12 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
          TR::InstOpCode::COND_BNE, resLabel, false);
       }
 
-   if (!comp->getOption(TR_DisableOOL))
-      {
-      helperReturnOOLLabel = generateLabelSymbol(cg);
-      doneOOLLabel = generateLabelSymbol(cg);
-      if (debugObj)
-         debugObj->addInstructionComment(instr, "Branch to OOL reservation exit sequence");
-      outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(resLabel, doneOOLLabel, cg);
-      cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
-      }
-   else
-      TR_ASSERT(0, "Not implemented: Lock reservation with Disable OOL.");
+   helperReturnOOLLabel = generateLabelSymbol(cg);
+   doneOOLLabel = generateLabelSymbol(cg);
+   if (debugObj)
+      debugObj->addInstructionComment(instr, "Branch to OOL reservation exit sequence");
+   outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(resLabel, doneOOLLabel, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
 
    if (!isPrimitive)
       {
@@ -7264,11 +7218,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool simpleLocking = false;
    bool reserveLocking = false, normalLockWithReservationPreserving = false;
 
-
-   bool disableOOL = comp->getOption(TR_DisableOOL);
-   if (disableOOL)
-      inlineRecursive = false;
-
    if (isMonitorValueBasedOrValueType == TR_maybe)
       {
       numDeps += 1;
@@ -7318,12 +7267,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
 
-      if (disableOOL)
-         {
-         TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
-         cFlowRegionStart->setStartInternalControlFlow();
-         }
       TR::Instruction *cmpInstr = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, targetLabel);
 
       if(cg->comp()->target().is64Bit())
@@ -7345,13 +7288,10 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
          TR::Instruction *cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, monitorLookupCacheLabel);
 
-         if (!disableOOL)
+         if (debugObj)
             {
-            if (debugObj)
-               {
-               debugObj->addInstructionComment(cmpInstr, "Branch to OOL monent monitorLookupCache");
-               debugObj->addInstructionComment(cursor, "Denotes start of OOL monent monitorLookupCache");
-               }
+            debugObj->addInstructionComment(cmpInstr, "Branch to OOL monent monitorLookupCache");
+            debugObj->addInstructionComment(cursor, "Denotes start of OOL monent monitorLookupCache");
             }
 
          lookupOffsetReg = cg->allocateRegister();
@@ -7436,15 +7376,13 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          dummyResultReg = helperLink->buildDirectDispatch(node, &deps);
          TR::RegisterDependencyConditions *mergeConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(OOLConditions, deps, cg);
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperReturnOOLLabel , mergeConditions);
-         if (!disableOOL)
-            {
-            cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
-            if (debugObj)
-               debugObj->addInstructionComment(cursor, "Denotes end of OOL monent monitorCacheLookup: return to mainline");
 
-            // Done using OOL with manual code generation
-            monitorCacheLookupOOL->swapInstructionListsWithCompilation();
-            }
+         cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
+         if (debugObj)
+            debugObj->addInstructionComment(cursor, "Denotes end of OOL monent monitorCacheLookup: return to mainline");
+
+         // Done using OOL with manual code generation
+         monitorCacheLookupOOL->swapInstructionListsWithCompilation();
       }
 
       simpleLocking = true;
@@ -7525,15 +7463,13 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR_S390OutOfLineCodeSection *outlinedHelperCall = NULL;
    TR::Instruction *cursor;
    TR::LabelSymbol *returnLabel = generateLabelSymbol(cg);
-   if (!disableOOL)
-      {
-      outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(callLabel, cFlowRegionEnd, cg);
-      cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
-      outlinedHelperCall->swapInstructionListsWithCompilation();
-      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, callLabel);
-      if (debugObj)
-         debugObj->addInstructionComment(cursor, "Denotes start of OOL monent sequence");
-      }
+   
+   outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(callLabel, cFlowRegionEnd, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+   outlinedHelperCall->swapInstructionListsWithCompilation();
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, callLabel);
+   if (debugObj)
+      debugObj->addInstructionComment(cursor, "Denotes start of OOL monent sequence");
 
    if (inlineRecursive)
       {
@@ -7612,27 +7548,18 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       mergeConditions = conditions;
    generateS390LabelInstruction(cg,TR::InstOpCode::LABEL,node,returnLabel,mergeConditions);
 
-   if (!disableOOL)
+   // End of OOl path.
+   cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
+   if (debugObj)
       {
-      // End of OOl path.
-      cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
-      if (debugObj)
-         {
-         debugObj->addInstructionComment(cursor, "Denotes end of OOL monent: return to mainline");
-         }
-
-      // Done using OOL with manual code generation
-      outlinedHelperCall->swapInstructionListsWithCompilation();
+      debugObj->addInstructionComment(cursor, "Denotes end of OOL monent: return to mainline");
       }
 
-   bool needDeps = false;
-   if (lwOffset <= 0 && disableOOL)
-      needDeps = true;
+   // Done using OOL with manual code generation
+   outlinedHelperCall->swapInstructionListsWithCompilation();
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionEnd, conditions);
 
-   if (lwOffset <= 0 && disableOOL)
-      cFlowRegionEnd->setEndInternalControlFlow();
    cg->stopUsingRegister(monitorReg);
    if (wasteReg)
       cg->stopUsingRegister(wasteReg);
@@ -7684,10 +7611,10 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR::Register      *metaReg             = cg->getMethodMetaDataRealRegister();
    TR::Register      *scratchRegister     = NULL;
    TR::Instruction         *startICF                  = NULL;
-   bool disableOOL  = comp->getOption(TR_DisableOOL);
+   
    static char * disableInlineRecursiveMonitor = feGetEnv("TR_DisableInlineRecursiveMonitor");
    bool inlineRecursive = true;
-   if (disableInlineRecursiveMonitor || disableOOL)
+   if (disableInlineRecursiveMonitor)
      inlineRecursive = false;
 
    TR::LabelSymbol *callLabel                      = generateLabelSymbol(cg);
@@ -7757,12 +7684,6 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
       generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, tempRegister, tempMR);
 
-      if (disableOOL)
-         {
-         TR::LabelSymbol * cFlowRegionStart = generateLabelSymbol(cg);
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
-         cFlowRegionStart->setStartInternalControlFlow();
-         }
       TR::Instruction *cmpInstr = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNH, node, targetLabel);
 
       if(comp->target().is64Bit())
@@ -7788,13 +7709,10 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
          TR::Instruction *cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, monitorLookupCacheLabel);
 
-         if (!disableOOL)
+         if (debugObj)
             {
-            if (debugObj)
-               {
-               debugObj->addInstructionComment(cmpInstr, "Branch to OOL monexit monitorLookupCache");
-               debugObj->addInstructionComment(cursor, "Denotes start of OOL monexit monitorLookupCache");
-               }
+            debugObj->addInstructionComment(cmpInstr, "Branch to OOL monexit monitorLookupCache");
+            debugObj->addInstructionComment(cursor, "Denotes start of OOL monexit monitorLookupCache");
             }
 
 
@@ -7879,15 +7797,12 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
          TR::RegisterDependencyConditions *mergeConditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(OOLConditions, deps, cg);
          generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, helperReturnOOLLabel , mergeConditions);
 
-         if (!disableOOL)
-            {
-            cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
-            if (debugObj)
-               debugObj->addInstructionComment(cursor, "Denotes end of OOL monexit monitorCacheLookup: return to mainline");
+         cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
+         if (debugObj)
+            debugObj->addInstructionComment(cursor, "Denotes end of OOL monexit monitorCacheLookup: return to mainline");
 
-            // Done using OOL with manual code generation
-            monitorCacheLookupOOL->swapInstructionListsWithCompilation();
-            }
+         // Done using OOL with manual code generation
+         monitorCacheLookupOOL->swapInstructionListsWithCompilation();
          }
 
       lwOffset = 0;
@@ -7946,12 +7861,11 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    generateSILInstruction(cg, moveImmOp, node, generateS390MemoryReference(baseReg, lwOffset, cg), 0);
 
    TR_S390OutOfLineCodeSection *outlinedHelperCall = NULL;
-   if (!disableOOL)
-     {
-     outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(callLabel,cFlowRegionEnd,cg);
-     cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
-     outlinedHelperCall->swapInstructionListsWithCompilation();
-     }
+   
+   outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(callLabel,cFlowRegionEnd,cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+   outlinedHelperCall->swapInstructionListsWithCompilation();
+   
    TR::Instruction *cursor = generateS390LabelInstruction(cg,TR::InstOpCode::LABEL,node,callLabel);
 
    if (inlineRecursive)
@@ -8033,25 +7947,15 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
    generateS390LabelInstruction(cg,TR::InstOpCode::LABEL,node,returnLabel,mergeConditions);
 
-   if (!disableOOL)
+   cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
+   if (debugObj)
       {
-      cursor = generateS390BranchInstruction(cg,TR::InstOpCode::BRC,TR::InstOpCode::COND_BRC,node,cFlowRegionEnd);
-      if (debugObj)
-         {
-         debugObj->addInstructionComment(cursor, "Denotes end of OOL monexit: return to mainline");
-         }
-      // Done using OOL with manual code generation
-      outlinedHelperCall->swapInstructionListsWithCompilation();
+      debugObj->addInstructionComment(cursor, "Denotes end of OOL monexit: return to mainline");
       }
-   bool needDeps = false;
-   if (lwOffset <= 0 && disableOOL)
-      needDeps = true;
-
+   // Done using OOL with manual code generation
+   outlinedHelperCall->swapInstructionListsWithCompilation();
+   
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionEnd, conditions);
-
-   if (lwOffset <= 0 && disableOOL)
-      cFlowRegionEnd->setEndInternalControlFlow();
-
 
    cg->stopUsingRegister(monitorReg);
    if (objectClassReg)
@@ -8886,68 +8790,58 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             static char * allocZeroArrayWithVM = feGetEnv("TR_VMALLOCZEROARRAY");
             // DualTLH: Remove when performance confirmed
             static char * useDualTLH = feGetEnv("TR_USEDUALTLH");
-            // OOL
-            if (!comp->getOption(TR_DisableOOL))
+            
+            if (comp->getOption(TR_DisableDualTLH) && useDualTLH || allocZeroArrayWithVM == NULL)
                {
-               if (comp->getOption(TR_DisableDualTLH) && useDualTLH || allocZeroArrayWithVM == NULL)
-                  {
-                  iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, startOOLLabel, iCursor);
-                  TR_Debug * debugObj = cg->getDebug();
-                  zeroSizeArrayChckOOL = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(startOOLLabel,exitOOLLabel,cg);
-                  cg->getS390OutOfLineCodeSectionList().push_front(zeroSizeArrayChckOOL);
-                  zeroSizeArrayChckOOL->swapInstructionListsWithCompilation();
-                  // Check to see if array-type is a super-class of the src object
-                  //
-                  TR::Instruction * cursor;
-                  cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startOOLLabel);
-                  if (debugObj)
-                  debugObj->addInstructionComment(cursor, "Denotes start of OOL for allocating zero size arrays");
+               iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, startOOLLabel, iCursor);
+               TR_Debug * debugObj = cg->getDebug();
+               zeroSizeArrayChckOOL = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(startOOLLabel,exitOOLLabel,cg);
+               cg->getS390OutOfLineCodeSectionList().push_front(zeroSizeArrayChckOOL);
+               zeroSizeArrayChckOOL->swapInstructionListsWithCompilation();
+               // Check to see if array-type is a super-class of the src object
+               //
+               TR::Instruction * cursor;
+               cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startOOLLabel);
+               if (debugObj)
+               debugObj->addInstructionComment(cursor, "Denotes start of OOL for allocating zero size arrays");
 
-                  /* using TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
-                   * for byte size for discontiguous 0 size arrays because later instructions do ( + 15 & -8) to round it to object size header and adding a j9 class header
-                   *
-                   *
-                   ----------- OOL: Beginning of out-of-line code section ---------------
-                   Label [0x484BE2AC80]:    ; Denotes start of OOL for allocating zero size arrays
-                   AGHI    GPR_0x484BE2A900,16
-                   BRC     J(0xf), Label [0x484BE2ACE0]
-                   --------------- OOL: End of out-of-line code section ------------------
+               /* using TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()
+                  * for byte size for discontiguous 0 size arrays because later instructions do ( + 15 & -8) to round it to object size header and adding a j9 class header
+                  *
+                  *
+                  ----------- OOL: Beginning of out-of-line code section ---------------
+                  Label [0x484BE2AC80]:    ; Denotes start of OOL for allocating zero size arrays
+                  AGHI    GPR_0x484BE2A900,16
+                  BRC     J(0xf), Label [0x484BE2ACE0]
+                  --------------- OOL: End of out-of-line code section ------------------
 
-                   Label [0x484BE2ACE0]:    ; Exit OOL, going back to main line
-                   LR      GPR_0x484BE2AAE0,GPR_0x484BE2A7A0
-                   SRA     GPR_0x484BE2AAE0,16
-                   BRC     MASK6(0x6), Snippet Label [0x484BE2A530]      # (Start of internal control flow)
-                   AGHI    GPR_0x484BE2A900,15 <----add 7 + 8
-                   NILF    GPR_0x484BE2A900,-8 <---round to object size
-                   AG      GPR_0x484BE2A900,#490 96(GPR13)
+                  Label [0x484BE2ACE0]:    ; Exit OOL, going back to main line
+                  LR      GPR_0x484BE2AAE0,GPR_0x484BE2A7A0
+                  SRA     GPR_0x484BE2AAE0,16
+                  BRC     MASK6(0x6), Snippet Label [0x484BE2A530]      # (Start of internal control flow)
+                  AGHI    GPR_0x484BE2A900,15 <----add 7 + 8
+                  NILF    GPR_0x484BE2A900,-8 <---round to object size
+                  AG      GPR_0x484BE2A900,#490 96(GPR13)
 
-                   */
-                  cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, tmp,
-                        TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cursor);
+                  */
+               cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, tmp,
+                     TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cursor);
 
-                  generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, exitOOLLabel,cursor);
-                  zeroSizeArrayChckOOL->swapInstructionListsWithCompilation();
-                  }
-               else
-                  {
-                  iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, callLabel, iCursor);
-                  if(!firstBRCToOOL)
-                     {
-                     firstBRCToOOL = iCursor;
-                     }
-                  else
-                     {
-                     secondBRCToOOL = iCursor;
-                     }
-                  }
+               generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, exitOOLLabel,cursor);
+               zeroSizeArrayChckOOL->swapInstructionListsWithCompilation();
                }
             else
                {
-               iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, exitOOLLabel, iCursor);
-               iCursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, tmp,
-                     TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() - TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), iCursor);
+               iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, callLabel, iCursor);
+               if(!firstBRCToOOL)
+                  {
+                  firstBRCToOOL = iCursor;
+                  }
+               else
+                  {
+                  secondBRCToOOL = iCursor;
+                  }
                }
-
             }
          else
             {

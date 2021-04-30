@@ -1887,7 +1887,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
             buildDirectCall(callNode, realMethodSymRef,  dependencies, sizeOfArguments);
 
-            if (comp()->getOption(TR_DisableOOL) || !virtualLabel)
+            if (!virtualLabel)
                generateS390BranchInstruction(cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, callNode, doneVirtualLabel);
             }
          }
@@ -1896,17 +1896,14 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
       if ( virtualLabel )
          {
-         if (!comp()->getOption(TR_DisableOOL))
-            {
-            traceMsg (comp(), "OOL vcall: generating Vcall dispatch sequence\n");
-            //Using OOL but generating code manually
-            outlinedSlowPath = new (cg()->trHeapMemory()) TR_S390OutOfLineCodeSection(vcallLabel,doneVirtualLabel,cg());
-            cg()->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
-            outlinedSlowPath->swapInstructionListsWithCompilation();
-            }
+         traceMsg (comp(), "OOL vcall: generating Vcall dispatch sequence\n");
+         //Using OOL but generating code manually
+         outlinedSlowPath = new (cg()->trHeapMemory()) TR_S390OutOfLineCodeSection(vcallLabel,doneVirtualLabel,cg());
+         cg()->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
+         outlinedSlowPath->swapInstructionListsWithCompilation();
 
          TR::Instruction * temp = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, vcallLabel);
-         if (debugObj && !comp()->getOption(TR_DisableOOL))
+         if (debugObj)
             {
             debugObj->addInstructionComment(temp, "Denotes start of OOL vcall sequence");
             }
