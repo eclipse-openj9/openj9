@@ -670,8 +670,6 @@ public:
    virtual bool               javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result);
    virtual int32_t            getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed);
 
-   virtual int32_t getCompInfo(char *processorName, int32_t stringLength) { return -1; }
-
    virtual bool traceableMethodsCanBeInlined() { return false; }
 
    bool isAnyMethodTracingEnabled(TR_OpaqueMethodBlock *method);
@@ -1248,8 +1246,6 @@ public:
 
    // for replay
    virtual TR_OpaqueClassBlock * getClassFromMethodBlock(TR_OpaqueMethodBlock *);
-
-   virtual int32_t getCompInfo(char *processorName, int32_t stringLength);
 
    virtual const char *       sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory);
 
