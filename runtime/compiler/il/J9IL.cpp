@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +28,6 @@
 
 TR::ILOpCodes J9::IL::opCodesForConst[] =
    {
-   TR::dfconst,    // TR::DecimalFloat
-   TR::ddconst,    // TR::DecimalDouble
-   TR::deconst,    // TR::DecimalLongDouble
    TR::BadILOp,    // TR::PackedDecimal
    TR::BadILOp,    // TR::ZonedDecimal
    TR::BadILOp,    // TR::ZonedDecimalSignLeadingEmbedded
@@ -43,9 +40,6 @@ TR::ILOpCodes J9::IL::opCodesForConst[] =
 
 TR::ILOpCodes J9::IL::opCodesForDirectLoad[] =
    {
-   TR::dfload,     // TR::DecimalFloat
-   TR::ddload,     // TR::DecimalDouble
-   TR::deload,     // TR::DecimalLongDouble
    TR::pdload,     // TR::PackedDecimal
    TR::zdload,     // TR::ZonedDecimal
    TR::zdsleLoad,  // TR::ZonedDecimalSignLeadingEmbedded
@@ -58,9 +52,6 @@ TR::ILOpCodes J9::IL::opCodesForDirectLoad[] =
 
 TR::ILOpCodes J9::IL::opCodesForDirectStore[] =
    {
-   TR::dfstore,    // TR::DecimalFloat
-   TR::ddstore,    // TR::DecimalDouble
-   TR::destore,    // TR::DecimalLongDouble
    TR::pdstore,    // TR::PackedDecimal
    TR::zdstore,    // TR::ZonedDecimal
    TR::zdsleStore, // TR::ZonedDecimalSignLeadingEmbedded
@@ -73,9 +64,6 @@ TR::ILOpCodes J9::IL::opCodesForDirectStore[] =
 
 TR::ILOpCodes J9::IL::opCodesForIndirectLoad[] =
    {
-   TR::dfloadi,    // TR::DecimalFloat
-   TR::ddloadi,    // TR::DecimalDouble
-   TR::deloadi,    // TR::DecimalLongDouble
    TR::pdloadi,    // TR::PackedDecimal
    TR::zdloadi,    // TR::ZonedDecimal
    TR::zdsleLoadi, // TR::ZonedDecimalSignLeadingEmbedded
@@ -88,9 +76,6 @@ TR::ILOpCodes J9::IL::opCodesForIndirectLoad[] =
 
 TR::ILOpCodes J9::IL::opCodesForIndirectStore[] =
    {
-   TR::dfstorei,    // TR::DecimalFloat
-   TR::ddstorei,    // TR::DecimalDouble
-   TR::destorei,    // TR::DecimalLongDouble
    TR::pdstorei,    // TR::PackedDecimal
    TR::zdstorei,    // TR::ZonedDecimal
    TR::zdsleStorei, // TR::ZonedDecimalSignLeadingEmbedded
@@ -103,9 +88,6 @@ TR::ILOpCodes J9::IL::opCodesForIndirectStore[] =
 
 TR::ILOpCodes J9::IL::opCodesForIndirectArrayLoad[] =
    {
-   TR::dfloadi,    // TR::DecimalFloat
-   TR::ddloadi,    // TR::DecimalDouble
-   TR::deloadi,    // TR::DecimalLongDouble
    TR::pdloadi,    // TR::PackedDecimal
    TR::zdloadi,    // TR::ZonedDecimal
    TR::zdsleLoadi, // TR::ZonedDecimalSignLeadingEmbedded
@@ -118,9 +100,6 @@ TR::ILOpCodes J9::IL::opCodesForIndirectArrayLoad[] =
 
 TR::ILOpCodes J9::IL::opCodesForIndirectArrayStore[] =
    {
-   TR::dfstorei,    // TR::DecimalFloat
-   TR::ddstorei,    // TR::DecimalDouble
-   TR::destorei,    // TR::DecimalLongDouble
    TR::pdstorei,    // TR::PackedDecimal
    TR::zdstorei,    // TR::ZonedDecimal
    TR::zdsleStorei, // TR::ZonedDecimalSignLeadingEmbedded
@@ -133,9 +112,6 @@ TR::ILOpCodes J9::IL::opCodesForIndirectArrayStore[] =
 
 TR::ILOpCodes J9::IL::opCodesForRegisterLoad[] =
    {
-   TR::dfRegLoad,  // TR::DecimalFloat
-   TR::ddRegLoad,  // TR::DecimalDouble
-   TR::deRegLoad,  // TR::DecimalLongDouble
    TR::BadILOp,    // TR::PackedDecimal
    TR::BadILOp,    // TR::ZonedDecimal
    TR::BadILOp,    // TR::ZonedDecimalSignLeadingEmbedded
@@ -148,9 +124,6 @@ TR::ILOpCodes J9::IL::opCodesForRegisterLoad[] =
 
 TR::ILOpCodes J9::IL::opCodesForRegisterStore[] =
    {
-   TR::dfRegStore, // TR::DecimalFloat
-   TR::ddRegStore, // TR::DecimalDouble
-   TR::deRegStore, // TR::DecimalLongDouble
    TR::BadILOp,    // TR::PackedDecimal
    TR::BadILOp,    // TR::ZonedDecimal
    TR::BadILOp,    // TR::ZonedDecimalSignLeadingEmbedded
@@ -163,9 +136,6 @@ TR::ILOpCodes J9::IL::opCodesForRegisterStore[] =
 
 TR::ILOpCodes J9::IL::opCodesForCompareEquals[] =
    {
-   TR::dfcmpeq,    // TR::DecimalFloat
-   TR::ddcmpeq,    // TR::DecimalDouble
-   TR::decmpeq,    // TR::DecimalLongDouble
    TR::pdcmpeq,    // TR::PackedDecimal
    TR::BadILOp,    // TR::ZonedDecimal
    TR::BadILOp,    // TR::ZonedDecimalSignLeadingEmbedded
@@ -178,9 +148,6 @@ TR::ILOpCodes J9::IL::opCodesForCompareEquals[] =
 
 TR::ILOpCodes J9::IL::opCodesForCompareNotEquals[] =
    {
-   TR::dfcmpne,    // TR::DecimalFloat
-   TR::ddcmpne,    // TR::DecimalDouble
-   TR::decmpne,    // TR::DecimalLongDouble
    TR::pdcmpne,    // TR::PackedDecimal
    TR::BadILOp,    // TR::ZonedDecimal
    TR::BadILOp,    // TR::ZonedDecimalSignLeadingEmbedded
@@ -236,9 +203,6 @@ J9::IL::opCodeForCorrespondingIndirectLoad(TR::ILOpCodes loadOpCode)
 
    switch (loadOpCode)
       {
-      case TR::dfloadi: return TR::dfstorei;
-      case TR::ddloadi: return TR::ddstorei;
-      case TR::deloadi: return TR::destorei;
       case TR::pdloadi: return TR::pdstorei;
       case TR::zdloadi: return TR::zdstorei;
       case TR::zdsleLoadi: return TR::zdsleStorei;
@@ -266,9 +230,6 @@ J9::IL::opCodeForCorrespondingIndirectStore(TR::ILOpCodes storeOpCode)
 
    switch (storeOpCode)
       {
-      case TR::dfstorei: return TR::dfloadi;
-      case TR::ddstorei: return TR::ddloadi;
-      case TR::destorei: return TR::deloadi;
       case TR::pdstorei: return TR::pdloadi;
       case TR::zdstorei: return TR::zdloadi;
       case TR::zdsleStorei: return TR::zdsleLoadi;
@@ -295,9 +256,6 @@ J9::IL::opCodeForCorrespondingDirectLoad(TR::ILOpCodes loadOpCode)
 
    switch (loadOpCode)
       {
-      case TR::dfload: return TR::dfstore;
-      case TR::ddload: return TR::ddstore;
-      case TR::deload: return TR::destore;
       case TR::pdload: return TR::pdstore;
       case TR::zdload: return TR::zdstore;
       case TR::zdsleLoad: return TR::zdsleStore;
@@ -325,9 +283,6 @@ J9::IL::opCodeForCorrespondingDirectStore(TR::ILOpCodes storeOpCode)
 
    switch (storeOpCode)
       {
-      case TR::dfstore: return TR::dfload;
-      case TR::ddstore: return TR::ddload;
-      case TR::destore: return TR::deload;
       case TR::pdstore: return TR::pdload;
       case TR::zdstore: return TR::zdload;
       case TR::zdsleStore: return TR::zdsleLoad;

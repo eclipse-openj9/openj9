@@ -110,17 +110,6 @@ class TR_J9MethodBase : public TR::Method
 public:
    TR_ALLOC(TR_Memory::Method)
 
-   static bool                     isBigDecimalNameAndSignature(J9UTF8 *name, J9UTF8 *signature);
-   static bool                     isBigDecimalMethod(J9ROMMethod * romMethod, J9ROMClass * romClass);
-   static bool                     isBigDecimalMethod(J9UTF8 * className, J9UTF8 * name, J9UTF8 * signature);
-   static bool                     isBigDecimalMethod(J9Method * j9Method);
-   bool                            isBigDecimalMethod( TR::Compilation * comp = NULL);
-   static bool                     isBigDecimalConvertersNameAndSignature(J9UTF8 *name, J9UTF8 *signature);
-   static bool                     isBigDecimalConvertersMethod(J9ROMMethod * romMethod, J9ROMClass * romClass);
-   static bool                     isBigDecimalConvertersMethod(J9UTF8 * className, J9UTF8 * name, J9UTF8 * signature);
-   static bool                     isBigDecimalConvertersMethod(J9Method * j9Method);
-   bool                            isBigDecimalConvertersMethod( TR::Compilation * comp = NULL);
-
    static bool                     isUnsafeGetPutWithObjectArg(TR::RecognizedMethod rm);
    static bool                     isUnsafeGetPutBoolean(TR::RecognizedMethod rm);
    static bool                     isUnsafePut(TR::RecognizedMethod rm);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,30 +33,27 @@ namespace J9 {
 #define TR_Bad TR::BadILOp
 
 static TR::ILOpCodes conversionMapOMR2TR[TR::NumOMRTypes][TR::NumTypes-TR::NumOMRTypes] =
-//                   DecFlt    DecDbl    DecLD     PackedDec ZonedDec ZDecSLE ZDecSLS ZDecSTS UniDec  UniDecSL UniDecST
+//                   PackedDec ZonedDec ZDecSLE ZDecSLS ZDecSTS UniDec  UniDecSL UniDecST
    {
-/* NoType */       { TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // NoType
-/* Int8 */         { TR::b2df, TR::b2dd, TR::b2de, TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Int8
-/* Int16 */        { TR::s2df, TR::s2dd, TR::s2de, TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Int16
-/* Int32 */        { TR::i2df, TR::i2dd, TR::i2de, TR::i2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Int32
-/* Int64 */        { TR::l2df, TR::l2dd, TR::l2de, TR::l2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Int64
-/* Float */        { TR::f2df, TR::f2dd, TR::f2de, TR::f2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Float
-/* Double */       { TR::d2df, TR::d2dd, TR::d2de, TR::d2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Double
-/* Address */      { TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Address
-/* VectorInt8 */   { TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt8
-/* VectorInt16*/   { TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt16
-/* VectorInt32*/   { TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt32
-/* VectorInt64*/   { TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt64
-/* VectorFloat*/   { TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorFloat
-/* VectorDouble*/  { TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad }   // VectorDouble
+/* NoType */       { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // NoType
+/* Int8 */         { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Int8
+/* Int16 */        { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Int16
+/* Int32 */        { TR::i2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Int32
+/* Int64 */        { TR::l2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Int64
+/* Float */        { TR::f2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Float
+/* Double */       { TR::d2pd, TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Double
+/* Address */      { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // Address
+/* VectorInt8 */   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt8
+/* VectorInt16*/   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt16
+/* VectorInt32*/   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt32
+/* VectorInt64*/   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorInt64
+/* VectorFloat*/   { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad },  // VectorFloat
+/* VectorDouble*/  { TR_Bad,   TR_Bad,  TR_Bad, TR_Bad, TR_Bad, TR_Bad, TR_Bad,  TR_Bad }   // VectorDouble
    };
 
 static TR::ILOpCodes conversionMapTR2OMR[TR::NumTypes-TR::NumOMRTypes][TR::NumOMRTypes] =
 //                                       No      Int8     Int16    Int32     Int64   Float     Double    Addr     VectorInt8 VectorInt16 VectorInt32 VectorInt64 VectorFloat VectorDouble
    {
-/* DecimalFloat */                     { TR_Bad, TR::df2b,TR::df2s,TR::df2i,TR::df2l,TR::df2f, TR::df2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // DecimalFloat
-/* DecimalDouble */                    { TR_Bad, TR::dd2b,TR::dd2s,TR::dd2i,TR::dd2l,TR::dd2f, TR::dd2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // DecimalDouble
-/* DecimalLongDouble */                { TR_Bad, TR::de2b,TR::de2s,TR::de2i,TR::de2l,TR::de2f, TR::de2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // DecimalLongD
 /* PackedDecimal */                    { TR_Bad, TR_Bad,  TR_Bad,  TR::pd2i,TR::pd2l,TR::pd2f, TR::pd2d, TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // PackedDecima
 /* ZonedDecimal */                     { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // ZonedDecimal
 /* ZonedDecimalSignLeadingEmbedded */  { TR_Bad, TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,  TR_Bad,   TR_Bad,   TR_Bad,  TR_Bad,    TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad,     TR_Bad },  // ZonedDecimal
@@ -68,19 +65,16 @@ static TR::ILOpCodes conversionMapTR2OMR[TR::NumTypes-TR::NumOMRTypes][TR::NumOM
    };
 
 static TR::ILOpCodes conversionMapTR2TR[TR::NumTypes-TR::NumOMRTypes][TR::NumTypes-TR::NumOMRTypes] =
-//                                       DecFlt    DecDbl    DecLD      PackedDec    ZonedDec     ZDecSLE      ZDecSLS      ZDecSTS      UniDec      UniDecSL    UniDecST
+//                                       PackedDec    ZonedDec     ZDecSLE      ZDecSLS      ZDecSTS      UniDec      UniDecSL    UniDecST
    {
-/* DecimalFloat */                     { TR_Bad,   TR::df2dd,TR::df2de, TR::df2pd,   TR::df2zd,   TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
-/* DecimalDouble */                    { TR::dd2df,TR_Bad,   TR::dd2de, TR::dd2pd,   TR::dd2zd,   TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
-/* DecimalLongDouble */                { TR::de2df,TR::de2dd,TR_Bad,    TR::de2pd,   TR::de2zd,   TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
-/* PackedDecimal */                    { TR::pd2df,TR::pd2dd,TR::pd2de, TR_Bad,      TR::pd2zd,   TR_Bad,      TR::pd2zdsls,TR::pd2zdsts,TR::pd2ud,  TR::pd2udsl,TR::pd2udst },
-/* ZonedDecimal */                     { TR::zd2df,TR::zd2dd,TR::zd2de, TR::zd2pd,   TR_Bad,      TR::zd2zdsle,TR::zd2zdsls,TR::zd2zdsts,TR_Bad,     TR_Bad,     TR_Bad      },
-/* ZonedDecimalSignLeadingEmbedded */  { TR_Bad,   TR_Bad,   TR_Bad,    TR_Bad,      TR::zdsle2zd,TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
-/* ZonedDecimalSignLeadingSeparate*/   { TR_Bad,   TR_Bad,   TR_Bad,    TR::zdsls2pd,TR::zdsls2zd,TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
-/* ZonedDecimalSignTrailingSeparate*/  { TR_Bad,   TR_Bad,   TR_Bad,    TR::zdsts2pd,TR::zdsts2zd,TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
-/* UnicodeDecimal */                   { TR_Bad,   TR_Bad,   TR_Bad,    TR::ud2pd,   TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
-/* UnicodeDecimalSignLeading */        { TR_Bad,   TR_Bad,   TR_Bad,    TR::udsl2pd, TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,      TR::udsl2ud,TR_Bad,     TR_Bad      },
-/* UnicodeDecimalSignTrailing */       { TR_Bad,   TR_Bad,   TR_Bad,    TR::udst2pd, TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,      TR::udst2ud,TR_Bad,     TR_Bad      }
+/* PackedDecimal */                    { TR_Bad,      TR::pd2zd,   TR_Bad,      TR::pd2zdsls,TR::pd2zdsts,TR::pd2ud,  TR::pd2udsl,TR::pd2udst },
+/* ZonedDecimal */                     { TR::zd2pd,   TR_Bad,      TR::zd2zdsle,TR::zd2zdsls,TR::zd2zdsts,TR_Bad,     TR_Bad,     TR_Bad      },
+/* ZonedDecimalSignLeadingEmbedded */  { TR_Bad,      TR::zdsle2zd,TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
+/* ZonedDecimalSignLeadingSeparate*/   { TR::zdsls2pd,TR::zdsls2zd,TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
+/* ZonedDecimalSignTrailingSeparate*/  { TR::zdsts2pd,TR::zdsts2zd,TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
+/* UnicodeDecimal */                   { TR::ud2pd,   TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,     TR_Bad,     TR_Bad      },
+/* UnicodeDecimalSignLeading */        { TR::udsl2pd, TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,      TR::udsl2ud,TR_Bad,     TR_Bad      },
+/* UnicodeDecimalSignTrailing */       { TR::udst2pd, TR_Bad,      TR_Bad,      TR_Bad,      TR_Bad,      TR::udst2ud,TR_Bad,     TR_Bad      }
    };
 
 #undef TR_Bad
@@ -208,9 +202,6 @@ J9::DataType::getDataTypeConversion(TR::DataType t1, TR::DataType t2)
 
 static int32_t J9DataTypeSizes[] =
    {
-   4,    // TR::DecimalFloat
-   8,    // TR::DecimalDouble
-   16,   // TR::DecimalLongDouble
    0,    // TR::PackedDecimal   -- The size of a BCD type can vary. The actual size for a particular symbol is in _size
    0,    // TR::ZonedDecimal
    0,    // TR::ZonedDecimalSignLeadingEmbedded
@@ -246,9 +237,6 @@ J9::DataType::setSize(TR::DataType dt, int32_t newSize)
 
 static const char * J9DataTypeNames[] =
    {
-   "DecimalFloat",
-   "DecimalDouble",
-   "DecimalLongDouble",
    "PackedDecimal",
    "ZonedDecimal",
    "ZonedDecimalSignLeadingEmbedded",
@@ -274,9 +262,6 @@ J9::DataType::getName(TR::DataType dt)
 
 static const char *J9DataTypePrefixes[] =
    {
-   "DF",    // TR::DecimalFloat
-   "DD",    // TR::DecimalDouble
-   "DE",    // TR::DecimalLongDouble
    "PD",    // TR::PackedDecimal
    "ZD",    // TR::ZonedDecimal
    "ZDSLE", // TR::ZonedDecimalSignLeadingEmbedded
@@ -471,27 +456,11 @@ J9::DataType::isValidBCDLiteral(char *lit, size_t litSize, TR::DataType dt, bool
       }
    }
 
-TR::DataType
-J9::DataType::getDFPTypeFromPrecision(int32_t precision)
-   {
-   if (precision < 1 || precision > J9::DataType::getMaxExtendedDFPPrecision())
-      return  TR::NoType;
-   else if (precision <= J9::DataType::getMaxShortDFPPrecision())
-      return  TR::DecimalFloat;
-   else if (precision <= J9::DataType::getMaxLongDFPPrecision())
-      return  TR::DecimalDouble;
-   else
-      return  TR::DecimalLongDouble;
-   }
-
 bool
 J9::DataType::canGetMaxPrecisionFromType()
    {
    switch (self()->getDataType())
       {
-      case TR::DecimalFloat:
-      case TR::DecimalDouble:
-      case TR::DecimalLongDouble:
       case TR::PackedDecimal:
       case TR::ZonedDecimal:
       case TR::ZonedDecimalSignLeadingEmbedded:
@@ -511,9 +480,6 @@ J9::DataType::getMaxPrecisionFromType()
    {
    switch (self()->getDataType())
       {
-      case TR::DecimalFloat: return TR::DataType::getMaxShortDFPPrecision();
-      case TR::DecimalDouble: return TR::DataType::getMaxLongDFPPrecision();
-      case TR::DecimalLongDouble: return TR::DataType::getMaxExtendedDFPPrecision();
       case TR::PackedDecimal:
       case TR::ZonedDecimal:
       case TR::ZonedDecimalSignLeadingEmbedded:

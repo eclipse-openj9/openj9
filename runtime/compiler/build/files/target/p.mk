@@ -50,7 +50,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
 
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/p/codegen/CallSnippet.cpp \
-    compiler/p/codegen/DFPTreeEvaluator.cpp \
     compiler/p/codegen/ForceRecompilationSnippet.cpp \
     compiler/p/codegen/GenerateInstructions.cpp \
     compiler/p/codegen/InterfaceCastSnippet.cpp \

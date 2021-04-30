@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,7 @@
 
 /* data types in TR */
 FirstJ9Type = NumOMRTypes,
-DecimalFloat = FirstJ9Type,
-DecimalDouble,
-DecimalLongDouble,
-FirstBCDType,    // do not insert any non-BCD types between FirstBCDType and LastBCDType
+FirstBCDType = FirstJ9Type,    // do not insert any non-BCD types between FirstBCDType and LastBCDType
 PackedDecimal = FirstBCDType,
 FirstZonedType,
 ZonedDecimal = FirstZonedType,

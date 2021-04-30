@@ -54,17 +54,6 @@
 #include "env/j9methodServer.hpp"
 #endif
 
-#define BDCLASSLEN 20
-#define BDCLASS "java/math/BigDecimal"
-#define BDFIELDLEN 6
-#define BDFIELD "laside"
-#define BDDFPHWAVAIL "java/math/BigDecimal.DFPHWAvailable()Z"
-#define BDDFPHWAVAILLEN 38
-#define BDDFPPERFORMHYS "java/math/BigDecimal.DFPPerformHysteresis()Z"
-#define BDDFPPERFORMHYSLEN 44
-#define BDDFPUSEDFP "java/math/BigDecimal.DFPUseDFP()Z"
-#define BDDFPUSEDFPLEN 33
-
 #define JAVA_SERIAL_CLASS_NAME "Ljava/io/ObjectInputStream;"
 #define JAVA_SERIAL_CLASS_NAME_LEN 27
 #define JAVA_SERIAL_CALLEE_METHOD_NAME_LEN 10
@@ -94,17 +83,6 @@
 #define ORB_REPLACE_METHOD_SIG "(Ljava/io/ObjectInputStream;Ljava/lang/Class;)Ljava/lang/Object;"
 #define ORB_REPLACE_METHOD_NAME_LEN 20
 #define ORB_REPLACE_METHOD_NAME "redirectedReadObject"
-
-#define BD_DFP_HW_AVAILABLE_FLAG "DFP_HW_AVAILABLE"
-#define BD_DFP_HW_AVAILABLE_FLAG_LEN 16
-#define BD_DFP_HW_AVAILABLE_FLAG_SIG "Z"
-#define BD_DFP_HW_AVAILABLE_FLAG_SIG_LEN 1
-#define BD_DFP_HW_AVAILABLE_GET_STATIC_FIELD_ADDR_FLAG 4
-
-#define BD_EXT_FACILITY_AVAILABLE "com/ibm/dataaccess/DecimalData.DFPFacilityAvailable()Z"
-#define BD_EXT_FACILITY_AVAILABLE_LEN 57
-#define BD_EXT_USE_DFP "com/ibm/dataaccess/DecimalData.DFPUseDFP()Z"
-#define BD_EXT_USE_DFP_LEN 46
 
 #define JSR292_ILGenMacros    "java/lang/invoke/ILGenMacros"
 #define JSR292_placeholder    "placeholder"
@@ -4063,26 +4041,11 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
       return node;
       }
 
-   // if optimizing for 390 or PPC hw that supports DFP instructions
-   // make sure to replace 3 recognized calls with load constants
-
-   /* Strategy on DFP HW is as follows:
-
-      -Xdfpbd  -Xhysteresis  Meaning                DFPHWAvail     DFPPerformHys     DFPUseDFP
-      ---------------------------------------------------------------------------------------
-      0        0             DisableDFP+DisableHys  0              0                 n/a             (default)
-      0        1             invalid                n/a            n/a               n/a             (invalid)
-      1        0             EnableDFP+DisableHys   1              0                 1               (enableDFP, disableHys)
-      1        1             EnableDFP+EnableHys    1              1                 n/a             (enableDFP, enableHys)
-
-    */
-
 #define DAA_PRINT(a) \
 case a: \
    if(trace()) \
       traceMsg(comp(), "DAA Method found: %s\n", #a); \
 break
-
 
    //print out the method name and ILCode from the
    switch (symbol->getRecognizedMethod())
@@ -4181,155 +4144,6 @@ break
 
       loadConstant(TR::iconst, constVal);
       return NULL;
-      }
-
-   if (!comp()->compileRelocatableCode())
-      {
-      bool dfpbd = comp()->getOption(TR_DisableHysteresis);
-      bool nodfpbd =  comp()->getOption(TR_DisableDFP);
-      bool isPOWERDFP = comp()->target().cpu.isPower() && comp()->target().cpu.supportsDecimalFloatingPoint();
-      bool is390DFP =
-#ifdef TR_TARGET_S390
-         comp()->target().cpu.isZ() && comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP);
-#else
-         false;
-#endif
-
-      int32_t constToLoad=0;
-
-      if (isPOWERDFP || is390DFP)
-         {
-         if (((symbol->getRecognizedMethod() == TR::java_math_BigDecimal_DFPHWAvailable) ||
-              (symbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_DFPFacilityAvailable) || //disable for DAA DFP
-             (!strncmp(calledMethod->signature(comp()->trMemory(), stackAlloc), BDDFPHWAVAIL, BDDFPHWAVAILLEN)))
-             )
-            {
-            int32_t * dfpHWAvailableFlag = NULL;
-            if (!fej9()->isCachedBigDecimalClassFieldAddr())
-               {
-               TR_OpaqueClassBlock * classBlock = fej9()->getClassFromSignature("java/math/BigDecimal", 20, comp()->getCurrentMethod());
-
-               // BigDecimal class should be loaded if called from itself.
-               // DecimalData creates a BigDecimal in its <clinit>, so the class should be loaded too.
-               TR_ASSERT(NULL != classBlock, "java/lang/BigDecimal is not loaded before com/ibm/dataaccess/DecimalData.");
-
-               if (NULL == classBlock)
-                  {
-                  loadConstant(TR::iconst, constToLoad);
-                  return NULL;
-                  }
-               TR_PersistentClassInfo * classInfo = (comp()->getPersistentInfo()->getPersistentCHTable() == NULL) ?
-                  NULL :
-                  comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(classBlock, comp());
-               if (classInfo && classInfo->isInitialized() && !comp()->compileRelocatableCode())
-                  {
-                  dfpHWAvailableFlag = (int32_t *)fej9()->getStaticFieldAddress(classBlock,
-                                              (unsigned char *)BD_DFP_HW_AVAILABLE_FLAG, BD_DFP_HW_AVAILABLE_FLAG_LEN,
-                                              (unsigned char *)BD_DFP_HW_AVAILABLE_FLAG_SIG, BD_DFP_HW_AVAILABLE_FLAG_SIG_LEN);
-                  TR_ASSERT(dfpHWAvailableFlag, "dfpHWAvailableFlag is null in IL walker\n");
-                  if (dfpHWAvailableFlag && *dfpHWAvailableFlag)
-                     {
-                     constToLoad = 1;
-                     }
-                  else if (dfpHWAvailableFlag == NULL)
-                     {
-                     comp()->failCompilation<TR::ILGenFailure>("dfpHWAvailableFlag is null in IL walker\n");
-                     }
-
-                  fej9()->setBigDecimalClassFieldAddr(dfpHWAvailableFlag);
-                  fej9()->setCachedBigDecimalClassFieldAddr();
-                  }
-               }
-            else
-               {
-               dfpHWAvailableFlag = fej9()->getBigDecimalClassFieldAddr();
-               if (dfpHWAvailableFlag && *dfpHWAvailableFlag)
-                  {
-                  constToLoad = 1;
-                  }
-               else if (dfpHWAvailableFlag == NULL)
-                  {
-                  comp()->failCompilation<TR::ILGenFailure>("dfpHWAvailableFlag is null from cache");
-                  }
-               }
-
-            loadConstant(TR::iconst, constToLoad);
-            return NULL;
-            }
-         else if ((symbol->getRecognizedMethod() == TR::java_math_BigDecimal_DFPPerformHysteresis) ||
-                 (!strncmp(calledMethod->signature(comp()->trMemory(), stackAlloc), BDDFPPERFORMHYS, BDDFPPERFORMHYSLEN)))
-            {
-            if ((!dfpbd && !nodfpbd) || (dfpbd && nodfpbd))
-               constToLoad = 1;
-            loadConstant(TR::iconst, constToLoad);
-            return NULL;
-            }
-         else if ((symbol->getRecognizedMethod() == TR::java_math_BigDecimal_DFPUseDFP) ||
-              (!strncmp(calledMethod->signature(comp()->trMemory(), stackAlloc), BDDFPUSEDFP, BDDFPUSEDFPLEN)))
-            {
-            if (dfpbd && !nodfpbd)
-               {
-               constToLoad = 1;
-               loadConstant(TR::iconst, constToLoad);
-               return NULL;
-               }
-            else if (!dfpbd && nodfpbd)
-               {
-               loadConstant(TR::iconst, constToLoad);
-               return NULL;
-               }
-            }
-         else if (symbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_DFPUseDFP)
-            {
-            if (dfpbd && !nodfpbd)
-               {
-               constToLoad = 1;
-               loadConstant(TR::iconst, constToLoad);
-               return NULL;
-               }
-            else if (!dfpbd && nodfpbd)
-               {
-               loadConstant(TR::iconst, constToLoad);
-               return NULL;
-               }
-            else
-               {
-               // load the hys_type in BigDecimal
-               TR_OpaqueClassBlock * clazz = fej9()->getClassFromSignature("java/math/BigDecimal", 20, comp()->getCurrentMethod());
-
-               // DecimalData creates a BigDecimal in its <clinit>, so the class should be loaded.
-               TR_ASSERT(NULL != clazz, "java/lang/BigDecimal is not loaded before com/ibm/dataaccess/DecimalData.");
-
-               if (NULL == clazz)
-                  {
-                  loadConstant(TR::iconst, constToLoad);
-                  return NULL;
-                  }
-
-               // Find the equivalent call in BigDecimal class, and redirect this call there.
-               TR_ScratchList<TR_ResolvedMethod> bdMethods(trMemory());
-               fej9()->getResolvedMethods(trMemory(), clazz, &bdMethods);
-               ListIterator<TR_ResolvedMethod> bdit(&bdMethods);
-               TR_ResolvedMethod * method = NULL;
-               for (method = bdit.getCurrent(); method; method = bdit.getNext()) {
-                  const char *sig = method->signature(comp()->trMemory());
-                  int32_t len = strlen(sig);
-                  if (BDDFPUSEDFPLEN == len && !strncmp(sig, BDDFPUSEDFP, BDDFPUSEDFPLEN)) {
-                     break;
-                     }
-                  }
-               TR_ASSERT(NULL != method, "Unable to find DPFUseDPF method in java/lang/BigDecimal");
-
-               TR::ILOpCodes callOpCode = calledMethod->directCallOpCode();
-               TR::Node * targetCallNode = genNodeAndPopChildren(callOpCode, 0, comp()->getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, method, TR::MethodSymbol::Static));
-               handleSideEffect(targetCallNode);
-               genTreeTop(targetCallNode);
-               push(targetCallNode);
-               return targetCallNode;
-               }
-            }
-         }
-
       }
 
     // Can't use recognized methods since it's not enabled on AOT
@@ -5301,30 +5115,6 @@ TR_J9ByteCodeIlGenerator::loadInstance(TR::SymbolReference * symRef)
    TR::ILOpCodes op = _generateReadBarriersForFieldWatch ? comp()->il.opCodeForIndirectReadBarrier(type): comp()->il.opCodeForIndirectLoad(type);
    dummyLoad = load = TR::Node::createWithSymRef(op, 1, 1, address, symRef);
 
-   // loading cleanroom BigDecimal long field?
-   // performed only when DFP isn't disabled, and the target
-   // is DFP enabled (i.e. Power6, zSeries6)
-   if (!comp()->compileRelocatableCode() && !comp()->getOption(TR_DisableDFP) &&
-       ((comp()->target().cpu.isPower() && comp()->target().cpu.supportsDecimalFloatingPoint())
-#ifdef TR_TARGET_S390
-         || (comp()->target().cpu.isZ() && comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP))
-#endif
-         ))
-      {
-      char * className = NULL;
-      className = _methodSymbol->getResolvedMethod()->classNameChars();
-      if (className != NULL && BDCLASSLEN == strlen(className) &&
-             !strncmp(className, BDCLASS, BDCLASSLEN))
-         {
-         int32_t fieldLen=0;
-         char * fieldName =  _methodSymbol->getResolvedMethod()->fieldNameChars(symRef->getCPIndex(), fieldLen);
-         if (fieldName != NULL && BDFIELDLEN == strlen(fieldName) && !strncmp(fieldName, BDFIELD, BDFIELDLEN))
-            {
-            load->setIsBigDecimalLoad();
-            comp()->setContainsBigDecimalLoad(true);
-            }
-         }
-      }
    TR::Node * treeTopNode = 0;
 
    if (symRef->isUnresolved())

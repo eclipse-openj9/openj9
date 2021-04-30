@@ -11182,15 +11182,6 @@ static void inlineArrayCopy_ICF(TR::Node *node, int64_t byteLen, TR::Register *s
    return;
    }
 
-extern TR::Register *inlineBigDecimalConstructor(TR::Node *node, TR::CodeGenerator *cg, bool isLong, bool exp);
-extern TR::Register *inlineBigDecimalBinaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, bool scaled);
-extern TR::Register *inlineBigDecimalDivide(TR::Node * node, TR::CodeGenerator *cg);
-extern TR::Register *inlineBigDecimalRound(TR::Node * node, TR::CodeGenerator *cg);
-extern TR::Register *inlineBigDecimalCompareTo(TR::Node * node, TR::CodeGenerator * cg);
-extern TR::Register *inlineBigDecimalUnaryOp(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::Mnemonic op, bool precision);
-extern TR::Register *inlineBigDecimalSetScale(TR::Node * node, TR::CodeGenerator * cg);
-extern TR::Register *inlineBigDecimalUnscaledValue(TR::Node * node, TR::CodeGenerator * cg);
-
 bool
 J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
@@ -11596,69 +11587,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       return true;
       }
 #endif
-
-   if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) && comp->target().cpu.supportsDecimalFloatingPoint())
-      {
-      if (methodSymbol)
-         {
-         switch (methodSymbol->getMandatoryRecognizedMethod())
-            {
-         case TR::java_math_BigDecimal_DFPIntConstructor:
-            resultReg = inlineBigDecimalConstructor(node, cg, false, false);
-            return true;
-         case TR::java_math_BigDecimal_DFPLongConstructor:
-            resultReg = inlineBigDecimalConstructor(node, cg, true, false);
-            return true;
-         case TR::java_math_BigDecimal_DFPLongExpConstructor:
-            resultReg = inlineBigDecimalConstructor(node, cg, true, true);
-            return true;
-         case TR::java_math_BigDecimal_DFPAdd:
-            resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::dadd, false);
-            return true;
-         case TR::java_math_BigDecimal_DFPSubtract:
-            resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::dsub, false);
-            return true;
-         case TR::java_math_BigDecimal_DFPMultiply:
-            resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::dmul, false);
-            return true;
-         case TR::java_math_BigDecimal_DFPDivide:
-            resultReg = inlineBigDecimalDivide(node, cg);
-            return true;
-         case TR::java_math_BigDecimal_DFPScaledAdd:
-            resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::dadd, true);
-            return true;
-         case TR::java_math_BigDecimal_DFPScaledSubtract:
-            resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::dsub, true);
-            return true;
-         case TR::java_math_BigDecimal_DFPScaledMultiply:
-            resultReg = inlineBigDecimalBinaryOp(node, cg, TR::InstOpCode::dmul, true);
-            return true;
-         case TR::java_math_BigDecimal_DFPRound:
-            resultReg = inlineBigDecimalRound(node, cg);
-            return true;
-         case TR::java_math_BigDecimal_DFPExponent:
-            resultReg = inlineBigDecimalUnaryOp(node, cg, TR::InstOpCode::dxex, false);
-            return true;
-         case TR::java_math_BigDecimal_DFPCompareTo:
-            resultReg = inlineBigDecimalCompareTo(node, cg);
-            return true;
-         case TR::java_math_BigDecimal_DFPBCDDigits:
-            resultReg = inlineBigDecimalUnaryOp(node, cg, TR::InstOpCode::ddedpd, false);
-            return true;
-         case TR::java_math_BigDecimal_DFPSignificance:
-            resultReg = inlineBigDecimalUnaryOp(node, cg, TR::InstOpCode::ddedpd, true);
-            return true;
-         case TR::java_math_BigDecimal_DFPUnscaledValue:
-            resultReg = inlineBigDecimalUnscaledValue(node, cg);
-            return true;
-         case TR::java_math_BigDecimal_DFPSetScale:
-            resultReg = inlineBigDecimalSetScale(node, cg);
-            return true;
-         default:
-            break;
-            }
-         }
-      }
 
    // No method specialization was done.
    //

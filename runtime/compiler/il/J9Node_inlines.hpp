@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,14 +29,14 @@
 float
 J9::Node::getFloat()
    {
-   TR_ASSERT(self()->getOpCodeValue() == TR::fconst || self()->getOpCodeValue() == TR::dfconst, "TR::Node::getFloat: used for a non fconst node");
+   TR_ASSERT(self()->getOpCodeValue() == TR::fconst, "TR::Node::getFloat: used for a non fconst node");
    return OMR::Node::getFloat();
    }
 
 float
 J9::Node::setFloat(float f)
    {
-   TR_ASSERT(self()->getOpCodeValue() == TR::fconst || self()->getOpCodeValue() == TR::dfconst, "TR::Node::setFloat: used for a non fconst node");
+   TR_ASSERT(self()->getOpCodeValue() == TR::fconst, "TR::Node::setFloat: used for a non fconst node");
    return OMR::Node::setFloat(f);
    }
 

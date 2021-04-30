@@ -210,15 +210,6 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
    TR::RecognizedMethod recognizedMethod = _methodSymbol->getRecognizedMethod();
    if (recognizedMethod != TR::unknownMethod)
       {
-      if (recognizedMethod == TR::java_math_BigDecimal_DFPGetHWAvailable)
-         {
-         if (performTransformation(comp(), "O^O IlGenerator: Generate java/math/BigDecimal.DFPGetHWAvailable\n"))
-            {
-            genDFPGetHWAvailable();
-            return true;
-            }
-         }
-
       if (recognizedMethod == TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion && !TR::Compiler->om.canGenerateArraylets())
          {
          if (performTransformation(comp(), "O^O IlGenerator: Generate com/ibm/jit/JITHelpers.supportsIntrinsicCaseConversion\n"))
@@ -1350,52 +1341,6 @@ TR_J9ByteCodeIlGenerator::genJNIIL()
    prependEntryCode(_block);
 
    return true;
-   }
-
-void
-TR_J9ByteCodeIlGenerator::genDFPGetHWAvailable()
-   {
-   static int32_t constToLoad = -1;
-   initialize();
-   int32_t firstIndex = _bcIndex;
-   setIsGenerated(_bcIndex);
-   if (constToLoad == -1)
-      {
-      bool dfpbd = comp()->getOption(TR_DisableHysteresis);
-      bool nodfpbd =  comp()->getOption(TR_DisableDFP);
-      bool isPOWERDFP = comp()->target().cpu.isPower() && comp()->target().cpu.supportsDecimalFloatingPoint();
-
-      bool is390DFP =
-#ifdef TR_TARGET_S390
-         comp()->target().cpu.isZ() && comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_DFP);
-#else
-         false;
-#endif
-
-      if ((isPOWERDFP || is390DFP) && ((!dfpbd && !nodfpbd) || dfpbd))
-         {
-         constToLoad = 1;
-         }
-      else
-         {
-         constToLoad = 0;
-         }
-      }
-
-   loadConstant(TR::iconst, constToLoad);
-
-   setIsGenerated(++_bcIndex);
-   _bcIndex = genReturn(method()->returnOpCode(), method()->isSynchronized());
-   TR::Block * block = blocks(firstIndex);
-   cfg()->addEdge(cfg()->getStart(), block);
-   block->setVisitCount(_blockAddedVisitCount);
-   block->getExit()->getNode()->copyByteCodeInfo(block->getLastRealTreeTop()->getNode());
-   cfg()->insertBefore(block, 0);
-   _bcIndex = 0;
-   _methodSymbol->setFirstTreeTop(blocks(0)->getEntry());
-   prependEntryCode(blocks(0));
-
-   dumpOptDetails(comp(), "\tOverriding default return value with %d.\n", constToLoad);
    }
 
 void

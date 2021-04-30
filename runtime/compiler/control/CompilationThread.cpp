@@ -5988,17 +5988,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
                   isORB = true;
                }
 
-            // compile BigDecimal methods containing DFP stubs synchronously on first compile
-            // requireAsyncCompile will be false on first compile
-
-            if (fe && requireAsyncCompile != TR_yes &&
-                (isORB ||
-                 ((!TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) || !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP)) &&
-                  (TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
-#ifdef TR_TARGET_S390
-                  || TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_DFP)
-#endif
-                  ) && TR_J9MethodBase::isBigDecimalMethod((J9Method *)method))))
+            if (fe && requireAsyncCompile != TR_yes && isORB)
                 async = false;
             }
          }
@@ -7021,17 +7011,6 @@ TR::CompilationInfoPerThreadBase::isMethodIneligibleForAot(J9Method *method)
          0 == memcmp(J9UTF8_DATA(utf8), "isVMDeepCopySupported", 21))
          return true;
       }
-   // don't AOT compile BigD methods, just JIT compile them
-   if ((!TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) && !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP))
-      &&
-      (TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
-#ifdef TR_TARGET_S390
-         || TR::Compiler->target.cpu.supportsFeature(OMR_FEATURE_S390_DFP)
-#endif
-         )
-      && TR_J9MethodBase::isBigDecimalMethod((J9ROMMethod *)romMethod, (J9ROMClass *)romClass)
-   )
-      return true;
    return false;
    }
 

@@ -4261,8 +4261,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
          {
          // Transmute this node into a regLoad
 
-         if ((node->getType().isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit())
-              || node->getType().isLongDouble())
+         if ((node->getType().isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit()))
             {
             if (self()->getDisableLongGRA())
                {
@@ -4273,7 +4272,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                // Endianness affects how longs are passed
                //
                int8_t lowLRI, highLRI;
-               if (self()->comp()->target().cpu.isBigEndian() || node->getType().isLongDouble())
+               if (self()->comp()->target().cpu.isBigEndian())
                   {
                   highLRI = lri;
                   lowLRI  = lri+1;
