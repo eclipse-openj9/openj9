@@ -773,12 +773,34 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
 
       if (vgs->_mutableCallSiteEpoch != TR::KnownObjectTable::UNKNOWN)
          {
-         TR_ResolvedMethod       *specimenMethod = comp()->fej9()->createMethodHandleArchetypeSpecimen(comp()->trMemory(),
-            knot->getPointerLocation(vgs->_mutableCallSiteEpoch), _callerResolvedMethod);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         TR::MethodSymbol::Kinds methodKind = TR::MethodSymbol::Static;
+         TR_OpaqueMethodBlock *targetJ9Method =
+            comp()->fej9()->targetMethodFromMethodHandle(comp(), vgs->_mutableCallSiteEpoch);
+
+         TR_ASSERT_FATAL(
+            targetJ9Method != NULL,
+            "failed to find MCS target (obj%d) LambdaForm method",
+            (int)vgs->_mutableCallSiteEpoch);
+
+         TR_ResolvedMethod *targetMethod = comp()->fej9()->createResolvedMethod(
+            comp()->trMemory(), targetJ9Method, callStack->_method);
+
+         heuristicTrace(
+            inliner->tracer(),
+            "Refine callee of MCS target invokeBasic to %s\n",
+            targetMethod->signature(comp()->trMemory(), stackAlloc));
+#else
+         TR::MethodSymbol::Kinds methodKind = TR::MethodSymbol::ComputedVirtual;
+         TR_ResolvedMethod *targetMethod = comp()->fej9()->createMethodHandleArchetypeSpecimen(
+            comp()->trMemory(),
+            knot->getPointerLocation(vgs->_mutableCallSiteEpoch),
+            _callerResolvedMethod);
+#endif
          TR_CallTarget *target = addTarget(comp()->trMemory(), inliner, vgs,
-            specimenMethod, _receiverClass, heapAlloc);
+            targetMethod, _receiverClass, heapAlloc);
          TR_ASSERT(target , "There should be only one target for TR_MutableCallSite");
-         target->_calleeMethodKind = TR::MethodSymbol::ComputedVirtual;
+         target->_calleeMethodKind = methodKind;
 
          heuristicTrace(
             inliner->tracer(),

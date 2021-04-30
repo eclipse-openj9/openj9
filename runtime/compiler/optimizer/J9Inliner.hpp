@@ -198,6 +198,7 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
       virtual bool inlineMethodEvenForColdBlocks(TR_ResolvedMethod *method);
       virtual bool willBeInlinedInCodeGen(TR::RecognizedMethod method);
       virtual bool canInlineMethodWhileInstrumenting(TR_ResolvedMethod *method);
+      virtual bool shouldRemoveDifferingTargets(TR::Node *callNode);
       virtual bool skipHCRGuardForCallee(TR_ResolvedMethod* callee);
       virtual bool dontPrivatizeArgumentsForRecognizedMethod(TR::RecognizedMethod recognizedMethod);
       virtual bool replaceSoftwareCheckWithHardwareCheck(TR_ResolvedMethod *calleeMethod);

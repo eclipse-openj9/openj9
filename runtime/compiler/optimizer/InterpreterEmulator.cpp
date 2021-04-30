@@ -872,22 +872,43 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
          result = new (trStackMemory()) IconstOperand(0);
          break;
       case TR::java_lang_invoke_MutableCallSite_getTarget:
+      case TR::java_lang_invoke_Invokers_getCallSiteTarget:
          {
-         int argNum = callee->numberOfExplicitParameters();
-         TR::KnownObjectTable::Index receiverIndex = topn(argNum)->getKnownObjectIndex();
-         if (receiverIndex == TR::KnownObjectTable::UNKNOWN)
+         // The CallSite object is always topmost on the stack.
+         TR::KnownObjectTable::Index callSiteIndex = top()->getKnownObjectIndex();
+         if (callSiteIndex == TR::KnownObjectTable::UNKNOWN)
             return NULL;
 
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
-         TR_OpaqueClassBlock *mutableCallsiteClass = callee->classOfMethod();
-         debugTrace(tracer(), "java_lang_invoke_MutableCallSite_target receiver obj%d(*%p) mutableCallsiteClass %p\n", receiverIndex, knot->getPointerLocation(receiverIndex), mutableCallsiteClass);
+         const char * const mcsClassName = "java/lang/invoke/MutableCallSite";
+         const int mcsClassNameLen = (int)strlen(mcsClassName);
+         TR_OpaqueClassBlock *mutableCallsiteClass =
+            fe()->getSystemClassFromClassName(mcsClassName, mcsClassNameLen, true);
+
+         debugTrace(tracer(), "potential MCS target: call site obj%d(*%p) mutableCallsiteClass %p\n", callSiteIndex, knot->getPointerLocation(callSiteIndex), mutableCallsiteClass);
          if (mutableCallsiteClass)
             {
+            if (recognizedMethod != TR::java_lang_invoke_MutableCallSite_getTarget)
+               {
+               TR_OpaqueClassBlock *callSiteType =
+                  fe()->getObjectClassFromKnownObjectIndex(comp(), callSiteIndex);
+               if (callSiteType == NULL)
+                  {
+                  debugTrace(tracer(), "failed to determine concrete CallSite type");
+                  return NULL;
+                  }
+               else if (fe()->isInstanceOf(callSiteType, mutableCallsiteClass, true) != TR_yes)
+                  {
+                  debugTrace(tracer(), "not a MutableCallSite");
+                  return NULL;
+                  }
+               }
+
    #if defined(J9VM_OPT_JITSERVER)
             if (comp()->isOutOfProcessCompilation())
                {
                auto stream = TR::CompilationInfo::getStream();
-               stream->write(JITServer::MessageType::KnownObjectTable_dereferenceKnownObjectField2, mutableCallsiteClass, receiverIndex);
+               stream->write(JITServer::MessageType::KnownObjectTable_dereferenceKnownObjectField2, mutableCallsiteClass, callSiteIndex);
 
                auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*>();
                resultIndex = std::get<0>(recv);
@@ -897,19 +918,19 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
                   {
                   knot->updateKnownObjectTableAtServer(resultIndex, objectPointerReference);
                   }
-               result = new (trStackMemory()) MutableCallsiteTargetOperand(resultIndex, receiverIndex);
+               result = new (trStackMemory()) MutableCallsiteTargetOperand(resultIndex, callSiteIndex);
                }
             else
    #endif /* defined(J9VM_OPT_JITSERVER) */
                {
                TR::VMAccessCriticalSection dereferenceKnownObjectField(comp()->fej9());
                int32_t targetFieldOffset = comp()->fej9()->getInstanceFieldOffset(mutableCallsiteClass, "target", "Ljava/lang/invoke/MethodHandle;");
-               uintptr_t receiverAddress = knot->getPointer(receiverIndex);
+               uintptr_t receiverAddress = knot->getPointer(callSiteIndex);
                TR_OpaqueClassBlock *receiverClass = comp()->fej9()->getObjectClass(receiverAddress);
-               TR_ASSERT_FATAL(comp()->fej9()->isInstanceOf(receiverClass, mutableCallsiteClass, true) == TR_yes, "receiver of mutableCallsite_getTarget must be instance of MutableCallSite (*%p)", knot->getPointerLocation(receiverIndex));
+               TR_ASSERT_FATAL(comp()->fej9()->isInstanceOf(receiverClass, mutableCallsiteClass, true) == TR_yes, "receiver of mutableCallsite_getTarget must be instance of MutableCallSite (*%p)", knot->getPointerLocation(callSiteIndex));
                uintptr_t fieldAddress = comp()->fej9()->getReferenceFieldAt(receiverAddress, targetFieldOffset);
                resultIndex = knot->getOrCreateIndex(fieldAddress);
-               result = new (trStackMemory()) MutableCallsiteTargetOperand(resultIndex, receiverIndex);
+               result = new (trStackMemory()) MutableCallsiteTargetOperand(resultIndex, callSiteIndex);
                }
             }
          }
@@ -1409,6 +1430,10 @@ InterpreterEmulator::visitInvokevirtual()
       TR::Node *callNode = 0;
       TR::ResolvedMethodSymbol *resolvedSymbol = 0;
 
+      Operand *receiver = NULL;
+      if (_iteratorWithState)
+         receiver = topn(_currentCallMethodUnrefined->numberOfExplicitParameters());
+
       if (_currentCallMethod->convertToMethod()->isArchetypeSpecimen() && _currentCallMethod->getMethodHandleLocation())
          {
          callsite = new (comp()->trHeapMemory()) TR_J9MethodHandleCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
@@ -1417,13 +1442,37 @@ InterpreterEmulator::visitInvokevirtual()
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                                                                         _recursionDepth, allconsts);
          }
-      else if (_currentCallMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact)
+      else if (_currentCallMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
+               || (_currentCallMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeBasic
+                   && receiver != NULL && receiver->asMutableCallsiteTargetOperand() != NULL))
          {
-         callsite = new (comp()->trHeapMemory()) TR_J9MutableCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
+         TR_J9MutableCallSite *inlinerMcs = new (comp()->trHeapMemory()) TR_J9MutableCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
                                                       callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
                                                       (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex, _currentCallMethod,
                                                       resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                                                       _recursionDepth, allconsts);
+         if (_currentCallMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeBasic)
+            {
+            // Set the MCS reference location so that TR_J9MutableCallSite
+            // doesn't go rummaging through the trees (with
+            // isMutableCallSiteTargetInvokeExact()) looking for
+            // mcs.target.invokeExact() or mcs.getTarget().invokeExact(). Those
+            // patterns won't be found:
+            // - the final call is invokeBasic(), not invokeExact()
+            // - rather than a load or getTarget() call, the target will come
+            //   from Invokers.getCallSiteTarget() (or, once inlining works for
+            //   dynamic invoker handles, another invokeBasic())
+            //
+            // But there's no need to look through the trees anyway, since the
+            // MCS is already known at this point.
+
+            TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+            MutableCallsiteTargetOperand *mcsOperand = receiver->asMutableCallsiteTargetOperand();
+            TR::KnownObjectTable::Index mcsIndex = mcsOperand->getMutableCallsiteIndex();
+            inlinerMcs->setMCSReferenceLocation(knot->getPointerLocation(mcsIndex));
+            }
+
+         callsite = inlinerMcs;
          }
       else if (isIndirectCall)
          {

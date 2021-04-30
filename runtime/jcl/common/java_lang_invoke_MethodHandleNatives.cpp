@@ -521,9 +521,10 @@ setCallSiteTargetImpl(J9VMThread *currentThread, jobject callsite, jobject targe
 		j9object_t callsiteObject = J9_JNI_UNWRAP_REFERENCE(callsite);
 		j9object_t targetObject = J9_JNI_UNWRAP_REFERENCE(target);
 
+		J9Class *clazz = J9OBJECT_CLAZZ(currentThread, callsiteObject);
 		UDATA offset = (UDATA)vmFuncs->instanceFieldOffset(
 			currentThread,
-			J9OBJECT_CLAZZ(currentThread, callsiteObject),
+			clazz,
 			(U_8*)"target",
 			LITERAL_STRLEN("target"),
 			(U_8*)"Ljava/lang/invoke/MethodHandle;",
@@ -531,7 +532,23 @@ setCallSiteTargetImpl(J9VMThread *currentThread, jobject callsite, jobject targe
 			NULL, NULL, 0);
 		offset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
-		objectAccessBarrier.inlineMixedObjectStoreObject(currentThread, callsiteObject, offset, targetObject, isVolatile);
+
+		/* Check for MutableCallSite modification. */
+		J9JITConfig* jitConfig = currentThread->javaVM->jitConfig;
+		J9UTF8 *clazzNameUTF8 = J9ROMCLASS_CLASSNAME(clazz->romClass);
+		U_8 *clazzName = J9UTF8_DATA(clazzNameUTF8);
+		UDATA clazzLength = J9UTF8_LENGTH(clazzNameUTF8);
+		if (!isVolatile /* MutableCallSite uses setTargetNormal(). */
+		&& NULL != jitConfig
+		&& J9UTF8_LITERAL_EQUALS(clazzName, clazzLength, "java/lang/invoke/MutableCallSite")
+		) {
+			jitConfig->jitSetMutableCallSiteTarget(currentThread, callsiteObject, targetObject);
+		} else {
+			/* There are no runtime assumptions to invalidate (either because
+			 * the call site is not a MutableCallSite, or because the JIT
+			 * compiler is not loaded). */
+			objectAccessBarrier.inlineMixedObjectStoreObject(currentThread, callsiteObject, offset, targetObject, isVolatile);
+		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
