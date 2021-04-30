@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -260,8 +260,8 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 
       includedClasses |= 1 << i;
       _wellKnownClasses.push_back(wkClass);
-      *nextClassChainOffset++ =
-         (uintptr_t)_fej9->sharedCache()->offsetInSharedCacheFromPointer(chain);
+      if (!_fej9->sharedCache()->isPointerInSharedCache(chain, nextClassChainOffset++))
+         SVM_ASSERT_NONFATAL(false, "Failed to get SCC offset for well-known class %s chain %p", name, chain);
       }
 
    *classCount = _wellKnownClasses.size();
