@@ -159,6 +159,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _socketTimeoutMs(2000),
          _clientUID(0),
          _JITServerUseAOTCache(false),
+         _requireJITServer(false),
 #endif /* defined(J9VM_OPT_JITSERVER) */
       OMR::PersistentInfoConnector(pm)
       {}
@@ -334,6 +335,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setClientUID(uint64_t val) { _clientUID = val; }
    bool getJITServerUseAOTCache() const { return _JITServerUseAOTCache; }
    void setJITServerUseAOTCache(bool use) { _JITServerUseAOTCache = use; }
+   bool getRequireJITServer() const { return _requireJITServer; }
+   void setRequireJITServer(bool requireJITServer) { _requireJITServer = requireJITServer; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    private:
@@ -424,6 +427,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
    uint64_t    _clientUID;
    bool        _JITServerUseAOTCache;
+   bool        _requireJITServer;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
