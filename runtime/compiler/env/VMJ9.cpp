@@ -1281,12 +1281,10 @@ void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"");
 
    const char *vendorId;
-   const int32_t size = 100;
-   char processorName[size] = {0};
+   const char* processorName = TR::Compiler->target.cpu.getProcessorName();
 
 #if defined(TR_TARGET_X86)
    vendorId =  TR::Compiler->target.cpu.getX86ProcessorVendorId();
-   getCompInfo(processorName, size);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"Processor Information:");
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Platform Info:%s",processorName);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Vendor:%s",vendorId);
@@ -1297,7 +1295,6 @@ void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
 #if !defined(TR_TARGET_X86) //CrossCompilation, will be removed
 #if defined(TR_TARGET_POWER)
    vendorId = "Unknown";
-   getCompInfo(processorName, size);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"Processor Information:");
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Platform Info:%s", processorName);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     Supports HardwareSQRT:%d", TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_HW_SQRT_FIRST));
@@ -1316,7 +1313,6 @@ void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
 
 #if defined(TR_TARGET_S390)
    vendorId = "IBM";
-   getCompInfo(processorName, size);
    TR_VerboseLog::writeLine(TR_Vlog_INFO, "Processor Information:");
    TR_VerboseLog::writeLine(TR_Vlog_INFO, "        Name: %s", processorName);
    TR_VerboseLog::writeLine(TR_Vlog_INFO, "      Vendor: %s", vendorId);
