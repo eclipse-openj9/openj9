@@ -2219,12 +2219,10 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                break;
 #if defined(J9VM_OPT_JITSERVER)
             case compilationStreamFailure:
-               // This feature TR_RequireJITServer is used when we would like the client to fail when server crashes
-               static char *requireJITServer = feGetEnv("TR_RequireJITServer");
-               if (requireJITServer)
+               // if -XX:+JITServerRequireServer is used, we would like the client to fail when server crashes
+               if (entry->_compInfoPT->getCompilationInfo()->getPersistentInfo()->getRequireJITServer())
                   {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "In mode TR_RequireJITServer, exit JITClient due to unavailable JITServer.");
-                  exit(25);
+                  TR_ASSERT_FATAL(false, "Option -XX:+JITServerRequireServer is used, terminate the JITClient due to unavailable JITServer.");
                   }
             case compilationStreamMessageTypeMismatch:
             case compilationStreamVersionIncompatible:

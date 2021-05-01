@@ -1113,6 +1113,8 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    const char *xxJITServerSSLRootCertsOption = "-XX:JITServerSSLRootCerts=";
    const char *xxJITServerUseAOTCacheOption = "-XX:+JITServerUseAOTCache";
    const char *xxDisableJITServerUseAOTCacheOption = "-XX:-JITServerUseAOTCache";
+   const char *xxRequireJITServerOption = "-XX:+RequireJITServer";
+   const char *xxDisableRequireJITServerOption = "-XX:-RequireJITServer";
 
    int32_t xxJITServerPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerPortOption, 0);
    int32_t xxJITServerTimeoutArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTimeoutOption, 0);
@@ -1121,6 +1123,8 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    int32_t xxJITServerSSLRootCertsArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLRootCertsOption, 0);
    int32_t xxJITServerUseAOTCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerUseAOTCacheOption, 0);
    int32_t xxDisableJITServerUseAOTCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerUseAOTCacheOption, 0);
+   int32_t xxRequireJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxRequireJITServerOption, 0);
+   int32_t xxDisableRequireJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableRequireJITServerOption, 0);
 
    if (xxJITServerPortArgIndex >= 0)
       {
@@ -1128,6 +1132,15 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
       IDATA ret = GET_INTEGER_VALUE(xxJITServerPortArgIndex, xxJITServerPortOption, port);
       if (ret == OPTION_OK)
          compInfo->getPersistentInfo()->setJITServerPort(port);
+      }
+
+   if (xxRequireJITServerArgIndex > xxDisableRequireJITServerArgIndex)
+      {
+      // If a debugging option to require JITServer connection is enabled, increase socket timeout,
+      // to prevent false positives from streams failing due to timeout.
+      // User-provided values still take priority.
+      compInfo->getPersistentInfo()->setRequireJITServer(true);
+      compInfo->getPersistentInfo()->setSocketTimeout(60000);
       }
 
    if (xxJITServerTimeoutArgIndex >= 0)
