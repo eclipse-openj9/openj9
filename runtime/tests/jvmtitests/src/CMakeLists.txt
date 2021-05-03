@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2018, 2020 IBM Corp. and others
+# Copyright (c) 2018, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,10 +187,13 @@ j9vm_add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/fieldwatch/fw001.c
 )
 
-
 target_link_libraries(jvmti_test_src
 	PRIVATE
 		j9vm_interface
 		j9vm_jvmtitest_includes
 		jvmti_test_agent
 )
+
+if(OMR_OS_ZOS)
+	target_compile_options(jvmti_test_src PRIVATE -Wc,DLL,EXPORTALL)
+endif()
