@@ -7847,6 +7847,45 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       {
       genInitObjectHeader(node, clazz, classReg, targetReg, tempReg, monitorSlotIsInitialized, false, cg);
       }
+   TR::Register *discontiguousDataAddrOffsetReg = NULL;
+#ifdef TR_TARGET_64BIT
+   if (isArrayNew)
+      {
+      // Initialize dataAddr field to address of the first array elememt, address following the array header in our case.
+      TR::MemoryReference *dataAddrSlotMR = NULL;
+      TR::MemoryReference *dataAddrMR = NULL;
+      if (TR::Compiler->om.compressObjectReferences() && NULL != sizeReg)
+         { // We need to check sizeReg at runtime to determine correct offset of dataAddr field.
+         if (comp->getOption(TR_TraceCG))
+            traceMsg(comp, "Dealing with compressed refs variable length array.\n");
+
+         discontiguousDataAddrOffsetReg = cg->allocateRegister();
+         generateRegRegInstruction(XORRegReg(), node, discontiguousDataAddrOffsetReg, discontiguousDataAddrOffsetReg, cg);
+         generateRegImmInstruction(CMPRegImm4(), node, sizeReg, 1, cg);
+         generateRegImmInstruction(ADCRegImm4(), node, discontiguousDataAddrOffsetReg, 0, cg);
+         dataAddrMR = generateX86MemoryReference(targetReg, discontiguousDataAddrOffsetReg, 3, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+         dataAddrSlotMR = generateX86MemoryReference(targetReg, discontiguousDataAddrOffsetReg, 3, fej9->getOffsetOfContiguousDataAddrField(), cg);
+         }
+      else if (NULL == sizeReg && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
+         {
+         if (comp->getOption(TR_TraceCG))
+            traceMsg(comp, "Dealing with zero size fixed length array.\n");
+
+         dataAddrMR = generateX86MemoryReference(targetReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
+         dataAddrSlotMR = generateX86MemoryReference(targetReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
+         }
+      else
+         {
+         if (comp->getOption(TR_TraceCG))
+            traceMsg(comp, "Dealing with either contiguous array of non zero size or noncompressed refs variable length array.\n");
+
+         dataAddrMR = generateX86MemoryReference(targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+         dataAddrSlotMR = generateX86MemoryReference(targetReg, fej9->getOffsetOfContiguousDataAddrField(), cg);
+         }
+      generateRegMemInstruction(LEARegMem(), node, tempReg, dataAddrMR, cg);
+      generateMemRegInstruction(SMemReg(), node, dataAddrSlotMR, tempReg, cg);
+      }
+#endif /* TR_TARGET_64BIT */
 
    if (fej9->inlinedAllocationsMustBeVerified() && (node->getOpCodeValue() == TR::New ||
                                                         node->getOpCodeValue() == TR::anewarray) )
@@ -7933,6 +7972,12 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       deps->addPostCondition(tempReg, TR::RealRegister::NoReg, cg);
       if (segmentReg)
          deps->addPostCondition(segmentReg, TR::RealRegister::NoReg, cg);
+      }
+
+   if (NULL != discontiguousDataAddrOffsetReg)
+      {
+      deps->addPostCondition(discontiguousDataAddrOffsetReg, TR::RealRegister::NoReg, cg);
+      cg->stopUsingRegister(discontiguousDataAddrOffsetReg);
       }
 
    if (scratchReg)
