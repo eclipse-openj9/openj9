@@ -1120,13 +1120,6 @@ private:
     */
    TR_MethodToBeCompiled * getCompilationQueueEntry();
 
-   int bufferSizeCompilationAttributes();
-   uint8_t * bufferPopulateCompilationAttributes(U_8 *buffer, TR::Compilation *&compiler, TR_MethodMetaData *metaData);
-   int bufferSizeInlinedCallSites(TR::Compilation *&compiler, TR_MethodMetaData *metaData);
-   uint8_t * bufferPopulateInlinedCallSites(uint8_t * buffer, TR::Compilation *&compiler, TR_MethodMetaData *metaData);
-   int bufferSizeLineNumberTable(TR::Compilation *&compiler, TR_MethodMetaData *metaData, J9Method *&_method);
-   uint8_t * bufferPopulateLineNumberTable(uint8_t *buffer, TR::Compilation *&compiler, TR_MethodMetaData *metaData, J9Method *&_method);
-
    J9Method *getRamMethod(TR_FrontEnd *vm, char *className, char *methodName, char *signature);
    //char *buildMethodString(TR_ResolvedMethod *method);
 
