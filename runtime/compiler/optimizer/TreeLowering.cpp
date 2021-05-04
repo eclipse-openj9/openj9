@@ -43,22 +43,26 @@ TR::TreeLowering::perform()
       return 0;
       }
 
+   TransformationManager transformations(comp()->region());
+
    TR::ResolvedMethodSymbol* methodSymbol = comp()->getMethodSymbol();
    for (TR::PreorderNodeIterator nodeIter(methodSymbol->getFirstTreeTop(), comp()); nodeIter != NULL; ++nodeIter)
       {
       TR::Node* node = nodeIter.currentNode();
       TR::TreeTop* tt = nodeIter.currentTree();
 
-      lowerValueTypeOperations(nodeIter, node, tt);
+      lowerValueTypeOperations(transformations, node, tt);
       }
+
+   transformations.doTransformations();
 
    return 0;
    }
 
 void
-TR::TreeLowering::moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node, bool isAddress)
+TR::TreeLowering::Transformer::moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node, bool isAddress)
    {
-   TR::Compilation* comp = self()->comp();
+   TR::Compilation* comp = this->comp();
    TR::TreeTop* blockExit = block->getExit();
    TR::TreeTop* iterTT = tt->getNextTreeTop();
 
@@ -93,7 +97,7 @@ TR::TreeLowering::moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* cons
             {
             if (trace())
                {
-               traceMsg(comp, "Moving treetop containing node n%dn [%p] for store of helper result to end of prevBlock in preparation of final block split\n", iterTT->getNode()->getGlobalIndex(), iterTT->getNode());
+               traceMsg(comp, "Moving treetop containing node n%dn [%p] for store of helper call result to end of prevBlock in preparation of final block split\n", iterTT->getNode()->getGlobalIndex(), iterTT->getNode());
                }
 
             // Remove store node from prevBlock temporarily
@@ -112,66 +116,14 @@ TR::TreeLowering::moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* cons
       }
    }
 
-/**
- * @brief Perform lowering related to Valhalla value types
- *
- */
-void
-TR::TreeLowering::lowerValueTypeOperations(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt)
+TR::Block*
+TR::TreeLowering::Transformer::splitForFastpath(TR::Block* const block, TR::TreeTop* const splitPoint, TR::Block* const targetBlock)
    {
-   TR::SymbolReferenceTable * symRefTab = comp()->getSymRefTab();
-   static char *disableInliningCheckAastore = feGetEnv("TR_DisableVT_AASTORE_Inlining");
-
-   if (node->getOpCode().isCall())
-      {
-      if (symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
-         {
-         // turn the non-helper call into a VM helper call
-         node->setSymbolReference(symRefTab->findOrCreateAcmpHelperSymbolRef());
-         static const bool disableAcmpFastPath =  NULL != feGetEnv("TR_DisableVT_AcmpFastpath");
-         if (!disableAcmpFastPath)
-            {
-            fastpathAcmpHelper(nodeIter, node, tt);
-            }
-         }
-      else if (node->getSymbolReference()->getReferenceNumber() == TR_ldFlattenableArrayElement)
-         {
-         static char *disableInliningCheckAaload = feGetEnv("TR_DisableVT_AALOAD_Inlining");
-
-         if (!disableInliningCheckAaload)
-            {
-            const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/inlinecheck/aaload/(%s)/bc=%d",
-                                                            comp()->signature(), node->getByteCodeIndex());
-            TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
-
-            TR_ASSERT_FATAL_WITH_NODE(tt->getNode(),
-                                      (tt->getNode()->getOpCodeValue() == TR::treetop) || (tt->getNode()->getOpCodeValue() == TR::NULLCHK),
-                                      "lowerLoadArrayElement cannot process the treetop node that is neither a treetop nor a NULLCHK\n");
-
-            lowerLoadArrayElement(nodeIter, node, tt);
-            }
-         }
-      else if (node->getSymbolReference()->getReferenceNumber() == TR_strFlattenableArrayElement)
-         {
-         if (!disableInliningCheckAastore)
-            {
-            const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/inlinecheck/aastore/(%s)/bc=%d",
-                                                            comp()->signature(), node->getByteCodeIndex());
-            TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
-
-            TR_ASSERT_FATAL_WITH_NODE(tt->getNode(),
-                                      (tt->getNode()->getOpCodeValue() == TR::treetop) || (tt->getNode()->getOpCodeValue() == TR::NULLCHK),
-                                      "lowerStoreArrayElement cannot process the treetop node that is neither a treetop nor a NULLCHK\n");
-            lowerStoreArrayElement(nodeIter, node, tt);
-            }
-         }
-      }
-   // If inlining check for aastore is enabled, the NULLCHK on the value reference is
-   // taken care of by lowerStoreArrayElement.
-   else if (node->getOpCodeValue() == TR::ArrayStoreCHK && disableInliningCheckAastore)
-      {
-      lowerArrayStoreCHK(node, tt);
-      }
+   TR::CFG* const cfg = comp()->getFlowGraph();
+   TR::Block* const newBlock = block->split(splitPoint, cfg);
+   newBlock->setIsExtensionOfPreviousBlock(true);
+   cfg->addEdge(block, targetBlock);
+   return newBlock;
    }
 
 /**
@@ -262,15 +214,15 @@ copyBranchGlRegDepsAndSubstitute(TR::Node* const branchNode, TR::Node* const sou
    return glRegDepsCopy;
    }
 
-TR::Block*
-TR::TreeLowering::splitForFastpath(TR::Block* const block, TR::TreeTop* const splitPoint, TR::Block* const targetBlock)
+class AcmpTransformer: public TR::TreeLowering::Transformer
    {
-   TR::CFG* const cfg = self()->comp()->getFlowGraph();
-   TR::Block* const newBlock = block->split(splitPoint, cfg);
-   newBlock->setIsExtensionOfPreviousBlock(true);
-   cfg->addEdge(block, targetBlock);
-   return newBlock;
-   }
+   public:
+   explicit AcmpTransformer(TR::TreeLowering* opt)
+      : TR::TreeLowering::Transformer(opt)
+      {}
+
+   void lower(TR::Node* const node, TR::TreeTop* const tt) override;
+   };
 
 /**
  * @brief Add checks to skip (fast-path) acmpHelper call
@@ -400,9 +352,9 @@ TR::TreeLowering::splitForFastpath(TR::Block* const block, TR::TreeTop* const sp
  *
  */
 void
-TR::TreeLowering::fastpathAcmpHelper(TR::PreorderNodeIterator& nodeIter, TR::Node * const node, TR::TreeTop * const tt)
+AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    {
-   TR::Compilation* comp = self()->comp();
+   TR::Compilation* comp = this->comp();
    TR::CFG* cfg = comp->getFlowGraph();
    cfg->invalidateStructure();
 
@@ -559,14 +511,6 @@ TR::TreeLowering::fastpathAcmpHelper(TR::PreorderNodeIterator& nodeIter, TR::Nod
    if (trace())
       traceMsg(comp, "Call node isolated in block_%d by splitPostGRA\n", callBlock->getNumber());
 
-   // Force nodeIter to first TreeTop of next block so that
-   // moving callBlock won't cause problems while iterating
-   while (nodeIter.currentTree() != targetBlock->getEntry())
-      ++nodeIter;
-
-   if (trace())
-      traceMsg(comp, "FORCED treeLowering ITERATOR TO POINT TO NODE n%unn\n", nodeIter.currentNode()->getGlobalIndex());
-
    // Move call block out of line.
    // The CFG edge that exists from prevBlock to callBlock is kept because
    // it will be needed once the branch for the fastpath gets added.
@@ -621,6 +565,17 @@ TR::TreeLowering::fastpathAcmpHelper(TR::PreorderNodeIterator& nodeIter, TR::Nod
       }
    }
 
+
+class ArrayStoreCHKTransformer: public TR::TreeLowering::Transformer
+   {
+   public:
+   explicit ArrayStoreCHKTransformer(TR::TreeLowering* opt)
+      : TR::TreeLowering::Transformer(opt)
+      {}
+
+   void lower(TR::Node* const node, TR::TreeTop* const tt) override;
+   };
+
 /**
  * If value types are enabled, and the value that is being assigned to the array
  * element might be a null reference, lower the ArrayStoreCHK by splitting the
@@ -631,7 +586,7 @@ TR::TreeLowering::fastpathAcmpHelper(TR::PreorderNodeIterator& nodeIter, TR::Nod
  * @param tt is the treetop at the root of the tree ancoring the current node
  */
 void
-TR::TreeLowering::lowerArrayStoreCHK(TR::Node *node, TR::TreeTop *tt)
+ArrayStoreCHKTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    {
    // Pattern match the ArrayStoreCHK operands to get the source of the assignment
    // (sourceChild) and the array to which an element will have a value assigned (destChild)
@@ -859,8 +814,18 @@ copyRegisterDependency(TR::Node *fromNode, TR::Node *toNode)
       }
    }
 
+class LoadArrayElementTransformer: public TR::TreeLowering::Transformer
+   {
+   public:
+   explicit LoadArrayElementTransformer(TR::TreeLowering* opt)
+      : TR::TreeLowering::Transformer(opt)
+      {}
+
+   void lower(TR::Node* const node, TR::TreeTop* const tt) override;
+   };
+
 /*
- * lowerLoadArrayElement transforms the block that contains the jitLoadFlattenableArrayElement helper call into three blocks:
+ * LoadArrayElementTransformer transforms the block that contains the jitLoadFlattenableArrayElement helper call into three blocks:
  *   1. The merge block (blockAfterHelperCall) that contains the tree tops after the helper call
  *   2. The helper call block (helperCallBlock) that contains the helper call and is moved to the end of the tree top list
  *   3. The new non-VT array load block (arrayElementLoadBlock) which is an extended block of the original block
@@ -960,10 +925,10 @@ copyRegisterDependency(TR::Node *fromNode, TR::Node *toNode)
  *
  */
 void
-TR::TreeLowering::lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node *node, TR::TreeTop *tt)
+LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    {
    bool enableTrace = trace();
-   TR::Compilation *comp = self()->comp();
+   TR::Compilation *comp = this->comp();
    TR::Block *originalBlock = tt->getEnclosingBlock();
 
    TR::Node *elementIndexNode = node->getFirstChild();
@@ -973,6 +938,9 @@ TR::TreeLowering::lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::
           tt->getNode()->getGlobalIndex(), node->getGlobalIndex(), node, originalBlock->getNumber(),
           elementIndexNode->getGlobalIndex(), arrayBaseAddressNode->getGlobalIndex(), tt->getNextTreeTop()->getNode()->getGlobalIndex()))
       return;
+
+   const char *counterName = TR::DebugCounter::debugCounterName(comp, "vt-helper/inlinecheck/aaload/(%s)/bc=%d", comp->signature(), node->getByteCodeIndex());
+   TR::DebugCounter::incStaticDebugCounter(comp, counterName);
 
    TR::CFG *cfg = comp->getFlowGraph();
    cfg->invalidateStructure();
@@ -1135,11 +1103,6 @@ TR::TreeLowering::lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::
    cfg->removeEdge(arrayElementLoadBlock, helperCallBlock);
    cfg->addEdge(arrayElementLoadBlock, blockAfterHelperCall);
 
-   // Force nodeIter to first TreeTop of next block so that
-   // moving callBlock won't cause problems while iterating
-   while (nodeIter.currentTree() != blockAfterHelperCall->getEntry())
-       ++nodeIter;
-
    // Move helper call to the end of the tree list
    arrayElementLoadBlock->getExit()->join(blockAfterHelperCall->getEntry());
 
@@ -1159,8 +1122,18 @@ TR::TreeLowering::lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::
       }
    }
 
+class StoreArrayElementTransformer: public TR::TreeLowering::Transformer
+   {
+   public:
+   explicit StoreArrayElementTransformer(TR::TreeLowering* opt)
+      : TR::TreeLowering::Transformer(opt)
+      {}
+
+   void lower(TR::Node* const node, TR::TreeTop* const tt) override;
+   };
+
 /*
- * lowerStoreArrayElement transforms the block that contains the jitStoreFlattenableArrayElement helper call into three blocks:
+ * StoreArrayElementTransformer transforms the block that contains the jitStoreFlattenableArrayElement helper call into three blocks:
  *   1. The merge block that contains the tree tops after the helper call
  *   2. The helper call block that contains the helper call and is moved to the end of the tree top list
  *   3. The new non-VT array store block which is an extended block of the original block
@@ -1269,10 +1242,10 @@ TR::TreeLowering::lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::
  *
  */
 void
-TR::TreeLowering::lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node *node, TR::TreeTop *tt)
+StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    {
    bool enableTrace = trace();
-   TR::Compilation *comp = self()->comp();
+   TR::Compilation *comp = this->comp();
    TR::Block *originalBlock = tt->getEnclosingBlock();
 
    TR::Node *valueNode = node->getFirstChild();
@@ -1282,6 +1255,9 @@ TR::TreeLowering::lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR:
    if (!performTransformation(comp, "%sTransforming storeArrayElement treetop n%dn node n%dn [%p] in block_%d: children (n%dn, n%dn, n%dn) ttAfterHelperCall n%dn\n", optDetailString(), tt->getNode()->getGlobalIndex(), node->getGlobalIndex(), node, originalBlock->getNumber(),
           valueNode->getGlobalIndex(), elementIndexNode->getGlobalIndex(), arrayBaseAddressNode->getGlobalIndex(), tt->getNextTreeTop()->getNode()->getGlobalIndex()))
       return;
+
+   const char *counterName = TR::DebugCounter::debugCounterName(comp, "vt-helper/inlinecheck/aastore/(%s)/bc=%d", comp->signature(), node->getByteCodeIndex());
+   TR::DebugCounter::incStaticDebugCounter(comp, counterName);
 
    TR::CFG *cfg = comp->getFlowGraph();
    cfg->invalidateStructure();
@@ -1439,11 +1415,6 @@ TR::TreeLowering::lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR:
    cfg->removeEdge(arrayElementStoreBlock, helperCallBlock);
    cfg->addEdge(arrayElementStoreBlock, blockAfterHelperCall);
 
-   // Force nodeIter to first TreeTop of next block so that
-   // moving callBlock won't cause problems while iterating
-   while (nodeIter.currentTree() != blockAfterHelperCall->getEntry())
-       ++nodeIter;
-
    arrayElementStoreBlock->getExit()->join(blockAfterHelperCall->getEntry());
 
    TR::TreeTop *lastTreeTop = comp->getMethodSymbol()->getLastTreeTop();
@@ -1459,5 +1430,59 @@ TR::TreeLowering::lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR:
       helperCallBlock->getExit()->getNode()->setNumChildren(0);
       deps->decReferenceCount();
       gotoAfterHelperCallNode->addChildren(&deps, 1);
+      }
+   }
+
+/**
+ * @brief Perform lowering related to Valhalla value types
+ *
+ */
+void
+TR::TreeLowering::lowerValueTypeOperations(TransformationManager& transformations, TR::Node* node, TR::TreeTop* tt)
+   {
+   TR::SymbolReferenceTable * symRefTab = comp()->getSymRefTab();
+   static char *disableInliningCheckAastore = feGetEnv("TR_DisableVT_AASTORE_Inlining");
+
+   if (node->getOpCode().isCall())
+      {
+      if (symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
+         {
+         // turn the non-helper call into a VM helper call
+         node->setSymbolReference(symRefTab->findOrCreateAcmpHelperSymbolRef());
+         static const bool disableAcmpFastPath =  NULL != feGetEnv("TR_DisableVT_AcmpFastpath");
+         if (!disableAcmpFastPath)
+            {
+            transformations.addTransformation(getTransformer<AcmpTransformer>(), node, tt);
+            }
+         }
+      else if (node->getSymbolReference()->getReferenceNumber() == TR_ldFlattenableArrayElement)
+         {
+         static char *disableInliningCheckAaload = feGetEnv("TR_DisableVT_AALOAD_Inlining");
+
+         if (!disableInliningCheckAaload)
+            {
+            TR_ASSERT_FATAL_WITH_NODE(tt->getNode(),
+                                      (tt->getNode()->getOpCodeValue() == TR::treetop) || (tt->getNode()->getOpCodeValue() == TR::NULLCHK),
+                                      "LoadArrayElementTransformer cannot process the treetop node that is neither a treetop nor a NULLCHK\n");
+
+            transformations.addTransformation(getTransformer<LoadArrayElementTransformer>(), node, tt);
+            }
+         }
+      else if (node->getSymbolReference()->getReferenceNumber() == TR_strFlattenableArrayElement)
+         {
+         if (!disableInliningCheckAastore)
+            {
+            TR_ASSERT_FATAL_WITH_NODE(tt->getNode(),
+                                      (tt->getNode()->getOpCodeValue() == TR::treetop) || (tt->getNode()->getOpCodeValue() == TR::NULLCHK),
+                                      "StoreArrayElementTransformer cannot process the treetop node that is neither a treetop nor a NULLCHK\n");
+            transformations.addTransformation(getTransformer<StoreArrayElementTransformer>(), node, tt);
+            }
+         }
+      }
+   // If inlining check for aastore is enabled, the NULLCHK on the value reference is
+   // taken care of by StoreArrayElementTransformer.
+   else if (node->getOpCodeValue() == TR::ArrayStoreCHK && disableInliningCheckAastore)
+      {
+      transformations.addTransformation(getTransformer<ArrayStoreCHKTransformer>(), node, tt);
       }
    }

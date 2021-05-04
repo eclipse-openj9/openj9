@@ -27,6 +27,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
+#include "infra/deque.hpp"
 #include "infra/ILWalk.hpp"
 #include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
@@ -50,6 +51,165 @@ class TreeLowering : public TR::Optimization
    {
    public:
 
+   /**
+    * @brief Abstract class serving as interface for callbacks that apply a transformation.
+    *
+    * Transformations use this class as an interface to invoke Transformer callbacks. Callbacks
+    * should be implemented by extending this class and overriding lower().
+    */
+   class Transformer
+      {
+      public:
+      explicit Transformer(TR::TreeLowering* treeLoweringOpt)
+         : _comp(treeLoweringOpt->comp())
+         , _treeLoweringOpt(treeLoweringOpt)
+         {}
+
+      TR::Compilation* comp() { return _comp; }
+
+      bool trace() { return _treeLoweringOpt->trace(); }
+
+      const char* optDetailString() { return _treeLoweringOpt->optDetailString(); }
+
+      void prepareToReplaceNode(TR::Node * node) { _treeLoweringOpt->prepareToReplaceNode(node); }
+      
+      /**
+       * @brief Main callback method to apply a transformation.
+       *
+       * Derived classes must override this method with the appropriate code
+       * to apply the transformation given some input.
+       *
+       * @param node the node where the transformation will happen
+       * @param tt the \ref TR::TreeTop instance at the root of the tree containing the node
+       */
+      virtual void lower(TR::Node* const node, TR::TreeTop* const tt) = 0;
+
+      protected:
+       /**
+       * @brief Moves a TreeTop down to the end of a block
+       *
+       * Any stores of the value of the node are also moved down.
+       *
+       * This can be useful to do after a call to splitPostGRA where, as part of un-commoning,
+       * it is possible that code to store the anchored node into a register or temp-slot is
+       * appended to the original block.
+       *
+       * @param block is the block containing the TreeTop to be moved
+       * @param tt is a pointer to the TreeTop to be moved
+       * @param node is a pointer to the node that stores a value 
+       * @param isAddress shows if the node is address, otherwise it is assumed to be an integer
+       */
+      void moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node, bool isAddress);
+
+      /**
+       * @brief Split a block after having inserted a fastpath branch
+       *
+       * The function should be used to split a block after a branch has been inserted.
+       * After the split, the resulting fall-through block is marked as an extension of
+       * the previous block (the original block that was split), which implies that 
+       * uncommoning is not required. The cfg is also updated with an edge going from
+       * the original block to some target block, which should be the same as the
+       * target of the branch inserted before the split.
+       *
+       * Note that this function does not call TR::CFG::invalidateStructure() as it assumes
+       * the caller is using this function in a context where TR::CFG::invalidateStructure()
+       * is likely to have already been called.
+       *
+       * @param block is the block that will be split
+       * @param splitPoint is the TreeTop within block at which the split must happen
+       * @param targetBlock is the target block of the branch inserted before the split point
+       * @return TR::Block* the (fallthrough) block created from the split
+       */
+      TR::Block* splitForFastpath(TR::Block* const block, TR::TreeTop* const splitPoint, TR::Block* const targetBlock);
+
+      private:
+      TR::Compilation* _comp;
+      TR::TreeLowering* _treeLoweringOpt;
+      };
+
+   private:
+   /**
+    * @brief A class for collecting transformations to be performed.
+    *
+    * This class encapsulates the basic functionality for "delaying"
+    * transformations in TreeLowering. It allows "future transformations"
+    * to be collected and then performed consecutively in bulk later on.
+    */
+   class TransformationManager
+      {
+      public:
+
+      /**
+       * @brief Construct a new TransformationManager object
+       *
+       * @param allocator is the \ref TR::Region instance used to do allocations internally
+       */
+      explicit TransformationManager(TR::Region& allocator) : _transformationQueue(allocator) {}
+
+      /**
+       * @brief Add a transformation to be performed
+       *
+       * @param transformer the Transformer object that acts as callback for the transformation
+       * @param node the node where the transformation will happen
+       * @param tt the \ref TR::TreeTop instance at the root of the tree containing the node
+       */
+      void addTransformation(Transformer* transformer, TR::Node* const node, TR::TreeTop* const tt)
+         {
+         _transformationQueue.push_back(Transformation{transformer, node, tt});
+         }
+
+      /**
+       * @brief Perform all accumulated transformations.
+       *
+       * The transformations are performed in sequence but no guarantees are made
+       * about the exact order in which it happens.
+       */
+      void doTransformations()
+         {
+         while (!_transformationQueue.empty())
+            {
+            auto transformation = _transformationQueue.front();
+            _transformationQueue.pop_front();
+            transformation.doTransformation();
+            }
+         }
+
+      private:
+
+      /**
+       * @brief A class representing an IL transformation.
+       * 
+       * This class encapsulates the different pieces needed to represent
+       * and perform a transformation.
+       *
+       * Conceptually, a transformation is made up of two parts:
+       * 
+       * 1. A function (callback) that applies the transformation
+       *    given some input.
+       * 2. The set of input arguments for the given transformation.
+       *
+       * Collectively, these pieces form a closure that will perform the
+       * transformation when invoked.
+       *
+       * In this implementation, the callback is represented by an instance
+       * of Transformer. The arguments are the \ref TR::Node and
+       * \ref TR::TreeTop instances. The transformation is performed by
+       * invoking doTransformation().
+       */
+      struct Transformation
+         {
+         Transformer* transformer;
+         TR::Node* node;
+         TR::TreeTop* tt;
+
+         inline void doTransformation();
+         };
+
+      TR::deque<Transformation, TR::Region&> _transformationQueue;
+      };
+
+   public:
+
    explicit TreeLowering(TR::OptimizationManager* manager)
       : TR::Optimization(manager)
       {}
@@ -63,51 +223,18 @@ class TreeLowering : public TR::Optimization
    virtual const char * optDetailString() const throw();
 
    private:
-
-   /**
-    * @brief Moves a node down to the end of a block
-    *
-    * Any stores of the value of the node are also moved down.
-    *
-    * This can be useful to do after a call to splitPostGRA where, as part of un-commoning,
-    * it is possible that code to store the anchored node into a register or temp-slot is
-    * appended to the original block.
-    *
-    * @param block is the block containing the TreeTop to be moved
-    * @param tt is a pointer to the TreeTop to be moved
-    * @param isAddress shows if the node is address, otherwise it is assumed to be an integer
-    */
-   void moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node, bool isAddress);
-
-   /**
-    * @brief Split a block after having inserted a fastpath branch
-    *
-    * The function should be used to split a block after a branch has been inserted.
-    * After the split, the resulting fall-through block is marked as an extension of
-    * the previous block (the original block that was split), which implies that 
-    * uncommoning is not required. The cfg is also updated with an edge going from
-    * the original block to some target block, which should be the same as the
-    * target of the branch inserted before the split.
-    *
-    * Note that this function does not call TR::CFG::invalidateStructure() as it assumes
-    * the caller is using this function in a context where TR::CFG::invalidateStructure()
-    * is likely to have already been called.
-    *
-    * @param block is the block that will be split
-    * @param splitPoint is the TreeTop within block at which the split must happen
-    * @param targetBlock is the target block of the branch inserted before the split point
-    * @return TR::Block* the (fallthrough) block created from the split
-    */
-   TR::Block* splitForFastpath(TR::Block* const block, TR::TreeTop* const splitPoint, TR::Block* const targetBlock);
-
    // helpers related to Valhalla value type lowering
-   void lowerValueTypeOperations(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
-   void fastpathAcmpHelper(TR::PreorderNodeIterator& nodeIter, TR::Node* const node, TR::TreeTop* const tt);
-   void lowerArrayStoreCHK(TR::Node* node, TR::TreeTop* tt);
+   void lowerValueTypeOperations(TransformationManager& transformation, TR::Node* node, TR::TreeTop* tt);
 
-   void lowerLoadArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
-   void lowerStoreArrayElement(TR::PreorderNodeIterator& nodeIter, TR::Node* node, TR::TreeTop* tt);
+   template <typename T>
+   Transformer* getTransformer() { return new (comp()->region()) T(this); }
    };
+
+void
+TR::TreeLowering::TransformationManager::Transformation::doTransformation()
+   {
+   transformer->lower(node, tt);
+   }
 
 }
 
