@@ -1559,7 +1559,7 @@ void
 J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
    TR::Register * vftReg, uint32_t sizeOfArguments)
    {
-   TR_S390RegisterDependencyGroup * Dgroup = dependencies->getPreConditions();
+   TR::RegisterDependencyGroup * Dgroup = dependencies->getPreConditions();
    TR::SymbolReference * methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol * methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
    TR::LabelSymbol * vcallLabel = generateLabelSymbol(cg());
