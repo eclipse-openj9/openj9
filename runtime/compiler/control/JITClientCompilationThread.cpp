@@ -2950,19 +2950,20 @@ remoteCompilationEnd(
    }
 
 void
-updateCompThreadActivationPolicy(TR::CompilationInfoPerThreadBase *compInfoPT, JITServer::ServerMemoryState nextMemoryState)
+updateCompThreadActivationPolicy(TR::CompilationInfoPerThreadBase *compInfoPT, JITServer::ServerMemoryState nextMemoryState,
+   JITServer::ServerActiveThreadsState nextActiveThreadState)
    {
-   // When the server starts running low on memory, clients need to reduce load on the server.
-   // This is achieved by suspending compilation threads once low server memory is detected.
+   // When the server starts running low on memory or uses high number of compilation threads, clients need to reduce load on the server.
+   // This is achieved by suspending compilation threads once low server memory or high number of compilation threads are detected.
    //
    // Under normal conditions, a client uses AGGRESSIVE activation policy, starting new compilation
    // threads at lower thresholds then non-JITServer.
    //
-   // Once the server reaches LOW threshold, the client enters MAINTAIN activation policy,
+   // Once the server reaches LOW threshold for memory or HIGH threshold for active threads, the client enters MAINTAIN activation policy,
    // it keeps the current threads running but is not allowed to start new ones.
    //
-   // If the situation deteriorates further and the server reaches VERY_LOW threshold,
-   // client begins SUSPEND activation policy, disabling all but one compilation threads.
+   // If the situation deteriorates further and the server reaches VERY_LOW threshold for memory or very HIGH threshold for active threads,
+   // client begins SUSPEND activation policy, disabling all but one compilation thread.
    //
    // If at some point the situation improves and the server returns to NORMAL memory state,
    // then clients using MAINTAIN policy will begin SUBDUE policy, which allows them to start/resume
@@ -2970,15 +2971,15 @@ updateCompThreadActivationPolicy(TR::CompilationInfoPerThreadBase *compInfoPT, J
    //
    auto *compInfo = compInfoPT->getCompilationInfo();
    JITServer::CompThreadActivationPolicy curPolicy = compInfo->getCompThreadActivationPolicy();
-   if (nextMemoryState == JITServer::ServerMemoryState::VERY_LOW)
+   if (nextMemoryState == JITServer::ServerMemoryState::VERY_LOW || nextActiveThreadState == JITServer::ServerActiveThreadsState::VERY_HIGH_THREAD)
       {
       compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::SUSPEND);
       }
-   else if (nextMemoryState == JITServer::ServerMemoryState::LOW)
+   else if (nextMemoryState == JITServer::ServerMemoryState::LOW || nextActiveThreadState == JITServer::ServerActiveThreadsState::HIGH_THREAD)
       {
       compInfo->setCompThreadActivationPolicy(JITServer::CompThreadActivationPolicy::MAINTAIN);
       }
-   else // ServerMemoryState::NORMAL 
+   else // ServerMemoryState::NORMAL or ServerActiveThreadsState::NORMAL_THREAD
       {
       if (curPolicy <= JITServer::CompThreadActivationPolicy::MAINTAIN)
          {
@@ -3158,7 +3159,7 @@ remoteCompile(
          auto recv = client->getRecvData<std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
                                          std::string, std::string, std::vector<TR_ResolvedJ9Method*>,
                                          TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>, JITServer::ServerMemoryState,
-                                         std::vector<TR_OpaqueMethodBlock *>>();
+                                         JITServer::ServerActiveThreadsState, std::vector<TR_OpaqueMethodBlock *>>();
          statusCode = compilationOK;
          codeCacheStr = std::get<0>(recv);
          dataCacheStr = std::get<1>(recv);
@@ -3169,10 +3170,11 @@ remoteCompile(
          resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
          modifiedOptPlan = std::get<7>(recv);
          serializedRuntimeAssumptions = std::get<8>(recv);
-         methodsRequiringTrampolines = std::get<10>(recv);
+         methodsRequiringTrampolines = std::get<11>(recv);
 
          JITServer::ServerMemoryState nextMemoryState = std::get<9>(recv);
-         updateCompThreadActivationPolicy(compInfoPT, nextMemoryState);
+         JITServer::ServerActiveThreadsState nextActiveThreadState = std::get<10>(recv);
+         updateCompThreadActivationPolicy(compInfoPT, nextMemoryState, nextActiveThreadState);
          }
       else
          {
@@ -3183,7 +3185,7 @@ remoteCompile(
          statusCode = std::get<0>(recv);
          uint64_t otherData = std::get<1>(recv);
          if (statusCode == compilationLowPhysicalMemory && otherData != -1) // if failed due to low memory, should've received an updated memory state
-            updateCompThreadActivationPolicy(compInfoPT, (JITServer::ServerMemoryState) otherData); 
+            updateCompThreadActivationPolicy(compInfoPT, (JITServer::ServerMemoryState) otherData, JITServer::ServerActiveThreadsState::NORMAL_THREAD); 
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "remoteCompile: compilationFailure statusCode %u\n", statusCode);
 

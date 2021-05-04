@@ -85,6 +85,28 @@ computeServerMemoryState(TR::CompilationInfo *compInfo)
    }
 
 /**
+ * @brief Helper method executed at the end of a compilation
+ * to determine whether the server is approaching the maximum number of active threads.
+ */
+JITServer::ServerActiveThreadsState
+computeServerActiveThreadsState(TR::CompilationInfo *compInfo)
+   {
+   int32_t highActiveThreadThreshold = TR::Options::getHighActiveThreadThreshold();
+   int32_t veryHighActiveThreadThreshold = TR::Options::getVeryHighActiveThreadThreshold();
+
+   // Typically getNumCompThreadsActive() needs to be protected by the compilationQueueMonitor,
+   // except here we allow some small imprecision because we implement a heuristic.
+   int32_t numOfActiveThreads = compInfo->getNumCompThreadsActive();
+
+   JITServer::ServerActiveThreadsState activeThreadState = numOfActiveThreads > veryHighActiveThreadThreshold ?
+      JITServer::ServerActiveThreadsState::VERY_HIGH_THREAD : 
+      (numOfActiveThreads > highActiveThreadThreshold ?
+         JITServer::ServerActiveThreadsState::HIGH_THREAD :
+         JITServer::ServerActiveThreadsState::NORMAL_THREAD);
+   return activeThreadState;      
+   }
+
+/**
  * @brief Method executed by JITServer to process the end of a compilation.
  */
 void
@@ -148,6 +170,7 @@ outOfProcessCompilationEnd(
    auto resolvedMirrorMethodsPersistIPInfo = compInfoPT->getCachedResolvedMirrorMethodsPersistIPInfo();
 
    JITServer::ServerMemoryState memoryState = computeServerMemoryState(compInfoPT->getCompilationInfo());
+   JITServer::ServerActiveThreadsState activeThreadState = computeServerActiveThreadsState(compInfoPT->getCompilationInfo());
 
    // Send methods requring resolved trampolines in this compilation to the client
    std::vector<TR_OpaqueMethodBlock *> methodsRequiringTrampolines;
@@ -167,7 +190,7 @@ outOfProcessCompilationEnd(
                                                          std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
                                                          std::vector<TR_ResolvedJ9Method*>(),
                                      *entry->_optimizationPlan, serializedRuntimeAssumptions, memoryState,
-                                     methodsRequiringTrampolines
+                                      activeThreadState, methodsRequiringTrampolines
                                      );
    compInfoPT->clearPerCompilationCaches();
 

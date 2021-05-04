@@ -4490,7 +4490,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
             compInfo->getRampDownMCT() ? "RampDownMCT" : "",
             compInfo->getSuspendThreadDueToLowPhysicalMemory() ? "LowPhysicalMem" : "",
 #if defined(J9VM_OPT_JITSERVER)
-            compInfo->getCompThreadActivationPolicy() == JITServer::CompThreadActivationPolicy::SUSPEND ? "ServerLowPhysicalMem" :
+            compInfo->getCompThreadActivationPolicy() == JITServer::CompThreadActivationPolicy::SUSPEND ? "ServerLowPhysicalMemOrHighThreadCount" :
 #endif
             ""
             );

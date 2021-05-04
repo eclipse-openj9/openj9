@@ -128,6 +128,8 @@ int64_t J9::Options::_oldAgeUnderLowMemory = 1000*60*5; // 5 minute
 int64_t J9::Options::_timeBetweenPurges = 1000*60*1; // 1 minute
 bool J9::Options::_shareROMClasses = false;
 int32_t J9::Options::_sharedROMClassCacheNumPartitions = 16;
+int32_t J9::Options::_highActiveThreadThreshold = -1;
+int32_t J9::Options::_veryHighActiveThreadThreshold = -1;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 int32_t J9::Options::_interpreterSamplingThreshold = 300;
@@ -772,6 +774,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"gcTrace=",           "D<nnn>\ttrace gc stack walks after gc number nnn",
         TR::Options::setJitConfigNumericValue, offsetof(J9JITConfig, gcTraceThreshold), 0, "F%d"},
 #endif
+#if defined(J9VM_OPT_JITSERVER)
+   {"highActiveThreadThreshold=", " \tDefines what is a high Threshold for active compilations",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_highActiveThreadThreshold, 0, " %d"},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"HWProfilerAOTWarmOptLevelThreshold=", "O<nnn>\tAOT Warm Opt Level Threshold",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_hwprofilerAOTWarmOptLevelThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"HWProfilerBufferMaxPercentageToDiscard=", "O<nnn>\tpercentage of HW profiling buffers "
@@ -1016,6 +1022,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setVerboseBitsInJitPrivateConfig, offsetof(J9JITConfig, privateConfig), 0, "F"},
    {"version",            "L\tdisplay the jit build version",
         TR::Options::versionOption, 0, 0, "F"},
+#if defined(J9VM_OPT_JITSERVER)
+   {"veryHighActiveThreadThreshold=", " \tDefines what is a very high Threshold for active compilations",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_veryHighActiveThreadThreshold, 0, " %d"},
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"veryHotSampleThreshold=",          "R<nnn>\tThe maximum number of global samples taken during a sample interval for which the method will be recompiled at hot with normal priority",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_veryHotSampleThreshold, 0, " %d", NOT_IN_SUBSET},
    {"vlog=",              "L<filename>\twrite verbose output to filename",
@@ -2200,7 +2210,6 @@ J9::Options::setupJITServerOptions()
                (unsigned long long) compInfo->getPersistentInfo()->getClientUID());
          }
       }
-
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -2467,6 +2476,26 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       doAOT = false;
       }
 #endif
+
+#if defined(J9VM_OPT_JITSERVER)
+   // Change the values of the two thresholds if the user didn't
+   // input values to the options.
+   if (_veryHighActiveThreadThreshold == -1)
+      _veryHighActiveThreadThreshold = getNumUsableCompilationThreads() * 0.9;
+  
+   if (_highActiveThreadThreshold == -1)
+      _highActiveThreadThreshold = getNumUsableCompilationThreads() * 0.8;
+
+   // Check if the user inputted the correct values.
+   // If the thresholds are bigger than the usableCompilationThreads, Then set them to be equal to the number of compilation threads.
+   if (_veryHighActiveThreadThreshold > getNumUsableCompilationThreads())
+      _veryHighActiveThreadThreshold = getNumUsableCompilationThreads();
+   if (_highActiveThreadThreshold > getNumUsableCompilationThreads())
+      _highActiveThreadThreshold = getNumUsableCompilationThreads();
+   if (_highActiveThreadThreshold  > _veryHighActiveThreadThreshold)
+      _highActiveThreadThreshold  = _veryHighActiveThreadThreshold;
+      
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    // Determine whether or not to inline monitor enter/exit
    //
