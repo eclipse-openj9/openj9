@@ -224,9 +224,10 @@ The admin password is in the secrets repo and the repository that is used is 'ge
 
 Next, click on the `Welcome, admin` tab and select `Add User`
 Insert the username `Jenkins` and the email address `j9build@ca.ibm.com`. Insert the password as indicated in the secrets file.
+Public OSU Art: Add a second user `openj9` for read-only access. Password in secrets file.
 
 Now click on the `Welcome, admin` tab and select `Add Permission`
-Give the permission a name like `Jenkins-perm` and include the `ci-eclipse-openj9` repository. Click on Users and then add Jenkins. Give Jenkins all of the permissions except manage and save.
+Give the permission a name like `Jenkins-perm` and include the `ci-eclipse-openj9` repository. Click on Users and then add Jenkins. Give Jenkins all of the permissions except manage and save. OSU: Add `openj9` user and only select read permission. OSU: Open the `Anything` permission, Users tab. Remove `anonymous` (should be no users here now). We can't have anon-read enabled.
 
 Under the Admin tab on the left side, select Services -> Backups and make sure that they are disabled. To see if they are disabled, click on the backup and see if the enabled button is checked. If it is, uncheck it and save. The backups take up too much memory for what ends up being needed.
 
