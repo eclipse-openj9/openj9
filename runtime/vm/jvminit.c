@@ -603,12 +603,6 @@ cleanCustomSpinOptions(void *element, void *userData)
 }
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 
-BOOLEAN
-areValueTypesEnabled(J9JavaVM *vm)
-{
-	return J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA);
-}
-
 #if defined(J9VM_OPT_JITSERVER)
 BOOLEAN
 isJITServerEnabled(J9JavaVM *vm)
