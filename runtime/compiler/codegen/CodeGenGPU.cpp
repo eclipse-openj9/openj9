@@ -84,14 +84,6 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
       case TR::bstorei:
       case TR::sstorei:
       case TR::istorei:
-      case TR::iustore:
-      case TR::lustore:
-      case TR::bustore:
-      case TR::iustorei:
-      case TR::lustorei:
-      case TR::bustorei:
-      case TR::cstore:
-      case TR::cstorei:
          return "store";
 
       case TR::Goto:
