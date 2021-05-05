@@ -4763,6 +4763,20 @@ uintptr_t TR_J9VMBase::mutableCallSiteCookie(uintptr_t mutableCallSite, uintptr_
    return result;
    }
 
+TR::KnownObjectTable::Index TR_J9VMBase::mutableCallSiteEpoch(TR::Compilation *comp, uintptr_t mutableCallSite)
+   {
+   TR_ASSERT_FATAL(haveAccess(), "mutableCallSiteEpoch requires VM access");
+
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (knot == NULL)
+      return TR::KnownObjectTable::UNKNOWN;
+
+   uintptr_t mh = getVolatileReferenceField(
+      mutableCallSite, "epoch", "Ljava/lang/invoke/MethodHandle;");
+
+   return mh == 0 ? TR::KnownObjectTable::UNKNOWN : knot->getOrCreateIndex(mh);
+   }
+
 bool
 TR_J9VMBase::hasMethodTypesSideTable()
    {

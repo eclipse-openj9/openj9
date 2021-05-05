@@ -579,11 +579,7 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
             {
             TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
             TR::VMAccessCriticalSection invalidateMCSTargetGuards(fej9);
-            // TODO: Code duplication with TR_InlinerBase::findInlineTargets
-            currentIndex = TR::KnownObjectTable::UNKNOWN;
-            uintptr_t currentEpoch = fej9->getVolatileReferenceField(*mcsReferenceLocation, "epoch", "Ljava/lang/invoke/MethodHandle;");
-            if (currentEpoch)
-               currentIndex = knot->getOrCreateIndex(currentEpoch);
+            currentIndex = fej9->mutableCallSiteEpoch(comp, *mcsReferenceLocation);
             if (info->mutableCallSiteEpoch() == currentIndex)
                cookie = fej9->mutableCallSiteCookie(*mcsReferenceLocation, potentialCookie);
             else
