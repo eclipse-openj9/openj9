@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2020 IBM Corp. and others
+// Copyright (c) 2006, 2021 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -379,3 +379,5 @@ TraceAssert=Trc_BCU_Assert_True_Level1 NoEnv Overhead=1 Level=1 Assert="(P1)"
 
 TraceEvent=Trc_BCU_ClassFileOracle_walkRecordComponents_UnknownAttribute Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkRecordComponents: Unknown attribute tag=%d name=%.*s length=%d"
 TraceExit=Trc_BCU_j9bcutil_readClassFileBytes_Basic_Check_Exit NoEnv Overhead=1 Level=3 Template="BCU j9bcutil_readClassFileBytes: exiting with result=%d" 
+
+TraceException=Trc_BCU_j9bcutil_readClassFileBytes_NoClassDefFoundError_Exception NoEnv Overhead=1 Level=3 Template="BCU j9bcutil_readClassFileBytes: NoClassDefFoundError %d - %s"

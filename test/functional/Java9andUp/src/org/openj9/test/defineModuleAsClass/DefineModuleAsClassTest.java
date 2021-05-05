@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,7 +72,7 @@ class MyClassLoader extends ClassLoader {
 
 		try {
 			Class<?> testClass = defineClass(name, classBytes, 0, classBytes.length);
-		} catch (ClassFormatError e) {
+		} catch (NoClassDefFoundError e) {
 			String message = e.getMessage();
 			if (message.contains("is not a class because access_flag ACC_MODULE is set")) {
 				result = true;

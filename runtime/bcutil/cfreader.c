@@ -2751,6 +2751,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	UDATA syntheticFound = FALSE;
 	U_32 vmVersionShifted = flags & BCT_MajorClassFileVersionMask;
 	U_16 constantPoolAllocationSize = 0;
+	U_16 errorAction = CFR_ThrowClassFormatError;
 
 	Trc_BCU_j9bcutil_readClassFileBytes_Entry();
 
@@ -2853,6 +2854,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 		&& J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_MODULE)
 	) {
 		errorCode = J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS__ID;
+		errorAction = CFR_ThrowNoClassDefFoundError;
 		offset = index - data - 2;
 		goto _errorFound;
 	}
@@ -3122,9 +3124,15 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 
 _errorFound:
 
-	buildError((J9CfrError *) segment, errorCode, CFR_ThrowClassFormatError, offset);
+	buildError((J9CfrError *) segment, errorCode, errorAction, offset);
 
-	Trc_BCU_j9bcutil_readClassFileBytes_ClassFormatError_Exception(((J9CfrError *) segment)->errorCode, getJ9CfrErrorDescription(portLib, (J9CfrError *) segment));
+	switch(errorAction) {
+		case CFR_ThrowNoClassDefFoundError:
+			Trc_BCU_j9bcutil_readClassFileBytes_NoClassDefFoundError_Exception(((J9CfrError *) segment)->errorCode, getJ9CfrErrorDescription(portLib, (J9CfrError *) segment));
+			break;
+		default:
+			Trc_BCU_j9bcutil_readClassFileBytes_ClassFormatError_Exception(((J9CfrError *) segment)->errorCode, getJ9CfrErrorDescription(portLib, (J9CfrError *) segment));
+	}
 
 	Trc_BCU_j9bcutil_readClassFileBytes_Exit(-1);
 	return -1;
