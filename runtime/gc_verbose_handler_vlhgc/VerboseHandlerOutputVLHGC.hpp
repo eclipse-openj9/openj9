@@ -156,7 +156,7 @@ public:
 	
 	virtual	void handleConcurrentStartInternal(J9HookInterface** hook, UDATA eventNum, void* eventData);
 	virtual void handleConcurrentEndInternal(J9HookInterface** hook, UDATA eventNum, void* eventData);
-	virtual const char *getConcurrentTypeString() { return "GMP work packet processing"; }
+	virtual const char *getConcurrentTypeString(uintptr_t type) { return "GMP work packet processing"; }
 
 	/**
 	 * Write the verbose stanza for the GMP mark start event.

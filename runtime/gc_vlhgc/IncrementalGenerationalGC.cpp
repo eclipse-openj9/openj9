@@ -96,6 +96,7 @@ MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *
 	, _projectedSurvivalCollectionSetDelegate(env, manager)
 	, _globalCollectionStatistics()
 	, _partialCollectionStatistics()
+	, _concurrentPhaseStats(OMR_GC_CYCLE_TYPE_VLHGC_GLOBAL_MARK_PHASE)
 	, _workPacketsForPartialGC(NULL)
 	, _workPacketsForGlobalGC(NULL)
 	, _taxationThreshold(0)
