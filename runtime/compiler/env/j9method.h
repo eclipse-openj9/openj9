@@ -66,15 +66,21 @@ extern "C" J9Class * getRAMClassFromTR_ResolvedVMMethod(TR_OpaqueMethodBlock *vm
 
 
 UDATA getFieldType(J9ROMConstantPoolItem * cp, I_32 cpIndex);
-inline char *nextSignatureArgument(char *currentArgument)
+
+inline const char *nextSignatureArgument(const char *currentArgument)
    {
-   char *result = currentArgument;
+   const char *result = currentArgument;
    while (*result == '[')
       result++;
    if (*result == 'L' || *result == 'Q')
       while (*result != ';')
          result++;
    return result+1;
+   }
+
+inline char *nextSignatureArgument(char *currentArgument)
+   {
+   return const_cast<char*>(nextSignatureArgument((const char*)currentArgument));
    }
 
 inline char *nthSignatureArgument(int32_t n, char *currentArgument)
