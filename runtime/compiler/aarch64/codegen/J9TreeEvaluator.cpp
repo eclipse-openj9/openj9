@@ -1528,9 +1528,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
    cg->decReferenceCount(castClassNode);
    // Stop using every reg in the deps except these ones.
    //
-   TR::Register *nodeRegs[2] = {objectReg, resultReg};
-   auto nodeRegsBegin = std::begin(nodeRegs);
-   deps->stopUsingDepRegs(cg, nodeRegsBegin, std::next(nodeRegsBegin, 2));
+   deps->stopUsingDepRegs(cg, objectReg, resultReg);
 
    node->setRegister(resultReg);
 
