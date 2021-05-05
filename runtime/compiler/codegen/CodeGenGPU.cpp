@@ -68,14 +68,6 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
       case TR::bloadi:
       case TR::sloadi:
       case TR::lloadi:
-      case TR::iuload:
-      case TR::luload:
-      case TR::buload:
-      case TR::iuloadi:
-      case TR::luloadi:
-      case TR::buloadi:
-      case TR::cload:
-      case TR::cloadi:
          return "load";
 
       case TR::istore:
