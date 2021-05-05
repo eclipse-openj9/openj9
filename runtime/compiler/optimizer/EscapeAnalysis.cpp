@@ -8384,8 +8384,14 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
       return;
       }
 
+   if (trace())
+      traceMsg(comp, "\nStarting local flush elimination \n");
+
    TR_LocalFlushElimination localFlushElimination(_escapeAnalysis, _numAllocations);
    localFlushElimination.perform();
+
+   if (trace())
+      traceMsg(comp, "\nStarting global flush elimination \n");
 
    if (comp->getFlowGraph()->getStructure()->markStructuresWithImproperRegions())
       {
@@ -8495,11 +8501,16 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                  {
                  for (auto succ = nextNode->getSuccessors().begin(); succ != nextNode->getSuccessors().end(); ++succ)
                     {
+                    if (trace())
+                       traceMsg(comp, "Checking succ edge from %d to %d\n", nextNode->getNumber(), (*succ)->getTo()->getNumber());
+
                     if (!_scratch->get((*succ)->getTo()->getNumber()) &&
                         ((*succ)->getTo()->getNumber() != nextSucc))
                        {
                        postDominated = false;
                        _flushEdges.add(new (trStackMemory()) TR_CFGEdgeAllocationPair(*succ, candidate));
+                       if (trace())
+                          traceMsg(comp, "Adding flush edge from %d to %d\n", nextNode->getNumber(), (*succ)->getTo()->getNumber());
                        }
                     }
                  }
@@ -8621,48 +8632,18 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
          {
          nextListElem = listElem->getNextElement();
          TR_CFGEdgeAllocationPair *pair = listElem->getData();
+         if (trace())
+            {
+            traceMsg(comp, "Processing flush edge from %d to %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber());
+            traceMsg(comp, "Processing flush alloc %p vs candidate %p\n", pair->getAllocation(), candidate);
+            }
+
          if (pair->getAllocation() == candidate)
             {
             bool edgeSplitRequired = true;
             int32_t toNum = pair->getEdge()->getTo()->getNumber();
             if (movedToBlocks->get(toNum))
                edgeSplitRequired = false;
-            else
-               {
-               TR_BitVector *toBlockSuccessors = _successorInfo[toNum];
-               TR_BitVectorIterator movedIt(*movedToBlocks);
-               while (movedIt.hasMoreElements())
-                  {
-                  int32_t nextMoved = movedIt.getNextElement();
-                  *_scratch = *_predecessorInfo[nextMoved];
-                  *_scratch &= *toBlockSuccessors;
-
-                  bool postDominated = true;
-                  TR::CFG *cfg = comp->getFlowGraph();
-                  TR::CFGNode *nextNode;
-                  for (nextNode = cfg->getFirstNode(); nextNode; nextNode = nextNode->getNext())
-                     {
-                     if (_scratch->get(nextNode->getNumber()))
-                        {
-                        for (auto succ = nextNode->getSuccessors().begin(); succ != nextNode->getSuccessors().end(); ++succ)
-                           {
-                           if (!_scratch->get((*succ)->getTo()->getNumber()) &&
-                               ((*succ)->getTo()->getNumber() != nextMoved))
-                              {
-                              postDominated = false;
-                              break;
-                              }
-                           }
-                        }
-                     }
-
-                  if (postDominated)
-                     {
-                     edgeSplitRequired = false;
-                     break;
-                     }
-                  }
-               }
 
             if (!edgeSplitRequired)
                {
