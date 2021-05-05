@@ -4934,46 +4934,108 @@ TR_J9VMBase::refineInvokeCacheElementSymRefWithKnownObjectIndex(TR::Compilation 
    return newRef;
    }
 
+static char *
+getSignatureForLinkToStatic(
+   const char * const extraParamsBefore,
+   const char * const extraParamsAfter,
+   TR::Compilation* comp,
+   J9UTF8* romMethodSignature,
+   int32_t &signatureLength)
+   {
+   const size_t extraParamsLength = strlen(extraParamsBefore) + strlen(extraParamsAfter);
+
+   const char * const origSignature = utf8Data(romMethodSignature);
+   const int origSignatureLength = J9UTF8_LENGTH(romMethodSignature);
+   signatureLength = origSignatureLength + extraParamsLength;
+
+   const int32_t signatureAllocSize = signatureLength + 1; // +1 for NUL terminator
+   char * linkToStaticSignature =
+      (char *)comp->trMemory()->allocateMemory(signatureAllocSize, heapAlloc);
+
+   TR_ASSERT_FATAL(
+      origSignature[0] == '(',
+      "method signature must begin with '(': `%.*s'",
+      origSignatureLength,
+      origSignature);
+
+   // Can't simply strchr() for ')' because that can appear within argument
+   // types, in particular within class names. It's necessary to parse the
+   // signature.
+   const char * const paramsStart = origSignature + 1;
+   const char * paramsEnd = paramsStart;
+   while (*paramsEnd != ')')
+      paramsEnd = nextSignatureArgument(paramsEnd);
+
+   const char * const returnType = paramsEnd + 1;
+   const char * const returnTypeEnd = nextSignatureArgument(returnType);
+
+   // Check that the parsed length is sensible. This also ensures that it's
+   // safe to truncate the lengths of the params and the return type to int
+   // (since they'll be less than parsedLength).
+   const ptrdiff_t parsedLength = returnTypeEnd - origSignature;
+   TR_ASSERT_FATAL(
+      0 <= parsedLength && parsedLength <= INT_MAX,
+      "bad parsedLength %lld for romMethodSignature (J9UTF8*)%p",
+      romMethodSignature);
+
+   TR_ASSERT_FATAL(
+      (int)parsedLength == origSignatureLength,
+      "parsed method signature length %d differs from claimed length %d "
+      "(origSignature `%.*s')",
+      (int)parsedLength,
+      origSignatureLength,
+      parsedLength > origSignatureLength ? (int)parsedLength : origSignatureLength,
+      origSignature);
+
+   // Put together the new signature.
+   const int formattedLength = snprintf(
+      linkToStaticSignature,
+      signatureAllocSize,
+      "(%s%.*s%s)%.*s",
+      extraParamsBefore,
+      (int)(paramsEnd - paramsStart),
+      paramsStart,
+      extraParamsAfter,
+      (int)(returnTypeEnd - returnType),
+      returnType);
+
+   // This condition implies that (formattedLength < signatureAllocSize), so
+   // given that the assertion passes, we can be sure that the signature was
+   // not truncated.
+   TR_ASSERT_FATAL(
+      formattedLength == signatureLength,
+      "expected linkToStatic signature length %d but got %d "
+      "(origSignature `%.*s', extraParamsBefore `%s', extraParamsAfter `%s')",
+      signatureLength,
+      formattedLength,
+      origSignatureLength,
+      origSignature,
+      extraParamsBefore,
+      extraParamsAfter);
+
+   return linkToStaticSignature;
+   }
+
 char *
 TR_J9VMBase::getSignatureForLinkToStaticForInvokeHandle(TR::Compilation* comp, J9UTF8* romMethodSignature, int32_t &signatureLength)
    {
-   signatureLength = J9UTF8_LENGTH(romMethodSignature) + 55; // 55 accounts for the number of chars added to ROM method signature to construct the linkToStatic signature from it
-   char * signatureString = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+1)*sizeof(char), heapAlloc);
-   char * linkToStaticSignature = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+55)*sizeof(char), heapAlloc);
-   strcpy(signatureString, utf8Data(romMethodSignature));
-   if (strncmp(signatureString, "()", 2) == 0) // handles empty signature
-      {
-      char * returnTypeToken = strtok(signatureString, "()");
-      sprintf(linkToStaticSignature, "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)%s", returnTypeToken);
-      }
-   else
-      {
-      char * sigTokenStart = strtok(signatureString, "()");
-      char * sigTokenEnd = strtok(NULL, "()");
-      sprintf(linkToStaticSignature, "(Ljava/lang/Object;%sLjava/lang/Object;Ljava/lang/Object;)%s", sigTokenStart, sigTokenEnd);
-      }
-   return linkToStaticSignature;
+   return getSignatureForLinkToStatic(
+        "Ljava/lang/Object;",
+        "Ljava/lang/Object;Ljava/lang/Object;",
+        comp,
+        romMethodSignature,
+        signatureLength);
    }
 
 char *
 TR_J9VMBase::getSignatureForLinkToStaticForInvokeDynamic(TR::Compilation* comp, J9UTF8* romMethodSignature, int32_t &signatureLength)
    {
-   signatureLength = J9UTF8_LENGTH(romMethodSignature) + 37; // 37 accounts for the number of chars added to ROM method signature to construct linkToStatic signature from it
-   char * signatureString = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+1)*sizeof(char), heapAlloc);
-   char * linkToStaticSignature = (char *) comp->trMemory()->allocateMemory((J9UTF8_LENGTH(romMethodSignature)+37)*sizeof(char), heapAlloc);
-   strcpy(signatureString, utf8Data(romMethodSignature));
-   if (strncmp(signatureString, "()", 2) == 0)
-      {
-      char * returnTypeToken = strtok(signatureString, "()"); // handles empty signature
-      sprintf(linkToStaticSignature, "(Ljava/lang/Object;Ljava/lang/Object;)%s", returnTypeToken);
-      }
-   else
-      {
-      char * sigTokenStart = strtok(signatureString, "()");
-      char * sigTokenEnd = strtok(NULL, "()");
-      sprintf(linkToStaticSignature, "(%sLjava/lang/Object;Ljava/lang/Object;)%s", sigTokenStart, sigTokenEnd);
-      }
-   return linkToStaticSignature;
+   return getSignatureForLinkToStatic(
+        "",
+        "Ljava/lang/Object;Ljava/lang/Object;",
+        comp,
+        romMethodSignature,
+        signatureLength);
    }
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
