@@ -857,8 +857,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
 
-   if (comp->getOption(TR_OptimizeForSpace) ||
-       (comp->getOption(TR_FullSpeedDebug) /*&& !comp->getOption(TR_EnableLiveMonitorMetadata)*/) ||
+   if ((comp->getOption(TR_FullSpeedDebug) /*&& !comp->getOption(TR_EnableLiveMonitorMetadata)*/) ||
        comp->getOption(TR_DisableInlineMonExit) ||
        lwOffset <= 0)
       {
@@ -1434,8 +1433,7 @@ OMR::ARM::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
    int32_t lwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
 
-   if (comp->getOption(TR_OptimizeForSpace) ||
-       (comp->getOption(TR_FullSpeedDebug) /*&& !comp->getOption(TR_EnableLiveMonitorMetadata)*/) ||
+   if ((comp->getOption(TR_FullSpeedDebug) /*&& !comp->getOption(TR_EnableLiveMonitorMetadata)*/) ||
        comp->getOption(TR_DisableInlineMonEnt) ||
        lwOffset <= 0)
       {

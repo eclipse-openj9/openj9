@@ -1063,8 +1063,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    if (intSavedFirst <= TR::RealRegister::LastGPR)
       {
       if (comp()->target().is64Bit() ||
-          (!comp()->getOption(TR_OptimizeForSpace) &&
-           TR::RealRegister::LastGPR - intSavedFirst <= 3))
+          (TR::RealRegister::LastGPR - intSavedFirst <= 3))
          {
          for (regIndex=intSavedFirst; regIndex<=TR::RealRegister::LastGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
             {
@@ -1358,8 +1357,7 @@ void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    if (savedFirst <= TR::RealRegister::LastGPR)
       {
       if (comp()->target().is64Bit() ||
-          (!comp()->getOption(TR_OptimizeForSpace) &&
-           TR::RealRegister::LastGPR - savedFirst <= 3))
+          (TR::RealRegister::LastGPR - savedFirst <= 3))
          {
          for (regIndex=savedFirst; regIndex<=TR::RealRegister::LastGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
             {
