@@ -173,8 +173,8 @@ outOfProcessCompilationEnd(
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d has successfully compiled %s",
-         compInfoPT->getCompThreadId(), compInfoPT->getCompilation()->signature());
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d has successfully compiled %s memoryState=%d",
+         compInfoPT->getCompThreadId(), compInfoPT->getCompilation()->signature(), memoryState);
       }
 
    Trc_JITServerCompileEnd(compInfoPT->getCompilationThread(), compInfoPT->getCompThreadId(),
