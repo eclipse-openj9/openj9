@@ -8784,6 +8784,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                {
                // We want to increase the scratch memory if it's a out of process compilation
                proposedScratchMemoryLimit *= TR::Options::getScratchSpaceFactorWhenJITServerWorkload();
+               // However, this new limit must not be larger than the half the free physical memory
+
                }
 #endif
 
@@ -8820,7 +8822,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                if (physicalLimit != OMRPORT_MEMINFO_NOT_AVAILABLE)
                   {
                   // If the proposed scratch space limit is greater than the available
-                  // physical memory, we need to lower the scratch space limit
+                  // physical memory, we need to lower the scratch space limit.
+#if defined(J9VM_OPT_JITSERVER)
+                  // Moreover, for JITServer do not allow a single compilation to consume
+                  // more than half of the free physical memory
+                  if (compiler->isOutOfProcessCompilation())
+                     physicalLimit = std::max(physicalLimit >> 1, static_cast<uint64_t>(TR::Options::getScratchSpaceLowerBound()));
+#endif
                   if (proposedScratchMemoryLimit > physicalLimit)
                      {
                      if (incompleteInfo)
