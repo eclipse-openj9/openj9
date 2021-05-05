@@ -101,10 +101,6 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
       case TR::ladd:
       case TR::badd:
       case TR::sadd:
-      case TR::iuadd:
-      case TR::luadd:
-      case TR::buadd:
-      case TR::cadd:
          return "add";
 
       case TR::fadd:
@@ -119,12 +115,6 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
       case TR::lneg:
       case TR::bneg:
       case TR::sneg:
-      case TR::iusub:
-      case TR::lusub:
-      case TR::busub:
-      case TR::iuneg:
-      case TR::luneg:
-      case TR::csub:
          return "sub";
 
       case TR::dsub:
