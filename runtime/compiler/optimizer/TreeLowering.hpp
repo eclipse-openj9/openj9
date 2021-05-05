@@ -72,7 +72,7 @@ class TreeLowering : public TR::Optimization
       const char* optDetailString() { return _treeLoweringOpt->optDetailString(); }
 
       void prepareToReplaceNode(TR::Node * node) { _treeLoweringOpt->prepareToReplaceNode(node); }
-      
+
       /**
        * @brief Main callback method to apply a transformation.
        *
@@ -96,7 +96,7 @@ class TreeLowering : public TR::Optimization
        *
        * @param block is the block containing the TreeTop to be moved
        * @param tt is a pointer to the TreeTop to be moved
-       * @param node is a pointer to the node that stores a value 
+       * @param node is a pointer to the node that stores a value
        * @param isAddress shows if the node is address, otherwise it is assumed to be an integer
        */
       void moveNodeToEndOfBlock(TR::Block* const block, TR::TreeTop* const tt, TR::Node* const node, bool isAddress);
@@ -106,7 +106,7 @@ class TreeLowering : public TR::Optimization
        *
        * The function should be used to split a block after a branch has been inserted.
        * After the split, the resulting fall-through block is marked as an extension of
-       * the previous block (the original block that was split), which implies that 
+       * the previous block (the original block that was split), which implies that
        * uncommoning is not required. The cfg is also updated with an edge going from
        * the original block to some target block, which should be the same as the
        * target of the branch inserted before the split.
@@ -155,7 +155,7 @@ class TreeLowering : public TR::Optimization
        */
       void addTransformation(Transformer* transformer, TR::Node* const node, TR::TreeTop* const tt)
          {
-         _transformationQueue.push_back(Transformation{transformer, node, tt});
+         _transformationQueue.push_back(Transformation(transformer, node, tt));
          }
 
       /**
@@ -178,12 +178,12 @@ class TreeLowering : public TR::Optimization
 
       /**
        * @brief A class representing an IL transformation.
-       * 
+       *
        * This class encapsulates the different pieces needed to represent
        * and perform a transformation.
        *
        * Conceptually, a transformation is made up of two parts:
-       * 
+       *
        * 1. A function (callback) that applies the transformation
        *    given some input.
        * 2. The set of input arguments for the given transformation.
@@ -202,6 +202,9 @@ class TreeLowering : public TR::Optimization
          TR::Node* node;
          TR::TreeTop* tt;
 
+         Transformation(Transformer* transform, TR::Node* n, TR::TreeTop* t)
+           : transformer(transform), node(n), tt(t)
+           {}
          inline void doTransformation();
          };
 

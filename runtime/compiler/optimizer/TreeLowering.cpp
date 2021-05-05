@@ -221,7 +221,7 @@ class AcmpTransformer: public TR::TreeLowering::Transformer
       : TR::TreeLowering::Transformer(opt)
       {}
 
-   void lower(TR::Node* const node, TR::TreeTop* const tt) override;
+   void lower(TR::Node* const node, TR::TreeTop* const tt);
    };
 
 /**
@@ -573,7 +573,7 @@ class ArrayStoreCHKTransformer: public TR::TreeLowering::Transformer
       : TR::TreeLowering::Transformer(opt)
       {}
 
-   void lower(TR::Node* const node, TR::TreeTop* const tt) override;
+   void lower(TR::Node* const node, TR::TreeTop* const tt);
    };
 
 /**
@@ -821,7 +821,7 @@ class LoadArrayElementTransformer: public TR::TreeLowering::Transformer
       : TR::TreeLowering::Transformer(opt)
       {}
 
-   void lower(TR::Node* const node, TR::TreeTop* const tt) override;
+   void lower(TR::Node* const node, TR::TreeTop* const tt);
    };
 
 /*
@@ -1129,7 +1129,7 @@ class StoreArrayElementTransformer: public TR::TreeLowering::Transformer
       : TR::TreeLowering::Transformer(opt)
       {}
 
-   void lower(TR::Node* const node, TR::TreeTop* const tt) override;
+   void lower(TR::Node* const node, TR::TreeTop* const tt);
    };
 
 /*
