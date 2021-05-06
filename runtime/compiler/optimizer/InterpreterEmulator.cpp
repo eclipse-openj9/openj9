@@ -29,7 +29,7 @@
 #include "jilconsts.h"
 #include "il/ParameterSymbol.hpp"
 #include "optimizer/PreExistence.hpp"
-#include "il/OMRNode_inlines.hpp"
+#include "il/Node_inlines.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
 #include "env/j9methodServer.hpp"
