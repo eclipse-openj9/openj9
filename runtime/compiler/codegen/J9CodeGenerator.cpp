@@ -2710,7 +2710,7 @@ static void processAOTGuardSites(TR::CodeGenerator *cg, uint32_t inlinedCallSize
 
          case TR_Breakpoint:
             cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation((uint8_t *)(*it)->getLocation(),
-                                                                             (uint8_t *)(*it)->getGuard()->getCurrentInlinedSiteIndex(),
+                                                                             (uint8_t *)(intptr_t)(*it)->getGuard()->getCurrentInlinedSiteIndex(),
                                                                              (uint8_t *)(*it)->getDestination(),
                                                                              type, cg),
                              __FILE__, __LINE__, NULL);
