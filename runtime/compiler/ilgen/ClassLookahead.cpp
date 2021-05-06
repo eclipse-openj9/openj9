@@ -1368,18 +1368,17 @@ void TR_ClassLookahead::makeInfoPersistent()
             {
             if (_traceIt)
                printf("Creating persistent info for array field %s\n", persistentSig);
-            newFieldInfo = new (PERSISTENT_NEW) TR_PersistentArrayFieldInfo(persistentSig, length);
-            memcpy(newFieldInfo, fieldInfo, sizeof(TR_PersistentArrayFieldInfo));
+            newFieldInfo = new (PERSISTENT_NEW) TR_PersistentArrayFieldInfo(*arrayFieldInfo);
             }
          else
             {
             if (_traceIt)
                printf("Creating persistent info for field %s\n", persistentSig);
-            newFieldInfo = new (PERSISTENT_NEW) TR_PersistentFieldInfo(persistentSig, length);
-            memcpy(newFieldInfo, fieldInfo, sizeof(TR_PersistentFieldInfo));
+            newFieldInfo = new (PERSISTENT_NEW) TR_PersistentFieldInfo(*fieldInfo);
             }
 
          newFieldInfo->setFieldSignature(persistentSig);
+         newFieldInfo->setFieldSignatureLength(length);
 
          char *persistentType = 0;
          if (isTypeInfoValid)
