@@ -2155,6 +2155,7 @@ bool TR_J9ByteCodeIlGenerator::replaceMethods(TR::TreeTop *tt, TR::Node *node)
    for (int i = 0; i < _numDecFormatRenames; i++)
       {
       if (!strcmp(nodeName, _decFormatRenames[i].srcMethodSignature))
+         {
          if (performTransformation(comp(), "%sreplaced %s by %s in [%p]\n",
                                      OPT_DETAILS, _decFormatRenames[i].srcMethodSignature, _decFormatRenames[i].dstMethodSignature, node))
             {
@@ -2164,7 +2165,10 @@ bool TR_J9ByteCodeIlGenerator::replaceMethods(TR::TreeTop *tt, TR::Node *node)
             return true;
             }
          else
+            {
             return false;
+            }
+         }
       }
    return true;
    }

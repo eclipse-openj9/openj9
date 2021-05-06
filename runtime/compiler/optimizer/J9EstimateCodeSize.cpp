@@ -1317,10 +1317,12 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          {
          int32_t i = bci.bcIndex();
          if (blocks[i])
+            {
             if (!blocks[i]->isCold() && blocks[i]->getFrequency() > coldBorderFrequency)
                isCold = false;
             else
                isCold = true;
+            }
 
          if (isCold)
             coldCode++;
@@ -1992,7 +1994,9 @@ TR_J9EstimateCodeSize::trimBlocksForPartialInlining(TR_CallTarget *calltarget, T
                calltarget->_cfg->getStart()->asBlock(), TR::Block::_endBlock,
                TR::Block::_partialInlineBlock);
          if (!gs)
+            {
             partialTrace(tracer(),"TrimBlocksForPartialInlining: No Complete Path from Start to End");
+            }
          }
 
       if (!gs)

@@ -1235,13 +1235,17 @@ J9::CodeGenerator::printNVVMIR(
        return GPUSuccess;   // will handle in the parent
 
    if (opcode.isLoadConst())
-       if((node->getDataType() == TR::Address) && (node->getAddress() != 0))
-          {
-          traceMsg(self()->comp(), "Load Const with a non-zero address in node %p\n", node);
-          return GPUInvalidProgram;
-          }
-       else
-          return GPUSuccess;   // will handle in the parent
+      {
+      if((node->getDataType() == TR::Address) && (node->getAddress() != 0))
+         {
+         traceMsg(self()->comp(), "Load Const with a non-zero address in node %p\n", node);
+         return GPUInvalidProgram;
+         }
+      else
+         {
+         return GPUSuccess;   // will handle in the parent
+         }
+      }
 
    if (node->getOpCodeValue() == TR::asynccheck)
        return GPUSuccess;
