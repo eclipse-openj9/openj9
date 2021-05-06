@@ -8500,8 +8500,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP
                       && (disableNextGenHCRDuringStartup
                           || that->_methodBeingCompiled->isDLTCompile()
-                          || options->getOptLevel() <= warm
-                             && !enableStartupNextGenHCRAtAllOpts))
+                          || (options->getOptLevel() <= warm
+                             && !enableStartupNextGenHCRAtAllOpts)))
                      {
                      options->setOption(TR_DisableNextGenHCR);
                      }

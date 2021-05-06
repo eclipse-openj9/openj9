@@ -991,7 +991,7 @@ TR_J9ByteCodeIlGenerator::expandPlaceholderSignature(TR::SymbolReference *symRef
    int32_t currentArgSignatureOffset = 1; // skip parenthesis
    for (int32_t childIndex = originalMethod->isStatic()? 0 : 1; childIndex < numArgs; childIndex++)
       {
-      int32_t explicitArgIndex = childIndex - originalMethod->isStatic()? 0 : 1;
+      int32_t explicitArgIndex = childIndex - (originalMethod->isStatic()? 0 : 1);
       TR_ResolvedMethod *symRefMethod = symRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod();
       char   *signatureChars  = symRefMethod->signatureChars();
       int nextArgSignatureOffset = nextSignatureArgument(signatureChars + currentArgSignatureOffset) - signatureChars;

@@ -515,8 +515,8 @@ reorderTargetNodesInBB(TR_CISCTransformer *trans)
 
                // Analyze whether we can move the node t to immediately before the nodes in nextPlist
                List<TR_CISCNode> *dagList = T->getDagId2Nodes()+t->getDagID();
-               TR_CISCNode *tgt;
-               if (tgt = analyzeMoveNodeForward(trans, dagList, t, nextPlist))
+               TR_CISCNode *tgt = analyzeMoveNodeForward(trans, dagList, t, nextPlist);
+               if (tgt)
                   {
                   T->duplicateListsDuplicator();
                   // OK, we can move the node t!

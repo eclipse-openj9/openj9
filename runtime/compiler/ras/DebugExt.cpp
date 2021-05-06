@@ -1147,7 +1147,7 @@ TR_DebugExt::dxTrPrint(const char* name1, void* addr2, uintptr_t argCount, const
    int32_t argc = 0;
    const char *argp1 = args;
    char *argp2 = myArgs;
-   while (*argp2++ = *argp1++);
+   while ((*argp2++ = *argp1++));
    for (argp2 = myArgs; *argp2; )
       {
       argv[argc++] = argp2;

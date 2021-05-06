@@ -432,8 +432,8 @@ TR::Node *pd2udSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
       child = node->setChild(0, s->replaceNodeWithChild(child, child->getFirstChild(), s->_curTree, block, false)); // correctBCDPrecision=false because nodePrec==childPrec
       }
 
-   TR::Node * result = NULL;
-   if (result = s->unaryCancelOutWithChild(node, node->getFirstChild(), s->_curTree, TR::ud2pd))
+   TR::Node * result = s->unaryCancelOutWithChild(node, node->getFirstChild(), s->_curTree, TR::ud2pd);
+   if (result)
       return result;
 
    child = node->setChild(0,removeOperandWidening(child, node, block, s));
@@ -605,8 +605,8 @@ TR::Node *ud2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
          }
       }
 
-   TR::Node * result = NULL;
-   if (result = s->unaryCancelOutWithChild(node, node->getFirstChild(), s->_curTree, TR::pd2ud))
+   TR::Node * result = s->unaryCancelOutWithChild(node, node->getFirstChild(), s->_curTree, TR::pd2ud);
+   if (result)
       return result;
    return node;
    }
@@ -624,8 +624,8 @@ TR::Node *udsx2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
       {
       TR::ILOpCodes inverseOp = TR::ILOpCode::getProperConversion(targetDataType, sourceDataType, false /* !wantZeroExtension */); // inverse conversion to what we are given
 
-      TR::Node * result = NULL;
-      if (result = s->unaryCancelOutWithChild(node, node->getFirstChild(), s->_curTree, inverseOp))
+      TR::Node * result = s->unaryCancelOutWithChild(node, node->getFirstChild(), s->_curTree, inverseOp);
+      if (result)
          return result;
       }
    return node;
@@ -833,8 +833,8 @@ TR::Node *zd2pdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
    propagateSignStateUnaryConversion(node, block, s);
 
-   TR::Node * result = NULL;
-   if (result = s->unaryCancelOutWithChild(node, firstChild, s->_curTree, TR::pd2zd))
+   TR::Node * result = s->unaryCancelOutWithChild(node, firstChild, s->_curTree, TR::pd2zd);
+   if (result)
       return result;
 
    if (firstChild->getOpCodeValue() == TR::zdsle2zd &&
@@ -866,8 +866,8 @@ TR::Node *pd2zdSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
 
    propagateSignStateUnaryConversion(node, block, s);
 
-   TR::Node * result = NULL;
-   if (result = s->unaryCancelOutWithChild(node, firstChild, s->_curTree, TR::zd2pd))
+   TR::Node * result = s->unaryCancelOutWithChild(node, firstChild, s->_curTree, TR::zd2pd);
+   if (result)
       return result;
 
    TR::Node *child = node->setChild(0, flipCleanAndShift(node->getFirstChild(), block, s));

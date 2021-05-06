@@ -825,7 +825,7 @@ TR_PersistentCHTable::addClassToTable(J9VMThread *vmThread,
       return false;
 
    /* Trigger Pre-initialize Hook */
-   if (j9clazz->initializeStatus & J9ClassInitStatusMask != J9ClassInitNotInitialized)
+   if ((j9clazz->initializeStatus & J9ClassInitStatusMask) != J9ClassInitNotInitialized)
       {
       jitHookClassPreinitializeHelper(vmThread, jitConfig, j9clazz, &eventFailed);
       if (eventFailed)

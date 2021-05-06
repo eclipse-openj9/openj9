@@ -1384,16 +1384,25 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    TR::Register *reg;
 
    if (callNode->getFirstChild() == node->getFirstChild())
-      if (reg = callNode->getFirstChild()->getRegister())
+      {
+      reg = callNode->getFirstChild()->getRegister();
+      if (reg)
          deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+      }
 
    if (callNode->getSecondChild() == node->getSecondChild())
-      if (reg = callNode->getSecondChild()->getRegister())
+      {
+      reg = callNode->getSecondChild()->getRegister();
+      if (reg)
          deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+      }
 
    if (callNode->getThirdChild() == node->getThirdChild())
-      if (reg = callNode->getThirdChild()->getRegister())
+      {
+      reg = callNode->getThirdChild()->getRegister();
+      if (reg)
          deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+      }
 
    deps->stopAddingConditions();
 
@@ -3641,12 +3650,18 @@ inline void generateInlinedCheckCastForDynamicCastClass(TR::Node* node, TR::Code
    TR::Register *reg;
 
    if (callNode->getFirstChild() == node->getFirstChild())
-      if (reg = callNode->getFirstChild()->getRegister())
+      {
+      reg = callNode->getFirstChild()->getRegister();
+      if (reg)
          deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+      }
 
    if (callNode->getSecondChild() == node->getSecondChild())
-      if (reg = callNode->getSecondChild()->getRegister())
+      {
+      reg = callNode->getSecondChild()->getRegister();
+      if (reg)
          deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+      }
 
    deps->stopAddingConditions();
 
@@ -7991,13 +8006,19 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       TR::Register *reg;
 
       if (callNode->getFirstChild() == node->getFirstChild())
-         if (reg = callNode->getFirstChild()->getRegister())
+         {
+         reg = callNode->getFirstChild()->getRegister();
+         if (reg)
             deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+         }
 
       if (node->getOpCodeValue() != TR::New)
          if (callNode->getSecondChild() == node->getSecondChild())
-            if (reg = callNode->getSecondChild()->getRegister())
+            {
+            reg = callNode->getSecondChild()->getRegister();
+            if (reg)
                deps->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+            }
       }
 
    deps->stopAddingConditions();

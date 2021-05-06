@@ -1975,11 +1975,11 @@ TR_BlockFrequencyInfo::generateBlockRawCountCalculationSubTree(TR::Compilation *
    {
    TR::Node *root = NULL;
    if (blockNumber > -1 && (_counterDerivationInfo[blockNumber * 2]
-      && ((((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1 == 1)
+      && (((((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1) == 1)
       || !_counterDerivationInfo[blockNumber * 2]->isEmpty())))
       {
       TR::Node *addRoot = NULL;
-      if (((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1 == 1)
+      if ((((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1) == 1)
          {
          TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(getFrequencyForBlock(((uintptr_t)_counterDerivationInfo[blockNumber * 2]) >> 1), TR::Int32);
          symRef->getSymbol()->setIsBlockFrequency();
@@ -2004,7 +2004,7 @@ TR_BlockFrequencyInfo::generateBlockRawCountCalculationSubTree(TR::Compilation *
       TR::Node *subRoot = NULL;
       if (_counterDerivationInfo[blockNumber * 2 +1] != NULL)
          {
-         if (((uintptr_t)_counterDerivationInfo[blockNumber *2 + 1]) & 0x1 == 1)
+         if ((((uintptr_t)_counterDerivationInfo[blockNumber *2 + 1]) & 0x1) == 1)
             {
             TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(getFrequencyForBlock(((uintptr_t)_counterDerivationInfo[blockNumber * 2 + 1]) >> 1), TR::Int32);
             symRef->getSymbol()->setIsBlockFrequency();

@@ -514,7 +514,7 @@ bool TR_AnnotationBase::extractValue(J9AnnotationInfoEntry * annotationInfoEntry
      ++dataPtr;// point at data
      *(int32_t* *)ptr = dataPtr;
      return true;
-   } while(namePtr = intFunc->annotationElementIteratorNext(&state,&data));
+   } while((namePtr = intFunc->annotationElementIteratorNext(&state,&data)));
     if(trace) printf("Search failed\n");
     return false;
   }

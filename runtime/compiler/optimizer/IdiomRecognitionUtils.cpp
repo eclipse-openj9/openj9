@@ -680,12 +680,12 @@ getThreeNodesForArray(TR_CISCNode *top, TR_CISCNode **ixloadORstore, TR_CISCNode
       case TR::ladd:
       case TR::iadd:
          // search iload
-         if (q = searchIload(p->getChild(1), allowArrayIndex))
+         if ((q = searchIload(p->getChild(1), allowArrayIndex)))
             {
             *iload = q;
             q = p->getChild(0);
             }
-         else if (q = searchIload(p->getChild(0), allowArrayIndex))
+         else if ((q = searchIload(p->getChild(0), allowArrayIndex)))
             {
             *iload = q;
             q = p->getChild(1);
