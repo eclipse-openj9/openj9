@@ -983,7 +983,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, decLabel, TR::CC_NE);
 
    generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, tempReg, 0);
-   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
+   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
    generateMemSrc1Instruction(cg, op, node, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), tempReg);
 
@@ -2847,7 +2847,7 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    generateTrg1MemSrc1Instruction(cg, op, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
    generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tempReg, loopLabel);
 
-   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
+   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
 
