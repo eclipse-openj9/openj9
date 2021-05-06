@@ -403,7 +403,7 @@ void TR_ValueProfiler::modifyTrees()
              !(arrayCopyLen->getOpCode().isCallIndirect() &&
                !arrayCopyLen->isTheVirtualCallNodeForAGuardedInlinedCall()))
              {
-             addProfilingTrees(arrayCopyLen, tt, 0, LastValueInfo, LastProfiler, true, &firstChild->getByteCodeInfo());
+             addProfilingTrees(arrayCopyLen, tt, firstChild->getByteCodeInfo(), 0, LastValueInfo, LastProfiler, true);
              }
          }
       else if (firstChild && firstChild->getOpCode().isCall() &&
