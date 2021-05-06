@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -998,8 +998,8 @@ typedef struct {
 	jvmtiEventGarbageCollectionFinish GarbageCollectionFinish;
 	jvmtiEventObjectFree ObjectFree;
 	jvmtiEventVMObjectAlloc VMObjectAlloc;
-	jvmtiEventReserved reserved85;
-ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [	jvmtiEventSampledObjectAlloc SampledObjectAlloc;], [	jvmtiEventReserved reserved86;])
+ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [	jvmtiEventReserved reserved85;
+	jvmtiEventSampledObjectAlloc SampledObjectAlloc;], [dnl])
 } jvmtiEventCallbacks;
 
 /*
