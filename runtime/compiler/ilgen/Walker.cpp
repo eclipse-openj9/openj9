@@ -4134,6 +4134,9 @@ break
       DAA_PRINT(TR::com_ibm_dataaccess_PackedDecimal_shiftLeftPackedDecimal);
       DAA_PRINT(TR::com_ibm_dataaccess_PackedDecimal_shiftRightPackedDecimal);
       DAA_PRINT(TR::com_ibm_dataaccess_PackedDecimal_movePackedDecimal);
+
+      default:
+         break;
       }
 
    if(symbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_JITIntrinsicsEnabled)
@@ -6732,6 +6735,9 @@ TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
         case TR::java_lang_StringCoding_encodeASCII:
         case TR::java_lang_StringCoding_encodeUTF8:
            node->setCanSkipZeroInitialization(true);
+           break;
+
+        default:
            break;
         }
      }

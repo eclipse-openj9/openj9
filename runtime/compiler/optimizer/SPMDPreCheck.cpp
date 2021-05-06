@@ -58,6 +58,9 @@ bool SPMDPreCheck::isSPMDCandidate(TR::Compilation *comp, TR_RegionStructure *lo
             case TR::compressedRefs:
                if (node->getFirstChild()->getOpCode().isLoad())
                    continue;
+
+            default:
+               break;
             }
 
           // explicitly allowed families of opcodes

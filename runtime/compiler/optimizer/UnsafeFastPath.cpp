@@ -313,6 +313,9 @@ static bool needUnsignedConversion(TR::RecognizedMethod methodToReduce)
       case TR::java_lang_StringUTF16_getChar:
       case TR::java_lang_StringUTF16_putChar:
          return true;
+
+      default:
+         break;
       }
 
    return false;
@@ -488,6 +491,9 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::java_lang_StringUTF16_getChar:
                objectChild = 0;
                offsetChild = 1;
+               break;
+
+            default:
                break;
             }
 
@@ -735,6 +741,9 @@ int32_t TR_UnsafeFastPath::perform()
                {
                case TR::java_lang_StringUTF16_getChar:
                   unsafeSymRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Int8);
+                  break;
+
+               default:
                   break;
                }
 

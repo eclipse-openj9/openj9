@@ -849,6 +849,9 @@ TR_ValueProfiler::addListOrArrayProfilingTrees(
       case ValueInfo:
          helper = TR_jitProfileValue;
          break;
+
+      default:
+         break;
       }
    TR::SymbolReference *profiler = comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper, false, false, true);
 #if defined(TR_HOST_POWER) || defined(TR_HOST_ARM)

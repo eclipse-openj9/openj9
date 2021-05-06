@@ -386,6 +386,9 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
               return mnIndex;
               }
            }
+
+         default:
+            break;
         }
       }
 
@@ -493,6 +496,9 @@ void TR_MethodHandleTransformer::visitCall(TR::TreeTop* tt, TR::Node* node)
          break;
       case TR::java_lang_invoke_Invokers_checkExactType:
          process_java_lang_invoke_Invokers_checkExactType(tt, node);
+         break;
+
+      default:
          break;
       }
    }

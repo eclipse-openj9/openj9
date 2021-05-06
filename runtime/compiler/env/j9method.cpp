@@ -896,6 +896,9 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
       case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
       case TR::java_lang_invoke_MethodHandle_invokeExact:
       return false;
+
+      default:
+         break;
       }
 
    if (convertToMethod()->isArchetypeSpecimen())
@@ -5093,6 +5096,9 @@ TR_J9MethodBase::isUnsafeCAS(TR::Compilation * c)
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
          return true;
+
+      default:
+         break;
       }
 
    return false;

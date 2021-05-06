@@ -224,6 +224,9 @@ int32_t TR_VarHandleTransformer::perform()
                   case TR::ResolveCHK:
                        newOpCode = TR::treetop;
                        break;
+
+                  default:
+                     break;
                   }
                if (hasNULLCHK)
                   {

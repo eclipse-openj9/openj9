@@ -8704,6 +8704,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                      options->setOption(TR_DebugInliner);
                      break;
                      }
+                  default:
+                     break;
                   }
                }
             }
