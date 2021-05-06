@@ -20,9 +20,5 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
-set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
-
-set(CMAKE_IMPORT_LIBRARY_PREFIX "lib")
-
-list(APPEND OMR_PLATFORM_COMPILE_OPTIONS "\"-Wc,inline(auto,noreport,600,5000)\"")
+include("${CMAKE_CURRENT_LIST_DIR}/cmprssptrs.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/zos_390-64.cmake")
