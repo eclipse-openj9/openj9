@@ -299,9 +299,6 @@ buildCallInStackFrame(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, 
 		UDATA usedBytes = ((UDATA)oldELS - (UDATA)newELS);
 		freeBytes -= usedBytes;
 		currentThread->currentOSStackFree = freeBytes;
-
-		Trc_VM_callin_stackFree(currentThread, freeBytes, newELS);
-
 		if ((IDATA)freeBytes < J9_OS_STACK_GUARD) {
 			if (J9_ARE_NO_BITS_SET(currentThread->privateFlags, J9_PRIVATE_FLAGS_CONSTRUCTING_EXCEPTION)) {
 				setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGSTACKOVERFLOWERROR, J9NLS_VM_OS_STACK_OVERFLOW);

@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2021 IBM Corp. and others
+// Copyright (c) 2006, 2017 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,6 +79,3 @@ TraceException=Trc_Util_validateLibrary_memAllocFailed Noenv Overhead=1 Level=1 
 TraceEvent=Trc_Util_validateLibrary_onLoadSignature NoEnv Overhead=1 Level=5 Template="validateLibrary signature (switch-string: %s, clear-string: %s)"
 TraceEvent=Trc_Util_validateLibrary_libraryStatus NoEnv Overhead=1 Level=3 Template="validateLibrary shared library %s flagged as %s"
 TraceExit=Trc_Util_validateLibrary_Exit Noenv Overhead=1 Level=5 Template="validateLibrary returns"
-
-TraceEvent=Trc_Util_thrhelp_initializeCurrentOSStackFree Overhead=1 Level=1 Template="Setup osStack free for osthread=%p requested stacksize=%zu realStacksize=%zu (zero is not found) stackfree=%zu starting sp=%p"
-

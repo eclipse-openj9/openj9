@@ -627,6 +627,7 @@ protectedInternalAttachCurrentThread(J9PortLibrary* portLibrary, void * userData
 	char *modifiedThreadName = NULL; /* needed if the original thread name is bad UTF8 */
 	j9object_t *threadGroup = NULL;
 	J9VMThread *env;
+	UDATA osStackFree;
 	void *memorySpace = vm->defaultMemorySpace;
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	BOOLEAN ifaEnabled = FALSE;
@@ -693,7 +694,11 @@ protectedInternalAttachCurrentThread(J9PortLibrary* portLibrary, void * userData
 
 	/* Determine the thread's remaining OS stack */
 
-	initializeCurrentOSStackFree(env, args->osThread, vm->defaultOSStackSize);
+	osStackFree = omrthread_current_stack_free();
+	if (osStackFree == 0) {
+		osStackFree = vm->defaultOSStackSize;
+	}
+	env->currentOSStackFree = osStackFree - (osStackFree / J9VMTHREAD_RESERVED_C_STACK_FRACTION);
 
 	threadAboutToStart(env);
 

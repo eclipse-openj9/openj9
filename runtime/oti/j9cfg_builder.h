@@ -92,12 +92,8 @@
 #define J9_JIT_DATA_CACHE_SIZE (8 * 1024 * 1024)
 #endif /* J9VM_ARCH_X86 && !J9VM_ENV_DATA64 */
 
-/*
- * J9_OS_STACK_GUARD needs to be large enough such that we can run
- * the initializer for StackOverflow and construct a new instance. On
- * some platforms this can use up more than 16kb from an overflow check.
- */
-#define J9_OS_STACK_GUARD (32 * 1024)
+
+#define J9_OS_STACK_GUARD (16 * 1024)
 
 #if defined(J9VM_ENV_DATA64) && defined(J9ZOS390)
 /* Use a 1MB OS stack on z/OS 64-bit as this is what the OS
