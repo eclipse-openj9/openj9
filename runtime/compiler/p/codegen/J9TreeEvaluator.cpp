@@ -4821,8 +4821,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
    TR::Compilation *comp = cg->comp();
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
-   if (comp->getOption(TR_OptimizeForSpace) ||
-         comp->getOption(TR_FullSpeedDebug) ||
+   if (comp->getOption(TR_FullSpeedDebug) ||
          (isMonitorValueBasedOrValueType == TR_yes) ||
          comp->getOption(TR_DisableInlineMonExit))
       {
@@ -7247,8 +7246,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
    TR_ASSERT(lwOffset>=LOWER_IMMED && lwOffset<=UPPER_IMMED, "Need re-work on using lwOffset.");
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
-   if (comp->getOption(TR_OptimizeForSpace) ||
-         comp->getOption(TR_MimicInterpreterFrameShape) ||
+   if (comp->getOption(TR_MimicInterpreterFrameShape) ||
          (comp->getOption(TR_FullSpeedDebug) && node->isSyncMethodMonitor()) ||
          (isMonitorValueBasedOrValueType == TR_yes) ||
          comp->getOption(TR_DisableInlineMonEnt))
