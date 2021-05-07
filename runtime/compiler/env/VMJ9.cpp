@@ -3274,7 +3274,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
       // create
       // iand
       //    bu2i
-      //      buload &vmThread()->javaVM->hookInterface->flags[J9HOOK_VM_METHOD_ENTER/J9HOOK_VM_METHOD_RETURN];
+      //      bload &vmThread()->javaVM->hookInterface->flags[J9HOOK_VM_METHOD_ENTER/J9HOOK_VM_METHOD_RETURN];
       //    iconst J9HOOK_FLAG_HOOKED
       //
       int32_t event = root->getOpCodeValue() == TR::MethodEnterHook ? J9HOOK_VM_METHOD_ENTER : J9HOOK_VM_METHOD_RETURN;

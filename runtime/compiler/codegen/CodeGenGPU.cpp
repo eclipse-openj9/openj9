@@ -68,14 +68,6 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
       case TR::bloadi:
       case TR::sloadi:
       case TR::lloadi:
-      case TR::iuload:
-      case TR::luload:
-      case TR::buload:
-      case TR::iuloadi:
-      case TR::luloadi:
-      case TR::buloadi:
-      case TR::cload:
-      case TR::cloadi:
          return "load";
 
       case TR::istore:
@@ -92,14 +84,6 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
       case TR::bstorei:
       case TR::sstorei:
       case TR::istorei:
-      case TR::iustore:
-      case TR::lustore:
-      case TR::bustore:
-      case TR::iustorei:
-      case TR::lustorei:
-      case TR::bustorei:
-      case TR::cstore:
-      case TR::cstorei:
          return "store";
 
       case TR::Goto:
@@ -117,10 +101,6 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
       case TR::ladd:
       case TR::badd:
       case TR::sadd:
-      case TR::iuadd:
-      case TR::luadd:
-      case TR::buadd:
-      case TR::cadd:
          return "add";
 
       case TR::fadd:
@@ -135,12 +115,6 @@ static const char* getOpCodeName(TR::ILOpCodes opcode) {
       case TR::lneg:
       case TR::bneg:
       case TR::sneg:
-      case TR::iusub:
-      case TR::lusub:
-      case TR::busub:
-      case TR::iuneg:
-      case TR::luneg:
-      case TR::csub:
          return "sub";
 
       case TR::dsub:
