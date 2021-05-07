@@ -582,6 +582,9 @@ private static void ensureProperties(boolean isInitialization) {
 	initializedProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
 	initializedProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
 	initializedProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	initializedProperties.put("native.encoding", (fileEncoding == null) ? platformEncoding : fileEncoding); //$NON-NLS-1$
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	initializedProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[IF JAVA_SPEC_VERSION < 12]*/
 	/* System property java.specification.vendor is set via VersionProps.init(systemProperties) since JDK12 */
