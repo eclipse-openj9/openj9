@@ -7404,7 +7404,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    // Also, don't do the inline allocation if optimizing for space
    //
    TR::MethodSymbol *helperSym = node->getSymbol()->castToMethodSymbol();
-   if (!helperSym->preservesAllRegisters() || comp->getOption(TR_OptimizeForSpace))
+   if (!helperSym->preservesAllRegisters())
       return NULL;
 
    TR_OpaqueClassBlock *clazz      = NULL;

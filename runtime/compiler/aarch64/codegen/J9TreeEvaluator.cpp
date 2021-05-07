@@ -923,8 +923,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::InstOpCode::Mnemonic op;
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
-   if (comp->getOption(TR_OptimizeForSpace) ||
-       comp->getOption(TR_FullSpeedDebug) ||
+   if (comp->getOption(TR_FullSpeedDebug) ||
        (isMonitorValueBasedOrValueType == TR_yes) ||
        comp->getOption(TR_DisableInlineMonExit) ||
        lwOffset <= 0)
@@ -2784,8 +2783,7 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::InstOpCode::Mnemonic op;
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
-   if (comp->getOption(TR_OptimizeForSpace) ||
-       comp->getOption(TR_FullSpeedDebug) ||
+   if (comp->getOption(TR_FullSpeedDebug) ||
        (isMonitorValueBasedOrValueType == TR_yes) ||
        comp->getOption(TR_DisableInlineMonEnt) ||
        lwOffset <= 0)
