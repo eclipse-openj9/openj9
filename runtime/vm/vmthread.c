@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1947,6 +1947,7 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 	/* on Linux this is done by the new thread when it starts running */
 	omrthread_set_name(newThread->osThread, threadName);
 #endif
+	newThread->currentOSStackFree = osStackSize - (osStackSize / J9VMTHREAD_RESERVED_C_STACK_FRACTION);
 
 	/* Link the thread and vmThread and fill in the thread fields */
 
@@ -2065,9 +2066,14 @@ javaProtectedThreadProc(J9PortLibrary* portLibrary, void * entryarg)
 {
 	
 	J9VMThread * vmThread = (J9VMThread *) entryarg;
-	J9JavaVM *vm = vmThread->javaVM;
+	UDATA osStackFree;
 
-	initializeCurrentOSStackFree(vmThread, vmThread->osThread, vm->defaultOSStackSize);
+	/* Determine the thread's free OS stack size (the default value has already been set if the query fails) */
+
+	osStackFree = omrthread_current_stack_free();
+	if (osStackFree != 0) {
+		vmThread->currentOSStackFree = osStackFree - (osStackFree / J9VMTHREAD_RESERVED_C_STACK_FRACTION);
+	}
 
 #if defined(LINUX)
 	omrthread_set_name(vmThread->osThread, (char*)vmThread->omrVMThread->threadName);
@@ -2075,7 +2081,7 @@ javaProtectedThreadProc(J9PortLibrary* portLibrary, void * entryarg)
 
 	threadAboutToStart(vmThread);
 
-	TRIGGER_J9HOOK_VM_THREAD_STARTED(vm->hookInterface, vmThread, vmThread);
+	TRIGGER_J9HOOK_VM_THREAD_STARTED(vmThread->javaVM->hookInterface, vmThread, vmThread);
 
 
 	acquireVMAccess(vmThread);

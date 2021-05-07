@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2021 IBM Corp. and others
+ * Copyright (c) 2015, 2015 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@
 #include "j9.h"
 #include "omrthread.h"
 #include "util_api.h"
-#include "ut_j9util.h"
 
 J9VMThread *
 getVMThreadFromOMRThread(J9JavaVM *vm, omrthread_t omrthread)
@@ -37,25 +36,4 @@ getVMThreadFromOMRThread(J9JavaVM *vm, omrthread_t omrthread)
 		}
 	}
 	return vmThread;
-}
-
-void
-initializeCurrentOSStackFree(J9VMThread *currentThread, omrthread_t osThread, UDATA osStackSize)
-{
-	UDATA actualStackSize = 0;
-	UDATA stackStart = 0;
-	UDATA stackEnd = 0;
-
-	if (J9THREAD_SUCCESS == omrthread_get_stack_range(osThread, (void**)&stackStart, (void **)&stackEnd)) {
-		actualStackSize = stackEnd - stackStart;
-		currentThread->currentOSStackFree = ((UDATA)&stackStart - stackStart);
-	} else {
-		UDATA osStackFree = omrthread_current_stack_free();
-		if (0 != osStackFree) {
-			currentThread->currentOSStackFree = osStackFree - (osStackFree / J9VMTHREAD_RESERVED_C_STACK_FRACTION);
-		} else {
-			currentThread->currentOSStackFree = osStackSize - (osStackSize / J9VMTHREAD_RESERVED_C_STACK_FRACTION);
-		}
-	}
-	Trc_Util_thrhelp_initializeCurrentOSStackFree(currentThread, osThread, osStackSize, actualStackSize, currentThread->currentOSStackFree, &actualStackSize);
 }
