@@ -311,6 +311,7 @@
 	<test>
 		<testCaseName>cmdLineTester_fieldwatchtests</testCaseName>
 		<variations>
+			<variation>NoOptions</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \

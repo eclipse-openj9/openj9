@@ -429,9 +429,6 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<tags>
-			<tag>test:largepages</tag>
-		</tags>
 	</test>
 	<test>
 		<testCaseName>testSoftMxRemote</testCaseName>
@@ -593,9 +590,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<tags>
-			<tag>test:largepages</tag>
-		</tags>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -762,9 +756,6 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<tags>
-			<tag>test:largepages</tag>
-		</tags>
 	</test>
 	<test>
 		<testCaseName>testSoftMxNotDisclaimMemory</testCaseName>
