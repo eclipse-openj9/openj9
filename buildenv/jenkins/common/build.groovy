@@ -381,26 +381,36 @@ def archive_sdk() {
 
                 // Always use the default server link for the description and for test.
                 env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${SDK_FILENAME}"
-                currentBuild.description += "<br><a href=${CUSTOMIZED_SDK_URL}>${SDK_FILENAME}</a>"
+                if (ARTIFACTORY_CONFIG['printLinks'] == 'true') {
+                    currentBuild.description += "<br><a href=${CUSTOMIZED_SDK_URL}>${SDK_FILENAME}</a>"
+                }
 
                 if (fileExists("${TEST_FILENAME}")) {
                     TEST_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${TEST_FILENAME}"
-                    currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
+                    if (ARTIFACTORY_CONFIG['printLinks'] == 'true') {
+                        currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
+                    }
                     env.CUSTOMIZED_SDK_URL += " " + TEST_LIB_URL
                 }
                 if (fileExists("${DEBUG_IMAGE_FILENAME}")) {
                     DEBUG_IMAGE_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}/${DEBUG_IMAGE_FILENAME}"
-                    currentBuild.description += "<br><a href=${DEBUG_IMAGE_LIB_URL}>${DEBUG_IMAGE_FILENAME}</a>"
+                    if (ARTIFACTORY_CONFIG['printLinks'] == 'true') {
+                        currentBuild.description += "<br><a href=${DEBUG_IMAGE_LIB_URL}>${DEBUG_IMAGE_FILENAME}</a>"
+                    }
                 }
                 if (params.ARCHIVE_JAVADOC) {
                     if (fileExists("${JAVADOC_FILENAME}")) {
                         JAVADOC_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${JAVADOC_FILENAME}"
-                        currentBuild.description += "<br><a href=${JAVADOC_LIB_URL}>${JAVADOC_FILENAME}</a>"
+                        if (ARTIFACTORY_CONFIG['printLinks'] == 'true') {
+                            currentBuild.description += "<br><a href=${JAVADOC_LIB_URL}>${JAVADOC_FILENAME}</a>"
+                        }
                         echo "Javadoc:'${JAVADOC_LIB_URL}'"
                     }
                     if (fileExists("${JAVADOC_OPENJ9_ONLY_FILENAME}")) {
                         JAVADOC_OPENJ9_ONLY_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${JAVADOC_OPENJ9_ONLY_FILENAME}"
-                        currentBuild.description += "<br><a href=${JAVADOC_OPENJ9_ONLY_LIB_URL}>${JAVADOC_OPENJ9_ONLY_FILENAME}</a>"
+                        if (ARTIFACTORY_CONFIG['printLinks'] == 'true') {
+                            currentBuild.description += "<br><a href=${JAVADOC_OPENJ9_ONLY_LIB_URL}>${JAVADOC_OPENJ9_ONLY_FILENAME}</a>"
+                        }
                         echo "Javadoc (OpenJ9 extensions only):'${JAVADOC_OPENJ9_ONLY_LIB_URL}'"
                     }
                 }

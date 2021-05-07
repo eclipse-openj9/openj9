@@ -849,6 +849,7 @@ def set_basic_artifactory_config(id="Nightly") {
         ARTIFACTORY_CONFIG['defaultGeo'] = params.ARTIFACTORY_GEO ?: VARIABLES.artifactory.defaultGeo
         ARTIFACTORY_CONFIG['geos'] = VARIABLES.artifactory.server.keySet()
         ARTIFACTORY_CONFIG['repo'] = get_value(VARIABLES.artifactory.repo, id) ?: get_value(VARIABLES.artifactory.repo, 'default')
+        ARTIFACTORY_CONFIG['printLinks'] = VARIABLES.artifactory.printLinks ?: true
 
         for (geo in ARTIFACTORY_CONFIG['geos']) {
             ARTIFACTORY_CONFIG[geo] = [:]

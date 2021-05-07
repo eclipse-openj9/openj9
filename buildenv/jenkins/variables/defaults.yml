@@ -73,6 +73,7 @@ artifactory:
   vpn:
     osu: false
     unb: true
+  printLinks: false
 #========================================#
 # Miscellaneous settings
 #========================================#
