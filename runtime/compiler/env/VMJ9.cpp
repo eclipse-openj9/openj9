@@ -5370,7 +5370,7 @@ TR_J9VMBase::reportAnalysisPhase(uint8_t id)
    if (!_vmThread)
       return;
 
-   vmThread()->omrVMThread->vmState = vmThread()->omrVMThread->vmState & ~0xFF | id;
+   vmThread()->omrVMThread->vmState = (vmThread()->omrVMThread->vmState & ~0xFF) | id;
    }
 
 void
