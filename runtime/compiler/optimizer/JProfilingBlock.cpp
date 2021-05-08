@@ -695,9 +695,9 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
             }
          // if the source of the edge has a single source we can count the source
          else if (block != to && !block->isOSRCatchBlock() &&
-             (block->getSuccessors().size() == 1 && block->getExceptionSuccessors().size() == 0)
+             ((block->getSuccessors().size() == 1 && block->getExceptionSuccessors().size() == 0)
              || (block->getSuccessors().size() == 0 && block->getExceptionSuccessors().size() == 1)
-             || block->isOSRInduceBlock() || block->isOSRCodeBlock())
+             || block->isOSRInduceBlock() || block->isOSRCodeBlock()))
             {
             if (!countedBlocks.contains(block))
                {
@@ -710,9 +710,9 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
          // if the destination of the edge has a single destination we can count the destination
          // if the destination is a catch block we also just count the destination
          else if (block != to &&
-             (to->getPredecessors().size() == 1 && to->getExceptionPredecessors().size() == 0)
+             ((to->getPredecessors().size() == 1 && to->getExceptionPredecessors().size() == 0)
              || (to->getPredecessors().size() == 0 && to->getExceptionPredecessors().size() == 1)
-             || to->isCatchBlock() || to->isOSRInduceBlock() || to->isOSRCodeBlock())
+             || to->isCatchBlock() || to->isOSRInduceBlock() || to->isOSRCodeBlock()))
             {
             if (!countedBlocks.contains(to))
                {

@@ -285,10 +285,10 @@ static TR_OutlinedInstructions *generateArrayletReference(
    bool loadNeedsDecompression = false;
 
    if (loadOrStoreOrArrayElementNode->getOpCodeValue() == TR::l2a ||
-       ((loadOrStoreOrArrayElementNode->getOpCodeValue() == TR::aload ||
+       (((loadOrStoreOrArrayElementNode->getOpCodeValue() == TR::aload ||
          loadOrStoreOrArrayElementNode->getOpCodeValue() == TR::aRegLoad) &&
         node->isSpineCheckWithArrayElementChild()) &&
-       comp->target().is64Bit() && comp->useCompressedPointers())
+       comp->target().is64Bit() && comp->useCompressedPointers()))
       loadNeedsDecompression = true;
 
    TR::Node *actualLoadOrStoreOrArrayElementNode = loadOrStoreOrArrayElementNode;

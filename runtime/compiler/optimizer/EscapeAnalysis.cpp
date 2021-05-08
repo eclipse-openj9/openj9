@@ -3022,9 +3022,9 @@ bool TR_EscapeAnalysis::checkOverlappingLoopAllocation(TR::Node *node, TR::Node 
           && (_valueNumberInfo->getValueNumber(node) == _valueNumberInfo->getValueNumber(useNode)))
       {
       if (!_doLoopAllocationAliasChecking
-            || !(node->getOpCode().isLoadVarDirect()
+            || (!(node->getOpCode().isLoadVarDirect()
                     && _aliasesOfAllocNode->get(node->getSymbolReference()->getReferenceNumber()))
-                  && (numReferences > 0))
+                  && (numReferences > 0)))
          {
          return false;
          }
@@ -5921,7 +5921,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
      (loadOrStore->getOpCode().isLoadVarOrStore() || loadOrStore->getOpCode().isLoadConst()))
      treeAsExpected = true;
 
-      if (!treeAsExpected || loadOrStore->getOpCode().hasSymbolReference() && loadOrStore->getSymbolReference()->getSymbol()->isAuto())
+      if (!treeAsExpected || (loadOrStore->getOpCode().hasSymbolReference() && loadOrStore->getSymbolReference()->getSymbol()->isAuto()))
          {
          TR::Node::recreate(node, TR::treetop);
          node->getSecondChild()->decReferenceCount();

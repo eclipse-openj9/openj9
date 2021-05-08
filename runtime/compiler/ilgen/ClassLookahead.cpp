@@ -356,8 +356,8 @@ TR_ClassLookahead::findInitializerMethods(List<TR_ResolvedMethod> *resolvedMetho
                 TR_ResolvedMethod *calleeMethod = calleeSymbol->getResolvedMethod();
                 if (calleeMethod->containingClass() == _classPointer &&
                     (!strncmp(calleeMethod->nameChars(), "<init>", 6) ||
-                    calleeMethod->isPrivate() &&
-                    !isCalledByNonConstructorMethodsInClass(calleeMethod, resolvedMethodSyms)))
+                    (calleeMethod->isPrivate() &&
+                    !isCalledByNonConstructorMethodsInClass(calleeMethod, resolvedMethodSyms))))
                     initializerMethodSymbol = calleeSymbol;
                 }
 

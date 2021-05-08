@@ -3176,7 +3176,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
    else
       {
       TR::Node * child = root->getChild(0);
-      if (isAOT_DEPRECATED_DO_NOT_USE() || !isTrace && comp->cg()->getSupportsPartialInlineOfMethodHooks())
+      if (isAOT_DEPRECATED_DO_NOT_USE() || (!isTrace && comp->cg()->getSupportsPartialInlineOfMethodHooks()))
          child = child->duplicateTree();
 
       methodCall = TR::Node::createWithSymRef(TR::call, 2, 2, child, ramMethod, root->getSymbolReference());

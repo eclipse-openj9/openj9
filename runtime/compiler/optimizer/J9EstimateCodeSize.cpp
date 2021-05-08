@@ -1160,8 +1160,8 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    // No need to peek LF methods, as we'll always interprete the method with state in order to propagate object info
    // through bytecodes to find call targets
    if (!inlineLambdaFormGeneratedMethod &&
-       (nph.doPeeking() && recurseDown ||
-       inlineArchetypeSpecimen && mhInlineWithPeeking))
+       ((nph.doPeeking() && recurseDown) ||
+       (inlineArchetypeSpecimen && mhInlineWithPeeking)))
       {
 
       heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- needsPeeking is true for calltarget %p",

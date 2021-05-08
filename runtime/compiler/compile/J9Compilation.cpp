@@ -1067,8 +1067,8 @@ J9::Compilation::verifyCompressedRefsAnchors(TR::Node *parent, TR::Node *node,
 
    // process loads/stores that are references
    //
-   if ((node->getOpCode().isLoadIndirect() || node->getOpCode().isStoreIndirect()) &&
-         node->getSymbolReference()->getSymbol()->getDataType() == TR::Address ||
+   if (((node->getOpCode().isLoadIndirect() || node->getOpCode().isStoreIndirect()) &&
+         node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) ||
             (node->getOpCodeValue() == TR::arrayset && node->getSecondChild()->getDataType() == TR::Address))
       {
       TR_Pair<TR::Node, TR::TreeTop> *info = findCPtrsInfo(nodesList, node);

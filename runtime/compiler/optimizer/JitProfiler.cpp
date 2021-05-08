@@ -136,22 +136,22 @@ int32_t TR_JitProfiler::performOnNode(TR::Node *node, TR::TreeTop *tt)
    // Profile address if node is an indirect call
    if (
         node->getOpCode().isCall() &&
-        ( comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingInvokeStatic) &&
-            node->getSymbol()->getMethodSymbol()->isStatic() ||
-          comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingInvokeVirtual) &&
-            node->getSymbol()->getMethodSymbol()->isVirtual() ||
-          comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingInvokeInterface) &&
-            node->getSymbol()->getMethodSymbol()->isInterface()
+        ( (comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingInvokeStatic) &&
+            node->getSymbol()->getMethodSymbol()->isStatic()) ||
+          (comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingInvokeVirtual) &&
+            node->getSymbol()->getMethodSymbol()->isVirtual()) ||
+          (comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingInvokeInterface) &&
+            node->getSymbol()->getMethodSymbol()->isInterface())
         )
       )
       {
       addCallProfiling(node, tt, tt->getEnclosingBlock(), addProfilingBypass);
       changesPerformed++;
       }
-   else if ( comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingInstanceOf) &&
-               node->getOpCodeValue() == TR::instanceof ||
-             comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingCheckCast) &&
-               node->getOpCodeValue() == TR::checkcast
+   else if ( (comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingInstanceOf) &&
+               node->getOpCodeValue() == TR::instanceof) ||
+             (comp()->getOptions()->getSamplingJProfilingOption(TR_SamplingJProfilingCheckCast) &&
+               node->getOpCodeValue() == TR::checkcast)
            )
       {
       addInstanceProfiling(node, tt, tt->getEnclosingBlock(), addProfilingBypass);

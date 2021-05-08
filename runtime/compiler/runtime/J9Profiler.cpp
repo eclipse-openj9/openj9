@@ -1949,7 +1949,7 @@ TR_BlockFrequencyInfo::getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci,
    bool currentCallSiteInfo = TR_CallSiteInfo::getCurrent(comp) == _callSiteInfo;
    for (auto i=0; i < _numBlocks; ++i)
       {
-      if (currentCallSiteInfo && _callSiteInfo->hasSameBytecodeInfo(_blocks[i], searchBCI, comp) ||
+      if ((currentCallSiteInfo && _callSiteInfo->hasSameBytecodeInfo(_blocks[i], searchBCI, comp)) ||
             (!currentCallSiteInfo && _blocks[i].getCallerIndex() == searchBCI.getCallerIndex() && _blocks[i].getByteCodeIndex() == searchBCI.getByteCodeIndex()))
          {
          if (trace)

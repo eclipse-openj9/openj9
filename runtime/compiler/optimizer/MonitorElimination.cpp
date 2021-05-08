@@ -589,7 +589,7 @@ bool TR::MonitorElimination::findRedundantMonitors()
             if (trace())
                traceMsg(comp(),"Monitor node %p has a call at %p in its monitor region\n",monitor->getMonitorNode(),node);
 
-            if (!block->isCold() && block->getFrequency() >= minBlockCount ||
+            if ((!block->isCold() && block->getFrequency() >= minBlockCount) ||
                 (monitor->getMonitorTree() && (monitor->getMonitorTree()->getEnclosingBlock()->getNextBlock() == block)))
                {
                monitor->_containsCalls = true;
@@ -5220,7 +5220,7 @@ bool TR::MonitorElimination::symbolsAreNotWrittenInTrees(TR::TreeTop *startTree,
             }
          }
       else if (/* cursorNode->getOpCode().isCall() || */
-               (cursorNode->isGCSafePointWithSymRef()) && comp()->getOptions()->realTimeGC() ||
+               ((cursorNode->isGCSafePointWithSymRef()) && comp()->getOptions()->realTimeGC()) ||
                (cursorNode->getOpCode().hasSymbolReference() &&
                 cursorNode->getSymbolReference()->isUnresolved()))
          {

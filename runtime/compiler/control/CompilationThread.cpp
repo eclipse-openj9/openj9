@@ -2035,8 +2035,8 @@ void TR::CompilationInfo::invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlo
          TR_ASSERT(method, "_method can be NULL only at shutdown time");
          if ((!unloadedClass && hotCodeReplacement) || // replacement in FSD mode
              J9_CLASS_FROM_METHOD(method) == unloadedClass ||
-             details.isNewInstanceThunk() &&
-             static_cast<J9::NewInstanceThunkDetails &>(details).isThunkFor(unloadedClass))
+             (details.isNewInstanceThunk() &&
+             static_cast<J9::NewInstanceThunkDetails &>(details).isThunkFor(unloadedClass)))
             {
             if (!hotCodeReplacement)
                {
@@ -2078,8 +2078,8 @@ void TR::CompilationInfo::invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlo
             TR_VerboseLog::writeLineLocked(TR_Vlog_HD,"Looking at compile request for method %p class %p", method, methodClass);
          if ((!unloadedClass && hotCodeReplacement) || // replacement in FSD mode
              methodClass == unloadedClass ||
-             details.isNewInstanceThunk() &&
-             static_cast<J9::NewInstanceThunkDetails &>(details).isThunkFor(unloadedClass))
+             (details.isNewInstanceThunk() &&
+             static_cast<J9::NewInstanceThunkDetails &>(details).isThunkFor(unloadedClass)))
             {
             if (verbose)
                TR_VerboseLog::writeLineLocked(TR_Vlog_HK,"Invalidating compile request for method %p class %p", method, methodClass);
@@ -9342,7 +9342,7 @@ TR::CompilationInfoPerThreadBase::compile(
       if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
             || _methodBeingCompiled->isOutOfProcessCompReq()
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-            || vm.isAOT_DEPRECATED_DO_NOT_USE() && !_methodBeingCompiled->isRemoteCompReq()
+            || (vm.isAOT_DEPRECATED_DO_NOT_USE() && !_methodBeingCompiled->isRemoteCompReq())
 #endif //endif J9VM_INTERP_AOT_COMPILE_SUPPORT
         )
          {
@@ -9383,7 +9383,7 @@ TR::CompilationInfoPerThreadBase::compile(
             }
          }
 
-      if (vm.isAOT_DEPRECATED_DO_NOT_USE() && !_methodBeingCompiled->isRemoteCompReq() || _methodBeingCompiled->isOutOfProcessCompReq())
+      if ((vm.isAOT_DEPRECATED_DO_NOT_USE() && !_methodBeingCompiled->isRemoteCompReq()) || _methodBeingCompiled->isOutOfProcessCompReq())
          {
          TR_DataCache *dataCache = (TR_DataCache*)compiler->getReservedDataCache();
          TR_ASSERT(dataCache, "Must have a reserved dataCache for AOT compilations");
@@ -12014,8 +12014,8 @@ void TR_LowPriorityCompQueue::invalidateRequestsForUnloadedMethods(J9Class * unl
       if (method)
          {
          if (J9_CLASS_FROM_METHOD(method) == unloadedClass ||
-            details.isNewInstanceThunk() &&
-            static_cast<J9::NewInstanceThunkDetails &>(details).isThunkFor(unloadedClass))
+            (details.isNewInstanceThunk() &&
+            static_cast<J9::NewInstanceThunkDetails &>(details).isThunkFor(unloadedClass)))
             {
             TR_ASSERT(cur->_priority < CP_SYNC_MIN,
                "Unloading cannot happen for SYNC requests");
@@ -12590,8 +12590,8 @@ void TR_JProfilingQueue::invalidateRequestsForUnloadedMethods(J9Class * unloaded
       if (method)
          {
          if (J9_CLASS_FROM_METHOD(method) == unloadedClass ||
-            details.isNewInstanceThunk() &&
-            static_cast<J9::NewInstanceThunkDetails &>(details).isThunkFor(unloadedClass))
+            (details.isNewInstanceThunk() &&
+            static_cast<J9::NewInstanceThunkDetails &>(details).isThunkFor(unloadedClass)))
             {
             TR_ASSERT(cur->_priority < CP_SYNC_MIN,
                "Unloading cannot happen for SYNC requests");
