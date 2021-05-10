@@ -8523,6 +8523,20 @@ foundITable:
 
 		return rc;
 	}
+
+	VMINLINE VM_BytecodeAction
+	throwDefaultConflictForMemberName(REGISTER_ARGS_LIST)
+	{
+		/* Load the conflicting method and error message from this special target */
+		char *msg = (char *)_sendMethod->extra;
+		J9Method *specialSendTarget = _sendMethod;
+		_sendMethod = (J9Method *)specialSendTarget->bytecodes;
+		buildMethodFrame(REGISTER_ARGS, _sendMethod, jitStackFrameFlags(REGISTER_ARGS, 0));
+		updateVMStruct(REGISTER_ARGS);
+		setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, msg);
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+		return GOTO_THROW_CURRENT_EXCEPTION;
+	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	VMINLINE j9object_t
@@ -9325,6 +9339,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOSTATICSPECIAL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOVIRTUAL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOINTERFACE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_MEMBERNAME_DEFAULT_CONFLICT),
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	};
 #endif /* !defined(USE_COMPUTED_GOTO) */
@@ -9913,6 +9928,8 @@ runMethod: {
 		PERFORM_ACTION(linkToVirtual(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOINTERFACE):
 		PERFORM_ACTION(linkToInterface(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_MEMBERNAME_DEFAULT_CONFLICT):
+		PERFORM_ACTION(throwDefaultConflictForMemberName(REGISTER_ARGS));
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if !defined(USE_COMPUTED_GOTO)
 	default:
