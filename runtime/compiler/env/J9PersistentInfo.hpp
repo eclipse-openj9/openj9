@@ -78,6 +78,13 @@ enum ServerMemoryState
    NORMAL,
    };
 
+enum ServerActiveThreadsState
+   {
+   VERY_HIGH_THREAD = 0,
+   HIGH_THREAD,
+   NORMAL_THREAD,
+   };
+
 enum CompThreadActivationPolicy
    {
    // Order is important, we use comparison operators

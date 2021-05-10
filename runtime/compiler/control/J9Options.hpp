@@ -94,6 +94,12 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static int32_t _samplingFrequencyInDeepIdleMode;
    static int32_t getSamplingFrequencyInDeepIdleMode() {return _samplingFrequencyInDeepIdleMode;}
+
+   static int32_t _highActiveThreadThreshold;
+   static int32_t getHighActiveThreadThreshold() {return _highActiveThreadThreshold;}
+
+   static int32_t _veryHighActiveThreadThreshold;
+   static int32_t getVeryHighActiveThreadThreshold() {return _veryHighActiveThreadThreshold;}
    
    static int32_t _maxCheckcastProfiledClassTests;
    static int32_t getCheckcastMaxProfiledClassTests() {return _maxCheckcastProfiledClassTests;}
