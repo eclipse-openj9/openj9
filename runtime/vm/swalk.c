@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -926,12 +926,16 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 
 		walkState->constantPool = UNTAGGED_METHOD_CP(walkState->method);
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		/* If PC = impdep1, we haven't run the method (and never will) its just a placeholder */
 		if ((walkState->pc != vm->impdep1PC) && (walkState->pc != (vm->impdep1PC + 3))) {
 			walkState->bytecodePCOffset = walkState->pc - (U_8 *) J9_BYTECODE_START_FROM_RAM_METHOD(walkState->method);
 		} else {
 			walkState->bytecodePCOffset = 0;
 		}
+#else /* defined(J9VM_OPT_METHOD_HANDLE) */
+		walkState->bytecodePCOffset = walkState->pc - (U_8 *) J9_BYTECODE_START_FROM_RAM_METHOD(walkState->method);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 		walkState->argCount = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod);
 		argTempCount = J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod) + walkState->argCount;
