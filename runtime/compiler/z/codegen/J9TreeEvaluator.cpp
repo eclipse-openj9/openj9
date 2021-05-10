@@ -8902,7 +8902,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          /* Example of the OOL for newarray
           * Outlined Label L0048:    ; Denotes start of OOL for heap alloc
           * LHI     GPR_0120,0x5
-          * ASSOCREGS
+          * assocreg
           * PRE:
           * {GPR2:GPR_0112:R} {GPR1:GPR_0120:R}
           * BRASL   GPR_0117,0x00000000
