@@ -1553,8 +1553,8 @@ void TR::X86CallSite::stopAddingConditions()
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    if (COPY_PRECONDITIONS_TO_POSTCONDITIONS)
       {
-      TR_X86RegisterDependencyGroup *preconditions  = getPreConditionsUnderConstruction()->getPreConditions();
-      TR_X86RegisterDependencyGroup *postconditions = getPostConditionsUnderConstruction()->getPostConditions();
+      TR::RegisterDependencyGroup *preconditions  = getPreConditionsUnderConstruction()->getPreConditions();
+      TR::RegisterDependencyGroup *postconditions = getPostConditionsUnderConstruction()->getPostConditions();
       for (uint8_t i = 0; i < getPreConditionsUnderConstruction()->getAddCursorForPre(); i++)
          {
          TR::RegisterDependency *pre  = preconditions->getRegisterDependency(i);
@@ -2279,7 +2279,7 @@ TR::Register *J9::X86::PrivateLinkage::buildCallPostconditions(TR::X86CallSite &
    // (The typical example is the ramMethod.)
    //
    int32_t gprsAlreadyPresent = TR::RealRegister::noRegMask;
-   TR_X86RegisterDependencyGroup *group = dependencies->getPostConditions();
+   TR::RegisterDependencyGroup *group = dependencies->getPostConditions();
    for (int i = 0; i < dependencies->getAddCursorForPost(); i++)
       {
       TR::RegisterDependency *dep = group->getRegisterDependency(i);
@@ -2295,7 +2295,7 @@ TR::Register *J9::X86::PrivateLinkage::buildCallPostconditions(TR::X86CallSite &
       // postcondition, thus indicating that the arguments are preserved.
       // Note: this assumes the postcondition regdeps have preconditions too; see COPY_PRECONDITIONS_TO_POSTCONDITIONS.
       //
-      TR_X86RegisterDependencyGroup *preConditions = dependencies->getPreConditions();
+      TR::RegisterDependencyGroup *preConditions = dependencies->getPreConditions();
       for (int i = 0; i < dependencies->getAddCursorForPre(); i++)
          {
          TR::RegisterDependency *preCondition = preConditions->getRegisterDependency(i);
