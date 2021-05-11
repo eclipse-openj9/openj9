@@ -3556,14 +3556,14 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    // Encode the address of the VM call helper
    if (comp->target().is64Bit())
       {
-      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, UPPER_4_BYTES(vmCallHelperAddress), cursor);
+      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, UPPER_4_BYTES(vmCallHelperAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
 
-      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, LOWER_4_BYTES(vmCallHelperAddress), cursor);
+      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, LOWER_4_BYTES(vmCallHelperAddress), cursor);
       }
    else
       {
-      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, vmCallHelperAddress, cursor);
+      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, vmCallHelperAddress, cursor);
       cursor->setEncodingRelocation(encodingRelocation);
       }
 
@@ -3579,14 +3579,14 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
 
    if (comp->target().is64Bit())
       {
-      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, UPPER_4_BYTES(j9MethodAddress), cursor);
+      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, UPPER_4_BYTES(j9MethodAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
 
-      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, LOWER_4_BYTES(j9MethodAddress), cursor);
+      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, LOWER_4_BYTES(j9MethodAddress), cursor);
       }
    else
       {
-      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, j9MethodAddress, cursor);
+      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, j9MethodAddress, cursor);
       cursor->setEncodingRelocation(encodingRelocation);
       }
 
@@ -3633,17 +3633,17 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperPrePrologue(TR::Instr
    // The following 4 bytes are used for various patching sequences that overwrite the JIT entry point with a 4 byte
    // branch (BRC) to some location. Before patching in the branch we must save the 4 bytes at the JIT entry point
    // to this location so that we can later reverse the patching at JIT entry point if needed.
-   cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0xdeafbeef, cursor);
+   cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, 0xdeafbeef, cursor);
 
    // Generated a pad for the body info address to keep offsets in PreprologueConst.hpp constant for simplicity
    if (comp->target().is64Bit())
       {
-      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0x00000000, cursor);
-      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0x00000000, cursor);
+      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, 0x00000000, cursor);
+      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, 0x00000000, cursor);
       }
    else
       {
-      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0x00000000, cursor);
+      cursor = generateDataConstantInstruction(self(), TR::InstOpCode::dd, node, 0x00000000, cursor);
       }
 
    return cursor;

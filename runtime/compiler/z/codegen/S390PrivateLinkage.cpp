@@ -2256,7 +2256,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, snippetReg, cursor);
             ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BCR);
 
-            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::DC, callNode,
+            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::dd, callNode,
                ifcSnippet->getDataConstantSnippet()->getSnippetLabel());
 
             // Added NOP so that the pattern matching code in jit2itrg icallVMprJavaSendPatchupVirtual
