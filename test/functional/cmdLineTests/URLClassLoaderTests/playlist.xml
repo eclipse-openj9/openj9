@@ -55,7 +55,7 @@
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/11965#issuecomment-778413238</comment>
 			<variation>Mode110</variation>
-			<plat>.*aarch.*</plat>
+			<platform>.*aarch.*</platform>
 		</disabled>
 		<variations>
 			<variation>Mode110</variation>

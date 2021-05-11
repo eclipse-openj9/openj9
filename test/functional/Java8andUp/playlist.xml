@@ -308,7 +308,7 @@
 		<testCaseName>TestAttachErrorHandling_SE80</testCaseName>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3081</comment>
-			<plat>.*aix.*</plat>
+			<platform>.*aix.*</platform>
 		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -336,7 +336,7 @@
 		<testCaseName>TestAttachErrorHandling</testCaseName>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3081</comment>
-			<plat>.*aix.*</plat>
+			<platform>.*aix.*</platform>
 		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \

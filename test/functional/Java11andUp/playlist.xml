@@ -75,7 +75,7 @@
 		<testCaseName>Nestmate_virtual_private</testCaseName>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/9167</comment>
-			<plat>.*zos.*</plat>
+			<platform>.*zos.*</platform>
 		</disabled>
 		<variations>
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0)$(SQ)</variation>
