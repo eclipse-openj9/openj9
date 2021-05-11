@@ -52,7 +52,8 @@
 J9::ValuePropagation::ValuePropagation(TR::OptimizationManager *manager)
    : OMR::ValuePropagation(manager),
      _bcdSignConstraints(NULL),
-     _callsToBeFoldedToNode(trMemory())
+     _callsToBeFoldedToNode(trMemory()),
+     _valueTypesHelperCallsToBeFolded(trMemory())
    {
    }
 
@@ -205,9 +206,11 @@ J9::ValuePropagation::transformCallToNodeDelayedTransformations(TR::TreeTop *cal
    {
    TR::Node * callNode = callTree->getNode()->getFirstChild();
    TR::Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
-   const char *signature = calledMethod->signature(comp()->trMemory(), stackAlloc);
+   const char *signature = calledMethod ? calledMethod->signature(comp()->trMemory(), stackAlloc) : NULL;
    if (trace())
-          traceMsg(comp(), "The call to %s on node %p will be folded in delayed transformations\n", signature, callNode, result);
+      {
+      traceMsg(comp(), "The call to %s on node %p will be folded in delayed transformations\n", signature ? signature : comp()->getDebug()->getName(callNode->getSymbol()), callNode, result);
+      }
    _callsToBeFoldedToNode.add(new (trStackMemory()) TreeNodeResultPair(callTree, result, requiresGuard));
    }
 /**
@@ -555,12 +558,251 @@ bool J9::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode
          }
       }
    return false;
+   }
 
+/**
+ * Determine whether the type is, or might be, a value type.
+ * \param constraint The \ref TR::VPConstraint type constraint for a node
+ * \returns \c TR_yes if the type is definitely a value type;\n
+ *          \c TR_no if it is definitely not a value type; or\n
+ *          \c TR_maybe otherwise.
+ */
+static TR_YesNoMaybe isValue(TR::VPConstraint *constraint)
+   {
+   // If there's no information is available about the class of the operand,
+   // VP has to assume that it might be a value type
+   //
+   if (constraint == NULL)
+      {
+      return TR_maybe;
+      }
+
+   // A null reference can never be used in a context where a value type is required
+   //
+   if (constraint->isNullObject())
+      {
+      return TR_no;
+      }
+
+   // Instances of java/lang/Class are not value types
+   //
+   if (constraint->isClassObject() == TR_yes)
+      {
+      return TR_no;
+      }
+
+   // If the type is unresolved no information is available -
+   // VP has to assume that it might be a value type
+   //
+   TR::VPClassType *maybeUnresolvedType = constraint->getClassType();
+   if (maybeUnresolvedType == NULL)
+      {
+      return TR_maybe;
+      }
+
+   TR::VPResolvedClass *type = maybeUnresolvedType->asResolvedClass();
+   if (type == NULL)
+      {
+      return TR_maybe;
+      }
+
+   // Check for a type of java/lang/Object.  If the type is fixed to
+   // that class, it's not a value type; if it's not fixed, it could
+   // any subtype of java/lang/Object, which includes all value types
+   //
+   TR::Compilation *comp = TR::comp();
+   TR_OpaqueClassBlock *clazz = type->getClass();
+
+   if (clazz == comp->getObjectClassPointer())
+      {
+      return type->isFixedClass() ? TR_no : TR_maybe;
+      }
+
+   // Is the type either an abstract class or an interface (i.e., not a
+   // concrete class)?  If so, it might be a value type.
+   //
+   // Future refinements:
+   //   The JVM will have classes whose instances must be identity
+   //   objects implement the java/lang/IdentityObject interface, including
+   //   array classes.  Once that happens, the check for isClassArray can
+   //   be replaced with a test of whether the component class implements
+   //   IdentityObject, and the test of !isConcreteClass can be refined
+   //   to distinguish abstract classes that implement IdentityObject from
+   //   those that do not, as well as interfaces that extend IdentityObject.
+   //
+   if (!TR::Compiler->cls.isConcreteClass(comp, clazz))
+      {
+      return TR_maybe;
+      }
+
+   return TR::Compiler->cls.isValueTypeClass(clazz) ? TR_yes : TR_no;
    }
 
 void
 J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    {
+   const bool isObjectEqualityCompare =
+      comp()->getSymRefTab()->isNonHelper(
+         node->getSymbolReference(),
+         TR::SymbolReferenceTable::objectEqualityComparisonSymbol);
+
+   if (isObjectEqualityCompare)
+      {
+      // Only constrain the call in the last run of vp to avoid handling the candidate twice if the call is inside a loop
+      if (lastTimeThrough())
+         {
+         addGlobalConstraint(node, TR::VPIntRange::create(this, 0, 1));
+         }
+      else
+         {
+         return;
+         }
+
+      bool lhsGlobal, rhsGlobal;
+      TR::Node *lhsNode = node->getChild(0);
+      TR::Node *rhsNode = node->getChild(1);
+      TR::VPConstraint *lhs = getConstraint(lhsNode, lhsGlobal);
+      TR::VPConstraint *rhs = getConstraint(rhsNode, rhsGlobal);
+
+      const TR_YesNoMaybe isLhsValue = isValue(lhs);
+      const TR_YesNoMaybe isRhsValue = isValue(rhs);
+      const bool areSameRef = (getValueNumber(lhsNode) == getValueNumber(rhsNode))
+                              || (lhs != NULL && rhs != NULL && lhs->mustBeEqual(rhs, this));
+
+      // Non-helper equality comparison call is not needed if either operand
+      // is definitely not an instance of a value type or if both operands
+      // are definitely references to the same object
+      //
+      if (isLhsValue == TR_no || isRhsValue == TR_no || areSameRef)
+         {
+         if (performTransformation(
+               comp(),
+               "%sChanging n%un from <objectEqualityComparison> to acmpeq\n",
+               OPT_DETAILS,
+               node->getGlobalIndex()))
+            {
+            // Add a delayed transformation just for the purpose of being able to
+            // insert a dynamic debug counter
+            //
+            _valueTypesHelperCallsToBeFolded.add(
+                  new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node,
+                                              ValueTypesHelperCallTransform::IsRefCompare
+                                              | ValueTypesHelperCallTransform::InsertDebugCounter));
+
+            // Replace the non-helper equality comparison with an address comparison
+            TR::Node::recreate(node, TR::acmpeq);
+
+            // It might now be possible to fold.
+            ValuePropagationPtr acmpeqHandler = constraintHandlers[TR::acmpeq];
+            TR::Node *replacement = acmpeqHandler(this, node);
+            TR_ASSERT_FATAL_WITH_NODE(node, replacement == node, "can't replace n%un here",
+                  node->getGlobalIndex());
+            }
+         }
+      else
+         {
+         // Construct static debug counter to note failure to take advantage of
+         // any VP constraint to eliminate this equality comparison non-helper call
+         const char *reason = "unknown";
+
+         if (lhs == NULL && rhs == NULL)
+            {
+            reason = "no-constraint";
+            }
+         else if (isLhsValue != TR_no)
+            {
+            reason = (isLhsValue == TR_maybe) ? "lhs-may-be-vt" : "lhs-is-vt";
+            }
+         else if (isRhsValue != TR_no)
+            {
+            reason = (isRhsValue == TR_maybe) ? "rhs-may-be-vt" : "rhs-is-vt";
+            }
+
+         const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/vp-failed/acmp/(%s)/%s/block_%d/%s",
+                                                        comp()->signature(),
+                                                        comp()->getHotnessName(comp()->getMethodHotness()),
+                                                        _curTree->getEnclosingBlock()->getNumber(),
+                                                        reason);
+         TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
+         }
+
+      return;
+      }
+
+   // Check for call to jit{Load|Store}FlattenableArrayElement helpers
+   const bool isLoadFlattenableArrayElement =
+                 node->getOpCode().isCall()
+                 && node->getSymbolReference()
+                    == comp()->getSymRefTab()->findOrCreateLoadFlattenableArrayElementSymbolRef();
+
+   const bool isStoreFlattenableArrayElement =
+                 node->getOpCode().isCall()
+                 && node->getSymbolReference()
+                    == comp()->getSymRefTab()->findOrCreateStoreFlattenableArrayElementSymbolRef();
+
+   if (isLoadFlattenableArrayElement || isStoreFlattenableArrayElement)
+      {
+      // Only constrain the call in the last run of vp to avoid handling the candidate twice if the call is inside a loop
+      if (!lastTimeThrough())
+         {
+         return;
+         }
+
+      bool arrayRefGlobal;
+      const int elementIndexOpIndex = isLoadFlattenableArrayElement ? 0 : 1;
+      const int arrayRefOpIndex = elementIndexOpIndex+1;
+
+      TR::Node *indexNode = node->getChild(elementIndexOpIndex);
+      TR::Node *arrayRefNode = node->getChild(arrayRefOpIndex);
+      TR::VPConstraint *arrayConstraint = getConstraint(arrayRefNode, arrayRefGlobal);
+      TR_YesNoMaybe isCompTypeVT = isArrayCompTypeValueType(arrayConstraint);
+
+      // If the array's component type is definitely not a value type, add a delayed
+      // transformation to replace the helper call with inline code to perform the
+      // array element access
+      //
+      if (arrayConstraint != NULL && isCompTypeVT == TR_no)
+         {
+         flags8_t flagsForTransform = (isLoadFlattenableArrayElement ? ValueTypesHelperCallTransform::IsArrayLoad
+                                                                     : (ValueTypesHelperCallTransform::IsArrayStore
+                                                                        | ValueTypesHelperCallTransform::RequiresStoreCheck))
+                                      | ValueTypesHelperCallTransform::InsertDebugCounter;
+
+         _valueTypesHelperCallsToBeFolded.add(
+               new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node, flagsForTransform));
+         }
+      else
+         {
+         // Construct static debug counter to note failure to take advantage of
+         // any VP constraint to eliminate this array element helper call
+         const char *operationName = isLoadFlattenableArrayElement ? "aaload" : "aastore";
+
+         const char *reason = "unknown";
+
+         if (arrayConstraint == NULL)
+            {
+            reason = "no-array-constraint";
+            }
+         else if (isCompTypeVT == TR_yes)
+            {
+            reason = "comp-type-is-vt";
+            }
+         else if (isCompTypeVT == TR_maybe)
+            {
+            reason = "comp-type-may-be-vt";
+            }
+
+         const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/vp-failed/%s/(%s)/%s/block_%d/%s",
+                                                        operationName, comp()->signature(),
+                                                        comp()->getHotnessName(comp()->getMethodHotness()),
+                                                        _curTree->getEnclosingBlock()->getNumber(),
+                                                        reason);
+         TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
+         }
+
+      return;
+      }
+
    // Only constrain resolved calls
    if (!node->getSymbol()->isResolvedMethod())
       return;
@@ -1266,6 +1508,94 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       }
    }
 
+TR_YesNoMaybe
+J9::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint)
+   {
+   if (!TR::Compiler->om.areValueTypesEnabled())
+      {
+      return TR_no;
+      }
+
+   // If there's no constraint for the array operand, or no information
+   // is available about the class of the array, or the operand is not
+   // even definitely known to be an array, VP has to assume that it might
+   // have a component type that is a value type
+   //
+   if (!(arrayConstraint && arrayConstraint->getClass()
+              && arrayConstraint->getClassType()->isArray() == TR_yes))
+      {
+      return TR_maybe;
+      }
+
+   TR_OpaqueClassBlock *arrayComponentClass = fe()->getComponentClassFromArrayClass(arrayConstraint->getClass());
+
+   // Cases to consider:
+   //
+   //   - Is no information available about the component type of the array?
+   //     If not, assume it might be a value type.
+   //   - Is the component type definitely a value type?
+   //   - Is the component type an array class (i.e., is this an array of
+   //     arrays)?  If so, it's definitely not a value type.
+   //   - Is the component type either an abstract class or an interface
+   //     (i.e., not a concrete class)?  If so, it might be a value type.
+   //   - Is the array an array of java/lang/Object?  See below.
+   //   - Otherwise, it must be a concrete class known not to be a value
+   //     type
+   //
+   // Future refinements:
+   //   The JVM will have classes whose instances must be identity
+   //   objects implement the java/lang/IdentityObject interface, including
+   //   array classes.  Once that happens, the check for isClassArray can
+   //   be replaced with a test of whether the component class implements
+   //   IdentityObject, and the test of !isConcreteClass can be refined
+   //   to distinguish abstract classes that implement IdentityObject from
+   //   those that do not, as well as interfaces that extend IdentityObject.
+   //
+   //   Another potential improvement would be to look for fixed class
+   //   arrays of an interface type
+   //
+   if (!arrayComponentClass)
+      {
+      return TR_maybe;
+      }
+
+   if (TR::Compiler->cls.isValueTypeClass(arrayComponentClass))
+      {
+      return TR_yes;
+      }
+
+   if (TR::Compiler->cls.isClassArray(comp(), arrayComponentClass))
+      {
+      return TR_no;
+      }
+
+   if (!TR::Compiler->cls.isConcreteClass(comp(), arrayComponentClass))
+      {
+      return TR_maybe;
+      }
+
+   int32_t len;
+   const char *sig = arrayConstraint->getClassSignature(len);
+
+   // If the array is an array of java/lang/Object, and it is fixed to
+   // that type, the component type is not a value type (though it
+   // can still hold references to instances of value types).  If it is
+   // an array of java/lang/Object, but not fixed to that type, the
+   // component type could sometimes be a value type.
+   //
+   if (sig && sig[0] == '[' && len == 19
+       && !strncmp(sig, "[Ljava/lang/Object;", 19))
+      {
+      return (arrayConstraint->isFixedClass()) ? TR_no : TR_maybe;
+      }
+
+   // If we get to this point, we know this is not an array of
+   // java/lang/Object, and we know the component must be a concrete
+   // class that is not a value type.
+   //
+   return TR_no;
+   }
+
 void
 J9::ValuePropagation::doDelayedTransformations()
    {
@@ -1292,6 +1622,130 @@ J9::ValuePropagation::doDelayedTransformations()
          }
       }
    _callsToBeFoldedToNode.deleteAll();
+
+   // Process transformations for calls to value types helpers or non-helpers
+   ListIterator<ValueTypesHelperCallTransform> valueTypesHelperCallsToBeFolded(&_valueTypesHelperCallsToBeFolded);
+
+   for (ValueTypesHelperCallTransform *callToTransform = valueTypesHelperCallsToBeFolded.getFirst();
+        callToTransform != NULL;
+        callToTransform = valueTypesHelperCallsToBeFolded.getNext())
+      {
+      TR::TreeTop *callTree = callToTransform->_tree;
+      TR::Node *callNode = callToTransform->_callNode;
+
+      const bool isLoad = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsArrayLoad);
+      const bool isStore = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsArrayStore);
+      const bool isCompare = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsRefCompare);
+      const bool needsStoreCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresStoreCheck);
+
+      // performTransformation was already checked for comparison non-helper call
+      // Only need to check for array element load or store helper calls
+      if (!isCompare && !performTransformation(
+                            comp(),
+                            "%s Replacing n%dn from acall of <jit%sFlattenableArrayElement> to aloadi\n",
+                            OPT_DETAILS,
+                            callNode->getGlobalIndex(),
+                            isLoad ? "Load" : "Store"))
+         {
+         continue;
+         }
+
+      // Insert dynamic debug counter to describe successful transformation of value type helper or non-helper call
+      if (callToTransform->_flags.testAny(ValueTypesHelperCallTransform::InsertDebugCounter))
+         {
+         const char *operationName = isLoad ? "aaload" : (isStore ? "aastore" : "acmp");
+
+         const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/vp-xformed/%s/(%s)/bc=%d",
+                                                               operationName, comp()->signature(), callNode->getByteCodeIndex());
+         TR::DebugCounter::prependDebugCounter(comp(), counterName, callTree);
+         }
+
+      // Transformation for comparison was already handled.  Just needed post-processing to be able to insert debug counter
+      if (isCompare)
+         {
+         continue;
+         }
+
+      TR_ASSERT_FATAL_WITH_NODE(callNode, !comp()->requiresSpineChecks(), "Cannot handle VP yet for jit{Load|Store}FlattenableArrayElement if SpineCHKs are required\n");
+
+      int opIndex = 0;
+
+      TR::Node *valueNode = isLoad ? NULL : callNode->getChild(opIndex++);
+      TR::Node *indexNode = callNode->getChild(opIndex++);
+      TR::Node *arrayRefNode = callNode->getChild(opIndex);
+
+      TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddress(comp(), arrayRefNode, indexNode, TR::Address);
+
+      const int32_t width = comp()->useCompressedPointers() ? TR::Compiler->om.sizeofReferenceField()
+                                                            : TR::Symbol::convertTypeToSize(TR::Address);
+
+      TR::Node *arrayLengthNode = TR::Node::create(callNode, TR::arraylength, 1, arrayRefNode);
+      arrayLengthNode->setArrayStride(width);
+
+      TR::Node *bndChkNode = TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arrayLengthNode, indexNode,
+                                          comp()->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp()->getMethodSymbol()));
+
+      callTree->insertBefore(TR::TreeTop::create(comp(), bndChkNode));
+
+      TR::SymbolReference *elementSymRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, arrayRefNode);
+
+      if (isLoad)
+         {
+         const TR::ILOpCodes loadOp = comp()->il.opCodeForIndirectArrayLoad(TR::Address);
+
+         TR::Node *elementLoadNode = TR::Node::recreateWithoutProperties(callNode, loadOp, 1, elementAddressNode, elementSymRef);
+
+         if (comp()->useCompressedPointers())
+            {
+            TR::Node *compressNode = TR::Node::createCompressedRefsAnchor(elementLoadNode);
+            callTree->insertBefore(TR::TreeTop::create(comp(), compressNode));
+            }
+         }
+      else
+         {
+         TR::Node *oldAnchorNode = callTree->getNode();
+
+         TR_ASSERT_FATAL_WITH_NODE(oldAnchorNode, (oldAnchorNode->getNumChildren() == 1) && oldAnchorNode->getFirstChild() == callNode, "Expected call node n%un for jitStoreFlattenableArrayElement was anchored under node n%un\n", callNode->getGlobalIndex(), oldAnchorNode->getGlobalIndex());
+
+         TR::Node *elementStoreNode = TR::Node::recreateWithoutProperties(callNode, TR::awrtbari, 3, elementAddressNode,
+                                                   valueNode, arrayRefNode, elementSymRef);
+
+         if (needsStoreCheck)
+            {
+            TR::ResolvedMethodSymbol *methodSym = comp()->getMethodSymbol();
+            TR::SymbolReference *storeCheckSymRef = comp()->getSymRefTab()->findOrCreateTypeCheckArrayStoreSymbolRef(methodSym);
+            TR::Node *storeCheckNode = TR::Node::createWithRoomForThree(TR::ArrayStoreCHK, elementStoreNode, 0, storeCheckSymRef);
+            callTree->setNode(storeCheckNode);
+            }
+         else
+            {
+            callTree->setNode(elementStoreNode);
+            }
+
+         // The old anchor node is no longer needed.  Remove what was previously a child
+         // call node from it.
+         oldAnchorNode->removeAllChildren();
+
+         if (comp()->useCompressedPointers())
+            {
+            TR::Node *compressNode = TR::Node::createCompressedRefsAnchor(elementStoreNode);
+            callTree->insertAfter(TR::TreeTop::create(comp(), compressNode));
+            }
+         }
+
+      // The indexNode, arrayRefNode and valueNode (if any), were referenced by the
+      // original callNode.  Now that the call node has been recreated with either
+      // an aloadi, awrtbari or ArrayStoreCHK, we need to decrement their references.
+      if (valueNode != NULL)
+         {
+         valueNode->recursivelyDecReferenceCount();
+         }
+
+      indexNode->recursivelyDecReferenceCount();
+      arrayRefNode->recursivelyDecReferenceCount();
+      }
+
+   _valueTypesHelperCallsToBeFolded.deleteAll();
 
    OMR::ValuePropagation::doDelayedTransformations();
    }
