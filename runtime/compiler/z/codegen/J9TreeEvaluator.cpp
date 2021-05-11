@@ -4808,7 +4808,7 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
 
    if (!actualLoadOrStoreChild->getOpCode().isStore())
       {
-      TR::InstOpCode::Mnemonic op = TR::InstOpCode::BAD;
+      TR::InstOpCode::Mnemonic op = TR::InstOpCode::bad;
 
       TR::MemoryReference *highArrayletMR = NULL;
       TR::Register *highRegister = NULL;
@@ -4932,7 +4932,7 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
 
             default:
                TR_ASSERT(0, "unsupported array element store type");
-               op = TR::InstOpCode::BAD;
+               op = TR::InstOpCode::bad;
             }
 
          if (needStore)
@@ -5815,7 +5815,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
                n->setIsNonZero(true);
                }
 
-            TR::InstOpCode::Mnemonic cmpOpCode = TR::InstOpCode::BAD;
+            TR::InstOpCode::Mnemonic cmpOpCode = TR::InstOpCode::bad;
 
             // For compressed pointers case, if we find the compressed value,
             // and it has already been evaluated into a register,

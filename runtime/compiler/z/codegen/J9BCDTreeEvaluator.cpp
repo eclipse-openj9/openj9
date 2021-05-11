@@ -4412,7 +4412,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          if (childContainsAccumulatedResult && isLeadingSignByteWidening)
             {
             uint16_t signSize = 0;
-            TR::InstOpCode::Mnemonic signCopyOp = TR::InstOpCode::BAD;
+            TR::InstOpCode::Mnemonic signCopyOp = TR::InstOpCode::bad;
 
             switch (node->getType().getDataType())
                {

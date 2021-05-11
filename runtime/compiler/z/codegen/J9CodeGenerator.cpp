@@ -2047,7 +2047,7 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
             {
             int32_t bytesToSet = (digitsToClear+1)/2;
             int32_t leftMostByte = 0;
-            TR::InstOpCode::Mnemonic op = TR::InstOpCode::BAD;
+            TR::InstOpCode::Mnemonic op = TR::InstOpCode::bad;
             switch (bytesToSet)
                {
                case 2:
