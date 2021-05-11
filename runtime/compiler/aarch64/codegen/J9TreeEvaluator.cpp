@@ -3174,7 +3174,7 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
 
    if (!sourceChild->isNull())
       {
-      bool disableArrayStoreCHKOpts = feGetEnv("TR_AArch64DisableArrayStoreCHKOpts") != NULL;
+      static const bool disableArrayStoreCHKOpts = feGetEnv("TR_AArch64DisableArrayStoreCHKOpts") != NULL;
       TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
       TR::LabelSymbol *helperCallLabel = generateLabelSymbol(cg);
       // Since ArrayStoreCHK doesn't have the shape of the corresponding helper call we have to create this tree
