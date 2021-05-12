@@ -785,18 +785,16 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          // Furthermore, for unresolved invokedynamic and invokehandle bytecodes, we create a call to linkToStatic.
          // The appendix object in the invoke cache array entry could be NULL, which we cannot determine at compile
          // time when the callSite/invokeCache table entries are unresolved. The VM would have to remove the appendix
-         // object, which would require knowing the number of args of the method. To pass that information, we store to
+         // object, which would require knowing the number of args of the ROM method. To pass that information, we store to
          // vmThread.floatTemp1 field. The name of the field is misleading, as it is an lconst/iconst being stored. This
          // is also done for linkToSpecial, as it shares the same bytecode handler as linkToStatic.
-         int32_t numParameterStackSlots = node->getSymbol()->castToResolvedMethodSymbol()->getNumParameterSlots();
-         int32_t numArgs = node->getNumArguments();
          TR::Node * numArgsNode = NULL;
          TR::Node * numArgSlotsNode = NULL;
          TR::Node * tempSlotStoreNode = NULL;
          TR::Node * floatTemp1StoreNode = NULL;
          bool is64Bit = self()->comp()->target().is64Bit();
          TR::ILOpCodes storeOpCode;
-
+         int32_t numParameterStackSlots = node->getSymbol()->castToResolvedMethodSymbol()->getNumParameterSlots();
          if (is64Bit)
             {
             storeOpCode = TR::lstore;
@@ -815,6 +813,35 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 
          if (rm == TR::java_lang_invoke_MethodHandle_linkToStatic || rm ==  TR::java_lang_invoke_MethodHandle_linkToSpecial)
             {
+            // The last child of the call node is the iload for the memberName object, from which we can obtain the callSite index or cpIndex.
+            TR::Node * invokeCacheArrayShadowNode = node->getLastChild();
+
+            // in compressed pointers mode, the compressed refs anchors are transformed right before codegen, for which we
+            // need to go a few levels down to reach the invoke cache array shadow node.
+            //
+            // n28n      compressedRefs
+            // n26n        l2a
+            // n49n          lshl (compressionSequence )
+            // n48n            iu2l
+            // n47n              iloadi  <array-shadow>[#229  Shadow] [flags 0x80000607 0x0 ]
+            // n25n                aladd (X>=0 internalPtr sharedMemory )
+            // n5n                   ==>aload
+            // n24n                  lconst 16 (highWordZero X!=0 X>=0 )
+            // n46n            iconst 3
+            // n15n        ==>lconst 0
+            //
+            if (self()->comp()->useCompressedPointers())
+               invokeCacheArrayShadowNode = invokeCacheArrayShadowNode->getFirstChild()->getFirstChild()->getFirstChild();
+
+            // finally, we can obtain the base address of the invoke cache array
+            TR::Node * sideTableEntryNode = invokeCacheArrayShadowNode->getFirstChild()->getFirstChild();
+            TR::StaticSymbol * sideTableEntrySymbol = sideTableEntryNode->getSymbolReference()->getSymbol()->castToStaticSymbol();
+            int32_t numArgs;
+            if(sideTableEntrySymbol->isCallSiteTableEntry())
+               numArgs = self()->comp()->getCurrentMethod()->romMethodArgCountAtCallSiteIndex(sideTableEntrySymbol->castToCallSiteTableEntrySymbol()->getCallSiteIndex());
+            else
+               numArgs = self()->comp()->getCurrentMethod()->romMethodArgCountAtCPIndex(sideTableEntrySymbol->castToMethodTypeTableEntrySymbol()->getMethodTypeIndex());
+
             numArgsNode = is64Bit ? TR::Node::lconst(node, numArgs) :
                                     TR::Node::iconst(node, numArgs);
 
