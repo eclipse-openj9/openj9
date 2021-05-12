@@ -536,6 +536,7 @@ def get_user_credentials_id(KEY) {
 def set_node(job_type) {
     // fetch labels for given platform/spec
     NODE = ''
+    DOCKER_IMAGE = buildspec_manager.getSpec(SPEC).getScalarField("node_labels.docker_image", SDK_VERSION) ?: ''
     for (key in ['NODE', 'LABEL']) {
         // check the build parameters
         if (params.containsKey(key)) {
@@ -550,7 +551,6 @@ def set_node(job_type) {
         if (!NODE) {
             error("Missing ${job_type} NODE!")
         }
-
     }
 }
 
