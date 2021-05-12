@@ -3510,7 +3510,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    // Associate all generated instructions with the first node
    TR::Node* node = comp->getStartTree()->getNode();
 
-   cursor = generateS390LabelInstruction(self(), TR::InstOpCode::LABEL, node, vmCallHelperSnippetLabel, cursor);
+   cursor = generateS390LabelInstruction(self(), TR::InstOpCode::label, node, vmCallHelperSnippetLabel, cursor);
 
    TR::Instruction* vmCallHelperSnippetLabelInstruction = cursor;
 

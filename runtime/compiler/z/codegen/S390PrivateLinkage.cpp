@@ -1253,7 +1253,7 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
       cg()->addSnippet(snippet);
 
       // The stack overflow helper returns back here
-      cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, firstNode, reStartLabel, cursor);
+      cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, firstNode, reStartLabel, cursor);
       }
 
       // End of stack overflow checking code ////////////////////////
@@ -1542,7 +1542,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
          {
          if (cg()->_hottestReturn._frequency > 6)
             {
-            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, currentNode, cg()->_hottestReturn._returnLabel, cursor);
+            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, currentNode, cg()->_hottestReturn._returnLabel, cursor);
             }
          }
       }
@@ -1902,7 +1902,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          cg()->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
          outlinedSlowPath->swapInstructionListsWithCompilation();
 
-         TR::Instruction * temp = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, vcallLabel);
+         TR::Instruction * temp = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, vcallLabel);
          if (debugObj)
             {
             debugObj->addInstructionComment(temp, "Denotes start of OOL vcall sequence");
@@ -1976,7 +1976,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          // Done using OOL with manual code generation
          outlinedSlowPath->swapInstructionListsWithCompilation();
 
-         generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, doneVirtualLabel, postDeps);
+         generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, doneVirtualLabel, postDeps);
          }
       else
          {
@@ -2149,7 +2149,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                         generateS390MemoryReference(snippetReg, ifcSnippet->getDataConstantSnippet()->getSingleDynamicSlotOffset(), cg()), cursor);
 
             // We need a dummy label to hook dependencies onto
-            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, paramSetupDummyLabel, preDeps, cursor);
+            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, paramSetupDummyLabel, preDeps, cursor);
 
             //check if cached classPtr matches the receiving object classPtr
             cursor = generateRXInstruction(cg(), TR::InstOpCode::getCmpLogicalOpCode(), callNode, classRegister,
@@ -2200,7 +2200,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             cursor = generateRILInstruction(cg(), TR::InstOpCode::LARL, callNode, RegRA, returnLocationLabel, cursor);
 
             // We need a dummy label to hook dependencies.
-            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, paramSetupDummyLabel, preDeps, cursor);
+            cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, paramSetupDummyLabel, preDeps, cursor);
 
             if (useCLFIandBRCL)
                {
@@ -2269,7 +2269,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          gcPoint = cursor;
          ((TR::S390CallSnippet *) ifcSnippet)->setBranchInstruction(gcPoint);
 
-         cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, returnLocationLabel, postDeps);
+         cursor = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, returnLocationLabel, postDeps);
 
          if (comp()->getOption(TR_enableInterfaceCallCachingSingleDynamicSlot))
             {
@@ -2345,7 +2345,7 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
                                                           callSymRef?callSymRef:callNode->getSymbolReference(), reStartLabel, argSize);
       cg()->addSnippet(snippet);
 
-      auto* reStartInstruction = generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, reStartLabel);
+      auto* reStartInstruction = generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, reStartLabel);
 
       // NOP is necessary due to confusion when resolving shared slots at a transition. The OSR infrastructure needs
       // to locate the GC map metadata for this transition point by examining the return address. The algorithm used
@@ -2419,7 +2419,7 @@ J9::Z::PrivateLinkage::callPreJNICallOffloadCheck(TR::Node * callNode)
 
    codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
       offloadOffSnippetLabel, offloadOffSymRef, offloadOffRestartLabel));
-   generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, offloadOffRestartLabel);
+   generateS390LabelInstruction(codeGen, TR::InstOpCode::label, callNode, offloadOffRestartLabel);
    }
 
 void
@@ -2435,7 +2435,7 @@ J9::Z::PrivateLinkage::callPostJNICallOffloadCheck(TR::Node * callNode)
    TR::SymbolReference * offloadOnSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_S390jitPostJNICallOffloadCheck);
    codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
       offloadOnSnippetLabel, offloadOnSymRef, offloadOnRestartLabel));
-   generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, offloadOnRestartLabel);
+   generateS390LabelInstruction(codeGen, TR::InstOpCode::label, callNode, offloadOnRestartLabel);
    }
 
 void J9::Z::PrivateLinkage::collapseJNIReferenceFrame(TR::Node * callNode,
@@ -2462,7 +2462,7 @@ void J9::Z::PrivateLinkage::collapseJNIReferenceFrame(TR::Node * callNode,
    TR::SymbolReference * collapseSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_S390collapseJNIReferenceFrame);
    codeGen->addSnippet(new (trHeapMemory()) TR::S390HelperCallSnippet(codeGen, callNode,
       refPoolSnippetLabel, collapseSymRef, refPoolRestartLabel));
-   generateS390LabelInstruction(cg(), TR::InstOpCode::LABEL, callNode, refPoolRestartLabel);
+   generateS390LabelInstruction(cg(), TR::InstOpCode::label, callNode, refPoolRestartLabel);
    }
 
 //JNI Callout frame
@@ -2583,7 +2583,7 @@ void J9::Z::JNILinkage::releaseVMAccessMask(TR::Node * callNode,
        fej9->thisThreadGetPublicFlagsOffset(), self()->cg()));
 
 
-   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, loopHead);
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::label, callNode, loopHead);
    loopHead->setStartInternalControlFlow();
 
 
@@ -2639,7 +2639,7 @@ void J9::Z::JNILinkage::releaseVMAccessMask(TR::Node * callNode,
 
    generateS390BranchInstruction(self()->cg(), TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, callNode, loopHead);
 
-   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, cFlowRegionEnd, postDeps);
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::label, callNode, cFlowRegionEnd, postDeps);
    cFlowRegionEnd->setEndInternalControlFlow();
 
 
@@ -2689,7 +2689,7 @@ void J9::Z::JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register * 
 
    self()->cg()->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(self()->cg(), callNode, longAcquireSnippetLabel,
                               comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol()), acquireDoneLabel));
-   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, acquireDoneLabel);
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::label, callNode, acquireDoneLabel);
    // end of acquire vm accessa
    }
 
@@ -2752,7 +2752,7 @@ J9::Z::JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
                                                                          comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getJittedMethodSymbol()),
                                                                          longReleaseRestartLabel));
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, longReleaseRestartLabel);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, longReleaseRestartLabel);
    }
 
 /**
@@ -2793,7 +2793,7 @@ J9::Z::JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
                                                                          comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol()),
                                                                          longAcquireRestartLabel));
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, longAcquireRestartLabel);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, longAcquireRestartLabel);
    }
 #endif
 
@@ -2814,7 +2814,7 @@ void J9::Z::JNILinkage::checkException(TR::Node * callNode,
 
    self()->cg()->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(self()->cg(), callNode, exceptionSnippetLabel,
       comp()->getSymRefTab()->findOrCreateThrowCurrentExceptionSymbolRef(comp()->getJittedMethodSymbol()), exceptionRestartLabel));
-   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::LABEL, callNode, exceptionRestartLabel);
+   generateS390LabelInstruction(self()->cg(), TR::InstOpCode::label, callNode, exceptionRestartLabel);
    }
 
 void
@@ -2834,13 +2834,13 @@ J9::Z::JNILinkage::processJNIReturnValue(TR::Node * callNode,
       cFlowRegionStart = generateLabelSymbol(cg);
       cFlowRegionEnd = generateLabelSymbol(cg);
 
-      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, cFlowRegionStart);
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, cFlowRegionStart);
       cFlowRegionStart->setStartInternalControlFlow();
       generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister, 0, TR::InstOpCode::COND_BE, cFlowRegionEnd);
       generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), callNode, javaReturnRegister,
                             generateS390MemoryReference(javaReturnRegister, 0, cg));
 
-      generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, cFlowRegionEnd);
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, cFlowRegionEnd);
       cFlowRegionEnd->setEndInternalControlFlow();
       }
    else if ((returnType == TR::Int8) && comp()->getSymRefTab()->isReturnTypeBool(callNode->getSymbolReference()))
@@ -2856,12 +2856,12 @@ J9::Z::JNILinkage::processJNIReturnValue(TR::Node * callNode,
          cFlowRegionStart = generateLabelSymbol(cg);
          cFlowRegionEnd = generateLabelSymbol(cg);
 
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, cFlowRegionStart);
+         generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, cFlowRegionStart);
          cFlowRegionStart->setStartInternalControlFlow();
          generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), callNode, javaReturnRegister,
                                                  0, TR::InstOpCode::COND_BE, cFlowRegionEnd);
          generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, javaReturnRegister, 1);
-         generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, callNode, cFlowRegionEnd);
+         generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, cFlowRegionEnd);
          cFlowRegionEnd->setEndInternalControlFlow();
          }
       }

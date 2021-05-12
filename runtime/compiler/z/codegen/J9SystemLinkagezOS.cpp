@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -194,7 +194,7 @@ J9::Z::zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR::Re
    if (isJNIGCPoint)
          gcPoint->setNeedsGCMap(0x00000000);
 
-   TR::Instruction * cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, returnFromJNICallLabel);
+   TR::Instruction * cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::label, callNode, returnFromJNICallLabel);
 
    cursor = genCallNOPAndDescriptor(cursor, callNode, callNode, TR_XPLinkCallType_BASR);
    cursor->setDependencyConditions(callPostDeps);
