@@ -160,7 +160,7 @@ J9::Node::copyValidProperties(TR::Node *fromNode, TR::Node *toNode)
    UnionPropertyB_Type fromUnionPropertyB_Type = fromNode->getUnionPropertyB_Type();
    UnionPropertyB_Type toUnionPropertyB_Type = toNode->getUnionPropertyB_Type();
 
-   if ((fromUnionPropertyB_Type == toUnionPropertyB_Type))
+   if (fromUnionPropertyB_Type == toUnionPropertyB_Type)
       {
       switch (fromUnionPropertyB_Type)
          {

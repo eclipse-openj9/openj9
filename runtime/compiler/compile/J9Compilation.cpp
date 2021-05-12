@@ -86,11 +86,16 @@ void *operator new(size_t size)
    return malloc(size);
    }
 
+// Avoid -Wimplicit-exception-spec-mismatch error on platforms that specify the global delete operator with throw()
+#ifndef _NOEXCEPT
+#define _NOEXCEPT 
+#endif
+
 /**
  * Since we are using arena allocation, heap deletions must be a no-op, and
  * can't be used by JIT code, so we inject an assertion here.
  */
-void operator delete(void *)
+void operator delete(void *) _NOEXCEPT
    {
    TR_ASSERT(0, "Invalid use of global operator delete");
    }
@@ -1062,8 +1067,8 @@ J9::Compilation::verifyCompressedRefsAnchors(TR::Node *parent, TR::Node *node,
 
    // process loads/stores that are references
    //
-   if ((node->getOpCode().isLoadIndirect() || node->getOpCode().isStoreIndirect()) &&
-         node->getSymbolReference()->getSymbol()->getDataType() == TR::Address ||
+   if (((node->getOpCode().isLoadIndirect() || node->getOpCode().isStoreIndirect()) &&
+         node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) ||
             (node->getOpCodeValue() == TR::arrayset && node->getSecondChild()->getDataType() == TR::Address))
       {
       TR_Pair<TR::Node, TR::TreeTop> *info = findCPtrsInfo(nodesList, node);

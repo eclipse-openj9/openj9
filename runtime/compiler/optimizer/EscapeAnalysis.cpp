@@ -3022,9 +3022,9 @@ bool TR_EscapeAnalysis::checkOverlappingLoopAllocation(TR::Node *node, TR::Node 
           && (_valueNumberInfo->getValueNumber(node) == _valueNumberInfo->getValueNumber(useNode)))
       {
       if (!_doLoopAllocationAliasChecking
-            || !(node->getOpCode().isLoadVarDirect()
+            || (!(node->getOpCode().isLoadVarDirect()
                     && _aliasesOfAllocNode->get(node->getSymbolReference()->getReferenceNumber()))
-                  && (numReferences > 0))
+                  && (numReferences > 0)))
          {
          return false;
          }
@@ -5627,7 +5627,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                   // Uh, why are we re-calculating the fieldOffset?  Didn't we just do that above?
                   //
                   int32_t fieldOffset = node->getSymbolReference()->getOffset();
-                  if ((candidate->_origKind == TR::New))
+                  if (candidate->_origKind == TR::New)
                      {
                      TR::SymbolReference *symRef = node->getSymbolReference();
                      fieldOffset = symRef->getOffset();
@@ -5921,7 +5921,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
      (loadOrStore->getOpCode().isLoadVarOrStore() || loadOrStore->getOpCode().isLoadConst()))
      treeAsExpected = true;
 
-      if (!treeAsExpected || loadOrStore->getOpCode().hasSymbolReference() && loadOrStore->getSymbolReference()->getSymbol()->isAuto())
+      if (!treeAsExpected || (loadOrStore->getOpCode().hasSymbolReference() && loadOrStore->getSymbolReference()->getSymbol()->isAuto()))
          {
          TR::Node::recreate(node, TR::treetop);
          node->getSecondChild()->decReferenceCount();
@@ -6139,7 +6139,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForContiguousAllocation(TR::Node *node, 
        !candidate->escapesInColdBlocks() &&
        _valueNumberInfo->getValueNumber(node->getFirstChild()) == _valueNumberInfo->getValueNumber(candidate->_node))
       {
-        if ((candidate->_origKind == TR::New))
+        if (candidate->_origKind == TR::New)
          {
          TR::Node::recreate(node, TR::astorei);
          node->getChild(2)->recursivelyDecReferenceCount();
@@ -6159,7 +6159,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForContiguousAllocation(TR::Node *node, 
       }
 
    int32_t fieldOffset = node->getSymbolReference()->getOffset();
-   if ((candidate->_origKind == TR::New))
+   if (candidate->_origKind == TR::New)
       {
       TR::SymbolReference *symRef = node->getSymbolReference();
       fieldOffset = symRef->getOffset();
@@ -6279,7 +6279,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
       return true;
       }
 
-   if ((candidate->_origKind == TR::New))
+   if (candidate->_origKind == TR::New)
       {
       TR::SymbolReference *symRef = node->getSymbolReference();
       fieldOffset = symRef->getOffset();

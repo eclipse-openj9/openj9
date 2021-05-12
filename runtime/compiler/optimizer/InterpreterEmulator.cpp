@@ -29,7 +29,7 @@
 #include "jilconsts.h"
 #include "il/ParameterSymbol.hpp"
 #include "optimizer/PreExistence.hpp"
-#include "il/OMRNode_inlines.hpp"
+#include "il/Node_inlines.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
 #include "env/j9methodServer.hpp"
@@ -256,6 +256,9 @@ InterpreterEmulator::maintainStackForIf(TR_J9ByteCode bc)
          case J9BCificmpne:
             canBranch = second->intValue != first->intValue;
             debugTrace(tracer(), "maintainStackForIf ifcmpne %d != %d\n", second->intValue, first->intValue);
+            break;
+
+         default:
             break;
          }
       canFallThru = !canBranch;
@@ -756,6 +759,9 @@ InterpreterEmulator::maintainStackForCall()
          case J9BCinvokehandle:
             TR_ASSERT_FATAL(false, "Can't maintain stack for unresolved invokehandle");
             break;
+
+         default:
+            break;
          }
       TR::Method * calleeMethod = comp()->fej9()->createMethod(trMemory(), _calltarget->_calleeMethod->containingClass(), cpIndex);
       numOfArgs = calleeMethod->numberOfExplicitParameters() + (isStatic ? 0 : 1);
@@ -874,6 +880,9 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             }
          break;
          }
+
+      default:
+         break;
       }
    return result;
    }
@@ -1005,6 +1014,9 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
          return;
          }
 #endif //J9VM_OPT_OPENJDK_METHODHANDLE
+
+      default:
+         break;
       }
    }
 
@@ -1047,6 +1059,9 @@ InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessf
          case J9BCinvokestatic:
          case J9BCinvokestaticsplit: visitInvokestatic(); break;
          case J9BCinvokeinterface: visitInvokeinterface(); break;
+
+         default:
+            break;
          }
 
       if (_iteratorWithState)
@@ -1236,6 +1251,9 @@ InterpreterEmulator::debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod)
             case J9BCinvokestaticsplit:
                cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG;
                break;
+
+            default:
+               break;
             }
          TR::Method *meth = comp()->fej9()->createMethod(this->trMemory(), _calltarget->_calleeMethod->containingClass(), cpIndex);
          heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s", _recursionDepth, _bcIndex, meth->signature(comp()->trMemory()));
@@ -1306,6 +1324,9 @@ InterpreterEmulator::visitInvokevirtual()
          case TR::java_lang_invoke_MethodHandle_undoCustomizationLogic:
             if (_callerIsThunkArchetype)
                return;
+         
+         default:
+            break;
          }
 
       bool allconsts= false;
