@@ -1233,6 +1233,9 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             return;
          break;
          }
+
+      default:
+         break;
       }
 
    // The following are opts that do not support AOT
@@ -1504,6 +1507,9 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                }
             break;
             }
+
+         default:
+            break;
          }
       }
    }

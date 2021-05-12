@@ -403,7 +403,7 @@ void TR_ValueProfiler::modifyTrees()
              !(arrayCopyLen->getOpCode().isCallIndirect() &&
                !arrayCopyLen->isTheVirtualCallNodeForAGuardedInlinedCall()))
              {
-             addProfilingTrees(arrayCopyLen, tt, 0, LastValueInfo, LastProfiler, true, &firstChild->getByteCodeInfo());
+             addProfilingTrees(arrayCopyLen, tt, firstChild->getByteCodeInfo(), 0, LastValueInfo, LastProfiler, true);
              }
          }
       else if (firstChild && firstChild->getOpCode().isCall() &&
@@ -848,6 +848,9 @@ TR_ValueProfiler::addListOrArrayProfilingTrees(
          break;
       case ValueInfo:
          helper = TR_jitProfileValue;
+         break;
+
+      default:
          break;
       }
    TR::SymbolReference *profiler = comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper, false, false, true);
@@ -1946,7 +1949,7 @@ TR_BlockFrequencyInfo::getOriginalBlockNumberToGetRawCount(TR_ByteCodeInfo &bci,
    bool currentCallSiteInfo = TR_CallSiteInfo::getCurrent(comp) == _callSiteInfo;
    for (auto i=0; i < _numBlocks; ++i)
       {
-      if (currentCallSiteInfo && _callSiteInfo->hasSameBytecodeInfo(_blocks[i], searchBCI, comp) ||
+      if ((currentCallSiteInfo && _callSiteInfo->hasSameBytecodeInfo(_blocks[i], searchBCI, comp)) ||
             (!currentCallSiteInfo && _blocks[i].getCallerIndex() == searchBCI.getCallerIndex() && _blocks[i].getByteCodeIndex() == searchBCI.getByteCodeIndex()))
          {
          if (trace)
@@ -1975,11 +1978,11 @@ TR_BlockFrequencyInfo::generateBlockRawCountCalculationSubTree(TR::Compilation *
    {
    TR::Node *root = NULL;
    if (blockNumber > -1 && (_counterDerivationInfo[blockNumber * 2]
-      && ((((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1 == 1)
+      && (((((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1) == 1)
       || !_counterDerivationInfo[blockNumber * 2]->isEmpty())))
       {
       TR::Node *addRoot = NULL;
-      if (((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1 == 1)
+      if ((((uintptr_t)_counterDerivationInfo[blockNumber * 2]) & 0x1) == 1)
          {
          TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(getFrequencyForBlock(((uintptr_t)_counterDerivationInfo[blockNumber * 2]) >> 1), TR::Int32);
          symRef->getSymbol()->setIsBlockFrequency();
@@ -2004,7 +2007,7 @@ TR_BlockFrequencyInfo::generateBlockRawCountCalculationSubTree(TR::Compilation *
       TR::Node *subRoot = NULL;
       if (_counterDerivationInfo[blockNumber * 2 +1] != NULL)
          {
-         if (((uintptr_t)_counterDerivationInfo[blockNumber *2 + 1]) & 0x1 == 1)
+         if ((((uintptr_t)_counterDerivationInfo[blockNumber *2 + 1]) & 0x1) == 1)
             {
             TR::SymbolReference *symRef = comp->getSymRefTab()->createKnownStaticDataSymbolRef(getFrequencyForBlock(((uintptr_t)_counterDerivationInfo[blockNumber * 2 + 1]) >> 1), TR::Int32);
             symRef->getSymbol()->setIsBlockFrequency();

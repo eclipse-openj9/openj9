@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -356,8 +356,8 @@ TR_ClassLookahead::findInitializerMethods(List<TR_ResolvedMethod> *resolvedMetho
                 TR_ResolvedMethod *calleeMethod = calleeSymbol->getResolvedMethod();
                 if (calleeMethod->containingClass() == _classPointer &&
                     (!strncmp(calleeMethod->nameChars(), "<init>", 6) ||
-                    calleeMethod->isPrivate() &&
-                    !isCalledByNonConstructorMethodsInClass(calleeMethod, resolvedMethodSyms)))
+                    (calleeMethod->isPrivate() &&
+                    !isCalledByNonConstructorMethodsInClass(calleeMethod, resolvedMethodSyms))))
                     initializerMethodSymbol = calleeSymbol;
                 }
 
@@ -1368,18 +1368,17 @@ void TR_ClassLookahead::makeInfoPersistent()
             {
             if (_traceIt)
                printf("Creating persistent info for array field %s\n", persistentSig);
-            newFieldInfo = new (PERSISTENT_NEW) TR_PersistentArrayFieldInfo(persistentSig, length);
-            memcpy(newFieldInfo, fieldInfo, sizeof(TR_PersistentArrayFieldInfo));
+            newFieldInfo = new (PERSISTENT_NEW) TR_PersistentArrayFieldInfo(*arrayFieldInfo);
             }
          else
             {
             if (_traceIt)
                printf("Creating persistent info for field %s\n", persistentSig);
-            newFieldInfo = new (PERSISTENT_NEW) TR_PersistentFieldInfo(persistentSig, length);
-            memcpy(newFieldInfo, fieldInfo, sizeof(TR_PersistentFieldInfo));
+            newFieldInfo = new (PERSISTENT_NEW) TR_PersistentFieldInfo(*fieldInfo);
             }
 
          newFieldInfo->setFieldSignature(persistentSig);
+         newFieldInfo->setFieldSignatureLength(length);
 
          char *persistentType = 0;
          if (isTypeInfoValid)

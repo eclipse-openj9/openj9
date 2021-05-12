@@ -4144,6 +4144,9 @@ int TR_SPMDKernelParallelizer::symbolicEvaluateTree(TR::Node *node)
       case TR::isub:
       case TR::lsub:
          return (c1-c2);
+
+      default:
+         break;
       }
 
    return 0;

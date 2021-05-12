@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -198,6 +198,7 @@ class TR_AbstractProfilerInfo : public TR_Link0<TR_AbstractProfilerInfo>
    public:
    TR_AbstractProfilerInfo(TR_ByteCodeInfo &bci) : _byteCodeInfo(bci) {}
 
+   virtual ~TR_AbstractProfilerInfo() {}
    /**
     * Common methods based on metadata and frequencies.
     */
@@ -1211,7 +1212,7 @@ TR_LinkedListProfilerInfo<T>::~TR_LinkedListProfilerInfo()
    while (cursor)
       {
       auto next = cursor->getNext();
-      ~Element(cursor);
+      cursor->~Element();
       jitPersistentFree(cursor);
       cursor = next;
       }

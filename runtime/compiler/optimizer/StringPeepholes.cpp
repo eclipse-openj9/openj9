@@ -1886,14 +1886,14 @@ TR::TreeTop *TR_StringPeepholes::detectPattern(TR::Block *block, TR::TreeTop *tt
                                     initSymRef1);
          }
       }
-   else if ((stringCount == 3))
+   else if (stringCount == 3)
       {
       TR::SymbolReference *initSymRef2 = findSymRefForOptMethod(SPH_String_init_SSS) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_SSS)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Special) : 0;
       initCall = TR::Node::createWithSymRef(TR::call, 4, 4,
                                  stringNode, appendedString[0], appendedString[1], appendedString[2],
                                  initSymRef2);
       }
-   else if ((stringCount == 5))
+   else if (stringCount == 5)
       {
       TR::SymbolReference *initSymRef7 = findSymRefForOptMethod(SPH_String_init_ISISS) ? getSymRefTab()->findOrCreateMethodSymbol(stringNode->getSymbolReference()->getOwningMethodIndex(), -1, findSymRefForOptMethod(SPH_String_init_ISISS)->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod(), TR::MethodSymbol::Special) : 0;
       initCall = TR::Node::createWithSymRef(TR::call, 6, 6,
