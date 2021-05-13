@@ -113,6 +113,7 @@ public class PointerGenerator {
 		opts.put("-u", "true");  // flag to control if user code is supported or not, default is true
 		opts.put("-c", "");      // optional value to provide a cache properties file
 		opts.put("-l", "false"); // flag to determine if legacy DDR is used, default is false
+		opts.put("-a", null);    // auxilliary field information
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -120,9 +121,9 @@ public class PointerGenerator {
 		app.parseArgs(args);
 		app.generateClasses();
 		if (app.errorCount == 0) {
-			System.out.println("Processing complete");
+			System.out.println("Pointer class generation complete");
 		} else {
-			System.out.println("Processing failed");
+			System.out.println("Pointer class generation failed");
 			System.exit(1);
 		}
 	}
@@ -143,6 +144,19 @@ public class PointerGenerator {
 			System.out.println("Problem with file: " + fileName);
 			e.printStackTrace();
 			return;
+		}
+
+		String auxFieldInfo = opts.get("-a");
+
+		if (auxFieldInfo != null) {
+			try (InputStream stream = new FileInputStream(auxFieldInfo)) {
+				structureReader.loadAuxFieldInfo(stream);
+			} catch (IOException e) {
+				errorCount += 1;
+				System.out.println("Problem with file: " + auxFieldInfo);
+				e.printStackTrace();
+				return;
+			}
 		}
 
 		outputDir = getOutputDir("-p");
@@ -546,9 +560,16 @@ public class PointerGenerator {
 	}
 
 	private void generateImplementationMethods(PrintWriter writer, StructureDescriptor structure) {
-		Collections.sort(structure.getFields());
-		for (FieldDescriptor fieldDescriptor : structure.getFields()) {
+		List<FieldDescriptor> fields = structure.getFields();
+		Collections.sort(fields);
+		for (FieldDescriptor fieldDescriptor : fields) {
 			if (omitFieldImplementation(structure, fieldDescriptor)) {
+				continue;
+			}
+
+			if (fieldDescriptor.isRequired() && !fieldDescriptor.isPresent()) {
+				errorCount += 1;
+				System.out.printf("Missing required field: %s.%s%n", structure.getName(), fieldDescriptor.getName());
 				continue;
 			}
 
@@ -640,10 +661,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
-		writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
-				pointerType, structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
+					pointerType, structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
@@ -661,10 +683,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", typeString, getter);
 		}
-		writeMethodSignature(writer, generalizeSimpleType(typeString), getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "get%sBitfield(%s._%s_s_, %s._%s_b_)",
-				typeString, structure.getName(), getter, structure.getName(), getter);
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, generalizeSimpleType(typeString), getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "get%sBitfield(%s._%s_s_, %s._%s_b_)",
+					typeString, structure.getName(), getter, structure.getName(), getter);
+		}
+		writeMethodClose(writer, fieldDescriptor);
 	}
 
 	/**
@@ -688,13 +711,28 @@ public class PointerGenerator {
 		return name.contains("#");
 	}
 
-	private void writeMethodSignature(PrintWriter writer, String returnType, String getter, FieldDescriptor field, boolean fieldAccessor) {
+	/*
+	 * Write the beginning of a method. The return value indicates whether
+	 * the caller should produce the body of the method.
+	 */
+	private boolean writeMethodSignature(PrintWriter writer, String returnType, String getter, FieldDescriptor field, boolean fieldAccessor) {
 		writer.format("\t// %s %s%n", field.getDeclaredType(), field.getDeclaredName());
-		if (fieldAccessor) {
+		if (fieldAccessor && field.isPresent()) {
 			writer.format("\t@com.ibm.j9ddr.GeneratedFieldAccessor(offsetFieldName=\"_%sOffset_\", declaredType=\"%s\")", getOffsetConstant(field), field.getDeclaredType());
 			writer.println();
 		}
-		writer.format("\tpublic %s %s() throws CorruptDataException {%n", returnType, getter);
+		boolean optional = field.isOptional();
+		String exceptions = optional ? "CorruptDataException, NoSuchFieldException" : "CorruptDataException";
+		writer.format("\tpublic %s %s() throws %s {%n", returnType, getter, exceptions);
+		if (optional) {
+			if (field.isPresent()) {
+				writer.println("\ttry {");
+			} else {
+				writer.println("\t\tthrow new NoSuchFieldException();");
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void writeEAMethod(PrintWriter writer, String returnType, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
@@ -702,10 +740,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, generalizeSimplePointer(returnType), getter, fieldDescriptor, false);
-		writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_))",
-				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, generalizeSimplePointer(returnType), getter, fieldDescriptor, false)) {
+			writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_))",
+					returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 	}
 
 	private void writeEnumEAMethod(PrintWriter writer, String returnType, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
@@ -713,10 +752,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, false);
-		writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_), %s.class)",
-				returnType, structure.getName(), getOffsetConstant(fieldDescriptor), getEnumType(fieldDescriptor.getType()));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, false)) {
+			writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_), %s.class)",
+					returnType, structure.getName(), getOffsetConstant(fieldDescriptor), getEnumType(fieldDescriptor.getType()));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 	}
 
 	private String getOffsetConstant(FieldDescriptor fieldDescriptor) {
@@ -742,13 +782,19 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, false);
-		writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_))",
-				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, false)) {
+			writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_))",
+					returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 	}
 
-	private static void writeMethodClose(PrintWriter writer) {
+	private static void writeMethodClose(PrintWriter writer, FieldDescriptor fieldDescriptor) {
+		if (fieldDescriptor.isOptional() && fieldDescriptor.isPresent()) {
+			writer.println("\t} catch (NoSuchFieldError e) {");
+			writer.println("\t\tthrow new NoSuchFieldException();");
+			writer.println("\t}");
+		}
 		writer.println("\t}");
 		writer.println();
 	}
@@ -759,10 +805,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
-		writeMethodSignature(writer, generalizeSimplePointer(pointerType), getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
-				pointerType, structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, generalizeSimplePointer(pointerType), getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
+					pointerType, structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
@@ -890,10 +937,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate Boolean %s_cache;%n", getter);
 		}
-		writeMethodSignature(writer, "boolean", getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "getBoolAtOffset(%s._%sOffset_)",
-				structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, "boolean", getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "getBoolAtOffset(%s._%sOffset_)",
+					structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		/* Now write an EA method to return the address of the slot */
 		writeEAMethod(writer, "BoolPointer", structure, fieldDescriptor);
@@ -904,10 +952,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate Double %s_cache;%n", getter);
 		}
-		writeMethodSignature(writer, "double", getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "getDoubleAtOffset(%s._%sOffset_)",
-				structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, "double", getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "getDoubleAtOffset(%s._%sOffset_)",
+					structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		/* Now write an EA method to return the address of the slot */
 		writeEAMethod(writer, "DoublePointer", structure, fieldDescriptor);
@@ -921,37 +970,38 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate Long %s_cache;%n", getter);
 		}
-		writeMethodSignature(writer, "long", getter, fieldDescriptor, true);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\tif (%s.SIZEOF == 1) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getByteAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getShortAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getIntAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
-			writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getLongAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
-			writer.format("\t\t\t\t} else {%n");
-			writer.format("\t\t\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
-			writer.format("\t\t\t\t}%n");
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache.longValue();%n", getter);
+		if (writeMethodSignature(writer, "long", getter, fieldDescriptor, true)) {
+			if (cacheFields) {
+				writer.format("\t\tif (CACHE_FIELDS) {%n");
+				writer.format("\t\t\tif (%s_cache == null) {%n", getter);
+				writer.format("\t\t\t\tif (%s.SIZEOF == 1) {%n", enumType);
+				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getByteAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+				writer.format("\t\t\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
+				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getShortAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+				writer.format("\t\t\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
+				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getIntAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+				writer.format("\t\t\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
+				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getLongAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+				writer.format("\t\t\t\t} else {%n");
+				writer.format("\t\t\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
+				writer.format("\t\t\t\t}%n");
+				writer.format("\t\t\t}%n");
+				writer.format("\t\t\treturn %s_cache.longValue();%n", getter);
+				writer.format("\t\t}%n");
+			}
+			writer.format("\t\tif (%s.SIZEOF == 1) {%n", enumType);
+			writer.format("\t\t\treturn getByteAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+			writer.format("\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
+			writer.format("\t\t\treturn getShortAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+			writer.format("\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
+			writer.format("\t\t\treturn getIntAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+			writer.format("\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
+			writer.format("\t\t\treturn getLongAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+			writer.format("\t\t} else {%n");
+			writer.format("\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
 			writer.format("\t\t}%n");
 		}
-		writer.format("\t\tif (%s.SIZEOF == 1) {%n", enumType);
-		writer.format("\t\t\treturn getByteAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		writer.format("\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
-		writer.format("\t\t\treturn getShortAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		writer.format("\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
-		writer.format("\t\t\treturn getIntAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		writer.format("\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
-		writer.format("\t\t\treturn getLongAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
-		writer.format("\t\t} else {%n");
-		writer.format("\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
-		writer.format("\t\t}%n");
-		writeMethodClose(writer);
+		writeMethodClose(writer, fieldDescriptor);
 
 		/* Now write an EA method to return the address of the slot */
 		writeEnumEAMethod(writer, "EnumPointer", structure, fieldDescriptor);
@@ -965,10 +1015,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
-		writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_), %s.class)",
-				pointerType, structure.getName(), getOffsetConstant(fieldDescriptor), enumType);
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_), %s.class)",
+					pointerType, structure.getName(), getOffsetConstant(fieldDescriptor), enumType);
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
@@ -978,10 +1029,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate Float %s_cache;%n", getter);
 		}
-		writeMethodSignature(writer, "float", getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "getFloatAtOffset(%s._%sOffset_)",
-				structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, "float", getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "getFloatAtOffset(%s._%sOffset_)",
+					structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		/* Now write an EA method to return the address of the slot */
 		writeEAMethod(writer, "FloatPointer", structure, fieldDescriptor);
@@ -1028,20 +1080,22 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", typeString, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		switch (type) {
-		case TYPE_IDATA:
-		case TYPE_UDATA:
-			// accessors for IDATA and UDATA already return objects
-			writeMethodReturn(writer, getter, "%s(%s._%sOffset_)",
-					simpleTypeAccessorMap.get(type), structure.getName(), offsetConstant);
-			break;
-		default:
-			writeMethodReturn(writer, getter, "new %s(%s(%s._%sOffset_))",
-					typeString, simpleTypeAccessorMap.get(type), structure.getName(), offsetConstant);
-			break;
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
+			String accessor = simpleTypeAccessorMap.get(type);
+			switch (type) {
+			case TYPE_IDATA:
+			case TYPE_UDATA:
+				// accessors for IDATA and UDATA already return objects
+				writeMethodReturn(writer, getter, "%s(%s._%sOffset_)",
+						accessor, structure.getName(), offsetConstant);
+				break;
+			default:
+				writeMethodReturn(writer, getter, "new %s(%s(%s._%sOffset_))",
+						typeString, accessor, structure.getName(), offsetConstant);
+				break;
+			}
 		}
-		writeMethodClose(writer);
+		writeMethodClose(writer, fieldDescriptor);
 
 		/* Now write an EA method to return the address of the slot */
 		writeEAMethod(writer, returnType + "Pointer", structure, fieldDescriptor);
@@ -1098,28 +1152,29 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
-		writeMethodSignature(writer, generalizeSimplePointer(pointerType), getter, fieldDescriptor, true);
-		String value = String.format("%s.cast(address + (%s._%sOffset_ + nextAddress))", pointerType, structure.getName(), offsetConstant);
-		if (cacheFields) {
-			writer.format("\t\tif (CACHE_FIELDS) {%n");
-			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
-			writer.format("\t\t\t\tlong nextAddress = %s(%s._%sOffset_);%n", getAtOffsetFunction, structure.getName(), offsetConstant);
-			writer.format("\t\t\t\tif (nextAddress == 0) {%n");
-			writer.format("\t\t\t\t\t%s_cache = %s.NULL;%n", getter, pointerType);
-			writer.format("\t\t\t\t} else {%n");
-			writer.format("\t\t\t\t\t%s_cache = %s;%n", getter, value);
-			writer.format("\t\t\t\t}%n");
-			writer.format("\t\t\t}%n");
-			writer.format("\t\t\treturn %s_cache;%n", getter);
+		if (writeMethodSignature(writer, generalizeSimplePointer(pointerType), getter, fieldDescriptor, true)) {
+			String value = String.format("%s.cast(address + (%s._%sOffset_ + nextAddress))", pointerType, structure.getName(), offsetConstant);
+			if (cacheFields) {
+				writer.format("\t\tif (CACHE_FIELDS) {%n");
+				writer.format("\t\t\tif (%s_cache == null) {%n", getter);
+				writer.format("\t\t\t\tlong nextAddress = %s(%s._%sOffset_);%n", getAtOffsetFunction, structure.getName(), offsetConstant);
+				writer.format("\t\t\t\tif (nextAddress == 0) {%n");
+				writer.format("\t\t\t\t\t%s_cache = %s.NULL;%n", getter, pointerType);
+				writer.format("\t\t\t\t} else {%n");
+				writer.format("\t\t\t\t\t%s_cache = %s;%n", getter, value);
+				writer.format("\t\t\t\t}%n");
+				writer.format("\t\t\t}%n");
+				writer.format("\t\t\treturn %s_cache;%n", getter);
+				writer.format("\t\t}%n");
+			}
+			writer.format("\t\tlong nextAddress = %s(%s._%sOffset_);%n", getAtOffsetFunction, structure.getName(), offsetConstant);
+			writer.format("\t\tif (nextAddress == 0) {%n");
+			writer.format("\t\t\treturn %s.NULL;%n", pointerType);
 			writer.format("\t\t}%n");
+			writer.format("\t\treturn %s;%n", value);
 		}
-		writer.format("\t\tlong nextAddress = %s(%s._%sOffset_);%n", getAtOffsetFunction, structure.getName(), offsetConstant);
-		writer.format("\t\tif (nextAddress == 0) {%n");
-		writer.format("\t\t\treturn %s.NULL;%n", pointerType);
-		writer.format("\t\t}%n");
-		writer.format("\t\treturn %s;%n", value);
 
-		writeMethodClose(writer);
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeSRPEAMethod(writer, isWide ? "WideSelfRelativePointer" : "SelfRelativePointer", structure, fieldDescriptor);
 	}
@@ -1132,10 +1187,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
-				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
+					returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
@@ -1146,10 +1202,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "getObjectReferenceAtOffset(%s._%sOffset_)",
-				structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "getObjectReferenceAtOffset(%s._%sOffset_)",
+					structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "ObjectReferencePointer", structure, fieldDescriptor);
 	}
@@ -1160,10 +1217,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
-				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "%s.cast(getPointerAtOffset(%s._%sOffset_))",
+					returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
@@ -1174,10 +1232,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "getObjectClassAtOffset(%s._%sOffset_)",
-				structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "getObjectClassAtOffset(%s._%sOffset_)",
+					structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "ObjectClassReferencePointer", structure, fieldDescriptor);
 	}
@@ -1185,10 +1244,11 @@ public class PointerGenerator {
 	private void writeJ9ObjectClassPointerMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String returnType = "ObjectClassReferencePointer";
 		String getter = fieldDescriptor.getName();
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		writer.format("\t\t// j9objectclass_t* method goes here%n");
-		writer.format("\t\treturn null;%n");
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
+			writer.println("\t\t// j9objectclass_t* method goes here");
+			writer.println("\t\treturn null;");
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
@@ -1199,10 +1259,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "getObjectMonitorAtOffset(%s._%sOffset_)",
-				structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "getObjectMonitorAtOffset(%s._%sOffset_)",
+					structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "ObjectMonitorReferencePointer", structure, fieldDescriptor);
 	}
@@ -1210,10 +1271,11 @@ public class PointerGenerator {
 	private void writeJ9ObjectMonitorPointerMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		String returnType = "ObjectMonitorReferencePointer";
 		String getter = fieldDescriptor.getName();
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		writer.format("\t\t// j9objectmonitor_t* method goes here%n");
-		writer.format("\t\treturn null;%n");
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
+			writer.println("\t\t// j9objectmonitor_t* method goes here");
+			writer.println("\t\treturn null;");
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
@@ -1232,10 +1294,11 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter, fieldDescriptor, true);
-		writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_))",
-				returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
-		writeMethodClose(writer);
+		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
+			writeMethodReturn(writer, getter, "%s.cast(nonNullFieldEA(%s._%sOffset_))",
+					returnType, structure.getName(), getOffsetConstant(fieldDescriptor));
+		}
+		writeMethodClose(writer, fieldDescriptor);
 
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
@@ -1380,9 +1443,17 @@ public class PointerGenerator {
 			}
 		}
 
-		for (String key : opts.keySet()) {
-			String value = opts.get(key);
-			if (value == null && !key.equals("-s") && !key.equals("-h")) {
+		for (Map.Entry<String, String> entry : opts.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+
+			if (value != null) {
+				/* this option was specified or has a default */
+				continue;
+			} else if (key.equals("-a") || key.equals("-h") || key.equals("-s")) {
+				/* a value is not required for this option */
+				continue;
+			} else {
 				System.err.println("The option " + key + " has not been set.");
 				printHelp();
 				System.exit(1);

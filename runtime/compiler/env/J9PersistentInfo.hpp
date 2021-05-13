@@ -374,7 +374,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
    bool _externalStartupEndedSignal; // the app will tell us when startup ends
 
-   bool _disableFurtherCompilation;
+   volatile bool _disableFurtherCompilation;
 
    uint32_t _loadFactor; // set in samplerThread; increases with active threads, decreases with CPUs
 

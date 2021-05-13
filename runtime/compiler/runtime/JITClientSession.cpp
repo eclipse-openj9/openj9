@@ -25,6 +25,7 @@
 #include "control/CompilationRuntime.hpp" // for CompilationInfo
 #include "control/MethodToBeCompiled.hpp" // for TR_MethodToBeCompiled
 #include "control/JITServerHelpers.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "env/ut_j9jit.h"
 #include "net/ServerStream.hpp" // for JITServer::ServerStream
 #include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
@@ -666,14 +667,18 @@ void ClientSessionData::purgeCache(std::vector<ClassUnloadedData> *unloadedClass
    }
 
 void
-ClientSessionData::readAcquireClassUnloadRWMutex()
+ClientSessionData::readAcquireClassUnloadRWMutex(TR::CompilationInfoPerThreadBase *compInfoPT)
    {
+   // compInfoPT must be associated with the compilation thread that calls this
    omrthread_rwmutex_enter_read(_classUnloadRWMutex);
+   static_cast<TR::CompilationInfoPerThreadRemote *>(compInfoPT)->incrementClassUnloadReadMutexDepth();
    }
 
 void
-ClientSessionData::readReleaseClassUnloadRWMutex()
+ClientSessionData::readReleaseClassUnloadRWMutex(TR::CompilationInfoPerThreadBase *compInfoPT)
    {
+   // compInfoPT must be associated with the compilation thread that calls this
+   static_cast<TR::CompilationInfoPerThreadRemote *>(compInfoPT)->decrementClassUnloadReadMutexDepth();
    omrthread_rwmutex_exit_read(_classUnloadRWMutex);
    }
 

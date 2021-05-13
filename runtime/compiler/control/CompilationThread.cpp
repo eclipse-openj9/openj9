@@ -7823,7 +7823,9 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       }
 
 #if defined(J9VM_OPT_JITSERVER)
-   if (_compiler && _compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+   if (_compiler
+       && _compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER
+       && !entry->_optimizationPlan->isLogCompilation())
       {
       _compiler->getOptions()->closeLogFileForClientOptions();
       }
@@ -8168,7 +8170,17 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             auto compInfoPTRemote = static_cast<TR::CompilationInfoPerThreadRemote *>(that);
             TR_ASSERT_FATAL(compInfoPTRemote->getClientOptions(), "client options must be set for an out-of-process compilation");
             options = TR::Options::unpackOptions(compInfoPTRemote->getClientOptions(), compInfoPTRemote->getClientOptionsSize(), that, vm, p->trMemory());
-            options->setLogFileForClientOptions();
+            if (!p->_optimizationPlan->isLogCompilation())
+               {
+               options->setLogFileForClientOptions();
+               }
+            else
+               {
+               // For JitDump compilations, set the log file to the jitdump file,
+               // which has already been created by a thread running JitDump
+               TR::Options::findOrCreateDebug();
+               options->setLogFile(p->_optimizationPlan->getLogCompilation());
+               }
             // The following is a hack to prevent the JITServer from allocating
             // a sentinel entry for the list of runtime assumptions kept in the compiler object
             options->setOption(TR_DisableFastAssumptionReclamation);
@@ -10184,6 +10196,12 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 #if defined(J9VM_OPT_JITSERVER)
       if (entry && isJITServerMode) // failure at the JITServer
          {
+         // If no error code is set but the compilation failed,
+         // it means the diagnostic JitDump compilation crashed.
+         // We still need to notify the client, so manually set the error to compilationFailure
+         if (entry->_compErrCode == compilationOK)
+            entry->_compErrCode = compilationFailure;
+
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
@@ -12752,9 +12770,6 @@ TR::CompilationInfo::requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry)
    TR_ASSERT(getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "Should be called in JITServer server mode only");
 
    recycleCompilationEntry(entry);
-   // we do not requeue outOfProcessEntry for the Per-Compilation-Connection Mode
-   if (feGetEnv("TR_EnableJITServerPerCompConn"))
-      return;
 
    if (entry->_stream && addOutOfProcessMethodToBeCompiled(entry->_stream))
       {

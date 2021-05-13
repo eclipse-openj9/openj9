@@ -182,7 +182,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
    // If JVM has unloaded classes inform the server to abort this compilation
    uint8_t interruptReason = compInfoPT->compilationShouldBeInterrupted();
-   if (interruptReason)
+   if (interruptReason && response != MessageType::jitDumpPrintIL)
       {
       // Inform the server if compilation is not yet complete
       if ((response != MessageType::compilationCode) &&
@@ -204,9 +204,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       {
       case MessageType::compilationCode:
       case MessageType::compilationFailure:
+      case MessageType::compilationThreadCrashed:
          done = true;
          break;
-
+      case MessageType::jitDumpPrintIL:
+         {
+         client->getRecvData<JITServer::Void>();
+         done = true;
+         client->write(response, JITServer::Void());
+         }
+         break;
       case MessageType::getUnloadedClassRangesAndCHTable:
          {
          auto unloadedClasses = comp->getPersistentInfo()->getUnloadedClassAddresses();
@@ -3025,7 +3032,11 @@ remoteCompile(
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
    bool useAotCompilation = compInfoPT->getMethodBeingCompiled()->_useAotCompilation;
 
-   JITServer::ClientStream *client = enableJITServerPerCompConn ? NULL : compInfoPT->getClientStream();
+   // For JitDump recompilations need to use the same stream as for the original compile
+   JITServer::ClientStream *client = 
+      enableJITServerPerCompConn && !details.isJitDumpMethod() ? 
+      NULL
+      : compInfoPT->getClientStream();
    if (!client)
       {
       try
@@ -3109,9 +3120,13 @@ remoteCompile(
    std::pair<std::string, std::string> chtableUpdates = table->serializeUpdates();
    // Update the sequence number for these updates
    uint32_t seqNo = compInfo->incCompReqSeqNo();
-   uint32_t lastCriticalSeqNo = compInfo->getLastCriticalSeqNo();
+   uint32_t lastCriticalSeqNo = !details.isJitDumpMethod() ? compInfo->getLastCriticalSeqNo() : 0;
    // If needed, update the seqNo of the last request that carried information that needed to be processed in order
-   if (!chtableUpdates.first.empty() || !chtableUpdates.second.empty() || !illegalModificationList.empty() || !unloadedClasses.empty())
+   if (!chtableUpdates.first.empty()
+       || !chtableUpdates.second.empty()
+       || !illegalModificationList.empty()
+       || !unloadedClasses.empty()
+       || details.isJitDumpMethod())
       compInfo->setLastCriticalSeqNo(seqNo);
    
    compInfo->getSequencingMonitor()->exit();
@@ -3176,6 +3191,78 @@ remoteCompile(
          JITServer::ServerActiveThreadsState nextActiveThreadState = std::get<10>(recv);
          updateCompThreadActivationPolicy(compInfoPT, nextMemoryState, nextActiveThreadState);
          }
+      else if (JITServer::MessageType::jitDumpPrintIL == response)
+         {
+         // A server compilation thread has crashed, and the crashing thread
+         // is generating a JitDump. Use the existing compilation to print IL
+         // of the method causing the crash and then schedule a JitDump recompilation
+         bool writeVerboseLog = TR::Options::isAnyVerboseOptionSet(
+               TR_VerboseJITServer,
+               TR_VerboseCompilationDispatch,
+               TR_VerbosePerformance,
+               TR_VerboseCompFailure
+               );
+         if (writeVerboseLog)
+             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+               "Server compilation thread crashed while compiling %s (%s)", compiler->signature(), compiler->getHotnessName());
+         Trc_JITServerCompThreadCrashed(vmThread, compInfoPT->getCompThreadId(), compiler->signature(), compiler->getHotnessName());
+
+         TR::CompilationInfoPerThreadBase::UninterruptibleOperation uop(*compInfoPT);
+         releaseVMAccess(vmThread);
+         while(!handleServerMessage(client, compiler->fej9vm(), response));
+         acquireVMAccessNoSuspend(vmThread);
+         
+         TR_ASSERT_FATAL(
+            response == JITServer::MessageType::compilationThreadCrashed
+            || response == JITServer::MessageType::compilationFailure,
+            "Expected JITServer::MessageType::compilationThreadCrashed or JITServer::MessageType::compilationFailure but received %s\n",
+            JITServer::messageNames[response]); 
+
+         if (response == JITServer::MessageType::compilationThreadCrashed)
+            {
+            // IL of the crashing method generated successfully, proceed with diagnostic recompilation
+            auto recv = client->getRecvData<TR::FILE *>();
+            TR::FILE *jitdumpFile = std::get<0>(recv);
+            client->write(response, JITServer::Void());
+
+            // Create method details for the JitDump recompilation
+            // and update optimization plan with a file pointer to the jitdump log.
+            // NOTE: JitDumpMethodDetails parameter "optionsFromOriginalCompile"
+            // is set to NULL, because the original compile hasn't ended from the client's point of view
+            // so options haven't changed.
+            J9::JitDumpMethodDetails jitDumpDetails(method, NULL, useAotCompilation);
+            compInfoPT->getMethodBeingCompiled()->_optimizationPlan->setLogCompilation(jitdumpFile);
+
+            if (writeVerboseLog)
+                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                  "Requested JitDump recompilation of %s (%s)", compiler->signature(), compiler->getHotnessName());
+            if (enableJITServerPerCompConn)
+               compInfoPT->setClientStream(client);
+            try
+               {
+               // Recompile the method as a JitDump method
+               TR_MethodMetaData *metaData = remoteCompile(vmThread, compiler, compilee, method, jitDumpDetails, compInfoPT);
+               }
+            catch (std::exception &e)
+               {
+               // We expect the above compilation to fail and throw
+               // Since we are already handling this failure, ignore failures during diagnostic recompilation
+               if (writeVerboseLog)
+                   TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+                     "Server diagnostic thread crashed while compiling %s (%s)", compiler->signature(), compiler->getHotnessName());
+               }
+            }
+         else
+            {
+            if (writeVerboseLog)
+                TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Failed to generate IL of the crashing method, aborting diagnostic recompilation");
+            }
+
+         // Since server has crashed, all compilations will switch to local
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo);
+         compInfoPT->getMethodBeingCompiled()->_compErrCode = compilationFailure;
+         compiler->failCompilation<JITServer::ServerCompilationFailure>("JITServer compilation thread has crashed.");
+         }
       else
          {
          TR_ASSERT(JITServer::MessageType::compilationFailure == response,
@@ -3204,9 +3291,12 @@ remoteCompile(
       {
       JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary), compInfo);
 
-      client->~ClientStream();
-      TR_Memory::jitPersistentFree(client);
-      compInfoPT->setClientStream(NULL);
+      if (!details.isJitDumpMethod())
+         {
+         client->~ClientStream();
+         TR_Memory::jitPersistentFree(client);
+         compInfoPT->setClientStream(NULL);
+         }
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
@@ -3219,10 +3309,13 @@ remoteCompile(
       }
    catch (const JITServer::StreamVersionIncompatible &e)
       {
-      client->~ClientStream();
-      TR_Memory::jitPersistentFree(client);
-      compInfoPT->setClientStream(NULL);
-      JITServer::ClientStream::incrementIncompatibilityCount(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+      if (!details.isJitDumpMethod())
+         {
+         client->~ClientStream();
+         TR_Memory::jitPersistentFree(client);
+         compInfoPT->setClientStream(NULL);
+         JITServer::ClientStream::incrementIncompatibilityCount(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+         }
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
@@ -3235,9 +3328,12 @@ remoteCompile(
       }
    catch (const JITServer::StreamMessageTypeMismatch &e)
       {
-      client->~ClientStream();
-      TR_Memory::jitPersistentFree(client);
-      compInfoPT->setClientStream(NULL);
+      if (!details.isJitDumpMethod())
+         {
+         client->~ClientStream();
+         TR_Memory::jitPersistentFree(client);
+         compInfoPT->setClientStream(NULL);
+         }
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
@@ -3250,14 +3346,23 @@ remoteCompile(
       }
    catch (...)
       {
-      // For any other type of exception disconnect the socket
-      client->~ClientStream();
-      TR_Memory::jitPersistentFree(client);
-      compInfoPT->setClientStream(NULL);
+      if (!details.isJitDumpMethod())
+         {
+         // For any other type of exception disconnect the socket
+         client->~ClientStream();
+         TR_Memory::jitPersistentFree(client);
+         compInfoPT->setClientStream(NULL);
+         }
       throw; // rethrow the exception
       }
 
    TR_MethodMetaData *metaData = NULL;
+   // If a JitDump recompilation succeeded,
+   // return before performing relocations and adding runtime assumptions,
+   // since the compilation will be failed anyway.
+   if (details.isJitDumpMethod())
+      return NULL;
+
    if (statusCode == compilationOK || statusCode == compilationNotNeeded)
       {
       try
@@ -3421,7 +3526,7 @@ remoteCompile(
       compiler->failCompilation<JITServer::ServerCompilationFailure>("JITServer compilation failed.");
       }
 
-   if (enableJITServerPerCompConn && client)
+   if (enableJITServerPerCompConn && client && !details.isJitDumpMethod())
       {
       client->~ClientStream();
       TR_Memory::jitPersistentFree(client);

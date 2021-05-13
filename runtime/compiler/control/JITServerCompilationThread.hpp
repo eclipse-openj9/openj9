@@ -103,6 +103,10 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    void deleteClientSessionData(uint64_t clientId, TR::CompilationInfo* compInfo, J9VMThread* compThread);
    virtual void freeAllResources() override;
 
+   void incrementClassUnloadReadMutexDepth() { _classUnloadReadMutexDepth++; }
+   void decrementClassUnloadReadMutexDepth() { _classUnloadReadMutexDepth--; }
+   int32_t getClassUnloadReadMutexDepth() { return _classUnloadReadMutexDepth; }
+
    private:
    /* Template method for allocating a cache of type T on the heap.
     * Cache pointer must be NULL.
@@ -172,6 +176,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    FieldOrStaticAttrTable_t *_fieldAttributesCache;
    FieldOrStaticAttrTable_t *_staticAttributesCache;
    UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_IsUnresolvedString> *_isUnresolvedStrCache;
+   int32_t _classUnloadReadMutexDepth;
    }; // class CompilationInfoPerThreadRemote
 } // namespace TR
 

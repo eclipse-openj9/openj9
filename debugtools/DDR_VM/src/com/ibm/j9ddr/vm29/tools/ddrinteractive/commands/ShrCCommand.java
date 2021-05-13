@@ -1197,7 +1197,6 @@ public class ShrCCommand extends Command
 			 * If cacheStartAddress could not get on third try, then return since shared cache is not initialized enough.
 			 */
 			if (cacheStartAddress[layer].isNull()) {
-				
 				if (cacheMap.notNull()) {
 					/*  _ccHead -------------> ccNext ---------> ccNext --------> ........---------> ccTail
 					 * (top layer)         (middle layer)     (middle layer)      ........         (layer 0)
@@ -1208,7 +1207,8 @@ public class ShrCCommand extends Command
 						for (int tmplayer = 0; tmplayer < layer; tmplayer++) {
 							compositeCacheImpl = compositeCacheImpl._previous();
 						}
-					} catch (NoSuchFieldError | NoSuchMethodError e) {
+					} catch (NoSuchFieldException e) {
+						// the VM that produced this core predates the addition of the _ccTail and _previous fields
 						compositeCacheImpl = cacheMap._cc();
 					}
 					if (compositeCacheImpl.notNull()) {

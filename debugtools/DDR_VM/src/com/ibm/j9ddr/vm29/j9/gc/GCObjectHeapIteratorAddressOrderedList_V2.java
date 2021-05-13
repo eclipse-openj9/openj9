@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,12 @@ class GCObjectHeapIteratorAddressOrderedList_V2 extends GCObjectHeapIteratorAddr
 	@Override
 	protected U8Pointer getRealHeapTop(J9ModronThreadLocalHeapPointer threadLocalHeap, U8Pointer heapTop) throws CorruptDataException
 	{
-		return threadLocalHeap.realHeapTop();
+		try {
+			return threadLocalHeap.realHeapTop();
+		} catch (NoSuchFieldException e) {
+			// the 'realHeapTop' field should exist given the earlier algorithm version check
+			throw new CorruptDataException(e);
+		}
 	}
 
 	@Override

@@ -38,6 +38,8 @@ enum MessageType : uint16_t
    compilationInterrupted, // type used when client informs the server to abort the remote compilation
    clientSessionTerminate, // type used when client process is about to terminate
    connectionTerminate, // type used when client informs the server to close the connection
+   compilationThreadCrashed, 
+   jitDumpPrintIL,
 
    // For TR_ResolvedJ9JITServerMethod methods
    ResolvedMethod_setRecognizedMethodInfo,
@@ -285,6 +287,8 @@ static const char *messageNames[] =
    "compilationInterrupted",
    "clientSessionTerminate",
    "connectionTerminate",
+   "compilationThreadCrashed", 
+   "jitDumpPrintIL",
    "ResolvedMethod_setRecognizedMethodInfo",
    "ResolvedMethod_startAddressForInterpreterOfJittedMethod",
    "ResolvedMethod_staticAttributes",

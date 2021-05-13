@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -280,14 +280,20 @@ final class PointerHelper extends HelperBase {
 		return set;
 	}
 
-	private static void doAccessorAnnotation(MethodVisitor method, FieldDescriptor field) {
-		Type annotationType = Type.getObjectType("com/ibm/j9ddr/GeneratedFieldAccessor");
+	private static boolean checkPresent(FieldDescriptor field, MethodVisitor method) {
+		if (field.isPresent()) {
+			return true;
+		}
 
-		AnnotationVisitor annotation = method.visitAnnotation(annotationType.getDescriptor(), true);
+		String noSuchField = "java/lang/NoSuchFieldException";
 
-		annotation.visit("offsetFieldName", String.format("_%sOffset_", field.getName()));
-		annotation.visit("declaredType", field.getDeclaredType());
-		annotation.visitEnd();
+		method.visitTypeInsn(NEW, noSuchField);
+		method.visitInsn(DUP);
+		method.visitMethodInsn(INVOKESPECIAL, noSuchField, "<init>", voidMethod, false);
+
+		method.visitInsn(ATHROW);
+
+		return false;
 	}
 
 	/*
@@ -356,8 +362,6 @@ final class PointerHelper extends HelperBase {
 
 	private final Type abstractPointerType;
 
-	private final String[] accessorThrows;
-
 	private final String basePrefix;
 
 	private final String className;
@@ -365,6 +369,10 @@ final class PointerHelper extends HelperBase {
 	private final Type classType;
 
 	private final ClassWriter clazz;
+
+	private final String[] normalThrows;
+
+	private final String[] optionalThrows;
 
 	private final StructureReader reader;
 
@@ -389,16 +397,38 @@ final class PointerHelper extends HelperBase {
 		String prefix = className.substring(0, index + 1); // ends with '/vmNN/'
 
 		this.abstractPointerType = Type.getObjectType(prefix + "pointer/AbstractPointer");
-		this.accessorThrows = new String[] { "com/ibm/j9ddr/CorruptDataException" };
 		this.basePrefix = prefix;
 		this.className = className;
 		this.classType = Type.getObjectType(className);
 		this.clazz = new ClassWriter(0);
-		this.scalarType = Type.getObjectType(prefix + "types/Scalar");
+		this.normalThrows = new String[] { "com/ibm/j9ddr/CorruptDataException" };
+		this.optionalThrows = new String[] { "com/ibm/j9ddr/CorruptDataException", "java/lang/NoSuchFieldException" };
 		this.reader = reader;
+		this.scalarType = Type.getObjectType(prefix + "types/Scalar");
 		this.structure = structure;
 		this.typeManager = typeManager;
 		this.udataType = Type.getObjectType(prefix + "types/UDATA");
+	}
+
+	private MethodVisitor beginAnnotatedMethod(FieldDescriptor field, String name, String descriptor) {
+		MethodVisitor method = beginMethod(field, name, descriptor);
+
+		if (field.isPresent()) {
+			Type annotationType = Type.getObjectType("com/ibm/j9ddr/GeneratedFieldAccessor");
+			AnnotationVisitor annotation = method.visitAnnotation(annotationType.getDescriptor(), true);
+
+			annotation.visit("offsetFieldName", String.format("_%sOffset_", field.getName()));
+			annotation.visit("declaredType", field.getDeclaredType());
+			annotation.visitEnd();
+		}
+
+		return method;
+	}
+
+	private MethodVisitor beginMethod(FieldDescriptor field, String name, String descriptor) {
+		String[] exceptions = field.isOptional() ? optionalThrows : normalThrows;
+
+		return clazz.visitMethod(ACC_PUBLIC, name, descriptor, null, exceptions);
 	}
 
 	private void doAccessorMethods() {
@@ -572,16 +602,16 @@ final class PointerHelper extends HelperBase {
 		String accessorName = String.format("get%sBitfield", baseType);
 		String accessorDesc = Type.getMethodDescriptor(qualifiedBaseType, Type.INT_TYPE, Type.INT_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, fieldName, returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, fieldName, returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		method.visitFieldInsn(GETSTATIC, getStructureClassName(), startFieldName, Type.INT_TYPE.getDescriptor());
-		loadInt(method, width);
-		method.visitMethodInsn(INVOKEVIRTUAL, className, accessorName, accessorDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			method.visitFieldInsn(GETSTATIC, getStructureClassName(), startFieldName, Type.INT_TYPE.getDescriptor());
+			loadInt(method, width);
+			method.visitMethodInsn(INVOKEVIRTUAL, className, accessorName, accessorDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -599,15 +629,15 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(Type.BOOLEAN_TYPE);
 		String accessorDesc = Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getBoolAtOffset", accessorDesc, false);
-		method.visitInsn(IRETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getBoolAtOffset", accessorDesc, false);
+			method.visitInsn(IRETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -977,15 +1007,15 @@ final class PointerHelper extends HelperBase {
 	 * }
 	 */
 	private void doDoubleMethod(FieldDescriptor field) {
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), doubleFromVoid, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), doubleFromVoid);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getDoubleAtOffset", doubleFromLong, false);
-		method.visitInsn(DRETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getDoubleAtOffset", doubleFromLong, false);
+			method.visitInsn(DRETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1007,14 +1037,16 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedReturnType));
 		String actualDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedActualType), Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, accessorName, returnDesc, null, accessorThrows);
+		MethodVisitor method = beginMethod(field, accessorName, returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "nonNullFieldEA", longFromLong, false);
-		method.visitMethodInsn(INVOKESTATIC, qualifiedActualType, "cast", actualDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "nonNullFieldEA", longFromLong, false);
+			method.visitMethodInsn(INVOKESTATIC, qualifiedActualType, "cast", actualDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 	}
@@ -1033,15 +1065,17 @@ final class PointerHelper extends HelperBase {
 		String castDesc = Type.getMethodDescriptor(enumPointerType, Type.LONG_TYPE, Type.getType(Class.class));
 		Type enumType = Type.getObjectType(qualifyType(getEnumType(field.getType())));
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, accessorName, returnDesc, null, accessorThrows);
+		MethodVisitor method = beginMethod(field, accessorName, returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "nonNullFieldEA", longFromLong, false);
-		method.visitLdcInsn(enumType);
-		method.visitMethodInsn(INVOKESTATIC, enumPointerDesc, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "nonNullFieldEA", longFromLong, false);
+			method.visitLdcInsn(enumType);
+			method.visitMethodInsn(INVOKESTATIC, enumPointerDesc, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 	}
@@ -1061,18 +1095,18 @@ final class PointerHelper extends HelperBase {
 		int enumSize = reader.getStructureSizeOf(enumType);
 		PrimitiveAccessor accessor = PrimitiveAccessor.forSize(enumSize);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), longFromVoid, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), longFromVoid);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, accessor.methodName, accessor.descriptor, false);
-		if (!accessor.returnsLong) {
-			method.visitInsn(I2L);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, accessor.methodName, accessor.descriptor, false);
+			if (!accessor.returnsLong) {
+				method.visitInsn(I2L);
+			}
+			method.visitInsn(LRETURN);
 		}
-		method.visitInsn(LRETURN);
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1094,15 +1128,17 @@ final class PointerHelper extends HelperBase {
 		String targetType = getTargetType(getEnumType(field.getType()));
 		Type enumType = Type.getObjectType(qualifyType(targetType));
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
+		MethodVisitor method = beginMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
-		method.visitLdcInsn(enumType);
-		method.visitMethodInsn(INVOKESTATIC, enumPointerDesc, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
+			method.visitLdcInsn(enumType);
+			method.visitMethodInsn(INVOKESTATIC, enumPointerDesc, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 2);
 		method.visitEnd();
 
@@ -1121,15 +1157,15 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String accessorDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getObjectReferenceAtOffset", accessorDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getObjectReferenceAtOffset", accessorDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1149,16 +1185,16 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
-		method.visitMethodInsn(INVOKESTATIC, returnType, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
+			method.visitMethodInsn(INVOKESTATIC, returnType, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1173,15 +1209,15 @@ final class PointerHelper extends HelperBase {
 	 * }
 	 */
 	private void doFloatMethod(FieldDescriptor field) {
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), floatFromVoid, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), floatFromVoid);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getFloatAtOffset", floatFromLong, false);
-		method.visitInsn(FRETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getFloatAtOffset", floatFromLong, false);
+			method.visitInsn(FRETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1201,15 +1237,15 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String accessorDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getObjectClassAtOffset", accessorDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getObjectClassAtOffset", accessorDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1229,16 +1265,16 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String accessorDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
-		method.visitMethodInsn(INVOKESTATIC, returnType, "cast", accessorDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
+			method.visitMethodInsn(INVOKESTATIC, returnType, "cast", accessorDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1258,15 +1294,15 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String accessorDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getObjectMonitorAtOffset", accessorDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getObjectMonitorAtOffset", accessorDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1286,16 +1322,16 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
-		method.visitMethodInsn(INVOKESTATIC, returnType, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
+			method.visitMethodInsn(INVOKESTATIC, returnType, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1335,16 +1371,16 @@ final class PointerHelper extends HelperBase {
 		String qualifiedReturnType = qualifyPointerType(returnType);
 		String returnDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedReturnType));
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
-		method.visitMethodInsn(INVOKESTATIC, qualifiedTargetType, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
+			method.visitMethodInsn(INVOKESTATIC, qualifiedTargetType, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1366,21 +1402,21 @@ final class PointerHelper extends HelperBase {
 		PrimitiveAccessor accessor = simpleTypeAccessor(type);
 		String returnDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedReturnType));
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitTypeInsn(NEW, qualifiedFieldType);
-		method.visitInsn(DUP);
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, accessor.methodName, accessor.descriptor, false);
-		if (!accessor.returnsLong) {
-			method.visitInsn(I2L);
+		if (checkPresent(field, method)) {
+			method.visitTypeInsn(NEW, qualifiedFieldType);
+			method.visitInsn(DUP);
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, accessor.methodName, accessor.descriptor, false);
+			if (!accessor.returnsLong) {
+				method.visitInsn(I2L);
+			}
+			method.visitMethodInsn(INVOKESPECIAL, qualifiedFieldType, "<init>", voidFromLong, false);
+			method.visitInsn(ARETURN);
 		}
-		method.visitMethodInsn(INVOKESPECIAL, qualifiedFieldType, "<init>", voidFromLong, false);
-		method.visitInsn(ARETURN);
 		method.visitMaxs(5, 1);
 		method.visitEnd();
 
@@ -1400,14 +1436,16 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(returnType);
 		String castDesc = Type.getMethodDescriptor(returnType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, accessorName, returnDesc, null, accessorThrows);
+		MethodVisitor method = beginMethod(field, accessorName, returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "nonNullFieldEA", longFromLong, false);
-		method.visitMethodInsn(INVOKESTATIC, returnTypeName, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "nonNullFieldEA", longFromLong, false);
+			method.visitMethodInsn(INVOKESTATIC, returnTypeName, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 	}
@@ -1465,51 +1503,51 @@ final class PointerHelper extends HelperBase {
 		String qualifiedPointerName = qualifyPointerType(targetType);
 		String qualifiedPointerDesc = Type.getObjectType(qualifiedPointerName).getDescriptor();
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
-
-		Label nonNull = new Label();
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
+		if (checkPresent(field, method)) {
+			Label nonNull = new Label();
 
-		if (isWide) {
-			method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
-			method.visitVarInsn(LSTORE, 1);
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
 
-			method.visitVarInsn(LLOAD, 1);
-			method.visitInsn(LCONST_0);
-			method.visitInsn(LCMP);
-		} else {
-			method.visitMethodInsn(INVOKEVIRTUAL, className, "getIntAtOffset", intFromLong, false);
-			method.visitVarInsn(ISTORE, 1);
+			if (isWide) {
+				method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
+				method.visitVarInsn(LSTORE, 1);
 
-			method.visitVarInsn(ILOAD, 1);
+				method.visitVarInsn(LLOAD, 1);
+				method.visitInsn(LCONST_0);
+				method.visitInsn(LCMP);
+			} else {
+				method.visitMethodInsn(INVOKEVIRTUAL, className, "getIntAtOffset", intFromLong, false);
+				method.visitVarInsn(ISTORE, 1);
+
+				method.visitVarInsn(ILOAD, 1);
+			}
+			method.visitJumpInsn(IFNE, nonNull);
+
+			method.visitFieldInsn(GETSTATIC, qualifiedPointerName, "NULL", qualifiedPointerDesc);
+			method.visitInsn(ARETURN);
+
+			method.visitLabel(nonNull);
+			method.visitFrame(F_APPEND, 1, new Object[] { isWide ? LONG : INTEGER }, 0, null);
+			method.visitVarInsn(ALOAD, 0);
+			method.visitFieldInsn(GETFIELD, className, "address", Type.LONG_TYPE.getDescriptor());
+			addLong(method, field.getOffset());
+			if (isWide) {
+				method.visitVarInsn(LLOAD, 1);
+			} else {
+				method.visitVarInsn(ILOAD, 1);
+				method.visitInsn(I2L);
+			}
+			method.visitInsn(LADD);
+
+			String castDesc = Type.getMethodDescriptor(returnType, Type.LONG_TYPE);
+
+			method.visitMethodInsn(INVOKESTATIC, qualifiedPointerName, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
 		}
-		method.visitJumpInsn(IFNE, nonNull);
-
-		method.visitFieldInsn(GETSTATIC, qualifiedPointerName, "NULL", qualifiedPointerDesc);
-		method.visitInsn(ARETURN);
-
-		method.visitLabel(nonNull);
-		method.visitFrame(F_APPEND, 1, new Object[] { isWide ? LONG : INTEGER }, 0, null);
-		method.visitVarInsn(ALOAD, 0);
-		method.visitFieldInsn(GETFIELD, className, "address", Type.LONG_TYPE.getDescriptor());
-		addLong(method, field.getOffset());
-		if (isWide) {
-			method.visitVarInsn(LLOAD, 1);
-		} else {
-			method.visitVarInsn(ILOAD, 1);
-			method.visitInsn(I2L);
-		}
-		method.visitInsn(LADD);
-
-		String castDesc = Type.getMethodDescriptor(returnType, Type.LONG_TYPE);
-
-		method.visitMethodInsn(INVOKESTATIC, qualifiedPointerName, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
 		method.visitMaxs(4, isWide ? 3 : 2);
 		method.visitEnd();
 
@@ -1529,16 +1567,16 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
-		method.visitMethodInsn(INVOKESTATIC, returnType, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
+			method.visitMethodInsn(INVOKESTATIC, returnType, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1560,16 +1598,16 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "nonNullFieldEA", longFromLong, false);
-		method.visitMethodInsn(INVOKESTATIC, qualifiedReturnType, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "nonNullFieldEA", longFromLong, false);
+			method.visitMethodInsn(INVOKESTATIC, qualifiedReturnType, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1590,16 +1628,16 @@ final class PointerHelper extends HelperBase {
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
 
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, field.getName(), returnDesc, null, accessorThrows);
-
-		doAccessorAnnotation(method, field);
+		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		loadLong(method, field.getOffset());
-		method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
-		method.visitMethodInsn(INVOKESTATIC, qualifiedReturnType, "cast", castDesc, false);
-		method.visitInsn(ARETURN);
+		if (checkPresent(field, method)) {
+			method.visitVarInsn(ALOAD, 0);
+			loadLong(method, field.getOffset());
+			method.visitMethodInsn(INVOKEVIRTUAL, className, "getPointerAtOffset", longFromLong, false);
+			method.visitMethodInsn(INVOKESTATIC, qualifiedReturnType, "cast", castDesc, false);
+			method.visitInsn(ARETURN);
+		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
 
@@ -1766,6 +1804,10 @@ final class StructureHelper extends HelperBase {
 		// offsets
 		int bitFieldBitCount = 0;
 		for (FieldDescriptor field : structure.getFields()) {
+			if (!field.isPresent()) {
+				continue;
+			}
+
 			String fieldName = field.getName();
 			int fieldOffset = field.getOffset();
 			String type = field.getType();

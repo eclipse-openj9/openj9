@@ -64,7 +64,12 @@ public class J9ObjectHelper
 			mixedReferenceMode = AlgorithmVersion.getVersionOf(AlgorithmVersion.MIXED_REFERENCE_MODE).getAlgorithmVersion() > 0;
 			if (mixedReferenceMode) {
 				J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
-				compressObjectReferences = vm.extendedRuntimeFlags2().anyBitsIn(J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES);
+				try {
+					compressObjectReferences = vm.extendedRuntimeFlags2().anyBitsIn(J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES);
+				} catch (NoSuchFieldException e) {
+					// the 'extendedRuntimeFlags2' field should be present in a VM that supports mixed reference mode
+					throw new RuntimeException(e);
+				}
 			} else {
 				compressObjectReferences = J9BuildFlags.gc_compressedPointers;
 			}
@@ -106,10 +111,15 @@ public class J9ObjectHelper
 	public static UDATA rawClazz(J9ObjectPointer objPointer) throws CorruptDataException
 	{
 		if (mixedReferenceMode) {
-			if (compressObjectReferences) {
-				return J9ObjectCompressedPointer.cast(objPointer).clazz();
+			try {
+				if (compressObjectReferences) {
+					return J9ObjectCompressedPointer.cast(objPointer).clazz();
+				}
+				return J9ObjectFullPointer.cast(objPointer).clazz();
+			} catch (NoSuchFieldException e) {
+				// the 'clazz' field should be present in a VM that supports mixed reference mode
+				throw new CorruptDataException(e);
 			}
-			return J9ObjectFullPointer.cast(objPointer).clazz();
 		}
 		return UDATA.cast(objPointer.clazz());
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,11 +22,11 @@
 package com.ibm.j9ddr.vm29.pointer.helper;
 
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.pointer.I32Pointer;
+import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ShrOffsetPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.AttachedDataWrapperPointer;
-import com.ibm.j9ddr.vm29.pointer.I32Pointer;
-import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.structure.AttachedDataWrapper;
 import com.ibm.j9ddr.vm29.structure.ShcItem;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -35,15 +35,21 @@ public class AttachedDataWrapperHelper {
 	public static U8Pointer ADWCACHEOFFSET(AttachedDataWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
 		PointerPointer cacheOffset = ptr.cacheOffsetEA();
 		if (null == cacheHeader) {
-			return U8Pointer.cast(ptr).add(I32Pointer.cast(cacheOffset.getAddress()).at(0));
+			return U8Pointer.cast(ptr).add(I32Pointer.cast(cacheOffset).at(0));
 		} else {
-			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(cacheOffset);
-			UDATA offset = j9shrOffset.offset();
-			if (offset.eq(0)) {
-				return U8Pointer.NULL;
+			try {
+				J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(cacheOffset);
+				UDATA offset = j9shrOffset.offset();
+				if (offset.isZero()) {
+					return U8Pointer.NULL;
+				}
+				int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+				return cacheHeader[layer].add(offset);
+			} catch (NoClassDefFoundError | NoSuchFieldException e) {
+				// J9ShrOffset didn't exist in the VM that created this core file
+				// even though it appears to support a multi-layer cache.
+				throw new CorruptDataException(e);
 			}
-			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
-			return cacheHeader[layer].add(offset);
 		}
 	}
 
@@ -51,7 +57,7 @@ public class AttachedDataWrapperHelper {
 	public static U8Pointer ADWDATA(AttachedDataWrapperPointer ptr) {
 		return U8Pointer.cast(ptr).add(AttachedDataWrapper.SIZEOF);
 	}
-	
+
 	//#define ADWITEM(adw) (((U_8*)(adw)) - sizeof(ShcItem))
 	public static U8Pointer ADWITEM(AttachedDataWrapperPointer ptr) {
 		return U8Pointer.cast(ptr).sub(ShcItem.SIZEOF);

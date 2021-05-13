@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,25 +37,33 @@ public class CompiledMethodWrapperHelper {
 		if (null == cacheHeader) {
 			return U8Pointer.cast(ptr).add(I32Pointer.cast(romMethodOffset.getAddress()).at(0));
 		} else {
-			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(romMethodOffset);
-			UDATA offset = j9shrOffset.offset();
-			if (offset.eq(0)) {
-				return U8Pointer.NULL;
+			try {
+				J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(romMethodOffset);
+				UDATA offset = j9shrOffset.offset();
+				if (offset.isZero()) {
+					return U8Pointer.NULL;
+				}
+				int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+				return cacheHeader[layer].add(offset);
+			} catch (NoClassDefFoundError | NoSuchFieldException e) {
+				// J9ShrOffset didn't exist in the VM that created this core file
+				// even though it appears to support a multi-layer cache.
+				throw new CorruptDataException(e);
 			}
-			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
-			return cacheHeader[layer].add(offset);
 		}
 	}
 
-	//	#define CMWDATA(cmw) (((U_8*)(cmw)) + sizeof(CompiledMethodWrapper))
+	// #define CMWDATA(cmw) (((U_8*)(cmw)) + sizeof(CompiledMethodWrapper))
 	public static U8Pointer CMWDATA(CompiledMethodWrapperPointer ptr) {
 		return U8Pointer.cast(ptr).add(CompiledMethodWrapper.SIZEOF);
 	}
-	//	#define CMWCODE(cmw) (((U_8*)(cmw)) + sizeof(CompiledMethodWrapper) + J9SHR_READMEM((cmw)->dataLength))
+
+	// #define CMWCODE(cmw) (((U_8*)(cmw)) + sizeof(CompiledMethodWrapper) + J9SHR_READMEM((cmw)->dataLength))
 	public static U8Pointer CMWCODE(CompiledMethodWrapperPointer ptr) throws CorruptDataException {
 		return U8Pointer.cast(ptr).add(CompiledMethodWrapper.SIZEOF).add(ptr.dataLength());
 	}
-	//	#define CMWITEM(cmw) (((U_8*)(cmw)) - sizeof(ShcItem))	
+
+	// #define CMWITEM(cmw) (((U_8*)(cmw)) - sizeof(ShcItem))	
 	public static U8Pointer CMWITEM(CompiledMethodWrapperPointer ptr) {
 		return U8Pointer.cast(ptr).sub(ShcItem.SIZEOF);
 	}
