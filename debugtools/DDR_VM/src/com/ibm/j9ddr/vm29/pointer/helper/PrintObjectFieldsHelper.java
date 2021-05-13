@@ -124,7 +124,7 @@ public class PrintObjectFieldsHelper {
 			for (int i = 0; i < nestedClassHierarchy.length - 1; i++) {
 				clazz = nestedClassHierarchy[i];
 				if ((i > 0) && valueTypeHelper.classRequires4BytePrePadding(clazz)) {
-					/* decrement by 4bytes since the nested type is pre-padded */
+					/* decrement by 4 bytes since the nested type is pre-padded */
 					nestedFieldOffset = nestedFieldOffset.sub(4);
 				}
 				
@@ -133,7 +133,13 @@ public class PrintObjectFieldsHelper {
 
 				if (J9ClassHelper.isArrayClass(clazz)) {
 					int index = Integer.parseInt(nestingHierarchy[0].substring(1, nestingHierarchy[0].length() - 1));
-					int stride = J9ArrayClassPointer.cast(clazz).flattenedElementSize().intValue();
+					int stride;
+					try {
+						stride = J9ArrayClassPointer.cast(clazz).flattenedElementSize().intValue();
+					} catch (NoSuchFieldException e) {
+						// the 'flattenedElementSize' field should be present in a VM that understands flattened objects
+						throw new CorruptDataException(e);
+					}
 					dataStart = dataStart.add(index * stride);
 				} else {
 					for (superclassIndex = 0; (superclassIndex <= depth) && !found; superclassIndex++) {

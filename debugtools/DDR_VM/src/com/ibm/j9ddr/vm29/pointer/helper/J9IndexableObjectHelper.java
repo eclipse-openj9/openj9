@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,14 +43,14 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectContiguousFullPoint
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectDiscontiguousFullPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
-import com.ibm.j9ddr.vm29.types.U32;
-import com.ibm.j9ddr.vm29.types.UDATA;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectContiguous;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectContiguousCompressed;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectContiguousFull;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectDiscontiguous;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectDiscontiguousCompressed;
 import com.ibm.j9ddr.vm29.structure.J9IndexableObjectDiscontiguousFull;
+import com.ibm.j9ddr.vm29.types.U32;
+import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class J9IndexableObjectHelper extends J9ObjectHelper 
 {
@@ -77,10 +77,15 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	public static U32 rawSize(J9IndexableObjectPointer objPointer) throws CorruptDataException 
 	{
 		if (mixedReferenceMode) {
-			if (compressObjectReferences) {
-				return (U32)J9IndexableObjectContiguousCompressedPointer.cast(objPointer).size();
+			try {
+				if (compressObjectReferences) {
+					return (U32)J9IndexableObjectContiguousCompressedPointer.cast(objPointer).size();
+				}
+				return (U32)J9IndexableObjectContiguousFullPointer.cast(objPointer).size();
+			} catch (NoSuchFieldException e) {
+				// the 'size' field should be present in a VM that supports mixed reference mode
+				throw new CorruptDataException(e);
 			}
-			return (U32)J9IndexableObjectContiguousFullPointer.cast(objPointer).size();
 		}
 		return (U32)J9IndexableObjectContiguousPointer.cast(objPointer).size();
 	}
@@ -88,12 +93,17 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	public static U32 size(J9IndexableObjectPointer objPointer) throws CorruptDataException 
 	{
 		U32 size = rawSize(objPointer);
-		if (size.eq(0)) {
+		if (size.isZero()) {
 			if (mixedReferenceMode) {
-				if (compressObjectReferences) {
-					size = (U32)J9IndexableObjectDiscontiguousCompressedPointer.cast(objPointer).size();
-				} else {
-					size = (U32)J9IndexableObjectDiscontiguousFullPointer.cast(objPointer).size();
+				try {
+					if (compressObjectReferences) {
+						size = (U32)J9IndexableObjectDiscontiguousCompressedPointer.cast(objPointer).size();
+					} else {
+						size = (U32)J9IndexableObjectDiscontiguousFullPointer.cast(objPointer).size();
+					}
+				} catch (NoSuchFieldException e) {
+					// the 'size' field should be present in a VM that supports mixed reference mode
+					throw new CorruptDataException(e);
 				}
 			} else {
 				size = (U32)J9IndexableObjectDiscontiguousPointer.cast(objPointer).size();

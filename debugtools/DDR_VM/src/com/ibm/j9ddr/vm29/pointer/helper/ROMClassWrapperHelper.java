@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,41 +22,53 @@
 package com.ibm.j9ddr.vm29.pointer.helper;
 
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.pointer.I32Pointer;
+import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ShrOffsetPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.ROMClassWrapperPointer;
-import com.ibm.j9ddr.vm29.pointer.I32Pointer;
-import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class ROMClassWrapperHelper {
 	public static U8Pointer RCWCLASSPATH(ROMClassWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
 		PointerPointer theCpOffset = ptr.theCpOffsetEA();
 		if (null == cacheHeader) {
-			return U8Pointer.cast(ptr).add(I32Pointer.cast(theCpOffset.getAddress()).at(0));
+			return U8Pointer.cast(ptr).add(I32Pointer.cast(theCpOffset).at(0));
 		} else {
-			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(theCpOffset);
-			UDATA offset = j9shrOffset.offset();
-			if (offset.eq(0)) {
-				return U8Pointer.NULL;
+			try {
+				J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(theCpOffset);
+				UDATA offset = j9shrOffset.offset();
+				if (!offset.isZero()) {
+					int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+					return cacheHeader[layer].add(offset);
+				}
+			} catch (NoClassDefFoundError | NoSuchFieldException e) {
+				// J9ShrOffset didn't exist in the VM that created this core file
+				// even though it appears to support a multi-layer cache.
+				throw new CorruptDataException(e);
 			}
-			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
-			return cacheHeader[layer].add(offset);
+			return U8Pointer.NULL;
 		}
 	}
 
 	public static U8Pointer RCWROMCLASS(ROMClassWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
 		PointerPointer romClassOffset = ptr.romClassOffsetEA();
 		if (null == cacheHeader) {
-			return U8Pointer.cast(ptr).add(I32Pointer.cast(romClassOffset.getAddress()).at(0));
+			return U8Pointer.cast(ptr).add(I32Pointer.cast(romClassOffset).at(0));
 		} else {
-			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(romClassOffset);
-			UDATA offset = j9shrOffset.offset();
-			if (offset.eq(0)) {
-				return U8Pointer.NULL;
+			try {
+				J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(romClassOffset);
+				UDATA offset = j9shrOffset.offset();
+				if (!offset.isZero()) {
+					int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+					return cacheHeader[layer].add(offset);
+				}
+			} catch (NoClassDefFoundError | NoSuchFieldException e) {
+				// J9ShrOffset didn't exist in the VM that created this core file
+				// even though it appears to support a multi-layer cache.
+				throw new CorruptDataException(e);
 			}
-			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
-			return cacheHeader[layer].add(offset);
+			return U8Pointer.NULL;
 		}
 	}
 }

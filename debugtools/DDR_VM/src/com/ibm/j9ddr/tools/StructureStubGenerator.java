@@ -250,17 +250,19 @@ public class StructureStubGenerator {
 
 	private void writeOffsetStubs(PrintWriter writer, StructureDescriptor structure) {
 		List<FieldDescriptor> fields = structure.getFields();
+		boolean headingPrinted = false;
 
-		if (fields.isEmpty()) {
-			return;
-		}
-
-		writer.println("\t// Offsets");
-		writer.println();
 		Collections.sort(fields);
 		for (FieldDescriptor fieldDescriptor : fields) {
-			if (getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())
+			if (fieldDescriptor.isPresent()
+					&& getOffsetConstant(fieldDescriptor).equals(fieldDescriptor.getName())
 					&& !PointerGenerator.omitFieldImplementation(structure, fieldDescriptor)) {
+				if (!headingPrinted) {
+					writer.println("\t// Offsets");
+					writer.println();
+					headingPrinted = true;
+				}
+
 				writeOffsetStub(writer, fieldDescriptor);
 			}
 		}
@@ -279,10 +281,12 @@ public class StructureStubGenerator {
 	}
 
 	private void writeOffsetInitializer(PrintWriter writer, StructureDescriptor structure) {
-		Collections.sort(structure.getFields());
-		for (FieldDescriptor fieldDescriptor : structure.getFields()) {
+		List<FieldDescriptor> fields = structure.getFields();
+		Collections.sort(fields);
+		for (FieldDescriptor fieldDescriptor : fields) {
 			String fieldName = fieldDescriptor.getName();
-			if (getOffsetConstant(fieldDescriptor).equals(fieldName)
+			if (fieldDescriptor.isPresent()
+					&& getOffsetConstant(fieldDescriptor).equals(fieldName)
 					&& !PointerGenerator.omitFieldImplementation(structure, fieldDescriptor)) {
 				CTypeParser parser = new CTypeParser(fieldDescriptor.getType());
 
