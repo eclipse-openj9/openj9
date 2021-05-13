@@ -217,7 +217,8 @@ TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::Compilati
    _classOfStaticMap(NULL),
    _fieldAttributesCache(NULL),
    _staticAttributesCache(NULL),
-   _isUnresolvedStrCache(NULL)
+   _isUnresolvedStrCache(NULL),
+   _classUnloadReadMutexDepth(0)
    {}
 
 /**
@@ -384,6 +385,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    static bool enableJITServerPerCompConn = feGetEnv("TR_EnableJITServerPerCompConn") ? true : false;
 
    bool abortCompilation = false;
+   bool deleteStream = false;
    uint64_t clientId = 0;
    TR::CompilationInfo *compInfo = getCompilationInfo();
    J9VMThread *compThread = getCompilationThread();
@@ -440,7 +442,18 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       useAotCompilation                  = std::get<16>(req);
 
       TR_ASSERT_FATAL(TR::Compiler->persistentMemory() == compInfo->persistentMemory(), "per-client persistent memory must not be set at this point");
-      isCriticalRequest = !chtableMods.empty() || !chtableUnloads.empty() || !illegalModificationList.empty() || !unloadedClasses.empty();
+
+      TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
+      *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
+      TR::IlGeneratorMethodDetails serverDetailsStorage;
+      TR::IlGeneratorMethodDetails *serverDetails = TR::IlGeneratorMethodDetails::clone(serverDetailsStorage, *clientDetails, detailsType);
+
+      isCriticalRequest =
+         (!chtableMods.empty()
+         || !chtableUnloads.empty()
+         || !illegalModificationList.empty()
+         || !unloadedClasses.empty())
+         && !serverDetails->isJitDumpMethod(); // if this is a JitDump recompilation, ignore any critical updates
 
       if (useAotCompilation)
          {
@@ -495,6 +508,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       //
       clientSession->getSequencingMonitor()->enter();
       clientSession->updateMaxReceivedSeqNo(seqNo); // TODO: why do I need this?
+
       // This request can go through as long as criticalSeqNo has been processed
       if (criticalSeqNo > clientSession->getLastProcessedCriticalSeqNo())
          {
@@ -563,7 +577,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
          // Process the CHTable updates in order
          // Note that applying the updates will acquire the CHTable monitor and VMAccess
-         if (!chtableUnloads.empty() || !chtableMods.empty())
+         if ((!chtableUnloads.empty() || !chtableMods.empty())
+             && !serverDetails->isJitDumpMethod())
             {
             auto chTable = (JITServerPersistentCHTable*)clientSession->getCHTable(); // Will create CHTable if it doesn't exist
             TR_ASSERT_FATAL(chTable->isInitialized(), "CHTable must have been initialized for clientUID=%llu", (unsigned long long)clientId);
@@ -679,12 +694,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          if (!(optPlan = TR_OptimizationPlan::alloc(clientOptPlan.getOptLevel())))
             throw std::bad_alloc();
          optPlan->clone(&clientOptPlan);
+         if (optPlan->isLogCompilation())
+            optPlan->setLogCompilation(clientOptPlan.getLogCompilation());
          }
-
-      TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
-      *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
-      TR::IlGeneratorMethodDetails serverDetailsStorage;
-      TR::IlGeneratorMethodDetails *serverDetails = TR::IlGeneratorMethodDetails::clone(serverDetailsStorage, *clientDetails, detailsType);
 
       // All entries have the same priority for now. In the future we may want to give higher priority to sync requests
       // Also, oldStartPC is always NULL for JITServer
@@ -713,13 +725,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       Trc_JITServerStreamFailure(compThread, getCompThreadId(), __FUNCTION__, "", "", e.what());
 
       abortCompilation = true;
-      if (!enableJITServerPerCompConn)
-         {
-         // Delete server stream
-         stream->~ServerStream();
-         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
-         entry._stream = NULL;
-         }
+      deleteStream = true;
       }
    catch (const JITServer::StreamVersionIncompatible &e)
       {
@@ -730,13 +736,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       stream->writeError(compilationStreamVersionIncompatible);
       abortCompilation = true;
-      if (!enableJITServerPerCompConn)
-         {
-         // Delete server stream
-         stream->~ServerStream();
-         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
-         entry._stream = NULL;
-         }
+      deleteStream = true;
       }
    catch (const JITServer::StreamMessageTypeMismatch &e)
       {
@@ -747,6 +747,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       stream->writeError(compilationStreamMessageTypeMismatch);
       abortCompilation = true;
+      deleteStream = true;
       }
    catch (const JITServer::StreamConnectionTerminate &e)
       {
@@ -757,12 +758,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       Trc_JITServerStreamConnectionTerminate(compThread, getCompThreadId(), __FUNCTION__, stream, e.what());
 
       abortCompilation = true;
-      if (!enableJITServerPerCompConn) // JITServer TODO: remove the perCompConn mode
-         {
-         stream->~ServerStream();
-         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
-         entry._stream = NULL;
-         }
+      deleteStream = true;
       }
    catch (const JITServer::StreamClientSessionTerminate &e)
       {
@@ -772,15 +768,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       Trc_JITServerStreamClientSessionTerminate(compThread, getCompThreadId(), __FUNCTION__, e.what());
 
       abortCompilation = true;
+      deleteStream = true;
       
       deleteClientSessionData(e.getClientId(), compInfo, compThread);
-
-      if (!enableJITServerPerCompConn)
-         {
-         stream->~ServerStream();
-         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
-         entry._stream = NULL;
-         }
       }
    catch (const JITServer::StreamInterrupted &e)
       {
@@ -872,7 +862,20 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_OptimizationPlan::freeOptimizationPlan(optPlan);
          }
 
-      compInfo->requeueOutOfProcessEntry(&entry);
+      if (!compInfo->getPersistentInfo()->getDisableFurtherCompilation()
+          && !deleteStream
+          && !enableJITServerPerCompConn)
+         {
+         compInfo->requeueOutOfProcessEntry(&entry);
+         }
+      else
+         {
+         // Delete server stream if per compilation connections are enabled
+         // or if the server disabled compilations due to a crash
+         stream->~ServerStream();
+         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
+         entry._stream = NULL;
+         }
 
       // Reset the pointer to the cached client session data
       if (getClientData())
@@ -896,14 +899,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             }
          setClientData(NULL);
          }
-
-      if (enableJITServerPerCompConn)
-         {
-         // Delete server stream
-         stream->~ServerStream();
-         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
-         entry._stream = NULL;
-         }
       return;
       }
 
@@ -922,27 +917,18 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // The following call will return with compilation monitor in hand
    //
    stream->setClientData(clientSession);
-   getClientData()->readAcquireClassUnloadRWMutex();
+   getClientData()->readAcquireClassUnloadRWMutex(this);
 
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
 
-   getClientData()->readReleaseClassUnloadRWMutex();
+   getClientData()->readReleaseClassUnloadRWMutex(this);
    stream->setClientData(NULL);
-
-   if (entry._compErrCode == compilationStreamFailure)
-      {
-      if (!enableJITServerPerCompConn)
-         {
-         TR_ASSERT(entry._stream, "stream should still exist after compilation even if it encounters a streamFailure.");
-         // Clean up server stream because the stream is already dead
-         stream->~ServerStream();
-         TR::Compiler->persistentGlobalAllocator().deallocate(stream);
-         entry._stream = NULL;
-         }
-      }
 
    deleteClientOptions(getClientData()->persistentMemory());
 
+   // Notify any threads waiting on this entry's monitor
+   // The only thread that should be holding a monitor should be the JitDump thread
+   entry.getMonitor()->notifyAll();
    // Release the queue slot monitor because we don't need it anymore
    // This will allow us to acquire the sequencing monitor later
    entry.releaseSlotMonitor(compThread);
@@ -961,7 +947,24 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
    // Put the request back into the pool
    setMethodBeingCompiled(NULL);
-   compInfo->requeueOutOfProcessEntry(&entry);
+
+   if (!compInfo->getPersistentInfo()->getDisableFurtherCompilation()
+       && !enableJITServerPerCompConn
+       && entry._compErrCode != compilationStreamFailure)
+      {
+      compInfo->requeueOutOfProcessEntry(&entry);
+      }
+   else
+      {
+      TR_ASSERT(entry._stream, "stream should still exist after compilation even if it encounters a streamFailure.");
+      // Delete server stream if per compilation connections are enabled,
+      // if the server disabled compilations due to a crash,
+      // or if the stream failed
+      stream->~ServerStream();
+      TR::Compiler->persistentGlobalAllocator().deallocate(stream);
+      entry._stream = NULL;
+      }
+
    compInfo->printQueue();
 
    // Decrement number of active threads before _inUse, but we
@@ -1032,14 +1035,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (compInfo->getSuspendThreadDueToLowPhysicalMemory() &&
          compInfo->getNumCompThreadsActive() < 2)
          compInfo->setSuspendThreadDueToLowPhysicalMemory(false);
-      }
-
-   if (enableJITServerPerCompConn)
-      {
-      // Delete server stream
-      stream->~ServerStream();
-      TR::Compiler->persistentGlobalAllocator().deallocate(stream);
-      entry._stream = NULL;
       }
    }
 

@@ -41,8 +41,8 @@ class TR_MethodToBeCompiled;
 class TR_AddressRange;
 class TR_PersistentCHTable;
 class JITServerPersistentCHTable;
+namespace TR { class CompilationInfoPerThreadBase; }
 namespace JITServer { class ServerStream; }
-
 
 using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 using TR_JitFieldsCacheEntry = std::pair<J9Class*, UDATA>;
@@ -388,8 +388,8 @@ public:
    volatile bool isClassUnloadingAttempted() const { return _bClassUnloadingAttempt; }
    volatile bool isReadingClassUnload() { return !omrthread_rwmutex_is_writelocked(_classUnloadRWMutex); }
 
-   void readAcquireClassUnloadRWMutex();
-   void readReleaseClassUnloadRWMutex();
+   void readAcquireClassUnloadRWMutex(TR::CompilationInfoPerThreadBase *compInfoPT);
+   void readReleaseClassUnloadRWMutex(TR::CompilationInfoPerThreadBase *compInfoPT);
    void writeAcquireClassUnloadRWMutex();
    void writeReleaseClassUnloadRWMutex();
 
