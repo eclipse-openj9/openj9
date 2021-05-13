@@ -467,24 +467,46 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
       regDepForStoreNode->setAndIncChild(0, storeNode->getFirstChild());
       }
 
-   // Using a similar strategy as above, insert check for lhs == NULL.
    auto* const nullConst = TR::Node::aconst(0);
-   auto* const checkLhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
-   exitGlRegDeps = copyBranchGlRegDepsAndSubstitute(checkLhsNull, exitGlRegDeps, regDepForStoreNode);
-   tt->insertBefore(TR::TreeTop::create(comp, checkLhsNull));
-   callBlock = splitForFastpath(callBlock, tt, targetBlock);
-   if (trace())
-      traceMsg(comp, "Added check node n%un; call node is now in block_%d\n", checkLhsNull->getGlobalIndex(), callBlock->getNumber());
+   // Using a similar strategy as above, insert check for lhs == NULL.
+   if (!anchoredCallArg1TT->getNode()->getFirstChild()->isNonNull())
+      {
+      auto* const checkLhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg1TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
+      exitGlRegDeps = copyBranchGlRegDepsAndSubstitute(checkLhsNull, exitGlRegDeps, regDepForStoreNode);
+      // Set regDepForStoreNode to NULL so that the subsequent calls to copyBranchGlRegDepsAndSubstitute do not need to substitute it.
+      regDepForStoreNode = NULL;
+      tt->insertBefore(TR::TreeTop::create(comp, checkLhsNull));
+      callBlock = splitForFastpath(callBlock, tt, targetBlock);
+      if (trace())
+         traceMsg(comp, "Added check node n%un; call node is now in block_%d\n", checkLhsNull->getGlobalIndex(), callBlock->getNumber());
+      }
+   else
+      {
+      if (trace())
+         traceMsg(comp, "Skip fastpath for lhs == NULL because node n%un isNonNull\n", anchoredCallArg1TT->getNode()->getFirstChild()->getGlobalIndex());
+      }
+
 
    if (!performTransformation(comp, "%sInserting fastpath for rhs == NULL\n", optDetailString()))
       return;
 
-   auto* const checkRhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg2TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
-   copyBranchGlRegDepsAndSubstitute(checkRhsNull, exitGlRegDeps, NULL);
-   tt->insertBefore(TR::TreeTop::create(comp, checkRhsNull));
-   callBlock = splitForFastpath(callBlock, tt, targetBlock);
-   if (trace())
-      traceMsg(comp, "Added check node n%un; call node is now in block_%d\n", checkRhsNull->getGlobalIndex(), callBlock->getNumber());
+   if (!anchoredCallArg2TT->getNode()->getFirstChild()->isNonNull())
+      {
+      auto* const checkRhsNull = TR::Node::createif(TR::ifacmpeq, anchoredCallArg2TT->getNode()->getFirstChild(), nullConst, targetBlock->getEntry());
+      // regDepForStoreNode might or might not be NULL here depending on if (lhs == NULL) is skipped
+      exitGlRegDeps = copyBranchGlRegDepsAndSubstitute(checkRhsNull, exitGlRegDeps, regDepForStoreNode);
+      // Set regDepForStoreNode to NULL so that the subsequent calls to copyBranchGlRegDepsAndSubstitute do not need to substitute it.
+      regDepForStoreNode = NULL;
+      tt->insertBefore(TR::TreeTop::create(comp, checkRhsNull));
+      callBlock = splitForFastpath(callBlock, tt, targetBlock);
+      if (trace())
+         traceMsg(comp, "Added check node n%un; call node is now in block_%d\n", checkRhsNull->getGlobalIndex(), callBlock->getNumber());
+      }
+   else
+      {
+      if (trace())
+         traceMsg(comp, "Skip fastpath for rhs == NULL because node n%un isNonNull\n", anchoredCallArg2TT->getNode()->getFirstChild()->getGlobalIndex());
+      }
 
    if (!performTransformation(comp, "%sInserting fastpath for lhs is VT\n", optDetailString()))
       return;
@@ -494,7 +516,10 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    auto* const lhsVft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredCallArg1TT->getNode()->getFirstChild(), vftSymRef);
    auto* const isLhsValueType = comp->fej9()->testIsClassValueType(lhsVft);
    auto* const checkLhsIsVT = TR::Node::createif(TR::ificmpeq, isLhsValueType, storeNode->getFirstChild(), targetBlock->getEntry());
-   copyBranchGlRegDepsAndSubstitute(checkLhsIsVT, exitGlRegDeps, NULL);
+   // regDepForStoreNode might or might not be NULL here depending on if (lhs == NULL) or  (rhs == NULL) is skipped
+   exitGlRegDeps = copyBranchGlRegDepsAndSubstitute(checkLhsIsVT, exitGlRegDeps, regDepForStoreNode);
+   // Set regDepForStoreNode to NULL so that the subsequent calls to copyBranchGlRegDepsAndSubstitute do not need to substitute it.
+   regDepForStoreNode = NULL;
    tt->insertBefore(TR::TreeTop::create(comp, checkLhsIsVT));
    callBlock = splitForFastpath(callBlock, tt, targetBlock);
    if (trace())
