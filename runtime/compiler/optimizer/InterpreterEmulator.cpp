@@ -317,6 +317,7 @@ InterpreterEmulator::maintainStackForGetField()
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
          uintptr_t baseObjectAddress = 0;
          uintptr_t fieldAddress = 0;
+         bool avoidFolding = true;
 
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
@@ -326,13 +327,14 @@ InterpreterEmulator::maintainStackForGetField()
 
             auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::KnownObjectTable_dereferenceKnownObjectField,
-                  baseObjectIndex, clientMethod, cpIndex, fieldOffset);
+                  baseObjectIndex, clientMethod, cpIndex);
 
-            auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*, uintptr_t, uintptr_t>();
+            auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*, uintptr_t, uintptr_t, bool>();
             resultIndex = std::get<0>(recv);
             uintptr_t *objectPointerReference = std::get<1>(recv);
             fieldAddress = std::get<2>(recv);
             baseObjectAddress = std::get<3>(recv);
+            avoidFolding = std::get<4>(recv);
 
             if (resultIndex != TR::KnownObjectTable::UNKNOWN)
                knot->updateKnownObjectTableAtServer(resultIndex, objectPointerReference);
@@ -344,6 +346,10 @@ InterpreterEmulator::maintainStackForGetField()
             baseObjectAddress = knot->getPointer(baseObjectIndex);
             TR_OpaqueClassBlock *baseObjectClass = comp()->fej9()->getObjectClass(baseObjectAddress);
             TR_OpaqueClassBlock *fieldDeclaringClass = _calltarget->_calleeMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
+
+            avoidFolding = TR::TransformUtil::avoidFoldingInstanceField(
+               baseObjectAddress, fieldSymbol, cpIndex, _calltarget->_calleeMethod, comp());
+
             if (fieldDeclaringClass && comp()->fej9()->isInstanceOf(baseObjectClass, fieldDeclaringClass, true) == TR_yes)
                {
                fieldAddress = comp()->fej9()->getReferenceFieldAtAddress(baseObjectAddress + fieldOffset);
@@ -351,7 +357,18 @@ InterpreterEmulator::maintainStackForGetField()
                }
             }
 
-         if (resultIndex != TR::KnownObjectTable::UNKNOWN)
+         bool fail = resultIndex == TR::KnownObjectTable::UNKNOWN;
+         if (fail || avoidFolding)
+            {
+            int32_t len = 0;
+            debugTrace(
+               tracer(),
+               "%s field in obj%d: %s",
+               fail ? "failed to determine value of" : "avoid folding sometimes-foldable",
+               baseObjectIndex,
+               _calltarget->_calleeMethod->fieldName(cpIndex, len, this->trMemory()));
+            }
+         else
             {
             // It's OK to print fieldAddress and baseObjectAddress here even
             // without VM access. There's no meaningful difference between:
