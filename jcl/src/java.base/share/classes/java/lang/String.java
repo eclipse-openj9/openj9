@@ -126,7 +126,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (String.LATIN1 == coder) {
 				compressedArrayCopy(value, srcIndex, bytes, destIndex, length);
 			} else {
-				decompress(value, srcIndex, bytes, destIndex, length);
+				StringLatin1.inflate(value, srcIndex, bytes, destIndex, length);
 			}
 		} else {
 			decompressedArrayCopy(value, srcIndex, bytes, destIndex, length);
@@ -144,7 +144,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (String.LATIN1 == coder) {
 				compressedArrayCopy(value, 0, bytes, offset, currentLength);
 			} else {
-				decompress(value, 0, bytes, offset, currentLength);
+				StringLatin1.inflate(value, 0, bytes, offset, currentLength);
 			}
 		} else {
 			decompressedArrayCopy(value, 0, bytes, offset, currentLength);
@@ -716,7 +716,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s.coder == LATIN1) {
-				decompress(s.value, 0, value, 0, slen);
+				StringLatin1.inflate(s.value, 0, value, 0, slen);
 			} else {
 				decompressedArrayCopy(s.value, 0, value, 0, slen);
 			}		
@@ -986,14 +986,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s1.coder == LATIN1) {
-				decompress(s1.value, 0, value, 0, s1len);
+				StringLatin1.inflate(s1.value, 0, value, 0, s1len);
 			} else {
 				decompressedArrayCopy(s1.value, 0, value, 0, s1len);
 			}
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s2.coder == LATIN1) {
-				decompress(s2.value, 0, value, s1len, s2len);
+				StringLatin1.inflate(s2.value, 0, value, s1len, s2len);
 			} else {
 				decompressedArrayCopy(s2.value, 0, value, s1len, s2len);
 			}
@@ -1044,21 +1044,21 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s1.coder == LATIN1) {
-				decompress(s1.value, 0, value, 0, s1len);
+				StringLatin1.inflate(s1.value, 0, value, 0, s1len);
 			} else {
 				decompressedArrayCopy(s1.value, 0, value, 0, s1len);
 			}
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s2.coder == LATIN1) {
-				decompress(s2.value, 0, value, s1len, s2len);
+				StringLatin1.inflate(s2.value, 0, value, s1len, s2len);
 			} else {
 				decompressedArrayCopy(s2.value, 0, value, s1len, s2len);
 			}
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s3.coder == LATIN1) {
-				decompress(s3.value, 0, value, s1len + s2len, s3len);
+				StringLatin1.inflate(s3.value, 0, value, s1len + s2len, s3len);
 			} else {
 				decompressedArrayCopy(s3.value, 0, value, (s1len + s2len), s3len);
 			}
@@ -1271,7 +1271,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s3.coder == LATIN1) {
-				decompress(s3.value, 0, value, start, s3len);
+				StringLatin1.inflate(s3.value, 0, value, start, s3len);
 			} else {
 				decompressedArrayCopy(s3.value, 0, value, start, s3len);
 			}
@@ -1281,7 +1281,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s2.coder == LATIN1) {
-				decompress(s2.value, 0, value, start, s2len);
+				StringLatin1.inflate(s2.value, 0, value, start, s2len);
 			} else {
 				decompressedArrayCopy(s2.value, 0, value, start, s2len);
 			}
@@ -1308,7 +1308,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s1.coder == LATIN1) {
-				decompress(s1.value, 0, value, start, s1len);
+				StringLatin1.inflate(s1.value, 0, value, start, s1len);
 			} else {
 				decompressedArrayCopy(s1.value, 0, value, start, s1len);
 			}
@@ -1605,14 +1605,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s1.coder == LATIN1) {
-				decompress(s1.value, 0, buffer, 0, s1len);
+				StringLatin1.inflate(s1.value, 0, buffer, 0, s1len);
 			} else {
 				decompressedArrayCopy(s1.value, 0, buffer, 0, s1len);
 			}
 
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && s2.coder == LATIN1) {
-				decompress(s2.value, 0, buffer, s1len, s2len);
+				StringLatin1.inflate(s2.value, 0, buffer, s1len, s2len);
 			} else {
 				decompressedArrayCopy(s2.value, 0, buffer, s1len, s2len);
 			}
@@ -1972,7 +1972,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	void getCharsNoBoundChecks(int start, int end, char[] data, int index) {
 		// Check if the String is compressed
 		if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
-			decompress(value, start, data, index, end - start);
+			StringLatin1.inflate(value, start, data, index, end - start);
 		} else {
 			decompressedArrayCopy(value, start, data, index, end - start);
 		}
@@ -1983,7 +1983,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	void getCharsNoBoundChecks(int start, int end, byte[] data, int index) {
 		// Check if the String is compressed
 		if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
-			decompress(value, start, data, index, end - start);
+			StringLatin1.inflate(value, start, data, index, end - start);
 		} else {
 			decompressedArrayCopy(value, start, data, index, end - start);
 		}
@@ -2561,7 +2561,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			} else {
 				byte[] buffer = StringUTF16.newBytesFor(len);
 
-				decompress(value, 0, buffer, 0, len);
+				StringLatin1.inflate(value, 0, buffer, 0, len);
 
 				do {
 					helpers.putCharInArrayByIndex(buffer, index++, (char) newChar);
@@ -2793,7 +2793,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		// Check if the String is compressed
 		if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
-			decompress(value, 0, buffer, 0, len);
+			StringLatin1.inflate(value, 0, buffer, 0, len);
 		} else {
 			decompressedArrayCopy(value, 0, buffer, 0, len);
 		}
