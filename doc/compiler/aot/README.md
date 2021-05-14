@@ -55,6 +55,7 @@ method already exists in the SCC and loads that instead.
 6. [Class Chains](ClassChains.md)
 7. [Symbol Validation Manager](SymbolValidationManager.md)
 8. [Inlined Methods](InlinedMethods.md)
+9. [Adding New Relocation Records](AddingNewRelocation.md)
 
 <hr/>
 
