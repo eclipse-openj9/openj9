@@ -23,7 +23,7 @@
 /**
  * @file testjep178_static.c
  * Executable provides definitions for JNI routines statically, that is, as if
- * it were linked against the static library <library>, allowing the JVM to "see" 
+ * it were linked against the static library <library>, allowing the JVM to "see"
  * JNI_OnLoad_testlib<library>() or Agent_OnLoad_testjvmti<library>().
  */
 
@@ -36,12 +36,13 @@
  */
 #include <pthread.h>
 
-static  pthread_key_t key;
+static pthread_key_t key;
+
 void unused_function()
 {
-    pthread_key_create(&key, NULL);
+	pthread_key_create(&key, NULL);
 }
-#endif
+#endif /* LINUX */
 
 /* The JVM launcher. */
 int main(int argc, char ** argv, char ** envp)
@@ -55,9 +56,10 @@ int main(int argc, char ** argv, char ** envp)
 	I_32 mainIndex = 0;
 	I_32 javaArgc = 0;
 	I_32 optionCount = 0;
-	jmethodID mid;
-	jclass cls;
-	jobject javaArgv;
+	size_t optionLength = 0;
+	jmethodID mid = NULL;
+	jclass cls = NULL;
+	jobject javaArgv = NULL;
 	typedef jint (JNICALL *createJVMFP)(JavaVM** pvm, void** penv, void* vm_args);
 	createJVMFP createJavaVM = NULL;
 	char* agentlib[J9JEP178_MAXIMUM_JVM_OPTIONS] = { NULL };
@@ -68,7 +70,7 @@ int main(int argc, char ** argv, char ** envp)
 	char* compressedrefs = NULL;
 	char* optionsBuffer[J9JEP178_MAXIMUM_JVM_OPTIONS] = {NULL};
 	char buffer[J9PATH_LENGTH_MAXIMUM] = {0};
-	jclass stringClass;
+	jclass stringClass = NULL;
 #if defined(WIN32)
 	HINSTANCE handle = NULL;
 #else
@@ -98,13 +100,15 @@ int main(int argc, char ** argv, char ** envp)
 	/* Find the index of the main class in list of arguments to the driver. */
 	for (mainIndex = 1, i = 1; i < argc; i++, mainIndex++) {
 		/* If this is a JVM option, iterate past it. */
-		if (*argv[i] != '-') break;
+		if (*argv[i] != '-') {
+			break;
+		}
 
 		if (strncmp(argv[i], "-jvmpath:", sizeof("-jvmpath:") - 1) == 0) {
 			jvmPath = argv[i] + sizeof("-jvmpath:") - 1;
 		} else if (strncmp(argv[i], "-agentlib:", sizeof("-agentlib:") - 1) == 0) {
 			/* Pass this option as it is (-agentlib:<lib>=<options>) to the JVM. */
-			agentlib[agentCounter] = argv[i]; 
+			agentlib[agentCounter] = argv[i];
 			agentCounter++;
 		} else if (strncmp(argv[i], "-classpath:", sizeof("-classpath:") - 1) == 0) {
 			classpath = argv[i] + sizeof("-classpath:") - 1;
@@ -123,65 +127,65 @@ int main(int argc, char ** argv, char ** envp)
 		I_32 j;
 		/* Allocate space for all of the -agentlib options passed to launcher. */
 		for (j = 0; j < agentCounter; optionCount++, j++) {
-			optionsBuffer[j] = (char*) malloc(J9VM_OPTION_MAXIMUM_LENGTH);
+			optionLength = strlen(agentlib[j]);
+			optionsBuffer[j] = (char *)malloc(optionLength + 1);
 			if (NULL == optionsBuffer[j]) {
 				result = 3;
 				goto fail;
 			}
-			/* Copy out the options. */
-			memset(optionsBuffer[j], 0, J9VM_OPTION_MAXIMUM_LENGTH);
-			strncpy(optionsBuffer[j], agentlib[j], strlen(agentlib[j]));
+			/* copy the option */
+			memcpy(optionsBuffer[j], agentlib[j], optionLength + 1);
 		}
 	}
 
 	/* Add the -Xbootclasspath, if this was specified. */
-	if ((NULL != bootclasspath) && (strlen(bootclasspath) != 0)) {
-		optionsBuffer[optionCount] = (char*) malloc(J9VM_OPTION_MAXIMUM_LENGTH);
+	if ((NULL != bootclasspath) && ('\0' != *bootclasspath)) {
+		optionLength = strlen(bootclasspath);
+		optionsBuffer[optionCount] = (char*) malloc(optionLength + 1);
 		if (NULL == optionsBuffer[optionCount]) {
 			result = 2;
 			goto fail;
 		}
-		memset(optionsBuffer[optionCount], 0, J9VM_OPTION_MAXIMUM_LENGTH);
-		strcpy(optionsBuffer[optionCount], bootclasspath);
+		memcpy(optionsBuffer[optionCount], bootclasspath, optionLength + 1);
 		optionCount++; /* Increment this only for JVM options we recognize. */
 	}
 
 	/* Pass the classpath argument, if this was specified. */
-	if ((NULL != classpath) && (strlen(classpath) != 0)) {
-		optionsBuffer[optionCount] = (char*) malloc(J9VM_OPTION_MAXIMUM_LENGTH);
+	if ((NULL != classpath) && ('\0' != *classpath)) {
+		optionLength = strlen(classpath);
+		optionsBuffer[optionCount] = (char *)malloc(optionLength + sizeof("-Djava.class.path="));
 		if (NULL == optionsBuffer[optionCount]) {
 			result = 2;
 			goto fail;
 		}
-		memset(optionsBuffer[optionCount], 0, J9VM_OPTION_MAXIMUM_LENGTH);
 		sprintf(optionsBuffer[optionCount], "-Djava.class.path=%s", classpath);
 		optionCount++; /* Increment this only for JVM options we recognize. */
 	}
 
 #if defined(J9ZOS390)
-	optionsBuffer[optionCount] = (char*) malloc(J9VM_OPTION_MAXIMUM_LENGTH);
+	optionLength = sizeof("-Dcom.ibm.tools.attach.enable=yes") - 1;
+	optionsBuffer[optionCount] = (char*) malloc(optionLength + 1);
 	if (NULL == optionsBuffer[optionCount]) {
 		result = 2;
 		goto fail;
 	}
-	memset(optionsBuffer[optionCount], 0, J9VM_OPTION_MAXIMUM_LENGTH);
 	sprintf(optionsBuffer[optionCount], "-Dcom.ibm.tools.attach.enable=yes");
 	optionCount++; /* Increment this only for JVM options we recognize. */
 #endif /* defined(J9ZOS390) */
 
 	/* Pass the -Xcompressedrefs or -Xnocompressedrefs, if specified. */
 	if (NULL != compressedrefs) {
-		optionsBuffer[optionCount] = (char*) malloc(J9VM_OPTION_MAXIMUM_LENGTH);
+		optionLength = strlen(compressedrefs);
+		optionsBuffer[optionCount] = (char *)malloc(optionLength + 1);
 		if (NULL == optionsBuffer[optionCount]) {
 			result = 3;
 			goto fail;
 		}
-		memset(optionsBuffer[optionCount], 0, J9VM_OPTION_MAXIMUM_LENGTH);
-		strncpy(optionsBuffer[optionCount], compressedrefs, strlen(compressedrefs));
+		memcpy(optionsBuffer[optionCount], compressedrefs, optionLength + 1);
 		optionCount++; /* Increment this only for JVM options we recognize. */
 	}
 
-	/* Allocate memory for only "optionCount" structures since our simplified driver 
+	/* Allocate memory for only "optionCount" structures since our simplified driver
 	 * does /not/ need, nor understand many/all JVM options.
 	 */
 	if (0 != optionCount) {
@@ -203,7 +207,7 @@ int main(int argc, char ** argv, char ** envp)
 	vm_args.options = args;
 	vm_args.ignoreUnrecognized = JNI_FALSE;
 
-	if ((NULL != jvmPath) && (0 != strlen(jvmPath))) {
+	if ((NULL != jvmPath) && ('\0' != *jvmPath)) {
 		sprintf(buffer, "%s%c%s", jvmPath, J9PATH_DIRECTORY_SEPARATOR, J9PATH_JVM_LIBRARY);
 	} else {
 		fprintf(stderr, "[ERR] Invalid path for jvm specified.\n");
@@ -259,7 +263,7 @@ int main(int argc, char ** argv, char ** envp)
 	}
 
 	stringClass = (*env)->FindClass(env, "java/lang/String");
-	if (!stringClass) {
+	if (NULL == stringClass) {
 		fprintf(stderr, "[ERR] Cannot find String class.  FindClass() failed.\n");
 		(*env)->ExceptionDescribe(env);
 		result = 10;
@@ -280,9 +284,8 @@ int main(int argc, char ** argv, char ** envp)
 	/* Create UTF strings for each Java argument and set this into the argument
 	array to be passed to main. */
 	for (i = 0; i < javaArgc; i++) {
-		jstring arg;
-		arg = (*env)->NewStringUTF(env, argv[mainIndex + 1 + i]);
-		if (!arg) {
+		jstring arg = (*env)->NewStringUTF(env, argv[mainIndex + 1 + i]);
+		if (NULL == arg) {
 			fprintf(stderr, "[ERR] Could not create argument String.  Allocation failed.\n");
 			(*env)->ExceptionDescribe(env);
 			result = 12;
@@ -327,7 +330,7 @@ fail:
 	if (NULL != args) {
 		free(args);
 	}
-	
+
 	{
 		I_32 counter = 0;
 		for (; counter < optionCount; counter++) {
@@ -336,7 +339,7 @@ fail:
 	}
 
 	fprintf(stdout, "[MSG] Test jep178 %s with error code: %d\n",
-			(0 == result) ? "passed" : "failed", 
+			(0 == result) ? "passed" : "failed",
 			result);
 	fflush(stdout);
 	return result;

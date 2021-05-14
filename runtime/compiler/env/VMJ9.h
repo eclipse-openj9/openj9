@@ -286,7 +286,7 @@ public:
 
    static bool createGlobalFrontEnd(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo);
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
-   static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, int32_t, char *, char *, bool suffix=false);
+   static char *getJ9FormattedName(J9JITConfig *, J9PortLibrary *, char *, size_t, char *, char *, bool suffix=false);
 
    int32_t *getStringClassEnableCompressionFieldAddr(TR::Compilation *comp, bool isVettedForAOT);
    virtual bool stringEquals(TR::Compilation * comp, uintptr_t* stringLocation1, uintptr_t* stringLocation2, int32_t& result);

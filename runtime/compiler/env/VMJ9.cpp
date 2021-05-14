@@ -862,44 +862,49 @@ TR_J9VMBase::getJ9FormattedName(
       J9JITConfig *jitConfig,
       J9PortLibrary *portLibrary,
       char *buf,
-      int32_t bufLength,
+      size_t bufLength,
       char *name,
       char *format,
       bool suffix)
    {
    PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
-   J9StringTokens *tokens;
-   I_64 curTime;
    J9VMThread *vmThread = jitConfig->javaVM->internalVMFunctions->currentVMThread(jitConfig->javaVM);
-   curTime = j9time_current_time_millis();
-   tokens = j9str_create_tokens(curTime);
+   I_64 curTime = j9time_current_time_millis();
+   J9StringTokens *tokens = j9str_create_tokens(curTime);
    if (tokens == NULL)
       {
-      return 0;
+      return NULL;
       }
 
    char tmp[1025];
-   I_32 nameLength = (I_32)strlen(name);
+   size_t nameLength = strlen(name);
+   uintptr_t substLength = j9str_subst_tokens(tmp, sizeof(tmp), name, tokens);
 
-   j9str_subst_tokens(tmp,1025,name,tokens);
-
-   if(!(strcmp(tmp,name)==0))        //only append if there isn't a format specifier
+   if (substLength >= std::min(sizeof(tmp), bufLength))
       {
-      strncpy(buf,tmp,strlen(tmp)+1);   //+1 to get the null terminator
+      j9str_free_tokens(tokens);
+      return NULL; // not enough room for the name or the token expansion
+      }
+
+   if (strcmp(tmp, name) != 0) // only append if there isn't a format specifier
+      {
+      memcpy(buf, tmp, substLength + 1); // +1 to get the null terminator
       }
    else
       {
-      strncpy(buf, name, nameLength);
-      char *suffixBuf = &(buf[nameLength]);
+      memcpy(buf, name, nameLength);
+      char *suffixBuf = &buf[nameLength];
       if (format)
-         j9str_subst_tokens(suffixBuf, (bufLength - nameLength), format, tokens);
-      else if(suffix)
+         j9str_subst_tokens(suffixBuf, bufLength - nameLength, format, tokens);
+      else if (suffix)
          {
          // We have to break the string up to prevent CMVC keyword expansion
-         j9str_subst_tokens(suffixBuf, (bufLength - nameLength), ".%Y" "%m" "%d." "%H" "%M" "%S.%pid", tokens);
+         j9str_subst_tokens(suffixBuf, bufLength - nameLength, ".%Y" "%m" "%d." "%H" "%M" "%S.%pid", tokens);
          }
       else
-         buf=name;
+         {
+         buf = name;
+         }
       }
 
    j9str_free_tokens(tokens);
@@ -1938,8 +1943,9 @@ int32_t TR_J9VMBase::getFirstArrayletPointerOffset(TR::Compilation *comp)
    {
    TR_ASSERT(TR::Compiler->om.canGenerateArraylets(), "not supposed to be generating arraylets!");
 
-   int32_t headerSize = TR::Compiler->om.useHybridArraylets() ?
-		   TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() : TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   int32_t headerSize = TR::Compiler->om.useHybridArraylets()
+           ? TR::Compiler->om.discontiguousArrayHeaderSizeInBytes()
+           : TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
    return (headerSize + TR::Compiler->om.sizeofReferenceField()-1) & (-1)*(intptr_t)(TR::Compiler->om.sizeofReferenceField());
    }
