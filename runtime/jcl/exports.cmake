@@ -395,7 +395,6 @@ omr_add_exports(jclse
 	Java_sun_misc_Unsafe_allocateDBBMemory
 	Java_sun_misc_Unsafe_allocateMemory
 	Java_sun_misc_Unsafe_copyMemory__Ljava_lang_Object_2JLjava_lang_Object_2JJ
-	Java_sun_misc_Unsafe_defineAnonymousClass
 	Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2
 	Java_sun_misc_Unsafe_ensureClassInitialized
 	Java_sun_misc_Unsafe_freeDBBMemory
@@ -435,6 +434,12 @@ omr_add_exports(jclse
 	Java_sun_reflect_ConstantPool_getStringAt0
 	Java_sun_reflect_ConstantPool_getUTF8At0
 )
+
+if(JAVA_SPEC_VERSION LESS 17)
+omr_add_exports(jclse
+	Java_sun_misc_Unsafe_defineAnonymousClass
+)
+endif()
 
 if(J9VM_OPT_METHOD_HANDLE)
 	omr_add_exports(jclse

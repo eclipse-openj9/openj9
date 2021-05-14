@@ -1,5 +1,5 @@
 <!-- 
-	Copyright (c) 2009, 2020 IBM Corp. and others
+	Copyright (c) 2009, 2021 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,9 @@
 		<export name="Java_sun_misc_Unsafe_throwException" />
 		<export name="Java_sun_misc_Unsafe_tryMonitorEnter" />
 		<export name="Java_sun_misc_Unsafe_unpark" />
-		<export name="Java_sun_misc_Unsafe_defineAnonymousClass" />
+		<export name="Java_sun_misc_Unsafe_defineAnonymousClass">
+			<exclude-if condition="spec.java17" />
+		</export>
 		<export name="Java_sun_misc_Unsafe_unalignedAccess0" />
 		<export name="Java_sun_misc_Unsafe_isBigEndian0" />
 		<export name="Java_sun_misc_Unsafe_getUncompressedObject" />
