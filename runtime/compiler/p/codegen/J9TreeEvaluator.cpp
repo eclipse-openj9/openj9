@@ -4980,7 +4980,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
       baseReg = objectClassReg;
       }
 
-   /* If the -XX:+GlobalLockReservation option is NOT set, try to use the original aggressive reserved locking code path. */
+   /* If the -XX:-GlobalLockReservation option is set, try to use the original aggressive reserved locking code path. */
    if (!fej9->isEnableGlobalLockReservationSet())
       {
       bool reserveLocking = false, normalLockWithReservationPreserving = false;
@@ -7405,7 +7405,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
       baseReg = objectClassReg;
       }
 
-   /* If the -XX:+GlobalLockReservation option is NOT set, try to use the original aggressive reserved locking code path. */
+   /* If the -XX:-GlobalLockReservation option is set, try to use the original aggressive reserved locking code path. */
    if (!fej9->isEnableGlobalLockReservationSet())
       {
       bool reserveLocking = false, normalLockWithReservationPreserving = false;
