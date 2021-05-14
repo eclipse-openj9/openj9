@@ -2366,7 +2366,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    if (vm->isAOT_DEPRECATED_DO_NOT_USE() || (jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
       return true;
 
-#if defined(J9VM_INTERP_ATOMIC_FREE_JNI) && !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !defined(TR_HOST_X86)
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI) && !defined(TR_HOST_S390) && !defined(TR_HOST_POWER) && !defined(TR_HOST_X86) && !defined(TR_HOST_ARM64)
     // Atomic-free JNI dispatch needs codegen support, currently only prototyped on a few platforms
    setOption(TR_DisableDirectToJNI);
 #endif
