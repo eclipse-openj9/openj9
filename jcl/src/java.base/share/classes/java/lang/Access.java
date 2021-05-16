@@ -431,7 +431,7 @@ final class Access implements JavaLangAccess {
 	}
 
 	public ProtectionDomain protectionDomain(Class<?> clazz) {
-		return clazz.getProtectionDomain();
+		return clazz.getProtectionDomainInternal();
 	}
 
 	public MethodHandle stringConcatHelper(String arg0, MethodType type) {
