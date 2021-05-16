@@ -216,9 +216,12 @@ public abstract class ClassLoader {
 		}
 		bootstrapClassLoader.servicesCatalog = BootLoader.getServicesCatalog();
 		if (bootstrapClassLoader.classLoaderValueMap != null) {
+			/*[IF JAVA_SPEC_VERSION < 17]*/
 			throw new InternalError("bootstrapClassLoader.classLoaderValueMap is NOT null "); //$NON-NLS-1$
+			/*[ENDIF] JAVA_SPEC_VERSION < 17 */
+		} else {
+			bootstrapClassLoader.classLoaderValueMap = BootLoader.getClassLoaderValueMap();
 		}
-		bootstrapClassLoader.classLoaderValueMap = BootLoader.getClassLoaderValueMap();
 		applicationClassLoader = ClassLoaders.appClassLoader();
 		/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 		ClassLoader sysTemp = null;
