@@ -618,6 +618,13 @@ static TR_YesNoMaybe isValue(TR::VPConstraint *constraint)
       return type->isFixedClass() ? TR_no : TR_maybe;
       }
 
+   // Array types are never value types
+   //
+   if (TR::Compiler->cls.isClassArray(comp, clazz))
+      {
+      return TR_no;
+      }
+
    // Is the type either an abstract class or an interface (i.e., not a
    // concrete class)?  If so, it might be a value type.
    //
