@@ -57,21 +57,21 @@ class OMR_EXTENSIBLE Instruction : public J9::InstructionConnector
 #include "codegen/J9Instruction_inlines.hpp"
 
 TR::Instruction::Instruction(TR::Node *node, TR_X86OpCodes op, TR::CodeGenerator *cg) :
-   J9::InstructionConnector(cg, TR::InstOpCode::BAD, node)
+   J9::InstructionConnector(cg, TR::InstOpCode::bad, node)
    {
    self()->setOpCodeValue(op);
    self()->initialize();
    }
 
 TR::Instruction::Instruction(TR_X86OpCodes op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg) :
-   J9::InstructionConnector(cg, precedingInstruction, TR::InstOpCode::BAD)
+   J9::InstructionConnector(cg, precedingInstruction, TR::InstOpCode::bad)
    {
    self()->setOpCodeValue(op);
    self()->initialize();
    }
 
 TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, TR::Node *node, TR_X86OpCodes op, TR::CodeGenerator *cg) :
-   J9::InstructionConnector(cg, TR::InstOpCode::BAD, node)
+   J9::InstructionConnector(cg, TR::InstOpCode::bad, node)
    {
    self()->setOpCodeValue(op);
    self()->setDependencyConditions(cond);
@@ -79,7 +79,7 @@ TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, TR::Node *n
    }
 
 TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, TR_X86OpCodes op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg) :
-   J9::InstructionConnector(cg, precedingInstruction, TR::InstOpCode::BAD)
+   J9::InstructionConnector(cg, precedingInstruction, TR::InstOpCode::bad)
    {
    self()->setOpCodeValue(op);
    self()->setDependencyConditions(cond);
