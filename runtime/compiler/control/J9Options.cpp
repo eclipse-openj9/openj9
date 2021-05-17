@@ -1540,10 +1540,8 @@ J9::Options::fePreProcess(void * base)
 
          UDATA pageSizeHowMany = 0;
          UDATA pageSizeOptionNumber = 0;
-         UDATA pageableHowMany = 0;
-         UDATA pageableOptionNumber = 0;
-         UDATA nonPageableHowMany = 0;
          UDATA nonPageableOptionNumber = 0;
+         UDATA pageableOptionNumber = 0;
 
          char *optionsString = NULL;
 
@@ -1553,15 +1551,15 @@ J9::Options::fePreProcess(void * base)
          // optionsString can not be NULL here, though it may point to null ('\0') character
          char *scanLimit = optionsString + strlen(optionsString);
 
-         // Parse -Xlp:codecache:pagesize=<size> option.
-         // The proper formed -Xlp:codecache: options include
-         //      For X and zLinux platforms:
-         //              -Xlp:codecache:pagesize=<size> or
-         //              -Xlp:codecache:pagesize=<size>,pageable or
-         //              -Xlp:codecache:pagesize=<size>,nonpageable
-         //      For zOS platforms
-         //              -Xlp:codecache:pagesize=<size>,pageable or
-         //              -Xlp:codecache:pagesize=<size>,nonpageable
+         /* Parse -Xlp:codecache:pagesize=<size> option.
+          * The proper formed -Xlp:codecache: options include
+          *      For All platforms:
+          *              -Xlp:codecache:pagesize=<size> or
+          *              -Xlp:codecache:pagesize=<size>,pageable or
+          *              -Xlp:codecache:pagesize=<size>,nonpageable
+          *
+          *      Nonpageable codecache does not support large pages on ZOS.
+          */
          while (optionsString < scanLimit)
             {
             if (try_scan(&optionsString, ","))
@@ -1688,16 +1686,12 @@ J9::Options::fePreProcess(void * base)
                }
             else if (try_scan(&optionsString, "pageable"))
                {
-               pageableHowMany += 1;
                pageableOptionNumber = optionNumber;
-
                parsingState = XLPCC_PARSING_COMMA;
                }
             else if (try_scan(&optionsString, "nonpageable"))
                {
-               nonPageableHowMany += 1;
                nonPageableOptionNumber = optionNumber;
-
                parsingState = XLPCC_PARSING_COMMA;
                }
             }
@@ -1728,25 +1722,13 @@ J9::Options::fePreProcess(void * base)
             return false;
             }
 
-         #if defined(J9ZOS390)
-         //  [non]pageable option must be specified for Z platforms
-         if ((0 == pageableHowMany) && (0 == nonPageableHowMany))
-            {
-            // [non]pageable not found 
-            char *xlpOptionErrorString = "-Xlp:codecache:";
-            char *xlpMissingOptionString = "[non]pageable";
-
-            j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION, xlpOptionErrorString, xlpMissingOptionString);
-            return false;
-            }
-
-         // Check for the right most option is most right
-         if (pageableOptionNumber > nonPageableOptionNumber)
-            requestedLargeCodePageFlags = J9PORT_VMEM_PAGE_FLAG_PAGEABLE;
-         else
+#if defined(J9ZOS390)
+         /* Only set for the right most option, ignoring previous instances */
+         if (nonPageableOptionNumber > pageableOptionNumber)
             requestedLargeCodePageFlags = J9PORT_VMEM_PAGE_FLAG_FIXED;
-
-         #endif // defined(J9ZOS390)
+         else
+            requestedLargeCodePageFlags = J9PORT_VMEM_PAGE_FLAG_PAGEABLE;
+#endif /* defined(J9ZOS390) */
 
          // print extra comma ignored warning
          if (extraCommaWarning)
