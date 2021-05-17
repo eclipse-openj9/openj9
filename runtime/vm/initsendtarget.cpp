@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -292,7 +292,9 @@ J9Method cInitialStaticMethod = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_S
 J9Method cInitialSpecialMethod = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_SPECIAL), 0 };
 J9Method cInitialVirtualMethod = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL), 0 };
 J9Method cInvokePrivateMethod  = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_INVOKE_PRIVATE), 0 };
-
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+J9Method cThrowDefaultConflict = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_MEMBERNAME_DEFAULT_CONFLICT), 0 };
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 void
 initializeInitialMethods(J9JavaVM *vm)
 {
@@ -301,6 +303,9 @@ initializeInitialMethods(J9JavaVM *vm)
 	vm->initialMethods.initialSpecialMethod = &cInitialSpecialMethod;
 	vm->initialMethods.initialVirtualMethod = &cInitialVirtualMethod;
 	vm->initialMethods.invokePrivateMethod = &cInvokePrivateMethod;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	vm->initialMethods.throwDefaultConflict = &cThrowDefaultConflict;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
 }

@@ -821,54 +821,24 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 					J9Class *exceptionClass = J9OBJECT_CLAZZ(currentThread, currentThread->currentException);
 					if ((ref_kind == MH_REF_INVOKESPECIAL) && (exceptionClass == J9VMJAVALANGINCOMPATIBLECLASSCHANGEERROR(vm))) {
 						/* Special handling for default method conflict, defer the exception throw until invocation. */
-						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, currentThread->currentException);
 						VM_VMHelpers::clearException(currentThread);
 						/* Attempt to lookup method without checking for conflict.
 						 * If this failed with error, then throw that error.
-						 * Otherwise it will be used to construct the method frame during invoke.
+						 * Otherwise exception throw will be defered to the MH.invoke call.
 						 */
 						method = lookupMethod(
 							currentThread, resolvedClass, name, signature, callerClass,
 							(lookupOptions & ~J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS));
 
 						if (!VM_VMHelpers::exceptionPending(currentThread)) {
-							j9object_t exception = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
-							j9object_t detailMessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(currentThread, exception);
-
 							/* Set placeholder values for MemberName fields. */
 							vmindex = (jlong)(UDATA)1;
 							new_clazz = J9VM_J9CLASS_TO_HEAPCLASS(J9_CLASS_FROM_METHOD(method));
 							new_flags = flags;
 
-							/* Construct special sendTarget to throw the exception during invocation
-							 *
-							 * Field in J9Method structure used to store meta info:
-							 *    bytecodes        -> the conflicting method
-							 *    constantPool     -> NULL
-							 *    methodRunAddress -> J9_BCLOOP_SEND_TARGET_MEMBERNAME_DEFAULT_CONFLICT
-							 *    extra            -> cached error message
-							 */
-							J9Method *specialSendTarget = (J9Method *)j9mem_allocate_memory(sizeof(J9Method), J9MEM_CATEGORY_VM);
-							if (NULL == specialSendTarget) {
-								vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-								goto done;
-							}
-							specialSendTarget->bytecodes = (U_8 *)method;
-							specialSendTarget->methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_MEMBERNAME_DEFAULT_CONFLICT);
-							if (NULL != detailMessage) {
-								char *msg = vmFuncs->copyStringToUTF8WithMemAlloc(
-									currentThread, detailMessage, J9_STR_NULL_TERMINATE_RESULT,
-									"", 0, NULL, 0, NULL);
-								if (NULL == msg) {
-									j9mem_free_memory(specialSendTarget);
-									vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-									goto done;
-								}
-								specialSendTarget->extra = (void *)msg;
-							}
-							target = (jlong)(UDATA)specialSendTarget;
+							/* Load special sendTarget to throw the exception during invocation */
+							target = (jlong)(UDATA)vm->initialMethods.throwDefaultConflict;
 						} else {
-							DROP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 							goto done;
 						}
 					} else {

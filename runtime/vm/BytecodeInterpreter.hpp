@@ -8528,13 +8528,11 @@ foundITable:
 	throwDefaultConflictForMemberName(REGISTER_ARGS_LIST)
 	{
 		/* Load the conflicting method and error message from this special target */
-		char *msg = (char *)_sendMethod->extra;
-		J9Method *specialSendTarget = _sendMethod;
-		_sendMethod = (J9Method *)specialSendTarget->bytecodes;
-		buildMethodFrame(REGISTER_ARGS, _sendMethod, jitStackFrameFlags(REGISTER_ARGS, 0));
+		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 		updateVMStruct(REGISTER_ARGS);
-		setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, msg);
+		setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, "Default method conflict found during MethodHandle invocation.");
 		VMStructHasBeenUpdated(REGISTER_ARGS);
+		restoreGenericSpecialStackFrame(REGISTER_ARGS);
 		return GOTO_THROW_CURRENT_EXCEPTION;
 	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
