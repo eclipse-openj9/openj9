@@ -46,7 +46,7 @@
 #include "x/codegen/CheckFailureSnippet.hpp"
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"
+#include "codegen/InstOpCode.hpp"
 #include "x/codegen/X86Ops_inlines.hpp"
 
 ////////////////////////////////////////////////
