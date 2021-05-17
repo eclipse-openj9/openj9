@@ -110,7 +110,7 @@ J9::X86::UnresolvedDataSnippet::emitSnippetBody()
 
    if (!stackMapInstr)
       {
-      return TR_X86OpCode(BADIA32Op).binary(cursor);
+      return TR::InstOpCode(BADIA32Op).binary(cursor);
       }
 
    _glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());

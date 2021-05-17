@@ -9901,7 +9901,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             {
             if (comp->target().cpu.supportsMFence())
                {
-               TR_X86OpCode fenceOp;
+               TR::InstOpCode fenceOp;
                fenceOp.setOpCodeValue(MFENCE);
                generateInstruction(fenceOp.getOpCodeValue(), node, cg);
                }
@@ -9915,7 +9915,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             if (comp->target().cpu.requiresLFence() &&
                 comp->target().cpu.supportsLFence())
                {
-               TR_X86OpCode fenceOp;
+               TR::InstOpCode fenceOp;
                fenceOp.setOpCodeValue(LFENCE);
                generateInstruction(fenceOp.getOpCodeValue(), node, cg);
                }
@@ -9928,7 +9928,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             {
             if (comp->target().cpu.supportsSFence())
                {
-               TR_X86OpCode fenceOp;
+               TR::InstOpCode fenceOp;
                fenceOp.setOpCodeValue(SFENCE);
                generateInstruction(fenceOp.getOpCodeValue(), node, cg);
                }
