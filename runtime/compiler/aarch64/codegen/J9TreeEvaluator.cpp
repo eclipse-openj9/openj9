@@ -3245,39 +3245,79 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
    }
 
 static TR::Register *
-genCAS(TR::Node *node, TR::CodeGenerator *cg, TR::Register *objReg, TR::Register *offsetReg, TR::Register *oldVReg, TR::Register *newVReg,
+genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *srm, TR::Register *objReg, TR::Register *offsetReg, intptr_t offset, bool offsetInReg, TR::Register *oldVReg, TR::Register *newVReg,
       TR::LabelSymbol *doneLabel, int32_t oldValue, bool oldValueInReg, bool is64bit, bool casWithoutSync = false)
    {
-   TR::Register *addrReg = cg->allocateRegister();
+   TR::Register *addrReg = srm->findOrCreateScratchRegister();
    TR::Register *resultReg = cg->allocateRegister();
    TR::InstOpCode::Mnemonic op;
-
-   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
 
    TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
 
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, addrReg, objReg, offsetReg); // ldxr/stxr instructions does not take offset
+   if (offsetInReg)
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, addrReg, objReg, offsetReg); // ldxr/stxr instructions does not take offset
+      }
+   else
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, offset); // ldxr/stxr instructions does not take offset
+      }
 
+   const bool createDoneLabel = (doneLabel == NULL);
+   if (createDoneLabel)
+      {
+      doneLabel = generateLabelSymbol(cg);
+      }
+   /*
+    * Generating the same instruction sequence as __sync_bool_compare_and_swap
+    *
+    * loop:
+    *    ldxrx   resultReg, [addrReg]
+    *    cmpx    resultReg, oldVReg
+    *    bne     done
+    *    stlxrx  resultReg, newVReg, [addrReg]
+    *    cbnz    resultReg, loop
+    *    dmb     ish
+    * done:
+    *    cset    resultReg, eq
+    *
+    */
    op = is64bit ? TR::InstOpCode::ldxrx : TR::InstOpCode::ldxrw;
    generateTrg1MemInstruction(cg, op, node, resultReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
    if (oldValueInReg)
       generateCompareInstruction(cg, node, resultReg, oldVReg, is64bit);
    else
       generateCompareImmInstruction(cg, node, resultReg, oldValue, is64bit);
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 0); // failure
+   if (!createDoneLabel)
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 0); // failure
    generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_NE);
 
-   op = is64bit ? TR::InstOpCode::stxrx : TR::InstOpCode::stxrw;
+   if (casWithoutSync)
+      {
+      op = is64bit ? TR::InstOpCode::stxrx : TR::InstOpCode::stxrw;
+      }
+   else
+      {
+      op = is64bit ? TR::InstOpCode::stlxrx : TR::InstOpCode::stlxrw;
+      }
    generateTrg1MemSrc1Instruction(cg, op, node, resultReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), newVReg);
    generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, resultReg, loopLabel);
 
+   srm->reclaimScratchRegister(addrReg);
+
    if (!casWithoutSync)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
 
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 1); // success
-
-   cg->stopUsingRegister(addrReg);
+   if (createDoneLabel)
+      {
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+      generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
+      }
+   else
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 1); // success
+      }
 
    node->setRegister(resultReg);
    return resultReg;
@@ -3301,7 +3341,16 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
    intptr_t oldValue = 0;
    bool oldValueInReg = true;
-   offsetReg = cg->evaluate(thirdChild);
+   intptr_t offset;
+   bool offsetInReg = true;
+
+   if (thirdChild->getOpCode().isLoadConst() && thirdChild->getRegister() == NULL)
+      {
+      offset = (thirdChild->getOpCodeValue() == TR::iconst) ? thirdChild->getInt() : thirdChild->getLongInt();
+      offsetInReg = !constantIsUnsignedImm12(offset);
+      }
+   if (offsetInReg)
+      offsetReg = cg->evaluate(thirdChild);
 
    // Obtain values to be checked for, and swapped in:
    if (fourthChild->getOpCode().isLoadConst() && fourthChild->getRegister() == NULL)
@@ -3331,9 +3380,10 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
          casWithoutSync = true;
          }
       }
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
 
    // Compare and swap:
-   resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, doneLabel, oldValue, oldValueInReg, isLong, casWithoutSync);
+   resultReg = genCAS(node, cg, srm, objReg, offsetReg, offset, offsetInReg, oldVReg, newVReg, NULL, oldValue, oldValueInReg, isLong, casWithoutSync);
 
    conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
    TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -3347,12 +3397,245 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
 
    cg->recursivelyDecReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
-   cg->decReferenceCount(thirdChild);
+   if (offsetInReg)
+      cg->decReferenceCount(thirdChild);
+   else
+      cg->recursivelyDecReferenceCount(thirdChild);
+
    if (oldValueInReg)
       cg->decReferenceCount(fourthChild);
    else
       cg->recursivelyDecReferenceCount(fourthChild);
    cg->decReferenceCount(fifthChild);
+   return resultReg;
+   }
+
+static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(comp->fe());
+   TR::Register *objReg, *offsetReg, *resultReg;
+   TR::Node *firstChild, *secondChild, *thirdChild, *fourthChild, *fifthChild;
+   TR::LabelSymbol *doneLabel;
+   bool offsetInReg = true;
+   intptr_t offset;
+
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   const bool doWrtBar = (gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always);
+   const bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental);
+
+   /**
+    *  icall  jdk/internal/misc/Unsafe.compareAndSetObject
+    *    aload  java/lang/invoke/VarHandle._unsafe
+    *    aload  (objNode)
+    *    lconst (offset)
+    *    aload  (oldValueNode)
+    *    aload  (newValueNode)
+    */
+   firstChild = node->getFirstChild();
+   secondChild = node->getSecondChild();
+   thirdChild = node->getChild(2);
+   fourthChild = node->getChild(3);
+   fifthChild = node->getChild(4);
+
+   objReg = cg->evaluate(secondChild);
+
+   if (thirdChild->getOpCode().isLoadConst() && thirdChild->getRegister() == NULL)
+      {
+      offset = (thirdChild->getOpCodeValue() == TR::iconst) ? thirdChild->getInt() : thirdChild->getLongInt();
+      offsetInReg = !constantIsUnsignedImm12(offset);
+      }
+   if (offsetInReg)
+      offsetReg = cg->evaluate(thirdChild);
+
+   TR::Register *oldVReg = cg->evaluate(fourthChild);
+   TR::Register *newVReg = cg->evaluate(fifthChild);
+   doneLabel = generateLabelSymbol(cg);
+
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+
+#ifdef OMR_GC_CONCURRENT_SCAVENGER
+   if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
+      {
+      TR::Register *tempReg = srm->findOrCreateScratchRegister();
+      TR::Register *locationReg = cg->allocateRegister();
+      TR::Register *evacuateReg = srm->findOrCreateScratchRegister();
+      TR::Register *x0Reg = cg->allocateRegister();
+      TR::Register *vmThreadReg = cg->getMethodMetaDataRegister();
+
+      TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+      startLabel->setStartInternalControlFlow();
+      endLabel->setEndInternalControlFlow();
+
+      TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg->trMemory());
+      deps->addPostCondition(tempReg, TR::RealRegister::NoReg);
+      deps->addPostCondition(locationReg, TR::RealRegister::x1); // TR_softwareReadBarrier helper needs this in x1.
+      deps->addPostCondition(evacuateReg, TR::RealRegister::NoReg);
+      deps->addPostCondition(x0Reg, TR::RealRegister::x0);
+
+      if (offsetInReg)
+         {
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, locationReg, objReg, offsetReg);
+         }
+      else
+         {
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, locationReg, objReg, offset);
+         }
+
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(locationReg, 0, cg));
+
+      if (node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef())
+         TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tempReg);
+
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, evacuateReg,
+            new (cg->trHeapMemory()) TR::MemoryReference(vmThreadReg, comp->fej9()->thisThreadGetEvacuateBaseAddressOffset(), cg));
+      generateCompareInstruction(cg, node, tempReg, evacuateReg, true);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, endLabel, TR::CC_LT);
+
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, evacuateReg,
+            new (cg->trHeapMemory()) TR::MemoryReference(vmThreadReg, comp->fej9()->thisThreadGetEvacuateTopAddressOffset(), cg));
+      generateCompareInstruction(cg, node, tempReg, evacuateReg, true);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, endLabel, TR::CC_GT);
+
+      // TR_softwareReadBarrier helper expects the vmThread in x0.
+      generateMovInstruction(cg, node, x0Reg, vmThreadReg);
+
+      TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_softwareReadBarrier);
+      generateImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), deps, helperSym, NULL);
+
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
+
+      srm->reclaimScratchRegister(tempReg);
+      srm->reclaimScratchRegister(evacuateReg);
+
+      cg->stopUsingRegister(locationReg);
+      cg->stopUsingRegister(x0Reg);
+
+      cg->machine()->setLinkRegisterKilled(true);
+      }
+#endif //OMR_GC_CONCURRENT_SCAVENGER
+
+   TR::Register *oReg = oldVReg;
+   TR::Register *nReg = newVReg;
+   bool useShiftedOffsets = (TR::Compiler->om.compressedReferenceShiftOffset() != 0);
+   if (useShiftedOffsets)
+      {
+      if (!fourthChild->isNull())
+         {
+         oReg = srm->findOrCreateScratchRegister();
+         generateLogicalShiftRightImmInstruction(cg, node, oReg, oldVReg, TR::Compiler->om.compressedReferenceShiftOffset());
+         }
+      if (!fifthChild->isNull())
+         {
+         nReg = srm->findOrCreateScratchRegister();
+         generateLogicalShiftRightImmInstruction(cg, node, nReg, newVReg, TR::Compiler->om.compressedReferenceShiftOffset());
+         }
+      }
+   resultReg = genCAS(node, cg, srm, objReg, offsetReg, offset, offsetInReg, oReg, nReg, doneLabel, 0, true, !comp->useCompressedPointers());
+
+   if (useShiftedOffsets)
+      {
+      srm->reclaimScratchRegister(oReg);
+      srm->reclaimScratchRegister(nReg);
+      }
+
+   const bool skipWrtBar = (gcMode == gc_modron_wrtbar_none) || (fifthChild->isNull() && (gcMode != gc_modron_wrtbar_always));
+   if (!skipWrtBar)
+      {
+      TR::Register *wrtBarSrcReg = newVReg;
+
+      if (objReg == wrtBarSrcReg)
+         {
+         // write barrier helper requires that dstObject and srcObject are in the different registers.
+         // Because wrtBarSrcReg will be dead as soon as writeBarrier is done (which is not a GC safe point),
+         // it is not required to be a collected refernce register.
+         wrtBarSrcReg = srm->findOrCreateScratchRegister();
+         generateMovInstruction(cg, node, wrtBarSrcReg, objReg, true);
+         }
+
+      const bool srcNonNull = fifthChild->isNonNull();
+
+      if (doWrtBar) // generational or gencon
+         {
+         TR::SymbolReference *wbRef = (gcMode == gc_modron_wrtbar_always) ?
+            comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef() :
+            // use jitWriteBarrierStoreGenerational for both generational and gencon, because we inline card marking.
+            comp->getSymRefTab()->findOrCreateWriteBarrierStoreGenerationalSymbolRef();
+
+         if (!srcNonNull)
+            {
+            // If object is NULL, done
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:000srcNullChk"), *srm);
+            generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, wrtBarSrcReg, doneLabel);
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:000srcNullChk:NonNull"), *srm);
+            }
+         // Inlines cardmarking and remembered bit check for gencon.
+         VMnonNullSrcWrtBarCardCheckEvaluator(node, objReg, wrtBarSrcReg, srm, doneLabel, wbRef, cg);
+
+         }
+      else if (doCrdMrk)
+         {
+         TR::SymbolReference *wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
+         if (!srcNonNull)
+            {
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:000srcNullChk"), *srm);
+            generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, wrtBarSrcReg, doneLabel);
+            cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:000srcNullChk:NonNull"), *srm);
+            }
+         VMCardCheckEvaluator(node, objReg, srm, doneLabel, cg);
+         }
+
+      TR_ARM64ScratchRegisterDependencyConditions scratchDeps;
+      scratchDeps.addDependency(cg, objReg, doWrtBar ? TR::RealRegister::x0 : TR::RealRegister::NoReg);
+      scratchDeps.addDependency(cg, wrtBarSrcReg, doWrtBar ? TR::RealRegister::x1 : TR::RealRegister::NoReg);
+      if (offsetInReg)
+         {
+         scratchDeps.addDependency(cg, offsetReg, TR::RealRegister::NoReg);
+         }
+      scratchDeps.unionDependency(cg, oldVReg, TR::RealRegister::NoReg);
+      scratchDeps.unionDependency(cg, newVReg, TR::RealRegister::NoReg);
+      scratchDeps.addDependency(cg, resultReg, TR::RealRegister::NoReg);
+      scratchDeps.addScratchRegisters(cg, srm);
+      TR::RegisterDependencyConditions *conditions = TR_ARM64ScratchRegisterDependencyConditions::createDependencyConditions(cg, NULL, &scratchDeps);
+
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions, NULL);
+      }
+   else
+      {
+      TR_ARM64ScratchRegisterDependencyConditions scratchDeps;
+      scratchDeps.addDependency(cg, objReg,  TR::RealRegister::NoReg);
+      if (offsetInReg)
+         {
+         scratchDeps.addDependency(cg, offsetReg, TR::RealRegister::NoReg);
+         }
+      scratchDeps.unionDependency(cg, oldVReg, TR::RealRegister::NoReg);
+      scratchDeps.unionDependency(cg, newVReg, TR::RealRegister::NoReg);
+      scratchDeps.addDependency(cg, resultReg, TR::RealRegister::NoReg);
+      scratchDeps.addScratchRegisters(cg, srm);
+      TR::RegisterDependencyConditions *conditions = TR_ARM64ScratchRegisterDependencyConditions::createDependencyConditions(cg, NULL, &scratchDeps);
+
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions, NULL);
+      }
+
+   srm->stopUsingRegisters();
+
+   cg->recursivelyDecReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   if (offsetInReg)
+      {
+      cg->decReferenceCount(thirdChild);
+      }
+   else
+      {
+      cg->recursivelyDecReferenceCount(thirdChild);
+      }
+
+   cg->decReferenceCount(fourthChild);
+   cg->decReferenceCount(fifthChild);
+
    return resultReg;
    }
 
@@ -3427,6 +3710,18 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             break;
             }
 
+         case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
+            {
+            if (!methodSymbol->isNative())
+               break;
+
+            if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
+               {
+               resultReg = VMinlineCompareAndSwapObject(node, cg);
+               return true;
+               }
+            break;
+            }
          default:
             break;
          }
