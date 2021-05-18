@@ -183,29 +183,34 @@ public:
    /**
       @brief Expand the underlying buffer if more than allocated memory is needed.
 
-      If requiredSize is greater than _capacity, allocates a new buffer of size
-      requiredSize * 2 (to prevent frequent reallocations),
-      copies all existing data based on _curPtr location to the new buffer,
-      and frees the old buffer.
-
       @param requiredSize the number of bytes the buffer needs to fit.
    */
    void expandIfNeeded(uint32_t requiredSize);
 
    /**
-      @brief Expand the underlying buffer to requiredSize and copy numBytesToCopy
+      @brief Expand the underlying buffer to fit requiredSize and copy numBytesToCopy
       from the old buffer to the new buffer when requiredSize is greater than
       the capacity, and free the old buffer.
+
+      If requiredSize is greater than _capacity, allocates a new buffer that can fit requiredSize
+      bytes rounded up to the nearest power of 2,
+      copies all existing data based on _curPtr location to the new buffer,
+      and frees the old buffer.
+
+      @param requiredSize the number of bytes the buffer needs to fit.
+      @param numBytesToCopy the number of bytes that need to be copied over from the old buffer
    */
    void expand(uint32_t requiredSize, uint32_t numBytesToCopy);
 
    uint32_t getCapacity() const { return _capacity; }
 
+
 private:
-   static const size_t INITIAL_BUFFER_SIZE = 18000;
+   static const size_t INITIAL_BUFFER_SIZE = 32768; // Initial buffer size is 32K
    uint32_t offset(char *addr) const { return addr - _storage; }
    char *allocateMemory(uint32_t capacity) { return static_cast<char *>(_allocator.allocate(capacity)); }
    void freeMemory(char *storage) { _allocator.deallocate(storage); }
+   uint32_t computeRequiredCapacity(uint32_t requiredSize);
 
    uint32_t _capacity;
    char *_storage;
