@@ -939,20 +939,19 @@ compileClasses(J9VMThread * vmThread, const char * pattern)
 
    if (patternLength >= PATTERN_BUFFER_LENGTH)
       {
-      patternString = (char*)j9mem_allocate_memory((patternLength+1)*sizeof(char), J9MEM_CATEGORY_JIT);
+      patternString = (char*)j9mem_allocate_memory(patternLength + 1, J9MEM_CATEGORY_JIT);
       if (!patternString)
          return false;
       freePatternString = true;
       }
    #undef PATTERN_BUFFER_LENGTH
 
-   strncpy(patternString, (char*)pattern, patternLength);
+   memcpy(patternString, (char *)pattern, patternLength + 1);
 
    /* Slashify the className */
    for (int32_t i = 0; i < patternLength; ++i)
       if (patternString[i] == '.')
          patternString[i] = '/';
-   patternString[patternLength]='\0';
 
    bool threadHadNoVMAccess = (!(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS));
    if (threadHadNoVMAccess)
