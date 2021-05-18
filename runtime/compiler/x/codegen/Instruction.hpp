@@ -38,17 +38,17 @@ class OMR_EXTENSIBLE Instruction : public J9::InstructionConnector
    /*
     * Generic constructors
     */
-   inline Instruction(TR::Node *node, TR_X86OpCodes op, TR::CodeGenerator *cg);
+   inline Instruction(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg);
 
-   inline Instruction(TR_X86OpCodes op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg);
+   inline Instruction(TR::InstOpCode::Mnemonic op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg);
 
 
    /*
     * X86 specific constructors, need to call initializer to perform proper construction
     */
-   inline Instruction(TR::RegisterDependencyConditions *cond, TR::Node *node, TR_X86OpCodes op, TR::CodeGenerator *cg);
+   inline Instruction(TR::RegisterDependencyConditions *cond, TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg);
 
-   inline Instruction(TR::RegisterDependencyConditions *cond, TR_X86OpCodes op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg);
+   inline Instruction(TR::RegisterDependencyConditions *cond, TR::InstOpCode::Mnemonic op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg);
 
    };
 
@@ -56,21 +56,21 @@ class OMR_EXTENSIBLE Instruction : public J9::InstructionConnector
 
 #include "codegen/J9Instruction_inlines.hpp"
 
-TR::Instruction::Instruction(TR::Node *node, TR_X86OpCodes op, TR::CodeGenerator *cg) :
+TR::Instruction::Instruction(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg) :
    J9::InstructionConnector(cg, TR::InstOpCode::bad, node)
    {
    self()->setOpCodeValue(op);
    self()->initialize();
    }
 
-TR::Instruction::Instruction(TR_X86OpCodes op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg) :
+TR::Instruction::Instruction(TR::InstOpCode::Mnemonic op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg) :
    J9::InstructionConnector(cg, precedingInstruction, TR::InstOpCode::bad)
    {
    self()->setOpCodeValue(op);
    self()->initialize();
    }
 
-TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, TR::Node *node, TR_X86OpCodes op, TR::CodeGenerator *cg) :
+TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg) :
    J9::InstructionConnector(cg, TR::InstOpCode::bad, node)
    {
    self()->setOpCodeValue(op);
@@ -78,7 +78,7 @@ TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, TR::Node *n
    self()->initialize(cg, cond, op, true);
    }
 
-TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, TR_X86OpCodes op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg) :
+TR::Instruction::Instruction(TR::RegisterDependencyConditions *cond, TR::InstOpCode::Mnemonic op, TR::Instruction *precedingInstruction, TR::CodeGenerator *cg) :
    J9::InstructionConnector(cg, precedingInstruction, TR::InstOpCode::bad)
    {
    self()->setOpCodeValue(op);

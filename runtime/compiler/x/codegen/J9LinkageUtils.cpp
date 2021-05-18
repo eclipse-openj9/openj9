@@ -56,7 +56,7 @@ void J9LinkageUtils::cleanupReturnValue(
       // Native and JNI methods may not return a full register in some cases so we need to get the declared
       // type so that we sign and zero extend the narrower integer return types properly.
       //
-      TR_X86OpCodes op;
+      TR::InstOpCode::Mnemonic op;
       TR::ResolvedMethodSymbol *callSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
       TR_ResolvedMethod *resolvedMethod = callSymbol->getResolvedMethod();
       TR::Compilation *comp = cg->comp();

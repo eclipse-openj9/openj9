@@ -267,7 +267,7 @@ J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
 
 static uint8_t *flushArgument(
       uint8_t*cursor,
-      TR_X86OpCodes op,
+      TR::InstOpCode::Mnemonic op,
       TR::RealRegister::RegNum regIndex,
       int32_t offset,
       TR::CodeGenerator *cg)
@@ -304,7 +304,7 @@ static uint8_t *flushArgument(
    }
 
 static int32_t flushArgumentSize(
-      TR_X86OpCodes op,
+      TR::InstOpCode::Mnemonic op,
       int32_t offset)
    {
    int32_t size = TR::InstOpCode(op).length() + 1;   // length including ModRM + 1 SIB
@@ -333,7 +333,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::flushArguments(
       offset += sizeof(intptr_t);
 
    TR::RealRegister::RegNum reg = TR::RealRegister::NoReg;
-   TR_X86OpCodes            op  = BADIA32Op;
+   TR::InstOpCode::Mnemonic            op  = BADIA32Op;
    TR::DataType            dt  = TR::NoType;
 
    if (calculateSizeOnly)
@@ -414,7 +414,7 @@ J9::X86::AMD64::PrivateLinkage::generateFlushInstruction(
 
    // Opcode
    //
-   TR_X86OpCodes opCode = TR::Linkage::movOpcodes(operandType, movType(dataType));
+   TR::InstOpCode::Mnemonic opCode = TR::Linkage::movOpcodes(operandType, movType(dataType));
 
    // Registers
    //
@@ -1143,7 +1143,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
          }
       else
          {
-         TR_X86OpCodes op = picSlot.needsShortConditionalBranch() ? JNE1 : JNE4;
+         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? JNE1 : JNE4;
          generateLabelInstruction(op, node, mismatchLabel, cg());
          }
       }
@@ -1155,7 +1155,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
          }
       else
          {
-         TR_X86OpCodes op = picSlot.needsShortConditionalBranch() ? JE1 : JE4;
+         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? JE1 : JE4;
          generateLabelInstruction(op, node, mismatchLabel, cg());
          }
       }

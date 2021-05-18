@@ -343,7 +343,7 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushIntegerWordArg(TR::Node *child)
       if (child->getOpCode().isLoadConst())
          {
          int32_t value = child->getInt();
-         TR_X86OpCodes pushOp;
+         TR::InstOpCode::Mnemonic pushOp;
          if (value >= -128 && value <= 127)
             {
             pushOp = PUSHImms;
@@ -468,7 +468,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
          }
       else
          {
-         TR_X86OpCodes op = picSlot.needsShortConditionalBranch() ? JNE1 : JNE4;
+         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? JNE1 : JNE4;
          generateLabelInstruction(op, node, mismatchLabel, cg());
          }
       }
@@ -480,7 +480,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
          }
       else
          {
-         TR_X86OpCodes op = picSlot.needsShortConditionalBranch() ? JE1 : JE4;
+         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? JE1 : JE4;
          generateLabelInstruction(op, node, mismatchLabel, cg());
          }
       }

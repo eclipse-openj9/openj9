@@ -382,7 +382,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
    if (!comp->getOption(TR_DisableNewX86VolatileSupport) && getDataReferenceInstruction() != NULL)
       {
       TR::Instruction *dataRefInst = getDataReferenceInstruction();
-      TR_X86OpCodes opCode = dataRefInst->getOpCode().getOpCodeValue();
+      TR::InstOpCode::Mnemonic opCode = dataRefInst->getOpCode().getOpCodeValue();
 
       // If this is a store operation on an unresolved field, set the volatility check flag.
       //

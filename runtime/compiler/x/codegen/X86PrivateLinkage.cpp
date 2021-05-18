@@ -740,7 +740,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          TR_ASSERT(minInstructionSize <= 5, "Can't guarantee SUB instruction will be at least %d bytes", minInstructionSize);
          TR_ASSERT(allocSize >= 1, "When allocSize >= 1, the frame should be small or large, but never medium");
 
-         const TR_X86OpCodes subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? SUBRegImms() : SUBRegImm4();
+         const TR::InstOpCode::Mnemonic subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? SUBRegImms() : SUBRegImm4();
          cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, subOp, espReal, allocSize, cg());
 
          minInstructionSize = 0; // The SUB satisfies the constraint
@@ -841,7 +841,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    else if (!doAllocateFrameSpeculatively)
       {
       TR_ASSERT(minInstructionSize <= 5, "Can't guarantee SUB instruction will be at least %d bytes", minInstructionSize);
-      const TR_X86OpCodes subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? SUBRegImms() : SUBRegImm4();
+      const TR::InstOpCode::Mnemonic subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? SUBRegImms() : SUBRegImm4();
       cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, subOp, espReal, allocSize, cg());
       }
 
@@ -2087,7 +2087,7 @@ bool J9::X86::PrivateLinkage::buildVirtualGuard(TR::X86CallSite &site, TR::Label
       // We can do an explicit guard
       //
       uint32_t overRiddenBit = fej9->offsetOfIsOverriddenBit();
-      TR_X86OpCodes opCode;
+      TR::InstOpCode::Mnemonic opCode;
 
       if (overRiddenBit <= 0xff)
          opCode = TEST1MemImm1;

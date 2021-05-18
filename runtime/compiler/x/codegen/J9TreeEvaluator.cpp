@@ -257,7 +257,7 @@ static TR_OutlinedInstructions *generateArrayletReference(
 
       if (!indexReg)
          {
-         TR_X86OpCodes op = (indexValue >= -128 && indexValue <= 127) ? CMP4MemImms : CMP4MemImm4;
+         TR::InstOpCode::Mnemonic op = (indexValue >= -128 && indexValue <= 127) ? CMP4MemImms : CMP4MemImm4;
          generateMemImmInstruction(op, node, arraySizeMR, indexValue, cg);
          }
       else
@@ -327,7 +327,7 @@ static TR_OutlinedInstructions *generateArrayletReference(
    //
    if (indexReg)
       {
-      TR_X86OpCodes op = comp->target().is64Bit() ? MOVSXReg8Reg4 : MOVRegReg();
+      TR::InstOpCode::Mnemonic op = comp->target().is64Bit() ? MOVSXReg8Reg4 : MOVRegReg();
       generateRegRegInstruction(op, node, scratchReg, indexReg, cg);
 
       int32_t spineShift = fej9->getArraySpineShift(elementSize);
@@ -349,7 +349,7 @@ static TR_OutlinedInstructions *generateArrayletReference(
       spineMR = generateX86MemoryReference(baseArrayReg, spineDisp32, cg);
       }
 
-   TR_X86OpCodes op = (spinePointerSize == 8) ? L8RegMem : L4RegMem;
+   TR::InstOpCode::Mnemonic op = (spinePointerSize == 8) ? L8RegMem : L4RegMem;
    generateRegMemInstruction(op, node, scratchReg, spineMR, cg);
 
    // Decompress the arraylet pointer from the spine.
@@ -392,7 +392,7 @@ static TR_OutlinedInstructions *generateArrayletReference(
 
    if (!actualLoadOrStoreOrArrayElementNode->getOpCode().isStore())
       {
-      TR_X86OpCodes op;
+      TR::InstOpCode::Mnemonic op;
 
       TR::MemoryReference *highArrayletMR = NULL;
       TR::Register *highRegister = NULL;
@@ -469,7 +469,7 @@ static TR_OutlinedInstructions *generateArrayletReference(
          {
          // movE [S + S2], value
          //
-         TR_X86OpCodes op;
+         TR::InstOpCode::Mnemonic op;
          bool needStore = true;
 
          switch (dt)
@@ -724,7 +724,7 @@ TR::Register *J9::X86::I386::TreeEvaluator::conditionalHelperEvaluator(TR::Node 
       {
       int32_t      value            = secondChild->getInt();
       TR::Node     *firstChild       = testNode->getFirstChild();
-      TR_X86OpCodes opCode;
+      TR::InstOpCode::Mnemonic opCode;
       if (value >= -128 && value <= 127)
          opCode = CMP4MemImms;
       else
@@ -842,7 +842,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
       // Try to compare memory directly with immediate
       //
       TR::MemoryReference * memRef = generateX86MemoryReference(testNode->getFirstChild(), cg);
-      TR_X86OpCodes op;
+      TR::InstOpCode::Mnemonic op;
 
       if (testIs64Bit)
          {
@@ -1117,7 +1117,7 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
       else
          {
          int32_t value = secondChild->getInt();
-         TR_X86OpCodes op = (value < 127 && value >= -128) ? CMPMemImms() : CMPMemImm4();
+         TR::InstOpCode::Mnemonic op = (value < 127 && value >= -128) ? CMPMemImms() : CMPMemImm4();
          TR::X86CheckAsyncMessagesMemImmInstruction *ins =
             generateCheckAsyncMessagesInstruction(node, op, mr, value, cg);
          }
@@ -1841,7 +1841,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
          if (!appendTo)
              appendTo = cg->getAppendInstruction();
 
-         TR_X86OpCodes op = CMPMemImms();
+         TR::InstOpCode::Mnemonic op = CMPMemImms();
          appendTo = generateMemImmInstruction(appendTo, op, tempMR, NULLVALUE, cg);
          tempMR->decNodeReferenceCounts(cg);
          needLateEvaluation = false;
@@ -2160,7 +2160,7 @@ static bool isInteger(TR::ILOpCode &op, TR::CodeGenerator *cg)
    }
 
 
-static TR_X86OpCodes branchOpCodeForCompare(TR::ILOpCode &op, bool opposite=false)
+static TR::InstOpCode::Mnemonic branchOpCodeForCompare(TR::ILOpCode &op, bool opposite=false)
    {
    int32_t index = 0;
    if (op.isCompareTrueIfLess())
@@ -2175,7 +2175,7 @@ static TR_X86OpCodes branchOpCodeForCompare(TR::ILOpCode &op, bool opposite=fals
    if (opposite)
       index ^= 7;
 
-   static const TR_X86OpCodes opTable[] =
+   static const TR::InstOpCode::Mnemonic opTable[] =
       {
       BADIA32Op,  JL4,  JG4,  JNE4,
       JE4,        JLE4, JGE4, BADIA32Op,
@@ -2862,7 +2862,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
    // that the array bound is a constant, and lowered TR::arraylength into an
    // iconst.  In this case, make sure that the constant is the second child.
    //
-   TR_X86OpCodes branchOpCode;
+   TR::InstOpCode::Mnemonic branchOpCode;
 
    // For primitive stores anchored under the check node, we must evaluate the source node
    // before the bound check branch so that its available to the snippet.  We can make
@@ -4378,7 +4378,7 @@ J9::X86::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(
    auto fej9 = (TR_J9VMBase *)(cg->fe());
    TR::MemoryReference *classFlagsMR = generateX86MemoryReference(j9classReg, (uintptr_t)(fej9->getOffsetOfClassFlags()), cg);
 
-   TR_X86OpCodes testOpCode;
+   TR::InstOpCode::Mnemonic testOpCode;
    if ((uint32_t)classFlag <= USHRT_MAX)
       testOpCode = TEST2MemImm2;
    else
@@ -4583,7 +4583,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    //    label   restartLabel
    //
    TR::Register *lockedReg = NULL;
-   TR_X86OpCodes op = BADIA32Op;
+   TR::InstOpCode::Mnemonic op = BADIA32Op;
 
    if (cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord())
       {
@@ -4719,7 +4719,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          // Otherwise we'll necessarily call the helper.
          generateLabelInstruction(LABEL, node, mismatchLabel, cg);
 
-         TR_X86OpCodes cmpOp = CMPMemImms();
+         TR::InstOpCode::Mnemonic cmpOp = CMPMemImms();
          if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
             cmpOp = CMP4MemImms;
 
@@ -4757,8 +4757,8 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          }
       else
          {
-         TR_X86OpCodes loadOp = LRegMem();
-         TR_X86OpCodes testOp = TESTRegImm4();
+         TR::InstOpCode::Mnemonic loadOp = LRegMem();
+         TR::InstOpCode::Mnemonic testOp = TESTRegImm4();
          if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
             {
             loadOp = L4RegMem;
@@ -5212,7 +5212,7 @@ TR::Register
    generateLabelInstruction(JNE4, node, snippetLabel, cg);
 
 
-   TR_X86OpCodes op = cg->comp()->target().isSMP() ? LCMPXCHGMemReg(gen64BitInstr) : CMPXCHGMemReg(gen64BitInstr);
+   TR::InstOpCode::Mnemonic op = cg->comp()->target().isSMP() ? LCMPXCHGMemReg(gen64BitInstr) : CMPXCHGMemReg(gen64BitInstr);
 
    // compare-and-swap to unlock:
    generateRegRegInstruction(XORRegReg(), node, eaxReal, eaxReal, cg);
@@ -5322,7 +5322,7 @@ TR::Register
       generateRegRegInstruction(XORRegReg(), node, unlockedReg, unlockedReg, cg);
       generateRegImmInstruction(MOVRegImm4(), node, eaxReal, INC_DEC_VALUE, cg);
 
-      TR_X86OpCodes op = cg->comp()->target().isSMP() ? LCMPXCHGMemReg(gen64BitInstr) : CMPXCHGMemReg(gen64BitInstr);
+      TR::InstOpCode::Mnemonic op = cg->comp()->target().isSMP() ? LCMPXCHGMemReg(gen64BitInstr) : CMPXCHGMemReg(gen64BitInstr);
       cg->setImplicitExceptionPoint(generateMemRegInstruction(op, node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), unlockedReg, cg));
       numDeps += 2;
       }
@@ -5805,7 +5805,7 @@ static void genHeapAlloc(
          generateLabelInstruction(JAE4, node, failLabel, cg);
 
          // we have an object in eaxReal, now bump the current updatepointer
-         TR_X86OpCodes opcode;
+         TR::InstOpCode::Mnemonic opcode;
          uint32_t cellSize = fej9->getCellSizeForSizeClass(sizeClass);
          if (cellSize <= 127)
             opcode = ADDMemImms();
@@ -6652,7 +6652,7 @@ static void genInitObjectHeader(TR::Node             *node,
    //
    // --------------------------------------------------------------------------------
    //
-   TR_X86OpCodes opSMemReg = SMemReg(use64BitClasses);
+   TR::InstOpCode::Mnemonic opSMemReg = SMemReg(use64BitClasses);
 
    TR::Register * clzReg = classReg;
 
@@ -6849,7 +6849,7 @@ static void genInitArrayHeader(
          {
          // Native 64-bit needs to cover the discontiguous size field
          //
-         TR_X86OpCodes storeOp = (comp->target().is64Bit() && !comp->useCompressedPointers()) ? S8MemReg : S4MemReg;
+         TR::InstOpCode::Mnemonic storeOp = (comp->target().is64Bit() && !comp->useCompressedPointers()) ? S8MemReg : S4MemReg;
          generateMemRegInstruction(storeOp, node, arraySizeMR, sizeReg, cg);
          }
       else
@@ -6871,7 +6871,7 @@ static void genInitArrayHeader(
          {
          // Native 64-bit needs to cover the discontiguous size field
          //
-         TR_X86OpCodes storeOp = (comp->target().is64Bit() && !comp->useCompressedPointers()) ? S8MemImm4 : S4MemImm4;
+         TR::InstOpCode::Mnemonic storeOp = (comp->target().is64Bit() && !comp->useCompressedPointers()) ? S8MemImm4 : S4MemImm4;
          instanceSize = node->getFirstChild()->getInt();
          generateMemImmInstruction(storeOp, node, arraySizeMR, instanceSize, cg);
          }
@@ -6892,7 +6892,7 @@ static void genInitArrayHeader(
    if (generateArraylets)
       {
       // write arraylet pointer
-      TR_X86OpCodes storeOp;
+      TR::InstOpCode::Mnemonic storeOp;
 
       generateRegMemInstruction(
          LEARegMem(), node,
@@ -7281,11 +7281,11 @@ static bool genZeroInitObject(
 
       if (initLw)
          {
-         TR_X86OpCodes op = (comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? S4MemReg : SMemReg();
+         TR::InstOpCode::Mnemonic op = (comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? S4MemReg : SMemReg();
          generateMemRegInstruction(op, node, generateX86MemoryReference(segmentReg, lwOffset-startOfZeroInits, cg), targetReg, cg);
          }
 
-      TR_X86OpCodes op = comp->target().is64Bit() ? REPSTOSQ : REPSTOSD;
+      TR::InstOpCode::Mnemonic op = comp->target().is64Bit() ? REPSTOSQ : REPSTOSD;
       generateInstruction(op, node, cg);
 
       if (comp->target().is64Bit())
@@ -7310,7 +7310,7 @@ static bool genZeroInitObject(
 
       if (initLw)
          {
-         TR_X86OpCodes op = (comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? S4MemReg : SMemReg();
+         TR::InstOpCode::Mnemonic op = (comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? S4MemReg : SMemReg();
          generateMemRegInstruction(op, node, generateX86MemoryReference(targetReg, lwOffset, cg), tempReg, cg);
          }
       }
@@ -7322,7 +7322,7 @@ static bool genZeroInitObject(
 
       if (initLw)
          {
-         TR_X86OpCodes op = (comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? S4MemImm4 : SMemImm4();
+         TR::InstOpCode::Mnemonic op = (comp->target().is64Bit() && fej9->generateCompressedLockWord()) ? S4MemImm4 : SMemImm4();
          generateMemImmInstruction(op, node, generateX86MemoryReference(targetReg, lwOffset, cg), 0, cg);
          }
       return false;
@@ -8523,7 +8523,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
       // Neither object is known to be an array
       // Check that object 1 is an array. If not, throw exception.
       //
-      TR_X86OpCodes testOpCode;
+      TR::InstOpCode::Mnemonic testOpCode;
       if ((J9AccClassRAMArray >= CHAR_MIN) && (J9AccClassRAMArray <= CHAR_MAX))
          testOpCode = TEST1MemImm1;
       else
@@ -8611,7 +8611,7 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
          {
          // Check that object 2 is an array. If not, throw exception.
          //
-         TR_X86OpCodes testOpCode;
+         TR::InstOpCode::Mnemonic testOpCode;
          if ((J9AccClassRAMArray >= CHAR_MIN) && (J9AccClassRAMArray <= CHAR_MAX))
             testOpCode = TEST1MemImm1;
          else
@@ -9472,7 +9472,7 @@ inlineCompareAndSwapNative(
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-   TR_X86OpCodes op;
+   TR::InstOpCode::Mnemonic op;
 
    if (TR::Compiler->om.canGenerateArraylets() && !node->isUnsafeGetPutCASCallOnNonArray())
       return false;
@@ -9999,7 +9999,7 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
  * Note that RealTimeGC is handled separately in a different method.
  */
 static void generateWriteBarrierCall(
-   TR_X86OpCodes          branchOp,
+   TR::InstOpCode::Mnemonic          branchOp,
    TR::Node*              node,
     MM_GCWriteBarrierType gcMode,
    TR::Register*          owningObjectReg,
@@ -10741,7 +10741,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
       {
       static char *disableWrtbarOpt = feGetEnv("TR_DisableWrtbarOpt");
 
-      TR_X86OpCodes branchOp;
+      TR::InstOpCode::Mnemonic branchOp;
       auto gcModeForSnippet = gcMode;
 
       bool skipSnippetIfSrcNotOld = false;
@@ -10898,7 +10898,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
             }
 
          branchOp = skipSnippetIfOld ? JB4 : JAE4;  // For branch to snippet
-         TR_X86OpCodes reverseBranchOp = skipSnippetIfOld ? JAE4 : JB4;  // For branch past snippet
+         TR::InstOpCode::Mnemonic reverseBranchOp = skipSnippetIfOld ? JAE4 : JB4;  // For branch past snippet
 
          // Now performing check for remembered
          if (skipSnippetIfDestRemembered)
@@ -10963,7 +10963,7 @@ doReferenceStore(
    TR::CodeGenerator      *cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR_X86OpCodes storeOp = usingCompressedPointers ? S4MemReg : SMemReg();
+   TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? S4MemReg : SMemReg();
    TR::Instruction *instr = generateMemRegInstruction(storeOp, node, storeMR, sourceReg, cg);
 
    // for real-time GC, the data reference has already been resolved into an earlier LEA instruction so this padding isn't needed
