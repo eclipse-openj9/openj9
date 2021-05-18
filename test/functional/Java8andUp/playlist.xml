@@ -1996,6 +1996,7 @@
 	<test>
 		<testCaseName>testInvokeSpecialInsideInterface</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	$(ADD_EXPORTS_JDK_INTERNAL_MISC) $(ADD_OPEN_JDK_INTERNAL_MISC) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testInvokeSpecialInsideInterface \

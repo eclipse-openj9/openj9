@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2018, 2019 IBM Corp. and others
+#  Copyright (c) 2018, 2021 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,12 +30,14 @@ endif
 JAXB_API_JAR=
 ADD_EXPORTS_JDK_INTERNAL_REFLECT=
 ADD_EXPORTS_JDK_INTERNAL_MISC=
+ADD_OPEN_JDK_INTERNAL_MISC=
 # JAXB_API_JAR and ADD_EXPORTS_JDK_INTERNAL_REFLECT need to set for JDK11 and up
 # if JDK_VERSION is not 8 9 10
 ifeq ($(filter 8 9 10, $(JDK_VERSION)),)
  JAXB_API_JAR=$(P)$(LIB_DIR)$(D)jaxb-api.jar
  ADD_EXPORTS_JDK_INTERNAL_REFLECT=--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED
  ADD_EXPORTS_JDK_INTERNAL_MISC=--add-exports java.base/jdk.internal.misc=ALL-UNNAMED
+ ADD_OPEN_JDK_INTERNAL_MISC=--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED
 endif
 
 ADD_EXPORTS_JDK_INTERNAL_ACCESS=

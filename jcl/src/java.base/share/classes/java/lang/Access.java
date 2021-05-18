@@ -484,6 +484,13 @@ final class Access implements JavaLangAccess {
 		return String.join(prefix, suffix, delimiter, elements, size);
 	}
 	/*[ENDIF] OPENJDK_METHODHANDLES*/
+	
+	// The method findBootstrapClassOrNull(ClassLoader classLoader, String name) can be removed
+	// after following API change is promoted into extension repo openj9 branch.
+	public Class<?> findBootstrapClassOrNull(String name) {
+		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
+	}
+
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 /*[ENDIF] Sidecar19-SE */

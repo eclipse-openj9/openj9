@@ -66,6 +66,7 @@
 			<variation>Mode501</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+	--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames jsr335 \
 	-groups $(TEST_GROUP) \
@@ -98,6 +99,7 @@
 			<variation>Mode501</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+	--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames jsr335 \
 	-groups $(TEST_GROUP) \
@@ -146,6 +148,7 @@
 			<variation>Mode100</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+	--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
 	org.openj9.test.jsr335.defendersupersends.TestDefenderSupersends; \
 	$(TEST_STATUS)</command>
