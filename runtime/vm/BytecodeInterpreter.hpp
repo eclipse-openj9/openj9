@@ -41,11 +41,14 @@
 #include "jitregmap.h"
 #include "j2sever.h"
 #include "vmaccess.h"
+#include "objhelp.h"
 
 #include "ArrayCopyHelpers.hpp"
 #include "AtomicSupport.hpp"
 #include "BytecodeAction.hpp"
+#if defined(J9VM_OPT_METHOD_HANDLE)
 #include "MHInterpreter.hpp"
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 #include "ObjectAccessBarrierAPI.hpp"
 #include "ObjectHash.hpp"
 #include "ValueTypeHelpers.hpp"
@@ -156,6 +159,7 @@ public:
  * Function members
  */
 private:
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	/**
 	 * Run a methodHandle using the MethodHandle interpreter/
 	 * @param methodHandle[in] The MethodHandle to run
@@ -170,6 +174,7 @@ private:
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		return next;
 	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	/**
 	 * Modify the MH.invocationCount so that invocations from the interpreter don't

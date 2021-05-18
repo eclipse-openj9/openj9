@@ -920,7 +920,9 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 #endif
 		}
 	} else {
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		J9JavaVM *vm = walkState->walkThread->javaVM;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 		UDATA argTempCount = 0;
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 
