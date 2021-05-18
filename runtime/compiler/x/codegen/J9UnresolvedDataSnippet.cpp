@@ -41,7 +41,6 @@
 #include "runtime/J9Runtime.hpp"
 #include "x/codegen/X86Instruction.hpp"
 #include "codegen/InstOpCode.hpp"
-#include "x/codegen/X86Ops_inlines.hpp"
 
 J9::X86::UnresolvedDataSnippet::UnresolvedDataSnippet(
       TR::CodeGenerator *cg,

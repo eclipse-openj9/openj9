@@ -33,7 +33,6 @@
 #include "codegen/Snippet.hpp"
 #include "x/codegen/X86Instruction.hpp"
 #include "codegen/InstOpCode.hpp"
-#include "x/codegen/X86Ops_inlines.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // TR::X86MemImmSnippetInstruction:: member functions
