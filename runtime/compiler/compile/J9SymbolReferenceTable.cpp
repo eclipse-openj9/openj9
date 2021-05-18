@@ -828,26 +828,14 @@ J9::SymbolReferenceTable::createShadowSymbol(
    const char *name,
    TR::Symbol::RecognizedField recognizedField)
    {
-   TR::Symbol *sym = NULL;
-   if (recognizedField != TR::Symbol::UnknownField)
-      sym = TR::Symbol::createRecognizedShadow(trHeapMemory(), type, recognizedField);
-   else
-      sym = TR::Symbol::createShadow(trHeapMemory(), type);
+   TR::Symbol *sym = TR::Symbol::createPossiblyRecognizedShadowWithFlags(
+      trHeapMemory(), type, isVolatile, isFinal, isPrivate, recognizedField);
 
    if (name != NULL)
       {
       sym->setNamedShadowSymbol();
       sym->setName(name);
       }
-
-   if (isVolatile)
-      sym->setVolatile();
-
-   if (isPrivate)
-      sym->setPrivate();
-
-   if (isFinal)
-      sym->setFinal();
 
    static char *dontAliasShadowsToEarlierGISEnv = feGetEnv("TR_dontAliasShadowsToEarlierGIS");
    bool dontAliasShadowsToEarlierGIS = dontAliasShadowsToEarlierGISEnv != NULL;

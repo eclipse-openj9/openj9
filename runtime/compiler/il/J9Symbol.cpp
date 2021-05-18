@@ -370,6 +370,74 @@ J9::Symbol::createRecognizedShadow(AllocatorType m, TR::DataType d, uint32_t s, 
    return sym;
    }
 
+template <typename AllocatorType>
+TR::Symbol *
+J9::Symbol::createPossiblyRecognizedShadowWithFlags(
+   AllocatorType m,
+   TR::DataType type,
+   bool isVolatile,
+   bool isFinal,
+   bool isPrivate,
+   RecognizedField recognizedField)
+   {
+   TR::Symbol *fieldSymbol = NULL;
+   if (recognizedField != TR::Symbol::UnknownField)
+      fieldSymbol = TR::Symbol::createRecognizedShadow(m, type, recognizedField);
+   else
+      fieldSymbol = TR::Symbol::createShadow(m, type);
+
+   if (isVolatile)
+      fieldSymbol->setVolatile();
+
+   if (isFinal)
+      fieldSymbol->setFinal();
+
+   if (isPrivate)
+      fieldSymbol->setPrivate();
+
+   return fieldSymbol;
+   }
+
+template <typename AllocatorType>
+TR::Symbol *
+J9::Symbol::createPossiblyRecognizedShadowFromCP(
+   TR::Compilation *comp,
+   AllocatorType m,
+   TR_ResolvedMethod *owningMethod,
+   int32_t cpIndex,
+   TR::DataType *type, // can be determined accurately even for unresolved field refs
+   uint32_t *offset, // typically stored for some reason on symref (not Symbol)
+   bool needsAOTValidation)
+   {
+   *type = TR::NoType;
+   *offset = 0;
+
+   const bool isStatic = false;
+   RecognizedField recognizedField =
+      TR::Symbol::searchRecognizedField(comp, owningMethod, cpIndex, isStatic);
+
+   bool isVolatile, isFinal, isPrivate, isUnresolvedInCP;
+
+   const bool isStore = false;
+   bool resolved = owningMethod->fieldAttributes(
+      comp,
+      cpIndex,
+      offset,
+      type,
+      &isVolatile,
+      &isFinal,
+      &isPrivate,
+      isStore,
+      &isUnresolvedInCP,
+      needsAOTValidation);
+
+   if (!resolved)
+      return NULL;
+
+   return createPossiblyRecognizedShadowWithFlags(
+      m, *type, isVolatile, isFinal, isPrivate, recognizedField);
+   }
+
 /*
  * Explicit instantiation of factories for each TR_Memory type.
  */
@@ -380,3 +448,8 @@ template TR::Symbol * J9::Symbol::createRecognizedShadow(TR_HeapMemory,         
 template TR::Symbol * J9::Symbol::createRecognizedShadow(TR_StackMemory,         TR::DataType, uint32_t, RecognizedField);
 template TR::Symbol * J9::Symbol::createRecognizedShadow(TR_HeapMemory,          TR::DataType, uint32_t, RecognizedField);
 
+template TR::Symbol * J9::Symbol::createPossiblyRecognizedShadowWithFlags(TR_StackMemory,         TR::DataType, bool, bool, bool, RecognizedField);
+template TR::Symbol * J9::Symbol::createPossiblyRecognizedShadowWithFlags(TR_HeapMemory,          TR::DataType, bool, bool, bool, RecognizedField);
+
+template TR::Symbol * J9::Symbol::createPossiblyRecognizedShadowFromCP(TR::Compilation*, TR_StackMemory,         TR_ResolvedMethod*, int32_t, TR::DataType*, uint32_t*, bool);
+template TR::Symbol * J9::Symbol::createPossiblyRecognizedShadowFromCP(TR::Compilation*, TR_HeapMemory,          TR_ResolvedMethod*, int32_t, TR::DataType*, uint32_t*, bool);

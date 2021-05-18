@@ -198,6 +198,30 @@ private:
    RecognizedField _recognizedField;
    /** @} */
 
+public:
+
+   // These two methods are primarily for direct analysis of bytecode. If
+   // generating trees, use SymbolReferenceTable instead.
+
+   template <typename AllocatorType>
+   static TR::Symbol * createPossiblyRecognizedShadowWithFlags(
+      AllocatorType m,
+      TR::DataType type,
+      bool isVolatile,
+      bool isFinal,
+      bool isPrivate,
+      RecognizedField recognizedField);
+
+   template <typename AllocatorType>
+   static TR::Symbol * createPossiblyRecognizedShadowFromCP(
+      TR::Compilation *comp,
+      AllocatorType m,
+      TR_ResolvedMethod *owningMethod,
+      int32_t cpIndex,
+      TR::DataType *type,
+      uint32_t *offset,
+      bool needsAOTValidation);
+
    };
 }
 

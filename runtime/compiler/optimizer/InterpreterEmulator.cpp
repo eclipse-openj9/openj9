@@ -290,12 +290,12 @@ void
 InterpreterEmulator::maintainStackForGetField()
    {
    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
-   bool isVolatile, isPrivate, isUnresolvedInCP, isFinal;
    TR::DataType type = TR::NoType;
    uint32_t fieldOffset;
    int32_t cpIndex = next2Bytes();
    Operand *newOperand = _unknownOperand;
-   bool resolved = _calltarget->_calleeMethod->fieldAttributes(comp(), cpIndex, &fieldOffset, &type, &isVolatile, &isFinal, &isPrivate, false, &isUnresolvedInCP, false);
+   TR::Symbol *fieldSymbol = TR::Symbol::createPossiblyRecognizedShadowFromCP(
+      comp(), trStackMemory(), _calltarget->_calleeMethod, cpIndex, &type, &fieldOffset, false);
 
    TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
    if (knot &&
@@ -303,16 +303,7 @@ InterpreterEmulator::maintainStackForGetField()
        !knot->isNull(top()->getKnownObjectIndex())
        && type == TR::Address)
       {
-      TR::Symbol::RecognizedField recognizedField = TR::Symbol::searchRecognizedField(comp(), _calltarget->_calleeMethod, cpIndex, false);
-      TR::Symbol *fieldSymbol = NULL;
-      if (recognizedField != TR::Symbol::UnknownField)
-         fieldSymbol = TR::Symbol::createRecognizedShadow(trStackMemory(),type, recognizedField);
-      else
-         fieldSymbol = TR::Symbol::createShadow(trStackMemory(),type);
-      if (isFinal)
-         fieldSymbol->setFinal();
-
-      if (!resolved && isUnresolvedInCP)
+      if (fieldSymbol == NULL)
          {
          debugTrace(tracer(), "field is unresolved");
          }
