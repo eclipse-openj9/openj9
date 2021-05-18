@@ -8674,6 +8674,7 @@ done:
 		return retFromNativeHelper(REGISTER_ARGS, 2, _vm->jitConfig->jitExitInterpreterJ);
 	}
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	VMINLINE VM_BytecodeAction
 	impdep1(REGISTER_ARGS_LIST)
 	{
@@ -8683,6 +8684,7 @@ done:
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		return next;
 	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	VMINLINE VM_BytecodeAction
 	impdep2(REGISTER_ARGS_LIST)
@@ -9168,7 +9170,12 @@ public:
 		JUMP_TABLE_ENTRY(JBreturnFromJ2I), /* 0xFB(251) */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xFC(252) */
 		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xFD(253) */
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		JUMP_TABLE_ENTRY(JBimpdep1), /* 0xFE(254) */
+#else /* defined(J9VM_OPT_METHOD_HANDLE) */
+		/* impdep1 not used for OpenJDK method handles. */
+		JUMP_TABLE_ENTRY(JBunimplemented), /* 0xFE(254) */
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 		JUMP_TABLE_ENTRY(JBimpdep2),/* 0xFF(255) */
 	};
 	static JUMP_TABLE_TYPE sendTargetTable[] = {
@@ -10723,9 +10730,11 @@ executeBytecodeFromLocal:
 		JUMP_TARGET(JBreturnFromJ2I):
 			/* No single step for this bytecode */
 			PERFORM_ACTION(j2iReturn(REGISTER_ARGS));
+#if defined(J9VM_OPT_METHOD_HANDLE)
 		JUMP_TARGET(JBimpdep1):
 			/* No single step for this bytecode */
 			PERFORM_ACTION(impdep1(REGISTER_ARGS));
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 		JUMP_TARGET(JBimpdep2):
 			/* No single step for this bytecode */
 			PERFORM_ACTION(impdep2(REGISTER_ARGS));
