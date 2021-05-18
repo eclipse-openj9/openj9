@@ -5249,7 +5249,9 @@ typedef struct J9JavaVM {
 	UDATA  ( *unhookVMEvent)(struct J9JavaVM *javaVM, UDATA eventNumber, void * currentHandler, void * oldHandler) ;
 	UDATA classLoadingMaxStack;
 	U_8* callInReturnPC;
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	U_8* impdep1PC;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	UDATA  ( *jitExceptionHandlerSearch)(struct J9VMThread *currentThread, struct J9StackWalkState *walkState) ;
 	UDATA  ( *walkStackFrames)(struct J9VMThread *currentThread, struct J9StackWalkState *walkState) ;
 	UDATA  ( *walkFrame)(struct J9StackWalkState *walkState) ;

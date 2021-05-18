@@ -291,7 +291,9 @@ extern void populateRASNetData (J9JavaVM *javaVM, J9RAS *rasStruct);
 #endif /* J9VM_RAS_EYECATCHERS */
 
 const U_8 J9CallInReturnPC[] = { 0xFF, 0x00, 0x00, 0xFF }; /* impdep2, parm, parm, impdep2 */
+#if defined(J9VM_OPT_METHOD_HANDLE)
 const U_8 J9Impdep1PC[] = { 0xFE, 0x00, 0x00, 0xFE }; /* impdep1, parm, parm, impdep1 */
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 static jint (JNICALL * vprintfHookFunction)(FILE *fp, const char *format, va_list args) = NULL;
 static IDATA (* portLibrary_file_write_text) (struct OMRPortLibrary *portLibrary, IDATA fd, const char *buf, IDATA nbytes) = NULL;
@@ -2543,7 +2545,9 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 #endif
 			vm->callInReturnPC = (U_8 *) J9CallInReturnPC;
+#if defined(J9VM_OPT_METHOD_HANDLE)
 			vm->impdep1PC = (U_8 *) J9Impdep1PC;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 			break;
 
 		case JIT_INITIALIZED :

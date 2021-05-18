@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,8 +61,10 @@ getMethodName(J9PortLibrary *PORTLIB, J9Method *method, U_8 *pc, char *buffer)
 	if ((UDATA)pc <= J9SF_MAX_SPECIAL_FRAME_TYPE) {
 		j9str_printf(PORTLIB, temp, sizeof(temp), "SPECIAL %d", pc);
 		strcat(buffer, temp);
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	} else if (((U_8*)-1 != pc) && (JBimpdep1 == *pc)) {
 		strcat(buffer, "MHMAGIC");
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	} else if (((U_8*)-1 != pc) && (JBimpdep2 == *pc)) {
 		strcat(buffer, "CALLIN");
 	} else if (((U_8*)-1 != pc) && (((*pc >= JBretFromNative0) && (*pc <= JBreturnFromJ2I)) || (JBreturnFromJ2I == *pc))) {
