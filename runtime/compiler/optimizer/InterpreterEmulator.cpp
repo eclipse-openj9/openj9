@@ -312,7 +312,15 @@ InterpreterEmulator::maintainStackForGetField()
       if (isFinal)
          fieldSymbol->setFinal();
 
-      if ((resolved || !isUnresolvedInCP) && comp()->fej9()->canDereferenceAtCompileTimeWithFieldSymbol(fieldSymbol, cpIndex, _calltarget->_calleeMethod))
+      if (!resolved && isUnresolvedInCP)
+         {
+         debugTrace(tracer(), "field is unresolved");
+         }
+      else if (!comp()->fej9()->canDereferenceAtCompileTimeWithFieldSymbol(fieldSymbol, cpIndex, _calltarget->_calleeMethod))
+         {
+         debugTrace(tracer(), "field is not foldable");
+         }
+      else
          {
          TR::KnownObjectTable::Index baseObjectIndex = top()->getKnownObjectIndex();
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
@@ -366,8 +374,6 @@ InterpreterEmulator::maintainStackForGetField()
                   fieldOffset, baseObjectIndex, baseObjectAddress);
             }
          }
-      else
-         debugTrace(tracer(), "unresolved field or can't derefence in thunk archetype resolved %d isUnresolvedInCP %d\n", resolved, isUnresolvedInCP);
       }
    pop();
    push(newOperand);
