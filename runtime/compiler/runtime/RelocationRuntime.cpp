@@ -1064,12 +1064,13 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
       intptr_t featureFlags = generateFeatureFlags(fe);
 
       TR_Version currentVersion;
-      memset(&currentVersion, 0, sizeof(TR_Version));
       currentVersion.structSize = sizeof(TR_Version);
       currentVersion.majorVersion = TR_AOTHeaderMajorVersion;
       currentVersion.minorVersion = TR_AOTHeaderMinorVersion;
-      strncpy(currentVersion.vmBuildVersion, EsBuildVersionString, std::min(strlen(EsBuildVersionString), sizeof(currentVersion.vmBuildVersion) - 1));
-      strncpy(currentVersion.jitBuildVersion, TR_BUILD_NAME, std::min(strlen(TR_BUILD_NAME), sizeof(currentVersion.jitBuildVersion) - 1));
+      strncpy(currentVersion.vmBuildVersion, EsBuildVersionString, sizeof(currentVersion.vmBuildVersion) - 1);
+      currentVersion.vmBuildVersion[sizeof(currentVersion.vmBuildVersion) - 1] = '\0';
+      strncpy(currentVersion.jitBuildVersion, TR_BUILD_NAME, sizeof(currentVersion.jitBuildVersion) - 1);
+      currentVersion.jitBuildVersion[sizeof(currentVersion.jitBuildVersion) - 1] = '\0';
 
       if (hdrInCache->eyeCatcher != TR_AOTHeaderEyeCatcher ||
           currentVersion.structSize != hdrInCache->version.structSize ||
@@ -1144,13 +1145,14 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
       aotHeaderVersion->structSize = sizeof(TR_Version);
       aotHeaderVersion->majorVersion = TR_AOTHeaderMajorVersion;
       aotHeaderVersion->minorVersion = TR_AOTHeaderMinorVersion;
-      strncpy(aotHeaderVersion->vmBuildVersion, EsBuildVersionString, sizeof(EsBuildVersionString));
-      strncpy(aotHeaderVersion->jitBuildVersion, TR_BUILD_NAME, std::min(strlen(TR_BUILD_NAME), sizeof(aotHeaderVersion->jitBuildVersion)));
+      strncpy(aotHeaderVersion->vmBuildVersion, EsBuildVersionString, sizeof(aotHeaderVersion->vmBuildVersion) - 1);
+      aotHeaderVersion->vmBuildVersion[sizeof(aotHeaderVersion->vmBuildVersion) - 1] = '\0';
+      strncpy(aotHeaderVersion->jitBuildVersion, TR_BUILD_NAME, sizeof(aotHeaderVersion->jitBuildVersion) - 1);
+      aotHeaderVersion->jitBuildVersion[sizeof(aotHeaderVersion->jitBuildVersion) - 1] = '\0';
 
       aotHeader->gcPolicyFlag = javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM());
       aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(javaVM());
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
-      
 
       if (J9_ARE_ANY_BITS_SET(javaVM()->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
          {
@@ -1428,7 +1430,7 @@ TR_JITServerRelocationRuntime::copyDataToCodeCache(const void *startAddress, siz
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 
-/** 
+/**
  * @brief Generate the processor feature string which is stored inside TR_AOTHeader of the SCC
  * @param[in] aotHeaderAddress : the start address of TR_AOTHeader
  * @param[out] buff : store the generated processor feautre string in this buff
@@ -1453,7 +1455,7 @@ printAOTHeaderProcessorFeatures(TR_AOTHeader * hdrInCache, char * buff, const si
    for (size_t i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
       {
       size_t numberOfBits = CHAR_BIT * sizeof(processorDescription.features[i]);
-      for (int j = 0; j < numberOfBits; j++) 
+      for (int j = 0; j < numberOfBits; j++)
          {
          if (processorDescription.features[i] & (1<<j))
             {

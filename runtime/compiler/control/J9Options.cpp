@@ -917,7 +917,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"numInterpCompReqToExitIdleMode=", "M<nnn>\tNumber of first time comp. req. that takes the JIT out of idle mode",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numFirstTimeCompilationsToExitIdleMode, 0, "F%d", NOT_IN_SUBSET },
 #if defined(J9VM_OPT_JITSERVER)
-   {"oldAge=", " \tDefines what an old JITServer cache entry means", 
+   {"oldAge=", " \tDefines what an old JITServer cache entry means",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAge,  0, " %d"},
    {"oldAgeUnderLowMemory=", " \tDefines what an old JITServer cache entry means when memory is low",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAgeUnderLowMemory,  0, " %d" },
@@ -988,7 +988,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"testMode",           "D\tcompile but do not run the compiled code",  SET_JITCONFIG_RUNTIME_FLAG(J9JIT_TESTMODE) },
 #if defined(J9VM_OPT_JITSERVER)
-   {"timeBetweenPurges=", " \tDefines how often we are willing to scan for old entries to be purged", 
+   {"timeBetweenPurges=", " \tDefines how often we are willing to scan for old entries to be purged",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_timeBetweenPurges,  0, " %d"},
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_ARM64)
@@ -1052,7 +1052,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
 
 bool J9::Options::showOptionsInEffect()
    {
-   if (this == TR::Options::getAOTCmdLineOptions() && self()->getOption(TR_NoLoadAOT) &&	self()->getOption(TR_NoStoreAOT))
+   if (this == TR::Options::getAOTCmdLineOptions() && self()->getOption(TR_NoLoadAOT) && self()->getOption(TR_NoStoreAOT))
       return false;
    else
       return (TR::Options::isAnyVerboseOptionSet(TR_VerboseOptions, TR_VerboseExtended));
@@ -1720,7 +1720,7 @@ J9::Options::fePreProcess(void * base)
                return false;
             }
 
-          // Verify "pagesize=<size>" option. 
+          // Verify "pagesize=<size>" option.
           // This option must be specified for all platforms.
          if (0 == pageSizeHowMany)
             {
@@ -1732,7 +1732,7 @@ J9::Options::fePreProcess(void * base)
          //  [non]pageable option must be specified for Z platforms
          if ((0 == pageableHowMany) && (0 == nonPageableHowMany))
             {
-            // [non]pageable not found 
+            // [non]pageable not found
             char *xlpOptionErrorString = "-Xlp:codecache:";
             char *xlpMissingOptionString = "[non]pageable";
 
@@ -1759,7 +1759,7 @@ J9::Options::fePreProcess(void * base)
          char *lpOption = "-Xlp";
          GET_MEMORY_VALUE(xlpIndex, lpOption, requestedLargeCodePageSize);
          }
-      
+
       if (requestedLargeCodePageSize != 0)
          {
          // Check to see if requested size is valid
@@ -1767,7 +1767,7 @@ J9::Options::fePreProcess(void * base)
          largePageSize = requestedLargeCodePageSize;
          largePageFlags = requestedLargeCodePageFlags;
 
-         
+
          // j9vmem_find_valid_page_size happened to be changed to always return 0
          // However formally the function type still be IDATA so assert if it returns anything else
          j9vmem_find_valid_page_size(J9PORT_VMEM_MEMORY_MODE_EXECUTE, &largePageSize, &largePageFlags, &isRequestedSizeSupported);
@@ -2133,19 +2133,21 @@ static TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *na
    {
    PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
    char tmp[1025];
-
+   char *formattedTmp = NULL;
    if (!options->getOption(TR_EnablePIDExtension))
       {
-      char *formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, 1025, name, NULL, false);
-      return j9jit_fopen(formattedTmp, permission, b1, b2);
+      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, NULL, false);
       }
    else
-     {
-     char *formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, 1025, name, options->getSuffixLogsFormat(), true);
-     return j9jit_fopen(formattedTmp, permission, b1, b2);
-     }
-  }
-
+      {
+      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, options->getSuffixLogsFormat(), true);
+      }
+   if (NULL != formattedTmp)
+      {
+      return j9jit_fopen(formattedTmp, permission, b1, b2);
+      }
+   return NULL;
+   }
 
 void
 J9::Options::openLogFiles(J9JITConfig *jitConfig)
@@ -2482,7 +2484,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // input values to the options.
    if (_veryHighActiveThreadThreshold == -1)
       _veryHighActiveThreadThreshold = getNumUsableCompilationThreads() * 0.9;
-  
+
    if (_highActiveThreadThreshold == -1)
       _highActiveThreadThreshold = getNumUsableCompilationThreads() * 0.8;
 
@@ -2494,7 +2496,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       _highActiveThreadThreshold = getNumUsableCompilationThreads();
    if (_highActiveThreadThreshold  > _veryHighActiveThreadThreshold)
       _highActiveThreadThreshold  = _veryHighActiveThreadThreshold;
-      
+
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    // Determine whether or not to inline monitor enter/exit

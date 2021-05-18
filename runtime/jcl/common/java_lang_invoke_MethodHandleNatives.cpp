@@ -62,7 +62,7 @@ extern "C" {
 #define MN_TRUSTED_MODE			-1
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
-/* Private MemberName object init helper 
+/* Private MemberName object init helper
  *
  * Set the MemberName fields based on the refObject given:
  * For j.l.reflect.Field:
@@ -282,12 +282,12 @@ getJ9UTF8SignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObjec
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	char** signatures = (char**)j9mem_allocate_memory((numArgs) * sizeof(char*), OMRMEM_CATEGORY_VM);
+	char** signatures = (char**)j9mem_allocate_memory(numArgs * sizeof(char*), OMRMEM_CATEGORY_VM);
 	if (NULL == signatures) {
 		goto done;
 	}
 
-	memset(signatures, 0, (numArgs) * sizeof(char*));
+	memset(signatures, 0, numArgs * sizeof(char*));
 
 	for (U_32 i = 0; i < numArgs; i++) {
 		j9object_t pObject = J9JAVAARRAYOFOBJECT_LOAD(currentThread, ptypes, i);
@@ -308,9 +308,9 @@ getJ9UTF8SignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObjec
 		if (NULL == rSignature) {
 			goto done;
 		}
-	}
 
-	signatureLength += strlen(rSignature);
+		signatureLength += strlen(rSignature);
+	}
 
 	methodDescriptor = (J9UTF8*)j9mem_allocate_memory(signatureLength + sizeof(J9UTF8), OMRMEM_CATEGORY_VM);
 	if (NULL == methodDescriptor) {
@@ -323,13 +323,13 @@ getJ9UTF8SignatureFromMethodType(J9VMThread *currentThread, j9object_t typeObjec
 	/* Copy class signatures to descriptor string */
 	for (U_32 i = 0; i < numArgs; i++) {
 		UDATA len = strlen(signatures[i]);
-		strncpy(cursor, signatures[i], len);
+		memcpy(cursor, signatures[i], len);
 		cursor += len;
 	}
 
 	*cursor++ = ')';
 	/* Copy return type signature to descriptor string */
-	strncpy(cursor, rSignature, strlen(rSignature));
+	memcpy(cursor, rSignature, strlen(rSignature));
 
 done:
 	j9mem_free_memory(rSignature);
@@ -1257,7 +1257,7 @@ done:
 
 /**
  * static native long objectFieldOffset(MemberName self);  // e.g., returns vmindex
- * 
+ *
  * Returns the objectFieldOffset of the field represented by the MemberName
  * result should be same as if calling Unsafe.objectFieldOffset with the actual field object
  */
@@ -1298,7 +1298,7 @@ Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset(JNIEnv *env, jclass 
 
 /**
  * static native long staticFieldOffset(MemberName self);  // e.g., returns vmindex
- * 
+ *
  * Returns the staticFieldOffset of the field represented by the MemberName
  * result should be same as if calling Unsafe.staticFieldOffset with the actual field object
  */
@@ -1337,7 +1337,7 @@ Java_java_lang_invoke_MethodHandleNatives_staticFieldOffset(JNIEnv *env, jclass 
 
 /**
  * static native Object staticFieldBase(MemberName self);  // e.g., returns clazz
- * 
+ *
  * Returns the staticFieldBase of the field represented by the MemberName
  * result should be same as if calling Unsafe.staticFieldBase with the actual field object
  */
@@ -1374,7 +1374,7 @@ Java_java_lang_invoke_MethodHandleNatives_staticFieldBase(JNIEnv *env, jclass cl
 
 /**
  * static native Object getMemberVMInfo(MemberName self);  // returns {vmindex,vmtarget}
- * 
+ *
  * Return a 2-element java array containing the vm offset/target data
  * For a field MemberName, array contains:
  * 		(field offset, declaring class)
@@ -1595,6 +1595,5 @@ Java_java_lang_invoke_MethodHandleNatives_registerNatives(JNIEnv *env, jclass cl
 {
 	return;
 }
-
 
 } /* extern "C" */
