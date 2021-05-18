@@ -807,6 +807,20 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
          }
 
+      // If there is information available about the component type of the array for a call to
+      // jitLoadFlattenableArrayElement, mark the result of the call with the component type
+      //
+      if (isLoadFlattenableArrayElement && arrayConstraint && arrayConstraint->getClass()
+          && arrayConstraint->getClassType()->isArray() == TR_yes)
+         {
+         TR_OpaqueClassBlock *arrayComponentClass = fe()->getComponentClassFromArrayClass(arrayConstraint->getClass());
+
+         if (arrayComponentClass && arrayConstraint->asResolvedClass())
+            {
+            addBlockOrGlobalConstraint(node, TR::VPResolvedClass::create(this, arrayComponentClass), arrayRefGlobal);
+            }
+         }
+
       return;
       }
 
