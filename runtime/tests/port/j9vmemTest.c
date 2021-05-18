@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2419,9 +2419,15 @@ j9vmem_testFindValidPageSize_impl(struct J9PortLibrary *portLibrary, char *testN
 
 	j9vmem_find_valid_page_size(mode, &requestedPageSize, &requestedPageFlags, &isSizeSupported);
 
-	expectedPageSize = dataSegmentPageSize;
-	expectedPageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
-	expectedIsSizeSupported = (16 * FOUR_KB == dataSegmentPageSize) ? TRUE : FALSE;
+	if (TRUE == sixtyFourKBPageSize) {
+		expectedPageSize = 16 * FOUR_KB;
+		expectedPageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
+		expectedIsSizeSupported = TRUE;
+	} else {
+		expectedPageSize = dataSegmentPageSize;
+		expectedPageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
+		expectedIsSizeSupported = (16 * FOUR_KB == dataSegmentPageSize) ? TRUE : FALSE;
+	}
 
 	verifyFindValidPageSizeOutput(portLibrary, testName,
 								expectedPageSize, expectedPageFlags, expectedIsSizeSupported,
@@ -2445,9 +2451,15 @@ j9vmem_testFindValidPageSize_impl(struct J9PortLibrary *portLibrary, char *testN
 	/* unset the environment variable TR_ppcCodeCacheConsolidationEnabled */
 	unsetenv("TR_ppcCodeCacheConsolidationEnabled");
 
-	expectedPageSize = dataSegmentPageSize;
-	expectedPageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
-	expectedIsSizeSupported = (16 * FOUR_KB == dataSegmentPageSize) ? TRUE : FALSE;
+	if (TRUE == sixtyFourKBPageSize) {
+		expectedPageSize = 16 * FOUR_KB;
+		expectedPageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
+		expectedIsSizeSupported = TRUE;
+	} else {
+		expectedPageSize = dataSegmentPageSize;
+		expectedPageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
+		expectedIsSizeSupported = (16 * FOUR_KB == dataSegmentPageSize) ? TRUE : FALSE;
+	}
 
 	verifyFindValidPageSizeOutput(portLibrary, testName,
 								expectedPageSize, expectedPageFlags, expectedIsSizeSupported,
