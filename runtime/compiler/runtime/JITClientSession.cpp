@@ -417,10 +417,7 @@ ClientSessionData::ClassInfo::ClassInfo() :
 void
 ClientSessionData::ClassInfo::freeClassInfo(TR_PersistentMemory *persistentMemory)
    {
-   if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
-      cache->release(_romClass);
-   else
-      persistentMemory->freePersistentMemory(_romClass);
+   JITServerHelpers::freeRemoteROMClass(_romClass, persistentMemory);
 
    // free cached _interfaces
    _interfaces->~PersistentVector<TR_OpaqueClassBlock *>();
