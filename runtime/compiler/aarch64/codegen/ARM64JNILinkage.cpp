@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -167,14 +167,85 @@ void J9::ARM64::JNILinkage::acquireVMAccess(TR::Node *callNode, TR::Register *vm
    }
 
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
-void J9::ARM64::JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode, TR::Register *vmThreadReg)
+void J9::ARM64::JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg0, TR::Register *scratchReg1)
    {
-   TR_UNIMPLEMENTED();
+   TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
+   TR_Debug *debugObj = cg()->getDebug();
+
+   // Release VM access atomic free
+   //
+   //    movzx   scratch0, #1
+   //    strimmx scratch0, [vmThreadReg, #inNativeOffset]
+   //    ldrimmx scratch1, [vmThreadReg, #publicFlagsOffset]
+   //    cmpimmx scratch1, #J9_PUBLIC_FLAGS_VM_ACCESS
+   //    b.ne    releaseVMAccessSnippet
+   // releaseVMAccessRestart:
+   //
+   static_assert(static_cast<uint64_t>(J9_PUBLIC_FLAGS_VM_ACCESS) < (1 << 12), "J9_PUBLIC_FLAGS_VM_ACCESS must fit in immediate");
+   generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, scratchReg0, 1);
+#ifdef J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH
+   auto strInNativeInstr = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, offsetof(J9VMThread, inNative), cg()), scratchReg0);
+   auto ldrPubliFlagsInstr = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg1, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()));
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
+   generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, scratchReg1, vmThreadReg, offsetof(J9VMThread, inNative));
+   auto strInNativeInstr = generateMemSrc1Instruction(cg(), TR::InstOpCode::stlrx, callNode, new (trHeapMemory()) TR::MemoryReference(scratchReg1, 0, cg()), scratchReg0);
+   generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, scratchReg0, vmThreadReg, fej9->thisThreadGetPublicFlagsOffset());
+   auto ldrPubliFlagsInstr = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldarx, callNode, scratchReg1, new (trHeapMemory()) TR::MemoryReference(scratchReg0, 0, cg()));
+#endif
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(strInNativeInstr, "store 1 to vmThread->inNative");
+      debugObj->addInstructionComment(ldrPubliFlagsInstr, "load vmThread->publicFlags");
+      }
+   generateCompareImmInstruction(cg(), callNode, scratchReg1, J9_PUBLIC_FLAGS_VM_ACCESS, true);
+
+   TR::LabelSymbol *releaseVMAccessSnippetLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol *releaseVMAccessRestartLabel = generateLabelSymbol(cg());
+   TR::SymbolReference *relVMSymRef = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getJittedMethodSymbol());
+
+   TR::Snippet *releaseVMAccessSnippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, releaseVMAccessSnippetLabel, relVMSymRef, releaseVMAccessRestartLabel);
+   cg()->addSnippet(releaseVMAccessSnippet);
+   generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, callNode, releaseVMAccessSnippetLabel, TR::CC_NE);
+   releaseVMAccessSnippet->gcMap().setGCRegisterMask(0);
+
+   generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, releaseVMAccessRestartLabel);
    }
 
-void J9::ARM64::JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode, TR::Register *vmThreadReg)
+void J9::ARM64::JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg0, TR::Register *zeroReg)
    {
-   TR_UNIMPLEMENTED();
+   TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
+   TR_Debug *debugObj = cg()->getDebug();
+
+   // Re-acquire VM access atomic free
+   //    strimmx xzr, [vmThreadReg, #inNativeOffset]
+   //    ldrimmx scratch0, [vmThreadReg, #publicFlagsOffset]
+   //    cmpimmx scratch0, #J9_PUBLIC_FLAGS_VM_ACCESS
+   //    b.ne    acquireVMAccessSnippet
+   // reacquireVMAccessRestart:
+   //
+   static_assert(static_cast<uint64_t>(J9_PUBLIC_FLAGS_VM_ACCESS) < (1 << 12), "J9_PUBLIC_FLAGS_VM_ACCESS must fit in immediate");
+   auto strInNativeInstr = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, offsetof(J9VMThread, inNative), cg()), zeroReg);
+#ifndef J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH
+   generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, 0xb);
+#endif
+   auto ldrPubliFlagsInstr = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg0, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, fej9->thisThreadGetPublicFlagsOffset(), cg()));
+   if (debugObj)
+      {
+      debugObj->addInstructionComment(strInNativeInstr, "store 0 to vmThread->inNative");
+      debugObj->addInstructionComment(ldrPubliFlagsInstr, "load vmThread->publicFlags");
+      }
+   generateCompareImmInstruction(cg(), callNode, scratchReg0, J9_PUBLIC_FLAGS_VM_ACCESS, true);
+
+   TR::LabelSymbol *reacquireVMAccessSnippetLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol *reacquireVMAccessRestartLabel = generateLabelSymbol(cg());
+   TR::SymbolReference *acqVMSymRef = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol());
+
+   TR::Snippet *reacquireVMAccessSnippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, reacquireVMAccessSnippetLabel, acqVMSymRef, reacquireVMAccessRestartLabel);
+   cg()->addSnippet(reacquireVMAccessSnippet);
+   generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, callNode, reacquireVMAccessSnippetLabel, TR::CC_NE);
+   reacquireVMAccessSnippet->gcMap().setGCRegisterMask(0);
+
+   generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, reacquireVMAccessRestartLabel);
    }
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
@@ -858,7 +929,12 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    cg()->machine()->setLinkRegisterKilled(true);
 
    const int maxRegisters = getProperties()._numAllocatableIntegerRegisters + getProperties()._numAllocatableFloatRegisters;
-   TR::RegisterDependencyConditions *deps = new (trHeapMemory()) TR::RegisterDependencyConditions(maxRegisters, maxRegisters, trMemory());
+#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
+   const int maxPostRegisters = maxRegisters + 1;
+#else
+   const int maxPostRegisters = maxRegisters;
+#endif
+   TR::RegisterDependencyConditions *deps = new (trHeapMemory()) TR::RegisterDependencyConditions(maxRegisters, maxPostRegisters, trMemory());
 
    size_t spSize = buildJNIArgs(callNode, deps, passThread, passReceiver, killNonVolatileGPRs);
    TR::RealRegister *sp = machine()->getRealRegister(_systemLinkage->getProperties().getStackPointerRegister());
@@ -876,6 +952,11 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       }
 
    TR::Register *returnRegister = getReturnRegisterFromDeps(callNode, deps);
+
+#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
+   TR::Register *zeroReg = cg()->allocateRegister();
+   deps->addPostCondition(zeroReg, TR::RealRegister::xzr);
+#endif
    auto postLabelDeps = deps->clonePost(cg());
    TR::RealRegister *vmThreadReg = machine()->getRealRegister(getProperties().getMethodMetaDataRegister());   // x19
    TR::RealRegister *javaStackReg = machine()->getRealRegister(getProperties().getStackPointerRegister());    // x20
@@ -899,7 +980,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    if (dropVMAccess)
       {
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
-      releaseVMAccessAtomicFree(callNode, vmThreadReg);
+      releaseVMAccessAtomicFree(callNode, vmThreadReg, x9Reg, x10Reg);
 #else
       releaseVMAccess(callNode, vmThreadReg, x9Reg, x10Reg, x11Reg, x12Reg);
 #endif
@@ -923,7 +1004,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    if (dropVMAccess)
       {
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
-      acquireVMAccessAtomicFree(callNode, vmThreadReg);
+      acquireVMAccessAtomicFree(callNode, vmThreadReg, x9Reg, zeroReg);
 #else
       acquireVMAccess(callNode, vmThreadReg, x9Reg, x10Reg, x11Reg);
 #endif
@@ -949,6 +1030,9 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    callNode->setRegister(returnRegister);
 
+#ifdef J9VM_INTERP_ATOMIC_FREE_JNI
+   cg()->stopUsingRegister(zeroReg);
+#endif
    deps->stopUsingDepRegs(cg(), returnRegister);
    return returnRegister;
    }
