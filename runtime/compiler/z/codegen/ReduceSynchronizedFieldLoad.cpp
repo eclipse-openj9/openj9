@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,13 +64,13 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    TR::LabelSymbol* fastPathLabel = generateLabelSymbol(cg);
    TR::LabelSymbol* slowPathLabel = generateLabelSymbol(cg);
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fastPathLabel);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, fastPathLabel);
 
    TR_S390OutOfLineCodeSection* outOfLineCodeSection = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(slowPathLabel, mergeLabel, cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outOfLineCodeSection);
    outOfLineCodeSection->swapInstructionListsWithCompilation();
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, slowPathLabel);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, slowPathLabel);
 
    // Generate a dynamic debug counter for the fallback path whose execution should be extremely rare
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "codegen/z/ReduceSynchronizedFieldLoad/success/OOL/%s", comp->signature()));
@@ -239,7 +239,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, slowPathLabel);
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, mergeLabel, conditions);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, mergeLabel, conditions);
 
    cg->decReferenceCount(synchronizedObjectNode);
    cg->decReferenceCount(loadNode);
