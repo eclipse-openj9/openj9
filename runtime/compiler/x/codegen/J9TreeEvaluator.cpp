@@ -838,7 +838,7 @@ extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::f2l] =                   TR::TreeEvaluator::f2lEvaluator;
    tet[TR::f2lu] =                  TR::TreeEvaluator::f2lEvaluator;
    tet[TR::d2l] =                   TR::TreeEvaluator::d2lEvaluator;
-   tet[TR::d2lu =                   TR::TreeEvaluator::d2lEvaluator;
+   tet[TR::d2lu] =                   TR::TreeEvaluator::d2lEvaluator;
    tet[TR::ldiv] =                  TR::TreeEvaluator::integerPairDivEvaluator;
    tet[TR::lrem] =                  TR::TreeEvaluator::integerPairRemEvaluator;
 #endif
