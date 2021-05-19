@@ -53,9 +53,17 @@ Following these guidelines will help us merge your pull requests smoothly:
 
 4. If your contribution introduces an external change that requires an update
    to the [user documentation](https://www.eclipse.org/openj9/docs/), add the
-   label `doc:externals` and open an  [issue](https://github.com/eclipse-openj9/openj9-docs/issues/new?template=new-documentation-change.md)
-   at the user documentation repository. Examples of an external change include
+   label `doc:externals` to the OpenJ9 issue, or request a committer to do it,
+   and open an [issue](https://github.com/eclipse-openj9/openj9-docs/issues/new?template=new-documentation-change.md)
+   at the user documentation repository. The OpenJ9 pull request should be labeled with `depends:doc` as well. Committers
+   should not merge the OpenJ9 pull request until at least a doc issue is created, and ideally not until the doc pull
+   request is ready for merge. Rather than doing it separately, the pull request should add or update the
+   [release notes](https://github.com/eclipse-openj9/openj9/tree/master/doc/release-notes) for the next release with a
+   short summary of the change. Examples of an external change include
    a new command line option, a change in behavior, or a restriction.
+   
+   A [pull request](https://github.com/eclipse-openj9/openj9-docs/pulls) to update the documentation is required. Do your best
+   to make appropriate updates, and the reviewers will help guide the necessary doc changes.
 
 5. Please carefully read and adhere to the legal considerations and
    copyright/license requirements outlined below.
