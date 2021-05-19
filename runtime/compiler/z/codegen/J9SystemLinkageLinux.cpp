@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,7 +176,7 @@ J9::Z::zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
       {
       gcPoint->setNeedsGCMap(0x00000000);
       }
-   generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, returnFromJNICallLabel);
+   generateS390LabelInstruction(codeGen, TR::InstOpCode::label, callNode, returnFromJNICallLabel);
 
    if (parm5)
       {

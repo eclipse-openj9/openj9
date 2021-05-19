@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -136,7 +136,7 @@ TR_S390Recompilation::generatePrePrologue()
    if (useSampling())
       {
       TR::LabelSymbol* samplingRecompileMethodSnippetLabel = generateLabelSymbol(cg);
-      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, samplingRecompileMethodSnippetLabel, cursor);
+      cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, samplingRecompileMethodSnippetLabel, cursor);
 
       TR::Instruction* samplingRecompileMethodSnippetLabelInstruction = cursor;
 
@@ -199,14 +199,14 @@ TR_S390Recompilation::generatePrePrologue()
       // Encode the address of the sampling method
       if (comp->target().is64Bit())
          {
-         cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(samplingRecompileMethodAddress), cursor);
+         cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, UPPER_4_BYTES(samplingRecompileMethodAddress), cursor);
          cursor->setEncodingRelocation(encodingRelocation);
 
-         cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, LOWER_4_BYTES(samplingRecompileMethodAddress), cursor);
+         cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, LOWER_4_BYTES(samplingRecompileMethodAddress), cursor);
          }
       else
          {
-         cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, samplingRecompileMethodAddress, cursor);
+         cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, samplingRecompileMethodAddress, cursor);
          cursor->setEncodingRelocation(encodingRelocation);
          }
 
@@ -223,13 +223,13 @@ TR_S390Recompilation::generatePrePrologue()
    else
       {
       // To keep the offsets in PreprologueConst.hpp constant emit a 4 byte pad for simplicity
-      cursor = new (cg->trHeapMemory()) TR::S390ImmInstruction(TR::InstOpCode::DC, node, 0xdeadf00d, cursor, cg);
+      cursor = new (cg->trHeapMemory()) TR::S390ImmInstruction(TR::InstOpCode::dd, node, 0xdeadf00d, cursor, cg);
       }
 
    // The following 4 bytes are used for various patching sequences that overwrite the JIT entry point with a 4 byte
    // branch (BRC) to some location. Before patching in the branch we must save the 4 bytes at the JIT entry point
    // to this location so that we can later reverse the patching at JIT entry point if needed.
-   cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, 0xdeafbeef, cursor);
+   cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, 0xdeafbeef, cursor);
 
    TR::Instruction* restoreInstruction = cursor;
 
@@ -244,16 +244,16 @@ TR_S390Recompilation::generatePrePrologue()
    // or not as the counting recompilation generated in the prologue will use this location.
    if (comp->target().is64Bit())
       {
-      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(bodyInfoAddress), cursor);
+      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, UPPER_4_BYTES(bodyInfoAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
 
       bodyInfoDataConstant = cursor;
 
-      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, LOWER_4_BYTES(bodyInfoAddress), cursor);
+      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, LOWER_4_BYTES(bodyInfoAddress), cursor);
       }
    else
       {
-      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, bodyInfoAddress, cursor);
+      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, bodyInfoAddress, cursor);
       cursor->setEncodingRelocation(encodingRelocation);
 
       bodyInfoDataConstant = cursor;
@@ -322,7 +322,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    TR::LabelSymbol* startOfPrologueLabel = generateLabelSymbol(cg);
 
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, startOfPrologueLabel, cursor);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, startOfPrologueLabel, cursor);
 
    // Reserve space on stack for four register sized spill slots
    cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, cg->getStackPointerRealRegister(), -4 * cg->machine()->getGPRSize(), cursor);
@@ -412,16 +412,16 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    if (comp->target().is64Bit())
       {
-      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(countingRecompileMethodAddress), cursor);
+      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, UPPER_4_BYTES(countingRecompileMethodAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
 
       countingRecompileMethodAddressDataConstant = cursor;
 
-      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, LOWER_4_BYTES(countingRecompileMethodAddress), cursor);
+      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, LOWER_4_BYTES(countingRecompileMethodAddress), cursor);
       }
    else
       {
-      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, countingRecompileMethodAddress, cursor);
+      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, countingRecompileMethodAddress, cursor);
       cursor->setEncodingRelocation(encodingRelocation);
 
       countingRecompileMethodAddressDataConstant = cursor;
@@ -434,7 +434,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
    // recompiled method body.
    TR::LabelSymbol* patchCallerBranchToCountingRecompiledMethodLabel = generateLabelSymbol(cg);
 
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, patchCallerBranchToCountingRecompiledMethodLabel, cursor);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, patchCallerBranchToCountingRecompiledMethodLabel, cursor);
 
    // Reserve space on stack for the EP register as it may be used for patching of caller interface calls
    cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, cg->getStackPointerRealRegister(), -2 * cg->machine()->getGPRSize(), cursor);
@@ -497,22 +497,22 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    if (comp->target().is64Bit())
       {
-      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(countingPatchCallSiteAddress), cursor);
+      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, UPPER_4_BYTES(countingPatchCallSiteAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
 
       countingPatchCallSiteAddressDataConstant = cursor;
 
-      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, LOWER_4_BYTES(countingPatchCallSiteAddress), cursor);
+      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, LOWER_4_BYTES(countingPatchCallSiteAddress), cursor);
       }
    else
       {
-      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, countingPatchCallSiteAddress, cursor);
+      cursor = generateDataConstantInstruction(cg, TR::InstOpCode::dd, node, countingPatchCallSiteAddress, cursor);
       cursor->setEncodingRelocation(encodingRelocation);
 
       countingPatchCallSiteAddressDataConstant = cursor;
       }
 
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, resumeMethodExecutionLabel, cursor);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, resumeMethodExecutionLabel, cursor);
 
    spillSlotMemRef = generateS390MemoryReference(*spillSlotMemRef, 0, cg);
 
@@ -524,7 +524,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    TR::LabelSymbol* endOfPrologueLabel = generateLabelSymbol(cg);
 
-   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, endOfPrologueLabel, cursor);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, endOfPrologueLabel, cursor);
 
    // Now that all instructions have been inserted we can adjust the two add immediate instructions which point to
    // labels or data constants generated in the future
