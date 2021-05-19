@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -101,15 +101,18 @@ class JNILinkage : public PrivateLinkage
     * @brief Releases VM access in a way described in OpenJ9 issue 2576
     * @param[in] callNode : caller Node
     * @param[in] vmThreadReg : vm thread register
+    * @param[in] scratchReg0 : scratch register
+    * @param[in] scratchReg1 : scratch register
     */
-   void releaseVMAccessAtomicFree(TR::Node *callNode, TR::Register *vmThreadReg);
+   void releaseVMAccessAtomicFree(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg0, TR::Register *scratchReg1);
 
    /**
     * @brief Acquires VM access in a way described in OpenJ9 issue 2576
     * @param[in] callNode : caller Node
     * @param[in] vmThreadReg : vm thread register
-    */
-   void acquireVMAccessAtomicFree(TR::Node *callNode, TR::Register *vmThreadReg);
+    * @param[in] scratchReg0 : scratch register
+    * @param[in] zeroReg : zero register    */
+   void acquireVMAccessAtomicFree(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg0, TR::Register *zeroReg);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
    /**
