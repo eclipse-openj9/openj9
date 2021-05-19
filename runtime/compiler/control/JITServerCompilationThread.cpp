@@ -661,26 +661,22 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       J9ROMClass *romClass = NULL;
       if (!(romClass = JITServerHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
          {
-         // Check whether the first argument of the classInfoTuple is an empty string
-         // If it's an empty string then I dont't need to cache it
+         // Class for current request is not yet cached.
+         // If the client sent us the desired information in the compilation request, use that.
          if(!(std::get<0>(classInfoTuple).empty()))
             {
             romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), clientSession->persistentMemory());
             }
          else
             {
-            // When I receive an empty string I need to check whether the server had the class caches
-            // It could be a renewed connection, so that's a new server because old one was shutdown
-            // When the server receives an empty ROM class it would check if it actually has this class cached,
-            // And if it's not cached, send a request to the client
+            // The client did not embed info about desired class in the compilation request.
+            // This could happen if the client determined that it sent required information in
+            // a previous request, info which the server is expected to cache. However, this
+            // could be a new JITServer instance.
+            // Send a message to the client to retrieve desired info.
             romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, clientSession->persistentMemory(), &classInfoTuple);
             }
-         bool cached = JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
-         if (!cached)
-            {
-            clientSession->persistentMemory()->freePersistentMemory(romClass);
-            romClass = JITServerHelpers::getRemoteROMClassIfCached(clientSession, clazz);
-            }
+         romClass = JITServerHelpers::cacheRemoteROMClassOrFreeIt(getClientData(), clazz, romClass, &classInfoTuple, clientSession->persistentMemory());
          TR_ASSERT_FATAL(romClass, "ROM class of J9Class=%p must be cached at this point", clazz);
          }
 

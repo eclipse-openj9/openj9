@@ -486,8 +486,31 @@ JITServerHelpers::printJITServerCacheStats(J9JITConfig *jitConfig, TR::Compilati
       }
    }
 
-bool 
-JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple)
+/*
+ * Free the persistent memory allocated for the given `romClass`.
+ * If the server uses a global cache of ROMClasses shared among the different JVM clients,
+ * this routine decrements the reference count for the `romClass` given as parameter,
+ * and only if the ref count reaches 0, the persistent memory is freed.
+ */
+void
+JITServerHelpers::freeRemoteROMClass(J9ROMClass *romClass, TR_PersistentMemory *persistentMemory)
+   {
+   if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache()) 
+      cache->release(romClass); 
+   else 
+      persistentMemory->freePersistentMemory(romClass);
+   }
+
+/*
+ * `cacheRemoteROMClassOrFreeIt` takes a romClass data structure allocated with
+ * persistent memory and attempts to cache it in the per-client data session. 
+ * If caching suceeds, the method returns a pointer to the romClass received as parameter. 
+ * If the caching fails, the memory for romClass received as parameter is freed 
+ * and the method returns a pointer to the romClass from the cache
+ */
+J9ROMClass *
+JITServerHelpers::cacheRemoteROMClassOrFreeIt(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
+                                              ClassInfoTuple *classInfoTuple, TR_PersistentMemory *persistentMemory)
    {
    ClientSessionData::ClassInfo classInfo;
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
@@ -495,9 +518,12 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    if (it == clientSessionData->getROMClassMap().end())
       {
       JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple, classInfo);
-      return true;
+      return romClass;
       }
-   return false;
+   // romClass is already present in the cache; must free the duplicate
+   JITServerHelpers::freeRemoteROMClass(romClass, persistentMemory);
+   // Return the cached romClass
+   return it->second._romClass;
    }
 
 void
