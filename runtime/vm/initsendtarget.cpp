@@ -295,6 +295,7 @@ J9Method cInvokePrivateMethod  = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 J9Method cThrowDefaultConflict = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_MEMBERNAME_DEFAULT_CONFLICT), 0 };
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 void
 initializeInitialMethods(J9JavaVM *vm)
 {
