@@ -42,15 +42,7 @@ MessageBuffer::expandIfNeeded(uint32_t requiredSize)
    // expand the storage
    if (requiredSize > _capacity)
       {
-      _capacity = requiredSize * 2;
-      char *newStorage = allocateMemory(_capacity);
-      if (!newStorage)
-         throw std::bad_alloc();
-      uint32_t curSize = size();
-      memcpy(newStorage, _storage, curSize);
-      freeMemory(_storage);
-      _storage = newStorage;
-      _curPtr = _storage + curSize;
+      expand(requiredSize, size());
       }
    }
 
@@ -60,7 +52,7 @@ MessageBuffer::expand(uint32_t requiredSize, uint32_t numBytesToCopy)
    TR_ASSERT_FATAL((requiredSize > _capacity), "requiredSize %u has to be greater than _capacity %u", requiredSize, _capacity);
    TR_ASSERT_FATAL((numBytesToCopy <= _capacity), "numBytesToCopy %u has to be less than _capacity %u", numBytesToCopy, _capacity);
 
-   _capacity = requiredSize;
+   _capacity = computeRequiredCapacity(requiredSize);
    uint32_t curSize = size();
 
    char *newStorage = allocateMemory(_capacity);
@@ -104,4 +96,17 @@ MessageBuffer::alignCurrentPositionOn64Bit()
 
    return padding;
    }
+
+uint32_t
+MessageBuffer::computeRequiredCapacity(uint32_t requiredSize)
+   {
+   // Compute the nearest power of 2 that can fit requiredSize bytes
+   if (requiredSize <= _capacity)
+      return _capacity;
+   uint32_t extendedCapacity = _capacity * 2;
+   while (requiredSize > extendedCapacity)
+      extendedCapacity *= 2;
+   return extendedCapacity;
+   }
 };
+
