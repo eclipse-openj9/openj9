@@ -276,10 +276,8 @@ MM_ConfigurationIncrementalGenerational::initialize(MM_EnvironmentBase *env)
 	env->disableHotFieldDepthCopy();
 
 	if (result) {
-		if (MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST != extensions->scavengerScanOrdering) {
-			extensions->scavengerScanOrdering = MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_BREADTH_FIRST;
-		} else {
-			extensions->adaptiveGcCountBetweenHotFieldSort = false;
+		if (MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_NONE == extensions->scavengerScanOrdering) {
+			extensions->scavengerScanOrdering = MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST;
 		}
 		extensions->setVLHGC(true);
 	}
