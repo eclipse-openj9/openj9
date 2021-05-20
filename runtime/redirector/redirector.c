@@ -46,6 +46,7 @@
 #endif
 
 #if defined(J9ZOS39064)
+#include "omrutil.h"
 #include "omriarv64.h"
 #endif /* defined(J9ZOS39064) */
 
@@ -89,12 +90,6 @@ static void *j9vm_dllHandle = NULL;
 #endif
 /* define a size for the buffer which will hold the directory name containing the libjvm.so */
 #define J9_VM_DIR_LENGTH 32
-
-#if defined(J9ZOS39064)
-#pragma linkage (GETTTT,OS)
-#pragma map (getUserExtendedPrivateAreaMemoryType,"GETTTT")
-UDATA getUserExtendedPrivateAreaMemoryType();
-#endif /* defined(J9ZOS39064) */
 
 /*
  * Keep this structure synchronized with gc_policy_name table in parseGCPolicy()
@@ -640,17 +635,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 		if (isPackagedWithSubdir(OPENJ9_CR_JVM_DIR)) {
 			U_64 maxHeapForCR = 0;
 #if defined(J9ZOS39064)
-			switch (getUserExtendedPrivateAreaMemoryType()) {
-			case ZOS64_VMEM_ABOVE_BAR_GENERAL:
-			default:
-				break;
-			case ZOS64_VMEM_2_TO_32G:
-				maxHeapForCR = MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS;
-				break;
-			case ZOS64_VMEM_2_TO_64G:
-				maxHeapForCR = MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_COMPRESSEDREFS;
-				break;
-			}
+			maxHeapForCR = zosGetMaxHeapSizeForCR();
 #else /* defined(J9ZOS39064) */
 			maxHeapForCR = MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_COMPRESSEDREFS;
 #endif /* defined(J9ZOS39064) */
