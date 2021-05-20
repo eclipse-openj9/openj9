@@ -22,6 +22,7 @@
 #include "clang_comp.h"
 
 #include "j9cfg.h"
+#if defined(J9VM_OPT_METHOD_HANDLE)
 #include "VM_MethodHandleKinds.h"
 
 #include "MHInterpreter.hpp"
@@ -2558,3 +2559,4 @@ ffi_exit:
 	return ret;
 }
 #endif /* J9VM_OPT_PANAMA */
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
