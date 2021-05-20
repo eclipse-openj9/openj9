@@ -101,7 +101,7 @@ if(OMR_ARCH_X86)
 	elseif(OMR_OS_OSX)
 		target_sources(ffi
 			PRIVATE
-			x86/darwin64.s
+			x86/darwin64.S
 		)
 	endif()
 elseif(OMR_ARCH_POWER)
