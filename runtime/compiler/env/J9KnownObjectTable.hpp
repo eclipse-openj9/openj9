@@ -45,7 +45,6 @@ namespace J9 { class Compilation; }
 namespace TR { class Compilation; }
 class TR_J9VMBase;
 namespace J9 { class ObjectModel; }
-class TR_DebugExt;
 class TR_VMFieldsInfo;
 class TR_BitVector;
 
@@ -75,7 +74,6 @@ class OMR_EXTENSIBLE KnownObjectTable : public OMR::KnownObjectTableConnector
    {
    friend class ::TR_J9VMBase;
    friend class Compilation;
-   friend class ::TR_DebugExt;
    TR_Array<uintptr_t*> _references;
 
 public:

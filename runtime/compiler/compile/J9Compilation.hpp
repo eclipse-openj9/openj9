@@ -47,7 +47,6 @@ class TR_AOTGuardSite;
 class TR_FrontEnd;
 class TR_ResolvedMethod;
 class TR_OptimizationPlan;
-class TR_DebugExt;
 class TR_J9VMBase;
 class TR_ValueProfileInfoManager;
 class TR_BranchProfileInfoManager;
@@ -82,8 +81,6 @@ namespace J9
 
 class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    {
-   friend class ::TR_DebugExt;
-
    public:
 
    TR_ALLOC(TR_Memory::Compilation)

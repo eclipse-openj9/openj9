@@ -42,7 +42,6 @@ class TR_FrontEnd;
 class TR_PersistentMemory;
 class TR_PersistentCHTable; 
 class TR_PersistentClassLoaderTable;
-class TR_DebugExt;
 class TR_J2IThunkTable;
 namespace J9 { class Options; }
 
@@ -110,7 +109,6 @@ namespace J9
 
 class PersistentInfo : public OMR::PersistentInfoConnector
    {
-   friend class ::TR_DebugExt;
    friend class J9::Options;
 
    public:

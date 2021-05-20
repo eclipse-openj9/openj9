@@ -41,17 +41,6 @@ extern "C" {
 #endif
 
 
-/* ---------------- trdbgext.c ---------------- */
-
-/**
-* @brief
-* @param *args
-* @return void
-*/
-void 
-dbgext_trprint(const char *args);
-
-
 /* -- Note:  the methods below are not implemented by the dbgext module but are required to be implemented by modules
  * which want to link in dbgext so they are listed here as they form part of the public API.
  * These functions should probably be moved out to a different header file to specify the parts of the API which are

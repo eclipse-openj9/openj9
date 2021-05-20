@@ -54,7 +54,6 @@ public:
 private:
 
    friend class TR_Debug;
-   friend class TR_DebugExt;
 
    TR_PersistentMemory *const _persistentMemory;
    TR_J9SharedCache *_sharedCache;

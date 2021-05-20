@@ -37,7 +37,7 @@ enum TR_CompilationOperations
    OP_WillWaitOnSlotMonitorAfterCompMonRelease, // This entry will appear out-of-order
    OP_CompileOnSeparateThreadEnter,
    OP_WillStopCompilationThreads,
-   // If adding new entries, please add names as well in CompilationThread.cpp and DebugExt.cpp - OperationNames
+   // If adding new entries, please add names as well in CompilationThread.cpp - OperationNames
    OP_LastValidOperation
    };
 #if (OP_LastValidOperation > 255)

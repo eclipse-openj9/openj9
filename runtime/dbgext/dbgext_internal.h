@@ -1062,18 +1062,6 @@ dbgext_shrc(const char *args);
 void *
 dbgReadSharedCacheMetadata(J9JavaVM* remoteVM, UDATA* length, ShcItemHdr** firstEntry);
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) */
-/* ---------------- trdbgext.c ---------------- */
-
-#if (defined(J9VM_INTERP_NATIVE_SUPPORT)) 
-/**
-* @brief
-* @param void
-* @return UDATA
-*/
-UDATA 
-dbgTrInitialize(void);
-#endif /* J9VM_INTERP_NATIVE_SUPPORT */
-
 
 /**
 * @brief

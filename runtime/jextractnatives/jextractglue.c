@@ -59,8 +59,6 @@ run_command(const char *cmd)
 		dbgext_j9help(options);
 	} else if (IsCommand("!findvm")) {
 		dbgext_findvm(options);
-	} else if (IsCommand("!trprint")) {
-		dbgext_trprint(options);
 	} else if (IsCommand("!setvm")) {
 		dbgext_setvm(options);
 	} else {

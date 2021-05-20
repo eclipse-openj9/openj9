@@ -95,7 +95,6 @@ class TR_HashTableEntry
 //
 class TR_HashTable
    {
-   friend class TR_DebugExt;
    public:
 
    TR_HashTable(TR_Memory *mem, TR_HashIndex numElements = 64);

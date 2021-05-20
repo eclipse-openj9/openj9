@@ -34,7 +34,6 @@ struct J9JITDataCacheHeader;
 #define DATA_CACHE_VERBOSITY_LEVEL 3 // Higher numbers means more verbose output
 class TR_DataCache
 {
-   friend class TR_DebugExt;
 private:
    TR_DataCache    *_next;      // to be able to chain them
    J9MemorySegment *_segment;   // the segment where the memory for the dataCache is
@@ -144,7 +143,6 @@ protected:
          }
 #endif
    public:
-      friend class TR_DebugExt;
       class Iterator {
       private:
          ListElement *_currentElement;
@@ -261,7 +259,6 @@ protected:
          InPlaceList<Allocation>::ListElement _listElement;
 
       public:
-         friend class TR_DebugExt;
          void *operator new (size_t size, void * ptr) { return ptr; }
          explicit Allocation(uint32_t size) :
             _listElement(this)
@@ -288,7 +285,6 @@ protected:
       U_32 _size;
       InPlaceList<Allocation> _allocations;
    public:
-      friend class TR_DebugExt;
       void *operator new (size_t size, void *ptr) { return ptr; }
       SizeBucket():
       _listElement(this),
@@ -381,7 +377,6 @@ protected:
       }
 
 public:
-   friend class TR_DebugExt;
    void *operator new (size_t size, void * ptr) { return ptr; }
    TR_DataCache *reserveAvailableDataCache(J9VMThread *vmThread, uint32_t sizeHint);
    void makeDataCacheAvailable(TR_DataCache *dataCache); // put back the cache into the _activeDataCacheList

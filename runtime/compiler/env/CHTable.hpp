@@ -431,7 +431,6 @@ class TR_CHTable
    private:
 
    friend class TR_Debug;
-   friend class TR_DebugExt;
 
    TR_Array<TR_ResolvedMethod*> *    _preXMethods;
    TR_Array<TR_OpaqueClassBlock *> * _classes;

@@ -46,9 +46,6 @@ struct TR_CompilationTracingEntry
    }; // TR_CompilationTracingEntry
 
 
-// NOTE: if changes are made to this data structure, DebugExt.cpp might need
-// to be changed as well
-//
 namespace TR
 {
 

@@ -638,7 +638,6 @@ dbgext_j9help(const char *args)
 	dbgPrint("\n");
 	dbgPrint("findvm                         - find the JavaVM struct.\n");
 	dbgPrint("setvm <address>                - set the JavaVM address.\n");
-	dbgPrint("trprint <name>, <address>      - dump jit data structure.\n");
 }
 
 

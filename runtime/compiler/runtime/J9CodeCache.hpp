@@ -48,8 +48,6 @@ namespace J9
 
 class OMR_EXTENSIBLE CodeCache : public OMR::CodeCacheConnector
    {
-   friend class TR_DebugExt;
-
    TR::CodeCache *self();
 
 public:

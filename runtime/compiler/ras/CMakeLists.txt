@@ -21,8 +21,6 @@
 ################################################################################
 
 j9jit_files(
-	ras/DebugExt.cpp
-	ras/DebugExtSegmentProvider.cpp
 	ras/HashTable.cpp
 	ras/InternalFunctions.cpp
 	ras/kca_offsets_generator.cpp
