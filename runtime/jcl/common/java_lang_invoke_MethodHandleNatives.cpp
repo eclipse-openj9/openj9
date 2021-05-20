@@ -67,7 +67,7 @@ extern "C" {
  * Set the MemberName fields based on the refObject given:
  * For j.l.reflect.Field:
  *		find JNIFieldID for refObject, create j.l.String for name and signature and store in MN.name/type fields.
- *		set vmindex to the fieldID pointer and target to the J9ROMFieldShape struct.
+ *		set vmindex to the fieldID pointer and target to the field offset.
  *		set MN.clazz to declaring class in the fieldID struct.
  * For j.l.reflect.Method or j.l.reflect.Constructor:
  *		find JNIMethodID, set vmindex to the methodID pointer and target to the J9Method struct.
@@ -96,8 +96,17 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 
 	if (refClass == J9VMJAVALANGREFLECTFIELD(vm)) {
 		J9JNIFieldID *fieldID = vm->reflectFunctions.idFromFieldObject(currentThread, NULL, refObject);
+		J9ROMFieldShape *romField = fieldID->field;
+		UDATA offset = fieldID->offset;
+
+		if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
+			offset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
+			if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+				offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+			}
+		}
 		vmindex = (jlong)fieldID;
-		target = (jlong)fieldID->field;
+		target = (jlong)offset;
 
 		flags = fieldID->field->modifiers & CFR_FIELD_ACCESS_MASK;
 		flags |= MN_IS_FIELD;
