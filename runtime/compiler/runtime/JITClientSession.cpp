@@ -62,6 +62,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _classMapMonitor = TR::Monitor::create("JIT-JITServerClassMapMonitor");
    _classChainDataMapMonitor = TR::Monitor::create("JIT-JITServerClassChainDataMapMonitor");
    _sequencingMonitor = TR::Monitor::create("JIT-JITServerSequencingMonitor");
+   _cacheInitMonitor = TR::Monitor::create("JIT-JITServerCacheInitMonitor");
    _constantPoolMapMonitor = TR::Monitor::create("JIT-JITServerConstantPoolMonitor");
    _vmInfo = NULL;
    _staticMapMonitor = TR::Monitor::create("JIT-JITServerStaticMapMonitor");
@@ -112,6 +113,7 @@ ClientSessionData::destroyMonitors()
    TR::Monitor::destroy(_classMapMonitor);
    TR::Monitor::destroy(_classChainDataMapMonitor);
    TR::Monitor::destroy(_sequencingMonitor);
+   TR::Monitor::destroy(_cacheInitMonitor);
    TR::Monitor::destroy(_constantPoolMapMonitor);
    TR::Monitor::destroy(_staticMapMonitor);
    TR::Monitor::destroy(_thunkSetMonitor);
