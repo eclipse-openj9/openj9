@@ -568,6 +568,19 @@ public:
 			_indexableObjectModel->fixupDataAddr(forwardedHeader, destinationObjectPtr);
 		}
 
+		fixupHashFlagsAndSlot(forwardedHeader, destinationObjectPtr);
+	}
+
+	/**
+	 * This will install the correct (i.e. unforwarded) class pointer, update the hashed/moved
+	 * flags and install the hash code if the object has been hashed but not previously moved.
+	 *
+	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @param[in] destinationObjectPtr pointer to the copied object to be fixed up
+	 */
+	MMINLINE void
+	fixupHashFlagsAndSlot(MM_ForwardedHeader *forwardedHeader, omrobjectptr_t destinationObjectPtr)
+	{
 		/*	To have ability to backout last scavenge we need to recognize objects just moved (moved first time) in current scavenge
 		 *
 		 *	Bits	State
