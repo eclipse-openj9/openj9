@@ -1679,18 +1679,6 @@ TR_IProfiler::canProduceBlockFrequencyInfo(TR::Compilation& comp)
    return NULL;
    }
 
-static TR_OpaqueMethodBlock *
-getMethodFromBCInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
-   {
-   TR_OpaqueMethodBlock *method = NULL;
-   if (bcInfo.getCallerIndex() >= 0)
-      method = comp->getInlinedCallSite(bcInfo.getCallerIndex())._methodInfo;
-   else
-      method = comp->getCurrentMethod()->getPersistentIdentifier();
-
-   return method;
-   }
-
 uint8_t
 TR_IProfiler::getBytecodeOpCode(TR::Node *node, TR::Compilation *comp)
    {
@@ -1700,7 +1688,7 @@ TR_IProfiler::getBytecodeOpCode(TR::Node *node, TR::Compilation *comp)
    if (node->getInlinedSiteIndex() < -1)
       method = node->getMethod();
    else
-      method = getMethodFromBCInfo(bcInfo, comp);
+      method = TR::Node::getOwningMethod(comp, bcInfo);
 
    int32_t methodSize = TR::Compiler->mtd.bytecodeSize(method);
    uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
@@ -1841,7 +1829,10 @@ TR_IProfiler::getProfilingData(TR::Node *node, TR::Compilation *comp)
 
    uintptr_t data = 0;
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
-   data = getProfilingData(getMethodFromNode(node, comp), bcInfo.getByteCodeIndex(), comp);
+   if (-1 <= bcInfo.getCallerIndex())
+      data = getProfilingData(TR::Node::getOwningMethod(comp, bcInfo), bcInfo.getByteCodeIndex(), comp);
+   else
+      data = getProfilingData(node->getMethod(), bcInfo.getByteCodeIndex(), comp);
 
    if (data == (uintptr_t)1)
       return (uintptr_t)0;
@@ -1855,25 +1846,12 @@ TR_IProfiler::getProfilingData(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    if (!isIProfilingEnabled())
       return 0;
 
-   uintptr_t data = getProfilingData(getMethodFromBCInfo(bcInfo, comp), bcInfo.getByteCodeIndex(), comp);
+   uintptr_t data = getProfilingData(TR::Node::getOwningMethod(comp, bcInfo), bcInfo.getByteCodeIndex(), comp);
 
    if (data == (uintptr_t)1)
       return (uintptr_t)0;
 
    return data;
-   }
-
-TR_OpaqueMethodBlock *
-TR_IProfiler::getMethodFromNode(TR::Node *node, TR::Compilation *comp)
-   {
-   if (!isIProfilingEnabled())
-      return 0;
-
-   TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
-   if (bcInfo.getCallerIndex() >=-1)
-      return getMethodFromBCInfo(bcInfo, comp);
-   else
-      return node->getMethod();
    }
 
 
@@ -1963,7 +1941,7 @@ TR_IProfiler::getAllocationProfilingDataPointer(TR_ByteCodeInfo &bcInfo, TR_Opaq
    if (!isIProfilingEnabled())
       return NULL;
 
-   uintptr_t searchedPC = getSearchPC (getMethodFromBCInfo(bcInfo, comp), bcInfo.getByteCodeIndex(), comp);
+   uintptr_t searchedPC = getSearchPC (TR::Node::getOwningMethod(comp, bcInfo), bcInfo.getByteCodeIndex(), comp);
 
    //if (searchedPC == (uintptr_t)IPROFILING_PC_INVALID)
    //   return NULL;
@@ -2033,11 +2011,11 @@ TR_IProfiler::getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compila
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    if (bcInfo.doNotProfile())
       return 0;
-   TR_IPBytecodeHashTableEntry *entry = getProfilingEntry(getMethodFromNode(node, comp), bcInfo.getByteCodeIndex(), comp);
+   TR_IPBytecodeHashTableEntry *entry = getProfilingEntry(TR::Node::getOwningMethod(comp, bcInfo), bcInfo.getByteCodeIndex(), comp);
 
    if (entry && entry->asIPBCDataEightWords())
       {
-      uintptr_t searchedPC = getSearchPC (getMethodFromNode(node, comp), bcInfo.getByteCodeIndex(), comp);
+      uintptr_t searchedPC = getSearchPC (TR::Node::getOwningMethod(comp, bcInfo), bcInfo.getByteCodeIndex(), comp);
       int32_t data;
 
       if (node->getOpCodeValue() == TR::lookup)
@@ -2057,7 +2035,12 @@ TR_IProfiler::getSumSwitchCount (TR::Node *node, TR::Compilation *comp)
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    if (bcInfo.doNotProfile())
       return sum;
-   TR_IPBytecodeHashTableEntry *entry = getProfilingEntry(getMethodFromNode(node, comp), bcInfo.getByteCodeIndex(), comp);
+   TR_IPBytecodeHashTableEntry *entry;
+
+   if (-1 <= bcInfo.getCallerIndex())
+      entry = getProfilingEntry(TR::Node::getOwningMethod(comp, bcInfo), bcInfo.getByteCodeIndex(), comp);
+   else
+      entry = getProfilingEntry(node->getMethod(), bcInfo.getByteCodeIndex(), comp);
 
    if (entry && entry->asIPBCDataEightWords())
       {
@@ -2091,7 +2074,7 @@ TR_IProfiler::isSwitchProfileFlat (TR::Node *node, TR::Compilation *comp)
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    if (bcInfo.doNotProfile())
       return true;
-   TR_IPBytecodeHashTableEntry *entry = getProfilingEntry(getMethodFromNode(node, comp), bcInfo.getByteCodeIndex(), comp);
+   TR_IPBytecodeHashTableEntry *entry = getProfilingEntry(TR::Node::getOwningMethod(comp, bcInfo), bcInfo.getByteCodeIndex(), comp);
    uint32_t max = 0;
    if (entry && entry->asIPBCDataEightWords())
       {
@@ -2173,7 +2156,12 @@ TR_IProfiler::getBranchCounters (TR::Node *node, TR::TreeTop *fallThroughTree, i
          TR::TreeTop *branchTo = node->getBranchDestination();
          TR::TreeTop *fallThrough = fallThroughTree;
          bool matched = false;
-         uintptr_t byteCodePtr = getSearchPC (getMethodFromNode(node, comp), node->getByteCodeIndex(), comp);
+         uintptr_t byteCodePtr;
+
+         if (-1 <= node->getByteCodeInfo().getCallerIndex())
+            byteCodePtr = getSearchPC(node->TR::Node::getOwningMethod(comp), node->getByteCodeIndex(), comp);
+         else
+            byteCodePtr = getSearchPC(node->getMethod(), node->getByteCodeIndex(), comp);
 
          int32_t branchBC = node->getByteCodeIndex() + next2BytesSigned(byteCodePtr+1);
          int32_t fallThruBC = node->getByteCodeIndex() + 3;
@@ -2296,7 +2284,7 @@ TR_IProfiler::createIProfilingValueInfo (TR_ByteCodeInfo &bcInfo, TR::Compilatio
 
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
 
-   TR_OpaqueMethodBlock *method = getMethodFromBCInfo(bcInfo, comp);
+   TR_OpaqueMethodBlock *method = TR::Node::getOwningMethod(comp, bcInfo);
    TR_ExternalValueProfileInfo *valueProfileInfo = TR_ExternalValueProfileInfo::getInfo(method, comp);
 
    if (!valueProfileInfo)
@@ -2505,7 +2493,7 @@ TR_IProfiler::getValueProfileInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp
       }
 
    //TR_OpaqueMethodBlock *originatorMethod = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getPersistentIdentifier());
-   TR_OpaqueMethodBlock *originatorMethod = getMethodFromBCInfo(bcInfo, comp);
+   TR_OpaqueMethodBlock *originatorMethod = TR::Node::getOwningMethod(comp, bcInfo);
 
    if (traceIProfiling)
       {
@@ -3198,7 +3186,7 @@ TR_IProfiler::getCGProfilingData(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    if (!isIProfilingEnabled())
       return NULL;
 
-   return getCGProfilingData(getMethodFromBCInfo(bcInfo, comp), bcInfo.getByteCodeIndex(), comp);
+   return getCGProfilingData(TR::Node::getOwningMethod(comp, bcInfo), bcInfo.getByteCodeIndex(), comp);
    }
 
 TR_IPBCDataCallGraph*
@@ -3252,7 +3240,7 @@ TR_IProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_
 void
 TR_IProfiler::setCallCount(TR_ByteCodeInfo &bcInfo, int32_t count, TR::Compilation *comp)
    {
-   setCallCount(getMethodFromBCInfo(bcInfo, comp), (int32_t)bcInfo.getByteCodeIndex(), count, comp);
+   setCallCount(TR::Node::getOwningMethod(comp, bcInfo), (int32_t)bcInfo.getByteCodeIndex(), count, comp);
    }
 
 int32_t
@@ -3305,14 +3293,14 @@ TR_IProfiler::isWarmCallGraphTooBig(TR_OpaqueMethodBlock *method, int32_t bcInde
 int32_t
 TR_IProfiler::getCallCount(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    {
-   return getCallCount(getMethodFromBCInfo(bcInfo, comp), (int32_t)bcInfo.getByteCodeIndex(), comp);
+   return getCallCount(TR::Node::getOwningMethod(comp, bcInfo), (int32_t)bcInfo.getByteCodeIndex(), comp);
    }
 
 int32_t
 TR_IProfiler::getCGEdgeWeight (TR::Node *callerNode, TR_OpaqueMethodBlock *callee, TR::Compilation *comp)
    {
    TR_ByteCodeInfo& bcInfo = callerNode->getByteCodeInfo();
-   uintptr_t thisPC = getSearchPC (getMethodFromNode(callerNode, comp), bcInfo.getByteCodeIndex(), comp);
+   uintptr_t thisPC = getSearchPC (TR::Node::getOwningMethod(comp, bcInfo), bcInfo.getByteCodeIndex(), comp);
 
    if (isSpecialOrStatic(*(U_8 *)thisPC))
       return getCallCount(bcInfo, comp);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -652,7 +652,6 @@ private:
    TR_IPBCDataAllocation *profilingAllocSample (uintptr_t pc, uintptr_t data, bool addIt);
    TR_IPBytecodeHashTableEntry *findOrCreateEntry (int32_t bucket, uintptr_t pc, bool addIt);
    TR_IPBCDataAllocation *findOrCreateAllocEntry (int32_t bucket, uintptr_t pc, bool addIt);
-   TR_OpaqueMethodBlock * getMethodFromNode(TR::Node *node, TR::Compilation *comp);
    bool addSampleData(TR_IPBytecodeHashTableEntry *entry, uintptr_t data, bool isRIData = false, uint32_t freq = 1);
    TR_AbstractInfo *createIProfilingValueInfo( TR::Node *node, TR::Compilation *comp);
 
