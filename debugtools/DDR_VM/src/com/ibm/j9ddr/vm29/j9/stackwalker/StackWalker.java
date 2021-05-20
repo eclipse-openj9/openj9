@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -962,10 +962,16 @@ public class StackWalker
 				J9JavaVMPointer vm = walkState.walkThread.javaVM();
 				
 				walkState.constantPool = ConstantPoolHelpers.J9_CP_FROM_METHOD(walkState.method);
-				if ((walkState.pc != vm.impdep1PC()) && (walkState.pc != (vm.impdep1PC().addOffset(3)))) {
+				boolean isImpdep1 = false;
+				try {
+					isImpdep1 = (walkState.pc == vm.impdep1PC()) || (walkState.pc == vm.impdep1PC().addOffset(3));
+				} catch (NoSuchFieldException e) {
+					// impdep1PC field is disabled for OJDK method handles
+				}
+				if (!isImpdep1) {
 					walkState.bytecodePCOffset = walkState.pc.sub(walkState.method.bytecodes().getAddress());	
 				} else {
-					walkState.bytecodePCOffset = U8Pointer.cast(new UDATA(0));
+					walkState.bytecodePCOffset = U8Pointer.NULL;
 				}
 
 				romMethod = getOriginalROMMethod(walkState.method);
