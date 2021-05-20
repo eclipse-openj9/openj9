@@ -2504,6 +2504,8 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
          needVftChild = true;
       case TR::java_lang_invoke_MethodHandle_linkToSpecial:
          needNullChk = true;
+      default:
+         break;
       }
 
   if (needNullChk)
