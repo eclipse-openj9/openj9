@@ -461,18 +461,10 @@ public:
 	void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
-	/**
-	 * Calculate the actual object size and the size adjusted to object alignment. The calculated object size
-	 * includes any expansion bytes allocated if the object will grow when moved. TODO: Merge this with the
-	 * above calculateObjectDetailsForCopy()
-	 *
-	 * @param[in] env points to the environment for the calling thread
-	 * @param[in] forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
-	 * @param[out] objectCopySizeInBytes actual object size
-	 * @param[out] objectReserveSizeInBytes size adjusted to object alignment
-	 * @param[out] doesObjectNeedHash flag that indicates if object needs hashing
-	 */
-	void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader* forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash);
+	MMINLINE void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash)
+	{
+		/* TO BE REMOVED */
+	}
 
 	/**
 	 * Constructor receives a copy of OMR's object flags mask, normalized to low order byte. Delegate
