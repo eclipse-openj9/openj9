@@ -3125,6 +3125,45 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
 
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:05CastClassCacheCheckDone"), *srm);
 
+   /*
+    * If isInstanceOf (objectClass,ArrayComponentClass,true,true) was successful and stored during VP, we need to test again the real arrayComponentClass
+    * Need to relocate address of arrayComponentClass under AOT compilation.
+    * Need to add PICsite on class constant if the class can be unloaded.
+    */
+   if (node->getArrayComponentClassInNode())
+      {
+      TR::Register *arrayComponentClassReg = srm->findOrCreateScratchRegister();
+      TR_OpaqueClassBlock *arrayComponentClass = node->getArrayComponentClassInNode();
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:06ArrayComponentClassCheck"), *srm);
+
+      if (cg->wantToPatchClassPointer(arrayComponentClass, node) || cg->needClassAndMethodPointerRelocations())
+         {
+         loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(arrayComponentClass), arrayComponentClassReg, TR_ClassPointer);
+         }
+      else
+         {
+         bool isUnloadAssumptionRequired = fej9->isUnloadAssumptionRequired(arrayComponentClass, comp->getCurrentMethod());
+
+         if (isUnloadAssumptionRequired)
+            {
+            loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(arrayComponentClass), arrayComponentClassReg, TR_NoRelocation, true);
+            }
+         else
+            {
+            loadAddressConstant(cg, node, reinterpret_cast<intptr_t>(arrayComponentClass), arrayComponentClassReg, NULL, true);
+            }
+         }
+      generateCompareInstruction(cg, node, arrayComponentClassReg, destComponentClassReg, true);
+      instr = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(instr, "done if component type of the destination array equals to arrayComponentClass set in node");
+         }
+      srm->reclaimScratchRegister(arrayComponentClassReg);
+
+      cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:06ArrayComponentClassCheckDone"), *srm);
+      }
 
    genSuperClassTest(node, sourceClassReg, true, destComponentClassReg, -1, helperCallLabel, srm, cg);
    srm->reclaimScratchRegister(destComponentClassReg);
@@ -3138,7 +3177,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::R
       {
       debugObj->addInstructionComment(instr, "Call helper if super class test fails");
       }
-   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:06SuperClassTestDone"), *srm);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "ArrayStoreCHKEvaluator:010VMarrayStoreCHKEvaluator:07SuperClassTestDone"), *srm);
 
    cg->machine()->setLinkRegisterKilled(true);
    }
@@ -3172,7 +3211,7 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
 
    if (!sourceChild->isNull())
       {
-      static const bool disableArrayStoreCHKOpts = feGetEnv("TR_AArch64DisableArrayStoreCHKOpts") != NULL;
+      static const bool disableArrayStoreCHKOpts = comp->getOption(TR_DisableArrayStoreCheckOpts);
       TR_J9VM *fej9 = reinterpret_cast<TR_J9VM *>(cg->fe());
       TR::LabelSymbol *helperCallLabel = generateLabelSymbol(cg);
       // Since ArrayStoreCHK doesn't have the shape of the corresponding helper call we have to create this tree
