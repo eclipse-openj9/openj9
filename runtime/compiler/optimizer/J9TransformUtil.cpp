@@ -289,7 +289,6 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::C
    return true;
    }
 
-
 /**
  * Dereference through indirect load chain and return the address of field for curNode
  *
@@ -473,7 +472,6 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
 
    return false;
    }
-
 
 static bool changeIndirectLoadIntoConst(TR::Node *node, TR::ILOpCodes opCode, TR::Node **removedChild, TR::Compilation *comp)
    {
@@ -1818,7 +1816,6 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
    return true;
    }
 
-
 bool
 J9::TransformUtil::fieldShouldBeCompressed(TR::Node *node, TR::Compilation *comp)
    {
@@ -1901,7 +1898,6 @@ J9::TransformUtil::fieldShouldBeCompressed(TR::Node *node, TR::Compilation *comp
 
    return false;
    }
-
 
 TR::Block *
 J9::TransformUtil::insertNewFirstBlockForCompilation(TR::Compilation *comp)
@@ -2039,7 +2035,6 @@ TR::Node * J9::TransformUtil::calculateIndexFromOffsetInContiguousArray(TR::Comp
    return index;
    }
 
-
 /**
  * \brief
  *    Save a node to temp slot
@@ -2065,7 +2060,6 @@ J9::TransformUtil::saveNodeToTempSlot(TR::Compilation* comp, TR::Node* node, TR:
    return TR::Node::createWithSymRef(node, comp->il.opCodeForDirectLoad(type), 0, symRef);
    }
 
-
 /**
  * \brief
  *    Create temps for a call's children and replace the call's children with loads from the newly created temps.
@@ -2086,7 +2080,6 @@ J9::TransformUtil::createTempsForCall(TR::Optimization* opt, TR::TreeTop *callTr
    for (int32_t i = 0 ; i < callNode->getNumChildren() ; ++i)
       {
       TR::Node *child = callNode->getChild(i);
-
 
       //create a store of the correct type and insert before call.
 
@@ -2502,8 +2495,10 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       {
       case TR::java_lang_invoke_MethodHandle_linkToVirtual:
          needVftChild = true;
+         // fall through
       case TR::java_lang_invoke_MethodHandle_linkToSpecial:
          needNullChk = true;
+         break;
       default:
          break;
       }
@@ -2555,4 +2550,3 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
    return false;
 #endif
    }
-
