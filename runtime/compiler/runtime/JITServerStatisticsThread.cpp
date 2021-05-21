@@ -25,6 +25,7 @@
 #include "env/VMJ9.h" // for TR_JitPrivateConfig
 #include "env/VerboseLog.hpp"
 #include "control/CompilationRuntime.hpp" // for CompilatonInfo
+#include "control/JITServerCompilationThread.hpp"
 
 JITServerStatisticsThread::JITServerStatisticsThread()
    : _statisticsThread(NULL), _statisticsThreadMonitor(NULL), _statisticsOSThread(NULL),
@@ -72,10 +73,12 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
    TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
    PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
    uint64_t crtTime = j9time_current_time_millis();
    uint64_t lastStatsTime = crtTime;
    uint64_t lastPurgeTime = crtTime;
    uint64_t lastCpuUpdate = crtTime;
+   char timestamp[32];
 
    persistentInfo->setStartTime(crtTime);
    persistentInfo->setElapsedTime(0);
@@ -112,10 +115,16 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
                avgCpuUsage = cpuUtil->getAvgCpuUsage();
                vmCpuUsage = cpuUtil->getVmCpuUsage();
                }
+            omrstr_ftime_ex(timestamp, sizeof(timestamp), "%b %d %H:%M:%S %Y", crtTime, OMRSTR_FTIME_FLAG_LOCAL);
+            
             TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::writeLine(TR_Vlog_JITServer, "CurrentTime: %s", timestamp);
+            TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Compilation Queue Size: %d", compInfo->getMethodQueueSize());
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Number of clients : %u", compInfo->getClientSessionHT()->size());
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Total compilation threads : %d", compInfo->getNumUsableCompilationThreads());
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Active compilation threads : %d",compInfo->getNumCompThreadsActive());
+            if (TR::CompilationInfoPerThreadRemote::getNumClearedCaches() > 0)
+               TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Number of times the clientSession caches are cleared: %d", TR::CompilationInfoPerThreadRemote::getNumClearedCaches());
             bool incompleteInfo;
             TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Physical memory available: %llu MB", compInfo->computeAndCacheFreePhysicalMemory(incompleteInfo) >> 20);
             if (cpuUtil->isFunctional())
