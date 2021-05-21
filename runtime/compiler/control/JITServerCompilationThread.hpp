@@ -58,6 +58,8 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    void waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry); // Return false if timeout
    bool getWaitToBeNotified() const { return _waitToBeNotified; }
    void setWaitToBeNotified(bool b) { _waitToBeNotified = b; }
+   static int32_t getNumClearedCaches() { return _numClearedCaches; }
+   void incNumClearedCaches() { _numClearedCaches++; }
 
    void copyClientOptions(const std::string &clientOptStr, TR_PersistentMemory *persistentMemory)
       {
@@ -177,6 +179,8 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    FieldOrStaticAttrTable_t *_staticAttributesCache;
    UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_IsUnresolvedString> *_isUnresolvedStrCache;
    int32_t _classUnloadReadMutexDepth;
+   static int32_t _numClearedCaches; //number of instances JITServer was forced to clear its internal per-client caches
+
    }; // class CompilationInfoPerThreadRemote
 } // namespace TR
 

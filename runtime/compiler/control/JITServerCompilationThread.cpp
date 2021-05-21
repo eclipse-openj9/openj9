@@ -251,6 +251,8 @@ TR::CompilationInfoPerThreadRemote::notifyAndDetachWaitingRequests(ClientSession
       }
    }
 
+int32_t TR::CompilationInfoPerThreadRemote::_numClearedCaches = 0;
+
 /**
  * @brief Method executed by a compilation thread at JITServer to wait for all
  *        previous compilation requests it depends on to be processed.
@@ -335,6 +337,7 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
             !getWaitToBeNotified()) // Avoid a cohort of threads clearing the caches
             {
             clientSession->clearCaches();
+            incNumClearedCaches();
 
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
