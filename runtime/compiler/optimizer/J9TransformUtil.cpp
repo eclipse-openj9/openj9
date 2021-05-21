@@ -419,7 +419,14 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
    {
    TR::SimpleRegex *classRegex = comp->getOptions()->getClassesWithFoldableFinalFields();
    if (classRegex)
-      return TR::SimpleRegex::match(classRegex, className);
+      {
+      // TR::SimpleRegex::match needs a NUL-terminated string
+      size_t size = classNameLength + 1;
+      char *name = (char*)comp->trMemory()->allocateMemory(size, stackAlloc);
+      strncpy(name, className, classNameLength);
+      name[size - 1] = '\0';
+      return TR::SimpleRegex::match(classRegex, name);
+      }
    else if (classNameLength >= 17 && !strncmp(className, "java/lang/invoke/", 17))
       return true; // We can ONLY do this opt to fields that are never victimized by setAccessible
    else if (classNameLength >= 30 && !strncmp(className, "java/lang/String$UnsafeHelpers", 30))
