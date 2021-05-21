@@ -54,7 +54,6 @@ public:
          TR::Compilation *comp,
          TR::Node *object);
    
-   static TR::Node *transformIndirectLoad(TR::Compilation *, TR::Node *node);
    static bool transformDirectLoad(TR::Compilation *, TR::Node *node);
 
    /**
