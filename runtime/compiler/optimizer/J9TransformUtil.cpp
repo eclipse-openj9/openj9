@@ -2550,3 +2550,80 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
    return false;
 #endif
    }
+
+TR::KnownObjectTable::Index
+J9::TransformUtil::knownObjectFromFinalStatic(
+   TR::Compilation *comp,
+   TR_ResolvedMethod *owningMethod,
+   int32_t cpIndex,
+   void *dataAddress)
+   {
+   if (comp->compileRelocatableCode())
+      return TR::KnownObjectTable::UNKNOWN;
+
+   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+   if (knot == NULL)
+      return TR::KnownObjectTable::UNKNOWN;
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (comp->isOutOfProcessCompilation())
+      {
+      TR_ResolvedJ9JITServerMethod *serverMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(owningMethod);
+      TR_ResolvedMethod *clientMethod = serverMethod->getRemoteMirror();
+
+      auto stream = TR::CompilationInfo::getStream();
+      stream->write(JITServer::MessageType::KnownObjectTable_symbolReferenceTableCreateKnownObject, dataAddress, clientMethod, cpIndex);
+
+      auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*>();
+      TR::KnownObjectTable::Index knownObjectIndex = std::get<0>(recv);
+      uintptr_t *objectPointerReference = std::get<1>(recv);
+
+      if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
+         {
+         knot->updateKnownObjectTableAtServer(knownObjectIndex, objectPointerReference);
+         }
+
+      return knownObjectIndex;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   TR::VMAccessCriticalSection getObjectReferenceLocation(comp);
+   TR_J9VMBase *fej9 = comp->fej9();
+
+   // Could return the null index when the reference is null, but current
+   // callers aren't interested in it.
+   if (*((uintptr_t*)dataAddress) == 0)
+      return TR::KnownObjectTable::UNKNOWN;
+
+   TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+   if (!declaringClass || !fej9->isClassInitialized(declaringClass))
+      return TR::KnownObjectTable::UNKNOWN;
+
+   static const char *foldVarHandle = feGetEnv("TR_FoldVarHandleWithoutFear");
+   int32_t clazzNameLength = 0;
+   char *clazzName = fej9->getClassNameChars(declaringClass, clazzNameLength);
+   bool createKnownObject = false;
+
+   if (J9::TransformUtil::foldFinalFieldsIn(declaringClass, clazzName, clazzNameLength, true, comp))
+      {
+      createKnownObject = true;
+      }
+   else if (foldVarHandle
+            && (clazzNameLength != 16 || strncmp(clazzName, "java/lang/System", 16)))
+      {
+      TR_OpaqueClassBlock *varHandleClass =  fej9->getSystemClassFromClassName("java/lang/invoke/VarHandle", 26);
+      TR_OpaqueClassBlock *objectClass = TR::Compiler->cls.objectClass(comp, *((uintptr_t*)dataAddress));
+
+      if (varHandleClass != NULL
+          && objectClass != NULL
+          && fej9->isInstanceOf(objectClass, varHandleClass, true, true))
+         {
+         createKnownObject = true;
+         }
+      }
+
+   if (!createKnownObject)
+      return TR::KnownObjectTable::UNKNOWN;
+
+   return knot->getOrCreateIndexAt((uintptr_t*)dataAddress);
+   }
