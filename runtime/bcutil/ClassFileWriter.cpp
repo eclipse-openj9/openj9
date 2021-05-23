@@ -1971,7 +1971,7 @@ ClassFileWriter::writeTypeAnnotationsAttribute(U_32 *typeAnnotationsData)
 					U_16 tableLength = 0;
 					NEXT_U16(tableLength, data);
 					writeU16(tableLength);
-					for (U_32 ti=0; tableLength; ++ti) {
+					for (U_32 ti=0; ti < tableLength; ++ti) {
 						NEXT_U16(u16Data, data);
 						writeU16(u16Data); /* startPC */
 						NEXT_U16(u16Data, data);
