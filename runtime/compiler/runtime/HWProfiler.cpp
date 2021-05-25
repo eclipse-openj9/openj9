@@ -725,7 +725,7 @@ TR_HWProfiler::getBytecodePCFromIA(J9VMThread *vmThread, uint8_t *IA)
       J9JITExceptionTable *metaData = _jitConfig->jitGetExceptionTableFromPC(vmThread, (UDATA) IA);
       if (metaData &&
           metaData->riData &&
-          ((TR_HWPBytecodePCToIAMap *)metaData->riData)->_bytecodePC == (void *)METADATA_MAPPING_EYECATCHER)
+          ((TR_HWPBytecodePCToIAMap *)metaData->riData)->_bytecodePC == reinterpret_cast<void *>(static_cast<intptr_t>(METADATA_MAPPING_EYECATCHER)))
          {
          TR_HWPBytecodePCToIAMap *cursor = (TR_HWPBytecodePCToIAMap *)metaData->riData;
          uintptr_t arraySize = (uintptr_t)cursor->_instructionAddr;
@@ -782,7 +782,7 @@ TR_HWProfiler::registerRecords(J9JITExceptionTable *metaData, TR::Compilation *c
       uint32_t arraySize                      = maps->size();
 
       // Initialize the special first element
-      cursor->_bytecodePC = (void *)METADATA_MAPPING_EYECATCHER;
+      cursor->_bytecodePC = reinterpret_cast<void *>(static_cast<intptr_t>(METADATA_MAPPING_EYECATCHER));
       cursor->_instructionAddr = (void *)(uintptr_t)arraySize;
       cursor++;
 

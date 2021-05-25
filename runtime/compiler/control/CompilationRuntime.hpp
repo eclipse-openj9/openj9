@@ -651,7 +651,7 @@ public:
       value = (value << 1) | J9_STARTPC_NOT_TRANSLATED;
       if (value < 0)
           value = INT_MAX;
-      method->extra = reinterpret_cast<void *>(value);
+      method->extra = reinterpret_cast<void *>(static_cast<intptr_t>(value));
       }
 
    static uint32_t getMethodBytecodeSize(const J9ROMMethod * romMethod);
