@@ -3208,7 +3208,7 @@ void TR::CompilationInfo::stopCompilationThreads()
       unsigned long currTotalUsedKB = (unsigned long)(TR::CodeCacheManager::instance()->getCurrTotalUsedInBytes()/1024);
       unsigned long maxUsedKB = (unsigned long)(TR::CodeCacheManager::instance()->getMaxUsedInBytes()/1024);
 
-      fprintf(stderr, "\nCodeCache: size=%luKb used=%luKb max_used=%luKb free=%luKb\n\n",
+      fprintf(stderr, "\nCodeCache: size=%" OMR_PRIuPTR "Kb used=%luKb max_used=%luKb free=%" OMR_PRIuPTR "Kb\n\n",
               _jitConfig->codeCacheTotalKB,
               currTotalUsedKB,
               maxUsedKB,
@@ -3218,17 +3218,17 @@ void TR::CompilationInfo::stopCompilationThreads()
    if (printCompMem)
       {
       int32_t codeCacheAllocated = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() * _jitConfig->codeCacheKB;
-      fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %lu KB\n",
+      fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %" OMR_PRIuPTR " KB\n",
          codeCacheAllocated, _jitConfig->codeCacheTotalKB);
 
       TR::CodeCacheManager::instance()->printMccStats();
 
-      fprintf(stderr, "Allocated memory for data cache = %d KB\tLimit = %lu KB\n",
+      fprintf(stderr, "Allocated memory for data cache = %d KB\tLimit = %" OMR_PRIuPTR " KB\n",
          TR_DataCacheManager::getManager()->getTotalSegmentMemoryAllocated()/1024,
           _jitConfig->dataCacheTotalKB);
 
       if (getJProfilerThread())
-         fprintf(stderr, "Allocated memory for profile info = %lu KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
+         fprintf(stderr, "Allocated memory for profile info = %" OMR_PRIdSIZE " KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
       }
 
    static char * printPersistentMem = feGetEnv("TR_PrintPersistentMem");
