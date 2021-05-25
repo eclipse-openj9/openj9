@@ -58,7 +58,6 @@ public:
    virtual void fprintf(TR::FILE *file, const char * format, ...);
 
    TR_Memory * trMemory();
-   bool inDebugExtension() { return false; }
 
    TR_FrontEnd *fe() { return _fe; }
 
