@@ -38,7 +38,6 @@ jobject JNICALL
 CallObjectMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallObjectMethodV_64(env, obj, methodID, parms);
@@ -48,8 +47,9 @@ jobject JNICALL
 CallObjectMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallObjectMethodV_64(env, obj, methodID, parms);
 }
@@ -82,7 +82,6 @@ jboolean JNICALL
 CallBooleanMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallBooleanMethodV_64(env, obj, methodID, parms);
@@ -92,8 +91,9 @@ jboolean JNICALL
 CallBooleanMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallBooleanMethodV_64(env, obj, methodID, parms);
 }
@@ -126,7 +126,6 @@ jbyte JNICALL
 CallByteMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallByteMethodV_64(env, obj, methodID, parms);
@@ -136,8 +135,9 @@ jbyte JNICALL
 CallByteMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallByteMethodV_64(env, obj, methodID, parms);
 }
@@ -170,7 +170,6 @@ jchar JNICALL
 CallCharMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallCharMethodV_64(env, obj, methodID, parms);
@@ -180,8 +179,9 @@ jchar JNICALL
 CallCharMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallCharMethodV_64(env, obj, methodID, parms);
 }
@@ -214,7 +214,6 @@ jshort JNICALL
 CallShortMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallShortMethodV_64(env, obj, methodID, parms);
@@ -224,8 +223,9 @@ jshort JNICALL
 CallShortMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallShortMethodV_64(env, obj, methodID, parms);
 }
@@ -258,7 +258,6 @@ jint JNICALL
 CallIntMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallIntMethodV_64(env, obj, methodID, parms);
@@ -268,8 +267,9 @@ jint JNICALL
 CallIntMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallIntMethodV_64(env, obj, methodID, parms);
 }
@@ -302,7 +302,6 @@ jlong JNICALL
 CallLongMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallLongMethodV_64(env, obj, methodID, parms);
@@ -312,8 +311,9 @@ jlong JNICALL
 CallLongMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallLongMethodV_64(env, obj, methodID, parms);
 }
@@ -346,7 +346,6 @@ jfloat JNICALL
 CallFloatMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallFloatMethodV_64(env, obj, methodID, parms);
@@ -356,8 +355,9 @@ jfloat JNICALL
 CallFloatMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallFloatMethodV_64(env, obj, methodID, parms);
 }
@@ -390,7 +390,6 @@ jdouble JNICALL
 CallDoubleMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallDoubleMethodV_64(env, obj, methodID, parms);
@@ -400,8 +399,9 @@ jdouble JNICALL
 CallDoubleMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallDoubleMethodV_64(env, obj, methodID, parms);
 }
@@ -433,7 +433,6 @@ void JNICALL
 CallVoidMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	CallVoidMethodV_64(env, obj, methodID, parms);
@@ -444,8 +443,9 @@ void JNICALL
 CallVoidMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	CallVoidMethodV_64(env, obj, methodID, parms);
 	return;
@@ -479,7 +479,6 @@ jobject JNICALL
 CallNonvirtualObjectMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallNonvirtualObjectMethodV_64(env, obj, clazz, methodID, parms);
@@ -489,8 +488,9 @@ jobject JNICALL
 CallNonvirtualObjectMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallNonvirtualObjectMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -523,7 +523,6 @@ jboolean JNICALL
 CallNonvirtualBooleanMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallNonvirtualBooleanMethodV_64(env, obj, clazz, methodID, parms);
@@ -533,8 +532,9 @@ jboolean JNICALL
 CallNonvirtualBooleanMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallNonvirtualBooleanMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -567,7 +567,6 @@ jbyte JNICALL
 CallNonvirtualByteMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallNonvirtualByteMethodV_64(env, obj, clazz, methodID, parms);
@@ -577,8 +576,9 @@ jbyte JNICALL
 CallNonvirtualByteMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallNonvirtualByteMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -611,7 +611,6 @@ jchar JNICALL
 CallNonvirtualCharMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallNonvirtualCharMethodV_64(env, obj, clazz, methodID, parms);
@@ -621,8 +620,9 @@ jchar JNICALL
 CallNonvirtualCharMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallNonvirtualCharMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -655,7 +655,6 @@ jshort JNICALL
 CallNonvirtualShortMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallNonvirtualShortMethodV_64(env, obj, clazz, methodID, parms);
@@ -665,8 +664,9 @@ jshort JNICALL
 CallNonvirtualShortMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallNonvirtualShortMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -699,7 +699,6 @@ jint JNICALL
 CallNonvirtualIntMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallNonvirtualIntMethodV_64(env, obj, clazz, methodID, parms);
@@ -709,8 +708,9 @@ jint JNICALL
 CallNonvirtualIntMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallNonvirtualIntMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -743,7 +743,6 @@ jlong JNICALL
 CallNonvirtualLongMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallNonvirtualLongMethodV_64(env, obj, clazz, methodID, parms);
@@ -753,8 +752,9 @@ jlong JNICALL
 CallNonvirtualLongMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallNonvirtualLongMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -787,7 +787,6 @@ jfloat JNICALL
 CallNonvirtualFloatMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallNonvirtualFloatMethodV_64(env, obj, clazz, methodID, parms);
@@ -797,8 +796,9 @@ jfloat JNICALL
 CallNonvirtualFloatMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallNonvirtualFloatMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -831,7 +831,6 @@ jdouble JNICALL
 CallNonvirtualDoubleMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallNonvirtualDoubleMethodV_64(env, obj, clazz, methodID, parms);
@@ -841,8 +840,9 @@ jdouble JNICALL
 CallNonvirtualDoubleMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallNonvirtualDoubleMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -874,7 +874,6 @@ void JNICALL
 CallNonvirtualVoidMethod(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	CallNonvirtualVoidMethodV_64(env, obj, clazz, methodID, parms);
@@ -884,8 +883,9 @@ void JNICALL
 CallNonvirtualVoidMethodV(JNIEnv *env, jobject obj, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	CallNonvirtualVoidMethodV_64(env, obj, clazz, methodID, parms);
 }
@@ -918,7 +918,6 @@ jobject JNICALL
 CallStaticObjectMethod(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallStaticObjectMethodV_64(env, clazz, methodID, parms);
@@ -928,8 +927,9 @@ jobject JNICALL
 CallStaticObjectMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallStaticObjectMethodV_64(env, clazz, methodID, parms);
 }
@@ -962,7 +962,6 @@ jboolean JNICALL
 CallStaticBooleanMethod(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallStaticBooleanMethodV_64(env, clazz, methodID, parms);
@@ -972,8 +971,10 @@ jboolean JNICALL
 CallStaticBooleanMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
+
 
 	return CallStaticBooleanMethodV_64(env, clazz, methodID, parms);
 }
@@ -1006,7 +1007,6 @@ jbyte JNICALL
 CallStaticByteMethod(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallStaticByteMethodV_64(env, clazz, methodID, parms);
@@ -1016,8 +1016,9 @@ jbyte JNICALL
 CallStaticByteMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallStaticByteMethodV_64(env, clazz, methodID, parms);
 }
@@ -1050,7 +1051,6 @@ jchar JNICALL
 CallStaticCharMethod(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallStaticCharMethodV_64(env, clazz, methodID, parms);
@@ -1060,8 +1060,9 @@ jchar JNICALL
 CallStaticCharMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallStaticCharMethodV_64(env, clazz, methodID, parms);
 }
@@ -1094,7 +1095,6 @@ jshort JNICALL
 CallStaticShortMethod(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallStaticShortMethodV_64(env, clazz, methodID, parms);
@@ -1104,8 +1104,9 @@ jshort JNICALL
 CallStaticShortMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallStaticShortMethodV_64(env, clazz, methodID, parms);
 }
@@ -1138,7 +1139,6 @@ jint JNICALL
 CallStaticIntMethod(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallStaticIntMethodV_64(env, clazz, methodID, parms);
@@ -1148,8 +1148,10 @@ jint JNICALL
 CallStaticIntMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallStaticIntMethodV_64(env, clazz, methodID, parms);
 }
@@ -1192,8 +1194,9 @@ jlong JNICALL
 CallStaticLongMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallStaticLongMethodV_64(env, clazz, methodID, parms);
 }
@@ -1226,7 +1229,6 @@ jfloat JNICALL
 CallStaticFloatMethod(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallStaticFloatMethodV_64(env, clazz, methodID, parms);
@@ -1236,8 +1238,9 @@ jfloat JNICALL
 CallStaticFloatMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallStaticFloatMethodV_64(env, clazz, methodID, parms);
 }
@@ -1270,7 +1273,6 @@ jdouble JNICALL
 CallStaticDoubleMethod(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return CallStaticDoubleMethodV_64(env, clazz, methodID, parms);
@@ -1280,8 +1282,9 @@ jdouble JNICALL
 CallStaticDoubleMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return CallStaticDoubleMethodV_64(env, clazz, methodID, parms);
 }
@@ -1313,7 +1316,6 @@ void JNICALL
 CallStaticVoidMethod(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	CallStaticVoidMethodV_64(env, clazz, methodID, parms);
@@ -1323,8 +1325,9 @@ void JNICALL
 CallStaticVoidMethodV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list arg)
 {
 	va_list_64 parms;
-	long long value = *((int *)(((int *)(arg))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)arg)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	CallStaticVoidMethodV_64(env, clazz, methodID, parms);
 }
