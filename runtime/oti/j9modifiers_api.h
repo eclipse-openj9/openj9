@@ -71,6 +71,7 @@
 #define J9ROMCLASS_IS_RECORD(romClass)			(_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccRecord) && J9ROMCLASS_IS_FINAL(romClass) && !J9ROMCLASS_IS_ABSTRACT(romClass))
 #define J9ROMCLASS_IS_SEALED(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccSealed)
 #define J9ROMCLASS_IS_VALUEBASED(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsValueBased)
+#define J9ROMCLASS_HAS_IDENTITY(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHasIdentity)
 
 /* 
  * Note that resolvefield ignores this flag if the cache line size cannot be determined.

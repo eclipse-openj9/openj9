@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2020 IBM Corp. and others
+ * Copyright (c) 2011, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,4 +40,7 @@
 #define BCT_ERR_INVALID_CLASS_TYPE -17
 #define BCT_ERR_INVALID_ANNOTATION_BAD_CP_INDEX_OUT_OF_RANGE  -18
 #define BCT_ERR_INVALID_ANNOTATION_BAD_CP_UTF8_STRING  -19
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+#define BCT_ERR_INVALID_VALUE_TYPE -20
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 

@@ -84,7 +84,7 @@
 #define J9ClassHasReferences 0x10000
 #define J9ClassRequiresPrePadding 0x20000
 #define J9ClassIsValueBased 0x40000
-
+#define J9ClassHasIdentity 0x80000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 

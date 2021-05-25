@@ -992,6 +992,7 @@ class RecordComponentIterator
 	bool isValueBased() const { return _isClassValueBased; }
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	bool needsIdentityInterface() const { return _isIdentityInterfaceNeeded; }
+	bool hasIdentityInterface() const { return _hasIdentityInterface; }
 	bool isValueType() const { return _isValueType; }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
@@ -1085,8 +1086,12 @@ private:
 	bool _isSealed;
 	bool _isClassValueBased;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool _hasIdentityInterface;
 	bool _isIdentityInterfaceNeeded;
 	bool _isValueType;
+	bool _hasNonStaticSynchronizedMethod;
+	bool _hasNonStaticFields;
+	bool _hasNonEmptyConstructor;
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	FieldInfo *_fieldsInfo;
@@ -1111,6 +1116,9 @@ private:
 	void walkAttributes();
 	void checkHiddenClass();
 	void walkInterfaces();
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	void checkAndRecordIsIdentityInterfaceNeeded();
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	void walkMethods();
 	void walkRecordComponents(J9CfrAttributeRecord *attrib);
 
@@ -1139,6 +1147,10 @@ private:
 	bool methodIsObjectConstructor(U_16 methodIndex);
 	bool methodIsClinit(U_16 methodIndex);
 	bool methodIsNonStaticNonAbstract(U_16 methodIndex);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	bool methodIsConstructor(U_16 methodIndex);
+	bool methodIsNonStaticSynchronized(U_16 methodIndex);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	bool shouldConvertInvokeVirtualToInvokeSpecialForMethodRef(U_16 methodRefCPIndex);
 	UDATA shouldConvertInvokeVirtualToMethodHandleBytecodeForMethodRef(U_16 methodRefCPIndex);

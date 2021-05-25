@@ -1150,7 +1150,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                                    + UNUSED
  *
  *                                  + UNUSED
- *                                 + UNUSED
+ *                                 + J9AccClassHasIdentity
  *                                + J9AccClassIsValueBased
  *                              + J9AccClassHiddenOptionNestmate
  *
@@ -1237,6 +1237,14 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 	if (classFileOracle->isValueBased()) {
 		modifiers |= J9AccClassIsValueBased;
 	}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (classFileOracle->hasIdentityInterface()
+		|| classFileOracle->needsIdentityInterface()
+	) {
+		modifiers |= J9AccClassHasIdentity;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	U_32 classNameindex = classFileOracle->getClassNameIndex();
 

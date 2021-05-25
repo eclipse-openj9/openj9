@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,9 @@ enum BuildResult {
 	LineNumberTableDecompressFailed = BCT_ERR_LINE_NUMBER_TABLE_DECOMPRESS_FAILED,
 	InvalidBytecodeSize = BCT_ERR_INVALID_BYTECODE_SIZE,
 	InvalidClassType = BCT_ERR_INVALID_CLASS_TYPE,
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	InvalidValueType = BCT_ERR_INVALID_VALUE_TYPE,
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 };
 
 #endif /* BUILDRESULT_HPP_ */
