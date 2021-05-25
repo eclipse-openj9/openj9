@@ -20,10 +20,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined(J9ZOS390)
 #pragma csect(CODE,"TRJ9GCStackAtlas#C")
 #pragma csect(STATIC,"TRJ9GCStackAtlas#S")
 #pragma csect(TEST,"TRJ9GCStackAtlas#T")
-
+#endif
 
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"

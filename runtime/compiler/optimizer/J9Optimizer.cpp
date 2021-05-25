@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined(J9ZOS390)
 //On zOS XLC linker can't handle files with same name at link time
 //This workaround with pragma is needed. What this does is essentially
 //give a different name to the codesection (csect) for this file. So it
@@ -27,6 +28,7 @@
 #pragma csect(CODE,"J9Optimizer#C")
 #pragma csect(STATIC,"J9Optimizer#S")
 #pragma csect(TEST,"J9Optimizer#T")
+#endif
 
 #include "optimizer/Optimizer.hpp"
 
