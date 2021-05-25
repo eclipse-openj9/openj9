@@ -1194,7 +1194,7 @@ TR::SymbolValidationManager::validateClassInstanceOfClassRecord(uint16_t classOn
 
    TR_YesNoMaybe isInstanceOf = _fej9->isInstanceOf(classOne, classTwo, objectTypeIsFixed, castTypeIsFixed);
 
-   return (wasInstanceOf == isInstanceOf);
+   return (wasInstanceOf == (isInstanceOf == TR_yes));
    }
 
 bool

@@ -107,10 +107,10 @@ int32_t TR_DataAccessAccelerator::perform()
         {
         TR::Block* block = iter.currentBlock();
 
-        result |= performOnBlock(block, &variableCallTreeTops);
+        result += performOnBlock(block, &variableCallTreeTops);
         }
 
-     result |= processVariableCalls(&variableCallTreeTops);
+     result += processVariableCalls(&variableCallTreeTops);
      }
 
    if (result != 0)
@@ -126,7 +126,7 @@ int32_t TR_DataAccessAccelerator::perform()
 int32_t
 TR_DataAccessAccelerator::processVariableCalls(TreeTopContainer* variableCallTreeTops)
    {
-   int result = 0;
+   int32_t result = 0;
 
    // Process variable precision calls after iterating through all the nodes
    for(int i = 0; i < variableCallTreeTops->size(); ++i)
@@ -143,21 +143,37 @@ TR_DataAccessAccelerator::processVariableCalls(TreeTopContainer* variableCallTre
                // DAA Packed Decimal <-> Integer
                case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_:
                   {
-                  result |= generatePD2IVariableParameter(treeTop, callNode, true, false); continue;
+                  if (generatePD2IVariableParameter(treeTop, callNode, true, false))
+                     {
+                     ++result;
+                     }
+                  continue;
                   }
                case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_ByteBuffer_:
                   {
-                  result |= generatePD2IVariableParameter(treeTop, callNode, true, true); continue;
+                  if (generatePD2IVariableParameter(treeTop, callNode, true, true))
+                     {
+                     ++result;
+                     }
+                  continue;
                   }
 
                   // DAA Packed Decimal <-> Long
                case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_:
                   {
-                  result |= generatePD2IVariableParameter(treeTop, callNode, false, false); continue;
+                  if (generatePD2IVariableParameter(treeTop, callNode, false, false))
+                     {
+                     ++result;
+                     }
+                  continue;
                   }
                case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_ByteBuffer_:
                   {
-                  result |= generatePD2IVariableParameter(treeTop, callNode, false, true); continue;
+                  if (generatePD2IVariableParameter(treeTop, callNode, false, true))
+                     {
+                     ++result;
+                     }
+                  continue;
                   }
                default:
                   break;
@@ -261,7 +277,8 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                   returnNode = insertDecimalGetIntrinsic(treeTop, callNode, 8, 8);
                   break;
 
-               default: break;
+               default:
+                  break;
                   }
 
                if (returnNode)
@@ -293,21 +310,43 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                   {
                // DAA Packed Decimal Check
                case TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_:
-                  result |= inlineCheckPackedDecimal(treeTop, callNode); break;
+                  if (inlineCheckPackedDecimal(treeTop, callNode))
+                     {
+                     ++result;
+                     }
+                  break;
 
                   // DAA Packed Decimal <-> Unicode Decimal
                case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToUnicodeDecimal_:
-                  result |= generatePD2UD(treeTop, callNode, true); break;
+                  if (generatePD2UD(treeTop, callNode, true))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_DecimalData_convertUnicodeDecimalToPackedDecimal_:
-                  result |= generateUD2PD(treeTop, callNode, true); break;
+                  if (generateUD2PD(treeTop, callNode, true))
+                     {
+                     ++result;
+                     }
+                  break;
 
                   // DAA Packed Decimal <-> External Decimal
                case TR::com_ibm_dataaccess_DecimalData_convertExternalDecimalToPackedDecimal_:
-                  result |= generateUD2PD(treeTop, callNode, false); break;
+                  if (generateUD2PD(treeTop, callNode, false))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToExternalDecimal_:
-                  result |= generatePD2UD(treeTop, callNode, false); break;
+                  if (generatePD2UD(treeTop, callNode, false))
+                     {
+                     ++result;
+                     }
+                  break;
 
-               default: matched = false; break;
+               default:
+                  matched = false;
+                  break;
                   }
                }
 
@@ -321,33 +360,81 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                   {
                // DAA Packed Decimal arithmetic methods
                case TR::com_ibm_dataaccess_PackedDecimal_addPackedDecimal_:
-                  result |= genArithmeticIntrinsic(treeTop, callNode, TR::pdadd); break;
+                  if (genArithmeticIntrinsic(treeTop, callNode, TR::pdadd))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_PackedDecimal_subtractPackedDecimal_:
-                  result |= genArithmeticIntrinsic(treeTop, callNode, TR::pdsub); break;
+                  if (genArithmeticIntrinsic(treeTop, callNode, TR::pdsub))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_PackedDecimal_multiplyPackedDecimal_:
-                  result |= genArithmeticIntrinsic(treeTop, callNode, TR::pdmul); break;
+                  if (genArithmeticIntrinsic(treeTop, callNode, TR::pdmul))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_PackedDecimal_dividePackedDecimal_:
-                  result |= genArithmeticIntrinsic(treeTop, callNode, TR::pddiv); break;
+                  if (genArithmeticIntrinsic(treeTop, callNode, TR::pddiv))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_PackedDecimal_remainderPackedDecimal_:
-                  result |= genArithmeticIntrinsic(treeTop, callNode, TR::pdrem); break;
+                  if (genArithmeticIntrinsic(treeTop, callNode, TR::pdrem))
+                     {
+                     ++result;
+                     }
+                  break;
 
                   // DAA Packed Decimal shift methods
                case TR::com_ibm_dataaccess_PackedDecimal_shiftLeftPackedDecimal_:
-                  result |= genShiftLeftIntrinsic(treeTop, callNode); break;
+                  if (genShiftLeftIntrinsic(treeTop, callNode))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_PackedDecimal_shiftRightPackedDecimal_:
-                  result |= genShiftRightIntrinsic(treeTop, callNode); break;
+                  if (genShiftRightIntrinsic(treeTop, callNode))
+                     {
+                     ++result;
+                     }
+                  break;
 
                   // DAA Packed Decimal comparison methods
                case TR::com_ibm_dataaccess_PackedDecimal_lessThanPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmplt); break;
+                  if (genComparisionIntrinsic(treeTop, callNode, TR::pdcmplt))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_PackedDecimal_lessThanOrEqualsPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmple); break;
+                  if (genComparisionIntrinsic(treeTop, callNode, TR::pdcmple))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_PackedDecimal_greaterThanPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmpgt); break;
+                  if (genComparisionIntrinsic(treeTop, callNode, TR::pdcmpgt))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_PackedDecimal_greaterThanOrEqualsPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmpge); break;
+                  if (genComparisionIntrinsic(treeTop, callNode, TR::pdcmpge))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_PackedDecimal_equalsPackedDecimal_:
-                  result |= genComparisionIntrinsic(treeTop, callNode, TR::pdcmpeq); break;
+                  if (genComparisionIntrinsic(treeTop, callNode, TR::pdcmpeq))
+                     {
+                     ++result;
+                     }
+                  break;
 
                   // DAA Packed Decimal <-> Integer
                case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_:
@@ -358,7 +445,10 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                      }
                   else
                      {
-                     result |= generatePD2I(treeTop, callNode, true, false);
+                     if (generatePD2I(treeTop, callNode, true, false))
+                        {
+                        ++result;
+                        }
                      }
                   break;
                   }
@@ -370,14 +460,25 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                      }
                   else
                      {
-                     result |= generatePD2I(treeTop, callNode, true, true);
+                     if (generatePD2I(treeTop, callNode, true, true))
+                        {
+                        ++result;
+                        }
                      }
                   break;
                   }
                case TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal_:
-                  result |= generateI2PD(treeTop, callNode, true, false); break;
+                  if (generateI2PD(treeTop, callNode, true, false))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal_ByteBuffer_:
-                  result |= generateI2PD(treeTop, callNode, true, true); break;
+                  if (generateI2PD(treeTop, callNode, true, true))
+                     {
+                     ++result;
+                     }
+                  break;
 
                   // DAA Packed Decimal <-> Long
                case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToLong_:
@@ -388,7 +489,10 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                      }
                   else
                      {
-                     result |= generatePD2I(treeTop, callNode, false, false);
+                     if (generatePD2I(treeTop, callNode, false, false))
+                        {
+                        ++result;
+                        }
                      }
                   break;
                   }
@@ -400,16 +504,29 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                      }
                   else
                      {
-                     result |= generatePD2I(treeTop, callNode, false, true);
+                     if (generatePD2I(treeTop, callNode, false, true))
+                        {
+                        ++result;
+                        }
                      }
                   break;
                   }
                case TR::com_ibm_dataaccess_DecimalData_convertLongToPackedDecimal_:
-                  result |= generateI2PD(treeTop, callNode, false, false); break;
+                  if (generateI2PD(treeTop, callNode, false, false))
+                     {
+                     ++result;
+                     }
+                  break;
                case TR::com_ibm_dataaccess_DecimalData_convertLongToPackedDecimal_ByteBuffer_:
-                  result |= generateI2PD(treeTop, callNode, false, true); break;
+                  if (generateI2PD(treeTop, callNode, false, true))
+                     {
+                     ++result;
+                     }
+                  break;
 
-               default: matched = false; break;
+               default:
+                  matched = false;
+                  break;
                   }
                }
 
@@ -418,7 +535,7 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                 && TR_OSRGuardRemoval::findMatchingOSRGuard(comp(), treeTop))
                requestOSRGuardRemoval = true;
 
-            blockResult |= result;
+            blockResult += result;
             }
          }
       }

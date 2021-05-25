@@ -4159,9 +4159,9 @@ TR::Node* TR_SPMDKernelParallelizer::findSingleLoopVariant(TR::Node *node, TR_Re
    if (node->getNumChildren() >= 1) node1 = findSingleLoopVariant(node->getFirstChild(), loop, sign, constantsOnly);
    if (node->getNumChildren() == 2)
       {
-      *sign = (*sign)^(node->getOpCode().isSub());
+      *sign = (*sign)^(node->getOpCode().isSub() ? 1 : 0);
       node2 = findSingleLoopVariant(node->getSecondChild(), loop, sign, constantsOnly);
-      if (node2 == NULL && node1 == NULL) *sign = (*sign)^(node->getOpCode().isSub());
+      if (node2 == NULL && node1 == NULL) *sign = (*sign)^(node->getOpCode().isSub() ? 1 : 0);
       }
 
    if (*constantsOnly == 1 || (node->getNumChildren() == 0 && node->getOpCodeValue() != TR::lconst && node->getOpCodeValue() != TR::iconst && loop->isExprInvariant(node)))
