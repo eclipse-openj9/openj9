@@ -776,7 +776,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
 #endif
 #if defined(J9VM_OPT_JITSERVER)
    {"highActiveThreadThreshold=", " \tDefines what is a high Threshold for active compilations",
-        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_highActiveThreadThreshold, 0, " %d"},
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_highActiveThreadThreshold, 0, "F%d"},
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"HWProfilerAOTWarmOptLevelThreshold=", "O<nnn>\tAOT Warm Opt Level Threshold",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_hwprofilerAOTWarmOptLevelThreshold, 0, "F%d", NOT_IN_SUBSET},
@@ -918,9 +918,9 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_numFirstTimeCompilationsToExitIdleMode, 0, "F%d", NOT_IN_SUBSET },
 #if defined(J9VM_OPT_JITSERVER)
    {"oldAge=", " \tDefines what an old JITServer cache entry means",
-        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAge,  0, " %d"},
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAge,  0, "F%d"},
    {"oldAgeUnderLowMemory=", " \tDefines what an old JITServer cache entry means when memory is low",
-        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAgeUnderLowMemory,  0, " %d" },
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_oldAgeUnderLowMemory,  0, "F%d" },
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"profileAllTheTime=",    "R<nnn>\tInterpreter profiling will be on all the time",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_profileAllTheTime, 0, " %d", NOT_IN_SUBSET},
@@ -989,7 +989,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"testMode",           "D\tcompile but do not run the compiled code",  SET_JITCONFIG_RUNTIME_FLAG(J9JIT_TESTMODE) },
 #if defined(J9VM_OPT_JITSERVER)
    {"timeBetweenPurges=", " \tDefines how often we are willing to scan for old entries to be purged",
-        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_timeBetweenPurges,  0, " %d"},
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_timeBetweenPurges,  0, "F%d"},
 #endif /* defined(J9VM_OPT_JITSERVER) */
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_ARM64)
    {"tlhPrefetchBoundaryLineCount=",    "O<nnn>\tallocation prefetch boundary line for allocation prefetch",
@@ -1024,7 +1024,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::versionOption, 0, 0, "F"},
 #if defined(J9VM_OPT_JITSERVER)
    {"veryHighActiveThreadThreshold=", " \tDefines what is a very high Threshold for active compilations",
-        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_veryHighActiveThreadThreshold, 0, " %d"},
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_veryHighActiveThreadThreshold, 0, "F%d"},
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"veryHotSampleThreshold=",          "R<nnn>\tThe maximum number of global samples taken during a sample interval for which the method will be recompiled at hot with normal priority",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_veryHotSampleThreshold, 0, " %d", NOT_IN_SUBSET},
