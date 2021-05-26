@@ -590,37 +590,41 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          }
       else // Internal caches are empty
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will ask for address ranges of unloaded classes and CHTable for clientUID %llu",
-               getCompThreadId(), (unsigned long long)clientId);
-
-         stream->write(JITServer::MessageType::getUnloadedClassRangesAndCHTable, JITServer::Void());
-         auto response = stream->read<std::vector<TR_AddressRange>, int32_t, std::string>();
-         // TODO: we could send JVM info that is global and does not change together with CHTable
-         auto &unloadedClassRanges = std::get<0>(response);
-         auto maxRanges = std::get<1>(response);
-         std::string &serializedCHTable = std::get<2>(response);
-
-         clientSession->initializeUnloadedClassAddrRanges(unloadedClassRanges, maxRanges);
-         if (!unloadedClasses.empty())
+         OMR::CriticalSection cs(clientSession->getCacheInitMonitor());
+         if (clientSession->cachesAreCleared())
             {
-            // This function updates multiple caches based on the newly unloaded classes list.
-            // Pass `false` here to indicate that we want the unloaded class ranges table cache excluded,
-            // since we just retrieved the entire table and it should therefore already be up to date.
-            clientSession->processUnloadedClasses(unloadedClasses, false);
-            }
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will ask for address ranges of unloaded classes and CHTable for clientUID %llu",
+                  getCompThreadId(), (unsigned long long)clientId);
 
-         auto chTable = static_cast<JITServerPersistentCHTable *>(clientSession->getCHTable());
-         // Need CHTable mutex
-         TR_ASSERT_FATAL(!chTable->isInitialized(), "CHTable must be empty for clientUID=%llu", (unsigned long long)clientId);
-         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will initialize CHTable for clientUID %llu size=%zu",
-               getCompThreadId(), (unsigned long long)clientId, serializedCHTable.size());
-         chTable->initializeCHTable(_vm, serializedCHTable);
-         clientSession->setCachesAreCleared(false);
+            stream->write(JITServer::MessageType::getUnloadedClassRangesAndCHTable, JITServer::Void());
+            auto response = stream->read<std::vector<TR_AddressRange>, int32_t, std::string>();
+            // TODO: we could send JVM info that is global and does not change together with CHTable
+            auto &unloadedClassRanges = std::get<0>(response);
+            auto maxRanges = std::get<1>(response);
+            std::string &serializedCHTable = std::get<2>(response);
+
+            clientSession->initializeUnloadedClassAddrRanges(unloadedClassRanges, maxRanges);
+            if (!unloadedClasses.empty())
+               {
+               // This function updates multiple caches based on the newly unloaded classes list.
+               // Pass `false` here to indicate that we want the unloaded class ranges table cache excluded,
+               // since we just retrieved the entire table and it should therefore already be up to date.
+               clientSession->processUnloadedClasses(unloadedClasses, false);
+               }
+            auto chTable = static_cast<JITServerPersistentCHTable *>(clientSession->getCHTable());
+            // Need CHTable mutex
+            TR_ASSERT_FATAL(!chTable->isInitialized(), "CHTable must be empty for clientUID=%llu", (unsigned long long)clientId);
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will initialize CHTable for clientUID %llu size=%zu",
+                  getCompThreadId(), (unsigned long long)clientId, serializedCHTable.size());
+            chTable->initializeCHTable(_vm, serializedCHTable);
+            clientSession->setCachesAreCleared(false);
+            }
          }
 
-      // Critical requests must update lastProcessedCriticalSeqNo and notify any waiting threads. 
+
+      // Critical requests must update lastProcessedCriticalSeqNo and notify any waiting threads.
       // Dependent threads will pass through once we've released the sequencing monitor.
       if (isCriticalRequest)
          {
