@@ -5086,35 +5086,6 @@ TR_ResolvedJ9Method::isJITInternalNative()
    return isNative() && !isJNINative() && !isInterpreted();
    }
 
-uint32_t
-TR_ResolvedJ9Method::romMethodArgCountAtCallSiteIndex(int32_t callSiteIndex)
-   {
-   J9ROMClass *romClass = romClassPtr();
-   J9SRP                 *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
-   J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callSiteIndex], J9ROMNameAndSignature*);
-   J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
-
-   U_8 paramBuffer[256];
-   uintptr_t    paramElements;
-   uintptr_t    paramSlots;
-   jitParseSignature(signature, paramBuffer, &paramElements, &paramSlots);
-   return paramElements;
-   }
-
-uint32_t
-TR_ResolvedJ9Method::romMethodArgCountAtCPIndex(int32_t cpIndex)
-   {
-   J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(cp()->romConstantPool + cpIndex);
-   J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
-   J9UTF8                *signature    = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
-
-   U_8 paramBuffer[256];
-   uintptr_t    paramElements;
-   uintptr_t    paramSlots;
-   jitParseSignature(signature, paramBuffer, &paramElements, &paramSlots);
-   return paramElements;
-   }
-
 bool
 TR_J9MethodBase::isUnsafeCAS(TR::Compilation * c)
    {
