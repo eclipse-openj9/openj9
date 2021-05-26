@@ -2395,21 +2395,6 @@ J9::SymbolReferenceTable::findOrCreateVMThreadTempSlotFieldSymbolRef()
    }
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateVMThreadFloatTemp1SymbolRef()
-   {
-   if (!element(j9VMThreadFloatTemp1Symbol))
-      {
-      TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-      TR::Symbol * sym = TR::RegisterMappedSymbol::createMethodMetaDataSymbol(trHeapMemory(), "j9VMThreadFloatTemp1");
-      sym->setDataType(TR::Address);
-      element(j9VMThreadFloatTemp1Symbol) = new (trHeapMemory()) TR::SymbolReference(self(), j9VMThreadFloatTemp1Symbol, sym);
-      element(j9VMThreadFloatTemp1Symbol)->setOffset(fej9->thisThreadGetFloatTemp1Offset());
-      aliasBuilder.addressStaticSymRefs().set(getNonhelperIndex(j9VMThreadFloatTemp1Symbol));
-      }
-   return element(j9VMThreadFloatTemp1Symbol);
-   }
-
-TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateProfilingBufferSymbolRef(intptr_t offset)
    {
    if (!element(profilingBufferSymbol))
