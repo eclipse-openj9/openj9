@@ -2732,21 +2732,19 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (start == 0) {
 			return this;
 		}
-
+		if (start < 0) {
+			throw new StringIndexOutOfBoundsException(start);
+		}
 		int len = lengthInternal();
-
-		if (0 <= start && start <= len) {
+		if (start <= len) {
 			boolean isCompressed = false;
-
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
 				isCompressed = true;
 			}
-
 			return new String(value, start, len - start, isCompressed, enableSharingInSubstringWhenOffsetIsZero);
-		} else {
-			throw new StringIndexOutOfBoundsException(start);
 		}
+		throw new StringIndexOutOfBoundsException("begin " + start + ", length " + len); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/**
@@ -2763,22 +2761,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public String substring(int start, int end) {
 		int len = lengthInternal();
-
 		if (start == 0 && end == len) {
 			return this;
 		}
-
-		if (0 <= start && start <= end && end <= len) {
+		if ((start >= 0) && (start <= end) && (end <= len)) {
 			boolean isCompressed = false;
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
 				isCompressed = true;
 			}
-
 			return new String(value, start, end - start, isCompressed, enableSharingInSubstringWhenOffsetIsZero);
-		} else {
-			throw new StringIndexOutOfBoundsException(start);
 		}
+		throw new StringIndexOutOfBoundsException("begin " + start + ", end " + end + ", length " + len); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	/**
@@ -6735,19 +6729,19 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (start == 0) {
 			return this;
 		}
-
+		if (start < 0) {
+			throw new StringIndexOutOfBoundsException(start);
+		}
 		int len = lengthInternal();
-
-		if (0 <= start && start <= len) {
+		if (start <= len) {
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
 				return new String(value, start, len - start, true, enableSharingInSubstringWhenOffsetIsZero);
 			} else {
 				return new String(value, start, len - start, false, enableSharingInSubstringWhenOffsetIsZero);
 			}
-		} else {
-			throw new StringIndexOutOfBoundsException(start);
 		}
+		throw new StringIndexOutOfBoundsException("begin " + start + ", length " + len); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/**
@@ -6764,21 +6758,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public String substring(int start, int end) {
 		int len = lengthInternal();
-
-		if (start == 0 && end == len) {
+		if ((start == 0) && (end == len)) {
 			return this;
 		}
-
-		if (0 <= start && start <= end && end <= len) {
+		if ((start >= 0) && (start <= end) && (end <= len)) {
 			// Check if the String is compressed
 			if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
 				return new String(value, start, end - start, true, enableSharingInSubstringWhenOffsetIsZero);
 			} else {
 				return new String(value, start, end - start, false, enableSharingInSubstringWhenOffsetIsZero);
 			}
-		} else {
-			throw new StringIndexOutOfBoundsException(start);
 		}
+		throw new StringIndexOutOfBoundsException("begin " + start + ", end " + end + ", length " + len); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	/**
