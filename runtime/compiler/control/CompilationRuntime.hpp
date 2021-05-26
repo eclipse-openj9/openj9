@@ -666,6 +666,7 @@ public:
 #endif
 
    void * operator new(size_t s, void * p) throw() { return p; }
+   void operator delete (void *, void * p) {}
    CompilationInfo (J9JITConfig *jitConfig);
    TR::Monitor *getCompilationMonitor() {return _compilationMonitor;}
    void acquireCompMonitor(J9VMThread *vmThread); // used when we know we have a compilation monitor
