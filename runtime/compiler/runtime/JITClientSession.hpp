@@ -348,6 +348,7 @@ public:
    int64_t getTimeOflastAccess() const { return _timeOfLastAccess; }
 
    TR::Monitor *getSequencingMonitor() { return _sequencingMonitor; }
+   TR::Monitor *getCacheInitMonitor() { return _cacheInitMonitor; }
    TR::Monitor *getConstantPoolMonitor() { return _constantPoolMapMonitor; }
    TR_MethodToBeCompiled *getOOSequenceEntryList() const { return _OOSequenceEntryList; }
    void setOOSequenceEntryList(TR_MethodToBeCompiled *m) { _OOSequenceEntryList = m; }
@@ -433,6 +434,7 @@ private:
    // The following monitor is used to protect access to _lastProcessedCriticalSeqNo and
    // the list of out-of-sequence compilation requests (_OOSequenceEntryList)
    TR::Monitor *_sequencingMonitor;
+   TR::Monitor *_cacheInitMonitor;
    TR::Monitor *_constantPoolMapMonitor;
    // Compilation requests that arrived out-of-sequence wait in
    // _OOSequenceEntryList for their turn to be processed
