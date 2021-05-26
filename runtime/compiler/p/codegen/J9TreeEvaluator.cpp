@@ -4146,7 +4146,9 @@ TR::Register *J9::Power::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, 
    uint8_t num_PICS = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, instanceOfNode, guessClassArray);
 
    bool testEqualClass = instanceOfOrCheckCastNeedEqualityTest(instanceOfNode, cg);
-   bool testCastClassIsSuper = instanceOfOrCheckCastNeedSuperTest(instanceOfNode, cg);
+   // Testing castClassAddr to set testCastClassIsSuper only if cast class is known at compile time
+   // When class is unknown, testCastClassIsSuper is false, and needsHelperCall is true to handle non-typical class types (e.g. interfaces)
+   bool testCastClassIsSuper = castClassAddr && instanceOfOrCheckCastNeedSuperTest(instanceOfNode, cg);
    bool isFinalClass = (castClassSymRef == NULL) ? false : castClassSymRef->isNonArrayFinal(comp);
    bool needsHelperCall = needHelperCall(testCastClassIsSuper, isFinalClass);
    bool testCache = needTestCache(!comp->getOption(TR_DisableInlineCheckCast), needsHelperCall, testCastClassIsSuper, castClassAddr, num_PICS);
