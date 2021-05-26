@@ -3521,20 +3521,21 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
          {
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, locationReg, objReg, offset);
          }
+      TR::InstOpCode::Mnemonic loadOp = comp->useCompressedPointers() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx;
 
-      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(locationReg, 0, cg));
+      generateTrg1MemInstruction(cg, loadOp, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(locationReg, 0, cg));
 
       if (node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef())
          TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tempReg);
 
       generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
 
-      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, evacuateReg,
+      generateTrg1MemInstruction(cg, loadOp, node, evacuateReg,
             new (cg->trHeapMemory()) TR::MemoryReference(vmThreadReg, comp->fej9()->thisThreadGetEvacuateBaseAddressOffset(), cg));
       generateCompareInstruction(cg, node, tempReg, evacuateReg, true);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, endLabel, TR::CC_LT);
 
-      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, evacuateReg,
+      generateTrg1MemInstruction(cg, loadOp, node, evacuateReg,
             new (cg->trHeapMemory()) TR::MemoryReference(vmThreadReg, comp->fej9()->thisThreadGetEvacuateTopAddressOffset(), cg));
       generateCompareInstruction(cg, node, tempReg, evacuateReg, true);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, endLabel, TR::CC_GT);
