@@ -139,7 +139,6 @@ class CompilationInfoPerThreadBase
    {
    TR_PERSISTENT_ALLOC(TR_Memory::CompilationInfoPerThreadBase);
    friend class TR::CompilationInfo;
-   friend class ::TR_DebugExt;
    public:
    CompilationInfoPerThreadBase(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool onSeparateThread);
 
@@ -448,7 +447,6 @@ namespace TR
 class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    {
    friend class TR::CompilationInfo;
-   friend class ::TR_DebugExt;
    public:
    CompilationInfoPerThread(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread);
    bool                   initializationSucceeded() { return _initializationSucceeded; }

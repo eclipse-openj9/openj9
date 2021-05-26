@@ -159,7 +159,6 @@ public:
 
 protected:
    friend class TR_Debug;
-   friend class TR_DebugExt;
    uintptr_t    j9returnType();
    void         parseSignature(TR_Memory *);
 

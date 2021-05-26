@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,6 @@ class TR_PersistentMethodInfo
    friend class TR::CompilationInfo;
    friend class TR_S390Recompilation;  // FIXME: ugly
    friend class ::OMR::Options;
-   friend class TR_DebugExt;
    friend class TR::DefaultCompilationStrategy;
    friend class TR::ThresholdCompilationStrategy;
 
@@ -322,7 +321,6 @@ class TR_PersistentJittedBodyInfo
    friend class TR_EmilyPersistentJittedBodyInfo;
    friend class ::OMR::Options;
    friend class J9::Options;
-   friend class TR_DebugExt;
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
    friend void fixPersistentMethodInfo(void *table, bool isJITClientAOTLoad);

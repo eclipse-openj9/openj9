@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,25 +29,11 @@
 extern "C" {
 #endif
 
-void JNICALL dbgjit_TrInitialize(J9JavaVM *localVM,
-                                 J9PortLibrary *dbgPortLib,
-				 void (*dbgPrint)(const char *s, ...),
-				 void (*dbgReadMemory)(UDATA remoteAddr, void *localPtr, UDATA size, UDATA *bytesRead),
-				 UDATA (*dbgGetExpression)(const char* args),
-				 void* (*dbgMalloc)(UDATA size, void *originalAddress),
-				 void* (*dbgMallocAndRead)(UDATA size, void *remoteAddress),
-				 void (*dbgFree)(void * addr),
-				 void* (*dbgFindPatternInRange)(U_8* pattern, UDATA patternLength, UDATA patternAlignment,
-				 				U_8* startSearchFrom, UDATA bytesToSearch, UDATA* bytesSearched));
-void JNICALL dbgjit_TrPrint(const char *name, void *addr, UDATA argCount, const char* args);
-
 JNIEXPORT jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexToVTableIndex
   (JNIEnv *, jclass, jlong, jint, jlong);
 
 JNIEXPORT jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
   (JNIEnv *, jclass);
-
-void * JNICALL createDebugExtObject(void * comp, void * jitFunctions, void * dxMalloc);
 
 #ifdef __cplusplus
 }

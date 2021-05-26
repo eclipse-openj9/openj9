@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,17 +39,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-/* ---------------- trdbgext.c ---------------- */
-
-/**
-* @brief
-* @param *args
-* @return void
-*/
-void 
-dbgext_trprint(const char *args);
 
 
 /* -- Note:  the methods below are not implemented by the dbgext module but are required to be implemented by modules

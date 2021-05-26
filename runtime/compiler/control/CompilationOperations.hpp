@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ enum TR_CompilationOperations
    OP_WillWaitOnSlotMonitorAfterCompMonRelease, // This entry will appear out-of-order
    OP_CompileOnSeparateThreadEnter,
    OP_WillStopCompilationThreads,
-   // If adding new entries, please add names as well in CompilationThread.cpp and DebugExt.cpp - OperationNames
+   // If adding new entries, please add names as well in CompilationThread.cpp - OperationNames
    OP_LastValidOperation
    };
 #if (OP_LastValidOperation > 255)

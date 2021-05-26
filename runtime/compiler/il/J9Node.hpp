@@ -428,8 +428,6 @@ private:
    // Holds DecimalInfo and BCDFlags
    UnionPropertyB _unionPropertyB;
 
-   friend class ::TR_DebugExt;
-
 protected:
    // Flag bits
    enum

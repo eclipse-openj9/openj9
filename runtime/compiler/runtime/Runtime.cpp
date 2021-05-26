@@ -2028,8 +2028,7 @@ extern "C" void jitReportDynamicCodeLoadEvents(J9VMThread *currentThread)
    }
 
 
-/* Find the code cache method header given a PC value.
- * TODO: Common up with DebugExt.cpp code. */
+/* Find the code cache method header given a PC value. */
 OMR::CodeCacheMethodHeader *getCodeCacheMethodHeader(char *p, int searchLimit, J9JITExceptionTable* metaData)
    {
    char * const warmEyeCatcher = TR::CodeCacheManager::instance()->codeCacheConfig().warmEyeCatcher();

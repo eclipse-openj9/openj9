@@ -79,7 +79,6 @@ struct TR_RatHT
 //#define CLASS_EXTEND_ASSUMPTIONTABLE_SIZE 1543  // other choices: 3079 6151
 class TR_RuntimeAssumptionTable
    {
-   friend class TR_DebugExt;
    public:
    TR_RuntimeAssumptionTable() {} // constructor of TR_RuntimeAssumptionTable
    bool init();  // Must call this during bootstrap on a single thread because it is not MT safe

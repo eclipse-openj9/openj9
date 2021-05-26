@@ -237,10 +237,9 @@ J9::VMEnv::acquireVMAccessIfNeeded(TR_J9VMBase *fej9)
    // This interface should be deprecated when the FrontEnd is redesigned and
    // eliminated.  The trouble with the CompilerEnv interface is that it doesn't
    // yet understand compilation contexts (i.e., a 'regular' compile, an AOT
-   // compile, a FrontEnd cooked up for a debugger extension, etc.).  While
-   // this can be sorted out, the safest thing to do until that happens is to
-   // simply call the equivalent J9 FrontEnd virtual function to ensure the
-   // correct call is being made.
+   // compile, etc.). While this can be sorted out, the safest thing to do until
+   // that happens is to simply call the equivalent J9 FrontEnd virtual function to
+   // ensure the correct call is being made.
    //
    //   return acquireVMaccessIfNeededInner(fej9->vmThread(), fej9->vmThreadIsCompilationThread());
 

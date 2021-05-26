@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,8 +21,6 @@
 ################################################################################
 
 j9jit_files(
-	ras/DebugExt.cpp
-	ras/DebugExtSegmentProvider.cpp
 	ras/HashTable.cpp
 	ras/InternalFunctions.cpp
 	ras/kca_offsets_generator.cpp

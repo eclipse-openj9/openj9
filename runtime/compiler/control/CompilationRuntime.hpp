@@ -107,7 +107,6 @@ struct TR_SignatureCountPair
 class TR_LowPriorityCompQueue
    {
    public:
-      friend class TR_DebugExt;
       TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo); // TODO: define its own category
       static const uint32_t HT_SIZE = (1 << 13); // power of two for cheap modulo
       TR_LowPriorityCompQueue();
@@ -185,7 +184,6 @@ class TR_LowPriorityCompQueue
 class TR_JProfilingQueue
    {
    public:
-      friend class TR_DebugExt;
       TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo); // TODO: define its own category
       TR_JProfilingQueue() : _firstQentry(NULL), _lastQentry(NULL), _size(0), _weight(0), _allowProcessing(false) {};
       void setCompInfo(TR::CompilationInfo *compInfo) { _compInfo = compInfo; }
@@ -338,7 +336,6 @@ namespace TR
 class CompilationInfo
    {
 public:
-   friend class ::TR_DebugExt;
    friend class TR::CompilationInfoPerThreadBase;
    friend class TR::CompilationInfoPerThread;
    friend class ::TR_LowPriorityCompQueue;

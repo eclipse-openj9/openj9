@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Copyright (c) 2016, 2018 IBM Corp. and others
+; Copyright (c) 2016, 2021 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,8 +28,6 @@ SECTIONS
 EXPORTS
 	j9jit_testarossa
 	J9VMDllMain
-	dbgjit_TrPrint
-	dbgjit_TrInitialize
 	Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
 	Java_java_lang_invoke_InterfaceHandle_convertITableIndexToVTableIndex
 	Java_java_lang_invoke_MutableCallSite_invalidate

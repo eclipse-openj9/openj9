@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,9 +46,6 @@ struct TR_CompilationTracingEntry
    }; // TR_CompilationTracingEntry
 
 
-// NOTE: if changes are made to this data structure, DebugExt.cpp might need
-// to be changed as well
-//
 namespace TR
 {
 

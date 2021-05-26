@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ set(OMR_ENHANCED_WARNINGS OFF)
 j9vm_add_library(j9dbgext STATIC
 	dbgpool.c
 	j9dbgext.c
-	trdbgext.c
 )
 
 target_include_directories(j9dbgext

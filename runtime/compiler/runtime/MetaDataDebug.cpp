@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,7 @@
 #include "env/CompilerEnv.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "ras/DebugExt.hpp"
 #include "ras/InternalFunctions.hpp"
-#include "ras/InternalFunctionsExt.hpp"
 #include "runtime/MethodMetaData.h"
 #include "env/VMJ9.h"
 #include "env/CompilerEnv.hpp"
@@ -49,10 +47,7 @@ void
 TR_Debug::printJ9JITExceptionTableDetails(J9JITExceptionTable *data, J9JITExceptionTable *dbgextRemotePtr)
    {
    uintptr_t startPC = (uintptr_t)data->startPC;
-   if (inDebugExtension())
-      trfprintf(_file, "J9JITExceptionTable [%p]\n", dbgextRemotePtr);
-   else
-      trfprintf(_file, "J9JITExceptionTable [%p]\n", data);
+   trfprintf(_file, "J9JITExceptionTable [%p]\n", data);
    trfprintf(_file, "CP=[%p], slots=[%p], NumExcpRanges=[%p], size=[%p]\n",
                data->constantPool, data->slots, data->numExcptionRanges, data->size);
    trfprintf(_file, "startPC=     [%p]\n", data->startPC);
@@ -270,7 +265,7 @@ TR_Debug::printStackAtlasDetails(uintptr_t startPC, uint8_t * mapBits, int32_t n
       uint8_t variableLengthSize = *((uint8_t *)internalPtrMapCursor);
       trfprintf(_file, "        size of internal pointer stack map = %d\n", variableLengthSize);
       internalPtrMapCursor += 1;
-      if((!inDebugExtension() && _comp->isAlignStackMaps()) || (inDebugExtension() && isAlignStackMaps()))
+      if(_comp->isAlignStackMaps())
          internalPtrMapCursor += 1;
       indexOfFirstInternalPtr = *((uint16_t *)internalPtrMapCursor);
       trfprintf(_file, "        index of first internal pointer = %d\n", indexOfFirstInternalPtr);
@@ -358,7 +353,7 @@ TR_Debug::printMapInfo(uintptr_t startPC, uint8_t * mapBits, int32_t numberOfSlo
    else
       {
       lowOffset = *((U_16 *)mapBits);
-      if ((!inDebugExtension() && _comp->isAlignStackMaps()) || (inDebugExtension() && isAlignStackMaps()))
+      if (_comp->isAlignStackMaps())
          {
          mapBits += sizeof(U_32);
          *sizeOfStackAtlas = *sizeOfStackAtlas + sizeof(U_32);
@@ -483,7 +478,7 @@ TR_Debug::printMapInfo(uintptr_t startPC, uint8_t * mapBits, int32_t numberOfSlo
           trfprintf(_file,"\n");
 	    }
 
-         if ((!inDebugExtension() && _comp->isAlignStackMaps()) || (inDebugExtension() && isAlignStackMaps()))
+         if (_comp->isAlignStackMaps())
             {
             mapBits += ((uintptr_t)mapBits & 3) ? (4 - ((uintptr_t)mapBits & 3)) : 0;
             *sizeOfStackAtlas = *sizeOfStackAtlas + ((uintptr_t)mapBits & 3) ? (4 - ((uintptr_t)mapBits & 3)) : 0;
