@@ -526,6 +526,21 @@ public:
     */
    virtual bool isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bool isStatic);
 
+   /**
+    * @brief Gets the number of arguments in the ROM method signature
+    *
+    * @param callSiteIndex the call site index of the ROM method
+    * @return uint32_t the number of arguments
+    */
+   virtual uint32_t romMethodArgCountAtCallSiteIndex(int32_t callSiteIndex);
+   /**
+    * @brief Gets the number of arguments in the ROM method signature
+    *
+    * @param cpIndex the cpIndex to lookup the ROM method
+    * @return uint32_t the number of arguments
+    */
+   virtual uint32_t romMethodArgCountAtCPIndex(int32_t cpIndex);
+
 protected:
    virtual TR_J9MethodBase *       asJ9Method(){ return this; }
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
