@@ -35,7 +35,6 @@ namespace J9 { typedef MonitorTable MonitorTableConnector; }
 #include "infra/Monitor.hpp"
 #include "infra/RWMonitor.hpp"
 
-class TR_DebugExt;
 struct J9PortLibrary;
 struct J9JavaVM;
 struct J9VMThread;
@@ -46,8 +45,6 @@ namespace J9
 
 class OMR_EXTENSIBLE MonitorTable : public OMR::MonitorTableConnector
    {
-   friend class ::TR_DebugExt;
-
    public:
 
    void *operator new(size_t size, void *p) {return p;}

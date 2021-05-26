@@ -344,8 +344,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/optimizer/J9EstimateCodeSize.cpp \
     compiler/optimizer/J9Inliner.cpp \
     compiler/optimizer/InterpreterEmulator.cpp \
-    compiler/ras/DebugExt.cpp \
-    compiler/ras/DebugExtSegmentProvider.cpp \
     compiler/ras/HashTable.cpp \
     compiler/ras/InternalFunctions.cpp \
     compiler/ras/kca_offsets_generator.cpp \
