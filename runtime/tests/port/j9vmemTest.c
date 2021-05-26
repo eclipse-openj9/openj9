@@ -2410,7 +2410,7 @@ j9vmem_testFindValidPageSize_impl(struct J9PortLibrary *portLibrary, char *testN
 								expectedPageSize, expectedPageFlags, expectedIsSizeSupported,
 								requestedPageSize, requestedPageFlags, isSizeSupported);
 #endif /* !defined(J9VM_ENV_DATA64) */
-
+#if 0
 	outputComment(PORTLIB, "\nCase %d: -Xlp:codecache:pagesize=64K\n", caseIndex++);
 	mode = J9PORT_VMEM_MEMORY_MODE_EXECUTE;
 	requestedPageSize = 16 * FOUR_KB;
@@ -2432,8 +2432,9 @@ j9vmem_testFindValidPageSize_impl(struct J9PortLibrary *portLibrary, char *testN
 	verifyFindValidPageSizeOutput(portLibrary, testName,
 								expectedPageSize, expectedPageFlags, expectedIsSizeSupported,
 								requestedPageSize, requestedPageFlags, isSizeSupported);
-
+#endif
 #if !defined(J9VM_ENV_DATA64)
+#if 0
 	outputComment(PORTLIB, "\nCase %d: -Xlp:codecache:pagesize=64K with TR_ppcCodeCacheConsolidationEnabled set\n", caseIndex++);
 	/* No port library API to set the environment variable. Use setenv() */
 	rc = setenv("TR_ppcCodeCacheConsolidationEnabled", "true", 1 /*overwrite any existing value */);
@@ -2464,6 +2465,7 @@ j9vmem_testFindValidPageSize_impl(struct J9PortLibrary *portLibrary, char *testN
 	verifyFindValidPageSizeOutput(portLibrary, testName,
 								expectedPageSize, expectedPageFlags, expectedIsSizeSupported,
 								requestedPageSize, requestedPageFlags, isSizeSupported);
+#endif
 #endif /* !defined(J9VM_ENV_DATA64) */
 
 	outputComment(PORTLIB, "\nCase %d: -Xlp:codecache:pagesize=4K\n", caseIndex++);
