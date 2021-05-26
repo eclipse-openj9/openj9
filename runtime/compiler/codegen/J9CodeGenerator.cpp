@@ -786,8 +786,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          // The appendix object in the invoke cache array entry could be NULL, which we cannot determine at compile
          // time when the callSite/invokeCache table entries are unresolved. The VM would have to remove the appendix
          // object, which would require knowing the number of args of the ROM method. To pass that information, we store to
-         // vmThread.floatTemp1 field. The name of the field is misleading, as it is an lconst/iconst being stored. This
-         // is also done for linkToSpecial, as it shares the same bytecode handler as linkToStatic.
+         // vmThread.floatTemp1 field. The name of the field is misleading, as it is an lconst/iconst being stored.
          TR::Node * numArgsNode = NULL;
          TR::Node * numArgSlotsNode = NULL;
          TR::Node * tempSlotStoreNode = NULL;
@@ -811,7 +810,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          tempSlotStoreNode->setByteCodeIndex(node->getByteCodeIndex());
          TR::TreeTop::create(self()->comp(), tt->getPrevTreeTop(), tempSlotStoreNode);
 
-         if (rm == TR::java_lang_invoke_MethodHandle_linkToStatic || rm ==  TR::java_lang_invoke_MethodHandle_linkToSpecial)
+         if (rm == TR::java_lang_invoke_MethodHandle_linkToStatic)
             {
             // The last child of the call node is the iload for the memberName object, from which we can obtain the callSite index or cpIndex.
             TR::Node * invokeCacheArrayShadowNode = node->getLastChild();
