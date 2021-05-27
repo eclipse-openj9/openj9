@@ -2,7 +2,7 @@
  * Licensed Materials - Property of IBM
  * "Restricted Materials of IBM"
  *
- * (c) Copyright IBM Corp. 2020, 2020 All Rights Reserved
+ * (c) Copyright IBM Corp. 2020, 2021 All Rights Reserved
  *
  * US Government Users Restricted Rights - Use, duplication or disclosure
  * restricted by GSA ADP Schedule Contract with IBM Corp.
@@ -10,6 +10,7 @@
 
 def set_extra_options() {
     set_gskit()
+    set_healthcenter()
 }
 
 def set_gskit() {
@@ -59,6 +60,24 @@ def set_gskit() {
             EXTRA_CONFIGURE_OPTIONS += " --with-gskit=${gskitDir}"
 
             fileOperations([fileDeleteOperation(excludes: '', includes: 'gskit_*.tar')])
+        }
+    }
+}
+
+def set_healthcenter() {
+    def hcAgentDownloadUrl = buildspec.getScalarField("healthcenter.agent", SDK_VERSION)
+
+    if (hcAgentDownloadUrl) {
+        def hcAgentCredentialsId = variableFile.get_user_credentials_id('java-bin')
+        def hcAgentArchName = hcAgentDownloadUrl.tokenize('/').getAt(-1)
+
+        withCredentials([usernamePassword(credentialsId: "${hcAgentCredentialsId}", usernameVariable: "HCA_USERNAME", passwordVariable: "HCA_PASSWORD")]) {
+            sh "_ENCODE_FILE_NEW=UNTAGGED curl -sSkLO -u ${HCA_USERNAME}:${HCA_PASSWORD} ${hcAgentDownloadUrl}"
+        }
+
+        if (fileExists("${WORKSPACE}/${hcAgentArchName}")) {
+            // add --with-healthcenter configure option
+            EXTRA_CONFIGURE_OPTIONS += " --with-healthcenter=${WORKSPACE}/${hcAgentArchName}"
         }
     }
 }
