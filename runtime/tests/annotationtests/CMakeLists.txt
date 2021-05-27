@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2021 IBM Corp. and others
+# Copyright (c) 2021, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,39 +20,24 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-if(OMR_OS_AIX)
-	add_subdirectory(aixerrmsg)
-endif()
-add_subdirectory(algorithm)
-add_subdirectory(annotationtests)
-if(OMR_OS_WINDOWS AND NOT OMR_ENV_DATA64)
-	add_subdirectory(bcprof)
-endif()
-add_subdirectory(bcverify)
-add_subdirectory(cutest)
-add_subdirectory(gp)
-add_subdirectory(j9vm)
-add_subdirectory(jni)
-add_subdirectory(jniarg)
-add_subdirectory(jsig)
-add_subdirectory(jvmtitests)
-add_subdirectory(lazyclassload)
-if(OMR_OS_OSX)
-	add_subdirectory(loadLibraryTest)
-endif()
-add_subdirectory(port)
-add_subdirectory(props)
-add_subdirectory(redirector)
-add_subdirectory(shared)
-if(OMR_OS_WINDOWS AND NOT OMR_ENV_DATA64)
-	add_subdirectory(shared_service)
-endif()
-add_subdirectory(thread)
-if(OMR_OS_LINUX)
-	add_subdirectory(unresolved)
-endif()
-add_subdirectory(vm)
-add_subdirectory(vm_lifecycle)
-if(OMR_OS_ZOS)
-	add_subdirectory(zos)
-endif()
+set(OMR_ENHANCED_WARNINGS OFF)
+
+j9vm_add_library(anntests SHARED
+	annhelp_tests.c
+)
+
+target_link_libraries(anntests
+	PRIVATE
+		j9vm_interface
+		jvm
+)
+
+omr_add_exports(anntests
+	Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_containsRuntimeAnnotation
+)
+
+install(
+	TARGETS anntests
+	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
+)

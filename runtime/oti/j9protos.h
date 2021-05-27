@@ -1382,10 +1382,6 @@ extern J9_CFUNC void  jitAddPicToPatchOnClassUnload (void *classPointer, void *a
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 #endif /* _J9VMNATIVEHELPERSLARGE_ */
 
-/* Runtime annotation handling */
-extern J9_CFUNC I_32 getAnnotationByType(J9ROMConstantPoolItem const *constantPool, J9UTF8 const *searchString,
-	U_32 const numAnnotations, U_8 const *data, U_8 const **pIndex,  U_8 const *dataEnd);
-
 #ifdef __cplusplus
 }
 #endif
