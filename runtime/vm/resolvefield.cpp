@@ -64,7 +64,6 @@ static J9ROMFieldShape* findFieldInTable(J9VMThread *vmThread, J9Class *clazz, U
 static J9ROMFieldShape * findFieldInClass (J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, UDATA *offsetOrAddress, J9Class **definingClass);
 static J9ROMFieldShape* findFieldAndCheckVisibility (J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options, J9Class *sourceClass);
 static J9ROMFieldShape* findField (J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options);
-
 VMINLINE static UDATA calculateJ9UTFSize(UDATA stringLength);
 VMINLINE static UDATA calculateFakeJ9ROMFieldShapeSize(UDATA nameLength, UDATA signatureLength);
 static void initFakeJ9ROMFieldShape(J9ROMFieldShape *shape, U_16 nameLength, U_8 *nameData, U_16 signatureLength, U_8 *signatureData);
@@ -78,13 +77,19 @@ VMINLINE bool createClassLoaderHotFieldPool(J9JavaVM *javaVM, J9ClassLoader* cla
 VMINLINE void createClassHotFieldsInfo(J9JavaVM *javaVM, J9Class* clazz, uint8_t fieldOffset, int32_t reducedCpuUtil, uint32_t reducedFrequency);
 VMINLINE void addOrUpdateHotField(J9JavaVM *javaVM, J9Class* clazz, uint8_t fieldOffset, int32_t reducedCpuUtil, uint32_t reducedFrequency);
 
+J9ROMFieldShape*
+findFieldExt(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options)
+{
+	return findField(vmStruct, clazz, fieldName, fieldNameLength, signature, signatureLength, definingClass, offsetOrAddress, options);
+}
+
 /*
 		Returns NULL if an exception is thrown.
 		definingClass is set to the class containing the field, if it is not NULL.
 		offsetOrAddress is set to the instance offset (for instance field found) or static address (for static field found) if it is not NULL."
 */
-static J9ROMFieldShape* 
-findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options) 
+static J9ROMFieldShape*
+findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options)
 {
 #ifdef J9VM_INTERP_TRACING
 	PORT_ACCESS_FROM_VMC(vmStruct);
@@ -286,7 +291,7 @@ instanceFieldOffsetWithSourceClass(J9VMThread *vmStruct, J9Class *clazz, U_8 *fi
 		definingClass is set to the class containing the field, if it is not NULL.
 		offsetOrAddress is set to the instance offset (for instance field found) or static address (for static field found) if it is not NULL."
 */
-static J9ROMFieldShape* 
+static J9ROMFieldShape*
 findFieldAndCheckVisibility (J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options, J9Class *sourceClass) 
 {
 	J9Class* defClass;

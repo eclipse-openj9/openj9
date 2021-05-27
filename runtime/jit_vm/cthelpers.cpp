@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,12 @@
 #include "AtomicSupport.hpp"
 
 extern "C" {
+
+#if JAVA_SPEC_VERSION >= 11
+J9_DECLARE_CONSTANT_UTF8(ojdk_stable, "Ljdk/internal/vm/annotation/Stable;");
+#else /* JAVA_SPEC_VERSION >= 11 */
+J9_DECLARE_CONSTANT_UTF8(ojdk_stable, "Ljava/lang/invoke/Stable;");
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 void*
 jitGetCountingSendTarget(J9VMThread *vmThread, J9Method *ramMethod)
@@ -179,6 +185,20 @@ jitGetConstantDynamicTypeFromCP(J9VMThread *currentThread, J9ConstantPool *const
 	J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(NNSRP_GET(romConstantRef->nameAndSignature, struct J9ROMNameAndSignature*));
 
 	return sigUTF;
+}
+
+/**
+ * Queries if the fieldref at the specified cpIndex contains the @Stable annotation.
+ * Field ref must be resolved.
+ *
+ * @param clazz J9Class
+ * @param cpIndex fieldref cp index
+ * @return true if fieldref contains @Stable, false otherwise
+ */
+bool
+jitIsFieldStable(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex, bool isStatic)
+{
+	return FALSE != fieldContainsRuntimeAnnotation(currentThread, clazz, cpIndex, (J9UTF8 *)&ojdk_stable);
 }
 
 }
