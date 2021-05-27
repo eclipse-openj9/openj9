@@ -11605,6 +11605,149 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
    return J9::TreeEvaluator::directCallEvaluator(node, cg);
    }
 
+TR::Register *
+J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(cg->getSupportsInlineStringLatin1Inflate(), "Inlining of StringLatin1.inflate not supported");
+   TR_ASSERT_FATAL(node->getNumChildren() == 5, "Wrong number of children in inlineStringLatin1Inflate");
+
+   intptr_t headerOffsetConst = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   uint8_t vectorLengthConst = 16;
+
+   TR::Register *srcBufferReg = cg->evaluate(node->getChild(0));
+   TR::Register *srcOffsetReg = cg->gprClobberEvaluate(node->getChild(1), MOV4RegReg);
+   TR::Register *destBufferReg = cg->evaluate(node->getChild(2));
+   TR::Register *destOffsetReg = cg->gprClobberEvaluate(node->getChild(3), MOV4RegReg);
+   TR::Register *lengthReg = cg->evaluate(node->getChild(4));
+
+   TR::Register *xmmHighReg = cg->allocateRegister(TR_FPR);
+   TR::Register *xmmLowReg = cg->allocateRegister(TR_FPR);
+   TR::Register *zeroReg = cg->allocateRegister(TR_FPR);
+   TR::Register *scratchReg = cg->allocateRegister(TR_GPR);
+
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t) 0, (uint8_t) 6, cg);
+
+   deps->addPostCondition(xmmHighReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(xmmLowReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(zeroReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(scratchReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(srcOffsetReg, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(destOffsetReg, TR::RealRegister::NoReg, cg);
+   deps->stopAddingConditions();
+
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *beginLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *startLoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLoopLabel = generateLabelSymbol(cg);
+
+   beginLabel->setStartInternalControlFlow();
+   startLoopLabel->setStartInternalControlFlow();
+   endLoopLabel->setEndInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   generateRegImmInstruction(CMP4RegImm4, node, lengthReg, 0, cg);
+   generateLabelInstruction(JE4, node, endLabel, cg);
+
+   // make sure the register is zero before interleaving
+   generateRegRegInstruction(PXORRegReg, node, zeroReg, zeroReg, cg);
+
+   // vectorized add in loop, 16 bytes per iteration
+   // use srcOffsetReg for loop counter, add starting offset to lengthReg, subtract 16 (xmm register size)
+   // to prevent reading/writing beyond beyond the endLabel of the array
+   generateRegMemInstruction(LEA4RegMem, node, scratchReg, generateX86MemoryReference(lengthReg, srcOffsetReg, 0, -vectorLengthConst, cg), cg);
+
+   generateLabelInstruction(LABEL, node, startLoopLabel, cg);
+   generateRegRegInstruction(CMP4RegReg, node, srcOffsetReg, scratchReg, cg);
+   generateLabelInstruction(JG4, node, endLoopLabel, cg);
+
+   // read 16 bytes into xmmr register
+   generateRegMemInstruction(MOVDQURegMem, node, xmmHighReg, generateX86MemoryReference(srcBufferReg, srcOffsetReg, 0, headerOffsetConst, cg), cg);
+   // TODO; avoid this copy in the future by adding support for VPUNPCK instructions
+   generateRegRegInstruction(MOVDQURegReg, node, xmmLowReg, xmmHighReg, cg);
+   // interleave the low order bytes with zeros and write to the destination buffer
+   generateRegRegInstruction(PUNPCKHBWRegReg, node, xmmLowReg, zeroReg, cg);
+   generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(destBufferReg, destOffsetReg, 0, headerOffsetConst + vectorLengthConst, cg), xmmLowReg, cg);
+
+   // interleave the high order bytes with zeros and write to the destination buffer
+   generateRegRegInstruction(PUNPCKLBWRegReg, node, xmmHighReg, zeroReg, cg);
+   generateMemRegInstruction(MOVDQUMemReg, node, generateX86MemoryReference(destBufferReg, destOffsetReg, 0, headerOffsetConst, cg), xmmHighReg, cg);
+
+   // increase src offset by size of imm register
+   // increase dest offset by double, to account for the byte->char inflation
+   generateRegImmInstruction(ADD4RegImm4, node, srcOffsetReg, vectorLengthConst, cg);
+   generateRegImmInstruction(ADD4RegImm4, node, destOffsetReg, 2 * vectorLengthConst, cg);
+
+   //   LOOP BACK
+   generateLabelInstruction(JMP4, node, startLoopLabel, cg);
+   generateLabelInstruction(LABEL, node, endLoopLabel, cg);
+
+   // Support inflation of the remaining characters which do not fit cleanly into the xmm registers
+   // This approach will read from the source buffer in increments of 8-then-4-then-2-then-1 bytes until complete
+   TR_X86OpCodes loadInstructions[] = {MOVQRegMem, MOVDRegMem, MOVZXReg2Mem1, MOVZXReg2Mem1};
+   TR_X86OpCodes storeInstructions[] = {MOVDQUMemReg, MOVQMemReg, S2MemReg, S2MemReg};
+   uint8_t readIncrements[] = {8, 4, 2, 1};
+
+   for (int i = 0; i < sizeof(readIncrements); i++)
+      {
+      TR::LabelSymbol *beforeLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *afterLabel = generateLabelSymbol(cg);
+      beforeLabel->setStartInternalControlFlow();
+      afterLabel->setEndInternalControlFlow();
+
+      generateLabelInstruction(LABEL, node, beforeLabel, cg);
+
+      // Check if readIncrements[i] bytes remain
+      generateRegMemInstruction(LEA4RegMem, node, scratchReg, generateX86MemoryReference(lengthReg, - readIncrements[i], cg), cg);
+      generateRegRegInstruction(CMP4RegReg, node, srcOffsetReg, scratchReg, cg);
+      generateLabelInstruction(JG4, node, afterLabel, cg);
+
+      TR::Register *reg = readIncrements[i] > 2 ? xmmLowReg : scratchReg;
+
+      if (readIncrements[i] != 2)
+         {
+         // Read readIncrements[i] bytes, interleave if we read more than one byte, then store to destination buffer
+         generateRegMemInstruction(loadInstructions[i], node, reg, generateX86MemoryReference(srcBufferReg, srcOffsetReg, 0, headerOffsetConst, cg), cg);
+         if (loadInstructions[i] != MOVZXReg2Mem1) // no need to interleave if zero extended
+            {
+            generateRegRegInstruction(PUNPCKLBWRegReg, node, reg, zeroReg, cg);
+            }
+         generateMemRegInstruction(storeInstructions[i], node, generateX86MemoryReference(destBufferReg, destOffsetReg, 0, headerOffsetConst, cg), reg, cg);
+         }
+      else
+         {
+         // no easy way to interleave two bytes
+         generateRegMemInstruction(loadInstructions[i], node, reg, generateX86MemoryReference(srcBufferReg, srcOffsetReg, 0, headerOffsetConst, cg), cg);
+         generateMemRegInstruction(storeInstructions[i], node, generateX86MemoryReference(destBufferReg, destOffsetReg, 0, headerOffsetConst, cg), reg, cg);
+         generateRegMemInstruction(loadInstructions[i], node, reg, generateX86MemoryReference(srcBufferReg, srcOffsetReg, 0, headerOffsetConst + 1, cg), cg);
+         generateMemRegInstruction(storeInstructions[i], node, generateX86MemoryReference(destBufferReg, destOffsetReg, 0, headerOffsetConst + 2, cg), reg, cg);
+         }
+
+      if (readIncrements[i] != 1)
+         {
+         // increment offset pointers for the next read operation (except after last write operation)
+         generateRegImmInstruction(ADD4RegImm4, node, srcOffsetReg, readIncrements[i], cg);
+         generateRegImmInstruction(ADD4RegImm4, node, destOffsetReg, readIncrements[i] * 2, cg);
+         }
+
+      generateLabelInstruction(LABEL, node, afterLabel, cg);
+      }
+
+   generateLabelInstruction(LABEL, node, endLabel, deps, cg);
+
+   cg->stopUsingRegister(xmmHighReg);
+   cg->stopUsingRegister(xmmLowReg);
+   cg->stopUsingRegister(zeroReg);
+   cg->stopUsingRegister(scratchReg);
+   cg->stopUsingRegister(srcOffsetReg);
+   cg->stopUsingRegister(lengthReg);
+
+   for (int i = 0; i < 5; i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
+
+   return NULL;
+   }
 
 TR::Register *
 J9::X86::TreeEvaluator::encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg)
