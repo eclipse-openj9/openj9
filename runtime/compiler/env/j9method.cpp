@@ -1996,7 +1996,7 @@ TR_J9Method::TR_J9Method()
 
 static bool supportsFastJNI(TR_FrontEnd *fe)
    {
-#if defined(TR_TARGET_S390) || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER)
+#if defined(TR_TARGET_S390) || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER) || defined(TR_TARGET_ARM64)
    return true;
 #else
    return false;
