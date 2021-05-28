@@ -34,15 +34,15 @@ same environment every time.
 |:---------:|:------------:|:-------------:|:-------------:|
 | Ubuntu16  |  Test Only   | Build & Test  |   Test Only   |
 | Ubuntu18  |  Test Only   |   Test Only   |   Test Only   |
-| Centos6.9 | Build & Test | Not Available | Not Available |
+| Centos6   | Build & Test | Not Available | Not Available |
 | Centos7   | To be Added  |  To be Added  | Build & Test  |
 | Windows   | To be Added  | Not Available | Not Available |
 
 ## Eclipse OpenJ9 CI
 Generated Dockerfiles are used by two Jenkins jobs at Eclipse to
-build docker images. The first [job](https://ci.eclipse.org/openj9/view/Build/job/Build-Jenkins-Agent-Container/) is run manually
+build docker images. The first [job](https://openj9-jenkins.osuosl.org/job/Build-Jenkins-Agent-Container/) is run manually
 by supplying the architecture and os. It should be run after
-changes to mkdocker.sh have been merged. The second [job](https://ci.eclipse.org/openj9/view/Pull%20Requests/job/PullRequest-Build-Jenkins-Agent-Container/) is used
+changes to mkdocker.sh have been merged. The second [job](https://openj9-jenkins.osuosl.org/job/PullRequest-Build-Jenkins-Agent-Container/) is used
 to test pull requests. Whenever a PR makes changes to mkdocker.sh,
 a PR build should be launched for each affected architecture and os combination. A PR
 build can be launched by making a comment in the PR with the following format
@@ -50,16 +50,16 @@ build can be launched by making a comment in the PR with the following format
 Jenkins build docker <ARCH> <OS>
 ```
 Both jobs will push the Docker images to Docker Hub under the repo
-`eclipse-openj9/openj9-jenkins-agent-<ARCH>-<OS>:<TAG>`
+`eclipseopenj9/jenkins-agent-<ARCH>-<OS>:<TAG>`
 If a manual build is run the tag will be the build number of
 the job, as well as the `latest` tag. If a PR build is run the
 tag will contain `PR` followed by the ID of the pull request used to
 build the job.
 ## Using containers from a terminal
 If you have [docker installed](https://docs.docker.com/install/) then you can run
-`docker pull eclipse-openj9/openj9-jenkins-agent-<ARCH>-<OS>:<TAG>` to pull
+`docker pull eclipseopenj9/jenkins-agent-<ARCH>-<OS>:<TAG>` to pull
 a docker image of the specified architecture and os.
-You can use `docker run -it eclipse-openj9/openj9-jenkins-agent-<ARCH>-<OS>:<TAG> /bin/bash`
+You can use `docker run -it eclipseopenj9/jenkins-agent-<ARCH>-<OS>:<TAG> /bin/bash`
 to start up a new container and enter it. Once inside of a
 container, run `su - jenkins` to switch to the jenkins user.
 This way when you run your code you won't have root privileges.
