@@ -73,8 +73,8 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::DIVCHK] = TR::TreeEvaluator::DIVCHKEvaluator;
    tet[TR::BNDCHK] = TR::TreeEvaluator::BNDCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCopyBNDCHK] = TR::TreeEvaluator::ArrayCopyBNDCHKEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHKwithSpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::SpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
+   tet[TR::BNDCHKwithSpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
+   tet[TR::SpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
    tet[TR::ArrayStoreCHK] = TR::TreeEvaluator::ArrayStoreCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCHK] = TR::TreeEvaluator::ArrayCHKEvaluator;
    tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
@@ -2513,6 +2513,8 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
 
+   bool generateArraylets = comp->generateArraylets();
+
    if (comp->suppressAllocationInlining())
       return NULL;
 
@@ -2564,11 +2566,28 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
    else
       {
-      elementSize = TR::Compiler->om.getSizeOfArrayElement(node);
+      if (generateArraylets || TR::Compiler->om.useHybridArraylets())
+         {
+         if (node->getOpCodeValue() == TR::newarray)
+            elementSize = TR::Compiler->om.getSizeOfArrayElement(node);
+         else if (comp->useCompressedPointers())
+            elementSize = TR::Compiler->om.sizeofReferenceField();
+         else
+            elementSize = TR::Compiler->om.sizeofReferenceAddress();
+
+         if (generateArraylets)
+            headerSize = fej9->getArrayletFirstElementOffset(elementSize, comp);
+         else
+            headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+         }
+      else
+         {
+         elementSize = TR::Compiler->om.getSizeOfArrayElement(node);
+         headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+         }
 
       // If the array cannot be allocated as a contiguous array, then comp->canAllocateInline should have returned -1.
       // The only exception is when the array length is 0.
-      headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
       isArrayNew = true;
 
       lengthReg = cg->evaluate(firstChild);
@@ -2629,6 +2648,19 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    if (isArrayNew)
       {
       genInitArrayHeader(node, cg, clazz, resultReg, classReg, lengthReg, zeroReg, tempReg1, isBatchClearTLHEnabled, tlhHasNotBeenCleared);
+
+      if (generateArraylets)
+         {
+         // write arraylet pointer to object header
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, tempReg2, resultReg, headerSize);
+         if (TR::Compiler->om.compressedReferenceShiftOffset() > 0)
+            generateLogicalShiftRightImmInstruction(cg, node, tempReg2, tempReg2, TR::Compiler->om.compressedReferenceShiftOffset());
+
+         TR::InstOpCode::Mnemonic storeOp = comp->useCompressedPointers() ? TR::InstOpCode::strimmx : TR::InstOpCode::strimmw;
+         generateMemSrc1Instruction(cg, storeOp, node,
+                                    new (cg->trHeapMemory()) TR::MemoryReference(resultReg, fej9->getFirstArrayletPointerOffset(comp), cg),
+                                    tempReg2);
+         }
       }
    else
       {
@@ -2863,6 +2895,8 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *
 J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
+   TR_ASSERT(cg->comp()->requiresSpineChecks(), "TR::arraylength should be lowered when hybrid arraylets are not in use");
+
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    // ldrimmw R1, [B, contiguousSize]
    // cmpimmw R1, 0 ; If 0, must be a discontiguous array
@@ -4251,6 +4285,504 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
       }
 
    reference->setIsNonNull(true);
+
+   return NULL;
+   }
+
+static void
+genBoundCheck(TR::CodeGenerator *cg, TR::Node *node, TR::Register *indexReg, int32_t indexVal, TR::Register *arrayLengthReg, int32_t arrayLengthVal)
+   {
+   TR::Instruction *gcPoint;
+
+   TR::LabelSymbol *boundCheckFailSnippetLabel = cg->lookUpSnippet(TR::Snippet::IsHelperCall, node->getSymbolReference());
+   if (!boundCheckFailSnippetLabel)
+      {
+      boundCheckFailSnippetLabel = generateLabelSymbol(cg);
+      cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, boundCheckFailSnippetLabel, node->getSymbolReference()));
+      }
+
+   if (indexReg)
+      generateCompareInstruction(cg, node, arrayLengthReg, indexReg, false); // 32-bit compare
+   else
+      generateCompareImmInstruction(cg, node, arrayLengthReg, indexVal, false); // 32-bit compare
+
+   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, boundCheckFailSnippetLabel, TR::CC_LS);
+
+   // Exception edges don't have any live regs
+   gcPoint->ARM64NeedsGCMap(cg, 0);
+
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
+   }
+
+static TR::Instruction *
+genSpineCheck(TR::CodeGenerator *cg, TR::Node *node, TR::Register *arrayLengthReg, TR::LabelSymbol *discontiguousArrayLabel)
+   {
+   return generateCompareBranchInstruction(cg, TR::InstOpCode::cbzw, node, arrayLengthReg, discontiguousArrayLabel);
+   }
+
+static TR::Instruction *
+genSpineCheck(TR::CodeGenerator *cg, TR::Node *node, TR::Register *baseArrayReg, TR::Register *arrayLengthReg, TR::LabelSymbol *discontiguousArrayLabel)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::MemoryReference *contiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(baseArrayReg, fej9->getOffsetOfContiguousArraySizeField(), cg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, arrayLengthReg, contiguousArraySizeMR);
+   return genSpineCheck(cg, node, arrayLengthReg, discontiguousArrayLabel);
+   }
+
+static void
+genArrayletAccessAddr(TR::CodeGenerator *cg, TR::Node *node, int32_t elementSize,
+      // Inputs:
+      TR::Register *baseArrayReg, TR::Register *indexReg, int32_t indexVal,
+      // Outputs:
+      TR::Register *arrayletReg, TR::Register *offsetReg, int32_t& offsetVal)
+   {
+   TR::Compilation* comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
+   TR_ASSERT(offsetReg || !indexReg, "Expecting valid offset reg when index reg is passed");
+
+   uintptr_t arrayHeaderSize = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
+   int32_t spinePointerSize = TR::Compiler->om.sizeofReferenceField();
+   int32_t spinePointerSizeShift = spinePointerSize == 8 ? 3 : 2;
+
+   TR::MemoryReference *spineMR;
+   TR::InstOpCode::Mnemonic loadOp;
+
+   // Calculate the spine offset.
+   //
+   if (indexReg)
+      {
+      int32_t spineShift = fej9->getArraySpineShift(elementSize);
+
+      // spineOffset = (index >> spineShift) * spinePtrSize
+      //             = (index >> spineShift) << spinePtrSizeShift
+      // spineOffset += arrayHeaderSize
+      //
+      TR_ASSERT(spineShift >= spinePointerSizeShift, "Unexpected spine shift value");
+      generateLogicalShiftRightImmInstruction(cg, node, arrayletReg, indexReg, spineShift);
+      generateLogicalShiftLeftImmInstruction(cg, node, arrayletReg, arrayletReg, spinePointerSizeShift);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, arrayletReg, arrayletReg, arrayHeaderSize);
+
+      spineMR = new (cg->trHeapMemory()) TR::MemoryReference(baseArrayReg, arrayletReg, cg);
+      loadOp = spinePointerSize == 8 ? TR::InstOpCode::ldroffx : TR::InstOpCode::ldroffw;
+      }
+   else
+      {
+      int32_t spineIndex = fej9->getArrayletLeafIndex(indexVal, elementSize);
+      int32_t spineDisp32 = spineIndex * spinePointerSize + arrayHeaderSize;
+
+      spineMR = new (cg->trHeapMemory()) TR::MemoryReference(baseArrayReg, spineDisp32, cg);
+      loadOp = spinePointerSize == 8 ? TR::InstOpCode::ldrimmx : TR::InstOpCode::ldrimmw;
+      }
+
+   // Load the arraylet from the spine.
+   //
+   generateTrg1MemInstruction(cg, loadOp, node, arrayletReg, spineMR);
+
+   // Calculate the arraylet offset.
+   //
+   if (indexReg)
+      {
+      int32_t arrayletMask = fej9->getArrayletMask(elementSize);
+      int32_t elementSizeShift = CHAR_BIT * sizeof(int32_t) - leadingZeroes(elementSize - 1);
+
+      // generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, offsetReg, indexReg, elementSizeShift, arrayletMask << elementSizeShift);
+      loadConstant64(cg, node, arrayletMask, offsetReg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::andx, node, offsetReg, indexReg, offsetReg);
+      generateLogicalShiftLeftImmInstruction(cg, node, offsetReg, offsetReg, elementSizeShift);
+      }
+   else
+      offsetVal = (fej9->getLeafElementIndex(indexVal, elementSize) * elementSize);
+   }
+
+static void
+genDecompressPointer(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg)
+   {
+   int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
+
+   if (shiftAmount != 0)
+      generateLogicalShiftLeftImmInstruction(cg, node, ptrReg, ptrReg, shiftAmount);
+   }
+
+static TR::InstOpCode::Mnemonic
+getLoadOpCodeFromDataType(TR::CodeGenerator *cg, TR::DataType dt, int32_t elementSize, bool isUnsigned, bool useIdxReg)
+   {
+   switch (dt)
+      {
+      case TR::Int8:
+         return useIdxReg ? TR::InstOpCode::ldrboff : TR::InstOpCode::ldrbimm;
+      case TR::Int16:
+         if (isUnsigned)
+            return useIdxReg ? TR::InstOpCode::ldrhoff : TR::InstOpCode::ldrhimm;
+         else
+            return useIdxReg ? TR::InstOpCode::ldrshoffw : TR::InstOpCode::ldrshimmw;
+      case TR::Int32:
+         return useIdxReg ? TR::InstOpCode::ldroffw : TR::InstOpCode::ldrimmw;
+      case TR::Int64:
+         return useIdxReg ? TR::InstOpCode::ldroffx : TR::InstOpCode::ldrimmx;
+      case TR::Float:
+         return useIdxReg ? TR::InstOpCode::vldroffs : TR::InstOpCode::vstrimms;
+      case TR::Double:
+         return useIdxReg ? TR::InstOpCode::vldroffd : TR::InstOpCode::vstrimmd;
+      case TR::Address:
+         if (elementSize == 8)
+            return useIdxReg ? TR::InstOpCode::ldroffx : TR::InstOpCode::ldrimmx;
+         else
+            return useIdxReg ? TR::InstOpCode::ldroffw : TR::InstOpCode::ldrimmw;
+      default:
+         TR_ASSERT(false, "Unexpected array data type");
+         return TR::InstOpCode::bad;
+      }
+   }
+
+static TR::InstOpCode::Mnemonic
+getStoreOpCodeFromDataType(TR::CodeGenerator *cg, TR::DataType dt, int32_t elementSize, bool useIdxReg)
+   {
+   switch (dt)
+      {
+      case TR::Int8:
+         return useIdxReg ? TR::InstOpCode::strboff : TR::InstOpCode::strbimm;
+      case TR::Int16:
+         return useIdxReg ? TR::InstOpCode::strhoff : TR::InstOpCode::strhimm;
+      case TR::Int32:
+         return useIdxReg ? TR::InstOpCode::stroffw : TR::InstOpCode::strimmw;
+      case TR::Int64:
+         return useIdxReg ? TR::InstOpCode::stroffx : TR::InstOpCode::strimmx;
+      case TR::Float:
+         return useIdxReg ? TR::InstOpCode::vstroffs : TR::InstOpCode::vstrimms;
+      case TR::Double:
+         return useIdxReg ? TR::InstOpCode::vstroffd : TR::InstOpCode::vstrimmd;
+      case TR::Address:
+         if (elementSize == 8)
+            return useIdxReg ? TR::InstOpCode::stroffx : TR::InstOpCode::strimmx;
+         else
+            return useIdxReg ? TR::InstOpCode::stroffw : TR::InstOpCode::strimmw;
+      default:
+         TR_ASSERT(false, "Unexpected array data type");
+         return TR::InstOpCode::bad;
+      }
+   }
+
+// Handles both BNDCHKwithSpineCHK and SpineCHK nodes.
+//
+TR::Register *
+J9::ARM64::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
+   bool needsBoundCheck = node->getOpCodeValue() == TR::BNDCHKwithSpineCHK;
+   bool needsBoundCheckOOL;
+
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
+
+   TR::Node *loadOrStoreChild = node->getFirstChild();
+   TR::Node *baseArrayChild = node->getSecondChild();
+   TR::Node *arrayLengthChild;
+   TR::Node *indexChild;
+
+   if (needsBoundCheck)
+      {
+      arrayLengthChild = node->getChild(2);
+      indexChild = node->getChild(3);
+      }
+   else
+      indexChild = node->getChild(2);
+
+   TR::Register *baseArrayReg = cg->evaluate(baseArrayChild);
+   TR::Register *indexReg;
+   TR::Register *loadOrStoreReg;
+   TR::Register *arrayLengthReg;
+
+   // If the index is too large to be an immediate load it in a register
+   if (!indexChild->getOpCode().isLoadConst() || !constantIsUnsignedImm12(indexChild->getInt()))
+      indexReg = cg->evaluate(indexChild);
+   else
+      indexReg = NULL;
+
+   // For primitive stores anchored under the check node, we must evaluate the source node
+   // before the bound check branch so that its available to the snippet.
+   //
+   if (loadOrStoreChild->getOpCode().isStore() && !loadOrStoreChild->getRegister())
+      {
+      TR::Node *valueChild = loadOrStoreChild->getSecondChild();
+      cg->evaluate(valueChild);
+      }
+
+   // Evaluate any escaping nodes before the OOL branch since they won't be evaluated in the OOL path.
+   preEvaluateEscapingNodesForSpineCheck(node, cg);
+
+   // Label to the OOL code that will perform the load/store/agen for discontiguous arrays (and the bound check if needed).
+   TR::LabelSymbol *discontiguousArrayLabel = generateLabelSymbol(cg);
+
+   // Label back to main-line that the OOL code will branch to when done.
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   doneLabel->setEndInternalControlFlow();
+
+   TR_ARM64OutOfLineCodeSection *discontiguousArrayOOL = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(discontiguousArrayLabel, doneLabel, cg);
+   cg->getARM64OutOfLineCodeSectionList().push_front(discontiguousArrayOOL);
+
+   TR::Instruction *OOLBranchInstr;
+
+   if (needsBoundCheck)
+      {
+      TR_ASSERT(arrayLengthChild, "Expecting to have an array length child for BNDCHKwithSpineCHK node");
+      TR_ASSERT(
+            arrayLengthChild->getOpCode().isConversion() || arrayLengthChild->getOpCodeValue() == TR::iloadi || arrayLengthChild->getOpCodeValue() == TR::iload
+                  || arrayLengthChild->getOpCodeValue() == TR::iRegLoad || arrayLengthChild->getOpCode().isLoadConst(),
+            "Expecting array length child under BNDCHKwithSpineCHK to be a conversion, iiload, iload, iRegLoad or iconst");
+
+      arrayLengthReg = arrayLengthChild->getRegister();
+
+      if (arrayLengthReg)
+         {
+         OOLBranchInstr = genSpineCheck(cg, node, baseArrayReg, arrayLengthReg, discontiguousArrayLabel);
+         needsBoundCheckOOL = true;
+         genBoundCheck(cg, node, indexReg, indexChild->getInt(), arrayLengthReg, arrayLengthChild->getInt());
+         }
+      else if (arrayLengthChild->getOpCode().isLoadConst())
+         {
+         // If the constant arraylength is non-zero then it will pass the spine check (hence its
+         // a contiguous array) and the BNDCHK can be done inline with no OOL path.
+         //
+         // If the constant arraylength is zero then we will always go OOL.
+         //
+         // TODO: in the future there shouldn't be an OOL path because any valid access must be
+         //       on a discontiguous array.
+         //
+         if (arrayLengthChild->getInt() != 0)
+            {
+            // The array must be contiguous.
+            //
+
+            // If the array length is too large to be an immediate load it in a register for the bound check
+            if (!constantIsUnsignedImm12(arrayLengthChild->getInt()))
+               arrayLengthReg = cg->evaluate(arrayLengthChild);
+
+            // Do the bound check first.
+            genBoundCheck(cg, node, indexReg, indexChild->getInt(), arrayLengthReg, arrayLengthChild->getInt());
+            needsBoundCheckOOL = false;
+            TR::Register *scratchArrayLengthReg = srm->findOrCreateScratchRegister();
+            OOLBranchInstr = genSpineCheck(cg, node, baseArrayReg, scratchArrayLengthReg, discontiguousArrayLabel);
+            srm->reclaimScratchRegister(scratchArrayLengthReg);
+            }
+         else
+            {
+            // Zero length array or discontiguous array.  Unconditionally branch to the OOL path
+            // to find out which.
+            //
+            OOLBranchInstr = generateLabelInstruction(cg, TR::InstOpCode::b, node, discontiguousArrayLabel);
+            needsBoundCheckOOL = true;
+            }
+         }
+      else
+         {
+         // Load the contiguous array length.
+         arrayLengthReg = cg->evaluate(arrayLengthChild);
+         // If the array length is 0, this is a discontiguous array and the bound check will be handled OOL.
+         OOLBranchInstr = genSpineCheck(cg, node, arrayLengthReg, discontiguousArrayLabel);
+         needsBoundCheckOOL = true;
+         // Do the bound check using the contiguous array length.
+         genBoundCheck(cg, node, indexReg, indexChild->getInt(), arrayLengthReg, arrayLengthChild->getInt());
+         }
+
+      cg->decReferenceCount(arrayLengthChild);
+      }
+   else
+      {
+      // Spine check only; load the contiguous length, check for 0, branch OOL if discontiguous.
+      needsBoundCheckOOL = false;
+
+      arrayLengthReg = srm->findOrCreateScratchRegister();
+      OOLBranchInstr = genSpineCheck(cg, node, baseArrayReg, arrayLengthReg, discontiguousArrayLabel);
+      srm->reclaimScratchRegister(arrayLengthReg);
+      }
+
+   // For reference stores, only evaluate the array element address because the store cannot
+   // happen here (it must be done via the array store check).
+   //
+   // For primitive stores, evaluate them now.
+   // For loads, evaluate them now.
+   // For address calculations (aladd/aiadd), evaluate them now.
+   //
+   bool doLoadOrStore;
+   bool doLoadDecompress = false;
+   bool doAddressComputation;
+
+   if (loadOrStoreChild->getOpCode().isStore() && loadOrStoreChild->getReferenceCount() > 1)
+      {
+      TR_ASSERT(loadOrStoreChild->getOpCode().isWrtBar(), "Opcode must be wrtbar");
+      loadOrStoreReg = cg->evaluate(loadOrStoreChild->getFirstChild());
+      cg->decReferenceCount(loadOrStoreChild->getFirstChild());
+      doLoadOrStore = false;
+      doAddressComputation = true;
+      }
+   else
+      {
+      // If it's a store and not commoned then it must be a primitive store.
+      // If it's an address load it may need decompression in the OOL path.
+
+      // Top-level check whether a decompression sequence is necessary, because the first child
+      // may have been created by a PRE temp.
+      //
+      if ((loadOrStoreChild->getOpCodeValue() == TR::aload || loadOrStoreChild->getOpCodeValue() == TR::aRegLoad)
+          && node->isSpineCheckWithArrayElementChild()
+          && comp->useCompressedPointers())
+         {
+         doLoadDecompress = true;
+         }
+
+      TR::Node *actualLoadOrStoreChild = loadOrStoreChild;
+      while (actualLoadOrStoreChild->getOpCode().isConversion() || actualLoadOrStoreChild->containsCompressionSequence())
+         {
+         if (actualLoadOrStoreChild->containsCompressionSequence())
+            doLoadDecompress = true;
+         actualLoadOrStoreChild = actualLoadOrStoreChild->getFirstChild();
+         }
+
+      doLoadOrStore = actualLoadOrStoreChild->getOpCode().hasSymbolReference()
+            && (actualLoadOrStoreChild->getSymbolReference()->getSymbol()->isArrayShadowSymbol()
+                  || actualLoadOrStoreChild->getSymbolReference()->getSymbol()->isArrayletShadowSymbol()) && node->isSpineCheckWithArrayElementChild();
+
+      // If the 1st child is not a load/store/aladd/aiadd it's probably a nop (e.g. const) at this point due to commoning
+      //
+      doAddressComputation = !doLoadOrStore && actualLoadOrStoreChild->getOpCode().isArrayRef() && !node->isSpineCheckWithArrayElementChild();
+
+      if (doLoadOrStore || doAddressComputation || !loadOrStoreChild->getOpCode().isLoadConst())
+         loadOrStoreReg = cg->evaluate(loadOrStoreChild);
+      else
+         loadOrStoreReg = NULL;
+      }
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+   TR::LabelSymbol *doneMainlineLabel = generateLabelSymbol(cg);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneMainlineLabel);
+
+   // start of OOL
+   //
+   discontiguousArrayOOL->swapInstructionListsWithCompilation();
+      {
+      TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg, TR::InstOpCode::label, node, discontiguousArrayLabel);
+      // XXX: Temporary fix, OOL instruction stream does not pick up live locals or monitors correctly.
+      TR_ASSERT(!OOLLabelInstr->getLiveLocals() && !OOLLabelInstr->getLiveMonitors(), "Expecting first OOL instruction to not have live locals/monitors info");
+      OOLLabelInstr->setLiveLocals(OOLBranchInstr->getLiveLocals());
+      OOLLabelInstr->setLiveMonitors(OOLBranchInstr->getLiveMonitors());
+
+      if (needsBoundCheckOOL)
+         {
+         TR_ASSERT(needsBoundCheck, "Inconsistent state, needs bound check OOL but doesn't need bound check");
+
+         TR::MemoryReference *discontiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(baseArrayReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg);
+         TR::Register *arrayLengthScratchReg = srm->findOrCreateScratchRegister();
+
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, arrayLengthScratchReg, discontiguousArraySizeMR);
+
+         // Do the bound check using the discontiguous array length.
+         genBoundCheck(cg, node, indexReg, indexChild->getInt(), arrayLengthScratchReg, arrayLengthChild->getInt());
+
+         srm->reclaimScratchRegister(arrayLengthScratchReg);
+         }
+
+      TR_ASSERT(!(doLoadOrStore && doAddressComputation), "Unexpected condition");
+
+      TR::Register *arrayletReg = NULL;
+      TR::DataType dt = loadOrStoreChild->getDataType();
+
+      if (doLoadOrStore || doAddressComputation)
+         {
+         arrayletReg = doAddressComputation ? loadOrStoreReg : cg->allocateRegister();
+
+         // Generate the base+offset address pair into the arraylet.
+         //
+         int32_t elementSize = (dt == TR::Address) ? TR::Compiler->om.sizeofReferenceField() : TR::Symbol::convertTypeToSize(dt);
+         TR::Register *arrayletOffsetReg;
+         int32_t arrayletOffsetVal;
+
+         if (indexReg)
+            arrayletOffsetReg = srm->findOrCreateScratchRegister();
+
+         genArrayletAccessAddr(cg, node, elementSize, baseArrayReg, indexReg, indexChild->getInt(), arrayletReg, arrayletOffsetReg, arrayletOffsetVal);
+
+         // Decompress the arraylet pointer if necessary.
+         //
+         genDecompressPointer(cg, node, arrayletReg);
+
+         if (doLoadOrStore)
+            {
+            // Generate the load or store.
+            //
+            if (loadOrStoreChild->getOpCode().isStore())
+               {
+               TR::InstOpCode::Mnemonic storeOp = getStoreOpCodeFromDataType(cg, dt, elementSize, indexReg != NULL);
+
+               TR::MemoryReference *arrayletMR = indexReg ?
+                  new (cg->trHeapMemory()) TR::MemoryReference(arrayletReg, arrayletOffsetReg, cg) :
+                  new (cg->trHeapMemory()) TR::MemoryReference(arrayletReg, arrayletOffsetVal, cg);
+               generateMemSrc1Instruction(cg, storeOp, node, arrayletMR, loadOrStoreChild->getSecondChild()->getRegister());
+               }
+            else
+               {
+               TR_ASSERT(loadOrStoreChild->getOpCode().isConversion() || loadOrStoreChild->getOpCode().isLoad(), "Unexpected op");
+
+               bool isUnsigned = loadOrStoreChild->getOpCode().isUnsigned();
+               TR::InstOpCode::Mnemonic loadOp = getLoadOpCodeFromDataType(cg, dt, isUnsigned, elementSize, indexReg != NULL);
+
+               TR::MemoryReference *arrayletMR = indexReg ?
+                  new (cg->trHeapMemory()) TR::MemoryReference(arrayletReg, arrayletOffsetReg, cg) :
+                  new (cg->trHeapMemory()) TR::MemoryReference(arrayletReg, arrayletOffsetVal, cg);
+               generateTrg1MemInstruction(cg, loadOp, node, loadOrStoreReg, arrayletMR);
+
+               if (doLoadDecompress)
+                  {
+                  TR_ASSERT(dt == TR::Address, "Expecting loads with decompression trees to have data type TR::Address");
+                  genDecompressPointer(cg, node, loadOrStoreReg);
+                  }
+               }
+
+            cg->stopUsingRegister(arrayletReg);
+            }
+         else
+            {
+            if (indexReg)
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, loadOrStoreReg, loadOrStoreReg, arrayletOffsetReg);
+            else
+               addConstant32(cg, node, loadOrStoreReg, loadOrStoreReg, arrayletOffsetVal);
+            }
+
+         if (indexReg)
+            srm->reclaimScratchRegister(arrayletOffsetReg);
+         }
+
+      const uint32_t numOOLDeps = 1 + (doLoadOrStore ? 1 : 0) + (needsBoundCheck && arrayLengthReg ? 1 : 0) + (loadOrStoreReg ? 1 : 0)
+         + (indexReg ? 1 : 0) + srm->numAvailableRegisters();
+      TR::RegisterDependencyConditions *OOLDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numOOLDeps, cg->trMemory());
+      OOLDeps->addPostCondition(baseArrayReg, TR::RealRegister::NoReg);
+      TR_ASSERT(OOLDeps->getPostConditions()->getRegisterDependency(0)->getRegister() == baseArrayReg, "Unexpected register");
+      if (doLoadOrStore)
+         {
+         OOLDeps->addPostCondition(arrayletReg, TR::RealRegister::NoReg);
+         TR_ASSERT(OOLDeps->getPostConditions()->getRegisterDependency(1)->getRegister() == arrayletReg, "Unexpected register");
+         }
+      if (indexReg)
+         OOLDeps->addPostCondition(indexReg, TR::RealRegister::NoReg);
+      if (loadOrStoreReg)
+         OOLDeps->addPostCondition(loadOrStoreReg, TR::RealRegister::NoReg);
+      if (needsBoundCheck && arrayLengthReg)
+         OOLDeps->addPostCondition(arrayLengthReg, TR::RealRegister::NoReg);
+      srm->addScratchRegistersToDependencyList(OOLDeps);
+
+      srm->stopUsingRegisters();
+
+      TR::LabelSymbol *doneOOLLabel = generateLabelSymbol(cg);
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneOOLLabel, OOLDeps);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+      }
+   discontiguousArrayOOL->swapInstructionListsWithCompilation();
+   //
+   // end of OOL
+
+   cg->decReferenceCount(loadOrStoreChild);
+   cg->decReferenceCount(baseArrayChild);
+   cg->decReferenceCount(indexChild);
 
    return NULL;
    }
