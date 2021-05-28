@@ -4011,37 +4011,6 @@ bool TR_J9VMBase::isFinalFieldPointingAtJ9Class(TR::SymbolReference *symRef, TR:
 
 // }}}  (end of predicates)
 
-static bool foldFinalFieldsIn(const char *className, int32_t classNameLength, TR::Compilation *comp)
-   {
-   TR::SimpleRegex *classRegex = comp->getOptions()->getClassesWithFoldableFinalFields();
-   if (classRegex)
-      return TR::SimpleRegex::match(classRegex, className);
-   else if (classNameLength >= 17 && !strncmp(className, "java/lang/invoke/", 17))
-      return true; // We can ONLY do this opt to fields that are never victimized by setAccessible
-   else if (classNameLength >= 30 && !strncmp(className, "java/lang/String$UnsafeHelpers", 30))
-      return true;
-   else if (classNameLength >= 17 && !strncmp(className, "com/ibm/oti/vm/VM", 17))
-      return true;
-   else if (classNameLength >= 22 && !strncmp(className, "com/ibm/jit/JITHelpers", 22))
-      return true;
-   else if (classNameLength >= 23 && !strncmp(className, "java/lang/J9VMInternals", 23))
-      return true;
-   else if (classNameLength >= 34 && !strncmp(className, "java/util/concurrent/atomic/Atomic", 34))
-      return true;
-   else if (classNameLength >= 17 && !strncmp(className, "java/util/EnumMap", 17))
-      return true;
-   else if (classNameLength >= 38 && !strncmp(className, "java/util/concurrent/ThreadLocalRandom", 38))
-      return true;
-   else if (classNameLength == 16 && !strncmp(className, "java/lang/String", 16))
-      return true;
-   else if (classNameLength >= 20 && !strncmp(className, "jdk/incubator/vector", 20))
-      return true;
-   else if (classNameLength >= 22 && !strncmp(className, "jdk/internal/vm/vector", 22))
-      return true;
-   else
-      return false;
-   }
-
 bool
 TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol, int32_t cpIndex, TR_ResolvedMethod *owningMethod)
    {
@@ -4084,7 +4053,9 @@ TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol
             name = getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
             }
 
-         return foldFinalFieldsIn(name, len, comp);
+         bool isStatic = false;
+         TR_OpaqueClassBlock *clazz = NULL; // only used for static fields
+         return TR::TransformUtil::foldFinalFieldsIn(clazz, name, len, isStatic, comp);
          }
       }
    return false;
