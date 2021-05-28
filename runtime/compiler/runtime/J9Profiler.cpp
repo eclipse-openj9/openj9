@@ -2100,8 +2100,8 @@ TR_BlockFrequencyInfo::getRawCount(TR_ByteCodeInfo &bci, TR_CallSiteInfo *callSi
             if (comp->getOption(TR_TraceBFGeneration))
                traceMsg(comp, "   Slot %d has raw frequency %d\n", i, rawCount);
 
-            if (maxCount > 0)
-               rawCount = ((10000 * (uintptr_t)rawCount) / maxCount);
+            if (maxCount > 0 && rawCount > 0)
+               rawCount = ((10000 * rawCount) / maxCount);
             else
                rawCount = 0;
             }
