@@ -144,8 +144,8 @@
 			<variation>Mode195</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	--illegal-access=permit \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	--add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
