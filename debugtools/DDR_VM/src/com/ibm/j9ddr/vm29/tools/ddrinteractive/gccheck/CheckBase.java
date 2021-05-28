@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,6 +80,7 @@ public final class CheckBase
 	public static final int J9MODRON_GCCHK_MISC_DARKMATTER = 0x00008000;
 	public static final int J9MODRON_GCCHK_MISC_MIDSCAVENGE = 0x00010000;
 	public static final int J9MODRON_GCCHK_MISC_OWNABLESYNCHRONIZER_CONSISTENCY = 0x00020000;
+	public static final int J9MODRON_GCCHK_VALID_INDEXABLE_DATA_ADDRESS = 0x00040000;
 
 	/*
 	 * Return codes for iterator functions.
@@ -117,12 +118,16 @@ public final class CheckBase
 	public static final int J9MODRON_GCCHK_RC_CLASS_HOT_SWAPPED_POINTS_TO_STATICS = 31;
 	public static final int J9MODRON_GCCHK_RC_CLASS_STATICS_REFERENCE_IS_NOT_IN_SCANNING_RANGE = 32;
 	public static final int J9MODRON_GCCHK_RC_CLASS_STATICS_WRONG_NUMBER_OF_REFERENCES = 33;
+	/* obsolete code 35 */
+	/* obsolete code 36 */
+	/* obsolete code 37 */
 	public static final int J9MODRON_GCCHK_RC_CLASS_HOT_SWAPPED_FOR_ARRAY = 39;
 	public static final int J9MODRON_GCCHK_RC_REPLACED_CLASS_HAS_NO_HOTSWAP_FLAG = 40;
 	public static final int J9MODRON_GCCHK_RC_CLASS_IS_UNLOADED =  48;
 	public static final int J9MODRON_GCCHK_RC_REVERSED_FORWARDED_OUTSIDE_EVACUATE = 49;
 
-	public static final int J9MODRON_GCCHK_RC_OWNABLE_SYNCHRONIZER_INVALID_CLASS = 38;
+	/* Special error codes for indexable data address field checks */
+	public static final int J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS = 34;
 
 	/* Special error codes for when J9MODRON_GCCHK_VERIFY_FLAGS is set (all stages)*/
 	public static final int J9MODRON_GCCHK_RC_INVALID_FLAGS = 13;
@@ -131,11 +136,11 @@ public final class CheckBase
 
 	/* Error codes applicable only to stage_object_heap */
 	public static final int J9MODRON_GCCHK_RC_DEAD_OBJECT_SIZE = 16;
+	public static final int J9MODRON_GCCHK_RC_NEW_POINTER_NOT_REMEMBERED = 17;
 	public static final int J9MODRON_GCCHK_RC_DEAD_OBJECT_SIZE_NOT_ALIGNED = 44;
 	public static final int J9MODRON_GCCHK_RC_DEAD_OBJECT_NEXT_IS_NOT_HOLE = 45;
 	public static final int J9MODRON_GCCHK_RC_DEAD_OBJECT_NEXT_IS_NOT_IN_REGION = 46;
 	public static final int J9MODRON_GCCHK_RC_DEAD_OBJECT_NEXT_IS_POINTED_INSIDE = 47;
-	public static final int J9MODRON_GCCHK_RC_NEW_POINTER_NOT_REMEMBERED = 17;
 
 	/* Error codes applicable only to stage_remembered_set */
 	public static final int J9MODRON_GCCHK_RC_REMEMBERED_SET_WRONG_SEGMENT = 18;
@@ -153,7 +158,8 @@ public final class CheckBase
 	/* Error codes applicable for scopes */
 	public static final int J9MODRON_GCCHK_RC_INTERNAL_POINTER_NOT_IN_SCOPE = 28;
 
-	/* Error codes applicable for Ownable Synchronizers  */
+	/* Error codes for instances of java.util.concurrent.locks.AbstractOwnableSynchronizer */
+	public static final int J9MODRON_GCCHK_RC_OWNABLE_SYNCHRONIZER_INVALID_CLASS = 38;
 	public static final int J9MODRON_GCCHK_OWNABLE_SYNCHRONIZER_OBJECT_IS_NOT_ATTACHED_TO_THE_LIST = 42;
 	public static final int J9MODRON_GCCHK_OWNABLE_SYNCHRONIZER_LIST_HAS_CIRCULAR_REFERENCE = 43;
 	

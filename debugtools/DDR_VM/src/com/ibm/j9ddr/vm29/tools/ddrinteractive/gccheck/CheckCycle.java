@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -343,6 +343,11 @@ class CheckCycle
 							miscFlags |= J9MODRON_GCCHK_MISC_MIDSCAVENGE;
 							continue;
 						}
+
+						if (miscOption.equals("indexabledataaddress")) {
+							miscFlags |= J9MODRON_GCCHK_VALID_INDEXABLE_DATA_ADDRESS;
+							continue;
+						}
 					}	
 	
 					/* Most of these options are specific to a running process */					
@@ -485,5 +490,10 @@ class CheckCycle
 	public int getMiscFlags()
 	{
 		return _miscFlags;
+	}
+
+	public void clearIndexableDataAddrCheckMiscFlag()
+	{
+		_miscFlags &= ~J9MODRON_GCCHK_VALID_INDEXABLE_DATA_ADDRESS;
 	}
 }
