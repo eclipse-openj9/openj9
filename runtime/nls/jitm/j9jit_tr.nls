@@ -160,14 +160,6 @@ J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.user_response=Destroy and recr
 J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH=FSD Etkin \u00f6zellik uyumsuzlu\u011fu. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yoksay\u0131l\u0131yor.
-# START NON-TRANSLATABLE
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.explanation=The JVM is not running in the same FSD mode as the one that generated the code in the SCC.
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
-# END NON-TRANSLATABLE
-
 J9NLS_RELOCATABLE_CODE_HCR_MISMATCH=HCR Etkin \u00f6zellik uyumsuzlu\u011fu. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yoksay\u0131l\u0131yor.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.explanation=The JVM is not running in the same HCR mode as the one that generated the code in the SCC.
@@ -363,24 +355,32 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_6=pag
 
 J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH=Engel Aral\u0131\u011f\u0131 \u0130\u00e7in Y\u0131\u011f\u0131n Taban\u0131 \u00f6zellik uyumsuzlu\u011fu. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yoksay\u0131l\u0131yor.
 # START NON-TRANSLATABLE
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
 J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH=Engel Aral\u0131\u011f\u0131 \u0130\u00e7in Y\u0131\u011f\u0131n Taban\u0131 \u00f6zellik uyumsuzlu\u011fu. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yoksay\u0131l\u0131yor.
 # START NON-TRANSLATABLE
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
 J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH=Etkin Kart Tablosu Taban\u0131 \u00f6zellik uyumsuzlu\u011fu. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yoksay\u0131l\u0131yor.
 # START NON-TRANSLATABLE
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH=FSD Etkin \u00f6zellik uyumsuzlu\u011fu. Payla\u015f\u0131lan s\u0131n\u0131f \u00f6nbelle\u011findeki AOT kodu yoksay\u0131l\u0131yor.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.explanation=The JVM is not running in the same FSD mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE

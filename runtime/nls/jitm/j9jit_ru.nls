@@ -160,14 +160,6 @@ J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.user_response=Destroy and recr
 J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH=\u041d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u0430\u044f \u0444\u0443\u043d\u043a\u0446\u0438\u044f FSD \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u043e. \u041a\u043e\u0434 AOT \u0432 \u043a\u044d\u0448\u0435 \u043e\u0431\u0449\u0438\u0445 \u043a\u043b\u0430\u0441\u0441\u043e\u0432 \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0435\u0442\u0441\u044f.
-# START NON-TRANSLATABLE
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.explanation=The JVM is not running in the same FSD mode as the one that generated the code in the SCC.
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
-# END NON-TRANSLATABLE
-
 J9NLS_RELOCATABLE_CODE_HCR_MISMATCH=\u041d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u0430\u044f \u0444\u0443\u043d\u043a\u0446\u0438\u044f HCR \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u043e. \u041a\u043e\u0434 AOT \u0432 \u043a\u044d\u0448\u0435 \u043e\u0431\u0449\u0438\u0445 \u043a\u043b\u0430\u0441\u0441\u043e\u0432 \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0435\u0442\u0441\u044f.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_HCR_MISMATCH.explanation=The JVM is not running in the same HCR mode as the one that generated the code in the SCC.
@@ -363,24 +355,32 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.sample_input_6=pag
 
 J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH=\u041d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u0430\u044f \u0444\u0443\u043d\u043a\u0446\u0438\u044f \u0411\u0430\u0437\u0430 \u043a\u0443\u0447\u0438 \u0434\u043b\u044f \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0430 \u0431\u0430\u0440\u044c\u0435\u0440\u0430. \u041a\u043e\u0434 AOT \u0432 \u043a\u044d\u0448\u0435 \u043e\u0431\u0449\u0438\u0445 \u043a\u043b\u0430\u0441\u0441\u043e\u0432 \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0435\u0442\u0441\u044f.
 # START NON-TRANSLATABLE
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HEAP_BASE_FOR_BARRIER_RANGE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
 J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH=\u041d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u0430\u044f \u0444\u0443\u043d\u043a\u0446\u0438\u044f \u0420\u0430\u0437\u043c\u0435\u0440 \u043a\u0443\u0447\u0438 \u0434\u043b\u044f \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0430 \u0431\u0430\u0440\u044c\u0435\u0440\u0430. \u041a\u043e\u0434 AOT \u0432 \u043a\u044d\u0448\u0435 \u043e\u0431\u0449\u0438\u0445 \u043a\u043b\u0430\u0441\u0441\u043e\u0432 \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0435\u0442\u0441\u044f.
 # START NON-TRANSLATABLE
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
 J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH=\u041d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u0430\u044f \u0444\u0443\u043d\u043a\u0446\u0438\u044f \u0411\u0430\u0437\u0430 \u0442\u0430\u0431\u043b\u0438\u0446\u044b \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0439 \u043a\u0430\u0440\u0442\u044b. \u041a\u043e\u0434 AOT \u0432 \u043a\u044d\u0448\u0435 \u043e\u0431\u0449\u0438\u0445 \u043a\u043b\u0430\u0441\u0441\u043e\u0432 \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0435\u0442\u0441\u044f.
 # START NON-TRANSLATABLE
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
-J9NLS_RELOCATABLE_CODE_TM_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
+# END NON-TRANSLATABLE
+
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH=\u041d\u0435\u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u0430\u044f \u0444\u0443\u043d\u043a\u0446\u0438\u044f FSD \u0432\u043a\u043b\u044e\u0447\u0435\u043d\u043e. \u041a\u043e\u0434 AOT \u0432 \u043a\u044d\u0448\u0435 \u043e\u0431\u0449\u0438\u0445 \u043a\u043b\u0430\u0441\u0441\u043e\u0432 \u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0435\u0442\u0441\u044f.
+# START NON-TRANSLATABLE
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.explanation=The JVM is not running in the same FSD mode as the one that generated the code in the SCC.
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.user_response=Destroy and recreate the AOT code in the shared class cache for the current platform using the -Xshareclasses:reset option.
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
