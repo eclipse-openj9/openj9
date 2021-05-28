@@ -461,11 +461,6 @@ public:
 	void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, uintptr_t *hotFieldAlignmentDescriptor);
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
 
-	MMINLINE void calculateObjectDetailsForCopy(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedHeader, uintptr_t *objectCopySizeInBytes, uintptr_t *objectReserveSizeInBytes, bool *doesObjectNeedHash)
-	{
-		/* TO BE REMOVED */
-	}
-
 	/**
 	 * Constructor receives a copy of OMR's object flags mask, normalized to low order byte. Delegate
 	 * realigns it for internal use.
