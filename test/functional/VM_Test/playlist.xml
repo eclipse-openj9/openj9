@@ -226,10 +226,6 @@
 	</test>
 	<test>
 		<testCaseName>xlpCodeCacheTests</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/11104</comment>
-			<plat>.*aix.*</plat>
-		</disabled>
 		<variations>
 			<variation>Mode109</variation>
 			<variation>Mode110</variation>
