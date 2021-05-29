@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!--
+  Copyright (c) 2005, 2021 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "excludes.dtd">
+<?xml:stylesheet type="text/xsl" href="excludes.xsl" ?>
+<suite id="URLHelper Excluded Test Case List">
+	<platform id="all"/>
+	<exclude id="Create core file --illegal-access=permit" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findallmodules" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodulebyname" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !findmodulebyname" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodulebyname find non-existing module" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmoduleexports" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !dumpmoduleexports" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !dumpmodulereads" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmoduleexports" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !dumpmoduleexports" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodulereads" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !dumpmodulereads" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findallreads" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmoduledirectedexports" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpallclassesinmodule" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules all" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules name --illegal-access=permit" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !findmodules name" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules name on non-existing module" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules requires" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules requires on non-existing module" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules package" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules package on non-existing package" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules help" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules with an invalid subcommand" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !findmodules with too many arguments" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule --illegal-access=permit" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule packages" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !dumpmodule package" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule classes" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule requires" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !dumpmodule requires" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule exports --illegal-access=permit" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !dumpmodule exports" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule help" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule with an invalid subcommand" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule with too many arguments" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule with a non-numeric module address" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumpmodule with an invalid module address" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumppackage on a globally exported package" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumppackage on a package exported to specific modules" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumppackage classes" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Verify !dumppackage classes" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumppackage help" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumppackage with an invalid subcommand" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumppackage with too many arguments" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumppackage with a non-numeric package address" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+  <exclude id="Run !dumppackage with an invalid package address" platform="17"><reason>JEP 403 disabled illegal-access=permit</reason></exclude>
+</suite>

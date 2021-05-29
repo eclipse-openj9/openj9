@@ -33,7 +33,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)modularityddrtests.xml$(Q) \
+	-config $(Q)$(TEST_RESROOT)$(D)modularityddrtests.xml$(Q) -xids all,$(PLATFORM),$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-plats all,$(PLATFORM),$(VARIATION) \
 	-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
