@@ -35,7 +35,7 @@
 #include "env/VMJ9.h"
 #include "env/VerboseLog.hpp"
 #include "net/ClientStream.hpp"
-#include "optimizer/J9TransformUtil.hpp"
+#include "optimizer/TransformUtil.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -2567,47 +2567,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR_ResolvedMethod *owningMethod = std::get<1>(recv);
          int32_t cpIndex = std::get<2>(recv);
 
-         bool createKnownObject = false;
-         TR::KnownObjectTable::Index knotIndex = TR::KnownObjectTable::UNKNOWN;
+         TR::KnownObjectTable::Index knotIndex =
+            TR::TransformUtil::knownObjectFromFinalStatic(
+               comp, owningMethod, cpIndex, dataAddress);
+
          uintptr_t *objectPointerReference = NULL;
-
+         if (knotIndex != TR::KnownObjectTable::UNKNOWN)
             {
-            TR::VMAccessCriticalSection getObjectReferenceLocation(fe);
-            if (*((uintptr_t*)dataAddress) != 0)
-               {
-               TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
-               if (declaringClass && fe->isClassInitialized(declaringClass))
-                  {
-                  static const char *foldVarHandle = feGetEnv("TR_FoldVarHandleWithoutFear");
-                  int32_t clazzNameLength = 0;
-                  char *clazzName = fe->getClassNameChars(declaringClass, clazzNameLength);
-                  bool createKnownObject = false;
-
-                  if (J9::TransformUtil::foldFinalFieldsIn(declaringClass, clazzName, clazzNameLength, true, comp))
-                     {
-                     createKnownObject = true;
-                     }
-                  else if (foldVarHandle
-                           && (clazzNameLength != 16 || strncmp(clazzName, "java/lang/System", 16)))
-                     {
-                     TR_OpaqueClassBlock *varHandleClass =  fe->getSystemClassFromClassName("java/lang/invoke/VarHandle", 26);
-                     TR_OpaqueClassBlock *objectClass = TR::Compiler->cls.objectClass(comp, *((uintptr_t*)dataAddress));
-
-                     if (varHandleClass != NULL
-                         && objectClass != NULL
-                         && fe->isInstanceOf(objectClass, varHandleClass, true, true))
-                        {
-                        createKnownObject = true;
-                        }
-                     }
-
-                  if (createKnownObject)
-                     {
-                     knotIndex = knot->getOrCreateIndexAt((uintptr_t*)dataAddress);
-                     objectPointerReference = knot->getPointerLocation(knotIndex);
-                     }
-                  }
-               }
+            objectPointerReference =
+               comp->getKnownObjectTable()->getPointerLocation(knotIndex);
             }
 
          client->write(response, knotIndex, objectPointerReference);
