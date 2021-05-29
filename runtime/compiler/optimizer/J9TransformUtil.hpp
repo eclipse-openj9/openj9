@@ -214,6 +214,28 @@ public:
     *    Doesn't support `MethodHandle.linkToInterface` right now
     */
    static bool refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mnIndex, bool trace = false);
+
+   /*
+    * \brief
+    *    Determine the known-object index to use for a reference-typed final
+    *    static field that is foldable in the walker.
+    *
+    *    The caller must check in advance that the field is a final reference.
+    *    This method does not verify.
+    *
+    * \param comp the compilation object
+    * \param owningMethod the owning method of the static field reference
+    * \param cpIndex the constant pool index of the static field reference
+    * \param dataAddress The static field address from \c staticAttributes()
+    *
+    * \return the known object index, or \c UNKNOWN if disallowed
+    */
+   static TR::KnownObjectTable::Index knownObjectFromFinalStatic(
+      TR::Compilation *comp,
+      TR_ResolvedMethod *owningMethod,
+      int32_t cpIndex,
+      void *dataAddress);
+
 protected:
    /**
     * \brief
