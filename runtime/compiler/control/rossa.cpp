@@ -25,6 +25,10 @@
 #include <string.h>
 
 #ifdef WINDOWS
+// Undefine the winsockapi because winsock2 defines it. Removes warnings.
+#if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
+#undef _WINSOCKAPI_
+#endif
 #include <winsock2.h>
 #include <process.h>
 #else
