@@ -1701,6 +1701,72 @@ fixJNIRefs(J9VMThread * currentThread, J9HashTable * classPairs, BOOLEAN fastHCR
 }
 
 
+void
+fixMemberNames(J9JavaVM * vm, J9HashTable * classHashTable)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	/* iterate over all objects fixing up vmtarget refs if object is a MemberName */
+	vm->memoryManagerFunctions->j9mm_iterate_all_objects(vm, PORTLIB, 0, fixMemberNamesObjectIteratorCallback, classHashTable);
+}
+
+static jvmtiIterationControl
+fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData)
+{
+	J9HashTable *classHashTable = userData;
+	j9object_t object = objectDesc->object;
+	J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
+
+	if (NULL != classHashTable) {
+		if (clazz == J9VMJAVALANGINVOKEMEMBERNAME(vm) && NULL != J9OBJECT_U64_LOAD(vm->currentThread, object, vm->vmindexOffset)) {
+			j9object_t vmindex = J9OBJECT_U64_LOAD(vm->currentThread, object, vm->vmindexOffset);
+			J9Class *indexClazz = J9OBJECT_CLAZZ_VM(vm, vmindex);
+
+			J9JVMTIClassPair exemplar;
+			J9JVMTIClassPair *result = NULL;
+
+			exemplar.originalRAMClass = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(vm->currentThread, object);
+			result = hashTableFind(classHashTable, &exemplar);
+			if (NULL != result) {
+				J9Class *replacementRAMClass = result->replacementClass.ramClass;
+				if (NULL != replacementRAMClass) {
+					if (indexClazz == J9VMJAVALANGREFLECTFIELD(vm)) {
+						/* Update vmtarget to vmindex->offset */
+						J9JNIFieldID *fieldID = (J9JNIFieldID *)vmindex;
+						J9ROMFieldShape *romField = fieldID->field;
+						UDATA offset = fieldID->offset;
+
+						if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
+							offset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
+							if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+								offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+							}
+						}
+						J9OBJECT_U64_STORE(vm->currentThread, object, vm->vmtargetOffset, (U_64)offset));
+					
+						/* Update MemberName.clazz to replacement class */
+						if (exemplar.originalRAMClass != replacementRAMClass) { /* FSD */
+							J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(vm->currentThread, object, (j9object_t)replacementRAMClass);
+						}
+					} else if (indexClazz == J9VMJAVALANGREFLECTMETHOD(vm) || indexClazz == J9VMJAVALANGREFLECTCONSTRUCTOR(vm)) {
+						/* Update vmtarget to vmindex->method */
+						J9JNIMethodID *methodID = (J9JNIMethodID *)vmindex;
+						J9OBJECT_U64_STORE(vm->currentThread, object, vm->vmtargetOffset, vmindex->method));
+
+						/* Update MemberName.clazz to replacement class */
+						if (exemplar.originalRAMClass != replacementRAMClass) { /* FSD */
+							J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(vm->currentThread, object, (j9object_t)replacementRAMClass);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return JVMTI_ITERATION_CONTINUE;
+}
+
+
 /**
  * \brief  Reresolve the passed in constant pool
  * \ingroup jvmtiClass
