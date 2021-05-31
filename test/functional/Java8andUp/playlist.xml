@@ -392,7 +392,7 @@
 		<testCaseName>TestSunAttachClasses</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	--illegal-access=permit \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -445,7 +445,7 @@
 	<test>
 		<testCaseName>TestManagementAgent</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-	--illegal-access=permit \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	-Dcom.ibm.tools.attach.enable=yes \
 	-Dcom.ibm.tools.attach.timeout=15000 \
@@ -1519,7 +1519,9 @@
 	</test>
 	<test>
 		<testCaseName>JCL_Test_JITHelpers</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --illegal-access=permit --add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED  \
+	--add-exports=java.base/com.ibm.jit=ALL-UNNAMED \
 	--add-opens=java.base/com.ibm.jit=ALL-UNNAMED -Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)TestResources.jar$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JCL_TEST_JITHelpers \

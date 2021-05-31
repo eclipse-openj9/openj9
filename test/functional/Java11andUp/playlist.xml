@@ -27,7 +27,7 @@
 			<variation>-XX:+CompactStrings</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-			--illegal-access=permit \
+			--add-opens=java.base/java.lang=ALL-UNNAMED \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Test_String \
 			-groups $(TEST_GROUP) \
