@@ -430,6 +430,11 @@
       <class name="jit.test.tr.newinstance.NewInstanceTests"/>
     </classes>
   </test>
+  <test name="SeqLoadSimplificationTest">
+	 <classes>
+	   <class name="jit.test.tr.SeqLoadSimplificationTest" />
+	 </classes>
+  </test>
   <test name="signExtensionATest">
     <classes>
       <class name="jit.test.tr.signExtensionA.SignExtElimTest" />

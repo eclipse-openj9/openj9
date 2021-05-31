@@ -453,6 +453,31 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	<test>
+		<testCaseName>SeqLoadSimplificationTest</testCaseName>
+		<variations>
+			<variation>-Xjit:optlevel=hot,count=10,limit={*runTest*},disableasynccompilation,disableDynamicLoopTransfer</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	SeqLoadSimplificationTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<aot>nonapplicable</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 	<!-- jit.test.hw tests start here -->
 	<test>
 		<testCaseName>jit_hw</testCaseName>
