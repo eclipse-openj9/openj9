@@ -585,26 +585,69 @@ def cleanWorkspace (KEEP_WORKSPACE) {
     }
 }
 
+def clean_docker_containers() {
+    println("Listing docker containers to attempt removal")
+    sh "docker ps -a"
+    def containers = sh (script: "docker ps -a --format \"{{.ID}}\"", returnStdout: true).trim()
+    if (containers) {
+        println("Stop all docker containers")
+        sh "docker ps -a --format \"{{.ID}}\" | xargs docker stop"
+        println("Remove all docker containers")
+        sh "docker ps -a --format \"{{.ID}}\" | xargs docker rm --force"
+    }
+}
+
+def prepare_docker_environment() {
+    clean_docker_containers()
+    DOCKER_IMAGE_ID = get_docker_image_id(DOCKER_IMAGE)
+
+    // if there is no id found then attempt to pull it
+    if (!DOCKER_IMAGE_ID) {
+        echo "${DOCKER_IMAGE} not found locally, attempting to pull from dockerhub"
+        dockerCredentialID = variableFile.get_user_credentials_id('dockerhub')
+        docker.withRegistry("", "${dockerCredentialID}") {
+            sh "docker pull ${DOCKER_IMAGE}"
+        }
+    }
+    DOCKER_IMAGE_ID = get_docker_image_id(DOCKER_IMAGE)
+    echo "Using ID ${DOCKER_IMAGE_ID} of ${DOCKER_IMAGE}"
+}
+
+def get_docker_image_id(image) {
+    return sh (script: "docker images ${image} --format \"{{.ID}}\"", returnStdout: true).trim()
+}
+
+def _build_all() {
+    try {
+        cleanWorkspace(false)
+        add_node_to_description()
+        // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here
+        // to correctly expand $HOME variable
+        variableFile.set_build_variables_per_node()
+        get_source()
+        variableFile.set_sdk_variables()
+        variableFile.set_artifactory_config(BUILD_IDENTIFIER)
+        variableFile.set_build_custom_options()
+        build()
+        archive_sdk()
+    } finally {
+        KEEP_WORKSPACE = (params.KEEP_WORKSPACE) ?: false
+        cleanWorkspace(KEEP_WORKSPACE)
+    }
+}
+
 def build_all() {
     stage ('Queue') {
         timeout(time: 10, unit: 'HOURS') {
             node("${NODE}") {
                 timeout(time: 5, unit: 'HOURS') {
-                    try {
-                        cleanWorkspace(false)
-                        add_node_to_description()
-                        // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here
-                        // to correctly expand $HOME variable
-                        variableFile.set_build_variables_per_node()
-                        get_source()
-                        variableFile.set_sdk_variables()
-                        variableFile.set_artifactory_config(BUILD_IDENTIFIER)
-                        variableFile.set_build_custom_options()
-                        build()
-                        archive_sdk()
-                    } finally {
-                        KEEP_WORKSPACE = (params.KEEP_WORKSPACE) ?: false
-                        cleanWorkspace(KEEP_WORKSPACE)
+                    if ("${DOCKER_IMAGE}") {
+                        prepare_docker_environment()
+                        docker.image(DOCKER_IMAGE_ID).inside {
+                            _build_all()
+                        }
+                    } else { 
+                        _build_all()
                     }
                 }
             }

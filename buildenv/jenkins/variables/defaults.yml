@@ -88,6 +88,7 @@ misc:
     default: "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}${SDK_FILE_EXT}"
 credentials:
   github: 'github-bot'
+  dockerhub: 'docker-login'
 test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins'
 build_discarder:
@@ -395,12 +396,17 @@ x86-64_linux:
   node_labels:
     build:
       all: 'ci.role.build && hw.arch.x86 && sw.os.cent.7'
-      8: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
+      8: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
+      11: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
+    docker_image:
+      8: 'eclipseopenj9/jenkins-agent-x86-centos6:14'
+      11: 'eclipseopenj9/jenkins-agent-x86-centos6:14'
   extra_configure_options:
     all: '--enable-jitserver'
   build_env:
-    cmd: 'source /home/jenkins/set_gcc7.5.0_env'
+    cmd:
+      16: 'source /home/jenkins/set_gcc7.5.0_env'
+      next: 'source /home/jenkins/set_gcc7.5.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   extra_test_labels:
     16: '!sw.os.cent.6'
