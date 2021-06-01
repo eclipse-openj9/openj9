@@ -1132,6 +1132,7 @@ extern J9_CFUNC struct J9Method* jitGetJ9MethodUsingIndex(J9VMThread *currentThr
 extern J9_CFUNC struct J9Method* jitResolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpOrSplitIndex, UDATA resolveFlags);
 extern J9_CFUNC struct J9Method* jitResolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA cpOrSplitIndex, UDATA resolveFlags);
 extern J9_CFUNC struct J9Class * jitGetDeclaringClassOfROMField(J9VMThread *vmStruct, J9Class *clazz, J9ROMFieldShape *romField);
+extern J9_CFUNC BOOLEAN jitIsFieldStable(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex);
 
 typedef struct J9MethodFromSignatureWalkState {
 	const char *className;

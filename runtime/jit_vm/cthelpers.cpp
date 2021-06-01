@@ -195,10 +195,10 @@ jitGetConstantDynamicTypeFromCP(J9VMThread *currentThread, J9ConstantPool *const
  * @param cpIndex fieldref cp index
  * @return true if fieldref contains @Stable, false otherwise
  */
-bool
-jitIsFieldStable(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex, bool isStatic)
+BOOLEAN
+jitIsFieldStable(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex)
 {
-	return FALSE != fieldContainsRuntimeAnnotation(currentThread, clazz, cpIndex, (J9UTF8 *)&ojdk_stable);
+	return fieldContainsRuntimeAnnotation(currentThread, clazz, cpIndex, (J9UTF8 *)&ojdk_stable);
 }
 
 }
