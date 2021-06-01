@@ -2017,6 +2017,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 			|| (0 != addEnvironmentVariables(&j9portLibrary, args, &vmArgumentsList, localVerboseLevel))
 			|| (0 != addLauncherArgs(&j9portLibrary, args, launcherArgumentsSize, &vmArgumentsList,
 					&xServiceBuffer, argEncoding, localVerboseLevel))
+#if (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD)
+			|| (0 != addEnvironmentVariableArguments(&j9portLibrary, ENVVAR_JAVA_OPTIONS, &vmArgumentsList, localVerboseLevel))
+#endif /* (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD) */
 			|| (0 != addXserviceArgs(&j9portLibrary, &vmArgumentsList, xServiceBuffer, localVerboseLevel))
 		) {
 			result = JNI_ERR;

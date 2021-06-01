@@ -1362,8 +1362,8 @@ mapEnvVarToArgument(J9PortLibrary* portLibrary, const char* envVar, const char* 
 }
 
 
-static IDATA
-addEnvironmentVariableArguments(J9PortLibrary* portLib, const char* envVarName, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags) 
+IDATA
+addEnvironmentVariableArguments(J9PortLibrary *portLib, const char *envVarName, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags) 
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 	IDATA envVarSize = j9sysinfo_get_env(envVarName, NULL, 0);
@@ -1383,7 +1383,7 @@ addEnvironmentVariableArguments(J9PortLibrary* portLib, const char* envVarName, 
 }
 
 IDATA
-addEnvironmentVariables(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags) 
+addEnvironmentVariables(J9PortLibrary *portLib, JavaVMInitArgs *launcherArgs, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags) 
 {
 	IDATA status = 0;
 	if (
@@ -1395,9 +1395,6 @@ addEnvironmentVariables(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, J
 			|| (0 != mapEnvVarToArgument(portLib, ENVVAR_IBM_JAVA_ENABLE_ASCII_FILETAG, VMOPT_XASCII_FILETAG, vmArgumentsList, EXACT_MAP_NO_OPTIONS, verboseFlags))
 #endif
 			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_JAVA_TOOL_OPTIONS, vmArgumentsList, verboseFlags))
-#if (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD)
-			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_JAVA_OPTIONS, vmArgumentsList, verboseFlags))
-#endif /* (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD) */
 			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_OPENJ9_JAVA_OPTIONS, vmArgumentsList, verboseFlags))
 			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_IBM_JAVA_OPTIONS, vmArgumentsList, verboseFlags))
 			|| (0 != mapEnvVarToArgument(portLib, ENVVAR_IBM_JAVA_JITLIB, MAPOPT_XXJITDIRECTORY, vmArgumentsList, EXACT_MAP_WITH_OPTIONS, verboseFlags))

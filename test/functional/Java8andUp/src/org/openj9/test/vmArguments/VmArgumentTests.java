@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,7 +89,7 @@ public class VmArgumentTests {
 	private static final String XPROD = "-Xprod";
 	private static final String HELLO_WORLD_SCRIPT = "#!/bin/sh\n"+ "echo hello, world\n";
 
-	private static final String JAVA_OPTIONS = "JAVA_OPTIONS"; //$NON-NLS-1$
+	private static final String JAVA_OPTIONS = "_JAVA_OPTIONS"; //$NON-NLS-1$
 	private static final String IBM_JAVA_OPTIONS = "IBM_JAVA_OPTIONS"; //$NON-NLS-1$
 	private static final String JAVA_TOOL_OPTIONS = "JAVA_TOOL_OPTIONS"; //$NON-NLS-1$
 	private static final String OPENJ9_JAVA_OPTIONS = "OPENJ9_JAVA_OPTIONS"; //$NON-NLS-1$
@@ -336,7 +336,7 @@ public class VmArgumentTests {
 		assertTrue(IBM_JAVA_OPTIONS+ " should come last", argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 	}
 
-	/* test JAVA_OPTIONS environment variable */
+	/* test _JAVA_OPTIONS environment variable */
 	@Test
 	public void testJavaOptions() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
@@ -345,13 +345,13 @@ public class VmArgumentTests {
 		env.put(JAVA_OPTIONS, javaOptionsArg);
 		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
 		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, new String[] {javaOptionsArg});
-		if (!isJava8 || !isIBM) {
+		if (isJava8 && isIBM) {
+			assertFalse("Unexpected: " + javaOptionsArg, argumentPositions.containsKey(javaOptionsArg));
+		} else {
 			assertTrue(MISSING_ARGUMENT + javaOptionsArg, argumentPositions.containsKey(javaOptionsArg));
 			/* environment variables should come after implicit arguments */
 			assertTrue(JAVA_OPTIONS + SHOULD_COME_AFTER + DJAVA_HOME, 
 					argumentPositions.get(javaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
-		} else {
-			assertFalse("Unexpected: " + javaOptionsArg, argumentPositions.containsKey(javaOptionsArg));
 		}
 	}
 
@@ -719,14 +719,11 @@ public class VmArgumentTests {
 				argumentPositions.containsKey(openJ9JavaOptionsArg));
 		assertTrue(IBM_JAVA_OPTIONS+ SHOULD_COME_AFTER+OPENJ9_JAVA_OPTIONS, 
 				argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(openJ9JavaOptionsArg).intValue());
-		if (!isJava8 || !isIBM) {
-			assertTrue(OPENJ9_JAVA_OPTIONS + SHOULD_COME_AFTER + JAVA_OPTIONS, 
-					argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(javaOptionsArg).intValue());
-			assertTrue(JAVA_OPTIONS + SHOULD_COME_AFTER + JAVA_TOOL_OPTIONS, 
-					argumentPositions.get(javaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
-		} else {
-			assertTrue(OPENJ9_JAVA_OPTIONS + SHOULD_COME_AFTER + JAVA_TOOL_OPTIONS, 
-					argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
+		assertTrue(OPENJ9_JAVA_OPTIONS + SHOULD_COME_AFTER + JAVA_TOOL_OPTIONS, 
+				argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(javaToolOptionsArg).intValue());
+		if (!(isJava8 && isIBM)) {
+			assertTrue(JAVA_OPTIONS + SHOULD_COME_AFTER + IBM_JAVA_OPTIONS, 
+					argumentPositions.get(javaOptionsArg).intValue() > argumentPositions.get(ibmJavaOptionsArg).intValue());
 		}
 	}
 

@@ -139,7 +139,7 @@ typedef enum gc_policy{
 #ifndef PATH_MAX
 #define PATH_MAX 1023
 #endif
-#define ENVVAR_JAVA_OPTIONS "JAVA_OPTIONS"
+#define ENVVAR_JAVA_OPTIONS "_JAVA_OPTIONS"
 #define ENVVAR_OPENJ9_JAVA_OPTIONS "OPENJ9_JAVA_OPTIONS"
 #define ENVVAR_IBM_JAVA_OPTIONS "IBM_JAVA_OPTIONS"
 
@@ -552,7 +552,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 
 	/* 
 	 * The command line is handled below but look into the multiple JAVA_OPTIONS environment variables here, since it is a special case.
-	 * First look at JAVA_OPTIONS, then OPENJ9_JAVA_OPTIONS or IBM_JAVA_OPTIONS if OPENJ9_JAVA_OPTIONS isn't defined.
+	 * First look at OPENJ9_JAVA_OPTIONS, or IBM_JAVA_OPTIONS if OPENJ9_JAVA_OPTIONS isn't defined.
 	 */
 #if (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD)
 	envOptions = getenv(ENVVAR_JAVA_OPTIONS);
@@ -592,6 +592,14 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 			parseGCPolicy(args->options[i].optionString + LENGTH_GC_POLICY_OPTION, &gcPolicy);
 		}
 	}
+
+#if (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD)
+	/* _JAVA_OPTIONS overrides command line options. */
+	envOptions = getenv(ENVVAR_JAVA_OPTIONS);
+	if (NULL != envOptions) {
+		checkEnvOptions(envOptions, &gcPolicy, &xcompressedstr, &xnocompressedstr, &xjvmstr, &xjvm, &namedVM, &nameLength, &xmxstr);
+	}
+#endif /* (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD) */
 
 	requestedHeapSize = parseMemorySizeValue(xmxstr);
 
