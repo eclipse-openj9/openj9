@@ -2183,8 +2183,10 @@ unresolveAllClasses (J9VMThread * currentThread, J9HashTable * classPairs, J9Has
 void
 fixHeapRefs (J9JavaVM * vm, J9HashTable * classPairs);
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 void
 fixDirectHandles(J9VMThread * currentThread, J9HashTable * classHashTable, J9HashTable * methodHashTable);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 void
 copyPreservedValues (J9VMThread * currentThread, J9HashTable* classHashTable, UDATA extensionsUsed);
