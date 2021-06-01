@@ -34,7 +34,7 @@ on:
       - 'buildenv/**'
 jobs:
   Linter:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -44,9 +44,9 @@ jobs:
         g++-7 \
         gcc-7 \
         nasm \
-        clang-3.8 \
-        llvm-3.8 \
-        libclang-3.8-dev \
-        llvm-3.8-dev
+        clang-3.9 \
+        llvm-3.9 \
+        libclang-3.9-dev \
+        llvm-3.9-dev
     - name: run lint shell script
       run: .github/runlint.sh
