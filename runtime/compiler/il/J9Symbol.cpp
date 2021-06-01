@@ -376,9 +376,7 @@ J9::Symbol::createRecognizedShadow(AllocatorType m, TR::DataType d, uint32_t s, 
 
 template TR::Symbol * J9::Symbol::createRecognizedShadow(TR_StackMemory,         TR::DataType, RecognizedField);
 template TR::Symbol * J9::Symbol::createRecognizedShadow(TR_HeapMemory,          TR::DataType, RecognizedField);
-template TR::Symbol * J9::Symbol::createRecognizedShadow(PERSISTENT_NEW_DECLARE, TR::DataType, RecognizedField);
 
 template TR::Symbol * J9::Symbol::createRecognizedShadow(TR_StackMemory,         TR::DataType, uint32_t, RecognizedField);
 template TR::Symbol * J9::Symbol::createRecognizedShadow(TR_HeapMemory,          TR::DataType, uint32_t, RecognizedField);
-template TR::Symbol * J9::Symbol::createRecognizedShadow(PERSISTENT_NEW_DECLARE, TR::DataType, uint32_t, RecognizedField);
 
