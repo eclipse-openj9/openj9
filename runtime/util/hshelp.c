@@ -90,6 +90,7 @@ static int compareClassDepth (const void *leftPair, const void *rightPair);
 static UDATA utfsAreIdentical(J9UTF8 * utf1, J9UTF8 * utf2);
 static UDATA areUTFPairsIdentical(J9UTF8 * leftUtf1, J9UTF8 * leftUtf2, J9UTF8 * rightUtf1, J9UTF8 * rightUtf2);
 static jvmtiError fixJNIMethodID(J9VMThread *currentThread, J9Method *oldMethod, J9Method *newMethod, BOOLEAN equivalent, UDATA extensionsUsed);
+static jvmtiIterationControl fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
 
 static jvmtiIterationControl fixHeapRefsHeapIteratorCallback(J9JavaVM *vm, J9MM_IterateHeapDescriptor *heapDesc, void *userData);
 static jvmtiIterationControl fixHeapRefsSpaceIteratorCallback(J9JavaVM *vm, J9MM_IterateSpaceDescriptor *spaceDesc, void *userData);

@@ -2175,6 +2175,9 @@ void
 fixJNIRefs (J9VMThread * currentThread, J9HashTable* classHashTable, BOOLEAN fastHCR, UDATA extensionsUsed);
 
 void
+fixMemberNames(J9JavaVM * vm, J9HashTable * classHashTable);
+
+void
 fixConstantPoolsForFastHCR(J9VMThread *currentThread, J9HashTable *classPairs, J9HashTable *methodPair);
 
 void
