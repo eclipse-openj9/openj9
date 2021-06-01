@@ -780,12 +780,11 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
          TR_ASSERT(target , "There should be only one target for TR_MutableCallSite");
          target->_calleeMethodKind = TR::MethodSymbol::ComputedVirtual;
 
-         // The following dereferences pointers to heap references, which is technically not valid,
-         // but it's only a debug trace, and it won't crash (only return garbage).
-         //
-         heuristicTrace(inliner->tracer(),"  addTarget: MutableCallSite.epoch is %p.obj%d (%p.%p)",
-             vgs->_mutableCallSiteObject, vgs->_mutableCallSiteEpoch,
-            *vgs->_mutableCallSiteObject, knot->getPointer(vgs->_mutableCallSiteEpoch));
+         heuristicTrace(
+            inliner->tracer(),
+            "  addTarget: MutableCallSite %p epoch is obj%d",
+            vgs->_mutableCallSiteObject,
+            vgs->_mutableCallSiteEpoch);
 
          return true;
          }
