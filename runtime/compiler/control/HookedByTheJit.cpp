@@ -1274,11 +1274,7 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
    // Runtime Instrumentation
    processHWPBuffer(vmThread, vm);
 
-   if (TR::Options::getCmdLineOptions()->getOption(TR_OrderCompiles))
-      {
-      compInfo->triggerOrderedCompiles(vm, jitConfig->samplingTickCount);
-      }
-   else if ((jitConfig->runtimeFlags & J9JIT_DEFER_JIT) == 0)  // Reject any samples if we decided to postpone jitting
+   if ((jitConfig->runtimeFlags & J9JIT_DEFER_JIT) == 0)  // Reject any samples if we decided to postpone jitting
       {
       uint8_t * startPC = 0;
       int32_t codeSize = 0;

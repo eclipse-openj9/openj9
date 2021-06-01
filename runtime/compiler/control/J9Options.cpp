@@ -2282,18 +2282,6 @@ J9::Options::fePostProcessJIT(void * base)
    privateConfig->vLogFileName = jitConfig->vLogFileName;
    self()->openLogFiles(jitConfig);
 
-   if (self()->getOption(TR_OrderCompiles))
-      {
-      // Ordered compiles only make sense if there were sampling points
-      // recorded in the limit file.
-      //
-      if (!TR::Options::getDebug() || !TR::Options::getDebug()->getCompilationFilters()->samplingPoints)
-         {
-         j9tty_printf(PORTLIB, "<JIT: orderCompiles must have a limitfile with sampling points>\n");
-         self()->setOption(TR_OrderCompiles, false);
-         }
-      }
-
    // Copy verbose flags from jitConfig into TR::Options static fields
    //
    TR::Options::setVerboseOptions(privateConfig->verboseFlags);
