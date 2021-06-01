@@ -2089,6 +2089,7 @@ fixHeapRefs(J9JavaVM * vm, J9HashTable * classHashTable)
 	vm->memoryManagerFunctions->j9mm_iterate_heaps(vm, PORTLIB, 0, fixHeapRefsHeapIteratorCallback, classHashTable);
 }
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 void
 fixDirectHandles(J9VMThread * currentThread, J9HashTable * classHashTable, J9HashTable * methodHashTable)
 {
@@ -2139,6 +2140,7 @@ fixDirectHandles(J9VMThread * currentThread, J9HashTable * classHashTable, J9Has
 		}
 	}
 }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 void
 copyPreservedValues(J9VMThread * currentThread, J9HashTable * classPairs, UDATA extensionsUsed)
