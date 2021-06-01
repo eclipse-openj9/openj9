@@ -62,6 +62,28 @@ extern "C" {
 #define MN_TRUSTED_MODE			-1
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+static bool
+isPolymorphicMHMethod(J9JavaVM *vm, J9Class *declaringClass, J9UTF8 *methodName)
+{
+	if (declaringClass == J9VMJAVALANGINVOKEMETHODHANDLE(vm)) {
+		U_8 *nameData = J9UTF8_DATA(methodName);
+		U_16 nameLength = J9UTF8_LENGTH(methodName);
+
+		if (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "invoke")
+		|| J9UTF8_LITERAL_EQUALS(nameData, nameLength, "invokeBasic")
+		|| J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToVirtual")
+		|| J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToStatic")
+		|| J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToSpecial")
+		|| J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToInterface")
+		|| J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToNative")
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 /* Private MemberName object init helper
  *
  * Set the MemberName fields based on the refObject given:
@@ -113,6 +135,18 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		target = (jlong)methodID->method;
 
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
+
+		J9Class *declaringClass = J9_CLASS_FROM_METHOD(methodID->method);
+		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
+		if (isPolymorphicMHMethod(vm, declaringClass, methodName)
+#if JAVA_SPEC_VERSION >= 9
+		|| ((declaringClass == J9VMJAVALANGINVOKEVARHANDLE(vm))
+			&& VM_VMHelpers::isPolymorphicVarHandleMethod(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName)))
+#endif
+		) {
+			/* Do not initialize polymorphic MH/VH methods as the Java code handles the "MemberName.clazz == null" case for them. */
+			return;
+		}
 
 		flags = romMethod->modifiers & CFR_METHOD_ACCESS_MASK;
 		if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccMethodCallerSensitive)) {
@@ -460,20 +494,10 @@ lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9UTF8 *name, J9
 	lookupOptions |= J9_LOOK_DIRECT_NAS;
 
 	/* If looking for a MethodHandle polymorphic INL method, allow any caller signature. */
-	if (resolvedClass == J9VMJAVALANGINVOKEMETHODHANDLE(currentThread->javaVM)) {
-		U_8 *nameData = J9UTF8_DATA(name);
-		U_16 nameLength = J9UTF8_LENGTH(name);
-
-		if ((J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToVirtual"))
-		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToStatic"))
-		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToSpecial"))
-		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "linkToInterface"))
-		|| (J9UTF8_LITERAL_EQUALS(nameData, nameLength, "invokeBasic"))
-		) {
-			nas.signature = &nullSignature;
-			/* Set flag for partial signature lookup. Signature length is already initialized to 0. */
-			lookupOptions |= J9_LOOK_PARTIAL_SIGNATURE;
-		}
+	if (isPolymorphicMHMethod(currentThread->javaVM, resolvedClass, name)) {
+		nas.signature = &nullSignature;
+		/* Set flag for partial signature lookup. Signature length is already initialized to 0. */
+		lookupOptions |= J9_LOOK_PARTIAL_SIGNATURE;
 	}
 
 	result = (J9Method*)currentThread->javaVM->internalVMFunctions->javaLookupMethod(currentThread, resolvedClass, (J9ROMNameAndSignature*)&nas, callerClass, lookupOptions);

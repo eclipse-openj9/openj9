@@ -125,7 +125,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="com/ibm/oti/vm/VM"/>
 	<classref name="java/lang/System"/>
 	<classref name="java/lang/Module" flags="opt_module" versions="9-"/>
-	<classref name="java/lang/invoke/VarHandle" versions="9-" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/VarHandleInvokeHandle" versions="9-" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/FieldVarHandle" versions="9-" flags="opt_methodHandle"/>
 
@@ -135,6 +134,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/invoke/WrongMethodTypeException" flags="opt_methodHandleCommon"/>
 	<classref name="java/lang/invoke/MethodTypeHelper" flags="opt_methodHandleCommon"/>
 	<classref name="java/lang/invoke/MethodHandleResolver" flags="opt_methodHandleCommon"/>
+	<classref name="java/lang/invoke/VarHandle" versions="9-" flags="opt_methodHandleCommon"/>
 
 	<!-- Class references needed to support OpenJDK MethodHandles. -->
 	<classref name="java/lang/invoke/MemberName" flags="opt_openjdkMethodhandle"/>
