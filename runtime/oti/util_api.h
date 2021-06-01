@@ -2176,7 +2176,7 @@ fixJNIRefs (J9VMThread * currentThread, J9HashTable* classHashTable, BOOLEAN fas
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 void
-fixMemberNames(J9JavaVM * vm, J9HashTable * classHashTable);
+fixMemberNames(J9VMThread * currentThread, J9HashTable * classHashTable);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 void

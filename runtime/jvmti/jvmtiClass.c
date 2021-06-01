@@ -1197,7 +1197,7 @@ redefineClassesCommon(jvmtiEnv* env,
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 			/* Fix MemberNames (vmtarget) */
-			fixMemberNames(vm, classPairs);
+			fixMemberNames(currentThread, classPairs);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			/* Fix resolved constant pool references to point to new methods. */
@@ -1261,7 +1261,7 @@ redefineClassesCommon(jvmtiEnv* env,
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 			/* Fix MemberNames (vmtarget) */
-			fixMemberNames(vm, classPairs);
+			fixMemberNames(currentThread, classPairs);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			/* Restore breakpoints in the implicitly replaced classes */
