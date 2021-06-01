@@ -966,6 +966,12 @@ initializeSystemProperties(J9JavaVM * vm)
 			goto fail;
 		}
 	}
+
+	/* TODO: https://github.com/eclipse-openj9/openj9/issues/12811 */
+	rc = addSystemProperty(vm, "openjdk.methodhandles", "true", J9SYSPROP_FLAG_WRITEABLE);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	/* If we get here all is good */
