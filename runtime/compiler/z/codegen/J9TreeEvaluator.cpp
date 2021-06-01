@@ -93,6 +93,365 @@ extern void killRegisterIfNotLocked(TR::CodeGenerator * cg, TR::RealRegister::Re
 extern TR::Register * iDivRemGenericEvaluator(TR::Node * node, TR::CodeGenerator * cg, bool isDivision, TR::MemoryReference * divchkDivisorMR);
 extern TR::Instruction * generateS390CompareOps(TR::Node * node, TR::CodeGenerator * cg, TR::InstOpCode::S390BranchCondition fBranchOpCond, TR::InstOpCode::S390BranchCondition rBranchOpCond, TR::LabelSymbol * targetLabel);
 
+TR::Register*
+J9::Z::TreeEvaluator::zdloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdloadiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdsleLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdslsLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdstsLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdsleLoadiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdslsLoadiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdstsLoadiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdsleStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdslsStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdstsStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdsleStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdslsStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdstsStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zd2zdsleEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::zdsle2zdEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zd2zdstsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::zd2zdslsEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdsle2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdsts2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::zdsls2pdEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::zdsts2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::zdsls2zdEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2zdslsSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pd2zdslsEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2zdstsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pd2zdslsEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2zdstsSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pd2zdslsEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udslLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udstLoadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udLoadiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udslLoadiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udstLoadiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udslStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udstStoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udslStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udstStoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2udstEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pd2udslEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udsl2udEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udst2udEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::udst2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::udsl2pdEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pdloadiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdloadEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pdstoreiEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdstoreEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pddivEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pddivremEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pdremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pddivremEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pdabsEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pdshrSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pdshlSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pdshlOverflowEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdshlEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2iOverflowEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pd2iEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2iuEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pd2iEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::iu2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2lOverflowEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pd2lEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2luEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pd2lEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::lu2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2fEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pd2dEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::f2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::d2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pdcleanEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
+J9::Z::TreeEvaluator::pdclearSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::pdclearEvaluator(node, cg);
+   }
 
 /* Moved from Codegen to FE */
 ///////////////////////////////////////////////////////////////////////////////////
