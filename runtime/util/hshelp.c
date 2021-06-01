@@ -1719,45 +1719,34 @@ fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor 
 
 	if (NULL != classHashTable) {
 		if (clazz == J9VMJAVALANGINVOKEMEMBERNAME(vm) && NULL != J9OBJECT_U64_LOAD(vm->currentThread, object, vm->vmindexOffset)) {
-			j9object_t vmindex = J9OBJECT_U64_LOAD(vm->currentThread, object, vm->vmindexOffset);
-			J9Class *indexClazz = J9OBJECT_CLAZZ_VM(vm, vmindex);
+			jlong vmindex = J9OBJECT_U64_LOAD(vm->currentThread, object, vm->vmindexOffset);
 
 			J9JVMTIClassPair exemplar;
 			J9JVMTIClassPair *result = NULL;
 
-			exemplar.originalRAMClass = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(vm->currentThread, object);
+			exemplar.replacementClass.ramClass = J9VM_J9CLASS_FROM_HEAPCLASS(J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(vm->currentThread, object));
 			result = hashTableFind(classHashTable, &exemplar);
 			if (NULL != result) {
-				J9Class *replacementRAMClass = result->replacementClass.ramClass;
-				if (NULL != replacementRAMClass) {
-					if (indexClazz == J9VMJAVALANGREFLECTFIELD(vm)) {
-						/* Update vmtarget to vmindex->offset */
-						J9JNIFieldID *fieldID = (J9JNIFieldID *)vmindex;
-						J9ROMFieldShape *romField = fieldID->field;
-						UDATA offset = fieldID->offset;
+				jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(vm->currentThread, object);
+				if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
+					/* Update vmtarget to vmindex->offset */
+					J9JNIFieldID *fieldID = (J9JNIFieldID *)vmindex;
+					J9ROMFieldShape *romField = fieldID->field;
+					UDATA offset = fieldID->offset;
 
-						if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
-							offset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
-							if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
-								offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
-							}
-						}
-						J9OBJECT_U64_STORE(vm->currentThread, object, vm->vmtargetOffset, (U_64)offset));
-					
-						/* Update MemberName.clazz to replacement class */
-						if (exemplar.originalRAMClass != replacementRAMClass) { /* FSD */
-							J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(vm->currentThread, object, (j9object_t)replacementRAMClass);
-						}
-					} else if (indexClazz == J9VMJAVALANGREFLECTMETHOD(vm) || indexClazz == J9VMJAVALANGREFLECTCONSTRUCTOR(vm)) {
-						/* Update vmtarget to vmindex->method */
-						J9JNIMethodID *methodID = (J9JNIMethodID *)vmindex;
-						J9OBJECT_U64_STORE(vm->currentThread, object, vm->vmtargetOffset, vmindex->method));
-
-						/* Update MemberName.clazz to replacement class */
-						if (exemplar.originalRAMClass != replacementRAMClass) { /* FSD */
-							J9VMJAVALANGINVOKEMEMBERNAME_SET_CLAZZ(vm->currentThread, object, (j9object_t)replacementRAMClass);
+					if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
+						offset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
+						if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+							offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
 						}
 					}
+					J9OBJECT_U64_STORE(vm->currentThread, object, vm->vmtargetOffset, (U_64)offset));
+				
+				} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
+					/* Update vmtarget to vmindex->method */
+					J9JNIMethodID *methodID = (J9JNIMethodID *)vmindex;
+					J9OBJECT_U64_STORE(vm->currentThread, object, vm->vmtargetOffset, vmindex->method));
+
 				}
 			}
 		}
