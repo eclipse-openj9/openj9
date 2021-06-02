@@ -354,3 +354,54 @@ GetStringUTFRegion(JNIEnv *env, jstring str, jsize start, jsize len, char *buf)
 	j9_cel4ro64_call_function(functionDescriptor, argTypes, argValues, NUM_ARGS, CEL4RO64_type_void, NULL);
 	return;
 }
+
+jint JNICALL
+GetStringPlatform(JNIEnv* env, jstring instr, char* outstr, jint outlen, const char* encoding)
+{
+	const jint NUM_ARGS = 5;
+	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_jstring, CEL4RO64_type_uint32_ptr, CEL4RO64_type_jint, CEL4RO64_type_uint32_ptr };
+	uint64_t argValues[NUM_ARGS] = { JNIENV64_FROM_JNIENV31(env), instr, (uint64_t)outstr, outlen, (uint64_t)encoding };
+	jint returnValue = NULL;
+	uint32_t cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
+			LIBJVM_NAME, "GetStringPlatform",
+			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
+	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+		fprintf(stderr, "GetStringPlatform failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+		return JNI_ERR;
+	}
+	return returnValue;
+}
+
+jint JNICALL
+GetStringPlatformLength(JNIEnv* env, jstring instr, jint* outlen, const char* encoding)
+{
+	const jint NUM_ARGS = 4;
+	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_jstring, CEL4RO64_type_uint32_ptr, CEL4RO64_type_uint32_ptr };
+	uint64_t argValues[NUM_ARGS] = { JNIENV64_FROM_JNIENV31(env), instr, (uint64_t)outlen, (uint64_t)encoding };
+	jint returnValue = NULL;
+	uint32_t cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
+			LIBJVM_NAME, "GetStringPlatformLength",
+			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
+	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+		fprintf(stderr, "GetStringPlatformLength failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+		return JNI_ERR;
+	}
+	return returnValue;
+}
+
+jint JNICALL
+NewStringPlatform(JNIEnv* env, const char* instr, jstring* outstr, const char* encoding)
+{
+	const jint NUM_ARGS = 4;
+	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_uint32_ptr, CEL4RO64_type_uint32_ptr, CEL4RO64_type_uint32_ptr };
+	uint64_t argValues[NUM_ARGS] = { JNIENV64_FROM_JNIENV31(env), (uint64_t)instr, (uint64_t)outstr, (uint64_t)encoding };
+	jint returnValue = NULL;
+	uint32_t cel4ro64ReturnCode = j9_cel4ro64_load_query_call_function(
+			LIBJVM_NAME, "NewStringPlatform",
+			argTypes, argValues, NUM_ARGS, CEL4RO64_type_jint, &returnValue);
+	if (J9_CEL4RO64_RETCODE_OK != cel4ro64ReturnCode) {
+		fprintf(stderr, "NewStringPlatform failed. CEL4RO64 rc: %d - %s\n", cel4ro64ReturnCode, j9_cel4ro64_get_error_message(cel4ro64ReturnCode));
+		return JNI_ERR;
+	}
+	return returnValue;
+}
