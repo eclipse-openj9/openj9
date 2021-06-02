@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,10 +33,7 @@
  */
 
 timestamps {
-    LABEL = params.LABEL
-    if (!LABEL) {
-        LABEL = 'worker'
-    }
+    def LABEL = params.LABEL ?: 'worker'
     node(LABEL) {
         checkout scm
         def variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
@@ -156,8 +153,13 @@ def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_
             echo "There are ${data.results.size()} artifacts over ${artifactory_days_to_keep_artifacts} days old.\nCleaning them up"
 
             def artifacts_to_be_deleted = data.results.uri
+            def artifactFolders = []
             artifacts_to_be_deleted.each() { uri ->
-                httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: uri.minus('/api/storage')
+                artifactFolders.add(uri.substring(0,uri.lastIndexOf('/')).minus('/api/storage'))
+            }
+            artifactFoldersUnique = artifactFolders.unique()
+            artifactFoldersUnique.each() { uri ->
+                httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: uri
             }
             echo 'Deleted all the old artifacts'
             currentBuild.description += "<br>Deleted ${artifacts_to_be_deleted.size()} artifacts"
