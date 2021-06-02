@@ -400,7 +400,6 @@ public class J9ClassHelper
 	/**
 	 * Returns "raw" modifiers
 	 * 
-	 * Derived from logic in J9VMJavaLangClassNativesCDLC.getModifiersImpl
 	 * @param j9class
 	 * @return
 	 * @throws CorruptDataException
