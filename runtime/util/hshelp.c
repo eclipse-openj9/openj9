@@ -1734,7 +1734,7 @@ fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor 
 
 	if (NULL != classHashTable) {
 		if (clazz == J9VMJAVALANGINVOKEMEMBERNAME(vm) && 0 != J9OBJECT_U64_LOAD(currentThread, object, vm->vmindexOffset)) {
-			jlong vmindex = J9OBJECT_U64_LOAD(currentThread, object, vm->vmindexOffset);
+			U_64 vmindex = J9OBJECT_U64_LOAD(currentThread, object, vm->vmindexOffset);
 
 			J9JVMTIClassPair exemplar;
 			J9JVMTIClassPair *result = NULL;
