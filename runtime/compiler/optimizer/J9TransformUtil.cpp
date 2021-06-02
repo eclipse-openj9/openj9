@@ -153,16 +153,20 @@ static bool isFinalFieldPointingAtRepresentableNativeStruct(TR::SymbolReference 
       }
    }
 
-static bool isJavaField(TR::SymbolReference *symRef, TR::Compilation *comp)
+static bool isJavaField(TR::Symbol *symbol, int32_t cpIndex, TR::Compilation *comp)
    {
-   TR::Symbol *symbol = symRef->getSymbol();
    if (symbol->isShadow() &&
-       (symRef->getCPIndex() >= 0 ||
+       (cpIndex >= 0 ||
         // recognized fields are java fields
         symbol->getRecognizedField() != TR::Symbol::UnknownField))
       return true;
 
    return false;
+   }
+
+static bool isJavaField(TR::SymbolReference *symRef, TR::Compilation *comp)
+   {
+   return isJavaField(symRef->getSymbol(), symRef->getCPIndex(), comp);
    }
 
 static bool isFieldOfJavaObject(TR::SymbolReference *symRef, TR::Compilation *comp)
@@ -181,6 +185,88 @@ static bool isFieldOfJavaObject(TR::SymbolReference *symRef, TR::Compilation *co
       }
 
    return false;
+   }
+
+bool J9::TransformUtil::avoidFoldingInstanceField(
+   uintptr_t object,
+   TR::Symbol *field,
+   int cpIndex,
+   TR_ResolvedMethod *owningMethod,
+   TR::Compilation *comp)
+   {
+   TR_J9VMBase *fej9 = comp->fej9();
+
+   TR_ASSERT_FATAL(fej9->haveAccess(), "avoidFoldingInstanceField requires VM access\n");
+
+   TR_ASSERT_FATAL(
+      isJavaField(field, cpIndex, comp),
+      "avoidFoldingInstanceField: symbol %p is not a Java field shadow\n",
+      field);
+
+   TR_ASSERT_FATAL(
+      fej9->canDereferenceAtCompileTimeWithFieldSymbol(field, cpIndex, owningMethod),
+      "avoidFoldingInstanceField: symbol %p is never foldable (expected possibly foldable)\n",
+      field);
+
+   switch (field->getRecognizedField())
+      {
+      // In the LambdaForm-based JSR292 implementation, CallSite declares a
+      // target field to be inherited by all subclasses, including
+      // MutableCallSite, and that field is declared final even though it's
+      // actually mutable in instances of MCS.
+      //
+      // Because it is a final field declared in a trusted JCL package, loads
+      // of this field would normally be folded to a known object. However,
+      // folding the target in the case of a MCS can result in the spurious
+      // removal of the MCS target guard, so refuse to fold in that case.
+      //
+      // VolatileCallSite also has a mutable target, but there should be no
+      // need to check for it here because its implementation of getTarget()
+      // reads it using Unsafe.getReferenceVolatile().
+      //
+      // This checks only for CallSite.target because field recognition is
+      // based on the defining class even when the class named in the bytecode
+      // is a subclass.
+      //
+      // In the non-LambdaForm implementation, MCS declares its own target
+      // field, which is not final (and is in fact volatile), so we would not
+      // attempt to fold it. Furthermore, MutableCallSite.target will not be
+      // recognized as CallSite.target. Therefore, loads of CallSite.target
+      // from MCS instances can be rejected unconditionally here without
+      // affecting the non-LambdaForm implementation.
+      //
+      case TR::Symbol::Java_lang_invoke_CallSite_target:
+         {
+         TR_OpaqueClassBlock *objectClass =
+            fej9->getObjectClass((uintptr_t)object);
+
+         const char * const mcsName = "java/lang/invoke/MutableCallSite";
+         TR_OpaqueClassBlock *mcsClass =
+            fej9->getSystemClassFromClassName(mcsName, strlen(mcsName));
+
+         // If MCS isn't loaded, then object isn't an instance of it.
+         return mcsClass != NULL
+            && fej9->isInstanceOf(objectClass, mcsClass, true) != TR_no;
+         }
+
+      default:
+         break;
+      }
+
+   return false;
+   }
+
+bool J9::TransformUtil::avoidFoldingInstanceField(
+   uintptr_t object,
+   TR::SymbolReference *field,
+   TR::Compilation *comp)
+   {
+   return TR::TransformUtil::avoidFoldingInstanceField(
+      object,
+      field->getSymbol(),
+      field->getCPIndex(),
+      field->getOwningMethod(comp),
+      comp);
    }
 
 static bool isFinalFieldPointingAtUnrepresentableNativeStruct(TR::SymbolReference *symRef, TR::Compilation *comp)
@@ -362,6 +448,19 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
             // The offset of a java field is in its symRef
             if (isJavaField(symRef, comp))
                {
+               if (TR::TransformUtil::avoidFoldingInstanceField(curStruct, symRef, comp))
+                  {
+                  if (comp->getOption(TR_TraceOptDetails))
+                     {
+                     traceMsg(
+                        comp,
+                        "avoid folding load of field #%d from object at %p\n",
+                        symRef->getReferenceNumber(),
+                        (void*)curStruct);
+                     }
+                  return NULL;
+                  }
+
                fieldAddress = curStruct + symRef->getOffset();
                }
             else if (comp->getSymRefTab()->isImmutableArrayShadow(symRef))

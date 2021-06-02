@@ -52,7 +52,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<if>
 		<equals arg1="${OS}" arg2="os.zos" />
 		<then>
-			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=%uid.${dump.name},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=0,disableAsyncCompilation -Xmx512M" />
+			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=%uid.${dump.name},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M" />
 			<if>
 				<equals arg1="${BITS}" arg2="bits.64" />
 				<then>
@@ -64,7 +64,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</if>
 		</then>
 		<else>
-			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit:count=0 -Xaot:forceaot,count=0,disableAsyncCompilation -Xmx512M" />
+			<property name="DUMP_OPTION" value="-Xdump:system:defaults:label=${system.dump},request=exclusive+compact+prepwalk -Xscmx16m -Xshareclasses:name=ddrextjunitSCC,addtestjithints -Xjit:count=0 -Xaot:forceaot,count=5,disableAsyncCompilation -Xmx512M" />
 		</else>
 	</if>
 
@@ -186,15 +186,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>Using JVM : ${sdk.executable}${sdk.executable.ext}</echo>
 		<echo>classname = "j9vm.test.corehelper.StackMapCoreGenerator"</echo>
 		<echo>Java VM Args:</echo>
-		<echo>  jvmarg = -Xshareclasses:name=ddrextjunitSCC,reset -Xitsn1000 -Xaot:disableAsyncCompilation -Xjit:disableAsyncCompilation -Xmx512M</echo>
+		<echo>  jvmarg = -Xshareclasses:name=ddrextjunitSCC,reset -Xitsn1000</echo>
 		<echo>
 		</echo>
 		<java fork="true" jvm="${JAVA_COMMAND}" classname="j9vm.test.corehelper.StackMapCoreGenerator" timeout="1200000" failonerror="true">
 			<jvmarg value="-Xshareclasses:name=ddrextjunitSCC,reset" />
 			<jvmarg value="-Xitsn1000" />
-			<jvmarg value="-Xaot:disableAsyncCompilation" />
-			<jvmarg value="-Xjit:disableAsyncCompilation" />
-			<jvmarg value="-Xmx512M" />
 			<classpath refid="tck.class.path" />
 		</java>
 	</target>

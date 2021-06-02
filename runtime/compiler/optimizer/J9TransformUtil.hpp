@@ -50,6 +50,57 @@ public:
    static int32_t getLoopNestingDepth(TR::Compilation *comp, TR::Block *block);
    static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp);
 
+   /**
+    * \brief
+    *    Determine whether to avoid folding a final instance field of an
+    *    instance of a trusted JCL type.
+    *
+    *    This determination can depend on the particular instance, not only the
+    *    field. For example, a field might be foldable only once its value is
+    *    non-null, or it might be foldable in some subclasses but not others.
+    *
+    *    Because it may be dependent on the object's state, this determination
+    *    should be made \em before reading the field in question. Otherwise
+    *    there is a risk of incorrect folding:
+    *    1. The compiler reads a value from field f that should not be folded.
+    *    2. A concurrent modification changes the value of f and puts the
+    *       object into a state that allows f to be folded.
+    *    3. avoidFoldingInstanceField() returns false.
+    *    4. The compiler incorrectly folds the value from step 1 instead of the
+    *       new value from step 2.
+    *
+    *    This method requires the caller to hold VM access.
+    *
+    * \parm object
+    *    The address of the Java object to load from
+    *
+    * \parm field
+    *    The shadow symbol of the final field to load from \p object
+    *
+    * \parm cpIndex
+    *    The field reference CP index (-1 for fabricated references)
+    *
+    * \parm owningMethod
+    *    The owning method of the field reference
+    *
+    * \parm comp
+    *    The compilation object
+    *
+    * \return
+    *    True if folding must be avoided, false if folding is allowed.
+    */
+   static bool avoidFoldingInstanceField(
+      uintptr_t object,
+      TR::Symbol *field,
+      int cpIndex,
+      TR_ResolvedMethod *owningMethod,
+      TR::Compilation *comp);
+
+   static bool avoidFoldingInstanceField(
+      uintptr_t object,
+      TR::SymbolReference *symRef,
+      TR::Compilation *comp);
+
    static TR::Node *generateArrayElementShiftAmountTrees(
          TR::Compilation *comp,
          TR::Node *object);

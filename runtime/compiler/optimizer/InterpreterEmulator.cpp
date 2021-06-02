@@ -290,12 +290,12 @@ void
 InterpreterEmulator::maintainStackForGetField()
    {
    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
-   bool isVolatile, isPrivate, isUnresolvedInCP, isFinal;
    TR::DataType type = TR::NoType;
    uint32_t fieldOffset;
    int32_t cpIndex = next2Bytes();
    Operand *newOperand = _unknownOperand;
-   bool resolved = _calltarget->_calleeMethod->fieldAttributes(comp(), cpIndex, &fieldOffset, &type, &isVolatile, &isFinal, &isPrivate, false, &isUnresolvedInCP, false);
+   TR::Symbol *fieldSymbol = TR::Symbol::createPossiblyRecognizedShadowFromCP(
+      comp(), trStackMemory(), _calltarget->_calleeMethod, cpIndex, &type, &fieldOffset, false);
 
    TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
    if (knot &&
@@ -303,66 +303,85 @@ InterpreterEmulator::maintainStackForGetField()
        !knot->isNull(top()->getKnownObjectIndex())
        && type == TR::Address)
       {
-      TR::Symbol::RecognizedField recognizedField = TR::Symbol::searchRecognizedField(comp(), _calltarget->_calleeMethod, cpIndex, false);
-      TR::Symbol *fieldSymbol = NULL;
-      if (recognizedField != TR::Symbol::UnknownField)
-         fieldSymbol = TR::Symbol::createRecognizedShadow(trStackMemory(),type, recognizedField);
-      else
-         fieldSymbol = TR::Symbol::createShadow(trStackMemory(),type);
-      if (isFinal)
-         fieldSymbol->setFinal();
-
-      if ((resolved || !isUnresolvedInCP) && comp()->fej9()->canDereferenceAtCompileTimeWithFieldSymbol(fieldSymbol, cpIndex, _calltarget->_calleeMethod))
+      if (fieldSymbol == NULL)
          {
+         debugTrace(tracer(), "field is unresolved");
+         }
+      else if (!comp()->fej9()->canDereferenceAtCompileTimeWithFieldSymbol(fieldSymbol, cpIndex, _calltarget->_calleeMethod))
+         {
+         debugTrace(tracer(), "field is not foldable");
+         }
+      else
+         {
+         TR::KnownObjectTable::Index baseObjectIndex = top()->getKnownObjectIndex();
+         TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
+         uintptr_t baseObjectAddress = 0;
+         uintptr_t fieldAddress = 0;
+         bool avoidFolding = true;
+
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
             TR_ResolvedJ9JITServerMethod *serverMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(_calltarget->_calleeMethod);
             TR_ResolvedMethod *clientMethod = serverMethod->getRemoteMirror();
-            TR::KnownObjectTable::Index baseObjectIndex = top()->getKnownObjectIndex();
 
             auto stream = TR::CompilationInfo::getStream();
             stream->write(JITServer::MessageType::KnownObjectTable_dereferenceKnownObjectField,
-                  baseObjectIndex, clientMethod, cpIndex, fieldOffset);
+                  baseObjectIndex, clientMethod, cpIndex);
 
-            auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*, uintptr_t, uintptr_t>();
-            TR::KnownObjectTable::Index resultIndex = std::get<0>(recv);
+            auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*, uintptr_t, uintptr_t, bool>();
+            resultIndex = std::get<0>(recv);
             uintptr_t *objectPointerReference = std::get<1>(recv);
-            uintptr_t fieldAddress = std::get<2>(recv);
-            uintptr_t baseObjectAddress = std::get<3>(recv);
+            fieldAddress = std::get<2>(recv);
+            baseObjectAddress = std::get<3>(recv);
+            avoidFolding = std::get<4>(recv);
 
             if (resultIndex != TR::KnownObjectTable::UNKNOWN)
-               {
                knot->updateKnownObjectTableAtServer(resultIndex, objectPointerReference);
-
-               newOperand = new (trStackMemory()) KnownObjOperand(resultIndex);
-               int32_t len = 0;
-               debugTrace(tracer(), "dereference obj%d (%p)from field %s(offset = %d) of base obj%d(%p)\n",
-                     newOperand->getKnownObjectIndex(), (void *)fieldAddress, _calltarget->_calleeMethod->fieldName(cpIndex, len, this->trMemory()),
-                     fieldOffset, baseObjectIndex, baseObjectAddress);
-               }
             }
          else
 #endif /* defined(J9VM_OPT_JITSERVER) */
             {
             TR::VMAccessCriticalSection dereferenceKnownObjectField(comp()->fej9());
-            TR::KnownObjectTable::Index baseObjectIndex = top()->getKnownObjectIndex();
-            uintptr_t baseObjectAddress = knot->getPointer(baseObjectIndex);
+            baseObjectAddress = knot->getPointer(baseObjectIndex);
             TR_OpaqueClassBlock *baseObjectClass = comp()->fej9()->getObjectClass(baseObjectAddress);
             TR_OpaqueClassBlock *fieldDeclaringClass = _calltarget->_calleeMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
+
+            avoidFolding = TR::TransformUtil::avoidFoldingInstanceField(
+               baseObjectAddress, fieldSymbol, cpIndex, _calltarget->_calleeMethod, comp());
+
             if (fieldDeclaringClass && comp()->fej9()->isInstanceOf(baseObjectClass, fieldDeclaringClass, true) == TR_yes)
                {
-               uintptr_t fieldAddress = comp()->fej9()->getReferenceFieldAtAddress(baseObjectAddress + fieldOffset);
-               newOperand = new (trStackMemory()) KnownObjOperand(knot->getOrCreateIndex(fieldAddress));
-               int32_t len = 0;
-               debugTrace(tracer(), "dereference obj%d (%p)from field %s(offset = %d) of base obj%d(%p)\n",
-                     newOperand->getKnownObjectIndex(), (void *)fieldAddress, _calltarget->_calleeMethod->fieldName(cpIndex, len, this->trMemory()),
-                     fieldOffset, baseObjectIndex, baseObjectAddress);
+               fieldAddress = comp()->fej9()->getReferenceFieldAtAddress(baseObjectAddress + fieldOffset);
+               resultIndex = knot->getOrCreateIndex(fieldAddress);
                }
             }
+
+         bool fail = resultIndex == TR::KnownObjectTable::UNKNOWN;
+         if (fail || avoidFolding)
+            {
+            int32_t len = 0;
+            debugTrace(
+               tracer(),
+               "%s field in obj%d: %s",
+               fail ? "failed to determine value of" : "avoid folding sometimes-foldable",
+               baseObjectIndex,
+               _calltarget->_calleeMethod->fieldName(cpIndex, len, this->trMemory()));
+            }
+         else
+            {
+            // It's OK to print fieldAddress and baseObjectAddress here even
+            // without VM access. There's no meaningful difference between:
+            // - printing the object's address, then allowing it to move; and
+            // - observing the objects's address, then allowing it to move,
+            //   then finally printing the observed address.
+            newOperand = new (trStackMemory()) KnownObjOperand(resultIndex);
+            int32_t len = 0;
+            debugTrace(tracer(), "dereference obj%d (%p)from field %s(offset = %d) of base obj%d(%p)\n",
+                  newOperand->getKnownObjectIndex(), (void *)fieldAddress, _calltarget->_calleeMethod->fieldName(cpIndex, len, this->trMemory()),
+                  fieldOffset, baseObjectIndex, baseObjectAddress);
+            }
          }
-      else
-         debugTrace(tracer(), "unresolved field or can't derefence in thunk archetype resolved %d isUnresolvedInCP %d\n", resolved, isUnresolvedInCP);
       }
    pop();
    push(newOperand);
