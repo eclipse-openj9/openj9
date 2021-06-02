@@ -61,7 +61,7 @@ artifactory:
     osu: 'ci-eclipse-openj9'
     unb: 'ci-eclipse-openj9-unb'
   repo:
-    default: 'ci-eclipse-openj9'
+    default: 'ci-openj9'
   uploadDir:
     default: "${repo}/${JOB_NAME}/${BUILD_ID}"
   daysToKeepArtifacts:
