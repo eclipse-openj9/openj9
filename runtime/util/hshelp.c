@@ -1713,14 +1713,16 @@ typedef struct J9ThreadHashPair {
 void
 fixMemberNames(J9VMThread * currentThread, J9HashTable * classHashTable)
 {
-	PORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+	if (NULL != classHashTable) {
+		PORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
 
-	J9ThreadHashPair data;
-	data.currentThread = currentThread;
-	data.userData = classHashTable;
+		J9ThreadHashPair data;
+		data.currentThread = currentThread;
+		data.userData = classHashTable;
 
-	/* iterate over all objects fixing up vmtarget refs if object is a MemberName */
-	currentThread->javaVM->memoryManagerFunctions->j9mm_iterate_all_objects(currentThread->javaVM, PORTLIB, 0, fixMemberNamesObjectIteratorCallback, &data);
+		/* iterate over all objects fixing up vmtarget refs if object is a MemberName */
+		currentThread->javaVM->memoryManagerFunctions->j9mm_iterate_all_objects(currentThread->javaVM, PORTLIB, 0, fixMemberNamesObjectIteratorCallback, &data);
+	}
 }
 
 static jvmtiIterationControl
@@ -1732,10 +1734,9 @@ fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor 
 	j9object_t object = objectDesc->object;
 	J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
 
-	if (NULL != classHashTable) {
-		if (clazz == J9VMJAVALANGINVOKEMEMBERNAME(vm) && 0 != J9OBJECT_U64_LOAD(currentThread, object, vm->vmindexOffset)) {
-			U_64 vmindex = J9OBJECT_U64_LOAD(currentThread, object, vm->vmindexOffset);
-
+	if (clazz == J9VMJAVALANGINVOKEMEMBERNAME_OR_NULL(vm)) {
+		U_64 vmindex = J9OBJECT_U64_LOAD(currentThread, object, vm->vmindexOffset);
+		if (0 != vmindex) {
 			J9JVMTIClassPair exemplar;
 			J9JVMTIClassPair *result = NULL;
 
@@ -1746,7 +1747,7 @@ fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor 
 				jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, object);
 				if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
 					/* Update vmtarget to vmindex->offset */
-					J9JNIFieldID *fieldID = (J9JNIFieldID *)vmindex;
+					J9JNIFieldID *fieldID = (J9JNIFieldID *)(UDATA)vmindex;
 					J9ROMFieldShape *romField = fieldID->field;
 					UDATA offset = fieldID->offset;
 
@@ -1757,12 +1758,10 @@ fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor 
 						}
 					}
 					J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)offset);
-				
 				} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
 					/* Update vmtarget to vmindex->method */
-					J9JNIMethodID *methodID = (J9JNIMethodID *)vmindex;
-					J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)methodID->method);
-
+					J9JNIMethodID *methodID = (J9JNIMethodID *)(UDATA)vmindex;
+					J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)(UDATA)methodID->method);
 				}
 			}
 		}
