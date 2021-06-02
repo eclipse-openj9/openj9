@@ -336,6 +336,11 @@ jobjectRefType JNICALL GetObjectRefType(JNIEnv* env, jobject obj);
 jobject JNICALL GetModule(JNIEnv *env, jclass clazz);
 #endif /* JAVA_SPEC_VERSION >= 9 */
 
+/* The JNI convert functions that the shim library will implement. */
+jint JNICALL GetStringPlatform(JNIEnv* env, jstring instr, char* outstr, jint outlen, const char* encoding);
+jint JNICALL GetStringPlatformLength(JNIEnv* env, jstring instr, jint* outlen, const char* encoding);
+jint JNICALL NewStringPlatform(JNIEnv* env, const char* instr, jstring* outstr, const char* encoding);
+
 #ifdef __cplusplus
 }
 #endif
