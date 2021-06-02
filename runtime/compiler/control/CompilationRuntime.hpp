@@ -778,10 +778,6 @@ public:
    void acquireLogMonitor();
    void releaseLogMonitor();
 
-   // Handling of ordered compiles
-   //
-   void triggerOrderedCompiles(TR_FrontEnd *vm, intptr_t tickCount);
-
    int32_t getQueueWeight() const { return _queueWeight; }
    void increaseQueueWeightBy(uint8_t w) { _queueWeight += (int32_t)w; }
    int32_t decreaseQueueWeightBy(uint8_t w) { TR_ASSERT((int32_t)w <= _queueWeight, "assertion failure"); return _queueWeight -= (int32_t)w; }
