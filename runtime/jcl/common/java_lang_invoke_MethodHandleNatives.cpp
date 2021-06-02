@@ -44,11 +44,6 @@ extern "C" {
  * These constants are validated by the MethodHandleNatives$Constants.verifyConstants()
  * method when Java assertions are enabled
  */
-#define MN_IS_METHOD		0x00010000
-#define MN_IS_CONSTRUCTOR	0x00020000
-#define MN_IS_FIELD			0x00040000
-#define MN_IS_TYPE			0x00080000
-#define MN_CALLER_SENSITIVE	0x00100000
 
 #define MN_REFERENCE_KIND_SHIFT	24
 #define MN_REFERENCE_KIND_MASK	0xF		/* (flag >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK */

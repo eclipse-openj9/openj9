@@ -1761,7 +1761,7 @@ fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor 
 				} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
 					/* Update vmtarget to vmindex->method */
 					J9JNIMethodID *methodID = (J9JNIMethodID *)vmindex;
-					J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, methodID->method);
+					J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)methodID->method);
 
 				}
 			}
