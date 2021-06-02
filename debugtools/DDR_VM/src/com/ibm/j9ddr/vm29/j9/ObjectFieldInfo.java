@@ -36,6 +36,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
+import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
@@ -398,21 +399,37 @@ public class ObjectFieldInfo {
 						if (!valueTypeHelper.isJ9FieldIsFlattened(fieldClass, f)) {
 							instanceObjectCount += 1;
 							totalObjectCount += 1;
-						} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)) {
-							UDATA doubleSize = fieldClass.totalInstanceSize();
-							if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
-								doubleSize = doubleSize.sub(U32.SIZEOF);
-							}
-							size = Scalar.roundToSizeofU64(doubleSize).intValue();
-							totalFlatFieldDoubleBytes += size;
-						} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintReference(fieldClass)) {
-							size = Scalar.roundToSizeToFJ9object(fieldClass.totalInstanceSize()).intValue();
-							totalFlatFieldRefBytes += size;
-							setPotentialFlatObjectInstanceBackfill(size);
 						} else {
-							size = fieldClass.totalInstanceSize().intValue();
-							totalFlatFieldSingleBytes += size;
-							setPotentialFlatSingleInstanceBackfill(size);
+							boolean forceDoubleAlignment;
+							if (fj9object_t_SizeOf == U32.SIZEOF) {
+								UDATA instanceSize = fieldClass.totalInstanceSize();
+								UDATA doubleSize = new UDATA(U64.SIZEOF);
+								if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
+									instanceSize = instanceSize.sub(U32.SIZEOF);
+								}
+								forceDoubleAlignment = modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile)
+										&& instanceSize.eq(doubleSize);
+							} else {
+								forceDoubleAlignment = true;
+							}
+							if (forceDoubleAlignment
+								|| valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)
+							) {
+								UDATA doubleSize = fieldClass.totalInstanceSize();
+								if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
+									doubleSize = doubleSize.sub(U32.SIZEOF);
+								}
+								size = Scalar.roundToSizeofU64(doubleSize).intValue();
+								totalFlatFieldDoubleBytes += size;
+							} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintReference(fieldClass)) {
+								size = Scalar.roundToSizeToFJ9object(fieldClass.totalInstanceSize()).intValue();
+								totalFlatFieldRefBytes += size;
+								setPotentialFlatObjectInstanceBackfill(size);
+							} else {
+								size = fieldClass.totalInstanceSize().intValue();
+								totalFlatFieldSingleBytes += size;
+								setPotentialFlatSingleInstanceBackfill(size);
+							}
 						}
 					} else {
 						instanceObjectCount += 1;

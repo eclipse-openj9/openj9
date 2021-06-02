@@ -54,18 +54,33 @@ ObjectFieldInfo::countInstanceFields(void)
 					if (!J9_IS_FIELD_FLATTENED(fieldClass, field)) {
 						_instanceObjectCount += 1;
 						_totalObjectCount += 1;
-					} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
-						if (J9CLASS_HAS_4BYTE_PREPADDING(fieldClass)) {
-							size -= sizeof(U_32);
-						}
-						_totalFlatFieldDoubleBytes += (U_32) ROUND_UP_TO_POWEROF2(size, sizeof(U_64));
-					} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
-						size = (U_32) ROUND_UP_TO_POWEROF2(size, _referenceSize);
-						_totalFlatFieldRefBytes += size;
-						setPotentialFlatObjectInstanceBackfill(size);
 					} else {
-						_totalFlatFieldSingleBytes += size;
-						setPotentialFlatSingleInstanceBackfill(size);
+						bool forceDoubleAlignment = false;
+						if (sizeof(U_32) == _referenceSize) {
+							/* Flattened volatile valueType that is 8 bytes should be put at 8-byte aligned address. Currently flattening is disabled for volatile valueType > 8 bytes. 
+							 * Check J9AccVolatile for now. A new way other that "volatile" will likely to be introduced to indicate a non-tearable VT class, 
+							 * probably a marker interface java.lang.NonTearable.  
+							 */
+							forceDoubleAlignment = J9_ARE_ALL_BITS_SET(field->modifiers, J9AccVolatile) && (sizeof(U_64) == J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClass));
+						} else {
+							/* copyObjectFields() uses U_64 load/store. Put all nested fields at 8-byte aligned address. */
+							forceDoubleAlignment = true;
+						}
+						if (forceDoubleAlignment
+							|| J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)
+						) {
+							if (J9CLASS_HAS_4BYTE_PREPADDING(fieldClass)) {
+								size -= sizeof(U_32);
+							}
+							_totalFlatFieldDoubleBytes += (U_32) ROUND_UP_TO_POWEROF2(size, sizeof(U_64));
+						} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
+							size = (U_32) ROUND_UP_TO_POWEROF2(size, _referenceSize);
+							_totalFlatFieldRefBytes += size;
+							setPotentialFlatObjectInstanceBackfill(size);
+						} else {
+							_totalFlatFieldSingleBytes += size;
+							setPotentialFlatSingleInstanceBackfill(size);
+						}
 					}
 				} else
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */

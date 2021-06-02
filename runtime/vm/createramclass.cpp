@@ -3148,7 +3148,14 @@ fail:
 				ramArrayClass->module = leafComponentType->module;
 
 				if (J9_IS_J9CLASS_FLATTENED(ramArrayClass)) {
-					if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
+					bool forceDoubleAlignment = false;
+					if (sizeof(U_64) == referenceSize) {
+						/* copyObjectFields() uses U_64 load/store. Put all nested fields at 8-byte aligned address. */
+						forceDoubleAlignment = true;
+					}
+					if (forceDoubleAlignment
+						|| J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintDouble)
+					) {
 						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), sizeof(U_64)));
 					} else if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
 						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), referenceSize));
