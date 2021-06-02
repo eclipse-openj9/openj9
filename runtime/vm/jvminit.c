@@ -333,6 +333,8 @@ UDATA bytecodeLoopCompressed(J9VMThread *currentThread);
 UDATA debugBytecodeLoopCompressed(J9VMThread *currentThread);
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 
+static BOOLEAN isGCPolicyMetronome(J9JavaVM *javaVM);
+
 #if defined(COUNT_BYTECODE_PAIRS)
 static jint
 initializeBytecodePairs(J9JavaVM *vm)
@@ -3615,7 +3617,28 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA nocompressed = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XNOCOMPRESSEDREFS, NULL);
 		/* Compressed refs by default */
 		if (compressed >= nocompressed) {
-			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES;
+			/* switching to nocompressedrefs based on -Xmx, similar logic as redirector.c:chooseJVM() */
+			const char* option = "-Xmx";
+			UDATA requestedHeapSize = 0;
+			U_64 maxHeapForCR = 0;
+			IDATA element = FIND_AND_CONSUME_ARG2(EXACT_MEMORY_MATCH, option, NULL);
+			if (element >= 0) {
+				GET_MEMORY_VALUE(element, option, requestedHeapSize);
+			}
+			if (requestedHeapSize > 0) {
+#if defined(J9ZOS39064)
+				maxHeapForCR = zosGetMaxHeapSizeForCR();
+#else /* defined(J9ZOS39064) */
+				maxHeapForCR = MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_COMPRESSEDREFS;
+#endif /* defined(J9ZOS39064) */
+				/* Sizes Table for Segregated heap does not support 4-bit shift so do not use it for Metronome */
+				if ((maxHeapForCR > 0) && (J9_GC_POLICY_METRONOME == isGCPolicyMetronome(vm))) {
+					maxHeapForCR = MAXIMUM_HEAP_SIZE_RECOMMENDED_FOR_3BIT_SHIFT_COMPRESSEDREFS;
+				}
+			}
+			if (requestedHeapSize <= maxHeapForCR) {
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES;
+			}
 		}
 	}
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
@@ -3895,14 +3918,36 @@ static void registerIgnoredOptions(J9PortLibrary *portLibrary, J9VMInitArgs* j9v
 	}
 }
 
+/**
+ * Check if -Xgcpolicy:metronome is specified on the command line
+ *
+ * @param javaVM[in] java VM
+ * @returns TRUE if -Xgcpolicy:metronome is specified, FALSE otherwise
+ */
+static BOOLEAN
+isGCPolicyMetronome(J9JavaVM *javaVM)
+{
+	BOOLEAN isSRT = FALSE;
+	JavaVMInitArgs *args =javaVM->vmArgsArray->actualVMArgs;
+	int i = 0;
+	/* look for the option to see if it has been specified on the command line */
+	for (i = 0; i < args->nOptions; i++ ) {
+		if (0 == strcmp(args->options[i].optionString, "-Xgcpolicy:metronome")) {
+			isSRT = TRUE;
+			break;
+		}
+	}
+
+	return isSRT;
+}
 
 #if defined(LINUX) && defined(J9VM_GC_REALTIME) 
 /* Linux SRT only */
 
 /**
- * Check if -Xgcpolicy:metronome is on the command line and
- * set the scheduling policy accordingly
- * @param javaVM[in] A java VM that can be used by the method
+ * Set the scheduling policy according to if -Xgcpolicy:metronome is on the command line
+ *
+ * @param javaVM[in] java VM
  * @returns 0 upon success, -1 otherwise
  */
 static IDATA
@@ -3910,16 +3955,10 @@ setJ9ThreadSchedulingAlgorithm(J9JavaVM *javaVM)
 {
 	UDATA shouldUseRealtimeScheduling = J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING_DISABLED;
 	IDATA success = -1;
-	JavaVMInitArgs *args =javaVM->vmArgsArray->actualVMArgs;
-	int i = 0;
 
-	/* look for the option to see if it has been specified on the command line */
-	for(i=0; i < args->nOptions; i++ ) {
-		if (0 == strcmp(args->options[i].optionString, "-Xgcpolicy:metronome")) {
-			shouldUseRealtimeScheduling = J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING_ENABLED;
-		}
+	if (isGCPolicyMetronome(javaVM)) {
+		shouldUseRealtimeScheduling = J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING_ENABLED;
 	}
-
 	success = omrthread_lib_control(J9THREAD_LIB_CONTROL_USE_REALTIME_SCHEDULING, shouldUseRealtimeScheduling);
 
 	return success;
