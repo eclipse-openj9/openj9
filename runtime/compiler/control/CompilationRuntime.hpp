@@ -28,8 +28,6 @@
 #include "AtomicSupport.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "control/CompilationPriority.hpp"
-#include "control/CompilationOperations.hpp"
-#include "control/CompilationTracingFacility.hpp"
 #include "control/ClassHolder.hpp"
 #include "env/CpuUtilization.hpp"
 #include "env/Processors.hpp"
@@ -928,9 +926,6 @@ public:
    int32_t getIprofilerMaxCount() const { return _iprofilerMaxCount; }
    void setIprofilerMaxCount(int32_t n) { _iprofilerMaxCount = n; }
 
-   bool compTracingEnabled() const { return _compilationTracingFacility.isInitialized(); }
-   void addCompilationTraceEntry(J9VMThread * vmThread, TR_CompilationOperations op, uint32_t otherData=0);
-
    TR_SharedCacheRelocationRuntime  *reloRuntime() { return &_sharedCacheReloRuntime; }
 
    int32_t incNumSeriousFailures() { return ++_numSeriousFailures; } // no atomicity guarantees for the increment
@@ -1083,8 +1078,6 @@ public:
    static int32_t         MEDIUM_LARGE_QUEUE;
    static int32_t         LARGE_QUEUE;
    static int32_t         VERY_LARGE_QUEUE;
-
-   static const char     *OperationNames[];
 
    struct CompilationStatistics _stats;
    struct CompilationStatsPerInterval _intervalStats;
@@ -1246,7 +1239,6 @@ private:
    TR_LowPriorityCompQueue _lowPriorityCompilationScheduler;
    TR_JProfilingQueue      _JProfilingQueue;
 
-   TR::CompilationTracingFacility _compilationTracingFacility; // Must be initialized before using
    TR_CpuEntitlement _cpuEntitlement;
    TR_JitSampleInfo  _jitSampleInfo;
    TR_SharedCacheRelocationRuntime _sharedCacheReloRuntime;

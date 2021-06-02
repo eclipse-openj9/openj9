@@ -950,7 +950,6 @@ void
 TR::CompilationInfoPerThread::setCompilationThreadState(CompilationThreadState v)
    {
    TR::CompilationInfoPerThreadBase::setCompilationThreadState(v);
-   getCompilationInfo()->addCompilationTraceEntry(_compilationThread, OP_StateChange, (uint8_t)v);
    }
 
 bool
@@ -1170,12 +1169,6 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
          VERY_LARGE_QUEUE = temp;
       }
    statCompErrors.init("CompilationErrors", compilationErrorNames, 0);
-
-   // Options might not exist at this point
-   //
-   static char *compTracing = feGetEnv("TR_CompTracing");
-   if (compTracing)
-      _compilationTracingFacility.initialize(256); // the size must be a power of two
 
    setSamplerState(TR::CompilationInfo::SAMPLER_NOT_INITIALIZED);
 
@@ -1427,54 +1420,25 @@ void TR::CompilationInfo::rtlogRelease()
       _rtlogMonitor->exit();
    }
 
-const char * TR::CompilationInfo::OperationNames[] =
-   {
-   "EMPTY",
-   "HasAcquiredCompilationMonitor",
-   "WillReleaseCompilationMonitor",
-   "WillNotifyCompilationMonitor",
-   "WillWaitOnCompilationMonitor",
-   "HasFinishedWaitingOnCompilationMonitor",
-   "Changed state",
-   "WillWaitOnSlotMonitorAfterCompMonRelease",
-   "CompileOnSeparateThreadEnter",
-   "INVALID"
-   };
-
-void TR::CompilationInfo::addCompilationTraceEntry(J9VMThread * vmThread, TR_CompilationOperations op, uint32_t otherData)
-   {
-   if (compTracingEnabled())
-      {
-      _compilationTracingFacility.addNewEntry(vmThread, op, (uint32_t)otherData);
-      }
-   }
-
-
 void TR::CompilationInfo::acquireCompMonitor(J9VMThread *vmThread) // used when we know we have a compilation monitor
    {
    getCompilationMonitor()->enter();
-   addCompilationTraceEntry(vmThread, OP_HasAcquiredCompilationMonitor);
    }
 
 void TR::CompilationInfo::releaseCompMonitor(J9VMThread *vmThread) // used when we know we have a compilation monitor
    {
-   addCompilationTraceEntry(vmThread, OP_WillReleaseCompilationMonitor);
    getCompilationMonitor()->exit();
    }
 
 void TR::CompilationInfo::waitOnCompMonitor(J9VMThread *vmThread)
    {
-   addCompilationTraceEntry(vmThread, OP_WillWaitOnCompilationMonitor);
    getCompilationMonitor()->wait();
-   addCompilationTraceEntry(vmThread, OP_HasFinishedWaitingOnCompilationMonitor);
    }
 
 intptr_t TR::CompilationInfo::waitOnCompMonitorTimed(J9VMThread *vmThread, int64_t millis, int32_t nanos)
    {
    intptr_t retCode;
-   addCompilationTraceEntry(vmThread, OP_WillWaitOnCompilationMonitor);
    retCode = getCompilationMonitor()->wait_timed(millis, nanos);
-   addCompilationTraceEntry(vmThread, OP_HasFinishedWaitingOnCompilationMonitor);
    return retCode;
    }
 
@@ -3463,8 +3427,6 @@ void TR::CompilationInfo::stopCompilationThreads()
       }
 #endif
    acquireCompMonitor(vmThread);
-
-   addCompilationTraceEntry(vmThread, OP_WillStopCompilationThreads);
 
    // Cycle through all non-diagnostic threads and stop them
    for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
@@ -5860,7 +5822,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    debugPrint(vmThread, "\tapplication thread acquiring compilation monitor\n");
    acquireCompMonitor(vmThread);
    debugPrint(vmThread, "+CM\n");
-   addCompilationTraceEntry(vmThread, OP_CompileOnSeparateThreadEnter);
+
    // Even before checking whether compilation threads are active, we need
    // to check if a compilation for this body has already been performed
 
@@ -6316,7 +6278,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       // Before releasing the compilation monitor, mark that we have one more thead waiting for this entry
       //
       entry->_numThreadsWaiting++;
-      addCompilationTraceEntry(vmThread, OP_WillWaitOnSlotMonitorAfterCompMonRelease);
+
       // Release the compilation monitor
       //
       debugPrint(vmThread, "\tapplication thread releasing compilation monitor\n");
