@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,6 +218,17 @@ IDATA
 addJarArguments(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, const char *jarPath, J9ZipFunctionTable *zipFuncs, UDATA verboseFlags);
 
 /**
+ * Add the arguments coming from a specific environment variable
+ * @param portLib port library
+ * @param envVarName environment variable name
+ * @param vmArgumentsList current list of arguments
+ * @param verboseFlags set to VERBOSE_INIT for verbosity
+ * @return 0 on success, negative value on failure
+ */
+IDATA
+addEnvironmentVariableArguments(J9PortLibrary *portLib, const char *envVarName, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags);
+
+/**
  * Add the arguments coming from environment variables
  * @param portLib port library
  * @param launcherArgs JavaVMInitArgs passed in from the launcher
@@ -226,7 +237,7 @@ addJarArguments(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, c
  * @return 0 on success, negative value on failure
  */
 IDATA
-addEnvironmentVariables(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags);
+addEnvironmentVariables(J9PortLibrary *portLib, JavaVMInitArgs *launcherArgs, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags);
 
 /**
  * Copy the arguments given by the launching process to new memory and add to the list.

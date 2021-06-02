@@ -107,13 +107,6 @@
 #include "IdleGCManager.hpp"
 #endif
 
-#if defined(J9ZOS39064)
-#include "omriarv64.h"
-#pragma linkage (GETTTT,OS)
-#pragma map (getUserExtendedPrivateAreaMemoryType,"GETTTT")
-UDATA getUserExtendedPrivateAreaMemoryType();
-#endif /* defined(J9ZOS39064) */
-
 /**
  * If we fail to allocate heap structures with the default Xmx value,
  * we will try again with a smaller value. These parameters define
@@ -1088,20 +1081,7 @@ gcInitializeXmxXmdxVerification(J9JavaVM *javaVM, IDATA* memoryParameters, bool 
 			 * - 2_TO_64 to support heaps allocation below 64GB
 			 * - 2_TO_32 to support heaps allocation below 32GB
 			 */
-			UDATA maxHeapForCR = 0;
-			switch (getUserExtendedPrivateAreaMemoryType()) {
-			case ZOS64_VMEM_ABOVE_BAR_GENERAL:
-			default:
-				/* options are not supported, heap allocation will fail eventually */
-				break;
-			case ZOS64_VMEM_2_TO_32G:
-				maxHeapForCR = DEFAULT_LOW_MEMORY_HEAP_CEILING;
-				break;
-			case ZOS64_VMEM_2_TO_64G:
-				maxHeapForCR = LOW_MEMORY_HEAP_CEILING;
-				break;
-			}
-
+			U_64 maxHeapForCR = zosGetMaxHeapSizeForCR();
 			if (0 == maxHeapForCR) {
 				/* Redirector should not allow to run Compressed References JVM if options are not available */
 				Assert_MM_unreachable();
