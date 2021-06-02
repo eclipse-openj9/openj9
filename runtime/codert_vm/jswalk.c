@@ -276,7 +276,7 @@ resumeNonInline:
 		 * This is safe to do as the I2J values were saved by the interpreter at
 		 * the transition point, and can be assumed to be valid.
 		 */
-		if (walkState->errorMode != J9_STACKWALK_ERROR_MODE_IGNORE) {
+		if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
 			/* Avoid recursive error situations */
 			if (0 == (walkState->walkThread->privateFlags & J9_PRIVATE_FLAGS_STACK_CORRUPT)) {
 				walkState->walkThread->privateFlags |= J9_PRIVATE_FLAGS_STACK_CORRUPT;
@@ -457,6 +457,9 @@ static UDATA walkTransitionFrame(J9StackWalkState *walkState)
 			walkState->unwindSP = (UDATA *) UNTAG2(j2iFrame->taggedReturnSP, UDATA *);
 			UPDATE_PC_FROM(walkState, j2iFrame->returnAddress);
 		} else {
+			if (J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
+				return J9_STACKWALK_STOP_ITERATING;
+			}
 			/* Choke & Die */
 #ifndef J9VM_INTERP_STACKWALK_TRACING
 			/* Symbol not visible from verbose */
@@ -516,6 +519,9 @@ static void jitWalkFrame(J9StackWalkState *walkState, UDATA walkLocals, void *st
 	if (stackMap == NULL) {
 		stackMap = getStackMapFromJitPC(walkState->walkThread->javaVM, walkState->jitInfo, (UDATA) walkState->pc);
 		if (stackMap == NULL) {
+			if (J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
+				return;
+			}
 			PORT_ACCESS_FROM_WALKSTATE(walkState);
 			J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 			J9UTF8 * className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(walkState->method)->romClass);
@@ -1046,7 +1052,7 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 			 * If errors are not being reported, stop walking this frame,
 			 * which will likely lead to further errors or crashes.
 			 */
-			if (walkState->errorMode != J9_STACKWALK_ERROR_MODE_IGNORE) {
+			if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
 				/* Avoid recursive error situations */
 				if (0 == (walkState->walkThread->privateFlags & J9_PRIVATE_FLAGS_STACK_CORRUPT)) {
 					walkState->walkThread->privateFlags |= J9_PRIVATE_FLAGS_STACK_CORRUPT;
