@@ -2611,22 +2611,32 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::KnownObjectTable_dereferenceKnownObjectField:
          {
-         auto recv = client->getRecvData<TR::KnownObjectTable::Index, TR_ResolvedMethod *, int32_t, uint32_t>();
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index, TR_ResolvedMethod *, int32_t>();
          TR::KnownObjectTable::Index baseObjectIndex = std::get<0>(recv);
          TR_ResolvedMethod *calleeMethod = std::get<1>(recv);
          int32_t cpIndex = std::get<2>(recv);
-         uint32_t fieldOffset = std::get<3>(recv);
 
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
          uintptr_t *objectPointerReference = NULL;
          uintptr_t fieldAddress = 0;
          uintptr_t baseObjectAddress = 0;
+         bool avoidFolding = true;
 
+         TR::DataType type;
+         uint32_t fieldOffset;
+         TR::Symbol *fieldSymbol = TR::Symbol::createPossiblyRecognizedShadowFromCP(
+            comp, trMemory->trStackMemory(), calleeMethod, cpIndex, &type, &fieldOffset, false);
+
+         if (fieldSymbol != NULL)
             {
             TR::VMAccessCriticalSection dereferenceKnownObjectField(fe);
             baseObjectAddress = knot->getPointer(baseObjectIndex);
             TR_OpaqueClassBlock *baseObjectClass = fe->getObjectClass(baseObjectAddress);
             TR_OpaqueClassBlock *fieldDeclaringClass = calleeMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+
+            avoidFolding = TR::TransformUtil::avoidFoldingInstanceField(
+               baseObjectAddress, fieldSymbol, cpIndex, calleeMethod, comp);
+
             if (fieldDeclaringClass && fe->isInstanceOf(baseObjectClass, fieldDeclaringClass, true) == TR_yes)
                {
                fieldAddress = fe->getReferenceFieldAtAddress(baseObjectAddress + fieldOffset);
@@ -2635,7 +2645,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                }
             }
 
-         client->write(response, resultIndex, objectPointerReference, fieldAddress, baseObjectAddress);
+         client->write(response, resultIndex, objectPointerReference, fieldAddress, baseObjectAddress, avoidFolding);
          }
          break;
       case MessageType::KnownObjectTable_dereferenceKnownObjectField2:

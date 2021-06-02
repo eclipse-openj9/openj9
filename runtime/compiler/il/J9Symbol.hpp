@@ -148,6 +148,7 @@ public:
       Java_lang_Throwable_stackTrace,
       Java_lang_invoke_BruteArgumentMoverHandle_extra,
       Java_lang_invoke_DynamicInvokerHandle_site,
+      Java_lang_invoke_CallSite_target,
       Java_lang_invoke_MutableCallSite_target,
       Java_lang_invoke_MutableCallSiteDynamicInvokerHandle_mutableSite,
       Java_lang_invoke_MethodHandle_thunks,
@@ -197,6 +198,30 @@ private:
    /// This recognized field is currently only used for RecognizedShadows.
    RecognizedField _recognizedField;
    /** @} */
+
+public:
+
+   // These two methods are primarily for direct analysis of bytecode. If
+   // generating trees, use SymbolReferenceTable instead.
+
+   template <typename AllocatorType>
+   static TR::Symbol * createPossiblyRecognizedShadowWithFlags(
+      AllocatorType m,
+      TR::DataType type,
+      bool isVolatile,
+      bool isFinal,
+      bool isPrivate,
+      RecognizedField recognizedField);
+
+   template <typename AllocatorType>
+   static TR::Symbol * createPossiblyRecognizedShadowFromCP(
+      TR::Compilation *comp,
+      AllocatorType m,
+      TR_ResolvedMethod *owningMethod,
+      int32_t cpIndex,
+      TR::DataType *type,
+      uint32_t *offset,
+      bool needsAOTValidation);
 
    };
 }
