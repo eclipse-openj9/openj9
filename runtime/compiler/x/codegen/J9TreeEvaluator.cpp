@@ -3688,8 +3688,14 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
                              (!TR::Compiler->om.generateCompressedObjectHeaders() ||
                               (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager)));
 
+   // When running 64 bit compressed refs, if clazz is an address above the 2G boundary then we can't use
+   // a push 32bit immediate instruction to pass it on the stack to the jitThrowClassCastException helper
+   // as the address gets sign extended. It needs to be stored in a temp register and then push the
+   // register to the stack.
+   auto highClass = (comp->target().is64Bit() && ((uintptr_t)clazz) > INT_MAX) ? true : false;
+
    auto j9class = cg->allocateRegister();
-   auto tmp     = use64BitClasses ? cg->allocateRegister() : NULL;
+   auto tmp     = (use64BitClasses || highClass) ? cg->allocateRegister() : NULL;
 
    auto deps = generateRegisterDependencyConditions((uint8_t)2, (uint8_t)2, cg);
    deps->addPreCondition(j9class, TR::RealRegister::NoReg, cg);
