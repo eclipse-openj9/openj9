@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,8 +46,7 @@
 #include "x/codegen/CheckFailureSnippet.hpp"
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"
-#include "x/codegen/X86Ops_inlines.hpp"
+#include "codegen/InstOpCode.hpp"
 
 ////////////////////////////////////////////////
 //
@@ -268,13 +267,13 @@ J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
 
 static uint8_t *flushArgument(
       uint8_t*cursor,
-      TR_X86OpCodes op,
+      TR::InstOpCode::Mnemonic op,
       TR::RealRegister::RegNum regIndex,
       int32_t offset,
       TR::CodeGenerator *cg)
    {
    /* TODO:AMD64: Share code with the other flushArgument */
-   cursor = TR_X86OpCode(op).binary(cursor);
+   cursor = TR::InstOpCode(op).binary(cursor);
 
    // Mod | Reg | R/M
    //
@@ -305,10 +304,10 @@ static uint8_t *flushArgument(
    }
 
 static int32_t flushArgumentSize(
-      TR_X86OpCodes op,
+      TR::InstOpCode::Mnemonic op,
       int32_t offset)
    {
-   int32_t size = TR_X86OpCode(op).length() + 1;   // length including ModRM + 1 SIB
+   int32_t size = TR::InstOpCode(op).length() + 1;   // length including ModRM + 1 SIB
    return size + (((offset >= -128 && offset <= 127)) ? 1 : 4);
    }
 
@@ -334,7 +333,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::flushArguments(
       offset += sizeof(intptr_t);
 
    TR::RealRegister::RegNum reg = TR::RealRegister::NoReg;
-   TR_X86OpCodes            op  = BADIA32Op;
+   TR::InstOpCode::Mnemonic            op  = BADIA32Op;
    TR::DataType            dt  = TR::NoType;
 
    if (calculateSizeOnly)
@@ -415,7 +414,7 @@ J9::X86::AMD64::PrivateLinkage::generateFlushInstruction(
 
    // Opcode
    //
-   TR_X86OpCodes opCode = TR::Linkage::movOpcodes(operandType, movType(dataType));
+   TR::InstOpCode::Mnemonic opCode = TR::Linkage::movOpcodes(operandType, movType(dataType));
 
    // Registers
    //
@@ -1144,7 +1143,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
          }
       else
          {
-         TR_X86OpCodes op = picSlot.needsShortConditionalBranch() ? JNE1 : JNE4;
+         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? JNE1 : JNE4;
          generateLabelInstruction(op, node, mismatchLabel, cg());
          }
       }
@@ -1156,7 +1155,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
          }
       else
          {
-         TR_X86OpCodes op = picSlot.needsShortConditionalBranch() ? JE1 : JE4;
+         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? JE1 : JE4;
          generateLabelInstruction(op, node, mismatchLabel, cg());
          }
       }

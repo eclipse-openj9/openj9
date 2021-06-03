@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,8 +40,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"
-#include "x/codegen/X86Ops_inlines.hpp"
+#include "codegen/InstOpCode.hpp"
 
 J9::X86::UnresolvedDataSnippet::UnresolvedDataSnippet(
       TR::CodeGenerator *cg,
@@ -110,7 +109,7 @@ J9::X86::UnresolvedDataSnippet::emitSnippetBody()
 
    if (!stackMapInstr)
       {
-      return TR_X86OpCode(BADIA32Op).binary(cursor);
+      return TR::InstOpCode(BADIA32Op).binary(cursor);
       }
 
    _glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper());
@@ -383,7 +382,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
    if (!comp->getOption(TR_DisableNewX86VolatileSupport) && getDataReferenceInstruction() != NULL)
       {
       TR::Instruction *dataRefInst = getDataReferenceInstruction();
-      TR_X86OpCodes opCode = dataRefInst->getOpCode().getOpCodeValue();
+      TR::InstOpCode::Mnemonic opCode = dataRefInst->getOpCode().getOpCodeValue();
 
       // If this is a store operation on an unresolved field, set the volatility check flag.
       //

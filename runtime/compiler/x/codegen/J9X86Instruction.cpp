@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,14 +32,13 @@
 #include "codegen/X86Instruction.hpp"
 #include "codegen/Snippet.hpp"
 #include "x/codegen/X86Instruction.hpp"
-#include "x/codegen/X86Ops.hpp"
-#include "x/codegen/X86Ops_inlines.hpp"
+#include "codegen/InstOpCode.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // TR::X86MemImmSnippetInstruction:: member functions
 ////////////////////////////////////////////////////////////////////////////////
 
-TR::X86MemImmSnippetInstruction::X86MemImmSnippetInstruction(TR_X86OpCodes                op,
+TR::X86MemImmSnippetInstruction::X86MemImmSnippetInstruction(TR::InstOpCode::Mnemonic                op,
                                                              TR::Node                     *node,
                                                              TR::MemoryReference       *mr,
                                                              int32_t                      imm,
@@ -50,7 +49,7 @@ TR::X86MemImmSnippetInstruction::X86MemImmSnippetInstruction(TR_X86OpCodes      
    }
 
 TR::X86MemImmSnippetInstruction::X86MemImmSnippetInstruction(TR::Instruction              *precedingInstruction,
-                                                             TR_X86OpCodes                op,
+                                                             TR::InstOpCode::Mnemonic                op,
                                                              TR::MemoryReference       *mr,
                                                              int32_t                      imm,
                                                              TR::UnresolvedDataSnippet *us,
@@ -135,7 +134,7 @@ uint8_t *TR::X86MemImmSnippetInstruction::generateBinaryEncoding()
 
 TR::X86CheckAsyncMessagesMemImmInstruction::X86CheckAsyncMessagesMemImmInstruction(
    TR::Node               *node,
-   TR_X86OpCodes          op,
+   TR::InstOpCode::Mnemonic          op,
    TR::MemoryReference *mr,
    int32_t                value,
    TR::CodeGenerator      *cg) :
@@ -145,7 +144,7 @@ TR::X86CheckAsyncMessagesMemImmInstruction::X86CheckAsyncMessagesMemImmInstructi
 
 TR::X86CheckAsyncMessagesMemRegInstruction::X86CheckAsyncMessagesMemRegInstruction(
    TR::Node               *node,
-   TR_X86OpCodes          op,
+   TR::InstOpCode::Mnemonic          op,
    TR::MemoryReference *mr,
    TR::Register           *valueReg,
    TR::CodeGenerator      *cg) :
@@ -156,7 +155,7 @@ TR::X86CheckAsyncMessagesMemRegInstruction::X86CheckAsyncMessagesMemRegInstructi
 
 TR::X86StackOverflowCheckInstruction::X86StackOverflowCheckInstruction(
    TR::Instruction        *precedingInstruction,
-   TR_X86OpCodes          op,
+   TR::InstOpCode::Mnemonic          op,
    TR::Register           *cmpRegister,
    TR::MemoryReference *mr,
    TR::CodeGenerator      *cg) :
@@ -175,7 +174,7 @@ uint8_t *TR::X86StackOverflowCheckInstruction::generateBinaryEncoding()
 
 TR::X86StackOverflowCheckInstruction *generateStackOverflowCheckInstruction(
    TR::Instruction        *precedingInstruction,
-   TR_X86OpCodes          op,
+   TR::InstOpCode::Mnemonic          op,
    TR::Register           *cmpRegister,
    TR::MemoryReference *mr,
    TR::CodeGenerator      *cg)
@@ -185,7 +184,7 @@ TR::X86StackOverflowCheckInstruction *generateStackOverflowCheckInstruction(
 
 TR::X86CheckAsyncMessagesMemImmInstruction *generateCheckAsyncMessagesInstruction(
    TR::Node               *node,
-   TR_X86OpCodes          op,
+   TR::InstOpCode::Mnemonic          op,
    TR::MemoryReference *mr,
    int32_t                value,
    TR::CodeGenerator      *cg)
@@ -195,7 +194,7 @@ TR::X86CheckAsyncMessagesMemImmInstruction *generateCheckAsyncMessagesInstructio
 
 TR::X86CheckAsyncMessagesMemRegInstruction *generateCheckAsyncMessagesInstruction(
    TR::Node               *node,
-   TR_X86OpCodes          op,
+   TR::InstOpCode::Mnemonic          op,
    TR::MemoryReference *mr,
    TR::Register           *reg,
    TR::CodeGenerator      *cg)
@@ -216,7 +215,7 @@ uint8_t *TR::X86CheckAsyncMessagesMemRegInstruction::generateBinaryEncoding()
    };
 
 TR::X86MemImmSnippetInstruction  *
-generateMemImmSnippetInstruction(TR_X86OpCodes op, TR::Node * node, TR::MemoryReference  * mr, int32_t imm, TR::UnresolvedDataSnippet * snippet, TR::CodeGenerator *cg)
+generateMemImmSnippetInstruction(TR::InstOpCode::Mnemonic op, TR::Node * node, TR::MemoryReference  * mr, int32_t imm, TR::UnresolvedDataSnippet * snippet, TR::CodeGenerator *cg)
    {
    return new (cg->trHeapMemory()) TR::X86MemImmSnippetInstruction(op, node, mr, imm, snippet, cg);
    }

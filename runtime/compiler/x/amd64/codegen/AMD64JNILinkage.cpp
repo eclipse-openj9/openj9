@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -236,7 +236,7 @@ int32_t J9::X86::AMD64::JNILinkage::buildArgs(
       if ((adjustedMemoryArgSize % 16) != 0)
          memoryArgSize += 8;
 
-      TR_X86OpCodes op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? SUBRegImms() : SUBRegImm4();
+      TR::InstOpCode::Mnemonic op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? SUBRegImms() : SUBRegImm4();
       generateRegImmInstruction(op, callNode, espReal, memoryArgSize, cg());
       }
 
@@ -799,7 +799,7 @@ J9::X86::AMD64::JNILinkage::generateMethodDispatch(
 
       if (cleanUpSize != 0)
          {
-         TR_X86OpCodes op = (cleanUpSize >= -128 && cleanUpSize <= 127) ? ADDRegImms() : ADDRegImm4();
+         TR::InstOpCode::Mnemonic op = (cleanUpSize >= -128 && cleanUpSize <= 127) ? ADDRegImms() : ADDRegImm4();
          generateRegImmInstruction(op, callNode, espReal, cleanUpSize, cg());
          }
       }
@@ -825,7 +825,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccess(TR::Node *callNode)
    //    scratch2 <-> NoReg
    //    scratch3 <-> NoReg
    //
-   TR_X86OpCodes op;
+   TR::InstOpCode::Mnemonic op;
 
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
    TR::Register *scratchReg1 = cg()->allocateRegister();
@@ -951,7 +951,7 @@ void J9::X86::AMD64::JNILinkage::acquireVMAccess(TR::Node *callNode)
    TR::LabelSymbol *longReacquireSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longReacquireRestartLabel = generateLabelSymbol(cg());
 
-   TR_X86OpCodes op = comp()->target().isSMP() ? LCMPXCHGMemReg() : CMPXCHGMemReg(cg());
+   TR::InstOpCode::Mnemonic op = comp()->target().isSMP() ? LCMPXCHGMemReg() : CMPXCHGMemReg(cg());
    generateMemRegInstruction(
       op,
       callNode,
@@ -1075,7 +1075,7 @@ void J9::X86::AMD64::JNILinkage::cleanupReturnValue(
       // Native and JNI methods may not return a full register in some cases so we need to get the declared
       // type so that we sign and zero extend the narrower integer return types properly.
       //
-      TR_X86OpCodes op;
+      TR::InstOpCode::Mnemonic op;
       TR::SymbolReference      *callSymRef = callNode->getSymbolReference();
       TR::ResolvedMethodSymbol *callSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
       TR_ResolvedMethod *resolvedMethod = callSymbol->getResolvedMethod();
