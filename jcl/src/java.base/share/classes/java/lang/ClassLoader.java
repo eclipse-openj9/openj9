@@ -339,6 +339,7 @@ protected ClassLoader() {
  * @return Void a unused reference passed to the Constructor
  */
 private static Void checkSecurityPermission() {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		security.checkCreateClassLoader();
@@ -844,6 +845,7 @@ protected final Class<?> findSystemClass (String className) throws ClassNotFound
  */
 @CallerSensitive
 public final ClassLoader getParent() {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {	
 		ClassLoader callersClassLoader = callerClassLoader();
@@ -1068,6 +1070,7 @@ static ClassLoader getClassLoader(Class<?> clz) {
  */
 @CallerSensitive
 public static ClassLoader getPlatformClassLoader() {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	ClassLoader platformClassLoader = ClassLoaders.platformClassLoader();
 	if (security != null) {
@@ -1148,6 +1151,7 @@ public static ClassLoader getSystemClassLoader () {
 	}
 	
 	ClassLoader sysLoader = applicationClassLoader;
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {	
 		ClassLoader callersClassLoader = callerClassLoader();

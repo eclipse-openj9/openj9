@@ -477,20 +477,31 @@ final class Access implements JavaLangAccess {
 		StringLatin1.inflate(srcBytes, srcOffset, dstChars, dstOffset, length);
 	}
 
-	/*[IF OPENJDK_METHODHANDLES]*/
-	// This JPP flag is used to workaround the issue that latest 
-	// String update hasn't been promoted into openj9 branch. 
-	public String join(String prefix, String suffix, String delimiter, String[] elements, int size) {
-		return String.join(prefix, suffix, delimiter, elements, size);
-	}
-	/*[ENDIF] OPENJDK_METHODHANDLES*/
-	
 	// The method findBootstrapClassOrNull(ClassLoader classLoader, String name) can be removed
 	// after following API change is promoted into extension repo openj9 branch.
 	public Class<?> findBootstrapClassOrNull(String name) {
 		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
 	}
 
+	/*[IF OPENJDK_METHODHANDLES]*/
+	// This JPP flag is used to workaround the issue that latest 
+	// String update hasn't been promoted into openj9 branch. 
+	public String join(String prefix, String suffix, String delimiter, String[] elements, int size) {
+		return String.join(prefix, suffix, delimiter, elements, size);
+	}
+	
+	public boolean isEnableNativeAccess(Module mod) {
+		return mod.implIsEnableNativeAccess();
+	}
+	
+	public void addEnableNativeAccessAllUnnamed() {
+		Module.implAddEnableNativeAccessAllUnnamed();
+	}
+	
+	public Module addEnableNativeAccess(Module mod) {
+		return mod.implAddEnableNativeAccess();
+	}
+	/*[ENDIF] OPENJDK_METHODHANDLES*/
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 /*[ENDIF] Sidecar19-SE */

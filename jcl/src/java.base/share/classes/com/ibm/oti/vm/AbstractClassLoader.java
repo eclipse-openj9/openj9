@@ -1,9 +1,6 @@
-/*[INCLUDE-IF Sidecar16 & !Sidecar19-SE]*/
-
-package com.ibm.oti.vm;
-
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 8]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +20,7 @@ package com.ibm.oti.vm;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
- 
+package com.ibm.oti.vm;
 
 import java.lang.ref.SoftReference;
 import java.net.URL;
@@ -194,6 +191,7 @@ protected URL findResource(final String res) {
 			return null;
 		}});
 	if (result != null) {
+		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (sm != null) {
 			try {
@@ -260,6 +258,7 @@ protected Enumeration findResources(final String res) throws IOException {
 			}
 			return resources;
 		}});
+	@SuppressWarnings("removal")
 	SecurityManager sm;
 	int length = result.size();
 	if (length > 0 && (sm = System.getSecurityManager()) != null) {
@@ -324,6 +323,7 @@ public InputStream getResourceAsStream(String resName) {
 					final ZipFile zf = (ZipFile)cache[i];
 					ZipEntry entry;
 					if ((entry = zf.getEntry(resName)) != null) {
+						@SuppressWarnings("removal")
 						SecurityManager security = System.getSecurityManager();
 						if (security != null) {
 							initalizePermissions();

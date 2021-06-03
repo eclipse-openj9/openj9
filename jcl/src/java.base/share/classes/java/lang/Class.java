@@ -389,6 +389,7 @@ private static void forNameAccessCheck(final SecurityManager sm, final Class<?> 
  */
 @CallerSensitive
 public static Class<?> forName(String className) throws ClassNotFoundException {
+	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	/**
 	 * Get the SecurityManager from System.  If the VM has not yet completed bootstrapping (i.e., J9VMInternals.initialized is still false)
@@ -467,6 +468,7 @@ boolean casAnnotationType(AnnotationType oldType, AnnotationType newType) {
 public static Class<?> forName(String className, boolean initializeBoolean, ClassLoader classLoader)
 	throws ClassNotFoundException
 {
+	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	if (J9VMInternals.initialized) {
 		sm = System.getSecurityManager();
@@ -516,6 +518,7 @@ public static Class<?> forName(String className, boolean initializeBoolean, Clas
 @CallerSensitive
 public static Class<?> forName(Module module, String name)
 {
+	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	ClassLoader classLoader;
 	Class<?> c;
@@ -598,6 +601,7 @@ private static native Class<?> forNameImpl(String className,
 @CallerSensitive
 public Class<?>[] getClasses() {
 	/*[PR CMVC 82311] Spec is incorrect before 1.5, RI has this behavior since 1.2 */
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -635,6 +639,7 @@ public ClassLoader getClassLoader() {
 		if (classLoader == ClassLoader.bootstrapClassLoader)	{
 			return null;
 		}
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (null != security) {
 			ClassLoader callersClassLoader = ClassLoader.callerClassLoader();
@@ -722,6 +727,7 @@ private NoSuchMethodException newNoSuchMethodException(String name, Class<?>[] t
  */
 @CallerSensitive
 public Constructor<T> getConstructor(Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -778,6 +784,7 @@ private native Constructor<T> getConstructorImpl(Class<?> parameterTypes[], Stri
  */
 @CallerSensitive
 public Constructor<?>[] getConstructors() throws SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -822,6 +829,7 @@ private native Constructor<T>[] getConstructorsImpl();
  */
 @CallerSensitive
 public Class<?>[] getDeclaredClasses() throws SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -857,6 +865,7 @@ private native Class<?>[] getDeclaredClassesImpl();
  */
 @CallerSensitive
 public Constructor<T> getDeclaredConstructor(Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -914,6 +923,7 @@ private native Constructor<T> getDeclaredConstructorImpl(Class<?>[] parameterTyp
  */
 @CallerSensitive
 public Constructor<?>[] getDeclaredConstructors() throws SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -960,6 +970,7 @@ private native Constructor<T>[] getDeclaredConstructorsImpl();
  */
 @CallerSensitive
 public Field getDeclaredField(String name) throws NoSuchFieldException, SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -1033,6 +1044,7 @@ private native Field getDeclaredFieldImpl(String name) throws NoSuchFieldExcepti
  */
 @CallerSensitive
 public Field[] getDeclaredFields() throws SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -1181,6 +1193,7 @@ static void reflectCacheDebugHelper(Class<?>[] parameters, int posInsert, String
  */
 @CallerSensitive
 public Method getDeclaredMethod(String name, Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -1220,6 +1233,7 @@ private native Method getDeclaredMethodImpl(String name, Class<?>[] parameterTyp
  */
 @CallerSensitive
 public Method[] getDeclaredMethods() throws SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -1280,6 +1294,7 @@ public Class<?> getDeclaringClass() {
 		return declaringClass;
 	}
 	if (declaringClass.isClassADeclaredClass(this)) {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -1348,6 +1363,7 @@ private native Class<?> getDeclaringClassImpl();
  */
 @CallerSensitive
 public Field getField(String name) throws NoSuchFieldException, SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -1397,6 +1413,7 @@ private native Field getFieldImpl(String name) throws NoSuchFieldException;
  */
 @CallerSensitive
 public Field[] getFields() throws SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -1466,6 +1483,7 @@ public Class<?>[] getInterfaces() {
  */
 @CallerSensitive
 public Method getMethod(String name, Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -1791,6 +1809,7 @@ private native Method getMethodImpl(String name, Class<?>[] parameterTypes, Stri
  */
 @CallerSensitive
 public Method[] getMethods() throws SecurityException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -2047,6 +2066,7 @@ public String getName() {
  * @see			java.lang.Class
  */
 public ProtectionDomain getProtectionDomain() {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		security.checkPermission(sun.security.util.SecurityConstants.GET_PD_PERMISSION);
@@ -2408,6 +2428,7 @@ public native boolean isPrimitiveClass();
 @Deprecated(forRemoval=false, since="9")
 /*[ENDIF]*/
 public T newInstance() throws IllegalAccessException, InstantiationException {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -3636,6 +3657,7 @@ public Constructor<?> getEnclosingConstructor() throws SecurityException {
 	Object enclosing = getEnclosingObject();
 	if (enclosing instanceof Constructor<?>) {
 		constructor = (Constructor<?>) enclosing;
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -3663,6 +3685,7 @@ public Method getEnclosingMethod() throws SecurityException {
 	Object enclosing = getEnclosingObject();
 	if (enclosing instanceof Method) {
 		method = (Method)enclosing;
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -3711,6 +3734,7 @@ public Class<?> getEnclosingClass() throws SecurityException {
 		enclosingClass = cachedEnclosingClass == ClassReflectNullPlaceHolder.class ? null: cachedEnclosingClass;
 	}
 	if (enclosingClass != null) {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -4901,6 +4925,7 @@ public Class<?> getNestHost() throws SecurityException {
 	 * then throw a SecurityException.
 	 */
 	if (nestHost != this) {
+		@SuppressWarnings("removal")
 		SecurityManager securityManager = System.getSecurityManager();
 		if (securityManager != null) {
 			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
@@ -4963,6 +4988,7 @@ SecurityException {
 	Class<?>[] members = getNestMembersImpl();
 	/* Skip security check for the Class object that belongs to the nest consisting only of itself */
 	if (members.length > 1) {
+		@SuppressWarnings("removal")
 		SecurityManager securityManager = System.getSecurityManager();
 		if (securityManager != null) {
 			/* All classes in a nest must be in the same runtime package and therefore same classloader */
@@ -5121,6 +5147,7 @@ SecurityException {
 	 */
 	@CallerSensitive
 	public RecordComponent[] getRecordComponents() {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
@@ -5211,6 +5238,7 @@ SecurityException {
 			getUnsafe().putObjectRelease(this, localPermittedSubclassesCacheOffset, localPermittedSubclasses);
 		}
 
+		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (null != sm) {
 			HashSet<String> packages = new HashSet<>();

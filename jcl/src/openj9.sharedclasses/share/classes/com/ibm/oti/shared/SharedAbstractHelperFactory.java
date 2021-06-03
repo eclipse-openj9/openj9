@@ -45,6 +45,7 @@ public abstract class SharedAbstractHelperFactory {
 	
 	static boolean checkPermission(ClassLoader loader, String type) {
 		boolean result = true;
+		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (sm!=null) {
 			try {

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2021 IBM Corp. and others
  *
@@ -323,6 +323,7 @@ final class J9VMInternals {
 
 	/*[PR CVMC 124584] checkPackageAccess(), not defineClassImpl(), should use ProtectionDomain */
 	private static void checkPackageAccess(final Class clazz, ProtectionDomain pd) {
+		@SuppressWarnings("removal")
 		final SecurityManager sm = System.getSecurityManager();
 		if (sm != null) {
 			ProtectionDomain[] pdArray = (pd == null) ? new ProtectionDomain[]{} : new ProtectionDomain[]{pd};

@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2020 IBM Corp. and others
+ * Copyright (c) 2007, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,6 +84,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public long[] findMonitorDeadlockedThreads() {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
@@ -103,6 +104,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public long[] getAllThreadIds() {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
@@ -245,6 +247,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public ThreadInfo[] getThreadInfo(long[] ids, int maxDepth) {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
@@ -330,6 +333,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05FB")); //$NON-NLS-1$
 		}
 
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
@@ -353,6 +357,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public ThreadInfo getThreadInfo(long id, int maxDepth) {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
@@ -545,6 +550,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public void resetPeakThreadCount() {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -569,6 +575,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05FA")); //$NON-NLS-1$
 		}
 
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -593,6 +600,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05F9")); //$NON-NLS-1$
 		}
 
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -639,6 +647,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05FB")); //$NON-NLS-1$
 		}
 
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
@@ -672,6 +681,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			/*[MSG "K05FB", "Monitoring of ownable synchronizer usage is not supported on this virtual machine"]*/
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05FB")); //$NON-NLS-1$
 		}
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
@@ -736,6 +746,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 * To satisfy com.ibm.lang.management.ThreadMXBean.
 	 */
 	public long[] getNativeThreadIds(long[] threadIDs) throws IllegalArgumentException, SecurityException {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (null != security) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
@@ -758,6 +769,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 * To satisfy com.ibm.lang.management.
 	 */
 	public long getNativeThreadId(long threadId) throws IllegalArgumentException, SecurityException {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (null != security) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);

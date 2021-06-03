@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corp. and others
+ * Copyright (c) 2008, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -444,6 +444,7 @@ public final class ManagementUtils {
 		int i = name.lastIndexOf('.');
 
 		if (i != -1) {
+			@SuppressWarnings("removal")
 			SecurityManager sm = System.getSecurityManager();
 			if (sm != null) {
 				sm.checkPackageAccess(name.substring(0, i));

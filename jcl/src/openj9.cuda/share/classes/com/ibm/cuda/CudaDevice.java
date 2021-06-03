@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -525,6 +525,7 @@ public final class CudaDevice {
 	 *          does not have permission to disable peer access
 	 */
 	public void disablePeerAccess(CudaDevice peerDevice) throws CudaException {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
@@ -546,6 +547,7 @@ public final class CudaDevice {
 	 *          does not have permission to enable peer access
 	 */
 	public void enablePeerAccess(CudaDevice peerDevice) throws CudaException {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
@@ -736,6 +738,7 @@ public final class CudaDevice {
 	 *          does not have permission to set device cache configurations
 	 */
 	public void setCacheConfig(CacheConfig config) throws CudaException {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
@@ -759,6 +762,7 @@ public final class CudaDevice {
 	 *          does not have permission to set device limits
 	 */
 	public void setLimit(Limit limit, long value) throws CudaException {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
@@ -780,6 +784,7 @@ public final class CudaDevice {
 	 *          not have permission to set device shared memory configurations
 	 */
 	public void setSharedMemConfig(SharedMemConfig config) throws CudaException {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
