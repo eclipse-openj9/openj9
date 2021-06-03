@@ -256,7 +256,7 @@ public boolean allowThreadSuspension(boolean b) {
 public final void checkAccess() {
 	// Forwards the message to the SecurityManager (if there's one)
 	// passing the receiver as parameter
-
+	@SuppressWarnings("removal")
 	SecurityManager currentManager = System.getSecurityManager();
 	if (currentManager != null) currentManager.checkAccess(this);
 }

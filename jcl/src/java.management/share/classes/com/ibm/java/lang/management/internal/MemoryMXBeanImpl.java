@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -464,6 +464,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	 */
 	@Override
 	public void setVerbose(boolean value) {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -522,6 +523,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (size < this.getMinHeapSize() || size > this.getMaxHeapSizeLimit()) {
 			throw new IllegalArgumentException();
 		}
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -657,6 +659,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -671,6 +674,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -685,6 +689,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -699,6 +704,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -713,6 +719,7 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);

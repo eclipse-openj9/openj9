@@ -336,6 +336,7 @@ public final class MethodType implements Serializable
 		ClassLoader classLoader = loader; 
 		if (classLoader == null) {
 			/*[IF JAVA_SPEC_VERSION >= 14]*/
+			@SuppressWarnings("removal")
 			SecurityManager security = System.getSecurityManager();
 			if (security != null) {
 				security.checkPermission(sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION);

@@ -456,6 +456,7 @@ private static void initGPUAssist() {
  * @param		newIn 		the new value for in.
  */
 public static void setIn(InputStream newIn) {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)	{
 		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetIO);
@@ -471,6 +472,7 @@ public static void setIn(InputStream newIn) {
  * @param		newOut 		the new value for out.
  */
 public static void setOut(java.io.PrintStream newOut) {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)	{
 		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetIO);
@@ -485,6 +487,7 @@ public static void setOut(java.io.PrintStream newOut) {
  * @param		newErr  	the new value for err.
  */
 public static void setErr(java.io.PrintStream newErr) {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)	{
 		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetIO);
@@ -713,6 +716,7 @@ public static void gc() {
 @SuppressWarnings("dep-ann")
 public static String getenv(String var) {
 	if (var == null) throw new NullPointerException();
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(new RuntimePermission("getenv." + var)); //$NON-NLS-1$
@@ -733,6 +737,7 @@ public static String getenv(String var) {
  */
 public static Properties getProperties() {
 	if (!propertiesInitialized) throw new Error("bootstrap error, system property access before init"); //$NON-NLS-1$
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPropertiesAccess();
@@ -797,6 +802,7 @@ public static String getProperty(String prop) {
 public static String getProperty(String prop, String defaultValue) {
 	if (prop.length() == 0) throw new IllegalArgumentException();
 
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPropertyAccess(prop);
@@ -831,6 +837,7 @@ public static String setProperty(String prop, String value) {
 	/*[PR CMVC 80288] should check for empty key */
 	if (prop.length() == 0) throw new IllegalArgumentException();
 
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(
@@ -894,6 +901,7 @@ public static int identityHashCode(Object anObject) {
  */
 @CallerSensitive
 public static void load(String pathName) {
+	@SuppressWarnings("removal")
 	SecurityManager smngr = System.getSecurityManager();
 	if (smngr != null) {
 		smngr.checkLink(pathName);
@@ -921,6 +929,7 @@ public static void load(String pathName) {
  */
 @CallerSensitive
 public static void loadLibrary(String libName) {
+	@SuppressWarnings("removal")
 	SecurityManager smngr = System.getSecurityManager();
 	if (smngr != null) {
 		smngr.checkLink(libName);
@@ -974,6 +983,7 @@ public static void runFinalizersOnExit(boolean flag) {
  * @param		p			the property to set
  */
 public static void setProperties(Properties p) {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPropertiesAccess();
@@ -1000,6 +1010,7 @@ public static void setProperties(Properties p) {
  */
 public static void setSecurityManager(final SecurityManager s) {
 	/*[PR 113606] security field could be modified by another Thread */
+	@SuppressWarnings("removal")
 	final SecurityManager currentSecurity = security;
 
 	if (s != null) {
@@ -1103,6 +1114,7 @@ public static String clearProperty(String prop) {
 	if (!propertiesInitialized) throw new Error("bootstrap error, system property access before init: " + prop); //$NON-NLS-1$
 
 	if (prop.length() == 0) throw new IllegalArgumentException();
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(new PropertyPermission(prop, "write")); //$NON-NLS-1$
@@ -1115,6 +1127,7 @@ public static String clearProperty(String prop) {
  * @return	an unmodifiable Map containing all of the system environment variables.
  */
 public static Map<String, String> getenv() {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(new RuntimePermission("getenv.*")); //$NON-NLS-1$
@@ -1533,6 +1546,7 @@ public abstract static class LoggerFinder {
 	}
 
 	private static void verifyPermissions() {
+		@SuppressWarnings("removal")
 		SecurityManager securityManager = System.getSecurityManager();
 		if (securityManager != null)	{
 			securityManager.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionLoggerFinder);

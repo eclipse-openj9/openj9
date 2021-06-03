@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION > 8]*/
 /*******************************************************************************
  * Copyright (c) 2016, 2021 IBM Corp. and others
  *
@@ -70,6 +70,7 @@ public final class StackWalker {
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0641")); //$NON-NLS-1$
 		}
 		if (options.contains(Option.RETAIN_CLASS_REFERENCE)) {
+			@SuppressWarnings("removal")
 			SecurityManager securityMgr = System.getSecurityManager();
 			if (null != securityMgr) {
 				securityMgr.checkPermission(PermissionSingleton.perm);

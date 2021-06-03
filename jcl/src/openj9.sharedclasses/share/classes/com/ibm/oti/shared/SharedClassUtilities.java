@@ -112,6 +112,7 @@ public class SharedClassUtilities {
 	 * 					have SharedClassesNamedPermission("getSharedCacheInfo")
 	 */
 	static public List<SharedClassCacheInfo> getSharedCacheInfo(String cacheDir, int flags, boolean useCommandLineValues) {
+		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (sm != null) {
 			sm.checkPermission(SharedPermissions.getSharedCacheInfo);
@@ -182,6 +183,7 @@ public class SharedClassUtilities {
 	 * 					have SharedClassesNamedPermission("destroySharedCache")
 	 */
 	static public int destroySharedCache(String cacheDir, int cacheType, String cacheName, boolean useCommandLineValues) {
+		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (sm != null) {
 			sm.checkPermission(SharedPermissions.destroySharedCache);

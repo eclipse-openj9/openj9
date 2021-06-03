@@ -1892,6 +1892,7 @@ public class MethodHandles {
 			}
 			
 			if (performSecurityCheck) {
+				@SuppressWarnings("removal")
 				SecurityManager secmgr = System.getSecurityManager();
 				if (secmgr != null) {
 					/* Use leaf-class in the case of arrays for security check */
@@ -2094,6 +2095,7 @@ public class MethodHandles {
 				throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065Y1", Integer.toHexString(accessMode), Integer.toHexString(Lookup.PACKAGE))); //$NON-NLS-1$
 			}
 			
+			@SuppressWarnings("removal")
 			SecurityManager secmgr = System.getSecurityManager();
 			if ((null != secmgr)
 				/*[IF JAVA_SPEC_VERSION >= 14]*/
@@ -2553,6 +2555,7 @@ public class MethodHandles {
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 14*/
 
+		@SuppressWarnings("removal")
 		SecurityManager secmgr = System.getSecurityManager();
 		if (null != secmgr) {
 			secmgr.checkPermission(com.ibm.oti.util.ReflectPermissions.permissionSuppressAccessChecks);
@@ -2594,6 +2597,7 @@ public class MethodHandles {
 		if ((null == expected) || (null == target)) {
 			throw new NullPointerException();
 		}
+		@SuppressWarnings("removal")
 		SecurityManager secmgr = System.getSecurityManager();
 		if (null != secmgr) {
 			secmgr.checkPermission(com.ibm.oti.util.ReflectPermissions.permissionSuppressAccessChecks);
