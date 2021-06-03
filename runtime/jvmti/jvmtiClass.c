@@ -1195,6 +1195,11 @@ redefineClassesCommon(jvmtiEnv* env,
 			/* Fix JNI */
 			fixJNIRefs(currentThread, classPairs, TRUE, extensionsUsed);
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+			/* Fix MemberNames (vmtarget) */
+			fixMemberNames(currentThread, classPairs);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 			/* Fix resolved constant pool references to point to new methods. */
 			fixConstantPoolsForFastHCR(currentThread, classPairs, methodPairs);
 
@@ -1253,6 +1258,11 @@ redefineClassesCommon(jvmtiEnv* env,
 			if (!extensionsUsed) {
 				fixVTables_forNormalRedefine(currentThread, classPairs, methodPairs, FALSE, &methodEquivalences);
 			}
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+			/* Fix MemberNames (vmtarget) */
+			fixMemberNames(currentThread, classPairs);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			/* Restore breakpoints in the implicitly replaced classes */
 			restoreBreakpointsInClasses(currentThread, classPairs);

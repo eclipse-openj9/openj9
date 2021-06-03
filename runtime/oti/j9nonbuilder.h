@@ -2247,6 +2247,16 @@ typedef struct J9ROMMethodHandleRef {
 #define MH_REF_INVOKEVIRTUAL  5
 #define MH_REF_PUTFIELD  3
 
+/* Constants mapped from java.lang.invoke.MethodHandleNatives$Constants
+ * These constants are validated by the MethodHandleNatives$Constants.verifyConstants()
+ * method when Java assertions are enabled
+ */
+#define MN_IS_METHOD		0x00010000
+#define MN_IS_CONSTRUCTOR	0x00020000
+#define MN_IS_FIELD			0x00040000
+#define MN_IS_TYPE			0x00080000
+#define MN_CALLER_SENSITIVE	0x00100000
+
 typedef struct J9ROMMethodRef {
 	U_32 classRefCPIndex;
 	J9SRP nameAndSignature;
