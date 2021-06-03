@@ -39,7 +39,7 @@ make _sanity.regular
 ```
 
 ## Prerequisites
-Please read [Prerequisites.md](./Prerequisites.md) for details on what 
+Please read [Prerequisites.md](./Prerequisites.md) for details on what
 tools should be installed on your test machine to run tests.
 
 # Tasks in OpenJ9 Test
@@ -48,27 +48,27 @@ tools should be installed on your test machine to run tests.
 
 #### Environment variables
 required:
-    
+
 ```
     TEST_JDK_HOME=<path to JDK directory that you wish to test>
     BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
 ```
-    
+
 optional:
-    
+
 ```
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test, could be auto detected)
     JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value, could be auto detected)
     JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value, could be auto detected)
     NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as TEST_JDK_HOME)
 ```
-    
+
 #### Auto detection
-  
+
 By default, AUTO_DETECT is turned on. SPEC, JDK_VERSION, and JDK_IMPL do not need to be exported.
 If you do not wish to use AUTO_DETECT and export SPEC, JDK_VERSION, and JDK_IMPL manually, you can export AUTO_DETECT to false.
 e.g.,
-    
+
 ```
     export AUTO_DETECT=false
     export SPEC=linux_x86-64_cmprssptrs
@@ -106,21 +106,21 @@ the format to use.
 
 - A test can be tagged with following elements:
       - level:   [sanity|extended|special] (extended default value)
-      - group:   [functional|system|openjdk|external|perf|jck] (required 
+      - group:   [functional|system|openjdk|external|perf|jck] (required
                  to provide one group per test)
       - type:    [regular|native] (if a test is tagged with native, it means this
-                 test needs to run with test image (native test libs); 
-                 NATIVE_TEST_LIBS needs to be set for local testing; if Grinder is used, 
-                 native test libs download link needs to be provided in addition to SDK 
-                 download link in CUSTOMIZED_SDK_URL; for details, please refer to 
-                 [How-to-Run-a-Grinder-Build-on-Jenkins](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins); 
+                 test needs to run with test image (native test libs);
+                 NATIVE_TEST_LIBS needs to be set for local testing; if Grinder is used,
+                 native test libs download link needs to be provided in addition to SDK
+                 download link in CUSTOMIZED_SDK_URL; for details, please refer to
+                 [How-to-Run-a-Grinder-Build-on-Jenkins](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins);
                  default to regular)
-      - impl:    [openj9|hotspot|ibm] (filter test based on exported JDK_IMPL 
-                 value; a test can be tagged with multiple impls at the 
+      - impl:    [openj9|hotspot|ibm] (filter test based on exported JDK_IMPL
+                 value; a test can be tagged with multiple impls at the
                  same time; default to all impls)
-      - version:  [8|8+|9|9+|10|10+|11|11+|Panama|Valhalla] (filter test based on 
-                 exported JDK_VERSION value; a test can be tagged with 
-                 multiple versions at the same time; if a test tagged with 
+      - version:  [8|8+|9|9+|10|10+|11|11+|Panama|Valhalla] (filter test based on
+                 exported JDK_VERSION value; a test can be tagged with
+                 multiple versions at the same time; if a test tagged with
                  a number (e.g., 8), it will used to match JDK_VERSION; if
                  a test tagged with a number followed by + sign, any JDK_VERSION
                  after the number will be a match; default to always match)
@@ -135,42 +135,42 @@ the format to use.
 
 #### Run a group of tests (where group can be functional|system|openjdk|external|perf) <br />
 make _group <br />
-e.g., 
+e.g.,
 ```
     make _functional
 ```
 
 #### Run a level of tests (where level can be sanity|extended|special) <br />
 make _level <br />
-e.g., 
+e.g.,
 ```
     make _sanity
 ```
 
 #### Run a type of test (where type can be regular|native) <br />
 make _type <br />
-e.g., 
+e.g.,
 ```
     make _native
 ```
 
 #### Run a level of tests with specified group <br />
 make _level.group <br />
-e.g., 
+e.g.,
 ```
     make _sanity.functional
 ```
 
 #### Run a level of tests with specified type <br />
 make _level.type <br />
-e.g., 
+e.g.,
 ```
     make _sanity.native
 ```
 
 #### Run a group of tests with specified type <br />
 make _group.type <br />
-e.g., 
+e.g.,
 ```
     make _functional.native
 ```
@@ -178,7 +178,7 @@ e.g.,
 #### Run a specified level, group and type together <br />
 make _level.group.type <br />
 note that with each '.' in the make target, the breadth of tests narrows (_sanity > _sanity.functional > _sanity.functional.native)
-e.g., 
+e.g.,
 ```
     make _sanity.functional.native
 ```
@@ -193,7 +193,7 @@ The suffix number refers to the variation in the playlist.xml file
 
 #### Run all variations in the test target <br />
 make _testTargetName <br />
-e.g., 
+e.g.,
 ```
     make _testExample
 ```
@@ -219,7 +219,7 @@ make _testList TESTLIST=jit_jitt,jit_recognizedMethod,testSCCMLTests2_1
 
 #### Run tests against specific (e.g., hotspot 8) SDK
 
-`<impl>` and `<version>` elements are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable).  
+`<impl>` and `<version>` elements are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable).
 
 For example, adding a `<versions><version>8</version></versions>` block into the [target definition of TestExample](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample/playlist.xml#L26-L49) would mean that test would only get run against jdk8 and would be skipped for other JDK versions.  If `<versions>` or `<impls>` are not included in the target definition, then it is assumed that ALL versions and implementations are valid for that test target.
 
@@ -264,13 +264,13 @@ Instead of having to manually create a PR to disable test targets, they can now 
 
 ```auto exclude test <testName>```
 
-If the testName matches the testCaseName defined in ```<testCaseName>``` element of playlist.xml, the entire test suite will be excluded. If the testName is testCaseName followed by _n, only the (n+1)th variation will be excluded. 
+If the testName matches the testCaseName defined in ```<testCaseName>``` element of playlist.xml, the entire test suite will be excluded. If the testName is testCaseName followed by _n, only the (n+1)th variation will be excluded.
 
 For example:
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <variations>
     <variation>NoOptions</variation>
     <variation>-Xmx1024m</variation>
@@ -316,7 +316,7 @@ For example:
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
   </disabled>
@@ -332,7 +332,7 @@ For example, to exclude the test case with variation ```-Xmx1024m```:
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
     <variation>-Xmx1024m</variation>
@@ -352,7 +352,7 @@ For example, to exclude the test for openj9 only:
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
     <impl>openj9</impl>
@@ -367,7 +367,7 @@ For example, to exclude the test for AdoptOpenJDK only:
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
     <vendor>adoptopenjdk</vendor>
@@ -382,7 +382,7 @@ For example, to exclude the test for java 11 and up:
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
     <version>11+</version>
@@ -398,7 +398,7 @@ For example, to exclude the test for all linux platforms:
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
     <plat>.*linux.*</plat>
@@ -414,7 +414,7 @@ For example, to exclude the test with variation ```-Xmx1024m``` against adoptope
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
     <variation>-Xmx1024m</variation>
@@ -432,7 +432,7 @@ For example, to exclude test on against hotspot and openj9. It is required to de
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
     <version>8</version>
@@ -450,7 +450,7 @@ Or remove ```<impl>``` element to exclude test against all implementations:
 
 ```
 <test>
-  <testCaseName>jdk_test</testCaseName> 
+  <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
     <version>8</version>
@@ -461,15 +461,15 @@ Or remove ```<impl>``` element to exclude test against all implementations:
 
 If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed by specifying the test target or adding `disabled` in front of its top-level test target.
 
-```    
-        make _disabled.testA    // testA has <disabled> tag in playlist.xml  
+```
+        make _disabled.testA    // testA has <disabled> tag in playlist.xml
         make _disabled.sanity.functional
         make _disabled.extended
 ```
 
 Disabled tests and reasons can also be printed through adding `echo.disabled` in front of regular target.
 
-```    
+```
         make _echo.disabled.testA
         make _echo.disabled.sanity.functional
         make _echo.disabled.extended
@@ -552,21 +552,21 @@ If a test is disabled, it means that this test is disabled using `<disabled>` ta
 
 #### Results in html files
 
-TestNG tests produce html (and xml) output from the tests are 
-created and stored in a test_output_xxxtimestamp folder in the 
-TKG directory (or from where you ran "make test"). 
+TestNG tests produce html (and xml) output from the tests are
+created and stored in a test_output_xxxtimestamp folder in the
+TKG directory (or from where you ran "make test").
 
-The output is organized by tests, each test having its own set of 
+The output is organized by tests, each test having its own set of
 output.  If you open the index.html file in a web browser, you will
-be able to see which tests passed, failed or were skipped, along 
-with other information like execution time and error messages, 
+be able to see which tests passed, failed or were skipped, along
+with other information like execution time and error messages,
 exceptions and logs from the individual test methods.
 
 #### TAP result files
 
-As some of the tests are not testNG or junit format, a simple standardized 
+As some of the tests are not testNG or junit format, a simple standardized
 format for test output was needed so that all tests are reported in
-the same way for a complete test summary. Depending on the 
+the same way for a complete test summary. Depending on the
 requirement there are three different diagnostic levels.
 
 		* export DIAGNOSTICLEVEL=failure
@@ -575,7 +575,7 @@ requirement there are three different diagnostic levels.
 			Log all detailed information no matter test failures or succeed
 		* export DIAGNOSTICLEVEL=nodetails
 			No need to log any detailed information. Top level TAP test result
-			summary is enough 
+			summary is enough
 
 ### 7. Attach a debugger
 
@@ -590,7 +590,7 @@ attach a debugger.
 ### 8. Move test into different make targets (layers)
 
 #### From extended to sanity (or vice versa)
-- For testng tests, change the group annotated at the top of the 
+- For testng tests, change the group annotated at the top of the
 test class from `level.extended` to `level.sanity`
 
 - Change `<level>` from `extended` to `sanity` in playlist.xml
@@ -606,16 +606,16 @@ A common scenario is that automated testing finds a failure and a developer is a
 * implementation the test fails against (JDK_IMPL)
 * SDK build that was used by the test (in the console output of the Jenkins job, there is java -version info and a link to the SDK used)
 
-A specific example, [Issue 6555](https://github.com/eclipse-openj9/openj9/issues/6555) Test_openjdk13_j9_sanity.system_ppc64le_linux TestIBMJlmRemoteMemoryAuth_0 crash 
+A specific example, [Issue 6555](https://github.com/eclipse-openj9/openj9/issues/6555) Test_openjdk13_j9_sanity.system_ppc64le_linux TestIBMJlmRemoteMemoryAuth_0 crash
 we get the following info (captured in the name of the issue):
 * TARGET = TestIBMJlmRemoteMemoryAuth_0
 * BUILD_LIST = system
 * JDK_VERSION = 13
-* JDK_IMPL = openj9 (its implied if the failure was found in openj9 testing at ci.eclipse.org/openj9)
+* JDK_IMPL = openj9 (its implied if the failure was found in openj9 testing at OpenJ9's Jenkins)
 * Jenkinsfile = openjdk_ppc64le_linux (corresponds to platform to run on)
 
 Since only a link to the Jenkins job was provided in the example issue 6555, we do not have java -version info, we will have to go to the job link to find out the exact SDK build, though it may be sufficient just to rerun the test with the latest nightly build to reproduce.  Given those pieces of information, we have enough to try and rerun this test, either in a Grinder job in Jenkins, or locally on a machine (on the same platform as the test failure).
 
-For more details on launching a Grinder job, you can see these instructions on [how to run a grinder job](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins).  
+For more details on launching a Grinder job, you can see these instructions on [how to run a grinder job](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins).
 
 To try and reproduce the failure locally, please check out this [wiki for guidance on reproducing failures locally](https://github.com/eclipse-openj9/openj9/wiki/Reproducing-Test-Failures-Locally) for details.
