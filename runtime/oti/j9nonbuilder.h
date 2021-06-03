@@ -2518,7 +2518,6 @@ typedef struct J9StackWalkState {
 	UDATA slotType;
 	struct J9VMThread* currentThread;
 	void* linearSlotWalker;
-	UDATA errorMode;
 	void* inlinedCallSite;
 	void* stackMap;
 	void* inlineMap;
