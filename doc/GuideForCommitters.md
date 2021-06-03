@@ -152,16 +152,16 @@ possible between them.
     
 3.  In the Eclipse OMR project, merge the OMR pull request.
 
-4.  Ensure you are logged in to the [Eclipse OpenJ9 Jenkins instance](https://ci.eclipse.org/openj9).
+4.  Ensure you are logged in to the [Eclipse OpenJ9 Jenkins instance](https://openj9-jenkins.osuosl.org/).
 
-5.  Launch a ["Mirror-OMR-To-OpenJ9-OMR Build"](https://ci.eclipse.org/openj9/job/Mirror-OMR-to-OpenJ9-OMR/)
+5.  Launch a ["Mirror-OMR-To-OpenJ9-OMR Build"](https://openj9-jenkins.osuosl.org/job/Mirror-OMR-to-OpenJ9-OMR/)
     job in the Eclipse OpenJ9 project by clicking "Build Now".  This will
     pull the latest Eclipse OMR project `master` branch into the
     [`eclipse-openj9/openj9-omr`](https://github.com/eclipse-openj9/openj9-omr) repo's
     `master` branch and automatically launch an OMR Acceptance Build at
     OpenJ9 Jenkins.
     
-6.  Cancel the [OMR Acceptance build](https://ci.eclipse.org/openj9/job/Pipeline-OMR-Acceptance/)
+6.  Cancel the [OMR Acceptance build](https://openj9-jenkins.osuosl.org/job/Pipeline-OMR-Acceptance/)
     that is automatically triggered by the previous step.  It is not
     necessary to wait for this build to finish because an equivalent 
     of the OMR Acceptance Build was already tested in Step 1.
@@ -170,7 +170,7 @@ possible between them.
     contains the Eclipse OMR commit you merged in Step 3.  Make note
     of the commit SHA for Step 8.
 
-8.  Launch a ["Promote_OMR"](https://ci.eclipse.org/openj9/job/Promote_OMR/)
+8.  Launch a ["Promote_OMR"](https://openj9-jenkins.osuosl.org/job/Promote_OMR/)
     job on the SHA of the commit that was just merged in the Eclipse
     OMR repo.
    
