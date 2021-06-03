@@ -1621,57 +1621,40 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto methodTypes = std::get<1>(recv);
          auto cpIndices = std::get<2>(recv);
          int32_t numMethods = methodTypes.size();
-         std::vector<J9Method *> ramMethods(numMethods);
+         std::vector<TR_OpaqueMethodBlock *> ramMethods(numMethods);
          std::vector<uint32_t> vTableOffsets(numMethods);
          std::vector<TR_ResolvedJ9JITServerMethodInfo> methodInfos(numMethods);
          for (int32_t i = 0; i < numMethods; ++i)
             {
             int32_t cpIndex = cpIndices[i];
             TR_ResolvedMethodType type = methodTypes[i];
-            J9Method *ramMethod = NULL;
+            TR_ResolvedJ9Method *resolvedMethod = NULL;
+            TR_OpaqueMethodBlock *ramMethod = NULL;
             uint32_t vTableOffset = 0;
             TR_ResolvedJ9JITServerMethodInfo methodInfo;
-            bool createMethod = false;
+            bool unresolvedInCP = false;
             switch (type)
                {
                case TR_ResolvedMethodType::VirtualFromCP:
                   {
-                  UDATA offset;
-                  ramMethod = (J9Method *) TR_ResolvedJ9Method::getVirtualMethod(fe, owningMethod->cp(), cpIndex, &offset, NULL);
-                  vTableOffset = offset;
-                  if (ramMethod && vTableOffset) createMethod = true;
+                  resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedPossiblyPrivateVirtualMethod(comp, cpIndex, true, &unresolvedInCP));
+                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot(cpIndex) : 0;
                   break;
                   }
                case TR_ResolvedMethodType::Static:
                   {
-                  TR::VMAccessCriticalSection resolveStaticMethodRef(fe);
-                  ramMethod = jitResolveStaticMethodRef(fe->vmThread(), owningMethod->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
-                  if (ramMethod) createMethod = true;
+                  resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedStaticMethod(comp, cpIndex, &unresolvedInCP));
                   break;
                   }
                case TR_ResolvedMethodType::Special:
                   {
-                  if (!((fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
-                                    comp->ilGenRequest().details().isMethodHandleThunk() &&
-                                    performTransformation(comp, "Setting as unresolved special call cpIndex=%d\n",cpIndex)))
-                     {
-                     TR::VMAccessCriticalSection resolveSpecialMethodRef(fe);
-                     ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), owningMethod->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
-                     }
-                  if (ramMethod) createMethod = true;
+                  resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedSpecialMethod(comp, cpIndex, &unresolvedInCP));
                   break;
                   }
                case TR_ResolvedMethodType::ImproperInterface:
                   {
-                  TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
-                  UDATA offset;
-                  ramMethod = jitGetImproperInterfaceMethodFromCP(
-                     fe->vmThread(),
-                     owningMethod->cp(),
-                     cpIndex,
-                     &offset);
-                  vTableOffset = offset;
-                  if (ramMethod) createMethod = true;
+                  resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedImproperInterfaceMethod(comp, cpIndex));
+                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot(cpIndex) : 0;
                   break;
                   }
                default:
@@ -1679,14 +1662,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                   break;
                   }
                }
-            if (createMethod)
-               TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(
-                  methodInfo,
-                  (TR_OpaqueMethodBlock *) ramMethod,
-                  vTableOffset,
-                  owningMethod,
-                  fe,
-                  trMemory);
+            if (resolvedMethod)
+               {
+               TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, resolvedMethod, fe);
+               ramMethod = resolvedMethod->getPersistentIdentifier();
+               }
             ramMethods[i] = ramMethod;
             vTableOffsets[i] = vTableOffset;
             methodInfos[i] = methodInfo;

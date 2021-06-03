@@ -1797,7 +1797,7 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolv
 
    // 2. Send a remote query to mirror all uncached resolved methods
    _stream->write(JITServer::MessageType::ResolvedMethod_getMultipleResolvedMethods, (TR_ResolvedJ9Method *) _remoteMirror, methodTypes, cpIndices);
-   auto recv = _stream->read<std::vector<J9Method *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITServerMethodInfo>>();
+   auto recv = _stream->read<std::vector<TR_OpaqueMethodBlock *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITServerMethodInfo>>();
 
    // 3. Cache all received resolved methods
    auto &ramMethods = std::get<0>(recv);
@@ -1816,10 +1816,11 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolv
          {
          compInfoPT->cacheResolvedMethod(
             key,
-            (TR_OpaqueMethodBlock *) ramMethods[i],
+            ramMethods[i],
             vTableOffsets[i],
             methodInfos[i],
-            ttlForUnresolved);
+            ttlForUnresolved
+            );
          }
       }
    }
