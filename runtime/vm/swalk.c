@@ -151,8 +151,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	swPrintf(walkState, 1, "\n");
 	swPrintf(walkState, 1, "*** BEGIN STACK WALK, flags = %p, walkThread = %p, walkState = %p ***\n", walkState->flags, walkState->walkThread, walkState);
 
-	if (walkState->flags & J9_STACKWALK_NO_ERROR_REPORT) swPrintf(walkState, 2, "\tNO_ABORT\n");
-	if (walkState->flags & J9_STACKWALK_RESUME) swPrintf(walkState, 2, "\tRESUME\n");
+	if (walkState->flags & J9_STACKWALK_RESUME) swPrintf(walkState, 2, "\tJ9_STACKWALK_RESUME\n");
 	if (walkState->flags & J9_STACKWALK_START_AT_JIT_FRAME) swPrintf(walkState, 2, "\tSTART_AT_JIT_FRAME\n");
 	if (walkState->flags & J9_STACKWALK_CACHE_CPS) swPrintf(walkState, 2, "\tCACHE_CPS\n");
 	if (walkState->flags & J9_STACKWALK_CACHE_PCS) swPrintf(walkState, 2, "\tCACHE_PCS\n");
@@ -1475,15 +1474,13 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 	errorCode = vm->localMapFunction(PORTLIB, romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
 
 	if (errorCode < 0) {
-		if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
-			/* Local map failed, result = %p - aborting VM - needs new message TBD */
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_STACK_MAP_FAILED, errorCode);
+		/* Local map failed, result = %p - aborting VM - needs new message TBD */
+		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_STACK_MAP_FAILED, errorCode);
 #if defined(J9VM_INTERP_STACKWALK_TRACING)
-			Assert_VRB_stackMapFailed();
+		Assert_VRB_stackMapFailed();
 #else
-			Assert_VM_stackMapFailed();
+		Assert_VM_stackMapFailed();
 #endif
-		}
 	}
 
 	return;
@@ -1498,15 +1495,13 @@ getStackMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * r
 
 	errorCode = j9stackmap_StackBitsForPC(PORTLIB, offsetPC, romClass, romMethod, result, pushCount, walkState->walkThread->javaVM, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
 	if (errorCode < 0) {
-		if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
-			/* Local map failed, result = %p - aborting VM */
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_STACK_MAP_FAILED, errorCode);
+		/* Local map failed, result = %p - aborting VM */
+		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_STACK_MAP_FAILED, errorCode);
 #if defined(J9VM_INTERP_STACKWALK_TRACING)
-			Assert_VRB_stackMapFailed();
+		Assert_VRB_stackMapFailed();
 #else
-			Assert_VM_stackMapFailed();
+		Assert_VM_stackMapFailed();
 #endif
-		}
 	}
 	return;
 }
@@ -1571,11 +1566,9 @@ dropToCurrentFrame(J9StackWalkState * walkState)
 void
 invalidJITReturnAddress(J9StackWalkState *walkState)
 {
-	if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
-		PORT_ACCESS_FROM_WALKSTATE(walkState);
-		j9tty_printf(PORTLIB, "\n\n*** Invalid JIT return address %p in %p\n\n", walkState->pc, walkState);
-		Assert_VM_unreachable();
-	}
+	PORT_ACCESS_FROM_WALKSTATE(walkState);
+	j9tty_printf(PORTLIB, "\n\n*** Invalid JIT return address %p in %p\n\n", walkState->pc, walkState);
+	Assert_VM_unreachable();
 }
 #endif
 
