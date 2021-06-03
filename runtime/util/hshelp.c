@@ -90,6 +90,9 @@ static int compareClassDepth (const void *leftPair, const void *rightPair);
 static UDATA utfsAreIdentical(J9UTF8 * utf1, J9UTF8 * utf2);
 static UDATA areUTFPairsIdentical(J9UTF8 * leftUtf1, J9UTF8 * leftUtf2, J9UTF8 * rightUtf1, J9UTF8 * rightUtf2);
 static jvmtiError fixJNIMethodID(J9VMThread *currentThread, J9Method *oldMethod, J9Method *newMethod, BOOLEAN equivalent, UDATA extensionsUsed);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+static jvmtiIterationControl fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 static jvmtiIterationControl fixHeapRefsHeapIteratorCallback(J9JavaVM *vm, J9MM_IterateHeapDescriptor *heapDesc, void *userData);
 static jvmtiIterationControl fixHeapRefsSpaceIteratorCallback(J9JavaVM *vm, J9MM_IterateSpaceDescriptor *spaceDesc, void *userData);
@@ -1699,6 +1702,74 @@ fixJNIRefs(J9VMThread * currentThread, J9HashTable * classPairs, BOOLEAN fastHCR
 		classPair = hashTableNextDo(&hashTableState);
 	}
 }
+
+
+typedef struct J9ThreadHashPair {
+	J9VMThread *currentThread;
+	void *userData;
+} J9ThreadHashPair;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+void
+fixMemberNames(J9VMThread * currentThread, J9HashTable * classHashTable)
+{
+	if (NULL != classHashTable) {
+		PORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+
+		J9ThreadHashPair data;
+		data.currentThread = currentThread;
+		data.userData = classHashTable;
+
+		/* iterate over all objects fixing up vmtarget refs if object is a MemberName */
+		currentThread->javaVM->memoryManagerFunctions->j9mm_iterate_all_objects(currentThread->javaVM, PORTLIB, 0, fixMemberNamesObjectIteratorCallback, &data);
+	}
+}
+
+static jvmtiIterationControl
+fixMemberNamesObjectIteratorCallback(J9JavaVM *vm, J9MM_IterateObjectDescriptor *objectDesc, void *userData)
+{
+	J9ThreadHashPair *data = userData;
+	J9VMThread *currentThread = data->currentThread;
+	J9HashTable *classHashTable = data->userData;
+	j9object_t object = objectDesc->object;
+	J9Class *clazz = J9OBJECT_CLAZZ_VM(vm, object);
+
+	if (clazz == J9VMJAVALANGINVOKEMEMBERNAME_OR_NULL(vm)) {
+		U_64 vmindex = J9OBJECT_U64_LOAD(currentThread, object, vm->vmindexOffset);
+		if (0 != vmindex) {
+			J9JVMTIClassPair exemplar;
+			J9JVMTIClassPair *result = NULL;
+
+			j9object_t membernameClazz = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, object);
+			exemplar.replacementClass.ramClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, membernameClazz);
+			result = hashTableFind(classHashTable, &exemplar);
+			if (NULL != result) {
+				jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, object);
+				if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
+					/* Update vmtarget to vmindex->offset */
+					J9JNIFieldID *fieldID = (J9JNIFieldID *)(UDATA)vmindex;
+					J9ROMFieldShape *romField = fieldID->field;
+					UDATA offset = fieldID->offset;
+
+					if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
+						offset |= J9_SUN_STATIC_FIELD_OFFSET_TAG;
+						if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccFinal)) {
+							offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
+						}
+					}
+					J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)offset);
+				} else if (J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR)) {
+					/* Update vmtarget to vmindex->method */
+					J9JNIMethodID *methodID = (J9JNIMethodID *)(UDATA)vmindex;
+					J9OBJECT_U64_STORE(currentThread, object, vm->vmtargetOffset, (U_64)(UDATA)methodID->method);
+				}
+			}
+		}
+	}
+
+	return JVMTI_ITERATION_CONTINUE;
+}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 
 /**
