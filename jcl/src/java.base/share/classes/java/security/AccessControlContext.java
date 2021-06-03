@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -376,6 +376,7 @@ public AccessControlContext(AccessControlContext acc, DomainCombiner combiner) {
  */
 AccessControlContext(AccessControlContext acc, DomainCombiner combiner, boolean preauthorized) {
 	if (!preauthorized) {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (null != security) {
 			security.checkPermission(SecurityConstants.CREATE_ACC_PERMISSION);
@@ -894,6 +895,7 @@ public int hashCode() {
  *      when the caller doesn't have the  "getDomainCombiner" SecurityPermission
  */
 public DomainCombiner getDomainCombiner() {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(SecurityConstants.GET_COMBINER_PERMISSION);

@@ -127,7 +127,7 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 		currentThread->jitArtifactSearchCache = (void*)((UDATA)currentThread->jitArtifactSearchCache | J9_STACKWALK_NO_JIT_CACHE);
 		walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY
 			| J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET | J9_STACKWALK_COUNT_SPECIFIED
-			| J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_NO_ERROR_REPORT;
+			| J9_STACKWALK_ITERATE_FRAMES;
 		walkState.userData1 = (void*)parms->trace->frames;
 		walkState.frameWalkFunction = asyncFrameIterator;
 		UDATA result = BFUjavaVM->walkStackFrames(currentThread, &walkState);

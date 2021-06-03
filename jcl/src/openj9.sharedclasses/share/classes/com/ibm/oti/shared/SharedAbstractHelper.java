@@ -77,6 +77,7 @@ public abstract class SharedAbstractHelper implements SharedHelper {
 	}
 
 	static boolean checkReadPermission(ClassLoader loader) {
+		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (sm!=null) {
 			return checkPermission(sm, loader, "read"); //$NON-NLS-1$
@@ -85,6 +86,7 @@ public abstract class SharedAbstractHelper implements SharedHelper {
 	}
 	
 	static boolean checkWritePermission(ClassLoader loader) {
+		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (sm!=null) {
 			return checkPermission(sm, loader, "write"); //$NON-NLS-1$

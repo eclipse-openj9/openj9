@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -360,6 +360,7 @@ public class MemoryPoolMXBeanImpl implements MemoryPoolMXBean {
 	 */
 	@Override
 	public void resetPeakUsage() {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -385,6 +386,7 @@ public class MemoryPoolMXBeanImpl implements MemoryPoolMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05EE")); //$NON-NLS-1$
 		}
 
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
@@ -419,6 +421,7 @@ public class MemoryPoolMXBeanImpl implements MemoryPoolMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05EF")); //$NON-NLS-1$
 		}
 
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);

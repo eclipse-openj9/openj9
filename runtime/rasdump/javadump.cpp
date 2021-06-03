@@ -4495,13 +4495,13 @@ JavaCoreDumpWriter::writeThread(J9VMThread* vmThread, J9PlatformThread *nativeTh
 				J9_STACKWALK_ITERATE_FRAMES |
 				J9_STACKWALK_INCLUDE_NATIVES |
 				J9_STACKWALK_VISIBLE_ONLY |
-				J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET |
-				J9_STACKWALK_NO_ERROR_REPORT;
+				J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET;
 
 			stackWalkState.skipCount = 0;
 			stackWalkState.userData1 = (void*)this;
 			stackWalkState.userData2 = &depth; /* Use this for a depth count. */
 			stackWalkState.frameWalkFunction = writeFrameCallBack;
+			stackWalkState.errorMode = J9_STACKWALK_ERROR_MODE_IGNORE;
 			stackWalkState.userData3 = &monitorInfos;
 			stackWalkState.userData4 = (void *) monitorCount;
 

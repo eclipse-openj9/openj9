@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2020 IBM Corp. and others
+ * Copyright (c) 2006, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -496,6 +496,7 @@ public class Dump {
 
 	private static void checkDumpSecurityPermssion() throws SecurityException {
 		/* Check the caller has DumpPermission. */
+		@SuppressWarnings("removal")
 		SecurityManager manager = System.getSecurityManager();
 		if( manager != null ) {
 			manager.checkPermission(DUMP_PERMISSION);
@@ -504,6 +505,7 @@ public class Dump {
 
 	private static void checkToolSecurityPermssion() throws SecurityException {
 		/* Check the caller has DumpPermission. */
+		@SuppressWarnings("removal")
 		SecurityManager manager = System.getSecurityManager();
 		if( manager != null ) {
 			manager.checkPermission(TOOL_DUMP_PERMISSION);

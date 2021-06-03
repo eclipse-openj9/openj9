@@ -423,6 +423,7 @@ private Thread(ThreadGroup group, Runnable runnable, String threadName, AccessCo
 
 /*[PR 1FEO92F] (dup of 1FC0TRN) */
 	if (group == null) {
+		@SuppressWarnings("removal")
 		SecurityManager currentManager = System.getSecurityManager();
 		 // if there is a security manager...
 		if (currentManager != null)
@@ -473,6 +474,7 @@ private void initialize(boolean booting, ThreadGroup threadGroup, Thread parentT
 		}
 
 		/*[PR CMVC 90230] enableContextClassLoaderOverride check added in 1.5 */
+		@SuppressWarnings("removal")
 		final SecurityManager sm = System.getSecurityManager();
 		final Class implClass = getClass();
 		final Class thisClass = Thread.class;
@@ -571,6 +573,7 @@ public static int activeCount(){
  * @see			java.lang.SecurityManager
  */
 public final void checkAccess() {
+	@SuppressWarnings("removal")
 	SecurityManager currentManager = System.getSecurityManager();
 	if (currentManager != null) currentManager.checkAccess(this);
 }
@@ -664,6 +667,7 @@ public static int enumerate(Thread[] threads) {
 public ClassLoader getContextClassLoader() {
 /*[PR 1FCA807]*/
 /*[PR 1FDTAMT] use callerClassLoader()*/
+	@SuppressWarnings("removal")
 	SecurityManager currentManager = System.getSecurityManager();
 	 // if there is a security manager...
 	if (currentManager != null) {
@@ -722,6 +726,7 @@ public final ThreadGroup getThreadGroup() {
  * @see			Thread#isInterrupted
  */
 public void interrupt() {
+	@SuppressWarnings("removal")
 	SecurityManager currentManager = System.getSecurityManager();
 
 	if (currentManager != null) {
@@ -993,6 +998,7 @@ public void run() {
  */
 public void setContextClassLoader(ClassLoader cl) {
 /*[PR 1FCA807]*/
+	@SuppressWarnings("removal")
 	SecurityManager currentManager = System.getSecurityManager();
 	 // if there is a security manager...
 	if (currentManager != null) {
@@ -1366,6 +1372,7 @@ private native Throwable getStackTraceImpl();
  */
 public StackTraceElement[] getStackTrace() {
 	if (Thread.currentThread() != this) {
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null)
 			security.checkPermission(SecurityConstants.GET_STACK_TRACE_PERMISSION); //$NON-NLS-1$
@@ -1393,6 +1400,7 @@ public StackTraceElement[] getStackTrace() {
  * @see #getStackTrace()
  */
 public static Map<Thread, StackTraceElement[]> getAllStackTraces() {
+	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		security.checkPermission(SecurityConstants.GET_STACK_TRACE_PERMISSION);

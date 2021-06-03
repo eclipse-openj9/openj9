@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar17 & !Sidecar19-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION == 8]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,6 +240,7 @@ public class ManagementFactory {
 	 */
 	public static MBeanServer getPlatformMBeanServer() {
 		/*[PR CMVC 93006]*/
+		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
