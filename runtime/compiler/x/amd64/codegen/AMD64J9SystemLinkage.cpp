@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,7 +163,7 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(
       // adjust sp is necessary, because for java, the stack is native stack, not java stack.
       // we need to restore native stack sp properly to the correct place.
       TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
-      TR_X86OpCodes op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? ADDRegImms() : ADDRegImm4();
+      TR::InstOpCode::Mnemonic op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? ADDRegImms() : ADDRegImm4();
       generateRegImmInstruction(op, callNode, espReal, memoryArgSize, cg());
       }
 
