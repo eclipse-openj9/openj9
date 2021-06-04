@@ -107,17 +107,25 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 	vmFuncs->internalExitVMToJNI(currentThread);
 	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_HIDDEN)) {
 		options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE);
+		if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_NESTMATE)) {
+			options |= J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE;
+		}
+		if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_STRONG)) {
+			options |= J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG;
+		} else {
+			options |= J9_FINDCLASS_FLAG_ANON;
+		}
 	} else {
 		/* Validate the name for a normal (non-hidden) class. */
 		validateName = TRUE;
-	}
-	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_NESTMATE)) {
-		options |= J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE;
-	}
-	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_STRONG)) {
-		options |= J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG;
-	} else {
-		options |= J9_FINDCLASS_FLAG_ANON;
+		if (NULL == protectionDomain) {
+			/*
+			 * Only trusted code has access to JavaLangAccess.defineClass();
+			 * callers only provide a NULL protectionDomain when exemptions
+			 * are required.
+			 */
+			options |= J9_FINDCLASS_FLAG_UNSAFE;
+		}
 	}
 	
 	jsize length = env->GetArrayLength(classRep);
