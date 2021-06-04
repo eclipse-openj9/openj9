@@ -543,10 +543,10 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             J9_STACKWALK_VISIBLE_ONLY |
             J9_STACKWALK_SKIP_INLINES |
             J9_STACKWALK_COUNT_SPECIFIED |
-            J9_STACKWALK_ITERATE_FRAMES
+            J9_STACKWALK_ITERATE_FRAMES |
+            J9_STACKWALK_NO_ERROR_REPORT
             );
          walkState.frameWalkFunction = jitDumpStackFrameIterator;
-         walkState.errorMode = J9_STACKWALK_ERROR_MODE_IGNORE;
 
          crashedThread->javaVM->walkStackFrames(crashedThread, &walkState);
          }
