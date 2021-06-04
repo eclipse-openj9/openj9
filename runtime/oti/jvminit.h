@@ -396,6 +396,11 @@ enum INIT_STAGE {
 #define VMOPT_XXDISABLEVALHALLA "-XX:-EnableValhalla"
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#define VMOPT_XXENABLECRIU "-XX:+EnableCRIUSupport"
+#define VMOPT_XXDISABLECRIU "-XX:-EnableCRIUSupport"
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 /* Option to turn on exception on synchronization on instances of value-based classes */
 #define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1 "-XX:DiagnoseSyncOnValueBasedClasses=1"
 /* Option to turn on warning on synchronization on instances of value-based classes */

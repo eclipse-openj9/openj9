@@ -123,6 +123,8 @@ option(J9VM_MODULE_WINDBG "Enables compilation of the windbg module.")
 option(J9VM_MODULE_ZIP "Enables compilation of the zip module.")
 option(J9VM_MODULE_ZLIB "Enables compilation of the zlib module.")
 
+option(J9VM_OPT_CRIU_SUPPORT "Enables support for CRIU Java API's")
+
 j9vm_shadowed_option(J9VM_OPT_CUDA "Add support for CUDA")
 
 option(J9VM_OPT_DYNAMIC_LOAD_SUPPORT "Determines if the dynamic loader is included.")
