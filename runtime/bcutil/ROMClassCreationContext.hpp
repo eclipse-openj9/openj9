@@ -402,7 +402,6 @@ public:
 				U_16 classNameLenToCompare0 = (U_16)_classNameLength;
 				U_16 classNameLenToCompare1 = classNameLength;
 				BOOLEAN misMatch = FALSE;
-				BOOLEAN isInjectedInvoker = FALSE;
 				if (isClassHidden()) {
 					if (isROMClassShareable()) {
 						U_8* lambdaClass0 = (U_8*)getLastDollarSignOfLambdaClassName((const char*)_className, _classNameLength);
@@ -426,33 +425,9 @@ public:
 						/* for hidden class className has ROM address appended at the end, _className does not have that */
 						classNameLenToCompare1 = (U_16)_classNameLength;
 					}
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-#define J9_INJECTED_INVOKER_CLASSNAME_BYTECODE "InjectedInvoker/0x0"
-#define J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS "$$InjectedInvoker"
-					if (0 == memcmp(
-							className, J9_INJECTED_INVOKER_CLASSNAME_BYTECODE,
-							LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME_BYTECODE))
-					) {
-						/* className has InjectedInvoker/0x0000000000000000. */
-						U_8 *start = _className + _classNameLength
-								- LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS);
-						if (0 == memcmp(
-								start, J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS,
-								LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS))
-						) {
-#undef J9_INJECTED_INVOKER_CLASSNAME_ROMCLASS
-#undef J9_INJECTED_INVOKER_CLASSNAME_BYTECODE
-							/* _className has $$InjectedInvoker at the end. */
-							isInjectedInvoker = TRUE;
-						} else {
-							misMatch = TRUE;
-						}
-					}
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 				}
-				if (!isInjectedInvoker
-					&& (misMatch
-						|| (!J9UTF8_DATA_EQUALS(_className, classNameLenToCompare0, className, classNameLenToCompare1)))
+				if (misMatch
+				|| !J9UTF8_DATA_EQUALS(_className, classNameLenToCompare0, className, classNameLenToCompare1)
 				) {
 #define J9WRONGNAME " (wrong name: "
 					PORT_ACCESS_FROM_PORT(_portLibrary);

@@ -20,7 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-[Eclipse OpenJ9 Jenkins Builds](https://ci.eclipse.org/openj9/)
+[Eclipse OpenJ9 Jenkins Builds](https://openj9-jenkins.osuosl.org/)
 
 This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkins builds.
 
@@ -159,7 +159,7 @@ In this section:
 
 #### Pull Requests
 
-Pull Requests for all platforms and versions are available [**here**](https://ci.eclipse.org/openj9/view/Pull%20Requests/).
+Pull Requests for all platforms and versions are available [**here**](https://openj9-jenkins.osuosl.org/view/Pull%20Requests/).
 
 For Compile & Test PRs, there is a single top level job (for each repository) that connects Jenkins and the Github repo.
 This job will trigger downstream jobs based on what is requested in the pull request trigger comment (ghprbCommentBody)
@@ -194,7 +194,7 @@ Other PR jobs
 
 #### Pipelines
 
-Pipelines for all platforms and versions are available [**here**](https://ci.eclipse.org/openj9/view/Pipelines/).
+Pipelines for all platforms and versions are available [**here**](https://openj9-jenkins.osuosl.org/view/Pipelines/).
 
 - Any platform and version pipeline:
     - Name: Pipeline-Build-Test-JDK`<version>`-`<platform>`
@@ -207,7 +207,7 @@ Pipelines for all platforms and versions are available [**here**](https://ci.ecl
         - build periodically, @midnight
 
 - Pipeline-OMR-Acceptance
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Pipeline-OMR-Acceptance)](https://ci.eclipse.org/openj9/job/Pipeline-OMR-Acceptance)
+    - [![Build Status](https://openj9-jenkins.osuosl.org/buildStatus/icon?job=Pipeline-OMR-Acceptance)](https://openj9-jenkins.osuosl.org/job/Pipeline-OMR-Acceptance)
     - Description:
         - Compile and run sanity tests against new OMR content
         - Triggers:
@@ -217,7 +217,7 @@ Pipelines for all platforms and versions are available [**here**](https://ci.ecl
 
 #### Build
 
-Build pipelines for all platforms and versions are available [**here**](https://ci.eclipse.org/openj9/view/Build/).
+Build pipelines for all platforms and versions are available [**here**](https://openj9-jenkins.osuosl.org/view/Pipelines/).
 
 - Any platform and version build pipeline:
     - Name: Build-JDK`<version>`-`<platform>`
@@ -227,11 +227,11 @@ Build pipelines for all platforms and versions are available [**here**](https://
     - Trigger:
         - This job is used in other pipelines but can be launched manually
 
-**Note:** Windows 32 is available only for JDK8. Thus the only available build for win_x86 platform (Windows 32bits) is [Build-JDK8-win_x86](https://ci.eclipse.org/openj9/view/Build/job/Build-JDK8-win_x86/).
+**Note:** Windows 32 is available only for JDK8. Thus the only available build for win_x86 platform (Windows 32bits) is [Build_JDK8_x86-32_windows_Nightly](https://openj9-jenkins.osuosl.org/job/Build_JDK8_x86-32_windows_Nightly/).
 
 #### Test
 
-Test pipelines for all platforms and versions are available [**here**](https://ci.eclipse.org/openj9/view/Test/).
+Test pipelines for all platforms and versions are available [**here**](https://openj9-jenkins.osuosl.org/view/Test/).
 
 - Any platform and version build pipeline:
     - Name: Test-`<sanity|extended>.<functional|system>`-JDK`<version>`-`<platform>`
@@ -245,10 +245,10 @@ The [Running AdoptOpenJDK Tests](https://github.com/AdoptOpenJDK/openjdk-tests/b
 
 #### Infrastructure
 
-Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/view/Infrastructure/)
+Infrastructure pipelines are available [**here**](https://openj9-jenkins.osuosl.org/view/Infrastructure/)
 
 - Mirror-OMR-to-OpenJ9-OMR
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Mirror-OMR-to-OpenJ9-OMR)](https://ci.eclipse.org/openj9/job/Mirror-OMR-to-OpenJ9-OMR)
+    - [![Build Status](https://openj9-jenkins.osuosl.org/buildStatus/icon?job=Mirror-OMR-to-OpenJ9-OMR)](https://openj9-jenkins.osuosl.org/job/Mirror-OMR-to-OpenJ9-OMR)
     - Description:
         - Mirrors [eclipse/omr/master](https://github.com/eclipse/omr/tree/master) to [eclipse-openj9/openj9-omr/master](https://github.com/eclipse-openj9/openj9-omr/tree/master)
         - Triggers `Pipeline-OMR-Acceptance` when there is new content
@@ -256,14 +256,14 @@ Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/
         - Build periodically, 15 minutes
 
 - Promote_OMR
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Promote_OMR)](https://ci.eclipse.org/openj9/job/Promote_OMR)
+    - [![Build Status](https://openj9-jenkins.osuosl.org/buildStatus/icon?job=Promote_OMR)](https://openj9-jenkins.osuosl.org/job/Promote_OMR)
     - Description:
         - Promotes eclipse-openj9/openj9-omr branch master to branch openj9
     - Trigger:
         - Last step of `Pipeline-OMR-Acceptance`
 
-- Mirror-OpenJ9-Website-to-Eclipse
-    - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Mirror-OpenJ9-Website-to-Eclipse)](https://ci.eclipse.org/openj9/job/Mirror-OpenJ9-Website-to-Eclipse)
+- Deploy-OpenJ9-Website-to-Eclipse
+    - [![Build Status](https://openj9-jenkins.osuosl.org/buildStatus/icon?job=Deploy-OpenJ9-Website-to-Eclipse)](https://openj9-jenkins.osuosl.org/job/Deploy-OpenJ9-Website-to-Eclipse)
     - Description:
         - Mirrors [github.com/eclipse-openj9/openj9-website](https://github.com/eclipse-openj9/openj9-website/tree/master) to the Eclipse.org repo
     - Trigger:

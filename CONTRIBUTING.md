@@ -61,26 +61,26 @@ Following these guidelines will help us merge your pull requests smoothly:
    [release notes](https://github.com/eclipse-openj9/openj9/tree/master/doc/release-notes) for the next release with a
    short summary of the change. Examples of an external change include
    a new command line option, a change in behavior, or a restriction.
-   
+
    A [pull request](https://github.com/eclipse-openj9/openj9-docs/pulls) to update the documentation is required. Do your best
    to make appropriate updates, and the reviewers will help guide the necessary doc changes.
 
 5. Please carefully read and adhere to the legal considerations and
    copyright/license requirements outlined below.
-   
-   
+
+
 ## Building and testing
 
 In order to build OpenJ9, see the [build instructions](https://github.com/eclipse-openj9/openj9/tree/master/doc/build-instructions).
 Once the build system is prepared, building consists of a few simple steps. If
 building the original source fails, check the [level of the compiler](https://eclipse.github.io/openj9-docs/openj9_support/)
-being used. 
+being used.
 
 
 There are a large number of test cases that are run automatically as part of
 the Eclipse OpenJ9 build and test pipeline. The tests can be triggered by
 committers from pull requests. You can see the latest results on the
-[Eclipse OpenJ9 Jenkins instance](https://ci.eclipse.org/openj9/).
+[Eclipse OpenJ9 Jenkins instance](https://openj9-jenkins.osuosl.org/).
 
 The tests can also be run manually on your own machine, refer to the
 [OpenJ9 test quick start guide](https://github.com/eclipse-openj9/openj9/blob/master/test/README.md).

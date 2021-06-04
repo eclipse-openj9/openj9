@@ -130,7 +130,7 @@ private:
 	InterfaceInjectionInfo _interfaceInjectionInfo;
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
-	BuildResult handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, U_8* hostPackageName, UDATA hostPackageLength);
+	BuildResult handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, ROMClassCreationContext *context);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	BuildResult injectInterfaces(ClassFileOracle *classFileOracle);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
