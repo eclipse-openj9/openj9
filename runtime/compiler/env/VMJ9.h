@@ -903,6 +903,14 @@ public:
 
    /*
     * \brief
+    *    tell whether a field was annotated as @Stable
+    * \fieldRef
+    *    symbol reference of the field
+    */
+   virtual bool isStable(TR::Symbol *field, int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp);
+
+   /*
+    * \brief
     *    tell whether it's possible to dereference a field given the field symbol at compile time
     *
     * \fieldSymbol
