@@ -350,14 +350,31 @@ public:
 			_anonClassName = J9ROMCLASS_CLASSNAME(_romClass);
 			U_16 anonNameLength = J9UTF8_LENGTH(_anonClassName);
 			U_16 originalNameLength = anonNameLength - ROM_ADDRESS_LENGTH - 1;
+			U_8 *anonClassNameData = J9UTF8_DATA(_anonClassName);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+#define J9_INJECTED_INVOKER_CLASSNAME "InjectedInvoker"
+			/* ROM class format: <HOST_NAME>/InjectedInvoker/<ROM_ADDRESS_LENGTH>.
+			 * Search for InjectedInvoker in _anonClassName using the above format.
+			 * If found, reset the class name to "InjectedInvoker" in the class file.
+			 */
+			IDATA startIndex = anonNameLength - LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME) - ROM_ADDRESS_LENGTH - 1;
+			U_8 *start = anonClassNameData + startIndex;
+			if ((startIndex >= 0)
+			&& (0 == memcmp(start, J9_INJECTED_INVOKER_CLASSNAME, LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME)))
+			) {
+				originalNameLength = LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME);
+				anonClassNameData = (U_8 *)J9_INJECTED_INVOKER_CLASSNAME;
+			}
+#undef J9_INJECTED_INVOKER_CLASSNAME
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			/* nameLength field + nameBytes field + NULL terminator */
-			_originalClassName = (J9UTF8*) j9mem_allocate_memory(sizeof(U_16) + originalNameLength + 1, J9MEM_CATEGORY_CLASSES);
+			_originalClassName = (J9UTF8 *)j9mem_allocate_memory(sizeof(U_16) + originalNameLength + 1, J9MEM_CATEGORY_CLASSES);
 			if (NULL == _originalClassName) {
 				_buildResult = OutOfMemory;
 			} else {
 				J9UTF8_SET_LENGTH(_originalClassName, originalNameLength);
-				memcpy(((U_8*) J9UTF8_DATA(_originalClassName)), J9UTF8_DATA(_anonClassName), originalNameLength);
-				*(((U_8*) J9UTF8_DATA(_originalClassName)) + originalNameLength) = '\0';
+				memcpy(((U_8 *)J9UTF8_DATA(_originalClassName)), anonClassNameData, originalNameLength);
+				*(((U_8 *)J9UTF8_DATA(_originalClassName)) + originalNameLength) = '\0';
 			}
 		}
 		if (isOK()) {
