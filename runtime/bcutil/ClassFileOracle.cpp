@@ -61,6 +61,11 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 #define VALUEBASED_SIGNATURE "Ljdk/internal/ValueBased;"
 		{VALUEBASED_SIGNATURE, sizeof(VALUEBASED_SIGNATURE)},
 #undef VALUEBASED_SIGNATURE
+#if JAVA_SPEC_VERSION >= 16
+#define SCOPED_SIGNATURE "Ljdk/internal/misc/ScopedMemoryAccess$Scoped;"
+		{SCOPED_SIGNATURE, sizeof(SCOPED_SIGNATURE)},
+#undef SCOPED_SIGNATURE
+#endif /* JAVA_SPEC_VERSION >= 16 */
 		{0, 0}
 };
 
@@ -829,6 +834,9 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 			knownAnnotations = addAnnotationBit(knownAnnotations, FRAMEITERATORSKIP_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, SUN_REFLECT_CALLERSENSITIVE_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, JDK_INTERNAL_REFLECT_CALLERSENSITIVE_ANNOTATION);
+#if JAVA_SPEC_VERSION >= 16
+			knownAnnotations = addAnnotationBit(knownAnnotations, SCOPED_ANNOTATION);
+#endif /* JAVA_SPEC_VERSION >= 16*/
 
 			J9CfrAttributeRuntimeVisibleAnnotations *attribAnnotations = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == attribAnnotations->rawDataLength) { /* rawDataLength non-zero in case of error in the attribute */
@@ -844,6 +852,12 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 						_methodsInfo[methodIndex].modifiers |= J9AccMethodFrameIteratorSkip;
 					}
 				}
+#if JAVA_SPEC_VERSION >= 16
+				if (containsKnownAnnotation(foundAnnotations, SCOPED_ANNOTATION)) {
+					/* J9AccMethodHasExtendedModifiers in the modifiers is set when the ROM class is written */
+					_methodsInfo[methodIndex].extendedModifiers |= CFR_METHOD_EXT_HAS_SCOPED_ANNOTATION;
+				}
+#endif /* JAVA_SPEC_VERSION >= 16*/
 			}
 			_methodsInfo[methodIndex].annotationsAttribute = attribAnnotations;
 			_methodsInfo[methodIndex].modifiers |= J9AccMethodHasMethodAnnotations;
