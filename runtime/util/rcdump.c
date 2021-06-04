@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1381,6 +1381,16 @@ printMethodExtendedModifiers(J9PortLibrary *portLib, U_32 modifiers)
 			j9tty_printf(PORTLIB, " ");
 		}
 	}
+
+#if JAVA_SPEC_VERSION >= 16
+	if (J9_ARE_ANY_BITS_SET(modifiers, CFR_METHOD_EXT_HAS_SCOPED_ANNOTATION)) {
+		j9tty_printf(PORTLIB, "(scoped annotation)");
+		modifiers &= ~CFR_METHOD_EXT_HAS_SCOPED_ANNOTATION;
+		if (0 != modifiers) {
+			j9tty_printf(PORTLIB, " ");
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 16*/
 }
 
 
