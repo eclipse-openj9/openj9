@@ -263,7 +263,7 @@ ROMClassBuilder::injectInterfaces(ClassFileOracle *classFileOracle)
 }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 BuildResult
-ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, U_8* hostPackageName, UDATA hostPackageLength)
+ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, ROMClassCreationContext *context)
 {
 	J9CfrConstantPoolInfo* constantPool = classfile->constantPool;
 	U_32 cpThisClassUTF8Slot = constantPool[classfile->thisClass].slot1;
@@ -275,7 +275,46 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 	BOOLEAN newCPEntry = TRUE;
 	BuildResult result = OK;
 	char buf[ROM_ADDRESS_LENGTH + 1] = {0};
+	U_8 *hostPackageName = context->hostPackageName();
+	UDATA hostPackageLength = context->hostPackageLength();
 	PORT_ACCESS_FROM_PORT(_portLibrary);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* InjectedInvoker is a hidden class without the nestmate and strong
+	 * attributes set. It is created by MethodHandleImpl.makeInjectedInvoker on
+	 * the JCL side. ROM class name for InjectedInvoker is set using the hidden
+	 * class name, which contains the correct host class name. The below filter
+	 * is used to reduce the number of memcmps when identifying if a hidden
+	 * class is named InjectedInvoker. Class name for InjectedInvoker:
+	 *    - in class file bytecodes: "InjectedInvoker"; and
+	 *    - during hidden class creation: "<HOST_CLASS>$$InjectedInvoker".
+	 */
+	if (context->isClassHidden()
+	&& !context->isHiddenClassOptStrongSet()
+	&& !context->isHiddenClassOptNestmateSet()
+	) {
+#define J9_INJECTED_INVOKER_CLASSNAME "$$InjectedInvoker"
+		U_8 *nameData = context->className();
+		if (NULL != nameData) {
+			UDATA nameLength = context->classNameLength();
+			IDATA startIndex = nameLength - LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME);
+			if (startIndex >= 0) {
+				/* start points to a location in class name for checking if it contains
+				 * "$$InjectedInvoker".
+				 */
+				U_8 *start = nameData + startIndex;
+				if (0 == memcmp(
+						start, J9_INJECTED_INVOKER_CLASSNAME,
+						LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME))
+				) {
+					originalStringBytes = (char *)nameData;
+					originalStringLength = nameLength;
+				}
+			}
+		}
+#undef J9_INJECTED_INVOKER_CLASSNAME
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	/* check if adding host package name to anonymous class is needed */
 	UDATA newHostPackageLength = 0;
@@ -460,7 +499,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 
 	bool isLambda = false;
 	if (context->isClassAnon() || context->isClassHidden()) {
-		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile(), &isLambda, context->hostPackageName(), context->hostPackageLength());
+		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile(), &isLambda, context);
 		if (OK != res) {
 			return res;
 		}

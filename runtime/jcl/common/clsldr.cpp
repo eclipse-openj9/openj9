@@ -30,9 +30,12 @@
 #include "j9jclnls.h"
 
 #if JAVA_SPEC_VERSION >= 15
-/* The same values are defined in MethodHandles.java */
-#define CLASSOPTION_FLAG_NESTMATE 1
-#define CLASSOPTION_FLAG_STRONG  2
+/* Should match OJDK's j.l.i.MethodHandleNatives.Constants.NESTMATE_CLASS (0x1). */
+#define CLASSOPTION_FLAG_NESTMATE 0x1
+/* Should match OJDK's j.l.i.MethodHandleNatives.Constants.HIDDEN_CLASS (0x2). */
+#define CLASSOPTION_FLAG_HIDDEN 0x2
+/* Should match OJDK's j.l.i.MethodHandleNatives.Constants.STRONG_LOADER_LINK (0x4). */
+#define CLASSOPTION_FLAG_STRONG 0x4
 #endif /* JAVA_SPEC_VERSION >= 15 */
 
 
@@ -84,6 +87,7 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	UDATA options = 0;
+	BOOLEAN validateName = FALSE;
 	
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (NULL == classRep) {
@@ -101,8 +105,12 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 	J9Class *hostClazz =  J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, hostClassObject);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
-
-	options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE);
+	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_HIDDEN)) {
+		options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE);
+	} else {
+		/* Validate the name for a normal (non-hidden) class. */
+		validateName = TRUE;
+	}
 	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_NESTMATE)) {
 		options |= J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE;
 	}
@@ -114,7 +122,7 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 	
 	jsize length = env->GetArrayLength(classRep);
 
-	jclass result = defineClassCommon(env, receiver, className, classRep, 0, length, protectionDomain, &options, hostClazz, NULL, FALSE);
+	jclass result = defineClassCommon(env, receiver, className, classRep, 0, length, protectionDomain, &options, hostClazz, NULL, validateName);
 	if (env->ExceptionCheck()) {
 		return NULL;
 	} else if (NULL == result) {
