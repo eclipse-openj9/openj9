@@ -509,8 +509,7 @@ MM_InterRegionRememberedSet::overflowIfStableRegion(MM_EnvironmentVLHGC *env, MM
 		MM_RememberedSetCardList *rscl = region->getRememberedSetCardList();
 
 		if (rscl->isAccurate()) {
-			MM_MemoryPoolBumpPointer *pool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
-			IDATA unusedSize = pool->getDarkMatterBytes() + pool->getActualFreeMemorySize();
+			IDATA unusedSize = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 			if (unusedSize < (IDATA)(_regionSize * _unusedRegionThreshold)) {
 				rscl->setAsStable();
 				_stableRegionCount += 1;
@@ -589,7 +588,7 @@ MM_InterRegionRememberedSet::findRsclToOverflow(MM_EnvironmentVLHGC *env)
 		while (NULL != (region = regionIterator.nextRegion())) {
 			MM_RememberedSetCardList *rscl = region->getRememberedSetCardList();
 
-			if ((MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED == region->getRegionType()) && (0 < rscl->mapToBucket(env)->_bufferCount)) {
+			if ((MM_HeapRegionDescriptor::ADDRESS_ORDERED_MARKED == region->getRegionType()) && (0 < rscl->mapToBucket(env)->_bufferCount)) {
 				if (NULL == listToOverflow || (listToOverflow->getBufferCount() < rscl->getBufferCount())) {
 					listToOverflow = rscl;
 				}
