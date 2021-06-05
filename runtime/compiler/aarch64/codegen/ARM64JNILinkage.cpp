@@ -294,12 +294,10 @@ void J9::ARM64::JNILinkage::buildJNICallOutFrame(TR::Node *callNode, bool isWrap
    if (fej9->needClassAndMethodPointerRelocations())
       {
       // load a 64-bit constant into a register with a fixed 4 instruction sequence
-      TR::Instruction *firstInstruction;
-
-      TR::Instruction *cursor = firstInstruction = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, scratchReg0, methodAddr & 0x0000ffff, cursor);
-      cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg0, ((methodAddr >> 16) & 0x0000ffff) | TR::MOV_LSL16, cursor);
-      cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg0, ((methodAddr >> 32) & 0x0000ffff) | TR::MOV_LSL32 , cursor);
-      cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg0, (methodAddr >> 48) | TR::MOV_LSL48 , cursor);
+      TR::Instruction *firstInstruction = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, scratchReg0, methodAddr & 0x0000ffff);
+      generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg0, ((methodAddr >> 16) & 0x0000ffff) | TR::MOV_LSL16);
+      generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg0, ((methodAddr >> 32) & 0x0000ffff) | TR::MOV_LSL32);
+      generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg0, (methodAddr >> 48) | TR::MOV_LSL48);
 
       TR_ExternalRelocationTargetKind reloType;
       if (resolvedMethodSymbol->isSpecial())
@@ -846,14 +844,11 @@ TR::Instruction *J9::ARM64::JNILinkage::generateMethodDispatch(TR::Node *callNod
    TR_ResolvedMethod *resolvedMethod = resolvedMethodSymbol->getResolvedMethod();
    TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
 
-   TR::Instruction *cursor = cg()->getAppendInstruction();
-
    // load a 64-bit constant into a register with a fixed 4 instruction sequence
-   TR::Instruction *firstInstruction;
-   cursor = firstInstruction = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, scratchReg, targetAddress & 0x0000ffff, cursor);
-   cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg, ((targetAddress >> 16) & 0x0000ffff) | TR::MOV_LSL16, cursor);
-   cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg, ((targetAddress >> 32) & 0x0000ffff) | TR::MOV_LSL32, cursor);
-   generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg, (targetAddress >> 48) | TR::MOV_LSL48, cursor);
+   TR::Instruction *firstInstruction = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, scratchReg, targetAddress & 0x0000ffff);
+   generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg, ((targetAddress >> 16) & 0x0000ffff) | TR::MOV_LSL16);
+   generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg, ((targetAddress >> 32) & 0x0000ffff) | TR::MOV_LSL32);
+   generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg, (targetAddress >> 48) | TR::MOV_LSL48);
 
    if (fej9->needClassAndMethodPointerRelocations())
       {
