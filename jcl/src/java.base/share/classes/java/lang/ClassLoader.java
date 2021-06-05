@@ -2035,7 +2035,7 @@ static void loadLibrary(Class<?> caller, String libName) {
 	}
 }
 
-private static long findNative(ClassLoader loader, String entryName) {
+static long findNative(ClassLoader loader, String entryName) {
 	long result = 0;
 	if (loader == null) {
 		result = bootstrapClassLoader.nativelibs.find(entryName);
