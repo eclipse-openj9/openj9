@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -456,8 +456,8 @@ MM_MemorySubSpaceTarok::recycleRegion(MM_EnvironmentBase *env, MM_HeapRegionDesc
 	}
 
 	switch (region->getRegionType()) {
-		case MM_HeapRegionDescriptor::BUMP_ALLOCATED:
-		case MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED:
+		case MM_HeapRegionDescriptor::ADDRESS_ORDERED:
+		case MM_HeapRegionDescriptor::ADDRESS_ORDERED_MARKED:
 			/* declare previous mark map cleared, except if the region is arraylet leaf.
 			 * leaving _nextMarkMapCleared unchanged
 			 */

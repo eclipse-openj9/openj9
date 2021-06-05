@@ -1455,6 +1455,35 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			}
 			continue;
 		}
+
+		if (try_scan(&scan_start, "minimumFreeSizeForSurvivor=")) {
+			UDATA size = 0;
+			if(!scan_udata_helper(vm, &scan_start, &size, "minimumFreeSizeForSurvivor=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if ((size > MAXIMUM_SURVIVOR_MINIMUM_FREESIZE) || (size < MINIMUM_SURVIVOR_MINIMUM_FREESIZE) || (0 != (size & (MINIMUM_SURVIVOR_MINIMUM_FREESIZE-1)))) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->minimumFreeSizeForSurvivor = size;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "freeSizeThresholdForSurvivor=")) {
+			UDATA size = 0;
+			if(!scan_udata_helper(vm, &scan_start, &size, "freeSizeThresholdForSurvivor=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if ((size > MAXIMUM_SURVIVOR_THRESHOLD) || (size < MINIMUM_SURVIVOR_THRESHOLD) || (0 != (size & (MINIMUM_SURVIVOR_THRESHOLD-1)))) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			extensions->freeSizeThresholdForSurvivor = size;
+			continue;
+		}
+
 		if (try_scan(&scan_start, "stringDedupPolicy=")) {
 			if (try_scan(&scan_start, "disabled")) {
 				extensions->stringDedupPolicy = MM_GCExtensions::J9_JIT_STRING_DEDUP_POLICY_DISABLED;

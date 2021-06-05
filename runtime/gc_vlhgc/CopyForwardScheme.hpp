@@ -52,7 +52,7 @@ class MM_HeapRegionManager;
 class MM_HeapRegionDescriptorVLHGC;
 class MM_InterRegionRememberedSet;
 class MM_MarkMap;
-class MM_MemoryPoolBumpPointer;
+class MM_MemoryPoolAddressOrderedList;
 class MM_ReferenceStats;
 
 /* Forward declaration of classes defined within the cpp */
@@ -95,10 +95,9 @@ private:
 		UDATA _evacuateRegionCount; /**< The number of evacuate regions in this group */
 		UDATA _maxSublistCount; /**< The highest value _sublistCount is permitted to reach in this group */
 		volatile UDATA _sublistCount; /**< The number of active sublists in this list */
-		MM_HeapRegionDescriptorVLHGC *_tailCandidates; /**< A linked list of regions in this compact group which have empty tails */
-		MM_LightweightNonReentrantLock _tailCandidatesLock; /**< Lock to protect _tailCandidates */
-		UDATA _tailCandidateCount; /**< The number of regions in the _tailCandidates list */
-	protected:
+		MM_HeapRegionDescriptorVLHGC *_freeMemoryCandidates; /**< A linked list of regions in this compact group which have free memory */
+		MM_LightweightNonReentrantLock _freeMemoryCandidatesLock; /**< Lock to protect _freeMemoryCandidates */
+		UDATA _freeMemoryCandidateCount; /**< The number of regions in the _freeMemoryCandidates list */	protected:
 	private:
 		/* Methods */
 	public:
@@ -157,6 +156,8 @@ private:
 	volatile bool _failedToExpand; /**< Record if we've failed to expand in this collection already, in order to avoid repeated expansion attempts */
 	bool _shouldScanFinalizableObjects; /**< Set to true at the beginning of a collection if there are any pending finalizable objects */
 	const UDATA _objectAlignmentInBytes;	/**< Run-time objects alignment in bytes */
+
+	UDATA *_compressedSurvivorTable;	/**< start address of compressed survivor table (1 bit presents CARD_SIZE of Heap) */
 
 protected:
 public:
@@ -349,12 +350,12 @@ private:
 	void scanPhantomReferenceObjects(MM_EnvironmentVLHGC *env);
 	
 	/**
-	 * Set region as survivor (and its survivor base address). Also set the special state if region was created by phantom reference processing.
+	 * Set region as survivor. Also set the special state if region was created by phantom reference processing.
 	 * @param env[in] the current thread
 	 * @param region[in] region to set as survivor
-	 * @param survivorBase[in] survivor base address (all object below this address, if different than low region address are not part of survivor)
+	 * @param freshSurvivor[in] if true, it is survivor region from free region
 	 */
-	void setRegionAsSurvivor(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region, void* survivorBase);
+	void setRegionAsSurvivor(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region, bool freshSurvivor);
 
 	/**
 	 * Process the list of reference objects recorded in the specified list.
@@ -473,13 +474,13 @@ private:
 	void clearReservedRegionLists(MM_EnvironmentVLHGC *env);
 
 	/**
-	 * Acquire a region for use as a survivor area during copy and forward.
+	 * Acquire an empty region for use as a survivor area during copy and forward.
 	 * @param env GC thread.
 	 * @param regionList Internally managed region list to which the region should be assigned to.
 	 * @param compactGroup Compact group for acquired region
 	 * @return the newly acquired region or NULL if no region was available
 	 */
-	MM_HeapRegionDescriptorVLHGC *acquireRegion(MM_EnvironmentVLHGC *env, MM_ReservedRegionListHeader::Sublist *regionList, UDATA compactGroup);
+	MM_HeapRegionDescriptorVLHGC *acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRegionListHeader::Sublist *regionList, UDATA compactGroup);
 
 	/**
 	 * Inserts newRegion into the given regionList.  The implementation assumes that the calling thread can modify regionList without locking
@@ -499,22 +500,22 @@ private:
 	void releaseRegion(MM_EnvironmentVLHGC *env, MM_ReservedRegionListHeader::Sublist *regionList, MM_HeapRegionDescriptorVLHGC *region);
 
 	/**
-	 * Insert the specified tail candidate into the tail candidate list.  The implementation assumes that the calling thread can modify 
+	 * Insert the specified free memory candidate into the candidate list.  The implementation assumes that the calling thread can modify
 	 * regionList without locking it so the callsite either needs to have locked the list or be single-threaded.
 	 * @param env[in] The GC thread
-	 * @param regionList[in] The region list to which tailRegion should be added as a tail candidate
-	 * @param tailRegion[in] The region to add
+	 * @param regionList[in] The region list to which Region should be added as a candidate
+	 * @param region[in] The region to add
 	 */
-	void insertTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC *tailRegion);
+	void insertFreeMemoryCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC *region);
 
 	/**
-	 * Remove the specified tail candidate from the tail candidate list.  The implementation assumes that the calling thread can modify 
+	 * Remove the specified free memory candidate from the candidate list.  The implementation assumes that the calling thread can modify
 	 * regionList without locking it so the callsite either needs to have locked the list or be single-threaded.
 	 * @param env[in] The GC thread
-	 * @param regionList[in] The region list which tailRegion belongs to
-	 * @param tailRegion[in] The region to remove
+	 * @param regionList[in] The region list which Region belongs to
+	 * @param region[in] The region to remove
 	 */
-	void removeTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC *tailRegion);
+	void removeFreeMemoryCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC *region);
 	
 	/**
 	 * Reserve memory for an object to be copied to survivor space.
@@ -627,7 +628,7 @@ private:
 	/**
 	 * Rescan all objects in the specified overflowed region.
 	 */
-	void cleanRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, U_8 flagToClean);
+	void cleanOverflowedRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, U_8 flagToClean);
 	/**
 	 * Handling of Work Packets overflow case
 	 * Active STW Card Based Overflow Handler only.
@@ -924,26 +925,14 @@ private:
 	UDATA getDesiredCopyCacheSize(MM_EnvironmentVLHGC *env, UDATA compactGroup);
 
 	/**
-	 * Align the specified memory pool so that it can be used for survivor objects.
-	 * Specifically, make sure that we can't be copying objects into the area covered by a card which is 
-	 * meant to describe objects which were already in the region.
-	 * @param env[in] the current thread
-	 * @param memoryPool[in] the memoryPool to align
-	 * @return the number of bytes lost by aligning the pool
-	 */
-	UDATA alignMemoryPool(MM_EnvironmentVLHGC *env, MM_MemoryPoolBumpPointer *memoryPool);
-	
-	/**
-	 * Set the specified tail candidate region to be a survivor region.
-	 * 1. Set its _survivorBase to survivorBase (essentially set survivorSet to true).
-	 * 2. Update its free memory in preparation for copying objects into it
-	 * 3. Prepare its reference lists for processing
+	 * Set the specified free memory candidate region to be a survivor region.
+	 * 1. Update its free memory in preparation for copying objects into it
+	 * 2. Prepare its reference lists for processing
 	 * The caller is responsible for calling rememberAndResetReferenceLists() on the list once it's released all locks.
 	 * @param env[in] the current thread
-	 * @param region[in] the tail region to convert
-	 * @param survivorBase the lowest address in the region where survivor objects can be found
+	 * @param region[in] the free memory region to convert
 	 */
-	void convertTailCandidateToSurvivorRegion(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region, void* survivorBase);
+	void convertFreeMemoryCandidateToSurvivorRegion(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region);
 
 	/**
 	 * Scan the root set, copying-and-forwarding any objects found.
@@ -980,6 +969,15 @@ private:
 	 *  to avoid to push leaf object to work stack in case the reference need to be marked instead of copied.
 	 */
 	MMINLINE bool iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr);
+
+	void verifyObjectsInRange(MM_EnvironmentVLHGC *env, UDATA *lowAddress, UDATA *highAddress);
+	void verifyChunkSlotsAndMapSlotsInRange(MM_EnvironmentVLHGC *env, UDATA *lowAddress, UDATA *highAddress);
+	void checkConsistencyGMPMapAndPGCMap(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, UDATA *lowAddress, UDATA *highAddress);
+	void  cleanOverflowInRange(MM_EnvironmentVLHGC *env, UDATA *lowAddress, UDATA *highAddress);
+
+	MMINLINE bool isCompressedSurvivor(void *heapAddr);
+	MMINLINE void setCompressedSurvivorCards(MM_EnvironmentVLHGC *env, void *startHeapAddress, void *endHeapAddress);
+	MMINLINE void cleanCompressedSurvivorCardTable(MM_EnvironmentVLHGC *env);
 
 protected:
 
