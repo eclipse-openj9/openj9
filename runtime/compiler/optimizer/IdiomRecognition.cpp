@@ -5018,7 +5018,7 @@ TR_CISCTransformer::areAllNodesIncluded(TR_CISCNodeRegion *r)
          bv.reset(p->getID());
       }
 
-   // If the bit vector bv is empty, alll nodes are included in the region r.
+   // If the bit vector bv is empty, all nodes are included in the region r.
    if (trace())
       {
       if (!bv.isEmpty())

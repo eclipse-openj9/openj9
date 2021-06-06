@@ -181,7 +181,7 @@ printReasonForInvalidStackMapAttribute(MessageBuffer* msgBuf, J9CfrError* error,
 			printMessage(msgBuf, "(Stack Map Frame offset overflow. bci=%u, bytecode length=%u)", errorFrameBCI, codeLength);
 		}
 
-		/* Walk through the stackmap for the specified stackmap frame and set alll data to stackMapFrame for 'Current Frame'.
+		/* Walk through the stackmap for the specified stackmap frame and set all data to stackMapFrame for 'Current Frame'.
 		 * Note: it only prints out the content existing in the error message uffer even if out-out-memory.
 		 */
 		if (FALSE == prepareVerificationTypeBuffer(stackMapFrame, methodInfo)) {
