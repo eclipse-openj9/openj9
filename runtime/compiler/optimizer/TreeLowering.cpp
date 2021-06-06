@@ -348,7 +348,7 @@ class AcmpTransformer: public TR::TreeLowering::Transformer
  * with the exception of any register (x, above) holding the result of the compare
  *
  * @param node is the current node in the tree walk
- * @param tt is the treetop at the root of the tree ancoring the current node
+ * @param tt is the treetop at the root of the tree anchoring the current node
  *
  */
 void
@@ -608,7 +608,7 @@ class ArrayStoreCHKTransformer: public TR::TreeLowering::Transformer
  * of whether the array's component type is a value type.
  *
  * @param node is the current node in the tree walk
- * @param tt is the treetop at the root of the tree ancoring the current node
+ * @param tt is the treetop at the root of the tree anchoring the current node
  */
 void
 ArrayStoreCHKTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
