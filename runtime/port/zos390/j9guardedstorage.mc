@@ -47,7 +47,7 @@
  *   http://publibz.boulder.ibm.com/epubs/pdf/ccrug120.pdf
  * 
  * Specifically, page 24 has the sample macros for re-entrant code
- * that is used below (wAtuh and lAuth) stuff.
+ * that is used below (wAuth and lAuth) stuff.
  */
 #include <stdint.h>
 
