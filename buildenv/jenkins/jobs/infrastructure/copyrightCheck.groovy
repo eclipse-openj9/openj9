@@ -55,7 +55,7 @@ timeout(time: 6, unit: 'HOURS') {
                     ).trim()
 
                     // Set a different Copyright regex depending on the Repo the PR is from
-                    REGEX = "\'Copyright \\(c\\) ([0-9]{4}), ${DATE_YEAR}\'"
+                    REGEX = "\'Copyright \\(c\\) (?:([0-9]{4}), )?${DATE_YEAR}\'"
 
                     IGNORE_LIST = []
                     if (fileExists("${WORKSPACE}/.copyrightignore")) {
