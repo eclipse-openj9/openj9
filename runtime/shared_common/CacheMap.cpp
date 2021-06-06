@@ -6003,7 +6003,7 @@ SH_CacheMap::shutdownForStats(J9VMThread* currentThread)
 		SH_CompositeCacheImpl* ccNext = ccToUse->getNext();
 		if (_ccHead != ccToUse) {
 			PORT_ACCESS_FROM_VMC(currentThread);
-			/* _ccHead is alloacated together with the SH_CacheMap instance, it will be free together with the SH_CacheMap instance */
+			/* _ccHead is allocated together with the SH_CacheMap instance, it will be free together with the SH_CacheMap instance */
 			ccToUse->cleanup(currentThread);
 			j9mem_free_memory(ccToUse);
 		}
