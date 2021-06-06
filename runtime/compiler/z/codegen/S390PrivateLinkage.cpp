@@ -2690,7 +2690,7 @@ void J9::Z::JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register * 
    self()->cg()->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(self()->cg(), callNode, longAcquireSnippetLabel,
                               comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol()), acquireDoneLabel));
    generateS390LabelInstruction(self()->cg(), TR::InstOpCode::label, callNode, acquireDoneLabel);
-   // end of acquire vm accessa
+   // end of acquire vm access
    }
 
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI

@@ -491,7 +491,7 @@ private:
 
    This indirection is needed so that we can cache the value of the pointer so
    that we can access client session data without going through the hashtable.
-   Accesss to this hashtable must be protected by the compilation monitor.
+   Access to this hashtable must be protected by the compilation monitor.
    Compilation threads may purge old entries periodically at the beginning of a
    compilation. The StatistcisThread can also perform purging duties.
    Entried with inUse > 0 must not be purged.
