@@ -34,7 +34,7 @@ public class TestCommandLineOptionXscmx01 extends TestUtils {
 	
 	/* Note: AOT is turned off for the below tests. In some cases the JIT has 
 	 * enough time to store information in the already small cache. During this 
-	 * test this may cause the alredy to small cache to be marked as full 
+	 * test this may cause the already to small cache to be marked as full 
 	 * (when this is not expected to occur).
 	 */
 	
