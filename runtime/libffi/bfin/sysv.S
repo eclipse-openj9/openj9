@@ -72,7 +72,7 @@ _ffi_call_SYSV:
 	[FP+16] = R2;
 
 .allocate_stack:
-	//alocate cif->bytes into the stack
+	//allocate cif->bytes into the stack
 	R1 = [FP+8];
 	R0 = SP;
 	R0 = R0 - R1;
