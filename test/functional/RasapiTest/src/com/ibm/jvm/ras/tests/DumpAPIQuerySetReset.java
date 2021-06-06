@@ -544,7 +544,7 @@ public class DumpAPIQuerySetReset extends TestCase {
 					String options = type + ":events=" + event + ",filter=" + filter + ",label=" + type + count++;
 					try {
 						com.ibm.jvm.Dump.setDumpOptions(options);
-						fail("Expected not to be ablel to set these dump options: " + options);
+						fail("Expected not to be able to set these dump options: " + options);
 					} catch (InvalidDumpOptionException e) {
 						// TODO Auto-generated catch block
 					} catch (DumpConfigurationUnavailableException e) {
