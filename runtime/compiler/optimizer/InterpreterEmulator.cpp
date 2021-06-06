@@ -1288,7 +1288,7 @@ InterpreterEmulator::isCurrentCallUnresolvedOrCold(TR_ResolvedMethod *resolvedMe
    // Since bytecodes in a thunk archetype are never interpreted,
    // most of the cp entries may appear unresolved, and we always
    // compile-time resolve the cp entries. Thus ignore resolution
-   // status of cp entries of thunk arthetype
+   // status of cp entries of thunk archetype
    //
    if (_callerIsThunkArchetype)
       return resolvedMethod->isCold(comp(), isIndirectCall);
