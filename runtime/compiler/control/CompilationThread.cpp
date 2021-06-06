@@ -574,7 +574,7 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
       else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && JITServerHelpers::isServerAvailable())
          {
          
-         // For JITClient let's be more agressive with compilation thread activation
+         // For JITClient let's be more aggressive with compilation thread activation
          // because the latencies are larger. Beyond 'numProc-1' we will use the
          // 'starvation activation schedule', but accelerated (divide those thresholds by 2)
          // NOTE: compilation thread activation policy is AGGRESSIVE if we reached this point
