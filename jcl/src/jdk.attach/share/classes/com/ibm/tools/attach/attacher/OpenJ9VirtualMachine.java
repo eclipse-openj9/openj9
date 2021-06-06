@@ -421,7 +421,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 			AttachNotSupportedException {
 		Reply replyFile = null;
 		AttachHandler.waitForAttachApiInitialization(); /* ignore result: we can still attach to another target if API is disabled */
-		IPC.logMessage("VirtualMachineImpl.tryAttachtarget"); //$NON-NLS-1$
+		IPC.logMessage("VirtualMachineImpl.tryAttachTarget"); //$NON-NLS-1$
 		Object myIn = AttachHandler.getMainHandler().getIgnoreNotification();
 
 		synchronized (myIn) {
