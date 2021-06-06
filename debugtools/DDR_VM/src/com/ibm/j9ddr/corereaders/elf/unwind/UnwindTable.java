@@ -376,7 +376,7 @@ public class UnwindTable {
 				// One operand, register
 				long registerId = readUnsignedLEB128(instructionStream);
 				// This rule needs the offset from the last rule
-				// that affeted the CFA so we need to walk the list and find the
+				// that affected the CFA so we need to walk the list and find the
 				// last instance of CFARule.
 				out.printf("def_cfa_register: r%d", registerId);
 				break;
@@ -586,7 +586,7 @@ public class UnwindTable {
 				// One operand, register
 				long registerId = readUnsignedLEB128(instructionStream);
 				// This rule needs the offset from the last rule
-				// that affeted the CFA so we need to walk the list and find the
+				// that affected the CFA so we need to walk the list and find the
 				// last instance of CFARule.
 				CFARule lastRule = (CFARule)currentState.cfaRule;
 				currentState.cfaRule = new RegisterOffsetCFARule(CFA_RULE_ID, (int)registerId, lastRule.getOffset());
@@ -599,7 +599,7 @@ public class UnwindTable {
 //				out.printf("def_cfa_offset: offset: %d", offset);
 
 				// This rule needs the register number from the last rule
-				// that affeted the CFA so we need to walk the list and find the
+				// that affected the CFA so we need to walk the list and find the
 				// last instance of CFARule.
 				CFARule lastRule = (CFARule)currentState.cfaRule;
 				currentState.cfaRule = new RegisterOffsetCFARule(CFA_RULE_ID, lastRule.getBaseRegister(), offset);
