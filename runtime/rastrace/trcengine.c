@@ -493,7 +493,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			}
 		}
 
-		/* Normal exit - its not safe to free this stuff if we are ab'ending.
+		/* Normal exit - its not safe to free this stuff if we are abending.
 		 * Blank global pointer before freeing struct (safer?)
 		 */
 		if (vm->j9rasGlobalStorage != NULL) {
