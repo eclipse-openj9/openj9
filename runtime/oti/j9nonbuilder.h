@@ -2522,7 +2522,7 @@ typedef struct J9StackWalkState {
 	void* stackMap;
 	void* inlineMap;
 	/* The size of J9StackWalkState must be a multiple of 8 because it is inlined into
-	 * J9VMThread where alignment assumotions are being made.
+	 * J9VMThread where alignment assumptions are being made.
 	 */
 #if 1 && !defined(J9VM_ENV_DATA64) /* Change to 0 or 1 based on number of fields above */
 	U_32 padTo8;
