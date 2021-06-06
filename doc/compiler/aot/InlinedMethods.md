@@ -96,7 +96,7 @@ pool, and `bar` is named in `foo`'s constant pool. Therefore, in order to
 materialize the `J9Method` of `baz`, one first needs the `J9Method` of `bar`,
 which first requires the `J9Method` of `foo`.
 
-If the inlined method has a guard assocated with it, then the Inlined Method
+If the inlined method has a guard associated with it, then the Inlined Method
 with NOP Guard / Profiled Inlined Method with Guard relocations are 
 generated. If not, then the Inlined Method / Profiled Inlined Method
 relocations are generated. Additionally, unless the 
