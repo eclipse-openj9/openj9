@@ -43,7 +43,7 @@ public class TestZipCacheStoresAllBootstrapJar extends TestUtils {
 
 		String bootClassPath = System.getProperty("sun.boot.class.path");
 		
-		// Assumimg that the sun.boot.class.path is of the following format:
+		// Assuming that the sun.boot.class.path is of the following format:
 		// full_path_to_file1.jar;full_path_to_file2.jar
 		String[] bootClassPathSplit = bootClassPath.split(";");
 		
