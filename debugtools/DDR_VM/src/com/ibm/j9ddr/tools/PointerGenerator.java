@@ -113,7 +113,7 @@ public class PointerGenerator {
 		opts.put("-u", "true");  // flag to control if user code is supported or not, default is true
 		opts.put("-c", "");      // optional value to provide a cache properties file
 		opts.put("-l", "false"); // flag to determine if legacy DDR is used, default is false
-		opts.put("-a", null);    // auxilliary field information
+		opts.put("-a", null);    // auxiliary field information
 	}
 
 	public static void main(String[] args) throws Exception {
