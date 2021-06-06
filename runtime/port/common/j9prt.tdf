@@ -683,7 +683,7 @@ TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_unsupported_page_size Obsolete
 // TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_Exit4 Obsolete Group=j9mem Overhead=1 Level=3 NoEnv Template="j9vmem_reserve_memory (failure)" */
 TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_failure Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory (failure)"
 TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_shmget_failed Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory (shmget_failed) byteAmount=%u shmgetFlags=%i"
-TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_shmat_failed Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory (shmat failed) byteAmout=%u address=%p"
+TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_shmat_failed Obsolete Group=j9mem Overhead=1 Level=1 NoEnv Template="j9vmem_reserve_memory (shmat failed) byteAmount=%u address=%p"
 
 // TraceExit=Trc_PRT_vmem_j9vmem_reserve_memory_Exit Group=j9mem Overhead=1 Level=5 NoEnv Template="j9vmem_reserve_memory returns %p"
 TraceExit=Trc_PRT_vmem_j9vmem_reserve_memory_Exit_replacement Obsolete Group=j9mem Overhead=1 Level=5 NoEnv Template="j9vmem_reserve_memory returns %p requestedAddress=%p"
