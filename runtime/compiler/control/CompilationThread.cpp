@@ -6342,7 +6342,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          {
          void *currOldStartPC = startPCIfAlreadyCompiled(vmThread, details, startPC);
          // If currOldStartPC is NULL, the method body defined by startPC has not been
-         // recompiled. We will queue the second remote aync compilation here. Otherwise,
+         // recompiled. We will queue the second remote async compilation here. Otherwise,
          // another thread is doing the recompilation and will take care of queueing
          // the second compilation.
          if (!currOldStartPC)

@@ -207,7 +207,7 @@ poolElementAllocFailed:
 		UDATA *newStackOverflowMark = J9JAVASTACK_STACKOVERFLOWMARK(newStack);
 		UDATA currentStackOverflowMark = (UDATA)vmThread->stackOverflowMark;
 		if (J9_EVENT_SOM_VALUE != currentStackOverflowMark) {
-			/* Use an atomic here to ensure we don't lose an aynsc message post.
+			/* Use an atomic here to ensure we don't lose an async message post.
 			 * Only the current thread can ever write a value other than
 			 * J9_EVENT_SOM_VALUE into stackOverflowMark.
 			 */
