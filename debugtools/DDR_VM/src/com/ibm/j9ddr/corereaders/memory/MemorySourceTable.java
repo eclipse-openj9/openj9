@@ -322,7 +322,7 @@ public class MemorySourceTable {
 		public IMemorySource getRangeForAddress(long address);
 	}
 
-	/* Class used for debugging misbehaving addres resolver strategies */
+	/* Class used for debugging misbehaving address resolver strategies */
 	@SuppressWarnings("unused")
 	private static class DebugAddressResolverStrategy implements IAddressResolverStrategy {
 		private final IAddressResolverStrategy trusted;

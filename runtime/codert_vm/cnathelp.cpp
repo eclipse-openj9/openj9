@@ -2586,7 +2586,7 @@ old_slow_jitRetranslateMethod(J9VMThread *currentThread)
 		 *	- interpreter submits target for compilation
 		 *	- during compilation, a decomp is added for the caller
 		 *	- target is successfully compiled
-		 *	- decomp record is updated such that the savedPCAddres points to where the jitted method would save the RA
+		 *	- decomp record is updated such that the savedPCAddress points to where the jitted method would save the RA
 		 *	- interp transitions to the newly-compiled method with the return address pointing to a decompilation
 		 *
 		 * The decompilation assumes that the target method would run (so it's jitDecompileOnReturn*).
