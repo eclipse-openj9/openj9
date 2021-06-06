@@ -1,0 +1,9 @@
+abending
+bndchecks
+checkstk
+cpeitems
+Dchk
+enterobject
+initialiser
+maximumsize
+notsupported
