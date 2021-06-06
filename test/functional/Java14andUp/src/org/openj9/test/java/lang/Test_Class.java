@@ -190,7 +190,7 @@ import org.openj9.test.utilities.CustomClassLoader;
             AssertJUnit.assertNull(rc.getAccessor());
         }
 
-        /* check signature attribte */
+        /* check signature attribute */
         AssertJUnit.assertEquals(signature, rc.getGenericSignature());
 
         /* check annotations attributes */
