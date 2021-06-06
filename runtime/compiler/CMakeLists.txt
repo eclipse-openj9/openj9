@@ -71,7 +71,7 @@ endif()
 # This target is created so that various subdirectories can add dependencies to it.
 # The j9jit target will then depend on it, propagating the dependencies.
 # This is required because at the time we include the subdirectories, the j9jit target
-# does not yet exist (and as such can't have dependencies addded to it).
+# does not yet exist (and as such can't have dependencies added to it).
 add_custom_target(j9jit_generate)
 
 # On windows exceptions are controlled via a the preprocessor define _HAS_EXCEPTIONS
