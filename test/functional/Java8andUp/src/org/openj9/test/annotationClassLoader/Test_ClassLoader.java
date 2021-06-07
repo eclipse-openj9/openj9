@@ -30,6 +30,7 @@ import java.net.URLClassLoader;
 import java.sql.SQLException;
 
 import javax.sql.rowset.CachedRowSet;
+import javax.sql.rowset.RowSetProvider;
 import javax.sql.rowset.spi.SyncProvider;
 
 @Test(groups = { "level.sanity" })
@@ -79,7 +80,7 @@ public class Test_ClassLoader {
 	@Test
 	public void test_latestUserDefinedLoader() throws Exception {
 		String customSyncProviderClassName = CustomSyncProvider.class.getName();
-		CachedRowSet crs = (CachedRowSet)Class.forName("com.sun.rowset.CachedRowSetImpl").newInstance();
+		CachedRowSet crs = RowSetProvider.newFactory().createCachedRowSet();
 		crs.setSyncProvider(customSyncProviderClassName);
 		SyncProvider syncProvider = crs.getSyncProvider();
 	
