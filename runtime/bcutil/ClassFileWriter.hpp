@@ -72,6 +72,7 @@ private:
 	U_32 _bsmAttributeLength;
 	UDATA _classFileSize;
 	bool _isAnon;
+	bool _isInjectedInvoker;
 	J9UTF8* _anonClassName;
 	J9UTF8* _originalClassName;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -337,6 +338,7 @@ public:
 		, _bsmAttributeLength(0)
 		, _classFileSize(0)
 		, _isAnon(FALSE)
+		, _isInjectedInvoker(FALSE);
 		, _anonClassName(NULL)
 		, _originalClassName(NULL)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -362,8 +364,10 @@ public:
 			if ((startIndex >= 0)
 			&& (0 == memcmp(start, J9_INJECTED_INVOKER_CLASSNAME, LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME)))
 			) {
-				originalNameLength = LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME);
-				anonClassNameData = (U_8 *)J9_INJECTED_INVOKER_CLASSNAME;
+				_isInjectedInvoker = TRUE;
+				J9_DECLARE_CONSTANT_UTF8(anonClassName, J9_INJECTED_INVOKER_CLASSNAME);
+				originalNameLength = J9UTF8_LENGTH(&anonClassName);
+				anonClassNameData = J9UTF8_DATA(&anonClassName);
 			}
 #undef J9_INJECTED_INVOKER_CLASSNAME
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
@@ -405,7 +409,7 @@ public:
 			j9mem_free_memory(_classFileBuffer);
 			_classFileBuffer = NULL;
 		}
-		if (_isAnon) {
+		if (_isAnon && !_isInjectedInvoker) { /* Don't free if name is InjectedInvoker since it is static */
 			PORT_ACCESS_FROM_JAVAVM(_javaVM);
 			j9mem_free_memory(_originalClassName);
 		}
