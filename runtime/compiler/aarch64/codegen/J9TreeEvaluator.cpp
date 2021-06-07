@@ -3343,12 +3343,11 @@ static TR::Register *
 genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *srm, TR::Register *objReg, TR::Register *offsetReg, intptr_t offset, bool offsetInReg, TR::Register *oldVReg, TR::Register *newVReg,
       TR::LabelSymbol *doneLabel, int32_t oldValue, bool oldValueInReg, bool is64bit, bool casWithoutSync = false)
    {
+   TR::Compilation * comp = cg->comp();
    TR::Register *addrReg = srm->findOrCreateScratchRegister();
    TR::Register *resultReg = cg->allocateRegister();
    TR::InstOpCode::Mnemonic op;
 
-   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
 
    if (offsetInReg)
       {
@@ -3360,59 +3359,84 @@ genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *sr
       }
 
    const bool createDoneLabel = (doneLabel == NULL);
-   if (createDoneLabel)
+
+   static const bool disableLSE = feGetEnv("TR_aarch64DisableLSE") != NULL;
+   if (comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_LSE) && (!disableLSE))
       {
-      doneLabel = generateLabelSymbol(cg);
-      }
-   /*
-    * Generating the same instruction sequence as __sync_bool_compare_and_swap
-    *
-    * loop:
-    *    ldxrx   resultReg, [addrReg]
-    *    cmpx    resultReg, oldVReg
-    *    bne     done
-    *    stlxrx  resultReg, newVReg, [addrReg]
-    *    cbnz    resultReg, loop
-    *    dmb     ish
-    * done:
-    *    cset    resultReg, eq
-    *
-    */
-   op = is64bit ? TR::InstOpCode::ldxrx : TR::InstOpCode::ldxrw;
-   generateTrg1MemInstruction(cg, op, node, resultReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
-   if (oldValueInReg)
+      TR_ASSERT_FATAL(oldValueInReg, "Expecting oldValue is in register if LSE is enabled");
+      /*
+       * movx   resultReg, oldVReg
+       * casal  resultReg, newVReg, [addrReg]
+       * cmp    resultReg, oldReg
+       * cset   resultReg, eq
+       */
+      generateMovInstruction(cg, node, resultReg, oldVReg, is64bit);
+      op = casWithoutSync ? (is64bit ? TR::InstOpCode::casx : TR::InstOpCode::casw) : (is64bit ? TR::InstOpCode::casalx : TR::InstOpCode::casalw);
+      generateTrg1MemSrc1Instruction(cg, op, node, resultReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), newVReg);
       generateCompareInstruction(cg, node, resultReg, oldVReg, is64bit);
-   else
-      generateCompareImmInstruction(cg, node, resultReg, oldValue, is64bit);
-   if (!createDoneLabel)
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 0); // failure
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_NE);
-
-   if (casWithoutSync)
-      {
-      op = is64bit ? TR::InstOpCode::stxrx : TR::InstOpCode::stxrw;
-      }
-   else
-      {
-      op = is64bit ? TR::InstOpCode::stlxrx : TR::InstOpCode::stlxrw;
-      }
-   generateTrg1MemSrc1Instruction(cg, op, node, resultReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), newVReg);
-   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, resultReg, loopLabel);
-
-   srm->reclaimScratchRegister(addrReg);
-
-   if (!casWithoutSync)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
-
-   if (createDoneLabel)
-      {
-      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
       generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
+      if (!createDoneLabel)
+         {
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_NE);
+         }
       }
    else
       {
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 1); // success
+      TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+      if (createDoneLabel)
+         {
+         doneLabel = generateLabelSymbol(cg);
+         }
+      /*
+       * Generating the same instruction sequence as __sync_bool_compare_and_swap
+       *
+       * loop:
+       *    ldxrx   resultReg, [addrReg]
+       *    cmpx    resultReg, oldVReg
+       *    bne     done
+       *    stlxrx  resultReg, newVReg, [addrReg]
+       *    cbnz    resultReg, loop
+       *    dmb     ish
+       * done:
+       *    cset    resultReg, eq
+       *
+       */
+      op = is64bit ? TR::InstOpCode::ldxrx : TR::InstOpCode::ldxrw;
+      generateTrg1MemInstruction(cg, op, node, resultReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+      if (oldValueInReg)
+         generateCompareInstruction(cg, node, resultReg, oldVReg, is64bit);
+      else
+         generateCompareImmInstruction(cg, node, resultReg, oldValue, is64bit);
+      if (!createDoneLabel)
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 0); // failure
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_NE);
+
+      if (casWithoutSync)
+         {
+         op = is64bit ? TR::InstOpCode::stxrx : TR::InstOpCode::stxrw;
+         }
+      else
+         {
+         op = is64bit ? TR::InstOpCode::stlxrx : TR::InstOpCode::stlxrw;
+         }
+      generateTrg1MemSrc1Instruction(cg, op, node, resultReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), newVReg);
+      generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, resultReg, loopLabel);
+
+      if (!casWithoutSync)
+         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
+
+      if (createDoneLabel)
+         {
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+         generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
+         }
+      else
+         {
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 1); // success
+         }
       }
+   srm->reclaimScratchRegister(addrReg);
 
    node->setRegister(resultReg);
    return resultReg;
@@ -3447,8 +3471,10 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
    if (offsetInReg)
       offsetReg = cg->evaluate(thirdChild);
 
+   static const bool disableLSE = feGetEnv("TR_aarch64DisableLSE") != NULL;
+   static const bool useLSE = comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_LSE) && (!disableLSE);
    // Obtain values to be checked for, and swapped in:
-   if (fourthChild->getOpCode().isLoadConst() && fourthChild->getRegister() == NULL)
+   if ((!useLSE) && fourthChild->getOpCode().isLoadConst() && fourthChild->getRegister() == NULL)
       {
       if (isLong)
          oldValue = fourthChild->getLongInt();
