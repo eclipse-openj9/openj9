@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@
 #include "HeapRegionManager.hpp"
 #include "HeapRegionManagerTarok.hpp"
 #include "MarkMap.hpp"
-#include "MemoryPool.hpp"
+#include "MemoryPoolBumpPointer.hpp"
 #include "RegionValidator.hpp"
 
 MM_ProjectedSurvivalCollectionSetDelegate::MM_ProjectedSurvivalCollectionSetDelegate(MM_EnvironmentBase *env, MM_HeapRegionManager *manager)
@@ -206,7 +206,8 @@ MM_ProjectedSurvivalCollectionSetDelegate::selectRegion(MM_EnvironmentVLHGC *env
 	UDATA regionSize = _regionManager->getRegionSize();
 	UDATA tableIndex = _regionManager->mapDescriptorToRegionTableIndex(region);
 	UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
-	UDATA freeMemory = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
+	MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
+	UDATA freeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
 	UDATA projectedFreeMemoryAfterGC = regionSize - region->_projectedLiveBytes;
 	UDATA projectedReclaimableBytes = region->getProjectedReclaimableBytes();
 
@@ -455,7 +456,7 @@ MM_ProjectedSurvivalCollectionSetDelegate::deleteRegionCollectionSetForPartialGC
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		/* there shouldn't be any regions that have some occupancy but not marked left if the increment is done */
-		Assert_MM_false(MM_HeapRegionDescriptor::ADDRESS_ORDERED == region->getRegionType());
+		Assert_MM_false(MM_HeapRegionDescriptor::BUMP_ALLOCATED == region->getRegionType());
 		Assert_MM_true(MM_RegionValidator(region).validate(env));
 
 		region->_markData._shouldMark = false;
@@ -491,7 +492,7 @@ MM_ProjectedSurvivalCollectionSetDelegate::deleteRegionCollectionSetForGlobalGC(
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		/* there shouldn't be any regions that have some occupancy but not marked left */
-		Assert_MM_false(MM_HeapRegionDescriptor::ADDRESS_ORDERED == region->getRegionType());
+		Assert_MM_false(MM_HeapRegionDescriptor::BUMP_ALLOCATED == region->getRegionType());
 		Assert_MM_true(MM_RegionValidator(region).validate(env));
 
 		region->_reclaimData._shouldReclaim = false;
@@ -528,7 +529,7 @@ MM_ProjectedSurvivalCollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM
 		while (NULL != (region = regionIterator.nextRegion())) {
 			if(region->containsObjects()) {
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, region)];
-				MM_MemoryPool *memoryPool = region->getMemoryPool();
+				MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
 
 				stats->_reclaimStats._regionCountBefore += 1;
 				if(!region->_sweepData._alreadySwept) {
@@ -571,7 +572,7 @@ MM_ProjectedSurvivalCollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_
 			if(region->containsObjects()) {
 				UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 				SetSelectionData *stats = &_setSelectionDataTable[compactGroup];
-				MM_MemoryPool *memoryPool = region->getMemoryPool();
+				MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
 
 				stats->_reclaimStats._regionCountAfter += 1;
 

@@ -45,7 +45,7 @@
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
 #include "IncrementalGenerationalGC.hpp"
-#include "MemoryPoolAddressOrderedList.hpp"
+#include "MemoryPoolBumpPointer.hpp"
 
 /* NOTE: old logic for determining incremental thresholds has been deleted. Please 
  * see CVS history, version 1.14, if you need to find this logic
@@ -425,7 +425,6 @@ MM_SchedulingDelegate::measureScanRate(MM_EnvironmentVLHGC *env, double historic
 		scantime = markStats->getScanTime();
 	}
 
-
 	if (0 != currentBytesScanned) {
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
 		UDATA historicalBytesScanned = _scanRateStats.historicalBytesScanned;
@@ -467,7 +466,7 @@ MM_SchedulingDelegate::estimateMacroDefragmentationWork(MM_EnvironmentVLHGC *env
 void
 MM_SchedulingDelegate::updateCurrentMacroDefragmentationWork(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
 {
-	MM_MemoryPool *memoryPool = region->getMemoryPool();
+	MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
 	UDATA freeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
 	UDATA liveData = _regionManager->getRegionSize() - freeMemory;
 
@@ -495,7 +494,7 @@ MM_SchedulingDelegate::updateLiveBytesAfterPartialCollect()
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->containsObjects()) {
-			MM_MemoryPool *memoryPool = region->getMemoryPool();
+			MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
 			Assert_MM_true(NULL != memoryPool);
 			_liveSetBytesAfterPartialCollect += region->getSize();
 			_liveSetBytesAfterPartialCollect -= memoryPool->getActualFreeMemorySize();
@@ -666,7 +665,7 @@ MM_SchedulingDelegate::calculateScannableBytesRatio(MM_EnvironmentVLHGC *env)
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		if (region->containsObjects()) {
-			MM_MemoryPool *memoryPool = region->getMemoryPool();
+			MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
 			scannableBytes += memoryPool->getScannableBytes();
 			nonScannableBytes += memoryPool->getNonScannableBytes();
 		}
@@ -788,9 +787,10 @@ MM_SchedulingDelegate::calculatePGCCompactionRate(MM_EnvironmentVLHGC *env, UDAT
 
 	while (NULL != (region = regionIterator.nextRegion())) {
 		region->_defragmentationTarget = false;
+		MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
 		if (region->containsObjects()) {
 			Assert_MM_true(region->_sweepData._alreadySwept);
-			UDATA freeMemory = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
+			UDATA freeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
 			if (!region->getRememberedSetCardList()->isAccurate()) {
 				/* Overflowed regions or those that RSCL is being rebuilt will not be compacted */
 				nonCollectibleRegions += 1;
