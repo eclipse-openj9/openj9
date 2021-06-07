@@ -1010,7 +1010,7 @@
 			<variation>-XX:+CompactStrings</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
-	--illegal-access=permit -Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
+	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.util=ALL-UNNAMED \
@@ -1110,7 +1110,7 @@
 			<variation>-Xshareclasses:none -XX:RecreateClassfileOnload</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
-	--illegal-access=permit -Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
+	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
 	--add-exports java.base/com.ibm.oti.util=ALL-UNNAMED \
