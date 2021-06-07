@@ -108,7 +108,16 @@ MM_CopyForwardDelegate::estimateRequiredSurvivorBytes(MM_EnvironmentVLHGC *env)
 		if (region->_markData._shouldMark) {
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 			double survivalRate = persistentStats[compactGroup]._historicalSurvivalRate;
-			UDATA freeMemory =  region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
+			UDATA freeMemory = 0;
+			MM_MemoryPoolBumpPointer *pool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
+			if (region->isEden()) {
+				/* if a GMP just completed, there may be marked regions in Eden. We still use getAllocatableBytes() for them because our survival rate is for the whole region, not just for objects which survived a GMP */ 
+				Assert_MM_true((MM_HeapRegionDescriptor::BUMP_ALLOCATED == region->getRegionType()) || (MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED == region->getRegionType()));
+				freeMemory = pool->getAllocatableBytes();
+			} else {
+				Assert_MM_true(MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED == region->getRegionType());
+				freeMemory = pool->getFreeMemoryAndDarkMatterBytes();
+			}
 			estimatedSurvivorRequired += (UDATA)((double)(region->getSize() - freeMemory) * survivalRate);
 		}
 	}
