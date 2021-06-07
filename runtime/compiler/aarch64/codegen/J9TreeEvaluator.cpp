@@ -3458,15 +3458,22 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
    // Compare and swap:
    resultReg = genCAS(node, cg, srm, objReg, offsetReg, offset, offsetInReg, oldVReg, newVReg, NULL, oldValue, oldValueInReg, isLong, casWithoutSync);
 
-   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
-   TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(conditions, offsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   const int regnum = 3 + (oldValueInReg ? 1 : 0) + (offsetInReg ? 1 : 0) + srm->numAvailableRegisters();
+   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, regnum, cg->trMemory());
+   conditions->addPostCondition(objReg, TR::RealRegister::NoReg);
+   if (offsetInReg)
+      conditions->addPostCondition(offsetReg, TR::RealRegister::NoReg);
+   conditions->addPostCondition(resultReg, TR::RealRegister::NoReg);
+   conditions->addPostCondition(newVReg, TR::RealRegister::NoReg);
+
    if (oldValueInReg)
-      TR::addDependency(conditions, oldVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+      conditions->addPostCondition(oldVReg, TR::RealRegister::NoReg);
+
+   srm->addScratchRegistersToDependencyList(conditions);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
+
+   srm->stopUsingRegisters();
 
    cg->recursivelyDecReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
