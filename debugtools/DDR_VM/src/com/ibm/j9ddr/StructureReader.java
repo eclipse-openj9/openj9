@@ -362,7 +362,7 @@ public class StructureReader {
 
 		for (StructureDescriptor structure : structures.values()) {
 			String typeName = structure.getName();
-			Map<String, String> infoMap = fieldMap.get(typeName);
+			Map<String, String> infoMap = fieldMap.remove(typeName);
 
 			if (infoMap == null) {
 				// No required or optional fields for this structure.
@@ -393,6 +393,36 @@ public class StructureReader {
 			for (Map.Entry<String, String> entry : infoMap.entrySet()) {
 				String fieldName = entry.getKey();
 				String fieldType = entry.getValue();
+				FieldDescriptor field;
+
+				if (fieldType.equals("required")) {
+					field = new FieldDescriptor(0, "?", "?", fieldName, fieldName);
+					field.required = true;
+				} else {
+					field = new FieldDescriptor(0, fieldType, fieldType, fieldName, fieldName);
+					field.optional = true;
+				}
+
+				field.present = false;
+				fields.add(field);
+			}
+		}
+
+		// Remaining entries in fieldMap are for missing types.
+		for (Map.Entry<String, Map<String, String>> typeEntry : fieldMap.entrySet()) {
+			StructureDescriptor type = new StructureDescriptor();
+			String typeName = typeEntry.getKey();
+			List<FieldDescriptor> fields = new ArrayList<>();
+
+			type.name = typeName;
+			type.constants = new ArrayList<>();
+			type.fields = fields;
+
+			structures.put(typeName, type);
+
+			for (Map.Entry<String, String> fieldEntry : typeEntry.getValue().entrySet()) {
+				String fieldName = fieldEntry.getKey();
+				String fieldType = fieldEntry.getValue();
 				FieldDescriptor field;
 
 				if (fieldType.equals("required")) {
@@ -638,7 +668,6 @@ public class StructureReader {
 			structure.name = structure.name.replace("__", "$");
 			logger.logp(FINE, null, null, "Reading structure {0}", structure.name);
 
-			structure.pointerName = structure.name + "Pointer";
 			structure.superName = readString(ddrStream, ddrStringTableStart);
 			structure.superName = structure.superName.replace("__", "$");
 			structure.sizeOf = ddrStream.readInt();
@@ -724,7 +753,6 @@ public class StructureReader {
 	public static class StructureDescriptor {
 		String name;
 		String superName;
-		String pointerName;
 		int sizeOf;
 		List<FieldDescriptor> fields;
 		List<ConstantDescriptor> constants;
@@ -756,7 +784,7 @@ public class StructureReader {
 		}
 
 		public String getSuperName() {
-			return superName;
+			return superName != null ? superName : "";
 		}
 
 		public List<FieldDescriptor> getFields() {
@@ -779,7 +807,6 @@ public class StructureReader {
 			constants = new ArrayList<>();
 			fields = new ArrayList<>();
 			name = parts[1];
-			pointerName = parts[2];
 
 			if (parts.length == 4) {
 				superName = parts[3];
