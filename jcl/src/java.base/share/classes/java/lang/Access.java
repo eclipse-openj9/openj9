@@ -501,6 +501,11 @@ final class Access implements JavaLangAccess {
 	public Module addEnableNativeAccess(Module mod) {
 		return mod.implAddEnableNativeAccess();
 	}
+	
+	public long findNative(ClassLoader loader, String entryName) {
+		return ClassLoader.findNative(loader, entryName);
+	}
+
 	/*[ENDIF] OPENJDK_METHODHANDLES*/
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
