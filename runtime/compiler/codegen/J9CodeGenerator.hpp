@@ -510,6 +510,16 @@ public:
    void setSupportsInlineStringHashCode() { _j9Flags.set(SupportsInlineStringHashCode); }
 
    /** \brief
+   *    Determines whether the code generator supports inlining of java/lang/StringLatin1.inflate
+   */
+   bool getSupportsInlineStringLatin1Inflate() { return _j9Flags.testAny(SupportsInlineStringLatin1Inflate); }
+
+   /** \brief
+   *    The code generator supports inlining of java/lang/StringLatin1.inflate
+   */
+   void setSupportsInlineStringLatin1Inflate() { _j9Flags.set(SupportsInlineStringLatin1Inflate); }
+
+   /** \brief
    *    Determines whether the code generator supports inlining of java_util_concurrent_ConcurrentLinkedQueue_tm*
    *    methods
    */
@@ -606,6 +616,7 @@ private:
       SupportsInlineStringHashCode                        = 0x00000010, /*! codegen inlining of Java string hash code */
       SupportsInlineConcurrentLinkedQueue                 = 0x00000020,
       SupportsBigDecimalLongLookasideVersioning           = 0x00000040,
+      SupportsInlineStringLatin1Inflate                   = 0x00000080, /*! codegen inlining of Java StringLatin1.inflate */
       };
 
    flags32_t _j9Flags;
