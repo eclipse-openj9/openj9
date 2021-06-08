@@ -215,6 +215,7 @@ class TR_RelocationRecord
          {}
 
       void * operator new (size_t s, TR_RelocationRecord *p)   { return p; }
+      void operator delete (void *, TR_RelocationRecord *p) {}
 
       virtual void print(TR_RelocationRuntime *reloRuntime);
       virtual char *name() { return "TR_RelocationRecord"; }

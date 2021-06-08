@@ -41,6 +41,7 @@ class TR_EstimateCodeSize
    public:
 
    void * operator new (size_t size, TR::Allocator allocator) { return allocator.allocate(size); }
+   void operator delete (void *, TR::Allocator allocator) {}
 
    //    {
    //    TR_EstimateCodeSize::raiiWrapper lexicalScopeObject(....);

@@ -25,6 +25,10 @@
 #include <string.h>
 
 #ifdef WINDOWS
+// Undefine the winsockapi because winsock2 defines it. Removes warnings.
+#if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
+#undef _WINSOCKAPI_
+#endif
 #include <winsock2.h>
 #include <process.h>
 #else
@@ -1477,7 +1481,7 @@ onLoadInternal(
       }
    if (!TR_DataCacheManager::initialize(jitConfig))
       {
-      printf("{JIT: fatal error, failed to allocate %lu Kb data cache}\n", jitConfig->dataCacheKB);
+      printf("{JIT: fatal error, failed to allocate %" OMR_PRIuPTR " Kb data cache}\n", jitConfig->dataCacheKB);
       return -1;
       }
 
