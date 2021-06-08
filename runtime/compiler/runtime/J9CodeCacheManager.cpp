@@ -707,7 +707,7 @@ J9::CodeCacheManager::printRemainingSpaceInCodeCaches()
    CacheListCriticalSection scanCacheList(self());
    for (TR::CodeCache *codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next())
       {
-      fprintf(stderr, "cache %p has %lu bytes empty\n", codeCache, codeCache->getFreeContiguousSpace());
+      fprintf(stderr, "cache %p has %" OMR_PRIdSIZE " bytes empty\n", codeCache, codeCache->getFreeContiguousSpace());
       if (codeCache->isReserved())
          fprintf(stderr, "Above cache is reserved by compThread %d\n", codeCache->getReservingCompThreadID());
       }

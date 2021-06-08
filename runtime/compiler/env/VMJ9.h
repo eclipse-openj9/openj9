@@ -216,6 +216,7 @@ class TR_J9VMBase : public TR_FrontEnd
    {
 public:
    void * operator new (size_t, void * placement) { return placement; }
+   void operator delete (void *, void *) {}
    TR_PERSISTENT_ALLOC(TR_Memory::FrontEnd)
 
    enum VM_TYPE

@@ -857,6 +857,7 @@ class TR_CallSiteInfo
 
    // Placement new support, used when updating call site info
    void * operator new (size_t s, void * loc) {return loc;}
+   void operator delete(void *p, void *) {}
 
    TR_ALLOC(TR_Memory::CallSiteInfo)
 

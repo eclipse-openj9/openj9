@@ -20,9 +20,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined(J9ZOS390)
 #pragma csect(CODE,"TRJ9CGBase#C")
 #pragma csect(STATIC,"TRJ9CGBase#S")
 #pragma csect(TEST,"TRJ9CGBase#T")
+#endif
 
 #include <algorithm>
 #include "codegen/AheadOfTimeCompile.hpp"

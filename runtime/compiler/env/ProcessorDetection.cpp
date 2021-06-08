@@ -239,7 +239,10 @@ portLib_getARMLinuxProcessor()
 
    while (!feof(fp))
       {
-      fgets(line_p, n, fp);
+      if (NULL == fgets(line_p, n, fp))
+         {
+         break;
+         }
       // note the capital P, this isn't searching for the processor: line, it's
       // searching for part of the model name value
       position_l = strstr(line_p, "Processor");

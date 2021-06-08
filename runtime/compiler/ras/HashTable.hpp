@@ -55,6 +55,7 @@ class TR_HashTableEntry
 
    void *operator new[](size_t size, TR_Memory *m);
    void *operator new(size_t size, void *cell) {return cell;}
+   void operator delete[] (void *p, TR_Memory *m) {}
 
    void *getKey() const    {return _key;}
    void *setKey(void *key) {return (_key = key);}

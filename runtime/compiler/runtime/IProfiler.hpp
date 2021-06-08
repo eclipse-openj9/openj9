@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -304,6 +304,8 @@ public:
    TR_IPBCDataFourBytes(uintptr_t pc) : TR_IPBytecodeHashTableEntry(pc), data(0) {}
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
+   void operator delete(void *p, void *) {}
+
    static const uint32_t IPROFILING_INVALID = ~0;
    virtual uintptr_t getData(TR::Compilation *comp = NULL) { return (uint32_t)data; }
    virtual uint32_t* getDataReference() { static uint32_t data_copy = (uint32_t)data; return &data_copy; }
@@ -363,6 +365,7 @@ public:
       };
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
+   void operator delete(void *p, void *) {}
    static const uint64_t IPROFILING_INVALID = ~0;
    virtual uintptr_t getData(TR::Compilation *comp = NULL) { /*TR_ASSERT(0, "Don't call me, I'm empty"); */return 0;}
    virtual int32_t setData(uintptr_t value, uint32_t freq = 1) { /*TR_ASSERT(0, "Don't call me, I'm empty");*/ return 0;}
@@ -397,6 +400,7 @@ public:
       }
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
+   void operator delete(void *p, void *) {}
 
    // Set the higher 32 bits to zero under compressedref to avoid assertion in
    // CallSiteProfileInfo::setClazz, which is called by setInvalid with IPROFILING_INVALID
