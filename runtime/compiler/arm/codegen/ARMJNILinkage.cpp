@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -158,7 +158,7 @@ TR::Register *J9::ARM::JNILinkage::pushDoubleArgForJNI(TR::Node *child)
 TR::MemoryReference *J9::ARM::JNILinkage::getOutgoingArgumentMemRef(int32_t               totalSize,
                                                                        int32_t               offset,
                                                                        TR::Register          *argReg,
-                                                                       TR_ARMOpCodes         opCode,
+                                                                       TR::InstOpCode::Mnemonic         opCode,
                                                                        TR::ARMMemoryArgument &memArg)
    {
 /* totalSize does not matter */

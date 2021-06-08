@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,20 +40,20 @@ class OMR_EXTENSIBLE Instruction : public J9::InstructionConnector
    // TODO: need to fix the InstOpCode initialization
    inline Instruction(TR::Node *node, TR::CodeGenerator *cg);
 
-   inline Instruction(TR_ARMOpCodes op, TR::Node *node, TR::CodeGenerator *cg);
+   inline Instruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::CodeGenerator *cg);
 
    inline Instruction(TR::Instruction   *precedingInstruction,
-               TR_ARMOpCodes     op,
+               TR::InstOpCode::Mnemonic     op,
                TR::Node          *node,
                TR::CodeGenerator *cg);
 
-   inline Instruction(TR_ARMOpCodes                       op,
+   inline Instruction(TR::InstOpCode::Mnemonic                       op,
                TR::Node                            *node,
                TR::RegisterDependencyConditions    *cond,
                TR::CodeGenerator                   *cg);
 
    inline Instruction(TR::Instruction                     *precedingInstruction,
-               TR_ARMOpCodes                       op,
+               TR::InstOpCode::Mnemonic                       op,
                TR::Node                            *node,
                TR::RegisterDependencyConditions    *cond,
                TR::CodeGenerator                   *cg);
@@ -71,7 +71,7 @@ TR::Instruction::Instruction(TR::Node *node, TR::CodeGenerator *cg)
    self()->setDependencyConditions(NULL);
    }
 
-TR::Instruction::Instruction(TR_ARMOpCodes op, TR::Node *node, TR::CodeGenerator *cg)
+TR::Instruction::Instruction(TR::InstOpCode::Mnemonic op, TR::Node *node, TR::CodeGenerator *cg)
    : J9::InstructionConnector(cg, InstOpCode::bad, node)
    {
    self()->setOpCodeValue(op);
@@ -80,7 +80,7 @@ TR::Instruction::Instruction(TR_ARMOpCodes op, TR::Node *node, TR::CodeGenerator
    }
 
 TR::Instruction::Instruction(TR::Instruction   *precedingInstruction,
-                         TR_ARMOpCodes     op,
+                         TR::InstOpCode::Mnemonic     op,
                          TR::Node          *node,
                          TR::CodeGenerator *cg)
    : J9::InstructionConnector(cg, precedingInstruction, InstOpCode::bad, node)
@@ -90,7 +90,7 @@ TR::Instruction::Instruction(TR::Instruction   *precedingInstruction,
    self()->setDependencyConditions(NULL);
    }
 
-TR::Instruction::Instruction(TR_ARMOpCodes                       op,
+TR::Instruction::Instruction(TR::InstOpCode::Mnemonic                       op,
                          TR::Node                            *node,
                          TR::RegisterDependencyConditions    *cond,
                          TR::CodeGenerator                   *cg)
@@ -105,7 +105,7 @@ TR::Instruction::Instruction(TR_ARMOpCodes                       op,
 
 
 TR::Instruction::Instruction(TR::Instruction                     *precedingInstruction,
-                         TR_ARMOpCodes                       op,
+                         TR::InstOpCode::Mnemonic                       op,
                          TR::Node                            *node,
                          TR::RegisterDependencyConditions    *cond,
                          TR::CodeGenerator                   *cg)
