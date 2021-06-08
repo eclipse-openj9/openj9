@@ -792,8 +792,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_createMethodHandleArchetypeSpecimen:
          {
-         auto recv = client->getRecvData<uintptr_t*>();
+         auto recv = client->getRecvData<uintptr_t*, TR_ResolvedJ9Method *>();
          uintptr_t *methodHandleLocation = std::get<0>(recv);
+         TR_ResolvedJ9Method *owningMethod = std::get<1>(recv);
          intptr_t length;
          char *thunkableSignature;
             {
@@ -806,7 +807,21 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             length = fe->getStringUTF8Length(signatureString);
             thunkableSignature = (char*)trMemory->allocateStackMemory(length+1);
             fe->getStringUTF8(signatureString, thunkableSignature, length+1);
-            client->write(response, archetype, std::string(thunkableSignature, length));
+
+            TR_ResolvedMethod *resolvedMethod = fe->createResolvedMethodWithSignature(
+               trMemory,
+               archetype,
+               NULL,
+               thunkableSignature,
+               length,
+               owningMethod);
+            resolvedMethod->convertToMethod()->setArchetypeSpecimen();
+            resolvedMethod->setMethodHandleLocation(methodHandleLocation);
+
+            TR_ResolvedJ9JITServerMethodInfo methodInfo;
+            TR_ResolvedJ9JITServerMethod::packMethodInfo(methodInfo, static_cast<TR_ResolvedJ9Method *>(resolvedMethod), fe);
+
+            client->write(response, archetype, std::string(thunkableSignature, length), methodInfo);
             }
          }
          break;

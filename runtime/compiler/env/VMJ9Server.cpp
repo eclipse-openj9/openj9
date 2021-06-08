@@ -166,7 +166,7 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
                                                  char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
    {
    TR_ResolvedJ9Method *result = NULL;
-   if (_compInfoPT->getCompilation()->compileRelocatableCode())
+   if (isAOT_DEPRECATED_DO_NOT_USE())
       {
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
       result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(aMethod, this, trMemory, methodInfo, owningMethod);
@@ -1694,14 +1694,24 @@ TR_ResolvedMethod *
 TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_createMethodHandleArchetypeSpecimen, methodHandleLocation);
-   auto recv = stream->read<TR_OpaqueMethodBlock*, std::string>();
+   stream->write(JITServer::MessageType::VM_createMethodHandleArchetypeSpecimen,
+                 methodHandleLocation,
+                 owningMethod ? static_cast<TR_ResolvedJ9JITServerMethod *>(owningMethod)->getRemoteMirror() : NULL);
+   auto recv = stream->read<TR_OpaqueMethodBlock*, std::string, TR_ResolvedJ9JITServerMethodInfo>();
    TR_OpaqueMethodBlock *archetype = std::get<0>(recv);
    std::string thunkableSignature = std::get<1>(recv);
+   auto &methodInfo = std::get<2>(recv);
    if (!archetype)
       return NULL;
 
-   TR_ResolvedMethod *result = createResolvedMethodWithSignature(trMemory, archetype, NULL, &thunkableSignature[0], thunkableSignature.length(), owningMethod);
+   TR_ResolvedMethod *result = createResolvedMethodWithSignature(
+      trMemory,
+      archetype,
+      NULL,
+      &thunkableSignature[0],
+      thunkableSignature.length(),
+      owningMethod,
+      methodInfo);
    result->convertToMethod()->setArchetypeSpecimen();
    result->setMethodHandleLocation(methodHandleLocation);
    return result;
