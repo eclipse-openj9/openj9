@@ -65,6 +65,7 @@ TR::TreeLowering::perform()
       {
       comp()->dumpMethodTrees("Trees after Tree Lowering Optimization");
       }
+
    return 0;
    }
 
@@ -600,10 +601,10 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    }
 
 
-class ArrayStoreCHKTransformer: public TR::TreeLowering::Transformer
+class NonNullableArrayNullStoreCheckTransformer: public TR::TreeLowering::Transformer
    {
    public:
-   explicit ArrayStoreCHKTransformer(TR::TreeLowering* opt)
+   explicit NonNullableArrayNullStoreCheckTransformer(TR::TreeLowering* opt)
       : TR::TreeLowering::Transformer(opt)
       {}
 
@@ -620,96 +621,74 @@ class ArrayStoreCHKTransformer: public TR::TreeLowering::Transformer
  * @param tt is the treetop at the root of the tree ancoring the current node
  */
 void
-ArrayStoreCHKTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
+NonNullableArrayNullStoreCheckTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    {
-   // Pattern match the ArrayStoreCHK operands to get the source of the assignment
-   // (sourceChild) and the array to which an element will have a value assigned (destChild)
-   TR::Node *firstChild = node->getFirstChild();
-
-   // The only kind of child for an ArrayStoreCHK should be an awrtbari.  If something
-   // else can appear (such as astorei) will need to rework the logic to determine the
-   // destination of the element store
+   // Transform
+   //   +-----------------------------------------+
+   //   | ttprev                                  |
+   //   | treetop                                 |
+   //   |   call <nonNullableArrayNullStoreCheck> |
+   //   |     <array-reference>                   |
+   //   |     <value-reference>                   |
+   //   | ttnext                                  |
+   //   +-----------------------------------------+
    //
-   TR_ASSERT_FATAL_WITH_NODE(node, firstChild->getOpCodeValue() == TR::awrtbari, "Expected child of ArrayStoreCHK to be awrtbari");
+   // into
+   //   +--------------------------------+
+   //   | ttprev                         |
+   //   | treetop                        |
+   //   |   <array-reference>            |
+   //   | treetop                        |
+   //   |   <value-reference>            |
+   //   | ificmpeq  -->------------------*---------+
+   //   |   iand                         |         |
+   //   |     iloadi <isClassFlags>      |         |
+   //   |       aloadi <componentClass>  |         |
+   //   |         aloadi <vft-symbol>    |         |
+   //   |           ==><array-reference> |         |
+   //   |     iconst J9ClassIsValueType  |         |
+   //   |   iconst 0                     |         |
+   //   | BBEnd                          |         |
+   //   +--------------------------------+         |
+   //   | BBStart (Extension)            |         |
+   //   | NULLCHK                        |         |
+   //   |   Passthrough                  |         |
+   //   |     ==><value-reference>       |         |
+   //   | BBEnd                          |         |
+   //   +--------------------------------+         |
+   //                   |                          |
+   //                   +--------------------------+
+   //                   |
+   //                   v
+   //   +--------------------------------+
+   //   | BBStart                        |
+   //   | ttnext                         |
+   //   +--------------------------------+
+   //
+   TR::Node *sourceChild = node->getFirstChild();
+   TR::Node *destChild = node->getSecondChild();
 
-   TR::Node *sourceChild = firstChild->getSecondChild();
-   TR::Node *destChild = firstChild->getChild(2);
-
-   // Only need to lower if it is possible that the value is a null reference
    if (!sourceChild->isNonNull())
       {
       TR::CFG * cfg = comp()->getFlowGraph();
       cfg->invalidateStructure();
 
       TR::Block *prevBlock = tt->getEnclosingBlock();
-
-      performTransformation(comp(), "%sTransforming ArrayStoreCHK n%dn [%p] by splitting block block_%d, and inserting a NULLCHK guarded with a check of whether the component type of the array is a value type\n", optDetailString(), node->getGlobalIndex(), node, prevBlock->getNumber());
-
-      // Anchor the node containing the source of the array element
-      // assignment and the node that contains the destination array
-      // to ensure they are available for the ificmpeq and NULLCHK
       TR::TreeTop *anchoredArrayTT = TR::TreeTop::create(comp(), tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, destChild));
       TR::TreeTop *anchoredSourceTT = TR::TreeTop::create(comp(), anchoredArrayTT, TR::Node::create(TR::treetop, 1, sourceChild));
 
-      // Transform
-      //   +--------------------------------+
-      //   | ttprev                         |
-      //   | ArrayStoreCHK                  |
-      //   |   awrtbari                     |
-      //   |     aladd                      |
-      //   |       <array-reference>        |
-      //   |       index-offset-calculation |
-      //   |     <value>                    |
-      //   |     <array-reference>          |
-      //   +--------------------------------+
-      //
-      // into
-      //   +--------------------------------+
-      //   | treetop                        |
-      //   |   <array-reference>            |
-      //   | treetop                        |
-      //   |   <value-reference>            |
-      //   | ificmpeq  -->------------------*---------+
-      //   |   iand                         |         |
-      //   |     iloadi <isClassFlags>      |         |
-      //   |       aloadi <componentClass>  |         |
-      //   |         aloadi <vft-symbol>    |         |
-      //   |           <array-reference>    |         |
-      //   |     iconst J9ClassIsValueType  |         |
-      //   |   iconst 0                     |         |
-      //   | BBEnd                          |         |
-      //   +--------------------------------+         |
-      //   | BBStart (Extension)            |         |
-      //   | NULLCHK                        |         |
-      //   |   Passthrough                  |         |
-      //   |     <value-reference>          |         |
-      //   | BBEnd                          |         |
-      //   +--------------------------------+         |
-      //                   |                          |
-      //                   +--------------------------+
-      //                   |
-      //                   v
-      //   +--------------------------------+
-      //   | BBStart                        |
-      //   | ArrayStoreCHK                  |
-      //   |   awrtbari                     |
-      //   |     aladd                      |
-      //   |       aload <array>            |
-      //   |       index-offset-calculation |
-      //   |     aload <value>              |
-      //   +--------------------------------+
-      //
-      TR::Node *ifNode = comp()->fej9()->checkArrayCompClassValueType(anchoredArrayTT->getNode()->getFirstChild(), TR::ificmpeq);
+      TR::Node *ifNode = comp()->fej9()->checkArrayCompClassValueType(destChild, TR::ificmpeq);
 
       TR::Node *passThru  = TR::Node::create(node, TR::PassThrough, 1, sourceChild);
-      TR::ResolvedMethodSymbol *currentMethod = comp()->getMethodSymbol();
 
-      TR::Block *arrayStoreCheckBlock = prevBlock->splitPostGRA(tt, cfg);
+      TR::TreeTop *nextTT = tt->getNextTreeTop();
+      tt->getPrevTreeTop()->join(nextTT);
+      TR::Block *nextBlock = prevBlock->splitPostGRA(nextTT, cfg);
 
-      ifNode->setBranchDestination(arrayStoreCheckBlock->getEntry());
+      ifNode->setBranchDestination(nextBlock->getEntry());
 
-      // Copy register dependencies from the end of the block split before the
-      // ArrayStoreCHK to the ificmpeq that's being added to the end of that block
+      // Copy register dependencies from the end of the block split
+      // to the ificmpeq that's being added to the end of that block
       if (prevBlock->getExit()->getNode()->getNumChildren() != 0)
          {
          TR::Node *blkDeps = prevBlock->getExit()->getNode()->getFirstChild();
@@ -735,6 +714,8 @@ ArrayStoreCHKTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
 
       prevBlock->append(TR::TreeTop::create(comp(), ifNode));
 
+      TR::ResolvedMethodSymbol *currentMethod = comp()->getMethodSymbol();
+
       TR::Node *nullCheck = TR::Node::createWithSymRef(node, TR::NULLCHK, 1, passThru,
                                comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(currentMethod));
       TR::TreeTop *nullCheckTT = prevBlock->append(TR::TreeTop::create(comp(), nullCheck));
@@ -742,9 +723,13 @@ ArrayStoreCHKTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       TR::Block *nullCheckBlock = prevBlock->split(nullCheckTT, cfg);
 
       nullCheckBlock->setIsExtensionOfPreviousBlock(true);
-
-      cfg->addEdge(prevBlock, arrayStoreCheckBlock);
       }
+   else
+      {
+      tt->getPrevTreeTop()->join(tt->getNextTreeTop());
+      }
+
+   node->recursivelyDecReferenceCount();
    }
 
 static TR::Node *
@@ -1536,6 +1521,10 @@ TR::TreeLowering::lowerValueTypeOperations(TransformationManager& transformation
             transformations.addTransformation(getTransformer<AcmpTransformer>(), node, tt);
             }
          }
+      else if (symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::nonNullableArrayNullStoreCheckSymbol))
+         {
+         transformations.addTransformation(getTransformer<NonNullableArrayNullStoreCheckTransformer>(), node, tt);
+         }
       else if (node->getSymbolReference()->getReferenceNumber() == TR_ldFlattenableArrayElement)
          {
          static char *disableInliningCheckAaload = feGetEnv("TR_DisableVT_AALOAD_Inlining");
@@ -1559,11 +1548,5 @@ TR::TreeLowering::lowerValueTypeOperations(TransformationManager& transformation
             transformations.addTransformation(getTransformer<StoreArrayElementTransformer>(), node, tt);
             }
          }
-      }
-   // If inlining check for aastore is enabled, the NULLCHK on the value reference is
-   // taken care of by StoreArrayElementTransformer.
-   else if (node->getOpCodeValue() == TR::ArrayStoreCHK && disableInliningCheckAastore)
-      {
-      transformations.addTransformation(getTransformer<ArrayStoreCHKTransformer>(), node, tt);
       }
    }
