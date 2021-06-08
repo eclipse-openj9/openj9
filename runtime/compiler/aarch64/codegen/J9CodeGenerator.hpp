@@ -105,6 +105,12 @@ public:
     * @return true if isInstance inline fast helper is supported
     */
    bool supportsInliningOfIsInstance();
+
+   /**
+    * @brief Answers whether inlining of the specified recognized method should be suppressed
+    * @return true if inlining of the method should be suppressed
+    */
+   bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
    };
 
 }
