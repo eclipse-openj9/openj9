@@ -200,3 +200,9 @@ J9::ARM64::CodeGenerator::supportsInliningOfIsInstance()
    {
    return !self()->comp()->getOption(TR_DisableInlineIsInstance);
    }
+
+bool
+J9::ARM64::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
+   {
+   return false;
+   }
