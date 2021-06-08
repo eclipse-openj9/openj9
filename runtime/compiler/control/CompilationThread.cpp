@@ -2697,9 +2697,8 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      numUsableCompThreads = ((numUsableCompThreads <= 0) ||
-                              (numUsableCompThreads > MAX_CLIENT_USABLE_COMP_THREADS)) ?
-                               MAX_CLIENT_USABLE_COMP_THREADS : numUsableCompThreads;
+      numUsableCompThreads = (numUsableCompThreads <= 0) ? DEFAULT_CLIENT_USABLE_COMP_THREADS
+                             : std::min(numUsableCompThreads, (int32_t)MAX_CLIENT_USABLE_COMP_THREADS);
       }
    }
 
