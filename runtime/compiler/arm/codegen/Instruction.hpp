@@ -64,7 +64,7 @@ class OMR_EXTENSIBLE Instruction : public J9::InstructionConnector
 #include "codegen/J9Instruction_inlines.hpp"
 
 TR::Instruction::Instruction(TR::Node *node, TR::CodeGenerator *cg)
-   : J9::InstructionConnector(cg, InstOpCode::BAD, node)
+   : J9::InstructionConnector(cg, InstOpCode::bad, node)
    {
    self()->setOpCodeValue(ARMOp_bad);
    self()->setConditionCode(ARMConditionCodeAL);
@@ -72,7 +72,7 @@ TR::Instruction::Instruction(TR::Node *node, TR::CodeGenerator *cg)
    }
 
 TR::Instruction::Instruction(TR_ARMOpCodes op, TR::Node *node, TR::CodeGenerator *cg)
-   : J9::InstructionConnector(cg, InstOpCode::BAD, node)
+   : J9::InstructionConnector(cg, InstOpCode::bad, node)
    {
    self()->setOpCodeValue(op);
    self()->setConditionCode(ARMConditionCodeAL);
@@ -83,7 +83,7 @@ TR::Instruction::Instruction(TR::Instruction   *precedingInstruction,
                          TR_ARMOpCodes     op,
                          TR::Node          *node,
                          TR::CodeGenerator *cg)
-   : J9::InstructionConnector(cg, precedingInstruction, InstOpCode::BAD, node)
+   : J9::InstructionConnector(cg, precedingInstruction, InstOpCode::bad, node)
    {
    self()->setOpCodeValue(op);
    self()->setConditionCode(ARMConditionCodeAL);
@@ -94,7 +94,7 @@ TR::Instruction::Instruction(TR_ARMOpCodes                       op,
                          TR::Node                            *node,
                          TR::RegisterDependencyConditions    *cond,
                          TR::CodeGenerator                   *cg)
-   : J9::InstructionConnector(cg, InstOpCode::BAD, node)
+   : J9::InstructionConnector(cg, InstOpCode::bad, node)
    {
    self()->setOpCodeValue(op);
    self()->setConditionCode(ARMConditionCodeAL);
@@ -109,7 +109,7 @@ TR::Instruction::Instruction(TR::Instruction                     *precedingInstr
                          TR::Node                            *node,
                          TR::RegisterDependencyConditions    *cond,
                          TR::CodeGenerator                   *cg)
-   : J9::InstructionConnector(cg, precedingInstruction, InstOpCode::BAD, node)
+   : J9::InstructionConnector(cg, precedingInstruction, InstOpCode::bad, node)
    {
    self()->setOpCodeValue(op);
    self()->setConditionCode(ARMConditionCodeAL);
