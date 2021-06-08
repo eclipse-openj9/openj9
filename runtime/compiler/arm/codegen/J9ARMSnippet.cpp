@@ -75,7 +75,7 @@ uint8_t *TR::ARMMonitorEnterSnippet::emitSnippetBody()
    TR::RealRegister *addrReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
    TR::RealRegister *tempReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
 
-   TR_ARMOpCode opcode;
+   TR::InstOpCode opcode;
    TR_ARMOpCodes opCodeValue;
 
    uint8_t *buffer = cg()->getBinaryBufferCursor();
@@ -226,7 +226,7 @@ uint8_t *TR::ARMMonitorExitSnippet::emitSnippetBody()
    TR::RealRegister *monitorReg = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
    TR::RealRegister *threadReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
-   TR_ARMOpCode opcode;
+   TR::InstOpCode opcode;
    TR_ARMOpCodes opCodeValue;
 
    uint8_t *buffer = cg()->getBinaryBufferCursor();
