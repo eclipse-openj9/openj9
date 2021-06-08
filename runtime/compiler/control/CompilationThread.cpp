@@ -5996,6 +5996,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       debugPrint("synchronous");
       }
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
    // Check to make sure we never queue a thunk archetype
    // See JTC-JAT 56314
    if (details.isOrdinaryMethod() || details.isMethodInProgress())
@@ -6022,6 +6023,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
             }
          }
       }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
    TR_YesNoMaybe methodIsInSharedCache = TR_no;
    bool useCodeFromSharedCache = false;
