@@ -67,6 +67,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     * generate a single precision sqrt instruction
     */
    static TR::Register *inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerator *cg);
+   /*
+    * Inline Java's (Java 11 onwards) StringLatin1.inflate([BI[CII)V
+    */
+   static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMinlineCompareAndSwap( TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp, bool isObj);
    static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8_t size, TR::MethodSymbol *method, bool isArray = false);
    static TR::Register *inlineAtomicFieldUpdater(TR::Node *node, TR::CodeGenerator *cg, TR::MethodSymbol *method);
