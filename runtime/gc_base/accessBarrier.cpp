@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -361,10 +360,6 @@ j9gc_objaccess_getLockwordAddress(J9VMThread *vmThread, J9Object *object)
 	return barrier->getLockwordAddress(vmThread, object);
 }
 
-/**
- * TODO: This is not actually in the memory manager function table yet --
- * waiting until we have a consistent story for NHRT barriers.
- */
 void
 j9gc_objaccess_storeObjectToInternalVMSlot(J9VMThread *vmThread, J9Object** destSlot, J9Object *value) 
 {
@@ -372,14 +367,10 @@ j9gc_objaccess_storeObjectToInternalVMSlot(J9VMThread *vmThread, J9Object** dest
 	barrier->storeObjectToInternalVMSlot(vmThread, destSlot, value);
 }
 
-/**
- * TODO: This is not actually in the memory manager function table yet --
- * waiting until we have a consistent story for NHRT barriers.
- */
 J9Object*
-j9gc_objaccess_readObjectFromInternalVMSlot(J9VMThread *vmThread, J9Object **srcSlot)
+j9gc_objaccess_readObjectFromInternalVMSlot(J9VMThread *vmThread, J9JavaVM *vm, J9Object **srcSlot)
 {
-	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vm)->accessBarrier;
 	return barrier->readObjectFromInternalVMSlot(vmThread, srcSlot);
 }
 
