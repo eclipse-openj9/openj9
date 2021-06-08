@@ -383,6 +383,12 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             }
          }
 #endif
+
+      // Release the class unload RW mutex
+      while (TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(threadCompInfo->getCompThreadId()) > 0)
+         {
+         TR::MonitorTable::get()->readReleaseClassUnloadMonitor(threadCompInfo->getCompThreadId());
+         }
       }
 
    TR::CompilationInfoPerThread *recompilationThreadInfo = compInfo->getCompilationInfoForDiagnosticThread();
