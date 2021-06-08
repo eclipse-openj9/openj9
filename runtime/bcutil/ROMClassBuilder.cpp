@@ -308,7 +308,7 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 						LITERAL_STRLEN(J9_INJECTED_INVOKER_CLASSNAME))
 				) {
 					originalStringBytes = (char *)nameData;
-					originalStringLength = nameLength;
+					originalStringLength = (U_32)nameLength;
 				}
 			}
 		}
