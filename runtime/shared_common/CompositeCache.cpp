@@ -5538,15 +5538,8 @@ SH_CompositeCacheImpl::clearCacheHeaderFullFlags(J9VMThread *currentThread)
 bool
 SH_CompositeCacheImpl::isAllRuntimeCacheFullFlagsSet(void) const
 {
-	if ((0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) &&
-		(0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL)) &&
-		(0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL)) &&
-		(0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL))
-	) {
-		return true;
-	} else {
-		return false;
-	}
+	return J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL | J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL
+		| J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL | J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL);
 }
 
 /**
