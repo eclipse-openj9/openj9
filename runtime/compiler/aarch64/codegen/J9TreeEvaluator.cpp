@@ -2850,10 +2850,39 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, lwOffset); // ldxr/stxr instructions does not take immediate offset
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
 
-   op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldxrw : TR::InstOpCode::ldxrx;
-   auto faultingInstruction = generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+   TR::Instruction *faultingInstruction;
+   static const bool disableLSE = feGetEnv("TR_aarch64DisableLSE") != NULL;
+   if (comp->target().cpu.supportsFeature(OMR_FEATURE_ARM64_LSE) && (!disableLSE))
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, dataReg, 0); // expected value
+      /*
+       * We need to generate a CASAL, not a CASA because loads/stores before monitor exit can be reordered after a CASA
+       * as the store to lockword for monitor exit is a plain store.
+       */
+      op = fej9->generateCompressedLockWord() ? TR::InstOpCode::casalw : TR::InstOpCode::casalx;
+      /*
+       * As Trg1MemSrc1Instruction was introduced to support ldxr/stxr instructions, target and source register convention
+       * is somewhat confusing. Its `treg` register actually is a source register and `sreg` register is a target register.
+       * This needs to be fixed at some point.
+       */
+      faultingInstruction = generateTrg1MemSrc1Instruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
+      generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, incLabel);
+      }
+   else
+      {
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+      op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldxrw : TR::InstOpCode::ldxrx;
+      faultingInstruction = generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+
+      generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, incLabel);
+      op = fej9->generateCompressedLockWord() ? TR::InstOpCode::stxrw : TR::InstOpCode::stxrx;
+
+      generateTrg1MemSrc1Instruction(cg, op, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
+      generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tempReg, loopLabel);
+
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
+      }
 
    // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
    // In this case, nullcheck reference register is objReg, but the memory reference does not use it,
@@ -2869,13 +2898,6 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          cg->setImplicitExceptionPoint(faultingInstruction);
          }
       }
-   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, incLabel);
-
-   op = fej9->generateCompressedLockWord() ? TR::InstOpCode::stxrw : TR::InstOpCode::stxrx;
-   generateTrg1MemSrc1Instruction(cg, op, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
-   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tempReg, loopLabel);
-
-   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
 
