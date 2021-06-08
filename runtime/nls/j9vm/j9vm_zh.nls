@@ -1926,7 +1926,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.user_response=Contact the p
 # arguments 1 and 2 are the specified interface name
 J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE=\u8d85\u7c7b %2$.*1$s \u65e0\u6cd5\u4f4d\u4e8e\u63a5\u53e3\u4e2d
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.sample_input_1=9
+J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.sample_input_1=13
 J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.sample_input_2=InterfaceName
 J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.explanation=A superclass can't be interface
 J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -1948,7 +1948,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE.user_response=Contact 
 # arguments 1 and 2 are the specified interface name
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE=%2$.*1$s \u4e0d\u662f\u63a5\u53e3
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_1=9
+J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_1=13
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_2=InterfaceName
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.explanation=The specified interface is not a real interface
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -1967,9 +1967,9 @@ J9NLS_VM_XVERIFYNONE_DEPRECATED.user_response=Consider not using these options a
 # Arguments 3 and 4 are the parent class name
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID=\u7c7b\u88c5\u5165\u5173\u7cfb\u65e0\u6548\uff08\u5b50\u4ee3\uff1a%2$.*1$s\uff0c\u7236\u4ee3\uff1a%4$.*3$s\uff09
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_1=10
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_1=14
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_2=ChildClassName
-J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_3=11
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_3=15
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_4=ParentClassName
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.explanation=The specified child class fails verification since it has an invalid class relationship.
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.system_action=The JVM will throw a java/lang/VerifyError.
