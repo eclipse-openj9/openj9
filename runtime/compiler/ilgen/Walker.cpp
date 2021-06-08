@@ -3329,6 +3329,8 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
    // ------------------------------------------------------
    bool isUnresolved;
    TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateDynamicMethodSymbol(_methodSymbol, callSiteIndex, &isUnresolved);
+   if (isUnresolved)
+      targetMethodSymRef->getSymbol()->setDummyResolvedMethod(); // linkToStatic is a dummy TR_ResolvedMethod
    TR::SymbolReference *callSiteTableEntrySymRef = symRefTab()->findOrCreateCallSiteTableEntrySymbol(_methodSymbol, callSiteIndex);
    TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
    uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->callSiteTableEntryAddress(callSiteIndex);
@@ -3411,6 +3413,8 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(int32_t cpIndex)
    // ------------------------------------------------------
    bool isUnresolved;
    TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex, &isUnresolved);
+   if (isUnresolved)
+      targetMethodSymRef->getSymbol()->setDummyResolvedMethod(); // linkToStatic is a dummy TR_ResolvedMethod
    TR::SymbolReference *methodTypeTableEntrySymRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
    TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
    uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->methodTypeTableEntryAddress(cpIndex);
