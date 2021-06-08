@@ -3319,21 +3319,24 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
    iComment("if 1st dim is also 0, we handle it here. Else, jump to nonZeroFirstDimLabel.");
 
    // First dimension zero, so only allocate 1 zero-length object array
-   int32_t zeroArraySize = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
    TR::Register *vmThreadReg = cg->getMethodMetaDataRealRegister();
    generateRXInstruction(cg, TR::InstOpCode::LG, node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
+
+   // Take into account alignment requirements for the size of the zero-length array header
+   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), TR::Compiler->om.objectAlignmentInBytes());
 
    // Branch to OOL if there's not enough space for an array of size 0.
    TR::Register *temp1Reg = cg->allocateRegister();
    if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
       {
-      generateRIEInstruction(cg, TR::InstOpCode::AGHIK, node, temp1Reg, targetReg, zeroArraySize);
+      generateRIEInstruction(cg, TR::InstOpCode::AGHIK, node, temp1Reg, targetReg, zeroArraySizeAligned);
       }
    else
       {
       generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp1Reg, targetReg);
-      generateRILInstruction(cg, TR::InstOpCode::AGFI, node, temp1Reg, zeroArraySize);
+      generateRILInstruction(cg, TR::InstOpCode::AGFI, node, temp1Reg, zeroArraySizeAligned);
       }
+
    generateRXInstruction(cg, TR::InstOpCode::CLG, node, temp1Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg));
    cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, oolJumpLabel);
    iComment("Branch to oolJumpLabel if there isn't enough space for a 0 size array.");
@@ -3376,12 +3379,11 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
       }
 
    TR::Register *temp2Reg = cg->allocateRegister();
-   // temp2Reg = firstDimLenReg * 16 (discontiguousArrayHeaderSizeInBytes)
    generateRRInstruction(cg, TR::InstOpCode::LGR, node, temp2Reg, firstDimLenReg);
-   generateRILInstruction(cg, TR::InstOpCode::MSGFI, node, temp2Reg, zeroArraySize);
+   generateRILInstruction(cg, TR::InstOpCode::MSGFI, node, temp2Reg, zeroArraySizeAligned);
 
    cursor = generateRRInstruction(cg, TR::InstOpCode::AGR, node, temp2Reg, temp1Reg);
-   iComment("Calculates (firstDimLen * zeroArraySize) + (arrayStrideInBytes + arrayHeaderSize)");
+   iComment("Calculates (firstDimLen * zeroArraySizeAligned) + (arrayStrideInBytes + arrayHeaderSize)");
 
    generateRXInstruction(cg, TR::InstOpCode::LG, node, targetReg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
    generateRRInstruction(cg, TR::InstOpCode::AGR, node, temp2Reg, targetReg);
@@ -3439,7 +3441,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
       }
 
    // Advance cursors temp1 and temp2. Then branch back or fall through if done.
-   generateRIInstruction(cg, TR::InstOpCode::AGHI, node, temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes());
+   generateRIInstruction(cg, TR::InstOpCode::AGHI, node, temp2Reg, zeroArraySizeAligned);
    generateRIInstruction(cg, TR::InstOpCode::AGHI, node, temp1Reg, elementSize);
 
    generateRILInstruction(cg, TR::InstOpCode::SLFI, node, firstDimLenReg, 1);

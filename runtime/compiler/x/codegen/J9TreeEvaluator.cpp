@@ -1261,9 +1261,12 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
    generateLabelInstruction(JNE4, node, nonZeroFirstDimLabel, cg);
 
    // First Dim zero, only allocate 1 zero-length object array
-   int32_t zeroArraySize = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
    generateRegMemInstruction(LRegMem(), node, targetReg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), cg);
-   generateRegMemInstruction(LEARegMem(), node, temp1Reg, generateX86MemoryReference(targetReg, zeroArraySize, cg), cg);
+
+   // Take into account alignment requirements for the size of the zero-length array header
+   int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), TR::Compiler->om.objectAlignmentInBytes());
+   generateRegMemInstruction(LEARegMem(), node, temp1Reg, generateX86MemoryReference(targetReg, zeroArraySizeAligned, cg), cg);
+
    generateRegMemInstruction(CMPRegMem(), node, temp1Reg, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapTop), cg), cg);
    generateLabelInstruction(JA4, node, oolJumpPoint, cg);
    generateMemRegInstruction(SMemReg(), node, generateX86MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg), temp1Reg, cg);
@@ -1307,9 +1310,8 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
       generateRegImmInstruction(ANDRegImm4(), node, temp1Reg, -elementSizeAligned, cg);
       }
 
-   // temp2Reg = firstDimLenReg * 16 (discontiguousArrayHeaderSizeInBytes)
-   TR_ASSERT_FATAL(zeroArraySize >= 0 && zeroArraySize <= 127, "discontiguousArrayHeaderSizeInBytes cannot be > 127 for IMulRegRegImms instruction");
-   generateRegRegImmInstruction(IMULRegRegImm4(), node, temp2Reg, firstDimLenReg, zeroArraySize, cg);
+   TR_ASSERT_FATAL(zeroArraySizeAligned >= 0 && zeroArraySizeAligned <= 127, "discontiguousArrayHeaderSizeInBytes cannot be > 127 for IMulRegRegImms instruction");
+   generateRegRegImmInstruction(IMULRegRegImm4(), node, temp2Reg, firstDimLenReg, zeroArraySizeAligned, cg);
 
    // temp2Reg = temp2Reg + temp1Reg
    generateRegRegInstruction(ADDRegReg(), node, temp2Reg, temp1Reg, cg);
@@ -1357,7 +1359,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
       }
 
    // Advance cursors temp1 and temp2
-   generateRegImmInstruction(ADDRegImms(), node, temp2Reg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
+   generateRegImmInstruction(ADDRegImms(), node, temp2Reg, zeroArraySizeAligned, cg);
    generateRegImmInstruction(ADDRegImms(), node, temp1Reg, elementSize, cg);
 
    generateRegInstruction(DEC4Reg, node, firstDimLenReg, cg);
