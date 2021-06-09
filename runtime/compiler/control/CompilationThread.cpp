@@ -2674,9 +2674,8 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
 #if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      numUsableCompThreads = ((numUsableCompThreads <= 0) ||
-                              (numUsableCompThreads > MAX_SERVER_USABLE_COMP_THREADS)) ?
-                               MAX_SERVER_USABLE_COMP_THREADS : numUsableCompThreads;
+      numUsableCompThreads = (numUsableCompThreads <= 0) ? DEFAULT_SERVER_USABLE_COMP_THREADS
+                             : numUsableCompThreads;
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -2705,8 +2704,7 @@ TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
 #if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_SERVER_USABLE_COMP_THREADS),
-               "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_SERVER_USABLE_COMP_THREADS);
+      TR_ASSERT(0 < numUsableCompThreads, "numUsableCompThreads %d is negative", numUsableCompThreads);
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */

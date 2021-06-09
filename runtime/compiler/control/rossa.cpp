@@ -1530,7 +1530,16 @@ onLoadInternal(
       // Address the case where the number of compilation threads is higher than the
       // maximum number of code caches
       if (TR::Options::_numUsableCompilationThreads > maxNumberOfCodeCaches)
-         TR::Options::_numUsableCompilationThreads =  maxNumberOfCodeCaches;
+         {
+#if defined(J9VM_OPT_JITSERVER)
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "ERROR: Requested number of compilation threads larger than maximum number of code caches: %d > %d",
+               TR::Options::_numUsableCompilationThreads, maxNumberOfCodeCaches
+            );
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         TR::Options::_numUsableCompilationThreads = maxNumberOfCodeCaches;
+         }
 
       compInfo->updateNumUsableCompThreads(TR::Options::_numUsableCompilationThreads);
 

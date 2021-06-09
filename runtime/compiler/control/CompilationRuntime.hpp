@@ -1087,7 +1087,7 @@ public:
    // Must be less than 8 at the JITClient or non-JITServer mode.
    // Because in some parts of the code (CHTable) we keep flags on a byte variable.
    static const uint32_t MAX_CLIENT_USABLE_COMP_THREADS = 7;  // For JITClient and non-JITServer mode
-   static const uint32_t MAX_SERVER_USABLE_COMP_THREADS = 63; // JITServer
+   static const uint32_t DEFAULT_SERVER_USABLE_COMP_THREADS = 63; // JITServer
    static const uint32_t MAX_DIAGNOSTIC_COMP_THREADS = 1;
 
 private:
