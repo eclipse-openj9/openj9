@@ -3040,7 +3040,7 @@ TR::Instruction *J9::Power::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGe
    }
 
 static TR::Instruction *genTestIsSuper(TR::Node *node, TR::Register *objClassReg, TR::Register *castClassReg, TR::Register *crReg, TR::Register *scratch1Reg,
-      TR::Register *scratch2Reg, int32_t castClassDepth, TR::LabelSymbol *failLabel, TR::Instruction *cursor, TR::CodeGenerator *cg, int32_t depthInReg2 = 0)
+      TR::Register *scratch2Reg, int32_t castClassDepth, TR::LabelSymbol *failLabel, TR::Instruction *cursor, TR::CodeGenerator *cg, bool depthInReg2 = false)
    {
    TR::Compilation *comp = cg->comp();
    int32_t superClassOffset = castClassDepth * TR::Compiler->om.sizeofReferenceAddress();
@@ -3174,7 +3174,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
    TR_ASSERT(J9AccClassArray == (1 << 16) && J9AccInterface == (1 << 9), "Verify code sequence is still right ...");
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, t3Reg, t3Reg, cndReg, (J9AccClassArray | J9AccInterface) >> 1);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, fLabel, cndReg);
-   genTestIsSuper(node, t2Reg, t1Reg, cndReg, t3Reg, t4Reg, 0, fLabel, cg->getAppendInstruction(), cg, 1);
+   genTestIsSuper(node, t2Reg, t1Reg, cndReg, t3Reg, t4Reg, 0, fLabel, cg->getAppendInstruction(), cg, true);
 
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, fLabel, cndReg);
    }
@@ -4146,7 +4146,9 @@ TR::Register *J9::Power::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, 
    uint8_t num_PICS = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, instanceOfNode, guessClassArray);
 
    bool testEqualClass = instanceOfOrCheckCastNeedEqualityTest(instanceOfNode, cg);
-   bool testCastClassIsSuper = instanceOfOrCheckCastNeedSuperTest(instanceOfNode, cg);
+   // Testing castClassAddr to set testCastClassIsSuper only if cast class is known at compile time
+   // When class is unknown, testCastClassIsSuper is false, and needsHelperCall is true to handle non-typical class types (e.g. interfaces)
+   bool testCastClassIsSuper = castClassAddr && instanceOfOrCheckCastNeedSuperTest(instanceOfNode, cg);
    bool isFinalClass = (castClassSymRef == NULL) ? false : castClassSymRef->isNonArrayFinal(comp);
    bool needsHelperCall = needHelperCall(testCastClassIsSuper, isFinalClass);
    bool testCache = needTestCache(!comp->getOption(TR_DisableInlineCheckCast), needsHelperCall, testCastClassIsSuper, castClassAddr, num_PICS);
@@ -4499,13 +4501,28 @@ TR::Register * J9::Power::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *
 
    if (testCastClassIsSuper)
       {
-      TR::StaticSymbol *castClassSym;
+      bool depthInReg2 = false;
 
-      castClassSym = castClassSymRef->getSymbol()->getStaticSymbol();
-      void * clazz = castClassSym->getStaticAddress();
-      castClassDepth = TR::Compiler->cls.classDepthOf((TR_OpaqueClassBlock *) clazz);
+      TR::StaticSymbol    *castClassSym = NULL;
+      if (castClassSymRef && !castClassSymRef->isUnresolved())
+         castClassSym = castClassSymRef->getSymbol()->getStaticSymbol();
 
-      iCursor = genTestIsSuper(node, objClassReg, castClassReg, crReg, scratch1Reg, scratch2Reg, castClassDepth, res0Label, iCursor, cg);
+      TR_OpaqueClassBlock * clazz = NULL;
+      if (castClassSym)
+         clazz = (TR_OpaqueClassBlock *) castClassSym->getStaticAddress();
+
+      if(clazz)
+         castClassDepth = (int32_t)TR::Compiler->cls.classDepthOf(clazz);
+
+      if (castClassDepth == -1)
+         {
+         iCursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, scratch2Reg,
+            TR::MemoryReference::createWithDisplacement(cg, castClassReg, offsetof(J9Class, classDepthAndFlags), TR::Compiler->om.sizeofReferenceAddress()), iCursor);
+         iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, scratch2Reg, scratch2Reg, 0, J9AccClassDepthMask, iCursor);
+         depthInReg2 = true;
+         }
+
+      iCursor = genTestIsSuper(node, objClassReg, castClassReg, crReg, scratch1Reg, scratch2Reg, castClassDepth, res0Label, iCursor, cg, depthInReg2);
       iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, res0Label, crReg, iCursor);
 
       if (trueLabel == NULL)
