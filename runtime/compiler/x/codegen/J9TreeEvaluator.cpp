@@ -900,7 +900,7 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
       for (TR::Instruction *cursor = cg->getAppendInstruction(); cursor != startInstruction; cursor = cursor->getPrev())
          {
          TR::RegisterDependencyConditions  *cursorDeps = cursor->getDependencyConditions();
-         if (cursorDeps && cursor->getOpCodeValue() != ASSOCREGS)
+         if (cursorDeps && cursor->getOpCodeValue() != TR::InstOpCode::assocreg)
             {
             if (debug("traceConditionalHelperEvaluator"))
                {
