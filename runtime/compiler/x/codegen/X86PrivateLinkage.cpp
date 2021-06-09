@@ -163,7 +163,7 @@ void J9::X86::PrivateLinkage::copyGlRegDepsToParameterSymbols(TR::Node *bbStart,
 
 TR::Instruction *J9::X86::PrivateLinkage::copyStackParametersToLinkageRegisters(TR::Instruction *procEntryInstruction)
    {
-   TR_ASSERT(procEntryInstruction && procEntryInstruction->getOpCodeValue() == PROCENTRY, "assertion failure");
+   TR_ASSERT(procEntryInstruction && procEntryInstruction->getOpCodeValue() == TR::InstOpCode::proc, "assertion failure");
    TR::Instruction *intrpPrev = procEntryInstruction->getPrev(); // The instruction before the interpreter entry point
    movLinkageRegisters(intrpPrev, false);
    return intrpPrev->getNext();
@@ -703,7 +703,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       );
 #endif
 
-   // Set the VFP state for the PROCENTRY instruction
+   // Set the VFP state for the TR::InstOpCode::proc instruction
    //
    if (_properties.getAlwaysDedicateFramePointerRegister())
       {

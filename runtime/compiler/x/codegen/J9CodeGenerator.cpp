@@ -268,9 +268,9 @@ J9::X86::CodeGenerator::beginInstructionSelection()
    deps->stopAddingPostConditions();
 
    if (self()->getAppendInstruction())
-      generateInstruction(PROCENTRY, startNode, deps, self());
+      generateInstruction(TR::InstOpCode::proc, startNode, deps, self());
    else
-      new (self()->trHeapMemory()) TR::Instruction(deps, PROCENTRY, (TR::Instruction *)NULL, self());
+      new (self()->trHeapMemory()) TR::Instruction(deps, TR::InstOpCode::proc, (TR::Instruction *)NULL, self());
 
    // Set the default FPCW to single precision mode if we are allowed to.
    //
