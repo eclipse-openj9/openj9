@@ -608,7 +608,7 @@ reportHotField(J9JavaVM *javaVM, int32_t reducedCpuUtil, J9Class* clazz, uint8_t
 	 * for each classLoader if scavenger dynamicBreadthFirstScanOrdering is enabled.
 	 * If creating the classLoder's hotFieldPool or hotFieldPoolMutex fails, exit.
 	 */
-	if ((NULL == javaVM->hotFieldClassInfoPool) || ((NULL == clazz->classLoader->hotFieldPool) && (false == createClassLoaderHotFieldPool(javaVM, clazz->classLoader)))) {
+	if ((NULL == javaVM->hotFieldClassInfoPool) || ((NULL == clazz->classLoader->hotFieldPoolMutex) && (false == createClassLoaderHotFieldPool(javaVM, clazz->classLoader)))) {
 		return;
 	}
 	/* 
@@ -635,7 +635,12 @@ createClassLoaderHotFieldPool(J9JavaVM *javaVM, J9ClassLoader* classLoader)
 	omrthread_monitor_enter(javaVM->globalHotFieldPoolMutex);
 	if (NULL == classLoader->hotFieldPool) {
 		classLoader->hotFieldPool = pool_new(sizeof(J9HotField),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(javaVM->portLibrary));
-		if (NULL == classLoader->hotFieldPool || (0 != omrthread_monitor_init_with_name(&classLoader->hotFieldPoolMutex, 0, "Hot Field Pool"))) {
+		if (NULL == classLoader->hotFieldPool) {
+			result = false;
+		} else if (0 != omrthread_monitor_init_with_name(&classLoader->hotFieldPoolMutex, 0, "Hot Field Pool")) {
+			pool_kill(classLoader->hotFieldPool);
+			classLoader->hotFieldPool = NULL;
+			classLoader->hotFieldPoolMutex = NULL;
 			result = false;
 		}
 	}
