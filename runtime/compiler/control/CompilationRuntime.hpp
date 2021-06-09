@@ -1043,8 +1043,8 @@ public:
    uint32_t getLastCriticalSeqNo() const { return _lastCriticalCompReqSeqNo; }
    void setLastCriticalSeqNo(uint32_t seqNo) { _lastCriticalCompReqSeqNo = seqNo; }
 
-   void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= (1 << threadId); }
-   void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
+   void markCHTableUpdateDone(int32_t threadId) { _chTableUpdateFlags |= (1 << threadId); }
+   void resetCHTableUpdateDone(int32_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
    uint8_t getCHTableUpdateDone() const { return _chTableUpdateFlags; }
 
    const PersistentVector<std::string> &getJITServerSslKeys() const { return _sslKeys; }
