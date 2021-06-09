@@ -145,6 +145,34 @@
 		</impls>
 	</test>
 	<test>
+		<testCaseName>jit_jitt_array_compress</testCaseName>
+		<variations>
+			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=1</variation>
+			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=2</variation>
+			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=3</variation>
+			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=4</variation>
+		</variations>
+		<command> $(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	arrayTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>bits.64,^vm.xl</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
 		<testCaseName>jit_compareAndBranch</testCaseName>
 		<variations>
 			<variation>-Xjit:count=1,limit={*testAddressCompare*},optlevel=hot,disableCFGSimplification,disableGRA,disableAsyncCompilation</variation>
