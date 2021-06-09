@@ -1594,7 +1594,7 @@ TR::Register *J9::X86::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::C
 
 TR::Register *J9::X86::TreeEvaluator::exceptionRangeFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   generateFenceInstruction(FENCE, node, node, cg);
+   generateFenceInstruction(TR::InstOpCode::fence, node, node, cg);
    return NULL;
    }
 
