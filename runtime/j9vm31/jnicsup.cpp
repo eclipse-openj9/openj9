@@ -496,8 +496,6 @@ jobject JNICALL
 NewObject(JNIEnv *env, jclass clazz, jmethodID methodID, ...)
 {
 	va_list_64 parms;
-
-	long long value = *((int *)((char*)&(methodID) + sizeof(jmethodID)));
 	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
 
 	return NewObjectV_64(env, clazz, methodID, parms);
@@ -508,8 +506,9 @@ NewObjectV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list args)
 {
 	va_list_64 parms;
 
-	long long value = *((int *)(((int *)(args))[1]));
-	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = (parms)[1] + sizeof(jmethodID) );
+	// Extract the arguments pointer from 31-bit va_list.
+	char *arguments = (char *)((int *)args)[1];
+	(void)( (parms)[0] = 0, (parms)[1] =  (char *)&(methodID), (parms)[2] = 0, (parms)[3] = arguments );
 
 	return NewObjectV_64(env, clazz, methodID, parms);
 }
