@@ -1114,7 +1114,7 @@ TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock 
  */
 void
 TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method,
-                                                        uint32_t vTableSlot, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, int32_t ttlForUnresolved)
+                                                        uint32_t vTableSlot, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, int32_t ttlForUnresolved, TR_YesNoMaybe unresolvedInCP)
    {
    static bool useCaching = !feGetEnv("TR_DisableResolvedMethodsCaching");
    if (!useCaching)
@@ -1150,6 +1150,7 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
    cacheEntry.persistentBodyInfo = bodyInfo;
    cacheEntry.persistentMethodInfo = pMethodInfo;
    cacheEntry.IPMethodInfo = entry;
+   cacheEntry.unresolvedInCP = unresolvedInCP;
 
    // time-to-live for cached unresolved methods.
    // Irrelevant for resolved methods.
@@ -1231,7 +1232,13 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
       if (*resolvedMethod)
          {
          if (unresolvedInCP)
-            *unresolvedInCP = false;
+            {
+            if (methodCacheEntry.unresolvedInCP == TR_maybe)
+               {
+               return false;
+               }
+            *unresolvedInCP = (methodCacheEntry.unresolvedInCP == TR_yes);
+            }
          return true;
          }
       else
@@ -1242,6 +1249,32 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
    return false;
    }
 
+/**
+ * @brief Method executed by JITServer to retrieve methodinfo from the resolved method cache
+ *
+ * @param key Identifier used to identify a resolved method in resolved methods cache
+ * @param unresolvedInCP The unresolvedInCP boolean value of interest, set by this API
+ * @return returns the method info
+ */
+TR_ResolvedJ9JITServerMethodInfo
+TR::CompilationInfoPerThreadRemote::getCachedMethodInfo(TR_ResolvedMethodKey key, TR_YesNoMaybe *unresolvedInCache)
+   {
+   TR_ResolvedMethodCacheEntry methodCacheEntry = {0};
+
+   getCachedValueFromPerCompilationMap(_resolvedMethodInfoMap, key, methodCacheEntry);
+
+   uint32_t vTableSlot = methodCacheEntry.vTableSlot;
+   auto methodInfoStruct = methodCacheEntry.methodInfoStruct;
+   TR_ResolvedJ9JITServerMethodInfo methodInfo = make_tuple(methodInfoStruct,
+      methodCacheEntry.persistentBodyInfo ? std::string((const char*)methodCacheEntry.persistentBodyInfo, sizeof(TR_PersistentJittedBodyInfo)) : std::string(),
+      methodCacheEntry.persistentMethodInfo ? std::string((const char*)methodCacheEntry.persistentMethodInfo, sizeof(TR_PersistentMethodInfo)) : std::string(),
+      methodCacheEntry.IPMethodInfo ? std::string((const char*)methodCacheEntry.IPMethodInfo, sizeof(TR_ContiguousIPMethodHashTableEntry)) : std::string());
+
+   if (unresolvedInCache)
+      *unresolvedInCache = methodCacheEntry.unresolvedInCP;
+   
+   return methodInfo;
+   }
 /**
  * @brief Method executed by JITServer to compose a TR_ResolvedMethodKey used for the resolved method cache
  *
@@ -1256,6 +1289,34 @@ TR::CompilationInfoPerThreadRemote::getResolvedMethodKey(TR_ResolvedMethodType t
    {
    TR_ResolvedMethodKey key = {type, ramClass, cpIndex, classObject};
    return key;
+   }
+
+/**
+ * @brief Helper method executed by JITServer to cache and retrieve a resolved method from the resolved method cache
+ *
+ * @param key Identifier used to identify a resolved method in resolved methods cache
+ * @param method The resolved method of interest
+ * @param vTableSlot The vTableSlot for the resolved method of interest
+ * @param methodInfo Additional method info about the resolved method of interest
+ * @param owningMethod Owning method of the resolved method of interest
+ * @param resolvedMethod The resolved method of interest, set by this API
+ * @param unresolvedInCP The unresolvedInCP boolean value of interest, set by this API
+ * @param ttlForUnresolved Time-to-live for cached unresolved methods. After this number of accesses, the entry is deleted
+ * @return returns a resolved method pointer from the cache after caching it
+ */
+TR_ResolvedMethod *
+TR::CompilationInfoPerThreadRemote::cacheAndGetResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9JITServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, int32_t ttlForUnresolved, TR_YesNoMaybe unresolvedInCP)
+   {
+   cacheResolvedMethod(
+      key,
+      method,
+      vTableSlot,
+      methodInfo,
+      ttlForUnresolved,
+      unresolvedInCP);
+   getCachedResolvedMethod(key, owningMethod, resolvedMethod);
+
+   return *resolvedMethod;
    }
 
 /**

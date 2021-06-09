@@ -52,6 +52,26 @@ TR_ResolvedJ9JITServerMethodInfoStruct
    void *addressContainingIsOverriddenBit;
    J9ClassLoader *classLoader;
    bool isLambdaFormGeneratedMethod;
+
+   bool operator==(const TR_ResolvedJ9JITServerMethodInfoStruct& other) const 
+      {
+      return
+            literals == other.literals &&
+            ramClass == other.ramClass &&
+            methodIndex == other.methodIndex &&
+            jniProperties == other.jniProperties &&
+            jniTargetAddress == other.jniTargetAddress &&
+            isInterpreted == other.isInterpreted &&
+            isJNINative == other.isJNINative &&
+            isMethodInValidLibrary == other.isMethodInValidLibrary &&
+            mandatoryRm == other.mandatoryRm &&
+            rm == other.rm &&
+            startAddressForJittedMethod == other.startAddressForJittedMethod &&
+            virtualMethodIsOverridden == other.virtualMethodIsOverridden &&
+            addressContainingIsOverriddenBit == other.addressContainingIsOverriddenBit &&
+            classLoader == other.classLoader;
+            isLambdaFormGeneratedMethod == other.isLambdaFormGeneratedMethod;
+      }
    };
 
 
@@ -124,6 +144,7 @@ TR_ResolvedMethodCacheEntry
    TR_PersistentMethodInfo *persistentMethodInfo;
    TR_ContiguousIPMethodHashTableEntry *IPMethodInfo;
    int32_t ttlForUnresolved;
+   TR_YesNoMaybe unresolvedInCP;
    };
 
 using TR_ResolvedMethodInfoCache = UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry>;
@@ -231,6 +252,7 @@ public:
    int32_t collectImplementorsCapped(TR_OpaqueClassBlock *topClass, int32_t maxCount, int32_t cpIndexOrOffset, TR_YesNoMaybe useGetResolvedInterfaceMethod, TR_ResolvedMethod **implArray);
    bool isLambdaFormGeneratedMethod() { return _isLambdaFormGeneratedMethod; }
    static void packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
+   bool verifyCache(TR_ResolvedJ9JITServerMethodInfo clientMethodInfo, TR_ResolvedJ9JITServerMethodInfo cachedMethodInfo, TR_YesNoMaybe unresolvedInCache = TR_no, bool *unresolvedInCP = NULL);
 
 protected:
    JITServer::ServerStream *_stream;
