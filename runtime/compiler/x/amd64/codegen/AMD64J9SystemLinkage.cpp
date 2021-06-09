@@ -175,7 +175,7 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(
    generateVFPReleaseInstruction(vfpDedicateInstruction, callNode, cg());
 
    TR::LabelSymbol *postDepLabel = generateLabelSymbol(cg());
-   generateLabelInstruction(LABEL, callNode, postDepLabel, postDeps, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, postDepLabel, postDeps, cg());
 
    return returnReg;
    }

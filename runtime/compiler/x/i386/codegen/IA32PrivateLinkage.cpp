@@ -530,7 +530,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
 
    if (picSlot.generateNextSlotLabelInstruction())
       {
-      generateLabelInstruction(LABEL, node, mismatchLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::label, node, mismatchLabel, cg());
       }
 
    return firstInstruction;
@@ -582,7 +582,7 @@ void J9::X86::I386::PrivateLinkage::buildIPIC(
    TR_ASSERT(doneLabel, "a doneLabel is required for IPIC dispatches");
 
    if (entryLabel)
-      generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
 
    TR::Instruction *startOfPicInstruction = cg()->getAppendInstruction();
 
@@ -705,7 +705,7 @@ void J9::X86::I386::PrivateLinkage::buildVirtualOrComputedCall(
    else if (resolvedSite && site.resolvedVirtualShouldUseVFTCall())
       {
       if (entryLabel)
-         generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
+         generateLabelInstruction(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
 
       intptr_t offset=site.getSymbolReference()->getOffset();
       if (!resolvedSite)

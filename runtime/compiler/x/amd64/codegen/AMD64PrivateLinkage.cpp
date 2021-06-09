@@ -1193,7 +1193,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
 
    if (picSlot.generateNextSlotLabelInstruction())
       {
-      generateLabelInstruction(LABEL, node, mismatchLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::label, node, mismatchLabel, cg());
       }
 
    return firstInstruction;
@@ -1220,7 +1220,7 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
    TR_ASSERT(doneLabel, "a doneLabel is required for PIC dispatches");
 
    if (entryLabel)
-      generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
 
    int32_t numIPicSlots = IPicParameters.defaultNumberOfSlots;
 
@@ -1328,7 +1328,7 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
    if (entryLabel)
-      generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
 
    TR::SymbolReference *methodSymRef = site.getSymbolReference();
    if (comp()->getOption(TR_TraceCG))

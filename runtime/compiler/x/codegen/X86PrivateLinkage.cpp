@@ -454,7 +454,7 @@ static TR::Instruction *initializeLocals(TR::Instruction      *cursor,
                   cg);
 
       TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
-      cursor = new (cg->trHeapMemory()) TR::X86LabelInstruction(cursor, LABEL, loopLabel, cg);
+      cursor = new (cg->trHeapMemory()) TR::X86LabelInstruction(cursor, TR::InstOpCode::label, loopLabel, cg);
 
       cursor = new (cg->trHeapMemory()) TR::X86MemRegInstruction(
          cursor,
@@ -759,13 +759,13 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          endLabel->setEndInternalControlFlow();
          checkLabel->setStartOfColdInstructionStream();
 
-         cursor = generateLabelInstruction(cursor, LABEL, begLabel, cg());
+         cursor = generateLabelInstruction(cursor, TR::InstOpCode::label, begLabel, cg());
          cursor = generateLabelInstruction(cursor, JBE4, checkLabel, cg());
-         cursor = generateLabelInstruction(cursor, LABEL, endLabel, cg());
+         cursor = generateLabelInstruction(cursor, TR::InstOpCode::label, endLabel, cg());
 
          // At this point, cg()->getAppendInstruction() is already in the cold code section.
          generateVFPRestoreInstruction(vfp, cursor->getNode(), cg());
-         generateLabelInstruction(LABEL, cursor->getNode(), checkLabel, cg());
+         generateLabelInstruction(TR::InstOpCode::label, cursor->getNode(), checkLabel, cg());
          generateRegImmInstruction(MOV4RegImm4, cursor->getNode(), machine()->getRealRegister(TR::RealRegister::edi), allocSize, cg());
          if (doAllocateFrameSpeculatively)
             {
@@ -892,7 +892,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       //Perform the paint.
       //
       cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, MOVRegImm4(), frameSlotIndexReg, paintSize, cg());
-      cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, LABEL, startLabel, cg());
+      cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, TR::InstOpCode::label, startLabel, cg());
       if (comp()->target().is64Bit())
          cursor = new (trHeapMemory()) TR::X86MemRegInstruction(cursor, S8MemReg, generateX86MemoryReference(espReal, frameSlotIndexReg, 0,(uint8_t) paintSlotsOffset, cg()), paintReg, cg());
       else
@@ -1117,7 +1117,7 @@ J9::X86::PrivateLinkage::buildDirectDispatch(
 
    // Create the internal control flow region and VFP adjustment
    //
-   generateLabelInstruction(startBookmark, LABEL, startLabel, site.getPreConditionsUnderConstruction(), cg());
+   generateLabelInstruction(startBookmark, TR::InstOpCode::label, startLabel, site.getPreConditionsUnderConstruction(), cg());
    if (getProperties().getCallerCleanup())
       {
       // TODO: Caller must clean up
@@ -1130,7 +1130,7 @@ J9::X86::PrivateLinkage::buildDirectDispatch(
       {
       generateVFPCallCleanupInstruction(-site.getArgSize(), callNode, cg());
       }
-   generateLabelInstruction(LABEL, callNode, doneLabel, site.getPostConditionsUnderConstruction(), cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, doneLabel, site.getPostConditionsUnderConstruction(), cg());
 
    // Stop using the killed registers that are not going to persist
    //
@@ -1814,7 +1814,7 @@ TR::Register *J9::X86::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
 
             picSlot = i.getNext();
             if (picSlot)
-               generateLabelInstruction(LABEL, site.getCallNode(), picMismatchLabel, cg());
+               generateLabelInstruction(TR::InstOpCode::label, site.getCallNode(), picMismatchLabel, cg());
             }
 
          site.setFirstPICSlotInstruction(NULL);
@@ -1857,10 +1857,10 @@ TR::Register *J9::X86::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
 
    // Create the internal control flow region and VFP adjustment
    //
-   generateLabelInstruction(startBookmark, LABEL, startLabel, site.getPreConditionsUnderConstruction(), cg());
+   generateLabelInstruction(startBookmark, TR::InstOpCode::label, startLabel, site.getPreConditionsUnderConstruction(), cg());
    if (!getProperties().getCallerCleanup())
       generateVFPCallCleanupInstruction(-site.getArgSize(), callNode, cg());
-   generateLabelInstruction(LABEL, callNode, doneLabel, site.getPostConditionsUnderConstruction(), cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, doneLabel, site.getPostConditionsUnderConstruction(), cg());
 
    // Stop using the killed registers that are not going to persist
    //
@@ -2402,7 +2402,7 @@ void J9::X86::PrivateLinkage::buildVPIC(TR::X86CallSite &site, TR::LabelSymbol *
    TR_ASSERT(doneLabel, "a doneLabel is required for VPIC dispatches");
 
    if (entryLabel)
-      generateLabelInstruction(LABEL, site.getCallNode(), entryLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
 
    int32_t numVPicSlots = VPicParameters.defaultNumberOfSlots;
 
@@ -2545,7 +2545,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
    // The dispatch sequence
    //
 
-   TR::Instruction *lastITableDispatchStart = generateLabelInstruction(  LABEL, callNode, lastITableDispatchLabel, cg());
+   TR::Instruction *lastITableDispatchStart = generateLabelInstruction(  TR::InstOpCode::label, callNode, lastITableDispatchLabel, cg());
    generateRegImmInstruction( MOV4RegImm4, callNode, vtableIndexReg, fej9->getITableEntryJitVTableOffset(), cg());
    generateRegMemInstruction( SUBRegMem(), callNode, vtableIndexReg, generateX86MemoryReference(scratchReg, fej9->convertITableIndexToOffset(itableIndex), cg()), cg());
    buildVFTCall(site,         JMPMem, NULL, generateX86MemoryReference(vftReg, vtableIndexReg, 0, cg()));
@@ -2559,7 +2559,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
 
    // The test sequence
    //
-   generateLabelInstruction(LABEL, callNode, lastITableTestLabel, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, lastITableTestLabel, cg());
    if (breakBeforeInterfaceDispatchUsingLastITable)
       generateInstruction(TR::InstOpCode::bad, callNode, cg());
    generateRegMemInstruction(LRegMem(), callNode, scratchReg, generateX86MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), cg()), cg());

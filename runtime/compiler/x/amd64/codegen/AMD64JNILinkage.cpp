@@ -843,7 +843,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccess(TR::Node *callNode)
 
    // Loop head
    //
-   generateLabelInstruction(LABEL, callNode, loopHeadLabel, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, loopHeadLabel, cg());
    generateRegRegInstruction(MOVRegReg(), callNode, scratchReg2, scratchReg1, cg());
 
    TR::LabelSymbol *longReleaseSnippetLabel = generateLabelSymbol(cg());
@@ -919,7 +919,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccess(TR::Node *callNode)
 
    deps->stopAddingConditions();
 
-   generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, deps, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, longReleaseRestartLabel, deps, cg());
    }
 
 
@@ -982,7 +982,7 @@ void J9::X86::AMD64::JNILinkage::acquireVMAccess(TR::Node *callNode)
 
    deps->stopAddingConditions();
 
-   generateLabelInstruction(LABEL, callNode, longReacquireRestartLabel, deps, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, longReacquireRestartLabel, deps, cg());
    }
 
 
@@ -1015,7 +1015,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
                              J9_PUBLIC_FLAGS_VM_ACCESS,
                              cg());
    generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
-   generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, longReleaseRestartLabel, cg());
 
    TR_OutlinedInstructionsGenerator og(longReleaseSnippetLabel, callNode, cg());
    auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
@@ -1053,7 +1053,7 @@ void J9::X86::AMD64::JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
                              J9_PUBLIC_FLAGS_VM_ACCESS,
                              cg());
    generateLabelInstruction(JNE4, callNode, longAcquireSnippetLabel, cg());
-   generateLabelInstruction(LABEL, callNode, longAcquireRestartLabel, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, longAcquireRestartLabel, cg());
 
    TR_OutlinedInstructionsGenerator og(longAcquireSnippetLabel, callNode, cg());
    auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
@@ -1175,7 +1175,7 @@ void J9::X86::AMD64::JNILinkage::cleanupJNIRefPool(TR::Node *callNode)
                              cg());
 
    generateLabelInstruction(JNE4, callNode, refPoolSnippetLabel, cg());
-   generateLabelInstruction(LABEL, callNode, refPoolRestartLabel, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, refPoolRestartLabel, cg());
 
    TR_OutlinedInstructionsGenerator og(refPoolSnippetLabel, callNode, cg());
    generateHelperCallInstruction(callNode, TR_AMD64jitCollapseJNIReferenceFrame, NULL, cg());
@@ -1366,7 +1366,7 @@ TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callN
 
    TR::LabelSymbol *startJNISequence = generateLabelSymbol(cg());
    startJNISequence->setStartInternalControlFlow();
-   generateLabelInstruction(LABEL, callNode, startJNISequence, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, startJNISequence, cg());
 
    if (isGPUHelper)
       callNode->setSymbolReference(gpuHelperSymRef);
@@ -1406,7 +1406,7 @@ TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callN
    // TODO: will need an AOT relocation for this one at some point.
    // Lay down a label for the frame push to reference.
    //
-   generateLabelInstruction(callInstr, LABEL, returnAddrLabel, cg());
+   generateLabelInstruction(callInstr, TR::InstOpCode::label, returnAddrLabel, cg());
 
    if (_JNIDispatchInfo.JNIReturnRegister)
       {
@@ -1453,7 +1453,7 @@ TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callN
          generateX86MemoryReference(targetReg, 0, cg()),
          cg());
 
-      generateLabelInstruction(LABEL, callNode, nullLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::label, callNode, nullLabel, cg());
       }
 
    //    1) Store out the machine sp into the vm thread.  It has to be done as sometimes
@@ -1503,7 +1503,7 @@ TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callN
 
    TR::LabelSymbol *restartLabel = generateLabelSymbol(cg());
    restartLabel->setEndInternalControlFlow();
-   generateLabelInstruction(LABEL, callNode, restartLabel, _JNIDispatchInfo.mergeLabelPostDeps, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, restartLabel, _JNIDispatchInfo.mergeLabelPostDeps, cg());
 
    return _JNIDispatchInfo.JNIReturnRegister;
    }

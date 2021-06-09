@@ -113,7 +113,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
    begLabel->setStartInternalControlFlow();
    endLabel->setEndInternalControlFlow();
 
-   generateLabelInstruction(LABEL, callNode, begLabel, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, begLabel, cg());
 
    // Save VFP
    TR::X86VFPSaveInstruction* vfpSave = generateVFPSaveInstruction(callNode, cg());
@@ -295,7 +295,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
                                 J9_PUBLIC_FLAGS_VM_ACCESS,
                                 cg());
       generateLabelInstruction(JNE4, callNode, longReleaseSnippetLabel, cg());
-      generateLabelInstruction(LABEL, callNode, longReleaseRestartLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::label, callNode, longReleaseRestartLabel, cg());
 
       TR_OutlinedInstructionsGenerator og(longReleaseSnippetLabel, callNode, cg());
       auto helper = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getMethodSymbol());
@@ -324,7 +324,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
    // Lay down a label for the frame push to reference.
    //
-   generateLabelInstruction(LABEL, callNode, returnAddrLabel, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, returnAddrLabel, cg());
 
    // Restore stack pointer
    generateRegRegInstruction(MOV4RegReg, callNode, espReal, ediReal, cg());
@@ -390,7 +390,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
                                 J9_PUBLIC_FLAGS_VM_ACCESS,
                                 cg());
       generateLabelInstruction(JNE4, callNode, longAcquireSnippetLabel, cg());
-      generateLabelInstruction(LABEL, callNode, longAcquireRestartLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::label, callNode, longAcquireRestartLabel, cg());
 
       TR_OutlinedInstructionsGenerator og(longAcquireSnippetLabel, callNode, cg());
       auto helper = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getMethodSymbol());
@@ -407,7 +407,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
       generateRegRegInstruction(TEST4RegReg, callNode, ecxReal, ecxReal, cg());
       generateLabelInstruction(JE4, callNode, tempLab, cg());
       generateRegMemInstruction(L4RegMem, callNode, ecxReal, generateX86MemoryReference(ecxReal, 0, cg()), cg());
-      generateLabelInstruction(LABEL, callNode, tempLab, cg());
+      generateLabelInstruction(TR::InstOpCode::label, callNode, tempLab, cg());
       }
 
    // Switch stacks back.
@@ -453,7 +453,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
          TR::LabelSymbol *refPoolRestartLabel = generateLabelSymbol(cg());
          generateMemImmInstruction(op, callNode, generateX86MemoryReference(espReal, fej9->constJNICallOutFrameFlagsOffset(), cg()), flagValue, cg());
          generateLabelInstruction(JNE4, callNode, refPoolSnippetLabel, cg());
-         generateLabelInstruction(LABEL, callNode, refPoolRestartLabel, cg());
+         generateLabelInstruction(TR::InstOpCode::label, callNode, refPoolRestartLabel, cg());
 
          TR_OutlinedInstructionsGenerator og(refPoolSnippetLabel, callNode, cg());
          generateHelperCallInstruction(callNode, TR_IA32jitCollapseJNIReferenceFrame, NULL, cg());
@@ -517,7 +517,7 @@ TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
 
    // Restore VFP
    generateVFPRestoreInstruction(vfpSave, callNode, cg());
-   generateLabelInstruction(LABEL, callNode, endLabel, deps, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, endLabel, deps, cg());
 
    // Stop using the killed registers that are not going to persist.
    //

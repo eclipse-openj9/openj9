@@ -94,7 +94,7 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
    begLabel->setStartInternalControlFlow();
    endLabel->setEndInternalControlFlow();
 
-   generateLabelInstruction(LABEL, callNode, begLabel, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, begLabel, cg());
 
    // Save VFP
    TR::X86VFPSaveInstruction* vfpSave = generateVFPSaveInstruction(callNode, cg());
@@ -123,7 +123,7 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
 
    // Restore VFP
    generateVFPRestoreInstruction(vfpSave, callNode, cg());
-   generateLabelInstruction(LABEL, callNode, endLabel, deps, cg());
+   generateLabelInstruction(TR::InstOpCode::label, callNode, endLabel, deps, cg());
 
    // Stop using the killed registers that are not going to persist
    //
