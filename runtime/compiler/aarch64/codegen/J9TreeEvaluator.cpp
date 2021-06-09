@@ -4413,12 +4413,14 @@ genArrayletAccessAddr(TR::CodeGenerator *cg, TR::Node *node, int32_t elementSize
    if (indexReg)
       {
       int32_t arrayletMask = fej9->getArrayletMask(elementSize);
-      int32_t elementSizeShift = CHAR_BIT * sizeof(int32_t) - leadingZeroes(elementSize - 1);
 
-      // generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, offsetReg, indexReg, elementSizeShift, arrayletMask << elementSizeShift);
       loadConstant64(cg, node, arrayletMask, offsetReg);
       generateTrg1Src2Instruction(cg, TR::InstOpCode::andx, node, offsetReg, indexReg, offsetReg);
-      generateLogicalShiftLeftImmInstruction(cg, node, offsetReg, offsetReg, elementSizeShift);
+      if (elementSize > 1)
+         {
+         int32_t elementSizeShift = CHAR_BIT * sizeof(int32_t) - leadingZeroes(elementSize - 1);
+         generateLogicalShiftLeftImmInstruction(cg, node, offsetReg, offsetReg, elementSizeShift);
+         }
       }
    else
       offsetVal = (fej9->getLeafElementIndex(indexVal, elementSize) * elementSize);
