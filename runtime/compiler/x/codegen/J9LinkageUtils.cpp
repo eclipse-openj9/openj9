@@ -87,11 +87,11 @@ void J9LinkageUtils::cleanupReturnValue(
          default:
             // TR::Address, TR_[US]Int64, TR_[US]Int32
             //
-            op = (linkageReturnReg != targetReg) ? MOVRegReg() : BADIA32Op;
+            op = (linkageReturnReg != targetReg) ? MOVRegReg() : TR::InstOpCode::bad;
             break;
          }
 
-      if (op != BADIA32Op)
+      if (op != TR::InstOpCode::bad)
          generateRegRegInstruction(op, callNode, targetReg, linkageReturnReg, cg);
       }
    }

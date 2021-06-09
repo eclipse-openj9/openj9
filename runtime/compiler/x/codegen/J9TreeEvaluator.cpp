@@ -215,7 +215,7 @@ static TR_OutlinedInstructions *generateArrayletReference(
    static char *forceArrayletInt = feGetEnv("TR_forceArrayletInt");
    if (forceArrayletInt)
       {
-      generateInstruction(BADIA32Op, node, cg);
+      generateInstruction(TR::InstOpCode::bad, node, cg);
       }
 
    // -----------------------------------------------------------------------------------
@@ -439,7 +439,7 @@ static TR_OutlinedInstructions *generateArrayletReference(
 
             default:
                TR_ASSERT(0, "unsupported array element load type");
-               op = BADIA32Op;
+               op = TR::InstOpCode::bad;
             }
          }
 
@@ -515,7 +515,7 @@ static TR_OutlinedInstructions *generateArrayletReference(
 
             default:
                TR_ASSERT(0, "unsupported array element store type");
-               op = BADIA32Op;
+               op = TR::InstOpCode::bad;
             }
 
          if (needStore)
@@ -2179,10 +2179,10 @@ static TR::InstOpCode::Mnemonic branchOpCodeForCompare(TR::ILOpCode &op, bool op
 
    static const TR::InstOpCode::Mnemonic opTable[] =
       {
-      BADIA32Op,  JL4,  JG4,  JNE4,
-      JE4,        JLE4, JGE4, BADIA32Op,
-      BADIA32Op,  JB4,  JA4,  JNE4,
-      JE4,        JBE4, JAE4, BADIA32Op,
+      TR::InstOpCode::bad,  JL4,  JG4,  JNE4,
+      JE4,        JLE4, JGE4, TR::InstOpCode::bad,
+      TR::InstOpCode::bad,  JB4,  JA4,  JNE4,
+      JE4,        JBE4, JAE4, TR::InstOpCode::bad,
       };
    return opTable[index];
    }
@@ -4129,7 +4129,7 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
       //
       static char *d = feGetEnv("TR_GCOnAsyncBREAK");
       if (d)
-         generateInstruction(BADIA32Op, node, cg);
+         generateInstruction(TR::InstOpCode::bad, node, cg);
 
       generateMemImmInstruction(S8MemImm4, node, generateX86MemoryReference(cg->getVMThreadRegister(), offsetof(J9VMThread, stackOverflowMark), cg), -1, cg);
       generateRegImmInstruction(MOV8RegImm4, node, tempReg, 1 << comp->getPersistentInfo()->getGCMapCheckEventHandle(), cg);
@@ -4224,7 +4224,7 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
 
       static char *d = feGetEnv("TR_GCOnAsyncBREAK");
       if (d)
-         generateInstruction(BADIA32Op, node, cg);
+         generateInstruction(TR::InstOpCode::bad, node, cg);
 
       //Populate the existing inline code
       //
@@ -4591,7 +4591,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    //    label   restartLabel
    //
    TR::Register *lockedReg = NULL;
-   TR::InstOpCode::Mnemonic op = BADIA32Op;
+   TR::InstOpCode::Mnemonic op = TR::InstOpCode::bad;
 
    if (cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord())
       {
@@ -5644,7 +5644,7 @@ static void genHeapAlloc(
       UDATA sizeClass = fej9->getObjectSizeClass(allocationSizeOrDataOffset);
 
       if (comp->getOption(TR_BreakOnNew))
-         generateInstruction(BADIA32Op, node, cg);
+         generateInstruction(TR::InstOpCode::bad, node, cg);
 
       // heap allocation, so proceed
       if (sizeReg)
@@ -9224,7 +9224,7 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
    uint8_t width = 16;
    uint8_t shift = 0;
    uint8_t* shuffleMask = NULL;
-   auto compareOp = BADIA32Op;
+   auto compareOp = TR::InstOpCode::bad;
    if(isLatin1)
       {
       shuffleMask = MASKOFSIZEONE;
@@ -10188,7 +10188,7 @@ void J9::X86::TreeEvaluator::VMwrtbarRealTimeWithoutStoreEvaluator(
 
    if (comp->getOption(TR_BreakOnWriteBarrier))
       {
-      generateInstruction(BADIA32Op, node, cg);
+      generateInstruction(TR::InstOpCode::bad, node, cg);
       }
 
    TR::SymbolReference *wrtBarSymRef = NULL;
@@ -10519,7 +10519,7 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
 
    if (comp->getOption(TR_BreakOnWriteBarrier))
       {
-      generateInstruction(BADIA32Op, node, cg);
+      generateInstruction(TR::InstOpCode::bad, node, cg);
       }
 
    TR::MemoryReference *fragmentParentMR = generateX86MemoryReference(cg->getVMThreadRegister(), fej9->thisThreadRememberedSetFragmentOffset() + fej9->getFragmentParentOffset(), cg);

@@ -596,7 +596,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          //
          cursor = new (trHeapMemory()) TR::X86PaddingInstruction(cursor, minInstructionSize, TR_AtomicNoOpPadding, cg());
          }
-      cursor = new (trHeapMemory()) TR::Instruction(BADIA32Op, cursor, cg());
+      cursor = new (trHeapMemory()) TR::Instruction(TR::InstOpCode::bad, cursor, cg());
       }
 
    // Compute the nature of the preserved regs
@@ -1090,7 +1090,7 @@ J9::X86::PrivateLinkage::buildDirectDispatch(
          {
          if (TR::SimpleRegex::matchIgnoringLocale(r, name))
             {
-            generateInstruction(BADIA32Op, callNode, cg());
+            generateInstruction(TR::InstOpCode::bad, callNode, cg());
             }
          }
       }
@@ -2561,7 +2561,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
    //
    generateLabelInstruction(LABEL, callNode, lastITableTestLabel, cg());
    if (breakBeforeInterfaceDispatchUsingLastITable)
-      generateInstruction(BADIA32Op, callNode, cg());
+      generateInstruction(TR::InstOpCode::bad, callNode, cg());
    generateRegMemInstruction(LRegMem(), callNode, scratchReg, generateX86MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), cg()), cg());
    bool use32BitInterfacePointers = comp()->target().is32Bit();
    if (comp()->useCompressedPointers() /* actually compressed object headers */)

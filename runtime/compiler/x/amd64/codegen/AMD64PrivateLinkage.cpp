@@ -333,7 +333,7 @@ uint8_t *J9::X86::AMD64::PrivateLinkage::flushArguments(
       offset += sizeof(intptr_t);
 
    TR::RealRegister::RegNum reg = TR::RealRegister::NoReg;
-   TR::InstOpCode::Mnemonic            op  = BADIA32Op;
+   TR::InstOpCode::Mnemonic            op  = TR::InstOpCode::bad;
    TR::DataType            dt  = TR::NoType;
 
    if (calculateSizeOnly)
@@ -1250,7 +1250,7 @@ void J9::X86::AMD64::PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelS
          // let's just lay it down.  It's likely not worth the effort to get
          // this exactly right in all cases.
          //
-         generateInstruction(BADIA32Op, site.getCallNode(), cg());
+         generateInstruction(TR::InstOpCode::bad, site.getCallNode(), cg());
          }
       }
 

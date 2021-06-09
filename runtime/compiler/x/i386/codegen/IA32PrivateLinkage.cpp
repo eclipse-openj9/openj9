@@ -604,7 +604,7 @@ void J9::X86::I386::PrivateLinkage::buildIPIC(
    if (useLastITableCache)
       {
       if (breakBeforeIPICUsingLastITable)
-         generateInstruction(BADIA32Op, site.getCallNode(), cg());
+         generateInstruction(TR::InstOpCode::bad, site.getCallNode(), cg());
       if (numIPicSlotsBeforeLastITable)
          numIPicSlots = atoi(numIPicSlotsBeforeLastITable);
    }
@@ -666,7 +666,7 @@ void J9::X86::I386::PrivateLinkage::buildIPIC(
    // of the PIC.
    //
    startOfPicInstruction = startOfPicInstruction->getNext();
-   while (startOfPicInstruction->getOpCodeValue() == BADIA32Op)
+   while (startOfPicInstruction->getOpCodeValue() == TR::InstOpCode::bad)
       {
       startOfPicInstruction = startOfPicInstruction->getNext();
       }
