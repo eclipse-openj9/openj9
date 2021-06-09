@@ -28,6 +28,16 @@ typedef void cel4ro64_cwi_func(void*);
 #pragma linkage (cel4ro64_cwi_func,OS_UPSTACK)
 #define CEL4RO64_FNPTR ((cel4ro64_cwi_func *)(*(int*)((char*)(*(int*)(((char*)__gtca())+1024))+8)))
 
+/* CEEPCB_3164 indicator is the 6th bit of PCB's CEEPCBFLAG6 field (byte 84).
+ * CEECAAPCB field is byte 756 of CAA.
+ *
+ * References for AMODE31:
+ * https://www.ibm.com/docs/en/zos/2.4.0?topic=conventions-language-environment-process-control-block
+ * https://www.ibm.com/docs/en/zos/2.4.0?topic=conventions-language-environment-common-anchor-area
+ */
+#define CEL4RO64_CEEPCBFLAG6_VALUE *((char *)(*(int *)(((char *)__gtca())+756))+84)
+#define CEL4RO64_CEEPCB_3164_MASK 0x4
+
 #pragma linkage (J9VM_STE,OS)
 float J9VM_STE(void);
 #pragma linkage (J9VM_STD,OS)
@@ -328,7 +338,7 @@ j9_cel4ro64_load_query_call_function(
 jboolean
 j9_cel4ro64_isSupported(void)
 {
-	return (NULL != CEL4RO64_FNPTR);
+	return (CEL4RO64_CEEPCB_3164_MASK == (CEL4RO64_CEEPCBFLAG6_VALUE & CEL4RO64_CEEPCB_3164_MASK));
 }
 
 const char*
