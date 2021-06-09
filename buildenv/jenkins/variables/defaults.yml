@@ -47,10 +47,10 @@ openj9:
 omr:
   default:
     repoUrl: 'https://github.com/eclipse/omr.git'
-# AdoptOpenJDK Testing repository
+# Adoptium AQA Testing repository
 adoptopenjdk:
   default:
-    repoUrl: 'https://github.com/AdoptOpenJDK/openjdk-tests.git'
+    repoUrl: 'https://github.com/adoptium/aqa-tests.git'
     branch: 'master'
 #========================================#
 # Artifactory settings

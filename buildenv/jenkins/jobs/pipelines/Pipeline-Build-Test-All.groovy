@@ -35,8 +35,8 @@
  *   OMR_REPO: String - the OMR git repository URL: e.g. https://github.com/eclipse-openj9/openj9-omr.git (default)
  *   OMR_BRANCH: String - the OMR branch to clone from: e.g. openj9 (default)
  *   OMR_SHA: String - the last commit SHA of the OMR repository
- *   ADOPTOPENJDK_REPO: String - the AdoptOpenJDK testing repository URL: e.g. https://github.com/AdoptOpenJDK/openjdk-tests.git
- *   ADOPTOPENJDK_BRANCH: String - the AdoptOpenJDK testing branch: e.g. master
+ *   ADOPTOPENJDK_REPO: String - the Adoptium AQA testing repository URL: e.g. https://github.com/adoptium/aqa-tests.git
+ *   ADOPTOPENJDK_BRANCH: String - the Adoptium AQA testing branch: e.g. master
  *   TESTS_TARGETS: String - The test targets to run. Expected values: _sanity, _extended, none
  *   VARIABLE_FILE: String - the custom variables file. Uses defaults.yml when no value is provided.
  *   VENDOR_REPO: String - the repository URL of a Git repository that stores a custom variables file
