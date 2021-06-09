@@ -134,6 +134,16 @@ typedef void cel4ro31_cwi_func(void*);
 typedef void celqgipb_cwi_func(uint32_t*, ffi_cel4ro31_control_block**, uint32_t*);
 #define FFI390_CELQGIPB_FNPTR ((celqgipb_cwi_func*)((char*)(*(int*)(((char*)__gtca())+1096))+96))
 
+/* CEEPCB_3164 indicator is the 6th bit of PCB's CEEPCBFLAG6 field (byte 344).
+ * CEECAAPCB field is byte 912 of CAA.
+ *
+ * References for AMODE64:
+ * https://www.ibm.com/docs/en/zos/2.4.0?topic=mappings-language-environment-process-control-block
+ * https://www.ibm.com/docs/en/zos/2.4.0?topic=mappings-language-environment-common-anchor-area
+ */
+#define FFI390_CEL4RO31_CEEPCBFLAG6_VALUE *((char *)(*(long *)(((char *)__gtca())+912))+344)
+#define FFI390_CEL4RO31_CEEPCB_3164_MASK 0x4
+
 /*====================== End of Externals ============================*/
  
 /*====================================================================*/
@@ -336,7 +346,7 @@ ffi_prep_cif_machdep_cel4ro31(ffi_cif *cif)
   int i;
 
   /* Check if LE APIs are available. */
-  if ((NULL == FFI390_CEL4RO31_FNPTR) || (NULL == FFI390_CELQGIPB_FNPTR))
+  if (0 == (FFI390_CEL4RO31_CEEPCBFLAG6_VALUE & FFI390_CEL4RO31_CEEPCB_3164_MASK))
   {
     return FFI_BAD_ABI;
   }
