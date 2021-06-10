@@ -22,9 +22,6 @@
 
 # Exclude tests temporarily
 
-org.openj9.test.jsr335.defendersupersends.asm.TestDefenderMethodLookupAsm:test335DefenderSupersendsAsmAsMethodHandles AN-https://github.com/eclipse-openj9/openj9/issues/11924 generic-all
-org.openj9.test.jsr335.defendersupersends.asm.TestDefenderMethodLookupAsm:testConflictingDefinitionsInSuperInterface AN-https://github.com/eclipse-openj9/openj9/issues/11924 generic-all
-
 org.openj9.test.java.lang.invoke.Test_MethodHandleInfo:test_RevealDirect_TargetVarargsAdaptor AN-https://github.com/eclipse-openj9/openj9/issues/11927 generic-all
 
 org.openj9.test.modularity.tests.UnreflectTests:testLookupUnreflectSpecial AN-https://github.com/eclipse-openj9/openj9/issues/11935 generic-all
