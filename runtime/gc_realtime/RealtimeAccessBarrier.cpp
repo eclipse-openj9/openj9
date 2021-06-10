@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -344,7 +344,9 @@ mm_j9object_t
 MM_RealtimeAccessBarrier::readObjectFromInternalVMSlotImpl(J9VMThread *vmThread, j9object_t *srcAddress, bool isVolatile)
 {
 	mm_j9object_t object = *srcAddress;
-	rememberObjectIfBarrierEnabled(vmThread, object);
+	if (NULL != vmThread) {
+		rememberObjectIfBarrierEnabled(vmThread, object);
+	}
 	return object;
 }
 
