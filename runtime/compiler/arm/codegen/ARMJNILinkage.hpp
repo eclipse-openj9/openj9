@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ class JNILinkage : public PrivateLinkage
    virtual TR::MemoryReference *getOutgoingArgumentMemRef(int32_t               totalParmAreaSize,
                                                             int32_t               argOffset,
                                                             TR::Register          *argReg,
-                                                            TR_ARMOpCodes         opCode,
+                                                            TR::InstOpCode::Mnemonic         opCode,
                                                             TR::ARMMemoryArgument &memArg);
 
    virtual TR::ARMLinkageProperties& getProperties();

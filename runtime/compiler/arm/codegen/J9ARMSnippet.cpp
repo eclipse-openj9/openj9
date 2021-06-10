@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,8 +75,8 @@ uint8_t *TR::ARMMonitorEnterSnippet::emitSnippetBody()
    TR::RealRegister *addrReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
    TR::RealRegister *tempReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(3)->getRealRegister());
 
-   TR_ARMOpCode opcode;
-   TR_ARMOpCodes opCodeValue;
+   TR::InstOpCode opcode;
+   TR::InstOpCode::Mnemonic opCodeValue;
 
    uint8_t *buffer = cg()->getBinaryBufferCursor();
 
@@ -226,8 +226,8 @@ uint8_t *TR::ARMMonitorExitSnippet::emitSnippetBody()
    TR::RealRegister *monitorReg = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(1)->getRealRegister());
    TR::RealRegister *threadReg  = cg()->machine()->getRealRegister(deps->getPostConditions()->getRegisterDependency(2)->getRealRegister());
 
-   TR_ARMOpCode opcode;
-   TR_ARMOpCodes opCodeValue;
+   TR::InstOpCode opcode;
+   TR::InstOpCode::Mnemonic opCodeValue;
 
    uint8_t *buffer = cg()->getBinaryBufferCursor();
 #if 0
