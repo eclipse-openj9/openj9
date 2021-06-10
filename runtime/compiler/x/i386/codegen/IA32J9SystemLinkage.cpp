@@ -113,8 +113,8 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
    TR::RegisterDependencyConditions  *dummy = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)0, cg());
 
    // Call-out
-   generateRegImmInstruction(argSize >= -128 && argSize <= 127 ? SUB4RegImms : SUB4RegImm4, callNode, espReal, argSize, cg());
-   generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, cg());
+   generateRegImmInstruction(argSize >= -128 && argSize <= 127 ? TR::InstOpCode::SUB4RegImms : TR::InstOpCode::SUB4RegImm4, callNode, espReal, argSize, cg());
+   generateImmSymInstruction(TR::InstOpCode::CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, cg());
 
    if (returnReg && !(methodSymbol->isHelper()))
       TR::J9LinkageUtils::cleanupReturnValue(callNode, returnReg, returnReg, cg());
@@ -133,15 +133,15 @@ TR::IA32J9SystemLinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPReg
    if (callNode->getOpCode().isFloat())
       {
       TR::MemoryReference  *tempMR = machine()->getDummyLocalMR(TR::Float);
-      generateFPMemRegInstruction(FSTPMemReg, callNode, tempMR, returnReg, cg());
+      generateFPMemRegInstruction(TR::InstOpCode::FSTPMemReg, callNode, tempMR, returnReg, cg());
       cg()->stopUsingRegister(returnReg); // zhxingl: this is added by me
       returnReg = cg()->allocateSinglePrecisionRegister(TR_FPR);
-      generateRegMemInstruction(MOVSSRegMem, callNode, returnReg, generateX86MemoryReference(*tempMR, 0, cg()), cg());
+      generateRegMemInstruction(TR::InstOpCode::MOVSSRegMem, callNode, returnReg, generateX86MemoryReference(*tempMR, 0, cg()), cg());
       }
    else if (callNode->getOpCode().isDouble())
       {
       TR::MemoryReference  *tempMR = machine()->getDummyLocalMR(TR::Double);
-      generateFPMemRegInstruction(DSTPMemReg, callNode, tempMR, returnReg, cg());
+      generateFPMemRegInstruction(TR::InstOpCode::DSTPMemReg, callNode, tempMR, returnReg, cg());
       cg()->stopUsingRegister(returnReg); // zhxingl: this is added by me
       returnReg = cg()->allocateRegister(TR_FPR);
       generateRegMemInstruction(cg()->getXMMDoubleLoadOpCode(), callNode, returnReg, generateX86MemoryReference(*tempMR, 0, cg()), cg());
@@ -166,12 +166,12 @@ int32_t TR::IA32J9SystemLinkage::buildParametersOnCStack(TR::Node *callNode, int
       }
    // Load C Stack Pointer
    auto cSP = cg()->allocateRegister();
-   generateRegMemInstruction(L4RegMem, callNode, cSP, generateX86MemoryReference(cg()->getVMThreadRegister(), fej9->thisThreadGetMachineSPOffset(), cg()), cg());
+   generateRegMemInstruction(TR::InstOpCode::L4RegMem, callNode, cSP, generateX86MemoryReference(cg()->getVMThreadRegister(), fej9->thisThreadGetMachineSPOffset(), cg()), cg());
    // Pass in the env to the jni method as the lexically first arg.
    if (passVMThread)
       {
       auto slot = generateX86MemoryReference(cSP, 0, cg());
-      generateMemRegInstruction(S4MemReg, callNode, slot, cg()->getVMThreadRegister(), cg());
+      generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, slot, cg()->getVMThreadRegister(), cg());
       paramsSlotsOnStack.push(slot);
       }
    // Evaluate params
@@ -186,7 +186,7 @@ int32_t TR::IA32J9SystemLinkage::buildParametersOnCStack(TR::Node *callNode, int
          case TR::Int8:
          case TR::Int16:
          case TR::Int32:
-            generateMemRegInstruction(S4MemReg, callNode, slot, param, cg());
+            generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, slot, param, cg());
             break;
          case TR::Address:
             if (wrapAddress && child->getOpCodeValue() == TR::loadaddr)
@@ -194,37 +194,37 @@ int32_t TR::IA32J9SystemLinkage::buildParametersOnCStack(TR::Node *callNode, int
                TR::StaticSymbol* sym = child->getSymbolReference()->getSymbol()->getStaticSymbol();
                if (sym && sym->isAddressOfClassObject())
                   {
-                  generateMemRegInstruction(S4MemReg, callNode, slot, param, cg());
+                  generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, slot, param, cg());
                   }
                else // must be loadaddr of parm or local
                   {
                   TR::Register *tmp = cg()->allocateRegister();
-                  generateRegRegInstruction(XOR4RegReg, child, tmp, tmp, cg());
-                  generateMemImmInstruction(CMP4MemImms, child, generateX86MemoryReference(child->getRegister(), 0, cg()), 0, cg());
-                  generateRegRegInstruction(CMOVNE4RegReg, child, tmp, child->getRegister(), cg());
-                  generateMemRegInstruction(S4MemReg, callNode, slot, tmp, cg());
+                  generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, child, tmp, tmp, cg());
+                  generateMemImmInstruction(TR::InstOpCode::CMP4MemImms, child, generateX86MemoryReference(child->getRegister(), 0, cg()), 0, cg());
+                  generateRegRegInstruction(TR::InstOpCode::CMOVNE4RegReg, child, tmp, child->getRegister(), cg());
+                  generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, slot, tmp, cg());
                   cg()->stopUsingRegister(tmp);
                   }
                }
             else
                {
-               generateMemRegInstruction(S4MemReg, callNode, slot, param, cg());
+               generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, slot, param, cg());
                }
             break;
          case TR::Int64:
-            generateMemRegInstruction(S4MemReg, callNode, slot, param->getLowOrder(), cg());
+            generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, slot, param->getLowOrder(), cg());
             {
             auto highslot = generateX86MemoryReference(cSP, 0, cg());
             paramsSlotsOnStack.push(highslot);
-            generateMemRegInstruction(S4MemReg, callNode, highslot, param->getHighOrder(), cg());
+            generateMemRegInstruction(TR::InstOpCode::S4MemReg, callNode, highslot, param->getHighOrder(), cg());
             }
             break;
          case TR::Float:
-            generateMemRegInstruction(MOVSSMemReg, callNode, slot, param, cg());
+            generateMemRegInstruction(TR::InstOpCode::MOVSSMemReg, callNode, slot, param, cg());
             break;
          case TR::Double:
             paramsSlotsOnStack.push(NULL);
-            generateMemRegInstruction(MOVSDMemReg, callNode, slot, param, cg());
+            generateMemRegInstruction(TR::InstOpCode::MOVSDMemReg, callNode, slot, param, cg());
             break;
          }
       cg()->decReferenceCount(child);

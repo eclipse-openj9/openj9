@@ -166,7 +166,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::savePreservedRegisters(TR::Instr
          {
          cursor = generateMemRegInstruction(
                      cursor,
-                     S4MemReg,
+                     TR::InstOpCode::S4MemReg,
                      generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
                      reg,
                      cg()
@@ -195,7 +195,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::restorePreservedRegisters(TR::In
          {
          cursor = generateRegMemInstruction(
                      cursor,
-                     L4RegMem,
+                     TR::InstOpCode::L4RegMem,
                      reg,
                      generateX86MemoryReference(machine()->getRealRegister(TR::RealRegister::vfp), offsetCursor, cg()),
                      cg()
@@ -300,7 +300,7 @@ int32_t J9::X86::I386::PrivateLinkage::buildArgs(
       if (thisChild->getReferenceCount() > 1)
          {
          eaxRegister = cg()->allocateCollectedReferenceRegister();
-         generateRegRegInstruction(MOV4RegReg, thisChild, eaxRegister, rcvrReg, cg());
+         generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, thisChild, eaxRegister, rcvrReg, cg());
          }
       else
          {
@@ -328,7 +328,7 @@ TR::UnresolvedDataSnippet *J9::X86::I386::PrivateLinkage::generateX86UnresolvedD
    TR::UnresolvedDataSnippet *snippet = TR::UnresolvedDataSnippet::create(cg(), child, symRef, false, (debug("gcOnResolve") != NULL));
    cg()->addSnippet(snippet);
 
-   TR::Instruction *dataReferenceInstruction = generateImmSnippetInstruction(PUSHImm4, child, cpIndex, snippet, cg());
+   TR::Instruction *dataReferenceInstruction = generateImmSnippetInstruction(TR::InstOpCode::PUSHImm4, child, cpIndex, snippet, cg());
    snippet->setDataReferenceInstruction(dataReferenceInstruction);
    generateBoundaryAvoidanceInstruction(TR::X86BoundaryAvoidanceInstruction::unresolvedAtomicRegions, 8, 8, dataReferenceInstruction, cg());
 
@@ -346,11 +346,11 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushIntegerWordArg(TR::Node *child)
          TR::InstOpCode::Mnemonic pushOp;
          if (value >= -128 && value <= 127)
             {
-            pushOp = PUSHImms;
+            pushOp = TR::InstOpCode::PUSHImms;
             }
          else
             {
-            pushOp = PUSHImm4;
+            pushOp = TR::InstOpCode::PUSHImm4;
             }
 
          if (child->getOpCodeValue() == TR::aconst && child->isMethodPointerConstant() &&
@@ -382,7 +382,7 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushIntegerWordArg(TR::Node *child)
                {
                // Must pass symbol reference so that aot can put out a relocation for it
                //
-               TR::Instruction *instr = generateImmSymInstruction(PUSHImm4, child, (uintptr_t)sym->getStaticAddress(), symRef, cg());
+               TR::Instruction *instr = generateImmSymInstruction(TR::InstOpCode::PUSHImm4, child, (uintptr_t)sym->getStaticAddress(), symRef, cg());
 
                // HCR register the class passed as a parameter
                //
@@ -408,7 +408,7 @@ TR::Register *J9::X86::I386::PrivateLinkage::pushThis(TR::Node *child)
    // had a chance to set up its dependency conditions
    //
    TR::Register *tempRegister = cg()->evaluate(child);
-   generateRegInstruction(PUSHReg, child, tempRegister, cg());
+   generateRegInstruction(TR::InstOpCode::PUSHReg, child, tempRegister, cg());
    return tempRegister;
    }
 
@@ -443,7 +443,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
                                 generateX86MemoryReference(vftReg, picSlot.getSlot(), cg()), (uint32_t) addrToBeCompared, cg());
       }
    else
-      firstInstruction = generateRegImmInstruction(CMP4RegImm4, node, vftReg, addrToBeCompared, cg());
+      firstInstruction = generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, vftReg, addrToBeCompared, cg());
 
    firstInstruction->setNeedsGCMap(site.getPreservedRegisterMask());
 
@@ -464,11 +464,11 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
       {
       if (picSlot.needsLongConditionalBranch())
          {
-         generateLongLabelInstruction(JNE4, node, mismatchLabel, cg());
+         generateLongLabelInstruction(TR::InstOpCode::JNE4, node, mismatchLabel, cg());
          }
       else
          {
-         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? JNE1 : JNE4;
+         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? TR::InstOpCode::JNE1 : TR::InstOpCode::JNE4;
          generateLabelInstruction(op, node, mismatchLabel, cg());
          }
       }
@@ -476,33 +476,33 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
       {
       if (picSlot.needsLongConditionalBranch())
          {
-         generateLongLabelInstruction(JE4, node, mismatchLabel, cg());
+         generateLongLabelInstruction(TR::InstOpCode::JE4, node, mismatchLabel, cg());
          }
       else
          {
-         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? JE1 : JE4;
+         TR::InstOpCode::Mnemonic op = picSlot.needsShortConditionalBranch() ? TR::InstOpCode::JE1 : TR::InstOpCode::JE4;
          generateLabelInstruction(op, node, mismatchLabel, cg());
          }
       }
    else if (picSlot.needsNopAndJump())
       {
       generatePaddingInstruction(1, node, cg())->setNeedsGCMap((site.getArgSize()<<14) | site.getPreservedRegisterMask());
-      generateLongLabelInstruction(JMP4, node, mismatchLabel, cg());
+      generateLongLabelInstruction(TR::InstOpCode::JMP4, node, mismatchLabel, cg());
       }
 
    TR::Instruction *instr;
    if (picSlot.getMethod())
       {
-      instr = generateImmInstruction(CALLImm4, node, (uint32_t)(uintptr_t)picSlot.getMethod()->startAddressForJittedMethod(), cg());
+      instr = generateImmInstruction(TR::InstOpCode::CALLImm4, node, (uint32_t)(uintptr_t)picSlot.getMethod()->startAddressForJittedMethod(), cg());
       }
    else if (picSlot.getHelperMethodSymbolRef())
       {
       TR::MethodSymbol *helperMethod = picSlot.getHelperMethodSymbolRef()->getSymbol()->castToMethodSymbol();
-      instr = generateImmSymInstruction(CALLImm4, node, (uint32_t)(uintptr_t)helperMethod->getMethodAddress(), picSlot.getHelperMethodSymbolRef(), cg());
+      instr = generateImmSymInstruction(TR::InstOpCode::CALLImm4, node, (uint32_t)(uintptr_t)helperMethod->getMethodAddress(), picSlot.getHelperMethodSymbolRef(), cg());
       }
    else
       {
-      instr = generateImmInstruction(CALLImm4, node, 0, cg());
+      instr = generateImmInstruction(TR::InstOpCode::CALLImm4, node, 0, cg());
       }
 
    instr->setNeedsGCMap(site.getPreservedRegisterMask());
@@ -524,7 +524,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
    //
    if (picSlot.needsJumpToDone())
       {
-      instr = generateLabelInstruction(JMP4, node, doneLabel, cg());
+      instr = generateLabelInstruction(TR::InstOpCode::JMP4, node, doneLabel, cg());
       instr->setNeedsGCMap(site.getPreservedRegisterMask());
       }
 
@@ -700,7 +700,7 @@ void J9::X86::I386::PrivateLinkage::buildVirtualOrComputedCall(
       TR::Register *targetAddress = site.evaluateVFT();
       if (targetAddress->getRegisterPair())
          targetAddress = targetAddress->getRegisterPair()->getLowOrder();
-      buildVFTCall(site, CALLReg, targetAddress, NULL);
+      buildVFTCall(site, TR::InstOpCode::CALLReg, targetAddress, NULL);
       }
    else if (resolvedSite && site.resolvedVirtualShouldUseVFTCall())
       {
@@ -711,7 +711,7 @@ void J9::X86::I386::PrivateLinkage::buildVirtualOrComputedCall(
       if (!resolvedSite)
          offset = 0;
 
-      buildVFTCall(site, CALLMem, NULL, generateX86MemoryReference(site.evaluateVFT(), offset, cg()));
+      buildVFTCall(site, TR::InstOpCode::CALLMem, NULL, generateX86MemoryReference(site.evaluateVFT(), offset, cg()));
       }
    else
       {

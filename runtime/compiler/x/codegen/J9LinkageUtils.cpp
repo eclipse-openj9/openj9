@@ -67,21 +67,21 @@ void J9LinkageUtils::cleanupReturnValue(
          case TR::Int8:
             if (isUnsigned)
                {
-               op = comp->target().is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
+               op = comp->target().is64Bit() ? TR::InstOpCode::MOVZXReg8Reg1 : TR::InstOpCode::MOVZXReg4Reg1;
                }
             else
                {
-               op = comp->target().is64Bit() ? MOVSXReg8Reg1 : MOVSXReg4Reg1;
+               op = comp->target().is64Bit() ? TR::InstOpCode::MOVSXReg8Reg1 : TR::InstOpCode::MOVSXReg4Reg1;
                }
             break;
          case TR::Int16:
             if (isUnsigned)
                {
-               op = comp->target().is64Bit() ? MOVZXReg8Reg2 : MOVZXReg4Reg2;
+               op = comp->target().is64Bit() ? TR::InstOpCode::MOVZXReg8Reg2 : TR::InstOpCode::MOVZXReg4Reg2;
                }
             else
                {
-               op = comp->target().is64Bit() ? MOVSXReg8Reg2 : MOVSXReg4Reg2;
+               op = comp->target().is64Bit() ? TR::InstOpCode::MOVSXReg8Reg2 : TR::InstOpCode::MOVSXReg4Reg2;
                }
             break;
          default:

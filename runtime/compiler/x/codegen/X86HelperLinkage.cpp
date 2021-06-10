@@ -255,7 +255,7 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
          NumberOfParamOnStack++;
          if (CalleeCleanup)
             {
-            generateRegInstruction(PUSHReg, _Node, _Params[i], cg());
+            generateRegInstruction(TR::InstOpCode::PUSHReg, _Node, _Params[i], cg());
             }
          else
             {
@@ -270,7 +270,7 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
       }
 
    // Call helper
-   TR::X86ImmInstruction* instr = generateImmSymInstruction(CALLImm4,
+   TR::X86ImmInstruction* instr = generateImmSymInstruction(TR::InstOpCode::CALLImm4,
                                                             _Node,
                                                             (uintptr_t)_SymRef->getMethodAddress(),
                                                             _SymRef,

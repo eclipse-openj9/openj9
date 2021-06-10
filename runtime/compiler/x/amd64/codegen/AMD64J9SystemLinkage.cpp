@@ -141,17 +141,17 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(
       {
       TR_ASSERT(scratchReg, "could not find second scratch register");
       generateRegImm64Instruction(
-         MOV8RegImm64,
+         TR::InstOpCode::MOV8RegImm64,
          callNode,
          scratchReg,
          (uintptr_t)methodSymbol->getMethodAddress(),
          cg());
 
-      instr = generateRegInstruction(CALLReg, callNode, scratchReg, preDeps, cg());
+      instr = generateRegInstruction(TR::InstOpCode::CALLReg, callNode, scratchReg, preDeps, cg());
       }
    else
       {
-      instr = generateImmSymInstruction(CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps, cg());
+      instr = generateImmSymInstruction(TR::InstOpCode::CALLImm4, callNode, (uintptr_t)methodSymbol->getMethodAddress(), methodSymRef, preDeps, cg());
       }
 
    instr->setNeedsGCMap(getProperties().getPreservedRegisterMapForGC());
