@@ -459,7 +459,7 @@ TR::CompilationInfoPerThread *
 TR::CompilationInfo::findFirstLowPriorityCompilationInProgress(CompilationPriority priority) // needs compilationQueueMonitor in hand
    {
    TR::CompilationInfoPerThread *lowPriorityCompInProgress = NULL;
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1216,7 +1216,7 @@ TR::CompilationInfoPerThreadBase *TR::CompilationInfo::getCompInfoWithID(int32_t
    if (_compInfoForCompOnAppThread)
       return _compInfoForCompOnAppThread;
 
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1235,7 +1235,7 @@ TR::CompilationInfoPerThread *TR::CompilationInfo::getFirstSuspendedCompilationT
    if (_compInfoForCompOnAppThread)
       return NULL;
 
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1261,7 +1261,7 @@ void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
       _compInfoForCompOnAppThread->setCompilationShouldBeInterrupted(GC_COMP_INTERRUPT);
    else
       {
-      for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
          {
          TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
          TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1747,7 +1747,7 @@ bool TR::CompilationInfo::canProcessLowPriorityRequest()
       }
 
    // Cycle through all the compilation threads
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1764,7 +1764,7 @@ int64_t
 TR::CompilationInfo::getCpuTimeSpentInCompilation()
    {
    I_64 totalTime = 0;
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1887,7 +1887,7 @@ void TR::CompilationInfo::invalidateRequestsForNativeMethods(J9Class * clazz, J9
       TR_VerboseLog::writeLineLocked(TR_Vlog_HK, "invalidateRequestsForNativeMethods class=%p vmThread=%p", clazz, vmThread);
 
    // Cycle through all the compilation threads
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_MethodToBeCompiled *methodBeingCompiled = curCompThreadInfoPT->getMethodBeingCompiled();
@@ -1977,7 +1977,7 @@ void TR::CompilationInfo::invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlo
    if (verbose)
       TR_VerboseLog::writeLineLocked(TR_Vlog_HK, "invalidateRequestsForUnloadedMethods class=%p vmThread=%p hotCodeReplacement=%d", clazz, vmThread, hotCodeReplacement);
 
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2473,7 +2473,7 @@ void TR::CompilationInfo::suspendCompilationThread()
 
       // Must visit all compilation threads
       bool stoppedOneCompilationThread = false;
-      for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
          {
          TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
          TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2554,7 +2554,7 @@ void TR::CompilationInfo::resumeCompilationThread()
       int32_t numActiveCompThreads = 0; // RAS purposes
       int32_t numHot = 0;
       TR::CompilationInfoPerThread *compInfoPTHot = NULL;
-      for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
          {
          TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
          TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2608,7 +2608,7 @@ void TR::CompilationInfo::resumeCompilationThread()
 
       // If dynamicThreadActivation is used, wake compilation threads only as
       // many as required; otherwise wake them all
-      for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
          {
          TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
          TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2653,7 +2653,7 @@ int TR::CompilationInfo::computeCompilationThreadPriority(J9JavaVM *vm)
 
 TR::CompilationInfoPerThread* TR::CompilationInfo::getCompInfoForThread(J9VMThread *vmThread)
    {
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2674,9 +2674,8 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
 #if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      numUsableCompThreads = ((numUsableCompThreads <= 0) ||
-                              (numUsableCompThreads > MAX_SERVER_USABLE_COMP_THREADS)) ?
-                               MAX_SERVER_USABLE_COMP_THREADS : numUsableCompThreads;
+      numUsableCompThreads = (numUsableCompThreads <= 0) ? DEFAULT_SERVER_USABLE_COMP_THREADS
+                             : numUsableCompThreads;
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -2705,8 +2704,7 @@ TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
 #if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_SERVER_USABLE_COMP_THREADS),
-               "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_SERVER_USABLE_COMP_THREADS);
+      TR_ASSERT(0 < numUsableCompThreads, "numUsableCompThreads %d is negative", numUsableCompThreads);
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -3429,7 +3427,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    acquireCompMonitor(vmThread);
 
    // Cycle through all non-diagnostic threads and stop them
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
 
@@ -3445,7 +3443,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    // compilation thread has crashed and is going through the JitDump process. The reason we skipped terminating the
    // diagnostic threads in the above loop is because the JitDump logic will activate the diagnostic thread to generate
    // the JitDump, so the diagnostic thread must not be in a terminated state at that point.
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
 
@@ -3466,7 +3464,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    // for the crashed thread in the loop above. However because the diagnostic data is generated on the crashed 
    // thread this thread will never return to execute the state processing loop, and thus will never terminate.
    // This is ok, because following the dump process in the JVM we will terminate the entire JVM process.
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
 
@@ -3476,7 +3474,7 @@ void TR::CompilationInfo::stopCompilationThreads()
 
    // Wake up the diagnostic thread and stop it. If it is currently active then we will block here until the JitDump
    // process is complete (see #11860).
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
 
@@ -4636,7 +4634,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
    TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
 
    // search among the threads
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -4966,7 +4964,7 @@ TR::CompilationInfo::adjustCompilationEntryAndRequeue(
                             CompilationPriority priority,
                             TR_J9VMBase *fe)
    {
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5020,7 +5018,7 @@ int32_t TR::CompilationInfo::promoteMethodInAsyncQueue(J9Method * method, void *
    {
    // See if the method is already in the queue or is already being compiled
    //
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5080,7 +5078,7 @@ void TR::CompilationInfo::changeCompReqFromAsyncToSync(J9Method * method)
    TR_MethodToBeCompiled *cur = NULL, *prev = NULL;
    // See if the method is already in the queue or is already being compiled
    //
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5143,7 +5141,7 @@ TR_MethodToBeCompiled * TR::CompilationInfo::requestExistsInCompilationQueue(TR:
    {
    // See if the method is already in the queue or under compilation
    //
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5275,7 +5273,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
                // make sure there is at least one thread that is not jobless
                TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = getArrayOfCompilationInfoPerThread();
                int32_t numActive = 0, numHot = 0, numLowPriority = 0;
-               for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+               for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
                   {
                   TR::CompilationInfoPerThread *curCompThreadInfoPT = arrayOfCompInfoPT[i];
                   TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -11130,7 +11128,7 @@ TR::CompilationInfo::printQueue()
    fprintf(stderr, "\t\t\tActive: ");
    bool activeMethods = false;
 
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");

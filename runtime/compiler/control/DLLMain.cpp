@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -477,7 +477,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
             TR_ASSERT(arrayOfCompInfoPT, "TR::CompilationInfo::_arrayOfCompilationInfoPerThread is null\n");
 
-            for (uint8_t i = 0; i < compInfo->getNumTotalCompilationThreads(); i++)
+            for (int32_t i = 0; i < compInfo->getNumTotalCompilationThreads(); i++)
                {
                TR::CompilationInfoPerThread *curCompThreadInfoPT = arrayOfCompInfoPT[i];
                TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
