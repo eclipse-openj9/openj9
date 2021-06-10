@@ -21,7 +21,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
-
+	<xi:include href="uma/criusupport_exports.xml"></xi:include>
 	<xi:include href="uma/java_lang_invoke_MethodHandleNatives_exports.xml"></xi:include>
 	<xi:include href="uma/java_dyn_methodhandle_exports.xml"></xi:include>
 	<xi:include href="uma/sun_misc_Unsafe_exports.xml"></xi:include>
@@ -45,6 +45,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<xi:fallback/>
 	</xi:include>
 
+	<xi:include href="uma/criusupport_objects.xml"></xi:include>
 	<xi:include href="uma/java_lang_invoke_MethodHandleNatives_objects.xml"></xi:include>
 	<xi:include href="uma/java_dyn_methodhandle_objects.xml"></xi:include>
 	<xi:include href="uma/sun_misc_Unsafe_objects.xml"></xi:include>
@@ -93,6 +94,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group name="jithelpers"/>
 			<group name="sun_misc_Unsafe"/>
 			<group name="sun_misc_Unsafe_inl"/>
+			<group name="criusupport">
+				<include-if condition="spec.flags.opt_criuSupport"/>
+			</group>
 			<group name="attach">
 				<include-if condition="spec.flags.opt_sidecar"/>
 			</group>
@@ -164,6 +168,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<group name="attach">
 				<include-if condition="spec.flags.opt_sidecar"/>
 			</group>
+			<group name="criusupport">
+				<include-if condition="spec.flags.opt_criuSupport"/>
+			</group>
 			<group name="se626_orb_ludcl"/>
 			<group name="se7"/>
 			<group name="se8"/>
@@ -211,6 +218,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="j9thr"/>
 			<library name="socket" type="macro"/>
 			<library name="sunvmi"/>
+			<library name="criu" type="external">
+				<include-if condition="spec.flags.opt_criuSupport and spec.linux.*"/>
+			</library>
 		</libraries>
 	</artifact>
 

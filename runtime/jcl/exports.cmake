@@ -631,3 +631,10 @@ if(J9VM_OPT_OPENJDK_METHODHANDLE)
 		Java_java_lang_invoke_MethodHandleNatives_registerNatives
 	)
 endif()
+
+# CRIU support
+if(J9VM_OPT_CRIU_SUPPORT)
+	omr_add_exports(jclse
+		Java_com_ibm_jvm_CRIUSupport_isCRIUSupportEnabledImpl
+	)
+endif()

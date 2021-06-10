@@ -207,6 +207,7 @@ extern "C" {
 #cmakedefine J9VM_MATH_DIRECT_HELPERS
 #cmakedefine J9VM_OPT_ANNOTATIONS
 #cmakedefine J9VM_OPT_BIG_INTEGER
+#cmakedefine J9VM_OPT_CRIU_SUPPORT
 #cmakedefine J9VM_OPT_CUDA
 #cmakedefine J9VM_OPT_DEBUG_INFO_SERVER
 #cmakedefine J9VM_OPT_DEBUG_JSR45_SUPPORT
