@@ -377,7 +377,7 @@ J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.user_response=Destroy and
 J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_FSD_MISMATCH=FSD \u5df2\u555f\u7528\u529f\u80fd\u4e0d\u76f8\u7b26\u3002\u5ffd\u7565\u5171\u7528\u985e\u5225\u5feb\u53d6\u4e2d\u7684 AOT \u7a0b\u5f0f\u78bc\u3002
+J9NLS_RELOCATABLE_CODE_FSD_MISMATCH=\u5df2\u555f\u7528\u7684 FSD \u529f\u80fd\u4e0d\u7b26\u3002\u5ffd\u7565\u5171\u7528\u985e\u5225\u5feb\u53d6\u4e2d\u7684 AOT \u7a0b\u5f0f\u78bc\u3002
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.explanation=The JVM is not running in the same FSD mode as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_FSD_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.

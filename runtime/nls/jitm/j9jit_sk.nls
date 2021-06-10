@@ -305,7 +305,7 @@ J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.system_action=The JVM will ignore extra comma 
 J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.user_response=Remove extra commas from -Xlp option
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=Ve\u013ekos\u0165 ve\u013ekej str\u00e1nky %1$zu%2$s nie je podporovan\u00e1 ve\u013ekos\u0165 str\u00e1nky pre pam\u00e4\u0165 cache pre k\u00f3d JIT; namiesto nej sa pou\u017eije %3$zu%4$s
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=Ve\u013ekos\u0165 ve\u013ekej str\u00e1nky %1$zu%2$s nie je podporovan\u00e1 ve\u013ekos\u0165 str\u00e1nky pre pam\u00e4\u0165 cache pre k\u00f3d JIT. Namiesto nej sa pou\u017eije %3$zu%4$s
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.explanation=The specified large page size is not supported by the operating system. A default size will be used instead
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.system_action=The JVM will start using the default large page size instead of the specified size
@@ -316,7 +316,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_3=16
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_4=M
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=Ve\u013ekos\u0165 ve\u013ekej str\u00e1nky %1$zu%2$s nie je podporovan\u00e1 ve\u013ekos\u0165 str\u00e1nky pre pam\u00e4\u0165 cache pre k\u00f3d JIT; namiesto nej sa pou\u017eije %3$zu%4$s %5$s
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=Ve\u013ekos\u0165 ve\u013ekej str\u00e1nky %1$zu%2$s nie je podporovan\u00e1 ve\u013ekos\u0165 str\u00e1nky pre pam\u00e4\u0165 cache pre k\u00f3d JIT. Namiesto nej sa pou\u017eije %3$zu%4$s %5$s
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.explanation=The specified page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
@@ -328,7 +328,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_4
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_5=pageable
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=Ve\u013ekos\u0165 ve\u013ekej str\u00e1nky %1$zu%2$s %3$s nie je podporovan\u00e1 ve\u013ekos\u0165 str\u00e1nky pre pam\u00e4\u0165 cache pre k\u00f3d JIT; namiesto nej sa pou\u017eije %4$zu%5$s
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=Ve\u013ekos\u0165 ve\u013ekej str\u00e1nky %1$zu%2$s %3$s nie je podporovan\u00e1 ve\u013ekos\u0165 str\u00e1nky pre pam\u00e4\u0165 cache pre k\u00f3d JIT. Namiesto nej sa pou\u017eije %4$zu%5$s
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
@@ -340,7 +340,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_i
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_5=K
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=Ve\u013ekos\u0165 ve\u013ekej str\u00e1nky %1$zu%2$s %3$s nie je podporovan\u00e1 ve\u013ekos\u0165 str\u00e1nky pre pam\u00e4\u0165 cache pre k\u00f3d JIT; namiesto nej sa pou\u017eije %4$zu%5$s %6$s
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=Ve\u013ekos\u0165 ve\u013ekej str\u00e1nky %1$zu%2$s %3$s nie je podporovan\u00e1 ve\u013ekos\u0165 str\u00e1nky pre pam\u00e4\u0165 cache pre k\u00f3d JIT. Namiesto nej sa pou\u017eije %4$zu%5$s %6$s
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size

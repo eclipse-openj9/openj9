@@ -55,7 +55,7 @@ J9NLS.HEADER=j9vmnls.h
 
 # Note: this string is not used by J2ME VMs.
 # Note: IBM_JAVA_OPTIONS is an environment variable name and should not be translated
-J9NLS_VM_MALFORMED_OPTS_ERROR_STR=Valor mal format per a IBM_JAVA_OPTIONS
+J9NLS_VM_MALFORMED_OPTS_ERROR_STR=Valor amb format incorrecte per a IBM_JAVA_OPTIONS
 # START NON-TRANSLATABLE
 J9NLS_VM_MALFORMED_OPTS_ERROR_STR.explanation=An error in the options set in the environment variable IBM_JAVA_OPTIONS has been detected.
 J9NLS_VM_MALFORMED_OPTS_ERROR_STR.system_action=The JVM will fail to start.
@@ -64,7 +64,7 @@ J9NLS_VM_MALFORMED_OPTS_ERROR_STR.user_response=Examine IBM_JAVA_OPTIONS environ
 
 # Note: this string is not used by J2ME VMs.
 # Note: -Xservice is a command line option and should not be translated
-J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR=Valor mal format per a -Xservice
+J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR=Valor amb format incorrecte per a -Xservice
 # START NON-TRANSLATABLE
 J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR.explanation=An error in the options set by the -Xservice command line option has been detected.
 J9NLS_VM_MALFORMED_XSERVICE_ERROR_STR.system_action=The JVM will fail to start.
@@ -417,7 +417,7 @@ J9NLS_VM_DIVIDE_BY_ZERO.system_action=An Arithmetic exception will be raised.
 J9NLS_VM_DIVIDE_BY_ZERO.user_response=Investigate the source of the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR=No s'ha pogut assignar el monitor
+J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR=No s'ha pogut assignar el supervisor
 # START NON-TRANSLATABLE
 J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR.explanation=Failed to allocate native resources to support a Java monitor.
 J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR.system_action=The JVM will throw a native out of memory exception.
@@ -538,7 +538,7 @@ J9NLS_VM_XJNI_OPTIONS_2.system_action=
 J9NLS_VM_XJNI_OPTIONS_2.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR=L'opci\u00f3 mal formada %s s'ha trobat a -Xoptionsfile
+J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR=S'ha trobat l'opci\u00f3 amb format incorrecte %s a -Xoptionsfile
 # START NON-TRANSLATABLE
 J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR.sample_input_1=badoption
 J9NLS_VM_MALFORMED_OPTIONSFILE_ERROR_STR.explanation=A badly formed command line option was found in an options file.
@@ -849,7 +849,7 @@ J9NLS_VM_IFA_ERROR.sample_input_1=5623DA10
 # END NON-TRANSLATABLE
 
 # Note %s command-line option
-J9NLS_VM_OPTION_MALFORMED=Opci\u00f3 mal formada: '%s'
+J9NLS_VM_OPTION_MALFORMED=Opci\u00f3 amb format incorrecte: '%s'
 # START NON-TRANSLATABLE
 J9NLS_VM_OPTION_MALFORMED.explanation=The specified option could not be parsed
 J9NLS_VM_OPTION_MALFORMED.system_action=The JVM will warn the user and ignore the option
@@ -875,7 +875,7 @@ J9NLS_VM_MISSING_DUMP_DLL_RESETDUMPOPTION.user_response=Check whether the JVM du
 # END NON-TRANSLATABLE
 
 # CMVC 151143/ PMR 07257,t19,649 workaround: check that syscorepath has been set
-J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED=Advertiment: syscorepath no s'ha configurat, cosa que pot impedir la generaci\u00f3 del fitxer core del sistema (si en cal un).\n\t\tConsulteu les instruccions d'instal\u00b7laci\u00f3 del WebSphere Real Time per con\u00e8ixer els par\u00e0metres de configuraci\u00f3 correctes de syscorepath.\n\t\tNOTA: s'ha de configurar cada vegada que es reinici\u00ef la m\u00e0quina.
+J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED=Advertiment: syscorepath no s'ha configurat, aix\u00f2 pot impedir la generaci\u00f3 del fitxer core del sistema (si en cal un).\n\t\tConsulteu les instruccions d'instal\u00b7laci\u00f3 del WebSphere Real Time per con\u00e8ixer els par\u00e0metres de configuraci\u00f3 correctes de syscorepath.\n\t\tNOTA: s'ha de configurar cada vegada que es reinici\u00ef la m\u00e0quina.
 # START NON-TRANSLATABLE
 J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED.explanation=syscorepath needs to configured on certain AIX systems in order to generate system core files
 J9NLS_VM_SYSCOREPATH_NOT_CONFIGURED.system_action=The JVM will warn the user at JVM startup and continue execution
