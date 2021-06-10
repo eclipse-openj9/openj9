@@ -531,7 +531,7 @@ J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the use
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_ORDINARY_METHOD=\u8981\u7f16\u8bd1\u7684 JIT \u8f6c\u50a8\u65b9\u6cd5\u662f\u666e\u901a\u65b9\u6cd5
+J9NLS_DMP_JIT_ORDINARY_METHOD=\u6b63\u5728\u7f16\u8bd1\u7684 JIT \u8f6c\u50a8\u65b9\u6cd5\u662f\u666e\u901a\u65b9\u6cd5
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_ORDINARY_METHOD.explanation=The dump has reported that the method the unhandled exception occurred in is an ordinary method.
 J9NLS_DMP_JIT_ORDINARY_METHOD.system_action=The JVM continues.

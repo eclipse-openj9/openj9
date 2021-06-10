@@ -1438,7 +1438,7 @@ J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.system_action=The JVM will throw a ve
 J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED=\u0414\u043b\u044f \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0439 ValueType \u0434\u043e\u043b\u0436\u0435\u043d \u0431\u044b\u0442\u044c \u0432\u043a\u043b\u044e\u0447\u0435\u043d \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440 -XX:+EnableValhalla
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED=ValueTypes \u043c\u043e\u0436\u043d\u043e \u0432\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u043e\u043c -XX:+EnableValhalla
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.explanation=ValueTypes is an experimental feature and is not officially supported.
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1528,7 +1528,7 @@ J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.system_action=The JVM will
 J9NLS_CFR_ERR_MULTIPLE_PERMITTEDSUBCLASSES_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED=\u0444\u0438\u043d\u0430\u043b\u044c\u043d\u044b\u0435 \u043a\u043b\u0430\u0441\u0441\u044b \u043d\u0435\u043b\u044c\u0437\u044f \u0437\u0430\u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c
+J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED=\u043a\u043b\u0430\u0441\u0441\u044b final \u043d\u0435 \u043c\u043e\u0433\u0443\u0442 \u0438\u043c\u0435\u0442\u044c \u043c\u043e\u0434\u0438\u0444\u0438\u043a\u0430\u0442\u043e\u0440 sealed
 # START NON-TRANSLATABLE
 J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_FINAL_CLASS_CANNOT_BE_SEALED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1544,7 +1544,7 @@ J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_NAME_NOT_UTF8.user_response=Contact the provid
 # END NON-TRANSLATABLE
 
 # PermittedSubclasses is not translatable
-J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE=\u044d\u043a\u0437\u0435\u043c\u043f\u043b\u044f\u0440 \u043a\u043b\u0430\u0441\u0441\u0430 PermittedSubclasses \u043d\u0435 \u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442 \u0442\u0438\u043f\u0443 \u043a\u043b\u0430\u0441\u0441\u0430
+J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE=\u041e\u0434\u0438\u043d \u0438\u0437 \u043a\u043b\u0430\u0441\u0441\u043e\u0432 \u0432 PermittedSubclasses \u043d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u043a\u043b\u0430\u0441\u0441\u043e\u043c
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITTEDSUBCLASSES_CLASS_ENTRY_NOT_CLASS_TYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
