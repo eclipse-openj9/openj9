@@ -1709,13 +1709,13 @@ bool TR_LowPriorityCompQueue::addFirstTimeCompReqToLPQ(J9Method *j9method, uint8
 // This method is used when the JIT performs a low optimized compilation
 // and then schedules a low priority upgrade compilation for the same method
 //------------------------------------------------------------------
-bool TR_LowPriorityCompQueue::addUpgradeReqToLPQ(TR_MethodToBeCompiled *compReq)
+bool TR_LowPriorityCompQueue::addUpgradeReqToLPQ(TR_MethodToBeCompiled *compReq, uint8_t reason)
    {
    TR_ASSERT(!compReq->getMethodDetails().isNewInstanceThunk(), "classForNewInstance is sync req");
    // filter out DLT compilations and fixed opt level situations
    if (compReq->isDLTCompile() || !TR::Options::getCmdLineOptions()->allowRecompilation())
       return false;
-   return createLowPriorityCompReqAndQueueIt(compReq->getMethodDetails(), compReq->_newStartPC, TR_MethodToBeCompiled::REASON_UPGRADE);
+   return createLowPriorityCompReqAndQueueIt(compReq->getMethodDetails(), compReq->_newStartPC, reason);
    }
 
 bool TR::CompilationInfo::canProcessLowPriorityRequest()
@@ -1729,6 +1729,12 @@ bool TR::CompilationInfo::canProcessLowPriorityRequest()
    // If the main compilation queue has requests, we should serve those first
    if (getMethodQueueSize() != 0)
       return false;
+
+#if defined(J9VM_OPT_JITSERVER)
+   // If the first LPQ entry is REASON_SERVER_UNAVAILABLE, only attempt compilation if server is available by now
+   if (getLowPriorityCompQueue().getFirstLPQRequest()->_reqFromSecondaryQueue == TR_MethodToBeCompiled::REASON_SERVER_UNAVAILABLE)
+      return JITServerHelpers::isServerAvailable();
+#endif
 
    // To process a request from the low priority queue we need to have
    // (1) no other compilation in progress (not required if TR_ConcurrentLPQ is enabled)
@@ -4256,15 +4262,11 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
 #ifdef STATS
    statQueueSize.update(compInfo->getMethodQueueSize());
 #endif
-   bool shouldAddToUpgradeQueue = false;
-
    TR_ASSERT(entry._optimizationPlan, "Must have an optimization plan");
 
    // The server should not adjust the opt plan requested by the client.
    if (!entry.isOutOfProcessCompReq())
       TR::CompilationController::getCompilationStrategy()->adjustOptimizationPlan(&entry, 0);
-
-   shouldAddToUpgradeQueue = entry._optimizationPlan->shouldAddToUpgradeQueue();
 
    entry._tryCompilingAgain = false; // this field may be set by compile()
 
@@ -4306,18 +4308,33 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       compInfo->debugPrint("\tcompilation succeeded for method", details, compThread);
       // Add upgrade request to secondary queue if we downgraded, this is not GCR and method
       // looks important enough that an upgrade is justified
-      if (shouldAddToUpgradeQueue && entry._compErrCode == compilationOK)
+      if (entry._compErrCode == compilationOK)
          {
-         // The flag could have been reset by GCR or other reasons
          if (entry._optimizationPlan->shouldAddToUpgradeQueue())
             {
             // clone this request, adjust its _oldStartPC to match the _newStartPC for the
             // this request, and insert it in the low upgrade queue
-            compInfo->getLowPriorityCompQueue().addUpgradeReqToLPQ(getMethodBeingCompiled());
+            compInfo->getLowPriorityCompQueue().addUpgradeReqToLPQ(getMethodBeingCompiled(), TR_MethodToBeCompiled::REASON_UPGRADE);
 #ifdef STATS
             fprintf(stderr, "Downgraded request will be added to upgrade queue\n");
 #endif
             }
+#if defined(J9VM_OPT_JITSERVER)
+         else if (entry.shouldUpgradeOutOfProcessCompilation())
+            {
+            // If it's a local cold downgraded compilation, add an upgrade request to the LPQ, hoping that
+            // the server will become available at some point in the future
+            if (TR::Options::isAnyVerboseOptionSet(
+                   TR_VerboseJITServer,
+                   TR_VerboseCompilationDispatch,
+                   TR_VerbosePerformance,
+                   TR_VerboseCompFailure))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u Buffering an upgrade request into the LPQ: j9method=%p",
+                                              (uint32_t) compInfo->getPersistentInfo()->getElapsedTime(),
+                                              entry.getMethodDetails().getMethod());
+            compInfo->getLowPriorityCompQueue().addUpgradeReqToLPQ(getMethodBeingCompiled(), TR_MethodToBeCompiled::REASON_SERVER_UNAVAILABLE);
+            }
+#endif
          }
       }
    else // compilation failure
@@ -4377,7 +4394,6 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       }
    else // compilation will not be retried
       {
-      //fprintf(stderr, "compilation thread will free optimization plan %p %d\n", entry->_optimizationPlan, entry->_optimizationPlan->creatorCanFreePlan());
       TR_OptimizationPlan::freeOptimizationPlan(entry._optimizationPlan); // we no longer need the optimization plan
       // decrease the queue weight
       compInfo->decreaseQueueWeightBy(entry._weight);
@@ -5334,7 +5350,11 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
          // Check if we need to throttle
          if (exceedsCompCpuEntitlement() == TR_yes &&
             !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
-            (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
+            (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50))
+#if defined(J9VM_OPT_JITSERVER)
+            && !getLowPriorityCompQueue().getFirstLPQRequest()->shouldUpgradeOutOfProcessCompilation() // Don't throttle if compilation will be done remotely
+#endif
+            )
             {
             // If at all possible suspend the compilation thread
             // Otherwise, perform a timed wait
@@ -7050,14 +7070,17 @@ TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotnes
    }
 
 bool
-TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeCompiled *entry)
+TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeCompiled *entry, bool &forcedLocal)
    {
    // As a heuristic, cold compilations could be performed locally because
    // they are supposed to be cheap with respect to memory and CPU, but
    // only if we think we have enough resources
    if (!JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
        (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
-       return true; // I really cannot do a remote compilation
+      {
+      forcedLocal = true; // Inform the caller that remote compilation is not possible
+      return true; // I really cannot do a remote compilation
+      }
 
    // Do a local compile because the Power codegen is missing some FieldWatch relocation support.
    if (TR::Compiler->target.cpu.isPower() && _jitConfig->inlineFieldWatches)
@@ -7098,6 +7121,43 @@ TR::CompilationInfoPerThreadBase::exitPerClientAllocationRegion()
    if (_compiler)
       _compiler->switchToGlobalMemory();
    _perClientPersistentMemory = NULL;
+   }
+
+void
+TR::CompilationInfoPerThreadBase::downgradeLocalCompilationIfLowPhysicalMemory(TR_MethodToBeCompiled *entry)
+   {
+   TR_ASSERT_FATAL(_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT,
+                   "Must be called on JITServer client");
+
+   J9Method *method = entry->getMethodDetails().getMethod();
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJITServerBufferedExpensiveCompilations) &&
+       TR::Options::getCmdLineOptions()->allowRecompilation() &&
+       !TR::CompilationInfo::isCompiled(method) &&  // do not downgrade recompilations
+       (entry->_optimizationPlan->getOptLevel() >= warm ||
+       // AOT compilations that are upgraded back to cheap-warm should be considered expensive
+       (entry->_useAotCompilation && !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableAotAtCheapWarm))))
+      {
+      // Downgrade a forced local compilation, if the available client memory is low.
+      bool incomplete;
+      uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incomplete, 10);
+      int32_t numActiveThreads = _compInfo.getNumCompThreadsActive();
+      if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE &&
+         freePhysicalMemorySizeB <= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue() + (numActiveThreads + 4) * TR::Options::getScratchSpaceLowerBound())
+         {
+         if (TR::Options::isAnyVerboseOptionSet(
+                TR_VerboseJITServer,
+                TR_VerboseCompilationDispatch,
+                TR_VerbosePerformance,
+                TR_VerboseCompFailure))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u Downgraded a forced local compilation to cold due to low memory: j9method=%p", 
+                                           (uint32_t)_compInfo.getPersistentInfo()->getElapsedTime(), method);
+         entry->_optimizationPlan->setOptLevel(cold);
+         entry->_optimizationPlan->setOptLevelDowngraded(true);
+         entry->_optimizationPlan->setDisableGCR(); // disable GCR to prevent aggressive recompilation
+         entry->_optimizationPlan->setUseSampling(false); // disable sampling to prevent spontaneous recompilation
+         entry->setShouldUpgradeOutOfProcessCompilation(); // ask for an upgrade if the server becomes available
+         }
+      }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -7387,10 +7447,13 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 #endif /* defined(J9VM_OPT_JITSERVER) */
          _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
 #if defined(J9VM_OPT_JITSERVER)
-      if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
-         !shouldPerformLocalComp(entry))
+      if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
-         entry->setRemoteCompReq();
+         bool forcedLocal = false;
+         if (!shouldPerformLocalComp(entry, forcedLocal))
+            entry->setRemoteCompReq();
+         else if (forcedLocal)
+            downgradeLocalCompilationIfLowPhysicalMemory(entry);
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
       }
@@ -7411,7 +7474,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
           TR::Options::canJITCompile())
          {
-         bool doLocalCompilation = shouldPerformLocalComp(entry);
+         bool forcedLocal = false;
+         bool doLocalCompilation = shouldPerformLocalComp(entry, forcedLocal);
 
          // If this is a remote sync compilation, change it to a local sync compilation.
          // After the local compilation is completed successfully, a remote async compilation
@@ -7454,7 +7518,13 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             }
 
          if (!doLocalCompilation)
+            {
             entry->setRemoteCompReq();
+            }
+         else if (forcedLocal)
+            {
+            downgradeLocalCompilationIfLowPhysicalMemory(entry);
+            }
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
       }
@@ -8161,7 +8231,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   (!TR::Compiler->target.cpu.isPower() && // Temporary change until we figure out the AOT bug on PPC
                    !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableAotAtCheapWarm))) &&
                   p->_optimizationPlan->isOptLevelDowngraded() &&
-                  p->_optimizationPlan->getOptLevel() == cold) // Is this test really needed?
+                  p->_optimizationPlan->getOptLevel() == cold // Is this test really needed?
+#if defined(J9VM_OPT_JITSERVER)
+                  // Do not reupgrade a compilation that was downgraded due to low memory
+                  && (TR::Options::getCmdLineOptions()->getOption(TR_DisableJITServerBufferedExpensiveCompilations) ||
+                      !that->_methodBeingCompiled->shouldUpgradeOutOfProcessCompilation())
+#endif
+                  )
                   {
                   p->_optimizationPlan->setOptLevel(warm);
                   p->_optimizationPlan->setOptLevelDowngraded(false);

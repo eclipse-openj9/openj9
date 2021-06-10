@@ -29,6 +29,7 @@
 #include "compile/CompilationTypes.hpp"
 #include "control/CompilationPriority.hpp"
 #include "control/ClassHolder.hpp"
+#include "control/MethodToBeCompiled.hpp"
 #include "env/CpuUtilization.hpp"
 #include "env/Processors.hpp"
 #include "env/ProcessorInfo.hpp"
@@ -119,7 +120,7 @@ class TR_LowPriorityCompQueue
       void enqueueCompReqToLPQ(TR_MethodToBeCompiled *compReq);
       bool createLowPriorityCompReqAndQueueIt(TR::IlGeneratorMethodDetails &details, void *startPC, uint8_t reason);
       bool addFirstTimeCompReqToLPQ(J9Method *j9method, uint8_t reason);
-      bool addUpgradeReqToLPQ(TR_MethodToBeCompiled*);
+      bool addUpgradeReqToLPQ(TR_MethodToBeCompiled*, uint8_t reason = TR_MethodToBeCompiled::REASON_UPGRADE);
       int32_t getLowPriorityQueueSize() const { return _sizeLPQ; }
       int32_t getLPQWeight() const { return _LPQWeight; }
       void increaseLPQWeightBy(uint8_t weight) { _LPQWeight += (int32_t)weight; }

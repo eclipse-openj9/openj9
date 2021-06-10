@@ -51,7 +51,17 @@ struct J9VMThread;
 
 struct TR_MethodToBeCompiled
    {
-   enum LPQ_REASON { REASON_NONE = 0, REASON_IPROFILER_CALLS, REASON_LOW_COUNT_EXPIRED, REASON_UPGRADE };
+   enum LPQ_REASON
+      {
+      REASON_NONE = 0,
+      REASON_IPROFILER_CALLS,
+      REASON_LOW_COUNT_EXPIRED,
+      REASON_UPGRADE,
+#if defined(J9VM_OPT_JITSERVER)
+      REASON_SERVER_UNAVAILABLE
+#endif
+      };
+
    static int16_t _globalIndex;
    static TR_MethodToBeCompiled *allocate(J9JITConfig *jitConfig);
    void shutdown();
@@ -74,6 +84,8 @@ struct TR_MethodToBeCompiled
    bool isOutOfProcessCompReq() const { return _stream != NULL; } // at the server
    uint64_t getClientUID() const;
    bool hasChangedToLocalSyncComp() const { return (_origOptLevel != unknownHotness); }
+   void setShouldUpgradeOutOfProcessCompilation() { _shouldUpgradeOutOfProcessCompilation = true; }
+   bool shouldUpgradeOutOfProcessCompilation() { return _shouldUpgradeOutOfProcessCompilation; }
 #else
    bool isRemoteCompReq() const { return false; } // at the client
    bool isOutOfProcessCompReq() const { return false; } // at the server
@@ -136,6 +148,7 @@ struct TR_MethodToBeCompiled
    bool                   _remoteCompReq; // Comp request should be sent remotely to JITServer
    JITServer::ServerStream  *_stream; // A non-NULL field denotes an out-of-process compilation request
    TR_Hotness             _origOptLevel; //  Cache original optLevel when transforming a remote sync compilation to a local cheap one
+   bool                   _shouldUpgradeOutOfProcessCompilation; // Flag used to determine whether a cold local compilation should be upgraded by LPQ
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // TR_MethodToBeCompiled
 
