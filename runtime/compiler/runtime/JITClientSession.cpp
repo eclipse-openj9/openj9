@@ -567,12 +567,24 @@ ClientSessionData::destroy(ClientSessionData *clientSession)
    bool useAOTCache = compInfo->getPersistentInfo()->getJITServerUseAOTCache();
    if (usesPerClientMemory && useAOTCache)
       {
-      // Destroy objects that are allocated globally: shared ROMClasses (if enabled) and monitors
-      if (auto cache = compInfo->getJITServerSharedROMClassCache())
+      // Destroy objects that are allocated globally:
+      // shared ROMClasses (if enabled), monitors, std::strings
+      auto sharedROMClassCache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache();
+      for (auto &it : clientSession->_romClassMap)
          {
-         for (auto &it : clientSession->_romClassMap)
-            cache->release(it.second._romClass);
+         if (sharedROMClassCache)
+            sharedROMClassCache->release(it.second._romClass);
+         for (auto &kv : it.second._J9MethodNameCache)
+            kv.second.~J9MethodNameAndSignature();
          }
+
+      for (auto &it : clientSession->_classBySignatureMap)
+         it.first.~ClassLoaderStringPair();
+      for (auto &it : clientSession->_registeredJ2IThunksMap)
+         it.first.first.~basic_string();
+      for (auto &it : clientSession->_registeredInvokeExactJ2IThunksSet)
+         it.first.~basic_string();
+
       clientSession->destroyMonitors();
       if (clientSession->_chTable)
          TR::Monitor::destroy(clientSession->_chTable->getCHTableMonitor());
