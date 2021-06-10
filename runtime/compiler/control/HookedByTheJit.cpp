@@ -4966,7 +4966,7 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
    //TODO: Is getArrayOfCompilationInfoPerThread() called after setupCompilationThreads()
    TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
 
-   for (int32_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+   for (uint8_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
       {
       const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
       if (cpuUtil.isFunctional())
@@ -4993,7 +4993,7 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
       TR_VerboseLog::vlogAcquire();
       TR_VerboseLog::write(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", static_cast<uint32_t>(crtTime), totalCompCPUUtilization);
       TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
-      for (int32_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+      for (uint8_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
          {
          const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
          TR_VerboseLog::write(" compThr%d:%3d%% (%2d%%, %2d%%) ", i, cpuUtilizationValues[i], cpuUtil.getThreadLastCpuUtil(), cpuUtil.getThreadPrevCpuUtil());
