@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/arm/codegen/ControlFlowEvaluator.cpp \
     omr/compiler/arm/codegen/FPTreeEvaluator.cpp \
     omr/compiler/arm/codegen/OMRCodeGenerator.cpp \
+    omr/compiler/arm/codegen/OMRInstOpCode.cpp \
     omr/compiler/arm/codegen/OMRInstruction.cpp \
     omr/compiler/arm/codegen/OMRLinkage.cpp \
     omr/compiler/arm/codegen/OMRMachine.cpp \
@@ -38,8 +39,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/arm/codegen/OMRRegisterDependency.cpp \
     omr/compiler/arm/codegen/OMRSnippet.cpp \
     omr/compiler/arm/codegen/OMRTreeEvaluator.cpp \
-    omr/compiler/arm/codegen/OpBinary.cpp \
-    omr/compiler/arm/codegen/OpProperties.cpp \
     omr/compiler/arm/codegen/StackCheckFailureSnippet.cpp \
     omr/compiler/arm/codegen/SubtractAnalyser.cpp \
     omr/compiler/arm/codegen/UnaryEvaluator.cpp \
