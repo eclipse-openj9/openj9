@@ -341,9 +341,11 @@ class CompilationInfoPerThreadBase
              CPU relative to what the JVM has at its disposal
     */
    bool isCPUCheapCompilation(uint32_t bcsz, TR_Hotness optLevel);
-   bool shouldPerformLocalComp(const TR_MethodToBeCompiled *entry);
+   bool shouldPerformLocalComp(const TR_MethodToBeCompiled *entry, bool &forcedLocal);
 
    bool compilationCanBeInterrupted() const { return _compilationCanBeInterrupted; }
+
+   void downgradeLocalCompilationIfLowPhysicalMemory(TR_MethodToBeCompiled *entry);
 
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

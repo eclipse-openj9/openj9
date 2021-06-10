@@ -29,6 +29,7 @@
 #include "compile/CompilationTypes.hpp"
 #include "control/CompilationPriority.hpp"
 #include "control/ClassHolder.hpp"
+#include "control/MethodToBeCompiled.hpp"
 #include "env/CpuUtilization.hpp"
 #include "env/Processors.hpp"
 #include "env/ProcessorInfo.hpp"
@@ -119,7 +120,7 @@ class TR_LowPriorityCompQueue
       void enqueueCompReqToLPQ(TR_MethodToBeCompiled *compReq);
       bool createLowPriorityCompReqAndQueueIt(TR::IlGeneratorMethodDetails &details, void *startPC, uint8_t reason);
       bool addFirstTimeCompReqToLPQ(J9Method *j9method, uint8_t reason);
-      bool addUpgradeReqToLPQ(TR_MethodToBeCompiled*);
+      bool addUpgradeReqToLPQ(TR_MethodToBeCompiled*, uint8_t reason = TR_MethodToBeCompiled::REASON_UPGRADE);
       int32_t getLowPriorityQueueSize() const { return _sizeLPQ; }
       int32_t getLPQWeight() const { return _LPQWeight; }
       void increaseLPQWeightBy(uint8_t weight) { _LPQWeight += (int32_t)weight; }
@@ -1043,8 +1044,8 @@ public:
    uint32_t getLastCriticalSeqNo() const { return _lastCriticalCompReqSeqNo; }
    void setLastCriticalSeqNo(uint32_t seqNo) { _lastCriticalCompReqSeqNo = seqNo; }
 
-   void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= (1 << threadId); }
-   void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
+   void markCHTableUpdateDone(int32_t threadId) { _chTableUpdateFlags |= (1 << threadId); }
+   void resetCHTableUpdateDone(int32_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
    uint8_t getCHTableUpdateDone() const { return _chTableUpdateFlags; }
 
    const PersistentVector<std::string> &getJITServerSslKeys() const { return _sslKeys; }
@@ -1087,7 +1088,7 @@ public:
    // Must be less than 8 at the JITClient or non-JITServer mode.
    // Because in some parts of the code (CHTable) we keep flags on a byte variable.
    static const uint32_t MAX_CLIENT_USABLE_COMP_THREADS = 7;  // For JITClient and non-JITServer mode
-   static const uint32_t MAX_SERVER_USABLE_COMP_THREADS = 63; // JITServer
+   static const uint32_t DEFAULT_SERVER_USABLE_COMP_THREADS = 63; // JITServer
    static const uint32_t MAX_DIAGNOSTIC_COMP_THREADS = 1;
 
 private:

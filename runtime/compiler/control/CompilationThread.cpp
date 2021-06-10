@@ -459,7 +459,7 @@ TR::CompilationInfoPerThread *
 TR::CompilationInfo::findFirstLowPriorityCompilationInProgress(CompilationPriority priority) // needs compilationQueueMonitor in hand
    {
    TR::CompilationInfoPerThread *lowPriorityCompInProgress = NULL;
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1216,7 +1216,7 @@ TR::CompilationInfoPerThreadBase *TR::CompilationInfo::getCompInfoWithID(int32_t
    if (_compInfoForCompOnAppThread)
       return _compInfoForCompOnAppThread;
 
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1235,7 +1235,7 @@ TR::CompilationInfoPerThread *TR::CompilationInfo::getFirstSuspendedCompilationT
    if (_compInfoForCompOnAppThread)
       return NULL;
 
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1261,7 +1261,7 @@ void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
       _compInfoForCompOnAppThread->setCompilationShouldBeInterrupted(GC_COMP_INTERRUPT);
    else
       {
-      for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
          {
          TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
          TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1709,13 +1709,13 @@ bool TR_LowPriorityCompQueue::addFirstTimeCompReqToLPQ(J9Method *j9method, uint8
 // This method is used when the JIT performs a low optimized compilation
 // and then schedules a low priority upgrade compilation for the same method
 //------------------------------------------------------------------
-bool TR_LowPriorityCompQueue::addUpgradeReqToLPQ(TR_MethodToBeCompiled *compReq)
+bool TR_LowPriorityCompQueue::addUpgradeReqToLPQ(TR_MethodToBeCompiled *compReq, uint8_t reason)
    {
    TR_ASSERT(!compReq->getMethodDetails().isNewInstanceThunk(), "classForNewInstance is sync req");
    // filter out DLT compilations and fixed opt level situations
    if (compReq->isDLTCompile() || !TR::Options::getCmdLineOptions()->allowRecompilation())
       return false;
-   return createLowPriorityCompReqAndQueueIt(compReq->getMethodDetails(), compReq->_newStartPC, TR_MethodToBeCompiled::REASON_UPGRADE);
+   return createLowPriorityCompReqAndQueueIt(compReq->getMethodDetails(), compReq->_newStartPC, reason);
    }
 
 bool TR::CompilationInfo::canProcessLowPriorityRequest()
@@ -1729,6 +1729,12 @@ bool TR::CompilationInfo::canProcessLowPriorityRequest()
    // If the main compilation queue has requests, we should serve those first
    if (getMethodQueueSize() != 0)
       return false;
+
+#if defined(J9VM_OPT_JITSERVER)
+   // If the first LPQ entry is REASON_SERVER_UNAVAILABLE, only attempt compilation if server is available by now
+   if (getLowPriorityCompQueue().getFirstLPQRequest()->_reqFromSecondaryQueue == TR_MethodToBeCompiled::REASON_SERVER_UNAVAILABLE)
+      return JITServerHelpers::isServerAvailable();
+#endif
 
    // To process a request from the low priority queue we need to have
    // (1) no other compilation in progress (not required if TR_ConcurrentLPQ is enabled)
@@ -1747,7 +1753,7 @@ bool TR::CompilationInfo::canProcessLowPriorityRequest()
       }
 
    // Cycle through all the compilation threads
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1764,7 +1770,7 @@ int64_t
 TR::CompilationInfo::getCpuTimeSpentInCompilation()
    {
    I_64 totalTime = 0;
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -1887,7 +1893,7 @@ void TR::CompilationInfo::invalidateRequestsForNativeMethods(J9Class * clazz, J9
       TR_VerboseLog::writeLineLocked(TR_Vlog_HK, "invalidateRequestsForNativeMethods class=%p vmThread=%p", clazz, vmThread);
 
    // Cycle through all the compilation threads
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_MethodToBeCompiled *methodBeingCompiled = curCompThreadInfoPT->getMethodBeingCompiled();
@@ -1977,7 +1983,7 @@ void TR::CompilationInfo::invalidateRequestsForUnloadedMethods(TR_OpaqueClassBlo
    if (verbose)
       TR_VerboseLog::writeLineLocked(TR_Vlog_HK, "invalidateRequestsForUnloadedMethods class=%p vmThread=%p hotCodeReplacement=%d", clazz, vmThread, hotCodeReplacement);
 
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2473,7 +2479,7 @@ void TR::CompilationInfo::suspendCompilationThread()
 
       // Must visit all compilation threads
       bool stoppedOneCompilationThread = false;
-      for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
          {
          TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
          TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2554,7 +2560,7 @@ void TR::CompilationInfo::resumeCompilationThread()
       int32_t numActiveCompThreads = 0; // RAS purposes
       int32_t numHot = 0;
       TR::CompilationInfoPerThread *compInfoPTHot = NULL;
-      for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
          {
          TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
          TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2608,7 +2614,7 @@ void TR::CompilationInfo::resumeCompilationThread()
 
       // If dynamicThreadActivation is used, wake compilation threads only as
       // many as required; otherwise wake them all
-      for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
          {
          TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
          TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2653,7 +2659,7 @@ int TR::CompilationInfo::computeCompilationThreadPriority(J9JavaVM *vm)
 
 TR::CompilationInfoPerThread* TR::CompilationInfo::getCompInfoForThread(J9VMThread *vmThread)
    {
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -2674,9 +2680,8 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
 #if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      numUsableCompThreads = ((numUsableCompThreads <= 0) ||
-                              (numUsableCompThreads > MAX_SERVER_USABLE_COMP_THREADS)) ?
-                               MAX_SERVER_USABLE_COMP_THREADS : numUsableCompThreads;
+      numUsableCompThreads = (numUsableCompThreads <= 0) ? DEFAULT_SERVER_USABLE_COMP_THREADS
+                             : numUsableCompThreads;
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -2705,8 +2710,7 @@ TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
 #if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_SERVER_USABLE_COMP_THREADS),
-               "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_SERVER_USABLE_COMP_THREADS);
+      TR_ASSERT(0 < numUsableCompThreads, "numUsableCompThreads %d is negative", numUsableCompThreads);
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -3429,7 +3433,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    acquireCompMonitor(vmThread);
 
    // Cycle through all non-diagnostic threads and stop them
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
 
@@ -3445,7 +3449,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    // compilation thread has crashed and is going through the JitDump process. The reason we skipped terminating the
    // diagnostic threads in the above loop is because the JitDump logic will activate the diagnostic thread to generate
    // the JitDump, so the diagnostic thread must not be in a terminated state at that point.
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
 
@@ -3466,7 +3470,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    // for the crashed thread in the loop above. However because the diagnostic data is generated on the crashed 
    // thread this thread will never return to execute the state processing loop, and thus will never terminate.
    // This is ok, because following the dump process in the JVM we will terminate the entire JVM process.
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
 
@@ -3476,7 +3480,7 @@ void TR::CompilationInfo::stopCompilationThreads()
 
    // Wake up the diagnostic thread and stop it. If it is currently active then we will block here until the JitDump
    // process is complete (see #11860).
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
 
@@ -4258,15 +4262,11 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
 #ifdef STATS
    statQueueSize.update(compInfo->getMethodQueueSize());
 #endif
-   bool shouldAddToUpgradeQueue = false;
-
    TR_ASSERT(entry._optimizationPlan, "Must have an optimization plan");
 
    // The server should not adjust the opt plan requested by the client.
    if (!entry.isOutOfProcessCompReq())
       TR::CompilationController::getCompilationStrategy()->adjustOptimizationPlan(&entry, 0);
-
-   shouldAddToUpgradeQueue = entry._optimizationPlan->shouldAddToUpgradeQueue();
 
    entry._tryCompilingAgain = false; // this field may be set by compile()
 
@@ -4308,18 +4308,33 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       compInfo->debugPrint("\tcompilation succeeded for method", details, compThread);
       // Add upgrade request to secondary queue if we downgraded, this is not GCR and method
       // looks important enough that an upgrade is justified
-      if (shouldAddToUpgradeQueue && entry._compErrCode == compilationOK)
+      if (entry._compErrCode == compilationOK)
          {
-         // The flag could have been reset by GCR or other reasons
          if (entry._optimizationPlan->shouldAddToUpgradeQueue())
             {
             // clone this request, adjust its _oldStartPC to match the _newStartPC for the
             // this request, and insert it in the low upgrade queue
-            compInfo->getLowPriorityCompQueue().addUpgradeReqToLPQ(getMethodBeingCompiled());
+            compInfo->getLowPriorityCompQueue().addUpgradeReqToLPQ(getMethodBeingCompiled(), TR_MethodToBeCompiled::REASON_UPGRADE);
 #ifdef STATS
             fprintf(stderr, "Downgraded request will be added to upgrade queue\n");
 #endif
             }
+#if defined(J9VM_OPT_JITSERVER)
+         else if (entry.shouldUpgradeOutOfProcessCompilation())
+            {
+            // If it's a local cold downgraded compilation, add an upgrade request to the LPQ, hoping that
+            // the server will become available at some point in the future
+            if (TR::Options::isAnyVerboseOptionSet(
+                   TR_VerboseJITServer,
+                   TR_VerboseCompilationDispatch,
+                   TR_VerbosePerformance,
+                   TR_VerboseCompFailure))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u Buffering an upgrade request into the LPQ: j9method=%p",
+                                              (uint32_t) compInfo->getPersistentInfo()->getElapsedTime(),
+                                              entry.getMethodDetails().getMethod());
+            compInfo->getLowPriorityCompQueue().addUpgradeReqToLPQ(getMethodBeingCompiled(), TR_MethodToBeCompiled::REASON_SERVER_UNAVAILABLE);
+            }
+#endif
          }
       }
    else // compilation failure
@@ -4379,7 +4394,6 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       }
    else // compilation will not be retried
       {
-      //fprintf(stderr, "compilation thread will free optimization plan %p %d\n", entry->_optimizationPlan, entry->_optimizationPlan->creatorCanFreePlan());
       TR_OptimizationPlan::freeOptimizationPlan(entry._optimizationPlan); // we no longer need the optimization plan
       // decrease the queue weight
       compInfo->decreaseQueueWeightBy(entry._weight);
@@ -4636,7 +4650,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
    TR_J9VMBase * fe = TR_J9VMBase::get(_jitConfig, vmThread);
 
    // search among the threads
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -4966,7 +4980,7 @@ TR::CompilationInfo::adjustCompilationEntryAndRequeue(
                             CompilationPriority priority,
                             TR_J9VMBase *fe)
    {
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5020,7 +5034,7 @@ int32_t TR::CompilationInfo::promoteMethodInAsyncQueue(J9Method * method, void *
    {
    // See if the method is already in the queue or is already being compiled
    //
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5080,7 +5094,7 @@ void TR::CompilationInfo::changeCompReqFromAsyncToSync(J9Method * method)
    TR_MethodToBeCompiled *cur = NULL, *prev = NULL;
    // See if the method is already in the queue or is already being compiled
    //
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5143,7 +5157,7 @@ TR_MethodToBeCompiled * TR::CompilationInfo::requestExistsInCompilationQueue(TR:
    {
    // See if the method is already in the queue or under compilation
    //
-   for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5275,7 +5289,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
                // make sure there is at least one thread that is not jobless
                TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = getArrayOfCompilationInfoPerThread();
                int32_t numActive = 0, numHot = 0, numLowPriority = 0;
-               for (uint8_t i = 0; i < getNumUsableCompilationThreads(); i++)
+               for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
                   {
                   TR::CompilationInfoPerThread *curCompThreadInfoPT = arrayOfCompInfoPT[i];
                   TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
@@ -5336,7 +5350,11 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
          // Check if we need to throttle
          if (exceedsCompCpuEntitlement() == TR_yes &&
             !compThreadCameOutOfSleep && // Don't throttle a comp thread that has just slept its share of time
-            (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50)))
+            (TR::Options::_compThreadCPUEntitlement < 100 || getNumCompThreadsActive() * 100 > (TR::Options::_compThreadCPUEntitlement + 50))
+#if defined(J9VM_OPT_JITSERVER)
+            && !getLowPriorityCompQueue().getFirstLPQRequest()->shouldUpgradeOutOfProcessCompilation() // Don't throttle if compilation will be done remotely
+#endif
+            )
             {
             // If at all possible suspend the compilation thread
             // Otherwise, perform a timed wait
@@ -7052,14 +7070,17 @@ TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotnes
    }
 
 bool
-TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeCompiled *entry)
+TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeCompiled *entry, bool &forcedLocal)
    {
    // As a heuristic, cold compilations could be performed locally because
    // they are supposed to be cheap with respect to memory and CPU, but
    // only if we think we have enough resources
    if (!JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
        (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
-       return true; // I really cannot do a remote compilation
+      {
+      forcedLocal = true; // Inform the caller that remote compilation is not possible
+      return true; // I really cannot do a remote compilation
+      }
 
    // Do a local compile because the Power codegen is missing some FieldWatch relocation support.
    if (TR::Compiler->target.cpu.isPower() && _jitConfig->inlineFieldWatches)
@@ -7100,6 +7121,43 @@ TR::CompilationInfoPerThreadBase::exitPerClientAllocationRegion()
    if (_compiler)
       _compiler->switchToGlobalMemory();
    _perClientPersistentMemory = NULL;
+   }
+
+void
+TR::CompilationInfoPerThreadBase::downgradeLocalCompilationIfLowPhysicalMemory(TR_MethodToBeCompiled *entry)
+   {
+   TR_ASSERT_FATAL(_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT,
+                   "Must be called on JITServer client");
+
+   J9Method *method = entry->getMethodDetails().getMethod();
+   if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableJITServerBufferedExpensiveCompilations) &&
+       TR::Options::getCmdLineOptions()->allowRecompilation() &&
+       !TR::CompilationInfo::isCompiled(method) &&  // do not downgrade recompilations
+       (entry->_optimizationPlan->getOptLevel() >= warm ||
+       // AOT compilations that are upgraded back to cheap-warm should be considered expensive
+       (entry->_useAotCompilation && !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableAotAtCheapWarm))))
+      {
+      // Downgrade a forced local compilation, if the available client memory is low.
+      bool incomplete;
+      uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incomplete, 10);
+      int32_t numActiveThreads = _compInfo.getNumCompThreadsActive();
+      if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE &&
+         freePhysicalMemorySizeB <= (uint64_t)TR::Options::getSafeReservePhysicalMemoryValue() + (numActiveThreads + 4) * TR::Options::getScratchSpaceLowerBound())
+         {
+         if (TR::Options::isAnyVerboseOptionSet(
+                TR_VerboseJITServer,
+                TR_VerboseCompilationDispatch,
+                TR_VerbosePerformance,
+                TR_VerboseCompFailure))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u Downgraded a forced local compilation to cold due to low memory: j9method=%p", 
+                                           (uint32_t)_compInfo.getPersistentInfo()->getElapsedTime(), method);
+         entry->_optimizationPlan->setOptLevel(cold);
+         entry->_optimizationPlan->setOptLevelDowngraded(true);
+         entry->_optimizationPlan->setDisableGCR(); // disable GCR to prevent aggressive recompilation
+         entry->_optimizationPlan->setUseSampling(false); // disable sampling to prevent spontaneous recompilation
+         entry->setShouldUpgradeOutOfProcessCompilation(); // ask for an upgrade if the server becomes available
+         }
+      }
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -7389,10 +7447,13 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 #endif /* defined(J9VM_OPT_JITSERVER) */
          _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
 #if defined(J9VM_OPT_JITSERVER)
-      if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
-         !shouldPerformLocalComp(entry))
+      if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
-         entry->setRemoteCompReq();
+         bool forcedLocal = false;
+         if (!shouldPerformLocalComp(entry, forcedLocal))
+            entry->setRemoteCompReq();
+         else if (forcedLocal)
+            downgradeLocalCompilationIfLowPhysicalMemory(entry);
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
       }
@@ -7413,7 +7474,8 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
           TR::Options::canJITCompile())
          {
-         bool doLocalCompilation = shouldPerformLocalComp(entry);
+         bool forcedLocal = false;
+         bool doLocalCompilation = shouldPerformLocalComp(entry, forcedLocal);
 
          // If this is a remote sync compilation, change it to a local sync compilation.
          // After the local compilation is completed successfully, a remote async compilation
@@ -7456,7 +7518,13 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             }
 
          if (!doLocalCompilation)
+            {
             entry->setRemoteCompReq();
+            }
+         else if (forcedLocal)
+            {
+            downgradeLocalCompilationIfLowPhysicalMemory(entry);
+            }
          }
 #endif /* defined(J9VM_OPT_JITSERVER) */
       }
@@ -8163,7 +8231,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   (!TR::Compiler->target.cpu.isPower() && // Temporary change until we figure out the AOT bug on PPC
                    !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableAotAtCheapWarm))) &&
                   p->_optimizationPlan->isOptLevelDowngraded() &&
-                  p->_optimizationPlan->getOptLevel() == cold) // Is this test really needed?
+                  p->_optimizationPlan->getOptLevel() == cold // Is this test really needed?
+#if defined(J9VM_OPT_JITSERVER)
+                  // Do not reupgrade a compilation that was downgraded due to low memory
+                  && (TR::Options::getCmdLineOptions()->getOption(TR_DisableJITServerBufferedExpensiveCompilations) ||
+                      !that->_methodBeingCompiled->shouldUpgradeOutOfProcessCompilation())
+#endif
+                  )
                   {
                   p->_optimizationPlan->setOptLevel(warm);
                   p->_optimizationPlan->setOptLevelDowngraded(false);
@@ -11130,7 +11204,7 @@ TR::CompilationInfo::printQueue()
    fprintf(stderr, "\t\t\tActive: ");
    bool activeMethods = false;
 
-   for (uint8_t i = 0; i < getNumTotalCompilationThreads(); i++)
+   for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");

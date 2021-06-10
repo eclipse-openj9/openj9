@@ -88,6 +88,7 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _remoteCompReq = false;
    _stream = NULL;
    _origOptLevel = unknownHotness;
+   _shouldUpgradeOutOfProcessCompilation = false;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_ASSERT_FATAL(_freeTag & ENTRY_IN_POOL_FREE, "initializing an entry which is not free");
