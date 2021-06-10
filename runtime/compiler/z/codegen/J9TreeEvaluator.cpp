@@ -616,7 +616,7 @@ doubleMaxMinHelper(TR::Node *node, TR::CodeGenerator *cg, bool isMaxOp)
  * \return a register for that contains the indexOf() result.
 */
 TR::Register*
-inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF16)
+J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF16)
    {
    #define iComment(str) if (compDebug) compDebug->addInstructionComment(cursor, (const_cast<char*>(str)));
    TR::Compilation *comp = cg->comp();
@@ -1295,8 +1295,8 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    return node->getRegister();
    }
 
-extern TR::Register *
-inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
+TR::Register *
+J9::Z::TreeEvaluator::inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
    {
    cg->generateDebugCounter("z13/simd/indexOf", 1, TR::DebugCounter::Free);
 
@@ -1445,36 +1445,36 @@ inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
    return indexRegister;
    }
 
-extern TR::Register *
-toUpperIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString)
+TR::Register*
+J9::Z::TreeEvaluator::toUpperIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString)
    {
    cg->generateDebugCounter("z13/simd/toUpper", 1, TR::DebugCounter::Free);
    return caseConversionHelper(node, cg, true, isCompressedString);
    }
 
-extern TR::Register *
-toLowerIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString)
+TR::Register*
+J9::Z::TreeEvaluator::toLowerIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString)
    {
    cg->generateDebugCounter("z13/simd/toLower", 1, TR::DebugCounter::Free);
    return caseConversionHelper(node, cg, false, isCompressedString);
    }
 
-extern TR::Register *
-inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register*
+J9::Z::TreeEvaluator::inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg)
    {
    cg->generateDebugCounter("z13/simd/doubleMax", 1, TR::DebugCounter::Free);
    return doubleMaxMinHelper(node, cg, true);
    }
 
-extern TR::Register *
-inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register*
+J9::Z::TreeEvaluator::inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg)
    {
    cg->generateDebugCounter("z13/simd/doubleMin", 1, TR::DebugCounter::Free);
    return doubleMaxMinHelper(node, cg, false);
    }
 
-extern TR::Register *
-inlineMathFma(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *
+J9::Z::TreeEvaluator::inlineMathFma(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_ASSERT_FATAL(node->getNumChildren() == 3,
    "In function inlineMathFma, the node at address %p should have exactly 3 children, but got %u instead", node, node->getNumChildren());
@@ -10152,8 +10152,8 @@ void J9::Z::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register *s
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
    }
 
-extern TR::Register *
-VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp, bool isObj)
+TR::Register*
+J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp, bool isObj)
    {
    TR::Register *scratchReg = NULL;
    TR::Register *objReg, *oldVReg, *newVReg;
@@ -10479,7 +10479,8 @@ extern "C" void _getSTCKLSOOffset(int32_t* offsetArray);  /* 390 asm stub */
 /**
  * generate a single precision sqrt instruction
  */
-extern TR::Register * inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register*
+J9::Z::TreeEvaluator::inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node * firstChild = node->getFirstChild();
    TR::Register * targetRegister = NULL;
@@ -10511,7 +10512,8 @@ extern TR::Register * inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerato
  *  \return
  *     A register (or register pair for 31-bit) containing the current time in terms of 1/2048 of micro-seconds.
  */
-extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::Node* node)
+TR::Register*
+J9::Z::TreeEvaluator::inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::Node* node)
    {
    // STCKF is an S instruction and requires a 64-bit memory reference
    TR::SymbolReference* reusableTempSlot = cg->allocateReusableTempSlot();
@@ -10571,12 +10573,8 @@ extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::No
    return targetRegister;
    }
 
-extern TR::Register *inlineAtomicOps(
-      TR::Node *node,
-      TR::CodeGenerator *cg,
-      int8_t size,
-      TR::MethodSymbol *method,
-      bool isArray = false)
+TR::Register*
+J9::Z::TreeEvaluator::inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8_t size, TR::MethodSymbol *method, bool isArray)
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -10973,11 +10971,8 @@ evaluateTwo32BitLoadsInAConsecutiveEvenOddPair(
    return newRegisterPair;
    }
 
-extern TR::Register *
-inlineAtomicFieldUpdater(
-      TR::Node *node,
-      TR::CodeGenerator *cg,
-      TR::MethodSymbol *method)
+TR::Register*
+J9::Z::TreeEvaluator::inlineAtomicFieldUpdater(TR::Node *node, TR::CodeGenerator *cg, TR::MethodSymbol *method)
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -11123,10 +11118,8 @@ inlineAtomicFieldUpdater(
    return resultReg;
    }
 
-extern TR::Register *
-inlineKeepAlive(
-      TR::Node *node,
-      TR::CodeGenerator *cg)
+TR::Register*
+J9::Z::TreeEvaluator::inlineKeepAlive(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *paramNode = node->getFirstChild();
    TR::Register *paramReg = cg->evaluate(paramNode);
@@ -11212,10 +11205,8 @@ genWrtBarForTM(
       }
    }
 
-extern TR::Register *
-inlineConcurrentLinkedQueueTMOffer(
-      TR::Node *node,
-      TR::CodeGenerator *cg)
+TR::Register*
+J9::Z::TreeEvaluator::inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::CodeGenerator *cg)
    {
    int32_t offsetTail = 0;
    int32_t offsetNext = 0;
@@ -11400,10 +11391,8 @@ inlineConcurrentLinkedQueueTMOffer(
    return rReturn;
    }
 
-extern TR::Register *
-inlineConcurrentLinkedQueueTMPoll(
-      TR::Node *node,
-      TR::CodeGenerator *cg)
+TR::Register*
+J9::Z::TreeEvaluator::inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeGenerator *cg)
    {
    int32_t offsetHead = 0;
    int32_t offsetNext = 0;

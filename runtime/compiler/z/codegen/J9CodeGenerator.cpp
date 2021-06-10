@@ -3714,14 +3714,6 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    }
 
 /* extern TreeEvaluator functions */
-extern TR::Register* inlineCurrentTimeMaxPrecision(TR::CodeGenerator* cg, TR::Node* node);
-extern TR::Register* inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register* VMinlineCompareAndSwap( TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp, bool isObj);
-extern TR::Register* inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8_t size, TR::MethodSymbol *method, bool isArray = false);
-extern TR::Register* inlineAtomicFieldUpdater(TR::Node *node, TR::CodeGenerator *cg, TR::MethodSymbol *method);
-extern TR::Register* inlineKeepAlive(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register* inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register* inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeGenerator *cg);
 
 extern TR::Register* inlineStringHashCode(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed);
 extern TR::Register* inlineUTF16BEEncodeSIMD(TR::Node *node, TR::CodeGenerator *cg);
@@ -3732,17 +3724,7 @@ extern TR::Register *inlineNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerato
 extern TR::Register *inlineNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg, int32_t subfconst);
 extern TR::Register *inlineTrailingZerosQuadWordAtATime(TR::Node *node, TR::CodeGenerator *cg);
 
-extern TR::Register *toUpperIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
-extern TR::Register *toLowerIntrinsic(TR::Node * node, TR::CodeGenerator * cg, bool isCompressedString);
 
-extern TR::Register* inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isCompressed);
-
-extern TR::Register *inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isLatin1);
-
-extern TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register *inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg);
-
-extern TR::Register *inlineMathFma(TR::Node *node, TR::CodeGenerator *cg);
 
 #define IS_OBJ      true
 #define IS_NOT_OBJ  false
@@ -3771,12 +3753,12 @@ J9::Z::CodeGenerator::inlineDirectCall(
    //
    if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::currentTimeMaxPrecisionSymbol))
       {
-      resultReg = inlineCurrentTimeMaxPrecision(cg, node);
+      resultReg = TR::TreeEvaluator::inlineCurrentTimeMaxPrecision(cg, node);
       return true;
       }
    else if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::singlePrecisionSQRTSymbol))
       {
-      resultReg = inlineSinglePrecisionSQRT(node, cg);
+      resultReg = TR::TreeEvaluator::inlineSinglePrecisionSQRT(node, cg);
       return true;
       }
    else if (comp->getSymRefTab()->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::synchronizedFieldLoadSymbol))
@@ -3797,7 +3779,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
          if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CS, IS_NOT_OBJ);
+            resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CS, IS_NOT_OBJ);
             return true;
             }
 
@@ -3808,7 +3790,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
          if (comp->target().is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ);
+            resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ);
             return true;
             }
          // Too risky to do Long-31bit version now.
@@ -3821,7 +3803,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
          if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = VMinlineCompareAndSwap(node, cg, (comp->useCompressedPointers() ? TR::InstOpCode::CS : TR::InstOpCode::getCmpAndSwapOpCode()), IS_OBJ);
+            resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, (comp->useCompressedPointers() ? TR::InstOpCode::CS : TR::InstOpCode::getCmpAndSwapOpCode()), IS_OBJ);
             return true;
             }
          break;
@@ -3841,7 +3823,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicInteger_addAndGet:
       case TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet:
-         resultReg = inlineAtomicOps(node, cg, 4, methodSymbol);
+         resultReg = TR::TreeEvaluator::inlineAtomicOps(node, cg, 4, methodSymbol);
          return true;
          break;
 
@@ -3852,7 +3834,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicIntegerArray_addAndGet:
       case TR::java_util_concurrent_atomic_AtomicIntegerArray_incrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicIntegerArray_decrementAndGet:
-         resultReg = inlineAtomicOps(node, cg, 4, methodSymbol, true);
+         resultReg = TR::TreeEvaluator::inlineAtomicOps(node, cg, 4, methodSymbol, true);
          return true;
          break;
 
@@ -3866,7 +3848,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
-            resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);
+            resultReg = TR::TreeEvaluator::inlineAtomicOps(node, cg, 8, methodSymbol);
             return true;
             }
          break;
@@ -3881,7 +3863,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
-            resultReg = inlineAtomicOps(node, cg, 8, methodSymbol);
+            resultReg = TR::TreeEvaluator::inlineAtomicOps(node, cg, 8, methodSymbol);
             return true;
             }
          break;
@@ -3894,20 +3876,20 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_getAndAdd:
          if (cg->getSupportsAtomicLoadAndAdd())
             {
-            resultReg = inlineAtomicFieldUpdater(node, cg, methodSymbol);
+            resultReg = TR::TreeEvaluator::inlineAtomicFieldUpdater(node, cg, methodSymbol);
             return true;
             }
          break;
 
       case TR::java_nio_Bits_keepAlive:
       case TR::java_lang_ref_Reference_reachabilityFence:
-         resultReg = inlineKeepAlive(node, cg);
+         resultReg = TR::TreeEvaluator::inlineKeepAlive(node, cg);
          return true;
 
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer:
          if (cg->getSupportsInlineConcurrentLinkedQueue())
             {
-            resultReg = inlineConcurrentLinkedQueueTMOffer(node, cg);
+            resultReg = TR::TreeEvaluator::inlineConcurrentLinkedQueueTMOffer(node, cg);
             return true;
             }
          break;
@@ -3915,7 +3897,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll:
          if (cg->getSupportsInlineConcurrentLinkedQueue())
             {
-            resultReg = inlineConcurrentLinkedQueueTMPoll(node, cg);
+            resultReg = TR::TreeEvaluator::inlineConcurrentLinkedQueueTMPoll(node, cg);
             return true;
             }
          break;
@@ -3980,16 +3962,16 @@ J9::Z::CodeGenerator::inlineDirectCall(
       switch (methodSymbol->getRecognizedMethod())
          {
          case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16:
-            resultReg = toUpperIntrinsic(node, cg, false);
+            resultReg = TR::TreeEvaluator::toUpperIntrinsic(node, cg, false);
             return true;
          case TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1:
-            resultReg = toUpperIntrinsic(node, cg, true);
+            resultReg = TR::TreeEvaluator::toUpperIntrinsic(node, cg, true);
             return true;
          case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16:
-            resultReg = toLowerIntrinsic(node, cg, false);
+            resultReg = TR::TreeEvaluator::toLowerIntrinsic(node, cg, false);
             return true;
          case TR::com_ibm_jit_JITHelpers_toLowerIntrinsicLatin1:
-            resultReg = toLowerIntrinsic(node, cg, true);
+            resultReg = TR::TreeEvaluator::toLowerIntrinsic(node, cg, true);
             return true;
          default:
             break;
@@ -4001,18 +3983,18 @@ J9::Z::CodeGenerator::inlineDirectCall(
       switch (methodSymbol->getRecognizedMethod())
          {
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
-            resultReg = inlineIntrinsicIndexOf(node, cg, true);
+            resultReg = TR::TreeEvaluator::inlineIntrinsicIndexOf(node, cg, true);
             return true;
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
-            resultReg = inlineIntrinsicIndexOf(node, cg, false);
+            resultReg = TR::TreeEvaluator::inlineIntrinsicIndexOf(node, cg, false);
             return true;
          case TR::java_lang_StringLatin1_indexOf:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
-               resultReg = inlineVectorizedStringIndexOf(node, cg, false);
+               resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, false);
                return true;
          case TR::java_lang_StringUTF16_indexOf:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
-               resultReg = inlineVectorizedStringIndexOf(node, cg, true);
+               resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, true);
                return true;
          default:
             break;
@@ -4024,10 +4006,10 @@ J9::Z::CodeGenerator::inlineDirectCall(
          switch (methodSymbol->getRecognizedMethod())
             {
             case TR::java_lang_Math_max_D:
-               resultReg = inlineDoubleMax(node, cg);
+               resultReg = TR::TreeEvaluator::inlineDoubleMax(node, cg);
                return true;
             case TR::java_lang_Math_min_D:
-               resultReg = inlineDoubleMin(node, cg);
+               resultReg = TR::TreeEvaluator::inlineDoubleMin(node, cg);
                return true;
             default:
                break;
@@ -4039,14 +4021,14 @@ J9::Z::CodeGenerator::inlineDirectCall(
             {
             case TR::java_lang_Math_fma_D:
             case TR::java_lang_StrictMath_fma_D:
-               resultReg = inlineMathFma(node, cg);
+               resultReg = TR::TreeEvaluator::inlineMathFma(node, cg);
                return true;
 
             case TR::java_lang_Math_fma_F:
             case TR::java_lang_StrictMath_fma_F:
                if (comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_1))
                   {
-                  resultReg = inlineMathFma(node, cg);
+                  resultReg = TR::TreeEvaluator::inlineMathFma(node, cg);
                   return true;
                   }
                break;

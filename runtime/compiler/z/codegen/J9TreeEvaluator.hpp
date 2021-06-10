@@ -49,6 +49,21 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
 
+   static TR::Register *inlineCurrentTimeMaxPrecision(TR::CodeGenerator *cg, TR::Node *node);
+   static TR::Register *inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *VMinlineCompareAndSwap( TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp, bool isObj);
+   static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8_t size, TR::MethodSymbol *method, bool isArray = false);
+   static TR::Register *inlineAtomicFieldUpdater(TR::Node *node, TR::CodeGenerator *cg, TR::MethodSymbol *method);
+   static TR::Register *inlineKeepAlive(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *toUpperIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString);
+   static TR::Register *toLowerIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString);
+   static TR::Register *inlineVectorizedStringIndexOf(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed);
+   static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *cg, bool isLatin1);
+   static TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineMathFma(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdloadiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
