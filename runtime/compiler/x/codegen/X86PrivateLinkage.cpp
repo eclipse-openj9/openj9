@@ -431,7 +431,7 @@ static TR::Instruction *initializeLocals(TR::Instruction      *cursor,
          {
          cursor = new (cg->trHeapMemory()) TR::X86MemRegInstruction(
             cursor,
-            SMemReg(),
+            TR::InstOpCode::SMemReg(),
             generateX86MemoryReference(framePointer, offset, cg),
             sourceReg,
             cg);
@@ -448,7 +448,7 @@ static TR::Instruction *initializeLocals(TR::Instruction      *cursor,
 
       cursor = new (cg->trHeapMemory()) TR::X86RegMemInstruction(
                   cursor,
-                  LEARegMem(),
+                  TR::InstOpCode::LEARegMem(),
                   loopReg,
                   generateX86MemoryReference(sourceReg, count-1, cg),
                   cg);
@@ -458,7 +458,7 @@ static TR::Instruction *initializeLocals(TR::Instruction      *cursor,
 
       cursor = new (cg->trHeapMemory()) TR::X86MemRegInstruction(
          cursor,
-         SMemReg(),
+         TR::InstOpCode::SMemReg(),
          generateX86MemoryReference(
             framePointer,
             loopReg,
@@ -740,7 +740,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          TR_ASSERT(minInstructionSize <= 5, "Can't guarantee SUB instruction will be at least %d bytes", minInstructionSize);
          TR_ASSERT(allocSize >= 1, "When allocSize >= 1, the frame should be small or large, but never medium");
 
-         const TR::InstOpCode::Mnemonic subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? SUBRegImms() : SUBRegImm4();
+         const TR::InstOpCode::Mnemonic subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? TR::InstOpCode::SUBRegImms() : TR::InstOpCode::SUBRegImm4();
          cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, subOp, espReal, allocSize, cg());
 
          minInstructionSize = 0; // The SUB satisfies the constraint
@@ -750,7 +750,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       if (doOverflowCheck)
          {
          TR::X86VFPSaveInstruction* vfp = generateVFPSaveInstruction(cursor, cg());
-         cursor = generateStackOverflowCheckInstruction(vfp, CMPRegMem(), espReal, generateX86MemoryReference(metaDataReg, cg()->getStackLimitOffset(), cg()), cg());
+         cursor = generateStackOverflowCheckInstruction(vfp, TR::InstOpCode::CMPRegMem(), espReal, generateX86MemoryReference(metaDataReg, cg()->getStackLimitOffset(), cg()), cg());
 
          TR::LabelSymbol* begLabel = generateLabelSymbol(cg());
          TR::LabelSymbol* endLabel = generateLabelSymbol(cg());
@@ -769,14 +769,14 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, cursor->getNode(), machine()->getRealRegister(TR::RealRegister::edi), allocSize, cg());
          if (doAllocateFrameSpeculatively)
             {
-            generateRegImmInstruction(ADDRegImm4(), cursor->getNode(), espReal, allocSize, cg());
+            generateRegImmInstruction(TR::InstOpCode::ADDRegImm4(), cursor->getNode(), espReal, allocSize, cg());
             }
          TR::SymbolReference* helper = comp()->getSymRefTab()->findOrCreateStackOverflowSymbolRef(NULL);
          jitOverflowCheck = generateImmSymInstruction(TR::InstOpCode::CALLImm4, cursor->getNode(), (uintptr_t)helper->getMethodAddress(), helper, cg());
          jitOverflowCheck->setNeedsGCMap(0xFF00FFFF);
          if (doAllocateFrameSpeculatively)
             {
-            generateRegImmInstruction(SUBRegImm4(), cursor->getNode(), espReal, allocSize, cg());
+            generateRegImmInstruction(TR::InstOpCode::SUBRegImm4(), cursor->getNode(), espReal, allocSize, cg());
             }
          generateLabelInstruction(TR::InstOpCode::JMP4, cursor->getNode(), endLabel, cg());
          }
@@ -841,7 +841,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    else if (!doAllocateFrameSpeculatively)
       {
       TR_ASSERT(minInstructionSize <= 5, "Can't guarantee SUB instruction will be at least %d bytes", minInstructionSize);
-      const TR::InstOpCode::Mnemonic subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? SUBRegImms() : SUBRegImm4();
+      const TR::InstOpCode::Mnemonic subOp = (allocSize <= 127 && getMinimumFirstInstructionSize() <= 3)? TR::InstOpCode::SUBRegImms() : TR::InstOpCode::SUBRegImm4();
       cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, subOp, espReal, allocSize, cg());
       }
 
@@ -891,14 +891,14 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
       //Perform the paint.
       //
-      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, MOVRegImm4(), frameSlotIndexReg, paintSize, cg());
+      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, TR::InstOpCode::MOVRegImm4(), frameSlotIndexReg, paintSize, cg());
       cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, TR::InstOpCode::label, startLabel, cg());
       if (comp()->target().is64Bit())
          cursor = new (trHeapMemory()) TR::X86MemRegInstruction(cursor, TR::InstOpCode::S8MemReg, generateX86MemoryReference(espReal, frameSlotIndexReg, 0,(uint8_t) paintSlotsOffset, cg()), paintReg, cg());
       else
-         cursor = new (trHeapMemory()) TR::X86MemImmInstruction(cursor, SMemImm4(), generateX86MemoryReference(espReal, frameSlotIndexReg, 0,(uint8_t) paintSlotsOffset, cg()), paintValue32, cg());
-      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, SUBRegImms(), frameSlotIndexReg, sizeof(intptr_t),cg());
-      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, CMPRegImm4(), frameSlotIndexReg, paintBound, cg());
+         cursor = new (trHeapMemory()) TR::X86MemImmInstruction(cursor, TR::InstOpCode::SMemImm4(), generateX86MemoryReference(espReal, frameSlotIndexReg, 0,(uint8_t) paintSlotsOffset, cg()), paintValue32, cg());
+      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, TR::InstOpCode::SUBRegImms(), frameSlotIndexReg, sizeof(intptr_t),cg());
+      cursor = new (trHeapMemory()) TR::X86RegImmInstruction(cursor, TR::InstOpCode::CMPRegImm4(), frameSlotIndexReg, paintBound, cg());
       cursor = new (trHeapMemory()) TR::X86LabelInstruction(cursor, TR::InstOpCode::JGE4, startLabel,cg());
       }
 
@@ -930,7 +930,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
       if (numReferenceLocalSlotsToInitialize > 0 || numInternalPointerSlotsToInitialize > 0)
          {
-         cursor = new (trHeapMemory()) TR::X86RegRegInstruction(cursor, XORRegReg(), scratchReg, scratchReg, cg());
+         cursor = new (trHeapMemory()) TR::X86RegRegInstruction(cursor, TR::InstOpCode::XORRegReg(), scratchReg, scratchReg, cg());
 
          // Initialize locals that are live on entry
          //
@@ -1039,7 +1039,7 @@ void J9::X86::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
       {
       // Restore stack pointer from frame pointer
       //
-      cursor = generateRegRegInstruction(cursor, MOVRegReg(), espReal, machine()->getRealRegister(_properties.getFramePointerRegister()), cg());
+      cursor = generateRegRegInstruction(cursor, TR::InstOpCode::MOVRegReg(), espReal, machine()->getRealRegister(_properties.getFramePointerRegister()), cg());
       cursor = generateRegInstruction(cursor, TR::InstOpCode::POPReg, machine()->getRealRegister(_properties.getFramePointerRegister()), cg());
       }
    else
@@ -1047,7 +1047,7 @@ void J9::X86::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
       auto frameSize = cg()->getFrameSizeInBytes();
       if (frameSize != 0)
          {
-         cursor = generateRegImmInstruction(cursor, (frameSize <= 127) ? ADDRegImms() : ADDRegImm4(), espReal, frameSize, cg());
+         cursor = generateRegImmInstruction(cursor, (frameSize <= 127) ? TR::InstOpCode::ADDRegImms() : TR::InstOpCode::ADDRegImm4(), espReal, frameSize, cg());
          }
       }
 
@@ -2547,7 +2547,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
 
    TR::Instruction *lastITableDispatchStart = generateLabelInstruction(  TR::InstOpCode::label, callNode, lastITableDispatchLabel, cg());
    generateRegImmInstruction( TR::InstOpCode::MOV4RegImm4, callNode, vtableIndexReg, fej9->getITableEntryJitVTableOffset(), cg());
-   generateRegMemInstruction( SUBRegMem(), callNode, vtableIndexReg, generateX86MemoryReference(scratchReg, fej9->convertITableIndexToOffset(itableIndex), cg()), cg());
+   generateRegMemInstruction( TR::InstOpCode::SUBRegMem(), callNode, vtableIndexReg, generateX86MemoryReference(scratchReg, fej9->convertITableIndexToOffset(itableIndex), cg()), cg());
    buildVFTCall(site,         TR::InstOpCode::JMPMem, NULL, generateX86MemoryReference(vftReg, vtableIndexReg, 0, cg()));
 
    // Without PIC slots, lastITableDispatchStart takes the place of various "first instruction" pointers
@@ -2562,7 +2562,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
    generateLabelInstruction(TR::InstOpCode::label, callNode, lastITableTestLabel, cg());
    if (breakBeforeInterfaceDispatchUsingLastITable)
       generateInstruction(TR::InstOpCode::bad, callNode, cg());
-   generateRegMemInstruction(LRegMem(), callNode, scratchReg, generateX86MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), cg()), cg());
+   generateRegMemInstruction(TR::InstOpCode::LRegMem(), callNode, scratchReg, generateX86MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), cg()), cg());
    bool use32BitInterfacePointers = comp()->target().is32Bit();
    if (comp()->useCompressedPointers() /* actually compressed object headers */)
       {
@@ -2584,8 +2584,8 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
       TR::Register *interfaceClassReg = vtableIndexReg;
       auto cds = cg()->findOrCreate8ByteConstant(site.getCallNode(), (intptr_t)declaringClass);
       TR::MemoryReference *interfaceClassAddr = generateX86MemoryReference(cds, cg());
-      generateRegMemInstruction(LRegMem(), callNode, interfaceClassReg, interfaceClassAddr, cg());
-      generateMemRegInstruction(CMPMemReg(),
+      generateRegMemInstruction(TR::InstOpCode::LRegMem(), callNode, interfaceClassReg, interfaceClassAddr, cg());
+      generateMemRegInstruction(TR::InstOpCode::CMPMemReg(),
                                 callNode,
                                 generateX86MemoryReference(scratchReg, fej9->getOffsetOfInterfaceClassFromITableField(), cg()),
                                 interfaceClassReg, cg());

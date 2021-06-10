@@ -163,7 +163,7 @@ TR::Register *TR::AMD64J9SystemLinkage::buildDirectDispatch(
       // adjust sp is necessary, because for java, the stack is native stack, not java stack.
       // we need to restore native stack sp properly to the correct place.
       TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
-      TR::InstOpCode::Mnemonic op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? ADDRegImms() : ADDRegImm4();
+      TR::InstOpCode::Mnemonic op = (memoryArgSize >= -128 && memoryArgSize <= 127) ? TR::InstOpCode::ADDRegImms() : TR::InstOpCode::ADDRegImm4();
       generateRegImmInstruction(op, callNode, espReal, memoryArgSize, cg());
       }
 

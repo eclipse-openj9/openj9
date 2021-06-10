@@ -87,7 +87,7 @@ void J9LinkageUtils::cleanupReturnValue(
          default:
             // TR::Address, TR_[US]Int64, TR_[US]Int32
             //
-            op = (linkageReturnReg != targetReg) ? MOVRegReg() : TR::InstOpCode::bad;
+            op = (linkageReturnReg != targetReg) ? TR::InstOpCode::MOVRegReg() : TR::InstOpCode::bad;
             break;
          }
 
@@ -104,7 +104,7 @@ void J9LinkageUtils::switchToMachineCStack(TR::Node *callNode, TR::CodeGenerator
 
    // Squirrel Java SP away into VM thread.
    //
-   generateMemRegInstruction(SMemReg(),
+   generateMemRegInstruction(TR::InstOpCode::SMemReg(),
                              callNode,
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetJavaSPOffset(), cg),
                              espReal,
@@ -112,7 +112,7 @@ void J9LinkageUtils::switchToMachineCStack(TR::Node *callNode, TR::CodeGenerator
 
    // Load machine SP from VM thread.
    //
-   generateRegMemInstruction(LRegMem(),
+   generateRegMemInstruction(TR::InstOpCode::LRegMem(),
                              callNode,
                              espReal,
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetMachineSPOffset(), cg),
@@ -128,7 +128,7 @@ void J9LinkageUtils::switchToJavaStack(TR::Node *callNode, TR::CodeGenerator *cg
    //  Load up the java sp so we have the callout frame on top of the java stack.
    //
    generateRegMemInstruction(
-      LRegMem(),
+      TR::InstOpCode::LRegMem(),
       callNode,
       espReal,
       generateX86MemoryReference(vmThreadReg, cg->fej9()->thisThreadGetJavaSPOffset(), cg),

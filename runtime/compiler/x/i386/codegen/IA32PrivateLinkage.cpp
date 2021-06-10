@@ -439,7 +439,7 @@ TR::Instruction *J9::X86::I386::PrivateLinkage::buildPICSlot(
    if (picSlot.getMethodAddress())
       {
       addrToBeCompared = (uintptr_t) picSlot.getMethodAddress();
-      firstInstruction = generateMemImmInstruction(CMPMemImm4(false), node,
+      firstInstruction = generateMemImmInstruction(TR::InstOpCode::CMPMemImm4(false), node,
                                 generateX86MemoryReference(vftReg, picSlot.getSlot(), cg()), (uint32_t) addrToBeCompared, cg());
       }
    else

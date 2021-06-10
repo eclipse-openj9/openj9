@@ -926,7 +926,7 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node        
          traceMsg(comp(), "parm area size was %d, and is aligned to %d\n", parmAreaSize, alignedParmAreaSize);
          }
       if (alignedParmAreaSize > 0)
-         generateRegImmInstruction((alignedParmAreaSize <= 127 ? SUBRegImms() : SUBRegImm4()), callNode, stackPointer, alignedParmAreaSize, cg());
+         generateRegImmInstruction((alignedParmAreaSize <= 127 ? TR::InstOpCode::SUBRegImms() : TR::InstOpCode::SUBRegImm4()), callNode, stackPointer, alignedParmAreaSize, cg());
       }
 
    int32_t i;
