@@ -2680,9 +2680,19 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
 #if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      numUsableCompThreads = ((numUsableCompThreads <= 0) ||
-                              (numUsableCompThreads > MAX_SERVER_USABLE_COMP_THREADS)) ?
-                               MAX_SERVER_USABLE_COMP_THREADS : numUsableCompThreads;
+      if (numUsableCompThreads <= 0)
+         {
+         numUsableCompThreads = DEFAULT_SERVER_USABLE_COMP_THREADS;
+         }
+      else if (numUsableCompThreads > MAX_SERVER_USABLE_COMP_THREADS)
+         {
+         fprintf(stderr,
+            "Requested number of compilation threads is over the limit of %u.\n"
+            "Will use the default number of threads: %u.\n",
+            MAX_SERVER_USABLE_COMP_THREADS, DEFAULT_SERVER_USABLE_COMP_THREADS
+         );
+         numUsableCompThreads = DEFAULT_SERVER_USABLE_COMP_THREADS;
+         }
       }
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */

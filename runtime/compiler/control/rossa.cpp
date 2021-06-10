@@ -1530,7 +1530,20 @@ onLoadInternal(
       // Address the case where the number of compilation threads is higher than the
       // maximum number of code caches
       if (TR::Options::_numUsableCompilationThreads > maxNumberOfCodeCaches)
-         TR::Options::_numUsableCompilationThreads =  maxNumberOfCodeCaches;
+         {
+#if defined(J9VM_OPT_JITSERVER)
+         if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+            {
+            fprintf(stderr,
+               "Requested number of compilation threads is larger than the maximum number of code caches: %d > %d.\n"
+               "Use the -Xcodecachetotal option to increase the maximum total size of the code cache.",
+               TR::Options::_numUsableCompilationThreads, maxNumberOfCodeCaches
+            );
+            return -1;
+            }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         TR::Options::_numUsableCompilationThreads = maxNumberOfCodeCaches;
+         }
 
       compInfo->updateNumUsableCompThreads(TR::Options::_numUsableCompilationThreads);
 
