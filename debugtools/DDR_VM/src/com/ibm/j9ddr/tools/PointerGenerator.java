@@ -95,11 +95,11 @@ public class PointerGenerator {
 	StructureReader structureReader;
 	File outputDir;
 	File outputDirHelpers;
-	private boolean cacheClass = false;
-	private boolean cacheFields = false;
-	private boolean generalizeSimpleTypes = false;
-	private Properties cacheProperties = null;
-
+	private boolean cacheClass;
+	private boolean cacheFields;
+	private boolean generalizeSimpleTypes;
+	private Properties cacheProperties;
+	private int errorCount;
 	private StructureTypeManager typeManager;
 
 	public PointerGenerator() {
@@ -108,10 +108,10 @@ public class PointerGenerator {
 		opts.put("-o", null);
 		opts.put("-f", null);
 		opts.put("-v", null);
-		opts.put("-s", null);    // superset filename
+		opts.put("-s", J9DDRStructureStore.DEFAULT_SUPERSET_FILE_NAME);
 		opts.put("-h", null);    // helper class location - optional
 		opts.put("-u", "true");  // flag to control if user code is supported or not, default is true
-		opts.put("-c", "");      // optional value to provide a cache properties file
+		opts.put("-c", "");      // optional cache control properties file
 		opts.put("-l", "false"); // flag to determine if legacy DDR is used, default is false
 		opts.put("-a", null);    // auxilliary field information
 	}
@@ -791,7 +791,7 @@ public class PointerGenerator {
 
 	private static void writeMethodClose(PrintWriter writer, FieldDescriptor fieldDescriptor) {
 		if (fieldDescriptor.isOptional() && fieldDescriptor.isPresent()) {
-			writer.println("\t} catch (NoSuchFieldError e) {");
+			writer.println("\t} catch (NoClassDefFoundError | NoSuchFieldError e) {");
 			writer.println("\t\tthrow new NoSuchFieldException();");
 			writer.println("\t}");
 		}
@@ -837,8 +837,6 @@ public class PointerGenerator {
 			return type + "Pointer";
 		}
 	}
-
-	private int errorCount = 0;
 
 	private void writeArrayMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		try {
@@ -971,17 +969,18 @@ public class PointerGenerator {
 			writer.format("\tprivate Long %s_cache;%n", getter);
 		}
 		if (writeMethodSignature(writer, "long", getter, fieldDescriptor, true)) {
+			String name = structure.getName();
 			if (cacheFields) {
 				writer.format("\t\tif (CACHE_FIELDS) {%n");
 				writer.format("\t\t\tif (%s_cache == null) {%n", getter);
 				writer.format("\t\t\t\tif (%s.SIZEOF == 1) {%n", enumType);
-				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getByteAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getByteAtOffset(%s._%sOffset_));%n", getter, name, offsetConstant);
 				writer.format("\t\t\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
-				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getShortAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getShortAtOffset(%s._%sOffset_));%n", getter, name, offsetConstant);
 				writer.format("\t\t\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
-				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getIntAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getIntAtOffset(%s._%sOffset_));%n", getter, name, offsetConstant);
 				writer.format("\t\t\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
-				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getLongAtOffset(%s._%sOffset_));%n", getter, structure.getName(), offsetConstant);
+				writer.format("\t\t\t\t\t%s_cache = Long.valueOf(getLongAtOffset(%s._%sOffset_));%n", getter, name, offsetConstant);
 				writer.format("\t\t\t\t} else {%n");
 				writer.format("\t\t\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
 				writer.format("\t\t\t\t}%n");
@@ -990,13 +989,13 @@ public class PointerGenerator {
 				writer.format("\t\t}%n");
 			}
 			writer.format("\t\tif (%s.SIZEOF == 1) {%n", enumType);
-			writer.format("\t\t\treturn getByteAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+			writer.format("\t\t\treturn getByteAtOffset(%s._%sOffset_);%n", name, offsetConstant);
 			writer.format("\t\t} else if (%s.SIZEOF == 2) {%n", enumType);
-			writer.format("\t\t\treturn getShortAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+			writer.format("\t\t\treturn getShortAtOffset(%s._%sOffset_);%n", name, offsetConstant);
 			writer.format("\t\t} else if (%s.SIZEOF == 4) {%n", enumType);
-			writer.format("\t\t\treturn getIntAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+			writer.format("\t\t\treturn getIntAtOffset(%s._%sOffset_);%n", name, offsetConstant);
 			writer.format("\t\t} else if (%s.SIZEOF == 8) {%n", enumType);
-			writer.format("\t\t\treturn getLongAtOffset(%s._%sOffset_);%n", structure.getName(), offsetConstant);
+			writer.format("\t\t\treturn getLongAtOffset(%s._%sOffset_);%n", name, offsetConstant);
 			writer.format("\t\t} else {%n");
 			writer.format("\t\t\tthrow new IllegalArgumentException(\"Unexpected ENUM size in core file\");%n");
 			writer.format("\t\t}%n");
@@ -1467,16 +1466,21 @@ public class PointerGenerator {
 	 * Print usage help to stdout
 	 */
 	private static void printHelp() {
-		System.out.println("Usage :\n\njava PointerGenerator -p <package name> -o <output path> -f <path to structure file> -v <vm version> [-s <superset file name> -h <helper class package> -u <user code support> -c <cache properties> -l <legacy mode>]\n");
-		System.out.println("<package name>           : the package name for all the generated classes e.g. com.ibm.j9ddr.vm.pointer.generated");
-		System.out.println("<relative output path>   : where to write out the class files.  Full path to base of package hierarchy e.g. c:\\src\\");
-		System.out.println("<path to structure file> : full path to the J9 structure file");
-		System.out.println("<vm version>             : the version of the VM for which the pointers are generated e.g. 23 and corresponds to the stub package name");
-		System.out.println("<superset file name>     : optional filename of the superset to be used as input / output");
-		System.out.println("<helper class package>   : optional package for pointer helper files to be generated in from user code");
-		System.out.println("<user code support>      : optional set to true or false to enable or disable user code support in the generated pointers, default if not specified is true");
-		System.out.println("<cache properties>       : optional properties file which controls the class and field caching of generated pointers");
-		System.out.println("<legacy mode>            : optional flag set to true or false indicating if legacy DDR is used");
+		System.out.println("Usage: PointerGenerator {option value} ...");
+		System.out.println("  required:");
+		System.out.println("    -p <package name>         : package name for generated classes, e.g. com.ibm.j9ddr.vm29.pointer.generated");
+		System.out.println("    -o <output path>          : where to write class files (path to base of package hierarchy, e.g. C:\\src\\)");
+		System.out.println("    -f <superset folder>      : folder containing superset file");
+		System.out.println("    -v <vm version>           : VM version for which the pointers are generated, e.g. 29 (corresponds to the stub package name)");
+		System.out.println("  optional:");
+		System.out.println("    -s <superset file>        : superset file (default: superset.dat)");
+		System.out.println("    -h <helper class package> : package for pointer helper files to be generated in from user code");
+		System.out.println("    -u <user code support>    : enable user code support (true or false; default: true)");
+		System.out.println("    -c <cache properties>     : cache control properties file");
+		System.out.println("    -l <legacy mode>          : true or false indicating if legacy DDR is used");
+		System.out.println("    -r <path>                 : path to superset file for restricting available constants");
+		System.out.println("    -c <path>                 : path to additional compatibility constants");
+		System.out.println("    -a <path>                 : path to auxiliary field information");
 	}
 
 	/**
