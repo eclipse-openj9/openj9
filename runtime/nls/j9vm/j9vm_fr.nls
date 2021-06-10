@@ -1224,14 +1224,14 @@ J9NLS_VM_HEAP_OUT_OF_MEMORY.system_action=
 J9NLS_VM_HEAP_OUT_OF_MEMORY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_RESUME_DETECTED=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a ill\u00e9galement effectu\u00e9 un retour ou un rappel dans Java
+J9NLS_VM_ILLEGAL_RESUME_DETECTED=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a effectu\u00e9 un retour ou un rappel non conforme dans Java
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.user_response=Inspect their user condition handler and change it to not resume execution after receiving an unrecoverable condition on a Java thread
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a ill\u00e9galement effectu\u00e9 un retour ou un rappel dans Java (code JIT)
+J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a effectu\u00e9 un retour ou un rappel non conforme dans Java (code JIT)
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()
@@ -1704,10 +1704,6 @@ J9NLS_VM_ILLEGAL_ACCESS_NONSTATIC_FINAL.user_response=Modify source code to avoi
 # Fourth argument is nest host name
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER=La classe %2$.*1$s et son h\u00f4te de nich\u00e9e %4$.*3$s doivent avoir le m\u00eame chargeur de classes.
 # START NON-TRANSLATABLE
-J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.sample_input_1=3
-J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.sample_input_2=Foo
-J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.sample_input_3=7
-J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.sample_input_4=FooHost
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.explanation=Class and nest host class were loaded with different class loaders.
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.system_action=The JVM will throw a java/lang/VerifyError
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.user_response=Load class and nest host class with same classloader.
@@ -1719,10 +1715,6 @@ J9NLS_VM_NEST_HOST_HAS_DIFFERENT_CLASSLOADER.user_response=Load class and nest h
 # Fourth argument is nest host name
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE=La classe %2$.*1$s et son h\u00f4te de nich\u00e9e %4$.*3$s doivent avoir le m\u00eame package.
 # START NON-TRANSLATABLE
-J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.sample_input_1=3
-J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.sample_input_2=Foo
-J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.sample_input_3=7
-J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.sample_input_4=FooHost
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.explanation=Class and nest host class were loaded with different class loaders.
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.system_action=The JVM will throw a java/lang/VerifyError
 J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest host class with same classloader.
@@ -1734,10 +1726,6 @@ J9NLS_VM_NEST_HOST_HAS_DIFFERENT_PACKAGE.user_response=Load class and nest host 
 # Fourth argument is nest host name
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST=La classe %2$.*1$s doit \u00eatre revendiqu\u00e9e par son h\u00f4te de nich\u00e9e %4$.*3$s
 # START NON-TRANSLATABLE
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.sample_input_1=3
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.sample_input_2=Foo
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.sample_input_3=7
-J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.sample_input_4=FooHost
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.explanation=Class was not claimed by its nest host class.
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.system_action=The JVM will throw a java/lang/VerifyError
 J9NLS_VM_NEST_MEMBER_NOT_CLAIMED_BY_NEST_HOST.user_response=Contact the provider of the classfile for a corrected version.
@@ -1796,10 +1784,6 @@ J9NLS_VM_LOADING_CONSTRAINT_OVERRIDE_VIOLATION.user_response=Examine the use of 
 # Fourth argument is nest host name
 J9NLS_VM_NEST_HOST_FAILED_TO_LOAD=La classe %2$.*1$s doit \u00eatre capable de charger son h\u00f4te de nich\u00e9e %4$.*3$s.
 # START NON-TRANSLATABLE
-J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.sample_input_1=3
-J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.sample_input_2=Foo
-J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.sample_input_3=7
-J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.sample_input_4=FooHost
 J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.explanation=Class and nest host class were loaded with different class loaders.
 J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.system_action=The JVM will throw a java/lang/IllegalAccessError
 J9NLS_VM_NEST_HOST_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
@@ -1851,10 +1835,6 @@ J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA.user_response=Don't defi
 # Fourth argument is nest host name
 J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD=Le membre de nich\u00e9e %2$.*1$s doit \u00eatre capable de charger l'h\u00f4te de nich\u00e9e %4$.*3$s
 # START NON-TRANSLATABLE
-J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.sample_input_1=3
-J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.sample_input_2=Foo
-J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.sample_input_3=7
-J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.sample_input_4=FooHost
 J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.explanation=Nest member class and nest host class were loaded with different class loaders.
 J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.system_action=The JVM will throw an IncompatibleClassChangeError
 J9NLS_VM_NESTMATES_CLASS_FAILED_TO_LOAD.user_response=Load class and nest host class with same classloader.
@@ -1924,7 +1904,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.user_response=Contact the p
 # arguments 1 and 2 are the specified interface name
 J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE=%2$.*1$s est une superclasse. Il ne peut pas s'agir d'une interface.
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.sample_input_1=13
+J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.sample_input_1=9
 J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.sample_input_2=InterfaceName
 J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.explanation=A superclass can't be interface
 J9NLS_VM_CLASS_LOADING_ERROR_SUPERCLASS_IS_INTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -1946,7 +1926,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_INVISIBLE_CLASS_OR_INTERFACE.user_response=Contact 
 # arguments 1 and 2 are the specified interface name
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE=%2$.*1$s n'est pas une interface
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_1=13
+J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_1=9
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.sample_input_2=InterfaceName
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.explanation=The specified interface is not a real interface
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
@@ -1965,9 +1945,9 @@ J9NLS_VM_XVERIFYNONE_DEPRECATED.user_response=Consider not using these options a
 # Arguments 3 and 4 are the parent class name
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID=Relation de chargement de classe non valide pour l'enfant : %2$.*1$s, parent : %4$.*3$s
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_1=14
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_1=10
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_2=ChildClassName
-J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_3=15
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_3=11
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_4=ParentClassName
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.explanation=The specified child class fails verification since it has an invalid class relationship.
 J9NLS_VM_CLASS_RELATIONSHIP_INVALID.system_action=The JVM will throw a java/lang/VerifyError.
@@ -2005,8 +1985,6 @@ J9NLS_VM_INCOMPATIBLE_CMDLINE_OPTIONS_ERROR.user_response=Remove one of the inco
 # argument 1 is the class name
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS=la classe %2$.*1$s ne peut pas h\u00e9riter de sa superclasse scell\u00e9e.
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.sample_input_1=3
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.sample_input_2=Foo
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.explanation=The specified class is not permitted to extend its sealed super class.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Contact the provider of the classfile for a corrected version.
@@ -2016,8 +1994,6 @@ J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDCLASS.user_response=Co
 # argument 1 is the class name,
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE=la classe %2$.*1$s ne peut pas h\u00e9riter de sa superinterface scell\u00e9e.
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.sample_input_1=3
-J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.sample_input_2=Foo
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.explanation=The specified class is not permitted to extend its sealed super interface.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_CLASS_NOT_PERMITTED_BY_SEALEDINTERFACE.user_response=Contact the provider of the classfile for a corrected version.
@@ -2039,8 +2015,6 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact th
 # argument 1 is the class name
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=La classe/interface %2$.*1$s ne se trouve pas dans le m\u00eame module que sa superclasse/interface scell\u00e9e.
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.sample_input_1=3
-J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.sample_input_2=Foo
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.explanation=The specified class must be in the same module as its sealed super class/interface.
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Contact the provider of the classfile for a corrected version.
@@ -2050,8 +2024,6 @@ J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Cont
 # argument 1 is the class name
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=La classe/interface non publique %2$.*1$s ne se trouve pas dans le m\u00eame package que sa superclasse/interface scell\u00e9e.
 # START NON-TRANSLATABLE
-J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.sample_input_1=3
-J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.sample_input_2=Foo
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.explanation=The specified non-public class must be in the same package as its sealed super class/interface.
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Contact the provider of the classfile for a corrected version.
