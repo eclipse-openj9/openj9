@@ -36,6 +36,7 @@ namespace J9 { typedef J9::Z::TreeEvaluator TreeEvaluatorConnector; }
 
 #include "codegen/Snippet.hpp"
 #include "compiler/codegen/J9TreeEvaluator.hpp"  // include parent
+#include "il/MethodSymbol.hpp"
 
 #define INSN_HEAP cg->trHeapMemory()
 
@@ -49,7 +50,22 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
 
+   /** \brief
+    *     Evaluates a sequence of instructions which generate the current time in terms of 1/2048 of micro-seconds.
+    *
+    *  \param cg
+    *     The code generator used to generate the instructions.
+    *
+    *  \param node
+    *     The node with which to associate the generated instructions with.
+    *
+    *  \return
+    *     A register (or register pair for 31-bit) containing the current time in terms of 1/2048 of micro-seconds.
+    */
    static TR::Register *inlineCurrentTimeMaxPrecision(TR::CodeGenerator *cg, TR::Node *node);
+   /**
+    * generate a single precision sqrt instruction
+    */
    static TR::Register *inlineSinglePrecisionSQRT(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMinlineCompareAndSwap( TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp, bool isObj);
    static TR::Register *inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int8_t size, TR::MethodSymbol *method, bool isArray = false);
@@ -59,11 +75,64 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *toUpperIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString);
    static TR::Register *toLowerIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bool isCompressedString);
+
+   /**
+    * \brief
+    *
+    * Use vector instructions to find the index of a sub-string inside
+    * a string assuming both strings have the same element size. Each element
+    * is 1-byte for compact strings and 2-bytes for non-compressed strings.
+    *
+    * \details
+    *
+    * The vector sequence searches for the first character of the sub-string
+    * inside the source/main string. If the first character is located, it'll
+    * perform iterative vector binary compares to match the rest of the sub-string
+    * starting from the first character position.
+    *
+    * This evaluator inlines the following Java intrinsic methods:
+    *
+    * <verbatim>
+    * For Java 9 and above:
+    *
+    * StringLatin1.indexOf(s1Value, s1Length, s2Value, s2Length, fromIndex);
+    * StringUTF16.indexOf(s1Value, s1Length, s2Value, s2Length, fromIndex);
+    *
+    * For Java 8:
+    * com.ibm.jit.JITHelpers.intrinsicIndexOfStringLatin1(Object s1Value, int s1len, Object s2Value, int s2len, int start);
+    * com.ibm.jit.JITHelpers.intrinsicIndexOfStringUTF16(Object s1Value, int s1len, Object s2Value, int s2len, int start);
+    *
+    * Assumptions:
+    *
+    * -# 0 <= fromIndex < s1Length
+    * -# s1Length could be anything: positive, negative or 0.
+    * -# s2Length > 0
+    * -# s1Value and s2Value are non-null arrays and are interpreted as byte arrays.
+    * -# s1Length and s2Length are not related. i.e. s1Length could be smallers than s2Length.
+    *
+    * <\verbatim>
+    *
+    * \param node the intrinsic function call node
+    * \param cg the code generator
+    * \param isUTF16 true if the string is a decompressed string.
+    *
+    * \return a register for that contains the indexOf() result.
+    */
    static TR::Register *inlineVectorizedStringIndexOf(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed);
    static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *cg, bool isLatin1);
    static TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineMathFma(TR::Node *node, TR::CodeGenerator *cg);
+
+   /* This Evaluator generates the SIMD routine for methods
+    * java/lang/String.hashCodeImplCompressed and
+    * java/lang/String.hashCodeImplDecompressed depending on the "isCompressed"
+    * parameter passed to it.
+    */
+   static TR::Register *inlineStringHashCode(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed);
+   static TR::Register *inlineUTF16BEEncodeSIMD(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register* inlineUTF16BEEncode    (TR::Node *node, TR::CodeGenerator *cg);
+
    static TR::Register *zdloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdloadiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);

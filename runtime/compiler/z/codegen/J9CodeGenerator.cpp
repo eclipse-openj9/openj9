@@ -3713,19 +3713,6 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    return false;
    }
 
-/* extern TreeEvaluator functions */
-
-extern TR::Register* inlineStringHashCode(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed);
-extern TR::Register* inlineUTF16BEEncodeSIMD(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register* inlineUTF16BEEncode    (TR::Node *node, TR::CodeGenerator *cg);
-
-extern TR::Register *inlineHighestOneBit(TR::Node *node, TR::CodeGenerator *cg, bool isLong);
-extern TR::Register *inlineNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator * cg, bool isLong);
-extern TR::Register *inlineNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg, int32_t subfconst);
-extern TR::Register *inlineTrailingZerosQuadWordAtATime(TR::Node *node, TR::CodeGenerator *cg);
-
-
-
 #define IS_OBJ      true
 #define IS_NOT_OBJ  false
 
@@ -3905,20 +3892,20 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_lang_String_hashCodeImplDecompressed:
          if (cg->getSupportsInlineStringHashCode())
             {
-            return resultReg = inlineStringHashCode(node, cg, false);
+            return resultReg = TR::TreeEvaluator::inlineStringHashCode(node, cg, false);
             }
          break;
 
       case TR::java_lang_String_hashCodeImplCompressed:
          if (cg->getSupportsInlineStringHashCode())
             {
-            return resultReg = inlineStringHashCode(node, cg, true);
+            return resultReg = TR::TreeEvaluator::inlineStringHashCode(node, cg, true);
             }
         break;
 
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
-         return resultReg = comp->getOption(TR_DisableUTF16BEEncoder) ? inlineUTF16BEEncodeSIMD(node, cg)
-                                                                      : inlineUTF16BEEncode    (node, cg);
+         return resultReg = comp->getOption(TR_DisableUTF16BEEncoder) ? TR::TreeEvaluator::inlineUTF16BEEncodeSIMD(node, cg)
+                                                                      : TR::TreeEvaluator::inlineUTF16BEEncode    (node, cg);
          break;
 
       default:
@@ -3929,22 +3916,22 @@ J9::Z::CodeGenerator::inlineDirectCall(
    switch (methodSymbol->getRecognizedMethod())
       {
       case TR::java_lang_Integer_highestOneBit:
-         resultReg = inlineHighestOneBit(node, cg, false);
+         resultReg = TR::TreeEvaluator::inlineHighestOneBit(node, cg, false);
          return true;
       case TR::java_lang_Integer_numberOfLeadingZeros:
-         resultReg = inlineNumberOfLeadingZeros(node, cg, false);
+         resultReg = TR::TreeEvaluator::inlineNumberOfLeadingZeros(node, cg, false);
          return true;
       case TR::java_lang_Integer_numberOfTrailingZeros:
-         resultReg = inlineNumberOfTrailingZeros(node, cg, 32);
+         resultReg = TR::TreeEvaluator::inlineNumberOfTrailingZeros(node, cg, 32);
          return true;
       case TR::java_lang_Long_highestOneBit:
-         resultReg = inlineHighestOneBit(node, cg, true);
+         resultReg = TR::TreeEvaluator::inlineHighestOneBit(node, cg, true);
          return true;
       case TR::java_lang_Long_numberOfLeadingZeros:
-         resultReg = inlineNumberOfLeadingZeros(node, cg, true);
+         resultReg = TR::TreeEvaluator::inlineNumberOfLeadingZeros(node, cg, true);
          return true;
       case TR::java_lang_Long_numberOfTrailingZeros:
-         resultReg = inlineNumberOfTrailingZeros(node, cg, 64);
+         resultReg = TR::TreeEvaluator::inlineNumberOfTrailingZeros(node, cg, 64);
          return true;
       default:
          break;
