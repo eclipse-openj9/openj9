@@ -292,6 +292,7 @@ public:
       bool _isHotReferenceFieldRequired;
       UDATA _osrGlobalBufferSize;
       bool _needsMethodTrampolines;
+      int32_t _objectAlignmentInBytes;
       }; // struct VMInfo
 
    /**
