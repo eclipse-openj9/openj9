@@ -618,6 +618,13 @@ static TR_YesNoMaybe isValue(TR::VPConstraint *constraint)
       return type->isFixedClass() ? TR_no : TR_maybe;
       }
 
+   // Array types are never value types
+   //
+   if (TR::Compiler->cls.isClassArray(comp, clazz))
+      {
+      return TR_no;
+      }
+
    // Is the type either an abstract class or an interface (i.e., not a
    // concrete class)?  If so, it might be a value type.
    //
@@ -798,6 +805,20 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                                                         _curTree->getEnclosingBlock()->getNumber(),
                                                         reason);
          TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
+         }
+
+      // If there is information available about the component type of the array for a call to
+      // jitLoadFlattenableArrayElement, mark the result of the call with the component type
+      //
+      if (isLoadFlattenableArrayElement && arrayConstraint && arrayConstraint->getClass()
+          && arrayConstraint->getClassType()->isArray() == TR_yes)
+         {
+         TR_OpaqueClassBlock *arrayComponentClass = fe()->getComponentClassFromArrayClass(arrayConstraint->getClass());
+
+         if (arrayComponentClass && arrayConstraint->asResolvedClass())
+            {
+            addBlockOrGlobalConstraint(node, TR::VPResolvedClass::create(this, arrayComponentClass), arrayRefGlobal);
+            }
          }
 
       return;
