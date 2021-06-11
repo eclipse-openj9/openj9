@@ -27,7 +27,7 @@
 			<variation>--enable-preview</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-			--illegal-access=permit \
+			--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED \
             -cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
             org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep359Tests \
             -groups $(TEST_GROUP) \
