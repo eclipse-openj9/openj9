@@ -1263,7 +1263,7 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 		}
 	}
 
-	if ( classFileOracle->getMajorVersion() >= (BCT_Java6MajorVersionShifted >> BCT_MajorClassFileVersionMaskShift) ) {
+	if (classFileOracle->getMajorVersion() >= (BCT_JavaMajorVersionShifted(6) >> BCT_MajorClassFileVersionMaskShift)) {
 		/* Expect verify data for Java 6 and later versions */
 		modifiers |= J9AccClassHasVerifyData;
 	} else {

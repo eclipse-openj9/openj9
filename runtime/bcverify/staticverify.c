@@ -238,7 +238,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				case CFR_CONSTANT_String:
 					break;
 				case CFR_CONSTANT_Class:
-					if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java5MajorVersionShifted) {
+					if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(5)) {
 						errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49__ID;
 						errorDataIndex = index;
 						goto _verifyError;
@@ -246,7 +246,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 					break;
 				case CFR_CONSTANT_MethodType:
 				case CFR_CONSTANT_MethodHandle:
-					if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java7MajorVersionShifted) {
+					if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(7)) {
 						errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51__ID;
 						errorDataIndex = index;
 						goto _verifyError;
@@ -255,7 +255,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				case CFR_CONSTANT_Dynamic:
 					{
 						J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classfile->constantPool[info->slot2].slot2];
-						if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java11MajorVersionShifted) {
+						if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(11)) {
 							errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55__ID;
 							errorDataIndex = index;
 							goto _verifyError;
@@ -289,7 +289,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 
 			if (CFR_CONSTANT_Dynamic == tag) {
 				J9CfrConstantPoolInfo *constantDynamicSignature = &classfile->constantPool[classfile->constantPool[info->slot2].slot2];
-				if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java11MajorVersionShifted) {
+				if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(11)) {
 					errorType = J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55__ID;
 					errorDataIndex = index;
 					goto _verifyError;
@@ -857,7 +857,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			}
 			info = &(classfile->constantPool[index]);
 			if (info->tag != CFR_CONSTANT_Methodref) {
-				BOOLEAN isJava8orLater = ((flags & BCT_MajorClassFileVersionMask) >= BCT_Java8MajorVersionShifted) || J9_ARE_ANY_BITS_SET(flags, BCT_Unsafe);
+				BOOLEAN isJava8orLater = ((flags & BCT_MajorClassFileVersionMask) >= BCT_JavaMajorVersionShifted(8)) || J9_ARE_ANY_BITS_SET(flags, BCT_Unsafe);
 
 				if (isJava8orLater && (bc != CFR_BC_invokevirtual) && (info->tag == CFR_CONSTANT_InterfaceMethodref)) {
 					/* JVMS 4.9.1 Static Constraints:
@@ -1829,7 +1829,7 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 		 * J2SE_19 has been deprecated and replaced with J2SE_V11
 		 * if (J2SE_VERSION(vm) >= J2SE_V11) {
 		 */
-		if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
+		if (vmVersionShifted >= BCT_JavaMajorVersionShifted(9)) {
 			if (classfile->majorVersion >= 51) {
 				if ((CFR_METHOD_NAME_CLINIT == isInit) 
 					&& (0 != argCount) 

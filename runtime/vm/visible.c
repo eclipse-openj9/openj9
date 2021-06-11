@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -356,9 +356,7 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 		/* If a problem occurred in nest host verification then the nest host value is invalid */
 		if (J9_VISIBILITY_ALLOWED == result) {
 			clazz->nestHost = nestHost;
-		} else if ((J2SE_VERSION(vmThread->javaVM) >= J2SE_V15)
-				&& canRunJavaCode
-		) {
+		} else if ((JAVA_SPEC_VERSION >= 15) && canRunJavaCode) {
 			/**
 			 * JVM spec updated in Java 15:
 			 * If a class has problem finding/validating its nest host, then it is its own nest host (for hidden class, the nest host is its host class).
