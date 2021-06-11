@@ -53,8 +53,10 @@ import com.ibm.j9ddr.tools.store.J9DDRStructureStore;
  */
 public class StructureStubGenerator {
 
+	private String auxFieldInfoFileName;
 	private String compatibilityConstantsFileName;
 	private String compatibilityLimitFileName;
+	private int errorCount;
 	private boolean legacyMode;
 	private File outputDir;
 	private String outputDirectoryName;
@@ -71,7 +73,12 @@ public class StructureStubGenerator {
 		StructureStubGenerator app = new StructureStubGenerator();
 		app.parseArgs(args);
 		app.generateClasses();
-		System.out.println("Structure stub generation complete");
+		if (app.errorCount == 0) {
+			System.out.println("Structure stub generation complete");
+		} else {
+			System.out.println("Structure stub generation failed");
+			System.exit(1);
+		}
 	}
 
 	private void generateClasses() {
@@ -85,11 +92,13 @@ public class StructureStubGenerator {
 				structureReader = new StructureReader(inputStream);
 			}
 		} catch (IOException e) {
-			System.err.println("Could not find file: " + supersetDirectoryName + "/" + supersetFileName);
+			System.err.println("Could not read: " + supersetDirectoryName + "/" + supersetFileName);
+			errorCount += 1;
 			return;
 		}
 
 		adjustForCompatibility();
+		adjustForOptionalFields();
 
 		outputDir = getOutputDir();
 
@@ -102,8 +111,10 @@ public class StructureStubGenerator {
 				}
 			} catch (FileNotFoundException e) {
 				System.err.format("File not found processing: %s: %s", structure.getName(), e.getMessage());
+				errorCount += 1;
 			} catch (IOException e) {
 				System.err.format("IOException processing: %s: %s", structure.getName(), e.getMessage());
+				errorCount += 1;
 			}
 		}
 	}
@@ -120,6 +131,7 @@ public class StructureStubGenerator {
 				}
 			} catch (IOException e) {
 				System.err.println("Could not apply compatibility limits from: " + compatibilityLimitFileName);
+				errorCount += 1;
 				return;
 			}
 
@@ -150,7 +162,18 @@ public class StructureStubGenerator {
 				structureReader.addCompatibilityConstants(inputStream);
 			} catch (IOException e) {
 				System.err.println("Could not apply compatibility constants from: " + compatibilityConstantsFileName);
-				return;
+				errorCount += 1;
+			}
+		}
+	}
+
+	private void adjustForOptionalFields() {
+		if (auxFieldInfoFileName != null) {
+			try (InputStream stream = new FileInputStream(auxFieldInfoFileName)) {
+				structureReader.loadAuxFieldInfo(stream);
+			} catch (IOException e) {
+				System.err.println("Could not load field information from: " + auxFieldInfoFileName);
+				errorCount += 1;
 			}
 		}
 	}
@@ -318,6 +341,9 @@ public class StructureStubGenerator {
 			String value = args[i + 1];
 
 			switch (arg) {
+			case "-a":
+				auxFieldInfoFileName = value;
+				break;
 			case "-c":
 				compatibilityConstantsFileName = value;
 				break;
@@ -363,15 +389,17 @@ public class StructureStubGenerator {
 	 * Print usage help to stdout
 	 */
 	private static void printHelp() {
-		System.out.println("Usage: StructureStubGenerator {option value}...");
-		System.out.println("  options:");
-		System.out.println("    -p <package name>           : the package name for the generated classes e.g. com.ibm.dtfj.j9.structures");
-		System.out.println("    -o <relative output path>   : where to write the class files (full path to base of package hierarchy e.g. C:\\src\\)");
-		System.out.println("    -f <path to structure file> : full path to the J9 structure file");
-		System.out.println("    -s <superset file name>     : optional file name of the superset to be used");
-		System.out.println("    -l <legacy mode>            : optional flag set to true or false indicating if legacy DDR is used");
-		System.out.println("    -r <restrict path>          : optional path to superset for restricting available constants");
-		System.out.println("    -c <legacy mode>            : optional path to additional compatibility constants");
+		System.out.println("Usage: StructureStubGenerator {option value} ...");
+		System.out.println("  required:");
+		System.out.println("    -p <package name>    : package name for generated classes, e.g. com.ibm.j9ddr.vm29.structures");
+		System.out.println("    -o <output path>     : where to write class files (path to base of package hierarchy, e.g. C:\\src\\)");
+		System.out.println("    -f <superset folder> : folder containing superset file");
+		System.out.println("  optional:");
+		System.out.println("    -s <superset file>   : superset file (default: superset.dat)");
+		System.out.println("    -l <legacy mode>     : flag set to true or false indicating if legacy DDR is used");
+		System.out.println("    -r <path>            : path to superset for restricting available constants");
+		System.out.println("    -c <path>            : path to additional compatibility constants");
+		System.out.println("    -a <path>            : path to auxiliary field information");
 	}
 
 	/**
