@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -99,13 +99,13 @@ J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.user_response=Contact your service 
 
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE=\u7b26\u53f7\u89e3\u6790\u5931\u8d25
 # START NON-TRANSLATABLE
-J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.explanation=There was a problem with symbol resolution while looking for a particular symbol 
+J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.explanation=There was a problem with symbol resolution while looking for a particular symbol
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.system_action=The JVM will terminate with more information if the symbol was critical
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.user_response=Contact your service representative if the JVM terminates
 
 # END NON-TRANSLATABLE
 
-# dead, OSX  
+# dead, OSX
 J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE=\u65e0\u6cd5\u88c5\u5165\u5171\u4eab\u5e93
 
 # START NON-TRANSLATABLE
@@ -115,7 +115,7 @@ J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT=\u6a21\u5757\u7684\u683c\u5f0f\u4e0d\u6b63\u786e
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT.explanation=NOTISSUED
@@ -124,7 +124,7 @@ J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_NOT_A_MODULE=\u6240\u6307\u5b9a\u7684\u6a21\u5757\u5e76\u975e\u6a21\u5757
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_NOT_A_MODULE.explanation=NOTISSUED
@@ -133,7 +133,7 @@ J9NLS_PORT_SL_NOT_A_MODULE.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT=\u8be5\u6a21\u5757\u7684\u4f53\u7cfb\u7ed3\u6784\u4e0d\u6b63\u786e
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT.explanation=NOTISSUED
@@ -142,7 +142,7 @@ J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_FILE_NOT_FOUND=\u672a\u627e\u5230\u6307\u5b9a\u7684\u5171\u4eab\u5e93
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_FILE_NOT_FOUND.explanation=NOTISSUED
@@ -151,7 +151,7 @@ J9NLS_PORT_SL_FILE_NOT_FOUND.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_PERMISSION_DENIED=\u672a\u6388\u4e88\u88c5\u5165\u5171\u4eab\u5e93\u7684\u8bb8\u53ef\u6743
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_PERMISSION_DENIED.explanation=NOTISSUED
@@ -160,7 +160,7 @@ J9NLS_PORT_SL_PERMISSION_DENIED.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, PalmOS 
+# dead, PalmOS
 J9NLS_PORT_SL_OUT_OF_MEMORY=\u65e0\u6cd5\u5728\u5c1d\u8bd5\u88c5\u5165\u5171\u4eab\u5e93\u65f6\u5206\u914d\u5185\u5b58
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_OUT_OF_MEMORY.explanation=NOTISSUED
@@ -169,7 +169,7 @@ J9NLS_PORT_SL_OUT_OF_MEMORY.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, PalmOS 
+# dead, PalmOS
 J9NLS_PORT_SL_ERROR_PACE_BIT_SET=\u7531\u4e8e\u6b63\u5728\u8bbe\u7f6e PACE \u4f4d\uff0c\u5bfc\u81f4\u88c5\u5165\u5171\u4eab\u5e93\u65f6\u53d1\u751f\u9519\u8bef
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_ERROR_PACE_BIT_SET.explanation=NOTISSUED
@@ -178,7 +178,7 @@ J9NLS_PORT_SL_ERROR_PACE_BIT_SET.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, Pilot 
+# dead, Pilot
 J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND=\u88c5\u5165\u5171\u4eab\u5e93\u65f6\u53d1\u751f\u9519\u8bef - \u65e0\u6cd5\u627e\u5230 dll \u8868
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND.explanation=NOTISSUED
@@ -187,7 +187,7 @@ J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, Pilot 
+# dead, Pilot
 J9NLS_PORT_SL_DLL_NOT_FOUND=\u7531\u4e8e\u672a\u627e\u5230 dll\uff0c\u56e0\u6b64\u65e0\u6cd5\u5c06\u5176\u88c5\u5165
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_DLL_NOT_FOUND.explanation=NOTISSUED
@@ -276,7 +276,7 @@ J9NLS_PORT_SHARED_OPENED_STALE_SEM.sample_input_2=0001
 
 J9NLS_PORT_ZOS_64_APPENDING_XDS=\u6b63\u5728\u5c06 .X&DS \u9644\u52a0\u5230\u7528\u6237\u6307\u5b9a\u7684\u8f6c\u50a8\u6a21\u677f\u4ee5\u542f\u7528\u5305\u542b\u591a\u4e2a\u90e8\u5206\u7684\u8f6c\u50a8\u3002
 # START NON-TRANSLATABLE
-J9NLS_PORT_ZOS_64_APPENDING_XDS.explanation=The user has specified a dump template (via -Xdump:system:file= or using the JAVA_DUMP_TDUMP_PATTERN environment variable). The maximum amount of data that can be dumped to a single IEATDUMP file is 2 gigabytes. For address spaces large than 2 gigabyes, zOS generates multiple dump files. To do this, the suffix &DS needs to be in the dump name, it will be replaced with a counter identifying which part of the dump is in the file. If the user does not add it, the JVM appends it to the dump template. 
+J9NLS_PORT_ZOS_64_APPENDING_XDS.explanation=The user has specified a dump template (via -Xdump:system:file= or using the JAVA_DUMP_TDUMP_PATTERN environment variable). The maximum amount of data that can be dumped to a single IEATDUMP file is 2 gigabytes. For address spaces large than 2 gigabyes, zOS generates multiple dump files. To do this, the suffix &DS needs to be in the dump name, it will be replaced with a counter identifying which part of the dump is in the file. If the user does not add it, the JVM appends it to the dump template.
 J9NLS_PORT_ZOS_64_APPENDING_XDS.system_action=The JVM will add .X&DS to the dump template and continue to run.
 J9NLS_PORT_ZOS_64_APPENDING_XDS.user_response=It is safe to ignore this message (and allow the JVM to alter the dump file name) unless extending the dump file name makes it too long (in which case the JVM will failover to using the default dump template). You can avoid the message by including the &DS placeholder in your dump template or by using the default dump template.
 

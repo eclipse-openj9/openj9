@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,14 +27,14 @@
 # New messages MUST be added at the end of this file.
 # DO NOT delete messages from this file, as it will change their indices.
 # If you wish to remove a message, delete its text, but leave the key in place
-# Important: the NLS messages are shared between all releases including branched SRs. 
+# Important: the NLS messages are shared between all releases including branched SRs.
 # This makes changing the meaning of any message highly dangerous.
 #
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -56,7 +56,7 @@ J9NLS_TRC_UNRECOGNISED_OPTION_STR.sample_input_1=-Xtrace:bogus
 
 J9NLS_TRC_ERROR_IN_OPTION_STR=Error processing trace option: -Xtrace:%s
 # START NON-TRANSLATABLE
-J9NLS_TRC_ERROR_IN_OPTION_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a syntax error. 
+J9NLS_TRC_ERROR_IN_OPTION_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a syntax error.
 J9NLS_TRC_ERROR_IN_OPTION_STR.system_action=The JVM ends.
 J9NLS_TRC_ERROR_IN_OPTION_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
 J9NLS_TRC_ERROR_IN_OPTION_STR.sample_input_1=-Xtrace:buffers
@@ -64,7 +64,7 @@ J9NLS_TRC_ERROR_IN_OPTION_STR.sample_input_1=-Xtrace:buffers
 
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR=Error processing trace option: -Xtrace:%s=%s
 # START NON-TRANSLATABLE
-J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a problem with the option or the arguments used. 
+J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to a problem with the option or the arguments used.
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.system_action=The JVM ends.
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
 J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.sample_input_1=-Xtrace:buffers=bogus
@@ -72,7 +72,7 @@ J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR.sample_input_1=-Xtrace:buffers=bogus
 
 J9NLS_TRC_ERROR_DETAIL_STR=Error processing trace option, detail: %s
 # START NON-TRANSLATABLE
-J9NLS_TRC_ERROR_DETAIL_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to the problem described in the detail string. 
+J9NLS_TRC_ERROR_DETAIL_STR.explanation=An option used with the -Xtrace parameter could not be processed correctly due to the problem described in the detail string.
 J9NLS_TRC_ERROR_DETAIL_STR.system_action=The JVM ends.
 J9NLS_TRC_ERROR_DETAIL_STR.user_response=Use -Xtrace:help to find the correct syntax for the -Xtrace options and try again.
 J9NLS_TRC_ERROR_DETAIL_STR.sample_input_1=-Xtrace:buffers=bogus
@@ -112,7 +112,7 @@ J9NLS_TRC_NEXT_GEN_FILE_OPEN_FAIL_STR.sample_input_1=-Xtrace:output={C:\temp\tra
 
 J9NLS_TRC_FILE_SEEK_FAIL_STR=Error performing seek in tracefile: %s
 # START NON-TRANSLATABLE
-J9NLS_TRC_FILE_SEEK_FAIL_STR.explanation=The JVM could not find an expected location in the specified trace file. 
+J9NLS_TRC_FILE_SEEK_FAIL_STR.explanation=The JVM could not find an expected location in the specified trace file.
 J9NLS_TRC_FILE_SEEK_FAIL_STR.system_action=The JVM continues but trace data is not written to this file.
 J9NLS_TRC_FILE_SEEK_FAIL_STR.user_response=If you need to collect the trace data, restart the JVM specifying a trace file that can be opened.
 J9NLS_TRC_FILE_SEEK_FAIL_STR.sample_input_1=-Xtrace:output={C:\temp\trace.out}

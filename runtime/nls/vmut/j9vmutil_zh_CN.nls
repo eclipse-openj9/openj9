@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ J9NLS_VMUTIL_THREAD_NAME_ACCESS_ERROR.user_response=None
 
 # END NON-TRANSLATABLE
 
-# Note: this string is not used by J2ME VMs. 
+# Note: this string is not used by J2ME VMs.
 J9NLS_VMUTIL_OPTIONS_FILE_NOT_FOUND_STR=\u9009\u9879\u6587\u4ef6\u672a\u627e\u5230
 # START NON-TRANSLATABLE
 J9NLS_VMUTIL_OPTIONS_FILE_NOT_FOUND_STR.explanation=An options file specified with the -Xoptionsfile option could not be opened
@@ -113,7 +113,7 @@ J9NLS_VMUTIL_MALFORMED_JTOPTS_ERROR_STR.user_response=Correct the JAVA_TOOL_OPTI
 
 # END NON-TRANSLATABLE
 
-# Note: this string is not used by J2ME VMs. 
+# Note: this string is not used by J2ME VMs.
 # Note: IBM_JAVA_OPTIONS is an environment variable name and should not be translated
 J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR=IBM_JAVA_OPTIONS \u7684\u503c\u683c\u5f0f\u9519\u8bef
 # START NON-TRANSLATABLE
@@ -123,7 +123,7 @@ J9NLS_VMUTIL_MALFORMED_OPTS_ERROR_STR.user_response=Correct the IBM_JAVA_OPTIONS
 
 # END NON-TRANSLATABLE
 
-# Note: this string is not used by J2ME VMs. 
+# Note: this string is not used by J2ME VMs.
 # Note: -Xservice is a command line option and should not be translated
 J9NLS_VMUTIL_MALFORMED_XSERVICE_ERROR_STR=-Xservice \u7684\u503c\u683c\u5f0f\u9519\u8bef
 # START NON-TRANSLATABLE
@@ -167,7 +167,7 @@ J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND.system_action=
 J9NLS_VMUTIL_DEFAULT_METHOD_INVALID_SUPERSEND.user_response=
 # END NON-TRANSLATABLE
 
-# Note: this string is not used by J2ME VMs. 
+# Note: this string is not used by J2ME VMs.
 J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR=\u9009\u9879\u6587\u4ef6 %s \u65e0\u6548
 # START NON-TRANSLATABLE
 J9NLS_VMUTIL_OPTIONS_FILE_INVALID_STR.explanation=An options file specified with the -Xoptionsfile option could not be opened or is too large

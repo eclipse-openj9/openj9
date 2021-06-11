@@ -275,7 +275,7 @@ J9NLS_JIT_OPTIONS_MUST_BE_NUMBER.sample_input_1=-Xlp:codecache:pagesize=<size>
 
 J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED=\u6307\u5b9a\u7684 %s \u503c\u592a\u5927
 # START NON-TRANSLATABLE
-J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large 
+J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large
 J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.system_action=The JVM will terminate
 J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.user_response=Adjust the JIT options
 J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xlp:codecache:pagesize=<size>
