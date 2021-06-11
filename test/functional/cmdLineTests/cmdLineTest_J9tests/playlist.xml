@@ -114,7 +114,7 @@
 		<testCaseName>cmdLineTest_J9test_native</testCaseName>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3212;https://github.com/eclipse-openj9/openj9/issues/3560</comment>
-			<plat>.*windows.*</plat>
+			<platform>.*windows.*</platform>
 		</disabled>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) \

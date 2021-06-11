@@ -25,15 +25,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<testCaseName>cmdLineTester_jep178_staticLinking_SE80</testCaseName>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<plat>.*windows.*</plat>
+			<platform>.*windows.*</platform>
 		</disabled>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/11854</comment>
-			<plat>ppc64le.*</plat>
+			<platform>ppc64le.*</platform>
 		</disabled>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/12050</comment>
-			<plat>aarch64.*</plat>
+			<platform>aarch64.*</platform>
 		</disabled>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJAVATEST_ROOT=$(Q)$(JAVATEST_ROOT)$(Q) \
@@ -77,7 +77,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</disabled>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<plat>.*windows.*</plat>
+			<platform>.*windows.*</platform>
 		</disabled>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJAVATEST_ROOT=$(Q)$(JAVATEST_ROOT)$(Q) \

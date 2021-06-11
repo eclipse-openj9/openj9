@@ -1258,7 +1258,7 @@
 		<testCaseName>testSoftMxUserScenario</testCaseName>
 		<disabled>
 			<comment>github.com/eclipse-openj9/openj9/issues/8967</comment>
-			<plat>aarch64.*</plat>
+			<platform>aarch64.*</platform>
 		</disabled>
 		<variations>
 			<variation>Mode110</variation>
