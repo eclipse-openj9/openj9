@@ -113,7 +113,7 @@ the format to use.
                  NATIVE_TEST_LIBS needs to be set for local testing; if Grinder is used,
                  native test libs download link needs to be provided in addition to SDK
                  download link in CUSTOMIZED_SDK_URL; for details, please refer to
-                 [How-to-Run-a-Grinder-Build-on-Jenkins](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins);
+                 [How-to-Run-a-Grinder-Build-on-Jenkins](https://github.com/adoptium/aqa-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins);
                  default to regular)
       - impl:    [openj9|hotspot|ibm] (filter test based on exported JDK_IMPL
                  value; a test can be tagged with multiple impls at the
@@ -301,7 +301,7 @@ To exclude the test for all linux platforms:
 
 ```auto exclude test jdk_test plat=.*linux.*```
 
-plat is defined in regular expression. All platforms can be found here: https://github.com/AdoptOpenJDK/openjdk-tests/blob/master/buildenv/jenkins/openjdk_tests
+plat is defined in regular expression. All platforms can be found here: https://github.com/adoptium/aqa-tests/blob/master/buildenv/jenkins/openjdk_tests
 
 To exclude the 2nd variation listed which is assigned suffix_1 ```-Xmx1024m``` against adoptopenjdk openj9 java 8 on windows only:
 
@@ -318,7 +318,7 @@ For example:
 <test>
   <testCaseName>jdk_test</testCaseName>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
   </disabled>
   ...
 ```
@@ -334,7 +334,7 @@ For example, to exclude the test case with variation ```-Xmx1024m```:
 <test>
   <testCaseName>jdk_test</testCaseName>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
     <variation>-Xmx1024m</variation>
   </disabled>
   ...
@@ -354,7 +354,7 @@ For example, to exclude the test for openj9 only:
 <test>
   <testCaseName>jdk_test</testCaseName>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
     <impl>openj9</impl>
   </disabled>
   ...
@@ -369,7 +369,7 @@ For example, to exclude the test for AdoptOpenJDK only:
 <test>
   <testCaseName>jdk_test</testCaseName>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
     <vendor>adoptopenjdk</vendor>
   </disabled>
   ...
@@ -384,7 +384,7 @@ For example, to exclude the test for java 11 and up:
 <test>
   <testCaseName>jdk_test</testCaseName>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
     <version>11+</version>
   </disabled>
   ...
@@ -392,7 +392,7 @@ For example, to exclude the test for java 11 and up:
 
 
 ##### Exclude a test against specific platform:
-Add a ```<plat>``` element in the ```<disabled>``` element to specify the platform in regular expression. All platforms can be found here: https://github.com/AdoptOpenJDK/openjdk-tests/blob/master/buildenv/jenkins/openjdk_tests
+Add a ```<plat>``` element in the ```<disabled>``` element to specify the platform in regular expression. All platforms can be found here: https://github.com/adoptium/aqa-tests/blob/master/buildenv/jenkins/openjdk_tests
 
 For example, to exclude the test for all linux platforms:
 
@@ -400,7 +400,7 @@ For example, to exclude the test for all linux platforms:
 <test>
   <testCaseName>jdk_test</testCaseName>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
     <plat>.*linux.*</plat>
   </disabled>
   ...
@@ -416,7 +416,7 @@ For example, to exclude the test with variation ```-Xmx1024m``` against adoptope
 <test>
   <testCaseName>jdk_test</testCaseName>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
     <variation>-Xmx1024m</variation>
     <version>8</version>
     <impl>openj9</impl>
@@ -434,12 +434,12 @@ For example, to exclude test on against hotspot and openj9. It is required to de
 <test>
   <testCaseName>jdk_test</testCaseName>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
     <version>8</version>
     <impl>openj9</impl>
   </disabled>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
     <version>8</version>
     <impl>hotspot</impl>
   </disabled>
@@ -452,7 +452,7 @@ Or remove ```<impl>``` element to exclude test against all implementations:
 <test>
   <testCaseName>jdk_test</testCaseName>
   <disabled>
-    <comment>https://github.com/AdoptOpenJDK/openjdk-tests/issues/123456</comment>
+    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
     <version>8</version>
   </disabled>
   ...
@@ -616,6 +616,6 @@ we get the following info (captured in the name of the issue):
 
 Since only a link to the Jenkins job was provided in the example issue 6555, we do not have java -version info, we will have to go to the job link to find out the exact SDK build, though it may be sufficient just to rerun the test with the latest nightly build to reproduce.  Given those pieces of information, we have enough to try and rerun this test, either in a Grinder job in Jenkins, or locally on a machine (on the same platform as the test failure).
 
-For more details on launching a Grinder job, you can see these instructions on [how to run a grinder job](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins).
+For more details on launching a Grinder job, you can see these instructions on [how to run a grinder job](https://github.com/adoptium/aqa-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins).
 
 To try and reproduce the failure locally, please check out this [wiki for guidance on reproducing failures locally](https://github.com/eclipse-openj9/openj9/wiki/Reproducing-Test-Failures-Locally) for details.
