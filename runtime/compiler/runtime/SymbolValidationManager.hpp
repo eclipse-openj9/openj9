@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -648,6 +648,7 @@ public:
 
    #define WELL_KNOWN_CLASS_COUNT 9
 
+   static void getWellKnownClassesSCCKey(char *buffer, size_t size, unsigned int includedClasses);
    void populateWellKnownClasses();
    bool validateWellKnownClasses(const uintptr_t *wellKnownClassChainOffsets);
    bool isWellKnownClass(TR_OpaqueClassBlock *clazz);

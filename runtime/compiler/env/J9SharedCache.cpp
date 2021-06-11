@@ -900,12 +900,11 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
 
    LOG(3, "\tcreating chain now: 1 + 1 + %d superclasses + %d interfaces\n", numSuperclasses, numInterfaces);
    UDATA chainLength = (2 + numSuperclasses + numInterfaces) * sizeof(UDATA);
-   const uint32_t maxChainLength = 32;
-   UDATA typicalChainData[maxChainLength];
-   chainData = typicalChainData;
-   if (chainLength > maxChainLength*sizeof(UDATA))
+   UDATA chainDataBuffer[maxClassChainLength];
+   chainData = chainDataBuffer;
+   if (chainLength > maxClassChainLength * sizeof(UDATA))
       {
-      LOG(1, "\t\t > %d so bailing\n", maxChainLength);
+      LOG(1, "\t\t > %u so bailing\n", maxClassChainLength);
       return NULL;
       }
 

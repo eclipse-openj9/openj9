@@ -71,6 +71,13 @@ class JITServerHelpers
       uintptr_t, std::vector<J9ROMMethod *>                          // 20: _classChainOffsetOfIdentifyingLoaderForClazz 21. _origROMMethods
       >;
 
+   // Packs a ROMClass to be transferred to the server.
+   // The result is allocated from the stack region of trMemory (as well as temporary data
+   // structures used for packing). This function should be used with TR::StackMemoryRegion.
+   // If passed non-zero expectedSize, and it doesn't match the resulting packedSize
+   // (which is returned to the caller by reference), this function returns NULL.
+   static J9ROMClass *packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t &packedSize, size_t expectedSize = 0);
+
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory, bool serializeClass);
    static void freeRemoteROMClass(J9ROMClass *romClass, TR_PersistentMemory *persistentMemory);
    static J9ROMClass *cacheRemoteROMClassOrFreeIt(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, TR_PersistentMemory *persistentMemory);

@@ -341,7 +341,7 @@ public:
 
    void incInUse() { _inUse++; }
    void decInUse() { _inUse--; TR_ASSERT(_inUse >= 0, "_inUse=%d must be positive\n", _inUse); }
-   bool getInUse() const { return _inUse; }
+   int32_t getInUse() const { return _inUse; }
 
    uint64_t getClientUID() const { return _clientUID; }
    void updateTimeOfLastAccess();
@@ -362,7 +362,7 @@ public:
       if (seqNo > _maxReceivedSeqNo)
          _maxReceivedSeqNo = seqNo;
       }
-   int8_t getNumActiveThreads() const { return _numActiveThreads; }
+   int32_t getNumActiveThreads() const { return _numActiveThreads; }
    void incNumActiveThreads() { ++_numActiveThreads; }
    void decNumActiveThreads() { --_numActiveThreads; }
    void printStats();
@@ -443,11 +443,11 @@ private:
 
    uint32_t _lastProcessedCriticalSeqNo; // highest seqNo processed request carrying info that needs to be applied in order
 
-   int8_t  _inUse;  // Number of concurrent compilations from the same client
+   int32_t  _inUse; // Number of concurrent compilations from the same client
                     // Accessed with compilation monitor in hand
-   int8_t _numActiveThreads; // Number of threads working on compilations for this client
-                             // This is smaller or equal to _inUse because some threads
-                             // could be just starting or waiting in _OOSequenceEntryList
+   int32_t _numActiveThreads; // Number of threads working on compilations for this client
+                              // This is smaller or equal to _inUse because some threads
+                              // could be just starting or waiting in _OOSequenceEntryList
    VMInfo *_vmInfo; // info specific to a client VM that does not change, NULL means not set
    bool _markedForDeletion; //Client Session is marked for deletion. When the inUse count will become zero this will be deleted.
    TR_AddressSet *_unloadedClassAddresses; // Per-client versions of the unloaded class and method addresses kept in J9PersistentInfo

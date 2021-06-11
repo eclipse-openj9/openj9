@@ -80,10 +80,11 @@
 #include "env/SystemSegmentProvider.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerHelpers.hpp"
+#include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
 #include "runtime/Listener.hpp"
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 extern "C" {
 struct J9JavaVM;
@@ -2104,6 +2105,8 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
       // Loop through the set to find the class that needs to be purged.
       // Once found erase from the set.
       compInfo->getclassesCachedAtServer().erase(unloadedEvent->clazz);      
+      if (auto deserializer = compInfo->getJITServerAOTDeserializer())
+         deserializer->invalidateClass(vmThread, j9clazz);
       }
 #endif
    }
@@ -2161,6 +2164,11 @@ static void jitHookClassLoaderUnload(J9HookInterface * * hookInterface, UDATA ev
       compInfo->getHWProfiler()->invalidateProfilingBuffers();
 
    compInfo->getPersistentInfo()->getPersistentClassLoaderTable()->removeClassLoader(vmThread, classLoader);
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto deserializer = compInfo->getJITServerAOTDeserializer())
+      deserializer->invalidateClassLoader(vmThread, classLoader);
+#endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
 #endif /* defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)*/
@@ -2350,6 +2358,8 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
       // Add to JITServer unload list
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
+      if (auto deserializer = compInfo->getJITServerAOTDeserializer())
+         deserializer->invalidateClass(currentThread, classPair->oldClass);
 #endif
 
       freshClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->newClass);
@@ -4966,7 +4976,7 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
    //TODO: Is getArrayOfCompilationInfoPerThread() called after setupCompilationThreads()
    TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
 
-   for (uint8_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+   for (int32_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
       {
       const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
       if (cpuUtil.isFunctional())
@@ -4993,7 +5003,7 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
       TR_VerboseLog::vlogAcquire();
       TR_VerboseLog::write(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", static_cast<uint32_t>(crtTime), totalCompCPUUtilization);
       TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
-      for (uint8_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
+      for (int32_t i = 0; i < compInfo->getNumUsableCompilationThreads(); i++)
          {
          const CpuSelfThreadUtilization& cpuUtil = arrayOfCompInfoPT[i]->getCompThreadCPU();
          TR_VerboseLog::write(" compThr%d:%3d%% (%2d%%, %2d%%) ", i, cpuUtilizationValues[i], cpuUtil.getThreadLastCpuUtil(), cpuUtil.getThreadPrevCpuUtil());

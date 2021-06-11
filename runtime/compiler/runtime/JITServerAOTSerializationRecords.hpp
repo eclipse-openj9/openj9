@@ -30,7 +30,8 @@
 
 enum AOTSerializationRecordType
    {
-   // Not associated with an SCC entity; used for class loader identification (by name of the 1st loaded class)
+   // Used for class loader identification (by name of the first loaded class).
+   // Associated with an SCC class chain identifying a class loader (class chain of its first loaded class).
    ClassLoader,
    // Associated with a ROMClass
    Class,
@@ -258,8 +259,7 @@ public:
    SerializedSCCOffset(uintptr_t recordId, AOTSerializationRecordType recordType, uintptr_t reloDataOffset) :
       _recordIdAndType(AOTSerializationRecord::idAndType(recordId, recordType)), _reloDataOffset(reloDataOffset)
       {
-      TR_ASSERT((recordType > AOTSerializationRecordType::ClassLoader) &&
-                (recordType < AOTSerializationRecordType::AOTHeader), "Invalid record type: %u", recordType);
+      TR_ASSERT(recordType < AOTSerializationRecordType::AOTHeader, "Invalid record type: %u", recordType);
       }
 
    uintptr_t recordId() const { return AOTSerializationRecord::getId(_recordIdAndType); }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 #include "runtime/IProfiler.hpp"
 #include "runtime/J9Profiler.hpp"
 #if defined(J9VM_OPT_JITSERVER)
+#include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/Listener.hpp"
 #endif /* J9VM_OPT_JITSERVER */
 #include "runtime/codertinit.hpp"
@@ -374,6 +375,10 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                TR_PersistentClassLoaderTable *loaderTable = persistentMemory->getPersistentInfo()->getPersistentClassLoaderTable();
                sharedCache->setPersistentClassLoaderTable(loaderTable);
                loaderTable->setSharedCache(sharedCache);
+#if defined(J9VM_OPT_JITSERVER)
+               if (auto deserializer = getCompilationInfo(vm->jitConfig)->getJITServerAOTDeserializer())
+                  deserializer->setSharedCache(sharedCache);
+#endif /* defined(J9VM_OPT_JITSERVER) */
                }
             }
          else
@@ -477,7 +482,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
             TR_ASSERT(arrayOfCompInfoPT, "TR::CompilationInfo::_arrayOfCompilationInfoPerThread is null\n");
 
-            for (uint8_t i = 0; i < compInfo->getNumTotalCompilationThreads(); i++)
+            for (int32_t i = 0; i < compInfo->getNumTotalCompilationThreads(); i++)
                {
                TR::CompilationInfoPerThread *curCompThreadInfoPT = arrayOfCompInfoPT[i];
                TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
