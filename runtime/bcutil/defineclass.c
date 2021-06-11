@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -549,7 +549,9 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
-	if (J2SE_VERSION(vm) >= J2SE_V17) {
+	if (J2SE_VERSION(vm) >= J2SE_V18) {
+		translationFlags |= BCT_Java18MajorVersionShifted;
+	} else if (J2SE_VERSION(vm) >= J2SE_V17) {
 		translationFlags |= BCT_Java17MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_V16) {
 		translationFlags |= BCT_Java16MajorVersionShifted;

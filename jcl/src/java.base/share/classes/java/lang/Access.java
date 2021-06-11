@@ -506,6 +506,13 @@ final class Access implements JavaLangAccess {
 		return ClassLoader.findNative(loader, entryName);
 	}
 
+	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	@Override
+	public void exit(int status) {
+		Shutdown.exit(status);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+
 	/*[ENDIF] OPENJDK_METHODHANDLES*/
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 

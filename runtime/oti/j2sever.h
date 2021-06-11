@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,7 @@
 #define J2SE_V15  (15 << J2SE_JAVA_SPEC_VERSION_SHIFT)
 #define J2SE_V16  (16 << J2SE_JAVA_SPEC_VERSION_SHIFT)
 #define J2SE_V17  (17 << J2SE_JAVA_SPEC_VERSION_SHIFT)
+#define J2SE_V18  (18 << J2SE_JAVA_SPEC_VERSION_SHIFT)
 
 /* J2SE_CURRENT_VERSION is the current Java version supported by VM for a JCL level. */
 #define J2SE_CURRENT_VERSION (JAVA_SPEC_VERSION << J2SE_JAVA_SPEC_VERSION_SHIFT)

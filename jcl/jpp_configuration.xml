@@ -178,7 +178,34 @@
 		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
 	</configuration>
-	
+
+	<configuration
+		  label="JAVA18"
+		  outputpath="JAVA18/src"
+		  dependencies="JAVA17"
+		  jdkcompliance="1.8">
+		<classpathentry kind="src" path="src/java.base/share/classes"/>
+		<classpathentry kind="src" path="src/java.management/share/classes"/>
+		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
+		<classpathentry kind="src" path="src/jdk.jcmd/share/classes"/>
+		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.jvm/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
+		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava17.jar"/>
+		<source path="src"/>
+		<parameter name="macro:define" value="JAVA_SPEC_VERSION=18"/>
+		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
+		<parameter name="jxerules:outputdir" value="java/lang"/>
+	</configuration>
+
 	<configuration
 		  label="OPENJ9-RAWBUILD"
 		  outputpath="OPENJ9-RAWBUILD/src"
