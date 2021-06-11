@@ -2037,7 +2037,7 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED.user_response=Contact th
 
 # Message to use when class/interface is not in the same module as its sealed super class/interface
 # argument 1 is the class name
-J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=T\u0159\u00edda/rozhran\u00ed %2$.*1$s nen\u00ed stejn\u00fd modul jako uzav\u0159en\u00e1 nad\u0159\u00edzen\u00e1 t\u0159\u00edda/rozhran\u00ed.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE=T\u0159\u00edda/rozhran\u00ed %2$.*1$s se nenach\u00e1z\u00ed ve stejn\u00e9m modulu jako uzav\u0159en\u00e1 nad\u0159\u00edzen\u00e1 t\u0159\u00edda/rozhran\u00ed.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.sample_input_1=3
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.sample_input_2=Foo
@@ -2048,7 +2048,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Cont
 
 # Message to use when non-public class/interface is not in the same package as its sealed super class/interface
 # argument 1 is the class name
-J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=Neve\u0159ejn\u00e1 t\u0159\u00edda/rozhran\u00ed %2$.*1$s nen\u00ed stejn\u00fd bal\u00edk jako uzav\u0159en\u00e1 nad\u0159\u00edzen\u00e1 t\u0159\u00edda/rozhran\u00ed.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=Neve\u0159ejn\u00e1 t\u0159\u00edda/rozhran\u00ed %2$.*1$s se nenach\u00e1z\u00ed ve stejn\u00e9m bal\u00edku jako uzav\u0159en\u00e1 nad\u0159\u00edzen\u00e1 t\u0159\u00edda/rozhran\u00ed.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.sample_input_1=3
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.sample_input_2=Foo

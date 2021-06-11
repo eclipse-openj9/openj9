@@ -540,7 +540,7 @@ J9NLS_DMP_JIT_ORDINARY_METHOD.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=V\u00fdpis pam\u011bti JIT upozornil v\u0161echny \u010dekaj\u00edc\u00ed podprocesy aktu\u00e1ln\u00ed metody, \u017ee maj\u00ed b\u00fdt kompilov\u00e1ny
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=V\u00fdpis pam\u011bti JIT upozornil v\u0161echny \u010dekaj\u00edc\u00ed podprocesy aktu\u00e1ln\u00ed metody, kter\u00e9 maj\u00ed b\u00fdt kompilov\u00e1ny
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.explanation=The compilation threads waiting on the method to be compiled monitor will be notified.
 J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.system_action=The JVM continues.
@@ -558,7 +558,7 @@ J9NLS_DMP_JIT_OPTIMIZATION_PLAN.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_OCCURRED_THREAD_NAME_ID=K v\u00fdpisu pam\u011bti %1$s do\u0161lo v podprocesu '%2$s' 0x%3$p
+J9NLS_DMP_OCCURRED_THREAD_NAME_ID=Byl proveden v\u00fdpis pam\u011bti %1$s v podprocesu %2$s 0x%3$p
 # START NON-TRANSLATABLE
 J9NLS_DMP_OCCURRED_THREAD_NAME_ID.explanation=The dump is reporting which thread caused the unhandled exception.
 J9NLS_DMP_OCCURRED_THREAD_NAME_ID.system_action=The JVM continues.

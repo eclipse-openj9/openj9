@@ -369,7 +369,7 @@ J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.user_response=Destro
 J9NLS_RELOCATABLE_CODE_HEAP_SIZE_FOR_BARRIER_RANGE_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH=Mancata corrispondenza funzione Active Card Table Base.Il codice AOT nella cache di classi condivisa verr\u00e0 ignorato.
+J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH=Mancata corrispondenza funzione Active Card Table Base. Il codice AOT nella cache di classi condivisa verr\u00e0 ignorato.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.explanation=The JVM is not running in a compatible heap configuration as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_ACTIVE_CARD_TABLE_BASE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.

@@ -531,7 +531,7 @@ J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the use
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_ORDINARY_METHOD=Il metodo di dump JIT viene compilato \u00e8 un metodo ordinario
+J9NLS_DMP_JIT_ORDINARY_METHOD=Il metodo di dump JIT in fase di compilazione \u00e8 un metodo ordinario
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_ORDINARY_METHOD.explanation=The dump has reported that the method the unhandled exception occurred in is an ordinary method.
 J9NLS_DMP_JIT_ORDINARY_METHOD.system_action=The JVM continues.
@@ -549,7 +549,7 @@ J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_OPTIMIZATION_PLAN=Impossibile assegnare il dump JIT ad un nuovo piano dell'organizzazione.
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN=Il dump JIT non \u00e8 stato in grado di eseguire l'allocazione di un nuovo piano di ottimizzazione.
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_OPTIMIZATION_PLAN.explanation=The dump could not allocate a new optimization plan for recompilation.
 J9NLS_DMP_JIT_OPTIMIZATION_PLAN.system_action=The JVM will not recompile the current method and will continue.
@@ -570,7 +570,7 @@ J9NLS_DMP_OCCURRED_THREAD_NAME_ID.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_RECURSIVE_CRASH=Si \u00e8 verificato un crash ripetitivo del dump sul thread di diagnostica
+J9NLS_DMP_JIT_RECURSIVE_CRASH=Si \u00e8 verificato un crash ricorsivo del dump sul thread di diagnostica
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_RECURSIVE_CRASH.explanation=The dump is reporting a reproduction of the original unhandled exception, with tracing.
 J9NLS_DMP_JIT_RECURSIVE_CRASH.system_action=The JVM continues.
@@ -591,7 +591,7 @@ J9NLS_DMP_JIT_RECOMPILING_METHOD.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD=Il dump JIT sta tracciando l'IL del metodo sul thread di compilazione andata in crash.
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD=Il dump JIT sta tracciando l'IL del metodo sul thread di compilazione che \u00e8 stato terminato in modo anomalo.
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.explanation=The dump is tracing the IL of the crashed thread in its current state before recompiling the method for tracing.
 J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.system_action=The JVM continues.

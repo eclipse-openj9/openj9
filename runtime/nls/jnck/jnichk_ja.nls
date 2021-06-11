@@ -32,7 +32,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -230,7 +230,7 @@ J9NLS_JNICHK_NONFATAL_ERROR.user_response=Investigate the JNI check error report
 # JNI is not translatable
 J9NLS_JNICHK_FATAL_ERROR=JNI \u30a8\u30e9\u30fc\u304c\u691c\u51fa\u3055\u308c\u307e\u3057\u305f\u3002 \u6253\u3061\u5207\u308a\u307e\u3059\u3002
 # START NON-TRANSLATABLE
-J9NLS_JNICHK_FATAL_ERROR.explanation=The JNI check utility has detected an unrecoverable JNI error. 
+J9NLS_JNICHK_FATAL_ERROR.explanation=The JNI check utility has detected an unrecoverable JNI error.
 J9NLS_JNICHK_FATAL_ERROR.system_action=The JVM terminates.
 J9NLS_JNICHK_FATAL_ERROR.user_response=Investigate the JNI check error reported in the previous message.
 # END NON-TRANSLATABLE
@@ -238,7 +238,7 @@ J9NLS_JNICHK_FATAL_ERROR.user_response=Investigate the JNI check error reported 
 # -Xcheck:jni:nonfatal is not translatable
 J9NLS_JNICHK_FATAL_ERROR_ADVICE=\u30a8\u30e9\u30fc\u304c\u691c\u51fa\u3055\u308c\u305f\u3068\u304d\u306b\u5b9f\u884c\u3092\u7d99\u7d9a\u3059\u308b\u306b\u306f\u3001-Xcheck:jni:nonfatal \u3092\u4f7f\u7528\u3057\u3066\u304f\u3060\u3055\u3044\u3002
 # START NON-TRANSLATABLE
-J9NLS_JNICHK_FATAL_ERROR_ADVICE.explanation=The JVM has terminated because it has detected a JNI error. The -Xcheck:jni:nonfatal option can be used to change this behaviour. 
+J9NLS_JNICHK_FATAL_ERROR_ADVICE.explanation=The JVM has terminated because it has detected a JNI error. The -Xcheck:jni:nonfatal option can be used to change this behaviour.
 J9NLS_JNICHK_FATAL_ERROR_ADVICE.system_action=The JVM terminates.
 J9NLS_JNICHK_FATAL_ERROR_ADVICE.user_response=As required, add the -Xcheck:jni:nonfatal option and re-run.
 # END NON-TRANSLATABLE
@@ -276,14 +276,14 @@ J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR=%s \u5185\u3067\u306e JNI \u30a8\u30e9\u30fc:
 J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.sample_input_1=methodName
 J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.explanation=The named JNI function has been called within a JNI critical section.
 J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
-J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.user_response=Correct the JNI application code to avoid calling the named function within a JNI critical section. 
+J9NLS_JNICHK_CRITICAL_UNSAFE_ERROR.user_response=Correct the JNI application code to avoid calling the named function within a JNI critical section.
 # END NON-TRANSLATABLE
 
 # JNI, GC, JVMPI and JVMTI are not translatable
 J9NLS_JNICHK_GC_IS_DISABLED=%s \u5185\u3067\u306e JNI \u30a8\u30e9\u30fc: \u3053\u306e\u95a2\u6570\u306f\u3001GC \u304c\u7121\u52b9\u306b\u3055\u308c\u3066\u3044\u308b\u9593\u306f\u547c\u3073\u51fa\u305b\u307e\u305b\u3093 (\u304a\u305d\u3089\u304f JVMPI \u30a4\u30d9\u30f3\u30c8\u307e\u305f\u306f JVMTI \u30a4\u30d9\u30f3\u30c8\u304b\u3089\u547c\u3073\u51fa\u3055\u308c\u307e\u3057\u305f)
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GC_IS_DISABLED.sample_input_1=methodName
-J9NLS_JNICHK_GC_IS_DISABLED.explanation=The named JNI function has been called at a point where the calling thread that has an internal VM access lock. 
+J9NLS_JNICHK_GC_IS_DISABLED.explanation=The named JNI function has been called at a point where the calling thread that has an internal VM access lock.
 J9NLS_JNICHK_GC_IS_DISABLED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_GC_IS_DISABLED.user_response=Correct the JNI application code to avoid calling the named function at this point.
 # END NON-TRANSLATABLE
@@ -978,7 +978,7 @@ J9NLS_JNICHK_PACKED_MISMATCH=%1$s \u5185\u3067\u306e JNI \u30a8\u30e9\u30fc: \u5
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_1=SetObjectField
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_2=3
-J9NLS_JNICHK_PACKED_MISMATCH.sample_input_3=non nested  
+J9NLS_JNICHK_PACKED_MISMATCH.sample_input_3=non nested
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_4=field
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_5=nested
 J9NLS_JNICHK_PACKED_MISMATCH.sample_input_6=field
@@ -991,7 +991,7 @@ J9NLS_JNICHK_NON_ARRAY_REQUIRED=%1$s \u5185\u3067\u306e JNI \u30a8\u30e9\u30fc: 
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.sample_input_1=GetClassPackedDataSize
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.sample_input_2=2
-J9NLS_JNICHK_NON_ARRAY_REQUIRED.explanation=expects a non-array type 
+J9NLS_JNICHK_NON_ARRAY_REQUIRED.explanation=expects a non-array type
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.system_action=If -Xcheck:jni:nonfatal has been specified, the JVM continues, otherwise it terminates.
 J9NLS_JNICHK_NON_ARRAY_REQUIRED.user_response=Check and correct the JNI application code.
 # END NON-TRANSLATABLE

@@ -531,7 +531,7 @@ J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.user_response=This exit was requested by the use
 J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN.link=
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_ORDINARY_METHOD=Kompilovan\u00e1 met\u00f3da vytvorenia v\u00fdpisu JIT je ordin\u00e1rna met\u00f3da
+J9NLS_DMP_JIT_ORDINARY_METHOD=Kompilovan\u00e1 met\u00f3da vytvorenia v\u00fdpisu pam\u00e4te JIT je ordin\u00e1rna met\u00f3da
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_ORDINARY_METHOD.explanation=The dump has reported that the method the unhandled exception occurred in is an ordinary method.
 J9NLS_DMP_JIT_ORDINARY_METHOD.system_action=The JVM continues.
@@ -540,7 +540,7 @@ J9NLS_DMP_JIT_ORDINARY_METHOD.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=V\u00fdpis JIT upozornil v\u0161etky \u010dakaj\u00face vl\u00e1kna aktu\u00e1lnej met\u00f3dy na skompilovanie
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=V\u00fdpis pam\u00e4te JIT upozornil v\u0161etky \u010dakaj\u00face vl\u00e1kna aktu\u00e1lnej met\u00f3dy na skompilovanie
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.explanation=The compilation threads waiting on the method to be compiled monitor will be notified.
 J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.system_action=The JVM continues.
@@ -549,7 +549,7 @@ J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_OPTIMIZATION_PLAN=V\u00fdpis JIT nemohol vytvori\u0165 nov\u00fd pl\u00e1n optimaliz\u00e1cie
+J9NLS_DMP_JIT_OPTIMIZATION_PLAN=V\u00fdpis pam\u00e4te JIT nemohol vytvori\u0165 nov\u00fd pl\u00e1n optimaliz\u00e1cie
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_OPTIMIZATION_PLAN.explanation=The dump could not allocate a new optimization plan for recompilation.
 J9NLS_DMP_JIT_OPTIMIZATION_PLAN.system_action=The JVM will not recompile the current method and will continue.

@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
- 
+
 # Externalised messages for the VM components of the JCL module.
 # New messages MUST be added at the end of this file.
 #
@@ -43,7 +43,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -117,7 +117,7 @@ J9NLS_JCL_INCOMPATIBLE_CL_VERSION_VM.user_response=Ensure the JVM and the class 
 
 # END NON-TRANSLATABLE
 
-# This fatal error can only occur if -verify:all is used with a JXE which provides no preverify 
+# This fatal error can only occur if -verify:all is used with a JXE which provides no preverify
 # data, and the VM does not include a first pass verifier
 J9NLS_JCL_NO_PREVERIFY_DATA_FOR_OBJECT=Sin verificaci\u00f3n previa de datos de java/lang/Object
 # START NON-TRANSLATABLE
@@ -328,7 +328,7 @@ J9NLS_JCL_OOM_TENANT_NATIVE_DATA.user_response=Ensure the process has enough nat
 
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=No se ha podido registrar dbgwrapper.dll como biblioteca de proceso de arranque. C\u00f3digo de error = %zu
 # START NON-TRANSLATABLE
-J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load dbgwrapper.dll was unsuccessful, the internal error code is shown. 
+J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load dbgwrapper.dll was unsuccessful, the internal error code is shown.
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact your service representative.
 J9NLS_JCL_WARNING_DBGWRAPPER_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=5
@@ -345,7 +345,7 @@ J9NLS_JCL_HYPERVISOR_USAGE_RETRIEVAL_ERROR.user_response=Refer the documentation
 
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB=No se ha podido registrar %s como biblioteca de proceso de arranque. C\u00f3digo de error = %zu
 # START NON-TRANSLATABLE
-J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load a dll was unsuccessful, the dll name and internal error code are shown. 
+J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.explanation=An attempt to load a dll was unsuccessful, the dll name and internal error code are shown.
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.system_action=The JVM will proceed but may fail to start.
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.user_response=Contact your service representative.
 J9NLS_JCL_WARNING_DLL_COULDNOT_BE_REGISTERED_AS_BOOTSTRAP_LIB.sample_input_1=dbgwrapper.dll

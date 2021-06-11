@@ -987,7 +987,7 @@ J9NLS_VM_XLOG_HELP02.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:none is not translatable
-J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              Disabilita le opzioni di log JVM precedentemente specificate, incluso le impostazioni predefinite.
+J9NLS_VM_XLOG_HELP03=  -Xsyslog:none              Disabilita le opzioni di log JVM precedentemente specificate, incluse le impostazioni predefinite.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP03.explanation=NOTAG
 J9NLS_VM_XLOG_HELP03.system_action=
@@ -1019,7 +1019,7 @@ J9NLS_VM_XLOG_HELP06.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:error is not translatable
-J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             Registra i messaggi di errore JVM.\u00c8 attivato per impostazione predefinita.
+J9NLS_VM_XLOG_HELP07=  -Xsyslog:error             Registra i messaggi di errore JVM. \u00c8 attivato per impostazione predefinita.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP07.explanation=NOTAG
 J9NLS_VM_XLOG_HELP07.system_action=
@@ -1027,7 +1027,7 @@ J9NLS_VM_XLOG_HELP07.user_response=
 # END NON-TRANSLATABLE
 
 # -Xsyslog:vital is not translatable
-J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             Registra i messaggi gravi JVM.\u00c8 attivato per impostazione predefinita.
+J9NLS_VM_XLOG_HELP08=  -Xsyslog:vital             Registra i messaggi gravi JVM. \u00c8 attivato per impostazione predefinita.
 # START NON-TRANSLATABLE
 J9NLS_VM_XLOG_HELP08.explanation=NOTAG
 J9NLS_VM_XLOG_HELP08.system_action=
@@ -2048,7 +2048,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_MODULE.user_response=Cont
 
 # Message to use when non-public class/interface is not in the same package as its sealed super class/interface
 # argument 1 is the class name
-J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=La classe/interfaccia non pubblica %2$.*1$s non \u00e8 nello stesso pacakage della super classe/interfaccia autenticata.
+J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE=La classe/interfaccia non pubblica %2$.*1$s non \u00e8 nello stesso pacchetto della super classe/interfaccia autenticata.
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.sample_input_1=3
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.sample_input_2=Foo
