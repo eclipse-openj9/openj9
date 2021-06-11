@@ -88,10 +88,7 @@ class Operand
       virtual MutableCallsiteTargetOperand* asMutableCallsiteTargetOperand(){ return NULL;}
       virtual TR::KnownObjectTable::Index getKnownObjectIndex(){ return TR::KnownObjectTable::UNKNOWN;}
       virtual char* getSignature(TR::Compilation *comp, TR_Memory *trMemory) {return NULL;}
-      virtual void printToString( char *buffer)
-         {
-         sprintf(buffer, "(unknown)");
-         }
+      virtual int printToString(char *buffer, size_t size);
       virtual KnowledgeLevel getKnowledgeLevel() { return NONE; }
       Operand* merge(Operand* other);
       virtual Operand* merge1(Operand* other);
@@ -103,10 +100,7 @@ class IconstOperand : public Operand
       TR_ALLOC(TR_Memory::EstimateCodeSize);
       IconstOperand (int x): intValue(x) { }
       virtual IconstOperand *asIconst() { return this;}
-      virtual void printToString( char *buffer)
-         {
-         sprintf(buffer, "(iconst=%d)", intValue);
-         }
+      virtual int printToString(char *buffer, size_t size);
       int32_t intValue;
 
       virtual KnowledgeLevel getKnowledgeLevel() { return ICONST; }
@@ -130,10 +124,7 @@ class ObjectOperand : public Operand
       virtual TR_OpaqueClassBlock* getClass() { return _clazz;}
       virtual KnowledgeLevel getKnowledgeLevel() { return OBJECT; }
       virtual Operand* merge1(Operand* other);
-      virtual void printToString(char *buffer)
-         {
-         sprintf(buffer, "(%s=clazz%p)", KnowledgeStrings[getKnowledgeLevel()], getClass());
-         }
+      virtual int printToString(char *buffer, size_t size);
 
    protected:
       char* _signature;
@@ -188,10 +179,7 @@ class KnownObjOperand : public FixedClassOperand
       virtual TR::KnownObjectTable::Index getKnownObjectIndex(){ return knownObjIndex;}
       virtual KnowledgeLevel getKnowledgeLevel() { return KNOWN_OBJECT; }
       virtual Operand* merge1(Operand* other);
-      virtual void printToString( char *buffer)
-         {
-         sprintf(buffer, "(obj%d)", getKnownObjectIndex());
-         }
+      virtual int printToString(char *buffer, size_t size);
    private:
       TR::KnownObjectTable::Index knownObjIndex;
    };
@@ -217,10 +205,7 @@ class MutableCallsiteTargetOperand : public ObjectOperand
          mutableCallsiteIndex(mutableCallsiteIndex){}
       virtual MutableCallsiteTargetOperand* asMutableCallsiteTargetOperand(){ return this; }
       virtual Operand* merge1(Operand* other);
-      virtual void printToString(char *buffer)
-         {
-         sprintf(buffer, "(mh=%d, mcs=%d)", getMethodHandleIndex(), getMutableCallsiteIndex());
-         }
+      virtual int printToString(char *buffer, size_t size);
       virtual KnowledgeLevel getKnowledgeLevel() { return MUTABLE_CALLSITE_TARGET; }
       TR::KnownObjectTable::Index getMethodHandleIndex(){ return methodHandleIndex; }
       TR::KnownObjectTable::Index getMutableCallsiteIndex() { return mutableCallsiteIndex; }
