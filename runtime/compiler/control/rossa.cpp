@@ -117,6 +117,7 @@
 #include "net/LoadSSLLibs.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/JITServerAOTCache.hpp"
+#include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITServerSharedROMClassCache.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
@@ -1799,6 +1800,14 @@ onLoadInternal(
          return -1;
 
       JITServer::CommunicationStream::initConfigurationFlags();
+
+      if (compInfo->getPersistentInfo()->getJITServerUseAOTCache())
+         {
+         auto deserializer = new (PERSISTENT_NEW) JITServerAOTDeserializer(loaderTable);
+         if (!deserializer)
+            return -1;
+         compInfo->setJITServerAOTDeserializer(deserializer);
+         }
       }
 #endif // J9VM_OPT_JITSERVER
 

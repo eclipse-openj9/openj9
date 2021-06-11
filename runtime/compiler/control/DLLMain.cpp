@@ -32,6 +32,7 @@
 #include "runtime/IProfiler.hpp"
 #include "runtime/J9Profiler.hpp"
 #if defined(J9VM_OPT_JITSERVER)
+#include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/Listener.hpp"
 #endif /* J9VM_OPT_JITSERVER */
 #include "runtime/codertinit.hpp"
@@ -374,6 +375,10 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                TR_PersistentClassLoaderTable *loaderTable = persistentMemory->getPersistentInfo()->getPersistentClassLoaderTable();
                sharedCache->setPersistentClassLoaderTable(loaderTable);
                loaderTable->setSharedCache(sharedCache);
+#if defined(J9VM_OPT_JITSERVER)
+               if (auto deserializer = getCompilationInfo(vm->jitConfig)->getJITServerAOTDeserializer())
+                  deserializer->setSharedCache(sharedCache);
+#endif /* defined(J9VM_OPT_JITSERVER) */
                }
             }
          else

@@ -195,6 +195,13 @@ TR::SymbolValidationManager::getSystemClassNotWorthRemembering(int idx)
    }
 
 void
+TR::SymbolValidationManager::getWellKnownClassesSCCKey(char *buffer, size_t size, unsigned int includedClasses)
+   {
+   int len = snprintf(buffer, size, "AOTWellKnownClasses:%x", includedClasses);
+   TR_ASSERT(len <= size, "Buffer too small");
+   }
+
+void
 TR::SymbolValidationManager::populateWellKnownClasses()
    {
 #define REQUIRED_WELL_KNOWN_CLASS_COUNT 0
@@ -279,7 +286,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    char key[128];
-   snprintf(key, sizeof (key), "AOTWellKnownClasses:%x", includedClasses);
+   getWellKnownClassesSCCKey(key, sizeof(key), includedClasses);
 
    J9SharedDataDescriptor dataDescriptor;
    dataDescriptor.address = (U_8*)classChainOffsets;

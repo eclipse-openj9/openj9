@@ -77,6 +77,7 @@ typedef J9JITExceptionTable TR_MethodMetaData;
 #if defined(J9VM_OPT_JITSERVER)
 class ClientSessionHT;
 class JITServerAOTCacheMap;
+class JITServerAOTDeserializer;
 class JITServerSharedROMClassCache;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -1065,6 +1066,9 @@ public:
 
    JITServerAOTCacheMap *getJITServerAOTCacheMap() const { return _JITServerAOTCacheMap; }
    void setJITServerAOTCacheMap(JITServerAOTCacheMap *map) { _JITServerAOTCacheMap = map; }
+
+   JITServerAOTDeserializer *getJITServerAOTDeserializer() const { return _JITServerAOTDeserializer; }
+   void setJITServerAOTDeserializer(JITServerAOTDeserializer *deserializer) { _JITServerAOTDeserializer = deserializer; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
@@ -1279,6 +1283,7 @@ private:
    JITServer::CompThreadActivationPolicy _activationPolicy;
    JITServerSharedROMClassCache *_sharedROMClassCache;
    JITServerAOTCacheMap *_JITServerAOTCacheMap;
+   JITServerAOTDeserializer *_JITServerAOTDeserializer;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // CompilationInfo
 }
