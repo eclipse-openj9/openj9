@@ -392,7 +392,7 @@ For example, to exclude the test for java 11 and up:
 
 
 ##### Exclude a test against specific platform:
-Add a ```<plat>``` element in the ```<disabled>``` element to specify the platform in regular expression. All platforms can be found here: https://github.com/adoptium/aqa-tests/blob/master/buildenv/jenkins/openjdk_tests
+Add a ```<platform>``` element in the ```<disabled>``` element to specify the platform in regular expression. All platforms can be found here: https://github.com/adoptium/aqa-tests/blob/master/buildenv/jenkins/openjdk_tests
 
 For example, to exclude the test for all linux platforms:
 
@@ -401,14 +401,14 @@ For example, to exclude the test for all linux platforms:
   <testCaseName>jdk_test</testCaseName>
   <disabled>
     <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <plat>.*linux.*</plat>
+    <platform>.*linux.*</plat>
   </disabled>
   ...
 ```
 
 
 ##### Exclude test against multiple criteria:
-Defined a combination of ```<variation>```, ```<impl>```, ```<version>```, and  ```<plat>``` in the ```<disabled>``` element.
+Defined a combination of ```<variation>```, ```<impl>```, ```<version>```, and  ```<platform>``` in the ```<disabled>``` element.
 
 For example, to exclude the test with variation ```-Xmx1024m``` against adoptopenjdk openj9 java 8 on windows only:
 
@@ -421,7 +421,7 @@ For example, to exclude the test with variation ```-Xmx1024m``` against adoptope
     <version>8</version>
     <impl>openj9</impl>
     <vendor>adoptopenjdk</vendor>
-    <plat>.*windows.*</plat>
+    <platform>.*windows.*</platform>
   </disabled>
   ...
 ```

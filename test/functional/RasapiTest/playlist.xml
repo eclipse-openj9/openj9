@@ -25,7 +25,7 @@
 		<testCaseName>testRASAPI</testCaseName>
 		<disabled>
 			<comment>backlog issue 426</comment>
-			<plat>.*mac.*</plat>
+			<platform>.*mac.*</platform>
 		</disabled>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/11800</comment>

@@ -25,7 +25,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<testCaseName>cmdLineTester_pltest</testCaseName>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<plat>.*windows.*</plat>
+			<platform>.*windows.*</platform>
 		</disabled>
 		<variations>
 			<variation>NoOptions</variation>
@@ -152,7 +152,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</disabled>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<plat>.*windows.*</plat>
+			<platform>.*windows.*</platform>
 		</disabled>
 		<variations>
 			<variation>NoOptions</variation>
@@ -189,7 +189,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</disabled>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<plat>.*windows.*</plat>
+			<platform>.*windows.*</platform>
 		</disabled>
 		<variations>
 			<variation>NoOptions</variation>
@@ -258,7 +258,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</disabled>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<plat>.*windows.*</plat>
+			<platform>.*windows.*</platform>
 		</disabled>
 		<variations>
 			<variation>NoOptions</variation>

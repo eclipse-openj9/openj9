@@ -25,7 +25,7 @@
 		<testCaseName>cmdLineTester_dumpromclasstests</testCaseName>
 		<disabled>
 			<comment>https://github.com/eclipse-openj9/openj9/issues/3562</comment>
-			<plat>.*aix.*</plat>
+			<platform>.*aix.*</platform>
 		</disabled>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
