@@ -324,22 +324,6 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
 #else
    auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
    TR_ResolvedMethod *resolvedMethod = NULL;
-   if (compInfoPT->getCachedResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex), this,
-                                           &resolvedMethod, unresolvedInCP))
-      {
-      if (resolvedMethod == NULL)
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual/null");
-         if (unresolvedInCP)
-            handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
-         }
-      else
-         {
-         TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
-         TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
-         }
-      return resolvedMethod;
-      }
 
    // See if the constant pool entry is already resolved or not
    if (unresolvedInCP)
@@ -347,10 +331,30 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
 
    bool shouldCompileTimeResolve = shouldCompileTimeResolveMethod(cpIndex);
 
-   if (!((_fe->_compInfoPT->getClientData()->getRtResolve()) &&
+   if (!((compInfoPT->getClientData()->getRtResolve()) &&
          !comp->ilGenRequest().details().isMethodHandleThunk() && // cmvc 195373
          performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve || shouldCompileTimeResolve)
       {
+      if (compInfoPT->getCachedResolvedMethod(
+            compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex),
+            this,
+            &resolvedMethod,
+            unresolvedInCP))
+         {
+         if (resolvedMethod == NULL)
+            {
+            TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual/null");
+            if (unresolvedInCP)
+               handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
+            }
+         else
+            {
+            TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
+            TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
+            }
+         return resolvedMethod;
+         }
+
       _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedPossiblyPrivateVirtualMethodAndMirror, (TR_ResolvedMethod *) _remoteMirror, literals(), cpIndex);
       auto recv = _stream->read<J9Method *, UDATA, bool, TR_ResolvedJ9JITServerMethodInfo>();
       J9Method *ramMethod = std::get<0>(recv);
@@ -1797,7 +1801,7 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolv
 
    // 2. Send a remote query to mirror all uncached resolved methods
    _stream->write(JITServer::MessageType::ResolvedMethod_getMultipleResolvedMethods, (TR_ResolvedJ9Method *) _remoteMirror, methodTypes, cpIndices);
-   auto recv = _stream->read<std::vector<J9Method *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITServerMethodInfo>>();
+   auto recv = _stream->read<std::vector<TR_OpaqueMethodBlock *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITServerMethodInfo>>();
 
    // 3. Cache all received resolved methods
    auto &ramMethods = std::get<0>(recv);
@@ -1816,10 +1820,11 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolv
          {
          compInfoPT->cacheResolvedMethod(
             key,
-            (TR_OpaqueMethodBlock *) ramMethods[i],
+            ramMethods[i],
             vTableOffsets[i],
             methodInfos[i],
-            ttlForUnresolved);
+            ttlForUnresolved
+            );
          }
       }
    }
