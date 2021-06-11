@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -228,7 +228,7 @@ J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR.system_action=The JVM terminates.
 J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR.user_response=Investigate process memory usage and retry.
 # END NON-TRANSLATABLE
 
-# jvmri->TraceRegister, jvmri->TraceDeregister, TraceListener and JVMRAS_VERSION_1_5 are not translatable 
+# jvmri->TraceRegister, jvmri->TraceDeregister, TraceListener and JVMRAS_VERSION_1_5 are not translatable
 J9NLS_RI_TRACELISTENER_NOT_SUPPORTED=jvmri->TraceRegister, jvmri->TraceDeregister and TraceListener no longer supported, use new versions in JVMRAS_VERSION_1_5
 # START NON-TRANSLATABLE
 J9NLS_RI_TRACELISTENER_NOT_SUPPORTED.explanation=The JVMRI TraceRegister and TraceDeregister calls are not supported by this JVM.

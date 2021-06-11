@@ -47,7 +47,7 @@ J9NLS_GC_INTERNAL_ERROR_OUT_OF_MEMORY.user_response=This may indicate a native m
 
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP=\u672a\u80fd\u5b9e\u4f8b\u5316\u5806
 # START NON-TRANSLATABLE
-J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.explanation=The JVM was unable to allocate memory for the object heap 
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.explanation=The JVM was unable to allocate memory for the object heap
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.system_action=The JVM will terminate
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.user_response=Specify a smaller heap value using the -Xmx command line option
 
@@ -57,7 +57,7 @@ J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP.user_response=Specify a smaller heap value u
 # Note %2$s is qualifier for number of bytes (e.g. "M")
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED=\u672a\u80fd\u5b9e\u4f8b\u5316\u5806\u3002\u5df2\u8bf7\u6c42 %1$zu%2$s
 # START NON-TRANSLATABLE
-J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for the object heap 
+J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for the object heap
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.system_action=The JVM will terminate
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.user_response=Specify a smaller heap value using the -Xmx command line option
 J9NLS_GC_FAILED_TO_INSTANTIATE_HEAP_SIZE_REQUESTED.sample_input_1=256
@@ -233,7 +233,7 @@ J9NLS_GC_SUBSPACE_TOO_LARGE_FOR_HEAP.sample_input_1=-Xms
 # Note %2$s memoryParameter (e.g. "-Xmos")
 J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR=%1$s \u5fc5\u987b\u7b49\u4e8e %2$s
 # START NON-TRANSLATABLE
-J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.explanation=The specified options must be equal if both are specified 
+J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.explanation=The specified options must be equal if both are specified
 J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.system_action=The JVM will terminate
 J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.user_response=Adjust the garbage collector options
 J9NLS_GC_SUBSPACE_NOT_EQUAL_ERROR.sample_input_1=-Xms
@@ -424,7 +424,7 @@ J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE.sample_input_2=0
 # Note %2$zu valid value (e.g. 0)
 J9NLS_GC_OPTIONS_VALUE_MUST_BE=\u4e0d\u652f\u6301 %1$s \u9664 %2$zu \u4e4b\u5916\u7684\u503c
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTIONS_VALUE_MUST_BE.explanation=The specified option only supports the specified value 
+J9NLS_GC_OPTIONS_VALUE_MUST_BE.explanation=The specified option only supports the specified value
 J9NLS_GC_OPTIONS_VALUE_MUST_BE.system_action=The JVM will terminate
 J9NLS_GC_OPTIONS_VALUE_MUST_BE.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTIONS_VALUE_MUST_BE.sample_input_1=-Xgcthreads
@@ -435,7 +435,7 @@ J9NLS_GC_OPTIONS_VALUE_MUST_BE.sample_input_2=0
 # Note %s memoryParameter (e.g. "-Xmx")
 J9NLS_GC_OPTIONS_VALUE_OVERFLOWED=\u6307\u5b9a\u7684 %s \u503c\u592a\u5927
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large 
+J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.explanation=The specified option is too large
 J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.system_action=The JVM will terminate
 J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xmx
@@ -446,7 +446,7 @@ J9NLS_GC_OPTIONS_VALUE_OVERFLOWED.sample_input_1=-Xmx
 # Note %2$s new parameter (e.g. "-Xtgc:excessivegc")
 J9NLS_GC_OPTION_DEPRECATED=*** \u4e0d\u652f\u6301 %1$s\uff1a\u8bf7\u4f7f\u7528 %2$s ***
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTION_DEPRECATED.explanation=The specified option is deprecated and is no longer supportd 
+J9NLS_GC_OPTION_DEPRECATED.explanation=The specified option is deprecated and is no longer supportd
 J9NLS_GC_OPTION_DEPRECATED.system_action=The JVM will terminate
 J9NLS_GC_OPTION_DEPRECATED.user_response=Replace the deprecated option with the suggested replacement
 J9NLS_GC_OPTION_DEPRECATED.sample_input_1=-Xgc:excessiveGCdebug=
@@ -458,7 +458,7 @@ J9NLS_GC_OPTION_DEPRECATED.sample_input_2=-Xtgc:excessivegc
 # e.g. java -Xgc:foo
 J9NLS_GC_OPTION_UNKNOWN=\u672a\u77e5\u7684\u9009\u9879\uff1a%s
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTION_UNKNOWN.explanation=The specified option is not recognized 
+J9NLS_GC_OPTION_UNKNOWN.explanation=The specified option is not recognized
 J9NLS_GC_OPTION_UNKNOWN.system_action=The JVM will terminate
 J9NLS_GC_OPTION_UNKNOWN.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTION_UNKNOWN.sample_input_1=foo
@@ -466,11 +466,11 @@ J9NLS_GC_OPTION_UNKNOWN.sample_input_1=foo
 # END NON-TRANSLATABLE
 
 # Note %s parameter
-# Note fvtest is a command line option. It should not be translated. 
+# Note fvtest is a command line option. It should not be translated.
 # e.g. java -Xgc:fvtest=foo
 J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE=\u672a\u77e5\u7684 fvtest \u7c7b\u578b\uff1a%s
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.explanation=The specified option is not recognized 
+J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.explanation=The specified option is not recognized
 J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.system_action=The JVM will terminate
 J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE.sample_input_1=foo
@@ -631,7 +631,7 @@ J9NLS_GC_OPTIONS_MUST_BE_NO_GREATER_THAN.sample_input_2=scvTiltRatioMax=
 #
 
 # Realtime
-# Note immortal memory is a technical term referring to memory which is not garbage collected. It is 
+# Note immortal memory is a technical term referring to memory which is not garbage collected. It is
 # defined by the Real-Time Specification for Java (JSR 001)
 J9NLS_GC_FAILED_TO_ALLOCATE_IMMORTAL_MEMORY_SPACE=\u672a\u80fd\u5206\u914d\u6c38\u4e45\u5185\u5b58\u7a7a\u95f4
 # START NON-TRANSLATABLE
@@ -676,7 +676,7 @@ J9NLS_GC_VERB_SIZES_SCOPED.user_response=None
 #Note "power of two" refers to the mathematical concept (e.g. 2^1 = 2, 2^2 = 4, 2^3 = 8, . . .)
 J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO=%s \u503c\u5fc5\u987b\u662f 2 \u7684\u5e42\u4e58
 # START NON-TRANSLATABLE
-J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.explanation=The value of the specified option must be a power of 2 (e.g. 2, 4, 8, 16, . . .) 
+J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.explanation=The value of the specified option must be a power of 2 (e.g. 2, 4, 8, 16, . . .)
 J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.system_action=The JVM will terminate
 J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.user_response=Adjust the garbage collector options
 J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.sample_input_1=heapBytesPerRemsetCard=
@@ -685,7 +685,7 @@ J9NLS_GC_OPTIONS_VALUE_MUST_BE_POWER_OF_TWO.sample_input_1=heapBytesPerRemsetCar
 
 J9NLS_GC_UNABLE_TO_OPEN_FILE=\u65e0\u6cd5\u6253\u5f00\u6587\u4ef6\u540d\u4e3a\u201c%s\u201d\u7684\u6587\u4ef6\u4ee5\u6267\u884c\u5199\u64cd\u4f5c
 # START NON-TRANSLATABLE
-J9NLS_GC_UNABLE_TO_OPEN_FILE.explanation=The specified file could not be opened for writing 
+J9NLS_GC_UNABLE_TO_OPEN_FILE.explanation=The specified file could not be opened for writing
 J9NLS_GC_UNABLE_TO_OPEN_FILE.system_action=No log file will be produced
 J9NLS_GC_UNABLE_TO_OPEN_FILE.user_response=Check the permissions on the file system or specify a different file name
 J9NLS_GC_UNABLE_TO_OPEN_FILE.sample_input_1=filename.log
@@ -915,7 +915,7 @@ J9NLS_GC_VERB_SIZES_XMCRS.user_response=None
 # Note %2$s is qualifier for number of bytes (e.g. "M")
 J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED=\u65e0\u6cd5\u5b9e\u4f8b\u5316\u5df2\u538b\u7f29\u7684\u5f15\u7528\u5143\u6570\u636e\uff1b\u5df2\u8bf7\u6c42 %1$zu%2$s
 # START NON-TRANSLATABLE
-J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for compressed references metadata 
+J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.explanation=The JVM was unable to allocate memory for compressed references metadata
 J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.system_action=The JVM will terminate
 J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.user_response=Specify a smaller compressed references metadata initial size value using the -Xmcrs command line option
 J9NLS_GC_FAILED_TO_INSTANTIATE_LOW_MEMORY_RESERVE_SIZE_REQUESTED.sample_input_1=256

@@ -32,7 +32,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -56,7 +56,7 @@ J9NLS.HEADER=j9bcvnls.h
 #Example: JVMCRFY114; class=Foo, method=main([Ljava/lang/String;)V, pc=5
 J9NLS_BCV_ERROR_TEMPLATE_WITH_PC=%1$s; class=%3$.*2$s, method=%5$.*4$s%7$.*6$s, pc=%8$u
 # START NON-TRANSLATABLE
-J9NLS_BCV_ERROR_TEMPLATE_WITH_PC.sample_input_1=JVMCRFY114; 
+J9NLS_BCV_ERROR_TEMPLATE_WITH_PC.sample_input_1=JVMCRFY114;
 J9NLS_BCV_ERROR_TEMPLATE_WITH_PC.sample_input_2=3
 J9NLS_BCV_ERROR_TEMPLATE_WITH_PC.sample_input_3=Foo
 J9NLS_BCV_ERROR_TEMPLATE_WITH_PC.sample_input_4=4
@@ -73,7 +73,7 @@ J9NLS_BCV_ERROR_TEMPLATE_WITH_PC.user_response=
 
 J9NLS_BCV_ERROR_TEMPLATE_NO_PC=%1$s; class=%3$.*2$s, method=%5$.*4$s%7$.*6$s
 # START NON-TRANSLATABLE
-J9NLS_BCV_ERROR_TEMPLATE_NO_PC.sample_input_1=JVMCRFY114; 
+J9NLS_BCV_ERROR_TEMPLATE_NO_PC.sample_input_1=JVMCRFY114;
 J9NLS_BCV_ERROR_TEMPLATE_NO_PC.sample_input_2=3
 J9NLS_BCV_ERROR_TEMPLATE_NO_PC.sample_input_3=Foo
 J9NLS_BCV_ERROR_TEMPLATE_NO_PC.sample_input_4=4
@@ -147,7 +147,7 @@ J9NLS_BCV_ERR_ARRAY_TYPE_MISMATCH=matriz de tipo n\u00e3o compat\u00edvel
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_ARRAY_TYPE_MISMATCH.explanation=Verification failed due to an incorrect 'anewarray' bytecode
 J9NLS_BCV_ERR_ARRAY_TYPE_MISMATCH.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
-J9NLS_BCV_ERR_ARRAY_TYPE_MISMATCH.user_response=Contact the provider of the classfile for a corrected version.  
+J9NLS_BCV_ERR_ARRAY_TYPE_MISMATCH.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE
 
@@ -177,9 +177,9 @@ J9NLS_BCV_ERR_INCONSISTENT_STACK.user_response=Contact the provider of the class
 
 J9NLS_BCV_ERR_CLASSLOADING_CONSTRAINT=restri\u00e7\u00e3o de carregamento de classe violado
 # START NON-TRANSLATABLE
-J9NLS_BCV_ERR_CLASSLOADING_CONSTRAINT.explanation=A classloader has visibility to two different instances of the same class. 
+J9NLS_BCV_ERR_CLASSLOADING_CONSTRAINT.explanation=A classloader has visibility to two different instances of the same class.
 J9NLS_BCV_ERR_CLASSLOADING_CONSTRAINT.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
-J9NLS_BCV_ERR_CLASSLOADING_CONSTRAINT.user_response=Adjust the class loading process of the application to ensure each classloader only has visibility to one instance of the class. 
+J9NLS_BCV_ERR_CLASSLOADING_CONSTRAINT.user_response=Adjust the class loading process of the application to ensure each classloader only has visibility to one instance of the class.
 
 # END NON-TRANSLATABLE
 
@@ -409,7 +409,7 @@ J9NLS_BCV_ERR_WRONG_INIT_METHOD.user_response=Contact the provider of the classf
 #Example: JVMVRFY012; class=Foo, method=main([Ljava/lang/String;)V, pc=5; Type Mismatch, argument 0 in signature Foo."<init>":(Ljava/lang/String;)V does not match
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH=%1$s; classe=%3$.*2$s, m\u00e9todo=%5$.*4$s%7$.*6$s, pc=%8$u; Incompatibilidade de tipos, o argumento %9$d na assinatura %11$.*10$s.%13$.*12$s:%15$.*14$s n\u00e3o corresponde
 # START NON-TRANSLATABLE
-J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.sample_input_1=JVMVRFY012; 
+J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.sample_input_1=JVMVRFY012;
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.sample_input_2=3
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.sample_input_3=Foo
 J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH.sample_input_4=4
@@ -435,6 +435,6 @@ J9NLS_BCV_ERR_BC_NEW_ARRAY=o novo bytecode n\u00e3o pode criar matrizes
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_BC_NEW_ARRAY.explanation=Verification failed due to an incorrect 'new' bytecode
 J9NLS_BCV_ERR_BC_NEW_ARRAY.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.
-J9NLS_BCV_ERR_BC_NEW_ARRAY.user_response=Contact the provider of the classfile for a corrected version.  
+J9NLS_BCV_ERR_BC_NEW_ARRAY.user_response=Contact the provider of the classfile for a corrected version.
 
 # END NON-TRANSLATABLE

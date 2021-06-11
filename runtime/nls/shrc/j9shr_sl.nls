@@ -34,7 +34,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -167,7 +167,7 @@ J9NLS_SHRC_OSCACHE_SHARED_CACHE_SEMAPHORE_REMOVE_FAILED.user_response=Contact yo
 
 J9NLS_SHRC_OSCACHE_INVALIDFLAG=Napaka predpomnilnika razreda v skupni rabi: Neveljaven znak
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_INVALIDFLAG.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_INVALIDFLAG.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_INVALIDFLAG.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_INVALIDFLAG.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -218,7 +218,7 @@ J9NLS_SHRC_OSCACHE_UNKNOWN_ERROR.user_response=Contact your service representati
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED=Napaka pri ustvarjanju podro\u010dja pomnilnika v skupni rabi
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED.explanation=An error has occurred in shared class processing.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. 
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
@@ -769,7 +769,7 @@ J9NLS_SHRC_CM_WARN_CORRUPT_CACHE=Predpomnilnik v skupni rabi \"%s\" je okvarjen.
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.sample_input_1=myCache
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.explanation=The shared class cache named in the message is corrupt.
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.system_action=The JVM will attempt to automatically re-create the cache before starting. If re-creation fails, the JVM will terminate unless you have specified the nonfatal option with "-Xshareclasses:nonfatal".
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative. 
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_PRINTSTATS_TITLE=\n\
@@ -841,7 +841,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CLASSPATH_DISPLAY.user_response=
 
 J9NLS_SHRC_CM_PRINTSTATS_CLASSPATH_URL_DISPLAY=%1$d: URL 0x%2$p
 # START NON-TRANSLATABLE
-J9NLS_SHRC_CM_PRINTSTATS_CLASSPATH_URL_DISPLAY.sample_input_1=1  
+J9NLS_SHRC_CM_PRINTSTATS_CLASSPATH_URL_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_CLASSPATH_URL_DISPLAY.sample_input_2=00FFAB00
 J9NLS_SHRC_CM_PRINTSTATS_CLASSPATH_URL_DISPLAY.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_CLASSPATH_URL_DISPLAY.system_action=
@@ -1250,7 +1250,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_UNREC_ESCAPE=Ube\u017eni znak %.*s ni veljaven za ime
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_UNREC_ESCAPE.sample_input_1=1
 J9NLS_SHRC_SHRINIT_FAILURE_UNREC_ESCAPE.sample_input_2=h
-J9NLS_SHRC_SHRINIT_FAILURE_UNREC_ESCAPE.explanation=An invalid escape character has been specified in a shared class cache name  
+J9NLS_SHRC_SHRINIT_FAILURE_UNREC_ESCAPE.explanation=An invalid escape character has been specified in a shared class cache name
 J9NLS_SHRC_SHRINIT_FAILURE_UNREC_ESCAPE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_SHRINIT_FAILURE_UNREC_ESCAPE.user_response=Specify a valid escape character. Valid escape characters are %%u for username (all platforms) and %%g for group name (not valid for Windows).
 # END NON-TRANSLATABLE
@@ -1387,7 +1387,7 @@ J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_ZOS.system_action=The JVM terminates, unle
 J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_ZOS.user_response=If you require a cache of this size, ask your system programmer to increase the z/OS system BPXPRMxx settings appropriately.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_AIX=Zaradi omejitev operacijskega sistema ni mogo\u010de izdelati predpomnilnika zahtevane velikosti. 
+J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_AIX=Zaradi omejitev operacijskega sistema ni mogo\u010de izdelati predpomnilnika zahtevane velikosti.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_AIX.explanation=AIX/i5OS cannot create a Shared Classes cache of requested size.
 J9NLS_SHRC_OSCACHE_ERROR_SHMEM_TOOBIG_AIX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -1775,70 +1775,70 @@ J9NLS_SHRC_OSCACHE_MMAP_PORT_ERROR_MESSAGE.user_response=If the appropriate acti
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP=Trajnih predpomnilnikov razredov v skupni rabi ni mogo\u010de izdelati/uporabiti, ker preslikava pomnilnika ne podpira zahtevanih zmo\u017enosti.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_MMAPCAP.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_PORTCAP=Trajnih predpomnilnikov razredov v skupni rabi ni mogo\u010de izdelati/uporabiti, ker zaklepanje datotek ni podprto.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_PORTCAP.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_PORTCAP.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_PORTCAP.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_PORTCAP.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_NOMEM_CACHENAME=Zmanjkalo je pomnilnika za lokalno kopijo imena predpomnilnika
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_NOMEM_CACHENAME.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_NOMEM_CACHENAME.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_NOMEM_CACHENAME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_NOMEM_CACHENAME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_GETCACHEPATHNAME_ERROR=Med pridobivanjem poti predpomnilni\u0161ke datoteke je pri\u0161lo do napake
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_GETCACHEPATHNAME_ERROR.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_GETCACHEPATHNAME_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_GETCACHEPATHNAME_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_GETCACHEPATHNAME_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR=Napaka pri odpiranju datoteke predpomnilnika razredov v skupni rabi. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR=Napaka pri odpiranju datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_FILEOPEN_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR=Napaka pri pridobivanju klju\u010davnice za zaklepanje glave datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME=Napaka pri posodabljanju \u010dasa zadnjega pripenjanja predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INVALID_CACHE_HEADER=Napaka: datoteka predpomnilnika razredov v skupni rabi ima neveljavno glavo.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INVALID_CACHE_HEADER.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INVALID_CACHE_HEADER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INVALID_CACHE_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INVALID_CACHE_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INITIALISING_DATA_HEADER=Med inicializiranjem oglavja podatkov predpomnilnika v skupni rabi je pri\u0161lo do napake
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INITIALISING_DATA_HEADER.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INITIALISING_DATA_HEADER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INITIALISING_DATA_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_INITIALISING_DATA_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_SETTING_CACHE_LENGTH=Napaka pri nastavljanju dol\u017eine datoteke predpomnilnika razreda v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_SETTING_CACHE_LENGTH.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_SETTING_CACHE_LENGTH.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_SETTING_CACHE_LENGTH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_SETTING_CACHE_LENGTH.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -1852,21 +1852,21 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_OPENING_CACHE_READONLY.user_response=Remov
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER=Napaka pri izdelavi glave datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_CREATING_CACHE_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK=Napaka pri pridobivanju bralne klju\u010davnice pripenjanja datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK=Napaka pri spro\u0161\u010danju bralne klju\u010davnice pripenjanja datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -1889,56 +1889,56 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_OPENED.user_response=No action required.
 
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED=Napaka: predpomnilnik razredov v skupni rabi ni pripet.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_NOT_ATTACHED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK=Napaka: pisalne klju\u010davnice glave datoteke predpomnilnika razredov v skupni rabi ni mogo\u010de pridobiti.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_HEADER_WRITE_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK=Napaka: pisalne klju\u010davnice pripenjanja datoteke predpomnilnika razredov v skupni rabi ni mogo\u010de pridobiti.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_ACQUIRING_ATTACH_WRITE_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE=Napaka: datoteke predpomnilnika razredov v skupni rabi ni mogo\u010de izbrisati.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_DESTROY_ERROR_DELETING_FILE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME=Napaka pri posodabljanju \u010dasa zadnjega odpenjanja datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK=Napaka pri spro\u0161\u010danju bralne klju\u010davnice pripenjanja datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_MMAP_CLEANUP_ERROR_RELEASING_ATTACH_READ_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH=Napaka pri pridobivanju dol\u017eine datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_GETTING_FILE_LENGTH.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_MAPPING_FILE=Napaka pri preslikovanju datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_MAPPING_FILE.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_MAPPING_FILE.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_MAPPING_FILE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_MAPPING_FILE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -1953,21 +1953,21 @@ J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ATTACHED.user_response=No action required.
 
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER=Napaka: prepoznano zaporedje bajtov v oglavju datoteke predpomnilnika razredov v skupni rabi ni veljavno.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_EYECATCHER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION=Napaka: razli\u010dica glave datoteke predpomnilnika razredov v skupni rabi ni veljavna.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_VERSION.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL=Napaka: raven popravkov glave datoteke predpomnilnika razredov v skupni rabi ni veljavna.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ISCACHEHEADERVALID_MODLEVEL.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -1988,28 +1988,28 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_AUTOPUNT.user_response=
 
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK=Napaka pri iskanju datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILESEEK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE=Napaka pri pisanju v datoteko predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_CREATECACHEHEADER_FILEWRITE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH=Napaka pri nastavljanju dol\u017eine datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_SETCACHELENGTH_FILESETLENGTH.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME=Napaka pri posodabljanju \u010dasa zadnjega odpenjanja datoteke predpomnilnika v skupni rabi v izhodu JVM
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_RUNEXITCODE_ERROR_UPDATING_LAST_ATTACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -2311,7 +2311,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NO_COREMMAP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_COREMMAP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_NO_COREMMAP_WARNING=Izvajanje z mo\u017enostjo "noCoreMmap" bo pomenilo, da vam IBM verjetno ne bo mogel pomagati pri sesutjih, saj bodo v izpisih pomnilnika sistema manjkali podatki razredov 
+J9NLS_SHRC_NO_COREMMAP_WARNING=Izvajanje z mo\u017enostjo "noCoreMmap" bo pomenilo, da vam IBM verjetno ne bo mogel pomagati pri sesutjih, saj bodo v izpisih pomnilnika sistema manjkali podatki razredov
 # START NON-TRANSLATABLE
 J9NLS_SHRC_NO_COREMMAP_WARNING.explanation=Without CORE_MMAP set to "yes", the system dumps will not contain the required class data
 J9NLS_SHRC_NO_COREMMAP_WARNING.system_action=The JVM continues
@@ -2434,14 +2434,14 @@ J9NLS_SHRC_OSCACHE_VMEM_NETWORK_CACHE.user_response=Select a different cacheDir.
 
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR=Napaka pri spro\u0161\u010danju pisalne klju\u010davnice pripenjanja datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEATTACHWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEHEADERWRITELOCK_ERROR=Napaka pri spro\u0161\u010danju pisalne klju\u010davnice glave datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VMEM_STARTUP_RELEASEHEADERWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -2631,7 +2631,7 @@ J9NLS_SHRC_OSCACHE_PORT_ERROR_NUMBER_SYSV_ERR_RECOVER=Koda napake plasti vrat = 
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_PORT_ERROR_NUMBER_SYSV_ERR_RECOVER.sample_input_1=101
 J9NLS_SHRC_OSCACHE_PORT_ERROR_NUMBER_SYSV_ERR_RECOVER.explanation=This message shows the last portable error code stored in the J9 Port layer.  It indicates the last error encountered.
-J9NLS_SHRC_OSCACHE_PORT_ERROR_NUMBER_SYSV_ERR_RECOVER.system_action=The JVM has failed to clean up a System V IPC resource during error recovery. 
+J9NLS_SHRC_OSCACHE_PORT_ERROR_NUMBER_SYSV_ERR_RECOVER.system_action=The JVM has failed to clean up a System V IPC resource during error recovery.
 J9NLS_SHRC_OSCACHE_PORT_ERROR_NUMBER_SYSV_ERR_RECOVER.user_response=Consult the "Java Diagnostics Guide".
 # END NON-TRANSLATABLE
 
@@ -2859,7 +2859,7 @@ J9NLS_SHRC_SHRINIT_FIND_FAILED_VERBOSE_DATA_MSG.user_response=
 J9NLS_SHRC_OSCACHE_SHMEM_OPEN_ATTACHED_FAILED=Napaka pri pripenjanju k pomnilniku v skupni rabi med odpiranjem/shranjevanjem
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPEN_ATTACHED_FAILED.explanation=An error has occurred in shared class processing.
-J9NLS_SHRC_OSCACHE_SHMEM_OPEN_ATTACHED_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. 
+J9NLS_SHRC_OSCACHE_SHMEM_OPEN_ATTACHED_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHMEM_OPEN_ATTACHED_FAILED.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
@@ -2963,7 +2963,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG=Ime predpomnilnika je predol
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_1=23
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_2=45
-J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.explanation=The system has not been able to include the username in the shared class cache name. 
+J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.explanation=The system has not been able to include the username in the shared class cache name.
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -2973,7 +2973,7 @@ J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY=%1$d: 0x%2$p ZIPCACHE: %4$.*3$s Naslov
 J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_ZIPCACHE_DISPLAY.explanation=NOTAG
@@ -3002,7 +3002,7 @@ J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE=Velikost podro\u010dja za razhro\u0161\u010devanje razredov                %*c= %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.sample_input_3=50
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.system_action=
@@ -3012,7 +3012,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_SIZE.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED=Uporabljenega %% podro\u010dja za razhro\u0161\u010devanje razredov             %*c= %u%%
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.sample_input_3=50
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.system_action=
@@ -3023,7 +3023,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES=Bajti razreda LineNumberTable %*c= %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.sample_input_3=50
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.system_action=
@@ -3034,7 +3034,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LINENUMBERTABLE_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES=Bajti LocalVariableTable podro\u010dja za razhro\u0161\u010devanje razredov %*c= %u\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.sample_input_3=50
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES.system_action=
@@ -3045,7 +3045,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2=\n\
 osnovni naslov                         %*c= 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.sample_input_3=4263E000
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.system_action=
@@ -3055,7 +3055,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BASEADDRESS_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2=kon\u010dni naslov                         %*c= 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.sample_input_3=43630000
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.system_action=
@@ -3065,7 +3065,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ENDADDRESS_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2=dodelitvena kazalka                  %*c= 0x%p\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.sample_input_3=427051B0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.system_action=
@@ -3075,7 +3075,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ALLOCPTR_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2=velikost predpomnilnika                          %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.sample_input_3=16776844
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.system_action=
@@ -3085,7 +3085,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CACHESIZE_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2=prosti bajti                           %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.sample_input_3=15691032
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.system_action=
@@ -3095,7 +3095,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_FREEBYTES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2=bajti ROMClass                      %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.sample_input_3=1007716
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.system_action=
@@ -3105,17 +3105,17 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ROMCLASS_BYTES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2=Bajti metapodatkov                      %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.sample_input_3=21124
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.system_action=
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.user_response=          
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_BYTES_V2.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2=Uporabljenih %% metapodatkov                     %*c= %d%%
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.sample_input_3=1
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.system_action=
@@ -3125,7 +3125,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_META_PERCENT_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2=# ROM razredov (ROMClasses)                        %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.sample_input_3=320
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.system_action=
@@ -3135,7 +3135,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ROMCLASSES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2=# razrednih poti                        %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.sample_input_3=1
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.system_action=
@@ -3145,7 +3145,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CLASSPATHS_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2=# URL-jev                              %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.sample_input_3=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.system_action=
@@ -3155,7 +3155,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_URLS_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2=# \u017eetonov                            %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.sample_input_3=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.system_action=
@@ -3165,7 +3165,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_TOKENS_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2=# zastaranih razredov                     %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.sample_input_3=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.system_action=
@@ -3175,17 +3175,17 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STALE_CLASSES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2=%% zastaranih razredov                      %*c= %d%%\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.sample_input_3=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.system_action=
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.user_response=          
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_PERC_STALE_CLASSES_V2.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2=bajti AOT                            %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.sample_input_3=364720
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.system_action=
@@ -3195,7 +3195,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_BYTES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2=# metod AOT                        %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.sample_input_3=230
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.system_action=
@@ -3205,7 +3205,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2=Podatkovni bajti                           %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.system_action=
@@ -3215,7 +3215,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_DATA_BYTES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2=Bajti predpomnilnika Zip                      %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.system_action=
@@ -3225,7 +3225,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2=# predpomnilnikov Zip                         %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.system_action=
@@ -3235,7 +3235,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2=podatkovni bajti JIT                       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.system_action=
@@ -3245,7 +3245,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_DATA_BYTES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES=Uporabljeni bajti podro\u010dja za razhro\u0161\u010devanje razredov          %*c= %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.sample_input_3=50
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_USED_BYTES.system_action=
@@ -3269,7 +3269,7 @@ J9NLS_SHRC_OSCACHE_CREATECACHEDIR_FAILED.user_response=Make sure you have the ri
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS=za\u010detni naslov metapodatkov               %*c= 0x%p
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.sample_input_3=427051B0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.system_action=
@@ -3279,7 +3279,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS=zastavice izvajalnega okolja                       %*.c= 0x%.16llX
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.sample_input_3=00000001ACA6029F
 J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.system_action=
@@ -3289,7 +3289,7 @@ J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN=izdelava predpomnilnika                    %*.c= %d\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.sample_input_3=8
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.system_action=
@@ -3299,7 +3299,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES=bajti kode AOT                       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.sample_input_3=364720
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.system_action=
@@ -3309,7 +3309,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CODE_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES=podatkovni bajti AOT                       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.sample_input_3=364720
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.system_action=
@@ -3319,7 +3319,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_DATA_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES=bajti hierarhije razreda AOT            %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.sample_input_3=364720
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.system_action=
@@ -3329,7 +3329,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_CLASS_HIERARCHY_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES=bajti prevednih podprogramov AOT                      %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.sample_input_3=364720
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.system_action=
@@ -3339,7 +3339,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_THUNK_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES=bajti namigov JIT                       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.system_action=
@@ -3349,7 +3349,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_HINT_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES=bajti profilov JIT                    %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.system_action=
@@ -3359,7 +3359,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_PROFILE_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES=bajti objektov Java                    %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.system_action=
@@ -3369,7 +3369,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JAVA_OBJECT_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES=bajti ReadWrite                      %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.system_action=
@@ -3379,7 +3379,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_READWRITE_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES=podatkovni bajti JCL                       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.system_action=
@@ -3389,7 +3389,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES=podatkovni bajti bajtov                       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.system_action=
@@ -3399,7 +3399,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_BYTE_DATA_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2=bajti razreda LocalVariableTable      %*c= %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.sample_input_3=50
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.system_action=
@@ -3409,7 +3409,7 @@ J9NLS_SHRC_CM_PRINTSTATS_DEBUGAREA_LOCALVARIABLETABLE_BYTES_V2.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA=# vnosov podatkov AOT                  %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.sample_input_3=230
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.system_action=
@@ -3419,7 +3419,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_DATA.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY=# hierarhij razreda AOT                %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.sample_input_3=230
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.system_action=
@@ -3429,7 +3429,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_CLASS_HIERARCHY.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS=# prevednih podprogramov AOT                         %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.sample_input_3=230
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.system_action=
@@ -3439,7 +3439,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_AOT_THUNKS.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS=# namigov JIT                         %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.sample_input_3=230
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.system_action=
@@ -3449,7 +3449,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_HINTS.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES=# profilov JIT                       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.sample_input_3=230
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.system_action=
@@ -3459,7 +3459,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JIT_PROFILES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS=# objektov Java                       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.sample_input_3=230
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.system_action=
@@ -3469,7 +3469,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JAVA_OBJECTS.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES=# vnosov JCL                        %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.sample_input_3=230
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES.system_action=
@@ -3496,7 +3496,7 @@ J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN=Starej\u0161e generacije predpomnilnika
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.sample_input_1=myCache
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.explanation=It has not been possible to remove the older generation of indicated shared class cache.
 J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.system_action=Processing continues.
-J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.user_response=Run with -Xshareclasses:verbose enabled to see other messages that may indicate the reason why the cache has not been destroyed.  Investigate these messages. 
+J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN.user_response=Run with -Xshareclasses:verbose enabled to see other messages that may indicate the reason why the cache has not been destroyed.  Investigate these messages.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN=Trenutne generacije predpomnilnika razreda v skupni rabi \"%s\" ni bilo mogo\u010de odstraniti
@@ -3540,11 +3540,11 @@ J9NLS_SHRC_CM_PRINTSTATS_JITPROFILE_FROM_ROMCLASS.user_response=
 
 J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER=Value=%d, ki jo je posredovala mo\u017enost -Xitsn, je zunaj obsega vrednosti pra\u0161tevil, ki ga podpira VM. Podprt obseg = 0 \u2013 %u
 # START NON-TRANSLATABLE
-J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.sample_input_1=150 
+J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.sample_input_1=150
 J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.sample_input_2=27000
 J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.explanation=The value passed by -Xitsn option is bigger than the biggest prime number supported by the VM.
 J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.system_action=VM terminates.
-J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.user_response=Please check the value passed by -Xitsn option on the command line. Supported range can be seen in the error message. 
+J9NLS_SHRC_SHRINIT_VALUE_IS_NOT_SUPPORTED_BY_PRIMENUMBERHELPER.user_response=Please check the value passed by -Xitsn option on the command line. Supported range can be seen in the error message.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE=-Xitsn%2$u uporablja %1$u bajtov pomnilnika, kar je ve\u010dje kot velikost pomnilnika razredov v skupni rabi, ki je %3$u bajtov
@@ -3553,20 +3553,20 @@ J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.sample_input_
 J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.sample_input_2=1000
 J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.sample_input_3=15000
 J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.explanation=Shared Intern Table is part of the shared cache and it can not be bigger than shared cache.
-J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.system_action=Processing continues. New intern table size is calculated proportional to the shared cache size. 
+J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.system_action=Processing continues. New intern table size is calculated proportional to the shared cache size.
 J9NLS_SHRC_SHRINIT_SHARED_INTERN_TABLE_IS_BIGGER_THAN_SHARED_CACHE.user_response=Check the shared cache size and intern string table node count specified by the -Xitsn option.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR=Napaka pri pridobivanju klju\u010davnice za zaklepanje glave datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK=Napaka pri spro\u0161\u010danju bralne klju\u010davnice glave datoteke predpomnilnika razredov v skupni rabi.
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -3607,7 +3607,7 @@ J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_2=-1
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.sample_input_3=67676767
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.explanation=The shared class cache named in the message is corrupt.
 J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.system_action=The JVM will attempt to automatically re-create the cache before starting. If re-creation fails, the JVM will terminate unless you have specified the nonfatal option with "-Xshareclasses:nonfatal".
-J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative. 
+J9NLS_SHRC_CM_WARN_CORRUPT_CACHE_V2.user_response=Destroy the shared class cache named in the message and rerun.  If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_CC_STARTUP_CACHE_CRC_INVALID=CRC predpomnilnika je nepravilen, kar nakazuje okvaro predpomnilnika. Nepravilen CRC predpomnilnika: 0x%x.
@@ -3871,10 +3871,10 @@ J9NLS_SHRC_CM_UPDATE_FAILED_VERBOSE_ATTACHED_MSG.user_response=
 
 #start of smaller messages in CacheMap.cpp
 #below messages are part of larger messages such as
-#J9NLS_SHRC_CM_UPDATE_FAILED_VERBOSE_ATTACHED_MSG, 
+#J9NLS_SHRC_CM_UPDATE_FAILED_VERBOSE_ATTACHED_MSG,
 #J9NLS_SHRC_CM_STORE_FAILED_VERBOSE_ATTACHED_MSG
 #J9NLS_SHRC_CM_FIND_FAILED_VERBOSE_ATTACHED_MSG
- 
+
 J9NLS_SHRC_CM_NO_ACCESS_TO_RESOURCE=ni dostopa no vira
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_NO_ACCESS_TO_RESOURCE.explanation=NOTAG
@@ -3967,7 +3967,7 @@ J9NLS_SHRC_CM_CACHE_REFRESH_FAILED.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MIN=Rezerviran prostor za bajte AOT        %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MIN.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MIN.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MIN.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MIN.sample_input_3=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MIN.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MIN.system_action=
@@ -3977,7 +3977,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MIN.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MAX=Najve\u010dji prostor za bajte AOT        %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MAX.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MAX.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MAX.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MAX.sample_input_3=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MAX.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MAX.system_action=
@@ -3987,7 +3987,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_AOT_MAX.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MIN=Rezerviran prostor za podatkovne bajte JIT        %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MIN.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MIN.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MIN.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MIN.sample_input_3=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MIN.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MIN.system_action=
@@ -3997,7 +3997,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MIN.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MAX=Najve\u010dji prostor za podatkovne bajte JIT        %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MAX.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MAX.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MAX.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MAX.sample_input_3=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MAX.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JIT_MAX.system_action=
@@ -4101,17 +4101,17 @@ J9NLS_SHRC_CM_UPDATE_FAILED_VERBOSE_ATTACHED_NOCLASSINFO_MSG.user_response=
 # END NON-TRANSLATABLE
 
 # START NON-TRANSLATABLE
-J9NLS_SHRC_PLACEHOLDER_A=Placeholder, not used 
+J9NLS_SHRC_PLACEHOLDER_A=Placeholder, not used
 J9NLS_SHRC_PLACEHOLDER_A.explanation=NOTISSUED
 J9NLS_SHRC_PLACEHOLDER_A.system_action=
 J9NLS_SHRC_PLACEHOLDER_A.user_response=
 
-J9NLS_SHRC_PLACEHOLDER_B=Placeholder, not used 
+J9NLS_SHRC_PLACEHOLDER_B=Placeholder, not used
 J9NLS_SHRC_PLACEHOLDER_B.explanation=NOTISSUED
 J9NLS_SHRC_PLACEHOLDER_B.system_action=
 J9NLS_SHRC_PLACEHOLDER_B.user_response=
 
-J9NLS_SHRC_PLACEHOLDER_C=Placeholder, not used 
+J9NLS_SHRC_PLACEHOLDER_C=Placeholder, not used
 J9NLS_SHRC_PLACEHOLDER_C.explanation=NOTISSUED
 J9NLS_SHRC_PLACEHOLDER_C.system_action=
 J9NLS_SHRC_PLACEHOLDER_C.user_response=
@@ -4215,8 +4215,8 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_CORRUPT_CACHE_DUMPS.user_response=
 J9NLS_CACHE_BAD_CC_INIT= Sestavljen predpomnilnik ima okvarjeno vrednost zastavice za inicializacijo. Vrednost ccInitComplete je %lu
 # START NON-TRANSLATABLE
 J9NLS_CACHE_BAD_CC_INIT.sample_input_1=2
-J9NLS_CACHE_BAD_CC_INIT.explanation=Composite cache has bad initialization flag value. 
-J9NLS_CACHE_BAD_CC_INIT.system_action=The cache is marked as corrup and JVM continues. 
+J9NLS_CACHE_BAD_CC_INIT.explanation=Composite cache has bad initialization flag value.
+J9NLS_CACHE_BAD_CC_INIT.system_action=The cache is marked as corrup and JVM continues.
 J9NLS_CACHE_BAD_CC_INIT.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
@@ -4263,56 +4263,56 @@ J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED.system_action=The JVM terminates
 J9NLS_SHRC_SHRINIT_PRINTALLSTATS_UNRECOGNISED.user_response=Provide a valid suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP=Razpolo\u017eljive mo\u017enosti za -Xshareclasses:printAllStats=<options>. Z znakom '+' podate ve\u010d mo\u017enosti. \u010ce je printallstats=aot+url \n  
-# START NON-TRANSLATABLE 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP=Razpolo\u017eljive mo\u017enosti za -Xshareclasses:printAllStats=<options>. Z znakom '+' podate ve\u010d mo\u017enosti. \u010ce je printallstats=aot+url \n
+# START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL=\t all               Izpi\u0161e vse naslednje tipe v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL=\t all               Izpi\u0161e vse naslednje tipe v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH=\t classpath   Izpi\u0161e samo tipe razredov poti v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH=\t classpath   Izpi\u0161e samo tipe razredov poti v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL=\t url               Izpi\u0161e samo tipe URL-jev v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL=\t url               Izpi\u0161e samo tipe URL-jev v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN=\t token           Izpi\u0161e samo tipe \u017eetonov v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN=\t token           Izpi\u0161e samo tipe \u017eetonov v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_TOKEN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS=\t romclass     Izpi\u0161e samo tipe romclass v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS=\t romclass     Izpi\u0161e samo tipe romclass v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMCLASS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD=\t rommethod   Izpi\u0161e samo tipe rommethod v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD=\t rommethod   Izpi\u0161e samo tipe rommethod v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ROMMETHOD.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT=\t aot               Izpi\u0161e samo tipe aot v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT=\t aot               Izpi\u0161e samo tipe aot v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.system_action=
@@ -4320,7 +4320,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOT.user_response=
 # END NON-TRANSLATABLE
 
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE=\t jitprofile Izpi\u0161e samo tipe jitprofile v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE=\t jitprofile Izpi\u0161e samo tipe jitprofile v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITPROFILE.system_action=
@@ -4334,56 +4334,56 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA=\t extra           Izpi\u0161e vse naslednje zasebne tipe v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA=\t extra           Izpi\u0161e vse naslednje zasebne tipe v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN=\t orphan         Izpi\u0161e samo osamele tipe (orphan types) v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN=\t orphan         Izpi\u0161e samo osamele tipe (orphan types) v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ORPHAN.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t jithint       Izpi\u0161e samo tipe jithint v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT=\t jithint       Izpi\u0161e samo tipe jithint v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JITHINT.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH=\t aotch           Izpi\u0161e samo tipe aotch v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH=\t aotch           Izpi\u0161e samo tipe aotch v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTCH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK=\t aotthunk     Izpi\u0161e samo tipe aotthunk v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK=\t aotthunk     Izpi\u0161e samo tipe aotthunk v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTTHUNK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA=\t aotdata       Izpi\u0161e samo tipe aotdata v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA=\t aotdata       Izpi\u0161e samo tipe aotdata v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_AOTDATA.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL=\t jcl               Izpi\u0161e samo tipe jcl v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL=\t jcl               Izpi\u0161e samo tipe jcl v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_JCL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA=\t bytedata     Izpi\u0161e vse druge tipe bytedata v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA=\t bytedata     Izpi\u0161e vse druge tipe bytedata v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_BYTEDATA.system_action=
@@ -4395,7 +4395,7 @@ J9NLS_SHRC_CM_PRINTSTATS_JITHINT_DISPLAY=%1$d: 0x%2$p JITHINT: %4$.*3$s Naslov: 
 J9NLS_SHRC_CM_PRINTSTATS_JITHINT_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_JITHINT_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_JITHINT_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_JITHINT_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_JITHINT_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_JITHINT_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_JITHINT_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_JITHINT_DISPLAY.explanation=NOTAG
@@ -4408,7 +4408,7 @@ J9NLS_SHRC_CM_PRINTSTATS_JCL_DISPLAY=%1$d: 0x%2$p JCL: %4$.*3$s Naslov: 0x%5$p V
 J9NLS_SHRC_CM_PRINTSTATS_JCL_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_JCL_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_JCL_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_JCL_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_JCL_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_JCL_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_JCL_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_JCL_DISPLAY.explanation=NOTAG
@@ -4421,7 +4421,7 @@ J9NLS_SHRC_CM_PRINTSTATS_AOTCH_DISPLAY=%1$d: 0x%2$p AOTCH: %4$.*3$s Naslov: 0x%5
 J9NLS_SHRC_CM_PRINTSTATS_AOTCH_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_AOTCH_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_AOTCH_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_AOTCH_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_AOTCH_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_AOTCH_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_AOTCH_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_AOTCH_DISPLAY.explanation=NOTAG
@@ -4434,7 +4434,7 @@ J9NLS_SHRC_CM_PRINTSTATS_AOTTHUNK_DISPLAY=%1$d: 0x%2$p AOTTHUNK: %4$.*3$s Naslov
 J9NLS_SHRC_CM_PRINTSTATS_AOTTHUNK_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_AOTTHUNK_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_AOTTHUNK_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_AOTTHUNK_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_AOTTHUNK_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_AOTTHUNK_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_AOTTHUNK_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_AOTTHUNK_DISPLAY.explanation=NOTAG
@@ -4447,7 +4447,7 @@ J9NLS_SHRC_CM_PRINTSTATS_UNKNOWN_DISPLAY=%1$d: 0x%2$p UNKNOWN: %4$.*3$s Naslov: 
 J9NLS_SHRC_CM_PRINTSTATS_UNKNOWN_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_UNKNOWN_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_UNKNOWN_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_UNKNOWN_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_UNKNOWN_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_UNKNOWN_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_UNKNOWN_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_UNKNOWN_DISPLAY.explanation=NOTAG
@@ -4460,7 +4460,7 @@ J9NLS_SHRC_CM_PRINTSTATS_HELPER_DISPLAY=%1$d: 0x%2$p HELPER: %4$.*3$s Naslov: 0x
 J9NLS_SHRC_CM_PRINTSTATS_HELPER_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_HELPER_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_HELPER_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_HELPER_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_HELPER_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_HELPER_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_HELPER_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_HELPER_DISPLAY.explanation=NOTAG
@@ -4473,7 +4473,7 @@ J9NLS_SHRC_CM_PRINTSTATS_POOL_DISPLAY=%1$d: 0x%2$p POOL: %4$.*3$s Naslov: 0x%5$p
 J9NLS_SHRC_CM_PRINTSTATS_POOL_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_POOL_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_POOL_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_POOL_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_POOL_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_POOL_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_POOL_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_POOL_DISPLAY.explanation=NOTAG
@@ -4486,7 +4486,7 @@ J9NLS_SHRC_CM_PRINTSTATS_AOTDATA_DISPLAY=%1$d: 0x%2$p AOTDATA: %4$.*3$s Naslov: 
 J9NLS_SHRC_CM_PRINTSTATS_AOTDATA_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_AOTDATA_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_AOTDATA_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_AOTDATA_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_AOTDATA_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_AOTDATA_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_AOTDATA_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_AOTDATA_DISPLAY.explanation=NOTAG
@@ -4499,7 +4499,7 @@ J9NLS_SHRC_CM_PRINTSTATS_VM_DISPLAY=%1$d: 0x%2$p VM: %4$.*3$s Naslov: 0x%5$p Vel
 J9NLS_SHRC_CM_PRINTSTATS_VM_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_VM_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_VM_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_VM_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_VM_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_VM_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_VM_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_VM_DISPLAY.explanation=NOTAG
@@ -4512,7 +4512,7 @@ J9NLS_SHRC_CM_PRINTSTATS_ROMSTRING_DISPLAY=%1$d: 0x%2$p ROMSTRING: %4$.*3$s Nasl
 J9NLS_SHRC_CM_PRINTSTATS_ROMSTRING_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_ROMSTRING_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_ROMSTRING_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_ROMSTRING_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_ROMSTRING_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_ROMSTRING_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_ROMSTRING_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_ROMSTRING_DISPLAY.explanation=NOTAG
@@ -4525,7 +4525,7 @@ J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY=%1$d: 0x%2$p UNUSED1: %4$.*3$s Naslov: 
 J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY.sample_input_2=042F71F8
 J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY.sample_input_3=35
-J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1 
+J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY.sample_input_4=luni-kernel.jar_347075_1272300300_1
 J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY.sample_input_5=042FE094
 J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY.sample_input_6=13808
 J9NLS_SHRC_CM_PRINTSTATS_UNUSED1_DISPLAY.explanation=NOTAG
@@ -4540,7 +4540,7 @@ J9NLS_SHRC_SHRINIT_FAILURE_ALLOCATING_CHAR_ARRAY.system_action=The JVM terminate
 J9NLS_SHRC_SHRINIT_FAILURE_ALLOCATING_CHAR_ARRAY.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET=Uveljavite preverjanje za ponastavitev tabele nizov, ko je ozna\u010den kot okvarjen. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET=Uveljavite preverjanje za ponastavitev tabele nizov, ko je ozna\u010den kot okvarjen.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET.system_action=
@@ -4610,8 +4610,8 @@ J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED.system_action=The JVM terminates
 J9NLS_SHRC_SHRINIT_PRINTSTATS_UNRECOGNISED.user_response=Provide a valid suboption
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP=Razpolo\u017eljive mo\u017enosti za -Xshareclasses:printStats=<options>. Z znakom '+' podate ve\u010d mo\u017enosti. \u010ce je printstats=aot+url \n  
-# START NON-TRANSLATABLE 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP=Razpolo\u017eljive mo\u017enosti za -Xshareclasses:printStats=<options>. Z znakom '+' podate ve\u010d mo\u017enosti. \u010ce je printstats=aot+url \n
+# START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP.user_response=
@@ -4649,7 +4649,7 @@ J9NLS_SHRC_CM_READ_CORRUPT_CACHE_ENTRY_HEADER_BAD_LEN.user_response=Contact your
 
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_REALTIME_CACHE_NOT_COMPATIBLE=Odpiranje predpomnilnika Realtime, ki ni zdru\u017eljiv s tem navideznim strojem Java. Za dostop do tega predpomnilnika uporabite mo\u017enost -Xrealtime JVM
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_REALTIME_CACHE_NOT_COMPATIBLE.explanation=A non-realtime JVM is accessing a realtime cache. 
+J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_REALTIME_CACHE_NOT_COMPATIBLE.explanation=A non-realtime JVM is accessing a realtime cache.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_REALTIME_CACHE_NOT_COMPATIBLE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_MMAP_ATTACH_ERROR_REALTIME_CACHE_NOT_COMPATIBLE.user_response=Use the -Xrealtime JVM option or try using a different cache name.
 # END NON-TRANSLATABLE
@@ -4670,7 +4670,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_CROSSGUEST.user_response=
 
 J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER=Vpadljivo zaporedje znakov glave predpomnilnika razredov, ki ga ima v skupni rabi ve\u010d gostov, ni veljavno
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_ISCACHEHEADERVALID_EYECATCHER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -4739,7 +4739,7 @@ J9NLS_SHRC_OSCACHE_VIRT_NETWORK_CACHE.user_response=Use the "nonpersistent" opti
 
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ACQUIREHEADERWRITELOCK_ERROR=Napaka pri pridobivanju zaklepa pisanja za glavo v predpomnilniku razredov, ki ga ima v skupni rabi ve\u010d gostov
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ACQUIREHEADERWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -4760,77 +4760,77 @@ J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_OPENING_CACHE_READONLY.user_response=Remov
 
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_CREATING_CACHE_HEADER=Napaka pri izdelavi glave predpomnilnika razredov, ki ga ima v skupni rabi ve\u010d gostov
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_CREATING_CACHE_HEADER.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_CREATING_CACHE_HEADER.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_CREATING_CACHE_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_CREATING_CACHE_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INITIALISING_DATA_HEADER=Med inicializiranjem glave podatkov predpomnilnika, ki ga ima v skupni rabi ve\u010d gostov, je pri\u0161lo do napake
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INITIALISING_DATA_HEADER.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INITIALISING_DATA_HEADER.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INITIALISING_DATA_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INITIALISING_DATA_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK=Napaka pri sprostitvi zaklepa branja pripenjanja predpomnilnika razredov, ki ga ima v skupni rabi ve\u010d gostov
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_RELEASING_HEADER_WRITE_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_MAPPING_SHARED_OBJECT=Napaka pri preslikavi objekta, ki ga ima v skupni rabi ve\u010d gostov
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_MAPPING_SHARED_OBJECT.explanation=An error has occurred in shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_MAPPING_SHARED_OBJECT.explanation=An error has occurred in shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_MAPPING_SHARED_OBJECT.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_MAPPING_SHARED_OBJECT.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE=Napaka: predpomnilnika razredov, ki ga ima v skupni rabi ve\u010d gostov, ni mogo\u010de izbrisati
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_VIRT_DESTROY_ERROR_DELETING_SHARED_CACHE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME=Napaka pri posodabljanju \u010dasa oddelitve "last detached" za predpomnilnik razredov, ki ga ima v skupni rabi ve\u010d gostov
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.system_action=The JVM terminates.
 J9NLS_SHRC_OSCACHE_VIRT_CLEANUP_ERROR_UPDATING_LAST_DETACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK=Napaka pri pridobivanju zaklepa branja pripenjanja predpomnilnika razredov, ki ga ima v skupni rabi ve\u010d gostov
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_ACQUIRING_ATTACH_READ_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR=Napaka pri pridobivanju zaklepa branja glave predpomnilnika razredov, ki ga ima v skupni rabi ve\u010d gostov
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ACQUIREHEADERWRITELOCK_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER=Napaka: predpomnilnik razredov, ki ga ima v skupni rabi ve\u010d gostov, ima neveljavno glavo
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_INVALID_CACHE_HEADER.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME=Napaka pri posodabljanju \u010dasa zadnjega pripenjanja predpomnilnika razredov, ki ga ima v skupni rabi ve\u010d gostov
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_STARTUP_ERROR_UPDATING_LAST_ATTACHED_TIME.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK=Napaka pri sprostitvi zaklepa branja glave predpomnilnika razredov, ki ga ima v skupni rabi ve\u010d gostov
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in cross-guest shared class processing. 
+J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.explanation=An error has occurred in cross-guest shared class processing.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_VIRT_ATTACH_ERROR_RELEASING_HEADER_WRITE_LOCK.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
@@ -4908,7 +4908,7 @@ J9NLS_SHRC_SHRINIT_SCIMX_GRTHAN_SCMX.user_response=The value has been changed au
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_RAW_CLASS_DATA_AREA_BAD_SIZE=Podro\u010dje neobdelanih podatkov razreda je po\u0161kodovano, ker je velikost elementa %lu ve\u010dja od skupne velikosti predpomnilnika elementa %lu.
-# START NON-TRANSLATABLE 
+# START NON-TRANSLATABLE
 J9NLS_SHRC_RAW_CLASS_DATA_AREA_BAD_SIZE.sample_input_1=1048576
 J9NLS_SHRC_RAW_CLASS_DATA_AREA_BAD_SIZE.sample_input_2=1024
 J9NLS_SHRC_RAW_CLASS_DATA_AREA_BAD_SIZE.explanation=An error has occurred in shared class processing.
@@ -4936,10 +4936,10 @@ J9NLS_SHRC_RAW_CLASS_DATA_AREA_BAD_SIZES_FOR_COMMIT.system_action=The cache is m
 J9NLS_SHRC_RAW_CLASS_DATA_AREA_BAD_SIZES_FOR_COMMIT.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_SIZE=Velikost podro\u010dja neobdelanih podatkov razreda            %*c= %lu 
+J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_SIZE=Velikost podro\u010dja neobdelanih podatkov razreda            %*c= %lu
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_SIZE.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_SIZE.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_SIZE.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_SIZE.sample_input_3=50
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_SIZE.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_SIZE.system_action=
@@ -4949,7 +4949,7 @@ J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_SIZE.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_PERC_USED=Uporabljeno podro\u010dje neobdelanih podatkov razreda %%          %*c= %lu%%
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_PERC_USED.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_PERC_USED.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_PERC_USED.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_PERC_USED.sample_input_3=50
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_PERC_USED.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_PERC_USED.system_action=
@@ -4959,7 +4959,7 @@ J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_PERC_USED.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_NUMBYTES=Bajti uporabljenih neobdelanih podatkov razreda           %*c= %lu
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_NUMBYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_NUMBYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_NUMBYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_NUMBYTES.sample_input_3=50
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_NUMBYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_NUMBYTES.system_action=
@@ -4981,7 +4981,7 @@ J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE.system_action=The JVM terminates.
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_MEMORY_SIZE.user_response=Correct or remove the invalid command-line option and rerun.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_ADD_JIT_HINTS=Dodajte nefunkcionalne namige JIT metodam za testiranje; uporabite z -Xint in predhodno zapolnjenim predpomnilnikom. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_ADD_JIT_HINTS=Dodajte nefunkcionalne namige JIT metodam za testiranje; uporabite z -Xint in predhodno zapolnjenim predpomnilnikom.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADD_JIT_HINTS.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_ADD_JIT_HINTS.system_action=
@@ -5107,42 +5107,42 @@ J9NLS_SHRC_OSCACHE_STARTUP_SEM_CONTROL_FILE_READ_ONLY.user_response=Ensure semap
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_CORRUPT=Napaka pri odpiranju podro\u010dja skupnega pomnilnika. Sistem je zaznal, da je krmilna datoteka po\u0161kodovana.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_CORRUPT.explanation=An error has occurred in shared class processing.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_CORRUPT.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. 
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_CORRUPT.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_CORRUPT.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHMID_MISMATCH=Napaka pri odpiranju podro\u010dja skupnega pomnilnika. ID skupnega pomnilnika se ne ujema.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHMID_MISMATCH.explanation=An error has occurred in shared class processing.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHMID_MISMATCH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. 
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHMID_MISMATCH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHMID_MISMATCH.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_KEY_MISMATCH=Napaka pri odpiranju podro\u010dja skupnega pomnilnika. Klju\u010d skupnega pomnilnika se ne ujema.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_KEY_MISMATCH.explanation=An error has occurred in shared class processing.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_KEY_MISMATCH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. 
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_KEY_MISMATCH.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_KEY_MISMATCH.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_GROUPID_CHECK_FAILED=Napaka pri odpiranju podro\u010dja skupnega pomnilnika. Preizkus za ID skupine ni uspel.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_GROUPID_CHECK_FAILED.explanation=An error has occurred in shared class processing.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_GROUPID_CHECK_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. 
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_GROUPID_CHECK_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_GROUPID_CHECK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_USERID_CHECK_FAILED=Napaka pri odpiranju podro\u010dja skupnega pomnilnika. Preizkus za ID uporabnika ni uspel.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_USERID_CHECK_FAILED.explanation=An error has occurred in shared class processing.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_USERID_CHECK_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. 
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_USERID_CHECK_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_USERID_CHECK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_SIZE_CHECK_FAILED=Napaka pri odpiranju podro\u010dja skupnega pomnilnika. Preizkus za velikost skupnega pomnilnika ni uspel.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_SIZE_CHECK_FAILED.explanation=An error has occurred in shared class processing.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_SIZE_CHECK_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. 
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_SIZE_CHECK_FAILED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_SHM_SIZE_CHECK_FAILED.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
@@ -5164,7 +5164,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_NOT_READABLE=Krmilne datoteke skupne
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_NOT_READABLE.explanation=Shared memory control file cannot be read by the JVM.
 J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_NOT_READABLE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
-J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_NOT_READABLE.user_response=Ensure shared memory control file has read-write permission and then retry. If the situation persists, contact your service representative. 
+J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_NOT_READABLE.user_response=Ensure shared memory control file has read-write permission and then retry. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_STARTUP_SHM_CONTROL_FILE_READ_ONLY=Krmilna datoteka skupnega pomnilnika je samo za branje.
@@ -5384,7 +5384,7 @@ J9NLS_SHRC_OSCACHE_MMAP_INTERNAL_ERROR_CHECKING_CACHEFILE_ACCESS.user_response=C
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_V1=Med odpiranjem skupnega pomnilnika je pri\u0161lo do napake
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_V1.explanation=An error has occurred in shared class processing. Further messages may follow providing more detail.
-J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_V1.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes. 
+J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_V1.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_V1.user_response=Contact your service representative, unless subsequent messages indicate otherwise.
 # END NON-TRANSLATABLE
 
@@ -5472,7 +5472,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.explanation=An error occurred i
 J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.system_action=The JVM attempts to attach to the shared memory segment of the shared class cache in the readonly mode if it exists.
 J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.user_response=No action required.
 # END NON-TRANSLATABLE
- 
+
 J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED=Uporabniku ni dovoljeno uni\u010diti nabora semaforjev (semid=%d). Nabor semaforjev lahko uni\u010di samo izdelovalec, lastnik ali uporabnik s skrbni\u0161kimi pravicami.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED.sample_input_1=123456
@@ -5481,14 +5481,14 @@ J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED.system_action=The JVM continu
 J9NLS_SHRC_OSCACHE_SEMAPHORE_DESTROY_NOT_PERMITTED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR=Nabora semaforjev, ki je povezan s predpomnilnikom razredov v skupni rabi, ni uspelo uni\u010diti. 
+J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR=Nabora semaforjev, ki je povezan s predpomnilnikom razredov v skupni rabi, ni uspelo uni\u010diti.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR.explanation=An error has occurred while destroying semaphore set associated with shared class cache.
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID=Nabora semaforjev (semid=%d), ki je povezan s predpomnilnikom razredov v skupni rabi, ni uspelo uni\u010diti. 
+J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID=Nabora semaforjev (semid=%d), ki je povezan s predpomnilnikom razredov v skupni rabi, ni uspelo uni\u010diti.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_DESTROYSEM_ERROR_WITH_SEMID.explanation=An error has occurred while destroying semaphore set associated with shared class cache.
@@ -5504,14 +5504,14 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_DESTROY_NOT_PERMITTED.system_action=The JVM con
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_DESTROY_NOT_PERMITTED.user_response=No action required.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR=Skupnega pomnilnika, ki je povezan s predpomnilnikom razredov v skupni rabi, ni uspelo uni\u010diti. 
+J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR=Skupnega pomnilnika, ki je povezan s predpomnilnikom razredov v skupni rabi, ni uspelo uni\u010diti.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR.explanation=An error has occurred while destroying shared memory associated with shared class cache.
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR_WITH_SHMID=Skupnega pomnilnika (shmid=%d), ki je povezan s predpomnilnikom razredov v skupni rabi, ni uspelo uni\u010diti. 
+J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR_WITH_SHMID=Skupnega pomnilnika (shmid=%d), ki je povezan s predpomnilnikom razredov v skupni rabi, ni uspelo uni\u010diti.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR_WITH_SHMID.sample_input_1=123456
 J9NLS_SHRC_OSCACHE_DESTROYSHM_ERROR_WITH_SHMID.explanation=An error has occurred while destroying shared memory associated with shared class cache.
@@ -5569,7 +5569,7 @@ J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED=Dose\u017eena je bila sistemska 
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.explanation=The JVM failed to create a new control file for shared class cache as the system limit has been hit.
 J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.system_action=If -Xshareclasses:nonfatal is specified and this error occurred when creating semaphore control file then it will try to use an existing shared class cache in read-only mode. But if the cache does not exist, then JVM will continue without shared class cache. If this error occurred when creating shared memory control file, then JVM will continue without shared class cache. In absence of -Xshareclasses:nonfatal, JVM will terminate.
-J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.user_response=Contact your system admin to increase the system limit on maximum open files or close any unused files and restart the JVM. 
+J9NLS_SHRC_OSCACHE_ERROR_MAX_OPEN_FILES_REACHED.user_response=Contact your system admin to increase the system limit on maximum open files or close any unused files and restart the JVM.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_SEMAPHORE_OPFAILED_CONTROL_FILE_LOCK_FAILED=Med odpiranjem semaforja je pri\u0161lo do napake. Krmilne datoteke ni bilo mo\u017eno zakleniti.
@@ -5589,8 +5589,8 @@ J9NLS_SHRC_OSCACHE_SHMEM_OPFAILED_CONTROL_FILE_LOCK_FAILED.user_response=Contact
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT=Predpomnilnika razredov v skupni rabi ni bilo mogo\u010de zagnati. Nadaljujte brez njegove uporabe, ker ste podali mo\u017enost -Xshareclasses:nonfatal
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.explanation=An error occurred during shared class cache startup. User has specified -Xshareclasses:nonfatal so JVM will continue without using shared class cache.
-J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.system_action=The JVM continues without shared class cache. 
-J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.user_response=Contact your service representative to understand the reason for failure to startup shared class cache. Previous error messages would possibly indicate the reason. 
+J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.system_action=The JVM continues without shared class cache.
+J9NLS_SHRC_SHRINIT_FAILED_NONFATAL_PRESENT.user_response=Contact your service representative to understand the reason for failure to startup shared class cache. Previous error messages would possibly indicate the reason.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_STARTUP_CACHE_CREATION_NOT_ALLOWED_READONLY_MODE=Novega predpomnilnika razredov v skupni rabi ni mogo\u010de izdelati, \u010de je uporabljena mo\u017enost -Xshareclasses:readonly
@@ -5941,7 +5941,7 @@ J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_IGNORED=JVM je prezrl mo\u017enos
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_IGNORED.explanation='-Xshareclasses:restrictClasspaths' is applicable only when the JVM is initializing a new shared cache.
 J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_IGNORED.system_action=The JVM continues.
-J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_IGNORED.user_response=Please destroy existing shared cache and restart the JVM if the user wants -Xshareclasses:restrictClasspaths option to be effective. 
+J9NLS_SHRC_OSCACHE_STARTUP_RESTRICT_CLASSPATHS_IGNORED.user_response=Please destroy existing shared cache and restart the JVM if the user wants -Xshareclasses:restrictClasspaths option to be effective.
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_OSCACHE_STARTUP_ALLOW_CLASSPATHS_ENABLED=JVM lahko shranjuje poti razredov v predpomnilnik v skupni rabi z uporabo mo\u017enosti '-Xshareclasses:restrictClasspaths'
@@ -6125,7 +6125,7 @@ J9NLS_SHRC_OSCACHE_CONTROL_FILE_RECREATE_PROHIBITED.user_response=None required.
 # END NON-TRANSLATABLE
 
 #shrinit.cpp
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t invalidatedaot	V skupni predpomnilnik natisne le razveljavljene tipe aot. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT=\t invalidatedaot	V skupni predpomnilnik natisne le razveljavljene tipe aot.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_INVALIDATEDAOT.system_action=
@@ -6358,7 +6358,7 @@ J9NLS_SHRC_CC_TOTAL_USED_BYTES_GRTHAN_MAXLIMIT.user_response=Either increase the
 J9NLS_SHRC_CC_MINAOT_SET=Najmanj\u0161e rezervirano \u0161tevilo bajtov za AOT je nastavljeno na %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_MINAOT_SET.sample_input_1=2048
-J9NLS_SHRC_CC_MINAOT_SET.explanation=The size of minimum AOT space has been adjusted. 
+J9NLS_SHRC_CC_MINAOT_SET.explanation=The size of minimum AOT space has been adjusted.
 J9NLS_SHRC_CC_MINAOT_SET.system_action=The JVM continues.
 J9NLS_SHRC_CC_MINAOT_SET.user_response=No action is required. This message is for information only.
 # END NON-TRANSLATABLE
@@ -6366,7 +6366,7 @@ J9NLS_SHRC_CC_MINAOT_SET.user_response=No action is required. This message is fo
 J9NLS_SHRC_CC_MAXAOT_SET=Najve\u010dje rezervirano \u0161tevilo bajtov za AOT je nastavljeno na %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_MAXAOT_SET.sample_input_1=2048
-J9NLS_SHRC_CC_MAXAOT_SET.explanation=The size of maximum AOT space has been adjusted. 
+J9NLS_SHRC_CC_MAXAOT_SET.explanation=The size of maximum AOT space has been adjusted.
 J9NLS_SHRC_CC_MAXAOT_SET.system_action=The JVM continues.
 J9NLS_SHRC_CC_MAXAOT_SET.user_response=No action required. This message is for information only.
 # END NON-TRANSLATABLE
@@ -6374,7 +6374,7 @@ J9NLS_SHRC_CC_MAXAOT_SET.user_response=No action required. This message is for i
 J9NLS_SHRC_CC_MINJIT_SET=Najmanj\u0161e rezervirano \u0161tevilo bajtov za podatke JIT je nastavljeno na %d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_MINJIT_SET.sample_input_1=2048
-J9NLS_SHRC_CC_MINJIT_SET.explanation=The size of minimum JIT data space has been adjusted. 
+J9NLS_SHRC_CC_MINJIT_SET.explanation=The size of minimum JIT data space has been adjusted.
 J9NLS_SHRC_CC_MINJIT_SET.system_action=The JVM continues.
 J9NLS_SHRC_CC_MINJIT_SET.user_response=No action is required. This message is for information only.
 # END NON-TRANSLATABLE
@@ -6382,7 +6382,7 @@ J9NLS_SHRC_CC_MINJIT_SET.user_response=No action is required. This message is fo
 J9NLS_SHRC_CC_MAXJIT_SET=Najve\u010dje dovoljeno \u0161tevilo bajtov za JIT je nastavljeno na %d..
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_MAXJIT_SET.sample_input_1=2048
-J9NLS_SHRC_CC_MAXJIT_SET.explanation=The size of maximum JIT data space has been adjusted. 
+J9NLS_SHRC_CC_MAXJIT_SET.explanation=The size of maximum JIT data space has been adjusted.
 J9NLS_SHRC_CC_MAXJIT_SET.system_action=The JVM continues.
 J9NLS_SHRC_CC_MAXJIT_SET.user_response=No action is required. This message is for information only.
 # END NON-TRANSLATABLE
@@ -6390,7 +6390,7 @@ J9NLS_SHRC_CC_MAXJIT_SET.user_response=No action is required. This message is fo
 J9NLS_SHRC_CC_SOFTMX_SET=\u0160tevilo bajtov za softmx je nastavljeno na %u.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CC_SOFTMX_SET.sample_input_1=2048
-J9NLS_SHRC_CC_SOFTMX_SET.explanation=The softmx bytes has been adjusted. 
+J9NLS_SHRC_CC_SOFTMX_SET.explanation=The softmx bytes has been adjusted.
 J9NLS_SHRC_CC_SOFTMX_SET.system_action=The JVM continues.
 J9NLS_SHRC_CC_SOFTMX_SET.user_response=No action is required. This message is for information only.
 # END NON-TRANSLATABLE
@@ -6482,7 +6482,7 @@ J9NLS_SHRC_CC_ADJUST_SIZE_ON_FULL_CACHE.user_response=No response is required.
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_SOFTMXBYTES=bajti za softmx                        %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_SOFTMXBYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_SOFTMXBYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_SOFTMXBYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_SOFTMXBYTES.sample_input_3=16776844
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_SOFTMXBYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_SOFTMXBYTES.system_action=
@@ -6584,7 +6584,7 @@ J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.system_action=The JVM continues.
 J9NLS_SHRC_CM_PRINTSHUTDOWNSTATS_UNSTORED.user_response=No action required, this is an information only message.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t zastarano		Izpi\u0161e vse zastarane vnose v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE=\t zastarano		Izpi\u0161e vse zastarane vnose v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.system_action=
@@ -6594,7 +6594,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_STALE_BYTES=zastarani bajti                         %*c= %u
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_STALE_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_STALE_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_STALE_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_STALE_BYTES.sample_input_3=15691032
 J9NLS_SHRC_CM_PRINTSTATS_STALE_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_STALE_BYTES.system_action=
@@ -6678,7 +6678,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT=\t startuphint	Natisne samo tipe zagonskih namigov v predpomnilniku v skupni rabi. 
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT=\t startuphint	Natisne samo tipe zagonskih namigov v predpomnilniku v skupni rabi.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.system_action=
@@ -6688,7 +6688,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES=Bajti zagonskega namiga                  %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.sample_input_3=112
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.system_action=
@@ -6698,7 +6698,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS=# Zagonski namigi       %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_3=345876
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.system_action=
@@ -6776,7 +6776,7 @@ J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.system_action=The JVM terminates, unless y
 J9NLS_SHRC_CM_FAILED_ALLOC_DESCRIPTOR.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=Predpomnilnika v skupni rabi ni bilo mogo\u010de zagnati. Zaznana je bila sprememba na predpomnilnik v skupni rabi ni\u017eje plasti. Pri\u010dakovani unikatni ID predpomnilnika je %s 
+J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED=Predpomnilnika v skupni rabi ni bilo mogo\u010de zagnati. Zaznana je bila sprememba na predpomnilnik v skupni rabi ni\u017eje plasti. Pri\u010dakovani unikatni ID predpomnilnika je %s
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.sample_input_1=foo
 J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layer shared caches built on top of it.
@@ -6851,7 +6851,7 @@ J9NLS_SHRC_CM_PRINTSTATS_TOP_LAYER_TITLE.user_response=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER=plast predpomnilnika                         %*.c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_1=0
-J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_2=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.sample_input_3=1
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.explanation=NOTAG
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER.system_action=
@@ -6874,7 +6874,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1=Razpolo\u017eljive mo\u017enosti za -Xshareclasses:%1$s<options>. Z znakom '+' podate ve\u010d mo\u017enosti. \u010ce je %2$saot+url \n  
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1=Razpolo\u017eljive mo\u017enosti za -Xshareclasses:%1$s<options>. Z znakom '+' podate ve\u010d mo\u017enosti. \u010ce je %2$saot+url \n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_1=printStats=
 J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1.sample_input_2=printStats=

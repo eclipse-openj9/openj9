@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -99,14 +99,14 @@ J9NLS_PORT_SL_ERROR_LOADING_DEPENDANT_MODULE.user_response=Contact your service 
 
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE=Symbol resolution failure
 # START NON-TRANSLATABLE
-J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.explanation=There was a problem with symbol resolution while looking for a particular symbol 
+J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.explanation=There was a problem with symbol resolution while looking for a particular symbol
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.system_action=The JVM will terminate with more information if the symbol was critical
 J9NLS_PORT_SL_SYMBOL_RESOLUTION_FAILURE.user_response=Contact your service representative if the JVM terminates
 
 # END NON-TRANSLATABLE
 
-# dead, OSX  
-J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE=Could not load the shared library 
+# dead, OSX
+J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE=Could not load the shared library
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE.explanation=NOTISSUED
 J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE.system_action=
@@ -114,7 +114,7 @@ J9NLS_PORT_SL_COULD_NOT_LOAD_MODULE.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT=The format of the module is not correct
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT.explanation=NOTISSUED
@@ -123,7 +123,7 @@ J9NLS_PORT_SL_MODULE_FORMAT_INCORRECT.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_NOT_A_MODULE=The specified module is not a module
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_NOT_A_MODULE.explanation=NOTISSUED
@@ -132,7 +132,7 @@ J9NLS_PORT_SL_NOT_A_MODULE.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT=The module is not the correct architecture
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT.explanation=NOTISSUED
@@ -141,7 +141,7 @@ J9NLS_PORT_SL_MODULE_ARCHITECTURE_INCORRECT.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_FILE_NOT_FOUND=The specified shared library was not found
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_FILE_NOT_FOUND.explanation=NOTISSUED
@@ -150,7 +150,7 @@ J9NLS_PORT_SL_FILE_NOT_FOUND.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, OSX 
+# dead, OSX
 J9NLS_PORT_SL_PERMISSION_DENIED=Permission to load the shared library was not granted
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_PERMISSION_DENIED.explanation=NOTISSUED
@@ -159,7 +159,7 @@ J9NLS_PORT_SL_PERMISSION_DENIED.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, PalmOS 
+# dead, PalmOS
 J9NLS_PORT_SL_OUT_OF_MEMORY=Unable to allocated memory while attempting to load a shared library
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_OUT_OF_MEMORY.explanation=NOTISSUED
@@ -168,7 +168,7 @@ J9NLS_PORT_SL_OUT_OF_MEMORY.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, PalmOS 
+# dead, PalmOS
 J9NLS_PORT_SL_ERROR_PACE_BIT_SET=Error loading shared library due to the PACE bit being set
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_ERROR_PACE_BIT_SET.explanation=NOTISSUED
@@ -177,7 +177,7 @@ J9NLS_PORT_SL_ERROR_PACE_BIT_SET.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, Pilot 
+# dead, Pilot
 J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND=Error loading shared library - the dll table could not be found
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND.explanation=NOTISSUED
@@ -186,7 +186,7 @@ J9NLS_PORT_SL_DLL_TABLE_NOT_FOUND.user_response=
 
 # END NON-TRANSLATABLE
 
-# dead, Pilot 
+# dead, Pilot
 J9NLS_PORT_SL_DLL_NOT_FOUND=Failed to load dll as it was not found
 # START NON-TRANSLATABLE
 J9NLS_PORT_SL_DLL_NOT_FOUND.explanation=NOTISSUED
@@ -275,7 +275,7 @@ J9NLS_PORT_SHARED_OPENED_STALE_SEM.sample_input_2=0001
 
 J9NLS_PORT_ZOS_64_APPENDING_XDS=Appending .X&DS to user-specified dump template to enable multi-part dumps.
 # START NON-TRANSLATABLE
-J9NLS_PORT_ZOS_64_APPENDING_XDS.explanation=The user has specified a dump template (via -Xdump:system:file= or using the JAVA_DUMP_TDUMP_PATTERN environment variable). The maximum amount of data that can be dumped to a single IEATDUMP file is 2 gigabytes. For address spaces large than 2 gigabyes, zOS generates multiple dump files. To do this, the suffix &DS needs to be in the dump name, it will be replaced with a counter identifying which part of the dump is in the file. If the user does not add it, the JVM appends it to the dump template. 
+J9NLS_PORT_ZOS_64_APPENDING_XDS.explanation=The user has specified a dump template (via -Xdump:system:file= or using the JAVA_DUMP_TDUMP_PATTERN environment variable). The maximum amount of data that can be dumped to a single IEATDUMP file is 2 gigabytes. For address spaces large than 2 gigabyes, zOS generates multiple dump files. To do this, the suffix &DS needs to be in the dump name, it will be replaced with a counter identifying which part of the dump is in the file. If the user does not add it, the JVM appends it to the dump template.
 J9NLS_PORT_ZOS_64_APPENDING_XDS.system_action=The JVM will add .X&DS to the dump template and continue to run.
 J9NLS_PORT_ZOS_64_APPENDING_XDS.user_response=It is safe to ignore this message (and allow the JVM to alter the dump file name) unless extending the dump file name makes it too long (in which case the JVM will failover to using the default dump template). You can avoid the message by including the &DS placeholder in your dump template or by using the default dump template.
 
