@@ -209,7 +209,7 @@ bool J9::TransformUtil::avoidFoldingInstanceField(
       "avoidFoldingInstanceField: symbol %p is never foldable (expected possibly foldable)\n",
       field);
 
-   if (fej9->isStable(field, cpIndex, owningMethod, comp) && !field->isFinal())
+   if (fej9->isStable(cpIndex, owningMethod, comp) && !field->isFinal())
       {
       uintptr_t fieldAddress = object + fieldOffset;
 
@@ -233,6 +233,7 @@ bool J9::TransformUtil::avoidFoldingInstanceField(
          case TR::Float:
             {
             float value = *(float*)fieldAddress;
+            // This will not fold -0.0 but will fold NaN
             if (value == 0.0)
                return true;
             }
@@ -240,6 +241,7 @@ bool J9::TransformUtil::avoidFoldingInstanceField(
          case TR::Double:
             {
             double value = *(double*)fieldAddress;
+            // This will not fold -0.0 but will fold NaN
             if (value == 0.0)
                return true;
             }
