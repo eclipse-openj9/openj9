@@ -298,7 +298,7 @@ J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_1=-Xlp:codecache:
 J9NLS_JIT_OPTIONS_XLP_INCOMPLETE_OPTION.sample_input_2=[non]pageable
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA='-Xlp' se\u00e7ene\u011finde fazladan virg\u00fcl karakterleri saptand\u0131 - yoksya\u0131ld\u0131
+J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA='-Xlp' se\u00e7ene\u011finde fazladan virg\u00fcl karakterleri saptand\u0131 - yoksay\u0131ld\u0131
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.explanation=Extra comma characters are discovered in '-Xlp' option
 J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.system_action=The JVM will ignore extra comma characters

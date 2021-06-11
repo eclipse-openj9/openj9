@@ -570,7 +570,7 @@ J9NLS_DMP_OCCURRED_THREAD_NAME_ID.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_RECURSIVE_CRASH=\u8a3a\u65b7\u57f7\u884c\u7dd2\u4e0a\u767c\u751f JIT \u50be\u51fa\u905e\u8ff4\u640d\u6bc0
+J9NLS_DMP_JIT_RECURSIVE_CRASH=\u8a3a\u65b7\u57f7\u884c\u7dd2\u4e0a\u767c\u751f JIT \u50be\u51fa\u905e\u8ff4\u7576\u6a5f
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_RECURSIVE_CRASH.explanation=The dump is reporting a reproduction of the original unhandled exception, with tracing.
 J9NLS_DMP_JIT_RECURSIVE_CRASH.system_action=The JVM continues.
@@ -591,7 +591,7 @@ J9NLS_DMP_JIT_RECOMPILING_METHOD.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD=JIT \u50be\u51fa\u6b63\u5728\u5df2\u640d\u6bc0\u7684\u7de8\u8b6f\u57f7\u884c\u7dd2\u4e0a\u8ffd\u8e64\u65b9\u6cd5\u7684 IL
+J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD=JIT \u50be\u51fa\u6b63\u5728\u5df2\u7576\u6a5f\u7684\u7de8\u8b6f\u57f7\u884c\u7dd2\u4e0a\u8ffd\u8e64\u65b9\u6cd5\u7684 IL
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.explanation=The dump is tracing the IL of the crashed thread in its current state before recompiling the method for tracing.
 J9NLS_DMP_JIT_TRACE_IL_CRASHED_THREAD.system_action=The JVM continues.

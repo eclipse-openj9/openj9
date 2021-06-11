@@ -279,7 +279,7 @@ J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable
 # This message will be followed by the exception's class name and
 # (if non-null) the exception's detail message
 # e.g. Exception in thread "main" java/lang/StackOverflowError: An overflow occurred
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=\u7ebf\u7a0b \"%.*s\" \u4e2d\u53d1\u751f\u5f02\u5e38
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=\u7ebf\u7a0b\u201c%.*s\u201d\u4e2d\u53d1\u751f\u5f02\u5e38
 
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=57

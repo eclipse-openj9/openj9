@@ -120,7 +120,7 @@ J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.user_response=Destroy and recreate the AOT c
 J9NLS_RELOCATABLE_CODE_SMP_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica de refer\u00e8ncies comprimides. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
+J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica Refer\u00e8ncies comprimides. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.explanation=The JVM is not running in the same compressedrefs mode as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_CMPRS_PTR_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -136,7 +136,7 @@ J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.user_response=Destroy and recreate the AOT c
 J9NLS_RELOCATABLE_CODE_DFP_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica habilita rastreig. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
+J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica Inhabilita paranys. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.explanation=The JVM is not running with the same Disable Traps option as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -144,7 +144,7 @@ J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.user_response=Destroy and recreate
 J9NLS_RELOCATABLE_CODE_DISABLE_TRAPS_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica de recollida pr\u00e8via TLH. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
+J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica Recollida pr\u00e8via de TLH. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.explanation=The JVM is not running in the same TLH Prefetch mode as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -152,7 +152,7 @@ J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.user_response=Destroy and recreate 
 J9NLS_RELOCATABLE_CODE_TLH_PREFETCH_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica metodologia trampol\u00ed. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
+J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica Metodologia trampol\u00ed. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.explanation=The JVM is not running in the same Method Trampoline mode as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_METHOD_TRAMPOLINE_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -176,7 +176,7 @@ J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.user_response=Destroy and recreate the AOT 
 J9NLS_RELOCATABLE_CODE_SIMD_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica compilaci\u00f3 as\u00edncrona. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
+J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica Compilaci\u00f3 as\u00edncrona. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.explanation=The JVM is not running in the same Async Compilation mode as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_ASYNC_COMP_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -192,7 +192,7 @@ J9NLS_RELOCATABLE_CODE_CS_MISMATCH.user_response=Destroy and recreate the AOT co
 J9NLS_RELOCATABLE_CODE_CS_MISMATCH.link=dita:///diag/appendixes/cmdline/cmdline_x.dita#cmdline_x/xshareclasses-reset
 # END NON-TRANSLATABLE
 
-J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica software de barrera de lectura. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
+J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH=Discrep\u00e0ncia a la caracter\u00edstica Barrera de lectura de programari. S'ignorar\u00e0 el codi AOT de la mem\u00f2ria cau de classes compartides.
 # START NON-TRANSLATABLE
 J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.explanation=The JVM is not running in the same Software Read Barrier mode as the one that generated the code in the SCC.
 J9NLS_RELOCATABLE_CODE_SW_READBAR_MISMATCH.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
@@ -305,7 +305,7 @@ J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.system_action=The JVM will ignore extra comma 
 J9NLS_JIT_OPTIONS_XLP_EXTRA_COMMA.user_response=Remove extra commas from -Xlp option
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=La mida de p\u00e0gina gran %1$zu%2$s no \u00e9s una mida de p\u00e0gina admesa per a la mem\u00f2ria cau de codi JIT; es fa servir %3$zu%4$s alternativament
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED=La mida de p\u00e0gina gran de %1$zu%2$s no \u00e9s una mida de p\u00e0gina admesa per a la mem\u00f2ria cau de codi JIT; alternativament, es far\u00e0 servir %3$zu%4$s
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.explanation=The specified large page size is not supported by the operating system. A default size will be used instead
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.system_action=The JVM will start using the default large page size instead of the specified size
@@ -316,7 +316,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_3=16
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED.sample_input_4=M
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=La mida de p\u00e0gina gran %1$zu%2$s no \u00e9s una mida de p\u00e0gina admesa per a la mem\u00f2ria cau de codi JIT; es fa servir %3$zu%4$s %5$s alternativament
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE=La mida de p\u00e0gina gran de %1$zu%2$s no \u00e9s una mida de p\u00e0gina admesa per a la mem\u00f2ria cau de codi JIT; alternativament, es far\u00e0 servir %3$zu%4$s %5$s
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.explanation=The specified page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
@@ -328,7 +328,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_4
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_NEW_PAGETYPE.sample_input_5=pageable
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=La mida de p\u00e0gina gran %1$zu%2$s %3$s no \u00e9s una mida de p\u00e0gina admesa per a la mem\u00f2ria cau de codi JIT; es fa servir %4$zu%5$s alternativament
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE=La mida de p\u00e0gina gran de %1$zu%2$s %3$s no \u00e9s una mida de p\u00e0gina admesa per a la mem\u00f2ria cau de codi JIT; alternativament, es far\u00e0 servir %4$zu%5$s
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size
@@ -340,7 +340,7 @@ J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_i
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_REQUESTED_PAGETYPE.sample_input_5=K
 # END NON-TRANSLATABLE
 
-J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=La mida de p\u00e0gina gran %1$zu%2$s %3$s no \u00e9s una mida de p\u00e0gina admesa per a la mem\u00f2ria cau de codi JIT; es fa servir %4$zu%5$s %6$s alternativament
+J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE=La mida de p\u00e0gina gran de %1$zu%2$s %3$s no \u00e9s una mida de p\u00e0gina admesa per a la mem\u00f2ria cau de codi JIT; alternativament, es far\u00e0 servir %4$zu%5$s %6$s
 # START NON-TRANSLATABLE
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.explanation=The specified large page size is not supported by the operating system. A suitable page size will be used.
 J9NLS_JIT_OPTIONS_LARGE_PAGE_SIZE_NOT_SUPPORTED_WITH_PAGETYPE.system_action=The JVM will start using a different page size instead of the specified size

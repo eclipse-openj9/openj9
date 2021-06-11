@@ -1224,14 +1224,14 @@ J9NLS_VM_HEAP_OUT_OF_MEMORY.system_action=
 J9NLS_VM_HEAP_OUT_OF_MEMORY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_RESUME_DETECTED=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a ill\u00e9galement effectu\u00e9 un retour ou un rappel dans Java
+J9NLS_VM_ILLEGAL_RESUME_DETECTED=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a effectu\u00e9 un retour ou un rappel non conforme dans Java
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()
 J9NLS_VM_ILLEGAL_RESUME_DETECTED.user_response=Inspect their user condition handler and change it to not resume execution after receiving an unrecoverable condition on a Java thread
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a ill\u00e9galement effectu\u00e9 un retour ou un rappel dans Java (code JIT)
+J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT=L'application a repris son ex\u00e9cution apr\u00e8s le traitement d'une condition irr\u00e9cup\u00e9rable et a effectu\u00e9 un retour ou un rappel non conforme dans Java (code JIT)
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.explanation=Application resumed execution after handling an unrecoverable condition and illegally returned to or called back into Java
 J9NLS_VM_ILLEGAL_RESUME_DETECTED_JIT.system_action=The JVM prints the error message and terminates the process using the z/OS specific system call CEE3AB2()
