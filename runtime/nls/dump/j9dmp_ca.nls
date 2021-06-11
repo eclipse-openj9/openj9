@@ -201,7 +201,7 @@ J9NLS_DMP_UNRECOGNISED_REQUEST_STR.link=dita:///diag/tools/dumpagents_syntax.dit
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_NO_OPEN_READ=Avortant: No es pot obrir o llegir (%s)
+J9NLS_DMP_NO_OPEN_READ=Avortant: No es pot obrir ni llegir (%s)
 # START NON-TRANSLATABLE
 J9NLS_DMP_NO_OPEN_READ.explanation=The JVM cannot open a dump file in read mode.
 J9NLS_DMP_NO_OPEN_READ.system_action=INTERNAL USE ONLY
@@ -540,7 +540,7 @@ J9NLS_DMP_JIT_ORDINARY_METHOD.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=L'abocament de mem\u00f2ria de JIT ha notificat que tots els fils en espera del m\u00e8tode actual s'han de compilar
+J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS=L'abocament de mem\u00f2ria de JIT ha notificat tots els fils en espera del m\u00e8tode actual que s'han de compilar
 # START NON-TRANSLATABLE
 J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.explanation=The compilation threads waiting on the method to be compiled monitor will be notified.
 J9NLS_DMP_JIT_NOTIFIED_WAITING_THREADS.system_action=The JVM continues.

@@ -99,7 +99,7 @@ J9NLS_CFR_ERR_MAJOR_VERSION.user_response=Contact the provider of the classfile 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BC_UNKNOWN=neznana bitna koda
+J9NLS_CFR_ERR_BC_UNKNOWN=neznana bajtna koda
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_UNKNOWN.explanation=An undefined bytecode was encountered in the classfile.
 J9NLS_CFR_ERR_BC_UNKNOWN.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -133,7 +133,7 @@ J9NLS_CFR_ERR_BAD_FIELD_DESCRIPTOR.user_response=Contact the provider of the cla
 # END NON-TRANSLATABLE
 
 # tableswitch is not translatable
-J9NLS_CFR_ERR_BC_SWITCH_EMPTY=visoko < nizko v bitni kodi preklopni tabeli
+J9NLS_CFR_ERR_BC_SWITCH_EMPTY=visoko < nizko v bajtni kodi preklopni tabeli
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_SWITCH_EMPTY.explanation=The 'tableswitch' bytecode is incorrectly formed.  The 'high' value must be greater than the 'low' value.
 J9NLS_CFR_ERR_BC_SWITCH_EMPTY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -150,7 +150,7 @@ J9NLS_CFR_ERR_INTERFACE_FIELD.user_response=Contact the provider of the classfil
 # END NON-TRANSLATABLE
 
 # lookupswitch is not translatable
-J9NLS_CFR_ERR_BC_SWITCH_NEGATIVE_COUNT=negativen \u0161tevec za pare ujemanja in odmika v bitni kodi lookupswitch
+J9NLS_CFR_ERR_BC_SWITCH_NEGATIVE_COUNT=negativen \u0161tevec za pare ujemanja in odmika v bajtni kodi lookupswitch
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_SWITCH_NEGATIVE_COUNT.explanation=The 'lookupswitch' bytecode is malformed.  The number of pairs must not be negative.
 J9NLS_CFR_ERR_BC_SWITCH_NEGATIVE_COUNT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -159,7 +159,7 @@ J9NLS_CFR_ERR_BC_SWITCH_NEGATIVE_COUNT.user_response=Contact the provider of the
 # END NON-TRANSLATABLE
 
 # anewarray is not translatable
-J9NLS_CFR_ERR_BC_ANEWARRAY_NOT_CLASS=bitna koda anewarray se mora sklicevati na razred
+J9NLS_CFR_ERR_BC_ANEWARRAY_NOT_CLASS=bajtna koda anewarray se mora sklicevati na razred
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_ANEWARRAY_NOT_CLASS.explanation=The 'anewarray' bytecode must refer to a class.
 J9NLS_CFR_ERR_BC_ANEWARRAY_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -285,7 +285,7 @@ J9NLS_CFR_ERR_TWO_CONSTANT_VALUE_ATTRIBUTES.user_response=Contact the provider o
 # END NON-TRANSLATABLE
 
 #newarray is not translatable
-J9NLS_CFR_ERR_BC_NEWARRAY_TYPE=neprepoznan tip kode newarray
+J9NLS_CFR_ERR_BC_NEWARRAY_TYPE=neprepoznan tip bajtne kode newarray
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NEWARRAY_TYPE.explanation=A 'newarray' bytecode has an invalid type specified.
 J9NLS_CFR_ERR_BC_NEWARRAY_TYPE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -294,7 +294,7 @@ J9NLS_CFR_ERR_BC_NEWARRAY_TYPE.user_response=Contact the provider of the classfi
 # END NON-TRANSLATABLE
 
 #multianewarray is not translatable
-J9NLS_CFR_ERR_BC_MULTI_NOT_ARRAY=bitna koda multianewarray se mora sklicevati na razred matrike
+J9NLS_CFR_ERR_BC_MULTI_NOT_ARRAY=bajtna koda multianewarray se mora sklicevati na razred matrike
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_MULTI_NOT_ARRAY.explanation=An array class must be specified for 'multinewarray' bytecodes.
 J9NLS_CFR_ERR_BC_MULTI_NOT_ARRAY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -303,7 +303,7 @@ J9NLS_CFR_ERR_BC_MULTI_NOT_ARRAY.user_response=Contact the provider of the class
 # END NON-TRANSLATABLE
 
 #ldc* is not translatable
-J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT=bitna koda ldc* se mora sklicevati na konstanto
+J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT=bajtna koda ldc* se mora sklicevati na konstanto
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT.explanation=An 'ldc' bytecode can only reference constant values.
 J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -312,7 +312,7 @@ J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT.user_response=Contact the provider of the clas
 # END NON-TRANSLATABLE
 
 #multianewarray is not translatable
-J9NLS_CFR_ERR_BC_MULTI_NOT_CLASS=bitna koda multianewarray se mora sklicevati na razred
+J9NLS_CFR_ERR_BC_MULTI_NOT_CLASS=bajtna koda multianewarray se mora sklicevati na razred
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_MULTI_NOT_CLASS.explanation=A 'multinewarray' bytecode references something other then a class.
 J9NLS_CFR_ERR_BC_MULTI_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -352,7 +352,7 @@ J9NLS_CFR_ERR_HANDLER_RANGE_EMPTY.user_response=Contact the provider of the clas
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BC_INCOMPLETE=nedokon\u010dana bitna koda
+J9NLS_CFR_ERR_BC_INCOMPLETE=nedokon\u010dana bajtna koda
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_INCOMPLETE.explanation=A bytecode has been truncated.
 J9NLS_CFR_ERR_BC_INCOMPLETE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -361,7 +361,7 @@ J9NLS_CFR_ERR_BC_INCOMPLETE.user_response=Contact the provider of the classfile 
 # END NON-TRANSLATABLE
 
 #new is not translatable
-J9NLS_CFR_ERR_BC_NEW_NOT_CLASS=nova bitna koda se mora sklicevati na razred
+J9NLS_CFR_ERR_BC_NEW_NOT_CLASS=nova bajtna koda se mora sklicevati na razred
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NEW_NOT_CLASS.explanation=A 'new' bytecode doesn't reference a class.
 J9NLS_CFR_ERR_BC_NEW_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -369,7 +369,7 @@ J9NLS_CFR_ERR_BC_NEW_NOT_CLASS.user_response=Contact the provider of the classfi
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BC_JUMP_TARGET=cilj ni navodilo v bitni kodi za skok
+J9NLS_CFR_ERR_BC_JUMP_TARGET=cilj ni navodilo v bajtni kodi za skok
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_JUMP_TARGET.explanation=An instruction attempts to branch to a location that is not the start of a bytecode.
 J9NLS_CFR_ERR_BC_JUMP_TARGET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -419,7 +419,7 @@ J9NLS_CFR_ERR_MINOR_VERSION.user_response=Contact the provider of the classfile 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE=velikost matrike bitne kode > 65535
+J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE=velikost matrike bajtne kode > 65535
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE.explanation=A bytecode array is too large.
 J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -427,7 +427,7 @@ J9NLS_CFR_ERR_CODE_ARRAY_TOO_LARGE.user_response=Contact the provider of the cla
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BC_NOT_WIDE=bitne kode ni mogo\u010de raz\u0161iriti
+J9NLS_CFR_ERR_BC_NOT_WIDE=bajtne kode ni mogo\u010de raz\u0161iriti
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NOT_WIDE.explanation=Illegal use of the 'wide' bytecode modifier.
 J9NLS_CFR_ERR_BC_NOT_WIDE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -436,7 +436,7 @@ J9NLS_CFR_ERR_BC_NOT_WIDE.user_response=Contact the provider of the classfile fo
 # END NON-TRANSLATABLE
 
 # invokeinterface is not translatable
-J9NLS_CFR_ERR_BC_METHOD_RESERVED=bitna koda invokeinterface je rezervirala re\u017eo, ki ni ni\u010d
+J9NLS_CFR_ERR_BC_METHOD_RESERVED=bajtna koda invokeinterface je rezervirala re\u017eo, ki ni ni\u010d
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_METHOD_RESERVED.explanation='invokeinterface' has none zero value in the fourth operand byte.
 J9NLS_CFR_ERR_BC_METHOD_RESERVED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -452,7 +452,7 @@ J9NLS_CFR_ERR_BAD_INDEX.user_response=Contact the provider of the classfile for 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BC_SWITCH_PAD=polnjenje bitne kode za preklop ni pravilno
+J9NLS_CFR_ERR_BC_SWITCH_PAD=polnjenje bajtne kode za preklop ni pravilno
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_SWITCH_PAD.explanation=The padding to one of the switch bytecodes is incorrect.
 J9NLS_CFR_ERR_BC_SWITCH_PAD.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -477,7 +477,7 @@ J9NLS_CFR_ERR_BC_STORE_INDEX.user_response=Contact the provider of the classfile
 # END NON-TRANSLATABLE
 
 # checkcast is not translatable
-J9NLS_CFR_ERR_BC_CHECKCAST_NOT_CLASS=bitna koda checkcast se mora sklicevati na razred
+J9NLS_CFR_ERR_BC_CHECKCAST_NOT_CLASS=bajtna koda checkcast se mora sklicevati na razred
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_CHECKCAST_NOT_CLASS.explanation=A 'checkcast' bytecode referenced something other than a class.
 J9NLS_CFR_ERR_BC_CHECKCAST_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -518,7 +518,7 @@ J9NLS_CFR_ERR_TOO_MANY_ARGS.user_response=Contact the provider of the classfile 
 # END NON-TRANSLATABLE
 
 #Fieldref is not translatable
-J9NLS_CFR_ERR_BC_NOT_FIELDREF=bitna koda field se mora sklicevati na Fieldref
+J9NLS_CFR_ERR_BC_NOT_FIELDREF=bajtna koda field se mora sklicevati na Fieldref
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NOT_FIELDREF.explanation=A field bytecode must reference a FieldRef.
 J9NLS_CFR_ERR_BC_NOT_FIELDREF.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -536,7 +536,7 @@ J9NLS_CFR_ERR_HANDLER_END_PC.user_response=Contact the provider of the classfile
 # END NON-TRANSLATABLE
 
 # invokeinterface is not translatable
-J9NLS_CFR_ERR_BC_METHOD_NARGS=napa\u010den \u0161tevec argumentov bitne kode invokeinterface
+J9NLS_CFR_ERR_BC_METHOD_NARGS=napa\u010den \u0161tevec argumentov bajtne kode invokeinterface
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_METHOD_NARGS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_METHOD_NARGS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -569,7 +569,7 @@ J9NLS_CFR_ERR_HANDLER_TARGET.user_response=Contact the provider of the classfile
 # END NON-TRANSLATABLE
 
 # PC is a standard reference for instruction pointer and is not translatable
-J9NLS_CFR_ERR_HANDLER_END_TARGET=kon\u010dni PC nadzornika izjemnih stanj ni navodilo ali konec matrike bitne kode
+J9NLS_CFR_ERR_HANDLER_END_TARGET=kon\u010dni PC nadzornika izjemnih stanj ni navodilo ali konec matrike bajtne kode
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_HANDLER_END_TARGET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_HANDLER_END_TARGET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -595,7 +595,7 @@ J9NLS_CFR_ERR_MAX_LOCALS.user_response=Contact the provider of the classfile for
 # END NON-TRANSLATABLE
 
 # invoke is not translatable
-J9NLS_CFR_ERR_BC_METHOD_INVALID=neveljavna metoda klicanja bitne kode invoke
+J9NLS_CFR_ERR_BC_METHOD_INVALID=neveljavna metoda klicanja bajtne kode invoke
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_METHOD_INVALID.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_METHOD_INVALID.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -662,7 +662,7 @@ J9NLS_CFR_ERR_LINE_NUMBER_PC.user_response=Contact the provider of the classfile
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CODE_ARRAY_EMPTY=matrika bitne kode je prazna
+J9NLS_CFR_ERR_CODE_ARRAY_EMPTY=matrika bajtne kode je prazna
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CODE_ARRAY_EMPTY.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CODE_ARRAY_EMPTY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -671,7 +671,7 @@ J9NLS_CFR_ERR_CODE_ARRAY_EMPTY.user_response=Contact the provider of the classfi
 # END NON-TRANSLATABLE
 
 # lookupswitch is not translatable
-J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED=vnosi niso razvr\u0161\u010deni v bitni kodi lookupswitch
+J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED=vnosi niso razvr\u0161\u010deni v bajtni kodi lookupswitch
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_SWITCH_NOT_SORTED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -798,7 +798,7 @@ J9NLS_CFR_ERR_TWO_CODE_ATTRIBUTES.user_response=Contact the provider of the clas
 # END NON-TRANSLATABLE
 
 # InterfaceMethodref is not translatable
-J9NLS_CFR_ERR_BC_NOT_INTERFACEMETHODREF=bitna koda metode vmesnika se mora sklicevati na InterfaceMethodref
+J9NLS_CFR_ERR_BC_NOT_INTERFACEMETHODREF=bajtna koda metode vmesnika se mora sklicevati na InterfaceMethodref
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NOT_INTERFACEMETHODREF.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_NOT_INTERFACEMETHODREF.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -823,7 +823,7 @@ J9NLS_CFR_ERR_BAD_NAME_AND_TYPE_INDEX.user_response=Contact the provider of the 
 # END NON-TRANSLATABLE
 
 # new is not translatable
-J9NLS_CFR_ERR_BC_NEW_ARRAY=nova bitna koda ne mora izdelovati matrik
+J9NLS_CFR_ERR_BC_NEW_ARRAY=nova bajtna koda ne mora izdelovati matrik
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NEW_ARRAY.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_NEW_ARRAY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -857,7 +857,7 @@ J9NLS_CFR_ERR_ACCESS_CONFLICT_METHOD.user_response=Contact the provider of the c
 # END NON-TRANSLATABLE
 
 # instanceof is not translatable
-J9NLS_CFR_ERR_BC_INSTANCEOF_NOT_CLASS=bitna koda instanceof se mora sklicevati na razred
+J9NLS_CFR_ERR_BC_INSTANCEOF_NOT_CLASS=bajtna koda instanceof se mora sklicevati na razred
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_INSTANCEOF_NOT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_INSTANCEOF_NOT_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -873,7 +873,7 @@ J9NLS_CFR_ERR_ANNOTATION_NOT_INTERFACE.user_response=Contact the provider of the
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BC_SWITCH_TARGET=cilj ni navodilo v bitni kodi za preklop
+J9NLS_CFR_ERR_BC_SWITCH_TARGET=cilj ni navodilo v bajtni kodi za preklop
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_SWITCH_TARGET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_SWITCH_TARGET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -907,7 +907,7 @@ J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS.user_response=Contact the provider of the
 # END NON-TRANSLATABLE
 
 # multianewarray is not translatable
-J9NLS_CFR_ERR_BC_MULTI_DIMS=preve\u010d zahtevanih dimenzij v bitni kodi multianewarray
+J9NLS_CFR_ERR_BC_MULTI_DIMS=preve\u010d zahtevanih dimenzij v bajtni kodi multianewarray
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_MULTI_DIMS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_MULTI_DIMS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -915,7 +915,7 @@ J9NLS_CFR_ERR_BC_MULTI_DIMS.user_response=Contact the provider of the classfile 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BC_SWITCH_OFFSET=odmik je izven dovoljenega obmo\u010dja v bitni kodi za preklop
+J9NLS_CFR_ERR_BC_SWITCH_OFFSET=odmik je izven dovoljenega obmo\u010dja v bajtni kodi za preklop
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_SWITCH_OFFSET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_SWITCH_OFFSET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -964,7 +964,7 @@ J9NLS_CFR_ERR_DUPLICATE_METHOD.user_response=Contact the provider of the classfi
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_BC_JUMP_OFFSET=odmik je izven dovoljenega obmo\u010dja v bitni kodi za skok
+J9NLS_CFR_ERR_BC_JUMP_OFFSET=odmik je izven dovoljenega obmo\u010dja v bajtni kodi za skok
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_JUMP_OFFSET.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_JUMP_OFFSET.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1039,7 +1039,7 @@ J9NLS_CFR_ERR_TOO_MANY_DIMENSIONS.user_response=Contact the provider of the clas
 # END NON-TRANSLATABLE
 
 # Methodref is not translatable
-J9NLS_CFR_ERR_BC_NOT_METHODREF=bitna koda invoke se mora sklicevati na Methodref
+J9NLS_CFR_ERR_BC_NOT_METHODREF=bajtna koda invoke se mora sklicevati na Methodref
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NOT_METHODREF.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_NOT_METHODREF.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1117,7 +1117,7 @@ J9NLS_CFR_ERR_BAD_ANNOTATION_TAG.user_response=Contact the provider of the class
 # END NON-TRANSLATABLE
 
 # InvokeDynamic and invokedynamic are not translatable
-J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC=bitna koda invokedynamic se mora sklicevati na vnos v podro\u010dje konstante InvokeDynamic
+J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC=bajtna koda invokedynamic se mora sklicevati na vnos v podro\u010dje konstante InvokeDynamic
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1125,7 +1125,7 @@ J9NLS_CFR_ERR_BC_NOT_INVOKEDYNAMIC.user_response=Contact the provider of the cla
 # END NON-TRANSLATABLE
 
 # invokedynamic is not translatable
-J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED=bitna koda invokedynamic je rezervirala re\u017ee, ki niso ni\u010d
+J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED=bajtna koda invokedynamic je rezervirala re\u017ee, ki niso ni\u010d
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.explanation='invokedynamic' has non zero values in the third or fourth operand bytes
 J9NLS_CFR_ERR_BC_INVOKEDYNAMIC_RESERVED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.

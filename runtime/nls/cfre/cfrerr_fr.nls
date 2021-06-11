@@ -1082,7 +1082,7 @@ J9NLS_CFR_ERR_FOUND_JSR_IN_CLASS_VER_51.user_response=Contact the provider of th
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=nom de champ ill\u00e9gal
+J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME=nom de champ non conforme
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1307,7 +1307,7 @@ J9NLS_CFR_ERR_CLINIT_NOT_STATIC.user_response=Contact the provider of the classf
 # END NON-TRANSLATABLE
 
 # <clinit> method at version 51.0 must be void and take no arguments
-J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=La m\u00e9thode <clinit> a une signature ill\u00e9gale
+J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE=La m\u00e9thode <clinit> a une signature non conforme
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_CLINIT_ILLEGAL_SIGNATURE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
