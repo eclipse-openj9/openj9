@@ -485,6 +485,14 @@ J9::ObjectModel::objectAlignmentInBytes()
    if (!javaVM)
       return 0;
 
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_objectAlignmentInBytes;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    J9MemoryManagerFunctions * mmf = javaVM->memoryManagerFunctions;
    uintptr_t result = 0;
    result = mmf->j9gc_modron_getConfigurationValueForKey(javaVM, j9gc_modron_configuration_objectAlignment, &result) ? result : 0;
