@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -380,7 +380,7 @@ extern "C" {
 #define J9SW_JIT_CALLEE_PRESERVED_SIZE 8
 #undef  J9SW_JIT_LOOKUP_INTERFACE_RESOLVE_OFFSET_TO_SAVED_RECEIVER
 #undef  J9SW_JIT_VIRTUAL_METHOD_RESOLVE_OFFSET_TO_SAVED_RECEIVER
-#define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER
+#define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER jit_r25
 
 #else /* J9VM_ENV_DATA64 */
 

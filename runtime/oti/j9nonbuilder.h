@@ -5736,10 +5736,11 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA jitGPRs[32]; /* x0-x31 */
 	U_8 jitFPRs[32 * 8]; /* v0-v31 */
 #elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_ARM */
-	UDATA preservedGPRs[13]; /* x2, x8, x9, and x18-x27  */
+	UDATA preservedGPRs[11]; /* x2, x8, x9, and x18-x25  */
 	U_8 preservedFPRs[32 * 8]; /* f0-f31 */
 	UDATA jitGPRs[32]; /* x0-x31 */
 	U_8 jitFPRs[32 * 8]; /* f0-f31 */
+	U_8 padding[8]; /* padding to 16-byte boundary */
 #elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_AARCH64 */
 #if defined(J9VM_ENV_DATA64) && defined(WIN32)
 	UDATA arguments[4]; /* outgoing arguments shadow */

@@ -87,6 +87,11 @@ elseif(OMR_ARCH_AARCH64)
 	target_sources(j9codert_vm PRIVATE
 		arm64nathelp.s
 	)
+elseif(OMR_ARCH_RISCV)
+	j9vm_gen_asm(riscvnathelp.m4)
+	target_sources(j9codert_vm PRIVATE
+		riscvnathelp.s
+	)	
 else()
 	message(SEND_ERROR "Unsupported platform")
 endif()
