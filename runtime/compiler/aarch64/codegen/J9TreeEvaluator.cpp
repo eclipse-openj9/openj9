@@ -4471,7 +4471,10 @@ getLoadOpCodeFromDataType(TR::CodeGenerator *cg, TR::DataType dt, int32_t elemen
    switch (dt)
       {
       case TR::Int8:
-         return useIdxReg ? TR::InstOpCode::ldrboff : TR::InstOpCode::ldrbimm;
+         if (isUnsigned)
+            return useIdxReg ? TR::InstOpCode::ldrboff : TR::InstOpCode::ldrbimm;
+         else
+            return useIdxReg ? TR::InstOpCode::ldrsboffw : TR::InstOpCode::ldrsbimmw;
       case TR::Int16:
          if (isUnsigned)
             return useIdxReg ? TR::InstOpCode::ldrhoff : TR::InstOpCode::ldrhimm;
@@ -4785,7 +4788,7 @@ J9::ARM64::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGe
                TR_ASSERT(loadOrStoreChild->getOpCode().isConversion() || loadOrStoreChild->getOpCode().isLoad(), "Unexpected op");
 
                bool isUnsigned = loadOrStoreChild->getOpCode().isUnsigned();
-               TR::InstOpCode::Mnemonic loadOp = getLoadOpCodeFromDataType(cg, dt, isUnsigned, elementSize, indexReg != NULL);
+               TR::InstOpCode::Mnemonic loadOp = getLoadOpCodeFromDataType(cg, dt, elementSize, isUnsigned, indexReg != NULL);
 
                TR::MemoryReference *arrayletMR = indexReg ?
                   new (cg->trHeapMemory()) TR::MemoryReference(arrayletReg, arrayletOffsetReg, cg) :
