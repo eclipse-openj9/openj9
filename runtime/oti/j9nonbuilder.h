@@ -4870,6 +4870,24 @@ typedef struct J9VMThread {
 #if 1 && !defined(J9VM_ENV_DATA64) /* Change to 0 or 1 based on number of fields above */
 	U_32 paddingToAlignFloatTemp;
 #endif
+	/**
+	 * floatTemp1 is an overloaded field used for multiple purposes.
+	 *
+	 * Note: Listed below is one such use, and the other uses of this field still need to be
+	 * documented.
+	 *
+	 * 1. OpenJDK MethodHandle implementation
+	 *		For signature-polymorphic INL calls from compiled code for the following methods:
+	 *		* java/lang/invoke/MethodHandle.linkToStatic
+	 *		* java/lang/invoke/MethodHandle.linkToSpecial
+	 *		the compiled code performs a store to this field right before the INL call. The
+	 *		stored value represents the number of args for the unresolved invokedynamic/invokehandle
+	 *		call. This is required because linkToStatic calls are generated for unresolved
+	 *		invokedynamic/invokehandle, where the JIT cannot determine whether the appendix object of
+	 *		the callSite/invokeCache table entry is valid. As a result, the JIT code may push NULL
+	 *		appendix objects on the stack which the interpreter must remove. To determine that, the
+	 *		interpreter would need to know the number of arguments of method.
+	 */
 	void* floatTemp1;
 	void* floatTemp2;
 	void* floatTemp3;
