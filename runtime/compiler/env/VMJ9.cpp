@@ -4093,6 +4093,8 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
 bool
 TR_J9VMBase::isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp)
    {
+   // NOTE: the field must be resolved!
+
    if (comp->getOption(TR_DisableStableAnnotations))
       return false;
    

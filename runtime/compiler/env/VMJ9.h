@@ -903,7 +903,7 @@ public:
 
    /*
     * \brief
-    *    tell whether a field was annotated as @Stable
+    *    tell whether a field was annotated as @Stable. Field must be resolved.
     *
     * \param cpIndex
     *    field's constant pool index
