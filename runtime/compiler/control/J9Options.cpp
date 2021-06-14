@@ -1957,6 +1957,99 @@ void J9::Options::preProcessDeterministicMode(J9JavaVM *vm)
       }
    }
 
+bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+   static bool JITServerAlreadyParsed = false;
+   TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
+   if (!JITServerAlreadyParsed) // Avoid processing twice for AOT and JIT and produce duplicate messages
+      {
+      JITServerAlreadyParsed = true;
+      if (vm->internalVMFunctions->isJITServerEnabled(vm))
+         {
+         J9::PersistentInfo::_remoteCompilationMode = JITServer::SERVER;
+         // Increase the default timeout value for JITServer.
+         // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
+         compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITSERVER_TIMEOUT);
+         }
+      else
+         {
+         // Check option -XX:+UseJITServer
+         // -XX:-UseJITServer disables JITServer at the client
+         const char *xxUseJITServerOption = "-XX:+UseJITServer";
+         const char *xxDisableUseJITServerOption = "-XX:-UseJITServer";
+
+         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxUseJITServerOption, 0);
+         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableUseJITServerOption, 0);
+
+         // Check if option is at all specified
+         if (xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex)
+            {
+            J9::PersistentInfo::_remoteCompilationMode = JITServer::CLIENT;
+            compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITCLIENT_TIMEOUT);
+
+            // Check if the technology preview message should be displayed.
+            const char *xxJITServerTechPreviewMessageOption = "-XX:+JITServerTechPreviewMessage";
+            const char *xxDisableJITServerTechPreviewMessageOption = "-XX:-JITServerTechPreviewMessage";
+
+            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerTechPreviewMessageOption, 0);
+            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
+
+            if (xxJITServerTechPreviewMessageArgIndex >= xxDisableJITServerTechPreviewMessageArgIndex)
+               {
+               j9tty_printf(PORTLIB, "JITServer is currently a technology preview. Its use is not yet supported\n");
+               }
+
+            const char *xxJITServerAddressOption = "-XX:JITServerAddress=";
+            int32_t xxJITServerAddressArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAddressOption, 0);
+
+            if (xxJITServerAddressArgIndex >= 0)
+               {
+               char *address = NULL;
+               GET_OPTION_VALUE(xxJITServerAddressArgIndex, '=', &address);
+               compInfo->getPersistentInfo()->setJITServerAddress(address);
+               }
+            }
+         }
+      if (!JITServerParseCommonOptions(vm, compInfo))
+         {
+         // Could not parse JITServer options successfully
+         return false;
+         }
+
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+         {
+         // Generate a random identifier for this JITServer instance.
+         // Collisions are possible, but very unlikely.
+         // Using more bits for the client UID can reduce the probability of a collision further.
+         std::random_device rd;
+         std::mt19937_64 rng(rd());
+         std::uniform_int_distribution<uint64_t> dist;
+         // clientUID != 0 when running in client mode
+         uint64_t clientUID = dist(rng);
+         while (0 == clientUID)
+            clientUID = dist(rng);
+         compInfo->getPersistentInfo()->setClientUID(clientUID);
+         jitConfig->clientUID = clientUID;
+
+         // _safeReservePhysicalMemoryValue is set as 0 for the JITClient because compilations
+         // are done remotely. The user can still override it with a command line option
+         J9::Options::_safeReservePhysicalMemoryValue = 0;
+         }
+      else
+         {
+         // clientUID == 0 when running in server mode / regular JVM
+         compInfo->getPersistentInfo()->setClientUID(0);
+         jitConfig->clientUID = 0;
+         }
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return true;
+   }
+
 bool
 J9::Options::fePreProcess(void * base)
    {
@@ -2119,90 +2212,10 @@ J9::Options::fePreProcess(void * base)
    if (!TR::Compiler->target.cpu.isZ())
       self()->setOption(TR_DisableAOTBytesCompression);
 
-#if defined(J9VM_OPT_JITSERVER)
-   static bool JITServerAlreadyParsed = false;
-   if (!JITServerAlreadyParsed) // Avoid processing twice for AOT and JIT and produce duplicate messages
+   if (!preProcessJitServer(vm, jitConfig))
       {
-      JITServerAlreadyParsed = true;
-      if (vm->internalVMFunctions->isJITServerEnabled(vm))
-         {
-         J9::PersistentInfo::_remoteCompilationMode = JITServer::SERVER;
-         // Increase the default timeout value for JITServer.
-         // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
-         compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITSERVER_TIMEOUT);
-         }
-      else
-         {
-         // Check option -XX:+UseJITServer
-         // -XX:-UseJITServer disables JITServer at the client
-         const char *xxUseJITServerOption = "-XX:+UseJITServer";
-         const char *xxDisableUseJITServerOption = "-XX:-UseJITServer";
-
-         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxUseJITServerOption, 0);
-         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableUseJITServerOption, 0);
-
-         // Check if option is at all specified
-         if (xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex)
-            {
-            J9::PersistentInfo::_remoteCompilationMode = JITServer::CLIENT;
-            compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITCLIENT_TIMEOUT);
-
-            // Check if the technology preview message should be displayed.
-            const char *xxJITServerTechPreviewMessageOption = "-XX:+JITServerTechPreviewMessage";
-            const char *xxDisableJITServerTechPreviewMessageOption = "-XX:-JITServerTechPreviewMessage";
-
-            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerTechPreviewMessageOption, 0);
-            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
-
-            if (xxJITServerTechPreviewMessageArgIndex >= xxDisableJITServerTechPreviewMessageArgIndex)
-               {
-               j9tty_printf(PORTLIB, "JITServer is currently a technology preview. Its use is not yet supported\n");
-               }
-
-            const char *xxJITServerAddressOption = "-XX:JITServerAddress=";
-            int32_t xxJITServerAddressArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAddressOption, 0);
-
-            if (xxJITServerAddressArgIndex >= 0)
-               {
-               char *address = NULL;
-               GET_OPTION_VALUE(xxJITServerAddressArgIndex, '=', &address);
-               compInfo->getPersistentInfo()->setJITServerAddress(address);
-               }
-            }
-         }
-      if (!JITServerParseCommonOptions(vm, compInfo))
-         {
-         // Could not parse JITServer options successfully
          return false;
-         }
-
-      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-         {
-         // Generate a random identifier for this JITServer instance.
-         // Collisions are possible, but very unlikely.
-         // Using more bits for the client UID can reduce the probability of a collision further.
-         std::random_device rd;
-         std::mt19937_64 rng(rd());
-         std::uniform_int_distribution<uint64_t> dist;
-         // clientUID != 0 when running in client mode
-         uint64_t clientUID = dist(rng);
-         while (0 == clientUID)
-            clientUID = dist(rng);
-         compInfo->getPersistentInfo()->setClientUID(clientUID);
-         jitConfig->clientUID = clientUID;
-
-         // _safeReservePhysicalMemoryValue is set as 0 for the JITClient because compilations
-         // are done remotely. The user can still override it with a command line option
-         J9::Options::_safeReservePhysicalMemoryValue = 0;
-         }
-      else
-         {
-         // clientUID == 0 when running in server mode / regular JVM
-         compInfo->getPersistentInfo()->setClientUID(0);
-         jitConfig->clientUID = 0;
-         }
       }
-#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER)) && defined(TR_TARGET_64BIT)
    self()->setOption(TR_EnableSymbolValidationManager);
