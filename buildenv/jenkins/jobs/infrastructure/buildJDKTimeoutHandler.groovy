@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ timestamps {
                             userRemoteConfigs: [[url: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git']]]
                 }
                 stage('Download and extract jtreg jar') {
-                    sh 'wget https://ci.adoptopenjdk.net/view/Dependencies/job/jtreg/lastSuccessfulBuild/artifact/jtreg-4.2.0-tip.tar.gz'
+                    sh 'wget https://ci.adoptopenjdk.net/job/dependency_pipeline/lastSuccessfulBuild/artifact/jtreg/jtreg-4.2.0-tip.tar.gz'
                     sh 'tar xf jtreg-4.2.0-tip.tar.gz jtreg/lib/jtreg.jar'
                 }
                 stage('Build openj9jtregtimeouthandler.jar') {
