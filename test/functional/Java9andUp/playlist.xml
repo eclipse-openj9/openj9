@@ -407,7 +407,8 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>9+</version>
+			<version>11</version>
+			<version>16</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
@@ -432,6 +433,33 @@
 		</groups>
 		<versions>
 			<version>9+</version>
+		</versions>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+		<test>
+		<testCaseName>StaticAccessChecks-IllegalAccessDenyWithPermit</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --illegal-access=permit \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames AccessRestrictedClass \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)
+		</command>
+		<disabled>
+			<comment>https://github.com/eclipse-openj9/openj9/issues/12890</comment>
+		</disabled>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<versions>
+			<version>17+</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
