@@ -1375,71 +1375,10 @@ void J9::Options::preProcessJniAccelerator(J9JavaVM *vm)
       }
    }
 
-bool
-J9::Options::fePreProcess(void * base)
+bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
    {
-   J9JITConfig * jitConfig = (J9JITConfig*)base;
-   J9JavaVM * vm = jitConfig->javaVM;
-
    PORT_ACCESS_FROM_JAVAVM(vm);
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
-
-   #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-      bool forceSuffixLogs = false;
-   #else
-      bool forceSuffixLogs = true;
-   #endif
-
-
-  /* Using traps on z/OS for NullPointerException and ArrayIndexOutOfBound checks instead of the
-   * old way of using explicit compare and branching off to a helper is causing several issues on z/OS:
-   *
-   * 1. When a trap fires because an exception needs to be thrown, the OS signal has to go through z/OS RTM
-   * (Recovery Termination Management) and in doing so it gets serialized and has to acquire this CML lock.
-   *  When many concurrent exceptions are thrown, this lock gets contention.
-   *
-   * 2. on z/OS Management Facility, disabling traps gave performance boost because of fewer exceptions from the JCL.
-   * The path length on z/OS for a trap is longer than on other operating systems so the trade-off and
-   * penalty for using traps on z/OS is significantly worse than other platforms. This gives the potential
-   * for significant performance loss caused by traps.
-   *
-   * 3. Depending on sysadmin settings, every time a trap fires, the system may get a "system dump"
-   * message which shows a 0C7 abend and with lots of exceptions being thrown this clutters up the syslog.
-   *
-   * 4. Certain products can get in the way of the JIT signal handler so the JIT doesn't
-   * receive the 0C7 signal causing the product process to get killed
-   *
-   * Therefore, the recommendation is to disable traps on z/OS by default.
-   * Users can choose to enable traps using the "enableTraps" option.
-   */
-   #if defined(J9ZOS390)
-      self()->setOption(TR_DisableTraps);
-   #endif
-
-   if (self()->getOption(TR_AggressiveOpts))
-      self()->setOption(TR_DontDowngradeToCold, true);
-
-   if (forceSuffixLogs)
-      self()->setOption(TR_EnablePIDExtension);
-
-   if (jitConfig->runtimeFlags & J9JIT_CG_REGISTER_MAPS)
-      self()->setOption(TR_RegisterMaps);
-
-   jitConfig->tLogFile     = -1;
-   jitConfig->tLogFileTemp = -1;
-
-   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-   uint32_t numProc = compInfo->getNumTargetCPUs();
-   TR::Compiler->host.setNumberOfProcessors(numProc);
-   TR::Compiler->target.setNumberOfProcessors(numProc);
-   TR::Compiler->relocatableTarget.setNumberOfProcessors(numProc);
-
-   preProcessMmf(vm, jitConfig);
-
-   if (FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xnoclassgc", 0) >= 0)
-      self()->setOption(TR_NoClassGC);
-
-   preProcessMode(vm, jitConfig);
 
    char *ccOption = "-Xcodecache";
    int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
@@ -1450,8 +1389,6 @@ J9::Options::fePreProcess(void * base)
       ccSize >>= 10;
       jitConfig->codeCacheKB = ccSize;
       }
-
-   preProcessJniAccelerator(vm);
 
    // Check for option to increase code cache total size
    static bool codecachetotalAlreadyParsed = false;
@@ -1864,8 +1801,84 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
+      return true;
+   }
+
+bool
+J9::Options::fePreProcess(void * base)
+   {
+   J9JITConfig * jitConfig = (J9JITConfig*)base;
+   J9JavaVM * vm = jitConfig->javaVM;
+
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+   #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+      bool forceSuffixLogs = false;
+   #else
+      bool forceSuffixLogs = true;
+   #endif
+
+
+  /* Using traps on z/OS for NullPointerException and ArrayIndexOutOfBound checks instead of the
+   * old way of using explicit compare and branching off to a helper is causing several issues on z/OS:
+   *
+   * 1. When a trap fires because an exception needs to be thrown, the OS signal has to go through z/OS RTM
+   * (Recovery Termination Management) and in doing so it gets serialized and has to acquire this CML lock.
+   *  When many concurrent exceptions are thrown, this lock gets contention.
+   *
+   * 2. on z/OS Management Facility, disabling traps gave performance boost because of fewer exceptions from the JCL.
+   * The path length on z/OS for a trap is longer than on other operating systems so the trade-off and
+   * penalty for using traps on z/OS is significantly worse than other platforms. This gives the potential
+   * for significant performance loss caused by traps.
+   *
+   * 3. Depending on sysadmin settings, every time a trap fires, the system may get a "system dump"
+   * message which shows a 0C7 abend and with lots of exceptions being thrown this clutters up the syslog.
+   *
+   * 4. Certain products can get in the way of the JIT signal handler so the JIT doesn't
+   * receive the 0C7 signal causing the product process to get killed
+   *
+   * Therefore, the recommendation is to disable traps on z/OS by default.
+   * Users can choose to enable traps using the "enableTraps" option.
+   */
+   #if defined(J9ZOS390)
+      self()->setOption(TR_DisableTraps);
+   #endif
+
+   if (self()->getOption(TR_AggressiveOpts))
+      self()->setOption(TR_DontDowngradeToCold, true);
+
+   if (forceSuffixLogs)
+      self()->setOption(TR_EnablePIDExtension);
+
+   if (jitConfig->runtimeFlags & J9JIT_CG_REGISTER_MAPS)
+      self()->setOption(TR_RegisterMaps);
+
+   jitConfig->tLogFile     = -1;
+   jitConfig->tLogFileTemp = -1;
+
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+   uint32_t numProc = compInfo->getNumTargetCPUs();
+   TR::Compiler->host.setNumberOfProcessors(numProc);
+   TR::Compiler->target.setNumberOfProcessors(numProc);
+   TR::Compiler->relocatableTarget.setNumberOfProcessors(numProc);
+
+   preProcessMmf(vm, jitConfig);
+
+   if (FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xnoclassgc", 0) >= 0)
+      self()->setOption(TR_NoClassGC);
+
+   preProcessMode(vm, jitConfig);
+
+   preProcessJniAccelerator(vm);
+
+   if (!preProcessCodeCache(vm, jitConfig))
+      {
+         return false;
+      }
+
    char *samplingOption = "-XsamplingExpirationTime";
-   argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, samplingOption, 0);
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, samplingOption, 0);
    if (argIndex >= 0)
       {
       UDATA expirationTime;
