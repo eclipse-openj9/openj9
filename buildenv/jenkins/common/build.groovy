@@ -624,9 +624,6 @@ def _build_all() {
     try {
         cleanWorkspace(false)
         add_node_to_description()
-        // initialize BOOT_JDK, FREEMARKER, OPENJDK_REFERENCE_REPO here
-        // to correctly expand $HOME variable
-        variableFile.set_build_variables_per_node()
         get_source()
         variableFile.set_sdk_variables()
         variableFile.set_artifactory_config(BUILD_IDENTIFIER)
@@ -644,9 +641,10 @@ def build_all() {
         timeout(time: 10, unit: 'HOURS') {
             node("${NODE}") {
                 timeout(time: 5, unit: 'HOURS') {
+                    variableFile.set_build_variables_per_node()
                     if ("${DOCKER_IMAGE}") {
                         prepare_docker_environment()
-                        docker.image(DOCKER_IMAGE_ID).inside {
+                        docker.image(DOCKER_IMAGE_ID).inside("-v ${OPENJDK_REFERENCE_REPO}:${OPENJDK_REFERENCE_REPO}:rw,z") {
                             _build_all()
                         }
                     } else { 
