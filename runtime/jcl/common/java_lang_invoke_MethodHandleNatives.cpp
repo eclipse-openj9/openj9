@@ -57,6 +57,9 @@ extern "C" {
 #define MN_TRUSTED_MODE			-1
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+/* PlaceHolder value used for MN.vmindex that has default method conflict */
+#define J9VM_RESOLVED_VMINDEX_FOR_DEFAULT_THROW 1
+
 static bool
 isPolymorphicMHMethod(J9JavaVM *vm, J9Class *declaringClass, J9UTF8 *methodName)
 {
@@ -832,7 +835,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 
 						if (!VM_VMHelpers::exceptionPending(currentThread)) {
 							/* Set placeholder values for MemberName fields. */
-							vmindex = (jlong)(UDATA)1;
+							vmindex = (jlong)J9VM_RESOLVED_VMINDEX_FOR_DEFAULT_THROW;
 							new_clazz = J9VM_J9CLASS_TO_HEAPCLASS(J9_CLASS_FROM_METHOD(method));
 							new_flags = flags;
 
