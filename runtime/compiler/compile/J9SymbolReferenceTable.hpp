@@ -85,6 +85,14 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     */
    TR::SymbolReference * findOrCreateVMThreadTempSlotFieldSymbolRef();
 
+   /** \brief
+    * Find or create VMThread.floatTemp1 symbol reference. J9VMThread.floatTemp1 provides an additional
+    * mechanism for the compiler to provide information that the VM can use for various reasons
+    *
+    * \return TR::SymbolReference* the VMThread.floatTemp1 symbol reference
+    */
+   TR::SymbolReference * findOrCreateVMThreadFloatTemp1SymbolRef();
+
    // CG linkage
    TR::SymbolReference * findOrCreateAcquireVMAccessSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol); // minor rework
    TR::SymbolReference * findOrCreateReleaseVMAccessSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol); // minor rework
