@@ -1341,6 +1341,40 @@ void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
       }
    }
 
+void J9::Options::preProcessJniAccelerator(J9JavaVM *vm)
+   {
+   static bool doneWithJniAcc = false;
+   char *jniAccOption = "-XjniAcc:";
+   if (!doneWithJniAcc)
+      {
+      int32_t argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, jniAccOption, 0);
+      if (argIndex >= 0)
+         {
+         char *optValue;
+         doneWithJniAcc = true;
+         GET_OPTION_VALUE(argIndex, ':', &optValue);
+         if (*optValue == '{')
+            {
+            if (!_debug)
+               TR::Options::createDebug();
+            if (_debug)
+               {
+               TR::SimpleRegex *mRegex;
+               mRegex = TR::SimpleRegex::create(optValue);
+               if (!mRegex || *optValue != 0)
+                  {
+                  TR_VerboseLog::writeLine(TR_Vlog_FAILURE, "Bad regular expression at --> '%s'", optValue);
+                  }
+               else
+                  {
+                  TR::Options::setJniAccelerator(mRegex);
+                  }
+               }
+            }
+         }
+      }
+   }
+
 bool
 J9::Options::fePreProcess(void * base)
    {
@@ -1417,36 +1451,7 @@ J9::Options::fePreProcess(void * base)
       jitConfig->codeCacheKB = ccSize;
       }
 
-   static bool doneWithJniAcc = false;
-   char *jniAccOption = "-XjniAcc:";
-   if (!doneWithJniAcc)
-      {
-      argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, jniAccOption, 0);
-      if (argIndex >= 0)
-         {
-         char *optValue;
-         doneWithJniAcc = true;
-         GET_OPTION_VALUE(argIndex, ':', &optValue);
-         if (*optValue == '{')
-            {
-            if (!_debug)
-               TR::Options::createDebug();
-            if (_debug)
-               {
-               TR::SimpleRegex *mRegex;
-               mRegex = TR::SimpleRegex::create(optValue);
-               if (!mRegex || *optValue != 0)
-                  {
-                  TR_VerboseLog::writeLine(TR_Vlog_FAILURE, "Bad regular expression at --> '%s'", optValue);
-                  }
-               else
-                  {
-                  TR::Options::setJniAccelerator(mRegex);
-                  }
-               }
-            }
-         }
-      }
+   preProcessJniAccelerator(vm);
 
    // Check for option to increase code cache total size
    static bool codecachetotalAlreadyParsed = false;
