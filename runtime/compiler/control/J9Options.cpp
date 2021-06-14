@@ -1897,6 +1897,46 @@ void J9::Options::preProcessTLHPrefetch(J9JavaVM *vm)
 #endif // defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
    }
 
+void J9::Options::preProcessHwProfiler(J9JavaVM *vm)
+   {
+   // If the user didn't specifically ask for RI, let's enable it on some well defined platforms
+   if (TR::Options::_hwProfilerEnabled == TR_maybe)
+      {
+#if defined (TR_HOST_S390)
+      if (vm->runtimeFlags & J9_RUNTIME_TUNE_VIRTUALIZED)
+         {
+         TR::Options::_hwProfilerEnabled = TR_yes;
+         }
+      else
+         {
+         TR::Options::_hwProfilerEnabled = TR_no;
+         }
+#else
+      TR::Options::_hwProfilerEnabled = TR_no;
+#endif
+      }
+
+   // If RI is to be enabled, set other defaults as well
+   if (TR::Options::_hwProfilerEnabled == TR_yes)
+      {
+      // Enable RI Based Recompilation by default
+      self()->setOption(TR_EnableHardwareProfileRecompilation);
+
+      // Disable the RI Reduced Warm Heuristic
+      self()->setOption(TR_DisableHardwareProfilerReducedWarm);
+
+#if (defined(TR_HOST_POWER) && defined(TR_HOST_64BIT))
+#if defined(LINUX)
+      // On Linux on Power downgrade compilations only when the compilation queue grows large
+      self()->setOption(TR_UseRIOnlyForLargeQSZ);
+#endif
+      self()->setOption(TR_DisableHardwareProfilerDuringStartup);
+#elif defined (TR_HOST_S390)
+      self()->setOption(TR_DisableDynamicRIBufferProcessing);
+#endif
+      }
+   }
+
 bool
 J9::Options::fePreProcess(void * base)
    {
@@ -1980,42 +2020,7 @@ J9::Options::fePreProcess(void * base)
    self()->setOption(TR_ReservingLocks);
 #endif
 
-   // If the user didn't specifically ask for RI, let's enable it on some well defined platforms
-   if (TR::Options::_hwProfilerEnabled == TR_maybe)
-      {
-#if defined (TR_HOST_S390)
-      if (vm->runtimeFlags & J9_RUNTIME_TUNE_VIRTUALIZED)
-         {
-         TR::Options::_hwProfilerEnabled = TR_yes;
-         }
-      else
-         {
-         TR::Options::_hwProfilerEnabled = TR_no;
-         }
-#else
-      TR::Options::_hwProfilerEnabled = TR_no;
-#endif
-      }
-
-   // If RI is to be enabled, set other defaults as well
-   if (TR::Options::_hwProfilerEnabled == TR_yes)
-      {
-      // Enable RI Based Recompilation by default
-      self()->setOption(TR_EnableHardwareProfileRecompilation);
-
-      // Disable the RI Reduced Warm Heuristic
-      self()->setOption(TR_DisableHardwareProfilerReducedWarm);
-
-#if (defined(TR_HOST_POWER) && defined(TR_HOST_64BIT))
-#if defined(LINUX)
-      // On Linux on Power downgrade compilations only when the compilation queue grows large
-      self()->setOption(TR_UseRIOnlyForLargeQSZ);
-#endif
-      self()->setOption(TR_DisableHardwareProfilerDuringStartup);
-#elif defined (TR_HOST_S390)
-      self()->setOption(TR_DisableDynamicRIBufferProcessing);
-#endif
-      }
+   preProcessHwProfiler(vm);
 
 #if defined (TR_HOST_S390)
    // On z Systems inlining very large compiled bodies proved to be worth a significant amount in terms of throughput
