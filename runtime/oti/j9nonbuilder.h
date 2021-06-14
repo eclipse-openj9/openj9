@@ -4028,6 +4028,9 @@ typedef struct J9JITConfig {
 	void ( *jitMethodBreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitMethodUnbreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	void ( *jitSetMutableCallSiteTarget)(struct J9VMThread *vmThread, j9object_t mcs, j9object_t newTarget) ;
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
 	U_8* (*codeCacheWarmAlloc)(void *codeCache);
 	U_8* (*codeCacheColdAlloc)(void *codeCache);
 	void ( *printAOTHeaderProcessorFeatures)(struct TR_AOTHeader * aotHeaderAddress, char * buff, const size_t BUFF_SIZE);
@@ -5511,6 +5514,7 @@ typedef struct J9JavaVM {
 #ifdef J9VM_OPT_OPENJDK_METHODHANDLE
 	UDATA vmindexOffset;
 	UDATA vmtargetOffset;
+	UDATA mutableCallSiteInvalidationCookieOffset;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
 	U_32 javaVM31;
@@ -5739,10 +5743,11 @@ typedef struct J9CInterpreterStackFrame {
 	UDATA jitGPRs[32]; /* x0-x31 */
 	U_8 jitFPRs[32 * 8]; /* v0-v31 */
 #elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_ARM */
-	UDATA preservedGPRs[13]; /* x2, x8, x9, and x18-x27  */
+	UDATA preservedGPRs[11]; /* x2, x8, x9, and x18-x25  */
 	U_8 preservedFPRs[32 * 8]; /* f0-f31 */
 	UDATA jitGPRs[32]; /* x0-x31 */
 	U_8 jitFPRs[32 * 8]; /* f0-f31 */
+	U_8 padding[8]; /* padding to 16-byte boundary */
 #elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_AARCH64 */
 #if defined(J9VM_ENV_DATA64) && defined(WIN32)
 	UDATA arguments[4]; /* outgoing arguments shadow */

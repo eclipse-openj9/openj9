@@ -2593,12 +2593,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             if (mcsObject && knotEnabled && knot)
                {
                TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe);
-               uintptr_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
-               if (currentEpoch)
-                  {
-                  knotIndex = knot->getOrCreateIndex(currentEpoch);
+               knotIndex = fej9->mutableCallSiteEpoch(comp, mcsObject);
+               if (knotIndex != TR::KnownObjectTable::UNKNOWN)
                   objectPointerReference = knot->getPointerLocation(knotIndex);
-                  }
                }
             }
 

@@ -376,7 +376,13 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_preservedFPRs", offsetof(J9CInterpreterStackFrame, preservedFPRs)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitGPRs", offsetof(J9CInterpreterStackFrame, jitGPRs)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitFPRs", offsetof(J9CInterpreterStackFrame, jitFPRs)) |
-#elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_AARCH64 */
+#elif defined(J9VM_ARCH_RISCV) /* J9VM_ARCH_AARCH64 */
+			/* RISC-V */
+			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_preservedGPRs", offsetof(J9CInterpreterStackFrame, preservedGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_preservedFPRs", offsetof(J9CInterpreterStackFrame, preservedFPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitGPRs", offsetof(J9CInterpreterStackFrame, jitGPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitFPRs", offsetof(J9CInterpreterStackFrame, jitFPRs)) |			
+#elif defined(J9VM_ARCH_X86) /* J9VM_ARCH_RISCV */
 			/* x86 */
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_vmStruct", offsetof(J9CInterpreterStackFrame, vmStruct)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_machineBP", offsetof(J9CInterpreterStackFrame, machineBP)) |

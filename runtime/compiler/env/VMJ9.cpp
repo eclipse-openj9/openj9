@@ -4755,12 +4755,44 @@ TR_J9VMBase::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptr_t 
 
 uintptr_t TR_J9VMBase::mutableCallSiteCookie(uintptr_t mutableCallSite, uintptr_t potentialCookie)
    {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   uint32_t offset = _jitConfig->javaVM->mutableCallSiteInvalidationCookieOffset;
+   // The *FieldAt() functions below will add the header size, but that's
+   // already included in mutableCallSiteInvalidationCookieOffset.
+   offset -= getObjectHeaderSizeInBytes();
+#else
+   uint32_t offset = getInstanceFieldOffset(
+      getObjectClass(mutableCallSite), "invalidationCookie", "J");
+#endif
+
    uintptr_t result=0;
-   if (potentialCookie && compareAndSwapInt64Field(mutableCallSite, "invalidationCookie", 0, potentialCookie))
+   if (potentialCookie && compareAndSwapInt64FieldAt(mutableCallSite, offset, 0, potentialCookie))
       result =  potentialCookie;
    else
-      result = (uintptr_t)getInt64Field(mutableCallSite, "invalidationCookie");
+      result = (uintptr_t)getInt64FieldAt(mutableCallSite, offset);
+
    return result;
+   }
+
+TR::KnownObjectTable::Index TR_J9VMBase::mutableCallSiteEpoch(TR::Compilation *comp, uintptr_t mutableCallSite)
+   {
+   TR_ASSERT_FATAL(haveAccess(), "mutableCallSiteEpoch requires VM access");
+
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (knot == NULL)
+      return TR::KnownObjectTable::UNKNOWN;
+
+   // getVolatileReferenceField() doesn't accept const char*
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   char *fieldName = "target"; // There is no separate epoch field.
+#else
+   char *fieldName = "epoch";
+#endif
+
+   uintptr_t mh = getVolatileReferenceField(
+      mutableCallSite, fieldName, "Ljava/lang/invoke/MethodHandle;");
+
+   return mh == 0 ? TR::KnownObjectTable::UNKNOWN : knot->getOrCreateIndex(mh);
    }
 
 bool

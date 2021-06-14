@@ -110,6 +110,10 @@ extern "C" void jitDiscardPendingCompilationsOfNatives(J9VMThread *vmThread, J9C
 extern "C" void *jitLookupDLT(J9VMThread *currentThread, J9Method *method, UDATA bcIndex);
 #endif
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+extern "C" void jitSetMutableCallSiteTarget(J9VMThread *vmThread, j9object_t mcs, j9object_t newTarget);
+#endif
+
 }
 
 static void codertOnBootstrap(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
@@ -483,6 +487,9 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
    jitConfig->jitDiscardPendingCompilationsOfNatives = jitDiscardPendingCompilationsOfNatives;
    jitConfig->jitMethodBreakpointed = jitMethodBreakpointed;
    jitConfig->jitIllegalFinalFieldModification = jitIllegalFinalFieldModification;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   jitConfig->jitSetMutableCallSiteTarget = jitSetMutableCallSiteTarget;
+#endif
 
    initializeCodertFunctionTable(javaVM);
 

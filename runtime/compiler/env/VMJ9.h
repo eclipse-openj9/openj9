@@ -762,6 +762,7 @@ public:
    virtual TR_ResolvedMethod    *createMethodHandleArchetypeSpecimen(TR_Memory *, TR_OpaqueMethodBlock *archetype, uintptr_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0); // more efficient if you already know the archetype
 
    virtual uintptr_t mutableCallSiteCookie(uintptr_t mutableCallSite, uintptr_t potentialCookie=0);
+   TR::KnownObjectTable::Index mutableCallSiteEpoch(TR::Compilation *comp, uintptr_t mutableCallSite);
 
    bool hasMethodTypesSideTable();
 

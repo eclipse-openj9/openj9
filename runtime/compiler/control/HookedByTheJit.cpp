@@ -2526,6 +2526,126 @@ void jitIllegalFinalFieldModification(J9VMThread *currentThread, J9Class *fieldC
    reportHookFinished(currentThread, "jitIllegalFinalFieldModification");
    }
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+// JIT hook called by the VM to update the target of a MutableCallSite.
+void jitSetMutableCallSiteTarget(J9VMThread *vmThread, j9object_t mcs, j9object_t newTarget)
+   {
+   J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
+   TR_J9VMBase *fej9 = TR_J9VMBase::get(jitConfig, vmThread);
+   TR_RuntimeAssumptionTable *rat = compInfo->getPersistentInfo()->getRuntimeAssumptionTable();
+
+   bool verbose = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHooks);
+   bool details = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseHookDetails);
+   verbose = verbose || details;
+
+   TR_OpaqueClassBlock *mcsClass = fej9->getObjectClass((uintptr_t)mcs);
+   uintptr_t targetOffset = fej9->getInstanceFieldOffset(
+      mcsClass, "target", "Ljava/lang/invoke/MethodHandle;");
+
+   TR::ClassTableCriticalSection commit(fej9);
+
+   // There are no concurrent modifications because target is only modified
+   // while holding the CH table lock.
+   uintptr_t prevTarget = fej9->getReferenceFieldAt((uintptr_t)mcs, targetOffset);
+   if ((uintptr_t)newTarget == prevTarget)
+      return; // Nothing to do.
+
+   // The CH table lock must be acquired before reading the cookie. Otherwise,
+   // a nonzero value written by another thread (in the compiler's CH table
+   // commit phase) won't necessarily be observed; and worse, if this MCS
+   // object were first inlined in a compilation that is committing
+   // concurrently, the following would be possible even with strong memory
+   // ordering:
+   //
+   // 1. jitSetMutableCallSiteTarget() reads the cookie, which is zero, so no
+   //    assumptions will be invalidated; then
+   //
+   // 2. the compilation reads the MCS target during CH table commit, which
+   //    matches what it saw during inlining, so it considers its assumption
+   //    valid; then
+   //
+   // 3. in any order, the compilation finishes and the MCS target is updated,
+   //    resulting in a compiled body that has inlined the wrong target.
+
+   uintptr_t cookie = fej9->mutableCallSiteCookie((uintptr_t)mcs);
+   if (cookie == 0)
+      {
+      if (verbose)
+         {
+         TR_VerboseLog::writeLineLocked(
+            TR_Vlog_HD, "%p skipping nonexistent cookie", vmThread);
+         }
+      }
+   else
+      {
+      // There may be assumptions to invalidate. Any such assumptions must be
+      // invalidated before updating the target field. Otherwise, another
+      // thread concurrently running JIT-compiled code where the previous
+      // target is inlined could read the new target object from the field and
+      // still pass the MCS target guard into the inlined body, even though the
+      // freshly loaded target differs from the known object used during
+      // optimization.
+      //
+      // While it would actually be OK to continue using the old target until
+      // syncAll() is called, code optimized based on known object information
+      // does not keep using the original reference it had when it was
+      // compiled. Instead, it retrieves the reference at runtime using the
+      // original chain of loads. The compiler will have transformed some but
+      // not necessarily all of the uses of this reference, so if a different
+      // reference is found at runtime, inconsistencies will result.
+      //
+      // For example, suppose the compiled code gets the mutable call site MCS
+      // and then updates ((Foo)((Species_L)MCS.target).argL0).f. Making use of
+      // the known object information, the compiler has likely improved the
+      // code so that it stores to MCS.target.argL0.f without any casts, but
+      // (crucially) the object reference MCS.target.argL0 is not truly
+      // constant-folded, so it must be found by chasing pointers at runtime.
+      // If MCS.target is changed to e.g. an instance of Species_I, and if the
+      // optimized code is still allowed to run, then the load of argL0 will
+      // reinterpret the bound integer as a reference, and the subsequent store
+      // will dereference it. Kaboom!
+
+      if (verbose)
+         {
+         TR_VerboseLog::writeLineLocked(
+            TR_Vlog_HD, "%p notifying cookie %p", vmThread, (void*)cookie);
+         }
+
+      rat->notifyMutableCallSiteChangeEvent(fej9, cookie);
+
+      if (verbose)
+         {
+         TR_VerboseLog::writeLineLocked(
+            TR_Vlog_HD, "%p finished notifying cookie %p", vmThread, (void*)cookie);
+         }
+      }
+
+   // Finally, update the target. This must be done while the CH table lock is
+   // still held. Otherwise, it would be possible for a concurrent compilation
+   // to inline the wrong target without invalidating its guard:
+   //
+   // 1. jitSetMutableCallSiteTarget() invalidates MCS target guards for this
+   //    call site and releases the CH table lock; then
+   //
+   // 2. the compilation gets the CH table lock and starts its CH table commit,
+   //    wherein it observes the previous target, which matches what it saw
+   //    during inlining, so it considers its assumption valid; then
+   //
+   // 3. finally, the target is updated.
+   //
+   // Note that it's fine to use a regular (non-volatile) store here. For other
+   // threads loading the target at runtime / in the interpreter, they are not
+   // required to see the update before syncAll() is called. For compilations
+   // in other threads, any subsequent CH table commit is guaranteed to see the
+   // update due to synchronization via the CH table lock.
+
+   targetOffset += TR::Compiler->om.objectHeaderSizeInBytes();
+   vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectStoreObject(
+      vmThread, mcs, targetOffset, newTarget, 0);
+   }
+#endif
+
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 static void jitHookInterruptCompilation(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {

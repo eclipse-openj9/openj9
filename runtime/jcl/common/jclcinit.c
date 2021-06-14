@@ -622,6 +622,10 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/invoke/MemberName", "vmtarget", "J", &vm->vmtargetOffset)) {
 		return 1;
 	}
+
+	if (0 != vmFuncs->addHiddenInstanceField(vm, "java/lang/invoke/MutableCallSite", "invalidationCookie", "J", &vm->mutableCallSiteInvalidationCookieOffset)) {
+		return 1;
+	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 

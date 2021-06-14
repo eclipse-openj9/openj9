@@ -430,11 +430,7 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
             // However, JITClientCHTableCommit() is called at the end of compilation,
             // and therefore it cannot cause any issues.
             TR::VMAccessCriticalSection invalidateMCSTargetGuards(fej9);
-            // TODO: Code duplication with TR_InlinerBase::findInlineTargets
-            currentIndex = TR::KnownObjectTable::UNKNOWN;
-            uintptr_t currentEpoch = fej9->getVolatileReferenceField(*mcsReferenceLocation, "epoch", "Ljava/lang/invoke/MethodHandle;");
-            if (currentEpoch)
-               currentIndex = knot->getOrCreateIndex(currentEpoch);
+            currentIndex = fej9->mutableCallSiteEpoch(comp, *mcsReferenceLocation);
             if (info->_mutableCallSiteEpoch == currentIndex)
                cookie = fej9->mutableCallSiteCookie(*mcsReferenceLocation, potentialCookie);
             else
