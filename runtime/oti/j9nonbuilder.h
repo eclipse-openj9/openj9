@@ -4028,6 +4028,9 @@ typedef struct J9JITConfig {
 	void ( *jitMethodBreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitMethodUnbreakpointed)(struct J9VMThread *currentThread, struct J9Method *method) ;
 	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	void ( *jitSetMutableCallSiteTarget)(struct J9VMThread *vmThread, j9object_t mcs, j9object_t newTarget) ;
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
 	U_8* (*codeCacheWarmAlloc)(void *codeCache);
 	U_8* (*codeCacheColdAlloc)(void *codeCache);
 	void ( *printAOTHeaderProcessorFeatures)(struct TR_AOTHeader * aotHeaderAddress, char * buff, const size_t BUFF_SIZE);
@@ -5508,6 +5511,7 @@ typedef struct J9JavaVM {
 #ifdef J9VM_OPT_OPENJDK_METHODHANDLE
 	UDATA vmindexOffset;
 	UDATA vmtargetOffset;
+	UDATA mutableCallSiteInvalidationCookieOffset;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
 	U_32 javaVM31;

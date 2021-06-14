@@ -763,9 +763,7 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
          if (mcsObject && knot)
             {
             TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fej9());
-            uintptr_t currentEpoch = fej9->getVolatileReferenceField(mcsObject, "epoch", "Ljava/lang/invoke/MethodHandle;");
-            if (currentEpoch)
-               vgs->_mutableCallSiteEpoch = knot->getOrCreateIndex(currentEpoch);
+            vgs->_mutableCallSiteEpoch = fej9->mutableCallSiteEpoch(comp(), mcsObject);
             }
          else
             {
@@ -775,19 +773,40 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
 
       if (vgs->_mutableCallSiteEpoch != TR::KnownObjectTable::UNKNOWN)
          {
-         TR_ResolvedMethod       *specimenMethod = comp()->fej9()->createMethodHandleArchetypeSpecimen(comp()->trMemory(),
-            knot->getPointerLocation(vgs->_mutableCallSiteEpoch), _callerResolvedMethod);
-         TR_CallTarget *target = addTarget(comp()->trMemory(), inliner, vgs,
-            specimenMethod, _receiverClass, heapAlloc);
-         TR_ASSERT(target , "There should be only one target for TR_MutableCallSite");
-         target->_calleeMethodKind = TR::MethodSymbol::ComputedVirtual;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         TR::MethodSymbol::Kinds methodKind = TR::MethodSymbol::Static;
+         TR_OpaqueMethodBlock *targetJ9Method =
+            comp()->fej9()->targetMethodFromMethodHandle(comp(), vgs->_mutableCallSiteEpoch);
 
-         // The following dereferences pointers to heap references, which is technically not valid,
-         // but it's only a debug trace, and it won't crash (only return garbage).
-         //
-         heuristicTrace(inliner->tracer(),"  addTarget: MutableCallSite.epoch is %p.obj%d (%p.%p)",
-             vgs->_mutableCallSiteObject, vgs->_mutableCallSiteEpoch,
-            *vgs->_mutableCallSiteObject, knot->getPointer(vgs->_mutableCallSiteEpoch));
+         TR_ASSERT_FATAL(
+            targetJ9Method != NULL,
+            "failed to find MCS target (obj%d) LambdaForm method",
+            (int)vgs->_mutableCallSiteEpoch);
+
+         TR_ResolvedMethod *targetMethod = comp()->fej9()->createResolvedMethod(
+            comp()->trMemory(), targetJ9Method, callStack->_method);
+
+         heuristicTrace(
+            inliner->tracer(),
+            "Refine callee of MCS target invokeBasic to %s\n",
+            targetMethod->signature(comp()->trMemory(), stackAlloc));
+#else
+         TR::MethodSymbol::Kinds methodKind = TR::MethodSymbol::ComputedVirtual;
+         TR_ResolvedMethod *targetMethod = comp()->fej9()->createMethodHandleArchetypeSpecimen(
+            comp()->trMemory(),
+            knot->getPointerLocation(vgs->_mutableCallSiteEpoch),
+            _callerResolvedMethod);
+#endif
+         TR_CallTarget *target = addTarget(comp()->trMemory(), inliner, vgs,
+            targetMethod, _receiverClass, heapAlloc);
+         TR_ASSERT(target , "There should be only one target for TR_MutableCallSite");
+         target->_calleeMethodKind = methodKind;
+
+         heuristicTrace(
+            inliner->tracer(),
+            "  addTarget: MutableCallSite %p epoch is obj%d",
+            vgs->_mutableCallSiteObject,
+            vgs->_mutableCallSiteEpoch);
 
          return true;
          }

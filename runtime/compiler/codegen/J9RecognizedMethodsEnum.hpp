@@ -993,6 +993,7 @@
    java_lang_invoke_InterfaceHandle_invokeExact,
    java_lang_invoke_Invokers_checkCustomized,
    java_lang_invoke_Invokers_checkExactType,
+   java_lang_invoke_Invokers_getCallSiteTarget,
    java_lang_invoke_MethodHandle_doCustomizationLogic,
    java_lang_invoke_MethodHandle_asType,
    java_lang_invoke_MethodHandle_asType_instance,

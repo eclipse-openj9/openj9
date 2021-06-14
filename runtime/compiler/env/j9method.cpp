@@ -3647,6 +3647,7 @@ void TR_ResolvedJ9Method::construct()
       {
       {x(TR::java_lang_invoke_Invokers_checkCustomized,                    "checkCustomized",             "(Ljava/lang/invoke/MethodHandle;)V")},
       {x(TR::java_lang_invoke_Invokers_checkExactType,                     "checkExactType",              "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)V")},
+      {x(TR::java_lang_invoke_Invokers_getCallSiteTarget,                  "getCallSiteTarget",           "(Ljava/lang/invoke/CallSite;)Ljava/lang/invoke/MethodHandle;")},
       {TR::unknownMethod}
       };
 

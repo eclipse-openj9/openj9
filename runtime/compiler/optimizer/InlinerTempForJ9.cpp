@@ -4488,6 +4488,17 @@ bool TR_J9InlinerPolicy::canInlineMethodWhileInstrumenting(TR_ResolvedMethod *me
    else return true;
    }
 
+bool TR_J9InlinerPolicy::shouldRemoveDifferingTargets(TR::Node *callNode)
+   {
+   if (!OMR_InlinerPolicy::shouldRemoveDifferingTargets(callNode))
+      return false;
+
+   TR::RecognizedMethod rm =
+      callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
+
+   return rm != TR::java_lang_invoke_MethodHandle_invokeBasic;
+   }
+
 void
 TR_J9InlinerUtil::refineInlineGuard(TR::Node *callNode, TR::Block *&block1, TR::Block *&block2,
                   bool &appendTestToBlock1, TR::ResolvedMethodSymbol * callerSymbol, TR::TreeTop *cursorTree,
@@ -6402,13 +6413,30 @@ TR_J9InlinerUtil::createPrexArgInfoForCallTarget(TR_VirtualGuardSelection *guard
             }
          }
 
-      if (implementer->convertToMethod()->isArchetypeSpecimen() &&
-          implementer->getMethodHandleLocation() &&
-          comp()->getOrCreateKnownObjectTable())
-         {
+      bool isArchetypeSpecimen =
+         implementer->convertToMethod()->isArchetypeSpecimen()
+         && implementer->getMethodHandleLocation() != NULL;
 
-         auto prexArg = new (comp()->trHeapMemory()) TR_PrexArgument(comp()->getKnownObjectTable()->getOrCreateIndexAt(implementer->getMethodHandleLocation()), comp());
-         if (guard->_kind == TR_MutableCallSiteTargetGuard)
+      bool isMCS = guard->_kind == TR_MutableCallSiteTargetGuard;
+
+      bool isLambdaFormMCS =
+         isMCS && comp()->fej9()->isLambdaFormGeneratedMethod(implementer);
+
+      if ((isArchetypeSpecimen || isLambdaFormMCS) && comp()->getOrCreateKnownObjectTable())
+         {
+         TR::KnownObjectTable::Index mhIndex = TR::KnownObjectTable::UNKNOWN;
+         if (isLambdaFormMCS)
+            {
+            mhIndex = guard->_mutableCallSiteEpoch;
+            }
+         else
+            {
+            uintptr_t *mhLocation = implementer->getMethodHandleLocation();
+            mhIndex = comp()->getKnownObjectTable()->getOrCreateIndexAt(mhLocation);
+            }
+
+         auto prexArg = new (comp()->trHeapMemory()) TR_PrexArgument(mhIndex, comp());
+         if (isMCS)
             prexArg->setTypeInfoForInlinedBody();
          myPrexArgInfo->set(0, prexArg);
          }
