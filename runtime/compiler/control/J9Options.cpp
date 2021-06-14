@@ -1279,6 +1279,68 @@ void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
    // } RTSJ Support End
    }
 
+void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
+   // Determine the mode we want to be in
+   // Possible options: client/Quickstart, server, aggressive, noquickstart
+   if (jitConfig->runtimeFlags & J9JIT_QUICKSTART)
+      {
+      self()->setQuickStart();
+      }
+   else
+      {
+      // if the server mode is set
+      if ((FIND_ARG_IN_VMARGS(EXACT_MATCH, "-server", 0)) >=0) // I already know I cannot be in -client mode
+         self()->setOption(TR_Server);
+      }
+
+   if (vm->runtimeFlags & J9_RUNTIME_AGGRESSIVE)
+      {
+      self()->setOption(TR_AggressiveOpts);
+      }
+
+   // The aggressivenessLevel can only be specified with a VM option (-XaggressivenessLevel)
+   // The level should be only set once (it's a static)
+   // This is a second hand citizen option; if other options contradict it, this option is
+   // ignored even if it appears later
+   if (!self()->getOption(TR_AggressiveOpts) &&
+       !(jitConfig->runtimeFlags & J9JIT_QUICKSTART) &&
+       !self()->getOption(TR_Server))
+      {
+      // Xtune:virtualized will put us in aggressivenessLevel3, but only if other options
+      // like Xquickstart, -client, -server, -Xaggressive are not specified
+      if (vm->runtimeFlags & J9_RUNTIME_TUNE_VIRTUALIZED)
+         {
+         _aggressivenessLevel = TR::Options::AGGRESSIVE_AOT;
+         }
+      if (_aggressivenessLevel == -1) // not yet set
+         {
+         char *aggressiveOption = "-XaggressivenessLevel";
+         int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, aggressiveOption, 0);
+         if (argIndex >= 0)
+            {
+            UDATA aggressivenessValue = 0;
+            IDATA ret = GET_INTEGER_VALUE(argIndex, aggressiveOption, aggressivenessValue);
+            if (ret == OPTION_OK && aggressivenessValue >= 0)
+               {
+               _aggressivenessLevel = aggressivenessValue;
+               }
+            }
+         else // option not specified on command line
+            {
+            // Automatically set an aggressiveness level based on CPU resources
+#if 0 // Do not change the default behavior just yet; needs more testing
+            TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+            if (compInfo->getJvmCpuEntitlement() < 100.0) // less than a processor available
+               _aggressivenessLevel = TR::Options::CONSERVATIVE_QUICKSTART;
+            else if (compInfo->getJvmCpuEntitlement() < 200.0) // less than 2 processors
+               _aggressivenessLevel = TR::Options::AGGRESSIVE_QUICKSTART;
+#endif
+            }
+         }
+      }
+   }
+
 bool
 J9::Options::fePreProcess(void * base)
    {
@@ -1340,71 +1402,13 @@ J9::Options::fePreProcess(void * base)
 
    preProcessMmf(vm, jitConfig);
 
-   int32_t argIndex;
    if (FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xnoclassgc", 0) >= 0)
       self()->setOption(TR_NoClassGC);
 
-
-   // Determine the mode we want to be in
-   // Possible options: client/Quickstart, server, aggressive, noquickstart
-   if (jitConfig->runtimeFlags & J9JIT_QUICKSTART)
-      {
-      self()->setQuickStart();
-      }
-   else
-      {
-      // if the server mode is set
-      if ((FIND_ARG_IN_VMARGS(EXACT_MATCH, "-server", 0)) >=0) // I already know I cannot be in -client mode
-         self()->setOption(TR_Server);
-      }
-
-   if (vm->runtimeFlags & J9_RUNTIME_AGGRESSIVE)
-      {
-      self()->setOption(TR_AggressiveOpts);
-      }
-
-   // The aggressivenessLevel can only be specified with a VM option (-XaggressivenessLevel)
-   // The level should be only set once (it's a static)
-   // This is a second hand citizen option; if other options contradict it, this option is
-   // ignored even if it appears later
-   if (!self()->getOption(TR_AggressiveOpts) &&
-       !(jitConfig->runtimeFlags & J9JIT_QUICKSTART) &&
-       !self()->getOption(TR_Server))
-      {
-      // Xtune:virtualized will put us in aggressivenessLevel3, but only if other options
-      // like Xquickstart, -client, -server, -Xaggressive are not specified
-      if (vm->runtimeFlags & J9_RUNTIME_TUNE_VIRTUALIZED)
-         {
-         _aggressivenessLevel = TR::Options::AGGRESSIVE_AOT;
-         }
-      if (_aggressivenessLevel == -1) // not yet set
-         {
-         char *aggressiveOption = "-XaggressivenessLevel";
-         argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, aggressiveOption, 0);
-         if (argIndex >= 0)
-            {
-            UDATA aggressivenessValue = 0;
-            IDATA ret = GET_INTEGER_VALUE(argIndex, aggressiveOption, aggressivenessValue);
-            if (ret == OPTION_OK && aggressivenessValue >= 0)
-               {
-               _aggressivenessLevel = aggressivenessValue;
-               }
-            }
-         else // option not specified on command line
-            {
-            // Automatically set an aggressiveness level based on CPU resources
-#if 0 // Do not change the default behavior just yet; needs more testing
-            if (compInfo->getJvmCpuEntitlement() < 100.0) // less than a processor available
-               _aggressivenessLevel = TR::Options::CONSERVATIVE_QUICKSTART;
-            else if (compInfo->getJvmCpuEntitlement() < 200.0) // less than 2 processors
-               _aggressivenessLevel = TR::Options::AGGRESSIVE_QUICKSTART;
-#endif
-            }
-         }
-      }
+   preProcessMode(vm, jitConfig);
 
    char *ccOption = "-Xcodecache";
-   argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
    if (argIndex >= 0)
       {
       UDATA ccSize;
