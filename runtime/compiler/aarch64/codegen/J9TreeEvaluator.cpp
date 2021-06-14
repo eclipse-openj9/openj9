@@ -44,6 +44,7 @@
 #include "il/Node_inlines.hpp"
 #include "il/OMRDataTypes_inlines.hpp"
 #include "il/StaticSymbol.hpp"
+#include "OMR/Bytes.hpp"
 
 /*
  * J9 ARM64 specific tree evaluator table overrides
@@ -1964,10 +1965,10 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
        * uxtw     tempReg, lengthReg
        * ldrimmx  resultReg, [metaReg, offsetToHeapAlloc]
        * lsl      tempReg, lengthReg, #shiftValue
-       * addimmx  tempReg, tempReg, #offset+round-1
+       * addimmx  tempReg, tempReg, #headerSize+round-1
        * cmpimmw  lengthReg, 0; # of array elements
        * andimmx  tempReg, tempReg, #-round
-       * movzx    tempReg2, #sizeOfDiscontiguousArrayHeader
+       * movzx    tempReg2, aligned(#sizeOfDiscontiguousArrayHeader)
        * cselx    dataSizeReg, tempReg, tempReg2, ne
        * ldrimmx  heapTopReg, [metaReg, offsetToHeapTop]
        * addimmx  tempReg, resultReg, dataSizeReg
@@ -2007,8 +2008,10 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
 
       // calculate variable size, rounding up if necessary to a intptr_t multiple boundary
       //
+      static const int32_t objectAlignmentInBytes = TR::Compiler->om.objectAlignmentInBytes();
+      bool headerAligned = (allocSize % objectAlignmentInBytes) == 0;
       // zero indicates no rounding is necessary
-      const int32_t round = (elementSize >= TR::Compiler->om.objectAlignmentInBytes()) ? 0 : TR::Compiler->om.objectAlignmentInBytes();
+      const int32_t round = ((elementSize >= objectAlignmentInBytes) && headerAligned) ? 0 : objectAlignmentInBytes;
 
       // If the array is zero length, the array is a discontiguous.
       // Large heap builds do not need to care about this because the
@@ -2044,7 +2047,8 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
             {
             generateLogicalImmInstruction(cg, TR::InstOpCode::andimmx, node, tempReg, tempReg, maskN, alignmentMaskEncoding);
             }
-         loadConstant64(cg, node, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), heapTopReg);
+         static const int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), objectAlignmentInBytes);
+         loadConstant64(cg, node, zeroArraySizeAligned, heapTopReg);
 
          generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselx, node, dataSizeReg, tempReg, heapTopReg, TR::CC_NE);
          }
