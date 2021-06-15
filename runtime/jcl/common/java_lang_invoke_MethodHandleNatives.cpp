@@ -57,6 +57,9 @@ extern "C" {
 #define MN_TRUSTED_MODE			-1
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+/* PlaceHolder value used for MN.vmindex that has default method conflict */
+#define J9VM_RESOLVED_VMINDEX_FOR_DEFAULT_THROW 1
+
 static bool
 isPolymorphicMHMethod(J9JavaVM *vm, J9Class *declaringClass, J9UTF8 *methodName)
 {
@@ -835,10 +838,33 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 
 				/* Check for resolution exception */
 				if (VM_VMHelpers::exceptionPending(currentThread)) {
-					goto done;
-				}
+					J9Class *exceptionClass = J9OBJECT_CLAZZ(currentThread, currentThread->currentException);
+					if ((ref_kind == MH_REF_INVOKESPECIAL) && (exceptionClass == J9VMJAVALANGINCOMPATIBLECLASSCHANGEERROR(vm))) {
+						/* Special handling for default method conflict, defer the exception throw until invocation. */
+						VM_VMHelpers::clearException(currentThread);
+						/* Attempt to lookup method without checking for conflict.
+						 * If this failed with error, then throw that error.
+						 * Otherwise exception throw will be defered to the MH.invoke call.
+						 */
+						method = lookupMethod(
+							currentThread, resolvedClass, name, signature, callerClass,
+							(lookupOptions & ~J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS));
 
-				if (NULL != method) {
+						if (!VM_VMHelpers::exceptionPending(currentThread)) {
+							/* Set placeholder values for MemberName fields. */
+							vmindex = (jlong)J9VM_RESOLVED_VMINDEX_FOR_DEFAULT_THROW;
+							new_clazz = J9VM_J9CLASS_TO_HEAPCLASS(J9_CLASS_FROM_METHOD(method));
+							new_flags = flags;
+
+							/* Load special sendTarget to throw the exception during invocation */
+							target = (jlong)(UDATA)vm->initialMethods.throwDefaultConflict;
+						} else {
+							goto done;
+						}
+					} else {
+						goto done;
+					}
+				} else if (NULL != method) {
 					J9JNIMethodID *methodID = vmFuncs->getJNIMethodID(currentThread, method);
 					vmindex = (jlong)(UDATA)methodID;
 					target = (jlong)(UDATA)method;

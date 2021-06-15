@@ -3087,6 +3087,9 @@ typedef struct J9InitializerMethods {
 	struct J9Method* initialSpecialMethod;
 	struct J9Method* initialVirtualMethod;
 	struct J9Method* invokePrivateMethod;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	struct J9Method* throwDefaultConflict;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } J9InitializerMethods;
 
 typedef struct J9VMInterface {
