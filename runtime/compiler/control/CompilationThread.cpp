@@ -10127,7 +10127,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   // Delete any assumptions that might still exist in persistent memory
                   // The metadata parameter is NULL meaning that we want to delete ALL assumptions, including those for JBI
                   compInfo->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimAssumptions(comp->getMetadataAssumptionList(), NULL);
-                  metaData->runtimeAssumptionList = NULL;
 
                   // reclaim code memory so we can use it for something else
                   TR::CodeCacheManager::instance()->addFreeBlock(static_cast<void *>(metaData), reinterpret_cast<uint8_t *>(metaData->startPC));
@@ -10194,7 +10193,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                if (metaData)
                   {
                   compInfo->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimAssumptions(comp->getMetadataAssumptionList(), NULL);
-                  metaData->runtimeAssumptionList = NULL;
 
                   metaData->constantPool = 0; // mark metadata as unloaded
                   }
