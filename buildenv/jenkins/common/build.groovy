@@ -78,10 +78,14 @@ def get_sources() {
             remote_config_parameters.put('credentialsId', "${USER_CREDENTIALS_ID}")
         }
 
+        def openjdkCheckoutRef = OPENJDK_BRANCH
+        if (OPENJDK_SHA) {
+            openjdkCheckoutRef = OPENJDK_SHA
+        }
         checkout changelog: false,
                 poll: false,
                 scm: [$class: 'GitSCM',
-                    branches: [[name: "${OPENJDK_BRANCH}"]],
+                    branches: [[name: "${openjdkCheckoutRef}"]],
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [[$class: 'CheckoutOption', timeout: 30],
                                 [$class: 'CloneOption',
@@ -100,7 +104,6 @@ def get_sources() {
         // Look for dependent changes and checkout PR(s)
         checkout_pullrequest()
     } else {
-        sh "git checkout ${OPENJDK_SHA}"
         sh "bash get_source.sh ${EXTRA_GETSOURCE_OPTIONS} ${OPENJ9_REPO_OPTION} ${OPENJ9_BRANCH_OPTION} ${OPENJ9_SHA_OPTION} ${OPENJ9_REFERENCE} ${OMR_REPO_OPTION} ${OMR_BRANCH_OPTION} ${OMR_SHA_OPTION} ${OMR_REFERENCE}"
     }
 }
