@@ -314,7 +314,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::
       implicitExceptionPointInstr->setNode(implicitExceptionPointNode);
       }
 
-   generateLabelInstruction(cg, ARMOp_label, node, doneLabel, deps);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
    deps->stopAddingConditions();
 
    cg->decReferenceCount(objNode);
@@ -528,7 +528,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
          }
 
       iCursor = cg->getAppendInstruction();
-      generateLabelInstruction(cg, ARMOp_label, node, doneLabel, conditions);
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
       conditions->stopAddingConditions();
       cg->decReferenceCount(objectNode);
       cg->decReferenceCount(castClassNode);
@@ -603,7 +603,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
          }
       else
          {
-         iCursor = generateLabelInstruction(cg, ARMOp_label, node, trueLabel, iCursor);
+         iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, trueLabel, iCursor);
          iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 1, 0, iCursor);
          }
 
@@ -655,7 +655,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
 
       if (doneLabel != NULL)
          {
-         generateLabelInstruction(cg, ARMOp_label, node, doneLabel, newDeps);
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, newDeps);
          newDeps->stopAddingConditions();
          }
 
@@ -778,7 +778,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
          }
 
       iCursor = cg->getAppendInstruction();
-      generateLabelInstruction(cg, ARMOp_label, node, doneLabel, conditions);
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
       cg->decReferenceCount(objectNode);
       cg->decReferenceCount(castClassNode);
       }
@@ -826,7 +826,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
 
       if (trueLabel != NULL)
          {
-         iCursor = generateLabelInstruction(cg, ARMOp_label, node, trueLabel, iCursor);
+         iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, trueLabel, iCursor);
          }
       iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 1, 0, iCursor);
       iCursor->setConditionCode(ARMConditionCodeEQ);
@@ -842,7 +842,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
       else
          {
          generateTrg1Src1Instruction(cg, ARMOp_mov, node, resultReg, callResult);
-         generateLabelInstruction(cg, ARMOp_label, node, doneLabel, conditions->cloneAndFix(cg));
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions->cloneAndFix(cg));
          }
       }
    if (resultReg != node->getRegister())
@@ -905,7 +905,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
 
    generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, decLabel);
 
-   generateLabelInstruction(cg, ARMOp_label, node, doneLabel, deps);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
    cg->addSnippet(snippet);
    doneLabel->setEndInternalControlFlow();
 
@@ -1160,10 +1160,10 @@ static void genAlignDoubleArray(TR::CodeGenerator  *cg,
 
    // the slop bytes are at the start of the allocation
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, (int32_t)0, cg);
-   iCursor = generateLabelInstruction(cg, ARMOp_label, node, slotAtStart, iCursor);
+   iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, slotAtStart, iCursor);
    iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, temp2Reg, iCursor);
    iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, resReg, resReg, 4, 0, iCursor);
-   iCursor = generateLabelInstruction(cg, ARMOp_label, node, doneAlign, iCursor);
+   iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, doneAlign, iCursor);
    }
 
 
@@ -1358,7 +1358,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
 
             iCursor = armLoadConstant(node, loopCnt, temp1Reg, cg, iCursor);
             iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, temp2Reg, resReg, dataBegin, 0, iCursor);
-            iCursor = generateLabelInstruction(cg, ARMOp_label, node, initLoop, iCursor);
+            iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, initLoop, iCursor);
             tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, 0, cg);
             iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
             tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, 4, cg);
@@ -1397,7 +1397,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
          iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, temp2Reg, resReg, dataBegin - 4, 0, iCursor);
 
          TR::LabelSymbol *initLoop = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-         iCursor = generateLabelInstruction(cg, ARMOp_label, node, initLoop, iCursor);
+         iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, initLoop, iCursor);
          tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, temp1Reg, 4, cg);
          iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
          iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_sub_r, node, temp1Reg, temp1Reg, 1, 0, iCursor);
@@ -1407,14 +1407,14 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
    generateConditionalBranchInstruction(cg, node, ARMConditionCodeAL, doneLabel);
 
    // TODO:  using snippet to better use of branch prediction facility
-   generateLabelInstruction(cg, ARMOp_label, node, callLabel);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, callLabel);
    generateTrg1Src1Instruction(cg, ARMOp_mov, node, resReg, classReg);
    if (secondChild != NULL)
       generateTrg1Src1Instruction(cg, ARMOp_mov, node, temp2Reg, enumReg);
    iCursor = generateImmSymInstruction(cg, ARMOp_bl, node, (uint32_t)node->getSymbolReference()->getMethodAddress(), deps, node->getSymbolReference());
    iCursor->ARMNeedsGCMap(0xFFFFFFFE);  // mask off gr0
    cg->machine()->setLinkRegisterKilled(true);
-   generateLabelInstruction(cg, ARMOp_label, node, doneLabel, deps);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
    deps->stopAddingConditions();
 
    cg->decReferenceCount(firstChild);
@@ -1469,7 +1469,7 @@ OMR::ARM::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
    generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, addrReg, objReg, lwOffset, 0);
-   generateLabelInstruction(cg, ARMOp_label, node, loopLabel);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
    generateTrg1MemInstruction(cg, ARMOp_ldrex, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
    generateSrc1ImmInstruction(cg, ARMOp_cmp, node, dataReg, 0, 0);
    TR::Instruction *cursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, incLabel);
@@ -1483,7 +1483,7 @@ OMR::ARM::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg
       generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
       }
 
-   generateLabelInstruction(cg, ARMOp_label, node, doneLabel, deps);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
 
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARMMonitorEnterSnippet(cg, node, lwOffset, incLabel, callLabel, doneLabel);
    cg->addSnippet(snippet);
@@ -1699,7 +1699,7 @@ void OMR::ARM::TreeEvaluator::VMwrtbarEvaluator(TR::Node *node, TR::Register *sr
       }
 
    // place label that marks work was done.
-   generateLabelInstruction(cg, ARMOp_label, node, doneLabel, deps);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
 
    if (flagReg == NULL)
       cg->stopUsingRegister(tempReg);

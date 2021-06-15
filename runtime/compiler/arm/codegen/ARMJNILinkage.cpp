@@ -860,7 +860,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       {
       spillDeps->addPostCondition(codeGen->allocateRegister(TR_FPR), (TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::fs0 + i));
       }
-   generateLabelInstruction(codeGen, ARMOp_label, callNode, spillLabel, spillDeps);
+   generateLabelInstruction(codeGen, TR::InstOpCode::label, callNode, spillLabel, spillDeps);
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    // mask out the magic bit that indicates JIT frames below
@@ -952,7 +952,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    codeGen->getJNICallSites().push_front(new (trHeapMemory()) TR_Pair<TR_ResolvedMethod, TR::Instruction>(calleeSym->getResolvedMethod(), gcPoint));
    gcPoint->ARMNeedsGCMap(jniLinkageProperties.getPreservedRegisterMapForGC());
 
-   generateLabelInstruction(codeGen, ARMOp_label, callNode, returnAddrLabel);
+   generateLabelInstruction(codeGen, TR::InstOpCode::label, callNode, returnAddrLabel);
 
    // JNI methods may not return a full register in some cases so we need to
    // sign- or zero-extend the narrower integer return types properly.
@@ -1089,7 +1089,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    gcPoint->ARMNeedsGCMap(1 << (jniLinkageProperties.getIntegerReturnRegister() - TR::RealRegister::FirstGPR));
 
    TR::LabelSymbol *doneLabel = generateLabelSymbol(codeGen);
-   generateLabelInstruction(codeGen, ARMOp_label, callNode, doneLabel, postDeps);
+   generateLabelInstruction(codeGen, TR::InstOpCode::label, callNode, doneLabel, postDeps);
 
    return callNode->setRegister(returnRegister);
    }

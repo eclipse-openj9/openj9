@@ -522,7 +522,7 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       snippet->resetNeedsExceptionTableEntry();
       codeGen->addSnippet(snippet);
 
-      cursor = generateLabelInstruction(codeGen, ARMOp_label, firstNode, restartLabel, cursor);
+      cursor = generateLabelInstruction(codeGen, TR::InstOpCode::label, firstNode, restartLabel, cursor);
       }
 
    // Save preserved registers.
@@ -608,7 +608,7 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
                cursor = armLoadConstant(firstNode, offset, gr4, codeGen, cursor);
                cursor = generateTrg1Src2Instruction(codeGen, ARMOp_add, firstNode, gr4, gr4, stackPtr, cursor);
                cursor = armLoadConstant(firstNode, (numLocalsToBeInitialized - 1) << 2, gr5, codeGen, cursor);
-               cursor = generateLabelInstruction(codeGen, ARMOp_label, firstNode, loopLabel, cursor);
+               cursor = generateLabelInstruction(codeGen, TR::InstOpCode::label, firstNode, loopLabel, cursor);
                tempMR = new (trHeapMemory()) TR::MemoryReference(gr4, gr5, codeGen);
                cursor = generateMemSrc1Instruction(codeGen, ARMOp_str, firstNode, tempMR, gr11, cursor);
                cursor = generateTrg1Src1ImmInstruction(codeGen, ARMOp_sub_r, firstNode, gr5, gr5, 4, 0, cursor);
@@ -942,7 +942,7 @@ void J9::ARM::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
 
       gcPoint->ARMNeedsGCMap(getProperties().getPreservedRegisterMapForGC());
 
-      generateLabelInstruction(codeGen, ARMOp_label, callNode, doneLabel, postDeps);
+      generateLabelInstruction(codeGen, TR::InstOpCode::label, callNode, doneLabel, postDeps);
 
       return;
       }
@@ -1045,7 +1045,7 @@ void J9::ARM::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
    // pre-conditions must be anchored on the branch out, and the post-
    // conditions must be anchored on the return label.
    if (doneLabel)
-      generateLabelInstruction(codeGen, ARMOp_label, callNode, doneLabel, postDeps);
+      generateLabelInstruction(codeGen, TR::InstOpCode::label, callNode, doneLabel, postDeps);
 
    return;
    }

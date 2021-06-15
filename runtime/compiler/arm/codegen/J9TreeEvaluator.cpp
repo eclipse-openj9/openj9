@@ -245,7 +245,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
       armLoadConstant(node, CARD_DIRTY, temp2Reg, cg);
       generateMemSrc1Instruction(cg, ARMOp_strb, node, new (cg->trHeapMemory()) TR::MemoryReference(temp1Reg, temp3Reg, 1, cg), temp2Reg);
 
-      generateLabelInstruction(cg, ARMOp_label, node, noChkLabel, deps);
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, noChkLabel, deps);
       }
 
    }
@@ -332,7 +332,7 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
 
       if (gcMode != gc_modron_wrtbar_always)
          {
-         generateLabelInstruction(cg, ARMOp_label, node, doneLabel, conditions);
+         generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
          }
 
       cg->machine()->setLinkRegisterKilled(true);
