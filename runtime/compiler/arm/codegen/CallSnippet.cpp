@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                offset -= 4;
             if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::ARMOp_str, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::str, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                }
             intArgNum++;
             if (linkageProperties.getRightToLeft())
@@ -78,10 +78,10 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                offset -= 8;
             if (intArgNum < linkageProperties.getNumIntArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::ARMOp_str, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::str, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), offset, cg);
                if (intArgNum < linkageProperties.getNumIntArgRegs()-1)
            	  {
-           	  buffer = storeArgumentItem(TR::InstOpCode::ARMOp_str, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum+1)), offset+4, cg);
+           	  buffer = storeArgumentItem(TR::InstOpCode::str, buffer, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum+1)), offset+4, cg);
            	  }
                }
             intArgNum += 2;
@@ -95,7 +95,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                offset -= 4;
                if (floatArgNum < linkageProperties.getNumFloatArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::ARMOp_stfs, buffer, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::stfs, buffer, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
                floatArgNum++;
                if (linkageProperties.getRightToLeft())
@@ -108,7 +108,7 @@ static uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32
                offset -= 8;
                if (floatArgNum < linkageProperties.getNumFloatArgRegs())
                {
-               buffer = storeArgumentItem(TR::InstOpCode::ARMOp_stfd, buffer, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
+               buffer = storeArgumentItem(TR::InstOpCode::stfd, buffer, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), offset, cg);
                }
                floatArgNum++;
                if (linkageProperties.getRightToLeft())

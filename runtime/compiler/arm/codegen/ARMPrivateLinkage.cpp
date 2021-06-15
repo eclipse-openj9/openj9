@@ -494,24 +494,24 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
        machine->getLinkRegisterKilled())
       {
       tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, -4, codeGen);
-      cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, firstNode, tempMR, gr14, cursor);
+      cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::str, firstNode, tempMR, gr14, cursor);
       }
 
    if (constantIsImmed8r(totalFrameSize, &base, &rotate))
       {
-      cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_sub, firstNode, stackPtr, stackPtr, base, rotate, cursor);
+      cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::sub, firstNode, stackPtr, stackPtr, base, rotate, cursor);
       }
    else
       {
       cursor = armLoadConstant(firstNode, totalFrameSize, gr11, codeGen, cursor);
-      cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_sub, firstNode, stackPtr, stackPtr, gr11, cursor);
+      cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::sub, firstNode, stackPtr, stackPtr, gr11, cursor);
       }
 
    if (!comp()->isDLT())
       {
       tempMR = new (trHeapMemory()) TR::MemoryReference(metaBase, codeGen->getStackLimitOffset(), codeGen);
-      cursor = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, firstNode, gr4, tempMR, cursor);
-      cursor = generateSrc2Instruction(codeGen, TR::InstOpCode::ARMOp_cmp, firstNode, stackPtr, gr4, cursor);
+      cursor = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ldr, firstNode, gr4, tempMR, cursor);
+      cursor = generateSrc2Instruction(codeGen, TR::InstOpCode::cmp, firstNode, stackPtr, gr4, cursor);
 
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(codeGen);
       TR::LabelSymbol *restartLabel = generateLabelSymbol(codeGen);
@@ -533,14 +533,14 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          {
          TR::Register *reg = machine->getRealRegister(getSingleAssignedRegister(machine, &linkage));
          tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, outgoingArgSize, codeGen);
-         cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, firstNode, tempMR, reg, cursor);
+         cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::str, firstNode, tempMR, reg, cursor);
          }
       else
          {
          constantIsImmed8r(outgoingArgSize, &base, &rotate);
-         cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, firstNode, gr4, stackPtr, base, rotate, cursor);
+         cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::add, firstNode, gr4, stackPtr, base, rotate, cursor);
          // FIXME Need generateMultiMoveInstruction().
-         cursor = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(cursor, TR::InstOpCode::ARMOp_stm, firstNode, gr4, getAssignedRegisterList(machine, &linkage), codeGen);
+         cursor = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(cursor, TR::InstOpCode::stm, firstNode, gr4, getAssignedRegisterList(machine, &linkage), codeGen);
          }
       }
 
@@ -558,25 +558,25 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          else
             {
             cursor = armLoadConstant(firstNode, outgoingArgSize, gr4, codeGen, cursor);
-            cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, firstNode, gr4, stackPtr, gr4, cursor);
+            cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::add, firstNode, gr4, stackPtr, gr4, cursor);
             tempMR = new (trHeapMemory()) TR::MemoryReference(gr4, 0, codeGen);
             }
-         cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_fstd, firstNode, tempMR, reg, cursor);
+         cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::fstd, firstNode, tempMR, reg, cursor);
          }
       else
          {
          if (constantIsImmed8r(outgoingArgSize, &base, &rotate))
             {
-            cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, firstNode, gr4, stackPtr, base, rotate, cursor);
+            cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::add, firstNode, gr4, stackPtr, base, rotate, cursor);
             }
          else
             {
             cursor = armLoadConstant(firstNode, outgoingArgSize, gr4, codeGen, cursor);
-            cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, firstNode, gr4, stackPtr, gr4, cursor);
+            cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::add, firstNode, gr4, stackPtr, gr4, cursor);
             }
          // FIXME Need generateMultiMoveInstruction().
          uint16_t offset = ((TR::RealRegister::fp8 - TR::RealRegister::FirstFPR) << 12) | (fpRegistersSaved << 1);
-         cursor = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(cursor, TR::InstOpCode::ARMOp_fstmd, firstNode, gr4, offset, codeGen);
+         cursor = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(cursor, TR::InstOpCode::fstmd, firstNode, gr4, offset, codeGen);
          ((TR::ARMMultipleMoveInstruction *)cursor)->setIncrement();
          }
       }
@@ -606,12 +606,12 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
                {
                TR::LabelSymbol *loopLabel = generateLabelSymbol(codeGen);
                cursor = armLoadConstant(firstNode, offset, gr4, codeGen, cursor);
-               cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, firstNode, gr4, gr4, stackPtr, cursor);
+               cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::add, firstNode, gr4, gr4, stackPtr, cursor);
                cursor = armLoadConstant(firstNode, (numLocalsToBeInitialized - 1) << 2, gr5, codeGen, cursor);
                cursor = generateLabelInstruction(codeGen, TR::InstOpCode::label, firstNode, loopLabel, cursor);
                tempMR = new (trHeapMemory()) TR::MemoryReference(gr4, gr5, codeGen);
-               cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, firstNode, tempMR, gr11, cursor);
-               cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_sub_r, firstNode, gr5, gr5, 4, 0, cursor);
+               cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::str, firstNode, tempMR, gr11, cursor);
+               cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::sub_r, firstNode, gr5, gr5, 4, 0, cursor);
                cursor = generateConditionalBranchInstruction(codeGen, firstNode, ARMConditionCodeGE, loopLabel, cursor);
                }
             else
@@ -619,7 +619,7 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
                for (uint32_t i = 0; i < numLocalsToBeInitialized; i++, offset += 4)
                   {
                   tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen);
-                  cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, firstNode, tempMR, gr11, cursor);
+                  cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::str, firstNode, tempMR, gr11, cursor);
                   }
                }
             }
@@ -684,7 +684,7 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          for (i = 0; i < numSlotsToBeInitialized; i++, offset += TR::Compiler->om.sizeofReferenceAddress())
             {
             tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, offset, codeGen);
-            cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, firstNode, tempMR, gr11, cursor);
+            cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::str, firstNode, tempMR, gr11, cursor);
             }
          }
 
@@ -761,14 +761,14 @@ void J9::ARM::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
          {
          TR::RealRegister *reg = machine->getRealRegister(getSingleAssignedRegister(machine, &linkage));
          tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, outgoingArgSize, codeGen);
-         cursor = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, lastNode, reg, tempMR, cursor);
+         cursor = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ldr, lastNode, reg, tempMR, cursor);
          }
       else
          {
          TR::RealRegister *gr4 = machine->getRealRegister(TR::RealRegister::gr4);
          constantIsImmed8r(outgoingArgSize, &base, &rotate);
-         cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, lastNode, gr4, stackPtr, base, rotate, cursor);
-         cursor = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(cursor, TR::InstOpCode::ARMOp_ldm, lastNode, gr4, getAssignedRegisterList(machine, &linkage), codeGen);
+         cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::add, lastNode, gr4, stackPtr, base, rotate, cursor);
+         cursor = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(cursor, TR::InstOpCode::ldm, lastNode, gr4, getAssignedRegisterList(machine, &linkage), codeGen);
          }
       }
 
@@ -786,25 +786,25 @@ void J9::ARM::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
          else
             {
             cursor = armLoadConstant(lastNode, outgoingArgSize, gr4, codeGen, cursor);
-            cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, lastNode, gr4, stackPtr, gr4, cursor);
+            cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::add, lastNode, gr4, stackPtr, gr4, cursor);
             tempMR = new (trHeapMemory()) TR::MemoryReference(gr4, 0, codeGen);
             }
-         cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_fldd, lastNode, tempMR, reg, cursor);
+         cursor = generateMemSrc1Instruction(codeGen, TR::InstOpCode::fldd, lastNode, tempMR, reg, cursor);
          }
       else
          {
          if (constantIsImmed8r(outgoingArgSize, &base, &rotate))
             {
-            cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, lastNode, gr4, stackPtr, base, rotate, cursor);
+            cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::add, lastNode, gr4, stackPtr, base, rotate, cursor);
             }
          else
             {
             cursor = armLoadConstant(lastNode, outgoingArgSize, gr4, codeGen, cursor);
-            cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, lastNode, gr4, stackPtr, gr4, cursor);
+            cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::add, lastNode, gr4, stackPtr, gr4, cursor);
             }
          // FIXME Need generateMultiMoveInstruction().
          uint16_t offset = ((TR::RealRegister::fp8 - TR::RealRegister::FirstFPR) << 12) | (fpRegistersSaved << 1);
-         cursor = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(cursor, TR::InstOpCode::ARMOp_fldmd, lastNode, gr4, offset, codeGen);
+         cursor = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(cursor, TR::InstOpCode::fldmd, lastNode, gr4, offset, codeGen);
          ((TR::ARMMultipleMoveInstruction *)cursor)->setIncrement();
          }
       }
@@ -819,22 +819,22 @@ void J9::ARM::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
        machine->getLinkRegisterKilled())
       {
       tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, totalFrameSize + properties.getOffsetToFirstLocal(), codeGen);
-      cursor = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, lastNode, gr14, tempMR, cursor);
+      cursor = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ldr, lastNode, gr14, tempMR, cursor);
       }
 
    // Collapse stack frame and return.
    if (constantIsImmed8r(totalFrameSize, &base, &rotate))
       {
-      cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, lastNode, stackPtr, stackPtr, base, rotate, cursor);
+      cursor = generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::add, lastNode, stackPtr, stackPtr, base, rotate, cursor);
       }
    else
       {
       TR::RealRegister *gr4 = machine->getRealRegister(TR::RealRegister::gr4);
       cursor = armLoadConstant(lastNode, totalFrameSize, gr4, codeGen, cursor);
-      cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, lastNode, stackPtr, stackPtr, gr4, cursor);
+      cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::add, lastNode, stackPtr, stackPtr, gr4, cursor);
       }
 
-   cursor = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, lastNode, gr15, gr14, cursor);
+   cursor = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::mov, lastNode, gr15, gr14, cursor);
    }
 
 TR::MemoryReference *J9::ARM::PrivateLinkage::getOutgoingArgumentMemRef(int32_t               totalSize,
@@ -932,13 +932,13 @@ void J9::ARM::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          targetAddress = targetAddress->getLowOrder();
          }
       doneLabel = generateLabelSymbol(codeGen);
-      generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr4, targetAddress);
+      generateTrg1Src1Instruction(codeGen, TR::InstOpCode::mov, callNode, gr4, targetAddress);
 
-      TR::Instruction *instr = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr14, gr15);
+      TR::Instruction *instr = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::mov, callNode, gr14, gr15);
       instr->setDependencyConditions(dependencies);
       dependencies->incRegisterTotalUseCounts(codeGen);
 
-      gcPoint = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr15, gr4);
+      gcPoint = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::mov, callNode, gr15, gr4);
 
       gcPoint->ARMNeedsGCMap(getProperties().getPreservedRegisterMapForGC());
 
@@ -959,7 +959,7 @@ void J9::ARM::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          if (TR::Compiler->cls.classesOnHeap())
             {
             classReg = gr11;
-            generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, gr11, new (trHeapMemory()) TR::MemoryReference(gr0, fej9->getOffsetOfClassFromJavaLangClassField(), codeGen));
+            generateTrg1MemInstruction(codeGen, TR::InstOpCode::ldr, callNode, gr11, new (trHeapMemory()) TR::MemoryReference(gr0, fej9->getOffsetOfClassFromJavaLangClassField(), codeGen));
             }
          else
             classReg = gr0;
@@ -985,39 +985,39 @@ void J9::ARM::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          // method pointer and move return address to link register.
          // The 4 instruction before branch should be a no-op if the offset turns
          // out to be within range (for most cases).
-         generateTrg1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr11, 0, 0);
-         generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, gr11, gr11, 0, 8);
-         generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, gr11, gr11, 0, 16);
-         generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, gr11, gr11, 0, 24);
+         generateTrg1ImmInstruction(codeGen, TR::InstOpCode::mov, callNode, gr11, 0, 0);
+         generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::add, callNode, gr11, gr11, 0, 8);
+         generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::add, callNode, gr11, gr11, 0, 16);
+         generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::add, callNode, gr11, gr11, 0, 24);
 
-         generateLabelInstruction(codeGen, TR::InstOpCode::ARMOp_b, callNode, snippetLabel, dependencies);
+         generateLabelInstruction(codeGen, TR::InstOpCode::b, callNode, snippetLabel, dependencies);
 
          tempMR = new (trHeapMemory()) TR::MemoryReference(classReg, 0, codeGen);
-         gcPoint = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, gr15, tempMR);
+         gcPoint = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ldr, callNode, gr15, tempMR);
          }
       else
          {
          int32_t offset = methodSymRef->getOffset();
          if (constantIsImmed12(offset))
             {
-            TR::Instruction *instr = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr14, gr15);
+            TR::Instruction *instr = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::mov, callNode, gr14, gr15);
             instr->setDependencyConditions(dependencies);
             dependencies->incRegisterTotalUseCounts(codeGen);
 
             tempMR = new (trHeapMemory()) TR::MemoryReference(classReg, offset, codeGen);
-            gcPoint = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, gr15, tempMR);
+            gcPoint = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ldr, callNode, gr15, tempMR);
             gcPoint->setDependencyConditions(postDeps);
             postDeps->incRegisterTotalUseCounts(codeGen);
             }
          else
             {
             TR::Instruction *instr = armLoadConstant(callNode, offset, gr11, codeGen);
-            instr = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr14, gr15);
+            instr = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::mov, callNode, gr14, gr15);
             instr->setDependencyConditions(dependencies);
             dependencies->incRegisterTotalUseCounts(codeGen);
 
             tempMR = new (trHeapMemory()) TR::MemoryReference(classReg, gr11, 0, codeGen);
-            gcPoint = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, gr15, tempMR);
+            gcPoint = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ldr, callNode, gr15, tempMR);
             gcPoint->setDependencyConditions(postDeps);
             postDeps->incRegisterTotalUseCounts(codeGen);
             }
@@ -1036,7 +1036,7 @@ void J9::ARM::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
                                                          doneLabel,
                                                          thunk));
 
-      gcPoint = generateLabelInstruction(codeGen, TR::InstOpCode::ARMOp_b, callNode, snippetLabel, dependencies);
+      gcPoint = generateLabelInstruction(codeGen, TR::InstOpCode::b, callNode, snippetLabel, dependencies);
       }
 
    gcPoint->ARMNeedsGCMap(getProperties().getPreservedRegisterMapForGC());
@@ -1118,7 +1118,7 @@ TR::Register *J9::ARM::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
          if (resType.isFloatingPoint())
             {
             TR::Register *tempReg = codeGen->allocateSinglePrecisionRegister();
-            TR::Instruction *cursor = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_fmsr, callNode, tempReg, returnRegister);
+            TR::Instruction *cursor = generateTrg1Src1Instruction(codeGen, TR::InstOpCode::fmsr, callNode, tempReg, returnRegister);
             returnRegister = tempReg;
             }
          break;
@@ -1133,7 +1133,7 @@ TR::Register *J9::ARM::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
          if (resType.isDouble())
             {
             TR::Register *tempReg = codeGen->allocateRegister(TR_FPR);
-            TR::Instruction *cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_fmdrr, callNode, tempReg, lowReg, highReg);
+            TR::Instruction *cursor = generateTrg1Src2Instruction(codeGen, TR::InstOpCode::fmdrr, callNode, tempReg, lowReg, highReg);
             returnRegister = tempReg;
             }
 
