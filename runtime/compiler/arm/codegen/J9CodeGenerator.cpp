@@ -170,7 +170,7 @@ void J9::ARM::CodeGenerator::doBinaryEncoding()
 
    cursorInstruction = cg->getFirstInstruction();
 
-   while (cursorInstruction && cursorInstruction->getOpCodeValue() != ARMOp_proc)
+   while (cursorInstruction && cursorInstruction->getOpCodeValue() != TR::InstOpCode::proc)
       {
       estimate          = cursorInstruction->estimateBinaryLength(estimate);
       cursorInstruction = cursorInstruction->getNext();
