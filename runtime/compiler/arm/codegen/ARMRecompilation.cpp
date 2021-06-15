@@ -90,11 +90,11 @@ TR::Instruction *TR_ARMRecompilation::generatePrePrologue()
          cursor = new (cg()->trHeapMemory()) TR::ARMTrg1Src1Instruction(cursor, ARMOp_mov, firstNode, gr4, lr, cg());
          cursor = generateImmSymInstruction(cg(), ARMOp_bl, firstNode, (uintptr_t)recompileMethodSymRef->getMethodAddress(), new (cg()->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg()->trMemory()), recompileMethodSymRef, NULL, cursor);
          }
-      cursor = new (cg()->trHeapMemory()) TR::ARMImmInstruction(cursor, ARMOp_dd, firstNode, (int32_t)(intptr_t)info, cg());
+      cursor = new (cg()->trHeapMemory()) TR::ARMImmInstruction(cursor, TR::InstOpCode::dd, firstNode, (int32_t)(intptr_t)info, cg());
       cursor->setNeedsAOTRelocation();
       ((TR::ARMImmInstruction *)cursor)->setReloKind(TR_BodyInfoAddress);
 
-      cursor = generateImmInstruction(cg(), ARMOp_dd, firstNode, 0, cursor);
+      cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode, 0, cursor);
       }
    return(cursor);
    }
