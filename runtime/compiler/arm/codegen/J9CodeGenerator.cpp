@@ -186,7 +186,7 @@ void J9::ARM::CodeGenerator::doBinaryEncoding()
    bool skipOneReturn = false;
    while (cursorInstruction)
       {
-      if (cursorInstruction->getOpCodeValue() == ARMOp_ret)
+      if (cursorInstruction->getOpCodeValue() == TR::InstOpCode::retn)
          {
          if (skipOneReturn == false)
             {
