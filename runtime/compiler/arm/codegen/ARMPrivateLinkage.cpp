@@ -469,7 +469,7 @@ void J9::ARM::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    if (comp()->getOption(TR_EntryBreakPoints))
       {
-      cursor = new (trHeapMemory()) TR::Instruction(cursor, ARMOp_bad, firstNode, codeGen);
+      cursor = new (trHeapMemory()) TR::Instruction(cursor, TR::InstOpCode::bad, firstNode, codeGen);
       }
 
    // TODO Only save arguments if full-speed debugging is enabled; otherwise, they
