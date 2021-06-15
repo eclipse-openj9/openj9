@@ -20,5 +20,6 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <exports group="criusupport">
-	<export name="Java_com_ibm_jvm_CRIUSupport_isCRIUSupportEnabledImpl" />
+	<export name="Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl" />
+	<export name="Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl" />
 </exports>

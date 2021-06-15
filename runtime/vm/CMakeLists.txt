@@ -91,6 +91,7 @@ set(main_sources
 	classseg.c
 	classsupport.c
 	createramclass.cpp
+	criuhelpers.cpp
 	description.c
 	dllsup.c
 	drophelp.c
