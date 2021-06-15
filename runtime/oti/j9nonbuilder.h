@@ -2043,28 +2043,13 @@ typedef struct J9BCTranslationData {
 
 #define BCT_J9DescriptionImmediate  1
 
-/* When adding a new major version update BCT_JavaMaxMajorVersionShifted to
- * the maximum allowed value.
- */
 #define BCT_MajorClassFileVersionMask  0xFF000000
 #define BCT_MajorClassFileVersionMaskShift  24
-#define BCT_Java2MajorVersionShifted  0x2E000000
-#define BCT_Java5MajorVersionShifted  0x31000000
-#define BCT_Java6MajorVersionShifted  0x32000000
-#define BCT_Java7MajorVersionShifted  0x33000000
-#define BCT_Java8MajorVersionShifted  0x34000000
-#define BCT_Java9MajorVersionShifted  0x35000000
-#define BCT_Java10MajorVersionShifted 0x36000000
-#define BCT_Java11MajorVersionShifted 0x37000000
-#define BCT_Java12MajorVersionShifted 0x38000000
-#define BCT_Java13MajorVersionShifted 0x39000000
-#define BCT_Java14MajorVersionShifted 0x3A000000
-#define BCT_Java15MajorVersionShifted 0x3B000000
-#define BCT_Java16MajorVersionShifted 0x3C000000
-#define BCT_Java17MajorVersionShifted 0x3D000000
-#define BCT_Java18MajorVersionShifted 0x3E000000
 
-#define BCT_JavaMaxMajorVersionShifted BCT_Java18MajorVersionShifted
+/* A given Java feature version uses class-file format (version) + 44. */
+#define BCT_JavaMajorVersionShifted(java_version)  ((44 + (I_32)(java_version)) << BCT_MajorClassFileVersionMaskShift)
+/* When adding support for a new Java feature version, update this appropriately. */
+#define BCT_JavaMaxMajorVersionShifted  BCT_JavaMajorVersionShifted(18)
 
 typedef struct J9RAMClassFreeListBlock {
 	UDATA size;

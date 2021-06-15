@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -177,30 +177,21 @@ jvmtiError JNICALL
 jvmtiGetVersionNumber(jvmtiEnv* env,
 	jint* version_ptr)
 {
-#if JAVA_SPEC_VERSION >= 11
-	J9JavaVM * vm = JAVAVM_FROM_ENV(env);
-#endif /* JAVA_SPEC_VERSION >= 11 */
 	jvmtiError rc = JVMTI_ERROR_NONE;
-	jint rv_version = JVMTI_1_2_3_SPEC_VERSION;
 
 	Trc_JVMTI_jvmtiGetVersionNumber_Entry(env);
 
 	ENSURE_NON_NULL(version_ptr);
 
-#if JAVA_SPEC_VERSION >= 11
-#if JAVA_SPEC_VERSION >= 15
-	if (J2SE_VERSION(vm) >= J2SE_V15) {
-		rv_version = JVMTI_VERSION_15;
-	} else
-#endif /* JAVA_SPEC_VERSION >= 15 */
-	if (J2SE_VERSION(vm) >= J2SE_V11) {
-		rv_version = JVMTI_VERSION_11;
-	}
-#endif /* JAVA_SPEC_VERSION >= 11 */
-
 done:
 	if (NULL != version_ptr) {
-		*version_ptr = rv_version;
+#if JAVA_SPEC_VERSION >= 15
+		*version_ptr = JVMTI_VERSION_15;
+#elif JAVA_SPEC_VERSION >= 11 /* JAVA_SPEC_VERSION >= 15 */
+		*version_ptr = JVMTI_VERSION_11;
+#else /* JAVA_SPEC_VERSION >= 15 */
+		*version_ptr = JVMTI_1_2_3_SPEC_VERSION;
+#endif /* JAVA_SPEC_VERSION >= 15 */
 	}
 	TRACE_JVMTI_RETURN(jvmtiGetVersionNumber);
 }

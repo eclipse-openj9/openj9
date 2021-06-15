@@ -549,25 +549,7 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
-	if (J2SE_VERSION(vm) >= J2SE_V18) {
-		translationFlags |= BCT_Java18MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V17) {
-		translationFlags |= BCT_Java17MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V16) {
-		translationFlags |= BCT_Java16MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V15) {
-		translationFlags |= BCT_Java15MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V14) {
-		translationFlags |= BCT_Java14MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V13) {
-		translationFlags |= BCT_Java13MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V12) {
-		translationFlags |= BCT_Java12MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_V11) {
-		translationFlags |= BCT_Java11MajorVersionShifted;
-	} else if (J2SE_VERSION(vm) >= J2SE_18) {
-		translationFlags |= BCT_Java8MajorVersionShifted;
-	}
+	translationFlags |= BCT_JavaMajorVersionShifted(JAVA_SPEC_VERSION);
 #endif
 
 	/* TODO toss tracepoint?? Trc_BCU_internalLoadROMClass_AttemptExisting(vmThread, segment, romAvailable, bytesRequired); */

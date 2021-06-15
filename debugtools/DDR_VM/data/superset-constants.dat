@@ -716,12 +716,6 @@ C|BCT_J9DescriptionCpTypeObject
 C|BCT_J9DescriptionCpTypeScalar
 C|BCT_J9DescriptionCpTypeShift
 C|BCT_J9DescriptionImmediate
-C|BCT_Java2MajorVersionShifted
-C|BCT_Java5MajorVersionShifted
-C|BCT_Java6MajorVersionShifted
-C|BCT_Java7MajorVersionShifted
-C|BCT_Java8MajorVersionShifted
-C|BCT_Java9MajorVersionShifted
 C|BCT_LittleEndianOutput
 C|BCT_MajorClassFileVersionMask
 C|BCT_MajorClassFileVersionMaskShift
