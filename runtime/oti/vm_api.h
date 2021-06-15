@@ -274,6 +274,18 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
 /* ---------------- classallocation.c ---------------- */
 
 /**
+* @brief Get Package ID for the ROM class. NOTE: You must own the class table mutex before calling this function.
+* @param *classLoader Classloader for the class
+* @param *romClass ROM class with package name
+* @param *vmThread J9VMThread instance
+* @param entryIndex classpath index
+* @param locationType location type of class
+* @return UDATA Package ID
+*/
+UDATA
+initializePackageID(J9ClassLoader *classLoader, J9ROMClass *romClass, J9VMThread *vmThread, IDATA entryIndex, I_32 locationType);
+
+/**
 * @brief
 * @param *javaVM
 * @param *classLoaderObject
@@ -2120,7 +2132,6 @@ cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor*
 
 /**
 * @brief Find the package ID for the given name and length
-* @note Must own the classTableMutex.
 * @param *vmThread J9VMThread instance
 * @param *classLoader Classloader for the class
 * @param *romClass ROM class with the package name
@@ -2133,25 +2144,13 @@ hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass* 
 
 /**
 * @brief Look up the package information given a ROM class.
-* @note Must own the classTableMutex.
-* @note The ROM class may be a dummy with only  the package name.
+* @note the ROM class may be a dummy with only  the package name.
 * @param *classLoader Classloader for the class
 * @param *romClass ROM class with the package name
 * @return J9PackageIDTableEntry* ROM class representing a package
 */
 J9PackageIDTableEntry *
 hashPkgTableAt(J9ClassLoader* classLoader, J9ROMClass* romClass);
-
-/**
-* @brief Delete the package ID for a ROM class.
-* @note Must own the classTableMutex.
-* @note The entry is only deleted if it came from the given ROM class.
-* @param *classLoader Classloader for the class
-* @param *romClass ROM class with the package name
-*/
-void
-hashPkgTableDelete(J9ClassLoader* classLoader, J9ROMClass* romClass);
-
 
 /**
 * @brief Iterate over the package IDs used by the specified class loader
