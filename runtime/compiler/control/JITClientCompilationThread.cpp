@@ -2628,7 +2628,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             TR_OpaqueClassBlock *fieldDeclaringClass = calleeMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
 
             avoidFolding = TR::TransformUtil::avoidFoldingInstanceField(
-               baseObjectAddress, fieldSymbol, cpIndex, calleeMethod, comp);
+                           baseObjectAddress, fieldSymbol, fieldOffset, cpIndex, calleeMethod, comp);
 
             if (fieldDeclaringClass && fe->isInstanceOf(baseObjectClass, fieldDeclaringClass, true) == TR_yes)
                {
