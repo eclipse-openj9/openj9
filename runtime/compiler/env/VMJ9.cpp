@@ -4015,10 +4015,6 @@ bool
 TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol, int32_t cpIndex, TR_ResolvedMethod *owningMethod)
    {
    TR::Compilation *comp = TR::comp();
-
-   if (isStable(cpIndex, owningMethod, comp))
-      return true;
-
    switch (fieldSymbol->getRecognizedField())
       {
       case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
@@ -4090,35 +4086,6 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
       return false;
    }
 
-bool
-TR_J9VMBase::isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp)
-   {
-   // NOTE: the field must be resolved!
-
-   if (comp->getOption(TR_DisableStableAnnotations))
-      return false;
-   
-   if (cpIndex < 0)
-      return false;
-   
-   J9Class *fieldClass = (J9Class*)owningMethod->classOfMethod();
-   if (!fieldClass)
-      return false;
-
-   bool isStable = jitIsFieldStable(comp->fej9()->vmThread(), fieldClass, cpIndex);
-
-   if (isStable && comp->getOption(TR_TraceOptDetails))
-      {
-      int classLen;
-      const char * className= owningMethod->classNameOfFieldOrStatic(cpIndex, classLen);
-      int fieldLen;
-      const char * fieldName = owningMethod->fieldNameChars(cpIndex, fieldLen);
-      traceMsg(comp, "   Found stable field: %.*s.%.*s\n", classLen, className, fieldLen, fieldName);
-      }
-
-   // Not checking for JCL classes since @Stable annotation only visible inside JCL
-   return isStable; 
-   }
 
 // Creates a node to initialize the local object flags field
 //

@@ -92,7 +92,6 @@ public:
    static bool avoidFoldingInstanceField(
       uintptr_t object,
       TR::Symbol *field,
-      uint32_t fieldOffset,       
       int cpIndex,
       TR_ResolvedMethod *owningMethod,
       TR::Compilation *comp);

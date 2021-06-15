@@ -190,7 +190,6 @@ static bool isFieldOfJavaObject(TR::SymbolReference *symRef, TR::Compilation *co
 bool J9::TransformUtil::avoidFoldingInstanceField(
    uintptr_t object,
    TR::Symbol *field,
-   uint32_t fieldOffset,
    int cpIndex,
    TR_ResolvedMethod *owningMethod,
    TR::Compilation *comp)
@@ -209,57 +208,6 @@ bool J9::TransformUtil::avoidFoldingInstanceField(
       "avoidFoldingInstanceField: symbol %p is never foldable (expected possibly foldable)\n",
       field);
 
-   if (fej9->isStable(cpIndex, owningMethod, comp) && !field->isFinal())
-      {
-      uintptr_t fieldAddress = object + fieldOffset;
-
-      TR::DataType loadType = field->getDataType();
-      switch (loadType)
-         {
-         case TR::Int32:
-            {
-            int32_t value = *(int32_t*)fieldAddress;
-            if (value == 0)
-               return true;
-            }
-            break;
-         case TR::Int64:
-            {
-            int64_t value = *(int64_t*)fieldAddress;
-            if (value == 0)
-               return true;
-            }
-            break;
-         case TR::Float:
-            {
-            float value = *(float*)fieldAddress;
-            // This will not fold -0.0 but will fold NaN
-            if (value == 0.0)
-               return true;
-            }
-            break;
-         case TR::Double:
-            {
-            double value = *(double*)fieldAddress;
-            // This will not fold -0.0 but will fold NaN
-            if (value == 0.0)
-               return true;
-            }
-            break;
-         case TR::Address:
-            {
-            TR_ASSERT_FATAL(field->isCollectedReference(), "Expecting a collectable reference\n");
-            uintptr_t value = fej9->getReferenceFieldAtAddress((uintptr_t)fieldAddress);
-            if (value == 0)
-               return true;
-            }
-            break;
-         default:
-            TR_ASSERT_FATAL(false, "Unknown type of field being dereferenced\n");
-            break;
-         }
-      }
-   
    switch (field->getRecognizedField())
       {
       // In the LambdaForm-based JSR292 implementation, CallSite declares a
@@ -316,7 +264,6 @@ bool J9::TransformUtil::avoidFoldingInstanceField(
    return TR::TransformUtil::avoidFoldingInstanceField(
       object,
       field->getSymbol(),
-      field->getOffset(),
       field->getCPIndex(),
       field->getOwningMethod(comp),
       comp);
