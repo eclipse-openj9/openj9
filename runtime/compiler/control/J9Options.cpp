@@ -1937,6 +1937,26 @@ void J9::Options::preProcessHwProfiler(J9JavaVM *vm)
       }
    }
 
+void J9::Options::preProcessDeterministicMode(J9JavaVM *vm)
+   {
+   // Process the deterministic mode
+   if (TR::Options::_deterministicMode == -1) // not yet set
+      {
+      char *deterministicOption = "-XX:deterministic=";
+      const UDATA MAX_DETERMINISTIC_MODE = 9; // only levels 0-9 are allowed
+      int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, deterministicOption, 0);
+      if (argIndex >= 0)
+         {
+         UDATA deterministicMode;
+         IDATA ret = GET_INTEGER_VALUE(argIndex, deterministicOption, deterministicMode);
+         if (ret == OPTION_OK && deterministicMode <= MAX_DETERMINISTIC_MODE)
+            {
+            TR::Options::_deterministicMode = deterministicMode;
+            }
+         }
+      }
+   }
+
 bool
 J9::Options::fePreProcess(void * base)
    {
@@ -2094,22 +2114,8 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile);
       }
 
-   // Process the deterministic mode
-   if (TR::Options::_deterministicMode == -1) // not yet set
-      {
-      char *deterministicOption = "-XX:deterministic=";
-      const UDATA MAX_DETERMINISTIC_MODE = 9; // only levels 0-9 are allowed
-      int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, deterministicOption, 0);
-      if (argIndex >= 0)
-         {
-         UDATA deterministicMode;
-         IDATA ret = GET_INTEGER_VALUE(argIndex, deterministicOption, deterministicMode);
-         if (ret == OPTION_OK && deterministicMode <= MAX_DETERMINISTIC_MODE)
-            {
-            TR::Options::_deterministicMode = deterministicMode;
-            }
-         }
-      }
+   preProcessDeterministicMode(vm);
+
    if (!TR::Compiler->target.cpu.isZ())
       self()->setOption(TR_DisableAOTBytesCompression);
 
