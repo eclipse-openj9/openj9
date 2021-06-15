@@ -1613,7 +1613,7 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 		field = &(classfile->fields[i]);
 		value = field->accessFlags & CFR_FIELD_ACCESS_MASK;
 
-		if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java5MajorVersionShifted) {
+		if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(5)) {
 			value &= ~CFR_FIELD_ACCESS_NEWJDK5_MASK;
 		}
 
@@ -1734,14 +1734,14 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 
 		value = method->accessFlags & CFR_METHOD_ACCESS_MASK;
 
-		if (classfileVersion < BCT_Java5MajorVersionShifted) {
+		if (classfileVersion < BCT_JavaMajorVersionShifted(5)) {
 			value &= ~CFR_METHOD_ACCESS_NEWJDK5_MASK;
 		}
 
 		/* ACC_STRICT doesn't exist for older .class files prior to Java 2 */
 		/* Xfuture qualification added to pass CLDC TCK mthacc00601m5_1 - wants 45.3 class file rejected with ACC_STRICT set */
 		/* Test exclusion request pending - will revert on success */
-		if ((classfileVersion < BCT_Java2MajorVersionShifted) && ((flags & CFR_Xfuture) == 0)) {
+		if ((classfileVersion < BCT_JavaMajorVersionShifted(2)) && ((flags & CFR_Xfuture) == 0)) {
 			value &= ~CFR_ACC_STRICT;
 		}
 
@@ -1759,14 +1759,9 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 			 * additionally have its ACC_STATIC flag (Section 4.6 Methods) set in order to be the class or interface
 			 * initialization method.
 			 */
-			if (classfileVersion < BCT_Java7MajorVersionShifted) {
+			if (classfileVersion < BCT_JavaMajorVersionShifted(7)) {
 				method->accessFlags |= CFR_ACC_STATIC;
-
-			/* Leave this here to find usages of the following check:
-			 * J2SE_19 has been deprecated and replaced with J2SE_V11
-			 * if (J2SE_VERSION(vm) >= J2SE_V11) { 
-			 */
-			} else if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
+			} else if (vmVersionShifted >= BCT_JavaMajorVersionShifted(9)) {
 				if (J9_ARE_NO_BITS_SET(method->accessFlags, CFR_ACC_STATIC)) {
 					/* missing code attribute  detected elsewhere */
 					errorCode = J9NLS_CFR_ERR_CLINIT_NOT_STATIC__ID;
@@ -1791,7 +1786,7 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 			 * A method is an instance initialization method if
 			 * it is defined in a class (not an interface).
 			 */
-			if (vmVersionShifted >= BCT_Java9MajorVersionShifted) {
+			if (vmVersionShifted >= BCT_JavaMajorVersionShifted(9)) {
 				if (classfile->accessFlags & CFR_ACC_INTERFACE) {
 					errorCode = J9NLS_CFR_ERR_INIT_ILLEGAL_IN_INTERFACE__ID;
 					goto _errorFound;
@@ -1801,7 +1796,7 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 
 		/* Check interface-method-only access flag constraints. */
 		if (classfile->accessFlags & CFR_ACC_INTERFACE) {
-			if (classfileVersion < BCT_Java8MajorVersionShifted) {
+			if (classfileVersion < BCT_JavaMajorVersionShifted(8)) {
 				U_32 mask = CFR_INTERFACE_METHOD_ACCESS_MASK;
 				/* Xfuture maintains checks for all the illegal qualifiers for interface methods */
 				/* Make the normal mode skip checks for some interface method flags */
@@ -2553,7 +2548,7 @@ checkClass(J9PortLibrary *portLib, J9CfrClassFile* classfile, U_8* segment, U_32
 
 	value = classfile->accessFlags & CFR_CLASS_ACCESS_MASK;
 
-	if ((flags & BCT_MajorClassFileVersionMask) < BCT_Java5MajorVersionShifted) {
+	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(5)) {
 		value &= ~CFR_CLASS_ACCESS_NEWJDK5_MASK;
 		
 		/* Remove ACC_SUPER from interface tests on older classes */
@@ -2850,7 +2845,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	classfile->accessFlags = NEXT_U16(classfile->accessFlags, index);
 
 	/* class files with the ACC_MODULE flag set cannot be loaded */
-	if (((flags & BCT_MajorClassFileVersionMask) >= BCT_Java9MajorVersionShifted)
+	if (((flags & BCT_MajorClassFileVersionMask) >= BCT_JavaMajorVersionShifted(9))
 		&& J9_ARE_ALL_BITS_SET(classfile->accessFlags, CFR_ACC_MODULE)
 	) {
 		errorCode = J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS__ID;
@@ -2884,7 +2879,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	classfile->j9Flags = 0;
 
 	if ((classfile->accessFlags & (CFR_ACC_INTERFACE | CFR_ACC_ABSTRACT)) == CFR_ACC_INTERFACE) {
-		if ((flags & BCT_MajorClassFileVersionMask) >= BCT_Java6MajorVersionShifted) {
+		if ((flags & BCT_MajorClassFileVersionMask) >= BCT_JavaMajorVersionShifted(6)) {
 			/* error out for Java 6 and newer versions */
 			errorCode = J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT__ID;
 			offset = index - data - 2;
