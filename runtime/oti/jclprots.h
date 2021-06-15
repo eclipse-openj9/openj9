@@ -1149,6 +1149,10 @@ Java_com_ibm_lang_management_internal_UnixExtendedOperatingSystem_getOpenFileDes
 jobject JNICALL
 Java_com_ibm_virtualization_management_internal_GuestOS_retrieveProcessorUsageImpl(JNIEnv *env, jobject beanInstance, jobject procUsageObject);
 
+/* CRIUSupport.c */
+jboolean JNICALL
+Java_com_ibm_jvm_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused);
+
 /* com_ibm_jvm_Stats.c */
 void JNICALL
 Java_com_ibm_jvm_Stats_getStats(JNIEnv *env, jobject obj);
