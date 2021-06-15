@@ -64,12 +64,12 @@ static inline TR::Instruction *genNullTest(TR::CodeGenerator *cg,
    uint32_t base, rotate;
    if (constantIsImmed8r(NULLVALUE, &base, &rotate))
       {
-      instr = generateSrc1ImmInstruction(cg, ARMOp_cmp, node, objectReg, base, rotate, cursor);
+      instr = generateSrc1ImmInstruction(cg, TR::InstOpCode::ARMOp_cmp, node, objectReg, base, rotate, cursor);
       }
    else
       {
       instr = armLoadConstant(node, NULLVALUE, scratchReg, cg, cursor);
-      instr = generateSrc2Instruction(cg, ARMOp_cmp, node, objectReg, scratchReg, instr);
+      instr = generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, objectReg, scratchReg, instr);
       }
 
    return instr;
@@ -127,7 +127,7 @@ TR::Instruction *OMR::ARM::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGen
       }
    else
       {
-      return generateTrg1Src1ImmInstruction(cg, ARMOp_bic, node, dstReg, srcReg, ~mask, 0, prev);
+      return generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_bic, node, dstReg, srcReg, ~mask, 0, prev);
       }
    }
 
@@ -154,21 +154,21 @@ static TR::Instruction *genTestIsSuper(TR::CodeGenerator *cg,
    bool     regDepth         = !constantIsImmed8r(castClassDepth, &base, &rotate);
 
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objClassReg, offsetof(J9Class, classDepthAndFlags), cg);
-   cursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, scratch1Reg, tempMR, cursor);
+   cursor = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, scratch1Reg, tempMR, cursor);
 
-   cursor = generateTrg1ImmInstruction(cg, ARMOp_mvn, node, scratch2Reg, 0, 0, cursor);
+   cursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mvn, node, scratch2Reg, 0, 0, cursor);
 
    TR_ARMOperand2 *operand2 = new (cg->trHeapMemory()) TR_ARMOperand2(ARMOp2RegLSRImmed, scratch2Reg, shiftAmount);
-   cursor = generateTrg1Src2Instruction(cg, ARMOp_and, node, scratch1Reg, scratch1Reg, operand2, cursor);
+   cursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_and, node, scratch1Reg, scratch1Reg, operand2, cursor);
 
    if (outOfBound || regDepth)
       {
       cursor = armLoadConstant(node, castClassDepth, scratch2Reg, cg, cursor);
-      cursor = generateSrc2Instruction(cg, ARMOp_cmp, node, scratch1Reg, scratch2Reg, cursor);
+      cursor = generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, scratch1Reg, scratch2Reg, cursor);
       }
    else
       {
-      cursor = generateSrc1ImmInstruction(cg, ARMOp_cmp, node, scratch1Reg, base, rotate, cursor);
+      cursor = generateSrc1ImmInstruction(cg, TR::InstOpCode::ARMOp_cmp, node, scratch1Reg, base, rotate, cursor);
       }
 
    if (failLabel)
@@ -178,27 +178,27 @@ static TR::Instruction *genTestIsSuper(TR::CodeGenerator *cg,
    else
       {
       TR::SymbolReference *symRef = node->getSymbolReference();
-      cursor = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)symRef->getMethodAddress(), NULL, symRef, NULL, NULL, ARMConditionCodeLE);
+      cursor = generateImmSymInstruction(cg, TR::InstOpCode::ARMOp_bl, node, (uintptr_t)symRef->getMethodAddress(), NULL, symRef, NULL, NULL, ARMConditionCodeLE);
       cursor->ARMNeedsGCMap(0xFFFFFFFF);
       cg->machine()->setLinkRegisterKilled(true);
       }
 
 
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objClassReg, offsetof(J9Class,superclasses), cg);
-   cursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, scratch1Reg, tempMR, cursor);
+   cursor = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, scratch1Reg, tempMR, cursor);
 
    if (outOfBound || regDepth)
       {
       tempMR = new (cg->trHeapMemory()) TR::MemoryReference(scratch1Reg, scratch2Reg, 4, cg);
-      cursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, scratch1Reg, tempMR, cursor);
+      cursor = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, scratch1Reg, tempMR, cursor);
       }
    else
       {
       tempMR = new (cg->trHeapMemory()) TR::MemoryReference(scratch1Reg, superClassOffset, cg);
-      cursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, scratch1Reg, tempMR, cursor);
+      cursor = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, scratch1Reg, tempMR, cursor);
       }
 
-   cursor = generateSrc2Instruction(cg, ARMOp_cmp, node, scratch1Reg, castClassReg, cursor);
+   cursor = generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, scratch1Reg, castClassReg, cursor);
    return cursor;
    }
 
@@ -247,7 +247,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::
    if (!testEqualClass && !testCastClassIsSuper)
       {
       TR::SymbolReference *symRef  = node->getSymbolReference();
-      TR::Instruction     *gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uint32_t)symRef->getMethodAddress(), deps, symRef);
+      TR::Instruction     *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::ARMOp_bl, node, (uint32_t)symRef->getMethodAddress(), deps, symRef);
       gcPoint->ARMNeedsGCMap(0xFFFFFFFF);
       deps->stopAddingConditions();
       cg->decReferenceCount(objNode);
@@ -271,7 +271,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::
          }
       }
 
-   implicitExceptionPointInstr = generateTrg1MemInstruction(cg, ARMOp_ldr, node, objClassReg,
+   implicitExceptionPointInstr = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, objClassReg,
                                  new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), cg));
    generateVFTMaskInstruction(cg, node, objClassReg);
 
@@ -279,12 +279,12 @@ TR::Register *OMR::ARM::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::
 
    if (testEqualClass)
       {
-      generateSrc2Instruction(cg, ARMOp_cmp, node, objClassReg, castClassReg);
+      generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, objClassReg, castClassReg);
       if (testCastClassIsSuper)
          generateConditionalBranchInstruction(cg, node, ARMConditionCodeEQ, doneLabel);
       else
          {
-         gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)symRef->getMethodAddress(), NULL, symRef, NULL, NULL, ARMConditionCodeNE);
+         gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::ARMOp_bl, node, (uintptr_t)symRef->getMethodAddress(), NULL, symRef, NULL, NULL, ARMConditionCodeNE);
          gcPoint->ARMNeedsGCMap(0xFFFFFFFF);
          }
       }
@@ -298,7 +298,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::
 
       genTestIsSuper(cg, node, objClassReg, castClassReg, scratch1Reg,
                      scratch2Reg, castClassDepth, NULL, NULL, doneLabel);
-      gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)symRef->getMethodAddress(), NULL, symRef, NULL, NULL, ARMConditionCodeNE);
+      gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::ARMOp_bl, node, (uintptr_t)symRef->getMethodAddress(), NULL, symRef, NULL, NULL, ARMConditionCodeNE);
       gcPoint->ARMNeedsGCMap(0xFFFFFFFF);
       }
 
@@ -424,7 +424,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
       TR::Node::recreate(instanceOfNode, childOpCode);
 
       iCursor = cg->getAppendInstruction();
-      while (iCursor->getOpCodeValue() != ARMOp_bl)
+      while (iCursor->getOpCodeValue() != TR::InstOpCode::ARMOp_bl)
          iCursor = iCursor->getPrev();
       conditions = iCursor->getDependencyConditions();
       iCursor = iCursor->getPrev();
@@ -445,7 +445,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
          if (needResult)
             {
             resultReg = conditions->searchPreConditionRegister(TR::RealRegister::gr5);
-            iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 0, 0, iCursor);
+            iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 0, 0, iCursor);
             }
          if (!objectNode->isNonNull())
             {
@@ -503,7 +503,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
 
       if (needResult)
          {
-         generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 0, 0);
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 0, 0);
          }
 
       if (!objectNode->isNonNull())
@@ -537,13 +537,13 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
    if (testEqualClass || testCastClassIsSuper)
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg);
-      iCursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, objClassReg, tempMR, iCursor);
+      iCursor = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, objClassReg, tempMR, iCursor);
       iCursor = generateVFTMaskInstruction(cg, node, objClassReg, iCursor);
       }
 
    if (testEqualClass)
       {
-      iCursor = generateSrc2Instruction(cg, ARMOp_cmp, node, objClassReg, castClassReg, iCursor);
+      iCursor = generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, objClassReg, castClassReg, iCursor);
 
       if (testCastClassIsSuper)
          {
@@ -561,7 +561,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
          {
          if (needResult)
             {
-            iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 1, 0, iCursor);
+            iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 1, 0, iCursor);
             }
          iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeEQ, res1Label, iCursor);
          }
@@ -569,7 +569,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
          {
          if (needResult)
             {
-            iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 1, 0, iCursor);
+            iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 1, 0, iCursor);
             iCursor->setConditionCode(ARMConditionCodeEQ);
             }
 
@@ -598,18 +598,18 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
          {
          if (needResult)
             {
-            iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 1, 0, iCursor);
+            iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 1, 0, iCursor);
             }
          }
       else
          {
          iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, trueLabel, iCursor);
-         iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 1, 0, iCursor);
+         iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 1, 0, iCursor);
          }
 
       if (branchOn1)
          {
-         iCursor = generateLabelInstruction(cg, ARMOp_b, node, res1Label, iCursor);
+         iCursor = generateLabelInstruction(cg, TR::InstOpCode::ARMOp_b, node, res1Label, iCursor);
          }
       }
 
@@ -624,10 +624,10 @@ TR::Register *OMR::ARM::TreeEvaluator::VMifInstanceOfEvaluator(TR::Node *node, T
          }
       else
          {
-         generateTrg1Src1Instruction(cg, ARMOp_mov, node, resultReg, callResult);
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, callResult);
          }
 
-      generateSrc1ImmInstruction(cg, ARMOp_cmp, node, resultReg, 0, 0);
+      generateSrc1ImmInstruction(cg, TR::InstOpCode::ARMOp_cmp, node, resultReg, 0, 0);
 
       if (depNode != NULL)
          {
@@ -709,7 +709,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
       TR::Node::recreate(node, opCode);
 
       iCursor = cg->getAppendInstruction();
-      while (iCursor->getOpCodeValue() != ARMOp_bl)
+      while (iCursor->getOpCodeValue() != TR::InstOpCode::ARMOp_bl)
          iCursor = iCursor->getPrev();
       conditions = iCursor->getDependencyConditions();
       iCursor = iCursor->getPrev();
@@ -731,7 +731,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
          resultReg = conditions->searchPreConditionRegister(
                        TR::RealRegister::gr5);
 
-         iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 0, 0, iCursor);
+         iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 0, 0, iCursor);
          if (!objectNode->isNonNull())
             {
             iCursor = genNullTest(cg, objectNode, objectReg, scratch1Reg, iCursor);
@@ -758,7 +758,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
          }
 
       doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 0, 0);
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 0, 0);
       if (!objectNode->isNonNull())
          {
          genNullTest(cg, objectNode, objectReg, objClassReg, NULL);
@@ -786,13 +786,13 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
    if (testEqualClass || testCastClassIsSuper)
       {
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg);
-      iCursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, objClassReg, tempMR, iCursor);
+      iCursor = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, objClassReg, tempMR, iCursor);
       iCursor = generateVFTMaskInstruction(cg, node, objClassReg, iCursor);
       }
 
    if (testEqualClass)
       {
-      iCursor = generateSrc2Instruction(cg, ARMOp_cmp, node, objClassReg, castClassReg, iCursor);
+      iCursor = generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, objClassReg, castClassReg, iCursor);
 
       if (testCastClassIsSuper)
          {
@@ -801,12 +801,12 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
          }
       else if (needsHelperCall)
          {
-         iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 1, 0, iCursor);
+         iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 1, 0, iCursor);
          iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeEQ, doneLabel, iCursor);
          }
       else
          {
-         iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 1, 0, iCursor);
+         iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 1, 0, iCursor);
          iCursor->setConditionCode(ARMConditionCodeEQ);
          }
       }
@@ -828,7 +828,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
          {
          iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, trueLabel, iCursor);
          }
-      iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, resultReg, 1, 0, iCursor);
+      iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, 1, 0, iCursor);
       iCursor->setConditionCode(ARMConditionCodeEQ);
       }
 
@@ -841,7 +841,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR:
          }
       else
          {
-         generateTrg1Src1Instruction(cg, ARMOp_mov, node, resultReg, callResult);
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::ARMOp_mov, node, resultReg, callResult);
          generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions->cloneAndFix(cg));
          }
       }
@@ -880,21 +880,21 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
    TR::addDependency(deps, flagReg, TR::RealRegister::NoReg, TR_GPR, cg);
 
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objReg, lwOffset, cg);
-   generateTrg1MemInstruction(cg, ARMOp_ldr, node, monitorReg, tempMR);
-   generateSrc2Instruction(cg, ARMOp_cmp, node, monitorReg, metaReg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, monitorReg, tempMR);
+   generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, monitorReg, metaReg);
 
-   TR::Instruction *instr = generateTrg1ImmInstruction(cg, ARMOp_mov, node, flagReg, 0, 0);
+   TR::Instruction *instr = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, flagReg, 0, 0);
    instr->setConditionCode(ARMConditionCodeEQ);
 
    if (cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      //instr = generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
-      instr = generateInstruction(cg, ARMOp_dmb_v6 , node); // v7 version is unconditional
+      //instr = generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? TR::InstOpCode::ARMOp_dmb_v6 : TR::InstOpCode::ARMOp_dmb, node);
+      instr = generateInstruction(cg, TR::InstOpCode::ARMOp_dmb_v6 , node); // v7 version is unconditional
       instr->setConditionCode(ARMConditionCodeEQ);
       }
 
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objReg, lwOffset, cg);
-   instr  = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, flagReg);
+   instr  = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, flagReg);
    instr->setConditionCode(ARMConditionCodeEQ);
 
    // Branch to decLabel in snippet first
@@ -943,22 +943,22 @@ static void genHeapAlloc(TR::CodeGenerator  *cg,
    if (isVariableLen)
       {
       // This is coming from the cg setting: less than 0x10000000 will not wrap around
-      iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_and_r, node, zeroReg, enumReg, 0x000000FF, 24, iCursor);
+      iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_and_r, node, zeroReg, enumReg, 0x000000FF, 24, iCursor);
       iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, callLabel, iCursor);
 
       if (isArrayAlloc)
          {
          // Zero length arrays are discontiguous
-         iCursor = generateSrc2Instruction(cg, ARMOp_tst, node, enumReg, enumReg, iCursor);
+         iCursor = generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_tst, node, enumReg, enumReg, iCursor);
          iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeEQ, callLabel, iCursor);
          }
       }
 
    TR::MemoryReference *tempMR;
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg);
-   iCursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, resReg, tempMR, iCursor);
+   iCursor = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, resReg, tempMR, iCursor);
    //tempMR = new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapTop), cg);
-   //iCursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, heapTopReg, tempMR, iCursor);
+   //iCursor = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, heapTopReg, tempMR, iCursor);
 
    if (sizeInReg)
       {
@@ -971,25 +971,25 @@ static void genHeapAlloc(TR::CodeGenerator  *cg,
          if (elementSize >= 4)
             {
             TR_ARMOperand2 *operand2 = new (cg->trHeapMemory()) TR_ARMOperand2(ARMOp2RegLSLImmed, enumReg, trailingZeroes(elementSize));
-            iCursor = generateTrg1Src1Instruction(cg, ARMOp_mov, node, dataSizeReg, operand2, iCursor);
+            iCursor = generateTrg1Src1Instruction(cg, TR::InstOpCode::ARMOp_mov, node, dataSizeReg, operand2, iCursor);
             }
          else
             {
             // Round the data area to a multiple of 4
-            iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, dataSizeReg, enumReg, 3, 0, iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add, node, dataSizeReg, enumReg, 3, 0, iCursor);
             if (elementSize == 2)
                {
-               iCursor = generateTrg1Src2Instruction(cg, ARMOp_add, node, dataSizeReg, dataSizeReg, enumReg, iCursor);
+               iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_add, node, dataSizeReg, dataSizeReg, enumReg, iCursor);
                }
-            iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_bic, node, dataSizeReg, dataSizeReg, 3, 0, iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_bic, node, dataSizeReg, dataSizeReg, 3, 0, iCursor);
             }
          if ((round != 0 && round != 4) || !headerAligned)
             {
-            iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, sizeReg, dataSizeReg, allocSize+round-1, 0, iCursor);
-            iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_bic, node, sizeReg, sizeReg, round-1, 0, iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add, node, sizeReg, dataSizeReg, allocSize+round-1, 0, iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_bic, node, sizeReg, sizeReg, round-1, 0, iCursor);
             }
          else
-            iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, sizeReg, dataSizeReg, allocSize, 0, iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add, node, sizeReg, dataSizeReg, allocSize, 0, iCursor);
          }
       else
          iCursor = armLoadConstant(node, allocSize, sizeReg, cg, iCursor);
@@ -997,7 +997,7 @@ static void genHeapAlloc(TR::CodeGenerator  *cg,
 
    // Borrowing heapTopReg
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapTop), cg);
-   iCursor = generateTrg1MemInstruction(cg, ARMOp_ldr, node, heapTopReg, tempMR, iCursor);
+   iCursor = generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, heapTopReg, tempMR, iCursor);
 
    // Calculate the after-allocation heapAlloc: if the size is huge,
    //   we need to check address wrap-around also. This is unsigned
@@ -1008,11 +1008,11 @@ static void genHeapAlloc(TR::CodeGenerator  *cg,
       {
       if (sizeInReg)
          {
-         iCursor = generateTrg1Src2Instruction(cg, ARMOp_add_r, node, sizeReg, resReg, sizeReg, iCursor);
+         iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_add_r, node, sizeReg, resReg, sizeReg, iCursor);
          }
       else
          {
-         iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add_r, node, sizeReg, resReg, base, rotate, iCursor);
+         iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add_r, node, sizeReg, resReg, base, rotate, iCursor);
          }
       iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeCS, callLabel, iCursor);
       }
@@ -1020,19 +1020,19 @@ static void genHeapAlloc(TR::CodeGenerator  *cg,
       {
       if (sizeInReg)
          {
-         iCursor = generateTrg1Src2Instruction(cg, ARMOp_add, node, sizeReg, resReg, sizeReg, iCursor);
+         iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_add, node, sizeReg, resReg, sizeReg, iCursor);
          }
       else
          {
-         iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, sizeReg, resReg, base, rotate, iCursor);
+         iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add, node, sizeReg, resReg, base, rotate, iCursor);
          }
       }
 
-   iCursor = generateSrc2Instruction(cg, ARMOp_cmp, node, sizeReg, heapTopReg, iCursor);
+   iCursor = generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, sizeReg, heapTopReg, iCursor);
    iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeHI, callLabel, iCursor);
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg);
-   iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, sizeReg, iCursor);
-   iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, zeroReg, 0, 0, iCursor);
+   iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, sizeReg, iCursor);
+   iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, zeroReg, 0, 0, iCursor);
    }
 
 
@@ -1057,12 +1057,12 @@ static void genInitObjectHeader(TR::CodeGenerator  *cg,
       iCursor = armLoadConstant(node, (int32_t)clazz, temp1Reg, cg, iCursor);
 
       tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), cg);
-      iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, temp1Reg, iCursor);
+      iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, temp1Reg, iCursor);
       }
    else
       {
       tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), cg);
-      iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, classReg, iCursor);
+      iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, classReg, iCursor);
       }
 
    // If the object flags cannot be determined at compile time, we have to add a load
@@ -1087,10 +1087,10 @@ static void genInitObjectHeader(TR::CodeGenerator  *cg,
    //   I can only think of 4 instructions sequence which takes advantage of the fact
    //   that resReg itself is at least dword-aligned. Need to revisit whether there is
    //   better sequence.
-   iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, temp1Reg, 2, 16, iCursor);
-   iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_sub, node, temp1Reg, temp1Reg, 1, 0, iCursor);
-   iCursor = generateTrg1Src2Instruction(cg, ARMOp_and, node, temp1Reg, resReg, temp1Reg, iCursor);
-   iCursor = generateTrg1Src1Instruction(cg, ARMOp_mov, node, temp1Reg,
+   iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, temp1Reg, 2, 16, iCursor);
+   iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_sub, node, temp1Reg, temp1Reg, 1, 0, iCursor);
+   iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_and, node, temp1Reg, resReg, temp1Reg, iCursor);
+   iCursor = generateTrg1Src1Instruction(cg, TR::InstOpCode::ARMOp_mov, node, temp1Reg,
                 new (cg->trHeapMemory()) TR_ARMOperand2(ARMOp2RegLSLImmed, temp1Reg, 14), iCursor);
 
    if (isStaticFlag != 0)
@@ -1099,19 +1099,19 @@ static void genInitObjectHeader(TR::CodeGenerator  *cg,
       uint32_t  val1, val2;
       if (constantIsImmed8r(staticFlag, &val1, &val2))
          {
-         iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_orr, node, temp1Reg, temp1Reg, val1, val2, iCursor);
+         iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_orr, node, temp1Reg, temp1Reg, val1, val2, iCursor);
          }
       else
          {
          iCursor = armLoadConstant(node, staticFlag, temp2Reg, cg, iCursor);
-         iCursor = generateTrg1Src2Instruction(cg, ARMOp_orr, node, temp1Reg, temp1Reg, temp2Reg, iCursor);
+         iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_orr, node, temp1Reg, temp1Reg, temp2Reg, iCursor);
          }
       }
 #endif /* J9VM_OPT_NEW_OBJECT_HASH */
 
    // Store the flags
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, (int32_t)TR::Compiler->om.offsetOfHeaderFlags(), cg);
-   iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, temp1Reg, iCursor);
+   iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, temp1Reg, iCursor);
 #endif /* J9VM_INTERP_FLAGS_IN_CLASS_SLOT */
    }
 
@@ -1130,8 +1130,8 @@ static void genAlignDoubleArray(TR::CodeGenerator  *cg,
    TR::LabelSymbol *slotAtStart = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *doneAlign = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-   iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_and_r, node, temp1Reg, resReg, 7, 0, iCursor);
-   iCursor = generateTrg1ImmInstruction(cg, ARMOp_mov, node, temp2Reg, 3, 0, iCursor);
+   iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_and_r, node, temp1Reg, resReg, 7, 0, iCursor);
+   iCursor = generateTrg1ImmInstruction(cg, TR::InstOpCode::ARMOp_mov, node, temp2Reg, 3, 0, iCursor);
    iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, slotAtStart, iCursor);
 
    // Should be able to have branch-less sequence here ... but we need to change armLoadConstant for that.
@@ -1142,27 +1142,27 @@ static void genAlignDoubleArray(TR::CodeGenerator  *cg,
    if (isVariableLen)
       {
       tempMR = new (cg->trHeapMemory()) TR::MemoryReference(temp1Reg, dataBegin, cg);
-      iCursor = generateTrg1Src2Instruction(cg, ARMOp_add, node, temp1Reg, resReg, dataSizeReg, iCursor);
-      iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, temp2Reg, iCursor);
+      iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_add, node, temp1Reg, resReg, dataSizeReg, iCursor);
+      iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, temp2Reg, iCursor);
       }
    else if (objectSize > UPPER_IMMED12)
       {
       tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, temp1Reg, cg);
       iCursor = armLoadConstant(node, objectSize, temp1Reg, cg, iCursor);
-      iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, temp2Reg, iCursor);
+      iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, temp2Reg, iCursor);
       }
    else
       {
       tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, objectSize, cg);
-      iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, temp2Reg, iCursor);
+      iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, temp2Reg, iCursor);
       }
-   iCursor = generateLabelInstruction(cg, ARMOp_b, node, doneAlign, iCursor);
+   iCursor = generateLabelInstruction(cg, TR::InstOpCode::ARMOp_b, node, doneAlign, iCursor);
 
    // the slop bytes are at the start of the allocation
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, (int32_t)0, cg);
    iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, slotAtStart, iCursor);
-   iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, temp2Reg, iCursor);
-   iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, resReg, resReg, 4, 0, iCursor);
+   iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, temp2Reg, iCursor);
+   iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add, node, resReg, resReg, 4, 0, iCursor);
    iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, doneAlign, iCursor);
    }
 
@@ -1189,7 +1189,7 @@ static void genInitArrayHeader(TR::CodeGenerator  *cg,
 
    // Store the array size
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, (int32_t)(fej9->getOffsetOfContiguousArraySizeField()), cg);
-   iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, instanceSizeReg, iCursor);
+   iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, instanceSizeReg, iCursor);
    }
 
 
@@ -1239,7 +1239,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
       if (firstChild->getReferenceCount() > 1)
          {
          TR::Register *copyReg = cg->allocateRegister();
-         iCursor = generateTrg1Src1Instruction(cg, ARMOp_mov, node, copyReg, classReg, iCursor);
+         iCursor = generateTrg1Src1Instruction(cg, TR::InstOpCode::ARMOp_mov, node, copyReg, classReg, iCursor);
          classReg = copyReg;
          }
       dataBegin = TR::Compiler->om.objectHeaderSizeInBytes();
@@ -1271,7 +1271,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
       if (secondChild->getReferenceCount() > 1)
          {
          TR::Register *copyReg = cg->allocateRegister();
-         iCursor = generateTrg1Src1Instruction(cg, ARMOp_mov, node, copyReg, classReg, iCursor);
+         iCursor = generateTrg1Src1Instruction(cg, TR::InstOpCode::ARMOp_mov, node, copyReg, classReg, iCursor);
          classReg = copyReg;
          }
       }
@@ -1344,7 +1344,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
             while (bvi.hasMoreElements())
                {
                tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(resReg, bvi.getNextElement() * 4 + dataBegin, cg);
-               iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
+               iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, zeroReg, iCursor);
                }
             }
          else if (objectSize > 48)
@@ -1357,26 +1357,26 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
             TR::LabelSymbol *initLoop = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
             iCursor = armLoadConstant(node, loopCnt, temp1Reg, cg, iCursor);
-            iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, temp2Reg, resReg, dataBegin, 0, iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add, node, temp2Reg, resReg, dataBegin, 0, iCursor);
             iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, initLoop, iCursor);
             tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, 0, cg);
-            iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
+            iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, zeroReg, iCursor);
             tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, 4, cg);
-            iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
+            iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, zeroReg, iCursor);
             tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, 8, cg);
-            iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
+            iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, zeroReg, iCursor);
             tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, 12, cg);
-            iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
+            iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, zeroReg, iCursor);
 
             // TODO: add the update form instruction, we will not need the following instruction
-            iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, temp2Reg, temp2Reg, 16, 0, iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add, node, temp2Reg, temp2Reg, 16, 0, iCursor);
 
-            iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_sub_r, node, temp1Reg, temp1Reg, 1, 0, iCursor);
+            iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_sub_r, node, temp1Reg, temp1Reg, 1, 0, iCursor);
             iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, initLoop, iCursor);
             for (idx = 0; idx < residue; idx++)
                {
                tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, idx << 2, cg);
-               iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
+               iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, zeroReg, iCursor);
                }
             }
          else
@@ -1384,7 +1384,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
             for (idx = dataBegin; idx < objectSize; idx += 4)
                {
                tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(resReg, idx, cg);
-               iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
+               iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, zeroReg, iCursor);
                }
             }
          }
@@ -1392,15 +1392,15 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
          {
          // Test for zero length array: also set up loop count
 
-         iCursor = generateTrg1Src1Instruction(cg, ARMOp_mov_r, node, temp1Reg, new (cg->trHeapMemory()) TR_ARMOperand2(ARMOp2RegLSRImmed, dataSizeReg, 2), iCursor);
+         iCursor = generateTrg1Src1Instruction(cg, TR::InstOpCode::ARMOp_mov_r, node, temp1Reg, new (cg->trHeapMemory()) TR_ARMOperand2(ARMOp2RegLSRImmed, dataSizeReg, 2), iCursor);
          iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeEQ, doneLabel, iCursor);
-         iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, temp2Reg, resReg, dataBegin - 4, 0, iCursor);
+         iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add, node, temp2Reg, resReg, dataBegin - 4, 0, iCursor);
 
          TR::LabelSymbol *initLoop = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
          iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, initLoop, iCursor);
          tempMR  = new (cg->trHeapMemory()) TR::MemoryReference(temp2Reg, temp1Reg, 4, cg);
-         iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
-         iCursor = generateTrg1Src1ImmInstruction(cg, ARMOp_sub_r, node, temp1Reg, temp1Reg, 1, 0, iCursor);
+         iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_str, node, tempMR, zeroReg, iCursor);
+         iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_sub_r, node, temp1Reg, temp1Reg, 1, 0, iCursor);
          iCursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, initLoop, iCursor);
          }
       }
@@ -1408,10 +1408,10 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
 
    // TODO:  using snippet to better use of branch prediction facility
    generateLabelInstruction(cg, TR::InstOpCode::label, node, callLabel);
-   generateTrg1Src1Instruction(cg, ARMOp_mov, node, resReg, classReg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::ARMOp_mov, node, resReg, classReg);
    if (secondChild != NULL)
-      generateTrg1Src1Instruction(cg, ARMOp_mov, node, temp2Reg, enumReg);
-   iCursor = generateImmSymInstruction(cg, ARMOp_bl, node, (uint32_t)node->getSymbolReference()->getMethodAddress(), deps, node->getSymbolReference());
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::ARMOp_mov, node, temp2Reg, enumReg);
+   iCursor = generateImmSymInstruction(cg, TR::InstOpCode::ARMOp_bl, node, (uint32_t)node->getSymbolReference()->getMethodAddress(), deps, node->getSymbolReference());
    iCursor->ARMNeedsGCMap(0xFFFFFFFE);  // mask off gr0
    cg->machine()->setLinkRegisterKilled(true);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
@@ -1468,19 +1468,19 @@ OMR::ARM::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::LabelSymbol *loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
 
-   generateTrg1Src1ImmInstruction(cg, ARMOp_add, node, addrReg, objReg, lwOffset, 0);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::ARMOp_add, node, addrReg, objReg, lwOffset, 0);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
-   generateTrg1MemInstruction(cg, ARMOp_ldrex, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
-   generateSrc1ImmInstruction(cg, ARMOp_cmp, node, dataReg, 0, 0);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldrex, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+   generateSrc1ImmInstruction(cg, TR::InstOpCode::ARMOp_cmp, node, dataReg, 0, 0);
    TR::Instruction *cursor = generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, incLabel);
 
-   generateTrg1MemSrc1Instruction(cg, ARMOp_strex, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
-   generateSrc1ImmInstruction(cg, ARMOp_cmp, node, tempReg, 0, 0);
+   generateTrg1MemSrc1Instruction(cg, TR::InstOpCode::ARMOp_strex, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
+   generateSrc1ImmInstruction(cg, TR::InstOpCode::ARMOp_cmp, node, tempReg, 0, 0);
    generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, loopLabel);
 
    if (cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
+      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? TR::InstOpCode::ARMOp_dmb_v6 : TR::InstOpCode::ARMOp_dmb, node);
       }
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
@@ -1675,7 +1675,7 @@ void OMR::ARM::TreeEvaluator::VMwrtbarEvaluator(TR::Node *node, TR::Register *sr
 
    // todo check for _isSourceNonNull in PPC gen to see possible opt?
    // nullcheck store - skip write barrier if null being written in
-   generateSrc2Instruction(cg, ARMOp_tst, node, srcReg, srcReg);
+   generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_tst, node, srcReg, srcReg);
    generateConditionalBranchInstruction(cg, node, ARMConditionCodeEQ, doneLabel);
 
    if (gcMode != gc_modron_wrtbar_always)
@@ -1683,11 +1683,11 @@ void OMR::ARM::TreeEvaluator::VMwrtbarEvaluator(TR::Node *node, TR::Register *sr
       // check to see if colour bits give hint (read FLAGS field of J9Object).
 // @@ getWordOffsetToGCFlags() and getWriteBarrierGCFlagMaskAsByte() are missing in TR_FrontEnd
 // @@      if (flagReg == NULL)
-// @@         generateTrg1MemInstruction(cg, ARMOp_ldr, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(dstReg, fej9->getWordOffsetToGCFlags(), cg));
-// @@      generateTrg1Src2Instruction(cg, ARMOp_and_r, node, tempReg, tempReg, new (cg->trHeapMemory()) TR_ARMOperand2(fej9->getWriteBarrierGCFlagMaskAsByte(), 8));
+// @@         generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(dstReg, fej9->getWordOffsetToGCFlags(), cg));
+// @@      generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_and_r, node, tempReg, tempReg, new (cg->trHeapMemory()) TR_ARMOperand2(fej9->getWriteBarrierGCFlagMaskAsByte(), 8));
       }
 
-   TR::Instruction *cursor = generateImmSymInstruction(cg, ARMOp_bl,
+   TR::Instruction *cursor = generateImmSymInstruction(cg, TR::InstOpCode::ARMOp_bl,
                                         node, (uintptr_t)wbref->getMethodAddress(),
                                         new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg->trMemory()),
                                         wbref, NULL);

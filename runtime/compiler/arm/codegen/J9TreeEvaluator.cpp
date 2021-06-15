@@ -106,10 +106,10 @@ J9::ARM::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool 
 
       TR::Register    *targetRegister = cg->evaluate(reference);
 
-      generateSrc2Instruction(cg, ARMOp_tst, node, targetRegister, targetRegister);
+      generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_tst, node, targetRegister, targetRegister);
 
       TR::SymbolReference *NULLCHKException = node->getSymbolReference();
-      TR::Instruction *instr1 = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)NULLCHKException->getMethodAddress(), NULL, NULLCHKException, NULL, NULL, ARMConditionCodeEQ);
+      TR::Instruction *instr1 = generateImmSymInstruction(cg, TR::InstOpCode::ARMOp_bl, node, (uintptr_t)NULLCHKException->getMethodAddress(), NULL, NULLCHKException, NULL, NULL, ARMConditionCodeEQ);
       instr1->ARMNeedsGCMap(0xFFFFFFFF);
       cg->machine()->setLinkRegisterKilled(true);
       }
@@ -208,7 +208,7 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
          {
          uint32_t base, rotate;
 
-         generateTrg1MemInstruction(cg, ARMOp_ldr, node, temp1Reg,
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, temp1Reg,
                new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, privateFlags), cg));
 
          // The value for J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE is a generated value when VM code is created
@@ -218,32 +218,32 @@ static void VMCardCheckEvaluator(TR::Node *node, TR::Register *dstReg, TR::Regis
          TR_ASSERT(J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE >= 0x00010000 && J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE <= 0x80000000,
                "Concurrent mark active Value assumption broken.");
          constantIsImmed8r(J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE, &base, &rotate);
-         generateSrc1ImmInstruction(cg, ARMOp_tst, node, temp1Reg, base, rotate);
+         generateSrc1ImmInstruction(cg, TR::InstOpCode::ARMOp_tst, node, temp1Reg, base, rotate);
          generateConditionalBranchInstruction(cg, node, ARMConditionCodeEQ, noChkLabel);
          }
 
       uintptr_t card_size_shift = trailingZeroes((uint32_t) options->getGcCardSize());
 
       // temp3Reg = dstReg - heapBaseForBarrierRange0
-      generateTrg1MemInstruction(cg, ARMOp_ldr, node, temp3Reg,
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, temp3Reg,
             new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapBaseForBarrierRange0), cg));
-      generateTrg1Src2Instruction(cg, ARMOp_sub, node, temp3Reg, dstReg, temp3Reg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_sub, node, temp3Reg, dstReg, temp3Reg);
 
       if (!definitelyHeapObject)
          {
          // if (temp3Reg >= heapSizeForBarrierRange0), object not in the heap
-         generateTrg1MemInstruction(cg, ARMOp_ldr, node, temp1Reg,
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, temp1Reg,
                new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapSizeForBarrierRange0), cg));
-         generateSrc2Instruction(cg, ARMOp_cmp, node, temp3Reg, temp1Reg);
+         generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, temp3Reg, temp1Reg);
          generateConditionalBranchInstruction(cg, node, ARMConditionCodeCS, noChkLabel);
          }
 
       // dirty(activeCardTableBase + temp3Reg >> card_size_shift)
-      generateTrg1MemInstruction(cg, ARMOp_ldr, node, temp1Reg,
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, temp1Reg,
             new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, activeCardTableBase), cg));
       generateShiftRightImmediate(cg, node, temp3Reg, temp3Reg, card_size_shift, true);
       armLoadConstant(node, CARD_DIRTY, temp2Reg, cg);
-      generateMemSrc1Instruction(cg, ARMOp_strb, node, new (cg->trHeapMemory()) TR::MemoryReference(temp1Reg, temp3Reg, 1, cg), temp2Reg);
+      generateMemSrc1Instruction(cg, TR::InstOpCode::ARMOp_strb, node, new (cg->trHeapMemory()) TR::MemoryReference(temp1Reg, temp3Reg, 1, cg), temp2Reg);
 
       generateLabelInstruction(cg, TR::InstOpCode::label, node, noChkLabel, deps);
       }
@@ -310,14 +310,14 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
          TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
          // temp1Reg = dstObjReg - heapBaseForBarrierRange0
-         generateTrg1MemInstruction(cg, ARMOp_ldr, node, temp1Reg,
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, temp1Reg,
                new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapBaseForBarrierRange0), cg));
-         generateTrg1Src2Instruction(cg, ARMOp_sub, node, temp1Reg, dstObjReg, temp1Reg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::ARMOp_sub, node, temp1Reg, dstObjReg, temp1Reg);
 
          // if (temp1Reg >= heapSizeForBarrierRange0), object not in the tenured area
-         generateTrg1MemInstruction(cg, ARMOp_ldr, node, temp2Reg,
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ARMOp_ldr, node, temp2Reg,
                new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapSizeForBarrierRange0), cg));
-         generateSrc2Instruction(cg, ARMOp_cmp, node, temp1Reg, temp2Reg);
+         generateSrc2Instruction(cg, TR::InstOpCode::ARMOp_cmp, node, temp1Reg, temp2Reg);
          generateConditionalBranchInstruction(cg, node, ARMConditionCodeCS, doneLabel);
          }
       else
@@ -327,7 +327,7 @@ void J9::ARM::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Register 
 
       TR::addDependency(conditions, dstObjReg, TR::RealRegister::gr0, TR_GPR, cg);
 
-      TR::Instruction *gcPoint = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)wbRef->getSymbol()->castToMethodSymbol()->getMethodAddress(), NULL, wbRef);
+      TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::ARMOp_bl, node, (uintptr_t)wbRef->getSymbol()->castToMethodSymbol()->getMethodAddress(), NULL, wbRef);
       gcPoint->ARMNeedsGCMap(0xFFFFFFFF);
 
       if (gcMode != gc_modron_wrtbar_always)

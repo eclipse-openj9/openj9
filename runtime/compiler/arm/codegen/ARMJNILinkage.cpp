@@ -130,7 +130,7 @@ TR::Register *J9::ARM::JNILinkage::pushFloatArgForJNI(TR::Node *child)
    if (pushRegister->getKind() == TR_GPR)
       {
       TR::Register *trgReg = cg()->allocateSinglePrecisionRegister();
-      generateTrg1Src1Instruction(cg(), ARMOp_fmsr, child, trgReg, pushRegister);
+      generateTrg1Src1Instruction(cg(), TR::InstOpCode::ARMOp_fmsr, child, trgReg, pushRegister);
       return trgReg;
       }
 
@@ -148,7 +148,7 @@ TR::Register *J9::ARM::JNILinkage::pushDoubleArgForJNI(TR::Node *child)
       {
       TR::Register *trgReg = cg()->allocateRegister(TR_FPR);
       TR::RegisterPair *pair = pushRegister->getRegisterPair();
-      generateTrg1Src2Instruction(cg(), ARMOp_fmdrr, child, trgReg, pair->getLowOrder(), pair->getHighOrder());
+      generateTrg1Src2Instruction(cg(), TR::InstOpCode::ARMOp_fmdrr, child, trgReg, pair->getLowOrder(), pair->getHighOrder());
       return trgReg;
       }
    return pushRegister;
@@ -369,13 +369,13 @@ printf("subtracting %d slots from SP\n", numStackParmSlots); fflush(stdout);
       uint32_t base, rotate;
       if (constantIsImmed8r(numStackParmSlots, &base, &rotate))
          {
-         generateTrg1Src1ImmInstruction(codeGen, ARMOp_sub, callNode, sp, sp, base, rotate);
+         generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_sub, callNode, sp, sp, base, rotate);
          }
       else
          {
          TR::Register *tmpReg = codeGen->allocateRegister();
          armLoadConstant(callNode, numStackParmSlots, tmpReg, codeGen);
-         generateTrg1Src2Instruction(codeGen, ARMOp_sub, callNode, sp, sp, tmpReg);
+         generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_sub, callNode, sp, sp, tmpReg);
          codeGen->stopUsingRegister(tmpReg);
          }
       }
@@ -419,7 +419,7 @@ printf("subtracting %d slots from SP\n", numStackParmSlots); fflush(stdout);
                      tempReg = codeGen->allocateCollectedReferenceRegister();
                   else
                      tempReg = codeGen->allocateRegister();
-                  generateTrg1Src1Instruction(codeGen, ARMOp_mov, child, tempReg, reg);
+                  generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, child, tempReg, reg);
                   reg = tempReg;
                   }
                if (numIntegerArgRegIndex == 0 &&
@@ -449,7 +449,7 @@ printf("subtracting %d slots from SP\n", numStackParmSlots); fflush(stdout);
 #ifdef DEBUG_ARM_LINKAGE
 printf("pushing 32-bit arg %d %d\n", numIntegerArgRegIndex, memArg); fflush(stdout);
 #endif
-               tempMR = getOutgoingArgumentMemRef(0, stackOffset, reg, ARMOp_str, pushToMemory[memArg++]);
+               tempMR = getOutgoingArgumentMemRef(0, stackOffset, reg, TR::InstOpCode::ARMOp_str, pushToMemory[memArg++]);
                stackOffset += 4;
                }
             numIntegerArgRegIndex++;
@@ -478,12 +478,12 @@ printf("skipping one argument slot\n"); fflush(stdout);
 
                   if (bigEndian)
                      {
-                     generateTrg1Src1Instruction(codeGen, ARMOp_mov, child, tempReg, reg->getRegisterPair()->getHighOrder());
+                     generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, child, tempReg, reg->getRegisterPair()->getHighOrder());
                      reg = codeGen->allocateRegisterPair(reg->getRegisterPair()->getLowOrder(), tempReg);
                      }
                   else
                      {
-                     generateTrg1Src1Instruction(codeGen, ARMOp_mov, child, tempReg, reg->getRegisterPair()->getLowOrder());
+                     generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, child, tempReg, reg->getRegisterPair()->getLowOrder());
                      reg = codeGen->allocateRegisterPair(tempReg, reg->getRegisterPair()->getHighOrder());
                      }
                   }
@@ -501,12 +501,12 @@ printf("skipping one argument slot\n"); fflush(stdout);
                      tempReg = codeGen->allocateRegister();
                      if (bigEndian)
                         {
-                        generateTrg1Src1Instruction(codeGen, ARMOp_mov, child, tempReg, reg->getRegisterPair()->getLowOrder());
+                        generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, child, tempReg, reg->getRegisterPair()->getLowOrder());
                         reg->getRegisterPair()->setLowOrder(tempReg, codeGen);
                         }
                      else
                         {
-                        generateTrg1Src1Instruction(codeGen, ARMOp_mov, child, tempReg, reg->getRegisterPair()->getHighOrder());
+                        generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, child, tempReg, reg->getRegisterPair()->getHighOrder());
                         reg->getRegisterPair()->setHighOrder(tempReg, codeGen);
                         }
                      }
@@ -518,7 +518,7 @@ printf("skipping one argument slot\n"); fflush(stdout);
 #ifdef DEBUG_ARM_LINKAGE
 printf("pushing %s word of 64-bit arg %d %d\n", bigEndian ? "low" : "high", numIntegerArgRegIndex, memArg); fflush(stdout);
 #endif
-                  tempMR = getOutgoingArgumentMemRef(0, stackOffset, bigEndian ? reg->getRegisterPair()->getLowOrder() : reg->getRegisterPair()->getHighOrder(), ARMOp_str, pushToMemory[memArg++]);
+                  tempMR = getOutgoingArgumentMemRef(0, stackOffset, bigEndian ? reg->getRegisterPair()->getLowOrder() : reg->getRegisterPair()->getHighOrder(), TR::InstOpCode::ARMOp_str, pushToMemory[memArg++]);
                   stackOffset += 4;
                   }
                }
@@ -529,8 +529,8 @@ printf("pushing 64-bit JNI arg %d %d %d\n", numIntegerArgs, memArg, totalSize); 
 #endif
                if (isEABI)
                   stackOffset = (stackOffset + 4) & (~7);
-               tempMR = getOutgoingArgumentMemRef(0, stackOffset, bigEndian ? reg->getRegisterPair()->getHighOrder() : reg->getRegisterPair()->getLowOrder(), ARMOp_str, pushToMemory[memArg++]);
-               tempMR = getOutgoingArgumentMemRef(0, stackOffset + 4, bigEndian ? reg->getRegisterPair()->getLowOrder() : reg->getRegisterPair()->getHighOrder(), ARMOp_str, pushToMemory[memArg++]);
+               tempMR = getOutgoingArgumentMemRef(0, stackOffset, bigEndian ? reg->getRegisterPair()->getHighOrder() : reg->getRegisterPair()->getLowOrder(), TR::InstOpCode::ARMOp_str, pushToMemory[memArg++]);
+               tempMR = getOutgoingArgumentMemRef(0, stackOffset + 4, bigEndian ? reg->getRegisterPair()->getLowOrder() : reg->getRegisterPair()->getHighOrder(), TR::InstOpCode::ARMOp_str, pushToMemory[memArg++]);
                stackOffset += 8;
                }
             numIntegerArgRegIndex += 2;
@@ -543,7 +543,7 @@ printf("pushing 64-bit JNI arg %d %d %d\n", numIntegerArgs, memArg, totalSize); 
                if (!cg()->canClobberNodesRegister(child, 0))
                   {
                   tempReg = codeGen->allocateSinglePrecisionRegister();
-                  generateTrg1Src1Instruction(codeGen, ARMOp_fcpys, child, tempReg, reg);
+                  generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_fcpys, child, tempReg, reg);
                   reg = tempReg;
                   }
                if ((numFloatArgRegIndex == 0) && resType.isFloatingPoint())
@@ -579,7 +579,7 @@ printf("pushing 64-bit JNI arg %d %d %d\n", numIntegerArgs, memArg, totalSize); 
                }
             else
                {
-               tempMR = getOutgoingArgumentMemRef(0, stackOffset, reg, ARMOp_fsts, pushToMemory[memArg++]);
+               tempMR = getOutgoingArgumentMemRef(0, stackOffset, reg, TR::InstOpCode::ARMOp_fsts, pushToMemory[memArg++]);
                stackOffset += 4;
 
                numFloatArgRegIndex++;
@@ -596,7 +596,7 @@ printf("pushing 64-bit JNI arg %d %d %d\n", numIntegerArgs, memArg, totalSize); 
                if (!cg()->canClobberNodesRegister(child, 0))
                   {
                   tempReg = cg()->allocateRegister(TR_FPR);
-                  generateTrg1Src1Instruction(codeGen, ARMOp_fcpyd, child, tempReg, reg);
+                  generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_fcpyd, child, tempReg, reg);
                   reg = tempReg;
                   }
                if ((numFloatArgRegIndex == 0) && resType.isFloatingPoint())
@@ -617,7 +617,7 @@ printf("pushing 64-bit JNI arg %d %d %d\n", numIntegerArgs, memArg, totalSize); 
                {
                if (isEABI)
                    stackOffset = (stackOffset + 4) & (~7);
-               tempMR = getOutgoingArgumentMemRef(0, stackOffset, reg, ARMOp_fstd, pushToMemory[memArg++]);
+               tempMR = getOutgoingArgumentMemRef(0, stackOffset, reg, TR::InstOpCode::ARMOp_fstd, pushToMemory[memArg++]);
                stackOffset += 8;
                }
             numFloatArgRegIndex++;
@@ -864,9 +864,9 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    // mask out the magic bit that indicates JIT frames below
-   generateTrg1ImmInstruction(codeGen, ARMOp_mov, callNode, gr5Reg, 0, 0);
+   generateTrg1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr5Reg, 0, 0);
    tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetJavaFrameFlagsOffset(), codeGen);
-   generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, gr5Reg);
+   generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, callNode, tempMR, gr5Reg);
 
    // push tag bits (savedA0 slot)
    // if the current method is simply a wrapper for the JNI call, hide the call-out stack frame
@@ -878,52 +878,52 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    armLoadConstant(callNode, tagBits, gr4Reg, codeGen);
    tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, -((int)sizeof(uintptr_t)), codeGen);
    tempMR->setImmediatePreIndexed();
-   generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, gr4Reg);
+   generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, callNode, tempMR, gr4Reg);
 
    // skip unused savedPC slot and push return address (savedCP slot)
    //
    TR::LabelSymbol *returnAddrLabel               = generateLabelSymbol(codeGen);
-   generateLabelInstruction(codeGen, ARMOp_add, callNode, returnAddrLabel, NULL, gr4Reg, instrPtr);
+   generateLabelInstruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, returnAddrLabel, NULL, gr4Reg, instrPtr);
    tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, -2 * ((int)sizeof(uintptr_t)), codeGen);
    tempMR->setImmediatePreIndexed();
-   generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, gr4Reg);
+   generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, callNode, tempMR, gr4Reg);
 
    // push frame flags
    intParts flags((int32_t)fej9->constJNICallOutFrameFlags());
    TR_ASSERT((flags.getValue() & ~0x7FFF0000) == 0, "JNI call-out frame flags have more than 15 bits");
-   generateTrg1Src1Instruction(codeGen, ARMOp_mov, callNode, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(flags.getByte3(), 24));
-   generateTrg1Src2Instruction(codeGen, ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(flags.getByte2(), 16));
+   generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(flags.getByte3(), 24));
+   generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(flags.getByte2(), 16));
    tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, -((int)TR::Compiler->om.sizeofReferenceAddress()), codeGen);
    tempMR->setImmediatePreIndexed();
-   generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, gr4Reg);
+   generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, callNode, tempMR, gr4Reg);
 
    // push the RAM method for the native
    intParts ramMethod((int32_t)resolvedMethod->resolvedMethodAddress());
-   generateTrg1Src1Instruction(codeGen, ARMOp_mov, callNode, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(ramMethod.getByte3(), 24));
-   generateTrg1Src2Instruction(codeGen, ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(ramMethod.getByte2(), 16));
-   generateTrg1Src2Instruction(codeGen, ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(ramMethod.getByte1(), 8));
-   generateTrg1Src2Instruction(codeGen, ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(ramMethod.getByte0(), 0));
+   generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(ramMethod.getByte3(), 24));
+   generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(ramMethod.getByte2(), 16));
+   generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(ramMethod.getByte1(), 8));
+   generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(ramMethod.getByte0(), 0));
    tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, -((int)TR::Compiler->om.sizeofReferenceAddress()), codeGen);
    tempMR->setImmediatePreIndexed();
-   generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, gr4Reg);
+   generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, callNode, tempMR, gr4Reg);
 
    // store the Java SP
    tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetJavaSPOffset(), codeGen);
-   generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, stackPtr);
+   generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, callNode, tempMR, stackPtr);
 
    // store the PC and literals values indicating the call-out frame
    intParts frameType((int32_t)fej9->constJNICallOutFrameType());
    TR_ASSERT((frameType.getValue() & ~0xFFFF) == 0, "JNI call-out frame type has more than 16 bits");
-   generateTrg1Src1Instruction(codeGen, ARMOp_mov, callNode, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(frameType.getByte1(), 8));
-   generateTrg1Src2Instruction(codeGen, ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(frameType.getByte0(), 0));
+   generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(frameType.getByte1(), 8));
+   generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, gr4Reg, gr4Reg, new (trHeapMemory()) TR_ARMOperand2(frameType.getByte0(), 0));
    tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetJavaPCOffset(), codeGen);
-   generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, gr4Reg);
+   generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, callNode, tempMR, gr4Reg);
    tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetJavaLiteralsOffset(), codeGen);
-   generateMemSrc1Instruction(codeGen, ARMOp_str, callNode, tempMR, gr5Reg);
+   generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_str, callNode, tempMR, gr5Reg);
 
    // the Java arguments for the native method are all in place already; now
    // pass the vmThread pointer as the hidden first argument to a JNI call
-   generateTrg1Src1Instruction(codeGen, ARMOp_mov, callNode, gr0Reg, metaReg);
+   generateTrg1Src1Instruction(codeGen, TR::InstOpCode::ARMOp_mov, callNode, gr0Reg, metaReg);
 
    // release VM access (go to internalReleaseVMAccess directly)
    TR::ResolvedMethodSymbol *callerSym    = comp()->getJittedMethodSymbol();
@@ -931,13 +931,13 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    TR::SymbolReference      *helperSymRef = symRefTab->findOrCreateReleaseVMAccessSymbolRef(callerSym);
 
    TR::ARMMultipleMoveInstruction *instr;
-   instr = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(ARMOp_stmdb, callNode, gr13Reg, 0x0f, codeGen);
+   instr = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(TR::InstOpCode::ARMOp_stmdb, callNode, gr13Reg, 0x0f, codeGen);
    instr->setWriteBack();
 
    //AOT relocation is handled in TR::ARMImmSymInstruction::generateBinaryEncoding()
-   TR::Instruction *gcPoint = generateImmSymInstruction(codeGen, ARMOp_bl, callNode, (uint32_t)helperSymRef->getMethodAddress(), NULL, helperSymRef);
+   TR::Instruction *gcPoint = generateImmSymInstruction(codeGen, TR::InstOpCode::ARMOp_bl, callNode, (uint32_t)helperSymRef->getMethodAddress(), NULL, helperSymRef);
    gcPoint->ARMNeedsGCMap(~(jniLinkageProperties.getPreservedRegisterMapForGC()));
-   instr = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(ARMOp_ldmia, callNode, gr13Reg, 0x0f, codeGen);
+   instr = new (trHeapMemory()) TR::ARMMultipleMoveInstruction(TR::InstOpCode::ARMOp_ldmia, callNode, gr13Reg, 0x0f, codeGen);
    instr->setWriteBack();
 
    // split dependencies to prevent register assigner from inserting code. Any generated
@@ -948,7 +948,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    // get the target method address and dispatch JNI method directly
    uintptr_t methodAddress = (uintptr_t)resolvedMethod->startAddressForJNIMethod(comp());
    //AOT relocation is handled in TR::ARMImmSymInstruction::generateBinaryEncoding()
-   gcPoint = generateImmSymInstruction(codeGen, ARMOp_bl, callNode, methodAddress, deps, callSymRef);
+   gcPoint = generateImmSymInstruction(codeGen, TR::InstOpCode::ARMOp_bl, callNode, methodAddress, deps, callSymRef);
    codeGen->getJNICallSites().push_front(new (trHeapMemory()) TR_Pair<TR_ResolvedMethod, TR::Instruction>(calleeSym->getResolvedMethod(), gcPoint));
    gcPoint->ARMNeedsGCMap(jniLinkageProperties.getPreservedRegisterMapForGC());
 
@@ -960,7 +960,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       {
       case TR::Int8:
         if (resolvedMethod->returnTypeIsUnsigned())
-           generateTrg1Src1ImmInstruction(codeGen, ARMOp_and, callNode, returnRegister, returnRegister, 0xFF, 0);
+           generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_and, callNode, returnRegister, returnRegister, 0xFF, 0);
         else
            {
            generateShiftLeftImmediate(codeGen, callNode, returnRegister, returnRegister, 24);
@@ -970,8 +970,8 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       case TR::Int16:
          if (resolvedMethod->returnTypeIsUnsigned())
             {
-            generateTrg1ImmInstruction(codeGen, ARMOp_mvn, callNode, gr4Reg, 0xFF, 0);
-            generateTrg1Src2Instruction(codeGen, ARMOp_and, callNode, returnRegister, returnRegister,
+            generateTrg1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_mvn, callNode, gr4Reg, 0xFF, 0);
+            generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_and, callNode, returnRegister, returnRegister,
                                         new (trHeapMemory()) TR_ARMOperand2(ARMOp2RegLSRImmed, gr4Reg, 16));
             }
          else
@@ -993,8 +993,8 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
             TR::RealRegister *fpReg   = machine->getRealRegister(jniLinkageProperties.getFloatReturnRegister());
             fpReg->setAssignedRegister(fpReg);
             tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetFloatTemp1Offset(), codeGen);
-            generateMemSrc1Instruction(codeGen, ARMOp_fsts, callNode, tempMR, fpReg);
-            generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, returnRegister, tempMR);
+            generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_fsts, callNode, tempMR, fpReg);
+            generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, returnRegister, tempMR);
             break;
             }
          case TR::Double:
@@ -1003,11 +1003,11 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
             fdReg->setAssignedRegister(fdReg);
             TR_ASSERT(fej9->thisThreadGetFloatTemp2Offset() - fej9->thisThreadGetFloatTemp1Offset() == 4,"floatTemp1 and floatTemp2 not contiguous");
             tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetFloatTemp1Offset(), codeGen);
-            generateMemSrc1Instruction(codeGen, ARMOp_fstd, callNode, tempMR, fdReg);
+            generateMemSrc1Instruction(codeGen, TR::InstOpCode::ARMOp_fstd, callNode, tempMR, fdReg);
             bool bigEndian = codeGen->comp()->target().cpu.isBigEndian();
-            generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, bigEndian ? returnRegister->getHighOrder() : returnRegister->getLowOrder(), tempMR);
+            generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, bigEndian ? returnRegister->getHighOrder() : returnRegister->getLowOrder(), tempMR);
             tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetFloatTemp2Offset(), codeGen);
-            generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, bigEndian ? returnRegister->getLowOrder() : returnRegister->getHighOrder(), tempMR);
+            generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, bigEndian ? returnRegister->getLowOrder() : returnRegister->getHighOrder(), tempMR);
             break;
             }
          }
@@ -1020,20 +1020,20 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       uint32_t base, rotate;
       if (constantIsImmed8r(spSize, &base, &rotate))
          {
-         generateTrg1Src1ImmInstruction(codeGen, ARMOp_add, callNode, sp, sp, base, rotate);
+         generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, sp, sp, base, rotate);
          }
       else
          {
          TR::Register *tmpReg = codeGen->allocateRegister();
          armLoadConstant(callNode, spSize, gr4Reg, codeGen);
-         generateTrg1Src2Instruction(codeGen, ARMOp_add, callNode, sp, sp, gr4Reg);
+         generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, sp, sp, gr4Reg);
          }
       }
 
    // re-acquire VM access
    helperSymRef = symRefTab->findOrCreateAcquireVMAccessSymbolRef(callerSym);
    //AOT relocation is handled in TR::ARMImmSymInstruction::generateBinaryEncoding()
-   gcPoint = generateImmSymInstruction(codeGen, ARMOp_bl, callNode, (uint32_t)helperSymRef->getMethodAddress(), NULL, helperSymRef);
+   gcPoint = generateImmSymInstruction(codeGen, TR::InstOpCode::ARMOp_bl, callNode, (uint32_t)helperSymRef->getMethodAddress(), NULL, helperSymRef);
    gcPoint->ARMNeedsGCMap(1 << (jniLinkageProperties.getIntegerReturnRegister() - TR::RealRegister::FirstGPR));
 
    // JNI methods return objects with an extra level of indirection (unless
@@ -1043,49 +1043,49 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    if (resolvedMethod->returnType() == TR::Address)
       {
       tempMR = new (trHeapMemory()) TR::MemoryReference(returnRegister, 0, codeGen);
-      generateSrc1ImmInstruction(codeGen, ARMOp_cmp, callNode, returnRegister, 0, 0);
-      gcPoint = generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, returnRegister, tempMR);
+      generateSrc1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_cmp, callNode, returnRegister, 0, 0);
+      gcPoint = generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, returnRegister, tempMR);
       gcPoint->setConditionCode(ARMConditionCodeNE);
       }
 
    // restore stack pointer and deal with possibly grown stack
    tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetJavaLiteralsOffset(), codeGen);
-   generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, gr4Reg, tempMR);
+   generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, gr4Reg, tempMR);
    tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetJavaSPOffset(), codeGen);
-   generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, stackPtr, tempMR);
-   generateTrg1Src2Instruction(codeGen, ARMOp_add, callNode, stackPtr, stackPtr, gr4Reg);
+   generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, stackPtr, tempMR);
+   generateTrg1Src2Instruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, stackPtr, stackPtr, gr4Reg);
 
    // see if the reference pool was used and, if used, clean it up; otherwise we can
    // leave a bunch of pinned garbage behind that screws up the GC quality forever
    tempMR = new (trHeapMemory()) TR::MemoryReference(stackPtr, fej9->constJNICallOutFrameFlagsOffset(), codeGen);
-   generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, gr4Reg, tempMR);
+   generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, gr4Reg, tempMR);
 
    uint32_t flagValue = fej9->constJNIReferenceFrameAllocatedFlags();
    uint32_t base, rotate;
    if (constantIsImmed8r(flagValue, &base, &rotate))
       {
-      generateSrc1ImmInstruction(codeGen, ARMOp_tst, callNode, gr4Reg, base, rotate);
+      generateSrc1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_tst, callNode, gr4Reg, base, rotate);
       }
    else
       {
       armLoadConstant(callNode, flagValue, gr5Reg, codeGen);
-      generateSrc2Instruction(codeGen, ARMOp_tst, callNode, gr4Reg, gr5Reg);
+      generateSrc2Instruction(codeGen, TR::InstOpCode::ARMOp_tst, callNode, gr4Reg, gr5Reg);
       }
 
    helperSymRef = codeGen->symRefTab()->findOrCreateRuntimeHelper(TR_ARMjitCollapseJNIReferenceFrame);
    //AOT relocation is handled in TR::ARMImmSymInstruction::generateBinaryEncoding()
-   generateImmSymInstruction(codeGen, ARMOp_bl, callNode, (uint32_t)helperSymRef->getMethodAddress(), NULL, helperSymRef, NULL, NULL, ARMConditionCodeEQ);
+   generateImmSymInstruction(codeGen, TR::InstOpCode::ARMOp_bl, callNode, (uint32_t)helperSymRef->getMethodAddress(), NULL, helperSymRef, NULL, NULL, ARMConditionCodeEQ);
 
    // restore the JIT frame
-   generateTrg1Src1ImmInstruction(codeGen, ARMOp_add, callNode, stackPtr, stackPtr, 20, 0);
+   generateTrg1Src1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_add, callNode, stackPtr, stackPtr, 20, 0);
 
    // check exceptions
    tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetCurrentExceptionOffset(), codeGen);
-   generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, gr4Reg, tempMR);
-   generateSrc1ImmInstruction(codeGen, ARMOp_cmp, callNode, gr4Reg, 0, 0);
+   generateTrg1MemInstruction(codeGen, TR::InstOpCode::ARMOp_ldr, callNode, gr4Reg, tempMR);
+   generateSrc1ImmInstruction(codeGen, TR::InstOpCode::ARMOp_cmp, callNode, gr4Reg, 0, 0);
    helperSymRef = symRefTab->findOrCreateThrowCurrentExceptionSymbolRef(callerSym);
    //AOT relocation is handled in TR::ARMImmSymInstruction::generateBinaryEncoding()
-   gcPoint = generateImmSymInstruction(codeGen, ARMOp_bl, callNode, (uint32_t)helperSymRef->getMethodAddress(), NULL, helperSymRef, NULL, NULL, ARMConditionCodeNE);
+   gcPoint = generateImmSymInstruction(codeGen, TR::InstOpCode::ARMOp_bl, callNode, (uint32_t)helperSymRef->getMethodAddress(), NULL, helperSymRef, NULL, NULL, ARMConditionCodeNE);
    gcPoint->ARMNeedsGCMap(1 << (jniLinkageProperties.getIntegerReturnRegister() - TR::RealRegister::FirstGPR));
 
    TR::LabelSymbol *doneLabel = generateLabelSymbol(codeGen);
