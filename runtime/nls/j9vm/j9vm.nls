@@ -2056,3 +2056,11 @@ J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.explanation=The s
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_SEALED_SUPER_IN_DIFFERENT_PACKAGE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+# Message for IncompatibleClassChangeError due to default method conflict during MemberName resolution
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC=Default method conflict found during MethodHandle invocation.
+# START NON-TRANSLATABLE
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.explanation=Default method conflict raised from MemberName resolution.
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.system_action=The JVM will throw an IncompatibleClassChangeError.
+J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.user_response=Investigate the source of the exception.
+# END NON-TRANSLATABLE
