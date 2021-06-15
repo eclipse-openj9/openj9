@@ -406,7 +406,7 @@ InterpreterEmulator::maintainStackForGetField()
             TR_OpaqueClassBlock *fieldDeclaringClass = _calltarget->_calleeMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
 
             avoidFolding = TR::TransformUtil::avoidFoldingInstanceField(
-                           baseObjectAddress, fieldSymbol, fieldOffset, cpIndex, _calltarget->_calleeMethod, comp());
+               baseObjectAddress, fieldSymbol, cpIndex, _calltarget->_calleeMethod, comp());
 
             if (fieldDeclaringClass && comp()->fej9()->isInstanceOf(baseObjectClass, fieldDeclaringClass, true) == TR_yes)
                {
