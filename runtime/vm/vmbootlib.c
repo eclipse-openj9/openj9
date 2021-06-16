@@ -410,7 +410,7 @@ registerBootstrapLibrary(J9VMThread *vmThread, const char *libName, J9NativeLibr
 	char errorBuffer[512] = {0};
 	JavaVMInitArgs *vmInitArgs = (JavaVMInitArgs *) vmThread->javaVM->vmArgsArray->actualVMArgs;
 
-	Trc_VM_registerBootstrapLibrary_Entry(vmThread, libName, libraryPtr);
+	Trc_VM_registerBootstrapLibrary_Entry(vmThread, libName, (NULL == libraryPtr) ? NULL : *libraryPtr);
 	/* Look for the boot library path system property */
 	if (NULL != vmInitArgs) {
 		bootLibraryPath = getBootLibraryPath(vmInitArgs);
@@ -421,7 +421,7 @@ registerBootstrapLibrary(J9VMThread *vmThread, const char *libName, J9NativeLibr
 		PORT_ACCESS_FROM_VMC(vmThread);
 		j9tty_printf(PORTLIB, "<error: unable to load %s (%s)>\n", libName, errorBuffer);
 	}
-	Trc_VM_registerBootstrapLibrary_Exit(vmThread, libName, libraryPtr, result);
+	Trc_VM_registerBootstrapLibrary_Exit(vmThread, libName, (NULL == libraryPtr) ? NULL : *libraryPtr, result);
 
 	return result;
 }
@@ -497,10 +497,10 @@ static UDATA
 classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const char* logicalName, char *physicalName, J9NativeLibrary** libraryPtr, char* errBuf, UDATA bufLen, UDATA flags)
 {
 	J9VMThread * vmThread = voidVMThread;
-	UDATA rc = 0;
+	UDATA rc = J9NATIVELIB_LOAD_OK;
 	J9JavaVM* javaVM = vmThread->javaVM;
 	J9NativeLibrary* newNativeLibrary = NULL;
-	J9ClassLoader* aClassLoader;
+	J9ClassLoader* aClassLoader = NULL;
 	BOOLEAN loadWasIntercepted = FALSE;
 	UDATA jniVersion = (UDATA) -1;
 	UDATA slOpenResult = J9PORT_SL_FOUND;
@@ -524,14 +524,14 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 
 #ifdef J9VM_GC_DYNAMIC_CLASS_UNLOADING
 	/* if another ClassLoader has loaded this library attempt to force it to be unloaded before reporting an error */
-	if ( (aClassLoader != NULL) && (aClassLoader != classLoader) ) {
+	if ((NULL != aClassLoader) && (aClassLoader != classLoader)) {
 		javaVM->memoryManagerFunctions->forceClassLoaderUnload(vmThread, aClassLoader);
 		/* try to find the loaded shared library again */
 		aClassLoader = findLoadedSharedLibrary(vmThread, physicalName, libraryPtr);
 	}
 #endif
 
-	if (aClassLoader != NULL) {
+	if (NULL != aClassLoader) {
 		RELEASE_CLASS_LOADER_BLOCKS_MUTEX(javaVM);
 		if (aClassLoader == classLoader) {
 			/* Loading a library multiple times in a ClassLoader is NOP. */
@@ -550,21 +550,22 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 	/*
 	 * Create an entry for this library.
 	 */
-	if (classLoader->sharedLibraries == NULL) {
+	if (NULL == classLoader->sharedLibraries) {
 		classLoader->sharedLibraries = pool_new(sizeof(J9NativeLibrary),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES,
-				(j9memAlloc_fptr_t)pool_portLibAlloc, (j9memFree_fptr_t)pool_portLibFree, PORTLIB);
+			(j9memAlloc_fptr_t)pool_portLibAlloc, (j9memFree_fptr_t)pool_portLibFree, PORTLIB);
 	}
 
-	if (classLoader->sharedLibraries != NULL) {
+	if (NULL != classLoader->sharedLibraries) {
 		newNativeLibrary = pool_newElement(classLoader->sharedLibraries);
 	}
 
 	if (NULL == newNativeLibrary) {
 		reportError(errBuf, "Failed allocating memory for native library", bufLen);
 		rc = J9NATIVELIB_LOAD_ERR_OUT_OF_MEMORY;
+		goto leave_routine;
 	}
 
-	if (0 == rc) {
+	if (J9NATIVELIB_LOAD_OK == rc) {
 		/* Initialize the structure with default values */
 		javaVM->internalVMFunctions->initializeNativeLibrary(javaVM, newNativeLibrary);
 
@@ -573,6 +574,7 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 		if (NULL == newNativeLibrary->name) {
 			reportError(errBuf, "Failed allocating memory for native library name", bufLen);
 			rc = J9NATIVELIB_LOAD_ERR_OUT_OF_MEMORY;
+			goto leave_routine;
 		} else {
 			strcpy(newNativeLibrary->name, physicalName);
 		}
@@ -582,10 +584,10 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 		if (NULL == newNativeLibrary->logicalName) {
 			reportError(errBuf, "Failed allocating memory for native library logical name", bufLen);
 			rc = J9NATIVELIB_LOAD_ERR_OUT_OF_MEMORY;
+			goto leave_routine;
 		} else {
 			strcpy(newNativeLibrary->logicalName, logicalName);
 		}
-
 	}
 
 	/**
@@ -780,12 +782,11 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 		}
 	}
 
-	if ( (rc != J9NATIVELIB_LOAD_OK) && (newNativeLibrary != NULL) ) {
-		freeSharedLibrary(vmThread, classLoader, newNativeLibrary);
-	} else {
+	Trc_VM_classLoaderRegisterLibrary_newNativeLibrary(vmThread, newNativeLibrary, newNativeLibrary->handle, newNativeLibrary->logicalName, newNativeLibrary->name, rc);
+	if (J9NATIVELIB_LOAD_OK == rc) {
 		issueWriteBarrier();
 		ACQUIRE_CLASS_LOADER_BLOCKS_MUTEX(javaVM);
-		if (classLoader->librariesTail == NULL) {
+		if (NULL == classLoader->librariesTail) {
 			classLoader->librariesHead = classLoader->librariesTail = newNativeLibrary;
 		} else {
 			classLoader->librariesTail->next = newNativeLibrary;
@@ -795,6 +796,9 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 	}
 
 leave_routine:
+	if ((J9NATIVELIB_LOAD_OK != rc) && (NULL != newNativeLibrary)) {
+		freeSharedLibrary(vmThread, classLoader, newNativeLibrary);
+	}
 	omrthread_monitor_exit(javaVM->nativeLibraryMonitor);
 	if (NULL != onloadRtnName) {
 		j9mem_free_memory(onloadRtnName);
