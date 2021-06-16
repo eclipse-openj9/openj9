@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,10 @@ setupImplicitNullPointerExceptionImpl(TR::CodeGenerator *cg, TR::Instruction *in
                node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef()) ||
              (node->hasChild(nullCheckReference) && (nullCheckReg != NULL) && mr->refsRegister(nullCheckReg)))
             {
-            traceMsg(comp,"Instruction %p throws an implicit NPE, node: %p NPE node: %p\n", instr, node, nullCheckReference);
+            if (comp->getOption(TR_TraceCG))
+               {
+               traceMsg(comp,"Instruction %p throws an implicit NPE, node: %p NPE node: %p\n", instr, node, nullCheckReference);
+               }
             cg->setImplicitExceptionPoint(instr);
             }
          }
