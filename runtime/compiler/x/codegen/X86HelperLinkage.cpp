@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -244,7 +244,7 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
       size_t index = _Params.size() - i - 1;
       if (index < NumberOfIntParamRegisters)
          {
-         generateRegRegInstruction(MOVRegReg(),
+         generateRegRegInstruction(TR::InstOpCode::MOVRegReg(),
                                    _Node,
                                    RealRegisters.Use(IntParamRegisters[index]),
                                    _Params[i],
@@ -255,12 +255,12 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
          NumberOfParamOnStack++;
          if (CalleeCleanup)
             {
-            generateRegInstruction(PUSHReg, _Node, _Params[i], cg());
+            generateRegInstruction(TR::InstOpCode::PUSHReg, _Node, _Params[i], cg());
             }
          else
             {
             size_t offset = StackSlotSize * (index - StackIndexAdjustment);
-            generateMemRegInstruction(SMemReg(),
+            generateMemRegInstruction(TR::InstOpCode::SMemReg(),
                                       _Node,
                                       generateX86MemoryReference(ESP, offset, cg()),
                                       _Params[i],
@@ -270,7 +270,7 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
       }
 
    // Call helper
-   TR::X86ImmInstruction* instr = generateImmSymInstruction(CALLImm4,
+   TR::X86ImmInstruction* instr = generateImmSymInstruction(TR::InstOpCode::CALLImm4,
                                                             _Node,
                                                             (uintptr_t)_SymRef->getMethodAddress(),
                                                             _SymRef,
@@ -317,7 +317,7 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
       }
    if (ret)
       {
-      generateRegRegInstruction(MOVRegReg(), _Node, ret, EAX, cg());
+      generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), _Node, ret, EAX, cg());
       }
 
    if (cg()->canEmitBreakOnDFSet())
