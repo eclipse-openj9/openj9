@@ -941,13 +941,17 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::Register *dataReg = cg->allocateRegister();
    TR::Register *addrReg = cg->allocateRegister();
    TR::Register *tempReg = cg->allocateRegister();
+   TR::Register *zeroReg = cg->allocateRegister();
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
    TR::addDependency(deps, objReg, TR::RealRegister::x0, TR_GPR, cg);
+   /* We need following 3 registers at index 1-3 of regdeps as ARM64MonitorExitSnippet expects it. */
    TR::addDependency(deps, dataReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   TR::addDependency(deps, zeroReg, TR::RealRegister::xzr, TR_GPR, cg);
 
    TR::LabelSymbol *callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
    TR::LabelSymbol *decLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
@@ -982,10 +986,18 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, decLabel, TR::CC_NE);
 
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, tempReg, 0);
-   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
-   op = fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
-   generateMemSrc1Instruction(cg, op, node, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), tempReg);
+   static const bool useMemoryBarrierForMonitorExit = feGetEnv("TR_aarch64UseMemoryBarrierForMonitorExit") != NULL;
+   if (useMemoryBarrierForMonitorExit)
+      {
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
+      op = fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
+      }
+   else
+      {
+      op = fej9->generateCompressedLockWord() ? TR::InstOpCode::stlrw : TR::InstOpCode::stlrx;
+      }
+
+   generateMemSrc1Instruction(cg, op, node, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), zeroReg);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
 
@@ -996,6 +1008,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    cg->stopUsingRegister(dataReg);
    cg->stopUsingRegister(addrReg);
    cg->stopUsingRegister(tempReg);
+   cg->stopUsingRegister(zeroReg);
 
    cg->decReferenceCount(objNode);
    cg->machine()->setLinkRegisterKilled(true);
