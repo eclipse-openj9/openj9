@@ -221,6 +221,7 @@ J9JVMTIObjectTag.ref = required
 J9JavaStack.end = required
 J9JavaStack.previous = required
 J9JavaStack.size = required
+J9JavaVM.anonClassLoader = required
 J9JavaVM.applicationClassLoader = required
 J9JavaVM.arrayletLeafLogSize = required
 J9JavaVM.arrayletLeafSize = required

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,6 +103,10 @@ verifyJ9Class(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangObjectClass)
 {
 	BOOLEAN passed = verifyJ9ClassHeader(vm, clazz, javaLangObjectClass);
 	J9ClassLoader *classLoader = clazz->classLoader;
+
+	if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassIsAnonymous)) {
+		classLoader = vm->anonClassLoader;
+	}
 
 	if (NULL != classLoader) {
 		if (NULL == findSegmentInClassLoaderForAddress(classLoader, (U_8*)clazz)) {
