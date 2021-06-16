@@ -66,7 +66,7 @@ class OMR_EXTENSIBLE Instruction : public J9::InstructionConnector
 TR::Instruction::Instruction(TR::Node *node, TR::CodeGenerator *cg)
    : J9::InstructionConnector(cg, InstOpCode::bad, node)
    {
-   self()->setOpCodeValue(ARMOp_bad);
+   self()->setOpCodeValue(TR::InstOpCode::bad);
    self()->setConditionCode(ARMConditionCodeAL);
    self()->setDependencyConditions(NULL);
    }
