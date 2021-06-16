@@ -30,11 +30,12 @@ import static java.lang.invoke.MethodHandles.foldArguments;
 import static java.lang.invoke.MethodType.methodType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import org.openj9.test.util.VersionCheck;
 
 public class MethodHandleAPI_foldArguments {
 	final Lookup lookup = lookup();
 	final String MHClassName = "java.lang.invoke.MethodHandles";
-
+	final String internalFoldArgumentMethod = (VersionCheck.major() > 11) ? "foldArgumentsWithCombiner" : "foldArguments";
 
 	/**
 	 * foldArguments test with target and combiner that takes no arguments with
@@ -248,7 +249,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_VoidReturnType_InvalidArgIndex() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(int.class, int.class, int.class));
@@ -271,7 +272,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_VoidReturnType_FoldInTheMiddle() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(void.class, int.class));
@@ -290,7 +291,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_IntReturnType_IntParam_FoldAtHead() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(int.class, int.class, int.class));
@@ -309,7 +310,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_IntReturnType_IntParam_FoldInTheMiddle() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(int.class, int.class, int.class));
@@ -328,7 +329,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_IntReturnType_IntParam_FoldAtEnd() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(int.class, int.class, int.class));
@@ -347,7 +348,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_LongReturnType_LongParam_FoldAtHead() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(long.class, long.class, long.class));
@@ -366,7 +367,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_LongReturnType_LongParam_FoldInTheMiddle() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(long.class, long.class, long.class));
@@ -385,7 +386,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_LongReturnType_LongParam_FoldAtEnd() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(long.class, long.class, long.class));
@@ -404,7 +405,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_StringReturnType_StringParam_FoldAtHead() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(String.class, String.class, String.class));
@@ -423,7 +424,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_StringReturnType_StringParam_FoldInTheMiddle() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(String.class, String.class, String.class));
@@ -442,7 +443,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgIndices_CombinerHandle_StringReturnType_StringParam_FoldAtEnd() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(String.class, String.class, String.class));
@@ -464,7 +465,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgPos_EquivalentOfEmptyArray_CombinerHandle_IntReturnType_IntParam_FoldInTheMiddle() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(int.class, int.class, int.class));
@@ -486,7 +487,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgPos_EquivalentOfEmptyArray_CombinerHandle_LongReturnType_LongParam_FoldInTheMiddle() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(long.class, long.class, long.class));
@@ -508,7 +509,7 @@ public class MethodHandleAPI_foldArguments {
 	@Test(groups = { "level.extended" }, invocationCount=2)
 	public void test_foldArguments_ArgPos_EquivalentOfEmptyArray_CombinerHandle_StringReturnType_StringParam_FoldInTheMiddle() throws Throwable {
 		Class<?> cls = Class.forName(MHClassName);
-		Method  method = cls.getDeclaredMethod("foldArgumentsWithCombiner", MethodHandle.class, int.class, MethodHandle.class, int[].class);
+		Method  method = cls.getDeclaredMethod(internalFoldArgumentMethod, MethodHandle.class, int.class, MethodHandle.class, int[].class);
 		method.setAccessible(true);
 
 		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(String.class, String.class, String.class));
