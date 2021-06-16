@@ -269,6 +269,15 @@ void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
          OMR::RuntimeAssumption *next = crt->getNextAssumptionForSameJittedBodyEvenIfDead();
          prev->setNextAssumptionForSameJittedBody(next);
          crt->setNextAssumptionForSameJittedBody(NULL);
+
+         // Sentinel is not a part of RAT so it will not be deleted normally.
+         // Need to explicitly free it here
+         if (crt->getAssumptionKind() == RuntimeAssumptionSentinel)
+            {
+            crt->paint();
+            TR_PersistentMemory::jitPersistentFree(crt);
+            }
+
          crt = next;
          }
       else
