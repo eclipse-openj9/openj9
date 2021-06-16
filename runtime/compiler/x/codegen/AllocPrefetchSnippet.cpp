@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -225,10 +225,10 @@ uint8_t* TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t* prefetchSnippetBuf
       prefetchSnippetBuffer += 3;
       }
 
-   // PREFETCHNTA [rcx + distance]
-   // PREFETCHNTA [rcx + distance + lineSize]
+   // TR::InstOpCode::PREFETCHNTA [rcx + distance]
+   // TR::InstOpCode::PREFETCHNTA [rcx + distance + lineSize]
    // ...
-   // PREFETCHNTA [rcx + distance + n*lineSize]
+   // TR::InstOpCode::PREFETCHNTA [rcx + distance + n*lineSize]
    //
    for (int32_t lineOffset = 0; lineOffset < numLines; ++lineOffset)
       {
@@ -266,7 +266,7 @@ uint8_t* TR::X86AllocPrefetchSnippet::emitSharedBody(uint8_t* prefetchSnippetBuf
    //
    *prefetchSnippetBuffer++ = 0x59;
 
-   // RET
+   // TR::InstOpCode::RET
    //
    *prefetchSnippetBuffer++ = 0xC3;
 

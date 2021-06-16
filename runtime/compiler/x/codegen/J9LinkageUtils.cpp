@@ -67,31 +67,31 @@ void J9LinkageUtils::cleanupReturnValue(
          case TR::Int8:
             if (isUnsigned)
                {
-               op = comp->target().is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
+               op = comp->target().is64Bit() ? TR::InstOpCode::MOVZXReg8Reg1 : TR::InstOpCode::MOVZXReg4Reg1;
                }
             else
                {
-               op = comp->target().is64Bit() ? MOVSXReg8Reg1 : MOVSXReg4Reg1;
+               op = comp->target().is64Bit() ? TR::InstOpCode::MOVSXReg8Reg1 : TR::InstOpCode::MOVSXReg4Reg1;
                }
             break;
          case TR::Int16:
             if (isUnsigned)
                {
-               op = comp->target().is64Bit() ? MOVZXReg8Reg2 : MOVZXReg4Reg2;
+               op = comp->target().is64Bit() ? TR::InstOpCode::MOVZXReg8Reg2 : TR::InstOpCode::MOVZXReg4Reg2;
                }
             else
                {
-               op = comp->target().is64Bit() ? MOVSXReg8Reg2 : MOVSXReg4Reg2;
+               op = comp->target().is64Bit() ? TR::InstOpCode::MOVSXReg8Reg2 : TR::InstOpCode::MOVSXReg4Reg2;
                }
             break;
          default:
             // TR::Address, TR_[US]Int64, TR_[US]Int32
             //
-            op = (linkageReturnReg != targetReg) ? MOVRegReg() : BADIA32Op;
+            op = (linkageReturnReg != targetReg) ? TR::InstOpCode::MOVRegReg() : TR::InstOpCode::bad;
             break;
          }
 
-      if (op != BADIA32Op)
+      if (op != TR::InstOpCode::bad)
          generateRegRegInstruction(op, callNode, targetReg, linkageReturnReg, cg);
       }
    }
@@ -104,7 +104,7 @@ void J9LinkageUtils::switchToMachineCStack(TR::Node *callNode, TR::CodeGenerator
 
    // Squirrel Java SP away into VM thread.
    //
-   generateMemRegInstruction(SMemReg(),
+   generateMemRegInstruction(TR::InstOpCode::SMemReg(),
                              callNode,
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetJavaSPOffset(), cg),
                              espReal,
@@ -112,7 +112,7 @@ void J9LinkageUtils::switchToMachineCStack(TR::Node *callNode, TR::CodeGenerator
 
    // Load machine SP from VM thread.
    //
-   generateRegMemInstruction(LRegMem(),
+   generateRegMemInstruction(TR::InstOpCode::LRegMem(),
                              callNode,
                              espReal,
                              generateX86MemoryReference(vmThreadReg, fej9->thisThreadGetMachineSPOffset(), cg),
@@ -128,7 +128,7 @@ void J9LinkageUtils::switchToJavaStack(TR::Node *callNode, TR::CodeGenerator *cg
    //  Load up the java sp so we have the callout frame on top of the java stack.
    //
    generateRegMemInstruction(
-      LRegMem(),
+      TR::InstOpCode::LRegMem(),
       callNode,
       espReal,
       generateX86MemoryReference(vmThreadReg, cg->fej9()->thisThreadGetJavaSPOffset(), cg),

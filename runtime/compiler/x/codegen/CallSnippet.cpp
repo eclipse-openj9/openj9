@@ -249,7 +249,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          }
       else
          {
-         // ModRM byte of CMPMemImm4 instruction
+         // ModRM byte of TR::InstOpCode::CMPMemImm4 instruction
          //
          uint8_t *slotPatchInstructionBytes = _slotPatchInstruction->getBinaryEncoding();
          *cursor = *(slotPatchInstructionBytes+1);
@@ -303,11 +303,11 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
             //
             *cursor++ = *slotPatchInstructionBytes;
 
-            // REX prefix for the CALLMem instruction.
+            // REX prefix for the TR::InstOpCode::CALLMem instruction.
             //
             *cursor++ = *(slotPatchInstructionBytes+9);
 
-            // Convert the CMP ModRM byte into the ModRM byte for the CALLMem instruction.
+            // Convert the CMP ModRM byte into the ModRM byte for the TR::InstOpCode::CALLMem instruction.
             //
             slotPatchInstructionBytes += 11;
             callModRMByte = (*slotPatchInstructionBytes & 7) + 0x90;
@@ -583,7 +583,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
             }
          else
             {
-            // ModRM of CMPRegImm4
+            // ModRM of TR::InstOpCode::CMPRegImm4
             //
             printPrefix(pOutFile, NULL, bufferPos, 1);
             trfprintf(pOutFile, "%s\t%s%02x%s\t\t\t\t\t\t\t\t%s ModRM of CMP",
@@ -629,7 +629,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
 
             callModRM = *bufferPos;
             printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for CALLMem",
+            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for TR::InstOpCode::CALLMem",
                           dbString(),
                           *bufferPos,
                           commentString());
@@ -638,7 +638,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
          else
             {
             printPrefix(pOutFile, NULL, bufferPos, 1);
-            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for CMPRegImm4",
+            trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s ModRM for TR::InstOpCode::CMPRegImm4",
                           dbString(),
                           *bufferPos,
                           commentString());
