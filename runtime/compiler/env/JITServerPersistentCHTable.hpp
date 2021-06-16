@@ -162,21 +162,20 @@ public:
    static size_t serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info);
    static size_t deserializeClassSimple(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo *info);
 
-   TR_OpaqueClassBlock                *_classId;
+   TR_OpaqueClassBlock *_classId;
 
    union
       {
       uintptr_t _visitedStatus;
       TR_PersistentClassInfoForFields *_fieldInfo;
       };
-   int16_t                             _prexAssumptions;
-   uint16_t                            _timeStamp;
-   int32_t                             _nameLength;
-   flags8_t                            _flags;
-   flags8_t                            _shouldNotBeNewlyExtended; // one bit for each possible compilation thread
+   int16_t   _prexAssumptions;
+   uint16_t  _timeStamp;
+   flags16_t _shouldNotBeNewlyExtended; // one bit for each possible compilation thread
+   flags8_t  _flags;
 
-   uint32_t                            _numSubClasses;
-   TR_OpaqueClassBlock                *_subClasses[0];
+   uint32_t             _numSubClasses;
+   TR_OpaqueClassBlock *_subClasses[0];
    };
 
 
@@ -217,7 +216,6 @@ public:
    virtual void setAlreadyCheckedForAnnotations(bool v = true) override;
    virtual void setCannotTrustStaticFinal(bool v = true) override;
    virtual void setClassHasBeenRedefined(bool v = true) override;
-   virtual void setNameLength(int32_t length) override;
 private:
    static JITClientPersistentCHTable *_chTable;
    };

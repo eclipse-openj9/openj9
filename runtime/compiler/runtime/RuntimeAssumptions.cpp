@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -246,8 +246,8 @@ TR_PersistentCHTable::classGotExtended(
    if (cl->shouldNotBeNewlyExtended())
       {
       TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
-      uint8_t mask = cl->getShouldNotBeNewlyExtendedMask().getValue();
-      for (int32_t ID = 0; mask; mask>>=1, ++ID)
+      uint16_t mask = cl->getShouldNotBeNewlyExtendedMask().getValue();
+      for (int32_t ID = 0; mask; mask >>= 1, ++ID)
          {
          if (mask & 0x1)
             {

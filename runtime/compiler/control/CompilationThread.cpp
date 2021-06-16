@@ -2697,9 +2697,18 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
       {
-      numUsableCompThreads = ((numUsableCompThreads <= 0) ||
-                              (numUsableCompThreads > MAX_CLIENT_USABLE_COMP_THREADS)) ?
-                               MAX_CLIENT_USABLE_COMP_THREADS : numUsableCompThreads;
+      if (numUsableCompThreads <= 0)
+         {
+         numUsableCompThreads = DEFAULT_CLIENT_USABLE_COMP_THREADS;
+         }
+      else if (numUsableCompThreads > MAX_CLIENT_USABLE_COMP_THREADS)
+         {
+         fprintf(stderr,
+            "Requested number of compilation threads is over the limit of %u. Will use %u threads.\n",
+            MAX_CLIENT_USABLE_COMP_THREADS, MAX_CLIENT_USABLE_COMP_THREADS
+         );
+         numUsableCompThreads = MAX_CLIENT_USABLE_COMP_THREADS;
+         }
       }
    }
 
