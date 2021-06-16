@@ -1089,9 +1089,10 @@ public:
    struct CompilationStatsPerInterval _intervalStats;
    TR_PersistentArray<TR_SignatureCountPair *> *_persistedMethods;
 
-   // Must be less than 8 at the JITClient or non-JITServer mode.
-   // Because in some parts of the code (CHTable) we keep flags on a byte variable.
-   static const uint32_t MAX_CLIENT_USABLE_COMP_THREADS = 7;  // For JITClient and non-JITServer mode
+   // Must be less than 16 at the JITClient or non-JITServer mode because
+   // in some parts of the code (CHTable) we keep flags on a 2-byte variable.
+   static const uint32_t MAX_CLIENT_USABLE_COMP_THREADS = 15; // For JITClient and non-JITServer mode
+   static const uint32_t DEFAULT_CLIENT_USABLE_COMP_THREADS = 7; // For JITClient and non-JITServer mode
 #if defined(J9VM_OPT_JITSERVER)
    static const uint32_t MAX_SERVER_USABLE_COMP_THREADS = 999; // JITServer
    static const uint32_t DEFAULT_SERVER_USABLE_COMP_THREADS = 63; // JITServer
