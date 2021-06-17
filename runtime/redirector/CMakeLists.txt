@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,10 +56,18 @@ if(OMR_OS_ZOS)
 	# Ensure that omrutil is built before we attempt to link it.
 	add_dependencies(jvm_redirect omrutil)
 endif()
+
+if(OMR_OS_WINDOWS)
+	set(archive_dir ${CMAKE_CURRENT_BINARY_DIR})
+else()
+	set(archive_dir ${j9vm_BINARY_DIR}/lib/redirector)
+endif()
+
 set_target_properties(jvm_redirect PROPERTIES
 	ARCHIVE_OUTPUT_NAME redirector_jvm
 	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+	ARCHIVE_OUTPUT_DIRECTORY "${archive_dir}"
 )
 
 # The redirector should have the same exports as the jvm

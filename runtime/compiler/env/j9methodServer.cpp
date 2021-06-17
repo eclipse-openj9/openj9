@@ -189,8 +189,17 @@ TR_ResolvedJ9JITServerMethod::getClassFromConstantPool(TR::Compilation * comp, u
    if (cpIndex == -1)
       return NULL;
 
-   TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT;
+   bool doRuntimeResolve = compInfoPT->getClientData()->getRtResolve() && !comp->ilGenRequest().details().isMethodHandleThunk();
+   if (doRuntimeResolve &&
+       performTransformation(comp, "Setting as unresolved class from CP cpIndex=%d\n",cpIndex))
       {
+      return NULL;
+      }
+
+      {
+      // This persistent cache must only be checked when doRuntimeResolve is false,
+      // otherwise a non method handle thunk compilation can return cached value, instead of NULL.
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
       auto &constantClassPoolCache = getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
       auto it = constantClassPoolCache.find(cpIndex);
@@ -199,6 +208,7 @@ TR_ResolvedJ9JITServerMethod::getClassFromConstantPool(TR::Compilation * comp, u
       }
    _stream->write(JITServer::MessageType::ResolvedMethod_getClassFromConstantPool, _remoteMirror, cpIndex, returnClassForAOT);
    TR_OpaqueClassBlock *resolvedClass = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+
    if (resolvedClass)
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
