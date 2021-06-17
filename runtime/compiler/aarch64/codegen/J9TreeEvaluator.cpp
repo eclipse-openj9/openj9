@@ -4228,21 +4228,7 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
             && opCode.isIndirect()
             && (cg->getNumberBytesReadInaccessible() > TR::Compiler->om.offsetOfObjectVftField()))
          {
-         TR::SymbolReference *methodSymRef = firstChild->getSymbolReference();
-         TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
-         // Currently, we do not have instructions to access receiver for interface calls in main line code.
-         // Thus, we need to do null check explictly.
-         if (!methodSymbol->isInterface())
-            {
-            needExplicitCheck = false;
-            }
-         else
-            {
-            if (comp->getOption(TR_TraceCG))
-               {
-               traceMsg(comp, "\nExcplicit NULLCHK on interface call [%p]\n", firstChild);
-               }
-            }
+         needExplicitCheck = false;
          }
       else if (opCode.getOpCodeValue() == TR::iushr
             && (cg->getNumberBytesReadInaccessible() > cg->fe()->getOffsetOfContiguousArraySizeField()))

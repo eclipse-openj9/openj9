@@ -24,6 +24,7 @@
 #include <iterator>
 
 #include "codegen/ARM64Instruction.hpp"
+#include "codegen/ARM64OutOfLineCodeSection.hpp"
 #include "codegen/ARM64PrivateLinkage.hpp"
 #include "codegen/CallSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
@@ -40,6 +41,7 @@
 #include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/J2IThunk.hpp"
+#include "env/PersistentCHTable.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
@@ -1330,6 +1332,38 @@ TR::Register *J9::ARM64::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
    return retReg;
    }
 
+/**
+ * @brief Generates instruction sequence for virtual call
+ *
+ * @param[in] cg:          code generator
+ * @param[in] callNode:    node for the virtual call
+ * @param[in] vftReg:      register containing VFT
+ * @param[in] x9:          x9 register
+ * @param[in] regMapForGC: register map for GC
+ */
+static void buildVirtualCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Register *vftReg, TR::Register *x9, uint32_t regMapForGC)
+   {
+   int32_t offset = callNode->getSymbolReference()->getOffset();
+   TR_ASSERT_FATAL(offset < 0, "Unexpected positive offset for virtual call");
+
+   // jitVTableIndex() in oti/JITInterface.hpp assumes the instruction sequence below
+   if (offset >= -65536)
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::movnx, callNode, x9, ~offset & 0xFFFF);
+      }
+   else
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, callNode, x9, offset & 0xFFFF);
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::movkx, callNode, x9,
+                                 (((offset >> 16) & 0xFFFF) | TR::MOV_LSL16));
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
+      }
+   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(vftReg, x9, cg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldroffx, callNode, x9, tempMR);
+   TR::Instruction *gcPoint = generateRegBranchInstruction(cg, TR::InstOpCode::blr, callNode, x9);
+   gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
+   }
+
 static TR::Register *evaluateUpToVftChild(TR::Node *callNode, TR::CodeGenerator *cg)
    {
    TR::Register *vftReg = NULL;
@@ -1352,7 +1386,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
 
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
-   TR::LabelSymbol *doneLabel = NULL;
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg());
    uint32_t regMapForGC = getProperties().getPreservedRegisterMapForGC();
    void *thunk = NULL;
 
@@ -1404,16 +1438,17 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
    if (!thunk)
       thunk = fej9->setJ2IThunk(methodSymbol->getMethod(), TR::ARM64CallSnippet::generateVIThunk(callNode, argSize, cg()), comp());
 
+   bool callIsSafe = methodSymRef != comp()->getSymRefTab()->findObjectNewInstanceImplSymbol();
+
+   // evaluate vftReg because it is required for implicit NULLCHK
+   TR::Register *vftReg = evaluateUpToVftChild(callNode, cg());
+   TR::addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, cg());
+
    if (methodSymbol->isVirtual())
       {
       TR::MemoryReference *tempMR;
-      TR::Register *vftReg = evaluateUpToVftChild(callNode, cg());
-      TR::addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, cg());
-
       if (methodSymRef->isUnresolved() || comp()->compileRelocatableCode())
          {
-         doneLabel = generateLabelSymbol(cg());
-
          TR::LabelSymbol *vcSnippetLabel = generateLabelSymbol(cg());
          TR::ARM64VirtualUnresolvedSnippet *vcSnippet =
             new (trHeapMemory())
@@ -1431,40 +1466,147 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          tempMR = new (trHeapMemory()) TR::MemoryReference(vftReg, x9, cg());
          generateTrg1MemInstruction(cg(), TR::InstOpCode::ldroffx, callNode, x9, tempMR);
          gcPoint = generateRegBranchInstruction(cg(), TR::InstOpCode::blr, callNode, x9);
-         }
-      else
-         {
-         int32_t offset = methodSymRef->getOffset();
-         TR_ASSERT(offset < 0, "Unexpected positive offset for virtual call");
+         gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
+         generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
 
-         // jitVTableIndex() in oti/JITInterface.hpp assumes the instruction sequence below
-         if (offset >= -65536)
+         return;
+         }
+
+      // Handle guarded devirtualization next
+      //
+      if (callIsSafe)
+         {
+         TR::ResolvedMethodSymbol *resolvedMethodSymbol = methodSymRef->getSymbol()->getResolvedMethodSymbol();
+         TR_ResolvedMethod       *resolvedMethod = resolvedMethodSymbol->getResolvedMethod();
+
+         if (comp()->performVirtualGuardNOPing() &&
+             comp()->isVirtualGuardNOPingRequired() &&
+             !resolvedMethod->isInterpreted() &&
+             !callNode->isTheVirtualCallNodeForAGuardedInlinedCall())
             {
-            generateTrg1ImmInstruction(cg(), TR::InstOpCode::movnx, callNode, x9, ~offset & 0xFFFF);
+            TR_VirtualGuard *virtualGuard = NULL;
+
+            if (!resolvedMethod->virtualMethodIsOverridden() &&
+                !resolvedMethod->isAbstract())
+               {
+               if (comp()->getOption(TR_TraceCG))
+                  {
+                  traceMsg(comp(), "Creating TR_NonoverriddenGuard for node %p\n", callNode);
+                  }
+               virtualGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_NonoverriddenGuard, comp(), callNode);
+               }
+            else
+               {
+               TR_DevirtualizedCallInfo *devirtualizedCallInfo = comp()->findDevirtualizedCall(callNode);
+               TR_OpaqueClassBlock      *refinedThisClass = devirtualizedCallInfo ? devirtualizedCallInfo->_thisType : NULL;
+               TR_OpaqueClassBlock      *thisClass = refinedThisClass ? refinedThisClass : resolvedMethod->containingClass();
+
+               TR_PersistentCHTable     *chTable = comp()->getPersistentInfo()->getPersistentCHTable();
+               /* Devirtualization is not currently supported for AOT compilations */
+               if (thisClass && TR::Compiler->cls.isAbstractClass(comp(), thisClass) && !comp()->compileRelocatableCode())
+                  {
+                  TR_ResolvedMethod *calleeMethod = chTable->findSingleAbstractImplementer(thisClass, methodSymRef->getOffset(), methodSymRef->getOwningMethod(comp()), comp());
+                  if (calleeMethod &&
+                      (comp()->isRecursiveMethodTarget(calleeMethod) ||
+                       !calleeMethod->isInterpreted() ||
+                       calleeMethod->isJITInternalNative()))
+                     {
+                     if (comp()->getOption(TR_TraceCG))
+                        {
+                        traceMsg(comp(), "Creating TR_AbstractGuard for node %p\n", callNode);
+                        }
+                     resolvedMethod = calleeMethod;
+                     virtualGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_AbstractGuard, comp(), callNode);
+                     }
+                  }
+               else if (refinedThisClass &&
+                        resolvedMethod->virtualMethodIsOverridden() &&
+                        !chTable->isOverriddenInThisHierarchy(resolvedMethod, refinedThisClass, methodSymRef->getOffset(), comp()))
+                  {
+                  TR_ResolvedMethod *calleeMethod = methodSymRef->getOwningMethod(comp())->getResolvedVirtualMethod(comp(), refinedThisClass, methodSymRef->getOffset());
+                  if (calleeMethod &&
+                      (comp()->isRecursiveMethodTarget(calleeMethod) ||
+                       !calleeMethod->isInterpreted() ||
+                       calleeMethod->isJITInternalNative()))
+                     {
+                     if (comp()->getOption(TR_TraceCG))
+                        {
+                        traceMsg(comp(), "Creating TR_HierarchyGuard for node %p\n", callNode);
+                        }
+                     resolvedMethod = calleeMethod;
+                     virtualGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_HierarchyGuard, comp(), callNode);
+                     }
+                  }
+               }
+
+            // If we have a virtual call guard generate a direct call
+            // in the inline path and the virtual call out of line.
+            // If the guard is later patched we'll go out of line path.
+            //
+            if (virtualGuard)
+               {
+               TR::LabelSymbol *virtualCallLabel = generateLabelSymbol(cg());
+               generateVirtualGuardNOPInstruction(cg(), callNode, virtualGuard->addNOPSite(), NULL, virtualCallLabel);
+
+               if (comp()->getOption(TR_EnableHCR))
+                  {
+                  if (cg()->supportsMergingGuards())
+                     {
+                     virtualGuard->setMergedWithHCRGuard();
+                     }
+                  else
+                     {
+                     TR_VirtualGuard *HCRGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_HCRGuard, comp(), callNode);
+                     generateVirtualGuardNOPInstruction(cg(), callNode, HCRGuard->addNOPSite(), NULL, virtualCallLabel);
+                     }
+                  }
+               if (resolvedMethod != resolvedMethodSymbol->getResolvedMethod())
+                  {
+                  methodSymRef = comp()->getSymRefTab()->findOrCreateMethodSymbol(methodSymRef->getOwningMethodIndex(),
+                                                                                  -1,
+                                                                                  resolvedMethod,
+                                                                                  TR::MethodSymbol::Virtual);
+                  methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+                  resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
+                  resolvedMethod = resolvedMethodSymbol->getResolvedMethod();
+                  }
+               uintptr_t methodAddress = comp()->isRecursiveMethodTarget(resolvedMethod) ? 0 : (uintptr_t)resolvedMethod->startAddressForJittedMethod();
+               TR::Instruction *gcPoint = generateImmSymInstruction(cg(), TR::InstOpCode::bl, callNode, methodAddress, NULL, methodSymRef, NULL);
+               generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
+               gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
+
+               fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
+
+               // Out of line virtual call
+               //
+               TR_ARM64OutOfLineCodeSection *virtualCallOOL = new (trHeapMemory()) TR_ARM64OutOfLineCodeSection(virtualCallLabel, doneLabel, cg());
+
+               virtualCallOOL->swapInstructionListsWithCompilation();
+               TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, virtualCallLabel);
+
+               // XXX: Temporary fix, OOL instruction stream does not pick up live locals or monitors correctly.
+               TR_ASSERT(!OOLLabelInstr->getLiveLocals() && !OOLLabelInstr->getLiveMonitors(), "Expecting first OOL instruction to not have live locals/monitors info");
+               OOLLabelInstr->setLiveLocals(gcPoint->getLiveLocals());
+               OOLLabelInstr->setLiveMonitors(gcPoint->getLiveMonitors());
+
+               buildVirtualCall(cg(), callNode, vftReg, x9, regMapForGC);
+
+               generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, doneLabel);
+               virtualCallOOL->swapInstructionListsWithCompilation();
+               cg()->getARM64OutOfLineCodeSectionList().push_front(virtualCallOOL);
+
+               return;
+               }
             }
-         else
-            {
-            generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, x9, offset & 0xFFFF);
-            generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, x9,
-                                       (((offset >> 16) & 0xFFFF) | TR::MOV_LSL16));
-            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
-            }
-         tempMR = new (trHeapMemory()) TR::MemoryReference(vftReg, x9, cg());
-         generateTrg1MemInstruction(cg(), TR::InstOpCode::ldroffx, callNode, x9, tempMR);
-         gcPoint = generateRegBranchInstruction(cg(), TR::InstOpCode::blr, callNode, x9, dependencies);
          }
       }
-   else
+
+   // Finally, regular virtual and interface calls
+   //
+   if (methodSymbol->isInterface())
       {
       // interface calls
       // ToDo: Inline interface dispatch
-      doneLabel = generateLabelSymbol(cg());
-
-      /**
-       * The vft child is not used by this interface dispatch, but its reference
-       * count must be decremented as if it were.
-       */
-      cg()->recursivelyDecReferenceCount(callNode->getFirstChild());
 
       TR::LabelSymbol *ifcSnippetLabel = generateLabelSymbol(cg());
       TR::ARM64InterfaceCallSnippet *ifcSnippet =
@@ -1473,14 +1615,13 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
       cg()->addSnippet(ifcSnippet);
 
       gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, ifcSnippetLabel);
+      gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
       }
-
-   gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
-
-   if (doneLabel)
-      generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
-
-   return;
+   else
+      {
+      buildVirtualCall(cg(), callNode, vftReg, x9, regMapForGC);
+      }
+   generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
    }
 
 TR::Register *J9::ARM64::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
