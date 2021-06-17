@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -226,7 +226,7 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
       if (DEBUG_ARM64_RECOMP)
          {
          uintptr_t target = (uintptr_t)patchAddr + distance;
-         printf("oldStartPC %x, patchAddr %p, target %lx\n", oldStartPC, patchAddr, target); fflush(stdout);
+         printf("oldStartPC %p, patchAddr %p, target %lx\n", oldStartPC, patchAddr, target); fflush(stdout);
          }
 
       *patchAddr = encodeDistanceInBranchInstruction(TR::InstOpCode::b, distance);
