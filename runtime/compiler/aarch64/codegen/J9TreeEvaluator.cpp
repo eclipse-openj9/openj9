@@ -1159,7 +1159,7 @@ void genSuperClassTest(TR::Node *node, TR::Register *instanceClassReg, bool inst
    // At this point EQ flag will be set if the cast class is a superclass of the instance class. Caller is responsible for acting on the result.
    }
 
-/** 
+/**
  * @brief Generates Arbitrary Class Test for instanceOf or checkCast node
  */
 static
@@ -1180,7 +1180,7 @@ void genInstanceOfOrCheckCastArbitraryClassTest(TR::Node *node, TR::Register *in
 
       if (isUnloadAssumptionRequired)
          {
-         loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, TR_NoRelocation, true); 
+         loadAddressConstantInSnippet(cg, node, reinterpret_cast<intptr_t>(arbitraryClass), arbitraryClassReg, TR_NoRelocation, true);
          }
       else
          {
@@ -1188,13 +1188,13 @@ void genInstanceOfOrCheckCastArbitraryClassTest(TR::Node *node, TR::Register *in
          }
       }
    generateCompareInstruction(cg, node, instanceClassReg, arbitraryClassReg, true);
-   
+
    srm->reclaimScratchRegister(arbitraryClassReg);
 
    // At this point EQ flag will be set if the cast class matches the arbitrary class. Caller is responsible for acting on the result.
    }
 
-/** 
+/**
  * @brief Generates ArrayOfJavaLangObjectTest (object class is reference array) for instanceOf or checkCast node
  * @details
  *    scratchReg1 = load (objectClassReg+offset_romClass)
@@ -1279,7 +1279,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
    TR::Compilation                      *comp = cg->comp();
    TR_OpaqueClassBlock                  *compileTimeGuessClass;
    int32_t                               maxProfiledClasses = comp->getOptions()->getCheckcastMaxProfiledClassTests();
-   traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
+   if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
    TR_ASSERT_FATAL(maxProfiledClasses <= 4, "Maximum 4 profiled classes per site allowed because we use a fixed stack allocated buffer for profiled classes\n");
    InstanceOfOrCheckCastSequences        sequences[InstanceOfOrCheckCastMaxSequences];
    bool                                  topClassWasCastClass = false;
@@ -1311,7 +1311,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
 
    auto itBegin = std::begin(sequences);
    const auto itEnd = std::next(itBegin, numSequencesRemaining);
-   
+
    for (auto it = itBegin; it != itEnd; it++)
       {
       auto current = *it;
@@ -1387,7 +1387,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
                /**
                 *  At this point EQ flag will be set if the profiledClass matches the cast class.
                 *  Set resultReg to 1 if isProfiledClassInstanceOfCastClass is true
-                */ 
+                */
                if (profiledClassesIt->isProfiledClassInstanceOfCastClass)
                   {
                   generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
@@ -1403,7 +1403,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
          case CompileTimeGuessClassTest:
             if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CompileTimeGuessClassTest\n", node->getOpCode().getName());
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/compTimeGuess", comp->signature()),1,TR::DebugCounter::Undetermined);
- 
+
             genInstanceOfOrCheckCastArbitraryClassTest(node, objectClassReg, compileTimeGuessClass, srm, cg);
             generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
 
@@ -1416,7 +1416,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
             /**
              * Compare the cast class against the cache on the instance class.
              * If they are the same the cast is successful.
-             * If not it's either because the cache class does not match the cast class, 
+             * If not it's either because the cache class does not match the cast class,
              * or it does match except the cache class has the low bit set, which means the cast is not successful.
              */
             TR::Register *castClassCacheReg = srm->findOrCreateScratchRegister();
@@ -1428,7 +1428,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
             /**
              *  At this point LT flag will be set if the cast is successful, EQ flag will be set if the cast is unsuccessful,
              *  and GT flag will be set if the cache class did not match the cast class.
-             */ 
+             */
             generateCSetInstruction(cg, node, resultReg, TR::CC_LT);
             srm->reclaimScratchRegister(castClassCacheReg);
             }
@@ -1483,7 +1483,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
                {
                // If other tests follow, branch to doneLabel
                generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
-               }          
+               }
             break;
          case CastClassCacheTest:
             if (isNextItemHelperCall(it, itEnd))
@@ -1493,7 +1493,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
             else if (!isNextItemGoToFalse(it, itEnd))
                {
                generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_LE);
-               } 
+               }
             break;
          case NullTest:
             break;
@@ -1515,7 +1515,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
 
    if (objectClassReg)
       srm->reclaimScratchRegister(objectClassReg);
-   
+
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3 + srm->numAvailableRegisters(), cg->trMemory());
    srm->addScratchRegistersToDependencyList(deps);
 
@@ -1526,7 +1526,7 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
       {
       deps->addPostCondition(castClassReg, TR::RealRegister::NoReg);
       }
-   
+
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
 
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast/%s/fastPath",
@@ -1550,12 +1550,12 @@ J9::ARM64::TreeEvaluator::VMinstanceofEvaluator(TR::Node *node, TR::CodeGenerato
 
 /**
  * @brief Generates null test instructions
- * 
+ *
  * @param[in]         cg: code generator
  * @param[in]     objReg: register holding object
  * @param[in]       node: null check node
  * @param[in] nullSymRef: symbol reference of null check
- * 
+ *
  */
 static
 void generateNullTest(TR::CodeGenerator *cg, TR::Register *objReg, TR::Node *node, TR::SymbolReference *nullSymRef = NULL)
@@ -1582,7 +1582,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
    TR::Compilation                      *comp = cg->comp();
    TR_OpaqueClassBlock                  *compileTimeGuessClass;
    int32_t                               maxProfiledClasses = comp->getOptions()->getCheckcastMaxProfiledClassTests();
-   traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
+   if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
    TR_ASSERT_FATAL(maxProfiledClasses <= 4, "Maximum 4 profiled classes per site allowed because we use a fixed stack allocated buffer for profiled classes\n");
    InstanceOfOrCheckCastSequences        sequences[InstanceOfOrCheckCastMaxSequences];
    bool                                  topClassWasCastClass = false;
@@ -1610,7 +1610,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
 
    auto itBegin = std::begin(sequences);
    const auto itEnd = std::next(itBegin, numSequencesRemaining);
-   
+
    for (auto it = itBegin; it != itEnd; it++)
       {
       auto current = *it;
@@ -1690,7 +1690,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
                genInstanceOfOrCheckCastArbitraryClassTest(node, objectClassReg, profiledClassesIt->profiledClass, srm, cg);
                /**
                 *  At this point EQ flag will be set if the profiledClass matches the cast class.
-                */ 
+                */
                profiledClassesIt++;
                if (profiledClassesIt != profiledClassesItEnd)
                   {
@@ -1702,7 +1702,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
          case CompileTimeGuessClassTest:
             if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CompileTimeGuessClassTest\n", node->getOpCode().getName());
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/compTimeGuess", comp->signature()),1,TR::DebugCounter::Undetermined);
- 
+
             genInstanceOfOrCheckCastArbitraryClassTest(node, objectClassReg, compileTimeGuessClass, srm, cg);
             break;
          /**
@@ -1721,7 +1721,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
             /**
              * Compare the cast class against the cache on the instance class.
              * If they are the same the cast is successful.
-             * If not it's either because the cache class does not match the cast class, 
+             * If not it's either because the cache class does not match the cast class,
              * or it does match except the cache class has the low bit set, which means the cast is not successful.
              * In those cases, we need to call out to helper.
              */
@@ -1731,7 +1731,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
             generateCompareInstruction(cg, node, castClassCacheReg, castClassReg, true);
             /**
              *  At this point, EQ flag will be set if the cast is successful.
-             */ 
+             */
             srm->reclaimScratchRegister(castClassCacheReg);
             }
             break;
@@ -1813,7 +1813,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
 
    if (objectClassReg)
       srm->reclaimScratchRegister(objectClassReg);
-   
+
    TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3 + srm->numAvailableRegisters(), cg->trMemory());
    srm->addScratchRegistersToDependencyList(deps);
 
@@ -1823,7 +1823,7 @@ J9::ARM64::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator
       {
       deps->addPostCondition(castClassReg, TR::RealRegister::NoReg);
       }
-   
+
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
 
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast/%s/fastPath",
@@ -2441,7 +2441,7 @@ genInitObjectHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *
  * @param[in] sizeReg:                the register that holds array length.
  * @param[in] zeroReg:                the register whose value is zero
  * @param[in] tempReg1:               temporary register 1
- * @param[in] isBatchClearTLHEnabled: true if BatchClearTLH is enabled 
+ * @param[in] isBatchClearTLHEnabled: true if BatchClearTLH is enabled
  * @param[in] isTLHHasNotBeenCleared: true if TLH has not been cleared
  */
 static void
@@ -3109,7 +3109,7 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
 /**
  * @brief Generate instruction sequence for array store check
- * 
+ *
  * @param[in] node:            node
  * @param[in] srcReg:          register contains source object
  * @param[in] dstReg:          register contains destination array
@@ -3806,7 +3806,7 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             // The only purpose of these functions is to prevent an otherwise
             // unreachable object from being garbage collected, because we don't
             // want its finalizer to be called too early.  There's no need to
-            // generate a full-blown call site just for this purpose.  
+            // generate a full-blown call site just for this purpose.
 
             TR::Node *paramNode = node->getFirstChild();
             TR::Register *paramReg = cg->evaluate(paramNode);
