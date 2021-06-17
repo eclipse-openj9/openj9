@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -348,22 +348,22 @@ inlinedEntry:
 						J9UTF8 const *utfClassName = J9ROMCLASS_CLASSNAME(romClass);
 
 						ramClass = peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
-						if (ramClass == NULL) {
-							if (j9shr_Query_IsAddressInCache(vm, romClass, romClass->romSize)) {
+						if (j9shr_Query_IsAddressInCache(vm, romClass, romClass->romSize)) {	
+							if (ramClass == NULL) {
 								/* Probe the application loader to determine if it has the J9Class for the current class.
 								 * This secondary probe is required as all ROMClasses from the SCC appear to be owned
 								 * by the bootstrap classloader.
 								 */
 								ramClass = peekClassHashTable(vmThread, vm->applicationClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
-								if (NULL != ramClass) {
-									if (romClass != ramClass->romClass) {
-										/**
-										 * It is possible this romClass is not loaded by app class loader.
-										 * There is another class loader that loads a different class with the same name,
-										 * Do not return the ramClass from app loader in this case.
-										 */
-										ramClass = NULL;
-									}
+							}
+							if (NULL != ramClass) {
+								if (romClass != ramClass->romClass) {
+									/**
+									 * It is possible this romClass is not loaded by bootstrap/app class loader.
+									 * There is another class loader that loads a different class with the same name,
+									 * Do not return the ramClass from bootstrap/app loader in this case.
+									 */
+									ramClass = NULL;
 								}
 							}
 						}
