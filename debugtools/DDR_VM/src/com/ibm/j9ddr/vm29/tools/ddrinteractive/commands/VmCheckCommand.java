@@ -236,13 +236,20 @@ public class VmCheckCommand extends Command
 
 	private boolean verifyJ9Class(J9JavaVMPointer javaVM, PrintStream out, J9ClassPointer classPointer) throws CorruptDataException {
 		boolean passed = verifyJ9ClassHeader(javaVM, out, classPointer);
+		J9ClassLoaderPointer classLoader;
 
-		if (!classPointer.classLoader().isNull()) {
-			J9MemorySegmentPointer segment = classPointer.classLoader().classSegments();
+		if (J9ROMClassHelper.isAnonymousClass(classPointer.romClass())) {
+			classLoader = javaVM.anonClassLoader();
+		} else {
+			classLoader = classPointer.classLoader();
+		}
+
+		if (!classLoader.isNull()) {
+			J9MemorySegmentPointer segment = classLoader.classSegments();
 			segment = findSegmentInClassLoaderForAddress(classPointer, segment);
 
 			if (segment.isNull()) {
-				reportError(out, "class=0x%s not found in classLoader=0x%s", Long.toHexString(classPointer.getAddress()), Long.toHexString(classPointer.classLoader().getAddress()));
+				reportError(out, "class=0x%s not found in classLoader=0x%s", Long.toHexString(classPointer.getAddress()), Long.toHexString(classLoader.getAddress()));
 				passed = false;
 			}
 		}
