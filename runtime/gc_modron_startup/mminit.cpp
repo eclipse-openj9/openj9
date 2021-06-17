@@ -81,6 +81,7 @@
 #include "GlobalCollector.hpp"
 #include "HeapRegionDescriptor.hpp"
 #include "HeapRegionManager.hpp"
+#include "LargeObjectAllocateStats.hpp"
 #include "Math.hpp"
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
@@ -2987,6 +2988,12 @@ gcInitializeDefaults(J9JavaVM* vm)
 			loadInfo->loadFlags &= ~FREE_ERROR_STRING;
 		}
 		loadInfo->fatalErrorStr = NULL;
+	}
+
+	/* initialize largeObjectAllocationProfilingVeryLargeObjectThreshold, largeObjectAllocationProfilingVeryLargeObjectSizeClass and freeMemoryProfileMaxSizeClasses for non segregated memoryPool case */
+	if (gc_policy_metronome != extensions->configurationOptions._gcPolicy) {
+		MM_LargeObjectAllocateStats::initializeFreeMemoryProfileMaxSizeClasses(&env, extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold,
+				(float)extensions->largeObjectAllocationProfilingSizeClassRatio / (float)100.0, extensions->heap->getMaximumMemorySize());
 	}
 
 	warnIfPageSizeNotSatisfied(vm,extensions);

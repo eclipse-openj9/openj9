@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -141,7 +141,11 @@ class GCHeapRegionDescriptor_V1 extends GCHeapRegionDescriptor
 	{
 		if ((MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED == regionType) ||
 			(MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED_MARKED == regionType)) {
-			return MM_MemoryPoolBumpPointerPointer.cast(heapRegionDescriptor._memoryPool())._allocatePointer();
+			try {
+				return MM_MemoryPoolBumpPointerPointer.cast(heapRegionDescriptor._memoryPool())._allocatePointer();
+			} catch (NoSuchFieldException nsfe) {
+				throw new CorruptDataException(nsfe);
+			}
 		} else {
 			return getHighAddress();
 		}

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@
 #include "InterRegionRememberedSet.hpp"
 #include "MarkMap.hpp"
 #include "MarkMapManager.hpp"
-#include "MemoryPoolBumpPointer.hpp"
+#include "MemoryPoolAddressOrderedList.hpp"
 
 MM_HeapRegionDataForAllocate::MM_HeapRegionDataForAllocate(MM_EnvironmentVLHGC *env)
 	: MM_BaseNonVirtual()
@@ -60,7 +60,7 @@ MM_HeapRegionDataForAllocate::initialize(MM_EnvironmentVLHGC *env, MM_HeapRegion
 void
 MM_HeapRegionDataForAllocate::tearDown(MM_EnvironmentVLHGC *env)
 {
-	MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer*)_region->getMemoryPool();
+	MM_MemoryPoolAddressOrderedList *memoryPool = (MM_MemoryPoolAddressOrderedList *)_region->getMemoryPool();
 	if (NULL != memoryPool) {
 		memoryPool->tearDown(env);
 		_region->setMemoryPool(NULL);
@@ -70,7 +70,7 @@ MM_HeapRegionDataForAllocate::tearDown(MM_EnvironmentVLHGC *env)
 }
 
 bool
-MM_HeapRegionDataForAllocate::taskAsMemoryPoolBumpPointer(MM_EnvironmentBase *env, MM_AllocationContextTarok *context)
+MM_HeapRegionDataForAllocate::taskAsMemoryPool(MM_EnvironmentBase *env, MM_AllocationContextTarok *context)
 {
 	MM_IncrementalGenerationalGC *globalCollector = ((MM_IncrementalGenerationalGC *)MM_GCExtensions::getExtensions(env)->getGlobalCollector());
 	if (globalCollector->isGlobalMarkPhaseRunning()) {
@@ -87,17 +87,17 @@ MM_HeapRegionDataForAllocate::taskAsMemoryPoolBumpPointer(MM_EnvironmentBase *en
 	bool regionConverted = false;
 	if (MM_HeapRegionDescriptor::FREE == _region->getRegionType()) {
 		Assert_MM_true(NULL == _region->getMemoryPool());
-		MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer*)_backingStore;
+		MM_MemoryPoolAddressOrderedList *memoryPool = (MM_MemoryPoolAddressOrderedList*)_backingStore;
 		UDATA minimumFreeEntrySize = MM_GCExtensions::getExtensions(env)->getMinimumFreeEntrySize();
-		new (memoryPool) MM_MemoryPoolBumpPointer(env, minimumFreeEntrySize);
+		new (memoryPool) MM_MemoryPoolAddressOrderedList(env, minimumFreeEntrySize);
 		if (memoryPool->initialize(env)) {
 			_region->setMemoryPool(memoryPool);
-			_region->setRegionType(MM_HeapRegionDescriptor::BUMP_ALLOCATED);
+			_region->setRegionType(MM_HeapRegionDescriptor::ADDRESS_ORDERED);
 			_region->_allocateData._owningContext = context;
 			regionConverted = true;
 		}
-	} else if (MM_HeapRegionDescriptor::BUMP_ALLOCATED_IDLE == _region->getRegionType()) {
-		_region->setRegionType(MM_HeapRegionDescriptor::BUMP_ALLOCATED);
+	} else if (MM_HeapRegionDescriptor::ADDRESS_ORDERED_IDLE == _region->getRegionType()) {
+		_region->setRegionType(MM_HeapRegionDescriptor::ADDRESS_ORDERED);
 		regionConverted = true;
 	} else {
 		Assert_MM_unreachable();
@@ -112,7 +112,7 @@ MM_HeapRegionDataForAllocate::taskAsFreePool(MM_EnvironmentBase *env)
 	Assert_MM_true(NULL == _nextArrayletLeafRegion);
 	Assert_MM_true(NULL == _previousArrayletLeafRegion);
 
-	MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer*)_region->getMemoryPool();
+	MM_MemoryPoolAddressOrderedList *memoryPool = (MM_MemoryPoolAddressOrderedList *)_region->getMemoryPool();
 	if (NULL != memoryPool) {
 		memoryPool->tearDown(env);
 		_region->setMemoryPool(NULL);
@@ -134,7 +134,7 @@ MM_HeapRegionDataForAllocate::taskAsFreePool(MM_EnvironmentBase *env)
 void
 MM_HeapRegionDataForAllocate::taskAsIdlePool(MM_EnvironmentVLHGC *env)
 {
-	Assert_MM_true( (MM_HeapRegionDescriptor::BUMP_ALLOCATED == _region->getRegionType()) || (MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED == _region->getRegionType()) );
+	Assert_MM_true( (MM_HeapRegionDescriptor::ADDRESS_ORDERED == _region->getRegionType()) || (MM_HeapRegionDescriptor::ADDRESS_ORDERED_MARKED == _region->getRegionType()) );
 
 	/* Region about to be set free better not to be marked overflowed in GMP or PGC */
 	Assert_MM_true(0 == _region->_markData._overflowFlags);
@@ -143,7 +143,7 @@ MM_HeapRegionDataForAllocate::taskAsIdlePool(MM_EnvironmentVLHGC *env)
 	 * PGC swept this region (it's empty), but RS list is stale - we should clear it
 	 */
 	MM_GCExtensions::getExtensions(env)->interRegionRememberedSet->clearReferencesToRegion(env, _region);
-	_region->setRegionType(MM_HeapRegionDescriptor::BUMP_ALLOCATED_IDLE);
+	_region->setRegionType(MM_HeapRegionDescriptor::ADDRESS_ORDERED_IDLE);
 	/* set _projectedLiveBytes to 'uninitialized' value. it will be initialized at the beginning of the first PGC */
 	_region->_projectedLiveBytes = UDATA_MAX;
 	_region->_projectedLiveBytesDeviation = 0;

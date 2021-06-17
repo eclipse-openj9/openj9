@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,7 +105,12 @@ public class MM_HeapRegionDescriptorHelper {
 				(MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED == regionType)
 				|| (MM_HeapRegionDescriptor$RegionType.BUMP_ALLOCATED_MARKED == regionType)
 			) {
-			top = MM_MemoryPoolBumpPointerPointer.cast(region._memoryPool())._allocatePointer();
+			try {
+				top = MM_MemoryPoolBumpPointerPointer.cast(region._memoryPool())._allocatePointer();
+			} catch (NoSuchFieldException nsfe) {
+				throw new CorruptDataException(nsfe);
+			}
+
 		} else {
 			top = getHighAddress(region);
 		}

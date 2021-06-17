@@ -48,7 +48,7 @@
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionManagerTarok.hpp"
-#include "MemoryPoolBumpPointer.hpp"
+#include "MemoryPool.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ParallelDispatcher.hpp"
 #include "ParallelSweepSchemeVLHGC.hpp"
@@ -216,7 +216,7 @@ MM_ReclaimDelegate::tagRegionsBeforeCompactWithWorkGoal(MM_EnvironmentVLHGC *env
 				Assert_MM_true(!region->_compactData._shouldCompact);
 			}
 
-			MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
+			MM_MemoryPool *memoryPool = region->getMemoryPool();
 			Assert_MM_true(NULL != memoryPool);
 			UDATA freeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
@@ -277,7 +277,7 @@ MM_ReclaimDelegate::estimateReclaimableRegions(MM_EnvironmentVLHGC *env, double 
 		while (NULL != (region = regionIterator.nextRegion())) {
 			/* regions that are overflowed or RSCL is being rebuilt are not included into estimate */
 			if (region->hasValidMarkMap() && region->getRememberedSetCardList()->isAccurate()) {
-				MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
+				MM_MemoryPool *memoryPool = region->getMemoryPool();
 				Assert_MM_true(NULL != memoryPool);
 				UDATA freeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
 			
@@ -335,10 +335,10 @@ compareEmptinessFunc(const void *element1, const void *element2)
 	MM_HeapRegionDescriptorVLHGC *region1 = *(MM_HeapRegionDescriptorVLHGC **)element1;
 	MM_HeapRegionDescriptorVLHGC *region2 = *(MM_HeapRegionDescriptorVLHGC **)element2;
 
-	UDATA emptiness1 = ((MM_MemoryPoolBumpPointer *)region1->getMemoryPool())->getFreeMemoryAndDarkMatterBytes();
-	UDATA emptiness2 = ((MM_MemoryPoolBumpPointer *)region2->getMemoryPool())->getFreeMemoryAndDarkMatterBytes();
+	UDATA emptiness1 = region1->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
+	UDATA emptiness2 = region2->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 
-	 if (emptiness1 == emptiness2) {
+	if (emptiness1 == emptiness2) {
 		 return 0;
 	 } else if (emptiness1 < emptiness2) {
 		 return 1;
@@ -427,7 +427,7 @@ MM_ReclaimDelegate::calculateOptimalEmptinessRegionThreshold(MM_EnvironmentVLHGC
 			}
 
 			MM_HeapRegionDescriptorVLHGC * region = _regionsSortedByEmptinessArray[regionSortedByEmptinessIndex++];
-			freeAndDarkMatterBytes = ((MM_MemoryPoolBumpPointer *)region->getMemoryPool())->getFreeMemoryAndDarkMatterBytes();
+			freeAndDarkMatterBytes = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 			bytesRecovered += freeAndDarkMatterBytes;
 			defragmentBytesCopyForwardedPerGMP += (regionSize - freeAndDarkMatterBytes);
 		}
@@ -473,6 +473,7 @@ done:
 void
 MM_ReclaimDelegate::runGlobalSweepBeforePGC(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, MM_GCCode gcCode)
 {
+	env->_cycleState->_noCompactionAfterSweep = true;
 	performAtomicSweep(env, allocDescription, activeSubSpace, gcCode);
 	
 	/* Now that dark matter and free bytes data have been updated in all memoryPools, we want to rebuild the _regionsSortedByEmptinessArray table */
@@ -579,7 +580,7 @@ MM_ReclaimDelegate::deriveCompactScore(MM_EnvironmentVLHGC *env)
 				jniCriticalReservedRegions += 1;
 			} else {
 				UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
-				MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
+				MM_MemoryPool *memoryPool = region->getMemoryPool();
 				UDATA freeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
 
 				if (region->_markData._shouldMark) {
@@ -601,8 +602,8 @@ MM_ReclaimDelegate::deriveCompactScore(MM_EnvironmentVLHGC *env)
 					double potentialWastedWork = (1.0 - weightedSurvivalRate) * (1.0 - emptiness);
 					
 					if (env->_cycleState->_shouldRunCopyForward) {
-						double sparsity = (double)(freeMemory - memoryPool->getAllocatableBytes()) / (double)regionSize;
-						compactScore = 50.0 * (sparsity + emptiness) * (1.0 - potentialWastedWork);
+						double sparsity = (double)memoryPool->getDarkMatterBytes() / (double)regionSize;
+						compactScore = 100.0 * sparsity * (1.0 - potentialWastedWork);
 					} else {
 						compactScore = 100.0 * emptiness * (1.0 - potentialWastedWork);
 					}
@@ -642,8 +643,7 @@ MM_ReclaimDelegate::deriveCompactScore(MM_EnvironmentVLHGC *env)
 	/* Walk the sorted list bottom up, and remove regions that do not contribute to recovering a full free region */
 	for (IDATA i = _currentSortedRegionCount - 1; i >= 0; i--) {
 		region = _regionSortedByCompactScore[i];
-		MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
-		UDATA freeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
+		UDATA freeMemory = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 
 		UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 		Assert_MM_true(compactGroup < _compactGroupMaxCount);
