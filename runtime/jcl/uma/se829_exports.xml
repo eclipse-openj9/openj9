@@ -1,5 +1,5 @@
 <!-- 
-	Copyright (c) 2016, 2018 IBM Corp. and others
+	Copyright (c) 2016, 2021 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,4 +34,6 @@
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getSharedClassCacheMaxAotUnstoredBytesImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getSharedClassCacheMaxJitDataUnstoredBytesImpl" />
 	<export name="Java_java_lang_ref_Reference_waitForReferenceProcessingImpl" />
+	<export name="Java_java_lang_invoke_MethodHandle_invoke" />
+	<export name="Java_java_lang_invoke_MethodHandle_invokeExact" />
 </exports>
