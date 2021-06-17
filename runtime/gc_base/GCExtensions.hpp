@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,6 +72,13 @@ class MM_ReferenceObjectList;
 #if defined(OMR_GC_IDLE_HEAP_MANAGER)
 class MM_IdleGCManager;
 #endif
+
+#define DEFAULT_SURVIVOR_MINIMUM_FREESIZE 	2048
+#define DEFAULT_SURVIVOR_THRESHOLD 			512
+#define MAXIMUM_SURVIVOR_MINIMUM_FREESIZE 	524288
+#define MAXIMUM_SURVIVOR_THRESHOLD 			8192
+#define MINIMUM_SURVIVOR_MINIMUM_FREESIZE 	512
+#define MINIMUM_SURVIVOR_THRESHOLD 			512
 
 /**
  * @todo Provide class documentation
@@ -186,7 +193,8 @@ public:
 
 	double maxRAMPercent; /**< Value of -XX:MaxRAMPercentage specified by the user */
 	double initialRAMPercent; /**< Value of -XX:InitialRAMPercentage specified by the user */
-
+	UDATA minimumFreeSizeForSurvivor; /**< minimum free size can be reused by collector as survivor, for balanced GC only */
+	UDATA freeSizeThresholdForSurvivor; /**< if average freeSize(freeSize/freeCount) of the region is smaller than the Threshold, the region would not be reused by collector as survivor, for balanced GC only */
 protected:
 private:
 protected:
@@ -317,6 +325,8 @@ public:
 #endif
 		, maxRAMPercent(0.0) /* this would get overwritten by user specified value */
 		, initialRAMPercent(0.0) /* this would get overwritten by user specified value */
+		, minimumFreeSizeForSurvivor(DEFAULT_SURVIVOR_MINIMUM_FREESIZE)
+		, freeSizeThresholdForSurvivor(DEFAULT_SURVIVOR_THRESHOLD)
 	{
 		_typeId = __FUNCTION__;
 	}

@@ -482,8 +482,7 @@ MM_CompactGroupPersistentStats::updateStatsBeforeCopyForward(MM_EnvironmentVLHGC
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 
 			if (!persistentStats[compactGroup]._statsHaveBeenUpdatedThisCycle) {
-				MM_MemoryPoolBumpPointer *pool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
-				UDATA completeFreeMemory = pool->getFreeMemoryAndDarkMatterBytes();
+				UDATA completeFreeMemory = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 				Assert_MM_true(completeFreeMemory <= regionSize);
 				UDATA measuredLiveBytes = regionSize - completeFreeMemory;
 				UDATA projectedLiveBytes = region->_projectedLiveBytes;
@@ -537,8 +536,7 @@ MM_CompactGroupPersistentStats::updateStatsBeforeSweep(MM_EnvironmentVLHGC *env,
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 
 			if (!persistentStats[compactGroup]._statsHaveBeenUpdatedThisCycle) {
-				MM_MemoryPoolBumpPointer *pool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
-				UDATA completeFreeMemory = pool->getFreeMemoryAndDarkMatterBytes();
+				UDATA completeFreeMemory = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 				Assert_MM_true(completeFreeMemory <= regionSize);
 				UDATA measuredLiveBytes = regionSize - completeFreeMemory;
 				UDATA projectedLiveBytes = region->_projectedLiveBytes;
@@ -567,8 +565,7 @@ MM_CompactGroupPersistentStats::updateStatsAfterSweep(MM_EnvironmentVLHGC *env, 
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 
 			if (!persistentStats[compactGroup]._statsHaveBeenUpdatedThisCycle) {
-				MM_MemoryPoolBumpPointer *pool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
-				UDATA completeFreeMemory = pool->getFreeMemoryAndDarkMatterBytes();
+				UDATA completeFreeMemory = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 				Assert_MM_true(completeFreeMemory <= regionSize);
 				UDATA measuredLiveBytes = regionSize - completeFreeMemory;
 
@@ -596,8 +593,7 @@ MM_CompactGroupPersistentStats::updateStatsBeforeCompact(MM_EnvironmentVLHGC *en
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 
 			if (!persistentStats[compactGroup]._statsHaveBeenUpdatedThisCycle) {
-				MM_MemoryPoolBumpPointer *pool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
-				UDATA completeFreeMemory = pool->getFreeMemoryAndDarkMatterBytes();
+				UDATA completeFreeMemory = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 				Assert_MM_true(completeFreeMemory <= regionSize);
 				UDATA measuredLiveBytes = regionSize - completeFreeMemory;
 				UDATA projectedLiveBytes = region->_projectedLiveBytes;
@@ -626,8 +622,7 @@ MM_CompactGroupPersistentStats::updateStatsAfterCompact(MM_EnvironmentVLHGC *env
 			UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
 
 			if (!persistentStats[compactGroup]._statsHaveBeenUpdatedThisCycle) {
-				MM_MemoryPoolBumpPointer *pool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
-				UDATA completeFreeMemory = pool->getFreeMemoryAndDarkMatterBytes();
+				UDATA completeFreeMemory = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 				Assert_MM_true(completeFreeMemory <= regionSize);
 				UDATA measuredLiveBytes = regionSize - completeFreeMemory;
 
@@ -652,8 +647,7 @@ MM_CompactGroupPersistentStats::initProjectedLiveBytes(MM_EnvironmentVLHGC *env)
 	while (NULL != (region = regionIterator.nextRegion())) {
 		/* UDATA_MAX has a special meaning of 'uninitialized' */
 		if(region->containsObjects() && (UDATA_MAX == region->_projectedLiveBytes)) {
-			MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
-			UDATA completeFreeMemory = memoryPool->getFreeMemoryAndDarkMatterBytes();
+			UDATA completeFreeMemory = region->getMemoryPool()->getFreeMemoryAndDarkMatterBytes();
 			Assert_MM_true(completeFreeMemory <= regionSize);
 			UDATA measuredLiveBytes = regionSize - completeFreeMemory;
 			region->_projectedLiveBytes = measuredLiveBytes;
