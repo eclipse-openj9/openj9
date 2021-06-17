@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,10 +59,6 @@ if(OMR_OS_LINUX)
 		ssignal
 	)
 endif()
-
-set_target_properties(jsig PROPERTIES
-	ARCHIVE_OUTPUT_DIRECTORY ${j9vm_BINARY_DIR}/lib
-)
 
 install(
 	TARGETS jsig
