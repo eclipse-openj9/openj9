@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.openj9.test.lworld;
 
+import static org.objectweb.asm.Opcodes.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -28,6 +29,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import sun.misc.Unsafe;
@@ -3011,12 +3013,12 @@ public class ValueTypeTests {
 		assertFalse(Arrays.asList(valueClass.getInterfaces()).contains(IdentityObject.class));
 	}
 
-	/* Temporarily disabled due IdentityObject currently not being injected in correct cases */
-	@Test(enabled=false, priority=1)
-	static public void testIdentityObjectOnAbstract() throws Throwable {
-		assertFalse(Arrays.asList(AbstractClass.class.getInterfaces()).contains(IdentityObject.class));
+	@Test(priority=1)
+	static public void testIdentityObjectOnHeavyAbstract() throws Throwable {
+		assertTrue(Arrays.asList(HeavyAbstractClass.class.getInterfaces()).contains(IdentityObject.class));
 	}
-	private static abstract class AbstractClass {
+	public static abstract class HeavyAbstractClass {
+		/* Abstract class that has fields */
 		private int x;
 		private int y;
 		public int getX(){
@@ -3025,6 +3027,105 @@ public class ValueTypeTests {
 		public int getY(){
 			return y;
 		}
+	}
+	
+	public static abstract class HeavyAbstractClass1 {
+		/* Abstract class that has non-empty constructors */
+		public HeavyAbstractClass1() {
+			System.out.println("This class is HeavyAbstractClass1");
+		}
+	}
+	
+	public static abstract class HeavyAbstractClass2 {
+		/* Abstract class that has synchronized methods */
+		public synchronized void printClassName() {
+			System.out.println("This class is HeavyAbstractClass2");
+		}
+	}
+	
+	public static abstract class HeavyAbstractClass3 {
+		/* Abstract class that has initializer */
+		{ System.out.println("This class is HeavyAbstractClass3"); }
+	}
+	
+	public static abstract class LightAbstractClass {
+		
+	}
+	
+	public static abstract class AbstractClassImplIdentityObject implements IdentityObject {
+		
+	}
+
+	private static abstract class InvisibleLightAbstractClass {
+		
+	}
+	
+	static private void valueTypeIdentityObjectTestHelper(String testName, String superClassName, int extraClassFlags) throws Throwable {
+		String fields[] = {"longField:J"};
+		if (null == superClassName) {
+			superClassName = "java/lang/Object";
+		}
+		Class valueClass = ValueTypeGenerator.generateValueClass(testName, superClassName, fields, extraClassFlags);
+		assertTrue(valueClass.isPrimitiveClass());
+		assertFalse(Arrays.asList(valueClass.getInterfaces()).contains(IdentityObject.class));
+	}
+
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassHeavyAbstract() throws Throwable {
+		String superClassName = HeavyAbstractClass.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract", superClassName, 0);
+	}
+	
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassHeavyAbstract1() throws Throwable {
+		String superClassName = HeavyAbstractClass1.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract1", superClassName, 0);
+	}
+	
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassHeavyAbstract2() throws Throwable {
+		String superClassName = HeavyAbstractClass2.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract2", superClassName, 0);
+	}
+	
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassHeavyAbstract3() throws Throwable {
+		String superClassName = HeavyAbstractClass3.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassHeavyAbstract3", superClassName, 0);
+	}
+
+	@Test(priority=1)
+	static public void testValueTypeSubClassLightAbstract() throws Throwable {
+		String superClassName = LightAbstractClass.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassLightAbstract", superClassName, 0);
+	}
+
+	@Test(priority=1, expectedExceptions=VerifyError.class)
+	static public void testInterfaceValueType() throws Throwable {
+		valueTypeIdentityObjectTestHelper("testInterfaceValueType", "java/lang/Object", ACC_INTERFACE | ACC_ABSTRACT);
+	}
+
+	@Test(priority=1, expectedExceptions=VerifyError.class)
+	static public void testAbstractValueType() throws Throwable {
+		valueTypeIdentityObjectTestHelper("testAbstractValueType", "java/lang/Object", ACC_ABSTRACT);
+	}
+
+	@Test(priority=1, expectedExceptions=IncompatibleClassChangeError.class)
+	static public void testValueTypeSubClassAbstractClassImplIdentityObject() throws Throwable {
+		String superClassName = AbstractClassImplIdentityObject.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassAbstractClassImplIdentityObject", superClassName, 0);
+	}
+	
+	@Test(priority=1, expectedExceptions=IllegalAccessError.class)
+	static public void testValueTypeSubClassInvisibleLightAbstractClass() throws Throwable {
+		String superClassName = InvisibleLightAbstractClass.class.getName().replace('.', '/');
+		valueTypeIdentityObjectTestHelper("testValueTypeSubClassInvisibleLightAbstractClass", superClassName, 0);
+	}
+
+	@Test(priority=1, expectedExceptions=VerifyError.class)
+	static public void testValueTypeHasSychMethods() throws Throwable {
+		String fields[] = {"longField:J"};
+		Class valueClass = ValueTypeGenerator.generateIllegalValueClassWithSychMethods("testValueTypeHasSychMethods", fields);
 	}
 
 	@Test(priority = 1)
@@ -3064,7 +3165,7 @@ public class ValueTypeTests {
 
 	@Test(priority=1)
 	static public void testIsPrimitiveClassOnAbstractClass() throws Throwable {
-		assertFalse(AbstractClass.class.isPrimitiveClass());
+		assertFalse(HeavyAbstractClass.class.isPrimitiveClass());
 	}
 
 	@Test(priority=1)
