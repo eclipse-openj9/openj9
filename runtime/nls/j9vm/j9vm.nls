@@ -2064,3 +2064,20 @@ J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.explanation=Default method conflict rai
 J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_DEFAULT_METHOD_CONFLICT_GENERIC.user_response=Investigate the source of the exception.
 # END NON-TRANSLATABLE
+
+#Message used when JVM detects a value type that has an illegal super class
+# argument 1 is the length of value type name
+# argument 2 is the string of value type name
+# argument 3 is the length of super class name
+# argument 4 is the string of super class name
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS=Value type class %2$.*1$s has an invalid super class %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_1=3
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_2=Foo
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_3=3
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.sample_input_4=Var
+
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.explanation=The specified class cannot be a super class of a value type.
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.system_action=The JVM will throw IncompatibleClassChangeError.
+J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE

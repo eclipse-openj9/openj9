@@ -192,8 +192,12 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_needsStaticConstantInit(false),
 	_isRecord(false),
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	_hasIdentityInterface(false),
 	_isIdentityInterfaceNeeded(false),
 	_isValueType(false),
+	_hasNonStaticSynchronizedMethod(false),
+	_hasNonStaticFields(false),
+	_hasNonEmptyConstructor(false),
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	_recordComponentCount(0),
 	_permittedSubclassesAttribute(NULL),
@@ -226,6 +230,17 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 		_buildResult = _constantPoolMap->getBuildResult();
 		return;
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)	
+	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_VALUE_TYPE) 
+		|| J9_ARE_NO_BITS_SET(_classFile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE)
+	) {
+		/**
+		 * We care about whether there is a non-empty constructor only for non-value type abstract classes.
+		 * Simply set _hasNonEmptyConstructor to true for value types, or concrete classes.
+		 */ 
+		_hasNonEmptyConstructor = true;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	/* analyze class file */
 
@@ -252,7 +267,12 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	if (OK == _buildResult) {
 		walkFields();
 	}
-
+	
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (OK == _buildResult) {
+		checkAndRecordIsIdentityInterfaceNeeded();
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (OK == _buildResult) {
 		_constantPoolMap->computeConstantPoolMapAndSizes();
 		if (!constantPoolMap->isOK()) {
@@ -338,6 +358,9 @@ ClassFileOracle::walkFields()
 				 */
 				_hasFinalFields = true;
 			}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			_hasNonStaticFields = true;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		}
 
 		for (U_16 attributeIndex = 0; (OK == _buildResult) && (attributeIndex < field->attributesCount); ++attributeIndex) {
@@ -732,15 +755,44 @@ ClassFileOracle::walkInterfaces()
 	if (J9_ARE_ALL_BITS_SET(_classFile->accessFlags, CFR_ACC_VALUE_TYPE)) {
 		_isValueType = true;
 	}
-	if (!isValueType()
-		&& !interfaceVisitor.wasIdentityInterfaceSeen()
-		&& (getSuperClassNameIndex() != 0) /* j.l.Object has no superClass */
-		&& (J9_ARE_NO_BITS_SET(_classFile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE))
-	) {
-		_isIdentityInterfaceNeeded = true;
-	}
+	_hasIdentityInterface = interfaceVisitor.wasIdentityInterfaceSeen();
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 }
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+void
+ClassFileOracle::checkAndRecordIsIdentityInterfaceNeeded()
+{
+	if (isValueType()) {
+		if (_hasIdentityInterface
+			|| J9_ARE_ANY_BITS_SET(_classFile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE)
+			|| _hasNonStaticSynchronizedMethod
+		) {
+			_buildResult = InvalidValueType;
+		}
+	} else {
+		if (!_hasIdentityInterface
+			&& (getSuperClassNameIndex() != 0) /* j.l.Object has no superClass */
+		) {
+			if (J9_ARE_NO_BITS_SET(_classFile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_INTERFACE)) {
+				/* For concrete classes, IdentityInterface is needed.  */
+				_isIdentityInterfaceNeeded = true;
+			} else {
+				/**
+				 * For abstract classes, IdentityInterface is needed only when it has non-static fields,
+				 * non-static synchronized method or non-empty constructor.
+				 */
+				if ((_hasNonStaticFields)
+					|| (_hasNonStaticSynchronizedMethod)
+					|| (_hasNonEmptyConstructor)
+				) {
+					_isIdentityInterfaceNeeded = true;
+				}
+			}
+		}
+	}
+}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 void
 ClassFileOracle::walkMethods()
@@ -777,6 +829,17 @@ ClassFileOracle::walkMethods()
 		if (methodIsObjectConstructor(methodIndex)) {
 			_methodsInfo[methodIndex].modifiers |= J9AccMethodObjectConstructor;
 		}
+		
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (!_hasNonEmptyConstructor) {
+			if (methodIsConstructor(methodIndex)) {
+				/* Do not record constructor forwarded to its superclass. */
+				if (J9_ARE_NO_BITS_SET(_methodsInfo[methodIndex].modifiers, J9AccForwarderMethod)) {
+					_hasNonEmptyConstructor = true;
+				}
+			}
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		/* does the method belong in vtables? */
 		if (methodIsVirtual(methodIndex)) {
@@ -796,6 +859,11 @@ ClassFileOracle::walkMethods()
 				_hasEmptyFinalizeMethod = true;
 			}
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (!_hasNonStaticSynchronizedMethod) {
+			_hasNonStaticSynchronizedMethod = methodIsNonStaticSynchronized(methodIndex);
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		computeSendSlotCount(methodIndex);
 
@@ -2175,6 +2243,29 @@ ClassFileOracle::methodIsObjectConstructor(U_16 methodIndex)
 	return false;
 }
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+ * Determine if a method is constructor of a non-Value Type (Value Type constructors are static).
+ *
+ * @param methodIndex[in] the method index
+ *
+ * @returns true if the method is a constructor of a non-Value Type, false if not.
+ */
+bool
+ClassFileOracle::methodIsConstructor(U_16 methodIndex)
+{
+	ROMCLASS_VERBOSE_PHASE_HOT(_context, MethodIsConstructor);
+
+	if (J9_ARE_NO_BITS_SET(_classFile->methods[methodIndex].accessFlags, (CFR_ACC_ABSTRACT | CFR_ACC_STATIC | CFR_ACC_SYNCHRONIZED))
+		&& ('<' == getUTF8Data(_classFile->methods[methodIndex].nameIndex)[0])
+	) {
+		return true;
+	}
+
+	return false;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 /**
  * Determine if a method is <clinit>.
  *
@@ -2418,6 +2509,20 @@ ClassFileOracle::methodIsNonStaticNonAbstract(U_16 methodIndex)
 
 	return J9_ARE_NO_BITS_SET(_classFile->methods[methodIndex].accessFlags, (CFR_ACC_STATIC | CFR_ACC_ABSTRACT));
 }
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+bool
+ClassFileOracle::methodIsNonStaticSynchronized(U_16 methodIndex)
+{
+	ROMCLASS_VERBOSE_PHASE_HOT(_context, MethodIsNonStaticSynchronized);
+	if (J9_ARE_NO_BITS_SET(_classFile->methods[methodIndex].accessFlags, CFR_ACC_STATIC)
+		&& J9_ARE_ALL_BITS_SET(_classFile->methods[methodIndex].accessFlags, CFR_ACC_SYNCHRONIZED)
+	) {
+		return true;
+	}
+	return false;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 /**
  * Method to determine if an invokevirtual instruction should be re-written to be an

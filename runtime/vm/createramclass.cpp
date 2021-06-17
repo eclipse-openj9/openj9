@@ -2884,7 +2884,7 @@ fail:
 			 *
 			 *                   + J9ClassHasReferences
 			 *                  + J9ClassIsValueBased
-			 *                 + Unused
+			 *                 + J9ClassHasIdentity (inherited)
 			 *                + Unused
 			 *
 			 *              + Unused
@@ -3367,8 +3367,12 @@ retry:
 	if (NULL != result) {
 		U_32 classFlags = result->classFlags;
 		if (NULL != superclass) {
-			/* watched fields tag and exemption from validation are inherited from the superclass */
-			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation;
+			/**
+			 * watched fields tag and exemption from validation are inherited from the superclass.
+			 * J9ClassHasIdentity is also inherited. If a class cannot be super class
+			 * of value types, its subclasses cannot be super of value types either.
+			 */
+			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation | J9ClassHasIdentity;
 			classFlags |= (superclass->classFlags & inheritedFlags);
 		}
 		if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
@@ -3387,12 +3391,25 @@ retry:
 				classFlags |= J9ClassIsExemptFromValidation;
 			}
 		}
-		
 		if (J9ROMCLASS_IS_VALUEBASED(romClass)) {
 			classFlags |= J9ClassIsValueBased;
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_ARE_ALL_BITS_SET(classFlags, J9ClassHasIdentity)) {
+			if (J9ROMCLASS_IS_VALUE(romClass)) {
+				J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
+				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS, 
+						J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(className), 
+						J9UTF8_DATA(className), J9UTF8_LENGTH(superclassName), J9UTF8_DATA(superclassName));
+			}
+		} else {
+			if (J9ROMCLASS_HAS_IDENTITY(romClass)) {
+				classFlags |= J9ClassHasIdentity;
+			}
+		}
+		
 		if (J9_ARE_ALL_BITS_SET(romClass->modifiers, J9AccValueType)) {
 			classFlags |= J9ClassIsValueType;
 			if ((result->totalInstanceSize <= javaVM->valueFlatteningThreshold) && !J9ROMCLASS_IS_CONTENDED(romClass)) {

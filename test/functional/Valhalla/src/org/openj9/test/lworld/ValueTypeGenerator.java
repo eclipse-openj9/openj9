@@ -49,10 +49,13 @@ public class ValueTypeGenerator extends ClassLoader {
 
 	private static class ClassConfiguration {
 		private String name;
+		private String superName;
 		private String[] fields;
 		private String nestHost;
 		private boolean isVerifiable;
 		private boolean isReference;
+		private boolean hasNonStaticSynchronizedMethods;
+		private int extraClassFlags;
 
 		/**
 		 * @see setAccessedContainer
@@ -66,15 +69,35 @@ public class ValueTypeGenerator extends ClassLoader {
 
 		public ClassConfiguration(String name) {
 			this.name = name;
+			this.superName = "java/lang/Object";
+			this.extraClassFlags = 0;
 		}
 
 		public ClassConfiguration(String name, String[] fields) {
 			this.name = name;
+			this.superName = "java/lang/Object";
 			this.fields = fields;
+			this.extraClassFlags = 0;
 		}
 
 		public String getName() {
 			return name;
+		}
+		
+		public void setSuperClassName(String superName) {
+			this.superName = superName;
+		}
+		
+		public String getSuperName() {
+			return superName;
+		}
+		
+		public void setExtraClassFlags(int extraClassFlags) {
+			this.extraClassFlags = extraClassFlags;
+		}
+		
+		public int getExtraClassFlags() {
+			return extraClassFlags;
 		}
 
 		public String[] getFields() {
@@ -89,8 +112,10 @@ public class ValueTypeGenerator extends ClassLoader {
 			this.nestHost = nestHost;
 		}
 
-		public void setIsReference(boolean isReference) {
+		public void setIsReference(boolean isReference) { 
 			this.isReference = isReference;
+			/* Only reference type can have non-static synchronized methods. Value type cannot have one. */
+			setHasNonStaticSynchronizedMethods(isReference);
 		}
 
 		public boolean isReference() {
@@ -103,6 +128,14 @@ public class ValueTypeGenerator extends ClassLoader {
 
 		public boolean isVerifiable() {
 			return this.isVerifiable;
+		}
+
+		public void setHasNonStaticSynchronizedMethods(boolean hasNonStaticSynchronizedMethods) {
+			this.hasNonStaticSynchronizedMethods = hasNonStaticSynchronizedMethods;
+		}
+
+		public boolean hasNonStaticSynchronizedMethods() {
+			return this.hasNonStaticSynchronizedMethods;
 		}
 
 		/**
@@ -157,7 +190,9 @@ public class ValueTypeGenerator extends ClassLoader {
 
 	private static byte[] generateClass(ClassConfiguration config) {
 		String className = config.getName();
+		String superName = config.getSuperName();
 		String[] fields = config.getFields();
+		int extraClassFlags = config.getExtraClassFlags();
 
 		String nestHost = config.getNestHost();
 
@@ -171,6 +206,7 @@ public class ValueTypeGenerator extends ClassLoader {
 
 		boolean isVerifiable = config.isVerifiable();
 		boolean isRef = config.isReference();
+		boolean addSyncMethods = config.hasNonStaticSynchronizedMethods();
 
 		ClassWriter cw = new ClassWriter(0);
 		FieldVisitor fv;
@@ -178,9 +214,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		String classFileName = className + ".class";
 
 		if (isRef) {
-			cw.visit(56, ACC_PUBLIC + ACC_FINAL + ACC_SUPER, className, null, "java/lang/Object", null);
+			cw.visit(56, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + extraClassFlags, className, null, superName, null);
 		} else {
-			cw.visit(56, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_VALUE_TYPE, className, null, "java/lang/Object", null);
+			cw.visit(56, ACC_PUBLIC + ACC_FINAL + ACC_SUPER + ACC_VALUE_TYPE + extraClassFlags, className, null, superName, null);
 		}
 
 		cw.visitSource(className + ".java", null);
@@ -265,7 +301,9 @@ public class ValueTypeGenerator extends ClassLoader {
 		testCheckCastOnInvalidQtype(cw);
 		testCheckCastOnInvalidLtype(cw);
 		addStaticSynchronizedMethods(cw);
-		addSynchronizedMethods(cw);
+		if (addSyncMethods) {
+			addSynchronizedMethods(cw);
+		}
 		cw.visitEnd();
 		
 		byte[] bytes = cw.toByteArray();
@@ -1148,6 +1186,25 @@ public class ValueTypeGenerator extends ClassLoader {
 
 	public static Class<?> generateValueClass(String name, String[] fields) throws Throwable {
 		return generateValueClass(name, fields, null);
+	}
+	
+	public static Class<?> generateValueClass(String name, String superClassName, String[] fields) throws Throwable {
+		return generateValueClass(name, superClassName, fields, 0);
+	}
+	
+	public static Class<?> generateValueClass(String name, String superClassName, String[] fields, int extraFlags) throws Throwable {
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+		classConfig.setSuperClassName(superClassName);
+		classConfig.setExtraClassFlags(extraFlags);
+		byte[] bytes = generateClass(classConfig);
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+	
+	public static Class<?> generateIllegalValueClassWithSychMethods(String name, String[] fields) throws Throwable {
+		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
+		classConfig.setHasNonStaticSynchronizedMethods(true);
+		byte[] bytes = generateClass(classConfig);
+		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
 	public static Class<?> generateValueClass(String name, String[] fields, String nestHost) throws Throwable {
