@@ -22,13 +22,16 @@
 
 #include "j9.h"
 #include "j9cfg.h"
+#include "omrcomp.h"
 
 #include "SweepHeapSectioningVLHGC.hpp"
+#include "SweepPoolManager.hpp"
 
 #include "EnvironmentBase.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
+#include "MemoryPool.hpp"
 #include "MemorySubSpace.hpp"
 #include "ParallelDispatcher.hpp"
 
@@ -153,6 +156,8 @@ MM_SweepHeapSectioningVLHGC::reassignChunks(MM_EnvironmentBase *env)
 				chunk->chunkBase = (void *)heapChunkBase;
 				chunk->chunkTop = (void *)heapChunkTop;
 				chunk->memoryPool = pool;
+				Assert_MM_true(NULL != pool);
+				chunk->_minFreeSize = OMR_MAX(pool->getMinimumFreeEntrySize(), pool->getSweepPoolManager()->getMinimumFreeSize());
 				chunk->_coalesceCandidate = (heapChunkBase != region->getLowAddress());
 				chunk->_previous= previousChunk;
 				if(NULL != previousChunk) {
