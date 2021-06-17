@@ -8341,24 +8341,28 @@ done:
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+		J9ROMMethod *romMethod = NULL;
+		UDATA methodArgCount = 0;
 
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
 		if (J9_UNEXPECTED(NULL == memberNameObject)) {
-			if (fromJIT) {
-				/* Restore SP to before popping memberNameObject. */
-				_sp -= 1;
-				buildJITResolveFrame(REGISTER_ARGS);
-			}
-			return THROW_NPE;
+			goto throw_npe;
 		}
 
 		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
 
-		if (fromJIT) {
-			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
-			UDATA methodArgCount = romMethod->argCount;
+		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
+		methodArgCount = romMethod->argCount;
 
+		if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic)) {
+			j9object_t mhReceiver = ((j9object_t *)_sp)[methodArgCount - 1];
+			if (J9_UNEXPECTED(NULL == mhReceiver)) {
+				goto throw_npe;
+			}
+		}
+
+		if (fromJIT) {
 			/* Restore SP to before popping memberNameObject. */
 			_sp -= 1;
 
@@ -8372,6 +8376,14 @@ done:
 		}
 
 		return rc;
+
+throw_npe:
+		if (fromJIT) {
+			/* Restore SP to before popping memberNameObject. */
+			_sp -= 1;
+			buildJITResolveFrame(REGISTER_ARGS);
+		}
+		return THROW_NPE;
 	}
 
 	VMINLINE VM_BytecodeAction
