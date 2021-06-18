@@ -1521,6 +1521,9 @@ createMethodMetaData(
 
    data->registerSaveDescription = comp->cg()->getRegisterSaveDescription();
 
+   if (*comp->getMetadataAssumptionList())
+      static_cast<TR::SentinelRuntimeAssumption *>(*(comp->getMetadataAssumptionList()))->setOwningMetadata(data);
+
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
    if (vm->isAOT_DEPRECATED_DO_NOT_USE()
 #if defined(J9VM_OPT_JITSERVER)
