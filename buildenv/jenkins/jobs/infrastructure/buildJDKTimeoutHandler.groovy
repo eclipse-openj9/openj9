@@ -38,8 +38,8 @@ timestamps {
                             userRemoteConfigs: [[url: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git']]]
                 }
                 stage('Download and extract jtreg jar') {
-                    sh 'wget https://ci.adoptopenjdk.net/job/dependency_pipeline/lastSuccessfulBuild/artifact/jtreg/jtreg-4.2.0-tip.tar.gz'
-                    sh 'tar xf jtreg-4.2.0-tip.tar.gz jtreg/lib/jtreg.jar'
+                    sh 'wget https://ci.adoptopenjdk.net/view/Dependencies/job/dependency_pipeline/lastSuccessfulBuild/artifact/jtreg/jtreg5.1-b01.tar.gz'
+                    sh 'tar xf jtreg5.1-b01.tar.gz jtreg/lib/jtreg.jar'
                 }
                 stage('Build openj9jtregtimeouthandler.jar') {
                     sh 'javac -d . -cp jtreg/lib/jtreg.jar closed/test/jtreg-ext/jtreg/openj9/CoreDumpTimeoutHandler.java'
