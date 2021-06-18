@@ -2048,7 +2048,7 @@ typedef struct J9BCTranslationData {
 #define BCT_MajorClassFileVersionMaskShift  24
 
 /* A given Java feature version uses class-file format (version) + 44. */
-#define BCT_JavaMajorVersionShifted(java_version)  ((44 + (I_32)(java_version)) << BCT_MajorClassFileVersionMaskShift)
+#define BCT_JavaMajorVersionShifted(java_version)  ((44 + (U_32)(java_version)) << BCT_MajorClassFileVersionMaskShift)
 /* When adding support for a new Java feature version, update this appropriately. */
 #define BCT_JavaMaxMajorVersionShifted  BCT_JavaMajorVersionShifted(18)
 

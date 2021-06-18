@@ -549,7 +549,11 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
-	translationFlags |= BCT_JavaMajorVersionShifted(JAVA_SPEC_VERSION);
+	{
+		/* majorVer is introduced to workaround JDK8 zOS 64bit compiler issue. */
+		U_32 majorVer = BCT_JavaMajorVersionShifted(JAVA_SPEC_VERSION);
+		translationFlags |= majorVer;
+	}
 #endif
 
 	/* TODO toss tracepoint?? Trc_BCU_internalLoadROMClass_AttemptExisting(vmThread, segment, romAvailable, bytesRequired); */
