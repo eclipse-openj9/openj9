@@ -568,6 +568,15 @@ void TR_RuntimeAssumptionTable::reclaimAssumptions(OMR::RuntimeAssumption **sent
       else
          {
          sentry->markForDetach();
+         if (metaData)
+            {
+            reinterpret_cast<J9JITExceptionTable*>(metaData)->runtimeAssumptionList = NULL;
+            }
+         else if ((metaData = reinterpret_cast<TR::SentinelRuntimeAssumption *>(sentry)->getOwningMetadata()))
+            {
+            // metadata passed might be NULL, but it can still exist
+            reinterpret_cast<J9JITExceptionTable*>(metaData)->runtimeAssumptionList = NULL;
+            }
          *sentinel = NULL;
          }
       }

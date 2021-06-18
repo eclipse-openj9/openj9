@@ -320,6 +320,7 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
             // having to allocate one at runtime and possibly running out of memory
             OMR::RuntimeAssumption * raList = new (PERSISTENT_NEW) TR::SentinelRuntimeAssumption();
             comp->setMetadataAssumptionList(raList); // copy this list to the compilation object as well (same view as for a JIT compilation)
+            static_cast<TR::SentinelRuntimeAssumption *>(*comp->getMetadataAssumptionList())->setOwningMetadata(_exceptionTable);
             _exceptionTable->runtimeAssumptionList = raList;
             // If we cannot allocate the memory, fail the compilation
             if (raList == NULL)
