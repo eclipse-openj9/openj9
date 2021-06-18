@@ -1443,6 +1443,20 @@ void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig
       }
    }
 
+void J9::Options::preProcessCodeCachePrintCodeCache(J9JavaVM *vm)
+   {
+   // -XX:+PrintCodeCache will be parsed twice into both AOT and JIT options here.
+   const char *xxPrintCodeCacheOption = "-XX:+PrintCodeCache";
+   const char *xxDisablePrintCodeCacheOption = "-XX:-PrintCodeCache";
+   int32_t xxPrintCodeCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxPrintCodeCacheOption, 0);
+   int32_t xxDisablePrintCodeCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisablePrintCodeCacheOption, 0);
+
+   if (xxPrintCodeCacheArgIndex > xxDisablePrintCodeCacheArgIndex)
+      {
+      self()->setOption(TR_PrintCodeCacheUsage);
+      }
+   }
+
 bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
    {
    PORT_ACCESS_FROM_JAVAVM(vm);
@@ -1460,16 +1474,7 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
 
    preProcessCodeCacheIncreaseTotalSize(vm, jitConfig);
 
-   // -XX:+PrintCodeCache will be parsed twice into both AOT and JIT options here.
-   const char *xxPrintCodeCacheOption = "-XX:+PrintCodeCache";
-   const char *xxDisablePrintCodeCacheOption = "-XX:-PrintCodeCache";
-   int32_t xxPrintCodeCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxPrintCodeCacheOption, 0);
-   int32_t xxDisablePrintCodeCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisablePrintCodeCacheOption, 0);
-
-   if (xxPrintCodeCacheArgIndex > xxDisablePrintCodeCacheArgIndex)
-      {
-      self()->setOption(TR_PrintCodeCacheUsage);
-      }
+   preProcessCodeCachePrintCodeCache(vm);
 
    // Enable on X and Z, also on P.
    // PPC supports -Xlp:codecache option.. since it's set via environment variables.  JVM should always request 4k pages.
