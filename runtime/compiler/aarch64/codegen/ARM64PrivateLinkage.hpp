@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,8 @@
 
 #include "infra/Assert.hpp"
 
+class TR_ResolvedMethod;
+
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
 namespace TR { class Register; }
@@ -36,6 +38,18 @@ namespace TR { class ResolvedMethodSymbol; }
 
 namespace J9
 {
+
+struct ARM64PICItem
+   {
+   TR_ALLOC(TR_Memory::Linkage);
+
+   ARM64PICItem(TR_OpaqueClassBlock *clazz, TR_ResolvedMethod *method, float freq) :
+      _clazz(clazz), _method(method), _frequency(freq) {}
+
+   TR_OpaqueClassBlock *_clazz;
+   TR_ResolvedMethod *_method;
+   float _frequency;
+   };
 
 namespace ARM64
 {

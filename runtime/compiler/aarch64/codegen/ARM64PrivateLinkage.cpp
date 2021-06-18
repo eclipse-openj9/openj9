@@ -51,6 +51,9 @@
 #include "infra/List.hpp"
 #include "runtime/Runtime.hpp"
 
+#define MIN_PROFILED_CALL_FREQUENCY (.075f)
+#define MAX_PROFILED_CALL_FREQUENCY (.90f)
+
 uint32_t J9::ARM64::PrivateLinkage::_globalRegisterNumberToRealRegisterMap[] =
    {
    // GPRs
@@ -1333,6 +1336,154 @@ TR::Register *J9::ARM64::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
    }
 
 /**
+ * @brief Gets profiled call site information
+ *
+ * @param[in] cg:           code generator
+ * @param[in] callNode:     node for call
+ * @param[in] maxStaticPIC: maximum number of static PICs
+ * @param[out] values:      list of PIC items
+ * @returns true if any call site information is returned
+ */
+static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, uint32_t maxStaticPICs, TR_ScratchList<J9::ARM64PICItem> &values)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   if (comp->compileRelocatableCode())
+      return false;
+
+   TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
+   TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+
+   if (!methodSymbol->isVirtual() && !methodSymbol->isInterface())
+      return false;
+
+   TR_AddressInfo *info = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp, AddressInfo));
+   if (!info)
+      {
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "Profiled target not found for node %p\n", callNode);
+         }
+      return false;
+      }
+   static const bool tracePIC = feGetEnv("TR_TracePIC") != NULL;
+   if (tracePIC)
+      {
+      traceMsg(comp, "Value profile info for callNode %p in %s\n", callNode, comp->signature());
+      info->getProfiler()->dumpInfo(comp->getOutFile());
+      traceMsg(comp, "\n");
+      }
+   uint32_t totalFreq = info->getTotalFrequency();
+   if (totalFreq == 0 || info->getTopProbability() < MIN_PROFILED_CALL_FREQUENCY)
+      {
+      if (comp->getOption(TR_TraceCG))
+         {
+         traceMsg(comp, "Profiled target with enough frequency not found for node %p\n", callNode);
+         }
+      return false;
+      }
+
+   TR_ScratchList<TR_ExtraAddressInfo> allValues(comp->trMemory());
+   info->getSortedList(comp, &allValues);
+
+   TR_ResolvedMethod   *owningMethod = methodSymRef->getOwningMethod(comp);
+   TR_OpaqueClassBlock *callSiteMethod;
+
+   if (methodSymbol->isVirtual())
+       callSiteMethod = methodSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->classOfMethod();
+
+   ListIterator<TR_ExtraAddressInfo> valuesIt(&allValues);
+
+   uint32_t             numStaticPics = 0;
+   TR_ExtraAddressInfo *profiledInfo;
+   for (profiledInfo = valuesIt.getFirst();  numStaticPics < maxStaticPICs && profiledInfo != NULL; profiledInfo = valuesIt.getNext())
+      {
+      float freq = (float)profiledInfo->_frequency / totalFreq;
+      if (freq < MIN_PROFILED_CALL_FREQUENCY)
+         break;
+
+      TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)profiledInfo->_value;
+      if (comp->getPersistentInfo()->isObsoleteClass(clazz, fej9))
+         continue;
+
+      TR_ResolvedMethod *method;
+
+      if (methodSymbol->isVirtual())
+         {
+         TR_ASSERT_FATAL(callSiteMethod, "Expecting valid callSiteMethod for virtual call");
+         if (fej9->isInstanceOf(clazz, callSiteMethod, true, true) != TR_yes)
+            continue;
+
+         method = owningMethod->getResolvedVirtualMethod(comp, clazz, methodSymRef->getOffset());
+         }
+      else
+         {
+         method = owningMethod->getResolvedInterfaceMethod(comp, clazz, methodSymRef->getCPIndex());
+         }
+
+      if (!method || method->isInterpreted())
+         continue;
+
+      values.add(new (comp->trStackMemory()) J9::ARM64PICItem(clazz, method, freq));
+      ++numStaticPics;
+      }
+
+   return numStaticPics > 0;
+   }
+
+/**
+ * @brief Generates instruction sequence for static PIC call
+ *
+ * @param[in] cg:             code generator
+ * @param[in] callNode:       node for call
+ * @param[in] profiledClass:  class suggested by interpreter profiler
+ * @param[in] profiledMethod: method suggested by interpreter profiler
+ * @param[in] vftReg:         register containing VFT
+ * @param[in] tempReg:        temporary register
+ * @param[in] missLabel:      label for cache miss
+ * @param[in] regMapForGC:    register map for GC
+ * @returns instruction making direct call to the method
+ */
+static TR::Instruction* buildStaticPICCall(TR::CodeGenerator *cg, TR::Node *callNode, TR_OpaqueClassBlock *profiledClass, TR_ResolvedMethod *profiledMethod,
+                                             TR::Register *vftReg, TR::Register *tempReg, TR::LabelSymbol *missLabel, uint32_t regMapForGC)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
+   TR::SymbolReference *profiledMethodSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(methodSymRef->getOwningMethodIndex(),
+                                                                                             -1,
+                                                                                             profiledMethod,
+                                                                                             TR::MethodSymbol::Virtual);
+
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   if (comp->compileRelocatableCode())
+      {
+      loadAddressConstantInSnippet(cg, callNode, reinterpret_cast<intptr_t>(profiledClass), tempReg, TR_ClassPointer);
+      }
+   else
+      {
+      bool isUnloadAssumptionRequired = fej9->isUnloadAssumptionRequired(profiledClass, comp->getCurrentMethod());
+
+      if (isUnloadAssumptionRequired)
+         {
+         loadAddressConstantInSnippet(cg, callNode, reinterpret_cast<intptr_t>(profiledClass), tempReg, TR_NoRelocation, true); 
+         }
+      else
+         {
+         loadAddressConstant(cg, callNode, reinterpret_cast<intptr_t>(profiledClass), tempReg, NULL, true);
+         }
+      }
+   generateCompareInstruction(cg, callNode, vftReg, tempReg, true);
+
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, callNode, missLabel, TR::CC_NE);
+
+   TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, callNode, (uintptr_t)profiledMethod->startAddressForJittedMethod(),
+                                                                                  NULL, profiledMethodSymRef, NULL);
+   gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
+   fej9->reserveTrampolineIfNecessary(comp, profiledMethodSymRef, false);
+   return gcPoint;
+   }
+
+/**
  * @brief Generates instruction sequence for virtual call
  *
  * @param[in] cg:          code generator
@@ -1361,6 +1512,24 @@ static void buildVirtualCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Regi
    TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(vftReg, x9, cg);
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldroffx, callNode, x9, tempMR);
    TR::Instruction *gcPoint = generateRegBranchInstruction(cg, TR::InstOpCode::blr, callNode, x9);
+   gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
+   }
+
+/**
+ * @brief Generates instruction sequence for interface call
+ *
+ * @param[in] cg:          code generator
+ * @param[in] callNode:    node for the interface call
+ * @param[in] ifcSnippet:  interfall call snippet
+ * @param[in] regMapForGC: register map for GC
+ */
+static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::ARM64InterfaceCallSnippet *ifcSnippet, uint32_t regMapForGC)
+   {
+   // ToDo: Inline interface dispatch
+
+   TR::LabelSymbol *ifcSnippetLabel = ifcSnippet->getSnippetLabel();
+
+   TR::Instruction *gcPoint = generateLabelInstruction(cg, TR::InstOpCode::b, callNode, ifcSnippetLabel);
    gcPoint->ARM64NeedsGCMap(cg, regMapForGC);
    }
 
@@ -1601,6 +1770,95 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          }
       }
 
+   // Profile-driven virtual and interface calls
+   //
+   // If the top value dominates everything else, generate a single static
+   // PIC call inline and a virtual call or dynamic PIC call out of line.
+   //
+   // Otherwise generate a reasonable amount of static PIC calls and a
+   // virtual call or dynamic PIC call all inline.
+   //
+   if (callIsSafe && !callNode->isTheVirtualCallNodeForAGuardedInlinedCall() && !comp()->getOption(TR_DisableInterpreterProfiling))
+      {
+      static uint32_t  maxVirtualStaticPICs = comp()->getOptions()->getMaxStaticPICSlots(comp()->getMethodHotness());
+      static uint32_t  maxInterfaceStaticPICs = comp()->getOptions()->getNumInterfaceCallCacheSlots();
+
+      TR_ScratchList<J9::ARM64PICItem> values(cg()->trMemory());
+      const uint32_t maxStaticPICs = methodSymbol->isInterface() ? maxInterfaceStaticPICs : maxVirtualStaticPICs;
+
+      if (getProfiledCallSiteInfo(cg(), callNode, maxStaticPICs, values))
+         {
+         ListIterator<J9::ARM64PICItem>  i(&values);
+         J9::ARM64PICItem               *pic = i.getFirst();
+
+         // If this value is dominant, optimize exclusively for it
+         if (pic->_frequency > MAX_PROFILED_CALL_FREQUENCY)
+            {
+            if (comp()->getOption(TR_TraceCG))
+               {
+               traceMsg(comp(), "Found dominant profiled target, frequency = %f\n", pic->_frequency);
+               }
+            TR::LabelSymbol *slowCallLabel = generateLabelSymbol(cg());
+
+            TR::Instruction *gcPoint = buildStaticPICCall(cg(), callNode, pic->_clazz, pic->_method,
+                                                            vftReg, x9, slowCallLabel, regMapForGC);
+            generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
+
+            // Out of line virtual/interface call
+            //
+            TR_ARM64OutOfLineCodeSection *slowCallOOL = new (trHeapMemory()) TR_ARM64OutOfLineCodeSection(slowCallLabel, doneLabel, cg());
+
+            slowCallOOL->swapInstructionListsWithCompilation();
+            TR::Instruction *OOLLabelInstr = generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, slowCallLabel);
+
+            // XXX: Temporary fix, OOL instruction stream does not pick up live locals or monitors correctly.
+            TR_ASSERT_FATAL(!OOLLabelInstr->getLiveLocals() && !OOLLabelInstr->getLiveMonitors(), "Expecting first OOL instruction to not have live locals/monitors info");
+            OOLLabelInstr->setLiveLocals(gcPoint->getLiveLocals());
+            OOLLabelInstr->setLiveMonitors(gcPoint->getLiveMonitors());
+
+            TR::LabelSymbol *doneOOLLabel = generateLabelSymbol(cg());
+
+            if (methodSymbol->isInterface())
+               {
+               TR::LabelSymbol               *ifcSnippetLabel = generateLabelSymbol(cg());
+               TR::ARM64InterfaceCallSnippet *ifcSnippet = new (trHeapMemory()) TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel, argSize, doneOOLLabel, static_cast<uint8_t *>(thunk));
+               cg()->addSnippet(ifcSnippet);
+               buildInterfaceCall(cg(), callNode, ifcSnippet, regMapForGC);
+               }
+            else
+               {
+               buildVirtualCall(cg(), callNode, vftReg, x9, regMapForGC);
+               }
+
+            generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneOOLLabel);
+            generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, doneLabel);
+            slowCallOOL->swapInstructionListsWithCompilation();
+            cg()->getARM64OutOfLineCodeSectionList().push_front(slowCallOOL);
+
+            return;
+            }
+         else
+            {
+             if (comp()->getOption(TR_TraceCG))
+               {
+               traceMsg(comp(), "Generating %d static PIC calls\n", values.getSize());
+               }
+            // Build multiple static PIC calls
+            while (pic)
+               {
+               TR::LabelSymbol *nextLabel = generateLabelSymbol(cg());
+
+               buildStaticPICCall(cg(), callNode, pic->_clazz, pic->_method,
+                                  vftReg, x9, nextLabel, regMapForGC);
+               generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, doneLabel);
+               generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, nextLabel);
+               pic = i.getNext();
+               }
+            // Regular virtual/interface call will be built below
+            }
+         }
+      }
+
    // Finally, regular virtual and interface calls
    //
    if (methodSymbol->isInterface())
@@ -1611,11 +1869,10 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
       TR::LabelSymbol *ifcSnippetLabel = generateLabelSymbol(cg());
       TR::ARM64InterfaceCallSnippet *ifcSnippet =
          new (trHeapMemory())
-         TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel, argSize, doneLabel, (uint8_t *)thunk);
+         TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel, argSize, doneLabel, static_cast<uint8_t *>(thunk));
       cg()->addSnippet(ifcSnippet);
 
-      gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, ifcSnippetLabel);
-      gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
+      buildInterfaceCall(cg(), callNode, ifcSnippet, regMapForGC);
       }
    else
       {
