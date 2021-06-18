@@ -36,6 +36,10 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk16.git'
       branch: 'openj9'
+  17:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk17.git'
+      branch: 'openj9'
   next:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
@@ -99,6 +103,7 @@ build_discarder:
     OpenJDK8: 5
     OpenJDK11: 5
     OpenJDK16: 10
+    OpenJDK17: 10
     OpenJDK: 10
     Personal: 30
     Pipeline: 100
@@ -167,6 +172,7 @@ boot_jdk_default:
       8: '8'
       11: '11'
       16: '16'
+      17: '16'
       next: '16'
     dir_strip:
       all: '1'
@@ -336,12 +342,14 @@ ppc64_aix:
     8: ' --disable-ccache'
     11: '--disable-warnings-as-errors'
     16: '--disable-warnings-as-errors'
+    17: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
     vars:
       8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       11: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       16: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
+      17: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   excluded_tests:
     8:
@@ -406,10 +414,12 @@ x86-64_linux:
   build_env:
     cmd:
       16: 'source /home/jenkins/set_gcc7.5.0_env'
+      17: 'source /home/jenkins/set_gcc7.5.0_env'
       next: 'source /home/jenkins/set_gcc7.5.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   extra_test_labels:
     16: '!sw.os.cent.6'
+    17: '!sw.os.cent.6'
     next: '!sw.os.cent.6'
   excluded_tests:
     11:
@@ -538,6 +548,7 @@ x86-64_windows:
     8: '--with-toolchain-version=2013 --with-freetype-src=/cygdrive/c/openjdk/freetype-2.5.3 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1k-x86_64-VS2013'
     11: '--with-toolchain-version=2017 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1k-x86_64-VS2017'
     16: '--with-toolchain-version=2019 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1k-x86_64-VS2019'
+    17: '--with-toolchain-version=2019 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1k-x86_64-VS2019'
     next: '--with-toolchain-version=2019 --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1k-x86_64-VS2019'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
