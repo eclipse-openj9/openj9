@@ -57,7 +57,7 @@ ENV JAVA_HOME=/root/j2sdk-image
 # Builds tests
 
 RUN cd /root/test \
- && git clone https://github.com/AdoptOpenJDK/TKG.git \
+ && git clone --depth 1 https://github.com/AdoptOpenJDK/TKG.git \
  && cd TKG \
  && make compile
 
