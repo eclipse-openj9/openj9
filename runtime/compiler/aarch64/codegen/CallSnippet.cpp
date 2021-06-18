@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -301,8 +301,110 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
    return cursor+4;
    }
 
+static void
+printArgumentFlush(TR_Debug *debug, TR::FILE *pOutFile, uint8_t *cursor, const char *mnemonic, uint32_t offset, TR::Register *reg, TR::Register *stackReg)
+   {
+   debug->printPrefix(pOutFile, NULL, cursor, 4);
+   trfprintf(pOutFile, "%s \t", mnemonic);
+   debug->print(pOutFile, reg, TR_WordReg);
+   trfprintf(pOutFile, ", [");
+   debug->print(pOutFile, stackReg, TR_WordReg);
+   trfprintf(pOutFile, ", %d]", offset);
+   }
+
+uint8_t *
+TR_Debug::printARM64ArgumentsFlush(TR::FILE *pOutFile, TR::Node *callNode, uint8_t *cursor, int32_t argSize)
+   {
+   uint32_t intArgNum=0, floatArgNum=0, offset;
+   TR::Machine *machine = _cg->machine();
+   TR::Linkage* linkage = _cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention());
+   const TR::ARM64LinkageProperties &linkageProperties = linkage->getProperties();
+   int32_t argStart = callNode->getFirstArgumentIndex();
+   TR::RealRegister *stackPtr = _cg->getStackPointerRegister();
+
+   if (linkageProperties.getRightToLeft())
+      offset = linkage->getOffsetToFirstParm();
+   else
+      offset = argSize+linkage->getOffsetToFirstParm();
+
+   for (int32_t i=argStart; i<callNode->getNumChildren();i++)
+      {
+      TR::Node *child = callNode->getChild(i);
+      switch (child->getDataType())
+         {
+         case TR::Int8:
+         case TR::Int16:
+         case TR::Int32:
+            if (!linkageProperties.getRightToLeft())
+               offset -= TR::Compiler->om.sizeofReferenceAddress();
+            if (intArgNum < linkageProperties.getNumIntArgRegs())
+               {
+               printArgumentFlush(this, pOutFile, cursor, "strimmw", offset, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), stackPtr);
+               cursor += 4;
+               }
+            intArgNum++;
+            if (linkageProperties.getRightToLeft())
+               offset += TR::Compiler->om.sizeofReferenceAddress();
+            break;
+         case TR::Address:
+            if (!linkageProperties.getRightToLeft())
+               offset -= TR::Compiler->om.sizeofReferenceAddress();
+            if (intArgNum < linkageProperties.getNumIntArgRegs())
+               {
+               printArgumentFlush(this, pOutFile, cursor, "strimmx", offset, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), stackPtr);
+               cursor += 4;
+               }
+            intArgNum++;
+            if (linkageProperties.getRightToLeft())
+               offset += TR::Compiler->om.sizeofReferenceAddress();
+            break;
+         case TR::Int64:
+            if (!linkageProperties.getRightToLeft())
+               offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
+            if (intArgNum < linkageProperties.getNumIntArgRegs())
+               {
+               printArgumentFlush(this, pOutFile, cursor, "strimmx", offset, machine->getRealRegister(linkageProperties.getIntegerArgumentRegister(intArgNum)), stackPtr);
+               cursor += 4;
+               }
+            intArgNum++;
+            if (linkageProperties.getRightToLeft())
+               offset += 2*TR::Compiler->om.sizeofReferenceAddress();
+            break;
+         case TR::Float:
+            if (!linkageProperties.getRightToLeft())
+               offset -= TR::Compiler->om.sizeofReferenceAddress();
+            if (floatArgNum < linkageProperties.getNumFloatArgRegs())
+               {
+               printArgumentFlush(this, pOutFile, cursor, "vstrimms", offset, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), stackPtr);
+               cursor += 4;
+               }
+            floatArgNum++;
+            if (linkageProperties.getRightToLeft())
+               offset += TR::Compiler->om.sizeofReferenceAddress();
+            break;
+         case TR::Double:
+            if (!linkageProperties.getRightToLeft())
+               offset -= 2*TR::Compiler->om.sizeofReferenceAddress();
+            if (floatArgNum < linkageProperties.getNumFloatArgRegs())
+               {
+               printArgumentFlush(this, pOutFile, cursor, "vstrimmd", offset, machine->getRealRegister(linkageProperties.getFloatArgumentRegister(floatArgNum)), stackPtr);
+               cursor += 4;
+               }
+            floatArgNum++;
+            if (linkageProperties.getRightToLeft())
+               offset += 2*TR::Compiler->om.sizeofReferenceAddress();
+            break;
+
+         default:
+            TR_ASSERT_FATAL(false, "Unknown argument type %d", child->getDataType());
+            break;
+         }
+      }
+      return cursor;
+   }
+
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::ARM64CallSnippet * snippet)
+TR_Debug::print(TR::FILE *pOutFile, TR::ARM64CallSnippet *snippet)
    {
    TR::Node            *callNode     = snippet->getNode();
    TR::SymbolReference *glueRef      = _cg->getSymRef(snippet->getHelper());
@@ -312,7 +414,35 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64CallSnippet * snippet)
    uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(methodSymRef));
 
-   //TODO print snippet body
+   bufferPos = printARM64ArgumentsFlush(pOutFile, callNode, bufferPos, snippet->getSizeOfArguments());
+
+   char *info = "";
+   intptr_t target = reinterpret_cast<intptr_t>(glueRef->getMethodAddress());
+   int32_t distance;
+   if (isBranchToTrampoline(glueRef, bufferPos, distance))
+      {
+      target = static_cast<intptr_t>(distance) + reinterpret_cast<intptr_t>(bufferPos);
+      info = " Through trampoline";
+      TR_ASSERT_FATAL(constantIsSignedImm28(distance), "Trampoline too far away.");
+      }
+
+   printPrefix(pOutFile, NULL, bufferPos, 4);
+   trfprintf(pOutFile, "%s \t" POINTER_PRINTF_FORMAT "\t\t; %s%s", (glueRef->isOSRInductionHelper() ? "b" : "bl"), target, getName(glueRef), info);
+   bufferPos += 4;
+
+   printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Code cache return address", snippet->getCallRA());
+   bufferPos += sizeof(intptr_t);
+
+   if (!glueRef->isOSRInductionHelper())
+      {
+      printPrefix(pOutFile, NULL, bufferPos, sizeof(intptr_t));
+      trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Method Pointer", *(reinterpret_cast<uintptr_t *>(bufferPos)));
+      bufferPos += sizeof(intptr_t);
+      }
+
+   printPrefix(pOutFile, NULL, bufferPos, 4);
+   trfprintf(pOutFile, ".word \t0x%08x\t\t; Lock Word For Compilation", *(reinterpret_cast<int32_t *>(bufferPos)));
    }
 
 uint32_t TR::ARM64CallSnippet::getLength(int32_t estimatedSnippetStart)
@@ -389,11 +519,45 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
    }
 
 void
-TR_Debug::print(TR::FILE *pOutFile, TR::ARM64UnresolvedCallSnippet * snippet)
+TR_Debug::print(TR::FILE *pOutFile, TR::ARM64UnresolvedCallSnippet *snippet)
    {
    print(pOutFile, (TR::ARM64CallSnippet *) snippet);
 
-   //TODO print snippet body
+   uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation() + snippet->getLength(0) - (sizeof(intptr_t) * 2);
+
+   TR::SymbolReference *methodSymRef = snippet->getNode()->getSymbolReference();
+   TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+
+   intptr_t helperLookupOffset;
+   switch (snippet->getNode()->getDataType())
+      {
+      case TR::NoType:
+         helperLookupOffset = 0;
+         break;
+      case TR::Int32:
+         helperLookupOffset = 8;
+         break;
+      case TR::Int64:
+      case TR::Address:
+         helperLookupOffset = 16;
+         break;
+      case TR::Float:
+         helperLookupOffset = 24;
+         break;
+      case TR::Double:
+         helperLookupOffset = 32;
+         break;
+      }
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Pointer To Constant Pool", *(reinterpret_cast<intptr_t *>(cursor)));
+   cursor += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, cursor, 8);
+   trfprintf(pOutFile,
+           ".dword \t%016llx\t\t; Offset | Flag | CP Index",
+           (helperLookupOffset << 56) | methodSymRef->getCPIndexForVM());
+   cursor += 8;
    }
 
 uint32_t TR::ARM64UnresolvedCallSnippet::getLength(int32_t estimatedSnippetStart)
