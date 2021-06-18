@@ -358,6 +358,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    void preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig);
    void preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig);
    void preProcessJniAccelerator(J9JavaVM *vm);
+   void preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig *jitConfig);
    bool preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig);
    bool  fePreProcess(void *base);
    bool  fePostProcessAOT(void *base);

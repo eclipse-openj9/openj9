@@ -1375,20 +1375,10 @@ void J9::Options::preProcessJniAccelerator(J9JavaVM *vm)
       }
    }
 
-bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
+void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig *jitConfig)
    {
    PORT_ACCESS_FROM_JAVAVM(vm);
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
-
-   char *ccOption = "-Xcodecache";
-   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
-   if (argIndex >= 0)
-      {
-      UDATA ccSize;
-      GET_MEMORY_VALUE(argIndex, ccOption, ccSize);
-      ccSize >>= 10;
-      jitConfig->codeCacheKB = ccSize;
-      }
 
    // Check for option to increase code cache total size
    static bool codecachetotalAlreadyParsed = false;
@@ -1399,6 +1389,7 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
       char *xxccOption = "-XX:codecachetotal=";
       int32_t codeCacheTotalArgIndex   = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, xccOption, 0);
       int32_t XXcodeCacheTotalArgIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, xxccOption, 0);
+      int32_t argIndex = 0;
       // Check if option is at all specified
       if (codeCacheTotalArgIndex >= 0 || XXcodeCacheTotalArgIndex >= 0)
          {
@@ -1450,6 +1441,24 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
             }
          }
       }
+   }
+
+bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+   char *ccOption = "-Xcodecache";
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
+   if (argIndex >= 0)
+      {
+      UDATA ccSize;
+      GET_MEMORY_VALUE(argIndex, ccOption, ccSize);
+      ccSize >>= 10;
+      jitConfig->codeCacheKB = ccSize;
+      }
+
+   preProcessCodeCacheIncreaseTotalSize(vm, jitConfig);
 
    // -XX:+PrintCodeCache will be parsed twice into both AOT and JIT options here.
    const char *xxPrintCodeCacheOption = "-XX:+PrintCodeCache";
