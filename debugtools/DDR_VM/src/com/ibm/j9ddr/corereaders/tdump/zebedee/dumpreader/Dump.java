@@ -168,19 +168,26 @@ public final class Dump extends ImageInputStreamImpl {
             raf = new FileImageInputStream(new RandomAccessFile(filename, "r"));
             fileSize = new File(filename).length();
         } catch (FileNotFoundException e) {
-            if (System.getProperty("os.arch").indexOf("390") == -1) {
+            /*
+             * Note: IBM Java 8 builds do not use the preprocessor so the [IF] condition
+             * is ignored: This must have the proper control flow ignoring those comments.
+             */
+            /*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
+            if (System.getProperty("os.name").toLowerCase().contains("z/os")) {
+                try {
+                    raf = new MVSFileReader(filename);
+                } catch (Exception ex) {
+                    log.info("could not load dump: " + ex.getMessage());
+                    throw e;
+                } catch (LinkageError le) {
+                    log.info("could not load recordio: " + le);
+                    throw le;
+                }
+            } else
+            /*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 */
+            {
                 throw e;
             }
-            
-            try {
-                raf = new MVSFileReader(filename);
-            } catch (Exception ex) {
-            	log.info("could not load dump: " + ex.getMessage());
-				throw e;
-			}
-        } catch (LinkageError le) {
-            log.info("could not load recordio: " + le);
-            throw le;
         }
         readFirstBlock();
         if (initialize)
