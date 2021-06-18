@@ -634,6 +634,22 @@ static TR_YesNoMaybe isValue(TR::VPConstraint *constraint)
    return TR::Compiler->cls.isValueTypeClass(clazz) ? TR_yes : TR_no;
    }
 
+static bool owningMethodDoesNotContainStoreChecks(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   TR::ResolvedMethodSymbol *method = node->getSymbolReference()->getOwningMethodSymbol(vp->comp());
+   if (method && method->skipArrayStoreChecks())
+      return true;
+   return false;
+   }
+
+static bool owningMethodDoesNotContainBoundChecks(OMR::ValuePropagation *vp, TR::Node *node)
+   {
+   TR::ResolvedMethodSymbol *method = node->getSymbolReference()->getOwningMethodSymbol(vp->comp());
+   if (method && method->skipBoundChecks())
+      return true;
+   return false;
+   }
+
 void
 J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    {
@@ -759,10 +775,19 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       //
       if (arrayConstraint != NULL && isCompTypeVT == TR_no)
          {
-         flags8_t flagsForTransform = (isLoadFlattenableArrayElement ? ValueTypesHelperCallTransform::IsArrayLoad
-                                                                     : (ValueTypesHelperCallTransform::IsArrayStore
-                                                                        | ValueTypesHelperCallTransform::RequiresStoreCheck))
-                                      | ValueTypesHelperCallTransform::InsertDebugCounter;
+         flags8_t flagsForTransform(isLoadFlattenableArrayElement ? ValueTypesHelperCallTransform::IsArrayLoad
+                                                                  : ValueTypesHelperCallTransform::IsArrayStore);
+         flagsForTransform.set(ValueTypesHelperCallTransform::InsertDebugCounter);
+
+         if (isStoreFlattenableArrayElement && !owningMethodDoesNotContainStoreChecks(this, node))
+            {
+            flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreCheck);
+            }
+
+         if (!owningMethodDoesNotContainBoundChecks(this, node))
+            {
+            flagsForTransform.set(ValueTypesHelperCallTransform::RequiresBoundCheck);
+            }
 
          _valueTypesHelperCallsToBeFolded.add(
                new (trStackMemory()) ValueTypesHelperCallTransform(_curTree, node, flagsForTransform));
@@ -1641,6 +1666,7 @@ J9::ValuePropagation::doDelayedTransformations()
       const bool isStore = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsArrayStore);
       const bool isCompare = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsRefCompare);
       const bool needsStoreCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresStoreCheck);
+      const bool needsBoundCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresBoundCheck);
 
       // performTransformation was already checked for comparison non-helper call
       // Only need to check for array element load or store helper calls
@@ -1680,16 +1706,18 @@ J9::ValuePropagation::doDelayedTransformations()
 
       TR::Node *elementAddressNode = J9::TransformUtil::calculateElementAddress(comp(), arrayRefNode, indexNode, TR::Address);
 
-      const int32_t width = comp()->useCompressedPointers() ? TR::Compiler->om.sizeofReferenceField()
-                                                            : TR::Symbol::convertTypeToSize(TR::Address);
+      if (needsBoundCheck)
+         {
+         const int32_t width = comp()->useCompressedPointers() ? TR::Compiler->om.sizeofReferenceField()
+                                                               : TR::Symbol::convertTypeToSize(TR::Address);
 
-      TR::Node *arrayLengthNode = TR::Node::create(callNode, TR::arraylength, 1, arrayRefNode);
-      arrayLengthNode->setArrayStride(width);
+         TR::Node *arrayLengthNode = TR::Node::create(callNode, TR::arraylength, 1, arrayRefNode);
+         arrayLengthNode->setArrayStride(width);
 
-      TR::Node *bndChkNode = TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arrayLengthNode, indexNode,
-                                          comp()->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp()->getMethodSymbol()));
-
-      callTree->insertBefore(TR::TreeTop::create(comp(), bndChkNode));
+         TR::Node *bndChkNode = TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arrayLengthNode, indexNode,
+                                             comp()->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp()->getMethodSymbol()));
+         callTree->insertBefore(TR::TreeTop::create(comp(), bndChkNode));
+         }
 
       TR::SymbolReference *elementSymRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, arrayRefNode);
 
@@ -1723,7 +1751,7 @@ J9::ValuePropagation::doDelayedTransformations()
             }
          else
             {
-            callTree->setNode(elementStoreNode);
+            callTree->setNode(TR::Node::create(TR::treetop, 1, elementStoreNode));
             }
 
          // The old anchor node is no longer needed.  Remove what was previously a child
