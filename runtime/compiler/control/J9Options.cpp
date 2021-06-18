@@ -1457,24 +1457,10 @@ void J9::Options::preProcessCodeCachePrintCodeCache(J9JavaVM *vm)
       }
    }
 
-bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
+bool J9::Options::preProcessCodeCacheXlpCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
    {
    PORT_ACCESS_FROM_JAVAVM(vm);
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
-
-   char *ccOption = "-Xcodecache";
-   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
-   if (argIndex >= 0)
-      {
-      UDATA ccSize;
-      GET_MEMORY_VALUE(argIndex, ccOption, ccSize);
-      ccSize >>= 10;
-      jitConfig->codeCacheKB = ccSize;
-      }
-
-   preProcessCodeCacheIncreaseTotalSize(vm, jitConfig);
-
-   preProcessCodeCachePrintCodeCache(vm);
 
    // Enable on X and Z, also on P.
    // PPC supports -Xlp:codecache option.. since it's set via environment variables.  JVM should always request 4k pages.
@@ -1816,6 +1802,33 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
       }
 
       return true;
+   }
+
+bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+   char *ccOption = "-Xcodecache";
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
+   if (argIndex >= 0)
+      {
+      UDATA ccSize;
+      GET_MEMORY_VALUE(argIndex, ccOption, ccSize);
+      ccSize >>= 10;
+      jitConfig->codeCacheKB = ccSize;
+      }
+
+   preProcessCodeCacheIncreaseTotalSize(vm, jitConfig);
+
+   preProcessCodeCachePrintCodeCache(vm);
+
+   if (!preProcessCodeCacheXlpCodeCache(vm, jitConfig))
+      {
+         return false;
+      }
+
+   return true;
    }
 
 bool
