@@ -61,6 +61,15 @@ ClassFileOracle::KnownAnnotation ClassFileOracle::_knownAnnotations[] = {
 #define VALUEBASED_SIGNATURE "Ljdk/internal/ValueBased;"
 		{VALUEBASED_SIGNATURE, sizeof(VALUEBASED_SIGNATURE)},
 #undef VALUEBASED_SIGNATURE
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+#if JAVA_SPEC_VERSION >= 16
+#define HIDDEN_SIGNATURE "Ljdk/internal/vm/annotation/Hidden;"
+#else /* JAVA_SPEC_VERSION >= 16 */
+#define HIDDEN_SIGNATURE "Ljava/lang/invoke/LambdaForm$Hidden;"
+#endif /* JAVA_SPEC_VERSION >= 16 */
+		{HIDDEN_SIGNATURE, sizeof(HIDDEN_SIGNATURE)},
+#undef HIDDEN_SIGNATURE
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		{0, 0}
 };
 
@@ -897,6 +906,9 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 			knownAnnotations = addAnnotationBit(knownAnnotations, FRAMEITERATORSKIP_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, SUN_REFLECT_CALLERSENSITIVE_ANNOTATION);
 			knownAnnotations = addAnnotationBit(knownAnnotations, JDK_INTERNAL_REFLECT_CALLERSENSITIVE_ANNOTATION);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+			knownAnnotations = addAnnotationBit(knownAnnotations, HIDDEN_ANNOTATION);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			J9CfrAttributeRuntimeVisibleAnnotations *attribAnnotations = (J9CfrAttributeRuntimeVisibleAnnotations *)attrib;
 			if (0 == attribAnnotations->rawDataLength) { /* rawDataLength non-zero in case of error in the attribute */
@@ -912,6 +924,16 @@ ClassFileOracle::walkMethodAttributes(U_16 methodIndex)
 						_methodsInfo[methodIndex].modifiers |= J9AccMethodFrameIteratorSkip;
 					}
 				}
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+				if (containsKnownAnnotation(foundAnnotations, HIDDEN_ANNOTATION)) {
+					/* J9AccMethodFrameIteratorSkip is reused for Hidden Annotation when OpenJDK MH is enabled
+					 * Hidden annotation is used by OpenJDK to tag LambdaForm generated methods which is similar
+					 * to the thunkArchetype methods as they both need to be skipped during stackwalk when
+					 * verifying the caller
+					 */
+					_methodsInfo[methodIndex].modifiers |= J9AccMethodFrameIteratorSkip;
+				}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			}
 			_methodsInfo[methodIndex].annotationsAttribute = attribAnnotations;
 			_methodsInfo[methodIndex].modifiers |= J9AccMethodHasMethodAnnotations;
