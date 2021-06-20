@@ -362,6 +362,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    void preProcessCodeCachePrintCodeCache(J9JavaVM *vm);
    bool preProcessCodeCacheXlpCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig);
    bool preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig);
+   void preProcessSamplingExpirationTime(J9JavaVM *vm);
    bool  fePreProcess(void *base);
    bool  fePostProcessAOT(void *base);
    bool  fePostProcessJIT(void *base);

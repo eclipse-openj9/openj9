@@ -1831,6 +1831,19 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
    return true;
    }
 
+void J9::Options::preProcessSamplingExpirationTime(J9JavaVM *vm)
+   {
+   char *samplingOption = "-XsamplingExpirationTime";
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, samplingOption, 0);
+   if (argIndex >= 0)
+      {
+      UDATA expirationTime;
+      IDATA ret = GET_INTEGER_VALUE(argIndex, samplingOption, expirationTime);
+      if (ret == OPTION_OK)
+         _samplingThreadExpirationTime = expirationTime;
+      }
+   }
+
 bool
 J9::Options::fePreProcess(void * base)
    {
@@ -1904,18 +1917,10 @@ J9::Options::fePreProcess(void * base)
          return false;
       }
 
-   char *samplingOption = "-XsamplingExpirationTime";
-   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, samplingOption, 0);
-   if (argIndex >= 0)
-      {
-      UDATA expirationTime;
-      IDATA ret = GET_INTEGER_VALUE(argIndex, samplingOption, expirationTime);
-      if (ret == OPTION_OK)
-         _samplingThreadExpirationTime = expirationTime;
-      }
+   preProcessSamplingExpirationTime(vm);
 
    char *compThreadsOption = "-XcompilationThreads";
-   argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, compThreadsOption, 0);
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, compThreadsOption, 0);
    if (argIndex >= 0)
       {
       UDATA numCompThreads;
