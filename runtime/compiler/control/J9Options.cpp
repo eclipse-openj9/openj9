@@ -1862,6 +1862,41 @@ void J9::Options::preProcessCompilationThreads(J9JavaVM *vm, J9JITConfig *jitCon
       }
    }
 
+void J9::Options::preProcessTLHPrefetch(J9JavaVM *vm)
+   {
+#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM64)
+   bool preferTLHPrefetch;
+#if defined(TR_HOST_POWER)
+   preferTLHPrefetch = TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P6) && TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_PPC_P7);
+#elif defined(TR_HOST_S390)
+   preferTLHPrefetch = true;
+#elif defined(TR_HOST_ARM64)
+   preferTLHPrefetch = true;
+#else // TR_HOST_X86
+   preferTLHPrefetch = true;
+   // Disable TM on x86 because we cannot tell whether a Haswell chip supports TM or not, plus it's killing the performance on dayTrader3
+   self()->setOption(TR_DisableTM);
+#endif
+
+   IDATA notlhPrefetch = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XnotlhPrefetch", 0);
+   IDATA tlhPrefetch = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XtlhPrefetch", 0);
+   if (preferTLHPrefetch)
+      {
+      if (notlhPrefetch <= tlhPrefetch)
+         {
+         self()->setOption(TR_TLHPrefetch);
+         }
+      }
+   else
+      {
+      if (notlhPrefetch < tlhPrefetch)
+         {
+         self()->setOption(TR_TLHPrefetch);
+         }
+      }
+#endif // defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
+   }
+
 bool
 J9::Options::fePreProcess(void * base)
    {
@@ -1939,37 +1974,7 @@ J9::Options::fePreProcess(void * base)
 
    preProcessCompilationThreads(vm, jitConfig);
 
-#if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM64)
-   bool preferTLHPrefetch;
-#if defined(TR_HOST_POWER)
-   preferTLHPrefetch = TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P6) && TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_PPC_P7);
-#elif defined(TR_HOST_S390)
-   preferTLHPrefetch = true;
-#elif defined(TR_HOST_ARM64)
-   preferTLHPrefetch = true;
-#else // TR_HOST_X86
-   preferTLHPrefetch = true;
-   // Disable TM on x86 because we cannot tell whether a Haswell chip supports TM or not, plus it's killing the performance on dayTrader3
-   self()->setOption(TR_DisableTM);
-#endif
-
-   IDATA notlhPrefetch = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XnotlhPrefetch", 0);
-   IDATA tlhPrefetch = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XtlhPrefetch", 0);
-   if (preferTLHPrefetch)
-      {
-      if (notlhPrefetch <= tlhPrefetch)
-         {
-         self()->setOption(TR_TLHPrefetch);
-         }
-      }
-   else
-      {
-      if (notlhPrefetch < tlhPrefetch)
-         {
-         self()->setOption(TR_TLHPrefetch);
-         }
-      }
-#endif // defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
+   preProcessTLHPrefetch(vm);
 
 #if defined(TR_HOST_X86) || defined(TR_TARGET_POWER) || defined (TR_HOST_S390)
    self()->setOption(TR_ReservingLocks);
