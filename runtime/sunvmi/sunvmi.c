@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2020 IBM Corp. and others
+ * Copyright (c) 2002, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -172,8 +172,8 @@ getCallerClassIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 	J9JavaVM * vm = currentThread->javaVM;
 	
 
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9AccMethodFrameIteratorSkip) == J9AccMethodFrameIteratorSkip) {
-		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip / jdk.internal.vm.annotation.Hidden / java.lang.invoke.LambdaForm$Hidden annotation */
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
 
@@ -212,8 +212,8 @@ getCallerClassJEP176Iterator(J9VMThread * currentThread, J9StackWalkState * walk
 	
 	Assert_SunVMI_mustHaveVMAccess(currentThread);
 
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9AccMethodFrameIteratorSkip) == J9AccMethodFrameIteratorSkip) {
-		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip / jdk.internal.vm.annotation.Hidden / java.lang.invoke.LambdaForm$Hidden annotation */
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
 
@@ -560,8 +560,8 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 {
 	J9JavaVM * vm = currentThread->javaVM;
 
-	if ((J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers & J9AccMethodFrameIteratorSkip) == J9AccMethodFrameIteratorSkip) {
-		/* Skip methods with java.lang.invoke.FrameIteratorSkip annotation */
+	if (J9_ARE_ALL_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers, J9AccMethodFrameIteratorSkip)) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip / jdk.internal.vm.annotation.Hidden / java.lang.invoke.LambdaForm$Hidden annotation */
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
 

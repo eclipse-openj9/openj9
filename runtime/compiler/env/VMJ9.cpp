@@ -6074,6 +6074,7 @@ TR_J9VMBase::argumentCanEscapeMethodCall(TR::MethodSymbol * method, int32_t argI
 bool
 TR_J9VMBase::isThunkArchetype(J9Method * method)
    {
+#if defined(J9VM_OPT_METHOD_HANDLE)
    J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
    J9ROMClass  *romClass  = J9_CLASS_FROM_METHOD(method)->romClass;
    if (_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccMethodFrameIteratorSkip))
@@ -6094,7 +6095,7 @@ TR_J9VMBase::isThunkArchetype(J9Method * method)
 
       return isInJLI && isThunkArchetype;
       }
-
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
    return false;
    }
 

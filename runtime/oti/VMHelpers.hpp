@@ -1491,7 +1491,7 @@ exit:
 		} else {
 			J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccMethodFrameIteratorSkip)) {
-				/* Methods with @FrameIteratorSkip annotation, such as JIT thunk */
+				/* Methods with @FrameIteratorSkip or @Hidden annotation, such as JIT thunk or LambdaForm adapter */
 				isHidden = true;
 			}
 		}
