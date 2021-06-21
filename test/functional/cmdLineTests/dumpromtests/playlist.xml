@@ -23,10 +23,12 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_dumpromclasstests</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3562</comment>
-			<platform>.*aix.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3562</comment>
+				<platform>.*aix.*</platform>
+			</disable>
+		</disables>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \

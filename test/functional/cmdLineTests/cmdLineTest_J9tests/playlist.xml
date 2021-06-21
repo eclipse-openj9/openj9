@@ -112,10 +112,12 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTest_J9test_native</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3212;https://github.com/eclipse-openj9/openj9/issues/3560</comment>
-			<platform>.*windows.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3212;https://github.com/eclipse-openj9/openj9/issues/3560</comment>
+				<platform>.*windows.*</platform>
+			</disable>
+		</disables>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)cmdLineTest_J9tests.jar$(Q) \
 	-DNATIVEVMARGS=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)nativevmargs$(Q) \

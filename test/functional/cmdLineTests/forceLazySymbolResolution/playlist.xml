@@ -23,10 +23,12 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_forceLazySymbolResolution</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/11076</comment>
-			<version>15+</version>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/11076</comment>
+				<version>15+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>

@@ -23,18 +23,20 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_jep178_staticLinking_SE80</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<platform>.*windows.*</platform>
-		</disabled>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/11854</comment>
-			<platform>ppc64le.*</platform>
-		</disabled>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/12050</comment>
-			<platform>aarch64.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
+				<platform>.*windows.*</platform>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/11854</comment>
+				<platform>ppc64le.*</platform>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/12050</comment>
+				<platform>aarch64.*</platform>
+			</disable>
+		</disables>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJAVATEST_ROOT=$(Q)$(JAVATEST_ROOT)$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
@@ -72,13 +74,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jep178_staticLinking</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3560</comment>
-		</disabled>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<platform>.*windows.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3560</comment>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
+				<platform>.*windows.*</platform>
+			</disable>
+		</disables>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJAVATEST_ROOT=$(Q)$(JAVATEST_ROOT)$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \

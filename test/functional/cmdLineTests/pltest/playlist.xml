@@ -23,10 +23,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_pltest</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<platform>.*windows.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
+				<platform>.*windows.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -147,13 +149,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_pltest_tty_extended</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
-		</disabled>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<platform>.*windows.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
+				<platform>.*windows.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -184,13 +188,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_pltest_numcpus_notBound</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
-		</disabled>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<platform>.*windows.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
+				<platform>.*windows.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -253,13 +259,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_pltest_numcpus_bound_win</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
-		</disabled>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
-			<platform>.*windows.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3212</comment>
+				<platform>.*windows.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
