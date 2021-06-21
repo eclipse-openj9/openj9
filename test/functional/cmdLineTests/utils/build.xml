@@ -81,6 +81,14 @@
 	</target>
 
 	<target name="build" >
-		<antcall target="clean" inheritall="true" />
+		<if>
+			<or>
+				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="openj9" />
+			</or>
+			<then>
+				<antcall target="clean" inheritall="true" />
+			</then>
+		</if>
 	</target>
 </project>
