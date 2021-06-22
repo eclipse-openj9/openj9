@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,7 +140,7 @@ extern J9_CFUNC void allocateZeroedTLHPages(J9JavaVM *javaVM, UDATA flag);
 extern J9_CFUNC I_64 j9gc_objaccess_mixedObjectReadI64(J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile);
 extern J9_CFUNC UDATA j9gc_objaccess_indexableReadU32(J9VMThread *vmThread, J9IndexableObject *srcObject, I_32 index, UDATA isVolatile);
 extern J9_CFUNC j9objectmonitor_t* j9gc_objaccess_getLockwordAddress(J9VMThread *vmThread, j9object_t object);
-extern J9_CFUNC j9object_t j9gc_objaccess_readObjectFromInternalVMSlot(J9VMThread *vmThread, j9object_t *srcSlot);
+extern J9_CFUNC j9object_t j9gc_objaccess_readObjectFromInternalVMSlot(J9VMThread *vmThread, J9JavaVM *vm, J9Object **srcSlot);
 extern J9_CFUNC U_64 j9gc_objaccess_mixedObjectReadU64(J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile);
 extern J9_CFUNC UDATA j9gc_objaccess_checkStringConstantsLive(J9JavaVM *javaVM, j9object_t stringOne, j9object_t stringTwo);
 extern J9_CFUNC BOOLEAN j9gc_objaccess_checkStringConstantLive(J9JavaVM *javaVM, j9object_t string);
