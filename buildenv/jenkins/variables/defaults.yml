@@ -687,7 +687,7 @@ x86-64_mac_xl_uma:
 # Linux RISC-V 64bits
 #========================================#
 riscv-64_linux:
-  extends: ['boot_jdk_default', 'openjdk_reference_repo', 'uma']
+  extends: ['boot_jdk_default', 'openjdk_reference_repo']
   boot_jdk:
     arch: 'x64'
     os: 'linux'
