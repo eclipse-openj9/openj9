@@ -634,7 +634,7 @@ add_git_remote() {
 
 create_git_cache() {
   local git_cache_dir=/home/$user/openjdk_cache
-  # The jdk16 remote is fetched first because that repository was subjected to
+  # The jdk17 remote is fetched first because that repository was subjected to
   # 'git gc --aggressive --prune=all' before it was first published making it much
   # smaller than some other jdk repositories. There is a large degree of overlap
   # among the jdk repositories so a relatively small number of commits must be
@@ -647,11 +647,12 @@ create_git_cache() {
   add_git_remote jdk8    https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
   add_git_remote jdk11   https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
   add_git_remote jdk16   https://github.com/ibmruntimes/openj9-openjdk-jdk16.git
+  add_git_remote jdk17   https://github.com/ibmruntimes/openj9-openjdk-jdk17.git
   add_git_remote jdknext https://github.com/ibmruntimes/openj9-openjdk-jdk.git
   add_git_remote omr     https://github.com/eclipse-openj9/openj9-omr.git
   add_git_remote openj9  https://github.com/eclipse-openj9/openj9.git
   echo " && echo Fetching repository cache... \\"
-  echo " && git fetch jdk16 \\"
+  echo " && git fetch jdk17 \\"
   echo " && git fetch --all \\"
   echo " && echo Shrinking repository cache... \\"
   echo " && git gc --aggressive --prune=all"
