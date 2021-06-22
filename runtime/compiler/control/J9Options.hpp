@@ -355,19 +355,138 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static char *inlinefileOption(char *option, void *, TR::OptionTable *entry);
    static char *limitfileOption(char *option, void *, TR::OptionTable *entry);
    static char *versionOption(char *option, void *, TR::OptionTable *entry);
+
+   /** \brief
+    *    Set memory manager functions related configuration.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    *
+    *  \param jitConfig
+    *     J9JITConfig pointer.
+    */
    void preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig);
+
+   /** \brief
+    *     Set compiler mode.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    *
+    *  \param jitConfig
+    *     J9JITConfig pointer.
+    */
    void preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig);
+
+   /** \brief
+    *     Set JNI related configuration.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    */
    void preProcessJniAccelerator(J9JavaVM *vm);
+
+   /** \brief
+    *     Increase code cache total size based on codecachetotal options.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    *
+    *  \param jitConfig
+    *     J9JITConfig pointer.
+    */
    void preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig *jitConfig);
+
+   /** \brief
+    *     Set print code cache usage option.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    */
    void preProcessCodeCachePrintCodeCache(J9JavaVM *vm);
+
+   /** \brief
+    *     Set large code page size and flags.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    *
+    *  \param jitConfig
+    *     J9JITConfig pointer.
+    *
+    *  \return true if successfully processed large code page size and flags.
+    */
    bool preProcessCodeCacheXlpCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig);
+
+   /** \brief
+    *     Set code cache related configuration.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    *
+    *  \param jitConfig
+    *     J9JITConfig pointer.
+    *
+    *  \return true if successfully processed code cache related
+    */
    bool preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig);
+
+   /** \brief
+    *     Set sampling thread expiration time.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    */
    void preProcessSamplingExpirationTime(J9JavaVM *vm);
+
+   /** \brief
+    *     Set number of usable compilation threads.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    *
+    *  \param jitConfig
+    *     J9JITConfig pointer.
+    */
    void preProcessCompilationThreads(J9JavaVM *vm, J9JITConfig *jitConfig);
+
+   /** \brief
+    *     Set thread local heap related configuration.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    */
    void preProcessTLHPrefetch(J9JavaVM *vm);
+
+   /** \brief
+    *     Set hardware profiler related configuration.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    */
    void preProcessHwProfiler(J9JavaVM *vm);
+
+   /** \brief
+    *     Set deterministic mode related configuration.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    */
    void preProcessDeterministicMode(J9JavaVM *vm);
+
+   /** \brief
+    *     Set jit server related configuration.
+    *
+    *  \param vm
+    *     J9JavaVM pointer.
+    *
+    *  \param jitConfig
+    *     J9JITConfig pointer.
+    *
+    *  \return true if successfully set jit server related configuration.
+    */
    bool preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig);
+
    bool  fePreProcess(void *base);
    bool  fePostProcessAOT(void *base);
    bool  fePostProcessJIT(void *base);
