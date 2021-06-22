@@ -1819,11 +1819,11 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
       jitConfig->codeCacheKB = ccSize;
       }
 
-   preProcessCodeCacheIncreaseTotalSize(vm, jitConfig);
+   self()->preProcessCodeCacheIncreaseTotalSize(vm, jitConfig);
 
-   preProcessCodeCachePrintCodeCache(vm);
+   self()->preProcessCodeCachePrintCodeCache(vm);
 
-   if (!preProcessCodeCacheXlpCodeCache(vm, jitConfig))
+   if (!self()->preProcessCodeCacheXlpCodeCache(vm, jitConfig))
       {
          return false;
       }
@@ -2109,31 +2109,31 @@ J9::Options::fePreProcess(void * base)
    TR::Compiler->target.setNumberOfProcessors(numProc);
    TR::Compiler->relocatableTarget.setNumberOfProcessors(numProc);
 
-   preProcessMmf(vm, jitConfig);
+   self()->preProcessMmf(vm, jitConfig);
 
    if (FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xnoclassgc", 0) >= 0)
       self()->setOption(TR_NoClassGC);
 
-   preProcessMode(vm, jitConfig);
+   self()->preProcessMode(vm, jitConfig);
 
-   preProcessJniAccelerator(vm);
+   self()->preProcessJniAccelerator(vm);
 
-   if (!preProcessCodeCache(vm, jitConfig))
+   if (!self()->preProcessCodeCache(vm, jitConfig))
       {
          return false;
       }
 
-   preProcessSamplingExpirationTime(vm);
+   self()->preProcessSamplingExpirationTime(vm);
 
-   preProcessCompilationThreads(vm, jitConfig);
+   self()->preProcessCompilationThreads(vm, jitConfig);
 
-   preProcessTLHPrefetch(vm);
+   self()->preProcessTLHPrefetch(vm);
 
 #if defined(TR_HOST_X86) || defined(TR_TARGET_POWER) || defined (TR_HOST_S390)
    self()->setOption(TR_ReservingLocks);
 #endif
 
-   preProcessHwProfiler(vm);
+   self()->preProcessHwProfiler(vm);
 
 #if defined (TR_HOST_S390)
    // On z Systems inlining very large compiled bodies proved to be worth a significant amount in terms of throughput
@@ -2207,12 +2207,12 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile);
       }
 
-   preProcessDeterministicMode(vm);
+   self()->preProcessDeterministicMode(vm);
 
    if (!TR::Compiler->target.cpu.isZ())
       self()->setOption(TR_DisableAOTBytesCompression);
 
-   if (!preProcessJitServer(vm, jitConfig))
+   if (!self()->preProcessJitServer(vm, jitConfig))
       {
          return false;
       }
