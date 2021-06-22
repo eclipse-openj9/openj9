@@ -687,7 +687,7 @@ x86-64_mac_xl_uma:
 # Linux RISC-V 64bits
 #========================================#
 riscv-64_linux:
-  extends: ['boot_jdk_default', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'openjdk_reference_repo', 'uma']
   boot_jdk:
     arch: 'x64'
     os: 'linux'
@@ -695,6 +695,7 @@ riscv-64_linux:
     all: 'linux-x86_64-server-release'
     8: 'linux-riscv64-normal-server-release'
     11: 'linux-riscv64-normal-server-release'
+  extra_configure_options: "--disable-warnings-as-errors --with-openssl=/usr/local/openssl-1.0.2 --enable-ccache --disable-ddr -openjdk-target=riscv64-unknown-linux-gnu"
   node_labels:
     build:
       all: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
