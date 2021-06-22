@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -624,7 +624,7 @@ J9::ClassEnv::enumerateFields(TR::Region &region, TR_OpaqueClassBlock *opaqueCla
          addEntryForField(field, tlb, region, opaqueClazz, comp);
          }
       }
-   
+
    return tlb.build();
    }
 
@@ -846,6 +846,29 @@ J9::ClassEnv::isValueBasedOrValueTypeClass(TR_OpaqueClassBlock *clazz)
 #endif /* defined(J9VM_OPT_JITSERVER) */
    J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
    return J9_ARE_ANY_BITS_SET(j9class->classFlags, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+   }
+
+bool
+J9::ClassEnv::classHasIdentity(TR_OpaqueClassBlock *clazz)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      uintptr_t classFlags = 0;
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
+#ifdef DEBUG
+      stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, clazz);
+      uintptr_t classFlagsRemote = std::get<0>(stream->read<uintptr_t>());
+      // Check that class flags from remote call is equal to the cached ones
+      classFlags = classFlags & J9ClassHasIdentity;
+      classFlagsRemote = classFlagsRemote & J9ClassHasIdentity;
+      TR_ASSERT_FATAL(classFlags == classFlagsRemote, "remote call class flags is not equal to cached class flags");
+#endif
+      return J9_ARE_ANY_BITS_SET(classFlags, J9ClassHasIdentity);
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   J9Class *j9class = reinterpret_cast<J9Class*>(clazz);
+   return J9_ARE_ANY_BITS_SET(j9class->classFlags, J9ClassHasIdentity);
    }
 
 bool
