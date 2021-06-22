@@ -613,30 +613,19 @@ static TR_YesNoMaybe isValue(TR::VPConstraint *constraint)
    TR::Compilation *comp = TR::comp();
    TR_OpaqueClassBlock *clazz = type->getClass();
 
+   // No need to check array class type because array classes should be marked as having identity.
+   if (TR::Compiler->cls.classHasIdentity(clazz))
+      {
+      return TR_no;
+      }
+
    if (clazz == comp->getObjectClassPointer())
       {
       return type->isFixedClass() ? TR_no : TR_maybe;
       }
 
-   // Array types are never value types
-   //
-   if (TR::Compiler->cls.isClassArray(comp, clazz))
-      {
-      return TR_no;
-      }
-
    // Is the type either an abstract class or an interface (i.e., not a
    // concrete class)?  If so, it might be a value type.
-   //
-   // Future refinements:
-   //   The JVM will have classes whose instances must be identity
-   //   objects implement the java/lang/IdentityObject interface, including
-   //   array classes.  Once that happens, the check for isClassArray can
-   //   be replaced with a test of whether the component class implements
-   //   IdentityObject, and the test of !isConcreteClass can be refined
-   //   to distinguish abstract classes that implement IdentityObject from
-   //   those that do not, as well as interfaces that extend IdentityObject.
-   //
    if (!TR::Compiler->cls.isConcreteClass(comp, clazz))
       {
       return TR_maybe;
@@ -1560,40 +1549,28 @@ J9::ValuePropagation::isArrayCompTypeValueType(TR::VPConstraint *arrayConstraint
    //
    //   - Is no information available about the component type of the array?
    //     If not, assume it might be a value type.
+   //   - Is the component type definitely a identity type?
    //   - Is the component type definitely a value type?
-   //   - Is the component type an array class (i.e., is this an array of
-   //     arrays)?  If so, it's definitely not a value type.
    //   - Is the component type either an abstract class or an interface
    //     (i.e., not a concrete class)?  If so, it might be a value type.
    //   - Is the array an array of java/lang/Object?  See below.
    //   - Otherwise, it must be a concrete class known not to be a value
    //     type
    //
-   // Future refinements:
-   //   The JVM will have classes whose instances must be identity
-   //   objects implement the java/lang/IdentityObject interface, including
-   //   array classes.  Once that happens, the check for isClassArray can
-   //   be replaced with a test of whether the component class implements
-   //   IdentityObject, and the test of !isConcreteClass can be refined
-   //   to distinguish abstract classes that implement IdentityObject from
-   //   those that do not, as well as interfaces that extend IdentityObject.
-   //
-   //   Another potential improvement would be to look for fixed class
-   //   arrays of an interface type
-   //
    if (!arrayComponentClass)
       {
       return TR_maybe;
       }
 
+   // No need to check array class type because array classes should be marked as having identity.
+   if (TR::Compiler->cls.classHasIdentity(arrayComponentClass))
+      {
+      return TR_no;
+      }
+
    if (TR::Compiler->cls.isValueTypeClass(arrayComponentClass))
       {
       return TR_yes;
-      }
-
-   if (TR::Compiler->cls.isClassArray(comp(), arrayComponentClass))
-      {
-      return TR_no;
       }
 
    if (!TR::Compiler->cls.isConcreteClass(comp(), arrayComponentClass))
