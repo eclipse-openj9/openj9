@@ -211,7 +211,7 @@ class TR_PersistentProfileInfo
    private:
    /**
     * This data structure contains all the fields required for serializing an object of TR_PersistentProfileInfo.
-    * Members of primitive type are represented as it is, and the pointer types which can have NULL value are 
+    * Members of primitive type are represented as it is, and the pointer types which can have NULL value are
     * represented as bool to indicate their absence/presence instead of storing the raw address.
     */
    struct SerializedPPI {
@@ -380,7 +380,7 @@ class TR_ValueProfiler : public TR_RecompilationProfiler
    {
    public:
    TR_ValueProfiler(TR::Compilation * c, TR::Recompilation * r, TR_ValueInfoSource profiler = LinkedListProfiler) :
-      TR_RecompilationProfiler(c, r, initialCompilation),
+      TR_RecompilationProfiler(c, r),
       _bdClass(NULL),
       _stringClass(NULL),
       _defaultProfiler(profiler),
@@ -750,7 +750,7 @@ class TR_BlockFrequencyInfo
 
    /**
     * This data structure contains all the fields required for serializing an object of TR_PersistentProfileInfo.
-    * Members of primitive type are represented as it is, and the pointer types which can have NULL value are 
+    * Members of primitive type are represented as it is, and the pointer types which can have NULL value are
     * represented as bool to indicate their absence/presence instead of storing the raw address.
     */
    struct SerializedBFI
@@ -913,7 +913,7 @@ class TR_CallSiteInfo
 
    /**
     * This data structure contains all the fields required for serializing an object of TR_PersistentProfileInfo.
-    * Members of primitive type are represented as it is, and the pointer types which can have NULL value are 
+    * Members of primitive type are represented as it is, and the pointer types which can have NULL value are
     * represented as bool to indicate their absence/presence instead of storing the raw address.
     */
    struct SerializedCSI
