@@ -270,6 +270,11 @@ def checkoutRef (REF) {
 }
 
 def build() {
+    sh """
+        curl -O https://ci.adoptopenjdk.net/userContent/freemarker-2.3.8.tar.gz
+        tar zxf freemarker-2.3.8.tar.gz
+    """
+    FREEMARKER = "${WORKSPACE}/freemarker-2.3.8/lib/freemarker.jar"
     stage('Compile') {
         // 'all' target dependencies broken for zos, use 'images test-image-openj9'
         def make_target = SPEC.contains('zos') ? 'images test-image-openj9 debug-image' : 'all'
