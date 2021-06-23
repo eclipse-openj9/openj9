@@ -480,6 +480,8 @@ public class RomClassWalker extends ClassWalker {
 				|| (bc == JBinvokestatic)
 				|| (bc == JBinvokehandle)
 				|| (bc == JBinvokehandlegeneric)
+				|| (bc == JBinvokedynamic)
+				|| (bc == JBinvokeinterface)
 				|| (bc == JBnew)
 				|| (bc == JBdefaultvalue)
 				|| (bc == JBnewdup)
