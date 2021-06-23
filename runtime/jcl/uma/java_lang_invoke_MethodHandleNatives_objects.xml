@@ -17,6 +17,7 @@
 -->
 <objects group="java_lang_invoke_MethodHandleNatives">
 	<object name="java_lang_invoke_MethodHandleNatives" >
-		<include-if condition="spec.flags.opt_openjdkMethodhandle"/>
+		<include-if condition="spec.flags.opt_openjdkMethodhandle" />
+		<include-if condition="spec.flags.opt_methodHandle" />
 	</object>
 </objects>

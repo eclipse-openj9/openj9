@@ -439,8 +439,6 @@ omr_add_exports(jclse
 if(J9VM_OPT_METHOD_HANDLE)
 	omr_add_exports(jclse
 		Java_java_lang_invoke_InterfaceHandle_registerNatives
-		Java_java_lang_invoke_MethodHandle_invoke
-		Java_java_lang_invoke_MethodHandle_invokeExact
 		Java_java_lang_invoke_MethodHandle_requestCustomThunkFromJit
 		Java_java_lang_invoke_MethodHandle_vmRefFieldOffset
 		Java_java_lang_invoke_MethodType_makeTenured
@@ -629,6 +627,12 @@ if(J9VM_OPT_OPENJDK_METHODHANDLE)
 		Java_java_lang_invoke_MethodHandleNatives_clearCallSiteContext
 		Java_java_lang_invoke_MethodHandleNatives_getNamedCon
 		Java_java_lang_invoke_MethodHandleNatives_registerNatives
+	)
+endif()
+
+# Shared by OpenJ9 & OpenJDK MethodHandle impl
+if(J9VM_OPT_OPENJDK_METHODHANDLE OR J9VM_OPT_METHOD_HANDLE)
+	omr_add_exports(jclse
 		Java_java_lang_invoke_MethodHandle_invoke
 		Java_java_lang_invoke_MethodHandle_invokeExact
 	)

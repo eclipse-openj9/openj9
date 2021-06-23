@@ -40,6 +40,8 @@
 
 extern "C" {
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+
 /* Constants mapped from java.lang.invoke.MethodHandleNatives$Constants
  * These constants are validated by the MethodHandleNatives$Constants.verifyConstants()
  * method when Java assertions are enabled
@@ -1667,6 +1669,9 @@ Java_java_lang_invoke_MethodHandleNatives_registerNatives(JNIEnv *env, jclass cl
 	return;
 }
 
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+#if defined (J9VM_OPT_METHOD_HANDLE) || defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 jobject JNICALL
 Java_java_lang_invoke_MethodHandle_invokeExact(JNIEnv *env, jclass ignored, jobject handle, jobject args)
 {
@@ -1680,5 +1685,5 @@ Java_java_lang_invoke_MethodHandle_invoke(JNIEnv *env, jclass ignored, jobject h
 	throwNewUnsupportedOperationException(env);
 	return NULL;
 }
-
+#endif /* defined (J9VM_OPT_METHOD_HANDLE) || defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 } /* extern "C" */
