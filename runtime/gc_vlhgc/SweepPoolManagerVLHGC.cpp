@@ -51,8 +51,11 @@ MM_SweepPoolManagerVLHGC::newInstance(MM_EnvironmentBase *env)
 bool
 MM_SweepPoolManagerVLHGC::initialize(MM_EnvironmentBase *env)
 {
-	_minimumFreeSize = OMR_MAX(((MM_GCExtensions*)_extensions)->minimumFreeSizeForSurvivor, ((MM_GCExtensions*)_extensions)->getMinimumFreeEntrySize());
-	return MM_SweepPoolManagerAddressOrderedList::initialize(env);
+	if (!MM_SweepPoolManagerAddressOrderedList::initialize(env)) {
+		return false;
+	}
+	_minFreeSize = OMR_MAX(((MM_GCExtensions*)_extensions)->minimumFreeSizeForSurvivor, _minFreeSize);
+	return true;
 }
 
 /**
@@ -89,23 +92,4 @@ MM_SweepPoolManagerVLHGC::addFreeMemoryPostProcess(MM_EnvironmentBase *env, MM_M
 	if (0 != adjustedbytes) {
 		((MM_MemoryPoolAddressOrderedList *)memoryPool)->setAdjustedBytesForCardAlignment(adjustedbytes, needSync);
 	}
-}
-
-MMINLINE bool
-MM_SweepPoolManagerVLHGC::isEligibleForFreeMemory(MM_EnvironmentBase *env, MM_MemoryPoolAddressOrderedListBase *memoryPool, void* address, uintptr_t size)
-{
-	bool ret = false;
-	if (!env->_cycleState->_noCompactionAfterSweep)
-	{
-		ret = memoryPool->canMemoryBeConnectedToPool(env, address, size);
-	} else {
-		if (size >= _minimumFreeSize) {
-			ret = true;
-		}
-	}
-
-	if (!ret) {
-		memoryPool->fillWithHoles(address, (void*)((UDATA)address+size));
-	}
-	return ret;
 }
