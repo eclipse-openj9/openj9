@@ -696,7 +696,6 @@ riscv-64_linux:
     8: 'linux-riscv64-normal-server-release'
     11: 'linux-riscv64-normal-server-release'
   extra_configure_options: "--disable-warnings-as-errors --with-openssl=/usr/local/openssl-1.0.2 --enable-ccache --disable-ddr --openjdk-target=riscv64-unknown-linux-gnu --with-sysroot=/opt/fedora28_riscv_root"
-  extra_make_options: "--cross-compile -F"
   node_labels:
     build:
       all: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
