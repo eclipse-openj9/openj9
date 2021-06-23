@@ -284,7 +284,7 @@ def build() {
             dir(OPENJDK_CLONE_DIR) {
                 try {
                     def freemarker_option = FREEMARKER ? "--with-freemarker-jar=${FREEMARKER}" : ""
-                    sh "${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && make ${EXTRA_MAKE_OPTIONS} ${make_target}"
+                    sh "${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && printenv && echo $PATH && echo $LD_LIBRARY_PATH && ls -al /opt/riscv_toolchain_linux/bin/ && which riscv64-unknown-linux-gnu-g++ && make ${EXTRA_MAKE_OPTIONS} ${make_target}"
                 } catch (e) {
                     archive_diagnostics()
                     throw e
