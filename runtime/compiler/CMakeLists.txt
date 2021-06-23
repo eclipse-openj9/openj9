@@ -287,13 +287,15 @@ elseif(OMR_OS_AIX)
 elseif(OMR_OS_ZOS)
 	list(APPEND TARGET_DEFINES
 		J9VM_TIERED_CODE_CACHE
-		COMPRESS_AOT_DATA
 		MAXMOVE
 	)
-	list(APPEND J9_SHAREDFLAGS -I/usr/lpp/hzc/include)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L/usr/lpp/hzc/lib")
 else()
 	message(SEND_ERROR "unsupported platform")
+endif()
+
+if(OMR_ARCH_S390)
+	list(APPEND TARGET_DEFINES COMPRESS_AOT_DATA)
 endif()
 
 # Add optional user-specified compiler flags that only apply to the JIT
@@ -383,6 +385,16 @@ if((OMR_TOOLCONFIG STREQUAL "gnu") AND ALLOWS_STATIC_LIBCPP)
 	set_property(TARGET j9jit APPEND_STRING PROPERTY
 		LINK_FLAGS " -static-libgcc -static-libstdc++")
 endif()
+
+if(OMR_ARCH_S390)
+	if(OMR_OS_ZOS)
+		target_include_directories(j9jit BEFORE PRIVATE /usr/lpp/hzc/include)
+		target_link_libraries(j9jit PRIVATE zz)
+	else()
+		target_link_libraries(j9jit PRIVATE j9zlib)
+	endif()
+endif()
+
 set_property(TARGET j9jit PROPERTY LINKER_LANGUAGE CXX)
 
 # Note ddrgen can't handle the templated symbols used in the jit
