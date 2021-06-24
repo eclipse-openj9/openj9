@@ -1200,68 +1200,11 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-bool
-J9::Options::fePreProcess(void * base)
+void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
    {
-   J9JITConfig * jitConfig = (J9JITConfig*)base;
-   J9JavaVM * vm = jitConfig->javaVM;
-
-   PORT_ACCESS_FROM_JAVAVM(vm);
-   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
-
-   #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-      bool forceSuffixLogs = false;
-   #else
-      bool forceSuffixLogs = true;
-   #endif
-
-
-  /* Using traps on z/OS for NullPointerException and ArrayIndexOutOfBound checks instead of the
-   * old way of using explicit compare and branching off to a helper is causing several issues on z/OS:
-   *
-   * 1. When a trap fires because an exception needs to be thrown, the OS signal has to go through z/OS RTM
-   * (Recovery Termination Management) and in doing so it gets serialized and has to acquire this CML lock.
-   *  When many concurrent exceptions are thrown, this lock gets contention.
-   *
-   * 2. on z/OS Management Facility, disabling traps gave performance boost because of fewer exceptions from the JCL.
-   * The path length on z/OS for a trap is longer than on other operating systems so the trade-off and
-   * penalty for using traps on z/OS is significantly worse than other platforms. This gives the potential
-   * for significant performance loss caused by traps.
-   *
-   * 3. Depending on sysadmin settings, every time a trap fires, the system may get a "system dump"
-   * message which shows a 0C7 abend and with lots of exceptions being thrown this clutters up the syslog.
-   *
-   * 4. Certain products can get in the way of the JIT signal handler so the JIT doesn't
-   * receive the 0C7 signal causing the product process to get killed
-   *
-   * Therefore, the recommendation is to disable traps on z/OS by default.
-   * Users can choose to enable traps using the "enableTraps" option.
-   */
-   #if defined(J9ZOS390)
-      self()->setOption(TR_DisableTraps);
-   #endif
-
-   if (self()->getOption(TR_AggressiveOpts))
-      self()->setOption(TR_DontDowngradeToCold, true);
-
-   if (forceSuffixLogs)
-      self()->setOption(TR_EnablePIDExtension);
-
-   if (jitConfig->runtimeFlags & J9JIT_CG_REGISTER_MAPS)
-      self()->setOption(TR_RegisterMaps);
-
-   jitConfig->tLogFile     = -1;
-   jitConfig->tLogFileTemp = -1;
-
-   TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, 0);
-   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-   uint32_t numProc = compInfo->getNumTargetCPUs();
-   TR::Compiler->host.setNumberOfProcessors(numProc);
-   TR::Compiler->target.setNumberOfProcessors(numProc);
-   TR::Compiler->relocatableTarget.setNumberOfProcessors(numProc);
-
    J9MemoryManagerFunctions * mmf = vm->memoryManagerFunctions;
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
+   TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, 0);
    if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
       {
       self()->setGcCardSize(mmf->j9gc_concurrent_getCardSize(vm));
@@ -1334,12 +1277,10 @@ J9::Options::fePreProcess(void * base)
    else
       self()->setRealTimeGC(false);
    // } RTSJ Support End
+   }
 
-   int32_t argIndex;
-   if (FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xnoclassgc", 0) >= 0)
-      self()->setOption(TR_NoClassGC);
-
-
+void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
    // Determine the mode we want to be in
    // Possible options: client/Quickstart, server, aggressive, noquickstart
    if (jitConfig->runtimeFlags & J9JIT_QUICKSTART)
@@ -1375,7 +1316,7 @@ J9::Options::fePreProcess(void * base)
       if (_aggressivenessLevel == -1) // not yet set
          {
          char *aggressiveOption = "-XaggressivenessLevel";
-         argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, aggressiveOption, 0);
+         int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, aggressiveOption, 0);
          if (argIndex >= 0)
             {
             UDATA aggressivenessValue = 0;
@@ -1389,6 +1330,7 @@ J9::Options::fePreProcess(void * base)
             {
             // Automatically set an aggressiveness level based on CPU resources
 #if 0 // Do not change the default behavior just yet; needs more testing
+            TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
             if (compInfo->getJvmCpuEntitlement() < 100.0) // less than a processor available
                _aggressivenessLevel = TR::Options::CONSERVATIVE_QUICKSTART;
             else if (compInfo->getJvmCpuEntitlement() < 200.0) // less than 2 processors
@@ -1397,22 +1339,15 @@ J9::Options::fePreProcess(void * base)
             }
          }
       }
+   }
 
-   char *ccOption = "-Xcodecache";
-   argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
-   if (argIndex >= 0)
-      {
-      UDATA ccSize;
-      GET_MEMORY_VALUE(argIndex, ccOption, ccSize);
-      ccSize >>= 10;
-      jitConfig->codeCacheKB = ccSize;
-      }
-
+void J9::Options::preProcessJniAccelerator(J9JavaVM *vm)
+   {
    static bool doneWithJniAcc = false;
    char *jniAccOption = "-XjniAcc:";
    if (!doneWithJniAcc)
       {
-      argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, jniAccOption, 0);
+      int32_t argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, jniAccOption, 0);
       if (argIndex >= 0)
          {
          char *optValue;
@@ -1438,6 +1373,12 @@ J9::Options::fePreProcess(void * base)
             }
          }
       }
+   }
+
+void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
    // Check for option to increase code cache total size
    static bool codecachetotalAlreadyParsed = false;
@@ -1448,6 +1389,7 @@ J9::Options::fePreProcess(void * base)
       char *xxccOption = "-XX:codecachetotal=";
       int32_t codeCacheTotalArgIndex   = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, xccOption, 0);
       int32_t XXcodeCacheTotalArgIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, xxccOption, 0);
+      int32_t argIndex = 0;
       // Check if option is at all specified
       if (codeCacheTotalArgIndex >= 0 || XXcodeCacheTotalArgIndex >= 0)
          {
@@ -1499,7 +1441,10 @@ J9::Options::fePreProcess(void * base)
             }
          }
       }
+   }
 
+void J9::Options::preProcessCodeCachePrintCodeCache(J9JavaVM *vm)
+   {
    // -XX:+PrintCodeCache will be parsed twice into both AOT and JIT options here.
    const char *xxPrintCodeCacheOption = "-XX:+PrintCodeCache";
    const char *xxDisablePrintCodeCacheOption = "-XX:-PrintCodeCache";
@@ -1510,6 +1455,12 @@ J9::Options::fePreProcess(void * base)
       {
       self()->setOption(TR_PrintCodeCacheUsage);
       }
+   }
+
+bool J9::Options::preProcessCodeCacheXlpCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
    // Enable on X and Z, also on P.
    // PPC supports -Xlp:codecache option.. since it's set via environment variables.  JVM should always request 4k pages.
@@ -1850,8 +1801,40 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
+      return true;
+   }
+
+bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+   char *ccOption = "-Xcodecache";
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
+   if (argIndex >= 0)
+      {
+      UDATA ccSize;
+      GET_MEMORY_VALUE(argIndex, ccOption, ccSize);
+      ccSize >>= 10;
+      jitConfig->codeCacheKB = ccSize;
+      }
+
+   self()->preProcessCodeCacheIncreaseTotalSize(vm, jitConfig);
+
+   self()->preProcessCodeCachePrintCodeCache(vm);
+
+   if (!self()->preProcessCodeCacheXlpCodeCache(vm, jitConfig))
+      {
+         return false;
+      }
+
+   return true;
+   }
+
+void J9::Options::preProcessSamplingExpirationTime(J9JavaVM *vm)
+   {
    char *samplingOption = "-XsamplingExpirationTime";
-   argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, samplingOption, 0);
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, samplingOption, 0);
    if (argIndex >= 0)
       {
       UDATA expirationTime;
@@ -1859,9 +1842,13 @@ J9::Options::fePreProcess(void * base)
       if (ret == OPTION_OK)
          _samplingThreadExpirationTime = expirationTime;
       }
+   }
 
+void J9::Options::preProcessCompilationThreads(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
+   TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    char *compThreadsOption = "-XcompilationThreads";
-   argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, compThreadsOption, 0);
+   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, compThreadsOption, 0);
    if (argIndex >= 0)
       {
       UDATA numCompThreads;
@@ -1873,7 +1860,10 @@ J9::Options::fePreProcess(void * base)
          compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
          }
       }
+   }
 
+void J9::Options::preProcessTLHPrefetch(J9JavaVM *vm)
+   {
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM64)
    bool preferTLHPrefetch;
 #if defined(TR_HOST_POWER)
@@ -1905,11 +1895,10 @@ J9::Options::fePreProcess(void * base)
          }
       }
 #endif // defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
+   }
 
-#if defined(TR_HOST_X86) || defined(TR_TARGET_POWER) || defined (TR_HOST_S390)
-   self()->setOption(TR_ReservingLocks);
-#endif
-
+void J9::Options::preProcessHwProfiler(J9JavaVM *vm)
+   {
    // If the user didn't specifically ask for RI, let's enable it on some well defined platforms
    if (TR::Options::_hwProfilerEnabled == TR_maybe)
       {
@@ -1946,85 +1935,16 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_DisableDynamicRIBufferProcessing);
 #endif
       }
+   }
 
-#if defined (TR_HOST_S390)
-   // On z Systems inlining very large compiled bodies proved to be worth a significant amount in terms of throughput
-   // on benchmarks that we track. As such the throughput-compile-time tradeoff was significant enough to warrant the
-   // inlining of very large compiled bodies on z Systems by default.
-   if (vm->runtimeFlags & J9_RUNTIME_TUNE_VIRTUALIZED)
-      {
-      // Disable inlining of very large compiled methods only under -Xtune:virtualized
-      self()->setOption(TR_InlineVeryLargeCompiledMethods, false);
-      }
-   else
-      {
-      self()->setOption(TR_InlineVeryLargeCompiledMethods);
-      }
-#endif
-
-   // On big machines we can afford to spend more time compiling
-   // (but not on zOS where customers care about CPU or on Xquickstart
-   // which should be skimpy on compilation resources).
-   // TR_SuspendEarly is set on zOS because test results indicate that
-   // it does not benefit much by spending more time compiling.
-#if !defined(J9ZOS390)
-   if (!self()->isQuickstartDetected())
-      {
-      // Power uses a larger SMT than X or Z
-      uint32_t largeNumberOfCPUs = TR::Compiler->target.cpu.isPower() ? 64 : 32;
-      if (compInfo->getNumTargetCPUs() >= largeNumberOfCPUs)
-         {
-         self()->setOption(TR_ConcurrentLPQ);
-         self()->setOption(TR_EarlyLPQ);
-         TR::Options::_expensiveCompWeight = 99; // default 20
-         TR::Options::_invocationThresholdToTriggerLowPriComp = 50; // default is 250
-         TR::Options::_numIProfiledCallsToTriggerLowPriComp = 100; // default is 250
-         TR::Options::_numDLTBufferMatchesToEagerlyIssueCompReq = 1;
-         }
-      }
-#else
-   self()->setOption(TR_SuspendEarly);
-#endif
-
-   // samplingJProfiling is disabled globally. It will be enabled on a method by
-   // method basis based on selected heuristic
-   self()->setDisabled(OMR::samplingJProfiling, true);
-
-#if defined (TR_HOST_S390)
-   // Disable lock reservation due to a functional problem causing a deadlock situation in an ODM workload in Java 8
-   // SR5. In addition several performance issues on SPARK workloads have been reported which seem to concurrently
-   // access StringBuffer objects from multiple threads.
-   self()->setOption(TR_DisableLockResevation);
-   // Setting number of onsite cache slots for instanceOf node to 4 on IBM Z
-   self()->setMaxOnsiteCacheSlotForInstanceOf(4);
-#endif
-   // Set a value for _safeReservePhysicalMemoryValue that is proportional
-   // to the amount of free physical memory at boot time
-   // The user can still override it with a command line option
-   bool incomplete = false;
-   uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
-   if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
-      {
-      const uint64_t reserveLimit = 32 * 1024 * 1024;
-      uint64_t proposed = phMemAvail >> 6; // 64 times less
-      if (proposed > reserveLimit)
-         proposed = reserveLimit;
-      J9::Options::_safeReservePhysicalMemoryValue = (int32_t)proposed;
-      }
-
-   // enable TR_SelfTuningScratchMemoryUsageBeforeCompile if there is no swap memory
-   J9MemoryInfo memInfo;
-   if ((omrsysinfo_get_memory_info(&memInfo) == 0) && (0 == memInfo.totalSwap))
-      {
-      self()->setOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile);
-      }
-
+void J9::Options::preProcessDeterministicMode(J9JavaVM *vm)
+   {
    // Process the deterministic mode
    if (TR::Options::_deterministicMode == -1) // not yet set
       {
       char *deterministicOption = "-XX:deterministic=";
       const UDATA MAX_DETERMINISTIC_MODE = 9; // only levels 0-9 are allowed
-      argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, deterministicOption, 0);
+      int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, deterministicOption, 0);
       if (argIndex >= 0)
          {
          UDATA deterministicMode;
@@ -2035,11 +1955,16 @@ J9::Options::fePreProcess(void * base)
             }
          }
       }
-   if (!TR::Compiler->target.cpu.isZ())
-      self()->setOption(TR_DisableAOTBytesCompression);
+   }
 
+bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
+   {
 #if defined(J9VM_OPT_JITSERVER)
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
    static bool JITServerAlreadyParsed = false;
+   TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    if (!JITServerAlreadyParsed) // Avoid processing twice for AOT and JIT and produce duplicate messages
       {
       JITServerAlreadyParsed = true;
@@ -2122,6 +2047,175 @@ J9::Options::fePreProcess(void * base)
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   return true;
+   }
+
+bool
+J9::Options::fePreProcess(void * base)
+   {
+   J9JITConfig * jitConfig = (J9JITConfig*)base;
+   J9JavaVM * vm = jitConfig->javaVM;
+
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+   #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+      bool forceSuffixLogs = false;
+   #else
+      bool forceSuffixLogs = true;
+   #endif
+
+
+  /* Using traps on z/OS for NullPointerException and ArrayIndexOutOfBound checks instead of the
+   * old way of using explicit compare and branching off to a helper is causing several issues on z/OS:
+   *
+   * 1. When a trap fires because an exception needs to be thrown, the OS signal has to go through z/OS RTM
+   * (Recovery Termination Management) and in doing so it gets serialized and has to acquire this CML lock.
+   *  When many concurrent exceptions are thrown, this lock gets contention.
+   *
+   * 2. on z/OS Management Facility, disabling traps gave performance boost because of fewer exceptions from the JCL.
+   * The path length on z/OS for a trap is longer than on other operating systems so the trade-off and
+   * penalty for using traps on z/OS is significantly worse than other platforms. This gives the potential
+   * for significant performance loss caused by traps.
+   *
+   * 3. Depending on sysadmin settings, every time a trap fires, the system may get a "system dump"
+   * message which shows a 0C7 abend and with lots of exceptions being thrown this clutters up the syslog.
+   *
+   * 4. Certain products can get in the way of the JIT signal handler so the JIT doesn't
+   * receive the 0C7 signal causing the product process to get killed
+   *
+   * Therefore, the recommendation is to disable traps on z/OS by default.
+   * Users can choose to enable traps using the "enableTraps" option.
+   */
+   #if defined(J9ZOS390)
+      self()->setOption(TR_DisableTraps);
+   #endif
+
+   if (self()->getOption(TR_AggressiveOpts))
+      self()->setOption(TR_DontDowngradeToCold, true);
+
+   if (forceSuffixLogs)
+      self()->setOption(TR_EnablePIDExtension);
+
+   if (jitConfig->runtimeFlags & J9JIT_CG_REGISTER_MAPS)
+      self()->setOption(TR_RegisterMaps);
+
+   jitConfig->tLogFile     = -1;
+   jitConfig->tLogFileTemp = -1;
+
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+   uint32_t numProc = compInfo->getNumTargetCPUs();
+   TR::Compiler->host.setNumberOfProcessors(numProc);
+   TR::Compiler->target.setNumberOfProcessors(numProc);
+   TR::Compiler->relocatableTarget.setNumberOfProcessors(numProc);
+
+   self()->preProcessMmf(vm, jitConfig);
+
+   if (FIND_ARG_IN_VMARGS(EXACT_MATCH, "-Xnoclassgc", 0) >= 0)
+      self()->setOption(TR_NoClassGC);
+
+   self()->preProcessMode(vm, jitConfig);
+
+   self()->preProcessJniAccelerator(vm);
+
+   if (!self()->preProcessCodeCache(vm, jitConfig))
+      {
+         return false;
+      }
+
+   self()->preProcessSamplingExpirationTime(vm);
+
+   self()->preProcessCompilationThreads(vm, jitConfig);
+
+   self()->preProcessTLHPrefetch(vm);
+
+#if defined(TR_HOST_X86) || defined(TR_TARGET_POWER) || defined (TR_HOST_S390)
+   self()->setOption(TR_ReservingLocks);
+#endif
+
+   self()->preProcessHwProfiler(vm);
+
+#if defined (TR_HOST_S390)
+   // On z Systems inlining very large compiled bodies proved to be worth a significant amount in terms of throughput
+   // on benchmarks that we track. As such the throughput-compile-time tradeoff was significant enough to warrant the
+   // inlining of very large compiled bodies on z Systems by default.
+   if (vm->runtimeFlags & J9_RUNTIME_TUNE_VIRTUALIZED)
+      {
+      // Disable inlining of very large compiled methods only under -Xtune:virtualized
+      self()->setOption(TR_InlineVeryLargeCompiledMethods, false);
+      }
+   else
+      {
+      self()->setOption(TR_InlineVeryLargeCompiledMethods);
+      }
+#endif
+
+   // On big machines we can afford to spend more time compiling
+   // (but not on zOS where customers care about CPU or on Xquickstart
+   // which should be skimpy on compilation resources).
+   // TR_SuspendEarly is set on zOS because test results indicate that
+   // it does not benefit much by spending more time compiling.
+#if !defined(J9ZOS390)
+   if (!self()->isQuickstartDetected())
+      {
+      // Power uses a larger SMT than X or Z
+      uint32_t largeNumberOfCPUs = TR::Compiler->target.cpu.isPower() ? 64 : 32;
+      if (compInfo->getNumTargetCPUs() >= largeNumberOfCPUs)
+         {
+         self()->setOption(TR_ConcurrentLPQ);
+         self()->setOption(TR_EarlyLPQ);
+         TR::Options::_expensiveCompWeight = 99; // default 20
+         TR::Options::_invocationThresholdToTriggerLowPriComp = 50; // default is 250
+         TR::Options::_numIProfiledCallsToTriggerLowPriComp = 100; // default is 250
+         TR::Options::_numDLTBufferMatchesToEagerlyIssueCompReq = 1;
+         }
+      }
+#else
+   self()->setOption(TR_SuspendEarly);
+#endif
+
+   // samplingJProfiling is disabled globally. It will be enabled on a method by
+   // method basis based on selected heuristic
+   self()->setDisabled(OMR::samplingJProfiling, true);
+
+#if defined (TR_HOST_S390)
+   // Disable lock reservation due to a functional problem causing a deadlock situation in an ODM workload in Java 8
+   // SR5. In addition several performance issues on SPARK workloads have been reported which seem to concurrently
+   // access StringBuffer objects from multiple threads.
+   self()->setOption(TR_DisableLockResevation);
+   // Setting number of onsite cache slots for instanceOf node to 4 on IBM Z
+   self()->setMaxOnsiteCacheSlotForInstanceOf(4);
+#endif
+   // Set a value for _safeReservePhysicalMemoryValue that is proportional
+   // to the amount of free physical memory at boot time
+   // The user can still override it with a command line option
+   bool incomplete = false;
+   uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
+   if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
+      {
+      const uint64_t reserveLimit = 32 * 1024 * 1024;
+      uint64_t proposed = phMemAvail >> 6; // 64 times less
+      if (proposed > reserveLimit)
+         proposed = reserveLimit;
+      J9::Options::_safeReservePhysicalMemoryValue = (int32_t)proposed;
+      }
+
+   // enable TR_SelfTuningScratchMemoryUsageBeforeCompile if there is no swap memory
+   J9MemoryInfo memInfo;
+   if ((omrsysinfo_get_memory_info(&memInfo) == 0) && (0 == memInfo.totalSwap))
+      {
+      self()->setOption(TR_EnableSelfTuningScratchMemoryUsageBeforeCompile);
+      }
+
+   self()->preProcessDeterministicMode(vm);
+
+   if (!TR::Compiler->target.cpu.isZ())
+      self()->setOption(TR_DisableAOTBytesCompression);
+
+   if (!self()->preProcessJitServer(vm, jitConfig))
+      {
+         return false;
+      }
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER)) && defined(TR_TARGET_64BIT)
    self()->setOption(TR_EnableSymbolValidationManager);
