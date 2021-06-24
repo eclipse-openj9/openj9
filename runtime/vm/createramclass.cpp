@@ -2210,7 +2210,9 @@ nativeOOM:
 
 				/* Release the mutex, GC, and reacquire the mutex */
 				omrthread_monitor_exit(javaVM->classTableMutex);
+				PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, (j9object_t)state->classObject);
 				javaVM->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_NATIVE_OUT_OF_MEMORY);
+				state->classObject = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 				omrthread_monitor_enter(javaVM->classTableMutex);
 				
 				if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN)) {
