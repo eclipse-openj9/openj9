@@ -472,6 +472,28 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	UDATA options, J9Class* elementClass, j9object_t protectionDomain, J9ROMMethod ** methodRemapArray,
 	IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, J9Class *hostClass);
 
+
+/* ---------------- criuhelpers.cpp ---------------- */
+
+/**
+ * @brief JVM hooks to run before performing a JVM checkpoint
+ *
+ * @param currentThread vmthread token
+ * @return TRUE on success, FALSE otherwise
+ */
+BOOLEAN
+jvmCheckpointHooks(J9VMThread *currentThread);
+
+/**
+ * @brief JVM hooks to run after performing a JVM checkpoint. If
+ * there is a fatal error, the process will terminate.
+ *
+ * @param currentThread vmthread token
+ * @return TRUE on success, FALSE otherwise
+ */
+BOOLEAN
+jvmRestoreHooks(J9VMThread *currentThread);
+
 /* ---------------- classloadersearch.c ---------------- */
 
 /**

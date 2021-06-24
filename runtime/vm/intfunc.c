@@ -399,4 +399,8 @@ J9InternalVMFunctions J9InternalFunctions = {
 	areValueBasedMonitorChecksEnabled,
 	fieldContainsRuntimeAnnotation,
 	findFieldExt,
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	jvmCheckpointHooks,
+	jvmRestoreHooks,
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };
