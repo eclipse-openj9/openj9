@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,14 +50,6 @@
 #define J9DYNAMIC_ONUNLOAD              "JNI_OnUnload"
 
 static void cleanPackage(J9Package *package);
-
-UDATA
-initializePackageID(J9ClassLoader *classLoader, J9ROMClass *romClass, J9VMThread *vmThread, IDATA entryIndex, I_32 locationType)
-{
-	UDATA id = hashPkgTableIDFor(vmThread, classLoader, romClass, entryIndex, locationType);
-
-	return id;
-}
 
 #define CLASS_PROPAGATION_TABLE_SIZE 3
 
