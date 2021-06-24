@@ -1275,9 +1275,7 @@ void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
 
 bool TR::CompilationInfo::useSeparateCompilationThread()
    {
-   if (!TR::Options::getCmdLineOptions()->getOption(TR_AOT))
-      return !TR::Options::getCmdLineOptions()->getOption(TR_DisableCompilationThread);
-   return TR::Options::getCmdLineOptions()->getOption(TR_EnableCompilationThread);
+   return !TR::Options::getCmdLineOptions()->getOption(TR_DisableCompilationThread);
    }
 
 bool TR::CompilationInfo::asynchronousCompilation()
@@ -8321,8 +8319,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             // Adjust Options for AOT compilation
             if (vm->isAOT_DEPRECATED_DO_NOT_USE())
                {
-               options->setOption(TR_AOT);
-
                // Disable dynamic literal pool for AOT because of an unresolved data snippet patching issue in which
                // the "Address Of Ref. Instruction" in the unresolved data snippet points to the wrong load instruction
                options->setOption(TR_DisableOnDemandLiteralPoolRegister);

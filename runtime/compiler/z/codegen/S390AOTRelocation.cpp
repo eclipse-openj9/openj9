@@ -33,7 +33,7 @@
 
 void TR::S390PairedRelocation::mapRelocation(TR::CodeGenerator *cg)
    {
-   if (cg->comp()->getOption(TR_AOT))
+   if (cg->comp()->compileRelocatableCode())
       {
       cg->addExternalRelocation(
          new (cg->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(

@@ -28,7 +28,7 @@ void TR::ARMPairedRelocation::mapRelocation(TR::CodeGenerator *cg)
    {
    //if(isSmall()) return;
    
-   if (TR::comp()->getOption(TR_AOT))
+   if (TR::comp()->compileRelocatableCode())
       {
       cg->addExternalRelocation(
          new (cg->trHeapMemory()) TR::ExternalOrderedPair32BitRelocation(

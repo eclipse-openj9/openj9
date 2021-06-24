@@ -8113,7 +8113,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       }
    TR::RegisterDependencyConditions * conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg);
 
-   bool isAOT = comp->getOption(TR_AOT);
    TR_Debug * debugObj = cg->getDebug();
 
 
@@ -8529,7 +8528,6 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
 
 
    TR::Instruction * gcPoint;
-   bool isAOT = comp->getOption(TR_AOT);
    TR_Debug * debugObj = cg->getDebug();
 
    bool reserveLocking                          = false;
