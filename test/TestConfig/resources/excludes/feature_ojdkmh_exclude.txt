@@ -37,3 +37,8 @@ com.ibm.j9.jsr292.ReceiverBoundHandleTest:testIfRecieverBoundHandleTestIsJitted 
 com.ibm.j9.jsr292.InterfaceHandleTest:testIfInterfaceHandleIsJitted AN-https://github.com/eclipse-openj9/openj9/issues/12571 generic-all
 com.ibm.j9.jsr292.DirectHandleTest:testIfDirectHandleTestIsJitted AN-https://github.com/eclipse-openj9/openj9/issues/12571 generic-all
 
+com.ibm.j9.jsr292.MethodHandleTest:test_exactInvoker_ArityLimit AN-https://github.com/eclipse-openj9/openj9/issues/13050 generic-all
+com.ibm.j9.jsr292.MethodHandleTest:test_exactInvoker_Static_ArityLimit AN-https://github.com/eclipse-openj9/openj9/issues/13050 generic-all
+com.ibm.j9.jsr292.MethodHandleTest:test_invoker_ArityLimit AN-https://github.com/eclipse-openj9/openj9/issues/13050 generic-all
+com.ibm.j9.jsr292.MethodHandleTest:test_invoker_Static_ArityLimit AN-https://github.com/eclipse-openj9/openj9/issues/13050 generic-all
+com.ibm.j9.jsr292.PermuteTest:testPermuteHandleMaximumArguments AN-https://github.com/eclipse-openj9/openj9/issues/13050 generic-all
