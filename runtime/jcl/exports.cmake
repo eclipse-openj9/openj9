@@ -635,6 +635,7 @@ endif()
 # CRIU support
 if(J9VM_OPT_CRIU_SUPPORT)
 	omr_add_exports(jclse
-		Java_com_ibm_jvm_CRIUSupport_isCRIUSupportEnabledImpl
+		Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl
+		Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl
 	)
 endif()

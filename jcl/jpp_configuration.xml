@@ -61,6 +61,7 @@
 		<source path="src/jdk.attach/share/classes"/>
 		<source path="src/jdk.jcmd/share/classes"/>
 		<source path="src/jdk.management/share/classes"/>
+		<source path="src/openj9.criu/share/classes" />
 		<source path="src/openj9.cuda/share/classes" />
 		<source path="src/openj9.dataaccess/share/classes"/>
 		<source path="src/openj9.gpu/share/classes" />
@@ -86,6 +87,7 @@
 		<source path="src/jdk.attach/share/classes"/>
 		<source path="src/jdk.jcmd/share/classes"/>
 		<source path="src/jdk.management/share/classes"/>
+		<source path="src/openj9.criu/share/classes" />
 		<source path="src/openj9.cuda/share/classes" />
 		<source path="src/openj9.dataaccess/share/classes"/>
 		<source path="src/openj9.gpu/share/classes" />
@@ -108,6 +110,7 @@
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.jcmd/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.criu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
@@ -135,6 +138,7 @@
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.jcmd/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.criu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
@@ -162,6 +166,7 @@
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.jcmd/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.criu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
@@ -189,6 +194,7 @@
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.jcmd/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.criu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
@@ -217,6 +223,7 @@
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.jcmd/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
+		<classpathentry kind="src" path="src/openj9.criu/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>

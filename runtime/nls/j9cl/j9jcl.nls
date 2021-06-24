@@ -444,3 +444,43 @@ J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.explanation=A duplicated class definition i
 J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.system_action=The JVM will throw a LinkageError.
 J9NLS_JCL_DUPLICATE_CLASS_DEFINITION.user_response=Ensure there is no duplicate definition for the class in the message and try again.
 # END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR=Could not open the checkpoint data directory, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.explanation=An error occured when the JVM attempted to open the specified directory.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.system_action=The JVM will throw an InternalError.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_INIT_FAILED=Could not init CRIU options, err=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_INIT_FAILED.sample_input_1=1
+J9NLS_JCL_CRIU_INIT_FAILED.explanation=An error occured when the JVM attempted to initialize CRIU options.
+J9NLS_JCL_CRIU_INIT_FAILED.system_action=The JVM will throw an InternalError.
+J9NLS_JCL_CRIU_INIT_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_DUMP_FAILED=Could not dump the JVM processs, err=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_DUMP_FAILED.sample_input_1=1
+J9NLS_JCL_CRIU_DUMP_FAILED.explanation=An error occured when the JVM attempted to dump the process via criu_dump.
+J9NLS_JCL_CRIU_DUMP_FAILED.system_action=The JVM will throw an InternalError.
+J9NLS_JCL_CRIU_DUMP_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR=Could not close the checkpoint data directory, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.explanation=An error occured when the JVM attempted to close the specified directory.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw an InternalError.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING=Could not convert java string to native encoding, err=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.explanation=An error occured when the JVM attempted to convert a java string to native encoding.
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.system_action=The JVM will throw an InternalError.
+J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.user_response=Ensure the specified input strings are valid.
+# END NON-TRANSLATABLE

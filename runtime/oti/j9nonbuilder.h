@@ -4789,6 +4789,10 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*areValueBasedMonitorChecksEnabled)(struct J9JavaVM *vm);
 	BOOLEAN (*fieldContainsRuntimeAnnotation)(struct J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
 	J9ROMFieldShape* (*findFieldExt)(struct J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	BOOLEAN (*jvmCheckpointHooks)(struct J9VMThread *currentThread);
+	BOOLEAN (*jvmRestoreHooks)(struct J9VMThread *currentThread);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
@@ -5524,6 +5528,17 @@ typedef struct J9JavaVM {
 	U_32 javaVM31;
 	U_32 javaVM31PadTo8; /* Possible to optimize with future guarded U_32 member in ENV_DATA64. */
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	jclass criuResultTypeClass;
+	jfieldID criuSupportSuccess;
+	jfieldID criuSupportUnsupportedOperation;
+	jfieldID criuSupportInvalidArguments;
+	jfieldID criuSupportSystemCheckpointFailure;
+	jfieldID criuSupportJVMCheckpointFailure;
+	jfieldID criuSupportJVMRestoreFailure;
+	jclass criuResultClass;
+	jmethodID criuResultInit;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

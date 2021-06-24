@@ -1,5 +1,3 @@
-/*[INCLUDE-IF CRIU_SUPPORT]*/
-
 /*******************************************************************************
  * Copyright (c) 2021, 2021 IBM Corp. and others
  *
@@ -21,26 +19,24 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.jvm;
+#include "j9.h"
 
-/**
- * CRIU Support API
- */
-public final class CRIUSupport {
-	
-	private static final boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
-	
-	private CRIUSupport() {}
-	
-	private static native boolean isCRIUSupportEnabledImpl();
-	
-	/**
-	 * Queries if CRIU support is enabled.
-	 * 
-	 * @return TRUE is support is enabled, FALSE otherwise
-	 */
-	public static boolean isCRIUSupportEnabled() {
-		return criuSupportEnabled;
-	}
-	
+extern "C" {
+
+BOOLEAN
+jvmCheckpointHooks(J9VMThread *currentThread)
+{
+	/* TODO checkpoint hooks will be called here */
+
+	return TRUE;
 }
+
+BOOLEAN
+jvmRestoreHooks(J9VMThread *currentThread)
+{
+	/* TODO restore hooks will be called here */
+
+	return TRUE;
+}
+
+}/* extern "C" */

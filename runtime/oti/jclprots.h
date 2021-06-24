@@ -1151,7 +1151,10 @@ Java_com_ibm_virtualization_management_internal_GuestOS_retrieveProcessorUsageIm
 
 /* CRIUSupport.c */
 jboolean JNICALL
-Java_com_ibm_jvm_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused);
+Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused);
+
+jobject JNICALL
+Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env, jclass unused, jstring checkPointDir, jboolean keepRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile);
 
 /* com_ibm_jvm_Stats.c */
 void JNICALL
