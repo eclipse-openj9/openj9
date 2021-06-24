@@ -54,7 +54,7 @@
 	<test>
 		<testCaseName>UnreflectTests</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)module_bin$(D)org.openj9test.modularity.unnamed$(Q) \
+		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)module_bin$(D)org.openj9test.modularity.unnamed$(Q) \
 		--module-path $(Q)$(TEST_RESROOT)$(D)module_bin$(Q) \
 		--add-modules org.openj9test.modularity.testUnreflect,org.openj9test.modularity.dummy \
 		--add-exports org.openj9test.modularity.testUnreflect/org.openj9.test.modularity.tests=ALL-UNNAMED \
