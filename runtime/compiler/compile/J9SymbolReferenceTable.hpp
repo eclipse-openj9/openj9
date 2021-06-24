@@ -313,6 +313,16 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    /**
     * \brief
+    *    Finds the <nonNullableArrayNullStoreCheck> "nonhelper" symbol
+    *    reference, creating it if necessary.
+    *
+    *  \return
+    *     The <nonNullableArrayNullStoreCheck> symbol reference.
+    */
+   TR::SymbolReference *findOrCreateNonNullableArrayNullStoreCheckSymbolRef();
+
+   /**
+    * \brief
     *    Creates a new symbol for a parameter within the supplied owning method of the
     *    specified type and slot index.
     *
