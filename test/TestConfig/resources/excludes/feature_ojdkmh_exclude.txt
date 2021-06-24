@@ -26,8 +26,6 @@ org.openj9.test.java.lang.invoke.Test_MethodHandleInfo:test_RevealDirect_TargetV
 
 org.openj9.test.modularity.tests.UnreflectTests:testLookupUnreflectSpecial AN-https://github.com/eclipse-openj9/openj9/issues/11935 generic-all
 
-org.openj9.test.java.security.Test_AccessController:test_doPrivilegedFrameStackWalking AN-https://github.com/eclipse-openj9/openj9/issues/12690 generic-all
-
 com.ibm.j9.jsr292.MethodHandleTest:testBindTo AN-https://github.com/eclipse-openj9/openj9/issues/12571 generic-all
 com.ibm.j9.jsr292.AsTypeTest:testAll AN-https://github.com/eclipse-openj9/openj9/issues/12571 generic-all
 com.ibm.j9.jsr292.PermuteTest:testPermuteArguments AN-https://github.com/eclipse-openj9/openj9/issues/12571 generic-all
