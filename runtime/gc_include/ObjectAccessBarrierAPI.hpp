@@ -2741,12 +2741,12 @@ private:
 		if (0 != parent->globalFragmentIndex) {
 			/* if the double barrier is enabled call OOL */
 			if (0 == fragment->localFragmentIndex) {
-				vmThread->javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierStore(vmThread, object, destAddress, value);
+				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreStore(vmThread, object, destAddress, value);
 			} else {
 				j9object_t oldObject = readObjectImpl(vmThread, destAddress, false);
 				if (NULL != oldObject) {
 					if (!isMarked(vmThread, oldObject)) {
-						vmThread->javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierStore(vmThread, object, destAddress, value);
+						vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreStore(vmThread, object, destAddress, value);
 					}
 				}
 			}
@@ -2772,12 +2772,12 @@ private:
 		if (0 != parent->globalFragmentIndex) {
 			/* if the double barrier is enabled call OOL */
 			if (0 == fragment->localFragmentIndex) {
-				vmThread->javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierJ9ClassStore(vmThread, object, destAddress, value);
+				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierJ9PreClassStore(vmThread, object, destAddress, value);
 			} else {
 				j9object_t oldObject = *destAddress;
 				if (NULL != oldObject) {
 					if (!isMarked(vmThread, oldObject)) {
-						vmThread->javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierJ9ClassStore(vmThread, object, destAddress, value);
+						vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierJ9PreClassStore(vmThread, object, destAddress, value);
 					}
 				}
 			}
