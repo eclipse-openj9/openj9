@@ -1,4 +1,5 @@
 {
     "custom_openjdk_testrepo": true,
+    "custom_openj9_repo": false,
     "custom_tkg_repo": true
 }
