@@ -274,18 +274,6 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
 /* ---------------- classallocation.c ---------------- */
 
 /**
-* @brief Get Package ID for the ROM class. NOTE: You must own the class table mutex before calling this function.
-* @param *classLoader Classloader for the class
-* @param *romClass ROM class with package name
-* @param *vmThread J9VMThread instance
-* @param entryIndex classpath index
-* @param locationType location type of class
-* @return UDATA Package ID
-*/
-UDATA
-initializePackageID(J9ClassLoader *classLoader, J9ROMClass *romClass, J9VMThread *vmThread, IDATA entryIndex, I_32 locationType);
-
-/**
 * @brief
 * @param *javaVM
 * @param *classLoaderObject
@@ -432,6 +420,10 @@ contendedLoadTableFree(J9JavaVM* vm);
  * Use this if you don't have the class path index.
  */
 #define J9_CP_INDEX_NONE -1
+/**
+ * Use this to peek the package ID table
+ */
+#define J9_CP_INDEX_PEEK -2
 
 /**
  * Checks stack to see if element exists, if not adds the new element and returns TRUE. Otherwise, returns FALSE
@@ -2132,6 +2124,7 @@ cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor*
 
 /**
 * @brief Find the package ID for the given name and length
+* @note Must own the classTableMutex.
 * @param *vmThread J9VMThread instance
 * @param *classLoader Classloader for the class
 * @param *romClass ROM class with the package name
@@ -2144,7 +2137,8 @@ hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass* 
 
 /**
 * @brief Look up the package information given a ROM class.
-* @note the ROM class may be a dummy with only  the package name.
+* @note Must own the classTableMutex.
+* @note The ROM class may be a dummy with only the package name.
 * @param *classLoader Classloader for the class
 * @param *romClass ROM class with the package name
 * @return J9PackageIDTableEntry* ROM class representing a package

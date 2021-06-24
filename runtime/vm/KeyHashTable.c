@@ -523,10 +523,6 @@ hashClassTableNextDo(J9HashTableState *walkState)
 	return (NULL == next) ? NULL : next->ramClass;
 }
 
-/**
- * Find the package ID for the given name and length.
- * NOTE: You must own the class table mutex before calling this function.
- */
 UDATA
 hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, IDATA entryIndex, I_32 locationType)
 {
@@ -548,14 +544,27 @@ hashPkgTableIDFor(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *
 		return (UDATA)classLoader;
 	} else {
 		UDATA packageID = 0;
-		KeyHashTableClassEntry *result = hashTableAdd(table, &key);
-		if (NULL == result) {
-			result = growClassHashTable(javaVM, classLoader, &key);
+		KeyHashTableClassEntry *result = NULL;
+		BOOLEAN peekOnly = (J9_CP_INDEX_PEEK == entryIndex);
+
+		if (peekOnly) {
+			result = hashTableFind(table, &key);
+			if (NULL == result) {
+				/* Not in the table yet, so use this romClass for the packageID as it is the
+				 * first occurrence of this package in this class loader.
+				 */
+				result = &key;
+			}
+		} else {
+			result = hashTableAdd(table, &key);
+			if (NULL == result) {
+				result = growClassHashTable(javaVM, classLoader, &key);
+			}
 		}
 		if (NULL != result) {
-			packageID = *(UDATA *)result;
+			packageID = result->packageID.taggedROMClass;
 			if (isSystemClassLoader && J9_ARE_ALL_BITS_SET(result->tag, TAG_GENERATED_PACKAGE)) {
-				if (J9_ARE_NO_BITS_SET(key.tag, TAG_GENERATED_PACKAGE)) {
+				if (!peekOnly && J9_ARE_NO_BITS_SET(key.tag, TAG_GENERATED_PACKAGE)) {
 					/* Below function removes the TAG_GENERATED_PACKAGE bit from the hash table entry after adding
 					 * a location for the generated class.
 					 */
