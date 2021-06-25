@@ -1203,6 +1203,7 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
 void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
    {
    J9MemoryManagerFunctions * mmf = vm->memoryManagerFunctions;
+
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
    TR_J9VMBase * fe = TR_J9VMBase::get(jitConfig, 0);
    if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
@@ -1254,6 +1255,9 @@ void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
       }
 
 #if defined(TR_TARGET_64BIT) && defined(J9ZOS390)
+   PORT_ACCESS_FROM_JAVAVM(vm);
+   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
    OMROSDesc desc;
    j9sysinfo_get_os_description(&desc);
 
