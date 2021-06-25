@@ -1104,14 +1104,14 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if( comp()->getVisitCount() > HIGH_VISIT_COUNT )
       {
       heuristicTrace(tracer(),"Depth %d: estimateCodeSize aborting due to high comp()->getVisitCount() of %d",_recursionDepth,comp()->getVisitCount());
-      return returnCleanup(3);
+      return returnCleanup(ECS_VISITED_COUNT_THRESHOLD_EXCEEDED);
       }
 
    if (_recursionDepth > MAX_ECS_RECURSION_DEPTH)
       {
       calltarget->_isPartialInliningCandidate = false;
       heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. Exceeded Recursion Depth", _recursionDepth, calltarget, callerName);
-      return returnCleanup(1);
+      return returnCleanup(ECS_RECURSION_DEPTH_THRESHOLD_EXCEEDED);
       }
 
    InterpreterEmulator bci(calltarget, methodSymbol, static_cast<TR_J9VMBase *> (comp()->fej9()), comp(), tracer(), this);
@@ -1136,7 +1136,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (!TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(argsFromSymbol, calltarget->_ecsPrexArgInfo, tracer()))
    {
       heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. Incompatible arguments", _recursionDepth, calltarget, callerName);
-      return returnCleanup(6);
+      return returnCleanup(ECS_ARGUMENTS_INCOMPATIBLE);
    }
 
    NeedsPeekingHeuristic nph(calltarget, bci, methodSymbol, comp());
@@ -1301,7 +1301,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       if (!bci.findAndCreateCallsitesFromBytecodes(wasPeekingSuccessfull, iteratorWithState))
          {
          heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. bci.findAndCreateCallsitesFromBytecode failed", _recursionDepth, calltarget, callerName);
-         return returnCleanup(7);
+         return returnCleanup(ECS_CALLSITES_CREATION_FAILED);
          }
       _hasNonColdCalls = bci._nonColdCallExists;
       }
@@ -1408,13 +1408,13 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       {
       calltarget->_isPartialInliningCandidate = false;
       heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. optimisticSize exceeds Size Threshold", _recursionDepth, calltarget, callerName);
-      return returnCleanup(2);
+      return returnCleanup(ECS_OPTIMISTIC_SIZE_THRESHOLD_EXCEEDED);
       }
 
    if (!recurseDown)
       {
       heuristicTrace(tracer(),"*** Depth %d: ECS end for target %p signature %s. recurseDown set to false. size = %d _fullSize = %d", _recursionDepth, calltarget, callerName, size, calltarget->_fullSize);
-      return returnCleanup(0);
+      return returnCleanup(ECS_NORMAL);
       }
 
    /****************** Phase 4: Deal with Inlineable Calls **************************/
@@ -1427,7 +1427,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       if (_realSize > sizeThreshold)
          {
          heuristicTrace(tracer(),"*** Depth %d: ECS end for target %p signature %s. real size %d exceeds sizeThreshold %d", _recursionDepth,calltarget, callerName,_realSize,sizeThreshold);
-         return returnCleanup(4);
+         return returnCleanup(ECS_REAL_SIZE_THRESHOLD_EXCEEDED);
          }
 
       if (blocks[i])
@@ -1609,7 +1609,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   if(comp()->getVisitCount() > HIGH_VISIT_COUNT)
                      {
                      heuristicTrace(tracer(),"Depth %d: estimateCodeSize aborting due to high comp()->getVisitCount() of %d",_recursionDepth,comp()->getVisitCount());
-                     return returnCleanup(3);
+                     return returnCleanup(ECS_VISITED_COUNT_THRESHOLD_EXCEEDED);
                      }
                   }
                else if (calltargetSetTooBig)
@@ -1630,7 +1630,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   if(comp()->getVisitCount() > HIGH_VISIT_COUNT)
                      {
                      heuristicTrace(tracer(),"Depth %d: estimateCodeSize aborting due to high comp()->getVisitCount() of %d",_recursionDepth,comp()->getVisitCount());
-                     return returnCleanup(3);
+                     return returnCleanup(ECS_VISITED_COUNT_THRESHOLD_EXCEEDED);
                      }
                   }
 
@@ -1699,10 +1699,10 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (_realSize > sizeThreshold)
       {
       heuristicTrace(tracer(),"*** Depth %d: ECS end for target %p signature %s. real size exceeds Size Threshold", _recursionDepth,calltarget, callerName);
-      return returnCleanup(4);
+      return returnCleanup(ECS_REAL_SIZE_THRESHOLD_EXCEEDED);
       }
 
-   return returnCleanup(0);
+   return returnCleanup(ECS_NORMAL);
    }
 
 bool TR_J9EstimateCodeSize::reduceDAAWrapperCodeSize(TR_CallTarget* target)

@@ -36,6 +36,16 @@ struct TR_CallTarget;
 
 #define MAX_ECS_RECURSION_DEPTH 30
 
+enum EcsCleanupErrorStates {
+   ECS_NORMAL = 0,
+   ECS_RECURSION_DEPTH_THRESHOLD_EXCEEDED,
+   ECS_OPTIMISTIC_SIZE_THRESHOLD_EXCEEDED,
+   ECS_VISITED_COUNT_THRESHOLD_EXCEEDED,
+   ECS_REAL_SIZE_THRESHOLD_EXCEEDED,
+   ECS_ARGUMENTS_INCOMPATIBLE,
+   ECS_CALLSITES_CREATION_FAILED
+};
+
 class TR_EstimateCodeSize
    {
    public:
@@ -79,7 +89,7 @@ class TR_EstimateCodeSize
 
    int32_t getSize()                   { return _realSize; }
    virtual int32_t getOptimisticSize() { return 0; } // override in subclasses that support partial inlining
-   int32_t getError()                  { return _error; }
+   EcsCleanupErrorStates getError()    { return _error; }
    int32_t getSizeThreshold()          { return _sizeThreshold; }
    bool aggressivelyInlineThrows()     { return _aggressivelyInlineThrows; }
    bool recursedTooDeep()              { return _recursedTooDeep; }
@@ -104,10 +114,10 @@ class TR_EstimateCodeSize
    /*
     *  \brief common tasks requiring completion before returning from estimation
     *
-    *  \param errorNumber
-    *       an unique number used to identify where estimate code size bailed out
+    *  \param errorState
+    *       an unique state used to identify where estimate code size bailed out
     */
-   bool returnCleanup(int32_t errorNumber );
+   bool returnCleanup(EcsCleanupErrorStates errorState);
 
    /* Fields */
 
@@ -123,7 +133,7 @@ class TR_EstimateCodeSize
 
    int32_t _sizeThreshold;
    int32_t _realSize;        // size once we know if we're doing a partial inline or not
-   int32_t _error;
+   EcsCleanupErrorStates _error;
 
    int32_t _totalBCSize;     // Pure accumulation of the bytecode size. Used by HW-based inlining.
 
