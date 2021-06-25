@@ -3012,9 +3012,9 @@ fail:
 			 *                     + J9ClassCanSupportFastSubstitutability
 			 *
 			 *                   + J9ClassHasReferences
-			 *                  + J9ClassIsValueBased
-			 *                 + J9ClassHasIdentity (inherited)
-			 *                + Unused
+			 *                  + J9ClassRequiresPrePadding
+			 *                 + J9ClassIsValueBased
+			 *                + J9ClassHasIdentity (inherited)
 			 *
 			 *              + Unused
 			 *             + Unused
@@ -3266,8 +3266,10 @@ fail:
 					 * elements may be flattened arrays.
 					 */
 					ramArrayClass->classFlags |= (elementClass->classFlags & arrayFlags);
-
 				}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				ramArrayClass->classFlags |= J9ClassHasIdentity; 
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				ramArrayClass->leafComponentType = leafComponentType;
 				ramArrayClass->arity = arity;
 				ramArrayClass->componentType = elementClass;
