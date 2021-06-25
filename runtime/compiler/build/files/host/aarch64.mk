@@ -19,6 +19,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
 JIT_PRODUCT_BACKEND_SOURCES+= \
+    omr/compiler/aarch64/runtime/ARM64arrayCopy.spp \
     omr/compiler/aarch64/runtime/CodeSync.cpp \
     omr/compiler/aarch64/runtime/VirtualGuardRuntime.cpp
 
