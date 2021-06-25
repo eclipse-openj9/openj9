@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,9 +29,9 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	J9AllocateObject,
 	J9AllocateIndexableObjectNoGC,
 	J9AllocateObjectNoGC,
-	J9WriteBarrierStore,
+	J9WriteBarrierPostStore,
 	J9WriteBarrierBatchStore,
-	J9WriteBarrierJ9ClassStore,
+	J9WriteBarrierJ9PostClassStore,
 	J9WriteBarrierJ9ClassBatchStore,
 	allocateMemoryForSublistFragment,
 	j9gc_heap_free_memory,
@@ -101,8 +101,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_ext_reachable_objects_do,
 	j9gc_ext_reachable_from_object_do,
 	j9gc_jit_isInlineAllocationSupported,
-	J9MetronomeWriteBarrierStore,
-	J9MetronomeWriteBarrierJ9ClassStore,
+	J9WriteBarrierPreStore,
+	J9WriteBarrierJ9PreClassStore,
 	J9ReadBarrier,
 	J9ReadBarrierJ9Class,
 	j9gc_weakRoot_readObject,

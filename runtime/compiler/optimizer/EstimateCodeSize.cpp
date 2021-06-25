@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ TR_EstimateCodeSize::get(TR_InlinerBase * inliner, TR_InlinerTracer *tracer, int
 
    estimator->_sizeThreshold = sizeThreshold;
    estimator->_realSize = 0;
-   estimator->_error = 0;
+   estimator->_error = ECS_NORMAL;
 
    estimator->_numOfEstimatedCalls = 0;
    estimator->_hasNonColdCalls = true;
@@ -149,12 +149,12 @@ TR_EstimateCodeSize::isInlineable(TR_CallStack * prevCallStack, TR_CallSite *cal
    }
 
 bool
-TR_EstimateCodeSize::returnCleanup(int32_t anerrno)
+TR_EstimateCodeSize::returnCleanup(EcsCleanupErrorStates errorState)
    {
-   _error = anerrno;
+   _error = errorState;
    if (_mayHaveVirtualCallProfileInfo)
       _inliner->comp()->decInlineDepth(true);
-   if (anerrno > 0)
+   if (errorState > 0)
       return false;
    else
       return true;

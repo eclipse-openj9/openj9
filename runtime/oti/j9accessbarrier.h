@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -160,56 +160,56 @@ typedef struct J9IndexableObject* mm_j9array_t;
 	(\
 	((OMR_GC_WRITE_BARRIER_TYPE_ALWAYS <= J9VMTHREAD_JAVAVM((vmThread))->gcWriteBarrierType) && \
 	(J9VMTHREAD_JAVAVM((vmThread))->gcWriteBarrierType <= OMR_GC_WRITE_BARRIER_TYPE_SATB_AND_OLDCHECK)) ? \
-	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9MetronomeWriteBarrierStore((vmThread), (j9object_t)(object), (fj9object_t*)(address), (j9object_t)(value)) : \
+	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9WriteBarrierPreStore((vmThread), (j9object_t)(object), (fj9object_t*)(address), (j9object_t)(value)) : \
 	(void)0 \
 	)
 #define J9OBJECT__PRE_OBJECT_STORE_ADDRESS_VM(javaVM, object, address, value) \
 	(\
 	((OMR_GC_WRITE_BARRIER_TYPE_ALWAYS <= javaVM->gcWriteBarrierType) && \
 	(javaVM->gcWriteBarrierType <= OMR_GC_WRITE_BARRIER_TYPE_SATB_AND_OLDCHECK)) ? \
-	javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierStore(J9JAVAVM_VMTHREAD(javaVM), (j9object_t)(object), (fj9object_t*)(address), (j9object_t)(value)) : \
+	javaVM->memoryManagerFunctions->J9WriteBarrierPreStore(J9JAVAVM_VMTHREAD(javaVM), (j9object_t)(object), (fj9object_t*)(address), (j9object_t)(value)) : \
 	(void)0 \
 	)
 #define J9OBJECT__POST_OBJECT_STORE_ADDRESS(vmThread, object, address, value) \
 	(\
 	((OMR_GC_WRITE_BARRIER_TYPE_OLDCHECK <= J9VMTHREAD_JAVAVM((vmThread))->gcWriteBarrierType) && \
 	(J9VMTHREAD_JAVAVM((vmThread))->gcWriteBarrierType <= OMR_GC_WRITE_BARRIER_TYPE_ALWAYS)) ? \
-	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9WriteBarrierStore((vmThread), (j9object_t)(object), (j9object_t)(value)) : \
+	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9WriteBarrierPostStore((vmThread), (j9object_t)(object), (j9object_t)(value)) : \
 	(void)0 \
 	)
 #define J9OBJECT__POST_OBJECT_STORE_ADDRESS_VM(javaVM, object, address, value) \
 	(\
 	((OMR_GC_WRITE_BARRIER_TYPE_OLDCHECK <= javaVM->gcWriteBarrierType) && \
 	(javaVM->gcWriteBarrierType <= OMR_GC_WRITE_BARRIER_TYPE_ALWAYS)) ? \
-	javaVM->memoryManagerFunctions->J9WriteBarrierStore(J9JAVAVM_VMTHREAD(javaVM), (j9object_t)(object), (j9object_t)(value)) : \
+	javaVM->memoryManagerFunctions->J9WriteBarrierPostStore(J9JAVAVM_VMTHREAD(javaVM), (j9object_t)(object), (j9object_t)(value)) : \
 	(void)0 \
 	)
 #define J9STATIC__PRE_OBJECT_STORE(vmThread, clazz, address, value) \
 	(\
 	((OMR_GC_WRITE_BARRIER_TYPE_ALWAYS <= J9VMTHREAD_JAVAVM((vmThread))->gcWriteBarrierType) && \
 	(J9VMTHREAD_JAVAVM((vmThread))->gcWriteBarrierType <= OMR_GC_WRITE_BARRIER_TYPE_SATB_AND_OLDCHECK)) ? \
-	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9MetronomeWriteBarrierJ9ClassStore((vmThread), J9VM_J9CLASS_TO_HEAPCLASS((clazz)), (j9object_t*)(address), (j9object_t)(value)) : \
+	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9WriteBarrierJ9PreClassStore((vmThread), J9VM_J9CLASS_TO_HEAPCLASS((clazz)), (j9object_t*)(address), (j9object_t)(value)) : \
 	(void)0 \
 	)
 #define J9STATIC__PRE_OBJECT_STORE_VM(javaVM, object, address, value) \
 	(\
 	((OMR_GC_WRITE_BARRIER_TYPE_ALWAYS <= javaVM->gcWriteBarrierType) && \
 	(javaVM->gcWriteBarrierType <= OMR_GC_WRITE_BARRIER_TYPE_SATB_AND_OLDCHECK)) ? \
-	javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierJ9ClassStore(J9JAVAVM_VMTHREAD(javaVM), J9VM_J9CLASS_TO_HEAPCLASS((clazz)), (j9object_t*)(address), (j9object_t)(value)) : \
+	javaVM->memoryManagerFunctions->J9WriteBarrierJ9PreClassStore(J9JAVAVM_VMTHREAD(javaVM), J9VM_J9CLASS_TO_HEAPCLASS((clazz)), (j9object_t*)(address), (j9object_t)(value)) : \
 	(void)0 \
 	)
 #define J9STATIC__POST_OBJECT_STORE(vmThread, clazz, address, value) \
 	(\
 	((OMR_GC_WRITE_BARRIER_TYPE_OLDCHECK <= J9VMTHREAD_JAVAVM((vmThread))->gcWriteBarrierType) && \
 	(J9VMTHREAD_JAVAVM((vmThread))->gcWriteBarrierType <= OMR_GC_WRITE_BARRIER_TYPE_ALWAYS)) ? \
-	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9WriteBarrierJ9ClassStore((vmThread), (clazz), (j9object_t)(value)) : \
+	J9VMTHREAD_JAVAVM((vmThread))->memoryManagerFunctions->J9WriteBarrierJ9PostClassStore((vmThread), (clazz), (j9object_t)(value)) : \
 	(void)0 \
 	)
 #define J9STATIC__POST_OBJECT_STORE_VM(javaVM, clazz, address, value) \
 	(\
 	((OMR_GC_WRITE_BARRIER_TYPE_OLDCHECK <= javaVM->gcWriteBarrierType) && \
 	(javaVM->gcWriteBarrierType <= OMR_GC_WRITE_BARRIER_TYPE_ALWAYS)) ? \
-	javaVM->memoryManagerFunctions->J9WriteBarrierJ9ClassStore(J9JAVAVM_VMTHREAD(javaVM), (clazz), (j9object_t)(value)) : \
+	javaVM->memoryManagerFunctions->J9WriteBarrierJ9PostClassStore(J9JAVAVM_VMTHREAD(javaVM), (clazz), (j9object_t)(value)) : \
 	(void)0 \
 	)
 

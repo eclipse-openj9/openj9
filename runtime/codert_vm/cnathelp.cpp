@@ -2866,7 +2866,7 @@ old_fast_jitWriteBarrierJ9ClassBatchStore(J9VMThread *currentThread)
 void J9FASTCALL
 fast_jitWriteBarrierJ9ClassStore(J9VMThread *currentThread, J9Class *destinationClass, j9object_t objectBeingStored)
 {
-	currentThread->javaVM->memoryManagerFunctions->J9WriteBarrierJ9ClassStore(currentThread, destinationClass, objectBeingStored);
+	currentThread->javaVM->memoryManagerFunctions->J9WriteBarrierJ9PostClassStore(currentThread, destinationClass, objectBeingStored);
 }
 
 void J9FASTCALL
@@ -2881,7 +2881,7 @@ old_fast_jitWriteBarrierJ9ClassStore(J9VMThread *currentThread)
 void J9FASTCALL
 fast_jitWriteBarrierStore(J9VMThread *currentThread, j9object_t destinationObject, j9object_t objectBeingStored)
 {
-	currentThread->javaVM->memoryManagerFunctions->J9WriteBarrierStore(currentThread, destinationObject, objectBeingStored);
+	currentThread->javaVM->memoryManagerFunctions->J9WriteBarrierPostStore(currentThread, destinationObject, objectBeingStored);
 }
 
 void J9FASTCALL
@@ -2926,7 +2926,7 @@ old_fast_jitWriteBarrierStoreGenerationalAndConcurrentMark(J9VMThread *currentTh
 void J9FASTCALL
 fast_jitWriteBarrierClassStoreMetronome(J9VMThread *currentThread, j9object_t destinationClassObject, J9Object** destinationAddress, j9object_t objectBeingStored)
 {
-	currentThread->javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierJ9ClassStore(currentThread, destinationClassObject, destinationAddress, objectBeingStored);
+	currentThread->javaVM->memoryManagerFunctions->J9WriteBarrierJ9PreClassStore(currentThread, destinationClassObject, destinationAddress, objectBeingStored);
 }
 
 void J9FASTCALL
@@ -2942,7 +2942,7 @@ old_fast_jitWriteBarrierClassStoreMetronome(J9VMThread *currentThread)
 void J9FASTCALL
 fast_jitWriteBarrierStoreMetronome(J9VMThread *currentThread, j9object_t destinationObject, fj9object_t* destinationAddress, j9object_t objectBeingStored)
 {
-	currentThread->javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierStore(currentThread, destinationObject, destinationAddress, objectBeingStored);
+	currentThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreStore(currentThread, destinationObject, destinationAddress, objectBeingStored);
 }
 
 void J9FASTCALL

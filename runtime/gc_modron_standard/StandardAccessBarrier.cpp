@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -293,6 +293,7 @@ MM_StandardAccessBarrier::postObjectStoreImpl(J9VMThread *vmThread, J9Object *ds
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 		/* Call the concurrent write barrier if required */
 		if(isIncrementalUpdateBarrierActive(vmThread) && _extensions->isOld(dstObject)) {
+			/* Once dependent OMR changes are in, this should be changed to: concurrentPostWriteBarrierStore(vmThread, destinationObject); */
 			J9ConcurrentWriteBarrierStore(vmThread->omrVMThread, dstObject, srcObject);
 		}
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
@@ -328,6 +329,7 @@ MM_StandardAccessBarrier::preBatchObjectStoreImpl(J9VMThread *vmThread, J9Object
 	if(_extensions->concurrentMark && 
 		(vmThread->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE) &&
 		_extensions->isOld(dstObject)) {
+		/* Once dependent OMR changes are in, this should be changed to: concurrentPostWriteBarrierStore(vmThread->omrVMThread, dstObject); */
 		J9ConcurrentWriteBarrierBatchStore(vmThread->omrVMThread, dstObject);
 	}
 #endif /* OMR_GC_MODRON_CONCURRENT_MARK */
