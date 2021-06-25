@@ -1256,7 +1256,6 @@ void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
 
 #if defined(TR_TARGET_64BIT) && defined(J9ZOS390)
    PORT_ACCESS_FROM_JAVAVM(vm);
-   OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
    OMROSDesc desc;
    j9sysinfo_get_os_description(&desc);
