@@ -616,7 +616,6 @@ enum INIT_STAGE {
 #define SYSPROP_JDK_MODULE_PATCH "jdk.module.patch."
 #define SYSPROP_JDK_MODULE_ILLEGALACCESS "jdk.module.illegalAccess"
 #define JAVA_BASE_MODULE "java.base"
-#define JAVA_MODULE_VERSION "9"
 
 #define SYSPROP_COM_SUN_MANAGEMENT "-Dcom.sun.management."
 
