@@ -2313,7 +2313,7 @@ copyStaticFields(J9VMThread * currentThread, J9Class * originalRAMClass, J9Class
 					newFieldAddress[1] = oldFieldAddress[1];
 #endif
 				} else if (currentField->modifiers & J9FieldFlagObject) {
-					vm->memoryManagerFunctions->J9WriteBarrierJ9ClassStore(currentThread, replacementRAMClass, *(j9object_t*)newFieldAddress);
+					vm->memoryManagerFunctions->J9WriteBarrierJ9PostClassStore(currentThread, replacementRAMClass, *(j9object_t*)newFieldAddress);
 				}
 			}
 		}
