@@ -2395,7 +2395,7 @@ J9::Options::fePostProcessJIT(void * base)
    jitConfig->runtimeFlags |= flags;
 
    if (jitConfig->runtimeFlags & J9JIT_TESTMODE || jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
-      self()->setOption(TR_DisableCompilationThread, true);
+      self()->setOption(TR_DisableAsyncCompilation, true);
 
    if (jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE)
       jitConfig->gcOnResolveThreshold = 0;
@@ -2478,7 +2478,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // so for AOT we can properly set dependent options only here
    if (jitConfig->runtimeFlags & J9JIT_TESTMODE ||
        jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
-      self()->setOption(TR_DisableCompilationThread, true);
+      self()->setOption(TR_DisableAsyncCompilation, true);
 
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
    if (vm->isAOT_DEPRECATED_DO_NOT_USE() || (jitConfig->runtimeFlags & J9JIT_TOSS_CODE))

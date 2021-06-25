@@ -1275,7 +1275,7 @@ void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
 
 bool TR::CompilationInfo::useSeparateCompilationThread()
    {
-   return !TR::Options::getCmdLineOptions()->getOption(TR_DisableCompilationThread);
+   return true;
    }
 
 bool TR::CompilationInfo::asynchronousCompilation()
