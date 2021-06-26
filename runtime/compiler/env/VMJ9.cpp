@@ -7464,7 +7464,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             callNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, callNode, comp->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
             }
          return callNode;
-#if 1 // Java 6 SR1 code
+
       // Note: these cases are not tested and thus are commented out:
       // - com.ibm.oti.vm.VM.getStackClass(int)
       // - com.ibm.oti.vm.VM.getStackClassLoader(int)
@@ -7488,120 +7488,118 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          // 1      0      -1
          // fall through intended
          return 0;   // FIXME:: disabled for now
+
       case TR::java_lang_invoke_MethodHandles_getStackClass:
+         return 0;
+
       case TR::sun_reflect_Reflection_getCallerClass:
-         // A() -> B() -> s/r/R.getCallerClass(1) => B()
-         // 2      1      0
          {
-         //we need to bail out since we create a class pointer const with cpIndex of -1
-         if ((isAOT_DEPRECATED_DO_NOT_USE() && !comp->getOption(TR_UseSymbolValidationManager)) ||
-             ((!(vmThread()->javaVM->extendedRuntimeFlags &  J9_EXTENDED_RUNTIME_ALLOW_GET_CALLER_CLASS)) &&
-              methodID == TR::sun_reflect_Reflection_getCallerClass))
+         // We need to bail out since we create a class pointer const with cpIndex of -1
+         if (isAOT_DEPRECATED_DO_NOT_USE() && !comp->getOption(TR_UseSymbolValidationManager))
             {
             return 0;
             }
 
-         // char *caseName = (methodID == TR::sun_reflect_Reflection_getCallerClass) ? "s/r/R.getCallerClass" : "j/l/CL.getStackClassLoader";
-         if (callNode->getNumChildren() == 0 || callNode->getFirstChild()->getOpCodeValue() == TR::iconst)
+         static const bool disableGetCallerClassReduction = feGetEnv("TR_DisableGetCallerClassReduction") != NULL;
+         if (disableGetCallerClassReduction)
             {
-            int32_t stackDepth = callNode->getNumChildren() == 0 ? -1 : callNode->getFirstChild()->getInt();
-            if (stackDepth <= 0)
-               return 0;   // getCallerClass is meaningless when invoked with depth <= 0
-            int32_t callerIndex = callNode->getByteCodeInfo().getCallerIndex();
-            int32_t inlineDepth;
-            J9Class *callerClass;
-            J9Method *callerMethod;
+            return 0;
+            }
+            
+         int32_t targetInlineDepth = 1;
+         
+         int32_t callerIndex = callNode->getByteCodeInfo().getCallerIndex();
+         J9Class *callerClass = NULL;
+         J9Method *callerMethod = NULL;
 
-            if (methodID == TR::sun_reflect_Reflection_getCallerClass)
-               inlineDepth = 1;
-            else
-               inlineDepth = 0;   // traverse one frame more than getCallerClass
+         // We need to keep track of whether we are asked to skip the frame at depth 0 which is the caller of the
+         // method that calls getCallerClass(). We could encounter the case where we have reached caller index -1
+         // in which case we need to know whether we were asked to keep skipping frames. If we are asked to keep
+         // skipping then we cannot do this reduction because we could have a case like this:
+         //
+         // Depth  Caller Index  Method
+         //   [3]             2  getCallerClass()
+         //   [2]             1  Method.invoke()
+         //   [1]             0  Method.invoke()
+         //   [0]            -1  Method.invoke()
+         //
+         // We cannot do this reduction in such a case because we want to get the class of the non-skipped caller
+         // of the call at depth [0] but depths [0] is the top level method we are compiling.
+         bool skipFrameAtDepth0 = false;
 
-            bool skipFrame;  // the logic of computing skipFrame should match with what vm does
-            while (true)
+         while (true)
+            {
+            if (callerIndex == -1)
                {
-               if (callerIndex != -1)
-                  {
-                  callerMethod = (J9Method *) comp->getInlinedCallSite(callerIndex)._methodInfo;
-                  callerClass = (J9Class*) comp->getInlinedResolvedMethod(callerIndex)->containingClass();
-                  }
-               else
-                  {
-                  TR::ResolvedMethodSymbol *callerMethodSymbol = comp->getJittedMethodSymbol();
-                  callerMethod = (J9Method *) callerMethodSymbol->getResolvedMethod()->getPersistentIdentifier();
-                  callerClass = (J9Class*) callerMethodSymbol->getResolvedMethod()->classOfMethod();
-                  }
+               TR::ResolvedMethodSymbol *callerMethodSymbol = comp->getJittedMethodSymbol();
+               callerMethod = reinterpret_cast<J9Method *>(callerMethodSymbol->getResolvedMethod()->getPersistentIdentifier());
+               callerClass = reinterpret_cast<J9Class *>(callerMethodSymbol->getResolvedMethod()->classOfMethod());
 
-               skipFrame = transformJlrMethodInvoke(callerMethod, callerClass);
-
-               if (!skipFrame && inlineDepth == stackDepth)
-                  break;
-               if (callerIndex == -1)
-                  break;
-               if (!skipFrame)
-                  inlineDepth++;
-               callerIndex = comp->getInlinedCallSite(callerIndex)._byteCodeInfo.getCallerIndex();
-               }
-
-            if (!skipFrame && (inlineDepth == stackDepth))
-               {
-               bool returnClassLoader;
-               switch (methodID)
-                  {
-                  case TR::sun_reflect_Reflection_getCallerClass:
-                  case TR::java_lang_invoke_MethodHandles_getStackClass:
-                  //case TR::com_ibm_oti_vm_VM_getStackClass:
-                  //case TR::java_lang_Class_getStackClass:
-                     returnClassLoader = false;
-                     break;
-                  default:
-                     returnClassLoader = true;
-                     break;
-                  }
-
-               if (returnClassLoader)
-                  {
-                  if (performTransformation(comp, "O^O inlineNativeCall: inline classloader load [%p] for '%s' at bytecode %d\n",
-                        callNode, callNode->getSymbolReference()->getName(comp->getDebug()), callNode->getByteCodeInfo().getByteCodeIndex()))
-                     {
-                     TR::Node::recreate(callNode, TR::aload);
-                     callNode->removeAllChildren();
-                     TR::SymbolReference *callerClassLoaderSymRef = comp->getSymRefTab()->findOrCreateClassLoaderSymbolRef(comp->getMethodSymbol()->getResolvedMethod());
-                     callNode->setSymbolReference(callerClassLoaderSymRef);
-                     }
-                  }
-               else
-                  {
-                  int32_t classNameLength;
-                  char *className = getClassNameChars((TR_OpaqueClassBlock *) callerClass, classNameLength);
-                  if (performTransformation(comp, "O^O inlineNativeCall: inline class load [%p] of %.*s for '%s' at bytecode %d\n", callNode,
-                        classNameLength, className,
-                        callNode->getSymbolReference()->getName(comp->getDebug()), callNode->getByteCodeInfo().getByteCodeIndex()))
-                     {
-                     TR::Node::recreate(callNode, TR::loadaddr);
-                     callNode->removeAllChildren();
-                     TR::SymbolReference *callerClassSymRef = comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, convertClassPtrToClassOffset(callerClass));
-                     callNode->setSymbolReference(callerClassSymRef);
-                     if (TR::Compiler->cls.classesOnHeap())
-                        {
-                        callNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, callNode, comp->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
-                        }
-                     }
-                  }
+               // It is possible that we've reached the top-level method being compiled and that the said method is
+               // marked with the FrameIteratorSkip annotation. In such a case targetInlineDepth may be 0 already
+               // and we want to skip the callerIndex == -1 frame, but we cannot because the JIT cannot statically
+               // determine the caller of the top-level method being compiled. We cannot perform this optimization
+               // in such a case, so we make skipFrameAtDepth0 at this point and proceed.
+               if ((J9_ROM_METHOD_FROM_RAM_METHOD(callerMethod)->modifiers & J9AccMethodFrameIteratorSkip) != J9AccMethodFrameIteratorSkip)
+                  skipFrameAtDepth0 = true;
                }
             else
                {
-               return 0;
+               callerMethod = reinterpret_cast<J9Method *>(comp->getInlinedCallSite(callerIndex)._methodInfo);
+               callerClass = reinterpret_cast<J9Class *>(comp->getInlinedResolvedMethod(callerIndex)->containingClass());
+               }
+
+            if (callerIndex == -1)
+               break;
+
+            // Skip methods with java.lang.invoke.FrameIteratorSkip annotation
+            if ((J9_ROM_METHOD_FROM_RAM_METHOD(callerMethod)->modifiers & J9AccMethodFrameIteratorSkip) != J9AccMethodFrameIteratorSkip)
+               {
+               if (targetInlineDepth == 0)
+                  {
+                  // Logic for whether we should skip an inlined frame should match up with what the VM is doing. See the VM
+                  // implementation of `getCallerClassIterator` for details.
+                  skipFrameAtDepth0 = transformJlrMethodInvoke(callerMethod, callerClass);
+                  if (skipFrameAtDepth0)
+                     {
+                     callerIndex = comp->getInlinedCallSite(callerIndex)._byteCodeInfo.getCallerIndex();
+                     continue;
+                     }
+
+                  break;
+                  }
+
+               targetInlineDepth--;
+               }
+
+            callerIndex = comp->getInlinedCallSite(callerIndex)._byteCodeInfo.getCallerIndex();
+            }
+
+         if (!skipFrameAtDepth0 && targetInlineDepth == 0)
+            {
+            int32_t classNameLength;
+            char *className = getClassNameChars(reinterpret_cast<TR_OpaqueClassBlock *>(callerClass), classNameLength);
+            if (performTransformation(comp, "O^O inlineNativeCall: inline class load [%p] of %.*s for '%s' at bytecode %d\n", callNode,
+                  classNameLength, className,
+                  callNode->getSymbolReference()->getName(comp->getDebug()), callNode->getByteCodeInfo().getByteCodeIndex()))
+               {
+               TR::Node::recreate(callNode, TR::loadaddr);
+               callNode->removeAllChildren();
+               TR::SymbolReference *callerClassSymRef = comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, convertClassPtrToClassOffset(callerClass));
+               callNode->setSymbolReference(callerClassSymRef);
+               if (TR::Compiler->cls.classesOnHeap())
+                  {
+                  callNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, callNode, comp->getSymRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
+                  }
                }
             }
          else
             {
             return 0;
             }
-         //fflush(stdout);
          }
          return callNode;
-#endif // Java 6 SR1 code
+         
       case TR::java_lang_Thread_currentThread:
          if (comp->cg()->getGRACompleted())
             {
