@@ -1,7 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
-package openj9.internal.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +20,7 @@ package openj9.internal.tools.attach.target;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package openj9.internal.tools.attach.target;
 
 import java.io.IOException;
 import static openj9.internal.tools.attach.target.IPC.loggingStatus;
@@ -92,9 +92,10 @@ final class WaitLoop extends Thread {
 				synchronized (AttachHandler.stateSync) {
 					if (!AttachHandler.isAttachApiTerminated()) {
 						try {
-							CommonDirectory.obtainControllerLock(); /*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
+							/*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
+							CommonDirectory.obtainControllerLock("WaitLoop.waitForNotification(" + retry + ")_1"); //$NON-NLS-1$ //$NON-NLS-2$ 
 							status = CommonDirectory.reopenSemaphore(); 
-							CommonDirectory.releaseControllerLock();
+							CommonDirectory.releaseControllerLock("WaitLoop.waitForNotification(" + retry + ")_2"); //$NON-NLS-1$ //$NON-NLS-2$
 						} catch (IOException e) { 
 							IPC.logMessage("waitForNotification: IOError on controller lock : ", e.toString()); //$NON-NLS-1$
 						}
@@ -103,12 +104,13 @@ final class WaitLoop extends Thread {
 				
 				/*[PR Jazz 41720 - Recreate notification directory if it is deleted. ]*/
 				if ((CommonDirectory.SEMAPHORE_OKAY == status) && TargetDirectory.ensureMyAdvertisementExists(AttachHandler.getVmId())) {
-					if (CommonDirectory.tryObtainControllerLock()) { /*[PR 199483] post to the semaphore to test it */
+					/*[PR 199483] post to the semaphore to test it */
+					if (CommonDirectory.tryObtainControllerLock("WaitLoop.waitForNotification(" + retry + ")_3")) { //$NON-NLS-1$ //$NON-NLS-2$
 						IPC.logMessage("semaphore recovery: send test post"); //$NON-NLS-1$
 						int numTargets = CommonDirectory.countTargetDirectories();
 						AttachHandler.setNumberOfTargets(numTargets);
-						CommonDirectory.notifyVm(numTargets, true); 
-						CommonDirectory.releaseControllerLock();
+						CommonDirectory.notifyVm(numTargets, true, "WaitLoop.waitForNotification"); //$NON-NLS-1$
+						CommonDirectory.releaseControllerLock("WaitLoop.waitForNotification(" + retry + ")_4"); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 					return waitForNotification(false);
 				}
@@ -131,19 +133,22 @@ final class WaitLoop extends Thread {
 		if (LOGGING_DISABLED != loggingStatus) {
 			IPC.logMessage("checkReplyAndCreateAttachment iteration "+ AttachHandler.notificationCount+" waitForNotification obtainLock"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		if (!AttachHandler.mainHandler.syncFileLock.lockFile(true)) { /* the sync file is missing. */
+		/* the sync file is missing. */
+		if (!AttachHandler.mainHandler.syncFileLock.lockFile(true, "WaitLoop.checkReplyAndCreateAttachment")) { //$NON-NLS-1$ 
 			TargetDirectory.createMySyncFile();
 			/* don't bother locking this since the attacher will not have locked it. */
 		} else {
 			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("iteration ", AttachHandler.notificationCount," checkReplyAndCreateAttachment releaseLock"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-			AttachHandler.mainHandler.syncFileLock.unlockFile();
+			AttachHandler.mainHandler.syncFileLock.unlockFile("WaitLoop.checkReplyAndCreateAttachment"); //$NON-NLS-1$
 		}
 		try {
 			/*[PR Jazz 33224 Throttle the loop in to prevent the loop from occupying the semaphore ]*/
+			IPC.logMessage("WaitLoop.checkReplyAndCreateAttachment before sleep"); //$NON-NLS-1$
 			Thread.sleep(1000);
 		} catch (InterruptedException e) { /* the attach handler thread is interrupted on shutdown */
+			IPC.logMessage("WaitLoop.checkReplyAndCreateAttachment Interrupted"); //$NON-NLS-1$
 			return at;
 		}
 		return at;
@@ -158,13 +163,15 @@ final class WaitLoop extends Thread {
 			try {
 				waitForNotification(true);
 			} catch (IOException e) {
-				IPC.logMessage("exception in waitForNotification ", e.toString()); //$NON-NLS-1$
+				IPC.logMessage("WaitLoop.waitForNotification exception: AttachHandler.notificationCount = " + AttachHandler.notificationCount, e.toString()); //$NON-NLS-1$
 				/*[PR CMVC 188652] Suppress OOM output from attach API */
 			} catch (OutOfMemoryError e) { 
 				IPC.tracepoint(IPC.TRACEPOINT_STATUS_OOM_DURING_WAIT, e.getMessage());
 				try {
+					IPC.logMessage("WaitLoop.waitForNotification OutOfMemoryError before sleep"); //$NON-NLS-1$
 					Thread.sleep(1000);
 				} catch (InterruptedException e1) {
+					IPC.logMessage("WaitLoop.waitForNotification OutOfMemoryError Interrupted"); //$NON-NLS-1$
 					continue; /* if we were interrupted by the shutdown code, the while() condition will break the loop */
 				}
 			}

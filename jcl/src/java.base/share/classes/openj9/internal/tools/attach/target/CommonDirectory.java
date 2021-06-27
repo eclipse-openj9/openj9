@@ -1,7 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
-package openj9.internal.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +20,7 @@ package openj9.internal.tools.attach.target;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package openj9.internal.tools.attach.target;
 
 import static openj9.internal.tools.attach.target.IPC.LOGGING_DISABLED;
 import static openj9.internal.tools.attach.target.IPC.loggingStatus;
@@ -138,9 +138,10 @@ public abstract class CommonDirectory {
 	}
 	/**
 	 * Lock the controller lock file. Create the lockfile if necessary.
+	 * @param callSite caller info
 	 * @throws IOException if the file is already locked.
 	 */
-	public static void obtainControllerLock() throws IOException {
+	public static void obtainControllerLock(String callSite) throws IOException {
 		FileLock controllerLockCopy = null;
 		synchronized (accessorMutex) {
 			++controllerLockCount;
@@ -149,22 +150,23 @@ public abstract class CommonDirectory {
 			}
 		}
 		if (null != controllerLockCopy) { /* first entry */
-			controllerLockCopy.lockFile(true);
+			controllerLockCopy.lockFile(true, callSite + "_obtainControllerLock"); //$NON-NLS-1$
 		}
 	}
 
 	/**
 	 * non-blocking lock the controller lockfile. 
 	 * Create the lockfile if necessary.
+	 * @param callSite caller info
 	 * @return true if lock obtained
 	 */
-	static boolean tryObtainControllerLock() {
+	static boolean tryObtainControllerLock(String callSite) {
 		boolean controllerLockEntered = true;
 		synchronized (accessorMutex) {
 			++controllerLockCount; /* optimistically assume we enter the lock */
 			if (1 == controllerLockCount) { /* first time in */
 				try {
-					controllerLockEntered = getControllerLock().lockFile(false);
+					controllerLockEntered = getControllerLock().lockFile(false, callSite + "_tryObtainControllerLock"); //$NON-NLS-1$
 					if (!controllerLockEntered) { /* lock failed, so revert */
 						--controllerLockCount;
 					}
@@ -180,8 +182,9 @@ public abstract class CommonDirectory {
 
 	/**
 	 * Release the lock on the controller lock file
+	 * @param callSite caller info
 	 */
-	public static void releaseControllerLock() {
+	public static void releaseControllerLock(String callSite) {
 		synchronized (accessorMutex) {
 			if (controllerLockCount <= 0) {
 				IPC.logMessage("releaseControllerLock: Illegal value for controllerLockCount", controllerLockCount); //$NON-NLS-1$
@@ -189,7 +192,7 @@ public abstract class CommonDirectory {
 			}
 			--controllerLockCount;
 			if (Objects.nonNull(controllerLock) && (0 == controllerLockCount)) {
-				controllerLock.unlockFile();
+				controllerLock.unlockFile(callSite + "_releaseControllerLock"); //$NON-NLS-1$
 				controllerLock = null;
 			}
 		}
@@ -197,19 +200,21 @@ public abstract class CommonDirectory {
 
 	/**
 	 * Lock the attach lockfile. Create the lockfile if necessary.
+	 * @param callSite caller info
 	 * @throws IOException if file already locked
 	 */
 	 
-	public static void obtainAttachLock() throws IOException {
-		getAttachLock().lockFile(true);
+	public static void obtainAttachLock(String callSite) throws IOException {
+		getAttachLock().lockFile(true, callSite + "_obtainAttachLock"); //$NON-NLS-1$
 	}
 
 	/**
 	 * Release the lock on the attach lock file
+	 * @param callSite caller info
 	 */
-	public static void releaseAttachLock() {
+	public static void releaseAttachLock(String callSite) {
 		try {
-			getAttachLock().unlockFile();	
+			getAttachLock().unlockFile(callSite + "_releaseAttachLock"); //$NON-NLS-1$
 		} catch (NullPointerException e) {
 			return;
 		}
@@ -273,13 +278,12 @@ public abstract class CommonDirectory {
 	 * Open the semaphore, post to it, and close it
 	 * @param numberOfTargets number of times to post to the semaphore
 	 * @param global Use the global semaphore (Windows only)
+	 * @param callSite caller info
 	 * @return 0 on success
 	 */
-	public static int notifyVm(int numberOfTargets, boolean global) {
-		if (LOGGING_DISABLED != loggingStatus) {
-			IPC.logMessage("notifyVm ", numberOfTargets, " targets"); //$NON-NLS-1$ //$NON-NLS-2$
-			IPC.logMessage(getCommonDirFileObject().getAbsolutePath() + ", global = " + global); //$NON-NLS-1$ //$NON-NLS-2$
-		}
+	public static int notifyVm(int numberOfTargets, boolean global, String callSite) {
+		IPC.logMessage(callSite + "_notifyVm ", numberOfTargets, " targets"); //$NON-NLS-1$ //$NON-NLS-2$
+		IPC.logMessage(getCommonDirFileObject().getAbsolutePath() + ", global = " + global); //$NON-NLS-1$
 		return IPC.notifyVm(getCommonDirFileObject().getAbsolutePath(), CONTROLLER_NOTIFIER, numberOfTargets, global);
 	}
 

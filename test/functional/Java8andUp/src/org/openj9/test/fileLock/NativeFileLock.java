@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,9 +42,9 @@ public class NativeFileLock extends GenericFileLock {
 		nflConstructor.setAccessible(true);
 		fileLockObject = nflConstructor.newInstance(lockFile.getAbsolutePath(), Integer.valueOf(mode));
 		lockFileMethod = nativeFileLock.getDeclaredMethod("lockFile",
-				boolean.class);
+				boolean.class, String.class);
 		lockFileMethod.setAccessible(true);
-		unlockFileMethod = nativeFileLock.getDeclaredMethod("unlockFile");
+		unlockFileMethod = nativeFileLock.getDeclaredMethod("unlockFile", String.class);
 		unlockFileMethod.setAccessible(true);
 		TestFileLocking.logger.debug("exit NativeFileLock");
 	}
@@ -53,12 +53,12 @@ public class NativeFileLock extends GenericFileLock {
 	public boolean lockFile(boolean blocking) throws Exception {
 		Boolean result = Boolean.valueOf(true);
 		TestFileLocking.logger.debug("lockfile blocking =" + blocking);
-		result = (Boolean) lockFileMethod.invoke(fileLockObject, Boolean.valueOf(blocking));
+		result = (Boolean) lockFileMethod.invoke(fileLockObject, Boolean.valueOf(blocking), "NativeFileLock.lockFile()");
 		return result.booleanValue();
 	}
 
 	@Override
 	public void unlockFile() throws Exception {
-		unlockFileMethod.invoke(fileLockObject);
+		unlockFileMethod.invoke(fileLockObject, "NativeFileLock.unlockFile()");
 	}
 }
