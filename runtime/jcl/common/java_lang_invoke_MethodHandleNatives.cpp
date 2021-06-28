@@ -133,6 +133,9 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		flags = fieldID->field->modifiers & CFR_FIELD_ACCESS_MASK;
 		flags |= MN_IS_FIELD;
 		flags |= (J9_ARE_ANY_BITS_SET(flags, J9AccStatic) ? MH_REF_GETSTATIC : MH_REF_GETFIELD) << MN_REFERENCE_KIND_SHIFT;
+		if (VM_VMHelpers::isTrustedFinalField(fieldID->field, fieldID->declaringClass->romClass)) {
+			flags |= MN_TRUSTED_FINAL;
+		}
 
 		nameObject = J9VMJAVALANGREFLECTFIELD_NAME(currentThread, refObject);
 		typeObject = J9VMJAVALANGREFLECTFIELD_TYPE(currentThread, refObject);
@@ -961,6 +964,10 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(JNIEnv *env, jclass clazz, job
 
 					new_clazz = J9VM_J9CLASS_TO_HEAPCLASS(declaringClass);
 					new_flags = MN_IS_FIELD | (fieldID->field->modifiers & CFR_FIELD_ACCESS_MASK);
+					if (VM_VMHelpers::isTrustedFinalField(fieldID->field, fieldID->declaringClass->romClass)) {
+						new_flags |= MN_TRUSTED_FINAL;
+					}
+
 					romField = fieldID->field;
 
 					if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {

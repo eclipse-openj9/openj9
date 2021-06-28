@@ -1812,6 +1812,28 @@ exit:
 		return result;
 	}
 
+	/**
+	 * Determine if the field is a trusted final field.
+	 *
+	 * A trusted final field must have be a static final field or
+	 * a final field defined in either a hidden class or Record class
+	 *
+	 * @param field the field to be checked
+	 * @param romClass the declaring class of the field
+	 * @return true if the field is trusted final. Otherwise, return false.
+	 */
+	static VMINLINE bool
+	isTrustedFinalField(J9ROMFieldShape *field, J9ROMClass *romClass)
+	{
+		bool result = false;
+		if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccFinal)) {
+			if (J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStatic) || J9ROMCLASS_IS_HIDDEN(romClass) || J9ROMCLASS_IS_RECORD(romClass)) {
+				result = true;
+			}
+		}
+		return result;
+	}
+
 	static VMINLINE void *
 	buildJITResolveFrameWithPC(J9VMThread *currentThread, UDATA flags, UDATA parmCount, UDATA spAdjust, void *oldPC)
 	{
