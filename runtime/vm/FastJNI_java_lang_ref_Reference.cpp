@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ Fast_java_lang_ref_Reference_reprocess(J9VMThread *currentThread, j9object_t rec
 		mmFuncs->j9gc_objaccess_referenceGet(currentThread, receiverObject);
 	} else {
 		/* Reprocess this object if a concurrent GC is in progress */
-		mmFuncs->J9WriteBarrierBatchStore(currentThread, receiverObject);
+		mmFuncs->J9WriteBarrierBatch(currentThread, receiverObject);
 	}
 }
 

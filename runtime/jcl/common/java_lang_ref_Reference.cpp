@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,7 @@ Java_java_lang_ref_Reference_reprocess(JNIEnv *env, jobject recv)
 		mmFuncs->j9gc_objaccess_referenceGet(currentThread, receiverObject);
 	} else {
 		/* Reprocess this object if a concurrent GC is in progress */
-		mmFuncs->J9WriteBarrierBatchStore(currentThread, receiverObject);
+		mmFuncs->J9WriteBarrierBatch(currentThread, receiverObject);
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 }

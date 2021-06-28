@@ -2092,15 +2092,15 @@ protected:
 	/**
 	 * Called before object references are stored into class statics to perform an prebarrier work.
 	 *
-	 * @param object - the class object being stored into
+	 * @param dstClassObject - the class object being stored into
 	 * @param destAddress - the address being stored into
 	 * @param value - the value being stored
 	 *
 	 */
 	VMINLINE void
-	preStaticStoreObject(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
+	preStaticStoreObject(J9VMThread *vmThread, j9object_t dstClassObject, j9object_t *destAddress, j9object_t value)
 	{
-		internalStaticPreStoreObject(vmThread, object, destAddress, value);
+		internalStaticPreStoreObject(vmThread, dstClassObject, destAddress, value);
 	}
 
 	/**
@@ -2341,7 +2341,7 @@ protected:
 	preStaticReadObject(J9VMThread *vmThread, J9Class *clazz, j9object_t *srcAddress)
 	{
 		if (j9gc_modron_readbar_none != _readBarrierType) {
-			vmThread->javaVM->memoryManagerFunctions->J9ReadBarrierJ9Class(vmThread, srcAddress);
+			vmThread->javaVM->memoryManagerFunctions->J9ReadBarrierClass(vmThread, srcAddress);
 		}
 	}
 	
@@ -2709,17 +2709,17 @@ private:
 	 * Currently pre store barriers are only required for WRT. Check the barrier type
 	 * and forward accordingly
 	 *
-	 * @param object this is the class object being stored into
+	 * @param dstClassObject this is the class object being stored into
 	 * @param destAddress the address being stored at
 	 * @param value the value being stored
 	 *
 	 */
 	VMINLINE void
-	internalStaticPreStoreObject(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
+	internalStaticPreStoreObject(J9VMThread *vmThread, j9object_t dstClassObject, j9object_t *destAddress, j9object_t value)
 	{
 		if ((j9gc_modron_wrtbar_satb == _writeBarrierType) ||
 				(j9gc_modron_wrtbar_satb_and_oldcheck == _writeBarrierType)) {
-			internalStaticPreStoreObjectSATB(vmThread, object, destAddress, value);
+			internalStaticPreStoreObjectSATB(vmThread, dstClassObject, destAddress, value);
 		}
 	}
 
@@ -2741,12 +2741,12 @@ private:
 		if (0 != parent->globalFragmentIndex) {
 			/* if the double barrier is enabled call OOL */
 			if (0 == fragment->localFragmentIndex) {
-				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreStore(vmThread, object, destAddress, value);
+				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPre(vmThread, object, destAddress, value);
 			} else {
 				j9object_t oldObject = readObjectImpl(vmThread, destAddress, false);
 				if (NULL != oldObject) {
 					if (!isMarked(vmThread, oldObject)) {
-						vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreStore(vmThread, object, destAddress, value);
+						vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPre(vmThread, object, destAddress, value);
 					}
 				}
 			}
@@ -2757,13 +2757,13 @@ private:
 	/**
 	 * Perform the static preStore barrier for WRT
 	 *
-	 * @param object this is the class object being stored into
+	 * @param dstClassObject this is the class object being stored into
 	 * @param destAddress the address being stored at
 	 * @param value the value being stored
 	 *
 	 */
 	VMINLINE void
-	internalStaticPreStoreObjectSATB(J9VMThread *vmThread, j9object_t object, j9object_t *destAddress, j9object_t value)
+	internalStaticPreStoreObjectSATB(J9VMThread *vmThread, j9object_t dstClassObject, j9object_t *destAddress, j9object_t value)
 	{
 #if defined(J9VM_GC_REALTIME)
 		MM_GCRememberedSetFragment *fragment =  &vmThread->sATBBarrierRememberedSetFragment;
@@ -2772,12 +2772,12 @@ private:
 		if (0 != parent->globalFragmentIndex) {
 			/* if the double barrier is enabled call OOL */
 			if (0 == fragment->localFragmentIndex) {
-				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierJ9PreClassStore(vmThread, object, destAddress, value);
+				vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreClass(vmThread, dstClassObject, destAddress, value);
 			} else {
 				j9object_t oldObject = *destAddress;
 				if (NULL != oldObject) {
 					if (!isMarked(vmThread, oldObject)) {
-						vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierJ9PreClassStore(vmThread, object, destAddress, value);
+						vmThread->javaVM->memoryManagerFunctions->J9WriteBarrierPreClass(vmThread, dstClassObject, destAddress, value);
 					}
 				}
 			}
