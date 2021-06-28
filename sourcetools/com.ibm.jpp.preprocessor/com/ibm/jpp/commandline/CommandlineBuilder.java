@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1999, 2017 IBM Corp. and others
+ * Copyright (c) 1999, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,6 +209,7 @@ public class CommandlineBuilder {
 		validArgs.add("-verdict");
 		validArgs.add("-includeifunsure");
 		validArgs.add("-nowarn");
+		validArgs.add("-nowarnincludeif");
 		validArgs.add("-nowarninvalidflags");
 		validArgs.add("-incremental");
 		validArgs.add("-force");
@@ -240,7 +241,7 @@ public class CommandlineBuilder {
 		temp.append("\n\n[options] ");
 		temp.append("\n  -baseDir <base dir>    Prepends base dir to all paths in xml");
 		temp.append("\n  -srcRoot <source dir>  Appends source dir to base dir for use with local src/output paths");
-		temp.append("\n  -verdict               Print information on preprocessor success of failure");
+		temp.append("\n  -verdict               Print information on preprocessor success or failure");
 		temp.append("\n  -xmlVerbose            Print information on loaded configurations");
 		temp.append("\n  -includeIfUnsure       Include in preprocessor if not sure");
 		temp.append("\n  -noWarn                Do not print any preprocessor warnings");
