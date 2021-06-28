@@ -2243,6 +2243,7 @@ typedef struct J9ROMMethodHandleRef {
 #define MN_IS_FIELD			0x00040000
 #define MN_IS_TYPE			0x00080000
 #define MN_CALLER_SENSITIVE	0x00100000
+#define MN_TRUSTED_FINAL	0x00200000
 
 typedef struct J9ROMMethodRef {
 	U_32 classRefCPIndex;
