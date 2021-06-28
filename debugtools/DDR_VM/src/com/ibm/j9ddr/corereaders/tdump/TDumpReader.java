@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,8 +75,6 @@ import com.ibm.j9ddr.corereaders.tdump.zebedee.le.Edb;
 import com.ibm.j9ddr.corereaders.tdump.zebedee.mvs.RegisterSet;
 import com.ibm.j9ddr.corereaders.tdump.zebedee.mvs.Tcb;
 import com.ibm.j9ddr.corereaders.tdump.zebedee.util.FileFormatException;
-import com.ibm.jzos.ZFile;
-
 
 /**
  * zOS dump reader implemented as a thin wrapper around Zebedee.
@@ -113,16 +111,18 @@ public class TDumpReader implements ICoreFileReader
 
 	public DumpTestResult testDump(String path) throws IOException
 	{
-		if (! new File(path).exists()) {
-			if (System.getProperty("os.name").toLowerCase().indexOf("z/os") == -1) {
-				return DumpTestResult.FILE_NOT_FOUND;
-			} else {
-				if (! ZFile.exists("//'" + path + "'")) {
-					return DumpTestResult.FILE_NOT_FOUND;
-				}
-			}
+		/*
+		 * Note: IBM Java 8 builds do not use the preprocessor so the [IF] condition
+		 * is ignored: This must have the proper control flow ignoring those comments.
+		 */
+		if (!new File(path).exists()
+			/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
+			&& !(System.getProperty("os.name").toLowerCase().contains("z/os") && com.ibm.jzos.ZFile.exists("//'" + path + "'"))
+			/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 */
+		) {
+			return DumpTestResult.FILE_NOT_FOUND;
 		}
-		
+
 		try {
 			//Creating the Zebedee dump with initialize=false will open the file (either via USS or TSO), check the header, but won't do a heavyweight load
 			new com.ibm.j9ddr.corereaders.tdump.zebedee.dumpreader.Dump(path, false).close();
