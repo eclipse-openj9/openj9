@@ -172,7 +172,22 @@ generateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg, bool isArdbar
 
    TR::InstOpCode::Mnemonic loadOp = isArdbari ? TR::InstOpCode::ldrimmx : TR::InstOpCode::ldrimmw;
 
-   generateTrg1MemInstruction(cg, loadOp, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(locationReg, 0, cg));
+   auto faultingInstruction = generateTrg1MemInstruction(cg, loadOp, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(locationReg, 0, cg));
+
+   // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
+   // In this case, nullcheck reference register is base register of tempMR, but the memory reference of load instruction does not use it,
+   // thus we need to explicitly set implicit exception point here.
+   if (cg->getHasResumableTrapHandler() && cg->getCurrentEvaluationTreeTop()->getNode()->getOpCode().isNullCheck())
+      {
+      if (cg->getImplicitExceptionPoint() == NULL)
+         {
+         if (comp->getOption(TR_TraceCG))
+            {
+            traceMsg(comp, "Instruction %p throws an implicit NPE, node: %p NPE node: %p\n", faultingInstruction, node, node->getFirstChild());
+            }
+         cg->setImplicitExceptionPoint(faultingInstruction);
+         }
+      }
 
    if (isArdbari && node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef())
       TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tempReg);
@@ -3781,7 +3796,22 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
          }
       TR::InstOpCode::Mnemonic loadOp = comp->useCompressedPointers() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx;
 
-      generateTrg1MemInstruction(cg, loadOp, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(locationReg, 0, cg));
+      auto faultingInstruction = generateTrg1MemInstruction(cg, loadOp, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(locationReg, 0, cg));
+
+      // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
+      // In this case, nullcheck reference register is objReg, but the memory reference does not use it,
+      // thus we need to explicitly set implicit exception point here.
+      if (cg->getHasResumableTrapHandler() && cg->getCurrentEvaluationTreeTop()->getNode()->getOpCode().isNullCheck())
+         {
+         if (cg->getImplicitExceptionPoint() == NULL)
+            {
+            if (comp->getOption(TR_TraceCG))
+               {
+               traceMsg(comp, "Instruction %p throws an implicit NPE, node: %p NPE node: %p\n", faultingInstruction, node, secondChild);
+               }
+            cg->setImplicitExceptionPoint(faultingInstruction);
+            }
+         }
 
       if (node->getSymbolReference() == comp->getSymRefTab()->findVftSymbolRef())
          TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tempReg);
