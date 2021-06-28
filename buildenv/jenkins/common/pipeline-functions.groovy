@@ -562,7 +562,7 @@ def cleanup_artifactory(artifactory_manual_cleanup, job_name, artifactory_server
             def cleanup_job_params = [
                 string(name: 'JOB_TYPE', value: 'COUNT'),
                 string(name: 'JOB_TO_CHECK', value: job_name),
-                string(name: 'ARTIFACTORY_SERVER', value: artifactory_repo),
+                string(name: 'ARTIFACTORY_SERVER', value: artifactory_server),
                 string(name: 'ARTIFACTORY_REPO', value: artifactory_repo),
                 string(name: 'ARTIFACTORY_NUM_ARTIFACTS', value: artifactory_num_artifacts)]
 
