@@ -317,4 +317,12 @@
 		<parameter name="msg:outputdir" value=""/>
 	</configuration>
 
+	<!--
+	This configuration is intended only for use by extension repos:
+	it is not expected to usable for generating an eclipse project.
+	-->
+	<configuration label="DDR_VM" outputpath="outputpath-not-used">
+		<source path="src"/>
+	</configuration>
+
 </configurationreg>
