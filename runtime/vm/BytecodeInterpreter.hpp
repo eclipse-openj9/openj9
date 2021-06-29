@@ -8352,13 +8352,15 @@ done:
 
 		_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
 
-		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
-		methodArgCount = romMethod->argCount;
+		if (J9_EXPECTED(_currentThread->javaVM->initialMethods.throwDefaultConflict != _sendMethod)) {
+			romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
+			methodArgCount = romMethod->argCount;
 
-		if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic)) {
-			j9object_t mhReceiver = ((j9object_t *)_sp)[methodArgCount - 1];
-			if (J9_UNEXPECTED(NULL == mhReceiver)) {
-				goto throw_npe;
+			if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic)) {
+				j9object_t mhReceiver = ((j9object_t *)_sp)[methodArgCount - 1];
+				if (J9_UNEXPECTED(NULL == mhReceiver)) {
+					goto throw_npe;
+				}
 			}
 		}
 
