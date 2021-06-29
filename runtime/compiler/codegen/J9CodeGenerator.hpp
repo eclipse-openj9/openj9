@@ -317,16 +317,6 @@ public:
 
    /*
     * \brief
-    *    Whether a monitor object is of value type
-    *
-    * \return
-    *    TR_yes The monitor object is definitely value type
-    *    TR_no The monitor object is definitely identity type
-    *    TR_maybe It is unknown whether the monitor object is identity type or value type
-    */
-   TR_YesNoMaybe isMonitorValueType(TR::Node* monNode);
-   /*
-    * \brief
     *    Whether a monitor object is of value based class type or value type.
     *    This API checks if value based or value type is enabled first.
     *
