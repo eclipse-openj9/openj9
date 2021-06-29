@@ -9319,6 +9319,16 @@ TR_J9VMBase::classNameChars(TR::Compilation *comp, TR::SymbolReference * symRef,
    return n;
    }
 
+bool
+TR_J9VMBase::inSnapshotMode()
+   {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   return getJ9JITConfig()->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread());
+#else
+   return false;
+#endif
+   }
+
 
 // Native method bodies
 //

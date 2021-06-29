@@ -1209,6 +1209,8 @@ public:
    virtual bool isStringCompressionEnabledVM();
    virtual void *getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::SymbolReference *glueSymRef, TR::DataType dataType);
 
+   bool inSnapshotMode();
+
 protected:
 
    enum // _flags
