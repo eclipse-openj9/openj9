@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,13 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
+#include <locale.h>
+#if !defined(OMR_OS_WINDOWS)
+#include <langinfo.h>
+#endif /* !defined(OMR_OS_WINDOWS) */
+#if defined(OSX)
+#include <xlocale.h>
+#endif /* defined(OSX) */
 #include "j9.h"
 #include "j9argscan.h"
 #include "j9port.h"
@@ -111,8 +118,57 @@ void scan_failed(J9PortLibrary * portLibrary, const char* module, const char *sc
 uintptr_t scan_double(char **scan_start, double *result)
 {
 	char *endPtr = NULL;
+	int bruteParse = 1;
+#if defined(OMR_OS_WINDOWS)
+	_locale_t clocale = _create_locale(LC_ALL, "C");
+	if (NULL != clocale) {
+		*result = _strtod_l(*scan_start, &endPtr, clocale);
+		_free_locale(clocale);
+		bruteParse = 0;
+	}
+#elif defined(LINUX) || defined(OSX) || defined(LC_ALL_MASK) /* defined(OMR_OS_WINDOWS) */
+	/* AIX 7.1+ has support for newlocale() */
+	locale_t clocale = newlocale(LC_ALL_MASK, "C", NULL);
+	if (NULL != clocale) {
+		locale_t orglocale = uselocale(clocale);
+		*result = strtod(*scan_start, &endPtr);
+		uselocale(orglocale);
+		freelocale(clocale);
+		bruteParse = 0;
+	}
+#endif /* defined(OMR_OS_WINDOWS) */
 
-	*result = strtod(*scan_start, &endPtr);
+	/* There is no per thread locale support on AIX 6.1 or z/OS so far. */
+	if (0 != bruteParse) {
+		/* 256 is more than enough to hold the string double. */
+		char buffer[256];
+		char *dest = *scan_start;
+		/* Determine the locale radix character and substitute it in the value being parsed. */
+#if defined(OMR_OS_WINDOWS)
+		struct lconv *linfo = localeconv();
+		char *localeRadix = linfo->decimal_point;
+#else /* defined(OMR_OS_WINDOWS) */
+		char *localeRadix = nl_langinfo(RADIXCHAR);
+#endif /* defined(OMR_OS_WINDOWS) */
+		if ((NULL != localeRadix) && ('.' != *localeRadix)) {
+			char *radixPos = NULL;
+			size_t len = strlen(*scan_start);
+			if (len >= sizeof(buffer)) {
+				return OPTION_MALFORMED;
+			}
+			strcpy(buffer, *scan_start);
+			radixPos = strstr(buffer, ".");
+			if (NULL != radixPos) {
+				*radixPos = *localeRadix;
+			}
+			dest = buffer;
+		}
+		*result = strtod(dest, &endPtr);
+		if (dest == buffer) {
+			endPtr = *scan_start + (endPtr - buffer);
+		}
+	}
+
 	if (ERANGE == errno) {
 		if ((HUGE_VAL == *result) || (-HUGE_VAL == *result)) {
 			/* overflow */
