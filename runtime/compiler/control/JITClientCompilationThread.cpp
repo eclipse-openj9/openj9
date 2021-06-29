@@ -216,6 +216,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::getUnloadedClassRangesAndCHTable:
          {
+         uint64_t serverUID = std::get<0>(client->getRecvData<uint64_t>());
+         uint64_t previousUID = compInfo->getPersistentInfo()->getServerUID();
+         compInfo->getPersistentInfo()->setServerUID(serverUID);
+
          auto unloadedClasses = comp->getPersistentInfo()->getUnloadedClassAddresses();
          std::vector<TR_AddressRange> ranges;
          ranges.reserve(unloadedClasses->getNumberOfRanges());
@@ -231,6 +235,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             {
             OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());
             compInfo->getclassesCachedAtServer().clear();
+            }
+
+         if (previousUID != serverUID && TR::Options::getVerboseOption(TR_VerboseJITServerConns))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                          "t=%6u Connected to a server (serverUID=%llu)",
+                                          (uint32_t) compInfo->getPersistentInfo()->getElapsedTime(),
+                                          serverUID);
             }
          break;
          }

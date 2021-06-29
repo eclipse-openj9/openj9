@@ -921,6 +921,16 @@ JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary, TR::Compilation
       _waitTimeMs *= 2; // Exponential backoff
       }
    _nextConnectionRetryTime = current_time + _waitTimeMs;
+
+   if (_serverAvailable && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServerConns))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                     "t=%6u Lost connection to the server (serverUID=%llu)",
+                                     (uint32_t) compInfo->getPersistentInfo()->getElapsedTime(),
+                                     compInfo->getPersistentInfo()->getServerUID());
+      compInfo->getPersistentInfo()->setServerUID(0);
+      }
+
    _serverAvailable = false;
 
    // Reset the activation policy flag in case we never reconnect to the server
