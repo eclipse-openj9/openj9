@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,7 +108,9 @@ public class RefectionMHTests {
 			methodHandle = lookup.findStatic(GetCallerClassTests.class, "test_getCallerClass_MethodHandle", methodType);
 			cls = (Class<?>) methodHandle.invoke();
 
-			if ("java.lang.invoke.SecurityFrame" == cls.getName()) {
+			if (("java.lang.invoke.SecurityFrame" == cls.getName())
+				|| cls.getName().startsWith(RefectionMHTests.class.getName() + "$$InjectedInvoker/")
+			) {
 				System.out.println(TESTCASE_NAME + ": PASSED: return " + cls.getName());
 				return true;
 			} else {
@@ -174,7 +176,9 @@ public class RefectionMHTests {
 			MethodHandle mhResult = MethodHandles.foldArguments(mhTarget, mhCombiner);
 			cls = (Class<?>) mhResult.invoke();
 
-			if ("java.lang.invoke.SecurityFrame" == cls.getName()) {
+			if ("java.lang.invoke.SecurityFrame" == cls.getName()
+				|| cls.getName().startsWith(RefectionMHTests.class.getName() + "$$InjectedInvoker/")
+			) {
 				System.out.println(TESTCASE_NAME + ": PASSED: return " + cls.getName());
 				return true;
 			} else {
