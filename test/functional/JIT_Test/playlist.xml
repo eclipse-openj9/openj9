@@ -147,10 +147,10 @@
 	<test>
 		<testCaseName>jit_jitt_array_compress</testCaseName>
 		<variations>
-			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=1</variation>
-			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=2</variation>
-			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=3</variation>
-			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=4</variation>
+			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=1 -Xmx512m</variation>
+			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=2 -Xmx512m</variation>
+			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=3 -Xmx512m</variation>
+			<variation>-Xjit:disableAsyncCompilation,count=1 -XXgc:forcedShiftingCompressionAmount=4 -Xmx512m</variation>
 		</variations>
 		<command> $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
