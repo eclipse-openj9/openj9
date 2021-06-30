@@ -1476,6 +1476,9 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 
 				/* Set flag for partial signature lookup. Signature length is already initialized to 0. */
 				lookupOptions |= (J9_LOOK_DIRECT_NAS | J9_LOOK_PARTIAL_SIGNATURE);
+
+				/* Skip CL constraint check as the varargs signature may not match */
+				lookupOptions &= ~J9_LOOK_CLCONSTRAINTS;
 			}
 		}
 #elif defined(J9VM_OPT_METHOD_HANDLE) /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
@@ -1555,93 +1558,8 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 			J9UTF8 *sigUTF = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 			U_8* initialMethodName = J9UTF8_DATA(nameUTF);
 			U_16 initialMethodNameLength = J9UTF8_LENGTH(nameUTF);
-			BOOLEAN isVarHandle = FALSE;
 
-			switch (initialMethodNameLength) {
-			case 3:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "get")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "set")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			case 9:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getOpaque")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "setOpaque")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndSet")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndAdd")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			case 10:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAcquire")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "setRelease")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			case 11:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getVolatile")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "setVolatile")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			case 16:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndSetAcquire")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndSetRelease")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndAddAcquire")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndAddRelease")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndBitwiseAnd")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndBitwiseXor")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			case 22:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndBitwiseOrAcquire")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndBitwiseOrRelease")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "weakCompareAndSetPlain")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			case 23:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndBitwiseAndAcquire")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndBitwiseAndRelease")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndBitwiseXorAcquire")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndBitwiseXorRelease")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			case 24:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "weakCompareAndSetAcquire")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "weakCompareAndSetRelease")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			case 25:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "compareAndExchangeAcquire")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "compareAndExchangeRelease")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			default:
-				if (J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "compareAndSet")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "getAndBitwiseOr")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "weakCompareAndSet")
-				 || J9UTF8_LITERAL_EQUALS(initialMethodName, initialMethodNameLength, "compareAndExchange")
-				) {
-					isVarHandle = TRUE;
-				}
-				break;
-			}
-
-			if (isVarHandle) {
+			if (VM_VMHelpers::isPolymorphicVarHandleMethod(initialMethodName, initialMethodNameLength)) {
 				J9UTF8 *modifiedMethodName = (J9UTF8 *)(onStackNAS + sizeof(J9ROMNameAndSignature));
 				J9UTF8 *modifiedMethodSig = (J9UTF8 *)(onStackNAS + sizeof(onStackNAS) - sizeof(J9UTF8));
 				memset(onStackNAS, 0, sizeof(onStackNAS));
