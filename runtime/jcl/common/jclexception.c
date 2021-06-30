@@ -110,7 +110,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 	/* Create the new StackTraceElement and put it in the array at the correct index */
 
 	element = mmfns->J9AllocateObject(vmThread, userData->elementClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-	if (element == NULL) {
+	if (NULL == element) {
 		rc = FALSE;
 		vmFuncs->setHeapOutOfMemoryError(vmThread);
 	} else {
@@ -119,12 +119,10 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 		userData->index += 1;
 
 		/* If there is a valid method at this frame, fill in the information for it in the StackTraceElement */
-
-		if (romMethod != NULL) {
+		if (NULL != romMethod) {
 			J9UTF8 const * utfClassName = J9ROMCLASS_CLASSNAME(romClass);
 			J9UTF8 * utf = NULL;
 			j9object_t string = NULL;
-			UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 
 			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, element);
 
@@ -146,15 +144,14 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 			}
 
 			/* Fill in module name and version */
-			if (j2seVersion >= J2SE_V11) {
-				J9Module *module = NULL;
-				if (classLoader != NULL) {
+			if (JAVA_SPEC_VERSION >= 11) {
+				if (NULL != classLoader) {
 					j9object_t classLoaderName = J9VMJAVALANGCLASSLOADER_CLASSLOADERNAME(vmThread, classLoader->classLoaderObject);
 					J9VMJAVALANGSTACKTRACEELEMENT_SET_CLASSLOADERNAME(vmThread, element, classLoaderName);
 				}
 				if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_BASE_MODULE, LITERAL_STRLEN(JAVA_BASE_MODULE), J9_STR_XLAT);
-					if (string == NULL) {
+					if (NULL == string) {
 						rc = FALSE;
 						/* exception is pending from the call */
 						goto done;
@@ -162,8 +159,8 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 					element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
 					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, string);
 
-					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_MODULE_VERSION, LITERAL_STRLEN(JAVA_MODULE_VERSION), J9_STR_XLAT);
-					if (string == NULL) {
+					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_SPEC_VERSION_STRING, LITERAL_STRLEN(JAVA_SPEC_VERSION_STRING), J9_STR_XLAT);
+					if (NULL == string) {
 						rc = FALSE;
 						/* exception is pending from the call */
 						goto done;
@@ -174,7 +171,8 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 					/* Fetch the J9Module from the j.l.Class->j.l.Module field if we have a class.
 					 * Otherwise the more painful package-based lookup must be performed
 					 */
-					if (ramClass != NULL) {
+					J9Module *module = NULL;
+					if (NULL != ramClass) {
 						j9object_t moduleObject = J9VMJAVALANGCLASS_MODULE(vmThread, ramClass->classObject);
 						module = J9OBJECT_ADDRESS_LOAD(vmThread, moduleObject, vm->modulePointerOffset);
 					} else {
@@ -183,7 +181,6 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 						module = vmFuncs->findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(utfClassName), (U_32) length);
 						omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 					}
-
 					if (NULL != module) {
 						J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, module->moduleName);
 						J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULEVERSION(vmThread, element, module->version);
@@ -210,11 +207,9 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 						rc = FALSE;
 						/* exception is pending from the call */
 						goto done;
-					} else {
-						if (NULL != ramClass) {
-							/* Class name was interned so it's safe to write it back to the Class Object */
-							J9VMJAVALANGCLASS_SET_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), string);
-						}
+					} else if (NULL != ramClass) {
+						/* Class name was interned so it's safe to write it back to the Class Object */
+						J9VMJAVALANGCLASS_SET_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), string);
 					}
 				}
 				element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
@@ -224,7 +219,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 			/* Fill in method name - intern the string as it's also interned by the StackWalker API and by Reflection */
 			utf = J9ROMMETHOD_NAME(romMethod);
 			string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), J9_STR_TENURE | J9_STR_INTERN);
-			if (string == NULL) {
+			if (NULL == string) {
 				rc = FALSE;
 				/* exception is pending from the call */
 				goto done;
@@ -243,36 +238,34 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 			 * This avoids additional allocations during stack trace generation
 			 */
 			string = NULL;
-			if (ramClass != NULL) {
+			if (NULL != ramClass) {
 				string = J9VMJAVALANGCLASS_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
 			}
-			if (string == NULL) {
-				if (fileName != NULL) {
-					J9UTF8 *previousFileName = userData->previousFileName;
-					/* Use an == comparison here as the previousFileName may have been from
-					* a classloader that was unloaded.  We can safely do an == comparison
-					* as we know the current class is deeper in the stack and can't have
-					* incorrectly been loaded into the space the previous loader was removed
-					* from.  We can't do a string compare here but the == should be sufficient
-					* provided the utf8 interning is hitting on common strings.
-					*/
-					if (previousFileName == fileName) {
-						j9array_t result = (j9array_t) PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 2);
-						element = J9JAVAARRAYOFOBJECT_LOAD(vmThread, result, currentIndex - 1);
-						string = J9VMJAVALANGSTACKTRACEELEMENT_FILENAME(vmThread, element);
-					} else {
-						string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(fileName), (U_32) J9UTF8_LENGTH(fileName), 0);
-						if (string == NULL) {
-							rc = FALSE;
-							/* exception is pending from the call */
-							goto done;
-						}
+			if ((NULL == string) && (NULL != fileName)) {
+				J9UTF8 *previousFileName = userData->previousFileName;
+				/* Use an == comparison here as the previousFileName may have been from
+				* a classloader that was unloaded.  We can safely do an == comparison
+				* as we know the current class is deeper in the stack and can't have
+				* incorrectly been loaded into the space the previous loader was removed
+				* from.  We can't do a string compare here but the == should be sufficient
+				* provided the utf8 interning is hitting on common strings.
+				*/
+				if (previousFileName == fileName) {
+					j9array_t result = (j9array_t) PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 2);
+					element = J9JAVAARRAYOFOBJECT_LOAD(vmThread, result, currentIndex - 1);
+					string = J9VMJAVALANGSTACKTRACEELEMENT_FILENAME(vmThread, element);
+				} else {
+					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(fileName), (U_32) J9UTF8_LENGTH(fileName), 0);
+					if (NULL == string) {
+						rc = FALSE;
+						/* exception is pending from the call */
+						goto done;
 					}
-					Assert_JCL_notNull(string);
-					if (ramClass != NULL) {
-						/* Update the cached fileNameString on the class so subsequent calls will find it */
-						J9VMJAVALANGCLASS_SET_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), string);
-					}
+				}
+				Assert_JCL_notNull(string);
+				if (NULL != ramClass) {
+					/* Update the cached fileNameString on the class so subsequent calls will find it */
+					J9VMJAVALANGCLASS_SET_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), string);
 				}
 			}
 			/* Update previous filename as it must always match the contents of the StackTraceElement[n-1]'s
@@ -280,21 +273,20 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 			 * name into the StackTraceElement
 			 */
 			userData->previousFileName = fileName;
-			if (string != NULL) {
+			if (NULL != string) {
 				element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
 				J9VMJAVALANGSTACKTRACEELEMENT_SET_FILENAME(vmThread, element, string);
 			}
 
 			/* Fill in line number - Java wants -2 for natives, -1 for no line number (which will be 0 coming in from the iterator) */
-
-			if (romMethod->modifiers & J9AccNative) {
+			if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
 				lineNumber = -2;
-			} else if (lineNumber == 0) {
+			} else if (0 == lineNumber) {
 				lineNumber = -1;
 			}
 			J9VMJAVALANGSTACKTRACEELEMENT_SET_LINENUMBER(vmThread, element, (I_32) lineNumber);
 
-			if (vm->verboseLevel & VERBOSE_STACKTRACE) {
+			if (J9_ARE_ANY_BITS_SET(vm->verboseLevel, VERBOSE_STACKTRACE)) {
 				setStackTraceElementSource(vmThread, element, classLoader, romClass);
 			}
 

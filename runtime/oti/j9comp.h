@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,9 @@
 #define J9_ARE_ANY_BITS_SET(value, bits) OMR_ARE_ANY_BITS_SET((value), (bits))
 #define J9_ARE_ALL_BITS_SET(value, bits) OMR_ARE_ALL_BITS_SET((value), (bits))
 #define J9_ARE_NO_BITS_SET(value, bits) OMR_ARE_NO_BITS_SET((value), (bits))
+
+#define J9_STR_(x) #x
+#define J9_STR(x) J9_STR_(x)
 
 #if defined(RS6000) || defined(LINUX) || defined(OSX)
 #define J9UNIX

@@ -575,9 +575,7 @@ initializeSystemProperties(J9JavaVM * vm)
 	if (JAVA_SPEC_VERSION == 8) {
 		specificationVersion = "1.8";
 	} else {
-#define J9_STR_(x) #x
-#define J9_STR(x) J9_STR_(x)
-		specificationVersion = J9_STR(JAVA_SPEC_VERSION);
+		specificationVersion = JAVA_SPEC_VERSION_STRING;
 	}
 
 	/* Some properties (*.vm.*) are owned by the VM and need to be set early for all

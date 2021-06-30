@@ -101,15 +101,15 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 /* assumes VM access */
 static UDATA
 printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod * romMethod, J9UTF8 * sourceFile, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass) {
-	const char* format;
+	const char* format = NULL;
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions * vmFuncs = vm->internalVMFunctions;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	if (romMethod == NULL) {
+	if (NULL == romMethod) {
 		format = j9nls_lookup_message(
-			J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, 
-			J9NLS_VM_STACK_TRACE_UNKNOWN, 
+			J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
+			J9NLS_VM_STACK_TRACE_UNKNOWN,
 			NULL);
 		j9tty_err_printf(PORTLIB, (char*)format);
 	} else {
@@ -123,12 +123,8 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 		char versionBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		BOOLEAN freeModuleName = FALSE;
 		BOOLEAN freeModuleVersion = FALSE;
-		UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
 
-		if (j2seVersion >= J2SE_V11) {
-			moduleNameUTF = JAVA_BASE_MODULE;
-			moduleVersionUTF = JAVA_MODULE_VERSION;
-
+		if (JAVA_SPEC_VERSION >= 11) {
 			if (J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 				J9Module *module = NULL;
 				U_8 *classNameUTF = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass));
@@ -138,26 +134,37 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 				module = vmFuncs->findModuleForPackage(vmThread, classLoader, classNameUTF, (U_32) length);
 				omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 
-				if ((NULL != module) && (module != vm->javaBaseModule)) {
-					moduleNameUTF = copyStringToUTF8WithMemAlloc(
-						vmThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
-					if (nameBuf != moduleNameUTF) {
-						freeModuleName = TRUE;
+				if (NULL != module) {
+					if (module != vm->javaBaseModule) {
+						moduleNameUTF = copyStringToUTF8WithMemAlloc(
+							vmThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+						if (nameBuf != moduleNameUTF) {
+							freeModuleName = TRUE;
+						}
+					} else {
+						moduleNameUTF = JAVA_BASE_MODULE;
 					}
+
 					if (NULL != moduleNameUTF) {
 						moduleVersionUTF = copyStringToUTF8WithMemAlloc(
 							vmThread, module->version, J9_STR_NULL_TERMINATE_RESULT, "", 0, versionBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
-						if (versionBuf != moduleVersionUTF) {
+						if (NULL == moduleVersionUTF) {
+							moduleVersionUTF = JAVA_SPEC_VERSION_STRING;
+						} else if (versionBuf != moduleVersionUTF) {
 							freeModuleVersion = TRUE;
 						}
 					}
 				}
+			} else {
+				/* Assume bootstrap code within java.base when the module itself hasn't been created yet  */
+				moduleNameUTF = JAVA_BASE_MODULE;
+				moduleVersionUTF = JAVA_SPEC_VERSION_STRING;
 			}
 		}
-		if (romMethod->modifiers & J9AccNative) {
+		if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
 			sourceFileName = "NativeMethod";
 			sourceFileNameLen = LITERAL_STRLEN("NativeMethod");
-		} else if (sourceFile) {
+		} else if (NULL != sourceFile) {
 			sourceFileName = (char *)J9UTF8_DATA(sourceFile);
 			sourceFileNameLen = (UDATA)J9UTF8_LENGTH(sourceFile);
 		} else {
@@ -165,51 +172,31 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 			sourceFileNameLen = LITERAL_STRLEN("Unknown Source");
 		}
 		if (NULL != moduleNameUTF) {
-			if (NULL != moduleVersionUTF) {
-				if (lineNumber) {
-					format = j9nls_lookup_message(
-						J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
-						J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION_LINE,
-						"\tat %.*s.%.*s (%s@%s/%.*s:%u)\n");
-				} else {
-					format = j9nls_lookup_message(
-						J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
-						J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION,
-						"\tat %.*s.%.*s (%s@%s/%.*s)\n");
-				}
-				j9tty_err_printf(PORTLIB, (char*)format,
-					(UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
-					(UDATA)J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
-					moduleNameUTF, moduleVersionUTF,
-					sourceFileNameLen, sourceFileName,
-					lineNumber); /* line number will be ignored in if it's not used in the format string */
-				if (TRUE == freeModuleVersion) {
-					j9mem_free_memory(moduleVersionUTF);
-				}
+			if (0 != lineNumber) {
+				format = j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
+					J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION_LINE,
+					"\tat %.*s.%.*s (%s@%s/%.*s:%u)\n");
 			} else {
-				if (lineNumber) {
-					format = j9nls_lookup_message(
-						J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
-						J9NLS_VM_STACK_TRACE_WITH_MODULE_LINE,
-						"\tat %.*s.%.*s (%s/%.*s:%u)\n");
-				} else {
-					format = j9nls_lookup_message(
-						J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
-						J9NLS_VM_STACK_TRACE_WITH_MODULE,
-						"\tat %.*s.%.*s (%s/%.*s)\n");
-				}
-				j9tty_err_printf(PORTLIB, (char*)format,
-					(UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
-					(UDATA)J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
-					moduleNameUTF,
-					sourceFileNameLen, sourceFileName,
-					lineNumber); /* line number will be ignored in if it's not used in the format string */
+				format = j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
+					J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION,
+					"\tat %.*s.%.*s (%s@%s/%.*s)\n");
+			}
+			j9tty_err_printf(PORTLIB, (char*)format,
+				(UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
+				(UDATA)J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
+				moduleNameUTF, moduleVersionUTF,
+				sourceFileNameLen, sourceFileName,
+				lineNumber); /* line number will be ignored in if it's not used in the format string */
+			if (TRUE == freeModuleVersion) {
+				j9mem_free_memory(moduleVersionUTF);
 			}
 			if (TRUE == freeModuleName) {
 				j9mem_free_memory(moduleNameUTF);
 			}
 		} else {
-			if (lineNumber) {
+			if (0 != lineNumber) {
 				format = j9nls_lookup_message(
 					J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
 					J9NLS_VM_STACK_TRACE_WITH_LINE,
