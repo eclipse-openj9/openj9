@@ -7494,6 +7494,13 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 
       case TR::sun_reflect_Reflection_getCallerClass:
          {
+#if defined(J9VM_OPT_JITSERVER)
+         // TODO (#13098): Enable getCallerClass optimization for JITServer
+         if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ||
+             compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+            return 0;
+#endif
+
          // We need to bail out since we create a class pointer const with cpIndex of -1
          if (isAOT_DEPRECATED_DO_NOT_USE() && !comp->getOption(TR_UseSymbolValidationManager))
             {
