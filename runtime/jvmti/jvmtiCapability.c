@@ -41,8 +41,6 @@ dumpCapabilities(J9JavaVM * vm, const jvmtiCapabilities *capabilities, const cha
 
 	j9tty_printf(PORTLIB, "%s\n", caption);
 
-#define J9_STR_(x) #x
-#define J9_STR(x) J9_STR_(x)
 #define PRINT_CAPABILITY(capability) if (capabilities->capability) j9tty_printf(PORTLIB, "\t%s\n", J9_STR(capability));
 
 	PRINT_CAPABILITY(can_tag_objects);
