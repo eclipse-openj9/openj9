@@ -2617,6 +2617,12 @@
 	</test>
 	<test>
 		<testCaseName>RuntimeAnnotationTests</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/13108#issuecomment-874272681</comment>
+				<version>17</version>
+			</disable>
+		</disables>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			$(ADD_EXPORTS_JDK_INTERNAL_REFLECT) $(ADD_EXPORTS_JDK_INTERNAL_MISC) $(ADD_EXPORTS_JDK_INTERNAL_ACCESS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
