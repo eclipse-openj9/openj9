@@ -399,6 +399,8 @@ enum INIT_STAGE {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #define VMOPT_XXENABLECRIU "-XX:+EnableCRIUSupport"
 #define VMOPT_XXDISABLECRIU "-XX:-EnableCRIUSupport"
+#define VMOPT_XXENABLECRIUNONPORTABLEMODE "-XX:+CRIURestoreNonPortableMode"
+#define VMOPT_XXDISABLECRIUNONPORTABLEMODE "-XX:-CRIURestoreNonPortableMode"
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* Option to turn on exception on synchronization on instances of value-based classes */

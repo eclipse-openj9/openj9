@@ -4793,6 +4793,8 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	BOOLEAN (*jvmCheckpointHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*jvmRestoreHooks)(struct J9VMThread *currentThread);
+	BOOLEAN (*isCRIUSupportEnabled)(struct J9VMThread *currentThread);
+	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } J9InternalVMFunctions;
 
@@ -5088,6 +5090,11 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
 #define J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull))
 #define J9VMTHREAD_DISCONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull))
+
+typedef struct J9CRIUCheckpointState {
+	BOOLEAN isCheckPointAllowed;
+	BOOLEAN isNonPortableRestoreMode;
+} J9CRIUCheckpointState;
 
 typedef struct J9ReflectFunctionTable {
 	jobject  ( *idToReflectMethod)(struct J9VMThread* vmThread, jmethodID methodID) ;
@@ -5540,6 +5547,7 @@ typedef struct J9JavaVM {
 	jclass criuResultClass;
 	jmethodID criuResultInit;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	J9CRIUCheckpointState *checkpointState;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

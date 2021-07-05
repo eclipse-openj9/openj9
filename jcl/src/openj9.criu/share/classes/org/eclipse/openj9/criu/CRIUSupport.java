@@ -98,6 +98,8 @@ public final class CRIUSupport {
 	private static final boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
 
 	private static native boolean isCRIUSupportEnabledImpl();
+	
+	private static native boolean isCheckpointAllowed();
 
 	private static native CRIUResult checkpointJVMImpl(String checkPointDir, boolean keepRunning, boolean shellJob, boolean extUnixSupport, int logLevel, String logFile);
 

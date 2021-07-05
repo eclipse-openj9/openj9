@@ -402,5 +402,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	jvmCheckpointHooks,
 	jvmRestoreHooks,
+	isCRIUSupportEnabled,
+	isCheckpointAllowed,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 };

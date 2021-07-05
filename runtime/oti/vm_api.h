@@ -474,6 +474,29 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 
 
 /* ---------------- criuhelpers.cpp ---------------- */
+/**
+ * @brief Queries if CRIU support is enabled. By default support
+ * is not enabled, it can be enabled with `-XX:+EnableCRIUSupport`
+ *
+ *
+ * @param currentThread vmthread token
+ * @return TRUE if enabled, FALSE otherwise
+ */
+BOOLEAN
+isCRIUSupportEnabled(J9VMThread *currentThread);
+
+/**
+ * @brief Queries if checkpointing is permitted. Note, when
+ * -XX:+CRIURestoreNonPortableMode option is specified checkpointing
+ * will not be permitted after the JVM has been restored from a checkpoint
+ * (checkpoint once mode).
+ *
+ *
+ * @param currentThread vmthread token
+ * @return TRUE if permitted, FALSE otherwise
+ */
+BOOLEAN
+isCheckpointAllowed(J9VMThread *currentThread);
 
 /**
  * @brief JVM hooks to run before performing a JVM checkpoint
