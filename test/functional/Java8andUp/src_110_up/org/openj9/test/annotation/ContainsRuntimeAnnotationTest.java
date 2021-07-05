@@ -73,11 +73,7 @@ public class ContainsRuntimeAnnotationTest {
 	int notStable_MultipleAnnotations = 0;
 
 	public ContainsRuntimeAnnotationTest() throws Throwable {
-		String version = System.getProperty("java.version");
-		int dot = version.indexOf(".");
-		if (dot != -1) {
-			version = version.substring(0, dot);
-		}
+		String version = System.getProperty("java.vm.specification.version");
 
 		Class SharedSecrets;
 		Class JavaLangAccess;
