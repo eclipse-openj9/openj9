@@ -63,7 +63,7 @@
  *   OPENJDK<version>_BRANCH_<platform>: String - the branch to clone from
  *   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
  *   SUMMARY_AUTO_REFRESH_TIME: String - the downstream summary badge auto-refresh time [in minutes], default: 5
- *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: false
+ *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: true
  */
 
 CURRENT_RELEASES = ['8', '11', '16', '17', 'next']
@@ -332,7 +332,7 @@ echo "SCM_REFSPEC:'${SCM_REFSPEC}'"
 
 SUMMARY_AUTO_REFRESH_TIME = (params.SUMMARY_AUTO_REFRESH_TIME) ? params.SUMMARY_AUTO_REFRESH_TIME : '5'
 echo "SUMMARY_AUTO_REFRESH_TIME:'${SUMMARY_AUTO_REFRESH_TIME}' [minutes]"
-ENABLE_SUMMARY_AUTO_REFRESH = (params.keySet().contains('ENABLE_SUMMARY_AUTO_REFRESH')) ? params.ENABLE_SUMMARY_AUTO_REFRESH : false
+ENABLE_SUMMARY_AUTO_REFRESH = params.ENABLE_SUMMARY_AUTO_REFRESH ? : true
 echo "ENABLE_SUMMARY_AUTO_REFRESH:'${ENABLE_SUMMARY_AUTO_REFRESH}'"
 
 RELEASES = []
