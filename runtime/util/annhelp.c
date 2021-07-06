@@ -170,8 +170,12 @@ fieldContainsRuntimeAnnotation(J9VMThread *currentThread, J9Class *clazz, UDATA 
 
 	Assert_VMUtil_true(NULL != clazz);
 	Assert_VMUtil_true(NULL != annotationName);
+	Assert_VMUtil_true(0 < cpIndex);
 
 	romClass = clazz->romClass;
+
+	Assert_VMUtil_true(J9CPTYPE_FIELD == J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(romClass), cpIndex));
+
 	constantPool = ramCP->romConstantPool;
 	romFieldRef = (J9ROMFieldRef *)&constantPool[cpIndex];
 
