@@ -586,6 +586,7 @@ enum INIT_STAGE {
 #define VMOPT_ADD_OPENS "--add-opens"
 #define VMOPT_PATCH_MODULE "--patch-module"
 #define VMOPT_ILLEGAL_ACCESS "--illegal-access="
+#define VMOPT_ENABLE_NATIVE_ACCESS "--enable-native-access"
 
 #define ENVVAR_IBM_MIXED_MODE_THRESHOLD "IBM_MIXED_MODE_THRESHOLD"
 #define ENVVAR_JAVA_COMPILER "JAVA_COMPILER"
@@ -615,6 +616,7 @@ enum INIT_STAGE {
 #define SYSPROP_JDK_MODULE_ADDEXPORTS "jdk.module.addexports."
 #define SYSPROP_JDK_MODULE_PATCH "jdk.module.patch."
 #define SYSPROP_JDK_MODULE_ILLEGALACCESS "jdk.module.illegalAccess"
+#define SYSPROP_JDK_MODULE_ENABLENATIVEACCESS "jdk.module.enable.native.access."
 #define JAVA_BASE_MODULE "java.base"
 
 #define SYSPROP_COM_SUN_MANAGEMENT "-Dcom.sun.management."

@@ -343,6 +343,7 @@ _end:
  * --add-opens,
  * --add-reads,
  * --patch-module
+ * --enable-native-access --- JDK17+
  *
  * For every occurrence of the option, a new system property is created by appending index
  * to the base property name. The index corresponds to the number of times that option is used.
@@ -480,6 +481,15 @@ addModularitySystemProperties(J9JavaVM * vm)
 			vm->jclFlags |= J9_JCL_FLAG_JDK_MODULE_PATCH_PROP;
 		}
 	}
+
+#if JAVA_SPEC_VERSION >= 17
+	/* Find all --enable-native-access options */
+	rc = addPropertiesForOptionWithAssignArg(vm, VMOPT_ENABLE_NATIVE_ACCESS, LITERAL_STRLEN(VMOPT_ENABLE_NATIVE_ACCESS),
+		SYSPROP_JDK_MODULE_ENABLENATIVEACCESS, LITERAL_STRLEN(SYSPROP_JDK_MODULE_ENABLENATIVEACCESS), NULL);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto _end;
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 	/* Find last --illegal-access */
 	rc = addPropertyForOptionWithEqualsArg(vm, VMOPT_ILLEGAL_ACCESS, LITERAL_STRLEN(VMOPT_ILLEGAL_ACCESS), SYSPROP_JDK_MODULE_ILLEGALACCESS);
