@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -143,6 +143,7 @@ public class TestLoadingClassesFromJarfile {
 			"javax.imageio.ImageIO",
 			"javax.swing",
 			"org.openj9.test.classRelationshipVerifier.TestClassRelationshipVerifier",
+			"org.openj9.test.annotation.ContainsRuntimeAnnotationTest",
 			"sun.applet",
 			"sun.awt",
 			"sun.font",
