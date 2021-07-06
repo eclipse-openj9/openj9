@@ -1,6 +1,12 @@
 /* fficonfig.h.  Generated from fficonfig.h.in by configure.  */
 /* fficonfig.h.in.  Generated from configure.ac by autoheader.  */
 
+/*
+ * ===========================================================================
+ * Copyright (c) 2021, 2021 IBM Corp. and others
+ * ===========================================================================
+ */
+
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
@@ -60,7 +66,7 @@
 /* #undef HAVE_AS_X86_64_UNWIND_SECTION_TYPE */
 
 /* Define if your assembler supports PC relative relocs. */
-/* #undef HAVE_AS_X86_PCREL */
+#define HAVE_AS_X86_PCREL 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
