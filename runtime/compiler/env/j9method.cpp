@@ -3006,6 +3006,12 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X MethodMethods[] =
+      {
+      {  TR::java_lang_reflect_Method_invoke, 6, "invoke", (int16_t)-1, "*"},
+      {  TR::unknownMethod}
+      };
+
    static X VectorMethods[] =
       {
       {  TR::java_util_Vector_subList,    7, "subList",  (int16_t)-1, "*"},
@@ -3269,7 +3275,6 @@ void TR_ResolvedJ9Method::construct()
 
    static X ReflectionMethods[] =
       {
-      {x(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "(I)Ljava/lang/Class;")},
       {x(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "()Ljava/lang/Class;")},
       {x(TR::sun_reflect_Reflection_getClassAccessFlags, "getClassAccessFlags", "(Ljava/lang/Class;)I")},
       {  TR::unknownMethod}
@@ -3979,6 +3984,7 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class24[] =
       {
+      { "java/lang/reflect/Method", MethodMethods },
       { "java/util/TreeMap$SubMap", SubMapMethods },
       { "sun/nio/cs/UTF_8$Decoder", EncodeMethods },
       { "sun/nio/cs/UTF_8$Encoder", EncodeMethods },
