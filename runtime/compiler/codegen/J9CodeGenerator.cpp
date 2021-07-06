@@ -435,12 +435,12 @@ J9::CodeGenerator::lowerCompressedRefs(
       // object references they will have decompression or compression sequence for
       // the child being loaded or stored respectively. In case of storing
       // object reference, in some cases it might need actual object decompressed
-      // address. 
+      // address.
       // Due to above assumptions made by the codegen we should not do any
       // optimization here on compression/decompression sequence which could
       // break this assumption and lead to undefined behaviour.
       // See openj9#12597 for more details
-      
+
       // -J9JIT_COMPRESSED_POINTER-
       // if the value is known to be null or if using lowMemHeap, do not
       // generate a compression sequence
@@ -5111,6 +5111,10 @@ J9::CodeGenerator::isMonitorValueBasedOrValueType(TR::Node* monNode)
 
       //java.lang.Object class is only set when monitor is java.lang.Object but not its subclass
       if (clazz == self()->comp()->getObjectClassPointer())
+         return TR_no;
+
+      // J9ClassIsValueType is mutually exclusive to J9ClassHasIdentity
+      if (!TR::Compiler->om.areValueBasedMonitorChecksEnabled() && TR::Compiler->cls.classHasIdentity(clazz))
          return TR_no;
 
       if (!TR::Compiler->cls.isConcreteClass(self()->comp(), clazz))
