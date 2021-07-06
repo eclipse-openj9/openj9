@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,28 +53,45 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
    static const float STRING_COMPRESSION_ADJUSTMENT_FACTOR;
 
    /** \brief
+    *     The inliner weight adjustment factor used for `java/lang/reflect/Method.invoke`.
+    */
+   static const float METHOD_INVOKE_ADJUSTMENT_FACTOR;
+
+   /** \brief
     *     Adjusts the estimated \p value by a \p factor for string compression related methods.
-    *
     *  \param method
     *     The method we are trying to make an estimate adjustment for.
-    *
     *  \param value
     *     The estimated value we are trying to adjust.
-    *
     *  \param factor
     *     The factor multiplier to adjust the value by.
-    *
     *  \return
     *     true if the \p value was adjusted by the \p factor for the specific \p method; false otherwise.
-    *
     *  \note
     *     If an adjustment is performed the formula used to calculate the new value is:
-    *
     *     \code
     *     value *= factor;
     *     \endcode
     */
    static bool adjustEstimateForStringCompression(TR_ResolvedMethod* method, int32_t& value, float factor);
+
+   /** \brief
+    *     Adjusts the estimated \p value by a \p factor for `java/lang/reflect/Method.invoke`.
+    *  \param method
+    *     The method we are trying to make an estimate adjustment for.
+    *  \param value
+    *     The estimated value we are trying to adjust.
+    *  \param factor
+    *     The factor multiplier to adjust the value by.
+    *  \return
+    *     true if the \p value was adjusted by the \p factor for the specific \p method; false otherwise.
+    *  \note
+    *     If an adjustment is performed the formula used to calculate the new value is:
+    *     \code
+    *     value *= factor;
+    *     \endcode
+    */
+   static bool adjustEstimateForMethodInvoke(TR_ResolvedMethod* method, int32_t& value, float factor);
 
    static TR::Block *getBlock(TR::Compilation *comp, TR::Block * * blocks, TR_ResolvedMethod *feMethod, int32_t i, TR::CFG & cfg);
 

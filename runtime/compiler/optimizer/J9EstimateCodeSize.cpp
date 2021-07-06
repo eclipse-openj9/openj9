@@ -44,6 +44,9 @@
 // Empirically determined value
 const float TR_J9EstimateCodeSize::STRING_COMPRESSION_ADJUSTMENT_FACTOR = 0.75f;
 
+// There was no analysis done to determine this factor. It was chosen by intuition.
+const float TR_J9EstimateCodeSize::METHOD_INVOKE_ADJUSTMENT_FACTOR = 0.20f;
+
 
 /*
 DEFINEs are ugly in general, but putting
@@ -377,6 +380,32 @@ TR_J9EstimateCodeSize::adjustEstimateForStringCompression(TR_ResolvedMethod* met
 
          return true;
          }
+      }
+
+   return false;
+   }
+
+/** \details
+ *     The `Method.invoke` API contains a call to `Reflect.getCallerClass()` API which when executed will trigger a
+ *     stack walking operation. Performance wise this is quite expensive. The `Reflect.getCallerClass()` API returns
+ *     the class of the method which called `Method.invoke`, so if we can promote inlining of `Method.invoke` we can
+ *     eliminate the `Reflect.getCallerClass()` call with a simple load, thus avoiding the expensive stack walk.
+ */
+bool
+TR_J9EstimateCodeSize::adjustEstimateForMethodInvoke(TR_ResolvedMethod* method, int32_t& value, float factor)
+   {
+   if (method->getRecognizedMethod() == TR::java_lang_reflect_Method_invoke)
+      {
+      static const char *factorOverrideChars = feGetEnv("TR_MethodInvokeInlinerFactor");
+      static const int32_t factorOverride = (factorOverrideChars != NULL) ? atoi(factorOverrideChars) : 0;
+      if (factorOverride != 0)
+         {
+         factor = 1.0f / static_cast<float>(factorOverride);
+         }
+
+      value *= factor;
+
+      return true;
       }
 
    return false;
@@ -785,6 +814,11 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
    if (adjustEstimateForStringCompression(calltarget->_calleeMethod, size, STRING_COMPRESSION_ADJUSTMENT_FACTOR))
       {
       heuristicTrace(tracer(), "*** Depth %d: Adjusting size for %s because of string compression from %d to %d", _recursionDepth, callerName, sizeBeforeAdjustment, size);
+      }
+
+   if (adjustEstimateForMethodInvoke(calltarget->_calleeMethod, size, METHOD_INVOKE_ADJUSTMENT_FACTOR))
+      {
+      heuristicTrace(tracer(), "*** Depth %d: Adjusting size for %s because of java/lang/reflect/Method.invoke from %d to %d", _recursionDepth, callerName, sizeBeforeAdjustment, size);
       }
 
    calltarget->_fullSize = size;
@@ -1662,6 +1696,11 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       heuristicTrace(tracer(), "*** Depth %d: Adjusting partial size for %s because of string compression from %d to %d", _recursionDepth, callerName, partialSizeBeforeAdjustment, calltarget->_partialSize);
       }
 
+   if (adjustEstimateForMethodInvoke(calltarget->_calleeMethod, calltarget->_partialSize, METHOD_INVOKE_ADJUSTMENT_FACTOR))
+      {
+      heuristicTrace(tracer(), "*** Depth %d: Adjusting partial size for %s because of java/lang/reflect/Method.invoke from %d to %d", _recursionDepth, callerName, partialSizeBeforeAdjustment, calltarget->_partialSize);
+      }
+
    auto fullSizeBeforeAdjustment = calltarget->_fullSize;
 
    if (adjustEstimateForStringCompression(calltarget->_calleeMethod, calltarget->_fullSize, STRING_COMPRESSION_ADJUSTMENT_FACTOR))
@@ -1669,11 +1708,21 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       heuristicTrace(tracer(), "*** Depth %d: Adjusting full size for %s because of string compression from %d to %d", _recursionDepth, callerName, fullSizeBeforeAdjustment, calltarget->_fullSize);
       }
 
+   if (adjustEstimateForMethodInvoke(calltarget->_calleeMethod, calltarget->_fullSize, METHOD_INVOKE_ADJUSTMENT_FACTOR))
+      {
+      heuristicTrace(tracer(), "*** Depth %d: Adjusting full size for %s because of java/lang/reflect/Method.invoke from %d to %d", _recursionDepth, callerName, fullSizeBeforeAdjustment, calltarget->_fullSize);
+      }
+
    auto realSizeBeforeAdjustment = _realSize;
 
    if (adjustEstimateForStringCompression(calltarget->_calleeMethod, _realSize, STRING_COMPRESSION_ADJUSTMENT_FACTOR))
       {
       heuristicTrace(tracer(), "*** Depth %d: Adjusting real size for %s because of string compression from %d to %d", _recursionDepth, callerName, realSizeBeforeAdjustment, _realSize);
+      }
+
+   if (adjustEstimateForMethodInvoke(calltarget->_calleeMethod, _realSize, METHOD_INVOKE_ADJUSTMENT_FACTOR))
+      {
+      heuristicTrace(tracer(), "*** Depth %d: Adjusting real size for %s because of java/lang/reflect/Method.invoke from %d to %d", _recursionDepth, callerName, realSizeBeforeAdjustment, _realSize);
       }
 
    reduceDAAWrapperCodeSize(calltarget);
