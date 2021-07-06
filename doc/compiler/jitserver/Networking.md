@@ -20,22 +20,25 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-# Sockets
+# Networking
 
-Client server communication via TCP sockets is the default communication backend. The implementation resides within the `runtime/compiler/net` directory. There is a base class `CommunicationStream`, which is specialized for both the client and server in `J9ClientStream` and `J9ServerStream`.
+The implementation resides within the `runtime/compiler/net` directory.
+There is a base class `CommunicationStream`, which is specialized for both the client and server in `J9ClientStream` and `J9ServerStream`.
 
-Encryption via TLS (OpenSSL) is optionally supported. See [Usage](Usage.md) for encryption setup instructions.
+Encryption via TLS (OpenSSL) is optionally supported. See [Getting started with JITServer](Usage.md) for encryption setup instructions.
 
 If a network error occurs, `JITServer::StreamFailure` is thrown.
 
-### `CommunicationStream`
-Implements basic functionality such as stream initialization (with/without TLS), reading/writing objects to streams, and stream cleanup.
+## `CommunicationStream`
 
-### `J9ClientStream`
+Implements basic functionality such as stream initialization (with/without TLS), reading/writing objects to streams, and stream cleanup.
+Uses TCP sockets for network communication.
+
+## `J9ClientStream`
 
 One instance per compilation thread. Typically, this is only interacted with through the function `handleServerMessage` in `JITClientCompilationThread.cpp`. An instance is created for a new compilation inside `remoteCompile`, and the `buildCompileRequest` method is then called on it to begin the compilation.
 
-### `J9ServerStream`
+## `J9ServerStream`
 
 There is one instance per compilation thread. Instances are created by `ServerStream::serveRemoteCompilationRequests`, a method which loops forever waiting for compilation requests and adding them to the compilation queue using the method `J9CompileDispatcher::compile`.
 
@@ -43,5 +46,6 @@ Accessible on a compilation thread via `TR::CompilationInfo::getStream()`, but b
 
 Also stores the client ID, accessible via `J9ServerStream::getClientId`.
 
-### TODO
+## TODO
+
 Add documentation describing implementation of `Message` and `MessageBuffer` classes.

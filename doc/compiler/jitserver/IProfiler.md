@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,15 +20,17 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-The IProfiler is specialized for JITServer in two classes: `JITServerIProfiler` and `JITClientIProfiler`. They are allocated in the method `onLoadInternal` in `rossa.cpp`.
+# JITServer Interpreter Profiler
+
+The Interpreter Profiler (IProfiler) is specialized for both server and client in classes `JITServerIProfiler` and `JITClientIProfiler` respectively. They are allocated in the method `onLoadInternal` in `control/rossa.cpp`.
 
 There are two different kinds of entries that we handle: method entries and bytecode entries.
 
-### Method entries
+## Method entries
 
 Holds profiling data relating to a method. This data is currently not cached. When the method `searchForMethodSample` is called on the server, it sends a message to the client. The client serializes the data using `TR_ContiguousIPMethodHashTableEntry::serialize` and the server deserializes it with `deserializeMethodEntry`.
 
-### Bytecode entries
+## Bytecode entries
 
 Profiling data for individual bytecodes. This data is retrieved during compilation using the method `profilingSample`. It is cached at the server in the client session data.
 
