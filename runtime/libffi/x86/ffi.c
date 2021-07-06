@@ -28,6 +28,12 @@
    DEALINGS IN THE SOFTWARE.
    ----------------------------------------------------------------------- */
 
+/*
+ * ===========================================================================
+ * Copyright (c) 2021, 2021 IBM Corp. and others
+ * ===========================================================================
+ */
+
 #if !defined(__x86_64__) || defined(_WIN64) || defined(__CYGWIN__)
 
 #ifdef _WIN64
@@ -327,7 +333,8 @@ ffi_status ffi_prep_cif_machdep(ffi_cif *cif)
 
 #ifndef X86_WIN32
 #ifndef X86_WIN64
-  if (cif->abi == FFI_SYSV || cif->abi == FFI_UNIX64)
+  /* Remove FFI_UNIX64 as the code is only used on 32bit */
+  if (cif->abi == FFI_SYSV)
 #endif
     cif->bytes = (cif->bytes + 15) & ~0xF;
 #endif

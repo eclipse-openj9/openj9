@@ -3443,15 +3443,17 @@ remoteCompile(
          // As a debugging feature, a local compilation can be performed immediately after a remote compilation.
          // Each of them has logs with the same compilationSequenceNumber
          int compilationSequenceNumber = compiler->getOptions()->writeLogFileFromServer(logFileStr);
-         if (TR::Options::getCmdLineOptions()->getOption(TR_JITServerFollowRemoteCompileWithLocalCompile) && compilationSequenceNumber)
+         if (compiler->getOption(TR_JITServerFollowRemoteCompileWithLocalCompile) && compilationSequenceNumber)
             {
             intptr_t rtn = 0;
             compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
+            releaseVMAccess(vmThread);
             if ((rtn = compiler->compile()) != COMPILATION_SUCCEEDED)
                {
                TR_ASSERT(false, "Compiler returned non zero return code %d\n", rtn);
                compiler->failCompilation<TR::CompilationException>("Compilation Failure");
                }
+            acquireVMAccessNoSuspend(vmThread);
             compiler->getOptions()->closeLogFileForClientOptions();
             }
 

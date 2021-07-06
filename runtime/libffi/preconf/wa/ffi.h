@@ -50,6 +50,12 @@
    http://gcc.gnu.org/ml/java/1999-q3/msg00174.html
    -------------------------------------------------------------------- */
 
+/*
+ * ===========================================================================
+ * Copyright (c) 2021, 2021 IBM Corp. and others
+ * ===========================================================================
+ */
+
 #ifndef LIBFFI_H
 #define LIBFFI_H
 
@@ -120,6 +126,34 @@ typedef struct _ffi_type
   struct _ffi_type **elements;
 } ffi_type;
 
+/* Need minimal decorations for DLLs to work on Windows.  GCC has
+ * autoimport and autoexport.  Always mark externally visible symbols
+ * as dllimport for MSVC clients, even if it means an extra indirection
+ * when using the static version of the library.
+ * Besides, as a workaround, they can define FFI_BUILDING if they
+ * *know* they are going to link with the static library.
+ */
+#if defined _MSC_VER
+# if defined FFI_BUILDING_DLL /* Building libffi.DLL with msvcc.sh */
+#  define FFI_API __declspec(dllexport)
+# elif !defined FFI_BUILDING  /* Importing libffi.DLL */
+#  define FFI_API __declspec(dllimport)
+# else                        /* Building/linking static library */
+#  define FFI_API
+# endif
+#else
+# define FFI_API
+#endif
+
+/* The externally visible type declarations also need the MSVC DLL
+ * decorations, or they will not be exported from the object file.
+ */
+#if defined LIBFFI_HIDE_BASIC_TYPES
+# define FFI_EXTERN FFI_API
+#else
+# define FFI_EXTERN extern FFI_API
+#endif
+
 #ifndef LIBFFI_HIDE_BASIC_TYPES
 #if SCHAR_MAX == 127
 # define ffi_type_uchar                ffi_type_uint8
@@ -167,20 +201,6 @@ typedef struct _ffi_type
 # define ffi_type_slong        ffi_type_sint64
 #else
  #error "long size not supported"
-#endif
-
-/* Need minimal decorations for DLLs to works on Windows. */
-/* GCC has autoimport and autoexport.  Rely on Libtool to */
-/* help MSVC export from a DLL, but always declare data   */
-/* to be imported for MSVC clients.  This costs an extra  */
-/* indirection for MSVC clients using the static version  */
-/* of the library, but don't worry about that.  Besides,  */
-/* as a workaround, they can define FFI_BUILDING if they  */
-/* *know* they are going to link with the static library. */
-#if !defined FFI_BUILDING
-#define FFI_EXTERN extern __declspec(dllimport)
-#else
-#define FFI_EXTERN extern
 #endif
 
 /* These are defined in types.c */
@@ -430,6 +450,22 @@ ffi_prep_java_raw_closure_loc (ffi_java_raw_closure*,
 			       void *codeloc);
 
 #endif /* FFI_CLOSURES */
+
+#if FFI_GO_CLOSURES
+
+typedef struct {
+  void      *tramp;
+  ffi_cif   *cif;
+  void     (*fun)(ffi_cif*,void*,void**,void*);
+} ffi_go_closure;
+
+FFI_API ffi_status ffi_prep_go_closure (ffi_go_closure*, ffi_cif *,
+				void (*fun)(ffi_cif*,void*,void**,void*));
+
+FFI_API void ffi_call_go (ffi_cif *cif, void (*fn)(void), void *rvalue,
+		  void **avalue, void *closure);
+
+#endif /* FFI_GO_CLOSURES */
 
 /* ---- Public interface definition -------------------------------------- */
 
