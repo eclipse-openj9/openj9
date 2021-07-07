@@ -1992,6 +1992,17 @@ resolveMethodHandleRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cp
 				break;
 			}
 		}
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+		if (resolvedClass == J9VMJAVALANGINVOKEVARHANDLE(vmThread->javaVM)) {
+			J9ROMNameAndSignature* nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
+			J9UTF8 *nameUTF = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+			/* Check if name is a polymorphic VarHandle Method */
+			if (VM_VMHelpers::isPolymorphicVarHandleMethod(J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF))) {
+				/* valid - must be resolvable */
+				break;
+			}
+		}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 		if (resolveVirtualMethodRef(vmThread, ramCP, fieldOrMethodIndex, resolveFlags, NULL) == 0) {
 			/* private methods don't end up in the vtable - we need to determine if invokeSpecial is
