@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2020 IBM Corp. and others
+# Copyright (c) 2000, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -359,8 +359,6 @@ ifeq ($(HOST_ARCH),z)
 
     M4_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES)
 
-
-
     ifeq ($(BUILD_CONFIG),debug)
         M4_DEFINES+=$(M4_DEFINES_DEBUG)
         M4_FLAGS+=$(M4_FLAGS_DEBUG)
@@ -518,7 +516,8 @@ ifeq ($(BUILD_CONFIG),debug)
 endif
 
 ifeq ($(OS),linux)
-SOLINK_EXTRA_ARGS+=-Wl,--version-script=$(SOLINK_VERSION_SCRIPT)
+    SOLINK_EXTRA_ARGS+=-Wl,-soname=libj9jit29.so
+    SOLINK_EXTRA_ARGS+=-Wl,--version-script=$(SOLINK_VERSION_SCRIPT)
 endif
 
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)
