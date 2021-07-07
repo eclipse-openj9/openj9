@@ -1397,8 +1397,12 @@ _illegalPrimitiveReturn:
 
 			receiver = BCV_BASE_TYPE_NULL; /* makes class compare work with statics */
 
-			if (bc & 1) {
-				/* JBputfield/JBpustatic - odd bc's */
+			if ((bc & 1)
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				|| (bc == JBwithfield)
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+			) {
+				/* case for JBwithfield and odd bc's which are JBputfield/JBpustatic  */
 				type = POP;
 				if ((*J9UTF8_DATA(utf8string) == 'D') || (*J9UTF8_DATA(utf8string) == 'J')) {
 					inconsistentStack |= (type != BCV_BASE_TYPE_TOP);
@@ -1802,6 +1806,15 @@ _illegalPrimitiveReturn:
 
 		case RTV_PUSH_NEW:
 			switch (bc) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			case JBdefaultvalue:
+				index = PARAM_16(bcIndex, 1);
+				info = &constantPool[index];
+				utf8string = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) info);
+				stackTop = pushClassType(verifyData, utf8string, stackTop);
+				break;
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 			case JBnew:
 			case JBnewdup:
 				index = PARAM_16(bcIndex, 1);
@@ -2608,11 +2621,11 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 		}
 
 		/* Object or array */
-		if ((*signature == 'L') || arity) {
+		if (IS_REF_OR_VAL_SIGNATURE(*signature) || arity) {
 			IDATA reasonCode = 0;
 
 			/* Object array */
-			if (*signature == 'L') {
+			if (IS_REF_OR_VAL_SIGNATURE(*signature)) {
 				signature++;
 				string = signature;	/* remember the start of the string */
 				while (*signature++ != ';');

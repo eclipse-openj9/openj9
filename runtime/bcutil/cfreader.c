@@ -1777,7 +1777,9 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<init>", 6)) {
 
 			/* check no invalid flags set */
-			if (value & ~CFR_INIT_METHOD_ACCESS_MASK) {
+			if ((J9_IS_CLASSFILE_VALUETYPE(classfile) && (value & ~CFR_INIT_VT_METHOD_ACCESS_MASK))
+				||  (!J9_IS_CLASSFILE_VALUETYPE(classfile) && (value & ~CFR_INIT_METHOD_ACCESS_MASK))
+			) {
 				errorCode = J9NLS_CFR_ERR_INIT_METHOD__ID;
 				goto _errorFound;
 			}

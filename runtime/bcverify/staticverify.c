@@ -122,7 +122,7 @@ buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode * code, U_8 
 			break;
 
 		default:
-			if (bc > CFR_BC_jsr_w) {
+			if ((bc > CFR_BC_MaxDefined) || (bc == CFR_BC_breakpoint)) {
 				errorType = J9NLS_CFR_ERR_BC_UNKNOWN__ID;
 				goto _leaveProc;
 			}
@@ -805,7 +805,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			break;
 
 		case CFR_BC_areturn:
-			if ((sigChar != 'L') && (sigChar != '[')) {
+			if (!IS_REF_OR_VAL_SIGNATURE(sigChar) && (sigChar != '[')) {
 				/* fail, modify the bytecode to be incompatible in the second pass of verification */
 				if (sigChar != 'V') {
 					*(bcIndex - 1) = CFR_BC_return;
@@ -822,6 +822,9 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 */
 			break;
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_BC_withfield:
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		case CFR_BC_getstatic:
 		case CFR_BC_putstatic:
 		case CFR_BC_getfield:
@@ -875,10 +878,12 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			}
 			index = info->slot2;
 			info = &(classfile->constantPool[classfile->constantPool[index].slot1]);
+			U_16 returnChar = getReturnTypeFromSignature(classfile->constantPool[classfile->constantPool[index].slot2].bytes, classfile->constantPool[classfile->constantPool[index].slot2].slot1, NULL);
 			if (info->bytes[0] == '<') {
-				if ((bc != CFR_BC_invokespecial)
-				|| (info->tag != CFR_CONSTANT_Utf8)
-				|| !J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)
+				if ((IS_QTYPE(returnChar) && (bc != CFR_BC_invokestatic))
+					|| (!IS_QTYPE(returnChar) && (bc != CFR_BC_invokespecial))
+					|| (info->tag != CFR_CONSTANT_Utf8)
+					|| !J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)
 				) {
 					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID__ID;
 					goto _verifyError;
@@ -957,6 +962,10 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			}
 			break;
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		case CFR_BC_defaultvalue:
+			/* fall through */
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		case CFR_BC_new:
 			NEXT_U16(index, bcIndex);
 			if ((!index) || (index >= cpCount)) {
@@ -1537,7 +1546,12 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 	/* Throw a class format error if we are given a static <init> method (otherwise later we will throw a verify error due to back stack shape) */
 	info = &(classfile->constantPool[method->nameIndex]);
 	if (method->accessFlags & CFR_ACC_STATIC) {
-		if ((CFR_CONSTANT_Utf8 == info->tag) && J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)) {
+		U_16 returnChar = getReturnTypeFromSignature(classfile->constantPool[method->descriptorIndex].bytes, classfile->constantPool[method->descriptorIndex].slot1, NULL);
+		if ((CFR_CONSTANT_Utf8 == info->tag)
+			&& J9UTF8_DATA_EQUALS("<init>", 6, info->bytes, info->slot1)
+			&& ((J9_IS_CLASSFILE_VALUETYPE(classfile) && !IS_QTYPE(returnChar))
+				|| (!J9_IS_CLASSFILE_VALUETYPE(classfile) && IS_QTYPE(returnChar)))
+		) {
 			errorType = J9NLS_CFR_ERR_ILLEGAL_METHOD_MODIFIERS__ID;
 			goto _formatError;
 		}
@@ -1746,7 +1760,8 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				goto _formatError;
 			}
 			if (isInit) {
-				if (info->bytes[info->slot1 - 1] != 'V') {
+				U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
+				if ((info->bytes[info->slot1 - 1] != 'V') && !IS_QTYPE(returnChar)) {
 					errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID;
 					goto _formatError;
 				}
@@ -1854,7 +1869,10 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			}
 		}
 		if (isInit) {
-			if (info->bytes[info->slot1 - 1] != 'V') {
+			U_16 returnChar = getReturnTypeFromSignature(info->bytes, info->slot1, NULL);
+			if ((J9_IS_CLASSFILE_VALUETYPE(classfile) && !IS_QTYPE(returnChar))
+				|| (!J9_IS_CLASSFILE_VALUETYPE(classfile) && (info->bytes[info->slot1 - 1] != 'V'))
+			) {
 				Trc_STV_j9bcv_verifyClassStructure_MethodError(J9NLS_CFR_ERR_BC_METHOD_INVALID_SIG__ID, i);
 				buildMethodError((J9CfrError *)segment, errorType, CFR_ThrowClassFormatError, (I_32) i, 0, method, classfile->constantPool);
 				result = -1;
