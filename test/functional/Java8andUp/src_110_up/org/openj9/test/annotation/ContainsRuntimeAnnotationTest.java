@@ -33,6 +33,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 
 import java.util.Arrays;
 
@@ -59,11 +60,11 @@ public class ContainsRuntimeAnnotationTest {
 
 	int notStableField = 0;
 
-	@Stable
 	@MyFieldAnnotation
 	@MyFieldAnnotation2
 	@MyFieldAnnotation3
 	@MyFieldAnnotation4
+	@Stable
 	int stable_MultipleAnnotations = 0;
 
 	@MyFieldAnnotation
@@ -71,6 +72,15 @@ public class ContainsRuntimeAnnotationTest {
 	@MyFieldAnnotation3
 	@MyFieldAnnotation4
 	int notStable_MultipleAnnotations = 0;
+
+	@Ann(a=1, b='a', c="abcd",
+		d={"aaa", "bbb"},
+		e=En.b,
+		f=@Ann2(a=1, b="abcd", c=@Ann3(a=Object.class)),
+		g={@Ann2(a=1, b="abcd", c=@Ann3(a=Object.class)), @Ann2(a=1, b="abcd", c=@Ann3(a=Object.class))})
+	@Single(a="first")
+	@Single(a="second")
+	int skipAnnotationMembers = 0;
 
 	public ContainsRuntimeAnnotationTest() throws Throwable {
 		String version = System.getProperty("java.vm.specification.version");
@@ -194,6 +204,21 @@ public class ContainsRuntimeAnnotationTest {
 		Assert.assertTrue(annotationFound, "did not detect @Stable annotation");
 	}
 
+	@Test
+	public void test_skip_annotation_members() throws Exception {
+		boolean annotationFound;
+		int cpIndex;
+		final String stableAnnotation = "Ljdk/internal/vm/annotation/Stable;";
+
+		/* resolve fields */
+		int a = skipAnnotationMembers;
+
+		cpIndex = getMemberCPIndex(thisClassConstantPool, THIS_CLASS_NAME, "skipAnnotationMembers", "I");
+		Assert.assertTrue(-1 != cpIndex, "Could not find skipAnnotationMembers");
+		annotationFound = containsRuntimeAnnotation(ContainsRuntimeAnnotationTest.class, cpIndex, stableAnnotation, true, 0);
+		Assert.assertFalse(annotationFound, "skipAnnotationMembers has Stable annotation");
+	}
+
 	private int getMemberCPIndex(ConstantPool constantPool, String className, String memberName, String memberType) {
 		int cpIndex = -1;
 		int size = constantPool.getSize();
@@ -276,3 +301,46 @@ class C {
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @interface MyFieldAnnotation4 {}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@interface Ann {
+	int a();
+	char b();
+	String c();
+	String[] d();
+	En e();
+	Ann2 f();
+	Ann2[] g();
+}
+
+enum En {
+	a,b,c
+}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@interface Ann2 {
+	int a();
+	String b();
+	Ann3 c();
+}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@interface Ann3 {
+	Class a();
+}
+
+@Repeatable(Multiple.class)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@interface Single {
+	String a();
+}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@interface Multiple {
+	Single[] value();
+}

@@ -25,10 +25,10 @@
 #include "rommeth.h"
 #include "ut_j9vmutil.h"
 
-static I_32 skipAnnotationElement(J9ROMConstantPoolItem const *constantPool, U_8 const *data, U_8 const **pIndex, U_8 const *dataEnd);
+static I_32 skipAnnotationElement(U_8 const *data, U_8 const **pIndex, U_8 const *dataEnd);
 static I_32 getAnnotationByType(J9ROMConstantPoolItem const *constantPool, J9UTF8 const *searchString, U_32 const numAnnotations, U_8 const *data, U_8 const **pIndex,  U_8 const *dataEnd);
 static J9ROMMethod *getMethodFromMethodRef(J9ROMClass *romClass, J9ROMMethodRef *romMethodRef);
-static BOOLEAN findRuntimeVisibleAnnotation(U_8 *data, U_32 length, J9UTF8 *annotationName, J9ROMConstantPoolItem *constantPool);
+static BOOLEAN findRuntimeVisibleAnnotation(J9VMThread *currentThread, U_8 *data, U_32 length, J9UTF8 *annotationName, J9ROMConstantPoolItem *constantPool);
 
 /**
  * @param (in) constantPool pointer to ROM class constant pool
@@ -63,7 +63,7 @@ getAnnotationByType(J9ROMConstantPoolItem const *constantPool, J9UTF8 const *sea
 			result = numElementValuePairs;
 		} else {
 			while (numElementValuePairs > 0) {
-				if (0 != skipAnnotationElement(constantPool, data, &index, dataEnd)) {
+				if (0 != skipAnnotationElement(data, &index, dataEnd)) {
 					result = -2; /* bad annotation */
 					break;
 				}
@@ -78,7 +78,7 @@ _errorFound:
 }
 
 static I_32
-skipAnnotationElement(J9ROMConstantPoolItem const * constantPool, U_8 const *data, U_8 const **pIndex, U_8 const * dataEnd)
+skipAnnotationElement(U_8 const *data, U_8 const **pIndex, U_8 const * dataEnd)
 {
 	U_8 tag = 0;
 	I_32 result = 0;
@@ -99,24 +99,28 @@ skipAnnotationElement(J9ROMConstantPoolItem const * constantPool, U_8 const *dat
 	case 'S':
 	case 'Z':
 	case 's':
-	case 'c':
+	case 'c': {
 		CHECK_EOF(2);
-		data += 2;
+		index += 2;
 		break;
+	}
 
-	case 'e':
+	case 'e': {
 		CHECK_EOF(4);
-		data += 4;
+		index += 4;
 		break;
+	}
 
-	case '@':{
+	case '@': {
 		U_32 numValues = 0;
 		U_32 j = 0;
 		CHECK_EOF(4);
-		data += 2; /* skip type_index */
+		index += 2; /* skip type_index */
 		NEXT_U16(numValues, index);
 		for (j = 0; (j < numValues) && (0 == result); j++) {
-			result = skipAnnotationElement(constantPool, data, &index, dataEnd);
+			/* Skip J9CfrAnnotationElementPair.elementNameIndex */
+			index += 2;
+			result = skipAnnotationElement(data, &index, dataEnd);
 		}
 		break;
 	}
@@ -127,7 +131,7 @@ skipAnnotationElement(J9ROMConstantPoolItem const * constantPool, U_8 const *dat
 		CHECK_EOF(2);
 		NEXT_U16(numValues, index);
 		for (j = 0; (j < numValues) && (0 == result); j++) {
-			result = skipAnnotationElement(constantPool, data, &index, dataEnd);
+			result = skipAnnotationElement(data, &index, dataEnd);
 		}
 		break;
 	}
@@ -202,7 +206,7 @@ fieldContainsRuntimeAnnotation(J9VMThread *currentThread, J9Class *clazz, UDATA 
 				U_32 len = *fieldAnnotationData;
 				U_8 *data = (U_8 *)(fieldAnnotationData + 1);
 
-				annotationFound = findRuntimeVisibleAnnotation(data, len, annotationName, ((J9ConstantPool *)definingClass->ramConstantPool)->romConstantPool);
+				annotationFound = findRuntimeVisibleAnnotation(currentThread, data, len, annotationName, ((J9ConstantPool *)definingClass->ramConstantPool)->romConstantPool);
 			}
 		}
 	} else {
@@ -210,7 +214,7 @@ fieldContainsRuntimeAnnotation(J9VMThread *currentThread, J9Class *clazz, UDATA 
 		Assert_VMUtil_ShouldNeverHappen();
 	}
 
-	Trc_Util_annhelp_SearchForFieldAnnotation(J9UTF8_DATA(annotationName), cpIndex, clazz, romFieldShape, (UDATA) annotationFound);
+	Trc_Util_annhelp_SearchForFieldAnnotation(currentThread, (UDATA)J9UTF8_LENGTH(annotationName), J9UTF8_DATA(annotationName), cpIndex, clazz, romFieldShape, (UDATA) annotationFound);
 
 	return annotationFound;
 }
@@ -225,7 +229,7 @@ fieldContainsRuntimeAnnotation(J9VMThread *currentThread, J9Class *clazz, UDATA 
  * @return TRUE if the annotation is found, FALSE otherwise.
  */
 static BOOLEAN
-findRuntimeVisibleAnnotation(U_8 *data, U_32 length, J9UTF8 *annotationName, J9ROMConstantPoolItem *constantPool)
+findRuntimeVisibleAnnotation(J9VMThread *currentThread, U_8 *data, U_32 length, J9UTF8 *annotationName, J9ROMConstantPoolItem *constantPool)
 {
 	U_8 *dataEnd = data + length;
 	U_32 errorCode = 0; /* used by CHECK_EOF */
@@ -260,10 +264,16 @@ findRuntimeVisibleAnnotation(U_8 *data, U_32 length, J9UTF8 *annotationName, J9R
 		NEXT_U16(numOfMembers, index);
 
 		for (; j < numOfMembers; j++) {
-			U_16 memberIndex = 0;
-			CHECK_EOF(2);
-			/* Disregard value and only iterate through the members. */
-			NEXT_U16(memberIndex, index);
+			/* Skip J9CfrAnnotationElementPair.elementNameIndex */
+			U_16 elementNameIndex = 0;
+			NEXT_U16(elementNameIndex, index);
+
+			/* Skip J9CfrAnnotationElement */
+			I_32 result = skipAnnotationElement(index, &index, dataEnd);
+			if (-1 == result) {
+				Trc_Util_annhelp_skipAnnotationElementError(currentThread, (UDATA)J9UTF8_LENGTH(searchAnnotation), J9UTF8_DATA(searchAnnotation), (UDATA)J9UTF8_LENGTH(annotationName), J9UTF8_DATA(annotationName), index, constantPool);
+				goto _errorFound;
+			}
 		}
 	}
 
