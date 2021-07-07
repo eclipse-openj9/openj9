@@ -2606,9 +2606,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 					goto _memParseError;
 				}
 			}
-		} else {
-			/* default behavior (jvm disable HWPrefetch) */
-			setHWPrefetch(XXSETHWPREFETCH_NONE_VALUE);
 		}
 #endif /*if defined(J9OS_I5)*/
 #endif /*if defined(AIXPPC)*/
