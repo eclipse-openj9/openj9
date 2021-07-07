@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -279,7 +279,7 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 			arity++;
 		}
 
-		if (args[i] == 'L') {
+		if (IS_REF_OR_VAL_SIGNATURE(args[i])) {
 			U_8 *string;
 			U_16 length = 0;
 
@@ -680,7 +680,7 @@ static UDATA *
 pushType(J9BytecodeVerificationData *verifyData, U_8 * signature, UDATA * stackTop)
 {
 	if (*signature != 'V') {
-		if ((*signature == '[') || (*signature == 'L')) {
+		if ((*signature == '[') || IS_REF_OR_VAL_SIGNATURE(*signature)) {
 			PUSH(parseObjectOrArrayName(verifyData, signature));
 		} else {
 			UDATA baseType = (UDATA) argTypeCharConversion[*signature - 'A'];
@@ -1080,6 +1080,15 @@ static void getNameAndLengthFromClassNameList (J9BytecodeVerificationData *verif
 		J9ROMClass * romClass = verifyData->romClass;
 		*name = (U_8 *) ((UDATA) offset[0] + (UDATA) romClass);
 	}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (IS_QTYPE(*(char *)*name)
+		&& (';' == *(char *)(*name + (*length - 1)))
+	) {
+		/* we are dealing with signature envelope, extract the name from it */
+		*name += 1;
+		*length -= 2;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 }
 
 /* return BCV_SUCCESS if field is found
@@ -1172,7 +1181,7 @@ parseObjectOrArrayName(J9BytecodeVerificationData *verifyData, U_8 *signature)
 		signature++;
 	}
 	arity = (UDATA) (signature - string);
-	if (*signature == 'L') {
+	if (IS_REF_OR_VAL_SIGNATURE(*signature)) {
 		U_16 length = 0;
 		UDATA classIndex = 0;
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
  * Methods, fields, local variables can not contain: '.', ';', '[' '/'.
  * Methods, other than <init> and <clinit> cannot contain '<' or '>'.
  * Classes can contain '[' only at the front if they are array classes.
- * Classes can end with ';' only if they are array classes.
+ * Classes can end with ';' only if they are array classes or valuetypes.
  * Classes can contain '/'
  * 		if not the first character,
  * 		if not the last character,
@@ -83,8 +83,9 @@ checkNameImpl (J9CfrConstantPoolInfo * info, BOOLEAN isClass, BOOLEAN isMethod, 
 			return -1;
 		case ';':
 			if (isClass) {
-				/* Valid at the end of array classes */
-				if (arity && ((c + 1) == end)) {
+				/* Valid at the end of array classes or for valuetypes */
+				if ((arity || IS_QTYPE(*info->bytes))
+					&& ((c + 1) == end)) {
 					break;
 				}
 			}

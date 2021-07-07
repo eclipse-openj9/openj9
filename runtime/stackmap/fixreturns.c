@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -117,7 +117,10 @@ getReturnBytecode(J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA * return
 	}
 
 	/* Determine the correct return bytecode to insert */
-	if ((J9UTF8_DATA(name)[0] == '<') && (J9UTF8_DATA(name)[1] == 'i')) {
+	if ((J9UTF8_DATA(name)[0] == '<')
+		&& (J9UTF8_DATA(name)[1] == 'i')
+		&& J9_ARE_NO_BITS_SET(romClass->modifiers, J9AccValueType)
+	) {
 		returnBytecode = JBreturnFromConstructor;
 	} else {
 		/* bool, byte, char, and short need special treatment since they need to be truncated before return */
