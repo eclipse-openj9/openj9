@@ -40,6 +40,12 @@
 		<subant target="">
 			<fileset dir="." includes="*/build.xml" />
 		</subant>
+		<subant target="">
+			<fileset dir="../cmdline_options_tester" includes="build.xml" />
+		</subant>
+		<subant target="">
+			<fileset dir="../cmdline_options_testresources" includes="build.xml" />
+		</subant>
 	</target>
 	
 	<target name="dist" depends="init">

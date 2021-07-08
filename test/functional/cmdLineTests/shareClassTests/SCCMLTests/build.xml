@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,13 @@
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/SCCMLTests" />
 	<property name="src" location="." />
 
-	<target name="dist" description="generate the distribution">
+	<target name="buildvm" description="build VM_Test.jar">
+		<subant target="check_vm_build">
+			<fileset dir="../../../VM_Test/" includes="build.xml" />
+		</subant>		
+	</target>
+
+	<target name="dist" depends="buildvm" description="generate the distribution">
 		<copy todir="${DEST}">
 			<fileset dir="${src}" includes="*.xml"/>
 			<fileset dir="${src}" includes="*.mk"/>

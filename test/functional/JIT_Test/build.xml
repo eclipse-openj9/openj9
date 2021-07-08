@@ -33,10 +33,11 @@
 	<property name="DEST" value="${BUILD_ROOT}/functional/JIT_Test" />
 
 	<!--Properties for this particular build-->
-	<property name="src" location="./src" />
-	<property name="build" location="./bin" />
+	<property name="src" location="${TEST_ROOT}/functional/JIT_Test/src" />
+	<property name="build" location="${TEST_ROOT}/functional/JIT_Test/bin" />
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src" />
 	<property name="LIB" value="jcommander,testng"/>
+	<property name="flag" value="false"/>
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
 	<target name="init">
@@ -75,12 +76,25 @@
 		</copy>
 	</target>
 
+	<target name="check_jit_build">
+		<echo message="target check_jit_build is called....." />
+		<echo>flag: ${flag}</echo>
+		<if>
+			<equals arg1="${flag}" arg2="false"/>
+			<then>
+				<antcall target="build" inheritall="false" />
+			</then>
+		</if>
+	</target>
+
 	<target name="clean" depends="dist" description="clean up">
 		<!-- Delete the ${build} directory trees -->
 		<delete dir="${build}" />
 	</target>
 
 	<target name="build" >
+		<echo message="reach here" />
+		<property name="flag" value="true" />
 		<antcall target="clean" inheritall="true" />
 	</target>
 </project>

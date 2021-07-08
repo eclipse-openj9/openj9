@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,24 +22,31 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<project name="cmdLineTests" default="build" basedir=".">
+<project name="cmdLineTests" default="verbosetestBuild" basedir=".">
 	<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build verbosetest
 	</description>
+	<import file="../../JIT_Test/build.xml" />
 
 	<!-- set properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/verbosetest" />
-	<property name="src" location="." />
+	<property name="verbosetestDEST" value="${BUILD_ROOT}/functional/cmdLineTests/verbosetest" />
+	<property name="verbosetestSrc" location="." />
 
-	<target name="dist" description="generate the distribution">
-		<copy todir="${DEST}">
-			<fileset dir="${src}" includes="*.xml"/>
-			<fileset dir="${src}" includes="*.mk"/>
+	<!-- <target name="buildjit" description="build jitt.jar">
+		<subant target="check_jit_build" inheritall="true">
+			<fileset dir="../../JIT_Test/" includes="build.xml" />
+		</subant>
+	</target> -->
+
+	<target name="verbosetestDist" description="generate the distribution">
+		<copy todir="${verbosetestDEST}">
+			<fileset dir="${verbosetestSrc}" includes="*.xml"/>
+			<fileset dir="${verbosetestSrc}" includes="*.mk"/>
 		</copy>
 	</target>
 	
-	<target name="build" >
-		<antcall target="dist" inheritall="true" />
+	<target name="verbosetestBuild" depends="check_jit_build">
+		<antcall target="verbosetestDist" inheritall="true" />
 	</target>
 </project>
