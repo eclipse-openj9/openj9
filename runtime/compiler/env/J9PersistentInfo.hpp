@@ -338,6 +338,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITServerPort(uint32_t port) { _JITServerPort = port; }
    uint64_t getClientUID() const { return _clientUID; }
    void setClientUID(uint64_t val) { _clientUID = val; }
+   uint64_t getServerUID() const { return _serverUID; }
+   void setServerUID(uint64_t val) { _serverUID = val; }
    bool getJITServerUseAOTCache() const { return _JITServerUseAOTCache; }
    void setJITServerUseAOTCache(bool use) { _JITServerUseAOTCache = use; }
    bool getRequireJITServer() const { return _requireJITServer; }
@@ -431,6 +433,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint32_t    _JITServerPort;
    uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
    uint64_t    _clientUID;
+   uint64_t    _serverUID; // At the client, this represents the UID of the server the client is connected to
    bool        _JITServerUseAOTCache;
    bool        _requireJITServer;
 #endif /* defined(J9VM_OPT_JITSERVER) */

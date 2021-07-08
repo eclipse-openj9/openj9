@@ -822,8 +822,14 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, b
          {
          _clientSessionMap[clientUID] = clientData;
          *newSessionWasCreated = true;
-         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server allocated data for a new clientUID %llu", (unsigned long long)clientUID);
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer) ||
+             TR::Options::getVerboseOption(TR_VerboseJITServerConns))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                           "t=%6u A new client (clientUID=%llu) connected. Server allocated a new client session.",
+                                           (uint32_t) _compInfo->getPersistentInfo()->getElapsedTime(),
+                                           (unsigned long long) clientUID);
+            }
          }
       else
          {
