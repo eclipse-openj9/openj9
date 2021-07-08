@@ -664,6 +664,7 @@ enum INIT_STAGE {
 #define VMOPT_XCONCURRENTBACKGROUND "-Xconcurrentbackground"
 #define VMOPT_XGCTHREADS "-Xgcthreads"
 #define VMOPT_XGCMAXTHREADS "-Xgcmaxthreads"
+#define VMOPT_PRESERVE_VECTORS "-XPreserveExtendedRegs"
 
 #define VMOPT_XXSHOW_EXTENDED_NPE_MESSAGE "-XX:+ShowCodeDetailsInExceptionMessages"
 #define VMOPT_XXNOSHOW_EXTENDED_NPE_MESSAGE "-XX:-ShowCodeDetailsInExceptionMessages"
