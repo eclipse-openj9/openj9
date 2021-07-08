@@ -968,13 +968,6 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-	if (j2seVersion >= J2SE_V11) {
-		rc = addSystemProperty(vm, "java.lang.invoke.VarHandle.VAR_HANDLE_GUARDS", "false", J9SYSPROP_FLAG_WRITEABLE);
-		if (J9SYSPROP_ERROR_NONE != rc) {
-			goto fail;
-		}
-	}
-
 	/* TODO: https://github.com/eclipse-openj9/openj9/issues/12811 */
 	rc = addSystemProperty(vm, "openjdk.methodhandles", "true", J9SYSPROP_FLAG_WRITEABLE);
 	if (J9SYSPROP_ERROR_NONE != rc) {
