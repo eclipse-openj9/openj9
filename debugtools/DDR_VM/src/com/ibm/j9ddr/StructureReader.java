@@ -657,7 +657,7 @@ public class StructureReader {
 		for (int i = 0; i < header.getStructureCount(); i++) {
 			logger.logp(FINER, null, null, "Reading structure on iteration {0}", i);
 			StructureDescriptor structure = new StructureDescriptor();
-			structure.name = readString(ddrStream, ddrStringTableStart);
+			structure.name = decodeTypeName(readString(ddrStream, ddrStringTableStart));
 			if (structure.name == null) {
 				logger.logp(FINE, null, null, "Structure name was null for structure {0}", i);
 				throw new IllegalArgumentException(String.format("Structure name was null for structure %d", i));
@@ -665,11 +665,9 @@ public class StructureReader {
 				logger.logp(FINE, null, null, "Structure name was blank for structure {0}", i);
 				throw new IllegalArgumentException(String.format("No name found for structure %d", i));
 			}
-			structure.name = structure.name.replace("__", "$");
 			logger.logp(FINE, null, null, "Reading structure {0}", structure.name);
 
-			structure.superName = readString(ddrStream, ddrStringTableStart);
-			structure.superName = structure.superName.replace("__", "$");
+			structure.superName = decodeTypeName(readString(ddrStream, ddrStringTableStart));
 			structure.sizeOf = ddrStream.readInt();
 			int numberOfFields = ddrStream.readInt();
 			structure.fields = new ArrayList<>(numberOfFields);
@@ -711,6 +709,33 @@ public class StructureReader {
 		}
 
 		logger.logp(FINE, null, null, "Finished parsing structures");
+	}
+
+	private static String decodeTypeName(String typeName) {
+		if (typeName != null) {
+			int index = typeName.indexOf("__");
+
+			if (index >= 0) {
+				StringBuilder buffer = new StringBuilder();
+				int start = 0;
+
+				do {
+					if (index == start) {
+						buffer.append("__");
+					} else {
+						buffer.append(typeName, start, index).append("$");
+					}
+
+					start = index + 2;
+					index = typeName.indexOf("__", start);
+				} while (index >= 0);
+
+				buffer.append(typeName, start, typeName.length());
+				typeName = buffer.toString();
+			}
+		}
+
+		return typeName;
 	}
 
 	private static String readString(ImageInputStream ddrStream, long ddrStringTableStart) {
