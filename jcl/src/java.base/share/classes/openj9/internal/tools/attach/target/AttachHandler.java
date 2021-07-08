@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,7 +186,7 @@ public class AttachHandler extends Thread {
 	private boolean createFiles(String newDisplayName) throws IOException {
 		try {
 			/*[PR Jazz 31593] stress failures caused by long wait times for lock file ]*/
-			if (CommonDirectory.tryObtainControllerLock()) {
+			if (CommonDirectory.tryObtainControllerLock("AttachHandler.createFiles(" + newDisplayName + ")_1")) { //$NON-NLS-1$ //$NON-NLS-2$
 				/* 
 				 * Non-blocking lock attempt succeeded. 
 				 * clean up garbage files from crashed processes or other failures.
@@ -196,7 +196,7 @@ public class AttachHandler extends Thread {
 				CommonDirectory.deleteStaleDirectories(pidProperty);
 			} else {
 				/* The following code needs to hold the lock, so go for a blocking lock. */
-				CommonDirectory.obtainControllerLock();
+				CommonDirectory.obtainControllerLock("AttachHandler.createFiles(" + newDisplayName + ")_2"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("AttachHandler obtained controller lock"); //$NON-NLS-1$
@@ -214,11 +214,11 @@ public class AttachHandler extends Thread {
 			setVmId(myId); /* may need to tweak the ID */
 			setDisplayName(newDisplayName);
 			CommonDirectory.openSemaphore();
-			CommonDirectory.obtainAttachLock();
+			CommonDirectory.obtainAttachLock("AttachHandler.createFiles(" + newDisplayName + ")_3"); //$NON-NLS-1$ //$NON-NLS-2$
 			Advertisement.createAdvertisementFile(getVmId(), newDisplayName);
 		} finally {
-			CommonDirectory.releaseAttachLock();
-			CommonDirectory.releaseControllerLock();
+			CommonDirectory.releaseAttachLock("AttachHandler.createFiles(" + newDisplayName + ")_4"); //$NON-NLS-1$ //$NON-NLS-2$
+			CommonDirectory.releaseControllerLock("AttachHandler.createFiles(" + newDisplayName + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return true;
 	}
@@ -425,10 +425,10 @@ public class AttachHandler extends Thread {
 		 */
 		long lockDeadline = System.nanoTime() + shutdownTimeoutMs*1000000/10; /* let the file lock use only a fraction of the timeout budget */
 		try {
-			gotLock = CommonDirectory.tryObtainControllerLock();
+			gotLock = CommonDirectory.tryObtainControllerLock("AttachHandler.terminateWaitLoop(" + wakeHandler + "," + retryNumber + ")_1"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			while (!gotLock && isWaitingForSemaphore()) {
 				Thread.sleep(10);
-				gotLock = CommonDirectory.tryObtainControllerLock();
+				gotLock = CommonDirectory.tryObtainControllerLock("AttachHandler.terminateWaitLoop(" + wakeHandler + "," + retryNumber + ")_2"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				if (System.nanoTime() > lockDeadline) {
 					break;
 				}
@@ -446,7 +446,7 @@ public class AttachHandler extends Thread {
 				 * We grabbed the lock to notify the wait loop.  
 				 * Release it because the wait loop does not need to be notified. 
 				 */ 
-				CommonDirectory.releaseControllerLock();
+				CommonDirectory.releaseControllerLock("AttachHandler.terminateWaitLoop(" + wakeHandler + "," + retryNumber + ")_3"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				gotLock = false;
 			}
 		}
@@ -473,7 +473,7 @@ public class AttachHandler extends Thread {
 					 * Therefore, notify myself 
 					 */
 					if (wakeHandler) {
-						CommonDirectory.notifyVm(1, true); 
+						CommonDirectory.notifyVm(1, true, "AttachHandler.terminateWaitLoop_1"); //$NON-NLS-1$
 					}
 					destroySemaphore = true;
 				} else if (wakeHandler) {
@@ -485,11 +485,11 @@ public class AttachHandler extends Thread {
 					 * it wakes up.
 					 */
 					setDoCancelNotify(true); /* get the handler thread to close the semaphore */
-					CommonDirectory.notifyVm(numTargets, true); 
+					CommonDirectory.notifyVm(numTargets, true, "AttachHandler.terminateWaitLoop_2"); //$NON-NLS-1$
 					/* CMVC 162086. add an extra notification since the count won't include this VM: the advertisement directory is already deleted */
 				}
 			} finally {
-				CommonDirectory.releaseControllerLock();
+				CommonDirectory.releaseControllerLock("AttachHandler.terminateWaitLoop(" + wakeHandler + "," + retryNumber + ")_4" ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				if (LOGGING_DISABLED != loggingStatus) {
 					IPC.logMessage("AttachHandler terminate released controller lock"); //$NON-NLS-1$
 				}
@@ -557,13 +557,13 @@ public class AttachHandler extends Thread {
 				TargetDirectory.deleteMyDirectory(true); /*[PR Jazz 58094] terminate() cleared out the directory */
 				/*[PR CMVC 161992] wait until the attach handler thread has finished before closing the semaphore*/
 				if (destroySemaphore) {
-					if (CommonDirectory.tryObtainControllerLock()) {
+					if (CommonDirectory.tryObtainControllerLock("AttachHandler.teardownHook")) { //$NON-NLS-1$
 						/* if this fails, then another process became active after the VMs were counted */
 						CommonDirectory.destroySemaphore();
 						if (LOGGING_DISABLED != loggingStatus) {
 							IPC.logMessage("AttachHandler destroyed semaphore"); //$NON-NLS-1$
 						}
-						CommonDirectory.releaseControllerLock();
+						CommonDirectory.releaseControllerLock("AttachHandler.teardownHook"); //$NON-NLS-1$
 					} else {
 						if (LOGGING_DISABLED != loggingStatus) {
 							IPC.logMessage("could not obtain lock, semaphore not destroyed"); //$NON-NLS-1$
@@ -622,7 +622,8 @@ public class AttachHandler extends Thread {
 					--waitCycles;
 					try {
 						/* assignments to stateSync cause a notifyAll on stateSync */
-						stateSync.wait(100000); /* timeout value */
+						IPC.logMessage("AttachHandler.waitForAttachApiInitialization waitCycles = " + waitCycles); //$NON-NLS-1$
+						stateSync.wait(30000); /* timeout value */
 						currentState = getAttachState();
 						switch (currentState) {
 						case ATTACH_STARTING:

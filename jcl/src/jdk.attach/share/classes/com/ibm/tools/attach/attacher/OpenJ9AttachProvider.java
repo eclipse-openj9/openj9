@@ -126,7 +126,8 @@ public class OpenJ9AttachProvider extends AttachProvider {
 		}
 
 		try {
-			CommonDirectory.obtainControllerLock(); /*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
+			/*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
+			CommonDirectory.obtainControllerLock("OpenJ9AttachProvider.listVirtualMachinesImp"); //$NON-NLS-1$
 		} catch (IOException e) { /*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
 			/* 
 			 * IOException is thrown if we already have the lock. The only other cases where we lock this file are during startup and shutdown.
@@ -182,7 +183,8 @@ public class OpenJ9AttachProvider extends AttachProvider {
 				}
 			}
 		} finally {
-			CommonDirectory.releaseControllerLock(); /* guarantee that we unlock the file */
+			/* guarantee that we unlock the file */
+			CommonDirectory.releaseControllerLock("OpenJ9AttachProvider.listVirtualMachinesImp"); //$NON-NLS-1$
 		}
 		return descriptors;
 	}
