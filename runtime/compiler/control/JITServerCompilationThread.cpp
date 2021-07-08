@@ -597,7 +597,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d will ask for address ranges of unloaded classes and CHTable for clientUID %llu",
                   getCompThreadId(), (unsigned long long)clientId);
 
-            stream->write(JITServer::MessageType::getUnloadedClassRangesAndCHTable, JITServer::Void());
+            stream->write(JITServer::MessageType::getUnloadedClassRangesAndCHTable, compInfo->getPersistentInfo()->getServerUID());
             auto response = stream->read<std::vector<TR_AddressRange>, int32_t, std::string>();
             // TODO: we could send JVM info that is global and does not change together with CHTable
             auto &unloadedClassRanges = std::get<0>(response);
@@ -1393,17 +1393,20 @@ TR::CompilationInfoPerThreadRemote::deleteClientSessionData(uint64_t clientId, T
    // Need to acquire compilation monitor for both deleting the client data and the setting the thread state to COMPTHREAD_SIGNAL_SUSPEND.
    compInfo->acquireCompMonitor(compThread);
    bool result = compInfo->getClientSessionHT()->deleteClientSession(clientId, true);
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer) ||
+       TR::Options::getVerboseOption(TR_VerboseJITServerConns))
       {
+      uint32_t timestamp = (uint32_t) compInfo->getPersistentInfo()->getElapsedTime();
       if (!result)
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"Message to delete Client (%llu) received. Data for client not deleted", (unsigned long long)clientId);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"t=%6u Client (clientUID=%llu) disconnected. Client session not deleted", timestamp, (unsigned long long)clientId);
          }
       else
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"Message to delete Client (%llu) received. Data for client deleted", (unsigned long long)clientId);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"t=%6u Client (clientUID=%llu) disconnected. Client session deleted", timestamp, (unsigned long long)clientId);
          }
       }
+
    compInfo->releaseCompMonitor(compThread);
    }
 

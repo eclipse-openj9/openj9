@@ -4030,6 +4030,7 @@ typedef struct J9JITConfig {
 	int32_t (*startJITServer)(struct J9JITConfig *jitConfig);
 	int32_t (*waitJITServerTermination)(struct J9JITConfig *jitConfig);
 	uint64_t clientUID;
+	uint64_t serverUID;
 #endif /* J9VM_OPT_JITSERVER */
 } J9JITConfig;
 

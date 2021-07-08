@@ -1125,6 +1125,8 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    const char *xxDisableJITServerUseAOTCacheOption = "-XX:-JITServerUseAOTCache";
    const char *xxRequireJITServerOption = "-XX:+RequireJITServer";
    const char *xxDisableRequireJITServerOption = "-XX:-RequireJITServer";
+   const char *xxJITServerLogConnections = "-XX:+JITServerLogConnections";
+   const char *xxDisableJITServerLogConnections = "-XX:-JITServerLogConnections";
 
    int32_t xxJITServerPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerPortOption, 0);
    int32_t xxJITServerTimeoutArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTimeoutOption, 0);
@@ -1135,6 +1137,8 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
    int32_t xxDisableJITServerUseAOTCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerUseAOTCacheOption, 0);
    int32_t xxRequireJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxRequireJITServerOption, 0);
    int32_t xxDisableRequireJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableRequireJITServerOption, 0);
+   int32_t xxJITServerLogConnectionsArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerLogConnections, 0);
+   int32_t xxDisableJITServerLogConnectionsArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerLogConnections, 0);
 
    if (xxJITServerPortArgIndex >= 0)
       {
@@ -1195,6 +1199,11 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
 
    if (xxJITServerUseAOTCacheArgIndex > xxDisableJITServerUseAOTCacheArgIndex)
       compInfo->getPersistentInfo()->setJITServerUseAOTCache(true);
+
+   if (xxJITServerLogConnectionsArgIndex > xxDisableJITServerLogConnectionsArgIndex)
+      {
+      TR::Options::setVerboseOption(TR_VerboseJITServerConns);
+      }
 
    return true;
    }
@@ -2023,7 +2032,8 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          return false;
          }
 
-      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT ||
+          compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          // Generate a random identifier for this JITServer instance.
          // Collisions are possible, but very unlikely.
@@ -2031,22 +2041,38 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          std::random_device rd;
          std::mt19937_64 rng(rd());
          std::uniform_int_distribution<uint64_t> dist;
-         // clientUID != 0 when running in client mode
-         uint64_t clientUID = dist(rng);
-         while (0 == clientUID)
-            clientUID = dist(rng);
-         compInfo->getPersistentInfo()->setClientUID(clientUID);
-         jitConfig->clientUID = clientUID;
+         // Generated uid must not be 0
+         uint64_t uid = dist(rng);
+         while (0 == uid)
+            uid = dist(rng);
 
-         // _safeReservePhysicalMemoryValue is set as 0 for the JITClient because compilations
-         // are done remotely. The user can still override it with a command line option
-         J9::Options::_safeReservePhysicalMemoryValue = 0;
+         if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+            {
+            compInfo->getPersistentInfo()->setClientUID(uid);
+            compInfo->getPersistentInfo()->setServerUID(0);
+            jitConfig->clientUID = uid;
+            jitConfig->serverUID = 0;
+
+            // _safeReservePhysicalMemoryValue is set as 0 for the JITClient because compilations
+            // are done remotely. The user can still override it with a command line option
+            J9::Options::_safeReservePhysicalMemoryValue = 0;
+            }
+         else
+            {
+            compInfo->getPersistentInfo()->setClientUID(0);
+            compInfo->getPersistentInfo()->setServerUID(uid);
+            jitConfig->clientUID = 0;
+            jitConfig->serverUID = uid;
+            }
+
          }
       else
          {
-         // clientUID == 0 when running in server mode / regular JVM
+         // clientUID/serverUID == 0 when running a regular JVM
          compInfo->getPersistentInfo()->setClientUID(0);
+         compInfo->getPersistentInfo()->setServerUID(0);
          jitConfig->clientUID = 0;
+         jitConfig->serverUID = 0;
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
