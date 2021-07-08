@@ -89,6 +89,10 @@
 			<exclude name="**/modules/**" />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
 			<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
+			<compilerarg line='--add-opens jdk.incubator.foreign/jdk.internal.foreign=ALL-UNNAMED' />
+			<compilerarg line='--add-opens java.base/jdk.internal.misc=ALL-UNNAMED' />
+			<compilerarg line='--add-opens java.base/java.lang=ALL-UNNAMED' />
+			<compilerarg line='--add-modules jdk.incubator.foreign' />
 			<classpath>
 				<pathelement location="${LIB_DIR}/testng.jar"/>
 				<pathelement location="${LIB_DIR}/jcommander.jar"/>
