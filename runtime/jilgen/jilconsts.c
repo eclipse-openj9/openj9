@@ -399,6 +399,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_machineBP", offsetof(J9CInterpreterStackFrame, machineBP)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitGPRs", offsetof(J9CInterpreterStackFrame, jitGPRs)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_jitFPRs", offsetof(J9CInterpreterStackFrame, jitFPRs)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_maskRegisters", offsetof(J9CInterpreterStackFrame, maskRegisters)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_rax", offsetof(J9CInterpreterStackFrame, jitGPRs.jitGPRs.named.rax)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_rbx", offsetof(J9CInterpreterStackFrame, jitGPRs.jitGPRs.named.rbx)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_cframe_rcx", offsetof(J9CInterpreterStackFrame, jitGPRs.jitGPRs.named.rcx)) |
@@ -505,6 +506,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_bytecodeLoop", offsetof(J9JavaVM, bytecodeLoop)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_extendedRuntimeFlags", offsetof(J9JavaVM, extendedRuntimeFlags)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_extendedRuntimeFlags2", offsetof(J9JavaVM, extendedRuntimeFlags2)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_extendedRuntimeFlags3", offsetof(J9JavaVM, extendedRuntimeFlags3)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVMInternalFunctionTable", offsetof(J9JavaVM, internalVMFunctions)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JavaVM_memoryManagerFunctions", offsetof(J9JavaVM, memoryManagerFunctions)) |
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
@@ -669,6 +671,8 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportInstanceFieldWrite", offsetof(J9JITConfig, old_slow_jitReportInstanceFieldWrite)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportStaticFieldRead", offsetof(J9JITConfig, old_slow_jitReportStaticFieldRead)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportStaticFieldWrite", offsetof(J9JITConfig, old_slow_jitReportStaticFieldWrite)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_saveVectorRegisters", offsetof(J9JITConfig, saveVectorRegisters)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_restoreVectorRegisters", offsetof(J9JITConfig, restoreVectorRegisters)) |
 
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitGetFlattenableField", offsetof(J9JITConfig, old_fast_jitGetFlattenableField)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_fast_jitCloneValueType", offsetof(J9JITConfig, old_fast_jitCloneValueType)) |
@@ -777,6 +781,8 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_ELSSize", sizeof(J9VMEntryLocalStorage)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9_EXTENDED_RUNTIME_DEBUG_MODE", J9_EXTENDED_RUNTIME_DEBUG_MODE) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS", J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9_EXTENDED_RUNTIME3_USE_VECTOR_LENGTH_256", J9_EXTENDED_RUNTIME3_USE_VECTOR_LENGTH_256) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_J9_EXTENDED_RUNTIME3_USE_VECTOR_LENGTH_512", J9_EXTENDED_RUNTIME3_USE_VECTOR_LENGTH_512) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES", J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9_INLINE_JNI_MAX_ARG_COUNT", J9_INLINE_JNI_MAX_ARG_COUNT) |
 
