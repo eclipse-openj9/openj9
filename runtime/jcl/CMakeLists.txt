@@ -167,13 +167,6 @@ else()
 	target_sources(jclse PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/unix/syshelp.c)
 endif()
 
-if(J9VM_OPT_CRIU_SUPPORT)
-	target_sources(jclse
-		PRIVATE
-			${CMAKE_CURRENT_SOURCE_DIR}/common/criusupport.c
-	)
-endif()
-
 if(J9VM_OPT_METHOD_HANDLE)
 	target_sources(jclse
 		PRIVATE
