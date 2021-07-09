@@ -20,13 +20,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include "j9.h"
+#include "ut_j9vm.h"
 
 extern "C" {
 
 BOOLEAN
 jvmCheckpointHooks(J9VMThread *currentThread)
 {
-	/* TODO checkpoint hooks will be called here */
+	J9JavaVM *vm = currentThread->javaVM;
+
+	TRIGGER_J9HOOK_VM_PREPARING_FOR_CHECKPOINT(vm->hookInterface, currentThread);
 
 	return TRUE;
 }
@@ -34,9 +37,38 @@ jvmCheckpointHooks(J9VMThread *currentThread)
 BOOLEAN
 jvmRestoreHooks(J9VMThread *currentThread)
 {
-	/* TODO restore hooks will be called here */
+	J9JavaVM *vm = currentThread->javaVM;
+
+	Assert_VM_notNull(vm->checkpointState);
+
+	if (vm->checkpointState->isNonPortableRestoreMode) {
+		vm->checkpointState->isCheckPointAllowed = FALSE;
+	}
+
+	TRIGGER_J9HOOK_VM_PREPARING_FOR_RESTORE(vm->hookInterface, currentThread);
 
 	return TRUE;
 }
+
+BOOLEAN
+isCRIUSupportEnabled(J9VMThread *currentThread)
+{
+	return NULL != currentThread->javaVM->checkpointState;
+}
+
+BOOLEAN
+isCheckpointAllowed(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	BOOLEAN res = FALSE;
+
+	if (isCRIUSupportEnabled(currentThread)) {
+		res = vm->checkpointState->isCheckPointAllowed;
+	}
+
+	return res;
+}
+
+
 
 }/* extern "C" */

@@ -95,7 +95,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, j
 	J9JavaVM *vm = currentThread->javaVM;
 	jboolean res = JNI_FALSE;
 
-	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CRIU_SUPPORT)) {
+	if (vm->internalVMFunctions->isCRIUSupportEnabled(currentThread)) {
 #if defined(LINUX)
 		if (0 == criu_init_opts()) {
 			res = JNI_TRUE;
@@ -103,6 +103,19 @@ Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, j
 #endif /* defined(LINUX) */
 	}
 	setupJNIFieldIDs(env);
+
+	return res;
+}
+
+jboolean JNICALL
+Java_org_eclipse_openj9_criu_CRIUSupport_isCheckpointAllowed(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread *) env;
+	jboolean res = JNI_FALSE;
+
+	if (currentThread->javaVM->internalVMFunctions->isCheckpointAllowed(currentThread)) {
+		res = JNI_TRUE;
+	}
 
 	return res;
 }
@@ -197,7 +210,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 	jthrowable currentExceptionLocalRef = NULL;
 	jfieldID resultType = vm->criuSupportUnsupportedOperation;
 
-	if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CRIU_SUPPORT)) {
+	if (vmFuncs->isCheckpointAllowed(currentThread)) {
 #if defined(LINUX)
 		j9object_t cpDir = NULL;
 		j9object_t log = NULL;
