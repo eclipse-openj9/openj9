@@ -779,6 +779,13 @@ freeJavaVM(J9JavaVM * vm)
 		vm->dllLoadTable = NULL;
 	}
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (NULL != vm->checkpointState) {
+		j9mem_free_memory(vm->checkpointState);
+		vm->checkpointState = NULL;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 	/* Detach the VM from OMR */
 	detachVMFromOMR(vm);
 
@@ -3558,7 +3565,24 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		IDATA enableCRIU = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLECRIU, NULL);
 		IDATA disableCRIU = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLECRIU, NULL);
 		if (enableCRIU > disableCRIU) {
-			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_CRIU_SUPPORT;
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			vm->checkpointState = (J9CRIUCheckpointState*) j9mem_allocate_memory(sizeof(J9CRIUCheckpointState), OMRMEM_CATEGORY_VM);
+			memset(vm->checkpointState, 0, sizeof(J9CRIUCheckpointState));
+
+			if (NULL == vm->checkpointState) {
+				return JNI_ENOMEM;
+			}
+			vm->checkpointState->isCheckPointAllowed = TRUE;
+		}
+	}
+
+	{
+		IDATA enableCRIUNonPortableMode = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLECRIUNONPORTABLEMODE, NULL);
+		IDATA disableCRIUNonPortableMode = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLECRIUNONPORTABLEMODE, NULL);
+		if (enableCRIUNonPortableMode > disableCRIUNonPortableMode) {
+			if (NULL != vm->checkpointState) {
+				vm->checkpointState->isNonPortableRestoreMode = TRUE;
+			}
 		}
 	}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

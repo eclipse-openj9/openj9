@@ -1803,6 +1803,17 @@ static void jitHookThreadDestroy(J9HookInterface * * hookInterface, UDATA eventN
    return;
    }
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static void jitHookPrepareCheckpoint(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
+   {
+   }
+
+static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
+   {
+   //vmThread->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) returns TRUE if checkpointing is permitted after restore
+   }
+#endif
+
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
@@ -6767,6 +6778,15 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          }
       }
    j9thread_monitor_exit(javaVM->vmThreadListMutex);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_PREPARING_FOR_CHECKPOINT, jitHookPrepareCheckpoint, OMR_GET_CALLSITE(), NULL) ||
+       (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_PREPARING_FOR_RESTORE, jitHookPrepareRestore, OMR_GET_CALLSITE(), NULL))
+      {
+      j9tty_printf(PORTLIB, "Error: Unable to register CRIU hook\n");
+      return -1;
+      }
+#endif
 
    if (!vmj9->isAOT_DEPRECATED_DO_NOT_USE()
 #if defined(J9VM_OPT_JITSERVER)

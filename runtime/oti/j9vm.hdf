@@ -1319,4 +1319,16 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 		<data type="struct J9Module*" name="module" description="module" />
 	</event>
+	<event>
+		<name>J9HOOK_VM_PREPARING_FOR_CHECKPOINT</name>
+		<description>Triggered as the JVM is preparing for a checkpoint</description>
+		<struct>J9CheckpointEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+	<event>
+		<name>J9HOOK_VM_PREPARING_FOR_RESTORE</name>
+		<description>Triggered as the JVM is preparing to restore from a checkpointed JVM</description>
+		<struct>J9RestoreEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
 </interface>
