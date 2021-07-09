@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2019 IBM Corp. and others
+  Copyright (c) 2012, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -101,7 +101,7 @@
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">JVMSHRC023E Cache does not exist</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1521,7 +1521,7 @@
 	--> 
 	<test id="Test 170: CMVC 176498 -Xshareclasses:checkStringTableReset : ensure string table reset is working properly" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,checkStringTableReset -Xitsn20000 -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -1547,7 +1547,7 @@
 	
 	<test id="Test 172: Create/reset shared class cache with AOT and JIT values for Test 167 and Test 168" timeout="600" runPath=".">
 		<command>$JAVA_EXE$  -Xscminjitdata2m -Xscmaxjitdata4m -Xscminaot6m -Xscmaxaot8m -Xscmx16m $currentMode$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1588,7 +1588,7 @@
 	 
 	<test id="Test 176: Create a cache without enableBCI option" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1597,7 +1597,7 @@
 	
 	<test id="Test 177: Ensure cache created without enableBCI option is usable with enableBCI option" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,enableBCI -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1606,7 +1606,7 @@
 		
 	<test id="Test 178: Create a cache with enableBCI option" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,enableBCI -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1615,7 +1615,7 @@
 	
 	<test id="Test 179: Reuse the BCI enabled cache without enableBCI option" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1638,7 +1638,7 @@
 
 	<test id="Test 180: Setup for Tests from 181 - 196. Create the layer 0 cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -1648,7 +1648,7 @@
 
 	<test id="Test 181: Test the sub-option createLayer" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,createLayer -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Failed to start up the shared cache</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -1953,7 +1953,7 @@
 
 	<test id="Test 197: After the invalid layer has been destroyed, try to create a new layer of the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,createLayer -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 
 		<output type="failure" caseSensitive="no" regex="no">Failed to start up the shared cache</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
