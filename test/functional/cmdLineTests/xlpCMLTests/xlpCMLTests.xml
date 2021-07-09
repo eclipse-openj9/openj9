@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@
 		<output regex="no" type="success">Command-line option unrecognised: -Xlpabc</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp1Mabc">
@@ -50,7 +50,7 @@
 		<output regex="yes" javaUtilPattern="yes" type="required">Value for '-Xlp:objectheap:pagesize=.?size.?' is not correct</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
 	<test id="Test -Xlp:objectheap:pagesize=abc">
@@ -59,13 +59,13 @@
 		<output regex="yes" javaUtilPattern="yes" type="required">Value for '-Xlp:objectheap:pagesize=.?size.?' is not correct</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp:objectheap:pagesize=1M," platforms="aix.*,linux.*,win.*">
 		<command>$EXE$ -Xlp:objectheap:pagesize=1M, -version</command>
 		<output regex="no" type="success">Extra comma characters are discovered in '-Xlp' option - ignored</output>
-  		<output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="required" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   		<output regex="no" type="failure">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="failure">Error: A fatal exception has occurred. Program will exit.</output>
  	</test>
@@ -75,7 +75,7 @@
 		<output regex="no" type="success">'-Xlp:objectheap:' option is not complete, must specify '[non]pageable' parameter</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp:objectheap:pagesize=1Mabc">
@@ -83,7 +83,7 @@
 		<output regex="no" type="success">System configuration does not support parameter 'pagesize=1Mabc' in option '-Xlp'</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp:objectheap:pagesize=1M,abc">
@@ -91,7 +91,7 @@
 		<output regex="no" type="success">System configuration does not support parameter 'abc' in option '-Xlp'</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
 	
 	<test id="Test -Xlp:objectheap:pagesize=abc,pageable">
@@ -100,7 +100,7 @@
 		<output regex="yes" javaUtilPattern="yes" type="required">Value for '-Xlp:objectheap:pagesize=.?size.?' is not correct</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp:objectheap:pagesize=abc,nonpageable">
@@ -109,7 +109,7 @@
 		<output regex="yes" javaUtilPattern="yes" type="required">Value for '-Xlp:objectheap:pagesize=.?size.?' is not correct</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp:objectheap:pagesize=1Mabc,pageable">
@@ -117,7 +117,7 @@
 		<output regex="no" type="success">System configuration does not support parameter 'pagesize=1Mabc' in option '-Xlp'</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
 
  	<test id="Test -Xlp:objectheap:pagesize=1Mabc,nonpageable">
@@ -125,7 +125,7 @@
 		<output regex="no" type="success">System configuration does not support parameter 'pagesize=1Mabc' in option '-Xlp'</output>
   		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp:objectheap:pagesize=1M,abc,pageable">
@@ -133,7 +133,7 @@
 		<output regex="no" type="success">System configuration does not support parameter 'abc' in option '-Xlp'</output>
  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp:objectheap:pagesize=1M,abc,nonpageable">
@@ -141,13 +141,13 @@
 		<output regex="no" type="success">System configuration does not support parameter 'abc' in option '-Xlp'</output>
  		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp:objectheap:pagesize=1M,pageable,">
 		<command>$EXE$ -Xlp:objectheap:pagesize=1M,pageable, -version</command>
 		<output regex="no" type="success">Extra comma characters are discovered in '-Xlp' option - ignored</output>
-  		<output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="required" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   		<output regex="no" type="failure">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="failure">Error: A fatal exception has occurred. Program will exit.</output>
  	</test>
@@ -155,7 +155,7 @@
  	<test id="Test -Xlp:objectheap:pagesize=1M,nonpageable,">
 		<command>$EXE$ -Xlp:objectheap:pagesize=1M,nonpageable, -version</command>
 		<output regex="no" type="success">Extra comma characters are discovered in '-Xlp' option - ignored</output>
-  		<output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="required" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   		<output regex="no" type="failure">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="failure">Error: A fatal exception has occurred. Program will exit.</output>
  	</test>
@@ -165,7 +165,7 @@
 		<output regex="no" type="success">System configuration does not support parameter 'pageableabc' in option '-Xlp'</output>
    		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  
  	<test id="Test -Xlp:objectheap:pagesize=1M,nonpageableabc">
@@ -173,7 +173,7 @@
 		<output regex="no" type="success">System configuration does not support parameter 'nonpageableabc' in option '-Xlp'</output>
    		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  	
  	<test id="Test -Xlp:objectheap:pagesize=1M,abcpageable">
@@ -181,7 +181,7 @@
 		<output regex="no" type="success">System configuration does not support parameter 'abcpageable' in option '-Xlp'</output>
    		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
  
  	<test id="Test -Xlp:objectheap:pagesize=1M,abcnonpageable">
@@ -189,6 +189,6 @@
 		<output regex="no" type="success">System configuration does not support parameter 'abcnonpageable' in option '-Xlp'</output>
    		<output regex="no" type="required">Could not create the Java Virtual Machine</output>
   		<output regex="no" type="required">Error: A fatal exception has occurred. Program will exit.</output>
-  		<output regex="yes" type="failure" javaUtilPattern="yes">(java|openjdk) version</output>
+  		<output regex="yes" caseSensitive="no" type="failure" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  	</test>
 </suite>

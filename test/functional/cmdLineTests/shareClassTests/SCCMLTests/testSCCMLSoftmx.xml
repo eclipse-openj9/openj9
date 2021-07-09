@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2018 IBM Corp. and others
+  Copyright (c) 2012, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,7 +72,7 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">The softmx bytes is set to [^0][0-9]*</output>
 		<output type="required" caseSensitive="yes" regex="no">Total bytes stored=0</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Total unstored bytes due to the setting of shared cache soft max is [^0][0-9]*</output>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		
 		<!-- in the output of addtestjithints, there might be class name or method name containing the word 'error', add space before and after 'error' in the following check-->
 		<output type="failure" caseSensitive="yes" regex="no"> error </output>
@@ -114,7 +114,7 @@
 		
 		<output type="required" caseSensitive="yes" regex="no">Stored AOT code for ROMMethod</output>
 		<output type="required" caseSensitive="yes" regex="no">Stored JITHINT attached data</output>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		
 		<!-- in the output of addtestjithints, there might be class name or method name containing the word 'error', add space before and after 'error' in the following check-->
 		<output type="failure" caseSensitive="yes" regex="no"> error </output>
@@ -205,7 +205,7 @@
 	
 	<test id="Test 6-a: Create a new cache with -Xscminaot0 -Xscmaxaot0 and -Xscminjitdata0 -Xscmaxjitdata0" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xscminaot0 -Xscmaxaot0 -Xscminjitdata0 -Xscmaxjitdata0 -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		
 		<output type="failure" caseSensitive="no" regex="no">error</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -276,7 +276,7 @@
 	
 	<test id="Test 8: Test create a cache with a positive softmx value" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,verbose -XX:SharedCacheHardLimit=16m -Xscmx1m -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Total unstored bytes due to the setting of shared cache soft max is [^0][0-9]*</output>
 
 		<output type="failure" caseSensitive="no" regex="no">error</output>
@@ -344,7 +344,7 @@
 	
 	<test id="Test 10-a: Test create a cache with a small -Xscmaxaot and -Xscmaxjitdata value" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,verbose -Xscmaxaot10 -Xscmaxjitdata10 -Xaot:forceAot,count=1 -Xjit:disableAsyncCompilation -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Unstored AOT bytes due to the setting of -Xscmaxaot is [^0][0-9]*. Unstored JIT bytes due to the setting of -Xscmaxjitdata is [^0][0-9]*</output>
 
 		<output type="failure" caseSensitive="no" regex="no">error</output>
@@ -369,7 +369,7 @@
 
 	<test id="Test 11-a: Test create a cache with -Xscmx12m" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xscmx12m -verbose:sizes -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">XX:SharedCacheHardLimit=12M\s+shared class cache size</output>
 
 		<output type="failure" caseSensitive="no" regex="no">error</output>
@@ -394,7 +394,7 @@
 	
 	<test id="Test 12-a: Test create a cache with -XX:SharedCacheHardLimit=12m" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -XX:SharedCacheHardLimit=12m -verbose:sizes -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-XX:SharedCacheHardLimit=12M\s+shared class cache size</output>
 
 		<output type="failure" caseSensitive="no" regex="no">error</output>
@@ -419,7 +419,7 @@
 	
 	<test id="Test 13-a: Test create a cache with -XX:SharedCacheHardLimit=12m and -Xscmx10m" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -XX:SharedCacheHardLimit=12m -Xscmx10m -verbose:sizes -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-XX:SharedCacheHardLimit=12M\s+shared class cache size</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xscmx10M\s+shared class cache soft max size</output>
 

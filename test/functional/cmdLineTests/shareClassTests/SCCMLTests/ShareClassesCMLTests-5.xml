@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2018 IBM Corp. and others
+  Copyright (c) 2012, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -109,7 +109,7 @@
 	
 	<test id="Test 189-a: Test for special value of 'cacheDirPerm' sub-option with sticky bit on" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,cacheDir=$CACHE_DIR_FOR_PERM_TEST$,cacheDirPerm=1000 -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -118,7 +118,7 @@
 	
 	<test id="Test 189-b: Verify that cache can be re-used" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,cacheDir=$CACHE_DIR_FOR_PERM_TEST$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -141,7 +141,7 @@
 		
 	<test id="Test 190-a: Use 'cacheDirPerm' sub-option on existing directory" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,$CACHE_DIR$,cacheDirPerm=0744 -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -150,7 +150,7 @@
 	
 	<test id="Test 190-b: Verify that cache can be re-used" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,$CACHE_DIR$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -171,7 +171,7 @@
 	
 	<test id="Test 191: Use 'cacheDirPerm' sub-option on default cache directory" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,cacheDirPerm=0744 -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -183,9 +183,9 @@
 		<command>$JAVA_EXE$ $currentMode$,reset,cacheDir=$CACHE_DIR_FOR_PERM_TEST$,cacheDirPerm=0577 -version</command>
 		<output type="success" caseSensitive="yes" regex="no" platforms="$NON_WINDOWS_PLATFORMS$">Invalid setting for cacheDirPerm option</output>
 		<output type="required" caseSensitive="yes" regex="no" platforms="$NON_WINDOWS_PLATFORMS$">Initialization error</output>
-		<output type="failure" caseSensitive="no" regex="yes" platforms="$NON_WINDOWS_PLATFORMS$" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" platforms="$NON_WINDOWS_PLATFORMS$" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		
-		<output type="success" caseSensitive="no" regex="yes" platforms="$WINDOWS_PLATFORMS$" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" platforms="$WINDOWS_PLATFORMS$" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -195,7 +195,7 @@
 	
 	<test id="Test 193: Code coverage on Xshareclasses:doExtraAreaChecks" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,enablebci,doExtraAreaChecks -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -206,7 +206,7 @@
 	
 	<test id="Test 194-a: Test -Xshareclasses followed by -XX:ShareClassesEnableBCI" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset $XXShareClassesEnableBCI$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -216,7 +216,7 @@
 	<test id="Test 194-b: Ensure BCI Enabled is true in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -225,7 +225,7 @@
 	
 	<test id="Test 194-c: Test -XX:ShareClassesEnableBCI followed by -Xshareclasses" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $XXShareClassesEnableBCI$ $currentMode$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -235,7 +235,7 @@
 	<test id="Test 194-d: Ensure BCI Enabled is true in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -255,7 +255,7 @@
 	
 	<test id="Test 194-f: Try to use -XX:ShareClassesEnableBCI after -Xshareclasses:none to create a cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,none $XXShareClassesEnableBCI$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -274,7 +274,7 @@
 	
 	<test id="Test 194-h: Try to use -XX:ShareClassesEnableBCI before -Xshareclasses:none to create a cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $XXShareClassesEnableBCI$ $currentMode$,none -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -293,7 +293,7 @@
 
 	<test id="Test 194-j: Try to use -XX:ShareClassesEnableBCI without -Xshareclasses to create a cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $XXShareClassesEnableBCI$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -314,7 +314,7 @@
 	
 	<test id="Test 195-a: Create a cache without BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,disableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -324,7 +324,7 @@
 	<test id="Test 195-b: Ensure cache created without enableBCI option is not usable with -XX:ShareClassEnableBCI option" timeout="600" runPath=".">
 	<command>$JAVA_EXE$ $currentMode$ $XXShareClassesEnableBCI$ -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Initialization error for library j9shr*</output>
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
@@ -332,7 +332,7 @@
 
 	<test id="Test 195-c: Verify that using '-XX:ShareClassesEnableBCI' with 'nonfatal' sub-option on an existing BCI disabled cache does not abort JVM" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $XXShareClassesEnableBCI$ $currentMode$,nonfatal,verboseIO -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="yes" regex="no">Found class</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -392,7 +392,7 @@
 	
 	<test id="Test 195-i: Create a cache without BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,disableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -411,7 +411,7 @@
 	
 	<test id="Test 195-k: Create a cache without BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,disableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -431,7 +431,7 @@
 	<test id="Test 195-m: Verify BCI Enabled is true in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -440,7 +440,7 @@
 
 	<test id="Test 195-n: Create a cache without BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,disableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -460,7 +460,7 @@
 	<test id="Test 195-p: Verify BCI Enabled is true in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -471,7 +471,7 @@
 	
 	<test id="Test 196-a: Verify that -Xshareclasses:disableBCI overrides -XX:ShareClassesEnableBCI when specified before it" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,disableBCI,reset $XXShareClassesEnableBCI$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -481,7 +481,7 @@
 	<test id="Test 196-b: Verify BCI Enabled is false in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -490,7 +490,7 @@
 	
 	<test id="Test 196-c: Verify that -Xshareclasses:disableBCI overrides -XX:ShareClassesEnableBCI when specified after it" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $XXShareClassesEnableBCI$ $currentMode$,disableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -500,7 +500,7 @@
 	<test id="Test 196-d: Verify BCI Enabled is false in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -509,7 +509,7 @@
 	
 	<test id="Test 196-e: Use -Xshareclasses:enableBCI,disableBCI to create a cache without BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,enableBCI,disableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -519,7 +519,7 @@
 	<test id="Test 196-f: Verify BCI Enabled is false in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -528,7 +528,7 @@
 	
 	<test id="Test 196-g: Use -Xshareclasses:disableBCI,enableBCI to create a cache with BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,disableBCI,enableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -538,7 +538,7 @@
 	<test id="Test 196-h: Ensure BCI Enabled is true in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -547,7 +547,7 @@
 	
 	<test id="Test 196-i: Create a BCI enabled cache with multiple BCI options" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $XXShareClassesEnableBCI$ $currentMode$,disableBCI,enableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -557,7 +557,7 @@
 	<test id="Test 196-j: Ensure BCI Enabled is true in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -566,7 +566,7 @@
 
 	<test id="Test 196-k: Create a BCI disabled cache with multiple BCI options" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $XXShareClassesEnableBCI$ $currentMode$,enableBCI,disableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -576,7 +576,7 @@
 	<test id="Test 196-l: Verify BCI Enabled is false in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -587,7 +587,7 @@
 	
 	<test id="Test 197-a: Create a cache with BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,enableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -597,7 +597,7 @@
 	<test id="Test 197-b: Try to use an existing BCI enabled cache with 'disableBCI' sub-option" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,disableBCI -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Initialization error for library j9shr*</output>
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
@@ -605,7 +605,7 @@
 	
 	<test id="Test 197-c: Verify that using 'disableBCI' with 'nonfatal' sub-option on an existing BCI enabled cache does not abort JVM" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,disableBCI,nonfatal,verboseIO -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="yes" regex="no">Found class</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -665,7 +665,7 @@
 	
 	<test id="Test 197-i: Create a cache with BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,enableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -684,7 +684,7 @@
 	
 	<test id="Test 197-k: Create a cache with BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,enableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -704,7 +704,7 @@
 	<test id="Test 197-m: Verify BCI Enabled is false in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -724,7 +724,7 @@
 	<test id="Test 197-o: Verify BCI Enabled is true in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -733,7 +733,7 @@
 
 	<test id="Test 197-p: Create a cache with BCI support" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,enableBCI,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -753,7 +753,7 @@
 	<test id="Test 197-r: Verify BCI Enabled is false in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= false</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -773,7 +773,7 @@
 	<test id="Test 197-t: Verify BCI Enabled is true in printStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">BCI Enabled[\s]*= true</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -793,7 +793,7 @@
 
 	<test id="Test 198-a: Create a cache with modification context" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,modified=mod1,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -802,7 +802,7 @@
 	
 	<test id="Test 198-b: Re-use previous cache without modification context in read-only mode" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,readonly -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -820,7 +820,7 @@
 	
 	<test id="Test 199-b: Add classpath of sample program as boot classpath in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $BOOTCP_HANOI$ $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
