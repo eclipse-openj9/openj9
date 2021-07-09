@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,16 +27,6 @@
 <suite id="J9 set HW prefetch AIX Command-Line Option Tests" timeout="2400">
 	<variable name="CLASS" value="-cp $UTILSJAR$ VMBench.FibBench" />
 
-	<test id="Disabling Hardware Prefetch by default">
-		<command>$EXE$ -Xtrace:print={j9util.35-36} $CLASS$</command>
-		<output regex="no" type="success">Fibonacci: iterations</output>
-		<output regex="no" type="required">j9util(j9vm).35       - setHWPrefetch return code = 0 and current value of DSCR = 1</output>
-		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
-		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
-		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
-		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
-	</test>
-	
 	<test id="Disabling Hardware Prefetch -XXsetHWPrefetch:none">
 		<command>$EXE$ -Xtrace:print={j9util.35-36} -XXsetHWPrefetch:none $CLASS$</command>
 		<output regex="no" type="success">Fibonacci: iterations</output>
