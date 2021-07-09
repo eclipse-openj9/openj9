@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2019, 2019 IBM Corp. and others
+  Copyright (c) 2019, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,25 +34,25 @@
 
  <test id="test -XX:-IgnoreUnrecognizedXXColonOptions -XX:+IgnoreUnrecognizedXXColonOptions, bad option: -XX:INVALID">
   <command>$EXE$ $NOIGNOREUNRECOGNIZEDXXOPTIONS$ $BADOPTION$ $IGNOREUNRECOGNIZEDXXOPTIONS$ -version</command>
-  <output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+  <output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   <output type="failure" caseSensitive="no" regex="no">Command-line option unrecognised</output>
  </test>
 
  <test id="test -XX:-IgnoreUnrecognizedXXColonOptions -XX:+IgnoreUnrecognizedXXColonOptions, good option: -XX:+DisableExplicitGC">
   <command>$EXE$ $NOIGNOREUNRECOGNIZEDXXOPTIONS$ $GOODOPTION$ $IGNOREUNRECOGNIZEDXXOPTIONS$ -version</command>
-  <output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+  <output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   <output type="failure" caseSensitive="no" regex="no">Command-line option unrecognised</output>
  </test>
 
  <test id="test -XX:+IgnoreUnrecognizedXXColonOptions -XX:-IgnoreUnrecognizedXXColonOptions, bad option: -XX:INVALID">
   <command>$EXE$ $IGNOREUNRECOGNIZEDXXOPTIONS$ $BADOPTION$ $NOIGNOREUNRECOGNIZEDXXOPTIONS$ -version</command>
   <output type="success" caseSensitive="no" regex="no">Command-line option unrecognised</output>
-  <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+  <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
  </test>
 
  <test id="test -XX:+IgnoreUnrecognizedXXColonOptions -XX:-IgnoreUnrecognizedXXColonOptions, good option: -XX:+DisableExplicitGC">
   <command>$EXE$ $IGNOREUNRECOGNIZEDXXOPTIONS$ $GOODOPTION$ $NOIGNOREUNRECOGNIZEDXXOPTIONS$ -version</command>
-  <output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+  <output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   <output type="failure" caseSensitive="no" regex="no">Command-line option unrecognised</output>
  </test>
 
