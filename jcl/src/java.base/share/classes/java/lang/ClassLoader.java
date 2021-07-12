@@ -290,6 +290,10 @@ public abstract class ClassLoader {
 			&& !javaSecurityManager.equals("allow") //$NON-NLS-1$ /* special token to allow SecurityManager */
 			/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 		) {
+			/*[IF JAVA_SPEC_VERSION >= 17]*/
+			System.initialErr.println("WARNING: A command line option has enabled the Security Manager"); //$NON-NLS-1$
+			System.initialErr.println("WARNING: The Security Manager is deprecated and will be removed in a future release"); //$NON-NLS-1$
+			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 			if (javaSecurityManager.isEmpty() || "default".equals(javaSecurityManager)) { //$NON-NLS-1$
 				System.setSecurityManager(new SecurityManager());
 			} else {
