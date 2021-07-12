@@ -4189,10 +4189,10 @@ typedef struct J9MemoryManagerFunctions {
 	j9object_t  ( *J9AllocateObject)(struct J9VMThread *vmContext, J9Class *clazz, UDATA allocateFlags) ;
 	j9object_t  ( *J9AllocateIndexableObjectNoGC)(struct J9VMThread *vmThread, J9Class *clazz, U_32 numberIndexedFields, UDATA allocateFlags) ;
 	j9object_t  ( *J9AllocateObjectNoGC)(struct J9VMThread *vmThread, J9Class *clazz, UDATA allocateFlags) ;
-	void  ( *J9WriteBarrierPostStore)(struct J9VMThread *vmThread, j9object_t destinationObject, j9object_t storedObject) ;
-	void  ( *J9WriteBarrierBatchStore)(struct J9VMThread *vmThread, j9object_t destinationObject) ;
-	void  ( *J9WriteBarrierJ9PostClassStore)(struct J9VMThread *vmThread, J9Class *destinationJ9Class, j9object_t storedObject) ;
-	void  ( *J9WriteBarrierJ9ClassBatchStore)(struct J9VMThread *vmThread, J9Class *destinationJ9Class) ;
+	void  ( *J9WriteBarrierPost)(struct J9VMThread *vmThread, j9object_t destinationObject, j9object_t storedObject) ;
+	void  ( *J9WriteBarrierBatch)(struct J9VMThread *vmThread, j9object_t destinationObject) ;
+	void  ( *J9WriteBarrierPostClass)(struct J9VMThread *vmThread, J9Class *destinationClazz, j9object_t storedObject) ;
+	void  ( *J9WriteBarrierClassBatch)(struct J9VMThread *vmThread, J9Class *destinationClazz) ;
 	UDATA  ( *allocateMemoryForSublistFragment)(void *vmThread, J9VMGC_SublistFragment *fragmentPrimitive) ;
 	UDATA  ( *j9gc_heap_free_memory)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_heap_total_memory)(struct J9JavaVM *javaVM) ;
@@ -4262,10 +4262,10 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *j9gc_ext_reachable_objects_do)(struct J9VMThread *vmThread, jvmtiIterationControl (*func)(j9object_t *slotPtr, j9object_t sourcePtr, void *userData, IDATA type, IDATA index, IDATA wasReportedBefore), void *userData, UDATA walkFlags) ;
 	void  ( *j9gc_ext_reachable_from_object_do)(struct J9VMThread *vmThread, j9object_t objectPtr, jvmtiIterationControl (*func)(j9object_t *slotPtr, j9object_t sourcePtr, void *userData, IDATA type, IDATA index, IDATA wasReportedBefore), void *userData, UDATA walkFlags) ;
 	UDATA  ( *j9gc_jit_isInlineAllocationSupported)(struct J9JavaVM *javaVM) ;
-	void  ( *J9WriteBarrierPreStore)(struct J9VMThread *vmThread, J9Object *dstObject, fj9object_t *dstAddress, J9Object *srcObject) ;
-	void  ( *J9WriteBarrierJ9PreClassStore)(struct J9VMThread *vmThread, J9Object *dstObject, J9Object **dstAddress, J9Object *srcObject) ;
+	void  ( *J9WriteBarrierPre)(struct J9VMThread *vmThread, J9Object *dstObject, fj9object_t *dstAddress, J9Object *srcObject) ;
+	void  ( *J9WriteBarrierPreClass)(struct J9VMThread *vmThread, J9Object *dstClassObject, J9Object **dstAddress, J9Object *srcObject) ;
 	void  ( *J9ReadBarrier)(struct J9VMThread *vmThread, fj9object_t *srcAddress);
-	void  ( *J9ReadBarrierJ9Class)(struct J9VMThread *vmThread, j9object_t *srcAddress);
+	void  ( *J9ReadBarrierClass)(struct J9VMThread *vmThread, j9object_t *srcAddress);
 	j9object_t  ( *j9gc_weakRoot_readObject)(struct J9VMThread *vmThread, j9object_t *srcAddress);
 	j9object_t  ( *j9gc_weakRoot_readObjectVM)(struct J9JavaVM *vm, j9object_t *srcAddress);
 	UDATA  ( *j9gc_ext_check_is_valid_heap_object)(struct J9JavaVM *javaVM, j9object_t ptr, UDATA flags) ;
