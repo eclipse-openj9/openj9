@@ -77,6 +77,8 @@ public class TestCloseScope0 {
 	}
 
 	private static Throwable expected = null;
+	private static volatile boolean t1Started = false;
+	private static volatile boolean t2Waiting = false;
 
 	@Test(expectedExceptions=java.lang.IllegalStateException.class)
 	public static void closeScopeDuringAccess() throws Throwable {
@@ -112,6 +114,7 @@ public class TestCloseScope0 {
 		Thread t1 = new Thread(()->{
 			try {
 				synchronized (synch1) {
+					t1Started = true;
 					synch1.wait();
 				}
 				close.invoke(scope);
@@ -121,8 +124,11 @@ public class TestCloseScope0 {
 			} catch (InterruptedException | IllegalAccessException e) {
 				e.printStackTrace();
 			} finally {
+				while (!t2Waiting) {
+					Thread.yield();
+				}
 				synchronized (synch2) {
-					synch2.notifyAll();
+					synch2.notify();
 				}
 			}
 		}, "ScopeCloserThread");
@@ -130,10 +136,14 @@ public class TestCloseScope0 {
 		class MyRunnable implements Runnable {
 			public void run() {
 				try {
+					while (!t1Started) {
+						Thread.yield();
+					}
 					synchronized (synch1) {
 						synch1.notify();
 					}
 					synchronized (synch2) {
+						t2Waiting = true;
 						synch2.wait();
 					}
 				} catch (Exception e) {
@@ -154,9 +164,9 @@ public class TestCloseScope0 {
 		t1.start();
 		t2.start();
 
-		synchronized (synch2) {
-			synch2.wait();
-		}
+		t1.join();
+		t2.join();
+
 		if (expected != null) throw expected;
 	}
 }
