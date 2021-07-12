@@ -88,9 +88,11 @@ automated test builds at the AdoptOpenJDK project.
 - In playlist.xml, to disable a test target, add
 
  ```
-    <disabled>
-        <comment>issue url or issue comment url</comment>
-    </disabled>
+    <disables>
+        <disable>
+            <comment>issue url or issue comment url</comment>
+        <disable>
+    </disables>
  ```
 
 inside the `<test>` element that you want to disable.

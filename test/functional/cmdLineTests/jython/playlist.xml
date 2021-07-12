@@ -23,12 +23,14 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>cmdLineTester_jython</testCaseName>
-		<disabled>
-			<comment>runtimes/backlog issues 514</comment>
-			<variation>Mode616</variation>
-			<version>8</version>
-			<impl>ibm</impl>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>runtimes/backlog issues 514</comment>
+				<variation>Mode616</variation>
+				<version>8</version>
+				<impl>ibm</impl>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode108</variation>

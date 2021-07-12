@@ -78,10 +78,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_callsitedbgddrext_openj9</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
-			<platform>.*zos.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/1511</comment>
+				<platform>.*zos.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>

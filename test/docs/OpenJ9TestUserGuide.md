@@ -310,33 +310,37 @@ To exclude the 2nd variation listed which is assigned suffix_1 ```-Xmx1024m``` a
 After the comment is left, there will be a auto PR created with the exclude change in the playlist.xml. The PR will be linked to issue. If the testName can not be found in the repo, no PR will be created and there will be a comment left in the issue linking to the failed workflow run for more details. In the case where the parameter contains space separated values, use single quotes to group the parameter.
 
 #### Manually exclude a test target
-Search the test name to find its playlist.xml file. Add a ```<disabled>``` element after ```<testCaseName>``` element. The ```<disabled>``` element should always contain a ```<comment>``` element to specify the related issue url (or issue comment url).
+Search the test name to find its playlist.xml file. Add a ```<disables>``` element after ```<testCaseName>``` element. The ```<disables>``` element is used to capsulate all ```<disable>``` elements. ```<disable>``` should always contain a ```<comment>``` element to specify the related issue url (or issue comment url).
 
 For example:
 
 ```
 <test>
   <testCaseName>jdk_test</testCaseName>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-  </disabled>
+  <disables>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+    <disable>
+  </disables>
   ...
 ```
 
 This will disable the entire test suite. The following section describes how to disable the specific test cases.
 
 ##### Exclude a specific test variation:
-Add a ```<variation>``` element in the ```<disabled>``` element to specify the variation. The ```<variation>``` element must match an element defined in the ```<variations>``` element.
+Add a ```<variation>``` element in the ```<disable>``` element to specify the variation. The ```<variation>``` element must match an element defined in the ```<variations>``` element.
 
 For example, to exclude the test case with variation ```-Xmx1024m```:
 
 ```
 <test>
   <testCaseName>jdk_test</testCaseName>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <variation>-Xmx1024m</variation>
-  </disabled>
+  <disables>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+      <variation>-Xmx1024m</variation>
+    </disable>
+  </disables>
   ...
   <variations>
     <variation>NoOptions</variation>
@@ -346,103 +350,116 @@ For example, to exclude the test case with variation ```-Xmx1024m```:
 ```
 
 ##### Exclude a test against specific java implementation:
-Add a ```<impl>``` element in the ```<disabled>``` element to specify the implementation.
+Add a ```<impl>``` element in the ```<disable>``` element to specify the implementation.
 
 For example, to exclude the test for openj9 only:
 
 ```
 <test>
   <testCaseName>jdk_test</testCaseName>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <impl>openj9</impl>
-  </disabled>
+  <disables>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+      <impl>openj9</impl>
+    </disable>
+  </disables>
   ...
 ```
 
 ##### Exclude a test against specific java vendor:
-Add a ```<vendor>``` element in the ```<disabled>``` element to specify the vendor information.
+Add a ```<vendor>``` element in the ```<disable>``` element to specify the vendor information.
 
 For example, to exclude the test for AdoptOpenJDK only:
 
 ```
 <test>
   <testCaseName>jdk_test</testCaseName>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <vendor>adoptopenjdk</vendor>
-  </disabled>
+  <disables>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+      <vendor>adoptopenjdk</vendor>
+    </disable>
+  </disables>
+
   ...
 ```
 
 ##### Exclude a test against specific java version:
-Add a ```<version>``` element in the ```<disabled>``` element to specify the version.
+Add a ```<version>``` element in the ```<disable>``` element to specify the version.
 
 For example, to exclude the test for java 11 and up:
 
 ```
 <test>
   <testCaseName>jdk_test</testCaseName>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <version>11+</version>
-  </disabled>
+  <disables>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+      <version>11+</version>
+   </disable>
+  </disables>
   ...
 ```
 
 
 ##### Exclude a test against specific platform:
-Add a ```<platform>``` element in the ```<disabled>``` element to specify the platform in regular expression. All platforms can be found here: https://github.com/adoptium/aqa-tests/blob/master/buildenv/jenkins/openjdk_tests
+Add a ```<platform>``` element in the ```<disable>``` element to specify the platform in regular expression. All platforms can be found here: https://github.com/adoptium/aqa-tests/blob/master/buildenv/jenkins/openjdk_tests
 
 For example, to exclude the test for all linux platforms:
 
 ```
 <test>
   <testCaseName>jdk_test</testCaseName>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <platform>.*linux.*</plat>
-  </disabled>
+  <disables>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+      <platform>.*linux.*</plat>
+    </disable>
+  </disables>
   ...
 ```
 
 
 ##### Exclude test against multiple criteria:
-Defined a combination of ```<variation>```, ```<impl>```, ```<version>```, and  ```<platform>``` in the ```<disabled>``` element.
+Defined a combination of ```<variation>```, ```<impl>```, ```<version>```, and  ```<platform>``` in the ```<disable>``` element.
 
 For example, to exclude the test with variation ```-Xmx1024m``` against adoptopenjdk openj9 java 8 on windows only:
 
 ```
 <test>
   <testCaseName>jdk_test</testCaseName>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <variation>-Xmx1024m</variation>
-    <version>8</version>
-    <impl>openj9</impl>
-    <vendor>adoptopenjdk</vendor>
-    <platform>.*windows.*</platform>
-  </disabled>
+  <disables>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+      <variation>-Xmx1024m</variation>
+      <version>8</version>
+      <impl>openj9</impl>
+      <vendor>adoptopenjdk</vendor>
+      <platform>.*windows.*</platform>
+    </disable>
+  </disables>
   ...
 ```
 
-Note: Same element cannot be defined multiple times inside one ```<disabled>``` element. It is because the elements inside the disable element are in AND relationship.
+Note: Same element cannot be defined multiple times inside one ```<disable>``` element. It is because the elements inside the disable element are in AND relationship.
 
-For example, to exclude test on against hotspot and openj9. It is required to define multiple ```<disabled>``` elements, each with a single ```<impl>``` element inside:
+For example, to exclude test on against hotspot and openj9. It is required to define multiple ```<disable>``` elements, each with a single ```<impl>``` element inside:
 
 ```
 <test>
   <testCaseName>jdk_test</testCaseName>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <version>8</version>
-    <impl>openj9</impl>
-  </disabled>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <version>8</version>
-    <impl>hotspot</impl>
-  </disabled>
+  <disables>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+      <version>8</version>
+      <impl>openj9</impl>
+    </disable>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+      <version>8</version>
+      <impl>hotspot</impl>
+    </disable>
+  </disables>
   ...
 ```
 
@@ -451,15 +468,17 @@ Or remove ```<impl>``` element to exclude test against all implementations:
 ```
 <test>
   <testCaseName>jdk_test</testCaseName>
-  <disabled>
-    <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
-    <version>8</version>
-  </disabled>
+  <disables>
+    <disable>
+      <comment>https://github.com/adoptium/aqa-tests/issues/123456</comment>
+      <version>8</version>
+    </disable>
+  </disables>
   ...
 ```
 #### Execute excluded test target
 
-If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed by specifying the test target or adding `disabled` in front of its top-level test target.
+If a test is disabled using `<disable>` tag in playlist.xml, it can be executed by specifying the test target or adding `disabled` in front of its top-level test target.
 
 ```
         make _disabled.testA    // testA has <disabled> tag in playlist.xml
@@ -548,7 +567,7 @@ capabilities.
 
 - `DISABLED` tests
 
-If a test is disabled, it means that this test is disabled using `<disabled>` tag in playlist.xml.
+If a test is disabled, it means that this test is disabled using `<disable>` tag in playlist.xml.
 
 #### Results in html files
 

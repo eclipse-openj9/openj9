@@ -124,9 +124,11 @@
 	</test>
 	<test>
 		<testCaseName>recreateClassTest</testCaseName>
-		<disabled>
-			<comment>excluded OpenJ9 tests</comment>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>excluded OpenJ9 tests</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -151,9 +153,11 @@
 	</test>
 	<test>
 		<testCaseName>CFdumptest</testCaseName>
-		<disabled>
-			<comment>excluded OpenJ9 tests</comment>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>excluded OpenJ9 tests</comment>
+			</disable>
+		</disables>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(TEST_RESROOT)$(D)VM_Test.jar$(P)$(LIB_DIR)$(D)junit4.jar$(Q) \
 	junit.textui.TestRunner com.ibm.j9.cfdump.tests.CfdumpTestSuite; \
@@ -200,10 +204,12 @@
 	</test>
 	<test>
 		<testCaseName>xlpTests</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/11374</comment>
-			<platform>.*mac.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/11374</comment>
+				<platform>.*mac.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
