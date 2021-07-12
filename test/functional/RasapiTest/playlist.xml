@@ -23,14 +23,16 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>testRASAPI</testCaseName>
-		<disabled>
-			<comment>backlog issue 426</comment>
-			<platform>.*mac.*</platform>
-		</disabled>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/11800</comment>
-			<version>16+</version>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>backlog issue 426</comment>
+				<platform>.*mac.*</platform>
+			</disable>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/11800</comment>
+				<version>16+</version>
+			</disable>
+		</disables>
 		<command>
 			ant -f $(TEST_RESROOT)$(D)test.xml -Dtest.java.home=$(Q)$(TEST_JDK_HOME)$(D)$(Q) launch_test; \
 		$(TEST_STATUS)</command>

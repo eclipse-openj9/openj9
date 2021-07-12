@@ -73,10 +73,12 @@
 		 -->
 	<test>
 		<testCaseName>Nestmate_virtual_private</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/9167</comment>
-			<platform>.*zos.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/9167</comment>
+				<platform>.*zos.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0)$(SQ)</variation>
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedJitted*,org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0),{org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*}(count=100)$(SQ)</variation>

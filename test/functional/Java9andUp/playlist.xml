@@ -439,8 +439,13 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-		<test>
+	<test>
 		<testCaseName>StaticAccessChecks-IllegalAccessDenyWithPermit</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/12890</comment>
+			</disable>
+		</disables>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) --illegal-access=permit \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -449,9 +454,7 @@
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)
 		</command>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/12890</comment>
-		</disabled>
+
 		<levels>
 			<level>extended</level>
 		</levels>

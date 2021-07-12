@@ -24,10 +24,12 @@
 	<!-- LIBPATH tests intended for PMR56610 (CMVC 201272) -->
 	<test>
 		<testCaseName>cmdLineTester_libpathTestRtf</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3787</comment>
-			<platform>.*mac.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3787</comment>
+				<platform>.*mac.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode610</variation>
 		</variations>
@@ -53,10 +55,12 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_libpathTestRtfChild</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/3787</comment>
-			<platform>.*mac.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/3787</comment>
+				<platform>.*mac.*</platform>
+			</disable>
+		</disables>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJAVA_EXE=$(JAVA_COMMAND) -DEXTRA_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DJAVATEST_ROOT=$(JAVATEST_ROOT) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) \
 	-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)libpathTest.jar$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) -jar $(CMDLINETESTER_JAR) \
