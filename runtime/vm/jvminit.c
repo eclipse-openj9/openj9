@@ -3567,11 +3567,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		if (enableCRIU > disableCRIU) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			vm->checkpointState = (J9CRIUCheckpointState*) j9mem_allocate_memory(sizeof(J9CRIUCheckpointState), OMRMEM_CATEGORY_VM);
-			memset(vm->checkpointState, 0, sizeof(J9CRIUCheckpointState));
-
 			if (NULL == vm->checkpointState) {
 				return JNI_ENOMEM;
 			}
+			memset(vm->checkpointState, 0, sizeof(J9CRIUCheckpointState));
 			vm->checkpointState->isCheckPointAllowed = TRUE;
 		}
 	}
