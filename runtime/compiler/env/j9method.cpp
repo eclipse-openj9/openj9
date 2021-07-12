@@ -3000,6 +3000,17 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+
+   static X VectorSupportMethods[] =
+      {
+      {x(TR::jdk_internal_vm_vector_VectorSupport_load, "load", "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$LoadOperation;)Ljava/lang/Object;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_binaryOp, "binaryOp",  "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_store, "store", "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjdk/internal/vm/vector/VectorSupport$Vector;Ljava/lang/Object;ILjdk/internal/vm/vector/VectorSupport$StoreVectorOperation;)V")},
+
+      {  TR::unknownMethod}
+      };
+      
+   
    static X ArrayMethods[] =
       {
       {x(TR::java_lang_reflect_Array_getLength, "getLength", "(Ljava/lang/Object;)I")},
@@ -4095,6 +4106,7 @@ void TR_ResolvedJ9Method::construct()
       { "com/ibm/tenant/InternalTenantContext", MTTenantContext },
       { "java/lang/StringCoding$StringDecoder", StringCoding_StringDecoderMethods },
       { "java/lang/StringCoding$StringEncoder", StringCoding_StringEncoderMethods },
+      { "jdk/internal/vm/vector/VectorSupport", VectorSupportMethods },
       { 0 }
       };
 

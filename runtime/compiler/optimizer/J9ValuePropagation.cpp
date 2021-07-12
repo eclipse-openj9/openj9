@@ -2162,6 +2162,37 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
       {
       if (!node->getOpCode().isIndirect())
          {
+         // Handle VectorSupport operations
+         bool isVectorSupportLoad =
+         method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_load;
+         bool isVectorSupportBinaryOp =
+         method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp;
+
+         if (isVectorSupportLoad || isVectorSupportBinaryOp)
+            {
+            bool isGlobal; // dummy
+            int typeChildIndex = isVectorSupportLoad ? 0 : 1;
+            TR::VPConstraint *jlClass = getConstraint(node->getChild(typeChildIndex), isGlobal);
+
+            TR::VPResolvedClass *resultType = NULL;
+            if (jlClass)
+               {
+               if (jlClass->isFixedClass())
+                  resultType = TR::VPFixedClass::create(this, jlClass->getClass());
+               else if (jlClass->getClassType() && jlClass->getClassType()->asResolvedClass())
+                  resultType = TR::VPResolvedClass::create(this, jlClass->getClass());
+               }
+
+            TR::VPClassPresence *nonNull = TR::VPNonNullObject::create(this);
+            TR::VPObjectLocation *heap = TR::VPObjectLocation::create(this, TR::VPObjectLocation::HeapObject);
+            TR::VPConstraint *result = TR::VPClass::create(this, resultType, nonNull, NULL, NULL, heap);
+
+            // This constraint can be global because the result of the call needs to have its own value number.
+            addGlobalConstraint(node, result);
+            return node; // nothing else to do
+            }
+
+         // Handle clone
          static char *enableDynamicObjectClone = feGetEnv("TR_enableDynamicObjectClone");
          // Dynamic cloning kicks in when we attempt to make direct call to Object.clone
          // or J9VMInternals.primitiveClone where the cloned object is an array.

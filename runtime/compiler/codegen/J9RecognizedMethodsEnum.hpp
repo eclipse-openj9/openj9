@@ -442,6 +442,10 @@
 
    jdk_internal_loader_NativeLibraries_load,
 
+   jdk_internal_vm_vector_VectorSupport_load,
+   jdk_internal_vm_vector_VectorSupport_binaryOp,
+   jdk_internal_vm_vector_VectorSupport_store,
+      
    java_lang_reflect_Array_getLength,
    java_lang_reflect_Method_invoke,
    java_util_Arrays_fill,
