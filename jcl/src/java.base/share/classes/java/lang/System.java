@@ -84,6 +84,10 @@ public final class System {
 	 * Default error output stream
 	 */
 	public static final PrintStream err = null;
+	/*[IF JAVA_SPEC_VERSION >= 17] */
+	// The initial err to print SecurityManager related warning messages
+	static PrintStream initialErr;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	//Get a ref to the Runtime instance for faster lookup
 	private static final Runtime RUNTIME = Runtime.getRuntime();
@@ -345,7 +349,12 @@ public final class System {
 		}
 		/* consoleDefaultCharset must be initialized before calling createConsole() */
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+		/*[IF JAVA_SPEC_VERSION >= 17] */
+		initialErr = createConsole(FileDescriptor.err, stderrCharset);
+		setErr(initialErr);
+		/*[ELSE] JAVA_SPEC_VERSION >= 17 */
 		setErr(createConsole(FileDescriptor.err, stderrCharset));
+		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 		setOut(createConsole(FileDescriptor.out, stdoutCharset));
 		/*[IF Sidecar19-SE_RAWPLUSJ9]*/
 		setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
@@ -871,6 +880,9 @@ private static native String getEncoding(int type);
  *
  * @return		the system security manager object.
  */
+/*[IF (JAVA_SPEC_VERSION >= 17) & OPENJDK_METHODHANDLES] */
+@Deprecated(since="17", forRemoval=true)
+/*[ENDIF] (JAVA_SPEC_VERSION >= 17) & OPENJDK_METHODHANDLES */
 public static SecurityManager getSecurityManager() {
 	return security;
 }
@@ -1008,6 +1020,12 @@ public static void setProperties(Properties p) {
  * 												which indicates that a security manager is not allowed to be set dynamically.
  /*[ENDIF] JAVA_SPEC_VERSION >= 12
  */
+/*[IF JAVA_SPEC_VERSION >= 17] */
+/*[IF OPENJDK_METHODHANDLES] */
+@Deprecated(since="17", forRemoval=true)
+/*[ENDIF] OPENJDK_METHODHANDLES */
+@CallerSensitive
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public static void setSecurityManager(final SecurityManager s) {
 	/*[PR 113606] security field could be modified by another Thread */
 	@SuppressWarnings("removal")
@@ -1016,7 +1034,7 @@ public static void setSecurityManager(final SecurityManager s) {
 	if (s != null) {
 		/*[IF JAVA_SPEC_VERSION >= 12]*/
 		if ("disallow".equals(systemProperties.getProperty("java.security.manager"))) { //$NON-NLS-1$ //$NON-NLS-2$
-			/*[MSG "K0B00", "`-Djava.security.manager=disallow` has been specified"]*/
+			/*[MSG "K0B00", "The Security Manager is deprecated and will be removed in a future release"]*/
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0B00")); //$NON-NLS-1$
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
@@ -1032,6 +1050,17 @@ public static void setSecurityManager(final SecurityManager s) {
 				// ignore any potential exceptions
 			}
 		}
+		
+		/*[IF JAVA_SPEC_VERSION >= 17] */
+		Class<?> callerClz = getCallerClass();
+		String callerName = callerClz.getName();
+		CodeSource cs = callerClz.getProtectionDomainInternal().getCodeSource();
+		String codeSource = (cs == null) ? callerName : callerName + " (" + cs.getLocation() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+		initialErr.println("WARNING: A terminally deprecated method in java.lang.System has been called"); //$NON-NLS-1$
+		initialErr.printf("WARNING: System::setSecurityManager has been called by %s" + lineSeparator(), codeSource); //$NON-NLS-1$
+		initialErr.printf("WARNING: Please consider reporting this to the maintainers of %s" + lineSeparator(), callerName); //$NON-NLS-1$
+		initialErr.println("WARNING: System::setSecurityManager will be removed in a future release"); //$NON-NLS-1$
+		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 		try {
 			/*[PR 97686] Preload the policy permission */

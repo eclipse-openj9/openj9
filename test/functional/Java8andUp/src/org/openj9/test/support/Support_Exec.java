@@ -1,7 +1,7 @@
 package org.openj9.test.support;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,7 +113,10 @@ public class Support_Exec {
 				String line;
 				try {
 					while ((line = reader.readLine()) != null) {
-						if (line.indexOf("switch to IFA processor") != -1) {
+						/* Ignore WARNING: message on stderr - https://github.com/eclipse-openj9/openj9/issues/12760 */
+						if ((line.indexOf("switch to IFA processor") != -1)
+							|| (line.indexOf("WARNING:") != -1)
+						) {
 							continue;
 						}
 						if (checkExpectedErr && line.indexOf(expectedErr) != -1) {
