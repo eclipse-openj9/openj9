@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ public class TestCommandLineOptionXscmx01 extends TestUtils {
 	
 	/* Note: AOT is turned off for the below tests. In some cases the JIT has 
 	 * enough time to store information in the already small cache. During this 
-	 * test this may cause the alredy to small cache to be marked as full 
+	 * test this may cause the already to small cache to be marked as full 
 	 * (when this is not expected to occur).
 	 */
 	

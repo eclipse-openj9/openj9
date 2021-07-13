@@ -1796,7 +1796,7 @@ J9::SymbolReferenceTable::checkUserField(TR::SymbolReference *symRef)
       // At the moment this is conservative. i.e. any field in any of the above packages will not be considered
       // a user field in any of the other packages. However it is possible to have fields from one package (or class) that we
       // may want to consider as a user field in another package (class) in which case having the different array elements
-      // below would then be the way to acomplish this. The population of the array would need to be more selective.
+      // below would then be the way to accomplish this. The population of the array would need to be more selective.
       //
       }
    else

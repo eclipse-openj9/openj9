@@ -1466,7 +1466,7 @@ public class MethodHandles {
 		 * Check whether the target class is accessible to the lookup class.
 		 * 
 		 * @param targetClass The {@link Class} being accessed.
-		 * @return true if the accessiblity check is passed; otherwise return false.
+		 * @return true if the accessibility check is passed; otherwise return false.
 		 */
 		private boolean isClassAccessible(Class<?> targetClass) {
 			try {

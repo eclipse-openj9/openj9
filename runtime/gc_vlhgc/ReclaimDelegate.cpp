@@ -364,7 +364,7 @@ MM_ReclaimDelegate::rebuildRegionsSortedByEmptinessArray(MM_EnvironmentVLHGC *en
 			if (region->getRememberedSetCardList()->isAccurate() && (!regionHasCriticalRegions)) {
 				/* Don't want to double-count regions that would be selected by other collection set algorithms 
 				 * (i.e. nursery or DCSS) when calculating optimalEmptinessRegionThreshold.
-				 * Going to only filter out nursery for now as with exponential aging, there may be alot of objects
+				 * Going to only filter out nursery for now as with exponential aging, there may be a lot of objects
 				 * that might never reach maximum age.
 				 */
 				 if (!MM_CompactGroupManager::isRegionInNursery(env, region)) {

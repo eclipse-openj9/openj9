@@ -377,7 +377,7 @@ public class StructureReader {
 				String fieldType = infoMap.remove(fieldName);
 
 				if (fieldType == null) {
-					// No auxilliary information for this field.
+					// No auxiliary information for this field.
 				} else if (fieldType.equals("required")) {
 					field.required = true;
 				} else {

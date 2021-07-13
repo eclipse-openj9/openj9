@@ -574,7 +574,7 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
       else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && JITServerHelpers::isServerAvailable())
          {
          
-         // For JITClient let's be more agressive with compilation thread activation
+         // For JITClient let's be more aggressive with compilation thread activation
          // because the latencies are larger. Beyond 'numProc-1' we will use the
          // 'starvation activation schedule', but accelerated (divide those thresholds by 2)
          // NOTE: compilation thread activation policy is AGGRESSIVE if we reached this point
@@ -6383,7 +6383,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          {
          void *currOldStartPC = startPCIfAlreadyCompiled(vmThread, details, startPC);
          // If currOldStartPC is NULL, the method body defined by startPC has not been
-         // recompiled. We will queue the second remote aync compilation here. Otherwise,
+         // recompiled. We will queue the second remote async compilation here. Otherwise,
          // another thread is doing the recompilation and will take care of queueing
          // the second compilation.
          if (!currOldStartPC)

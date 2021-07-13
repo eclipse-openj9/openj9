@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -493,7 +493,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			}
 		}
 
-		/* Normal exit - its not safe to free this stuff if we are ab'ending.
+		/* Normal exit - its not safe to free this stuff if we are abending.
 		 * Blank global pointer before freeing struct (safer?)
 		 */
 		if (vm->j9rasGlobalStorage != NULL) {

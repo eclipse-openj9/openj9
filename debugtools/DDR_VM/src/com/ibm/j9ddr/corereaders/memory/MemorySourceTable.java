@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -322,7 +322,7 @@ public class MemorySourceTable {
 		public IMemorySource getRangeForAddress(long address);
 	}
 
-	/* Class used for debugging misbehaving addres resolver strategies */
+	/* Class used for debugging misbehaving address resolver strategies */
 	@SuppressWarnings("unused")
 	private static class DebugAddressResolverStrategy implements IAddressResolverStrategy {
 		private final IAddressResolverStrategy trusted;

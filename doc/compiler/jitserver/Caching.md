@@ -25,7 +25,7 @@ Caching is an important aspect of `JITServer` and one of the main reasons for wh
 ## Why caching is important
 When server is compiling a method, it needs to know a lot of information that is located on the client side, e.g. the addresses of RAM classes, GC mode, class hierarchy information, interpreter profiling data and much more. To obtain this information, server will make a remote call over the network to the client, client will find it, and send it back to the server. During the course of a compilation server will make hundreds of such calls (on average), assuming no caching is involved.
 Why is it bad? First of all, remote calls are expensive, both in terms of latency and CPU, especially in terms of CPU. If the server makes hundreds of requests to the client just for one compilation, client will spend more CPU time just sending and receiving data over the network than it would take for it to compile a method locally. What makes it worse is that in order for the client to fetch the requested data it needs to do some work, which additionally increases CPU consumption.
-Caching helps alleviate this problem by storing the result of frequent remote calls on the server, so that if the same data is needed again, it can accesss it from the cache, instead of making a remote call.
+Caching helps alleviate this problem by storing the result of frequent remote calls on the server, so that if the same data is needed again, it can access it from the cache, instead of making a remote call.
 
 ## Types of caching
 There are 2 types of caching that `JITServer` does:

@@ -42,7 +42,7 @@
  *  2. Nodes with known object index
  *  3. Nodes whose value can be compile-time inferred and is a known object
  *
- * We'd like the object info be avaliable at places where we want to do transformation,
+ * We'd like the object info be available at places where we want to do transformation,
  * however, the objects will be stored into autos and autos will be used instead of
  * nodes with known object index. Thus we need to track the object info while walking
  * the trees.

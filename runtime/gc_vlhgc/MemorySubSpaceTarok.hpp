@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -220,7 +220,7 @@ public:
 	 * Called when an allocation context replenishment request fails in order to invoke a GC.
 	 * 
 	 * @param[in] env The current thread
-	 * @param[in] replenishingSpace The subspace which was initially asked to fill the replenishment request and which will be aksed to replenish it once the GC is complete
+	 * @param[in] replenishingSpace The subspace which was initially asked to fill the replenishment request and which will be asked to replenish it once the GC is complete
 	 * @param[in] context The allocation context which the sender failed to replenish
 	 * @param[in] allocateDescription The allocation request which initiated the allocation failure
 	 * @param[in] allocationType The type of allocation request we eventually must satisfy

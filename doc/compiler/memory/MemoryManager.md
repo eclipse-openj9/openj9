@@ -226,7 +226,7 @@ calling it `TR::PersistentSegmentProvider`, and have it use
 
 The mechanism for limiting the memory usage during compilation can be summarized as:
 
-Default size of system segments allocatd by `J9::SystemSegmentProvider` is 16 MB. 
+Default size of system segments allocated by `J9::SystemSegmentProvider` is 16 MB. 
 These system segments are then carved into smaller segments based on the size requested
 which is rounded up to 64 KB. The cumulative memory usage of these system segments is limited 
 by the value of the option `scratchSpaceLimit`. When the scratch space limit is not a multiple

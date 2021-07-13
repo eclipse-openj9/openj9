@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -207,7 +207,7 @@ poolElementAllocFailed:
 		UDATA *newStackOverflowMark = J9JAVASTACK_STACKOVERFLOWMARK(newStack);
 		UDATA currentStackOverflowMark = (UDATA)vmThread->stackOverflowMark;
 		if (J9_EVENT_SOM_VALUE != currentStackOverflowMark) {
-			/* Use an atomic here to ensure we don't lose an aynsc message post.
+			/* Use an atomic here to ensure we don't lose an async message post.
 			 * Only the current thread can ever write a value other than
 			 * J9_EVENT_SOM_VALUE into stackOverflowMark.
 			 */

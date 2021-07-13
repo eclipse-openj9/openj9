@@ -229,7 +229,7 @@ void* JNICALL
 getArrayElements(JNIEnv *env, jarray array, jboolean *isCopy)
 {
 	/* This routine is used for all Get*ArrayElements and GetPrimitiveArrayCritical. The latter because
-	 * the Java heap is not addressible in AMODE 31, as such, will always return a copy.
+	 * the Java heap is not addressable in AMODE 31, as such, will always return a copy.
 	 */
 	const jint NUM_ARGS = 3;
 	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_jarray, CEL4RO64_type_uint32_ptr };
