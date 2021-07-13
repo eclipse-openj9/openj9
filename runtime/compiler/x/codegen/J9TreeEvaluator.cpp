@@ -78,6 +78,7 @@
 #include "env/CompilerEnv.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "codegen/J9WatchedStaticFieldSnippet.hpp"
+#include "codegen/X86FPConversionSnippet.hpp"
 
 #ifdef TR_TARGET_64BIT
 #include "codegen/AMD64PrivateLinkage.hpp"
@@ -573,12 +574,299 @@ static TR::Instruction *generatePrefetchAfterHeaderAccess(TR::Node              
    return instr;
    }
 
+// 32-bit float/double convert to long
+//
+TR::Register *J9::X86::TreeEvaluator::fpConvertToLong(TR::Node *node, TR::SymbolReference *helperSymRef, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_ASSERT_FATAL(comp->target().is32Bit(), "AMD64 doesn't use this logic");
+
+   TR::Node *child = node->getFirstChild();
+
+   if (child->getOpCode().isDouble())
+      {
+      TR::RegisterDependencyConditions  *deps;
+
+      TR::Register        *doubleReg = cg->evaluate(child);
+      TR::Register        *lowReg    = cg->allocateRegister(TR_GPR);
+      TR::Register        *highReg   = cg->allocateRegister(TR_GPR);
+      TR::RealRegister    *espReal   = cg->machine()->getRealRegister(TR::RealRegister::esp);
+
+      deps = generateRegisterDependencyConditions((uint8_t) 0, 3, cg);
+      deps->addPostCondition(lowReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(highReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(doubleReg, TR::RealRegister::NoReg, cg);
+      deps->stopAddingConditions();
+
+      TR::LabelSymbol *reStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);   // exit routine label
+      TR::LabelSymbol *CallLabel    = TR::LabelSymbol::create(cg->trHeapMemory(),cg);   // label where long (64-bit) conversion will start
+      TR::LabelSymbol *StartLabel   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+
+      StartLabel->setStartInternalControlFlow();
+      reStartLabel->setEndInternalControlFlow();
+
+      // Attempt to convert a double in an XMM register to an integer using CVTTSD2SI.
+      // If the conversion succeeds, put the integer in lowReg and sign-extend it to highReg.
+      // If the conversion fails (the double is too large), call the helper.
+      generateRegRegInstruction(TR::InstOpCode::CVTTSD2SIReg4Reg, node, lowReg, doubleReg, cg);
+      generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, lowReg, 0x80000000, cg);
+
+      generateLabelInstruction(TR::InstOpCode::label, node, StartLabel, cg);
+      generateLabelInstruction(TR::InstOpCode::JE4, node, CallLabel, cg);
+
+      generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, highReg ,lowReg, cg);
+      generateRegImmInstruction(TR::InstOpCode::SAR4RegImm1, node, highReg , 31, cg);
+
+      generateLabelInstruction(TR::InstOpCode::label, node, reStartLabel, deps, cg);
+
+      TR::Register *targetRegister = cg->allocateRegisterPair(lowReg, highReg);
+      TR::SymbolReference *d2l = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_IA32double2LongSSE);
+      d2l->getSymbol()->getMethodSymbol()->setLinkage(TR_Helper);
+      TR::Node::recreate(node, TR::lcall);
+      node->setSymbolReference(d2l);
+      TR_OutlinedInstructions *outlinedHelperCall = new (cg->trHeapMemory()) TR_OutlinedInstructions(node, TR::lcall, targetRegister, CallLabel, reStartLabel, cg);
+      cg->getOutlinedInstructionsList().push_front(outlinedHelperCall);
+
+      cg->decReferenceCount(child);
+      node->setRegister(targetRegister);
+
+      return targetRegister;
+      }
+   else
+      {
+      TR::Register *accReg    = NULL;
+      TR::Register *lowReg    = cg->allocateRegister(TR_GPR);
+      TR::Register *highReg   = cg->allocateRegister(TR_GPR);
+      TR::Register *floatReg = cg->evaluate(child);
+
+      TR::LabelSymbol *snippetLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol *startLabel   = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+      TR::LabelSymbol *reStartLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+
+      startLabel->setStartInternalControlFlow();
+      reStartLabel->setEndInternalControlFlow();
+
+      generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
+
+      // These instructions must be set appropriately prior to the creation
+      // of the snippet near the end of this method. Also see warnings below.
+      //
+      TR::X86RegMemInstruction          *loadHighInstr;    // loads the high dword of the converted long
+      TR::X86RegMemInstruction          *loadLowInstr;     // loads the low dword of the converted long
+
+      TR::MemoryReference  *tempMR = cg->machine()->getDummyLocalMR(TR::Float);
+      generateMemRegInstruction(TR::InstOpCode::MOVSSMemReg, node, tempMR, floatReg, cg);
+      generateMemInstruction(TR::InstOpCode::FLDMem, node, generateX86MemoryReference(*tempMR, 0, cg), cg);
+
+      generateInstruction(TR::InstOpCode::FLDDUP, node, cg);
+
+      // For slow conversion only, change the rounding mode on the FPU via its control word register.
+      //
+      TR::MemoryReference  *convertedLongMR = (cg->machine())->getDummyLocalMR(TR::Int64);
+
+      if (cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE3))
+         {
+         generateMemInstruction(TR::InstOpCode::FLSTTPMem, node, convertedLongMR, cg);
+         }
+      else
+         {
+         int16_t fpcw = comp->getJittedMethodSymbol()->usesSinglePrecisionMode() ?
+               SINGLE_PRECISION_ROUND_TO_ZERO : DOUBLE_PRECISION_ROUND_TO_ZERO;
+         generateMemInstruction(TR::InstOpCode::LDCWMem, node, generateX86MemoryReference(cg->findOrCreate2ByteConstant(node, fpcw), cg), cg);
+         generateMemInstruction(TR::InstOpCode::FLSTPMem, node, convertedLongMR, cg);
+
+         fpcw = comp->getJittedMethodSymbol()->usesSinglePrecisionMode() ?
+               SINGLE_PRECISION_ROUND_TO_NEAREST : DOUBLE_PRECISION_ROUND_TO_NEAREST;
+
+         generateMemInstruction(TR::InstOpCode::LDCWMem, node, generateX86MemoryReference(cg->findOrCreate2ByteConstant(node, fpcw), cg), cg);
+         }
+
+      // WARNING:
+      //
+      // The following load instructions are dissected in the snippet to determine the target registers.
+      // If they or their format is changed, you may need to change the snippet also.
+      //
+      loadHighInstr = generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, highReg,
+                                                generateX86MemoryReference(*convertedLongMR, 4, cg), cg);
+
+      loadLowInstr = generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, lowReg,
+                                               generateX86MemoryReference(*convertedLongMR, 0, cg), cg);
+
+      // Jump to the snippet if the converted value is an indefinite integer; otherwise continue.
+      //
+      generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, highReg, INT_MIN, cg);
+      generateLabelInstruction(TR::InstOpCode::JNE4, node, reStartLabel, cg);
+      generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, node, lowReg, lowReg, cg);
+      generateLabelInstruction(TR::InstOpCode::JE4, node, snippetLabel, cg);
+
+      // Create the conversion snippet.
+      //
+      cg->addSnippet( new (cg->trHeapMemory()) TR::X86FPConvertToLongSnippet(reStartLabel,
+                                                                             snippetLabel,
+                                                                             helperSymRef,
+                                                                             node,
+                                                                             loadHighInstr,
+                                                                             loadLowInstr,
+                                                                             cg) );
+
+      TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, accReg ? 3 : 2, cg);
+
+      // Make sure the high and low long registers are assigned to something.
+      //
+      if (accReg)
+         {
+         deps->addPostCondition(accReg, TR::RealRegister::eax, cg);
+         }
+
+      deps->addPostCondition(lowReg, TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(highReg, TR::RealRegister::NoReg, cg);
+
+      generateLabelInstruction(TR::InstOpCode::label, node, reStartLabel, deps, cg);
+
+      cg->decReferenceCount(child);
+      generateInstruction(TR::InstOpCode::FSTPST0, node, cg);
+
+      TR::Register *targetRegister = cg->allocateRegisterPair(lowReg, highReg);
+      node->setRegister(targetRegister);
+      return targetRegister;
+      }
+   }
+
+// On AMD64, all four [fd]2[il] conversions are handled here
+// On IA32, both [fd]2i conversions are handled here
+TR::Register *J9::X86::TreeEvaluator::f2iEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   bool doubleSource;
+   bool longTarget;
+   TR::InstOpCode::Mnemonic cvttOpCode;
+
+   switch (node->getOpCodeValue())
+      {
+      case TR::f2i:
+         cvttOpCode   = TR::InstOpCode::CVTTSS2SIReg4Reg;
+         doubleSource = false;
+         longTarget   = false;
+         break;
+      case TR::f2l:
+         cvttOpCode   = TR::InstOpCode::CVTTSS2SIReg8Reg;
+         doubleSource = false;
+         longTarget   = true;
+         break;
+      case TR::d2i:
+         cvttOpCode   = TR::InstOpCode::CVTTSD2SIReg4Reg;
+         doubleSource = true;
+         longTarget   = false;
+         break;
+      case TR::d2l:
+         cvttOpCode   = TR::InstOpCode::CVTTSD2SIReg8Reg;
+         doubleSource = true;
+         longTarget   = true;
+         break;
+      default:
+         TR_ASSERT_FATAL(0, "Unknown opcode value in f2iEvaluator");
+         break;
+      }
+   TR_ASSERT_FATAL(cg->comp()->target().is64Bit() || !longTarget, "Incorrect opcode value in f2iEvaluator");
+
+   TR::Node        *child          = node->getFirstChild();
+   TR::Register    *sourceRegister = NULL;
+   TR::Register    *targetRegister = cg->allocateRegister(TR_GPR);
+   TR::LabelSymbol *startLabel     = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *endLabel       = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *exceptionLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+
+   sourceRegister = cg->evaluate(child);
+   generateRegRegInstruction(cvttOpCode, node, targetRegister, sourceRegister, cg);
+
+   startLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(TR::InstOpCode::label, node, startLabel, cg);
+
+   if (longTarget)
+      {
+      TR_ASSERT_FATAL(cg->comp()->target().is64Bit(), "We should only get here on AMD64");
+      // We can't compare with 0x8000000000000000.
+      // Instead, rotate left 1 bit and compare with 0x0000000000000001.
+      generateRegInstruction(TR::InstOpCode::ROL8Reg1, node, targetRegister, cg);
+      generateRegImmInstruction(TR::InstOpCode::CMP8RegImms, node, targetRegister, 1, cg);
+      generateLabelInstruction(TR::InstOpCode::JE4, node, exceptionLabel, cg);
+      }
+   else
+      {
+      generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, targetRegister, INT_MIN, cg);
+      generateLabelInstruction(TR::InstOpCode::JE4, node, exceptionLabel, cg);
+      }
+
+   //TODO: (omr issue #4969): Remove once support for spills in OOL paths is added
+   TR::RegisterDependencyConditions  *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)2, cg);
+   deps->addPostCondition(targetRegister, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(sourceRegister, TR::RealRegister::NoReg, cg);
+
+      {
+      TR_OutlinedInstructionsGenerator og(exceptionLabel, node, cg);
+      // at this point, target is set to -INF and there can only be THREE possible results: -INF, +INF, NaN
+      // compare source with ZERO
+      generateRegMemInstruction(doubleSource ? TR::InstOpCode::UCOMISDRegMem : TR::InstOpCode::UCOMISSRegMem,
+                                node,
+                                sourceRegister,
+                                generateX86MemoryReference(doubleSource ? cg->findOrCreate8ByteConstant(node, 0) : cg->findOrCreate4ByteConstant(node, 0), cg),
+                                cg);
+      // load max int if source is positive, note that for long case, LLONG_MAX << 1 is loaded as it will be shifted right
+      generateRegMemInstruction(TR::InstOpCode::CMOVARegMem(longTarget),
+                                node,
+                                targetRegister,
+                                generateX86MemoryReference(longTarget ? cg->findOrCreate8ByteConstant(node, LLONG_MAX << 1) : cg->findOrCreate4ByteConstant(node, INT_MAX), cg),
+                                cg);
+      // load zero if source is NaN
+      generateRegMemInstruction(TR::InstOpCode::CMOVPRegMem(longTarget),
+                                node,
+                                targetRegister,
+                                generateX86MemoryReference(longTarget ? cg->findOrCreate8ByteConstant(node, 0) : cg->findOrCreate4ByteConstant(node, 0), cg),
+                                cg);
+
+      generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
+      og.endOutlinedInstructionSequence();
+      }
+
+   generateLabelInstruction(TR::InstOpCode::label, node, endLabel, deps, cg);
+   if (longTarget)
+      {
+      generateRegInstruction(TR::InstOpCode::ROR8Reg1, node, targetRegister, cg);
+      }
+
+   node->setRegister(targetRegister);
+   cg->decReferenceCount(child);
+   return targetRegister;
+   }
+
+TR::Register *J9::X86::TreeEvaluator::f2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(cg->comp()->target().is32Bit(), "AMD64 uses f2iEvaluator for this");
+   return TR::TreeEvaluator::fpConvertToLong(node, cg->symRefTab()->findOrCreateRuntimeHelper(TR_IA32floatToLong), cg);
+   }
+
+TR::Register *J9::X86::TreeEvaluator::d2lEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(cg->comp()->target().is32Bit(), "AMD64 uses f2iEvaluator for this");
+
+   return TR::TreeEvaluator::fpConvertToLong(node, cg->symRefTab()->findOrCreateRuntimeHelper(TR_IA32doubleToLong), cg);
+   }
+
 /*
  * J9 X86 specific tree evaluator table overrides
  */
 extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    {
    TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
+   tet[TR::f2i] =                   TR::TreeEvaluator::f2iEvaluator;
+   tet[TR::f2iu] =                  TR::TreeEvaluator::f2iEvaluator;
+   tet[TR::f2l] =                   TR::TreeEvaluator::f2iEvaluator;
+   tet[TR::f2lu] =                  TR::TreeEvaluator::f2iEvaluator;
+   tet[TR::d2i] =                   TR::TreeEvaluator::f2iEvaluator;
+   tet[TR::d2iu] =                  TR::TreeEvaluator::f2iEvaluator;
+   tet[TR::d2l] =                   TR::TreeEvaluator::f2iEvaluator;
+   tet[TR::d2lu] =                  TR::TreeEvaluator::f2iEvaluator;
    tet[TR::monent] =                TR::TreeEvaluator::monentEvaluator;
    tet[TR::monexit] =               TR::TreeEvaluator::monexitEvaluator;
    tet[TR::monexitfence] =          TR::TreeEvaluator::monexitfenceEvaluator;
@@ -628,6 +916,10 @@ extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
 
 #if defined(TR_TARGET_32BIT)
    // 32-bit overrides
+   tet[TR::f2l] =                   TR::TreeEvaluator::f2lEvaluator;
+   tet[TR::f2lu] =                  TR::TreeEvaluator::f2lEvaluator;
+   tet[TR::d2l] =                   TR::TreeEvaluator::d2lEvaluator;
+   tet[TR::d2lu] =                  TR::TreeEvaluator::d2lEvaluator;
    tet[TR::ldiv] =                  TR::TreeEvaluator::integerPairDivEvaluator;
    tet[TR::lrem] =                  TR::TreeEvaluator::integerPairRemEvaluator;
 #endif
