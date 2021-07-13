@@ -83,6 +83,17 @@ alignedBackwardsMemcpy(J9VMThread *vmStruct, void *dest, void *source, UDATA byt
 BOOLEAN
 fieldContainsRuntimeAnnotation(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
 
+/**
+ * Check if a method contains the specified Runtime Visible annotation.
+ *
+ * @param currentThread Thread token
+ * @param method The method to be queried
+ * @param annotationName The annotation name
+ * @return TRUE if the annotation is found, FALSE otherwise.
+ */
+BOOLEAN
+methodContainsRuntimeAnnotation(J9VMThread *currentThread, J9Method *method, J9UTF8 *annotationName);
+
 /* ---------------- argbits.c ---------------- */
 
 /**

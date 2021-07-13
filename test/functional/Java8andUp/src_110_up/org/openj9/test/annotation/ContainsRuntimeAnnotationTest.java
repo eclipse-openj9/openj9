@@ -39,6 +39,7 @@ import java.util.Arrays;
 
 import jdk.internal.reflect.ConstantPool;
 import jdk.internal.vm.annotation.Stable;
+import jdk.internal.vm.annotation.ForceInline;
 
 @Test(groups = { "level.sanity" })
 public class ContainsRuntimeAnnotationTest {
@@ -81,6 +82,14 @@ public class ContainsRuntimeAnnotationTest {
 	@Single(a="first")
 	@Single(a="second")
 	int skipAnnotationMembers = 0;
+	
+	@MyMethodAnnotation
+	void myMethod() {}
+
+	void myMethod2() {}
+
+	@ForceInline
+	final static void fsMethod() {}
 
 	public ContainsRuntimeAnnotationTest() throws Throwable {
 		String version = System.getProperty("java.vm.specification.version");
@@ -102,6 +111,7 @@ public class ContainsRuntimeAnnotationTest {
 	}
 
 	private static native boolean containsRuntimeAnnotation(Class clazz, int cpIndex, String annotationName, boolean isField, int type);
+	private static native boolean methodContainsRuntimeAnnotation(Method method, String annotationName);
 
 	@Test
 	public void test_stable_annotation() throws Exception {
@@ -219,6 +229,57 @@ public class ContainsRuntimeAnnotationTest {
 		Assert.assertFalse(annotationFound, "skipAnnotationMembers has Stable annotation");
 	}
 
+	@Test
+	public void test_method_annotation() throws Exception {
+		boolean annotationFound = false;
+		Method m = ContainsRuntimeAnnotationTest.class.getDeclaredMethod("myMethod");
+		Method m2 = ContainsRuntimeAnnotationTest.class.getDeclaredMethod("myMethod2");
+		final String mAnnotation = "Lorg/openj9/test/annotation/MyMethodAnnotation;";
+
+		annotationFound = methodContainsRuntimeAnnotation(m, mAnnotation);
+		Assert.assertTrue(annotationFound, "myMethod does not have MyMethodAnnotation annotation");
+
+		annotationFound = methodContainsRuntimeAnnotation(m2, mAnnotation);
+		Assert.assertFalse(annotationFound, "myMethod2 has MyMethodAnnotation annotation");
+	}
+
+	@Test
+	public void test_finalStaticMethod_annotation() throws Exception {
+		boolean annotationFound = false;
+		Method m = ContainsRuntimeAnnotationTest.class.getDeclaredMethod("fsMethod");
+		final String mAnnotation = "Ljdk/internal/vm/annotation/ForceInline;";
+
+		annotationFound = methodContainsRuntimeAnnotation(m, mAnnotation);
+		Assert.assertTrue(annotationFound, "fsMethod does not have ForceInline annotation");
+	}
+
+	@Test
+	public void test_overridden_methods() throws Exception {
+		boolean annotationFound = false;
+		Method b1 = B.class.getDeclaredMethod("method1");
+		Method b2 = B.class.getDeclaredMethod("method2");
+		Method i3 = I.class.getDeclaredMethod("method3");
+		Method i4 = I.class.getDeclaredMethod("method4");
+		Method b3 = B.class.getDeclaredMethod("method3");
+		Method b4 = B.class.getDeclaredMethod("method4");
+		final String mAnnotation = "Lorg/openj9/test/annotation/MyMethodAnnotation;";
+
+		annotationFound = methodContainsRuntimeAnnotation(b1, mAnnotation);
+		Assert.assertFalse(annotationFound, "B.method1 has MyMethodAnnotation annotation");
+		annotationFound = methodContainsRuntimeAnnotation(b2, mAnnotation);
+		Assert.assertTrue(annotationFound, "B.method2 doesn't have MyMethodAnnotation annotation");
+
+		annotationFound = methodContainsRuntimeAnnotation(b3, mAnnotation);
+		Assert.assertFalse(annotationFound, "B.method3 has MyMethodAnnotation annotation");
+		annotationFound = methodContainsRuntimeAnnotation(b4, mAnnotation);
+		Assert.assertTrue(annotationFound, "B.method4 doesn't have MyMethodAnnotation annotation");
+
+		annotationFound = methodContainsRuntimeAnnotation(i4, mAnnotation);
+		Assert.assertFalse(annotationFound, "I.method4 has MyMethodAnnotation annotation");
+		annotationFound = methodContainsRuntimeAnnotation(i3, mAnnotation);
+		Assert.assertTrue(annotationFound, "I.method3 doesn't have MyMethodAnnotation annotation");
+	}
+
 	private int getMemberCPIndex(ConstantPool constantPool, String className, String memberName, String memberType) {
 		int cpIndex = -1;
 		int size = constantPool.getSize();
@@ -252,9 +313,14 @@ class A {
 
 	@Stable
 	static int sfield1;
+
+	@MyMethodAnnotation
+	void method1() {}
+
+	void method2() {}
 }
 
-class B extends A {
+class B extends A implements I {
 	B() {}
 
 	@Stable
@@ -262,6 +328,16 @@ class B extends A {
 
 	@Stable
 	static int sfield2;
+
+	void method1() {}
+
+	@MyMethodAnnotation
+	void method2() {}
+
+	public void method3() {}
+
+	@MyMethodAnnotation
+	public void method4() {}
 }
 
 class C {
@@ -284,6 +360,13 @@ class C {
 		int field2 = B.sfield2;
 		int field3 = C.sfield3;
 	}
+}
+
+interface I {
+	@MyMethodAnnotation
+	void method3();
+
+	void method4();
 }
 
 @Retention(RetentionPolicy.RUNTIME)
@@ -344,3 +427,7 @@ enum En {
 @interface Multiple {
 	Single[] value();
 }
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@interface MyMethodAnnotation {}

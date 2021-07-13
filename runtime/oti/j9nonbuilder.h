@@ -4790,6 +4790,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*objectIsBeingWaitedOn)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, j9object_t obj);
 	BOOLEAN (*areValueBasedMonitorChecksEnabled)(struct J9JavaVM *vm);
 	BOOLEAN (*fieldContainsRuntimeAnnotation)(struct J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
+	BOOLEAN (*methodContainsRuntimeAnnotation)(struct J9VMThread *currentThread, J9Method *method, J9UTF8 *annotationName);
 	J9ROMFieldShape* (*findFieldExt)(struct J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options);
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	BOOLEAN (*jvmCheckpointHooks)(struct J9VMThread *currentThread);

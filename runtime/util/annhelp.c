@@ -220,6 +220,38 @@ fieldContainsRuntimeAnnotation(J9VMThread *currentThread, J9Class *clazz, UDATA 
 }
 
 /**
+ * Check if a method contains the specified Runtime Visible annotation.
+ *
+ * @param currentThread Thread token
+ * @param method The method to be queried
+ * @param annotationName The annotation name
+ * @return TRUE if the annotation is found, FALSE otherwise.
+ */
+BOOLEAN
+methodContainsRuntimeAnnotation(J9VMThread *currentThread, J9Method *method, J9UTF8 *annotationName)
+{
+	BOOLEAN annotationFound = FALSE;
+	J9ROMMethod *romMethod = NULL;
+
+	Assert_VMUtil_true(NULL != annotationName);
+	Assert_VMUtil_true(NULL != method);
+	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	Assert_VMUtil_true(NULL != romMethod);
+	
+	U_32 *methodAnnotationData = getMethodAnnotationsDataFromROMMethod(romMethod);
+	if (NULL != methodAnnotationData) {
+		U_32 len = *methodAnnotationData;
+		U_8 *data = (U_8 *)(methodAnnotationData + 1);
+
+		annotationFound = findRuntimeVisibleAnnotation(currentThread, data, len, annotationName, J9_CP_FROM_METHOD(method)->romConstantPool);
+	}
+
+	Trc_Util_annhelp_SearchForMethodAnnotation(currentThread, (UDATA)J9UTF8_LENGTH(annotationName), J9UTF8_DATA(annotationName), romMethod, (UDATA)annotationFound);
+
+	return annotationFound;
+}
+
+/**
  * Check if the provided Runtime Visible annotation data contains the specified annotation.
  *
  * @param data The Runtime Visible annotation data.

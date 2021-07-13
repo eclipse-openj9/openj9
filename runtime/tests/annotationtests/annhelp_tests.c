@@ -49,13 +49,13 @@ Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_containsRuntimeAnn
 		j9object_t annotationNameObj = J9_JNI_UNWRAP_REFERENCE(annotationNameString);
 		char annotationNameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH] = {0};
 		J9UTF8 *annotationNameUTF8 = vmFuncs->copyStringToJ9UTF8WithMemAlloc(
-																			currentThread,
-																			annotationNameObj,
-																			J9_STR_NULL_TERMINATE_RESULT,
-																			"",
-																			0,
-																			annotationNameStackBuffer,
-																			0);
+										currentThread,
+										annotationNameObj,
+										J9_STR_NULL_TERMINATE_RESULT,
+										"",
+										0,
+										annotationNameStackBuffer,
+										0);
 
 		if (NULL == annotationNameUTF8) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
@@ -71,6 +71,61 @@ Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_containsRuntimeAnn
 					/* will add method support later */
 				}
 			}
+
+			if ((J9UTF8 *)annotationNameStackBuffer != annotationNameUTF8) {
+				j9mem_free_memory(annotationNameUTF8);
+			}
+		}
+
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+
+	return result;
+}
+
+/**
+ * Checks if a method contains the runtime annotation specified.
+ *
+ * @param env The JNI environment.
+ * @param method The reflect method to query
+ * @param annotationNameString The name of the annotation to check for.
+ * @return JNI_TRUE if the annotation is found, JNI_FALSE otherwise.
+ */
+jboolean JNICALL
+Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_methodContainsRuntimeAnnotation(JNIEnv *env, jclass unused, jobject method, jstring annotationNameString)
+{
+	jboolean result = JNI_FALSE;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	if (NULL == annotationNameString) {
+		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "annotation name is null");
+	} else if (NULL == method) {
+		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "method is null");
+	} else {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+
+		j9object_t annotationNameObj = J9_JNI_UNWRAP_REFERENCE(annotationNameString);
+		char annotationNameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH] = {0};
+		J9UTF8 *annotationNameUTF8 = vmFuncs->copyStringToJ9UTF8WithMemAlloc(
+										currentThread,
+										annotationNameObj,
+										J9_STR_NULL_TERMINATE_RESULT,
+										"",
+										0,
+										annotationNameStackBuffer,
+										0);
+
+		if (NULL == annotationNameUTF8) {
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		} else {
+			j9object_t methodObject = J9_JNI_UNWRAP_REFERENCE(method);
+			J9JNIMethodID *methodID = vm->reflectFunctions.idFromMethodObject(currentThread, methodObject);
+			J9Method *ramMethod = methodID->method;
+
+			result = (jboolean)vmFuncs->methodContainsRuntimeAnnotation(currentThread, ramMethod, annotationNameUTF8);
 
 			if ((J9UTF8 *)annotationNameStackBuffer != annotationNameUTF8) {
 				j9mem_free_memory(annotationNameUTF8);

@@ -34,6 +34,7 @@ target_link_libraries(anntests
 
 omr_add_exports(anntests
 	Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_containsRuntimeAnnotation
+	Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_methodContainsRuntimeAnnotation
 )
 
 install(
