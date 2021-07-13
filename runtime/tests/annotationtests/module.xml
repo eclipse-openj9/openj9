@@ -23,6 +23,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <module>
 	<exports group="all">
 		<export name="Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_containsRuntimeAnnotation"/>
+		<export name="Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_methodContainsRuntimeAnnotation"/>
 	</exports>
 
 	<artifact type="shared" name="anntests" appendrelease="false">
@@ -33,7 +34,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
-		</includes>		
+		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
 			<makefilestub data="UMA_DISABLE_DDRGEN=1"/>
