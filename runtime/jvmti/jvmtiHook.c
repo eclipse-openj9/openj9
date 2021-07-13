@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1579,7 +1579,7 @@ jvmtiHookGetEnv(J9HookInterface** hook, UDATA eventNum, void* eventData, void* u
 
 	Trc_JVMTI_jvmtiHookGetEnv_Entry();
 
-	if (data->rc == JNI_EVERSION) {
+	if (JNI_EVERSION == data->rc) {
 		jint version = data->version & ~JVMTI_VERSION_MASK_MICRO;
 
 		if ((JVMTI_VERSION_1_0 == version)
@@ -1589,7 +1589,7 @@ jvmtiHookGetEnv(J9HookInterface** hook, UDATA eventNum, void* eventData, void* u
 			|| (JVMTI_VERSION_9 == version)
 			|| (JVMTI_VERSION_11 == version)
 #if JAVA_SPEC_VERSION >= 15
-			|| (JVMTI_VERSION_15 == version)
+			|| (JVMTI_VERSION == version)
 #endif /* JAVA_SPEC_VERSION >= 15 */
 #endif /* JAVA_SPEC_VERSION > 8 */
 		) {
