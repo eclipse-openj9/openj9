@@ -42,6 +42,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	public static final int DEFAULTVALUE = 203;
 	public static final int WITHFIELD = 204;
 	private static final int ACC_VALUE_TYPE = 0x100;
+	public static final int ACC_ATOMIC = 0x40;
 	
 	static {
 		generator = new ValueTypeGenerator();
