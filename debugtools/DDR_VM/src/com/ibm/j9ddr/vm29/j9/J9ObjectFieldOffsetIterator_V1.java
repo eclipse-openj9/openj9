@@ -222,7 +222,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 									if (valueTypeHelper.classRequires4BytePrePadding(fieldClass)) {
 										instanceSize = instanceSize.sub(U32.SIZEOF);
 									}
-									forceDoubleAlignment = modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile)
+									forceDoubleAlignment = (modifiers.allBitsIn(J9JavaAccessFlags.J9AccVolatile) || valueTypeHelper.isRomClassAtomic(fieldClass.romClass()))
 											&& instanceSize.eq(doubleSize);
 								} else {
 									forceDoubleAlignment = true;
