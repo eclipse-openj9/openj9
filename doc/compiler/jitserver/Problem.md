@@ -19,6 +19,7 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
+
 # Debugging JITServer
 
 Typical OpenJ9 debugging procedures can be followed for JITServer, but there are a few JITServer specific tips and tricks.
@@ -27,42 +28,61 @@ working with addresses/objects that are only valid on the client. This makes it 
 In this document we will explore some common types of bugs and crashes that are encountered in JITServer development and how to deal with them.
 This document should be expanded upon whenever possible.
 
+1. [Server-side crashes](#server-side-crashes)
+2. [Client-side crashes](#client-side-crashes)
+3. [Crashes in compiled code](#crashes-in-compiled-code)
+
 ## Server-side crashes
+
+### Common crash causes (server)
+
 The most common type of a server crash is a segmentation fault caused by the compiler trying to dereference an address that is only valid on the client.
 For example, dereferencing `J9Class` pointer will lead to immediate crash in the best case, or some corrupt data being written in the worst case.
 If you suddenly discover a crash on the server that you haven't seen before, it's most likely caused by a change to mainline JIT code that did not account
 for JITServer. If that's the case, the crash should be in the newly added code. You should find the commit that introduced it, and rewrite it in such a way
 that accounts for JITServer, i.e. do not dereference client pointers directly but fetch the result from the client first.
 
-If you want the client to terminate immediately once the server crashes, pass it `-XX:+JITServerRequireServer` option. This will cause the client
+### `-XX:+RequireJITServer`
+
+If you want the client to terminate immediately once the server crashes, pass it `-XX:+RequireJITServer` option. This will cause the client
 to exit if a remote compilation fails with `compilationStreamFailure` error code, which indicates that the server is missing/crashed or a network error has occured.
 This option can be useful when you are running a suite of tests, e.g. `_sanity.functional` and want to detect any server crashes. Once the crash happens,
 the current and all subsequent tests will fail, and you will be able to determine which test caused the server to crash.
 
+### JitDump
+
+JitDump can be a useful tool to debug compile-time crashes, as it is supported for JITServer compilations.
+When a compilation thread crashes on the server, JitDump thread will trace the IL of the crashed method and attempt a remote compilation of the same method on a diagnostic thread, with tracing enabled. The resulting jitdump can then be used to determine the exact step in the compilation the crash occurs.
+
 ## Client-side crashes
+
+### Common crash causes (client)
+
 If the client crashes in `handleServerMessage` after receiving some bad data from the server, you will need to find out what the server was doing when it sent the message. The easiest way to do this is by running both the server and client in gdb, then sending the server a Ctrl-C after the client crashes. From the gdb prompt on the server you can type `thread apply all backtrace` and find the appropriate compilation thread to determine where the server was.
 
 ## Crashes in compiled code
-Another way a client can crash is when it runs the compiled method but something is wrong with it. These can be some of the tougher bugs to fix
-because you will need to find the failing method and look at its trace log to find the problem. Sometimes, the failure is not caused by one compilation
+
+Another way a client can crash is when it runs a remotely compiled method but something is wrong with it. These can be some of the tougher bugs to fix
+because you often need to find the failing method and look at its trace log to find the problem. Sometimes, the failure is not caused by one compilation
 but by a series of them, which makes debugging even harder.
 
-Tracing method compilation is the same as for non-JITServer - use `-Xjit:{<method_name>}(traceFull,log=<log_name>)` in the client options and both client
+Tracing method compilation is the same as for non-JITServer - use `-Xjit:{<method_name_regex>}(traceFull,log=<log_name>)` in the client options and both client
 and server will produce trace logs. Passing options for limit files and other tracing options also works in the same way.
+
 One useful technique to find JITServer-specific issues in compiled code is to compare trace log for a remotely compiled method
 with a trace log for the same method but compiled locally.
 Differences in logs may reveal bugs when JITServer takes incorrect optimizer/codegen paths.
 Passing `-Xjit:enableJITServerFollowRemoteCompileWithLocalCompile` to the client makes every compilation take place both on the server
-and locally, making it easier to generate logs for comparison.
+and locally, making it easier to generate trace files for comparison. It is recommended to only enable the above option for the compilations you want to trace, not for all compilations, as it makes everything much slower.
 
-Unlike with other types of crashes, there are many possible reasons why JITServer might be producing incorrect compiled method body.
+There are many possible reasons why JITServer might be producing incorrect compiled method body.
 Here are some of them:
-- Missing relocation: although most missing relocations are pretty rare in AOT code, it is possible that JITServer needs a relocation
-that AOT does not. This is because JITServer supports more optimizations/better code paths than AOT since it does not have to make code
-executable on any VM, just on the client one, and it can fetch client addresses during compilation. The fix is to either create a new 
-relocation or just embed the correct address in the compiled body right away. If it's something that needs to happen infrequently,
-we usually go for the latter solution, as it is easier to implement.
-- Missing VM information: client needs to inform the server about some VM options that can affect compilation, e.g. GC mode.
-If some information about VM setup is missing, server might compile something that will not run correctly. Usually, such information
-should go into the `VMInfo` object on the server.
 
+- **Missing relocation**: although missing relocations are pretty rare in AOT code, it is possible that JITServer needs a relocation
+that AOT does not. This is because JITServer supports more optimizations/better code paths than AOT since it does not have to make code
+executable on any VM, just on the client one, and it can fetch client addresses during compilation. The fix is to either create a new
+relocation or just embed the correct address in the compiled body right away. If it's something that needs to happen infrequently, and does not need to be supported for AOT,
+we usually go for the latter solution, as it is easier to implement.
+- **Missing VM information**: client needs to inform the server about some VM options that can affect compilation, e.g. GC mode.
+If some information about the VM setup is missing, server might compile something that will not run correctly. Usually, such information
+should go into the `VMInfo` object on the server.
