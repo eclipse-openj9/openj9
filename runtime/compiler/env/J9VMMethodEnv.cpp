@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,3 +112,19 @@ J9::VMMethodEnv::bytecodeSize(TR_OpaqueMethodBlock *method)
                      J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }
 
+bool
+J9::VMMethodEnv::isFrameIteratorSkipMethod(J9Method *method)
+   {
+   J9ROMMethod *romMethod = NULL;
+#if defined(J9VM_OPT_JITSERVER)
+   if (TR::CompilationInfo::getStream())
+      {
+      romMethod = JITServerHelpers::romMethodOfRamMethod(method);
+      }
+   else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      {
+      romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+      }
+   return _J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccMethodFrameIteratorSkip);
+   }
