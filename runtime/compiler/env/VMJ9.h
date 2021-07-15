@@ -898,22 +898,35 @@ public:
     * \brief
     *    tell whether it's possible to dereference a field given the field symbol reference at compile time
     *
-    * \fieldRef
+    * \param fieldRef
     *    symbol reference of the field
     */
    virtual bool canDereferenceAtCompileTime(TR::SymbolReference *fieldRef,  TR::Compilation *comp);
 
    /*
     * \brief
+    *    tell whether a field was annotated as @Stable. Field must be resolved.
+    *
+    * \param cpIndex
+    *    field's constant pool index
+    *
+    * \param owningMethod
+    *    the method accessing the field
+    *
+    */
+   virtual bool isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp);
+
+   /*
+    * \brief
     *    tell whether it's possible to dereference a field given the field symbol at compile time
     *
-    * \fieldSymbol
+    * \param fieldSymbol
     *    symbol of the field
     *
-    * \cpIndex
+    * \param cpIndex
     *    constant pool index
     *
-    * \owningMethod
+    * \param owningMethod
     *    the method accessing the field
     */
    virtual bool canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol *fieldSymbol, int32_t cpIndex, TR_ResolvedMethod *owningMethod);
@@ -1311,6 +1324,7 @@ public:
    virtual bool               isBenefitInliningCheckIfFinalizeObject()        { return true; }
    virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
    virtual bool               needRelocatableTarget()                          { return true; }
+   virtual bool               isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp) { return false; }
    virtual bool               shouldDelayAotLoad();
 
    virtual bool               isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false);
