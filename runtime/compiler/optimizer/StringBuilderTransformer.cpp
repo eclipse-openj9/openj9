@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,12 +29,9 @@
 #include "env/VMJ9.h"
 #include "il/Block.hpp"
 #include "il/StaticSymbol.hpp"
+#include "infra/String.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "ras/DebugCounter.hpp"
-
-#if defined (_MSC_VER) && _MSC_VER < 1900
-#define snprintf _snprintf
-#endif
 
 #define OPT_DETAILS "O^O STRINGBUILDER TRANSFORMER: "
 
@@ -504,17 +501,7 @@ int32_t TR_StringBuilderTransformer::computeHeuristicStringBuilderInitCapacity(L
             {
             if (argument->getOpCodeValue() == TR::dconst)
                {
-               char printed[32];
-
-               // The C Standard Library guarantees the printed array to be null-terminated except on certain versions of MSVC++
-               snprintf(printed, sizeof(printed) / sizeof(printed[0]), "%g", argument->getDouble());
-
-#if defined (_MSC_VER) && _MSC_VER < 1900
-               // Explicitly null terminate as null termination is not guaranteed
-               printed[(sizeof(printed) / sizeof(printed[0])) - 1] = '\0';
-#endif
-
-               capacity += strlen(printed);
+               capacity += TR::printfLen("%g", argument->getDouble());
                }
             else
                {
@@ -527,17 +514,7 @@ int32_t TR_StringBuilderTransformer::computeHeuristicStringBuilderInitCapacity(L
             {
             if (argument->getOpCodeValue() == TR::fconst)
                {
-               char printed[32];
-
-               // The C Standard Library guarantees the printed array to be null-terminated except on certain versions of MSVC++
-               snprintf(printed, sizeof(printed) / sizeof(printed[0]), "%g", argument->getFloat());
-
-#if defined (_MSC_VER) && _MSC_VER < 1900
-               // Explicitly null terminate as null termination is not guaranteed
-               printed[(sizeof(printed) / sizeof(printed[0])) - 1] = '\0';
-#endif
-
-               capacity += strlen(printed);
+               capacity += TR::printfLen("%g", argument->getFloat());
                }
             else
                {

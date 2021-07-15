@@ -53,6 +53,7 @@
 #include "il/Block.hpp"
 #include "ilgen/ByteCodeIteratorWithState.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
+#include "infra/String.hpp"
 #include "optimizer/Inliner.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
 #include "optimizer/J9Inliner.hpp"
@@ -88,7 +89,7 @@ class Operand
       virtual MutableCallsiteTargetOperand* asMutableCallsiteTargetOperand(){ return NULL;}
       virtual TR::KnownObjectTable::Index getKnownObjectIndex(){ return TR::KnownObjectTable::UNKNOWN;}
       virtual char* getSignature(TR::Compilation *comp, TR_Memory *trMemory) {return NULL;}
-      virtual int printToString(char *buffer, size_t size);
+      virtual void printToString(TR::StringBuf *buf);
       virtual KnowledgeLevel getKnowledgeLevel() { return NONE; }
       Operand* merge(Operand* other);
       virtual Operand* merge1(Operand* other);
@@ -100,7 +101,7 @@ class IconstOperand : public Operand
       TR_ALLOC(TR_Memory::EstimateCodeSize);
       IconstOperand (int x): intValue(x) { }
       virtual IconstOperand *asIconst() { return this;}
-      virtual int printToString(char *buffer, size_t size);
+      virtual void printToString(TR::StringBuf *buf);
       int32_t intValue;
 
       virtual KnowledgeLevel getKnowledgeLevel() { return ICONST; }
@@ -124,7 +125,7 @@ class ObjectOperand : public Operand
       virtual TR_OpaqueClassBlock* getClass() { return _clazz;}
       virtual KnowledgeLevel getKnowledgeLevel() { return OBJECT; }
       virtual Operand* merge1(Operand* other);
-      virtual int printToString(char *buffer, size_t size);
+      virtual void printToString(TR::StringBuf *buf);
 
    protected:
       char* _signature;
@@ -179,7 +180,7 @@ class KnownObjOperand : public FixedClassOperand
       virtual TR::KnownObjectTable::Index getKnownObjectIndex(){ return knownObjIndex;}
       virtual KnowledgeLevel getKnowledgeLevel() { return KNOWN_OBJECT; }
       virtual Operand* merge1(Operand* other);
-      virtual int printToString(char *buffer, size_t size);
+      virtual void printToString(TR::StringBuf *buf);
    private:
       TR::KnownObjectTable::Index knownObjIndex;
    };
@@ -205,7 +206,7 @@ class MutableCallsiteTargetOperand : public ObjectOperand
          mutableCallsiteIndex(mutableCallsiteIndex){}
       virtual MutableCallsiteTargetOperand* asMutableCallsiteTargetOperand(){ return this; }
       virtual Operand* merge1(Operand* other);
-      virtual int printToString(char *buffer, size_t size);
+      virtual void printToString(TR::StringBuf *buf);
       virtual KnowledgeLevel getKnowledgeLevel() { return MUTABLE_CALLSITE_TARGET; }
       TR::KnownObjectTable::Index getMethodHandleIndex(){ return methodHandleIndex; }
       TR::KnownObjectTable::Index getMutableCallsiteIndex() { return mutableCallsiteIndex; }
@@ -241,6 +242,13 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
          _currentCallMethodUnrefined = NULL;
          _numSlots = 0;
          _callerIsThunkArchetype = _calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen();
+
+         _operandBuf = NULL;
+         if (_tracer->heuristicLevel() || _tracer->debugLevel())
+            {
+            TR::Region &stackRegion = comp->trMemory()->currentStackRegion();
+            _operandBuf = new (stackRegion) TR::StringBuf(stackRegion);
+            }
          }
       TR_LogTracer *tracer() { return _tracer; }
       /* \brief Initialize data needed for looking for callsites
@@ -447,5 +455,7 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       OperandArray** _localObjectInfos;
       // Number of local slots
       int32_t _numSlots;
+
+      TR::StringBuf *_operandBuf; // for debug printing
    };
 #endif

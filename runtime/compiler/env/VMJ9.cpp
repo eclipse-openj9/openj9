@@ -26,10 +26,6 @@
 #include "env/VMJ9Server.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
-#if defined (_MSC_VER) && (_MSC_VER < 1900)
-#define snprintf _snprintf
-#endif
-
 #include "env/VMJ9.h"
 
 #include <algorithm>
@@ -130,6 +126,7 @@
 #include "infra/Bit.hpp"               //for trailingZeroes
 #include "VMHelpers.hpp"
 #include "env/JSR292Methods.h"
+#include "infra/String.hpp"
 
 #ifdef LINUX
 #include <signal.h>
@@ -4365,8 +4362,8 @@ TR_J9VMBase::getOverflowSafeAllocSize()
 void
 TR_J9VMBase::unsupportedByteCode(TR::Compilation * comp, U_8 opcode)
    {
-   char errMsg[40];
-   snprintf(errMsg, 40, "bytecode %d not supported by JIT", opcode);
+   char errMsg[64];
+   TR::snprintfNoTrunc(errMsg, sizeof (errMsg), "bytecode %d not supported by JIT", opcode);
    comp->failCompilation<TR::CompilationException>(errMsg);
    }
 
@@ -4988,9 +4985,8 @@ getSignatureForLinkToStatic(
 
    const char * const origSignature = utf8Data(romMethodSignature);
    const int origSignatureLength = J9UTF8_LENGTH(romMethodSignature);
-   signatureLength = origSignatureLength + extraParamsLength;
 
-   const int32_t signatureAllocSize = signatureLength + 1; // +1 for NUL terminator
+   const int32_t signatureAllocSize = origSignatureLength + extraParamsLength + 1; // +1 for NUL terminator
    char * linkToStaticSignature =
       (char *)comp->trMemory()->allocateMemory(signatureAllocSize, heapAlloc);
 
@@ -5030,7 +5026,7 @@ getSignatureForLinkToStatic(
       origSignature);
 
    // Put together the new signature.
-   const int formattedLength = snprintf(
+   signatureLength = TR::snprintfNoTrunc(
       linkToStaticSignature,
       signatureAllocSize,
       "(%s%.*s%s)%.*s",
@@ -5040,20 +5036,6 @@ getSignatureForLinkToStatic(
       extraParamsAfter,
       (int)(returnTypeEnd - returnType),
       returnType);
-
-   // This condition implies that (formattedLength < signatureAllocSize), so
-   // given that the assertion passes, we can be sure that the signature was
-   // not truncated.
-   TR_ASSERT_FATAL(
-      formattedLength == signatureLength,
-      "expected linkToStatic signature length %d but got %d "
-      "(origSignature `%.*s', extraParamsBefore `%s', extraParamsAfter `%s')",
-      signatureLength,
-      formattedLength,
-      origSignatureLength,
-      origSignature,
-      extraParamsBefore,
-      extraParamsAfter);
 
    return linkToStaticSignature;
    }
