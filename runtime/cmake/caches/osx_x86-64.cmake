@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2018, 2020 IBM Corp. and others
+# Copyright (c) 2018, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,4 +42,4 @@ set(OMR_GC_IDLE_HEAP_MANAGER ON CACHE BOOL "")
 set(OMR_GC_TLH_PREFETCH_FTA ON CACHE BOOL "")
 set(OMR_PORT_NUMA_SUPPORT ON CACHE BOOL "")
 
-include(${CMAKE_CURRENT_LIST_DIR}/common.cmake)
+include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")

@@ -7,6 +7,12 @@
    libffi.
    ----------------------------------------------------------------------- */
 
+/*
+ * ===========================================================================
+ * Copyright (c) 2021, 2021 IBM Corp. and others
+ * ===========================================================================
+ */
+
 #ifndef FFI_COMMON_H
 #define FFI_COMMON_H
 
@@ -80,6 +86,11 @@ void ffi_type_test(ffi_type *a, char *file, int line);
 
 #define ALIGN(v, a)  (((((size_t) (v))-1) | ((a)-1))+1)
 #define ALIGN_DOWN(v, a) (((size_t) (v)) & -a)
+
+/* v cast to size_t and aligned up to a multiple of a */
+#define FFI_ALIGN  ALIGN
+/* v cast to size_t and aligned down to a multiple of a */
+#define FFI_ALIGN_DOWN  ALIGN_DOWN
 
 /* Perform machine dependent cif processing */
 ffi_status ffi_prep_cif_machdep(ffi_cif *cif);

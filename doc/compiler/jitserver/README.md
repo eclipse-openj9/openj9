@@ -22,18 +22,38 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # JITServer Documentation
 
-## Setup/Usage
+JITServer technology decouples the JIT compiler from the VM and lets the JIT compiler run remotely in its own process. This mechanism prevents your Java application from suffering possible negative effects due to CPU and memory consumption caused by JIT compilation.
+
+This technology can improve quality of service, robustness, and even performance of Java applications. We recommend trying this technology if the following criteria are met:
+
+- Your Java application is required to compile many methods using JIT in a relatively short time.
+- The application is running in an environment with limited CPU or memory, which can worsen interference from the JIT compiler.
+- The network latency between JITServer and client VM is relatively low.
+
+## Quick Start
+
+To get started with JITServer read [this guide](Usage.md) first.
+
+## Setup/Testing
+
+Building and testing JVM with JITServer is almost identical to building and testing a regular JVM.
+Below you can find links to documents that outline the important differences and provide step-by-step instructions.
+
 - [Build](Build.md)
-- [Usage](Usage.md)
 - [Testing](Testing.md)
 
 ## Development
+
+The below sections are useful for readers who want to contribute to JITServer
+or those who want to learn in more detail how the technology actually works.
+
 - [System Overview](Overview.md)
-- [Problem Determination](Problem.md)
-- [Handling Options](OptionsDev.md)
-- [Sockets](Sockets.md)
+- [Client Sessions](ClientSession.md)
+- [Networking](Networking.md)
+- [Caching](Caching.md)
 - [Resolved Method](ResolvedMethod.md)
 - [Frontend](Frontend.md)
 - [CHTable](CHTable.md)
 - [IProfiler](IProfiler.md)
-- [Client Sessions](ClientSession.md)
+- [Handling Options](OptionsDev.md)
+- [Problem Determination](Probleddm.md)

@@ -271,8 +271,7 @@ def checkoutRef (REF) {
 
 def build() {
     stage('Compile') {
-        // 'all' target dependencies broken for zos, use 'images test-image-openj9'
-        def make_target = SPEC.contains('zos') ? 'images test-image-openj9 debug-image' : 'all'
+        def make_target = 'all'
         OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
 
         withEnv(BUILD_ENV_VARS_LIST) {
@@ -611,8 +610,8 @@ def prepare_docker_environment() {
         docker.withRegistry("", "${dockerCredentialID}") {
             sh "docker pull ${DOCKER_IMAGE}"
         }
+        DOCKER_IMAGE_ID = get_docker_image_id(DOCKER_IMAGE)
     }
-    DOCKER_IMAGE_ID = get_docker_image_id(DOCKER_IMAGE)
     echo "Using ID ${DOCKER_IMAGE_ID} of ${DOCKER_IMAGE}"
 }
 
@@ -649,7 +648,7 @@ def build_all() {
                         docker.image(DOCKER_IMAGE_ID).inside {
                             _build_all()
                         }
-                    } else { 
+                    } else {
                         _build_all()
                     }
                 }

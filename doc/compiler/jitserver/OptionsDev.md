@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,8 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
+
+# JITServer options handling
 
 Options parsing happens mostly in `control/J9Options.cpp`. Parsing of the -XX:JITServer options happens mostly in `fePostProcess` and a few helper functions. If you want to add a suboption that should probably go in `JITServerParseCommonOptions`. The values of most options are stored in the `PersistentInfo` after they are parsed.
 

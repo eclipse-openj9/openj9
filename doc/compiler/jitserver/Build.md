@@ -20,6 +20,8 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
+# Building JITServer
+
 There are currently 3 supported build procedures. Select the one that best suits your needs.
 
 - [Building the whole VM](#vm). The complete build process (Most correct and recommended). Produces a complete JVM as output (including the JIT).
@@ -32,6 +34,7 @@ For building in Docker, you can skip [Prepare your system](#prerequisites).
 If you run into issues during this process, please document any solutions here.
 
 ## PREREQUISITES
+
 - The following example is for Ubuntu18:
 
 ```
@@ -99,7 +102,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## VM
 
-The `JITServer` feature is not enabled by default on the `master` branch at the moment. **`--enable-jitserver` option needs to be passed in the configure step`**
+The `JITServer` feature is not enabled by default on the `master` branch at the moment. **`--enable-jitserver` option needs to be passed in the configure step**
 
 ```
 git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
@@ -112,10 +115,13 @@ bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/root/
 
 make all
 ```
+
 Depending on where you want to fetch OpenJ9 sources from, you could use your own repository as shown below:
+
 ```
 bash get_source.sh -openj9-repo=https://github.com/<Your GitHub UserID>/openj9.git -omr-repo=https://github.com/eclipse-openj9/openj9-omr.git
 ```
+
 See https://www.eclipse.org/openj9/oj9_build.html for more detail.
 
 You can test the success of the build process by starting the JVM in server and client mode.
@@ -123,16 +129,20 @@ You can test the success of the build process by starting the JVM in server and 
 ```
 cd build/linux-x86_64-normal-server-release/images/jdk
 ```
+
 Run:
 
 To start the JVM in server mode:
+
 ```
 $./bin/jitserver
 JITServer is currently a technology preview. Its use is not yet supported
 
 JITServer is ready to accept incoming requests
 ```
+
 To start the JVM in client mode:
+
 ```
 $./bin/java -XX:+UseJITServer -version
 JIT: using build "Nov 6 2019 20:02:35"
@@ -144,6 +154,7 @@ OpenJ9   - cf3ba4120
 OMR      - cf9d75a4a
 JCL      - 03cb3a3cb4 based on jdk8u232-b09)
 ```
+
 ## JIT
 
 If you already have an SDK enabled with JITServer and just want to rebuild the JIT library, then **`export J9VM_OPT_JITSERVER=1` needs to be added to the build environment**.

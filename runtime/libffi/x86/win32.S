@@ -29,7 +29,7 @@
    DEALINGS IN THE SOFTWARE.
    -----------------------------------------------------------------------
    */
- 
+
 #define LIBFFI_ASM
 #include <fficonfig.h>
 #include <ffi.h>

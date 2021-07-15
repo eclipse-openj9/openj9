@@ -66,15 +66,33 @@ if(OMR_ARCH_X86)
 		message(SEND_ERROR "Unsupported OS")
 	endif()
 
-	target_sources(ffi PRIVATE x86/ffi.c)
 	if(OMR_ENV_DATA64)
-		target_sources(ffi PRIVATE x86/ffi64.c)
+		target_sources(ffi PRIVATE x86/ffiw64.c)
+	else()
+		target_sources(ffi PRIVATE x86/ffi.c)
+	endif()
+
+	if(OMR_OS_LINUX OR OMR_OS_OSX)
+		target_sources(ffi
+			PRIVATE
+			x86/ffi64.c
+		)
+		target_sources(ffi
+			PRIVATE
+			x86/unix64.S
+		)
+		if(OMR_ENV_DATA64)
+			target_sources(ffi
+				PRIVATE
+				x86/win64.S
+			)
+		endif()
 	endif()
 
 	if(OMR_OS_WINDOWS)
 
 		if(OMR_ENV_DATA64)
-			set(source_name win64)
+			set(source_name win64_intel)
 			set(preconf_dir ${CMAKE_CURRENT_SOURCE_DIR}/preconf/wa)
 		else()
 			set(source_name win32)
@@ -84,25 +102,13 @@ if(OMR_ARCH_X86)
 		# We are assuming we are using an MSVC toolchain
 		add_custom_command(
 			OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${source_name}.asm
-			COMMAND ${CMAKE_C_COMPILER} -nologo -EP -P  -I ${preconf_dir} -I ${CMAKE_CURRENT_SOURCE_DIR}/x86 -Fi${source_name}.asm  ${CMAKE_CURRENT_SOURCE_DIR}/x86/${source_name}.S
+			COMMAND ${CMAKE_C_COMPILER} -nologo -EP -P  -I ${preconf_dir} -I ${j9vm_SOURCE_DIR}/include -I ${CMAKE_CURRENT_SOURCE_DIR}/x86 -Fi${source_name}.asm  ${CMAKE_CURRENT_SOURCE_DIR}/x86/${source_name}.S
 			DEPENDS x86/${source_name}.S
 		)
 		target_sources(ffi PRIVATE ${source_name}.asm)
 		set_source_files_properties(${source_name}.asm PROPERTIES LANGUAGE ASM_MASM)
 	else()
 		target_sources(ffi PRIVATE x86/sysv.S)
-	endif()
-
-	if(OMR_OS_LINUX)
-		target_sources(ffi
-			PRIVATE
-			x86/unix64.S
-		)
-	elseif(OMR_OS_OSX)
-		target_sources(ffi
-			PRIVATE
-			x86/darwin64.S
-		)
 	endif()
 elseif(OMR_ARCH_POWER)
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "XL")

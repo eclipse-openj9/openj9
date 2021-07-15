@@ -2613,9 +2613,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 					goto _memParseError;
 				}
 			}
-		} else {
-			/* default behavior (jvm disable HWPrefetch) */
-			setHWPrefetch(XXSETHWPREFETCH_NONE_VALUE);
 		}
 #endif /*if defined(J9OS_I5)*/
 #endif /*if defined(AIXPPC)*/
@@ -3570,11 +3567,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		if (enableCRIU > disableCRIU) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			vm->checkpointState = (J9CRIUCheckpointState*) j9mem_allocate_memory(sizeof(J9CRIUCheckpointState), OMRMEM_CATEGORY_VM);
-			memset(vm->checkpointState, 0, sizeof(J9CRIUCheckpointState));
-
 			if (NULL == vm->checkpointState) {
 				return JNI_ENOMEM;
 			}
+			memset(vm->checkpointState, 0, sizeof(J9CRIUCheckpointState));
 			vm->checkpointState->isCheckPointAllowed = TRUE;
 		}
 	}

@@ -29,10 +29,16 @@
 
 extern "C" {
 
+#if JAVA_SPEC_VERSION >= 16
+J9_DECLARE_CONSTANT_UTF8(ojdk_intrinsicCandidate, "Ljdk/internal/vm/annotation/IntrinsicCandidate;");
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 #if JAVA_SPEC_VERSION >= 11
 J9_DECLARE_CONSTANT_UTF8(ojdk_stable, "Ljdk/internal/vm/annotation/Stable;");
+J9_DECLARE_CONSTANT_UTF8(ojdk_forceInline, "Ljdk/internal/vm/annotation/ForceInline;");
 #else /* JAVA_SPEC_VERSION >= 11 */
 J9_DECLARE_CONSTANT_UTF8(ojdk_stable, "Ljava/lang/invoke/Stable;");
+J9_DECLARE_CONSTANT_UTF8(ojdk_forceInline, "Ljava/lang/invoke/ForceInline;");
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 void*
@@ -199,6 +205,36 @@ BOOLEAN
 jitIsFieldStable(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex)
 {
 	return fieldContainsRuntimeAnnotation(currentThread, clazz, cpIndex, (J9UTF8 *)&ojdk_stable);
+}
+
+/**
+ * Queries if the method contains the @ForceInline annotation
+ *
+ * @param currentThread currentThread
+ * @param method the queried method
+ * @return true if method contains @ForceInline, false otherwise
+ */
+BOOLEAN
+jitIsMethodTaggedWithForceInline(J9VMThread *currentThread, J9Method *method)
+{
+	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_forceInline);
+}
+
+/**
+ * Queries if the method contains the @IntrinsicCandidate annotation
+ *
+ * @param currentThread currentThread
+ * @param method the queried method
+ * @return true if method contains @IntrinsicCandidate, false otherwise
+ */
+BOOLEAN
+jitIsMethodTaggedWithIntrinsicCandidate(J9VMThread *currentThread, J9Method *method)
+{
+#if JAVA_SPEC_VERSION >= 16
+	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_intrinsicCandidate);
+#else /* JAVA_SPEC_VERSION >= 16 */
+	return FALSE;
+#endif /* JAVA_SPEC_VERSION >= 16 */
 }
 
 }

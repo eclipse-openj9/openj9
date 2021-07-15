@@ -100,7 +100,7 @@
 
 	<test id="Test 59: -Xnolinenumbers : create cache with -Xnolinenumbers" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xnolinenumbers -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -130,7 +130,7 @@
 	
 	<test id="Test 62: -Xnolinenumbers & -Xjit:verbose : create cache with -Xnolinenumbers -Xjit:verbose" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xnolinenumbers -Xjit:verbose -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -160,7 +160,7 @@
 	
 	<test id="Test 65: -Xshareclasses:mprotect code coverage : create a cache with defaults for the following tests" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -169,7 +169,7 @@
 	
 	<test id="Test 66: -Xshareclasses:mprotect code coverage : mprotect=default" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,mprotect=default -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -178,7 +178,7 @@
 	
 	<test id="Test 67: -Xshareclasses:mprotect code coverage : mprotect=none" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,mprotect=none -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -187,7 +187,7 @@
 	
 	<test id="Test 68: -Xshareclasses:mprotect code coverage : mprotect=all" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,mprotect=all -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -196,7 +196,7 @@
 
 	<test id="Test 69: -Xshareclasses:mprotect code coverage : mprotect=norw" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,mprotect=norw -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -268,7 +268,7 @@
 		
 	<test id="Test 79: CMVC 168586 : Create a persistent cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xscmx32m $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -286,7 +286,7 @@
 	
 	<test id="Test 81: CMVC 168586 : Re-create by failing buildid match" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,testBadBuildId -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -327,7 +327,7 @@
 
 	<test id="Test 85: utilities test: create cache to be used below" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $UTILITIES_CACHE$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output> 
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -376,7 +376,7 @@
 
 	<test id="Test 90: utilities test: create cache to be used below" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $UTILITIES_CACHE$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output> 
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -479,7 +479,7 @@
 
 	<test id="Test 99: JAZZ 39157 -Xshareclasses with minjitdata & maxjitdata < cache size" timeout="600" runPath=".">
 		<command>$JAVA_EXE$   -Xscminjitdata12m -Xscmaxjitdata12m -Xscmx16m  $currentMode$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -498,7 +498,7 @@
 
 	<test id="Test 101: JAZZ 39157 -Xshareclasses with minaot & maxaot < cache size" timeout="600" runPath=".">
 		<command>$JAVA_EXE$   -Xscminaot12m -Xscmaxaot12m -Xscmx16m  $currentMode$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -527,7 +527,7 @@
 	
 	<test id="Test 104: Design 40220: Create a cache that will be corrupted in the next test." timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output> 
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
@@ -655,7 +655,7 @@
 	
 	<test id="Test 112: Design 40220: Make sure the JVM will delete the corrupted cache, and create a new one." timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="success" caseSensitive="no" regex="no">Shared cache "ShareClassesCMLTests" is corrupt</output>		
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">"ShareClassesCMLTests".*destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
@@ -688,7 +688,7 @@
 
 	<test id="Test 115: utilities test: create cache to be used below" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $UTILITIES_CACHE$,reset -version</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output> 
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>

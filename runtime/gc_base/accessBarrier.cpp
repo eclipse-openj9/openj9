@@ -666,35 +666,35 @@ j9gc_objaccess_asConstantPoolObject(J9VMThread *vmThread, j9object_t toConvert, 
  * @note This function does not work in barrier check VMs
  */
 void
-J9WriteBarrierPreStore(J9VMThread *vmThread, J9Object *dstObject, fj9object_t *dstAddress, J9Object *srcObject)
+J9WriteBarrierPre(J9VMThread *vmThread, J9Object *dstObject, fj9object_t *dstAddress, J9Object *srcObject)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
 	barrier->preObjectStore(vmThread, dstObject, dstAddress, srcObject);
 }
 
 void
-J9WriteBarrierJ9PreClassStore(J9VMThread *vmThread, J9Object *dstObject, J9Object **dstAddress, J9Object *srcObject)
+J9WriteBarrierPreClass(J9VMThread *vmThread, J9Object *dstClassObject, J9Object **dstAddress, J9Object *srcObject)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
-	barrier->preObjectStore(vmThread, dstObject, dstAddress, srcObject);
+	barrier->preObjectStore(vmThread, dstClassObject, dstAddress, srcObject);
 }
 
 void
-J9WriteBarrierPostStore(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject)
+J9WriteBarrierPost(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
 	barrier->postObjectStore(vmThread, dstObject, (fj9object_t*)0, srcObject);
 }
 
 void
-J9WriteBarrierJ9PostClassStore(J9VMThread *vmThread, J9Class *dstObject, J9Object *srcObject)
+J9WriteBarrierPostClass(J9VMThread *vmThread, J9Class *dstClazz, J9Object *srcObject)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
-	barrier->postObjectStore(vmThread, dstObject, (J9Object**)0, srcObject);
+	barrier->postObjectStore(vmThread, dstClazz, (J9Object**)0, srcObject);
 }
 
 void
-J9WriteBarrierBatchStore(J9VMThread *vmThread, J9Object *dstObject)
+J9WriteBarrierBatch(J9VMThread *vmThread, J9Object *dstObject)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
 	/* In Metronome, write barriers are always pre-store */
@@ -702,11 +702,11 @@ J9WriteBarrierBatchStore(J9VMThread *vmThread, J9Object *dstObject)
 }
 
 void
-J9WriteBarrierJ9ClassBatchStore(J9VMThread *vmThread, J9Class *dstJ9Class)
+J9WriteBarrierClassBatch(J9VMThread *vmThread, J9Class *dstClazz)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
 	/* In Metronome, write barriers are always pre-store */
-	barrier->preBatchObjectStore(vmThread, dstJ9Class);	
+	barrier->preBatchObjectStore(vmThread, dstClazz);	
 }
 
 void
@@ -717,7 +717,7 @@ J9ReadBarrier(J9VMThread *vmThread, fj9object_t *srcAddress)
 }
 
 void
-J9ReadBarrierJ9Class(J9VMThread *vmThread, j9object_t *srcAddress)
+J9ReadBarrierClass(J9VMThread *vmThread, j9object_t *srcAddress)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread->javaVM)->accessBarrier;
 	barrier->preObjectRead(vmThread, NULL, srcAddress);

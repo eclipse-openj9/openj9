@@ -3000,9 +3000,26 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+
+   static X VectorSupportMethods[] =
+      {
+      {x(TR::jdk_internal_vm_vector_VectorSupport_load, "load", "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/internal/vm/vector/VectorSupport$VectorSpecies;Ljdk/internal/vm/vector/VectorSupport$LoadOperation;)Ljava/lang/Object;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_binaryOp, "binaryOp",  "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;")},
+      {x(TR::jdk_internal_vm_vector_VectorSupport_store, "store", "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjdk/internal/vm/vector/VectorSupport$Vector;Ljava/lang/Object;ILjdk/internal/vm/vector/VectorSupport$StoreVectorOperation;)V")},
+
+      {  TR::unknownMethod}
+      };
+      
+   
    static X ArrayMethods[] =
       {
       {x(TR::java_lang_reflect_Array_getLength, "getLength", "(Ljava/lang/Object;)I")},
+      {  TR::unknownMethod}
+      };
+
+   static X MethodMethods[] =
+      {
+      {  TR::java_lang_reflect_Method_invoke, 6, "invoke", (int16_t)-1, "*"},
       {  TR::unknownMethod}
       };
 
@@ -3269,7 +3286,6 @@ void TR_ResolvedJ9Method::construct()
 
    static X ReflectionMethods[] =
       {
-      {x(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "(I)Ljava/lang/Class;")},
       {x(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "()Ljava/lang/Class;")},
       {x(TR::sun_reflect_Reflection_getClassAccessFlags, "getClassAccessFlags", "(Ljava/lang/Class;)I")},
       {  TR::unknownMethod}
@@ -3979,6 +3995,7 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class24[] =
       {
+      { "java/lang/reflect/Method", MethodMethods },
       { "java/util/TreeMap$SubMap", SubMapMethods },
       { "sun/nio/cs/UTF_8$Decoder", EncodeMethods },
       { "sun/nio/cs/UTF_8$Encoder", EncodeMethods },
@@ -4089,6 +4106,7 @@ void TR_ResolvedJ9Method::construct()
       { "com/ibm/tenant/InternalTenantContext", MTTenantContext },
       { "java/lang/StringCoding$StringDecoder", StringCoding_StringDecoderMethods },
       { "java/lang/StringCoding$StringEncoder", StringCoding_StringEncoderMethods },
+      { "jdk/internal/vm/vector/VectorSupport", VectorSupportMethods },
       { 0 }
       };
 

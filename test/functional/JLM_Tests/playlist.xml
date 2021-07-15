@@ -432,9 +432,11 @@
 	</test>
 	<test>
 		<testCaseName>testSoftMxRemote</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode119</variation>
@@ -465,9 +467,11 @@
 	</test>
 	<test>
 		<testCaseName>testSoftMxRemote_zlinux_64</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode119</variation>
@@ -498,9 +502,11 @@
 	</test>
 	<test>
 		<testCaseName>testSoftMxRemote_zlinux_31</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode119</variation>
@@ -531,9 +537,11 @@
 	</test>
 	<test>
 		<testCaseName>testSoftMxRemote_LP4k</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode119</variation>
@@ -564,9 +572,11 @@
 	</test>
 	<test>
 		<testCaseName>testSoftMxRemote_LP64k</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/480</comment>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode119</variation>
@@ -1256,10 +1266,12 @@
 	</test>
 	<test>
 		<testCaseName>testSoftMxUserScenario</testCaseName>
-		<disabled>
-			<comment>github.com/eclipse-openj9/openj9/issues/8967</comment>
-			<platform>aarch64.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>github.com/eclipse-openj9/openj9/issues/8967</comment>
+				<platform>aarch64.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode119</variation>

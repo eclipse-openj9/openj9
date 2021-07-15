@@ -57,4 +57,7 @@ TraceExit=Trc_VMUtil_getOriginalROMMethodUnchecked_Exit Overhead=1 Level=3 Noenv
 
 TraceException=Trc_VMUtil_getOriginalROMMethodUnchecked_getMethodIndexFailed Overhead=1 Level=1 Noenv Template="getOriginalROMMethodUnchecked: Unable to get methodIndex for method=%p"
 
-TraceEvent=Trc_Util_annhelp_SearchForFieldAnnotation Noenv Overhead=1 Level=5 Template="Search for field annotation: annotation=%s cpIndex=%zu clazz=%p romFieldShape=%p result=%zu"
+TraceEvent=Trc_Util_annhelp_SearchForFieldAnnotation Obsolete Noenv Overhead=1 Level=5 Template="Search for field annotation: annotation=%s cpIndex=%zu clazz=%p romFieldShape=%p result=%zu"
+TraceEvent=Trc_Util_annhelp_SearchForFieldAnnotation Overhead=1 Level=5 Template="Search for field annotation: annotation=%.*s cpIndex=%zu clazz=%p romFieldShape=%p result=%zu"
+TraceEvent=Trc_Util_annhelp_skipAnnotationElementError Overhead=1 Level=5 Template="Error when skipping annotation: annotation=%.*s targetAnnotation=%.*s index=%p constantPool=%p"
+TraceEvent=Trc_Util_annhelp_SearchForMethodAnnotation Overhead=1 Level=5 Template="Search for method annotation: annotation=%.*s romMethod=%p result=%zu"

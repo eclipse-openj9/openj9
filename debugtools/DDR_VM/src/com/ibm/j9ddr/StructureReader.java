@@ -572,7 +572,7 @@ public class StructureReader {
 				structure.constants.add(constant);
 				break;
 			default:
-				throw new IllegalArgumentException(String.format("Superset stream contained unknown line: %s", line));
+				throw new IllegalArgumentException("Superset stream contained unknown line: " + line);
 			}
 			line = reader.readLine();
 		}
@@ -657,19 +657,17 @@ public class StructureReader {
 		for (int i = 0; i < header.getStructureCount(); i++) {
 			logger.logp(FINER, null, null, "Reading structure on iteration {0}", i);
 			StructureDescriptor structure = new StructureDescriptor();
-			structure.name = readString(ddrStream, ddrStringTableStart);
+			structure.name = decodeTypeName(readString(ddrStream, ddrStringTableStart));
 			if (structure.name == null) {
 				logger.logp(FINE, null, null, "Structure name was null for structure {0}", i);
-				throw new IllegalArgumentException(String.format("Structure name was null for structure %d", i));
+				throw new IllegalArgumentException("Structure name was null for structure " + i);
 			} else if (structure.name.isEmpty()) {
 				logger.logp(FINE, null, null, "Structure name was blank for structure {0}", i);
-				throw new IllegalArgumentException(String.format("No name found for structure %d", i));
+				throw new IllegalArgumentException("No name found for structure " + i);
 			}
-			structure.name = structure.name.replace("__", "$");
 			logger.logp(FINE, null, null, "Reading structure {0}", structure.name);
 
-			structure.superName = readString(ddrStream, ddrStringTableStart);
-			structure.superName = structure.superName.replace("__", "$");
+			structure.superName = decodeTypeName(readString(ddrStream, ddrStringTableStart));
 			structure.sizeOf = ddrStream.readInt();
 			int numberOfFields = ddrStream.readInt();
 			structure.fields = new ArrayList<>(numberOfFields);
@@ -713,6 +711,33 @@ public class StructureReader {
 		logger.logp(FINE, null, null, "Finished parsing structures");
 	}
 
+	private static String decodeTypeName(String typeName) {
+		if (typeName != null) {
+			int index = typeName.indexOf("__");
+
+			if (index >= 0) {
+				StringBuilder buffer = new StringBuilder();
+				int start = 0;
+
+				do {
+					if (index == start) {
+						buffer.append("__");
+					} else {
+						buffer.append(typeName, start, index).append("$");
+					}
+
+					start = index + 2;
+					index = typeName.indexOf("__", start);
+				} while (index >= 0);
+
+				buffer.append(typeName, start, typeName.length());
+				typeName = buffer.toString();
+			}
+		}
+
+		return typeName;
+	}
+
 	private static String readString(ImageInputStream ddrStream, long ddrStringTableStart) {
 		try {
 			int stringOffset = ddrStream.readInt();
@@ -725,7 +750,7 @@ public class StructureReader {
 			ddrStream.seek(seekPos);
 			int length = ddrStream.readUnsignedShort();
 			if (length > 200) {
-				throw new IOException(String.format("Improbable string length: %d", length));
+				throw new IOException("Improbable string length: " + length);
 			}
 			// TODO: Reuse buffer
 			byte[] buffer = new byte[length];
@@ -802,7 +827,7 @@ public class StructureReader {
 		private void inflate(String line) {
 			String[] parts = line.split("\\|");
 			if (parts.length < 3 || parts.length > 4) {
-				throw new IllegalArgumentException(String.format("Superset file line is invalid: %s", line));
+				throw new IllegalArgumentException("Superset file line is invalid: " + line);
 			}
 			constants = new ArrayList<>();
 			fields = new ArrayList<>();
@@ -865,7 +890,7 @@ public class StructureReader {
 		private void inflate(String line) {
 			String[] parts = line.split("\\|");
 			if (parts.length != 2) {
-				throw new IllegalArgumentException(String.format("Superset file line is invalid: %s", line));
+				throw new IllegalArgumentException("Superset file line is invalid: " + line);
 			}
 			name = parts[1];
 		}
@@ -1003,7 +1028,7 @@ public class StructureReader {
 		public static Collection<FieldDescriptor> inflate(String line) {
 			String[] parts = line.split("\\|");
 			if (parts.length < 5 || ((parts.length - 3) % 2) != 0) {
-				throw new IllegalArgumentException(String.format("Superset file line is invalid: %s", line));
+				throw new IllegalArgumentException("Superset file line is invalid: " + line);
 			}
 
 			int count = (parts.length - 3) / 2;
@@ -1062,7 +1087,7 @@ public class StructureReader {
 		StructureDescriptor structure = structures.get(clazzName);
 
 		if (structure == null) {
-			throw new ClassNotFoundException(String.format("%s is not in core file.", clazzName));
+			throw new ClassNotFoundException(clazzName + " is not in core file");
 		}
 
 		String fullClassName = getPackageName(PackageNameType.STRUCTURE_PACKAGE_SLASH_NAME) + clazzName;
@@ -1092,7 +1117,7 @@ public class StructureReader {
 		StructureDescriptor structure = structures.get(structureName);
 
 		if (structure == null) {
-			throw new ClassNotFoundException(String.format("%s is not in core file.", clazzName));
+			throw new ClassNotFoundException(clazzName + " is not in core file");
 		}
 
 		String fullClassName = getPackageName(PackageNameType.POINTER_PACKAGE_SLASH_NAME) + clazzName;

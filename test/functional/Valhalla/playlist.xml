@@ -60,10 +60,12 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeTestsJIT</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/pull/9392#issuecomment-661246648</comment>
-			<variation>-Xjit:count=0</variation>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/pull/9392#issuecomment-661246648</comment>
+				<variation>-Xjit:count=0</variation>
+			</disable>
+		</disables>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>

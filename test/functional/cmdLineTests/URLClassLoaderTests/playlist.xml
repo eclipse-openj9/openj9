@@ -52,11 +52,13 @@
 	</test>
 	<test>
 		<testCaseName>SCURLClassLoaderTests</testCaseName>
-		<disabled>
-			<comment>https://github.com/eclipse-openj9/openj9/issues/11965#issuecomment-778413238</comment>
-			<variation>Mode110</variation>
-			<platform>.*aarch.*</platform>
-		</disabled>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/11965#issuecomment-778413238</comment>
+				<variation>Mode110</variation>
+				<platform>.*aarch.*</platform>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>

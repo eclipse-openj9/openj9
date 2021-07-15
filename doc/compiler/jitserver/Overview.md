@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2021 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,14 +20,15 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-Compilation lifecycle:
+# JITServer Overview
 
-1. Compilation request is generated on the client and added to compilation queue
-1. Request is popped from queue and assigned a compilation thread
-1. Compilation thread serializes compilation request and sends it to the server
-1. Server listener thread receives request and adds it to the server compilation queue
-1. Server pops compilation from queue and assigns to a compilation thread
-1. Queries are sent to the client to inquire about the VM or compilation options
-1. A final message is sent which includes the compiled code
-1. Client relocates and installs the code
+## Compilation lifecycle
 
+1. Compilation request is generated on the client and added to the compilation queue
+2. Request is popped from the queue and assigned a compilation thread
+3. Compilation thread serializes compilation request and sends it to the server
+4. Server listener thread receives request and adds it to the server compilation queue
+5. Server pops compilation from the queue and assigns to a compilation thread
+6. Queries are sent to the client to inquire about the VM or compilation options
+7. A final message is sent which includes the compiled code
+8. Client relocates and installs the code
