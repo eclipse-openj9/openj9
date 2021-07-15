@@ -39,63 +39,79 @@ setupJNIFieldIDs(JNIEnv *env)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9CRIUGlobals *criuGlobals = NULL;
 	jclass criuResultTypeClass = NULL;
 	jclass criuResultClass = NULL;
+	jclass criuSupportClass = NULL;
+	PORT_ACCESS_FROM_VMC(currentThread);
 
-	criuResultTypeClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResultType");
-	Assert_JCL_notNull(criuResultTypeClass);
-	vm->criuResultTypeClass = (*env)->NewGlobalRef(env, criuResultTypeClass);
-
-	criuResultClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResult");
-	Assert_JCL_notNull(criuResultClass);
-	vm->criuResultClass = (*env)->NewGlobalRef(env, criuResultClass);
-
-	if ((NULL != vm->criuResultTypeClass) && (NULL != vm->criuResultClass)) {
-		vm->criuSupportSuccess = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "SUCCESS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportSuccess);
-		vm->criuSupportUnsupportedOperation  = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "UNSUPPORTED_OPERATION", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportUnsupportedOperation);
-		vm->criuSupportInvalidArguments = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "INVALID_ARGUMENTS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportInvalidArguments);
-		vm->criuSupportSystemCheckpointFailure = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "SYSTEM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportSystemCheckpointFailure);
-		vm->criuSupportJVMCheckpointFailure = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "JVM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportJVMCheckpointFailure);
-		vm->criuSupportJVMRestoreFailure = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "JVM_RESTORE_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportJVMRestoreFailure);
-
-		vm->criuResultInit = (*env)->GetMethodID(env, vm->criuResultClass, "<init>", "(Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;Ljava/lang/Throwable;)V");
-		Assert_JCL_notNull(vm->criuResultInit);
-	} else {
-		vmFuncs->internalEnterVMFromJNI(currentThread);
+	criuGlobals = (J9CRIUGlobals *)j9mem_allocate_memory(sizeof(J9CRIUGlobals), OMRMEM_CATEGORY_VM);
+	if (NULL == criuGlobals) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-		vmFuncs->internalExitVMToJNI(currentThread);
+		goto done;
 	}
+	memset(criuGlobals, 0, sizeof(J9CRIUGlobals));
 
-	if (NULL == vm->criuSupportClass) {
-		jclass criuSupportClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport");
+	if (NULL == criuGlobals->criuResultTypeClass
+		&& NULL == criuGlobals->criuResultClass
+		&& NULL == criuGlobals->criuSupportClass
+	) {
+		criuResultTypeClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResultType");
+		Assert_JCL_notNull(criuResultTypeClass);
+		criuGlobals->criuResultTypeClass = (*env)->NewGlobalRef(env, criuResultTypeClass);
+
+		criuResultClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResult");
+		Assert_JCL_notNull(criuResultClass);
+		criuGlobals->criuResultClass = (*env)->NewGlobalRef(env, criuResultClass);
+
+		criuSupportClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport");
 		Assert_JCL_notNull(criuSupportClass);
-		vm->criuSupportClass = (*env)->NewGlobalRef(env, criuSupportClass);
+		criuGlobals->criuSupportClass = (*env)->NewGlobalRef(env, criuSupportClass);
 
-		if (NULL != vm->criuSupportClass) {
-			vm->criuSupportCheckPointDir = (*env)->GetFieldID(env, vm->criuSupportClass, "checkPointDir", "Ljava/lang/String;");
-			Assert_JCL_notNull(vm->criuSupportCheckPointDir);
-			vm->criuSupportKeepRunning  = (*env)->GetFieldID(env, vm->criuSupportClass, "keepRunning", "Z");
-			Assert_JCL_notNull(vm->criuSupportKeepRunning);
-			vm->criuSupportShellJob = (*env)->GetFieldID(env, vm->criuSupportClass, "shellJob", "Z");
-			Assert_JCL_notNull(vm->criuSupportShellJob);
-			vm->criuSupportExtUnixSupport = (*env)->GetFieldID(env, vm->criuSupportClass, "extUnixSupport", "Z");
-			Assert_JCL_notNull(vm->criuSupportExtUnixSupport);
-			vm->criuSupportLogLevel = (*env)->GetFieldID(env, vm->criuSupportClass, "logLevel", "I");
-			Assert_JCL_notNull(vm->criuSupportLogLevel);
-			vm->criuSupportLogFile = (*env)->GetFieldID(env, vm->criuSupportClass, "logFile", "Ljava/lang/String;");
-			Assert_JCL_notNull(vm->criuSupportLogFile);
+		if (NULL != criuGlobals->criuResultTypeClass
+			&& NULL != criuGlobals->criuResultClass
+			&& NULL != criuGlobals->criuSupportClass
+		) {
+			criuGlobals->criuSupportSuccess = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "SUCCESS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+			Assert_JCL_notNull(criuGlobals->criuSupportSuccess);
+			criuGlobals->criuSupportUnsupportedOperation  = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "UNSUPPORTED_OPERATION", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+			Assert_JCL_notNull(criuGlobals->criuSupportUnsupportedOperation);
+			criuGlobals->criuSupportInvalidArguments = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "INVALID_ARGUMENTS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+			Assert_JCL_notNull(criuGlobals->criuSupportInvalidArguments);
+			criuGlobals->criuSupportSystemCheckpointFailure = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "SYSTEM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+			Assert_JCL_notNull(criuGlobals->criuSupportSystemCheckpointFailure);
+			criuGlobals->criuSupportJVMCheckpointFailure = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "JVM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+			Assert_JCL_notNull(criuGlobals->criuSupportJVMCheckpointFailure);
+			criuGlobals->criuSupportJVMRestoreFailure = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "JVM_RESTORE_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+			Assert_JCL_notNull(criuGlobals->criuSupportJVMRestoreFailure);
+
+			criuGlobals->criuResultInit = (*env)->GetMethodID(env, criuGlobals->criuResultClass, "<init>", "(Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;Ljava/lang/Throwable;)V");
+			Assert_JCL_notNull(criuGlobals->criuResultInit);
+
+			criuGlobals->criuSupportImagesDir = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "imagesDir", "Ljava/lang/String;");
+			Assert_JCL_notNull(criuGlobals->criuSupportImagesDir);
+			criuGlobals->criuSupportLeaveRunning  = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "leaveRunning", "Z");
+			Assert_JCL_notNull(criuGlobals->criuSupportLeaveRunning);
+			criuGlobals->criuSupportShellJob = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "shellJob", "Z");
+			Assert_JCL_notNull(criuGlobals->criuSupportShellJob);
+			criuGlobals->criuSupportExtUnixSupport = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "extUnixSupport", "Z");
+			Assert_JCL_notNull(criuGlobals->criuSupportExtUnixSupport);
+			criuGlobals->criuSupportLogLevel = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "logLevel", "I");
+			Assert_JCL_notNull(criuGlobals->criuSupportLogLevel);
+			criuGlobals->criuSupportLogFile = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "logFile", "Ljava/lang/String;");
+			Assert_JCL_notNull(criuGlobals->criuSupportLogFile);
+			criuGlobals->criuSupportFileLocks = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "fileLocks", "Z");
+			Assert_JCL_notNull(criuGlobals->criuSupportFileLocks);
+			criuGlobals->criuSupportWorkDir = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "workDir", "Ljava/lang/String;");
+			Assert_JCL_notNull(criuGlobals->criuSupportWorkDir);
 		} else {
 			vmFuncs->internalEnterVMFromJNI(currentThread);
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			vmFuncs->internalExitVMToJNI(currentThread);
 		}
 	}
+done:
+	vm->criuGlobals = criuGlobals;
 }
 
 static jobject
@@ -105,9 +121,9 @@ constructResult(JNIEnv *env, jfieldID resultType, jthrowable throwable)
 	J9JavaVM *vm = currentThread->javaVM;
 
 	jobject criuResult = (*env)->NewObject(env,
-			vm->criuResultClass,
-			vm->criuResultInit,
-			(*env)->GetStaticObjectField(env, vm->criuResultTypeClass, resultType),
+			vm->criuGlobals->criuResultClass,
+			vm->criuGlobals->criuResultInit,
+			(*env)->GetStaticObjectField(env, vm->criuGlobals->criuResultTypeClass, resultType),
 			throwable);
 
 	return criuResult;
@@ -161,7 +177,7 @@ getNativeString(J9VMThread *currentThread, j9object_t javaString, char **nativeS
 	mutf8String = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, javaString, J9_STR_NULL_TERMINATE_RESULT, "", 0, mutf8StringBuf, STRING_BUFFER_SIZE, &mutf8StringSize);
 	if (NULL == mutf8String) {
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-		*resultType = vm->criuSupportJVMCheckpointFailure;
+		*resultType = vm->criuGlobals->criuSupportJVMCheckpointFailure;
 		res = FALSE;
 		goto free;
 	}
@@ -175,7 +191,7 @@ getNativeString(J9VMThread *currentThread, j9object_t javaString, char **nativeS
 
 	if (requiredConvertedStringSize < 0) {
 		vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, requiredConvertedStringSize);
-		*resultType = vm->criuSupportInvalidArguments;
+		*resultType = vm->criuGlobals->criuSupportInvalidArguments;
 		res = FALSE;
 		goto free;
 	}
@@ -187,7 +203,7 @@ getNativeString(J9VMThread *currentThread, j9object_t javaString, char **nativeS
 		*nativeString = (char*)j9mem_allocate_memory(requiredConvertedStringSize, OMRMEM_CATEGORY_VM);
 		if (NULL == *nativeString) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-			*resultType = vm->criuSupportJVMCheckpointFailure;
+			*resultType = vm->criuGlobals->criuSupportJVMCheckpointFailure;
 			res = FALSE;
 			goto free;
 		}
@@ -204,7 +220,7 @@ getNativeString(J9VMThread *currentThread, j9object_t javaString, char **nativeS
 
 	if (requiredConvertedStringSize < 0) {
 		vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, requiredConvertedStringSize);
-		*resultType = vm->criuSupportInvalidArguments;
+		*resultType = vm->criuGlobals->criuSupportInvalidArguments;
 		res = FALSE;
 		goto free;
 	}
@@ -226,97 +242,140 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env, jobject 
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	jthrowable currentExceptionLocalRef = NULL;
-	jfieldID resultType = vm->criuSupportUnsupportedOperation;
+	jfieldID resultType = vm->criuGlobals->criuSupportUnsupportedOperation;
 
 	if (vmFuncs->isCheckpointAllowed(currentThread)) {
 #if defined(LINUX)
 		j9object_t cpDir = NULL;
 		j9object_t log = NULL;
+		j9object_t wrkDir = NULL;
 		IDATA dirFD = 0;
+		IDATA workDirFD = 0;
 		char directoryBuf[STRING_BUFFER_SIZE];
 		char *directoryChars = directoryBuf;
 		char logFileBuf[STRING_BUFFER_SIZE];
 		char *logFileChars = logFileBuf;
+		char workDirBuf[STRING_BUFFER_SIZE];
+		char *workDirChars = workDirBuf;
 		IDATA systemReturnCode = 0;
-		jstring checkPointDir = (*env)->GetObjectField(env, criuSupport, vm->criuSupportCheckPointDir);
-		jboolean keepRunning = (*env)->GetBooleanField(env, criuSupport, vm->criuSupportKeepRunning);
-		jboolean shellJob = (*env)->GetBooleanField(env, criuSupport, vm->criuSupportShellJob);
-		jboolean extUnixSupport = (*env)->GetBooleanField(env, criuSupport, vm->criuSupportExtUnixSupport);
-		jint logLevel = (*env)->GetIntField(env, criuSupport, vm->criuSupportLogLevel);
-		jstring logFile = (*env)->GetObjectField(env, criuSupport, vm->criuSupportLogFile);
+		jstring imagesDir = (*env)->GetObjectField(env, criuSupport, vm->criuGlobals->criuSupportImagesDir);
+		jboolean leaveRunning = (*env)->GetBooleanField(env, criuSupport, vm->criuGlobals->criuSupportLeaveRunning);
+		jboolean shellJob = (*env)->GetBooleanField(env, criuSupport, vm->criuGlobals->criuSupportShellJob);
+		jboolean extUnixSupport = (*env)->GetBooleanField(env, criuSupport, vm->criuGlobals->criuSupportExtUnixSupport);
+		jint logLevel = (*env)->GetIntField(env, criuSupport, vm->criuGlobals->criuSupportLogLevel);
+		jstring logFile = (*env)->GetObjectField(env, criuSupport, vm->criuGlobals->criuSupportLogFile);
+		jboolean fileLocks = (*env)->GetBooleanField(env, criuSupport, vm->criuGlobals->criuSupportFileLocks);
+		jstring workDir = (*env)->GetObjectField(env, criuSupport, vm->criuGlobals->criuSupportWorkDir);
 		PORT_ACCESS_FROM_VMC(currentThread);
 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
-		cpDir = J9_JNI_UNWRAP_REFERENCE(checkPointDir);
-		log = J9_JNI_UNWRAP_REFERENCE(logFile);
+		cpDir = J9_JNI_UNWRAP_REFERENCE(imagesDir);
+		if(NULL != logFile) {
+			log = J9_JNI_UNWRAP_REFERENCE(logFile);
+		}
 
 		if (FALSE == getNativeString(currentThread, cpDir, &directoryChars, &resultType)) {
 			/* errors and return codes are set in the helper */
 			goto freeDir;
 		}
 
-		if (FALSE == getNativeString(currentThread, log, &logFileChars, &resultType)) {
-			/* errors and return codes are set in the helper */
-			goto freeLog;
+		if (NULL != logFile) {
+			if (FALSE == getNativeString(currentThread, log, &logFileChars, &resultType)) {
+				/* errors and return codes are set in the helper */
+				goto freeLog;
+			}
 		}
 
 		dirFD = open(directoryChars, O_DIRECTORY);
 		if (dirFD < 0) {
 			systemReturnCode = errno;
 			vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, systemReturnCode);
-			resultType = vm->criuSupportInvalidArguments;
+			resultType = vm->criuGlobals->criuSupportInvalidArguments;
 			goto freeLog;
+		}
+
+		if (NULL != workDir) {
+			wrkDir = J9_JNI_UNWRAP_REFERENCE(workDir);
+			if (FALSE == getNativeString(currentThread, wrkDir, &workDirChars, &resultType)) {
+				/* errors and return codes are set in the helper */
+				goto freeWorkDir;
+			}
+			
+			workDirFD = open(workDirChars, O_DIRECTORY);
+			if (workDirFD < 0) {
+				systemReturnCode = errno;
+				vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, systemReturnCode);
+				resultType = vm->criuGlobals->criuSupportInvalidArguments;
+				goto freeWorkDir;
+			}
 		}
 
 		systemReturnCode = criu_init_opts();
 		if (0 != systemReturnCode) {
 			vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_CRIU_INIT_FAILED, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, systemReturnCode);
-			resultType = vm->criuSupportSystemCheckpointFailure;
-			goto freeLog;
+			resultType = vm->criuGlobals->criuSupportSystemCheckpointFailure;
+			goto closeWorkDirFD;
 		}
 
 		criu_set_images_dir_fd(dirFD);
 		criu_set_shell_job(FALSE != shellJob);
-		criu_set_log_level((int)logLevel);
-		criu_set_log_file(logFileChars);
-		criu_set_leave_running(FALSE != keepRunning);
+		if (logLevel > 0) {
+			criu_set_log_level((int)logLevel);
+		}
+		if (NULL != logFile) {
+			criu_set_log_file(logFileChars);
+		}
+		criu_set_leave_running(FALSE != leaveRunning);
 		criu_set_ext_unix_sk(FALSE != extUnixSupport);
+		criu_set_file_locks(FALSE != fileLocks);
+		if (NULL != workDir) {
+			criu_set_work_dir_fd(workDirFD);
+		}
 
 		vmFuncs->acquireExclusiveVMAccess(currentThread);
 
 		if (FALSE == vmFuncs->jvmCheckpointHooks(currentThread)) {
-			resultType = vm->criuSupportJVMCheckpointFailure;
+			resultType = vm->criuGlobals->criuSupportJVMCheckpointFailure;
 			goto releaseExclusive;
 		}
 
 		systemReturnCode = criu_dump();
 		if (systemReturnCode < 0) {
 			vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_CRIU_DUMP_FAILED, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, systemReturnCode);
-			resultType = vm->criuSupportSystemCheckpointFailure;
+			resultType = vm->criuGlobals->criuSupportSystemCheckpointFailure;
 			goto releaseExclusive;
 		}
 
 		/* We can only end up here if the CRIU restore was successful */
 
 		if (FALSE == vmFuncs->jvmRestoreHooks(currentThread)) {
-			resultType = vm->criuSupportJVMRestoreFailure;
+			resultType = vm->criuGlobals->criuSupportJVMRestoreFailure;
 			goto releaseExclusive;
 		}
 
-		resultType = vm->criuSupportSuccess;
+		resultType = vm->criuGlobals->criuSupportSuccess;
 
 releaseExclusive:
-		if (0 != close(dirFD)) {
+		vmFuncs->releaseExclusiveVMAccess(currentThread);
+closeWorkDirFD:
+		if (0 != close(workDirFD)) {
 			systemReturnCode = errno;
-			resultType = vm->criuSupportJVMRestoreFailure;
+			resultType = vm->criuGlobals->criuSupportJVMRestoreFailure;
 			vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, systemReturnCode);
 		}
-		vmFuncs->releaseExclusiveVMAccess(currentThread);
-
+freeWorkDir:
+		if (0 != close(dirFD)) {
+			systemReturnCode = errno;
+			resultType = vm->criuGlobals->criuSupportJVMRestoreFailure;
+			vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, systemReturnCode);
+		}
+		if (workDirChars != workDirBuf) {
+			j9mem_free_memory(workDirChars);
+		}
 freeLog:
 		if (logFileChars != logFileBuf) {
-			j9mem_free_memory(directoryChars);
+			j9mem_free_memory(logFileChars);
 		}
 freeDir:
 		if (directoryChars != directoryBuf) {

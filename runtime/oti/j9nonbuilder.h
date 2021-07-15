@@ -5098,6 +5098,27 @@ typedef struct J9CRIUCheckpointState {
 	BOOLEAN isNonPortableRestoreMode;
 } J9CRIUCheckpointState;
 
+typedef struct J9CRIUGlobals {
+	jclass criuResultTypeClass;
+	jfieldID criuSupportSuccess;
+	jfieldID criuSupportUnsupportedOperation;
+	jfieldID criuSupportInvalidArguments;
+	jfieldID criuSupportSystemCheckpointFailure;
+	jfieldID criuSupportJVMCheckpointFailure;
+	jfieldID criuSupportJVMRestoreFailure;
+	jclass criuResultClass;
+	jmethodID criuResultInit;
+	jclass criuSupportClass;
+	jfieldID criuSupportImagesDir;
+	jfieldID criuSupportLeaveRunning;
+	jfieldID criuSupportShellJob;
+	jfieldID criuSupportExtUnixSupport;
+	jfieldID criuSupportLogLevel;
+	jfieldID criuSupportLogFile;
+	jfieldID criuSupportFileLocks;
+	jfieldID criuSupportWorkDir;
+} J9CRIUGlobals;
+
 typedef struct J9ReflectFunctionTable {
 	jobject  ( *idToReflectMethod)(struct J9VMThread* vmThread, jmethodID methodID) ;
 	jobject  ( *idToReflectField)(struct J9VMThread* vmThread, jfieldID fieldID) ;
@@ -5539,22 +5560,7 @@ typedef struct J9JavaVM {
 	U_32 javaVM31PadTo8; /* Possible to optimize with future guarded U_32 member in ENV_DATA64. */
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	jclass criuResultTypeClass;
-	jfieldID criuSupportSuccess;
-	jfieldID criuSupportUnsupportedOperation;
-	jfieldID criuSupportInvalidArguments;
-	jfieldID criuSupportSystemCheckpointFailure;
-	jfieldID criuSupportJVMCheckpointFailure;
-	jfieldID criuSupportJVMRestoreFailure;
-	jclass criuResultClass;
-	jmethodID criuResultInit;
-	jclass criuSupportClass;
-	jfieldID criuSupportCheckPointDir;
-	jfieldID criuSupportKeepRunning;
-	jfieldID criuSupportShellJob;
-	jfieldID criuSupportExtUnixSupport;
-	jfieldID criuSupportLogLevel;
-	jfieldID criuSupportLogFile;
+	J9CRIUGlobals *criuGlobals;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	J9CRIUCheckpointState *checkpointState;
 } J9JavaVM;

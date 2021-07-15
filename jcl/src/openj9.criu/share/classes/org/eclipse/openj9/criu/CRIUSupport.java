@@ -103,11 +103,7 @@ public final class CRIUSupport {
 
 	private native CRIUResult checkpointJVMImpl();
 
-	private CRIUSupport() {}
-
-	public static CRIUSupport newCRIUSupport() {
-		return new CRIUSupport();
-	}
+	public CRIUSupport() {}
 
 	/**
 	 * Queries if CRIU support is enabled.
@@ -118,35 +114,74 @@ public final class CRIUSupport {
 		return criuSupportEnabled;
 	}
 
-	private String checkPointDir;
-	private boolean keepRunning = false;
+	private String imagesDir = null;
+	private boolean leaveRunning = false;
 	private boolean shellJob = true;
 	private boolean extUnixSupport = true;
-	private int logLevel = 4;
-	private String logFile = "checkpoint.log";
+	private int logLevel = 0;
+	private String logFile = null;
+	private boolean fileLocks = false;
+	private String workDir = null;
 
-	public CRIUSupport setCheckPointDir(String checkPointDir) {
-		this.checkPointDir = checkPointDir;
+	public CRIUSupport setImagesDir(Path imagesDir) throws SecurityException {
+		if (imagesDir != null) {
+			String dir = imagesDir.toAbsolutePath().toString();
+
+			SecurityManager manager = System.getSecurityManager();
+			if (manager != null) {
+				manager.checkPermission(CRIU_DUMP_PERMISSION);
+				manager.checkWrite(dir);
+			}
+			this.imagesDir = dir;
+		}
 		return this;
 	}
-	public CRIUSupport setKeepRunning(boolean keepRunning) {
-		this.keepRunning = keepRunning;
+
+	public CRIUSupport setLeaveRunning(boolean leaveRunning) {
+		this.leaveRunning = leaveRunning;
 		return this;
 	}
+
 	public CRIUSupport setShellJob(boolean shellJob) {
 		this.shellJob = shellJob;
 		return this;
 	}
+
 	public CRIUSupport setExtUnixSupport(boolean extUnixSupport) {
 		this.extUnixSupport = extUnixSupport;
 		return this;
 	}
+
 	public CRIUSupport setLogLevel(int logLevel) {
-		this.logLevel = logLevel;
+		if (logLevel > 0) {
+			this.logLevel = logLevel;
+		}
 		return this;
 	}
+
 	public CRIUSupport setLogFile(String logFile) {
-		this.logFile = logFile;
+		if (logFile != null && !logFile.contains("/")) {
+			this.logFile = logFile;
+		}
+		return this;
+	}
+
+	public CRIUSupport setFileLocks(boolean fileLocks) {
+		this.fileLocks = fileLocks;
+		return this;
+	}
+
+	public CRIUSupport setWorkDir(Path workDir) throws SecurityException {
+		if (workDir != null) {
+			String dir = workDir.toAbsolutePath().toString();
+
+			SecurityManager manager = System.getSecurityManager();
+			if (manager != null) {
+				manager.checkPermission(CRIU_DUMP_PERMISSION);
+				manager.checkWrite(dir);
+			}
+			this.workDir = dir;
+		}
 		return this;
 	}
 
@@ -154,39 +189,20 @@ public final class CRIUSupport {
 	 * Checkpoint the JVM. A security manager check is done for org.eclipse.openj9.criu.CRIUDumpPermission
 	 * as well as a java.io.FilePermission check to see if checkPointDir is writable.
 	 * 
-	 * This operation will re-initialize the CRIU options
+	 * This operation will use the CRIU options set by the options setters.
 	 * 
 	 * All errors will be stored in the throwable field of CRIUResult.
 	 * 
-	 * @param checkPointDir the directory in which the checkpoint data will be stored
-	 * 
 	 * @return return CRIUResult
 	 */
-	public CRIUResult checkPointJVM(Path checkPointDir) {
+	public CRIUResult checkPointJVM() throws NullPointerException {
 		CRIUResult ret = new CRIUResult(CRIUResultType.UNSUPPORTED_OPERATION, null);
 
-		if (null == checkPointDir) {
-			ret = new CRIUResult(CRIUResultType.INVALID_ARGUMENTS, new NullPointerException("checkPointDir is NULL"));
+		if (null == imagesDir) {
+			throw new NullPointerException("Images directory needs to be set with setImagesDir(Path imagesDir)");
 		} else {
 			if (isCRIUSupportEnabled()) {
-				boolean securityCheckPassed = true;
-				String cpDataDir = checkPointDir.toAbsolutePath().toString();
-
-				SecurityManager manager = System.getSecurityManager();
-				if (manager != null) {
-					try {
-						manager.checkPermission(CRIU_DUMP_PERMISSION);
-						manager.checkWrite(cpDataDir);
-					} catch (SecurityException e) {
-						securityCheckPassed = false;
-						ret = new CRIUResult(CRIUResultType.UNSUPPORTED_OPERATION, e);
-					}
-				}
-				
-				if (securityCheckPassed) {
-					setCheckPointDir(cpDataDir);
-					ret = checkpointJVMImpl(); //$NON-NLS-1$
-				}
+				ret = checkpointJVMImpl();
 			}
 		}
 
