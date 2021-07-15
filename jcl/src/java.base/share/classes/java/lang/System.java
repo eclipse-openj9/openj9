@@ -87,6 +87,8 @@ public final class System {
 	/*[IF JAVA_SPEC_VERSION >= 17] */
 	// The initial err to print SecurityManager related warning messages
 	static PrintStream initialErr;
+	// Show only one setSecurityManager() warning message for each caller
+	private static Map<Class<?>, Object> setSMCallers;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	//Get a ref to the Runtime instance for faster lookup
@@ -365,6 +367,10 @@ public final class System {
 		setErr(createConsole(FileDescriptor.err));
 		setOut(createConsole(FileDescriptor.out));
 		/*[ENDIF] Sidecar18-SE-OpenJ9 */
+		
+		/*[IF JAVA_SPEC_VERSION >= 17] */
+		setSMCallers = Collections.synchronizedMap(new WeakHashMap<>());
+		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	}
 
 native static void startSNMPAgent();
@@ -1031,13 +1037,27 @@ public static void setSecurityManager(final SecurityManager s) {
 	@SuppressWarnings("removal")
 	final SecurityManager currentSecurity = security;
 
+	/*[IF JAVA_SPEC_VERSION >= 12]*/
+	if ("disallow".equals(systemProperties.getProperty("java.security.manager"))) { //$NON-NLS-1$ //$NON-NLS-2$
+		/*[MSG "K0B00", "The Security Manager is deprecated and will be removed in a future release"]*/
+		throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0B00")); //$NON-NLS-1$
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
+
+	/*[IF JAVA_SPEC_VERSION >= 17] */
+	Class<?> callerClz = getCallerClass();
+	if (setSMCallers.putIfAbsent(callerClz, Boolean.TRUE) == null) {
+		String callerName = callerClz.getName();
+		CodeSource cs = callerClz.getProtectionDomainInternal().getCodeSource();
+		String codeSource = (cs == null) ? callerName : callerName + " (" + cs.getLocation() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+		initialErr.println("WARNING: A terminally deprecated method in java.lang.System has been called"); //$NON-NLS-1$
+		initialErr.printf("WARNING: System::setSecurityManager has been called by %s" + lineSeparator(), codeSource); //$NON-NLS-1$
+		initialErr.printf("WARNING: Please consider reporting this to the maintainers of %s" + lineSeparator(), callerName); //$NON-NLS-1$
+		initialErr.println("WARNING: System::setSecurityManager will be removed in a future release"); //$NON-NLS-1$
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
 	if (s != null) {
-		/*[IF JAVA_SPEC_VERSION >= 12]*/
-		if ("disallow".equals(systemProperties.getProperty("java.security.manager"))) { //$NON-NLS-1$ //$NON-NLS-2$
-			/*[MSG "K0B00", "The Security Manager is deprecated and will be removed in a future release"]*/
-			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K0B00")); //$NON-NLS-1$
-		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 		if (currentSecurity == null) {
 			// only preload classes when current security manager is null
 			// not adding an extra static field to preload only once
@@ -1051,17 +1071,6 @@ public static void setSecurityManager(final SecurityManager s) {
 			}
 		}
 		
-		/*[IF JAVA_SPEC_VERSION >= 17] */
-		Class<?> callerClz = getCallerClass();
-		String callerName = callerClz.getName();
-		CodeSource cs = callerClz.getProtectionDomainInternal().getCodeSource();
-		String codeSource = (cs == null) ? callerName : callerName + " (" + cs.getLocation() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-		initialErr.println("WARNING: A terminally deprecated method in java.lang.System has been called"); //$NON-NLS-1$
-		initialErr.printf("WARNING: System::setSecurityManager has been called by %s" + lineSeparator(), codeSource); //$NON-NLS-1$
-		initialErr.printf("WARNING: Please consider reporting this to the maintainers of %s" + lineSeparator(), callerName); //$NON-NLS-1$
-		initialErr.println("WARNING: System::setSecurityManager will be removed in a future release"); //$NON-NLS-1$
-		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-
 		try {
 			/*[PR 97686] Preload the policy permission */
 			AccessController.doPrivileged(new PrivilegedAction<Void>() {
