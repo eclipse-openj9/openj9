@@ -4105,9 +4105,9 @@ TR_J9VMBase::isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilat
    if (!fieldClass)
       return false;
 
-   bool isStable = jitIsFieldStable(comp->fej9()->vmThread(), fieldClass, cpIndex);
+   bool isFieldStable = isStable(fieldClass, cpIndex);
 
-   if (isStable && comp->getOption(TR_TraceOptDetails))
+   if (isFieldStable && comp->getOption(TR_TraceOptDetails))
       {
       int classLen;
       const char * className= owningMethod->classNameOfFieldOrStatic(cpIndex, classLen);
@@ -4117,7 +4117,14 @@ TR_J9VMBase::isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilat
       }
 
    // Not checking for JCL classes since @Stable annotation only visible inside JCL
-   return isStable; 
+   return isFieldStable;
+   }
+
+bool
+TR_J9VMBase::isStable(J9Class *fieldClass, int cpIndex)
+   {
+   TR_ASSERT_FATAL(fieldClass, "fieldClass must not be NULL");
+   return jitIsFieldStable(vmThread(), fieldClass, cpIndex);
    }
 
 // Creates a node to initialize the local object flags field
