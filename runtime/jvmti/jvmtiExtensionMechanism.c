@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1780,6 +1780,8 @@ jvmtiInternalGetStackTraceIteratorExtended(J9VMThread * currentThread, J9StackWa
 #ifdef J9VM_INTERP_NATIVE_SUPPORT 
 			if (walkState->jitInfo == NULL) {
 				frame_buffer->type = COM_IBM_STACK_FRAME_EXTENDED_NOT_JITTED;
+			} else if (J9_ARE_ANY_BITS_SET(type, J9JVMTI_STACK_TRACE_MARK_INLINED_FRAMES) && (walkState->inlineDepth > 0)) {
+				frame_buffer->type = COM_IBM_STACK_FRAME_EXTENDED_INLINED;
 			} else {
 				frame_buffer->type = COM_IBM_STACK_FRAME_EXTENDED_JITTED;
 			}	
