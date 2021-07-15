@@ -293,6 +293,10 @@ public:
       UDATA _osrGlobalBufferSize;
       bool _needsMethodTrampolines;
       int32_t _objectAlignmentInBytes;
+      bool _isGetImplInliningSupported;
+      bool _isAllocateZeroedTLHPagesEnabled;
+      uint32_t _staticObjectAllocateFlags;
+      void *_referenceArrayCopyHelperAddress;
       }; // struct VMInfo
 
    /**
