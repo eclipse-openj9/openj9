@@ -1810,7 +1810,19 @@ static void jitHookPrepareCheckpoint(J9HookInterface * * hookInterface, UDATA ev
 
 static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
-   //vmThread->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) returns TRUE if checkpointing is permitted after restore
+   J9VMClassesUnloadEvent * restoreEvent = (J9VMClassesUnloadEvent *)eventData;
+   J9VMThread * vmThread = restoreEvent->currentThread;
+   J9JavaVM * javaVM = vmThread->javaVM;
+
+   /* If the restored run does not allow further checkpoints, then
+    * remove the portability restrictions on the target CPU (used
+    * for JIT compiles) to allow optimal code generation
+    */
+   if (!javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+      {
+      TR::Compiler->target.cpu = TR::CPU::detect(TR::Compiler->omrPortLib);
+      jitConfig->targetProcessor = TR::Compiler->target.cpu.getProcessorDescription();
+      }
    }
 #endif
 
