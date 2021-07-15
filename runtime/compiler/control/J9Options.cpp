@@ -1257,7 +1257,11 @@ void J9::Options::preProcessMmf(J9JavaVM *vm, J9JITConfig *jitConfig)
       self()->setIsVariableActiveCardTableBase(true);
       }
 
-   if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE))
+   if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE)
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+       || vm->internalVMFunctions->isCheckpointAllowed(vmThread)
+#endif
+       )
       {
       // Disable any fixed-size heap optimizations under portable shared cache mode
       self()->setIsVariableHeapSizeForBarrierRange0(true);
