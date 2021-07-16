@@ -23,6 +23,8 @@
 package org.eclipse.openj9.criu;
 
 import java.nio.file.Path;
+import java.util.Objects;
+import java.io.File;
 
 /**
  * CRIU Support API
@@ -103,7 +105,10 @@ public final class CRIUSupport {
 
 	private native CRIUResult checkpointJVMImpl();
 
-	public CRIUSupport() {}
+	public CRIUSupport() {
+		shellJob = true;
+		extUnixSupport = true;
+	}
 
 	/**
 	 * Queries if CRIU support is enabled.
@@ -114,74 +119,138 @@ public final class CRIUSupport {
 		return criuSupportEnabled;
 	}
 
-	private String imagesDir = null;
-	private boolean leaveRunning = false;
-	private boolean shellJob = true;
-	private boolean extUnixSupport = true;
-	private int logLevel = 0;
-	private String logFile = null;
-	private boolean fileLocks = false;
-	private String workDir = null;
+	private String imagesDir;
+	private boolean leaveRunning;
+	private boolean shellJob;
+	private boolean extUnixSupport;
+	private int logLevel;
+	private String logFile;
+	private boolean fileLocks;
+	private String workDir;
 
-	public CRIUSupport setImagesDir(Path imagesDir) throws SecurityException {
-		if (imagesDir != null) {
-			String dir = imagesDir.toAbsolutePath().toString();
+	/**
+	 * Sets the directory that will hold the images upon dump. Corresponds to criu_set_images_dir_fd.
+	 * This must be set before calling {@link #checkPointJVM()}.
+	 * 
+	 * @param imagesDir the directory as a java.nio.file.Path
+	 * @return this
+	 * @throws NullPointerException if imagesDir is null.
+	 * @throws SecurityException if no permission to access imagesDir.
+	 */
+	public CRIUSupport setImagesDir(Path imagesDir) {
+		Objects.requireNonNull(imagesDir, "Path cannot be null");
+		String dir = imagesDir.toAbsolutePath().toString();
 
-			SecurityManager manager = System.getSecurityManager();
-			if (manager != null) {
-				manager.checkPermission(CRIU_DUMP_PERMISSION);
-				manager.checkWrite(dir);
-			}
-			this.imagesDir = dir;
+		SecurityManager manager = System.getSecurityManager();
+		if (manager != null) {
+			manager.checkPermission(CRIU_DUMP_PERMISSION);
+			manager.checkWrite(dir);
 		}
+		this.imagesDir = dir;
 		return this;
 	}
 
+	/**
+	 * Controls whether processes are left running after dump. Corresponds to criu_set_leave_running.
+	 * Default: false
+	 * 
+	 * @param leaveRunning
+	 * @return this
+	 */
 	public CRIUSupport setLeaveRunning(boolean leaveRunning) {
 		this.leaveRunning = leaveRunning;
 		return this;
 	}
 
+	/**
+	 * Controls ability to dump shell jobs. Corresponds to criu_set_shell_job.
+	 * Default: true
+	 * 
+	 * @param shellJob
+	 * @return this
+	 */
 	public CRIUSupport setShellJob(boolean shellJob) {
 		this.shellJob = shellJob;
 		return this;
 	}
 
+	/**
+	 * Controls whether to dump only one end of a unix socket pair. Corresponds to criu_set_ext_unix_sk.
+	 * Default: true
+	 * 
+	 * @param extUnixSupport
+	 * @return this
+	 */
 	public CRIUSupport setExtUnixSupport(boolean extUnixSupport) {
 		this.extUnixSupport = extUnixSupport;
 		return this;
 	}
 
+	/**
+	 * Sets the verbosity of log output. Corresponds to criu_set_log_level.
+	 * Default: 2 (errors + warnings)
+	 * 
+	 * @param logLevel verbosity from 1 to 4 inclusive
+	 * @return this
+	 * @throws IllegalArgumentException if logLevel is not valid.
+	 */
 	public CRIUSupport setLogLevel(int logLevel) {
-		if (logLevel > 0) {
+		if (logLevel > 0 && logLevel <= 4) {
 			this.logLevel = logLevel;
+		} else {
+			throw new IllegalArgumentException("Log level must be 1 to 4 inclusive");
 		}
 		return this;
 	}
 
+	/**
+	 * Write log output to logFile. Corresponds to criu_set_log_file.
+	 * Default: criu.log
+	 * 
+	 * @param logFile name of the file to write log output to. The path to the file can be set with {@link #setWorkDir(Path)}.
+	 * @return this
+	 * @throws IllegalArgumentException if logFile is null or a path.
+	 */
 	public CRIUSupport setLogFile(String logFile) {
-		if (logFile != null && !logFile.contains("/")) {
+		if (logFile != null && !logFile.contains(File.separator)) {
 			this.logFile = logFile;
+		} else {
+			throw new IllegalArgumentException("Log file must not be null and not be a path");
 		}
 		return this;
 	}
 
+	/**
+	 * Controls whether to dump file locks. Corresponds to criu_set_file_locks.
+	 * Default: false
+	 * 
+	 * @param fileLocks
+	 * @return this
+	 */
 	public CRIUSupport setFileLocks(boolean fileLocks) {
 		this.fileLocks = fileLocks;
 		return this;
 	}
 
-	public CRIUSupport setWorkDir(Path workDir) throws SecurityException {
-		if (workDir != null) {
-			String dir = workDir.toAbsolutePath().toString();
+	/**
+	 * Sets the directory where non-image files are stored (e.g. logs). Corresponds to criu_set_work_dir_fd.
+	 * Default: same as path set by {@link #setImagesDir(Path)}.
+	 * 
+	 * @param workDir the directory as a java.nio.file.Path
+	 * @return this
+	 * @throws NullPointerException if workDir is null.
+	 * @throws SecurityException if no permission to access workDir.
+	 */
+	public CRIUSupport setWorkDir(Path workDir) {
+		Objects.requireNonNull(workDir, "Path cannot be null");
+		String dir = workDir.toAbsolutePath().toString();
 
-			SecurityManager manager = System.getSecurityManager();
-			if (manager != null) {
-				manager.checkPermission(CRIU_DUMP_PERMISSION);
-				manager.checkWrite(dir);
-			}
-			this.workDir = dir;
+		SecurityManager manager = System.getSecurityManager();
+		if (manager != null) {
+			manager.checkPermission(CRIU_DUMP_PERMISSION);
+			manager.checkWrite(dir);
 		}
+		this.workDir = dir;
 		return this;
 	}
 
@@ -194,16 +263,16 @@ public final class CRIUSupport {
 	 * All errors will be stored in the throwable field of CRIUResult.
 	 * 
 	 * @return return CRIUResult
+	 * @throws NullPointerException if imagesDir has not been set with {@link #setImagesDir(Path)}.
 	 */
-	public CRIUResult checkPointJVM() throws NullPointerException {
-		CRIUResult ret = new CRIUResult(CRIUResultType.UNSUPPORTED_OPERATION, null);
+	public CRIUResult checkPointJVM() {
+		CRIUResult ret;
 
-		if (null == imagesDir) {
-			throw new NullPointerException("Images directory needs to be set with setImagesDir(Path imagesDir)");
+		Objects.requireNonNull(imagesDir, "Images directory needs to be set with setImagesDir(Path imagesDir)");
+		if (isCRIUSupportEnabled()) {
+			ret = checkpointJVMImpl();
 		} else {
-			if (isCRIUSupportEnabled()) {
-				ret = checkpointJVMImpl();
-			}
+			ret = new CRIUResult(CRIUResultType.UNSUPPORTED_OPERATION, null);
 		}
 
 		return ret;

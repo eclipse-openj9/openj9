@@ -50,7 +50,7 @@ setupJNIFieldIDs(JNIEnv *env)
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 		goto done;
 	}
-	memset(criuGlobals, 0, sizeof(J9CRIUGlobals));
+	memset(criuGlobals, 0, sizeof(*criuGlobals));
 
 	if (NULL == criuGlobals->criuResultTypeClass
 		&& NULL == criuGlobals->criuResultClass
@@ -271,7 +271,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env, jobject 
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 
 		cpDir = J9_JNI_UNWRAP_REFERENCE(imagesDir);
-		if(NULL != logFile) {
+		if (NULL != logFile) {
 			log = J9_JNI_UNWRAP_REFERENCE(logFile);
 		}
 
