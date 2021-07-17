@@ -1137,6 +1137,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          }
          break;
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
+      case MessageType::VM_isStable:
+         {
+         auto recv = client->getRecvData<J9Class *, int>();
+         J9Class *fieldClass = std::get<0>(recv);
+         int cpIndex = std::get<1>(recv);
+
+         bool isStable = fe->isStable(fieldClass, cpIndex);
+         client->write(response, isStable);
+         }
+         break;
       case MessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only

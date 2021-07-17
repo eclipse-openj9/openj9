@@ -915,6 +915,7 @@ public:
     *
     */
    virtual bool isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp);
+   virtual bool isStable(J9Class *fieldClass, int cpIndex);
 
    /*
     * \brief
