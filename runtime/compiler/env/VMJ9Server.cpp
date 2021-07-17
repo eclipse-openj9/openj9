@@ -2235,6 +2235,14 @@ TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_ResolvedMethod *method)
    }
 
 bool
+TR_J9ServerVM::isStable(J9Class *fieldClass, int cpIndex)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_isStable, fieldClass, cpIndex);
+   return std::get<0>(stream->read<bool>());
+   }
+
+bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {
    TR_ASSERT(vettedForAOT, "The TR_J9SharedCacheServerVM version of this method is expected to be called only from isClassLibraryMethod.\n"

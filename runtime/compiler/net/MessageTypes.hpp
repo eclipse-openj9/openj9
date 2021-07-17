@@ -189,6 +189,7 @@ enum MessageType : uint16_t
    VM_isLambdaFormGeneratedMethod,
    VM_vTableOrITableIndexFromMemberName,
    VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex,
+   VM_isStable,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,
@@ -433,6 +434,7 @@ static const char *messageNames[] =
    "VM_isLambdaFormGeneratedMethod",
    "VM_vTableOrITableIndexFromMemberName",
    "VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex",
+   "VM_isStable",
    "CompInfo_isCompiled",
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",
