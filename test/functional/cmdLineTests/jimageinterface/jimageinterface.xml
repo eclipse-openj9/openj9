@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2015, 2018 IBM Corp. and others
+  Copyright (c) 2015, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@
  <test id="Test JImage Interface default behavior">
   <command>$EXE$ -verbose:dynload -version</command>
   <output regex="yes" type="success" javaUtilPattern="yes" >JImage interface is using jimage library</output>
-  <output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  <output regex="yes" caseSensitive="no" type="required" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
   <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
   <output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -43,7 +43,7 @@
  <test id="Test JImage Interface with -XX:+UseJ9JImageReader">
   <command>$EXE$ $USEJ9JIMAGEREADER$ -verbose:dynload -version</command>
   <output regex="no" type="success">JImage interface is using internal implementation of jimage reader</output>
-  <output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  <output regex="yes" caseSensitive="no" type="required" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
   <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
   <output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -53,7 +53,7 @@
  <test id="Test JImage Interface with -XX:-UseJ9JImageReader">
   <command>$EXE$ $NOUSEJ9JIMAGEREADER$ -verbose:dynload -version</command>
   <output regex="no" type="success">JImage interface is using jimage library</output>
-  <output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  <output regex="yes" caseSensitive="no" type="required" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
   <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
   <output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -64,7 +64,7 @@
  <test id="Test JImage Interface with -XX:+UseJ9JImageReader -XX:-UseJ9JImageReader"> 
   <command>$EXE$ $USEJ9JIMAGEREADER$ $NOUSEJ9JIMAGEREADER$ -verbose:dynload -version</command>
   <output regex="no" type="success">JImage interface is using jimage library</output>
-  <output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  <output regex="yes" caseSensitive="no" type="required" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   <output type="failure">JImage interface is using internal implementation of jimage reader</output>
   <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
   <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
@@ -75,7 +75,7 @@
  <test id="Test JImage Interface with -XX:-UseJ9JImageReader -XX:+UseJ9JImageReader"> 
   <command>$EXE$ $NOUSEJ9JIMAGEREADER$ $USEJ9JIMAGEREADER$ -verbose:dynload -version</command>
   <output regex="no" type="success">JImage interface is using internal implementation of jimage reader</output>
-  <output regex="yes" type="required" javaUtilPattern="yes">(java|openjdk) version</output>
+  <output regex="yes" caseSensitive="no" type="required" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
   <output type="failure">JImage interface is using jimage library</output>
   <output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
   <output type="failure" caseSensitive="yes" regex="no">Exception:</output>
