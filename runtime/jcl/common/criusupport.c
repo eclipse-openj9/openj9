@@ -52,63 +52,58 @@ setupJNIFieldIDs(JNIEnv *env)
 	}
 	memset(criuGlobals, 0, sizeof(*criuGlobals));
 
-	if (NULL == criuGlobals->criuResultTypeClass
-		&& NULL == criuGlobals->criuResultClass
-		&& NULL == criuGlobals->criuSupportClass
+	criuResultTypeClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResultType");
+	Assert_JCL_notNull(criuResultTypeClass);
+	criuGlobals->criuResultTypeClass = (*env)->NewGlobalRef(env, criuResultTypeClass);
+
+	criuResultClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResult");
+	Assert_JCL_notNull(criuResultClass);
+	criuGlobals->criuResultClass = (*env)->NewGlobalRef(env, criuResultClass);
+
+	criuSupportClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport");
+	Assert_JCL_notNull(criuSupportClass);
+	criuGlobals->criuSupportClass = (*env)->NewGlobalRef(env, criuSupportClass);
+
+	if (NULL != criuGlobals->criuResultTypeClass
+		&& NULL != criuGlobals->criuResultClass
+		&& NULL != criuGlobals->criuSupportClass
 	) {
-		criuResultTypeClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResultType");
-		Assert_JCL_notNull(criuResultTypeClass);
-		criuGlobals->criuResultTypeClass = (*env)->NewGlobalRef(env, criuResultTypeClass);
+		criuGlobals->criuSupportSuccess = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "SUCCESS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+		Assert_JCL_notNull(criuGlobals->criuSupportSuccess);
+		criuGlobals->criuSupportUnsupportedOperation  = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "UNSUPPORTED_OPERATION", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+		Assert_JCL_notNull(criuGlobals->criuSupportUnsupportedOperation);
+		criuGlobals->criuSupportInvalidArguments = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "INVALID_ARGUMENTS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+		Assert_JCL_notNull(criuGlobals->criuSupportInvalidArguments);
+		criuGlobals->criuSupportSystemCheckpointFailure = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "SYSTEM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+		Assert_JCL_notNull(criuGlobals->criuSupportSystemCheckpointFailure);
+		criuGlobals->criuSupportJVMCheckpointFailure = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "JVM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+		Assert_JCL_notNull(criuGlobals->criuSupportJVMCheckpointFailure);
+		criuGlobals->criuSupportJVMRestoreFailure = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "JVM_RESTORE_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
+		Assert_JCL_notNull(criuGlobals->criuSupportJVMRestoreFailure);
 
-		criuResultClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResult");
-		Assert_JCL_notNull(criuResultClass);
-		criuGlobals->criuResultClass = (*env)->NewGlobalRef(env, criuResultClass);
+		criuGlobals->criuResultInit = (*env)->GetMethodID(env, criuGlobals->criuResultClass, "<init>", "(Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;Ljava/lang/Throwable;)V");
+		Assert_JCL_notNull(criuGlobals->criuResultInit);
 
-		criuSupportClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport");
-		Assert_JCL_notNull(criuSupportClass);
-		criuGlobals->criuSupportClass = (*env)->NewGlobalRef(env, criuSupportClass);
-
-		if (NULL != criuGlobals->criuResultTypeClass
-			&& NULL != criuGlobals->criuResultClass
-			&& NULL != criuGlobals->criuSupportClass
-		) {
-			criuGlobals->criuSupportSuccess = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "SUCCESS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-			Assert_JCL_notNull(criuGlobals->criuSupportSuccess);
-			criuGlobals->criuSupportUnsupportedOperation  = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "UNSUPPORTED_OPERATION", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-			Assert_JCL_notNull(criuGlobals->criuSupportUnsupportedOperation);
-			criuGlobals->criuSupportInvalidArguments = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "INVALID_ARGUMENTS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-			Assert_JCL_notNull(criuGlobals->criuSupportInvalidArguments);
-			criuGlobals->criuSupportSystemCheckpointFailure = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "SYSTEM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-			Assert_JCL_notNull(criuGlobals->criuSupportSystemCheckpointFailure);
-			criuGlobals->criuSupportJVMCheckpointFailure = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "JVM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-			Assert_JCL_notNull(criuGlobals->criuSupportJVMCheckpointFailure);
-			criuGlobals->criuSupportJVMRestoreFailure = (*env)->GetStaticFieldID(env, criuGlobals->criuResultTypeClass, "JVM_RESTORE_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-			Assert_JCL_notNull(criuGlobals->criuSupportJVMRestoreFailure);
-
-			criuGlobals->criuResultInit = (*env)->GetMethodID(env, criuGlobals->criuResultClass, "<init>", "(Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;Ljava/lang/Throwable;)V");
-			Assert_JCL_notNull(criuGlobals->criuResultInit);
-
-			criuGlobals->criuSupportImagesDir = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "imagesDir", "Ljava/lang/String;");
-			Assert_JCL_notNull(criuGlobals->criuSupportImagesDir);
-			criuGlobals->criuSupportLeaveRunning  = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "leaveRunning", "Z");
-			Assert_JCL_notNull(criuGlobals->criuSupportLeaveRunning);
-			criuGlobals->criuSupportShellJob = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "shellJob", "Z");
-			Assert_JCL_notNull(criuGlobals->criuSupportShellJob);
-			criuGlobals->criuSupportExtUnixSupport = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "extUnixSupport", "Z");
-			Assert_JCL_notNull(criuGlobals->criuSupportExtUnixSupport);
-			criuGlobals->criuSupportLogLevel = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "logLevel", "I");
-			Assert_JCL_notNull(criuGlobals->criuSupportLogLevel);
-			criuGlobals->criuSupportLogFile = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "logFile", "Ljava/lang/String;");
-			Assert_JCL_notNull(criuGlobals->criuSupportLogFile);
-			criuGlobals->criuSupportFileLocks = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "fileLocks", "Z");
-			Assert_JCL_notNull(criuGlobals->criuSupportFileLocks);
-			criuGlobals->criuSupportWorkDir = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "workDir", "Ljava/lang/String;");
-			Assert_JCL_notNull(criuGlobals->criuSupportWorkDir);
-		} else {
-			vmFuncs->internalEnterVMFromJNI(currentThread);
-			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-			vmFuncs->internalExitVMToJNI(currentThread);
-		}
+		criuGlobals->criuSupportImagesDir = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "imagesDir", "Ljava/lang/String;");
+		Assert_JCL_notNull(criuGlobals->criuSupportImagesDir);
+		criuGlobals->criuSupportLeaveRunning  = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "leaveRunning", "Z");
+		Assert_JCL_notNull(criuGlobals->criuSupportLeaveRunning);
+		criuGlobals->criuSupportShellJob = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "shellJob", "Z");
+		Assert_JCL_notNull(criuGlobals->criuSupportShellJob);
+		criuGlobals->criuSupportExtUnixSupport = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "extUnixSupport", "Z");
+		Assert_JCL_notNull(criuGlobals->criuSupportExtUnixSupport);
+		criuGlobals->criuSupportLogLevel = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "logLevel", "I");
+		Assert_JCL_notNull(criuGlobals->criuSupportLogLevel);
+		criuGlobals->criuSupportLogFile = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "logFile", "Ljava/lang/String;");
+		Assert_JCL_notNull(criuGlobals->criuSupportLogFile);
+		criuGlobals->criuSupportFileLocks = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "fileLocks", "Z");
+		Assert_JCL_notNull(criuGlobals->criuSupportFileLocks);
+		criuGlobals->criuSupportWorkDir = (*env)->GetFieldID(env, criuGlobals->criuSupportClass, "workDir", "Ljava/lang/String;");
+		Assert_JCL_notNull(criuGlobals->criuSupportWorkDir);
+	} else {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 done:
 	vm->criuGlobals = criuGlobals;
