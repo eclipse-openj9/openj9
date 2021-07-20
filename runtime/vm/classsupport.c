@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -339,9 +339,9 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 			}
 
 			result = internalFindClassInModule(currentThread, j9module, utf8Name, utf8Length, classLoader, options);
-			if (utf8Name != localBuf) {
-				j9mem_free_memory(utf8Name);
-			}
+		}
+		if (utf8Name != localBuf) {
+			j9mem_free_memory(utf8Name);
 		}
 	}
 	return result;
