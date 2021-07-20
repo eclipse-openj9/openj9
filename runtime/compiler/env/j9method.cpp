@@ -288,6 +288,12 @@ bool TR_ResolvedJ9Method::isMethodInValidLibrary()
    if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/gpu/Kernel", 18))
       return true;
 
+   if (!strncmp(this->convertToMethod()->classNameChars(), "jdk/incubator/vector/FloatVector", 32))
+      return true;
+   if (!strncmp(this->convertToMethod()->classNameChars(), "jdk/incubator/vector/VectorSpecies", 34))
+      return true;
+
+   
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    // For IBMJCE Crypto
    if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/jit/Crypto", 18))
@@ -2581,6 +2587,27 @@ void TR_ResolvedJ9Method::construct()
       {TR::unknownMethod}
    };
 
+                                              
+   static X FloatVectorMethods[] =
+      {
+      {x(TR::jdk_incubator_vector_FloatVector_fromArray, "fromArray" , "(Ljdk/incubator/vector/VectorSpecies;[FI)Ljdk/incubator/vector/FloatVector;")},
+      {x(TR::jdk_incubator_vector_FloatVector_intoArray, "intoArray" , "([FI)V")},
+
+      {x(TR::jdk_incubator_vector_FloatVector_fromArray_mask, "fromArray" , "(Ljdk/incubator/vector/VectorSpecies;[FILjdk/incubator/vector/VectorMask;)Ljdk/incubator/vector/FloatVector;")},
+      {x(TR::jdk_incubator_vector_FloatVector_intoArray_mask, "intoArray" , "([FILjdk/incubator/vector/VectorMask;)V")},
+
+      {x(TR::jdk_incubator_vector_FloatVector_add, "add" , "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/FloatVector;")},
+
+      {TR::unknownMethod}
+      };
+
+   static X VectorSpeciesMethods[] =
+      {
+      {x(TR::jdk_incubator_vector_VectorSpecies_indexInRange, "indexInRange" , "(II)Ljdk/incubator/vector/VectorMask;")},
+
+      {TR::unknownMethod}
+      };
+
    static X BigDecimalMethods[] =
       {
       {x(TR::java_math_BigDecimal_add,                   "add",                   "(Ljava/math/BigDecimal;)Ljava/math/BigDecimal;")},
@@ -4071,6 +4098,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/lang/invoke/MutableCallSite", MutableCallSiteMethods },
       { "java/lang/invoke/PrimitiveHandle", PrimitiveHandleMethods },
       { "com/ibm/dataaccess/PackedDecimal", DataAccessPackedDecimalMethods },
+      { "jdk/incubator/vector/FloatVector", FloatVectorMethods},
       { 0 }
       };
 
@@ -4087,6 +4115,8 @@ void TR_ResolvedJ9Method::construct()
       { "java/util/concurrent/atomic/Fences", JavaUtilConcurrentAtomicFencesMethods },
       { "com/ibm/Compiler/Internal/Prefetch", PrefetchMethods },
       { "java/lang/invoke/VarHandleInternal", VarHandleMethods },
+      { "jdk/incubator/vector/VectorSpecies", VectorSpeciesMethods},
+
       { 0 }
       };
 
@@ -4259,7 +4289,7 @@ void TR_ResolvedJ9Method::construct()
                      }
                   }
          }
-
+      
       if (TR::Method::getMandatoryRecognizedMethod() == TR::unknownMethod)
          {
          // Cases where multiple method names all map to the same RecognizedMethod

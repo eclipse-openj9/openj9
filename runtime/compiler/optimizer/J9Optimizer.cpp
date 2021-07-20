@@ -84,6 +84,7 @@
 #include "optimizer/StaticFinalFieldFolding.hpp"
 #include "optimizer/HandleRecompilationOps.hpp"
 #include "optimizer/MethodHandleTransformer.hpp"
+#include "optimizer/VectorAPIExpansion.hpp"
 
 
 static const OptimizationStrategy J9EarlyGlobalOpts[] =
@@ -729,6 +730,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
+   { OMR::vectorAPIExpansion                                                    },
    { OMR::redundantGotoElimination,                  OMR::IfEnabledAndNotJitProfiling }, // dead store and dead tree elimination may have left empty blocks
    { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by profilingGroup
    { OMR::globalLiveVariablesForGC                                              },
@@ -841,6 +843,8 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_HandleRecompilationOps::create, OMR::handleRecompilationOps);
    _opts[OMR::hotFieldMarking] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_HotFieldMarking::create, OMR::hotFieldMarking);
+   _opts[OMR::vectorAPIExpansion] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_VectorAPIExpansion::create, OMR::vectorAPIExpansion);
    // NOTE: Please add new J9 optimizations here!
 
    // initialize additional J9 optimization groups

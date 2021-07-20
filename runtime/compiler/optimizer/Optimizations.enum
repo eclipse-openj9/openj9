@@ -36,3 +36,4 @@
    OPTIMIZATION(jProfilingRecompLoopTest)
    OPTIMIZATION(handleRecompilationOps)
    OPTIMIZATION(hotFieldMarking)
+   OPTIMIZATION(vectorAPIExpansion)

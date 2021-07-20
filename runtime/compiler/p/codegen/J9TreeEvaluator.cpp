@@ -11848,6 +11848,13 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
    TR::Linkage      *linkage;
    TR::Register        *returnRegister;
 
+   if (callee->getRecognizedMethod() == TR::jdk_incubator_vector_FloatVector_add &&
+       node->getOpCodeValue() == TR::vcall) // was vectorized
+      {
+      TR::Node::recreate(node, TR::vadd);
+      return vaddEvaluator(node, cg);
+      }
+   
    if (!cg->inlineDirectCall(node, returnRegister))
       {
       TR::SymbolReferenceTable *symRefTab = cg->comp()->getSymRefTab();

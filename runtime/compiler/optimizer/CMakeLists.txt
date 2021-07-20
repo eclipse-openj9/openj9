@@ -74,6 +74,7 @@ j9jit_files(
 	optimizer/UnsafeFastPath.cpp
 	optimizer/VarHandleTransformer.cpp
 	optimizer/MethodHandleTransformer.cpp
+        optimizer/VectorAPIExpansion.cpp
 	optimizer/VPBCDConstraint.cpp
 	optimizer/TreeLowering.cpp
 )
