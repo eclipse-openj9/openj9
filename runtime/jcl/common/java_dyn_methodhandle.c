@@ -788,27 +788,6 @@ Java_java_lang_invoke_MethodHandle_vmRefFieldOffset(JNIEnv *env, jclass clazz, j
 	return (jint) J9VMJAVALANGCLASS_VMREF_OFFSET(((J9VMThread *) env));
 }
 
-#ifdef J9VM_OPT_PANAMA
-jlong JNICALL
-Java_java_lang_invoke_MethodHandles_findNativeAddress(JNIEnv *env, jclass jlClass, jstring methodName)
-{
-	const char *nativeMethodName = NULL;
-	UDATA handle = 0;
-	jlong func = 0;
-	PORT_ACCESS_FROM_ENV(env);
-
-	nativeMethodName = (*env)->GetStringUTFChars(env, methodName, NULL);
-
-	if(0 == j9sl_open_shared_library(NULL, &handle, FALSE)) {
-		if(0 != j9sl_lookup_name(handle, (char *)nativeMethodName, (UDATA *)&func, "")){
-			func = 0;
-		}
-	}
-
-	return func;
-}
-#endif
-
 void JNICALL
 Java_java_lang_invoke_MutableCallSite_freeGlobalRef(JNIEnv *env, jclass mutableCallSite, jlong bypassOffset)
 {
