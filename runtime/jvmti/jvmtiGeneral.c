@@ -186,7 +186,7 @@ jvmtiGetVersionNumber(jvmtiEnv* env,
 done:
 	if (NULL != version_ptr) {
 #if JAVA_SPEC_VERSION >= 15
-		*version_ptr = JVMTI_VERSION_15;
+		*version_ptr = JVMTI_VERSION;
 #elif JAVA_SPEC_VERSION >= 11 /* JAVA_SPEC_VERSION >= 15 */
 		*version_ptr = JVMTI_VERSION_11;
 #else /* JAVA_SPEC_VERSION >= 15 */

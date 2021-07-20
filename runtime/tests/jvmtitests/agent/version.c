@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ const static char *versionNames[] =
 	"JVMTI 1.2",
 	"JVMTI 9.0",
 	"JVMTI 11",
-	"JVMTI 15",
+	"JVMTI " JAVA_SPEC_VERSION_STRING,
 	"unknown"
 };
 
@@ -67,7 +67,7 @@ getVersionName(agentEnv * agent_env, jint version)
 		case JVMTI_VERSION_11:
 			return versionNames[4];
 #if JAVA_SPEC_VERSION >= 15
-		case JVMTI_VERSION_15:
+		case JVMTI_VERSION:
 			return versionNames[5];
 #endif /* JAVA_SPEC_VERSION >= 15 */
 #endif /* JAVA_SPEC_VERSION > 8 */

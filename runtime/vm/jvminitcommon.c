@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,22 +128,29 @@ createLoadInfo(J9PortLibrary *portLibrary, J9Pool *aPool, const char *name, U_32
 
 /**
  * This method indicates if the requested jniVersion is valid or not
+ *
+ * Note: a JVMTI environment can be obtained through the JNI Invocation API GetEnv function
+ *       https://docs.oracle.com/en/java/javase/11/docs/specs/jvmti.html
  * @param jniVersion the version to be checked
  * @returns true if the version is valid
  */
 UDATA
 jniVersionIsValid(UDATA jniVersion)
 {
-	return (jniVersion == JNI_VERSION_1_1)
-		|| (jniVersion == JNI_VERSION_1_2)
-		|| (jniVersion == JNI_VERSION_1_4)
-		|| (jniVersion == JNI_VERSION_1_6)
-		|| (jniVersion == JNI_VERSION_1_8)
+	return (JNI_VERSION_1_1 == jniVersion)
+		|| (JNI_VERSION_1_2 == jniVersion)
+		|| (JNI_VERSION_1_4 == jniVersion)
+		|| (JNI_VERSION_1_6 == jniVersion)
+		|| (JNI_VERSION_1_8 == jniVersion)
 #if JAVA_SPEC_VERSION >= 9
-		|| (jniVersion == JNI_VERSION_9)
+		|| (JNI_VERSION_9 == jniVersion)
 #endif /* JAVA_SPEC_VERSION >= 9 */
 #if JAVA_SPEC_VERSION >= 10
-		|| (jniVersion == JNI_VERSION_10)
+		|| (JNI_VERSION_10 == jniVersion)
 #endif /* JAVA_SPEC_VERSION >= 10 */
+#if JAVA_SPEC_VERSION >= 11
+		|| (J9_ARE_ALL_BITS_SET(jniVersion, JVMTI_VERSION_INTERFACE_JVMTI)
+			&& ((jniVersion & JVMTI_VERSION_MASK_MAJOR) <= JAVA_SPEC_VERSION))
+#endif /* JAVA_SPEC_VERSION >= 16 */
 		;
 }
