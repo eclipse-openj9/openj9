@@ -2907,7 +2907,12 @@ gcInitializeDefaults(J9JavaVM* vm)
 
 				if (hwSupported) {
 					/* Software Barrier request overwrites HW usage on supported HW */
-					extensions->concurrentScavengerHWSupport = hwSupported && !extensions->softwareRangeCheckReadBarrier && !J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE);
+					extensions->concurrentScavengerHWSupport = hwSupported 
+						&& !extensions->softwareRangeCheckReadBarrier 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+						&& !vm->internalVMFunctions->isCRIUSupportEnabled(vm->internalVMFunctions->currentVMThread(vm))
+#endif
+						&& !J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE);
 					extensions->concurrentScavenger = hwSupported || extensions->softwareRangeCheckReadBarrier;
 				} else {
 					extensions->concurrentScavengerHWSupport = false;
