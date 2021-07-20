@@ -23,6 +23,7 @@
 package org.eclipse.openj9.criu;
 
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.Objects;
 import java.io.File;
 
@@ -105,7 +106,31 @@ public final class CRIUSupport {
 
 	private native CRIUResult checkpointJVMImpl();
 
-	public CRIUSupport() {
+	/**
+	 * Constructs a new {@code CRIUSupport}.
+	 * 
+	 * The default CRIU dump options are:
+	 * {@code imagesDir} = null (must be set)
+	 * {@code leaveRunning} = false
+	 * {@code shellJob} = true
+	 * {@code extUnixSupport} = true
+	 * {@code logLevel} = 2
+	 * {@code logFile} = criu.log
+	 * {@code fileLocks} = false
+	 * {@code workDir} = imagesDir
+	 * 
+	 * @param imagesDir the directory that will hold the dump files as a java.nio.file.Path
+	 * @throws NullPointerException if imagesDir is null.
+	 * @throws SecurityException if no permission to access imagesDir.
+	 * @throws IllegalArgumentException if imagesDir is not a valid directory.
+	 */
+	public CRIUSupport(Path imagesDir) {
+		SecurityManager manager = System.getSecurityManager();
+		if (manager != null) {
+			manager.checkPermission(CRIU_DUMP_PERMISSION);
+		}
+
+		setImagesDir(imagesDir);
 		shellJob = true;
 		extUnixSupport = true;
 	}
@@ -136,16 +161,20 @@ public final class CRIUSupport {
 	 * @return this
 	 * @throws NullPointerException if imagesDir is null.
 	 * @throws SecurityException if no permission to access imagesDir.
+	 * @throws IllegalArgumentException if imagesDir is not a valid directory.
 	 */
 	public CRIUSupport setImagesDir(Path imagesDir) {
 		Objects.requireNonNull(imagesDir, "Path cannot be null");
+		if (!Files.isDirectory(imagesDir)) {
+			throw new IllegalArgumentException("imagesDir is not a valid directory");
+		}
 		String dir = imagesDir.toAbsolutePath().toString();
 
 		SecurityManager manager = System.getSecurityManager();
 		if (manager != null) {
-			manager.checkPermission(CRIU_DUMP_PERMISSION);
 			manager.checkWrite(dir);
 		}
+		
 		this.imagesDir = dir;
 		return this;
 	}
@@ -240,16 +269,20 @@ public final class CRIUSupport {
 	 * @return this
 	 * @throws NullPointerException if workDir is null.
 	 * @throws SecurityException if no permission to access workDir.
+	 * @throws IllegalArgumentException if imagesDir is not a valid directory.
 	 */
 	public CRIUSupport setWorkDir(Path workDir) {
 		Objects.requireNonNull(workDir, "Path cannot be null");
+		if (!Files.isDirectory(workDir)) {
+			throw new IllegalArgumentException("workDir is not a valid directory");
+		}
 		String dir = workDir.toAbsolutePath().toString();
 
 		SecurityManager manager = System.getSecurityManager();
 		if (manager != null) {
-			manager.checkPermission(CRIU_DUMP_PERMISSION);
 			manager.checkWrite(dir);
 		}
+
 		this.workDir = dir;
 		return this;
 	}
@@ -263,7 +296,7 @@ public final class CRIUSupport {
 	 * All errors will be stored in the throwable field of CRIUResult.
 	 * 
 	 * @return return CRIUResult
-	 * @throws NullPointerException if imagesDir has not been set with {@link #setImagesDir(Path)}.
+	 * @throws NullPointerException if imagesDir has not been set with {@link #CRIUSupport()} or {@link #setImagesDir(Path)}.
 	 */
 	public CRIUResult checkPointJVM() {
 		CRIUResult ret;
