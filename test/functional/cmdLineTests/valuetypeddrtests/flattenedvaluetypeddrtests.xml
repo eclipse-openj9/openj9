@@ -158,10 +158,13 @@
 			<input>quit</input>
 		</command>
 		<output regex="no" type="success" showMatch="yes"> ValueTypeWithVolatileFields</output>
-		<output regex="no" type="required" showMatch="yes"> point (offset = 20) (Point2D)</output>
+		<output regex="no" type="required" showMatch="yes"> i (offset = 16) (ValueInt)</output>
+		<output regex="no" type="required" showMatch="yes"> i2 (offset = 20) (ValueInt)</output>
+		<output regex="no" type="required" showMatch="yes"> point (offset = 24) (Point2D)</output>
 		<output regex="no" type="required" showMatch="yes"> vpoint (offset = 4) (Point2D)</output>
-		<output regex="no" type="required" showMatch="yes"> line (offset = 28) (FlattenedLine2D)</output>
+		<output regex="no" type="required" showMatch="yes"> line (offset = 32) (FlattenedLine2D)</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes"> vline = !fj9object 0x[\w]+ \(offset = 0\)</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes"> aline = !fj9object 0x[\w]+ \(offset = 12\)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -172,11 +175,14 @@
 			<input>quit</input>
 		</command>
 		<output regex="no" type="success" showMatch="yes"> ValueTypeWithVolatileFields</output>
-		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D point (.)* \(offset = 20\)[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">ValueInt i (.)* \(offset = 16\)[\n\r](.)*I i = 0x12123434</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">ValueInt i2 (.)* \(offset = 20\)[\n\r](.)*I i = 0x12123434</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D point (.)* \(offset = 24\)[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D vpoint (.)* \(offset = 4\)[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D st (.)*[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D en (.)*[\n\r](.)*I x = 0xCCDDCCDD[\n\r](.)*I y = 0x33443344</output>
-		<saveoutput regex="no" type="required" saveName="vlineAddr" splitIndex="1" splitBy="!fj9object " showMatch="yes">= !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="vlineAddr" splitIndex="1" splitBy="vline = !fj9object " showMatch="yes">vline = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="alineAddr" splitIndex="1" splitBy="aline = !fj9object " showMatch="yes">aline = !fj9object 0x</saveoutput>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 	
@@ -187,6 +193,18 @@
 			<input>quit</input>
 		</command>
 		<output regex="no" type="success" showMatch="yes"> FlattenedLine2D</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D st (.)*[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
+		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D en (.)*[\n\r](.)*I x = 0xCCDDCCDD[\n\r](.)*I y = 0x33443344</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+	
+	<test id="Run !flatobject $alineAddr$ to show the field aline of ValueTypeWithVolatileFields. Make sure it has the correct values">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $alineAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes"> AtomicFlattenedLine2D</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D st (.)*[\n\r](.)*I x = 0xFFEEFFEE[\n\r](.)*I y = 0xAABBAABB</output>
 		<output regex="yes" javaUtilPattern="yes" type="required" showMatch="yes">Point2D en (.)*[\n\r](.)*I x = 0xCCDDCCDD[\n\r](.)*I y = 0x33443344</output>
 		<output regex="no" type="failure">Problem running command</output>
@@ -247,6 +265,7 @@
 		<output regex="no" type="required" showMatch="yes">(offset = 24)</output>
 		<output regex="no" type="required" showMatch="yes">(offset = 32)</output>
 		<output regex="no" type="required" showMatch="yes">(offset = 48)</output>
+		<output regex="no" type="required" showMatch="yes">(offset = 56)</output>
 
 		<output regex="no" type="failure">(offset = 4)</output>
 		<output regex="no" type="failure">(offset = 12)</output>
@@ -254,6 +273,8 @@
 		<output regex="no" type="failure">(offset = 28)</output>
 		<output regex="no" type="failure">(offset = 36)</output>
 		<output regex="no" type="failure">(offset = 44)</output>
+		<output regex="no" type="failure">(offset = 52)</output>
+		<output regex="no" type="failure">(offset = 60)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
