@@ -96,7 +96,8 @@ JITServerSharedROMClassCache::JITServerSharedROMClassCache(size_t numPartitions)
    _numPartitions(numPartitions), _persistentMemory(NULL),
    _partitions((Partition *)TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory(
                numPartitions * sizeof(Partition), TR_Memory::ROMClass)),
-   _monitors(new (TR::Compiler->persistentGlobalMemory()) TR::Monitor *[numPartitions])
+   _monitors((TR::Monitor **) TR::Compiler->persistentGlobalMemory()->allocatePersistentMemory(
+               numPartitions * sizeof(TR::Monitor *), TR_Memory::ROMClass))
    {
    if (!_partitions || !_monitors)
       throw std::bad_alloc();
