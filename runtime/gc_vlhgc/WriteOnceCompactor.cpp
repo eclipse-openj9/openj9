@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1877,7 +1877,7 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 
 				regionPool->reset(MM_MemoryPool::forCompact);
 				if (currentFreeSize > regionPool->getMinimumFreeEntrySize()) {
-					regionPool->recycleHeapChunk(currentFreeBase, byteAfterFreeEntry);
+					regionPool->recycleHeapChunk(env, currentFreeBase, byteAfterFreeEntry);
 					regionPool->updateMemoryPoolStatistics(env, currentFreeSize, 1, currentFreeSize);
 				} else {
 					regionPool->abandonHeapChunk(currentFreeBase, byteAfterFreeEntry);

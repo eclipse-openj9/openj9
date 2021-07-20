@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,12 @@
 #include "j9cfg.h"
 #include "modronopt.h"
 
+#include "GCExtensions.hpp"
+#include "MemoryPool.hpp"
+#include "EnvironmentVLHGC.hpp"
+#include "HeapRegionDescriptorVLHGC.hpp"
+#include "HeapRegionManager.hpp"
+
 class MM_CopyScanCacheVLHGC;
 class MM_LightweightNonReentrantLock;
 
@@ -44,6 +50,7 @@ class MM_CopyForwardCompactGroup
 {
 /* data members */
 private:
+	MM_HeapRegionManager *_regionManager;  /**< Region manager for the heap instance */
 protected:
 public:
 	MM_CopyScanCacheVLHGC *_copyCache;  /**< The copy cache in this compact group for the owning thread */
@@ -116,6 +123,7 @@ public:
 		_markMapPGCBitMask = 0;
 		_markMapGMPSlotIndex = 0;
 		_markMapGMPBitMask = 0;
+		_regionManager = MM_GCExtensions::getExtensions(env)->heapRegionManager;
 	}
 
 /* function members */
@@ -128,10 +136,54 @@ public:
 		_TLHRemainderTop = NULL;
 	}
 
-	MMINLINE void setTLHRemainder(void *base, void *top)
+	MMINLINE void setTLHRemainder(void* base, void* top)
 	{
 		_TLHRemainderBase = base;
 		_TLHRemainderTop = top;
+		_TLHRemainderCount += 1;
+	}
+
+	MMINLINE uintptr_t getTLHRemainderSize()
+	{
+		return ((uintptr_t)_TLHRemainderTop - (uintptr_t)_TLHRemainderBase);
+	}
+
+	MMINLINE void discardTLHRemainder(MM_EnvironmentVLHGC* env)
+	{
+		if (NULL != _TLHRemainderBase) {
+			discardTLHRemainder(env, _TLHRemainderBase, _TLHRemainderTop);
+			resetTLHRemainder();
+		} else {
+			Assert_MM_true(NULL == _TLHRemainderTop);
+		}
+	}
+
+	MMINLINE void discardTLHRemainder(MM_EnvironmentVLHGC* env, void* base, void* top)
+	{
+		/* make it a walkable hole */
+		env->_cycleState->_activeSubSpace->abandonHeapChunk(base, top);
+		MM_HeapRegionDescriptorVLHGC *region = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(base);
+		discardHeapChunk(base, top, region);
+	}
+
+	MMINLINE void recycleTLHRemainder(MM_EnvironmentVLHGC* env)
+	{
+		if (NULL != _TLHRemainderBase) {
+			/* make it a walkable hole */
+			env->_cycleState->_activeSubSpace->abandonHeapChunk(_TLHRemainderBase, _TLHRemainderTop);
+			MM_HeapRegionDescriptorVLHGC *region = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(_TLHRemainderBase);
+			region->getMemoryPool()->recycleHeapChunk(env, _TLHRemainderBase, _TLHRemainderTop);
+			resetTLHRemainder();
+		} else {
+			Assert_MM_true(NULL == _TLHRemainderTop);
+		}
+	}
+
+	MMINLINE void discardHeapChunk(void* base, void* top, MM_HeapRegionDescriptorVLHGC* region)
+	{
+		uintptr_t discardSize = ((uintptr_t)top - (uintptr_t)base);
+		_discardedBytes += discardSize;
+		region->getMemoryPool()->incrementDarkMatterBytesAtomic(discardSize);
 	}
 };
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1507,14 +1507,11 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 		localStats->_copyDiscardBytesTotal += compactGroup->_discardedBytes;
 		localStats->_TLHRemainderCount += compactGroup->_TLHRemainderCount;
 
-		/* distribute the discard cost proportionately to Eden/non-Eden based on how many bytes were copied from each */
-		UDATA copyDiscardBytesEden = 
-			(totalCopiedBytes > 0) 
-				? (UDATA)((double)compactGroup->_discardedBytes * (double)compactGroup->_edenStats._copiedBytes / (double)totalCopiedBytes)
-				: 0;
-		localStats->_copyDiscardBytesEden += copyDiscardBytesEden;
-		Assert_MM_true(compactGroup->_discardedBytes >= copyDiscardBytesEden);
-		localStats->_copyDiscardBytesNonEden += compactGroup->_discardedBytes - copyDiscardBytesEden;
+		if (0 == MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroupNumber)) {
+			localStats->_copyDiscardBytesEden += compactGroup->_discardedBytes;
+		} else {
+			localStats->_copyDiscardBytesNonEden += compactGroup->_discardedBytes;
+		}
 		
 		/* use an atomic since other threads may be doing this at the same time */
 		if (0 != totalLiveBytes) {
@@ -1775,19 +1772,11 @@ MM_CopyForwardScheme::clearCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC
 		if ((discardSize < env->getExtensions()->tlhSurvivorDiscardThreshold) ||
 			(discardSize <= ((uintptr_t)compactGroupForMarkData->_TLHRemainderTop - (uintptr_t)compactGroupForMarkData->_TLHRemainderBase))) {
 			/* Abandon the current entry in the cache */
-			env->_cycleState->_activeSubSpace->abandonHeapChunk(cache->cacheAlloc, cache->cacheTop);
-			discardHeapChunk(compactGroupForMarkData, cache->cacheAlloc, cache->cacheTop);
+			compactGroupForMarkData->discardTLHRemainder(env, cache->cacheAlloc, cache->cacheTop);
 		} else {
-			if (NULL != compactGroupForMarkData->_TLHRemainderBase) {
-				/* Abandon the current entry in the cache */
-				env->_cycleState->_activeSubSpace->abandonHeapChunk(compactGroupForMarkData->_TLHRemainderBase, compactGroupForMarkData->_TLHRemainderTop);
-				discardHeapChunk(compactGroupForMarkData, compactGroupForMarkData->_TLHRemainderBase, compactGroupForMarkData->_TLHRemainderTop);
-				compactGroupForMarkData->resetTLHRemainder();
-			}
+			/* Abandon the current TLHRemainder if one exists */
+			compactGroupForMarkData->discardTLHRemainder(env);
 			remainderCreated = true;
-			compactGroupForMarkData->_TLHRemainderCount += 1;
-			Assert_MM_true(NULL == compactGroupForMarkData->_TLHRemainderBase);
-			Assert_MM_true(NULL == compactGroupForMarkData->_TLHRemainderTop);
 			compactGroupForMarkData->setTLHRemainder(cache->cacheAlloc, cache->cacheTop);
 		}
 	}
@@ -4020,8 +4009,6 @@ MM_CopyForwardScheme::clearCardTableForPartialCollect(MM_EnvironmentVLHGC *env)
 			if (region->_copyForwardData._evacuateSet && !region->_markData._noEvacuation) {
 				if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 					void *low = region->getLowAddress();
-//					void *bumpPointer = ((MM_MemoryPoolBumpPointer *)region->getMemoryPool())->getAllocationPointer();
-//					void *high = (void *)MM_Math::roundToCeiling(CARD_SIZE, (UDATA)bumpPointer);
 					void *high = region->getHighAddress();
 					Card *lowCard = cardTable->heapAddrToCardAddr(env, low);
 					Card *highCard = cardTable->heapAddrToCardAddr(env, high);
@@ -4056,7 +4043,8 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 					MM_MemoryPool *pool = region->getMemoryPool();
 					/* only add regions with pools which could possibly satisfy a TLH allocation */
 					if ((pool->getActualFreeMemorySize() >= pool->getMinimumFreeEntrySize()) &&
-						((pool->getActualFreeMemorySize()/pool->getActualFreeEntryCount()) >= _extensions->freeSizeThresholdForSurvivor)) {
+						((pool->getActualFreeMemorySize()/pool->getActualFreeEntryCount()) >= _extensions->freeSizeThresholdForSurvivor)
+						) {
 						Assert_MM_true(pool->getActualFreeMemorySize() < region->getSize());
 						Assert_MM_false(region->isSurvivorRegion());
 						insertFreeMemoryCandidate(env, &_reservedRegionList[compactGroup], region);
@@ -4196,7 +4184,7 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	/* flush ownable synchronizer object buffer after rebuild the ownableSynchronizerObjectList during main scan phase */
 	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
 
-	abandonTLHRemainder(env);
+	abandonTLHRemainders(env);
 
 	/* No matter what happens, always sum up the gc stats */
 	mergeGCStats(env);
@@ -5468,6 +5456,10 @@ MM_CopyForwardScheme::isCompressedSurvivor(void *heapAddr)
 	return isSurvivor;
 }
 
+/**
+ * compressedSurvivorTable bit to Card Table, it is for identifying if live object is in survivor memory in current PGC
+ *  setCompressedSurvivorCards() are called for requiring free memory from region and preparing preserved TLHRemainders.
+ */
 MMINLINE void
 MM_CopyForwardScheme::setCompressedSurvivorCards(MM_EnvironmentVLHGC *env, void *startHeapAddress, void *endHeapAddress)
 {
@@ -5531,42 +5523,19 @@ MM_CopyForwardScheme::cleanCompressedSurvivorCardTable(MM_EnvironmentVLHGC *env)
 }
 
 void
-MM_CopyForwardScheme::abandonTLHRemainder(MM_EnvironmentVLHGC *env, bool preserveRemainders)
+MM_CopyForwardScheme::abandonTLHRemainders(MM_EnvironmentVLHGC *env)
 {
-	for (uintptr_t compactGroup = 0; compactGroup < _compactGroupMaxCount; compactGroup++) {
-		MM_CopyForwardCompactGroup *compactGroupForMarkData = &(env->_copyForwardCompactGroups[compactGroup]);
-		if (NULL != compactGroupForMarkData->_TLHRemainderBase) {
-			Assert_MM_true(NULL != compactGroupForMarkData->_TLHRemainderTop);
-			env->_cycleState->_activeSubSpace->abandonHeapChunk(compactGroupForMarkData->_TLHRemainderBase, compactGroupForMarkData->_TLHRemainderTop);
-			if (!preserveRemainders) {
-				/* discard the remainder for nursery regions */
-				discardHeapChunk(compactGroupForMarkData, compactGroupForMarkData->_TLHRemainderBase, compactGroupForMarkData->_TLHRemainderTop);
-				compactGroupForMarkData->resetTLHRemainder();
+	for (UDATA compactGroup = 0; compactGroup < _compactGroupMaxCount; compactGroup++) {
+		MM_CopyForwardCompactGroup *copyForwardCompactGroup = &env->_copyForwardCompactGroups[compactGroup];
+		if (_extensions->recycleRemainders) {
+			if ((MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) >= _extensions->tarokNurseryMaxAge._valueSpecified) &&
+				(copyForwardCompactGroup->getTLHRemainderSize() >= _extensions->minimumFreeSizeForSurvivor)) {
+				copyForwardCompactGroup->recycleTLHRemainder(env);
+			} else {
+				copyForwardCompactGroup->discardTLHRemainder(env);
 			}
 		} else {
-			Assert_MM_true(NULL == compactGroupForMarkData->_TLHRemainderTop);
+			copyForwardCompactGroup->discardTLHRemainder(env);
 		}
 	}
-}
-
-void
-MM_CopyForwardScheme::resetAllTLHRemainders(MM_EnvironmentVLHGC *env)
-{
-	MM_CopyForwardCompactGroup *copyForwardCompactGroups = NULL;
-	for (uintptr_t id = 0; id < _extensions->gcThreadCount; id++) {
-		copyForwardCompactGroups = &_compactGroupBlock[id * _compactGroupMaxCount];
-
-		for (uintptr_t compactGroup = 0; compactGroup < _compactGroupMaxCount; compactGroup++) {
-			copyForwardCompactGroups[compactGroup].resetTLHRemainder();
-		}
-	}
-}
-
-void
-MM_CopyForwardScheme::discardHeapChunk(MM_CopyForwardCompactGroup *compactGroupForMarkData, void *base, void *top)
-{
-	uintptr_t discardSize = ((uintptr_t)top - (uintptr_t)base);
-	compactGroupForMarkData->_discardedBytes += discardSize;
-	MM_HeapRegionDescriptorVLHGC *region = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(base);
-	region->getMemoryPool()->incrementDarkMatterBytes(discardSize);
 }
