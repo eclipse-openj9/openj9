@@ -416,6 +416,8 @@ public:
 		return _schedulingDelegate.getCurrentEdenSizeInBytes(env);
 	}
 
+	MMINLINE MM_SchedulingDelegate* getSchedulingDelegate() { return &_schedulingDelegate; };
+
 	MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager);
 
 	friend class MM_MainGCThread;

@@ -1877,7 +1877,7 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 
 				regionPool->reset(MM_MemoryPool::forCompact);
 				if (currentFreeSize > regionPool->getMinimumFreeEntrySize()) {
-					regionPool->recycleHeapChunk(currentFreeBase, byteAfterFreeEntry);
+					regionPool->recycleHeapChunk(env, currentFreeBase, byteAfterFreeEntry);
 					regionPool->updateMemoryPoolStatistics(env, currentFreeSize, 1, currentFreeSize);
 				} else {
 					regionPool->abandonHeapChunk(currentFreeBase, byteAfterFreeEntry);

@@ -1123,11 +1123,8 @@ public:
 		return false;
 	}
 
-	void abandonTLHRemainder(MM_EnvironmentVLHGC *env, bool preserveRemainders = false);
+	void abandonTLHRemainders(MM_EnvironmentVLHGC *env);
 
-	/* after Global GC or before first PGC after GMP, we need to reset all of TLHRemainders */
-	void resetAllTLHRemainders(MM_EnvironmentVLHGC *env);
-	MMINLINE void discardHeapChunk(MM_CopyForwardCompactGroup *compactGroupForMarkData, void *base, void *top);
 	friend class MM_CopyForwardGMPCardCleaner;
 	friend class MM_CopyForwardNoGMPCardCleaner;
 	friend class MM_CopyForwardSchemeTask;

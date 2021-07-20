@@ -44,6 +44,7 @@
 #include "EnvironmentVLHGC.hpp"
 #include "GlobalAllocationManagerTarok.hpp"
 #include "InterRegionRememberedSet.hpp"
+#include "IncrementalGenerationalGC.hpp"
 #include "MemorySubSpace.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
@@ -238,6 +239,9 @@ MM_ReclaimDelegate::tagRegionsBeforeCompactWithWorkGoal(MM_EnvironmentVLHGC *env
 			} else {
 				Assert_MM_true(0 == region->_criticalRegionsInUse);
 				region->_compactData._shouldCompact = true;
+
+				region->_copyForwardData._lastGcIDForReclaim = MM_GCExtensions::getExtensions(env)->globalVLHGCStats.gcCount;
+
 			}
 			Assert_MM_true(region->_defragmentationTarget);
 			/* Collected regions are no longer targets for defragmentation until next GMP */
@@ -481,7 +485,7 @@ MM_ReclaimDelegate::runGlobalSweepBeforePGC(MM_EnvironmentVLHGC *env, MM_Allocat
 }
 
 void 
-MM_ReclaimDelegate::untagRegionsAfterSweep()
+MM_ReclaimDelegate::untagRegionsAfterSweep(MM_EnvironmentVLHGC *env)
 {
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
@@ -490,6 +494,8 @@ MM_ReclaimDelegate::untagRegionsAfterSweep()
 			/* the region may still be in use or it may have been recycled during sweep */
 			Assert_MM_true(region->hasValidMarkMap() || region->isFreeOrIdle());
 			region->_sweepData._alreadySwept = true;
+
+			region->_copyForwardData._lastGcIDForReclaim = MM_GCExtensions::getExtensions(env)->globalVLHGCStats.gcCount;
 		}
 	}
 }
@@ -526,7 +532,7 @@ MM_ReclaimDelegate::performAtomicSweep(MM_EnvironmentVLHGC *env, MM_AllocateDesc
 
 	MM_CompactGroupPersistentStats::updateStatsAfterSweep(env, persistentStats);
 
-	untagRegionsAfterSweep();
+	untagRegionsAfterSweep(env);
 }
 
 void
@@ -717,6 +723,7 @@ MM_ReclaimDelegate::runReclaimCompleteSweep(MM_EnvironmentVLHGC *env, MM_Allocat
 	UDATA freeBefore = globalAllocationManager->getFreeRegionCount();
 	Trc_MM_ReclaimDelegate_runReclaimComplete_freeBeforeReclaim(env->getLanguageVMThread(), freeBefore);
 	performAtomicSweep(env, allocDescription, activeSubSpace, gcCode);
+
 	UDATA freeAfterSweep = globalAllocationManager->getFreeRegionCount();
 	Trc_MM_ReclaimDelegate_runReclaimComplete_freeAfterSweep(env->getLanguageVMThread(), freeAfterSweep);
 }

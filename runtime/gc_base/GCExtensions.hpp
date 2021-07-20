@@ -193,6 +193,11 @@ public:
 	double initialRAMPercent; /**< Value of -XX:InitialRAMPercentage specified by the user */
 	UDATA minimumFreeSizeForSurvivor; /**< minimum free size can be reused by collector as survivor, for balanced GC only */
 	UDATA freeSizeThresholdForSurvivor; /**< if average freeSize(freeSize/freeCount) of the region is smaller than the Threshold, the region would not be reused by collector as survivor, for balanced GC only */
+	bool  preserveRemainders;	/**< true if need to preserve TLHRemainders at the end of PGC for the following PGCs, for balanced GC only */
+	bool  recycleRemainders;
+
+	UDATA samplingCount;
+
 protected:
 private:
 protected:
@@ -325,6 +330,10 @@ public:
 		, initialRAMPercent(0.0) /* this would get overwritten by user specified value */
 		, minimumFreeSizeForSurvivor(DEFAULT_SURVIVOR_MINIMUM_FREESIZE)
 		, freeSizeThresholdForSurvivor(DEFAULT_SURVIVOR_THRESHOLD)
+		, preserveRemainders(false)
+		, recycleRemainders(true)
+		, samplingCount(0)
+
 	{
 		_typeId = __FUNCTION__;
 	}

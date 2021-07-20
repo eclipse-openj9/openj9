@@ -1484,6 +1484,26 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "noPreserveRemainders")) {
+
+			extensions->preserveRemainders = false;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "preserveRemainders")) {
+
+			extensions->preserveRemainders = true;
+			extensions->recycleRemainders = false;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "recycleRemainders")) {
+
+			extensions->recycleRemainders = true;
+			extensions->preserveRemainders = false;
+			continue;
+		}
+
 		if (try_scan(&scan_start, "stringDedupPolicy=")) {
 			if (try_scan(&scan_start, "disabled")) {
 				extensions->stringDedupPolicy = MM_GCExtensions::J9_JIT_STRING_DEDUP_POLICY_DISABLED;
