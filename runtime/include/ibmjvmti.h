@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,7 +165,8 @@ enum {
 
 enum {
 	COM_IBM_STACK_FRAME_EXTENDED_NOT_JITTED = 0,
-	COM_IBM_STACK_FRAME_EXTENDED_JITTED     = 1
+	COM_IBM_STACK_FRAME_EXTENDED_JITTED     = 1,
+	COM_IBM_STACK_FRAME_EXTENDED_INLINED    = 2
 };
 
 /**
@@ -174,7 +175,8 @@ enum {
 enum {
 	COM_IBM_GET_STACK_TRACE_PRUNE_UNREPORTED_METHODS	= 1,	/** Prunes methods for which method enter was not reported */
 	COM_IBM_GET_STACK_TRACE_ENTRY_LOCAL_STORAGE			= 2,	/** Returns ELS pointers */
-	COM_IBM_GET_STACK_TRACE_EXTRA_FRAME_INFO			= 4		/** Returns jitted vs non-jitted data */
+	COM_IBM_GET_STACK_TRACE_EXTRA_FRAME_INFO			= 4,	/** Returns jitted vs non-jitted data */
+	COM_IBM_GET_STACK_TRACE_MARK_INLINED_FRAMES			= 8		/** Distinguish between jitted (root) and inlined */
 };
 
 

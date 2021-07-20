@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,8 @@ typedef enum {
 typedef enum {
 	J9JVMTI_STACK_TRACE_PRUNE_UNREPORTED_METHODS	= COM_IBM_GET_STACK_TRACE_PRUNE_UNREPORTED_METHODS,
 	J9JVMTI_STACK_TRACE_ENTRY_LOCAL_STORAGE			= COM_IBM_GET_STACK_TRACE_ENTRY_LOCAL_STORAGE,
-	J9JVMTI_STACK_TRACE_EXTRA_FRAME_INFO			= COM_IBM_GET_STACK_TRACE_EXTRA_FRAME_INFO
+	J9JVMTI_STACK_TRACE_EXTRA_FRAME_INFO			= COM_IBM_GET_STACK_TRACE_EXTRA_FRAME_INFO,
+	J9JVMTI_STACK_TRACE_MARK_INLINED_FRAMES			= COM_IBM_GET_STACK_TRACE_MARK_INLINED_FRAMES
 } J9JVMTIStackTraceType;
 
 #define J9JVMTI_LOWEST_EXTENSION_EVENT (J9JVMTI_BEFORE_FIRST_EXTENSION_EVENT + 1)
