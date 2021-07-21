@@ -63,13 +63,38 @@ typedef struct {
 
 extern J9JavaVM *BFUjavaVM;
 
+#define TRIGGER_SEGV() *(UDATA*)UDATA_MAX = UDATA_MAX
+
 static UDATA
 asyncFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 {
 	ASGCT_CallFrame *frame = (ASGCT_CallFrame*)walkState->userData1;
 	J9Method *method = walkState->method;
-	J9JNIMethodID *methodID = currentThread->javaVM->internalVMFunctions->getJNIMethodID(currentThread, method);
-	Assert_SC_notNull(methodID);
+	J9JavaVM * vm = currentThread->javaVM;
+	J9Class * declaringClass = J9_CLASS_FROM_METHOD(method);
+	UDATA methodIndex = getMethodIndexUnchecked(method);
+	/* If any of the following are true, trigger a SEGV which will
+	 * be caught in the caller.
+	 * 
+	 * - method index is invalid (i.e. method was invalid)
+	 * - method IDs for the class not pre-initialized
+	 * - method ID for the method not pre-initialized
+	 *
+	 * Only completely valid stack walks will result in any samples
+	 * being returned. This is better than simply ignoring bad methods
+	 * and continuing, which would result in inaccurate traces.
+	 */
+	if (UDATA_MAX == methodIndex) {
+		TRIGGER_SEGV();
+	}
+	void ** jniIDs = declaringClass->jniIDs;
+	if (NULL == jniIDs) {
+		TRIGGER_SEGV();
+	}
+	J9JNIMethodID * methodID = (J9JNIMethodID*)(jniIDs[methodIndex]);
+	if (NULL == methodID) {
+		TRIGGER_SEGV();
+	}
 	frame->method_id = (jmethodID)methodID;
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 	if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
@@ -93,6 +118,10 @@ typedef struct {
 	void *ucontext;
 	J9VMThread *currentThread;
 	jint num_frames;
+	U_8 *pc;
+	UDATA *sp;
+	UDATA *arg0EA;
+	J9Method *literals;
 } ASGCT_parms;
 
 static UDATA
@@ -102,6 +131,11 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 	J9VMThread *currentThread = BFUjavaVM->internalVMFunctions->currentVMThread(BFUjavaVM);
 	if (NULL != currentThread) {
 		parms->currentThread = currentThread;
+		/* Back up the J9VMThread root values for restoration in the caller */
+		parms->pc = currentThread->pc;
+		parms->sp = currentThread->sp;
+		parms->arg0EA = currentThread->arg0EA;
+		parms->literals = currentThread->literals;
 		parms->num_frames = ticks_not_walkable_Java;
 		J9JITConfig *jitConfig = BFUjavaVM->jitConfig;
 		if (NULL != jitConfig) {
@@ -112,19 +146,37 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 				J9JITExceptionTable *metaData = jitConfig->jitGetExceptionTableFromPC(currentThread, rip);
 				if (NULL != metaData) {
 					greg_t rsp = regs[REG_RSP];
-					jitPushResolveFrame(currentThread, (UDATA*)rsp, (U_8*)rip);
+					/* Build a JIT resolve frame on the C stack to avoid writing to the java
+					 * stack in the signal handler. Update the J9VMThread roots to point to
+					 * the resolve frame (will be restored in the caller).
+					 */
+					J9SFJITResolveFrame resolveFrame = {
+						NULL, /* savedJITException */
+						J9_SSF_JIT_RESOLVE, /* specialFrameFlags */
+						0, /* parmCount */
+						(U_8*)rip, /* returnAddress */
+						(UDATA*)(((U_8 *)rsp) + J9SF_A0_INVISIBLE_TAG) /* taggedRegularReturnSP */
+					};
+					currentThread->pc = (U_8*)J9SF_FRAME_TYPE_JIT_RESOLVE;
+					currentThread->arg0EA = (UDATA*)&(resolveFrame.taggedRegularReturnSP);
+					currentThread->literals = NULL;
+					currentThread->sp = (UDATA*)&resolveFrame;
 				}
 			}
 		}
-		J9StackWalkState walkState;
+		/* Disable the JIT metadata cache. The cache may be in an inconsistent state, and may
+		 * need to allocate memory (which is undesireable in a signal handler).
+		 */
+		currentThread->jitArtifactSearchCache = (void*)((UDATA)currentThread->jitArtifactSearchCache | J9_STACKWALK_NO_JIT_CACHE);
+		/* Disable trace and assertions. The current thread may be in the process of updating the trace
+		 * buffers when it was interrupted. Assertions during ASGCT are also undesireable, better to let
+		 * the thread continue on to crash, which is handled.
+		 */
+		currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE;
+		J9StackWalkState walkState = {0};
 		walkState.walkThread = currentThread;
 		walkState.skipCount = 0;
 		walkState.maxFrames = parms->depth;
-		/* JIT cache may allocate, which we don't want inside a signal handler,
-		 * Flag is cleared in the caller (so both the normal and exception cases
-		 * clear it).
-		 */
-		currentThread->jitArtifactSearchCache = (void*)((UDATA)currentThread->jitArtifactSearchCache | J9_STACKWALK_NO_JIT_CACHE);
 		walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY
 			| J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET | J9_STACKWALK_COUNT_SPECIFIED
 			| J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_NO_ERROR_REPORT;
@@ -147,7 +199,7 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void *ucontext)
 #if defined(ASGCT_SUPPORTED)
 	if (NULL != BFUjavaVM) {
 		PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
-		ASGCT_parms parms = { trace, depth, ucontext, currentThread, num_frames };
+		ASGCT_parms parms = { trace, depth, ucontext, currentThread, num_frames, NULL, NULL, NULL, NULL };
 		UDATA result = 0;
 		j9sig_protect(
 				protectedASGCT, (void*)&parms, 
@@ -157,7 +209,13 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void *ucontext)
 		num_frames = parms.num_frames;
 		currentThread = parms.currentThread;
 		if (NULL != currentThread) {
+			/* Restore any modified J9VMThread fields */
 			currentThread->jitArtifactSearchCache = (void*)((UDATA)currentThread->jitArtifactSearchCache & ~(UDATA)J9_STACKWALK_NO_JIT_CACHE);
+			currentThread->privateFlags2 &= ~(UDATA)J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE;
+			currentThread->pc = parms.pc;
+			currentThread->sp = parms.sp;
+			currentThread->arg0EA = parms.arg0EA;
+			currentThread->literals = parms.literals;
 		}
 	}
 #endif /* ASGCT_SUPPORTED */
