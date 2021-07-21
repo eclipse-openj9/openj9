@@ -86,8 +86,12 @@ public:
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass) override;
    virtual bool classHasBeenReplaced(TR_OpaqueClassBlock *) override;
    virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override;
+   virtual bool isGetImplInliningSupported() override;
    virtual bool compiledAsDLTBefore(TR_ResolvedMethod *) override;
+   virtual bool tlhHasBeenCleared() override;
+   virtual uint32_t getStaticObjectFlags() override;
    virtual uintptr_t getOverflowSafeAllocSize() override;
+   virtual void *getReferenceArrayCopyHelperAddress() override;
    virtual bool isThunkArchetype(J9Method * method) override;
    virtual int32_t printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method) override;
    virtual bool isClassInitialized(TR_OpaqueClassBlock * clazz) override;

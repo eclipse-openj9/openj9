@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1307,8 +1307,14 @@ javaTrace(void *env, UtModuleInfo *modInfo, U_32 traceId, const char *spec, ...)
 	if( NULL == vmThr ) {
 		vmThr = globalVM->internalVMFunctions->currentVMThread(globalVM);
 	}
+	if (NULL != vmThr) {
+		if (J9_ARE_ANY_BITS_SET(vmThr->privateFlags2, J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE)) {
+			goto done;
+		}
+	}
 	utThr = UT_THREAD_FROM_VM_THREAD(vmThr);
 	doTracePoint( utThr, modInfo, traceId, spec, var);
+done:
 	va_end(var);
 }
 
