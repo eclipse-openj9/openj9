@@ -630,6 +630,14 @@ TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
    }
 
 bool
+TR_J9ServerVM::isGetImplInliningSupported()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_isGetImplInliningSupported;
+   }
+
+bool
 TR_J9ServerVM::compiledAsDLTBefore(TR_ResolvedMethod *method)
    {
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
@@ -648,6 +656,34 @@ TR_J9ServerVM::getOverflowSafeAllocSize()
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
    return static_cast<uintptr_t>(vmInfo->_overflowSafeAllocSize);
+   }
+
+void*
+TR_J9ServerVM::getReferenceArrayCopyHelperAddress()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_referenceArrayCopyHelperAddress;
+   }
+
+bool
+TR_J9ServerVM::tlhHasBeenCleared()
+   {
+#if defined(J9VM_GC_BATCH_CLEAR_TLH)
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_isAllocateZeroedTLHPagesEnabled;
+#else
+   return false;
+#endif
+   }
+
+uint32_t
+TR_J9ServerVM::getStaticObjectFlags()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_staticObjectAllocateFlags;
    }
 
 bool
