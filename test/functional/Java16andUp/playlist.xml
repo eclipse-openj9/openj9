@@ -128,6 +128,12 @@
 	</test>
 	<test>
 		<testCaseName>CloseScope0Tests</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/13195</comment>
+				<version>17</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>--enable-preview</variation>
 		</variations>
