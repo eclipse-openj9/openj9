@@ -54,7 +54,8 @@ ifelse(eval(JAVA_SPEC_VERSION >= 15), 1, [#define JVMTI_VERSION_15 0x300f0000], 
 #define JVMTI_1_2_SPEC_VERSION           (JVMTI_VERSION_1_2 + 1)	/* Spec version is 1.2.1 */
 #define JVMTI_1_2_3_SPEC_VERSION         (JVMTI_VERSION_1_2 + 3)  /* Spec version is 1.2.3 */
 
-ifelse(eval(JAVA_SPEC_VERSION >= 15), 1, [#define JVMTI_VERSION JVMTI_VERSION_15], [
+dnl /* JVMTI_VERSION = 0x30000000 + majorversion * 0x10000 + minorversion (always 0) * 0x100 */
+ifelse(eval(JAVA_SPEC_VERSION >= 15), 1, [[#]define JVMTI_VERSION (0x30000000 + (JAVA_SPEC_VERSION * 0x10000))], [
 ifelse(eval(JAVA_SPEC_VERSION >= 11), 1, [#define JVMTI_VERSION JVMTI_VERSION_11], [
 #define JVMTI_VERSION JVMTI_1_2_SPEC_VERSION])])
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1579,20 +1579,20 @@ jvmtiHookGetEnv(J9HookInterface** hook, UDATA eventNum, void* eventData, void* u
 
 	Trc_JVMTI_jvmtiHookGetEnv_Entry();
 
-	if (data->rc == JNI_EVERSION) {
-		jint version = data->version & ~JVMTI_VERSION_MASK_MICRO;
+	if (JNI_EVERSION == data->rc) {
+		jint version = (data->version & ~JVMTI_VERSION_MASK_MICRO);
+		jboolean isValidVersion = ((JVMTI_VERSION_1_0 == version) || (JVMTI_VERSION_1_1 == version) || (JVMTI_VERSION_1_2 == version)); 
 
-		if ((JVMTI_VERSION_1_0 == version)
-			|| (JVMTI_VERSION_1_1 == version)
-			|| (JVMTI_VERSION_1_2 == version)
 #if JAVA_SPEC_VERSION > 8
-			|| (JVMTI_VERSION_9 == version)
-			|| (JVMTI_VERSION_11 == version)
-#if JAVA_SPEC_VERSION >= 15
-			|| (JVMTI_VERSION_15 == version)
-#endif /* JAVA_SPEC_VERSION >= 15 */
+		if (!isValidVersion) {
+			/* JVMTI 9+ with minor/micro versions are not accepted, this could change if such support is added explicitly. */
+			jint majorVersion = ((version & JVMTI_VERSION_MASK_MAJOR) >> JVMTI_VERSION_SHIFT_MAJOR);
+			isValidVersion = ((majorVersion > 8)
+				&& (majorVersion <= JAVA_SPEC_VERSION)
+				&& (JVMTI_VERSION_INTERFACE_JVMTI == (version & ~JVMTI_VERSION_MASK_MAJOR)));
+		}
 #endif /* JAVA_SPEC_VERSION > 8 */
-		) {
+		if (isValidVersion) {
 			J9JVMTIData * jvmtiData = userData;
 
 			if ((NULL != jvmtiData) && (JVMTI_PHASE_DEAD != jvmtiData->phase)) {

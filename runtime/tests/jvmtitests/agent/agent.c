@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ Agent_Prepare(JavaVM * vm, char *phase, char * options, void * reserved)
 		rc = JNI_ERR;
 		goto done;
 	}
-	tprintf(env, 100, "JVMTI version: %p\n", version, getVersionName(env, version));
+	tprintf(env, 100, "JVMTI version: %x\n", version);
 	env->jvmtiVersion = version;
 
 	/* Take the options and run the testcase */
