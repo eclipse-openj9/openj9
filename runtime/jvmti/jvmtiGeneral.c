@@ -185,13 +185,11 @@ jvmtiGetVersionNumber(jvmtiEnv* env,
 
 done:
 	if (NULL != version_ptr) {
-#if JAVA_SPEC_VERSION >= 15
-		*version_ptr = JVMTI_VERSION_15;
-#elif JAVA_SPEC_VERSION >= 11 /* JAVA_SPEC_VERSION >= 15 */
-		*version_ptr = JVMTI_VERSION_11;
-#else /* JAVA_SPEC_VERSION >= 15 */
+#if JAVA_SPEC_VERSION >= 11
+		*version_ptr = JVMTI_VERSION;
+#else /* JAVA_SPEC_VERSION >= 11 */
 		*version_ptr = JVMTI_1_2_3_SPEC_VERSION;
-#endif /* JAVA_SPEC_VERSION >= 15 */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	}
 	TRACE_JVMTI_RETURN(jvmtiGetVersionNumber);
 }
