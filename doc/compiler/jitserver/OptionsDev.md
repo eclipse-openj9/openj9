@@ -20,10 +20,17 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-# JITServer options handling
+# JITServer Options Handling
 
-Options parsing happens mostly in `control/J9Options.cpp`. Parsing of the -XX:JITServer options happens mostly in `fePostProcess` and a few helper functions. If you want to add a suboption that should probably go in `JITServerParseCommonOptions`. The values of most options are stored in the `PersistentInfo` after they are parsed.
+JITServer introduces new command line options. Most of them configure JITServer parameters, such as network timeout, or server's IP address. Such options begin with `-XX:JITServer*` and are processed in `JITServerParseCommonOptions()`. The values of most options are stored in the `PersistentInfo` after they are parsed.
 
-Two functions `packOptions` and `unpackOptions` are used for sending options specified at the client to the server, so that it is not necessary to specify the same options on both the client and server. However, at the moment there is still some code that checks for command line options directly instead of going through the options for the current compilation. So for those options you must specify them at both the client and the server. You usually don't need to worry about this, but if some option doesn't seem to be working you may want to try adding it to the server as well. There are also a few options which are not sent because they are uncommon and difficult to serialize. Such options are set to `NULL` within `packOptions`.
+Another important function is `setupJITServerOptions()`. Executed during VM startup, it disables unsupported optimizations and modifies some heuristics.
 
-In `J9::Options::fePostProcessJIT` there is some code that sets other options depending on whether we are in client or server mode. Most of these are workarounds or heuristics.
+## Client-side options
+
+A client must send its command line options to the server. `-Xjit` options are used to enable/disable optimizations/tracing options, while other options specify compilation-relevant VM parameters. For instance, `-Xgc` specifies a Garbage Collection policy. Despite the server not performing any GC, not knowing the right policy can affect functional correctness of the compiled code.
+
+Two functions - `J9::Options::packOptions` and `J9::Options::unpackOptions` are used for serializing and deserializing client options, respectively. All relevant options must be sent to the server, but if some option doesn't seem to be working you may want to try adding it to the server as well. If it starts working, then the above functions must be modified to handle the missing option. There are also a few options which are not sent because they are uncommon and difficult to serialize. Such options are set to `NULL` within `packOptions`.
+
+Serialized options are sent to the server with each compilation request.
+This is done for every compilation, because option subsets may enable or disable options for a subset of methods.

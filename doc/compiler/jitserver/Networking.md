@@ -22,30 +22,39 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # Networking
 
-The implementation resides within the `runtime/compiler/net` directory.
-There is a base class `CommunicationStream`, which is specialized for both the client and server in `J9ClientStream` and `J9ServerStream`.
+This document describes the networking component of JITServer that enables client and server to exchange messages.
 
-Encryption via TLS (OpenSSL) is optionally supported. See [Getting started with JITServer](Usage.md) for encryption setup instructions.
+The implementation resides within the `runtime/compiler/net` directory.
+There is a listener thread `TR_Listener` and a base class `CommunicationStream`, which is specialized for both the client and server in `ClientStream` and `ServerStream`.
+
+Encryption via TLS (OpenSSL) is optionally supported. See ["Getting started with JITServer"](Usage.md) for encryption setup instructions.
 
 If a network error occurs, `JITServer::StreamFailure` is thrown.
 
+## `TR_Listener`
+
+Implementation of a server's "listener" thread that waits for network connection requests.
+Server creates this thread and then invokes `TR_Listener::serveRemoteCompilationRequests`,
+which will open a TCP socket and `poll` it for new connection requests. Once such request is detected, a new `ServerStream` is initialized, establishing a communication stream between client's and server's compilation threads. The stream is then assigned to a compilation request entry that gets added to the compilation queue.
+
+If encryption is required, the listener thread will also setup the necessary context for the server side.
+
 ## `CommunicationStream`
 
-Implements basic functionality such as stream initialization (with/without TLS), reading/writing objects to streams, and stream cleanup.
-Uses TCP sockets for network communication.
+The base stream class that implements functionality for reading/writing JITServer messages to/from an open file descriptor. It also configures common stream parameters and cleans up. `CommunicationStream` uses `Message` and `MessageBuffer` classes to read/write messages. To learn more about those, read ["JITServer Messaging Protocol"](Messaging.md).
 
-## `J9ClientStream`
+## `ClientStream`
 
-One instance per compilation thread. Typically, this is only interacted with through the function `handleServerMessage` in `JITClientCompilationThread.cpp`. An instance is created for a new compilation inside `remoteCompile`, and the `buildCompileRequest` method is then called on it to begin the compilation.
+Extends `CommunicationStream` to implement an interface for clients to communicate with a server. One instance per active client compilation thread.
 
-## `J9ServerStream`
+Typically, this is only interacted with through the function `handleServerMessage` in `JITClientCompilationThread.cpp`. An instance is created for a new compilation inside `remoteCompile`, and the `buildCompileRequest` method is then called on it to begin the compilation.
 
-There is one instance per compilation thread. Instances are created by `ServerStream::serveRemoteCompilationRequests`, a method which loops forever waiting for compilation requests and adding them to the compilation queue using the method `J9CompileDispatcher::compile`.
+If encryption is required, client stream will initialize necessary context and open an SSL connection, instead of a regular one.
+
+## `ServerStream`
+
+Extends `CommunicationStream` to implement an interface for server to communicate with a client. There is usually one instance of this object per active server compilation thread, however streams are not permanently attached to any particular thread. Instead, they are assigned to compilation entries that can be retrieved from the compilation queue by any thread.
 
 Accessible on a compilation thread via `TR::CompilationInfo::getStream()`, but beware that a thread local read is performed, so try to avoid calling it in particularly hot code.
 
-Also stores the client ID, accessible via `J9ServerStream::getClientId`.
-
-## TODO
-
-Add documentation describing implementation of `Message` and `MessageBuffer` classes.
+Also stores the client ID, accessible via `ServerStream::getClientId()`.
