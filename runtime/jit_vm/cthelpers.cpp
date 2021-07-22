@@ -36,9 +36,11 @@ J9_DECLARE_CONSTANT_UTF8(ojdk_intrinsicCandidate, "Ljdk/internal/vm/annotation/I
 #if JAVA_SPEC_VERSION >= 11
 J9_DECLARE_CONSTANT_UTF8(ojdk_stable, "Ljdk/internal/vm/annotation/Stable;");
 J9_DECLARE_CONSTANT_UTF8(ojdk_forceInline, "Ljdk/internal/vm/annotation/ForceInline;");
+J9_DECLARE_CONSTANT_UTF8(ojdk_dontInline, "Ljdk/internal/vm/annotation/DontInline;");
 #else /* JAVA_SPEC_VERSION >= 11 */
 J9_DECLARE_CONSTANT_UTF8(ojdk_stable, "Ljava/lang/invoke/Stable;");
 J9_DECLARE_CONSTANT_UTF8(ojdk_forceInline, "Ljava/lang/invoke/ForceInline;");
+J9_DECLARE_CONSTANT_UTF8(ojdk_dontInline, "Ljava/lang/invoke/DontInline;");
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 void*
@@ -218,6 +220,19 @@ BOOLEAN
 jitIsMethodTaggedWithForceInline(J9VMThread *currentThread, J9Method *method)
 {
 	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_forceInline);
+}
+
+/**
+ * Queries if the method contains the @DontInline annotation
+ *
+ * @param currentThread currentThread
+ * @param method the queried method
+ * @return true if method contains @DontInline, false otherwise
+ */
+BOOLEAN
+jitIsMethodTaggedWithDontInline(J9VMThread *currentThread, J9Method *method)
+{
+	return FALSE != methodContainsRuntimeAnnotation(currentThread, method, (J9UTF8 *)&ojdk_dontInline);
 }
 
 /**

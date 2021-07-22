@@ -40,6 +40,7 @@ import java.util.Arrays;
 import jdk.internal.reflect.ConstantPool;
 import jdk.internal.vm.annotation.Stable;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.DontInline;
 
 @Test(groups = { "level.sanity" })
 public class ContainsRuntimeAnnotationTest {
@@ -90,6 +91,9 @@ public class ContainsRuntimeAnnotationTest {
 
 	@ForceInline
 	final static void fsMethod() {}
+
+	@DontInline
+	int dontInlineMethod(String param) { return 0; }
 
 	public ContainsRuntimeAnnotationTest() throws Throwable {
 		String version = System.getProperty("java.vm.specification.version");
@@ -157,7 +161,7 @@ public class ContainsRuntimeAnnotationTest {
 
 	@Test
 	public void test_field_in_external_class() throws Exception {
-		boolean annotationFound = false;
+		boolean annotationFound;
 		int cpIndex;
 		final String stableAnnotation = "Ljdk/internal/vm/annotation/Stable;";
 
@@ -187,7 +191,7 @@ public class ContainsRuntimeAnnotationTest {
 
 	@Test
 	public void test_static_field_in_external_class() throws Exception {
-		boolean annotationFound = false;
+		boolean annotationFound;
 		int cpIndex;
 		final String stableAnnotation = "Ljdk/internal/vm/annotation/Stable;";
 
@@ -231,7 +235,7 @@ public class ContainsRuntimeAnnotationTest {
 
 	@Test
 	public void test_method_annotation() throws Exception {
-		boolean annotationFound = false;
+		boolean annotationFound;
 		Method m = ContainsRuntimeAnnotationTest.class.getDeclaredMethod("myMethod");
 		Method m2 = ContainsRuntimeAnnotationTest.class.getDeclaredMethod("myMethod2");
 		final String mAnnotation = "Lorg/openj9/test/annotation/MyMethodAnnotation;";
@@ -245,7 +249,7 @@ public class ContainsRuntimeAnnotationTest {
 
 	@Test
 	public void test_finalStaticMethod_annotation() throws Exception {
-		boolean annotationFound = false;
+		boolean annotationFound;
 		Method m = ContainsRuntimeAnnotationTest.class.getDeclaredMethod("fsMethod");
 		final String mAnnotation = "Ljdk/internal/vm/annotation/ForceInline;";
 
@@ -255,7 +259,7 @@ public class ContainsRuntimeAnnotationTest {
 
 	@Test
 	public void test_overridden_methods() throws Exception {
-		boolean annotationFound = false;
+		boolean annotationFound;
 		Method b1 = B.class.getDeclaredMethod("method1");
 		Method b2 = B.class.getDeclaredMethod("method2");
 		Method i3 = I.class.getDeclaredMethod("method3");
@@ -278,6 +282,16 @@ public class ContainsRuntimeAnnotationTest {
 		Assert.assertFalse(annotationFound, "I.method4 has MyMethodAnnotation annotation");
 		annotationFound = methodContainsRuntimeAnnotation(i3, mAnnotation);
 		Assert.assertTrue(annotationFound, "I.method3 doesn't have MyMethodAnnotation annotation");
+	}
+
+	@Test
+	public void test_dont_inline() throws Exception {
+		boolean annotationFound;
+		Method m = ContainsRuntimeAnnotationTest.class.getDeclaredMethod("dontInlineMethod", new Class[] {String.class});
+		final String mAnnotation = "Ljdk/internal/vm/annotation/DontInline;";
+
+		annotationFound = methodContainsRuntimeAnnotation(m, mAnnotation);
+		Assert.assertTrue(annotationFound, "dontInlineMethod does not have DontInline annotation");
 	}
 
 	private int getMemberCPIndex(ConstantPool constantPool, String className, String memberName, String memberType) {
