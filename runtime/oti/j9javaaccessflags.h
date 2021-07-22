@@ -122,6 +122,7 @@
 #define J9AccValueType 0x100
 #define J9AccVarArgs 0x80
 #define J9AccVolatile 0x40
+#define J9AccAtomic 0x40
 #define J9AccRecord 0x400
 #define J9AccSealed 0x200
 #define J9StaticFieldRefBaseType 0x1

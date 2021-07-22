@@ -221,6 +221,11 @@ public class ValueTypeHelper {
 		}
 
 		@Override
+		public boolean isRomClassAtomic(J9ROMClassPointer romClass) throws CorruptDataException {
+			return romClass.modifiers().allBitsIn(J9JavaAccessFlags.J9AccAtomic);
+		}
+
+		@Override
 		public boolean isJ9ClassAValueType(J9ClassPointer clazz) throws CorruptDataException {
 			return clazz.classFlags().allBitsIn(J9JavaClassFlags.J9ClassIsValueType);
 		}
@@ -381,6 +386,17 @@ public class ValueTypeHelper {
 	 * @throws CorruptDataException
 	 */
 	public boolean isRomClassAValueType(J9ROMClassPointer romClass) throws CorruptDataException {
+		return false;
+	}
+
+	/**
+	 * Queries if a J9ROMClass is atomic
+	 *
+	 * @param romClass class to query
+	 * @return true if the romClass is atomic, false otherwise.
+	 * @throws CorruptDataException
+	 */
+	public boolean isRomClassAtomic(J9ROMClassPointer romClass) throws CorruptDataException {
 		return false;
 	}
 

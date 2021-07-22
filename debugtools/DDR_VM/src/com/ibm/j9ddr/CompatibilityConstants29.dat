@@ -44,6 +44,7 @@ J9Consts.J9_ITABLE_OFFSET_DIRECT = 0
 J9Consts.J9_ITABLE_OFFSET_TAG_BITS = 0
 J9Consts.J9_ITABLE_OFFSET_VIRTUAL = 0
 
+J9JavaAccessFlags.J9AccAtomic = 0
 J9JavaAccessFlags.J9AccClassIsUnmodifiable = 0
 J9JavaAccessFlags.J9AccRecord = 0
 J9JavaAccessFlags.J9AccSealed = 0

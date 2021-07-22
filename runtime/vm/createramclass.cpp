@@ -3531,10 +3531,30 @@ retry:
 		}
 		
 		if (J9_ARE_ALL_BITS_SET(romClass->modifiers, J9AccValueType)) {
+			UDATA instanceSize = result->totalInstanceSize;
 			classFlags |= J9ClassIsValueType;
-			if ((result->totalInstanceSize <= javaVM->valueFlatteningThreshold) && !J9ROMCLASS_IS_CONTENDED(romClass)) {
-				Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
-				classFlags |= J9ClassIsFlattened;
+			if ((instanceSize <= javaVM->valueFlatteningThreshold)
+				&& !J9ROMCLASS_IS_CONTENDED(romClass)
+			) {
+				bool flatten = false;
+				if (J9ROMCLASS_IS_ATOMIC(romClass)) {
+					UDATA unpaddedInstanceSize = instanceSize;
+					if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassRequiresPrePadding)) {
+						unpaddedInstanceSize = instanceSize - sizeof(U_32);
+					}
+					/**
+					 * Flattening of atomic VT class that is > 8 bytes is disabled for now.
+					 */
+					if (unpaddedInstanceSize <= sizeof(U_64)) {
+						flatten = true;
+					}
+				} else {
+					flatten = true;
+				}
+				if (flatten) {
+					Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
+					classFlags |= J9ClassIsFlattened;
+				}
 			}
 			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
 				classFlags |= J9ClassCanSupportFastSubstitutability;
