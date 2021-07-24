@@ -361,6 +361,10 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    auto node = treetop->getNode()->getFirstChild();
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
+      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
+      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
+         return cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicCompareAndSwapReturnStatusSymbol) &&
+                !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets();
       case TR::sun_misc_Unsafe_getAndAddInt:
          return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() &&
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
@@ -411,6 +415,10 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
    auto node = treetop->getNode()->getFirstChild();
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
+      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
+      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
+         processUnsafeAtomicCall(treetop, node, TR::SymbolReferenceTable::atomicCompareAndSwapReturnStatusSymbol);
+         break;
       case TR::sun_misc_Unsafe_getAndAddInt:
       case TR::sun_misc_Unsafe_getAndAddLong:
          processUnsafeAtomicCall(treetop, TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
