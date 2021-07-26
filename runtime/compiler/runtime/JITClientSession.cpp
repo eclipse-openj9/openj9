@@ -628,24 +628,6 @@ ClientSessionData::getCHTable()
    return _chTable;
    }
 
-// Takes a pointer to some data which is placed statically relative to the rom class,
-// as well as a list of offsets to J9SRP fields. The first offset is applied before the first
-// SRP is followed.
-char *
-ClientSessionData::ClassInfo::getROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
-   {
-   uint8_t *ptr = (uint8_t *)basePtr;
-   for (size_t offset : offsets)
-      {
-      ptr += offset;
-      TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(ptr, _romClass), "Address outside of ROMClass");
-      ptr = ptr + *(J9SRP *)ptr;
-      }
-   TR_ASSERT_FATAL(JITServerHelpers::isAddressInROMClass(ptr, _romClass), "Address outside of ROMClass");
-   char *data = utf8Data((J9UTF8 *)ptr, len);
-   return data;
-   }
-
 template <typename map, typename key>
 void ClientSessionData::purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map& m, key ClassUnloadedData::*k)
    {
