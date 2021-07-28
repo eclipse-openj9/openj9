@@ -2276,8 +2276,8 @@ JavaCoreDumpWriter::writeThreadsWithNativeStacks(void)
 	/* populate the VM thread avl tree or dump the java stacks if they won't fit */
 	J9VMThread* walkThread = J9_LINKED_LIST_START_DO(_VirtualMachine->mainThread);
 	for (i = 0; walkThread != NULL && i < _AllocatedVMThreadCount; i++) {
-		j9object_t lockObject;
-		J9VMThread *lockOwner;
+		j9object_t lockObject = NULL;
+		J9VMThread *lockOwner = NULL;
 		void *args[] = {walkThread, &lockObject, NULL, &lockOwner, NULL};
 		UDATA stateClean = 0;
 		UDATA stateFault = stateClean;
@@ -2509,8 +2509,8 @@ JavaCoreDumpWriter::writeThreadsJavaOnly(void)
 
 	/** Write the current thread out (if appropriate) **/
 	if ( currentThread != NULL) {
-		j9object_t lockObject;
-		J9VMThread *lockOwner;
+		j9object_t lockObject = NULL;
+		J9VMThread *lockOwner = NULL;
 		void *args[] = {currentThread, &lockObject, NULL, &lockOwner, NULL};
 		UDATA stateClean = 0;
 		UDATA stateFault = stateClean;
@@ -2549,8 +2549,8 @@ JavaCoreDumpWriter::writeThreadsJavaOnly(void)
 	/* dump the java stacks for all threads*/
 	J9VMThread* walkThread = J9_LINKED_LIST_START_DO(_VirtualMachine->mainThread);
 	for (UDATA i = 0; walkThread != NULL && i < _AllocatedVMThreadCount; i++) {
-		j9object_t lockObject;
-		J9VMThread *lockOwner;
+		j9object_t lockObject = NULL;
+		J9VMThread *lockOwner = NULL;
 		void *args[] = {walkThread, &lockObject, NULL, &lockOwner, NULL};
 		UDATA stateClean = 0;
 		UDATA stateFault = stateClean;
@@ -3965,10 +3965,10 @@ void
 JavaCoreDumpWriter::findThreadCycle(J9VMThread* vmThread, J9HashTable* deadlocks)
 {
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
-	J9ThreadAbstractMonitor *lock;
-	J9VMThread *owner;
-	UDATA status;
-	j9object_t lockObject;
+	J9ThreadAbstractMonitor *lock = NULL;
+	J9VMThread *owner = NULL;
+	UDATA status = 0;
+	j9object_t lockObject = NULL;
 
 	DeadLockGraphNode  node;
 	DeadLockGraphNode* prev = &node;
