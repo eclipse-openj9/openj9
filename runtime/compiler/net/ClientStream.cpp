@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -217,25 +217,32 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    if (!ctx)
       return NULL;
 
-   SSL *ssl = (*OSSL_new)(ctx);
-   if (!ssl)
+   BIO *bio = (*OBIO_new_ssl)(ctx, true);
+   if (!bio)
       {
       (*OERR_print_errors_fp)(stderr);
-      throw JITServer::StreamFailure("Failed to create new SSL connection");
+      throw JITServer::StreamFailure("Failed to make new BIO");
       }
 
-   (*OSSL_set_connect_state)(ssl);
+   SSL *ssl = NULL;
+   if ((*OBIO_ctrl)(bio, BIO_C_GET_SSL, false, (char *) &ssl) != 1) // BIO_get_ssl(bio, &ssl)
+      {
+      (*OERR_print_errors_fp)(stderr);
+      (*OBIO_free_all)(bio);
+      throw JITServer::StreamFailure("Failed to get BIO SSL");
+      }
 
    if ((*OSSL_set_fd)(ssl, connfd) != 1)
       {
       (*OERR_print_errors_fp)(stderr);
-      (*OSSL_free)(ssl);
+      (*OBIO_free_all)(bio);
       throw JITServer::StreamFailure("Cannot set file descriptor for SSL");
       }
+
    if ((*OSSL_connect)(ssl) != 1)
       {
       (*OERR_print_errors_fp)(stderr);
-      (*OSSL_free)(ssl);
+      (*OBIO_free_all)(bio);
       throw JITServer::StreamFailure("Failed to SSL_connect");
       }
 
@@ -243,7 +250,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    if (!cert)
       {
       (*OERR_print_errors_fp)(stderr);
-      (*OSSL_free)(ssl);
+      (*OBIO_free_all)(bio);
       throw JITServer::StreamFailure("Server certificate unspecified");
       }
    (*OX509_free)(cert);
@@ -251,24 +258,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    if (X509_V_OK != (*OSSL_get_verify_result)(ssl))
       {
       (*OERR_print_errors_fp)(stderr);
-      (*OSSL_free)(ssl);
       throw JITServer::StreamFailure("Server certificate verification failed");
-      }
-
-   BIO *bio = (*OBIO_new_ssl)(ctx, true);
-   if (!bio)
-      {
-      (*OERR_print_errors_fp)(stderr);
-      (*OSSL_free)(ssl);
-      throw JITServer::StreamFailure("Failed to make new BIO");
-      }
-
-   if ((*OBIO_ctrl)(bio, BIO_C_SET_SSL, true, (char *)ssl) != 1) // BIO_set_ssl(bio, ssl, true)
-      {
-      (*OERR_print_errors_fp)(stderr);
-      (*OBIO_free_all)(bio);
-      (*OSSL_free)(ssl);
-      throw JITServer::StreamFailure("Failed to set BIO SSL");
       }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
