@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -320,8 +320,8 @@ testProtectSharedCacheData_test1(J9JavaVM* vm)
 	cc = (SH_CompositeCacheImpl *)cacheMap->getCompositeCacheAPI();
 	ca = cc->getCacheHeaderAddress();
 
-	segmentStartPtr = (void *)cc->getBaseAddress();
-	metadataStartPtr = (void *)((UDATA)ca + ca->totalBytes - ca->debugRegionSize);
+	segmentStartPtr = (void *)cc->getCacheSegmentStartAddress();
+	metadataStartPtr = (void *)((UDATA)ca + ca->totalBytes);
 	currentSegmentPtr = (void *)((UDATA)ca + ca->segmentSRP);
 	currentMetadataPtr = (void *)((UDATA)ca + ca->updateSRP);
 
@@ -611,8 +611,8 @@ testProtectSharedCacheData_test2(J9JavaVM* vm)
 	cc = (SH_CompositeCacheImpl *)cacheMap->getCompositeCacheAPI();
 	ca = cc->getCacheHeaderAddress();
 
-	segmentStartPtr = (void *)cc->getBaseAddress();
-	metadataStartPtr = (void *)((UDATA)ca + ca->totalBytes - ca->debugRegionSize);
+	segmentStartPtr = (void *)cc->getCacheSegmentStartAddress();
+	metadataStartPtr = (void *)((UDATA)ca + ca->totalBytes);
 	currentSegmentPtr = (void *)((UDATA)ca + ca->segmentSRP);
 	currentMetadataPtr = (void *)((UDATA)ca + ca->updateSRP);
 
