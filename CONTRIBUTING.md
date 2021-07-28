@@ -68,6 +68,9 @@ Following these guidelines will help us merge your pull requests smoothly:
 5. Please carefully read and adhere to the legal considerations and
    copyright/license requirements outlined below.
 
+6. Ensure your changes are compatible with the checks that will be applied to your pull request.
+   - The second year in each copyright notice should be the current year.
+   - Text files should use the proper line-endings and there should be no unwanted whitespace. You can enable the sample `pre-commit` hook created by `git init` to ensure you adhere to expectations.
 
 ## Building and testing
 
