@@ -97,7 +97,17 @@ timeout(time: 6, unit: 'HOURS') {
                         echo "${HASHES}"
                         sh 'exit 1'
                     } else {
-                        echo "All modified files appear to have correct line endings"
+                        println "Checking for added trailing whitespace..."
+                        sh 'git config core.whitespace blank-at-eof,blank-at-eol,cr-at-eol,space-before-tab'
+                        WHITESPACE_ERRORS = sh (
+                            script: "git diff --check origin/${ghprbTargetBranch} HEAD",
+                            returnStdout: true
+                        )
+                        if (WHITESPACE_ERRORS.trim() == "") {
+                            echo "All modified files appear to have correct line endings"
+                        } else {
+                            echo "${WHITESPACE_ERRORS}"
+                        }
                     }
                 }
             }
