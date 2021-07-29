@@ -23,12 +23,25 @@
 package org.eclipse.openj9.criu;
 
 import java.nio.file.Path;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 /**
  * CRIU Support API
  */
 public final class CRIUSupport {
 	
+	static {
+		try {
+			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+				System.loadLibrary("j9criu29"); //$NON-NLS-1$
+				return null;
+			});
+		} catch (UnsatisfiedLinkError e) {
+			throw new InternalError(e);
+		}
+	}
+
 	/**
 	 * CRIU operation return type
 	 */

@@ -1153,16 +1153,6 @@ Java_com_ibm_lang_management_internal_UnixExtendedOperatingSystem_getOpenFileDes
 jobject JNICALL
 Java_com_ibm_virtualization_management_internal_GuestOS_retrieveProcessorUsageImpl(JNIEnv *env, jobject beanInstance, jobject procUsageObject);
 
-/* CRIUSupport.c */
-jboolean JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused);
-
-jboolean JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_isCheckpointAllowed(JNIEnv *env, jclass unused);
-
-jobject JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env, jclass unused, jstring checkPointDir, jboolean keepRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile);
-
 /* com_ibm_jvm_Stats.c */
 void JNICALL
 Java_com_ibm_jvm_Stats_getStats(JNIEnv *env, jobject obj);
