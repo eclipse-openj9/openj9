@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.*;
 import java.lang.ref.Cleaner;
+import jdk.internal.misc.ScopedMemoryAccess.*;
 
 import org.objectweb.asm.*;
 import static org.objectweb.asm.Opcodes.*;
@@ -76,11 +77,12 @@ public class TestCloseScope0 {
 		return cw.toByteArray();
 	}
 
-	private static Throwable expected = null;
+	private static Throwable closeException = null;
+	private static Throwable accessException = null;
 	private static volatile boolean t1Started = false;
 	private static volatile boolean t2Waiting = false;
 
-	@Test(expectedExceptions=java.lang.IllegalStateException.class)
+	@Test
 	public static void closeScopeDuringAccess() throws Throwable {
 		/* Reflect setup */
 		Class c = Class.forName("jdk.internal.foreign.MemoryScope");
@@ -89,8 +91,6 @@ public class TestCloseScope0 {
 		Method close = c.getDeclaredMethod("close");
 		close.setAccessible(true);
 		final Object scope = createShared.invoke(null, null, new Thread(), null);
-
-		Class Scope = Class.forName("jdk.internal.misc.ScopedMemoryAccess$Scope");
 		/* End Reflect setup */
 
 		/* ASM setup */
@@ -99,15 +99,15 @@ public class TestCloseScope0 {
 		ClassLoader loader = ClassLoader.getSystemClassLoader();
 		Class cls = Class.forName("java.lang.ClassLoader");
 		Method defineClass = cls.getDeclaredMethod(
-						"defineClass", 
+						"defineClass",
 						new Class[] { String.class, byte[].class, int.class, int.class });
 		defineClass.setAccessible(true);
-		
+
 		Object[] dcArgs = new Object[] {"jdk.internal.misc.RunInScoped", classBytes, 0, classBytes.length};
 		Class RunInScoped = (Class)defineClass.invoke(loader, dcArgs);
-		Method runInScoped = RunInScoped.getDeclaredMethod("runInScoped", new Class[] {Runnable.class, Scope});
+		Method runInScoped = RunInScoped.getDeclaredMethod("runInScoped", new Class[] {Runnable.class, Scope.class});
 		/* End ASM setup */
-		
+
 		Synch synch1 = new Synch();
 		Synch synch2 = new Synch();
 
@@ -119,10 +119,10 @@ public class TestCloseScope0 {
 				}
 				close.invoke(scope);
 			} catch (InvocationTargetException e) {
-				// This is the expected behaviour (throws IllegalStateException)
-				expected = e.getCause();
+				// This is the expected behaviour (closeException = IllegalStateException)
+				closeException = e.getCause();
 			} catch (InterruptedException | IllegalAccessException e) {
-				e.printStackTrace();
+				fail();
 			} finally {
 				while (!t2Waiting) {
 					Thread.yield();
@@ -132,7 +132,7 @@ public class TestCloseScope0 {
 				}
 			}
 		}, "ScopeCloserThread");
-		
+
 		class MyRunnable implements Runnable {
 			public void run() {
 				try {
@@ -146,18 +146,18 @@ public class TestCloseScope0 {
 						t2Waiting = true;
 						synch2.wait();
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
+				} catch (Throwable t) {
+					accessException = t;
 				}
 			}
 		}
-		
+
 		MyRunnable r = new MyRunnable();
 		Thread t2 = new Thread(()->{
 			try {
 				runInScoped.invoke(null, r, scope);
-			} catch (Exception e) {
-				e.printStackTrace();
+			} catch (InvocationTargetException | IllegalAccessException ex) {
+				fail();
 			}
 		}, "RunInScopeThread");
 
@@ -167,7 +167,9 @@ public class TestCloseScope0 {
 		t1.join();
 		t2.join();
 
-		if (expected != null) throw expected;
+		// If an exception wasn't thrown, the variable will be null and assertion will fail
+		assertTrue(accessException instanceof Scope.ScopedAccessError);
+		assertTrue(closeException instanceof IllegalStateException);
 	}
 }
 

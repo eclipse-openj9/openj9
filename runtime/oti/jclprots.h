@@ -1215,7 +1215,7 @@ void JNICALL
 Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives(JNIEnv *env, jclass clazz);
 
 jboolean JNICALL
-Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject exception);
+Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jthrowable exception);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 #ifdef __cplusplus

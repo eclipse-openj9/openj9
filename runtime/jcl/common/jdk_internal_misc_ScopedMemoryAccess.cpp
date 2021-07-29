@@ -39,7 +39,7 @@ Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives(JNIEnv *env, jclass cl
 static UDATA
 closeScope0FrameWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState)
 {
-	if (JNI_FALSE == *(jboolean *)walkState->userData2) {
+	if (JNI_TRUE == *(jboolean *)walkState->userData2) {
 		/* scope has been found */
 		return J9_STACKWALK_STOP_ITERATING;
 	}
@@ -56,26 +56,34 @@ closeScope0OSlotWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState, 
 			U_32 extraModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
 			if (J9ROMMETHOD_HAS_SCOPED_ANNOTATION(extraModifiers)) {
 				if (*slot == J9_JNI_UNWRAP_REFERENCE(walkState->userData1)) {
-					*(jboolean *)walkState->userData2 = JNI_FALSE;
+					*(jboolean *)walkState->userData2 = JNI_TRUE;
 				}
 			}
 		}
 	}
 }
 
+typedef struct LinkedThreads {
+	J9VMThread *thread;
+	struct LinkedThreads *next;
+} LinkedThreads;
+
 /**
  * For each thread, walk Java stack and look for the scope instance. Methods that can take and access a scope
  * instance are marked with the "@Scoped" extended modifier. If the scope instance is found in a method, that
- * method is accessing the memory segment associated with the scope and thus closing the scope will fail.
+ * method is accessing the memory segment associated with the scope and thus closing the scope will fail. The
+ * scope accessing methods will be interrupted with a ScopedMemoryAccess.Scope.ScopedAccessError.
  */
 jboolean JNICALL
-Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jobject exception)
+Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject instance, jobject scope, jthrowable exception)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	jboolean scopeNotFound = JNI_TRUE;
-
+	LinkedThreads *current = NULL;
+	LinkedThreads *head = NULL;
+	PORT_ACCESS_FROM_VMC(currentThread);
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->acquireExclusiveVMAccess(currentThread);
 
@@ -84,27 +92,58 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 	} else {
 		J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 		while (NULL != walkThread) {
+			jboolean threadHasScope = JNI_FALSE;
 			J9StackWalkState walkState;
 			walkState.walkThread = walkThread;
 			walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_ITERATE_O_SLOTS;
 			walkState.skipCount = 0;
 			walkState.userData1 = (void *)scope;
-			walkState.userData2 = (void *)&scopeNotFound;
+			walkState.userData2 = (void *)&threadHasScope;
 			walkState.frameWalkFunction = closeScope0FrameWalkFunction;
 			walkState.objectSlotWalkFunction = closeScope0OSlotWalkFunction;
 
 			vm->walkStackFrames(walkThread, &walkState);
-			if (JNI_FALSE == *(jboolean *)walkState.userData2) {
-				/* scope found */
-				break;
+			if (JNI_TRUE == *(jboolean *)walkState.userData2) {
+				/* scope found, add to linked list */
+				scopeNotFound = JNI_FALSE;
+				if (NULL == head) {
+					current = (LinkedThreads *)j9mem_allocate_memory(sizeof(LinkedThreads), J9MEM_CATEGORY_VM);
+					if (NULL != current) {
+						current->thread = walkThread;
+						current->next = NULL;
+						head = current;
+					}
+				} else {
+					current->next = (LinkedThreads *)j9mem_allocate_memory(sizeof(LinkedThreads), J9MEM_CATEGORY_VM);
+					if (NULL != current->next) {
+						current->next->thread = walkThread;
+						current->next->next = NULL;
+						current = current->next;
+					}
+				}
 			}
 
 			walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 		}
 	}
 
+	current = head;
+	while (NULL != current) {
+		/* Scope is being accessed by a thread */
+		J9VMThread *scopeThread = current->thread;
+		LinkedThreads *prev = NULL;
+
+		/* TODO: throw exception */
+		scopeThread = scopeThread;
+
+		prev = current;
+		current = current->next;
+		j9mem_free_memory(prev);
+	}
+
 	vmFuncs->releaseExclusiveVMAccess(currentThread);
 	vmFuncs->internalExitVMToJNI(currentThread);
+
 	return scopeNotFound;
 }
 #endif /* JAVA_SPEC_VERSION >= 16 */
