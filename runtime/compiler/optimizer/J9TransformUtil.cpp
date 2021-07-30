@@ -610,6 +610,18 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
       return true;
    else if (classNameLength >= 22 && !strncmp(className, "jdk/internal/vm/vector", 22))
       return true;
+   else if (classNameLength >= 14 && !strncmp(className, "java/lang/Byte", 14))
+      return true;
+   else if (classNameLength >= 15 && !strncmp(className, "java/lang/Short", 15))
+      return true;
+   else if (classNameLength >= 17 && !strncmp(className, "java/lang/Integer", 17))
+      return true;
+   else if (classNameLength >= 14 && !strncmp(className, "java/lang/Long", 14))
+      return true;
+   else if (classNameLength >= 15 && !strncmp(className, "java/lang/Float", 15))
+      return true;
+   else if (classNameLength >= 16 && !strncmp(className, "java/lang/Double", 16))
+      return true;
 
    if (classNameLength == 16 && !strncmp(className, "java/lang/System", 16))
       return false;
