@@ -27,9 +27,9 @@
 
 #include "jni.h"
 #include "j9.h"
-#include "jclprots.h"
 #include "j9jclnls.h"
-#include "ut_j9jcl.h"
+#include "criusupport.h"
+#include "ut_j9criu.h"
 
 #define STRING_BUFFER_SIZE 256
 
@@ -43,29 +43,29 @@ setupJNIFieldIDs(JNIEnv *env)
 	jclass criuResultClass = NULL;
 
 	criuResultTypeClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResultType");
-	Assert_JCL_notNull(criuResultTypeClass);
+	Assert_CRIU_notNull(criuResultTypeClass);
 	vm->criuResultTypeClass = (*env)->NewGlobalRef(env, criuResultTypeClass);
 
 	criuResultClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/CRIUSupport$CRIUResult");
-	Assert_JCL_notNull(criuResultClass);
+	Assert_CRIU_notNull(criuResultClass);
 	vm->criuResultClass = (*env)->NewGlobalRef(env, criuResultClass);
 
 	if ((NULL != vm->criuResultTypeClass) && (NULL != vm->criuResultClass)) {
 		vm->criuSupportSuccess = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "SUCCESS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportSuccess);
+		Assert_CRIU_notNull(vm->criuSupportSuccess);
 		vm->criuSupportUnsupportedOperation  = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "UNSUPPORTED_OPERATION", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportUnsupportedOperation);
+		Assert_CRIU_notNull(vm->criuSupportUnsupportedOperation);
 		vm->criuSupportInvalidArguments = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "INVALID_ARGUMENTS", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportInvalidArguments);
+		Assert_CRIU_notNull(vm->criuSupportInvalidArguments);
 		vm->criuSupportSystemCheckpointFailure = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "SYSTEM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportSystemCheckpointFailure);
+		Assert_CRIU_notNull(vm->criuSupportSystemCheckpointFailure);
 		vm->criuSupportJVMCheckpointFailure = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "JVM_CHECKPOINT_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportJVMCheckpointFailure);
+		Assert_CRIU_notNull(vm->criuSupportJVMCheckpointFailure);
 		vm->criuSupportJVMRestoreFailure = (*env)->GetStaticFieldID(env, vm->criuResultTypeClass, "JVM_RESTORE_FAILURE", "Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;");
-		Assert_JCL_notNull(vm->criuSupportJVMRestoreFailure);
+		Assert_CRIU_notNull(vm->criuSupportJVMRestoreFailure);
 
 		vm->criuResultInit = (*env)->GetMethodID(env, vm->criuResultClass, "<init>", "(Lorg/eclipse/openj9/criu/CRIUSupport$CRIUResultType;Ljava/lang/Throwable;)V");
-		Assert_JCL_notNull(vm->criuResultInit);
+		Assert_CRIU_notNull(vm->criuResultInit);
 	} else {
 		vmFuncs->internalEnterVMFromJNI(currentThread);
 		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
