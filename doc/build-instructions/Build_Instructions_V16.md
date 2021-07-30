@@ -774,11 +774,11 @@ Copy its contents to your AArch64 Linux device.
 For a simple test, try running the `java -version` command.
 Change to your jdk directory on AArch64 Linux:
 ```
-cd jdk
+cd build/linux-aarch64-normal-server-release/images/jdk
 ```
 Run:
 ```
-bin/java -version
+./bin/java -version
 ```
 
 Here is some sample output:
