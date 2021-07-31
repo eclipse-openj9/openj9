@@ -148,35 +148,25 @@ handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMs
       (*OBIO_free_all)(bio);
       bio = NULL;
       }
-   if (ssl)
-      {
-      (*OSSL_free)(ssl);
-      ssl = NULL;
-      }
    return false;
    }
 
 static bool
 acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
    {
-   SSL *ssl = (*OSSL_new)(sslCtx);
-   if (!ssl)
-      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error creating SSL connection");
+   SSL *ssl = NULL;
+   bio = (*OBIO_new_ssl)(sslCtx, false);
+   if (!bio)
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error creating new BIO");
 
-   (*OSSL_set_accept_state)(ssl);
+   if ((*OBIO_ctrl)(bio, BIO_C_GET_SSL, false, (char *) &ssl) != 1) // BIO_get_ssl(bio, &ssl)
+      return handleOpenSSLConnectionError(connfd, ssl, bio, "Failed to get BIO SSL");
 
    if ((*OSSL_set_fd)(ssl, connfd) != 1)
       return handleOpenSSLConnectionError(connfd, ssl, bio, "Error setting SSL file descriptor");
 
    if ((*OSSL_accept)(ssl) <= 0)
       return handleOpenSSLConnectionError(connfd, ssl, bio, "Error accepting SSL connection");
-
-   bio = (*OBIO_new_ssl)(sslCtx, false);
-   if (!bio)
-      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error creating new BIO");
-
-   if ((*OBIO_ctrl)(bio, BIO_C_SET_SSL, true, (char *)ssl) != 1) // BIO_set_ssl(bio, ssl, true)
-      return handleOpenSSLConnectionError(connfd, ssl, bio, "Error setting BIO SSL");
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
