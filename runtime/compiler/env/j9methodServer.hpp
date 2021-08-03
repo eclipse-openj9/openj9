@@ -176,7 +176,6 @@ public:
    virtual TR_ResolvedMethod * getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats) override;
    virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
-   virtual uint32_t classCPIndexOfMethod(uint32_t methodCPIndex) override;
    virtual bool fieldsAreSame(int32_t cpIndex1, TR_ResolvedMethod *m2, int32_t cpIndex2, bool &sigSame) override;
    virtual bool staticsAreSame(int32_t cpIndex1, TR_ResolvedMethod *m2, int32_t cpIndex2, bool &sigSame) override;
    virtual bool fieldAttributes(TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation) override;
@@ -190,13 +189,6 @@ public:
    virtual void * startAddressForJNIMethod(TR::Compilation *) override;
    virtual void *startAddressForInterpreterOfJittedMethod() override;
    virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve) override;
-   virtual char * fieldOrStaticSignatureChars(I_32 cpIndex, int32_t & len) override;
-   virtual char * getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length) override;
-   virtual char * classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
-   virtual char * classSignatureOfFieldOrStatic(int32_t cpIndex, int32_t & len) override;
-   virtual char * getMethodSignatureFromConstantPool(int32_t cpIndex, int32_t & len) override;
-   virtual char * getMethodNameFromConstantPool(int32_t cpIndex, int32_t & len) override;
-   virtual char * fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
    virtual bool isSubjectToPhaseChange(TR::Compilation *comp) override;
    virtual void * stringConstant(int32_t cpIndex) override;
    virtual TR_ResolvedMethod *getResolvedHandleMethod(TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP) override;
@@ -259,7 +251,6 @@ private:
    TR_IPMethodHashTableEntry *_iProfilerMethodEntry;
    bool _isLambdaFormGeneratedMethod;
 
-   char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
    void unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
    };
