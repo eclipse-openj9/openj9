@@ -5666,7 +5666,7 @@ uint32_t
 TR_ResolvedJ9Method::classCPIndexOfMethod(uint32_t methodCPIndex)
    {
    uint32_t realCPIndex = jitGetRealCPIndex(_fe->vmThread(), romClassPtr(), methodCPIndex);
-   uint32_t classIndex = ((J9ROMMethodRef *) cp()->romConstantPool)[realCPIndex].classRefCPIndex;
+   uint32_t classIndex = ((J9ROMMethodRef *) romCPBase())[realCPIndex].classRefCPIndex;
    return classIndex;
    }
 

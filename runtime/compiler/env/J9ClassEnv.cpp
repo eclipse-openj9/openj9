@@ -734,29 +734,6 @@ uint8_t *
 J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t cpIndex, int &classRefLen)
    {
    J9ROMConstantPoolItem *romCP = self()->getROMConstantPool(comp, clazz);
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp->isOutOfProcessCompilation())
-      {
-      J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
-      TR_ASSERT(JITServerHelpers::isAddressInROMClass(romFieldRef, self()->romClassOf(clazz)), "Field ref must be in ROM class");
-
-      J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
-      TR_ASSERT(JITServerHelpers::isAddressInROMClass(romClassRef, self()->romClassOf(clazz)), "Class ref must be in ROM class");
-
-      TR::CompilationInfoPerThread *compInfoPT = TR::compInfoPT;
-      char *name = NULL;
-
-      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &classMap = compInfoPT->getClientData()->getROMClassMap();
-      auto it = classMap.find(reinterpret_cast<J9Class *>(clazz));
-      auto &classInfo = it->second;
-      name = classInfo.getROMString(classRefLen, romClassRef,
-                             {
-                             offsetof(J9ROMClassRef, name)
-                             });
-      return (uint8_t *) name;
-      }
-#endif /* defined(J9VM_OPT_JITSERVER) */
    J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
    J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
    J9UTF8 *classRefNameUtf8 = J9ROMCLASSREF_NAME(romClassRef);

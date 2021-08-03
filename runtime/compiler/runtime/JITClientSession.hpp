@@ -216,8 +216,6 @@ public:
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _fieldOrStaticDefiningClassCache;
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
       PersistentUnorderedSet<J9ClassLoader *> _referencingClassLoaders;
-
-      char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
       }; // struct ClassInfo
 
 
