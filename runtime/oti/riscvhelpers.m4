@@ -63,14 +63,17 @@ define({JIT_GPR_SAVE_SLOT},{M(sp, JIT_GPR_SAVE_OFFSET($1))})
 define({JIT_FPR_SAVE_OFFSET},{eval(J9TR_cframe_jitFPRs+(($1)*8))})
 define({JIT_FPR_SAVE_SLOT},{M(sp, JIT_FPR_SAVE_OFFSET($1))})
 
+dnl SAFE_FPLR / RESTORE_FPLR only saves LR since on RISC-V there's
+dnl no designated FP register (when used, it's s0).
+dnl
+dnl However, we still call the macro SAVE_FPLR / RESTORE_FPLR for
+dnl consistency with AArch64.
 define({SAVE_FPLR},{
-    sd fp, JIT_GPR_SAVE_SLOT(8)
     sd ra, JIT_GPR_SAVE_SLOT(1)
 })
 
 define({RESTORE_FPLR},{
-    ld fp, JIT_GPR_SAVE_SLOT(8)
-    ld ra, JIT_GPR_SAVE_SLOT(1)    
+    ld ra, JIT_GPR_SAVE_SLOT(1)
 })
 
 define({BEGIN_HELPER},{
