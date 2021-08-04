@@ -932,6 +932,30 @@ public:
 	void AssertArrayPtrIsIndexable(J9IndexableObject *arrayPtr);
 
 	/**
+	 * Asserts that the dataAddr field of the indexable object is correct.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object
+	 * @param dataAddr      Pointer to indexable object data address
+	 */
+	MMINLINE bool
+	isCorrectDataAddrContiguous(J9IndexableObject *arrayPtr, void *dataAddr)
+	{
+		return dataAddr == (void *)((uintptr_t)arrayPtr + contiguousHeaderSize());
+	}
+
+	/**
+	 * Asserts that an indexable object pointer is indeed an indexable object
+	 *
+	 * @param arrayPtr      Pointer to the indexable object
+	 * @param dataAddr      Pointer to indexable object data address
+	 */
+	MMINLINE bool
+	isCorrectDataAddrDiscontiguous(J9IndexableObject *arrayPtr, void *dataAddr)
+	{
+		return dataAddr == (void *)((uintptr_t)arrayPtr + discontiguousHeaderSize());
+	}
+
+	/**
 	 * Returns data pointer associated with a contiguous Indexable object.
 	 * Data pointer will always be pointing at the arraylet data. In this
 	 * case the data pointer will be pointing to address immediately after
@@ -984,12 +1008,47 @@ public:
 	MMINLINE void *
 	getDataAddrForIndexableObject(J9IndexableObject *arrayPtr)
 	{
-		ArrayLayout layout = getArrayLayout(arrayPtr);
-		bool isDiscontiguous = (layout != InlineContiguous);
+		return (InlineContiguous == getArrayLayout(arrayPtr))
+			? getDataAddrForContiguous(arrayPtr)
+			: getDataAddrForDiscontiguous(arrayPtr);
+	}
 
-		return isDiscontiguous
-			? getDataAddrForDiscontiguous(arrayPtr)
-			: getDataAddrForContiguous(arrayPtr);
+	/**
+	 * Asserts that the dataAddr field of the indexable object is correct.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object
+	 */
+	MMINLINE bool
+	isCorrectDataAddr(J9IndexableObject *arrayPtr)
+	{
+
+		return (InlineContiguous == getArrayLayout(arrayPtr))
+			? isCorrectDataAddrForContiguousArraylet(arrayPtr)
+			: isCorrectDataAddrForDiscontiguousArraylet(arrayPtr);
+	}
+
+	/**
+	 * Asserts that the dataAddr field of the contiguous arraylet is correct.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object
+	 */
+	MMINLINE bool
+	isCorrectDataAddrForContiguousArraylet(J9IndexableObject *arrayPtr)
+	{
+		void *dataAddr = getDataAddrForContiguous(arrayPtr);
+		return isCorrectDataAddrContiguous(arrayPtr, dataAddr);
+	}
+
+	/**
+	 * Asserts that the dataAddr field of the indexable object is correct.
+	 *
+	 * @param arrayPtr      Pointer to the indexable object
+	 */
+	MMINLINE bool
+	isCorrectDataAddrForDiscontiguousArraylet(J9IndexableObject *arrayPtr)
+	{
+		void *dataAddr = getDataAddrForDiscontiguous(arrayPtr);
+		return isCorrectDataAddrDiscontiguous(arrayPtr, dataAddr);
 	}
 #endif /* J9VM_ENV_DATA64 */
 
@@ -1008,13 +1067,10 @@ public:
 #if defined(J9VM_ENV_DATA64)
 		J9IndexableObject *j9ArrayPtr = (J9IndexableObject *)arrayPtr;
 
-		ArrayLayout layout = getPreservedArrayLayout(forwardedHeader);
-		bool isDiscontiguous = (layout != InlineContiguous);
-
-		if (isDiscontiguous) {
-			setDataAddrForDiscontiguous(j9ArrayPtr, NULL);
-		} else {
+		if (InlineContiguous == getPreservedArrayLayout(forwardedHeader)) {
 			setDataAddrForContiguous(j9ArrayPtr);
+		} else {
+			setDataAddrForDiscontiguous(j9ArrayPtr, NULL);
 		}
 #endif /* J9VM_ENV_DATA64 */
 	}
@@ -1032,13 +1088,10 @@ public:
 		J9IndexableObject *j9ArrayPtr = (J9IndexableObject *)arrayPtr;
 		AssertArrayPtrIsIndexable(j9ArrayPtr);
 
-		ArrayLayout layout = getArrayLayout(j9ArrayPtr);
-		bool isDiscontiguous = (layout != InlineContiguous);
-
-		if (isDiscontiguous) {
-			setDataAddrForDiscontiguous(j9ArrayPtr, NULL);
-		} else {
+		if (InlineContiguous == getArrayLayout(j9ArrayPtr)) {
 			setDataAddrForContiguous(j9ArrayPtr);
+		} else {
+			setDataAddrForDiscontiguous(j9ArrayPtr, NULL);
 		}
 #endif /* J9VM_ENV_DATA64 */
 	}
