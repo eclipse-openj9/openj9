@@ -229,31 +229,31 @@ dnl Note, that s10 (vmthread) & s11 (java sp) are not
 dnl saved / restored
 
 define({SAVE_PRESERVED_REGS},{
-    sd s0,  JIT_GPR_SAVE_SLOT(1)
-    sd s1,  JIT_GPR_SAVE_SLOT(2)
+    sd s0,  JIT_GPR_SAVE_SLOT(8)
+    sd s1,  JIT_GPR_SAVE_SLOT(9)
 
-    sd s2,  JIT_GPR_SAVE_SLOT(3)
-    sd s3,  JIT_GPR_SAVE_SLOT(4)
-    sd s4,  JIT_GPR_SAVE_SLOT(5)
-    sd s5,  JIT_GPR_SAVE_SLOT(6)
-    sd s6,  JIT_GPR_SAVE_SLOT(7)
-    sd s7,  JIT_GPR_SAVE_SLOT(8)
-    sd s8,  JIT_GPR_SAVE_SLOT(9)
-    sd s9,  JIT_GPR_SAVE_SLOT(10)
+    sd s2,  JIT_GPR_SAVE_SLOT(18)
+    sd s3,  JIT_GPR_SAVE_SLOT(19)
+    sd s4,  JIT_GPR_SAVE_SLOT(20)
+    sd s5,  JIT_GPR_SAVE_SLOT(21)
+    sd s6,  JIT_GPR_SAVE_SLOT(22)
+    sd s7,  JIT_GPR_SAVE_SLOT(23)
+    sd s8,  JIT_GPR_SAVE_SLOT(24)
+    sd s9,  JIT_GPR_SAVE_SLOT(25)
 })
 
 define({RESTORE_PRESERVED_REGS},{
-    ld s0,  JIT_GPR_SAVE_SLOT(1)
-    ld s1,  JIT_GPR_SAVE_SLOT(2)
+    ld s0,  JIT_GPR_SAVE_SLOT(8)
+    ld s1,  JIT_GPR_SAVE_SLOT(9)
 
-    ld s2,  JIT_GPR_SAVE_SLOT(3)
-    ld s3,  JIT_GPR_SAVE_SLOT(4)
-    ld s4,  JIT_GPR_SAVE_SLOT(5)
-    ld s5,  JIT_GPR_SAVE_SLOT(6)
-    ld s6,  JIT_GPR_SAVE_SLOT(7)
-    ld s7,  JIT_GPR_SAVE_SLOT(8)
-    ld s8,  JIT_GPR_SAVE_SLOT(9)
-    ld s9,  JIT_GPR_SAVE_SLOT(10)
+    ld s2,  JIT_GPR_SAVE_SLOT(18)
+    ld s3,  JIT_GPR_SAVE_SLOT(19)
+    ld s4,  JIT_GPR_SAVE_SLOT(20)
+    ld s5,  JIT_GPR_SAVE_SLOT(21)
+    ld s6,  JIT_GPR_SAVE_SLOT(22)
+    ld s7,  JIT_GPR_SAVE_SLOT(23)
+    ld s8,  JIT_GPR_SAVE_SLOT(24)
+    ld s9,  JIT_GPR_SAVE_SLOT(25)
 })
 
 define({BRANCH_VIA_VMTHREAD},{
