@@ -359,138 +359,178 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
 bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    {
    auto node = treetop->getNode()->getFirstChild();
-   switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
+   TR::RecognizedMethod rm =
+      node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
+
+   bool isILGenPass = !getLastRun();
+   if (isILGenPass)
       {
-      case TR::sun_misc_Unsafe_getAndAddInt:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() &&
-            cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
-      case TR::sun_misc_Unsafe_getAndSetInt:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() &&
-            cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
-      case TR::sun_misc_Unsafe_getAndAddLong:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && comp()->target().is64Bit() &&
-            cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
-      case TR::sun_misc_Unsafe_getAndSetLong:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && comp()->target().is64Bit() &&
-            cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
-      case TR::java_lang_Class_isAssignableFrom:
-         return cg()->supportsInliningOfIsAssignableFrom();
-      case TR::java_lang_Integer_rotateLeft:
-      case TR::java_lang_Integer_rotateRight:
-         return comp()->target().cpu.getSupportsHardware32bitRotate();
-      case TR::java_lang_Long_rotateLeft:
-      case TR::java_lang_Long_rotateRight:
-         return comp()->target().cpu.getSupportsHardware64bitRotate();
-      case TR::java_lang_Math_abs_I:
-      case TR::java_lang_Math_abs_L:
-         return cg()->supportsIntAbs();
-      case TR::java_lang_Math_abs_F:
-      case TR::java_lang_Math_abs_D:
-         return cg()->supportsFPAbs();
-      case TR::java_lang_Math_max_I:
-      case TR::java_lang_Math_min_I:
-      case TR::java_lang_Math_max_L:
-      case TR::java_lang_Math_min_L:
-         return !comp()->getOption(TR_DisableMaxMinOptimization);
-      case TR::java_lang_StringUTF16_toBytes:
-         return !comp()->compileRelocatableCode();
-      case TR::java_lang_StrictMath_sqrt:
-      case TR::java_lang_Math_sqrt:
-         return comp()->target().cpu.getSupportsHardwareSQRT();
-      case TR::java_lang_Short_reverseBytes:
-      case TR::java_lang_Integer_reverseBytes:
-      case TR::java_lang_Long_reverseBytes:
-         return comp()->cg()->supportsByteswap();
-      default:
-         return false;
+      switch(rm)
+         {
+         case TR::sun_misc_Unsafe_getAndAddInt:
+            return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() &&
+               cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
+         case TR::sun_misc_Unsafe_getAndSetInt:
+            return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() &&
+               cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
+         case TR::sun_misc_Unsafe_getAndAddLong:
+            return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && comp()->target().is64Bit() &&
+               cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
+         case TR::sun_misc_Unsafe_getAndSetLong:
+            return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && comp()->target().is64Bit() &&
+               cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
+         case TR::java_lang_Class_isAssignableFrom:
+            return cg()->supportsInliningOfIsAssignableFrom();
+         case TR::java_lang_Integer_rotateLeft:
+         case TR::java_lang_Integer_rotateRight:
+            return comp()->target().cpu.getSupportsHardware32bitRotate();
+         case TR::java_lang_Long_rotateLeft:
+         case TR::java_lang_Long_rotateRight:
+            return comp()->target().cpu.getSupportsHardware64bitRotate();
+         case TR::java_lang_Math_abs_I:
+         case TR::java_lang_Math_abs_L:
+            return cg()->supportsIntAbs();
+         case TR::java_lang_Math_abs_F:
+         case TR::java_lang_Math_abs_D:
+            return cg()->supportsFPAbs();
+         case TR::java_lang_Math_max_I:
+         case TR::java_lang_Math_min_I:
+         case TR::java_lang_Math_max_L:
+         case TR::java_lang_Math_min_L:
+            return !comp()->getOption(TR_DisableMaxMinOptimization);
+         case TR::java_lang_StringUTF16_toBytes:
+            return !comp()->compileRelocatableCode();
+         case TR::java_lang_StrictMath_sqrt:
+         case TR::java_lang_Math_sqrt:
+            return comp()->target().cpu.getSupportsHardwareSQRT();
+         case TR::java_lang_Short_reverseBytes:
+         case TR::java_lang_Integer_reverseBytes:
+         case TR::java_lang_Long_reverseBytes:
+            return comp()->cg()->supportsByteswap();
+         default:
+            return false;
+         }
       }
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   else
+      {
+      // Post-inlining pass
+      switch (rm)
+         {
+         // TODO: invokeBasic, linkTo*
+         default:
+            return false;
+         }
+      }
+#else
+   return false;
+#endif
    }
 
 void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
    {
    auto node = treetop->getNode()->getFirstChild();
-   switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
+   TR::RecognizedMethod rm =
+      node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
+
+   bool isILGenPass = !getLastRun();
+   if (isILGenPass)
       {
-      case TR::sun_misc_Unsafe_getAndAddInt:
-      case TR::sun_misc_Unsafe_getAndAddLong:
-         processUnsafeAtomicCall(treetop, TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
-         break;
-      case TR::sun_misc_Unsafe_getAndSetInt:
-      case TR::sun_misc_Unsafe_getAndSetLong:
-         processUnsafeAtomicCall(treetop, TR::SymbolReferenceTable::atomicSwapSymbol);
-         break;
-      case TR::java_lang_Class_isAssignableFrom:
-         process_java_lang_Class_IsAssignableFrom(treetop, node);
-         break;
-      case TR::java_lang_Integer_rotateLeft:
-         processIntrinsicFunction(treetop, node, TR::irol);
-         break;
-      case TR::java_lang_Integer_rotateRight:
+      switch(rm)
          {
-         // rotateRight(x, distance) = rotateLeft(x, -distance)
-         TR::Node *distance = TR::Node::create(node, TR::ineg, 1);
-         distance->setChild(0, node->getSecondChild());
-         node->setAndIncChild(1, distance);
+         case TR::sun_misc_Unsafe_getAndAddInt:
+         case TR::sun_misc_Unsafe_getAndAddLong:
+            processUnsafeAtomicCall(treetop, TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
+            break;
+         case TR::sun_misc_Unsafe_getAndSetInt:
+         case TR::sun_misc_Unsafe_getAndSetLong:
+            processUnsafeAtomicCall(treetop, TR::SymbolReferenceTable::atomicSwapSymbol);
+            break;
+         case TR::java_lang_Class_isAssignableFrom:
+            process_java_lang_Class_IsAssignableFrom(treetop, node);
+            break;
+         case TR::java_lang_Integer_rotateLeft:
+            processIntrinsicFunction(treetop, node, TR::irol);
+            break;
+         case TR::java_lang_Integer_rotateRight:
+            {
+            // rotateRight(x, distance) = rotateLeft(x, -distance)
+            TR::Node *distance = TR::Node::create(node, TR::ineg, 1);
+            distance->setChild(0, node->getSecondChild());
+            node->setAndIncChild(1, distance);
 
-         processIntrinsicFunction(treetop, node, TR::irol);
+            processIntrinsicFunction(treetop, node, TR::irol);
 
-         break;
+            break;
+            }
+         case TR::java_lang_Long_rotateLeft:
+            processIntrinsicFunction(treetop, node, TR::lrol);
+            break;
+         case TR::java_lang_Long_rotateRight:
+            {
+            // rotateRight(x, distance) = rotateLeft(x, -distance)
+            TR::Node *distance = TR::Node::create(node, TR::ineg, 1);
+            distance->setChild(0, node->getSecondChild());
+            node->setAndIncChild(1, distance);
+
+            processIntrinsicFunction(treetop, node, TR::lrol);
+
+            break;
+            }
+         case TR::java_lang_Math_abs_I:
+            processIntrinsicFunction(treetop, node, TR::iabs);
+            break;
+         case TR::java_lang_Math_abs_L:
+            processIntrinsicFunction(treetop, node, TR::labs);
+            break;
+         case TR::java_lang_Math_abs_D:
+            processIntrinsicFunction(treetop, node, TR::dabs);
+            break;
+         case TR::java_lang_Math_abs_F:
+            processIntrinsicFunction(treetop, node, TR::fabs);
+            break;
+         case TR::java_lang_Math_max_I:
+            processIntrinsicFunction(treetop, node, TR::imax);
+            break;
+         case TR::java_lang_Math_min_I:
+            processIntrinsicFunction(treetop, node, TR::imin);
+            break;
+         case TR::java_lang_Math_max_L:
+            processIntrinsicFunction(treetop, node, TR::lmax);
+            break;
+         case TR::java_lang_Math_min_L:
+            processIntrinsicFunction(treetop, node, TR::lmin);
+            break;
+         case TR::java_lang_StringUTF16_toBytes:
+            process_java_lang_StringUTF16_toBytes(treetop, node);
+            break;
+         case TR::java_lang_StrictMath_sqrt:
+         case TR::java_lang_Math_sqrt:
+            process_java_lang_StrictMath_and_Math_sqrt(treetop, node);
+            break;
+         case TR::java_lang_Short_reverseBytes:
+            processConvertingUnaryIntrinsicFunction(treetop, node, TR::i2s, TR::sbyteswap, TR::s2i);
+            break;
+         case TR::java_lang_Integer_reverseBytes:
+            processIntrinsicFunction(treetop, node, TR::ibyteswap);
+            break;
+         case TR::java_lang_Long_reverseBytes:
+            processIntrinsicFunction(treetop, node, TR::lbyteswap);
+            break;
+         default:
+            break;
          }
-      case TR::java_lang_Long_rotateLeft:
-         processIntrinsicFunction(treetop, node, TR::lrol);
-         break;
-      case TR::java_lang_Long_rotateRight:
-         {
-         // rotateRight(x, distance) = rotateLeft(x, -distance)
-         TR::Node *distance = TR::Node::create(node, TR::ineg, 1);
-         distance->setChild(0, node->getSecondChild());
-         node->setAndIncChild(1, distance);
-
-         processIntrinsicFunction(treetop, node, TR::lrol);
-
-         break;
-         }
-      case TR::java_lang_Math_abs_I:
-         processIntrinsicFunction(treetop, node, TR::iabs);
-         break;
-      case TR::java_lang_Math_abs_L:
-         processIntrinsicFunction(treetop, node, TR::labs);
-         break;
-      case TR::java_lang_Math_abs_D:
-         processIntrinsicFunction(treetop, node, TR::dabs);
-         break;
-      case TR::java_lang_Math_abs_F:
-         processIntrinsicFunction(treetop, node, TR::fabs);
-         break;
-      case TR::java_lang_Math_max_I:
-         processIntrinsicFunction(treetop, node, TR::imax);
-         break;
-      case TR::java_lang_Math_min_I:
-         processIntrinsicFunction(treetop, node, TR::imin);
-         break;
-      case TR::java_lang_Math_max_L:
-         processIntrinsicFunction(treetop, node, TR::lmax);
-         break;
-      case TR::java_lang_Math_min_L:
-         processIntrinsicFunction(treetop, node, TR::lmin);
-         break;
-      case TR::java_lang_StringUTF16_toBytes:
-         process_java_lang_StringUTF16_toBytes(treetop, node);
-         break;
-      case TR::java_lang_StrictMath_sqrt:
-      case TR::java_lang_Math_sqrt:
-         process_java_lang_StrictMath_and_Math_sqrt(treetop, node);
-         break;
-      case TR::java_lang_Short_reverseBytes:
-         processConvertingUnaryIntrinsicFunction(treetop, node, TR::i2s, TR::sbyteswap, TR::s2i);
-         break;
-      case TR::java_lang_Integer_reverseBytes:
-         processIntrinsicFunction(treetop, node, TR::ibyteswap);
-         break;
-      case TR::java_lang_Long_reverseBytes:
-         processIntrinsicFunction(treetop, node, TR::lbyteswap);
-         break;
-      default:
-         break;
       }
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   else
+      {
+      // Post-inlining pass
+      switch (rm)
+         {
+         // TODO: invokeBasic, linkTo*
+         default:
+            break;
+         }
+      }
+#endif
    }
