@@ -88,7 +88,7 @@
 
 	<test id="Verify rightmost -XX:-PrintFlagsFinal overrides earlier -XX:+PrintFlagsFinal">
 		<command>$EXE$ -XX:+PrintFlagsFinal -XX:-PrintFlagsFinal -version</command>
-		<output type="success" caseSensitive="no" regex="no">Runtime Environment</output>
+		<output type="success" caseSensitive="yes" javaUtilPattern="yes" regex="yes">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
 		<output type="failure" caseSensitive="no" regex="no">[Global flags]</output>
 	</test>
 </suite>

@@ -697,7 +697,7 @@
 	<test id="Verify whether VM successfully runs in read-only shared cache with testBadBuildID and nonfatal option specified" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xint -Xshareclasses:testBadBuildID,verbose,readonly,nonfatal -version</command>
 		<output type="required" caseSensitive="yes" regex="no">Continue without using it as -Xshareclasses:nonfatal is specified</output>
-		<output type="success"  caseSensitive="yes" regex="yes" javaUtilPattern="yes">(Semeru|OpenJDK|Java\(TM\) SE) Runtime Environment</output>
+		<output type="success"  caseSensitive="yes" regex="yes" javaUtilPattern="yes">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
 		
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
