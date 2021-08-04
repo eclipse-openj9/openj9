@@ -919,6 +919,16 @@ public:
 
    /*
     * \brief
+    *    tell whether a method was annotated as @ForceInline.
+    *
+    * \param method
+    *    method
+    *
+    */
+   virtual bool isForceInline(TR_ResolvedMethod *method);
+   
+   /*
+    * \brief
     *    tell whether it's possible to dereference a field given the field symbol at compile time
     *
     * \param fieldSymbol
@@ -1328,6 +1338,8 @@ public:
    virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
    virtual bool               needRelocatableTarget()                          { return true; }
    virtual bool               isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp) { return false; }
+   virtual bool               isForceInline(TR_ResolvedMethod *method) { return false; }
+
    virtual bool               shouldDelayAotLoad();
 
    virtual bool               isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false);
