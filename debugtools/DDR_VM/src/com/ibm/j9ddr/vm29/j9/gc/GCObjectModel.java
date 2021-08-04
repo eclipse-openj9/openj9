@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -296,4 +296,12 @@ public abstract class GCObjectModel extends GCBase
 	 */
 	public abstract VoidPointer getElementAddress(J9IndexableObjectPointer indexableObjectPointer, int elementIndex, int elementSize) throws CorruptDataException;
 
+	/**
+	 * @param arrayPtr array object we are checking for isInlineContiguousArraylet
+	 * @throws CorruptDataException If there's a problem accessing the layout of the indexable object
+	 */
+	public boolean isInlineContiguousArraylet(J9IndexableObjectPointer arrayPtr) throws CorruptDataException
+	{
+		return indexableObjectModel.isInlineContiguousArraylet(arrayPtr);
+	}
 }

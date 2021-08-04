@@ -63,13 +63,14 @@ GC_ArrayletObjectModel::AssertArrayletIsDiscontiguous(J9IndexableObject *objPtr)
 void
 GC_ArrayletObjectModel::AssertContiguousArrayletLayout(J9IndexableObject *objPtr)
 {
-        Assert_MM_true(InlineContiguous == getArrayLayout(objPtr));
+	Assert_MM_true(InlineContiguous == getArrayLayout(objPtr));
 }
 
 void
 GC_ArrayletObjectModel::AssertDiscontiguousArrayletLayout(J9IndexableObject *objPtr)
 {
-        Assert_MM_true(Discontiguous == getArrayLayout(objPtr));
+	ArrayLayout layout = getArrayLayout(objPtr);
+	Assert_MM_true((Discontiguous == layout) || (Hybrid == layout));
 }
 
 GC_ArrayletObjectModel::ArrayLayout
