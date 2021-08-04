@@ -1579,7 +1579,7 @@ def download_boot_jdk(bootJDKVersion, bootJDK) {
         sh """
             curl -LJkO ${sdkUrl}
             mkdir -p ${bootJDK}
-            sdkFile=`ls | grep OpenJDK`
+            sdkFile=`ls | grep semeru`
             if [[ "\$sdkFile" == *zip ]]; then
                 unzip "\$sdkFile" -d .
                 sdkFolder=`ls -d */`
