@@ -70,10 +70,10 @@
 	<test>
 		<testCaseName>jit_jitt</testCaseName>
 		<variations>
-			<variation>-Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs:sync -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs:async -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:sync -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:async -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
@@ -199,10 +199,10 @@
 	<test>
 		<testCaseName>jit_jitt_openj9_none_SCC</testCaseName>
 		<variations>
-			<variation>-Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs:sync -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs:async -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:sync -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:async -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
@@ -245,10 +245,10 @@
 	<test>
 		<testCaseName>jit_jitt_none_SCC</testCaseName>
 		<variations>
-			<variation>-Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs:sync -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs:async -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:sync -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:async -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
@@ -294,10 +294,10 @@
 	<test>
 		<testCaseName>jit_jitt_XCEEHDLR</testCaseName>
 		<variations>
-			<variation>-XCEEHDLR -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs -XCEEHDLR -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs:sync -XCEEHDLR -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
-			<variation>-Xrs:async -XCEEHDLR -Xjit:noJitUntilMain,count=0,assumeStrictFP,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-XCEEHDLR -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs -XCEEHDLR -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:sync -XCEEHDLR -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
+			<variation>-Xrs:async -XCEEHDLR -Xjit:noJitUntilMain,count=0,optlevel=warm,gcOnResolve,rtResolve -verbose:stackwalk=0 -Xdump</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
