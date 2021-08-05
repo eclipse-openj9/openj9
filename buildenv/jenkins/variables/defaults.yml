@@ -495,9 +495,12 @@ aarch64_linux:
     8: 'linux-aarch64-normal-server-release'
     11: 'linux-aarch64-normal-server-release'
   node_labels:
-    build: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
+    build:
+      11: 'ci.role.build && hw.arch.aarch64 && sw.tool.docker'
+    docker_image:
+      11: 'adoptopenjdk/centos7_build_image@sha256:b2cc072a5c6196461a0993c6817d7540b8c8fcbce40f63cd5bb49eb6d7d61d89'
   build_env:
-    vars: 'PATH+TOOLS=/usr/local/gcc-7.5.0/bin'
+    vars: 'CC=/usr/local/gcc/bin/gcc-7.5 CXX=/usr/local/gcc/bin/g++-7.5'
 #========================================#
 # Linux Aarch 64bits Compressed Pointers /w cmake
 #========================================#

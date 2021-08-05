@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -435,9 +435,9 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 #define ALLOCATE_RAS_DATA_IN_SUBALLOCATOR FALSE
 #endif /* !defined(J9ZOS390) && !defined(J9ZTPF) */
 
-#if defined(J9ZOS390) || (defined (AIXPPC) && !defined (J9VM_ENV_DATA64))
+#if defined(J9ZOS390) || (defined(AIXPPC) && !defined(J9VM_ENV_DATA64))
 #define USE_STATIC_RAS_STRUCT
-#endif /* defined(J9ZOS390) || (defined (AIXPPC) && !defined (J9VM_ENV_DATA64)) */
+#endif /* defined(J9ZOS390) || (defined(AIXPPC) && !defined(J9VM_ENV_DATA64)) */
 
 static J9RAS*
 allocateRASStruct(J9JavaVM *javaVM)
@@ -471,12 +471,12 @@ allocateRASStruct(J9JavaVM *javaVM)
 			return candidate;
 		}
 		j9vmem_vmem_params_init(&params);
-#if defined (AIXPPC)
+#if defined(AIXPPC)
 		/* the low 768MB is out of bounds on AIX. Don't even bother trying */
 		params.startAddress = (void *)0x30000000;
-#else /* defined (AIXPPC) */
+#else /* defined(AIXPPC) */
 		params.startAddress = (void *)pageSize;
-#endif /* defined (AIXPPC) */
+#endif /* defined(AIXPPC) */
 		params.endAddress = OMR_MIN((void *) candidate, (void *) (UDATA) 0xffffffff); /* don't bother allocating after the static */
 		params.byteAmount = sizeof(J9AllocatedRAS);
 		params.pageSize = pageSize;
@@ -513,7 +513,7 @@ void J9RelocateRASData(J9JavaVM* javaVM) {
 			memset((J9RAS*)GLOBAL_DATA(_j9ras_), 0, sizeof(J9RAS));
 		}
 	}
-#endif /* defined(USE_STATIC_RAS_STRUCT) */
+#endif /* !defined(USE_STATIC_RAS_STRUCT) */
 	return;
 }
 
@@ -540,7 +540,7 @@ freeRASStruct(J9JavaVM *javaVM, J9RAS* rasStruct)
 			j9vmem_free_memory(allocatedStruct, sizeof(J9AllocatedRAS), &identifier);
 		}
 	}
-#endif /* defined(USE_STATIC_RAS_STRUCT) */
+#endif /* !defined(USE_STATIC_RAS_STRUCT) */
 }
 
 void
