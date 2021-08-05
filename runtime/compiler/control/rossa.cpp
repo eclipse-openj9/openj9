@@ -1822,13 +1822,6 @@ onLoadInternal(
       }
 #endif
 
-#if defined(TR_HOST_ARM64)
-   // ArrayCopy transformations are not available in AArch64 yet.
-   // OpenJ9 issue #6438 tracks the work to enable.
-   //
-   TR::Options::getCmdLineOptions()->setOption(TR_DisableArrayCopyOpts);
-#endif
-
 #ifdef J9VM_RAS_DUMP_AGENTS
    jitConfig->runJitdump = runJitdump;
 #endif
