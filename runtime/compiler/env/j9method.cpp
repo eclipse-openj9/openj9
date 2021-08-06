@@ -1340,12 +1340,6 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
    bool isStatic = false;
 
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->_jitConfig);
-   TR::CompilationInfoPerThreadBase *compInfoPerThreadBase = compInfo->getCompInfoForCompOnAppThread();
-   TR_RelocationRuntime *reloRuntime;
-   if (compInfoPerThreadBase)
-      reloRuntime = compInfoPerThreadBase->reloRuntime();
-   else
-      reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
 
    isStatic = (reloKind == TR_ValidateStaticField);
 
@@ -1473,15 +1467,6 @@ TR_ResolvedRelocatableJ9Method::fieldAttributes(TR::Compilation * comp, int32_t 
             {
             if (comp->getOption(TR_UseSymbolValidationManager))
                {
-               TR_J9VMBase *fej9 = (TR_J9VMBase *) comp->fe();
-               TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->_jitConfig);
-               TR::CompilationInfoPerThreadBase *compInfoPerThreadBase = compInfo->getCompInfoForCompOnAppThread();
-               TR_RelocationRuntime *reloRuntime;
-               if (compInfoPerThreadBase)
-                  reloRuntime = compInfoPerThreadBase->reloRuntime();
-               else
-                  reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
-
                TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, false);
 
                fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex);
@@ -1598,15 +1583,6 @@ TR_ResolvedRelocatableJ9Method::staticAttributes(TR::Compilation * comp,
       {
       if (comp->getOption(TR_UseSymbolValidationManager))
          {
-         TR_J9VMBase *fej9 = (TR_J9VMBase *) comp->fe();
-         TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->_jitConfig);
-         TR::CompilationInfoPerThreadBase *compInfoPerThreadBase = compInfo->getCompInfoForCompOnAppThread();
-         TR_RelocationRuntime *reloRuntime;
-         if (compInfoPerThreadBase)
-            reloRuntime = compInfoPerThreadBase->reloRuntime();
-         else
-            reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
-
          TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, true);
 
          fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex, true);

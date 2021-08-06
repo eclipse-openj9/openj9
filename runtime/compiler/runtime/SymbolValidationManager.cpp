@@ -1147,14 +1147,6 @@ TR::SymbolValidationManager::validateClassFromCPRecord(uint16_t classID,  uint16
 bool
 TR::SymbolValidationManager::validateDefiningClassFromCPRecord(uint16_t classID, uint16_t beholderID, uint32_t cpIndex, bool isStatic)
    {
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_fej9->_jitConfig);
-   TR::CompilationInfoPerThreadBase *compInfoPerThreadBase = compInfo->getCompInfoForCompOnAppThread();
-   TR_RelocationRuntime *reloRuntime;
-   if (compInfoPerThreadBase)
-      reloRuntime = compInfoPerThreadBase->reloRuntime();
-   else
-      reloRuntime = compInfo->getCompInfoForThread(_vmThread)->reloRuntime();
-
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
    return validateSymbol(classID, TR_ResolvedJ9Method::definingClassFromCPFieldRef(_comp, beholderCP, cpIndex, isStatic));

@@ -214,24 +214,11 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, uint32_t gpType, void *gpInf
    TR_MethodToBeCompiled *methodToBeCompiled = NULL;
    J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
-   TR::CompilationInfoPerThreadBase *cp = compInfo->getCompInfoForCompOnAppThread();
-
-   // compiling on app thread
-   if (cp)
+   TR::CompilationInfoPerThread *compInfoPT = compInfo->getCompInfoForThread(vmThread);
+   if (compInfoPT)
       {
-      comp = cp->getCompilation();
-      methodToBeCompiled = cp->getMethodBeingCompiled();
-      }
-
-   // probably compiling on separate thread
-   else
-      {
-      TR::CompilationInfoPerThread *compInfoPT = compInfo->getCompInfoForThread(vmThread);
-      if (compInfoPT)
-         {
-         comp = compInfoPT->getCompilation();
-         methodToBeCompiled = compInfoPT->getMethodBeingCompiled();
-         }
+      comp = compInfoPT->getCompilation();
+      methodToBeCompiled = compInfoPT->getMethodBeingCompiled();
       }
 
    const char *sig = (comp && comp->signature() ? comp->signature() : "<unknown>");
@@ -819,11 +806,6 @@ TR::CompilationInfo::freeAllCompilationThreads()
 
 void TR::CompilationInfo::freeAllResources()
    {
-   if (_compInfoForCompOnAppThread)
-      {
-      jitPersistentFree(_compInfoForCompOnAppThread);
-      }
-
    if (_interpSamplTrackingInfo)
       {
       jitPersistentFree(_interpSamplTrackingInfo);
@@ -1189,29 +1171,8 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
-bool TR::CompilationInfo::initializeCompilationOnApplicationThread()
-   {
-   if (!_compilationMonitor) return false;
-   OMR::CriticalSection initializingCompInfoForAppThreads(_compilationMonitor);
-   if (!_compInfoForCompOnAppThread)
-      {
-      PORT_ACCESS_FROM_JITCONFIG(_jitConfig);
-
-      // NOTE: _numCompThreads is 0 now because it's not incremented in TR::CompilationInfoPerThreadBase constructor
-      _compInfoForCompOnAppThread = new (PERSISTENT_NEW) TR::CompilationInfoPerThreadBase(*this, _jitConfig, 0, false);
-
-      if (!_compInfoForCompOnAppThread)
-         return false;
-      _compInfoForCompOnAppThread->setCompilationThreadState(COMPTHREAD_ACTIVE);
-      }
-   return true;
-   }
-
 TR::CompilationInfoPerThreadBase *TR::CompilationInfo::getCompInfoWithID(int32_t ID)
    {
-   if (_compInfoForCompOnAppThread)
-      return _compInfoForCompOnAppThread;
-
    for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
@@ -1228,9 +1189,6 @@ TR::CompilationInfoPerThreadBase *TR::CompilationInfo::getCompInfoWithID(int32_t
 //
 TR::CompilationInfoPerThread *TR::CompilationInfo::getFirstSuspendedCompilationThread()  // MCT
    {
-   if (_compInfoForCompOnAppThread)
-      return NULL;
-
    for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
       TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
@@ -1253,17 +1211,12 @@ TR::Compilation *TR::CompilationInfo::getCompilationWithID(int32_t ID)
 
 void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
    {
-   if (_compInfoForCompOnAppThread)
-      _compInfoForCompOnAppThread->setCompilationShouldBeInterrupted(GC_COMP_INTERRUPT);
-   else
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
-      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
-         {
-         TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
-         TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+      TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
 
-         curCompThreadInfoPT->setCompilationShouldBeInterrupted(GC_COMP_INTERRUPT);
-         }
+      curCompThreadInfoPT->setCompilationShouldBeInterrupted(GC_COMP_INTERRUPT);
       }
 
    _lastCompilationsShouldBeInterruptedTime = getPersistentInfo()->getElapsedTime(); // RAS
@@ -6322,96 +6275,6 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    return startPC;
    }
 
-void *TR::CompilationInfo::compileOnApplicationThread(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details,
-                                                     void *oldStartPC, TR_CompilationErrorCode *compErrCode,
-                                                     TR_OptimizationPlan * optimizationPlan)
-   {
-   // Assert that compilation is not recursive (for single compilation thread)
-   //
-   TR_ASSERT(!_compInfoForCompOnAppThread->_methodBeingCompiled, "assertion failure");
-
-   void *startPC = NULL;
-
-   if (_compInfoForCompOnAppThread->getCompilationThreadState() == COMPTHREAD_ACTIVE)
-      {
-      TR_MethodToBeCompiled methodEntry;
-      methodEntry._freeTag = ENTRY_IN_POOL_FREE;
-      methodEntry._monitor = NULL;
-      methodEntry.initialize(details, oldStartPC, CP_SYNC_NORMAL, optimizationPlan);
-      methodEntry._numThreadsWaiting = 1;
-      methodEntry._optimizationPlan = optimizationPlan;
-      methodEntry._jitStateWhenQueued = getPersistentInfo()->getJitState();
-      _compInfoForCompOnAppThread->_methodBeingCompiled = &methodEntry;
-
-      J9Method *method = details.getMethod();
-
-      // For newInstance thunks, we to stuff the class pointer
-      // into the "extra" field of the RAMMethod before calling the JIT. This is
-      // a convention that allows the same RAMMethod to be used to compile
-      // different newInstance thunks.
-      //
-      if (details.isNewInstanceThunk())
-         setJ9MethodVMExtra(method,
-                            reinterpret_cast<uintptr_t>(
-                               static_cast<J9::NewInstanceThunkDetails &>(details).classNeedingThunk()
-                               ) | J9_STARTPC_NOT_TRANSLATED);
-
-      if (getPersistentInfo()->isClassLoadingPhase() &&
-          !TR::Options::getCmdLineOptions()->getOption(TR_DontDowngradeToCold) &&
-          !isCompiled(method))
-         TR::CompilationController::getCompilationStrategy()->adjustOptimizationPlan(&methodEntry, -1);// decrease opt level
-
-#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-      // Check to see if we find the method in the shared cache
-      //
-      methodEntry._methodIsInSharedCache = TR_no;
-
-      if (vmThread && TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT)
-          && details.isOrdinaryMethod() && !isJNINative(method) && !isCompiled(method))
-         {
-         TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-         if (vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, fe->getROMMethodFromRAMMethod(method))
-             && (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
-                 || (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-                     && _sharedCacheReloRuntime.validateAOTHeader(fe, vmThread))))
-            {
-            methodEntry._methodIsInSharedCache = TR_yes;
-            }
-         }
-#endif // defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-
-      if (oldStartPC)
-         {
-         TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(oldStartPC);
-         if (bodyInfo)
-            bodyInfo->getMethodInfo()->setNextCompileLevel(optimizationPlan->getOptLevel(), optimizationPlan->insertInstrumentation());
-         }
-
-      J9::SegmentAllocator scratchSegmentProvider(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *_jitConfig->javaVM);
-      startPC = _compInfoForCompOnAppThread->compile(vmThread, &methodEntry, scratchSegmentProvider);
-
-      if (compErrCode)
-         *compErrCode = (TR_CompilationErrorCode)methodEntry._compErrCode; // communicate the error code to the caller
-
-      // the above call returns with the compilation monitor in hand
-
-      _compInfoForCompOnAppThread->_methodBeingCompiled = NULL;
-      }
-   else // Compilation is not active
-      {
-      acquireCompMonitor(vmThread);
-      startPC = compilationEnd(vmThread, details, _jitConfig, 0, oldStartPC);
-      if (compErrCode)
-         *compErrCode = compilationSuspended;
-      }
-
-   // Release the monitor
-   //
-   releaseCompMonitor(vmThread);
-
-   return startPC;
-   }
-
 #ifdef TR_HOST_S390
 void
 TR::CompilationInfoPerThreadBase::outputVerboseMMapEntry(
@@ -7816,8 +7679,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
    TR_RelocationRuntime *reloRuntime = NULL;
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-   TR::CompilationInfoPerThreadBase *cp = _compInfo.getCompInfoForCompOnAppThread();
-   reloRuntime = cp ? cp->reloRuntime() : entry->_compInfoPT->reloRuntime();
+   reloRuntime = entry->_compInfoPT->reloRuntime();
 #endif
 
    UDATA oldState = vmThread->omrVMThread->vmState;
@@ -10026,15 +9888,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   // Reservation will be cancelled at end of compilation
 
                   // Inform that metadata is now NULL
-                  if (compInfo->getCompInfoForCompOnAppThread())
-                     {
-                     compInfo->getCompInfoForCompOnAppThread()->setMetadata(NULL);
-                     }
-                  else
-                     {
-                     if (entry->_compInfoPT)
-                        entry->_compInfoPT->setMetadata(NULL);
-                     }
+                  if (entry->_compInfoPT)
+                     entry->_compInfoPT->setMetadata(NULL);
+
                   // mark that compilation failed
                   startPC = oldStartPC;
                   }

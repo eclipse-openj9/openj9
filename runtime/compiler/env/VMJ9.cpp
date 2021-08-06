@@ -3518,21 +3518,12 @@ TR_J9VMBase::lowerTree(TR::Compilation * comp, TR::Node * root, TR::TreeTop * tr
 uint8_t
 TR_J9VMBase::getCompilationShouldBeInterruptedFlag()
    {
-   // Some assumes to make sure that the code hasn't changed in an incompatible way
-   TR::CompilationInfoPerThreadBase *cp = _compInfo->getCompInfoForCompOnAppThread();
-   if (cp)
-      {
-      return cp->compilationShouldBeInterrupted();
-      }
-   else
-      {
 #ifdef DEBUG // make sure that what is true today stays true in the future
-      J9VMThread *vmThread = _jitConfig->javaVM->internalVMFunctions->currentVMThread(_jitConfig->javaVM);
-      TR::CompilationInfoPerThread *compInfoPT = _compInfo->getCompInfoForThread(vmThread);
-      TR_ASSERT(compInfoPT == _compInfoPT, "Discrepancy compInfoPT=%p _compInfoPT=%p\n", compInfoPT, _compInfoPT);
+   J9VMThread *vmThread = _jitConfig->javaVM->internalVMFunctions->currentVMThread(_jitConfig->javaVM);
+   TR::CompilationInfoPerThread *compInfoPT = _compInfo->getCompInfoForThread(vmThread);
+   TR_ASSERT(compInfoPT == _compInfoPT, "Discrepancy compInfoPT=%p _compInfoPT=%p\n", compInfoPT, _compInfoPT);
 #endif
-      return _compInfoPT->compilationShouldBeInterrupted();
-      }
+   return _compInfoPT->compilationShouldBeInterrupted();
    }
 
 // Resolution is 0.5 sec or worse. Returns negative value for not available
@@ -3540,12 +3531,8 @@ TR_J9VMBase::getCompilationShouldBeInterruptedFlag()
 int64_t
 TR_J9VMBase::getCpuTimeSpentInCompThread(TR::Compilation * comp)
    {
-   if (!_compInfo->getCompInfoForCompOnAppThread()) // filter out cases when we compile on app thread
-      {
-      _compInfoPT->getCompThreadCPU().update();
-      return _compInfoPT->getCompThreadCPU().getCpuTime();
-      }
-   return -1;
+   _compInfoPT->getCompThreadCPU().update();
+   return _compInfoPT->getCompThreadCPU().getCpuTime();
    }
 
 bool
@@ -3554,40 +3541,33 @@ TR_J9VMBase::compilationShouldBeInterrupted(TR::Compilation * comp, TR_CallingCo
    if (comp->getUpdateCompYieldStats())
       comp->updateCompYieldStatistics(callingContext);
 
-   bool const compilingOnApplicationThread = _compInfo->getCompInfoForCompOnAppThread() != NULL;
-   TR::CompilationInfoPerThreadBase * const compInfoPTB =
-      compilingOnApplicationThread ?
-         _compInfo->getCompInfoForCompOnAppThread() :
-         _compInfoPT;
+   TR::CompilationInfoPerThreadBase * const compInfoPTB = _compInfoPT;
 
    // Update the time spent in compilation thread
    //
    // TODO: use this only under an option
-   if (!compilingOnApplicationThread) // filter out cases when we compile on app thread; another test could be
+   // make sure current thread is the same as the thread stored in the FrontEnd
+   TR_ASSERT(vmThread() == _jitConfig->javaVM->internalVMFunctions->currentVMThread(_jitConfig->javaVM),
+             "Error: %p thread using the frontend of another thread %p",
+             _jitConfig->javaVM->internalVMFunctions->currentVMThread(_jitConfig->javaVM), vmThread());
+   // Update CPU time (update actually happens only every 0.5 seconds)
+   if (_compInfoPT->getCompThreadCPU().update()) // returns true if an update happened and metric looks good
       {
-      // make sure current thread is the same as the thread stored in the FrontEnd
-      TR_ASSERT(vmThread() == _jitConfig->javaVM->internalVMFunctions->currentVMThread(_jitConfig->javaVM),
-                "Error: %p thread using the frontend of another thread %p",
-                _jitConfig->javaVM->internalVMFunctions->currentVMThread(_jitConfig->javaVM), vmThread());
-      // Update CPU time (update actually happens only every 0.5 seconds)
-      if (_compInfoPT->getCompThreadCPU().update()) // returns true if an update happened and metric looks good
+      // We may also want to print it
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
          {
-         // We may also want to print it
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
-            {
-            int32_t CPUmillis = _compInfoPT->getCompThreadCPU().getCpuTime() / 1000000;
+         int32_t CPUmillis = _compInfoPT->getCompThreadCPU().getCpuTime() / 1000000;
 
-            // May issue a trace point if enabled
-            Trc_JIT_CompCPU(vmThread(), _compInfoPT->getCompThreadId(), CPUmillis);
+         // May issue a trace point if enabled
+         Trc_JIT_CompCPU(vmThread(), _compInfoPT->getCompThreadId(), CPUmillis);
 
-            TR_VerboseLog::writeLineLocked(
-               TR_Vlog_PERF,
-               "t=%6llu CPU time spent so far in compThread:%d = %d ms",
-               static_cast<unsigned long long>(_compInfo->getPersistentInfo()->getElapsedTime()),
-               _compInfoPT->getCompThreadId(),
-               CPUmillis
-               );
-            }
+         TR_VerboseLog::writeLineLocked(
+            TR_Vlog_PERF,
+            "t=%6llu CPU time spent so far in compThread:%d = %d ms",
+            static_cast<unsigned long long>(_compInfo->getPersistentInfo()->getElapsedTime()),
+            _compInfoPT->getCompThreadId(),
+            CPUmillis
+            );
          }
       }
 
@@ -3597,7 +3577,7 @@ TR_J9VMBase::compilationShouldBeInterrupted(TR::Compilation * comp, TR_CallingCo
       {
       releaseVMAccess(vmThread());
 
-      if (!compilingOnApplicationThread && comp->getOptions()->realTimeGC())
+      if (comp->getOptions()->realTimeGC())
          {
          // no compilation on application thread
          TR_ASSERT(_compInfoPT, "Missing compilation info per thread.");
@@ -3638,7 +3618,7 @@ TR_J9VMBase::compilationShouldBeInterrupted(TR::Compilation * comp, TR_CallingCo
 #endif
          //--- GC CAN INTERVENE HERE ---
          TR_ASSERT((vmThread()->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) == 0, "comp thread must not have vm access");
-         if (!compilingOnApplicationThread && comp->getOptions()->realTimeGC())
+         if (comp->getOptions()->realTimeGC())
             {
             // no compilation on application thread
             TR_ASSERT(_compInfoPT, "Missing compilation info per thread.");
@@ -5593,10 +5573,7 @@ TR_J9VMBase::reserveTrampolineIfNecessary(TR::Compilation * comp, TR::SymbolRefe
                if (newCache)
                   {
                   // check for class unloading that can happen in getNewCodeCache
-                  TR::CompilationInfoPerThreadBase * const compInfoPTB =
-                     _compInfo->getCompInfoForCompOnAppThread() ?
-                        _compInfo->getCompInfoForCompOnAppThread() :
-                        _compInfoPT;
+                  TR::CompilationInfoPerThreadBase * const compInfoPTB =_compInfoPT;
                   if (compInfoPTB->compilationShouldBeInterrupted())
                      {
                      newCache->unreserve(); // delete the reservation
@@ -7049,10 +7026,7 @@ TR_J9VM::getResolvedTrampoline(TR::Compilation *comp, TR::CodeCache* curCache, J
             if (newCache)
                {
                // check for class unloading that can happen in getNewCodeCache
-               TR::CompilationInfoPerThreadBase * const compInfoPTB =
-                  _compInfo->getCompInfoForCompOnAppThread() ?
-                     _compInfo->getCompInfoForCompOnAppThread() :
-                     _compInfoPT;
+               TR::CompilationInfoPerThreadBase * const compInfoPTB = _compInfoPT;
                if (compInfoPTB->compilationShouldBeInterrupted())
                   {
                   newCache->unreserve(); // delete the reservation
@@ -8407,7 +8381,7 @@ TR_J9VM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType address
 bool
 TR_J9SharedCacheVM::isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlock * destClass)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8493,7 +8467,7 @@ TR_J9SharedCacheVM::getInstanceFieldOffset(TR_OpaqueClassBlock * classPointer, c
                                     char * sig, uint32_t sigLen, UDATA options)
    {
 
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8519,7 +8493,7 @@ TR_J9SharedCacheVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
    {
    TR_OpaqueClassBlock *classPointer = TR_J9VM::getClassOfMethod(method);
 
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8543,7 +8517,7 @@ TR_J9SharedCacheVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
 TR_OpaqueClassBlock *
 TR_J9SharedCacheVM::getSuperClass(TR_OpaqueClassBlock * classPointer)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8567,7 +8541,7 @@ TR_J9SharedCacheVM::getSuperClass(TR_OpaqueClassBlock * classPointer)
 void
 TR_J9SharedCacheVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8607,7 +8581,7 @@ TR_ResolvedMethod *
 TR_J9SharedCacheVM::getResolvedMethodForNameAndSignature(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer,
                                                          const char* methodName, const char *signature)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8649,7 +8623,7 @@ TR_J9SharedCacheVM::getMethodFromClass(TR_OpaqueClassBlock * methodClass, char *
    TR_OpaqueMethodBlock* omb = this->TR_J9VM::getMethodFromClass(methodClass, methodName, signature, callingClass);
    if (omb)
       {
-      TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+      TR::Compilation* comp = _compInfoPT->getCompilation();
       TR_ASSERT(comp, "Should be called only within a compilation");
 
       if (comp->getOption(TR_UseSymbolValidationManager))
@@ -8776,7 +8750,7 @@ TR_OpaqueClassBlock *
 TR_J9SharedCacheVM::getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profiledInfo)
    {
    TR_OpaqueClassBlock * classPointer = (TR_OpaqueClassBlock *)(profiledInfo->_value);
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    if (comp->getPersistentInfo()->isObsoleteClass((void *)classPointer, comp->fe()))
@@ -8803,7 +8777,7 @@ TR_J9SharedCacheVM::getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *profil
 bool
 TR_J9SharedCacheVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool publicClass = TR_J9VM::isPublicClass(classPointer);
@@ -8829,7 +8803,7 @@ TR_J9SharedCacheVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
 bool
 TR_J9SharedCacheVM::hasFinalizer(TR_OpaqueClassBlock * classPointer)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool classHasFinalizer = TR_J9VM::hasFinalizer(classPointer);
@@ -8855,7 +8829,7 @@ TR_J9SharedCacheVM::hasFinalizer(TR_OpaqueClassBlock * classPointer)
 uintptr_t
 TR_J9SharedCacheVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8902,7 +8876,7 @@ TR_J9SharedCacheVM::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
 bool
 TR_J9SharedCacheVM::isPrimitiveClass(TR_OpaqueClassBlock * classPointer)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8928,7 +8902,7 @@ TR_J9SharedCacheVM::isPrimitiveClass(TR_OpaqueClassBlock * classPointer)
 TR_OpaqueClassBlock *
 TR_J9SharedCacheVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8954,7 +8928,7 @@ TR_J9SharedCacheVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayC
 TR_OpaqueClassBlock *
 TR_J9SharedCacheVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock * componentClass)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -8979,7 +8953,7 @@ TR_J9SharedCacheVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock * compon
 TR_OpaqueClassBlock *
 TR_J9SharedCacheVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -9005,7 +8979,7 @@ TR_J9SharedCacheVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * ar
 TR_OpaqueClassBlock *
 TR_J9SharedCacheVM::getBaseComponentClass(TR_OpaqueClassBlock * classPointer, int32_t & numDims)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -9041,7 +9015,7 @@ TR_J9SharedCacheVM::getClassFromNewArrayType(int32_t arrayType)
 bool
 TR_J9SharedCacheVM::isPrimitiveArray(TR_OpaqueClassBlock *classPointer)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -9067,7 +9041,7 @@ TR_J9SharedCacheVM::isPrimitiveArray(TR_OpaqueClassBlock *classPointer)
 bool
 TR_J9SharedCacheVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
    {
-   TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+   TR::Compilation* comp = _compInfoPT->getCompilation();
    TR_ASSERT(comp, "Should be called only within a compilation");
 
    bool validated = false;
@@ -9227,7 +9201,7 @@ TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength,
    const void* store= _jitConfig->javaVM->sharedClassConfig->storeSharedData(curThread, signatureChars, signatureLength, &dataDescriptor);
    if (!store) /* Store failed */
       {
-      TR::Compilation* comp = _compInfo->getCompInfoForCompOnAppThread() ? _compInfo->getCompInfoForCompOnAppThread()->getCompilation() : _compInfoPT->getCompilation();
+      TR::Compilation* comp = _compInfoPT->getCompilation();
       if (comp)
          comp->failCompilation<TR::CompilationException>("Failed to persist thunk");
       else
