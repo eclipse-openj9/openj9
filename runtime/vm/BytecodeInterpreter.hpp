@@ -8430,6 +8430,29 @@ throw_npe:
 			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
 		} else {
 			J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
+
+			if (J9_ARE_ANY_BITS_SET(vTableOffset, J9_JNI_MID_INTERFACE)) {
+				/* Treat as iTable index for the method if J9_JNI_MID_INTERFACE is set. */
+				UDATA iTableIndex = vTableOffset & ~(UDATA)J9_JNI_MID_INTERFACE;
+				J9Class *interfaceClass = J9_CLASS_FROM_METHOD(methodID->method);
+				/* Get the latest version of the class for the iTable search. */
+				interfaceClass = VM_VMHelpers::currentClass(interfaceClass);
+				vTableOffset = 0;
+				J9ITable * iTable = receiverClass->lastITable;
+				if (interfaceClass == iTable->interfaceClass) {
+					goto foundITable;
+				}
+				iTable = (J9ITable*)receiverClass->iTable;
+				while (NULL != iTable) {
+					if (interfaceClass == iTable->interfaceClass) {
+						receiverClass->lastITable = iTable;
+foundITable:
+						vTableOffset = ((UDATA*)(iTable + 1))[iTableIndex];
+						break;
+					}
+					iTable = iTable->next;
+				}
+			}
 			_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
 		}
 
