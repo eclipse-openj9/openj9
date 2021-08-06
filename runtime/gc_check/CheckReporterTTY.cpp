@@ -202,18 +202,20 @@ GC_CheckReporterTTY::reportObjectHeader(GC_CheckError *error, J9Object *objectPt
 {
 	MM_GCExtensionsBase* extensions = MM_GCExtensions::getExtensions(_javaVM);
 	const char *prefixString = prefix ? prefix : "";
+	UDATA headerSize = 0;
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
-	if (!shouldReport(error) || (NULL == J9GC_J9OBJECT_CLAZZ(objectPtr, extensions))) {
+	if (!shouldReport(error)) {
 		return;
 	}
 
-	UDATA headerSize = extensions->objectModel.getHeaderSize(objectPtr);
-	if (extensions->objectModel.isIndexable(objectPtr)) {
-		j9tty_printf(PORTLIB, "  <gc check (%zu): %sIObject %p header:", error->_errorNumber, prefixString, objectPtr);
+	if (extensions->objectModel.isDeadObject(objectPtr)) {
+		j9tty_printf(PORTLIB, "  <gc check (%zu): %sHole %p header:", error->_errorNumber, prefixString, objectPtr);
+		headerSize = (UDATA)sizeof(MM_HeapLinkedFreeHeader);
 	} else {
-		const char *elementName = (UDATA) extensions->objectModel.isDeadObject(objectPtr) ? "Hole" : "Object";
+		const char *elementName = (UDATA) extensions->objectModel.isIndexable(objectPtr) ? "IObject" : "Object";
 		j9tty_printf(PORTLIB, "  <gc check (%zu): %s%s %p header:", error->_errorNumber, prefixString, elementName, objectPtr);
+		headerSize = extensions->objectModel.getHeaderSize(objectPtr);
 	}
 	
 	U_32* cursor = (U_32*) objectPtr; 
