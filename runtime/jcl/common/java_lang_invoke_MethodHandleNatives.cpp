@@ -62,6 +62,8 @@ extern "C" {
 /* PlaceHolder value used for MN.vmindex that has default method conflict */
 #define J9VM_RESOLVED_VMINDEX_FOR_DEFAULT_THROW 1
 
+J9_DECLARE_CONSTANT_UTF8(mutableCallSite, "java/lang/invoke/MutableCallSite");
+
 static bool
 isPolymorphicMHMethod(J9JavaVM *vm, J9Class *declaringClass, J9UTF8 *methodName)
 {
@@ -520,7 +522,8 @@ lookupMethod(J9VMThread *currentThread, J9Class *resolvedClass, J9UTF8 *name, J9
 static void
 setCallSiteTargetImpl(J9VMThread *currentThread, jobject callsite, jobject target, bool isVolatile)
 {
-	const J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	J9JavaVM *javaVM = currentThread->javaVM;
+	const J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	if ((NULL == callsite) || (NULL == target)) {
@@ -542,13 +545,17 @@ setCallSiteTargetImpl(J9VMThread *currentThread, jobject callsite, jobject targe
 		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
 
 		/* Check for MutableCallSite modification. */
-		J9JITConfig* jitConfig = currentThread->javaVM->jitConfig;
-		J9UTF8 *clazzNameUTF8 = J9ROMCLASS_CLASSNAME(clazz->romClass);
-		U_8 *clazzName = J9UTF8_DATA(clazzNameUTF8);
-		UDATA clazzLength = J9UTF8_LENGTH(clazzNameUTF8);
+		J9JITConfig* jitConfig = javaVM->jitConfig;
+		J9Class *mcsClass = vmFuncs->peekClassHashTable(
+			currentThread,
+			javaVM->systemClassLoader,
+			J9UTF8_DATA(&mutableCallSite),
+			J9UTF8_LENGTH(&mutableCallSite));
+
 		if (!isVolatile /* MutableCallSite uses setTargetNormal(). */
-		&& NULL != jitConfig
-		&& J9UTF8_LITERAL_EQUALS(clazzName, clazzLength, "java/lang/invoke/MutableCallSite")
+		&& (NULL != jitConfig)
+		&& (NULL != mcsClass)
+		&& VM_VMHelpers::inlineCheckCast(clazz, mcsClass)
 		) {
 			jitConfig->jitSetMutableCallSiteTarget(currentThread, callsiteObject, targetObject);
 		} else {
