@@ -3899,10 +3899,7 @@ TR_J9VMBase::waitOnCompiler(void *config)
 bool
 TR_J9VMBase::tossingCode()
    {
-   if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
-       (_jitConfig->runtimeFlags & J9JIT_TESTMODE))
-      return true;
-   return false;
+   return (_jitConfig->runtimeFlags & J9JIT_TOSS_CODE);
    }
 
 TR::KnownObjectTable::Index

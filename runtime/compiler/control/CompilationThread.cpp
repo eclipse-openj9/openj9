@@ -5684,7 +5684,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
    // or when compiling a newInstanceThunk (otherwise we're too slow)
    //
    if ( (_jitConfig->runtimeFlags & J9JIT_SCAVENGE_ON_RESOLVE) &&
-       !(_jitConfig->runtimeFlags & J9JIT_TESTMODE) && !requireAsyncCompile &&
+       !(_jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && !requireAsyncCompile &&
         (oldStartPC || newInstanceThunkDetails))
       jitCheckScavengeOnResolve(vmThread);
 #endif
@@ -10461,7 +10461,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
       if (_methodBeingCompiled->_reqFromJProfilingQueue)
          _compInfo._statNumMethodsFromJProfilingQueue++;
 
-      if (_jitConfig->runtimeFlags & J9JIT_TESTMODE)
+      if (_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "JIT %s OK\n", compiler->signature());
          }
@@ -11042,7 +11042,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
       TR_VerboseLog::vlogAcquire();
       if (_methodBeingCompiled->_compErrCode != compilationFailure)
          {
-         if ((_jitConfig->runtimeFlags & J9JIT_TESTMODE) && _methodBeingCompiled->_compErrCode == compilationInterrupted)
+         if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && _methodBeingCompiled->_compErrCode == compilationInterrupted)
             TR_VerboseLog::write(TR_Vlog_FAILURE, "Translating %s -- Interrupted because of %s", compiler->signature(), exceptionName);
          else
             {

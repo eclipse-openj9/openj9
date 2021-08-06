@@ -986,7 +986,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"statisticsFrequency=", "R<nnn>\tnumber of milliseconds between statistics print",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_statisticsFrequency, 0, "F%d", NOT_IN_SUBSET},
 #endif /* defined(J9VM_OPT_JITSERVER) */
-   {"testMode",           "D\tcompile but do not run the compiled code",  SET_JITCONFIG_RUNTIME_FLAG(J9JIT_TESTMODE) },
+   {"testMode",           "D\tequivalent to tossCode",  SET_JITCONFIG_RUNTIME_FLAG(J9JIT_TOSS_CODE) },
 #if defined(J9VM_OPT_JITSERVER)
    {"timeBetweenPurges=", " \tDefines how often we are willing to scan for old entries to be purged",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_timeBetweenPurges,  0, "F%d"},
@@ -2394,7 +2394,7 @@ J9::Options::fePostProcessJIT(void * base)
    uint32_t flags = *(uint32_t *)(&jitConfig->runtimeFlags);
    jitConfig->runtimeFlags |= flags;
 
-   if (jitConfig->runtimeFlags & J9JIT_TESTMODE || jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
+   if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
       self()->setOption(TR_DisableAsyncCompilation, true);
 
    if (jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE)
@@ -2476,8 +2476,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
 
    // runtimeFlags are properly setup only in fePostProcessJit,
    // so for AOT we can properly set dependent options only here
-   if (jitConfig->runtimeFlags & J9JIT_TESTMODE ||
-       jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
+   if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
       self()->setOption(TR_DisableAsyncCompilation, true);
 
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);

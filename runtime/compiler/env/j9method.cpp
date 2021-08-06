@@ -4981,7 +4981,7 @@ TR_ResolvedJ9Method::startAddressForJittedMethod()
    {
    int8_t * address = (int8_t *)TR::CompilationInfo::getJ9MethodStartPC(ramMethod());
 
-   if (!TR::Compiler->target.cpu.isI386() && !(_fe->_jitConfig->runtimeFlags & J9JIT_TESTMODE))
+   if (!TR::Compiler->target.cpu.isI386() && !(_fe->_jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
       {
       address += ((*(int32_t *)(address - 4)) >> 16) & 0xFFFF;
       }
