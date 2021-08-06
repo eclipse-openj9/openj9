@@ -1330,9 +1330,9 @@ void
 InterpreterEmulator::updateKnotAndCreateCallSiteUsingInvokeCacheArray(TR_ResolvedJ9Method* owningMethod, uintptr_t * invokeCacheArray, int32_t cpIndex)
    {
    TR_J9VMBase *fej9 = comp()->fej9();
+   TR::KnownObjectTable::Index idx = fej9->getKnotIndexOfInvokeCacheArrayAppendixElement(comp(), invokeCacheArray);
    if (_iteratorWithState)
       {
-      TR::KnownObjectTable::Index idx = fej9->getKnotIndexOfInvokeCacheArrayAppendixElement(comp(), invokeCacheArray);
       if (idx != TR::KnownObjectTable::UNKNOWN)
          push(new (trStackMemory()) KnownObjOperand(idx));
       else
@@ -1357,7 +1357,7 @@ InterpreterEmulator::updateKnotAndCreateCallSiteUsingInvokeCacheArray(TR_Resolve
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                                                                         _recursionDepth, allconsts);
 
-   findTargetAndUpdateInfoForCallsite(callsite);
+   findTargetAndUpdateInfoForCallsite(callsite, idx);
    }
 
 #endif //J9VM_OPT_OPENJDK_METHODHANDLE
@@ -1789,7 +1789,8 @@ InterpreterEmulator::createPrexArgFromOperand(Operand* operand)
    }
 
 TR_PrexArgInfo*
-InterpreterEmulator::computePrexInfo(TR_CallSite *callsite)
+InterpreterEmulator::computePrexInfo(
+   TR_CallSite *callsite, TR::KnownObjectTable::Index appendix)
    {
    if (tracer()->heuristicLevel())
       _ecs->getInliner()->tracer()->dumpCallSite(callsite, "Compute prex info for call site %p\n", callsite);
@@ -1844,16 +1845,44 @@ InterpreterEmulator::computePrexInfo(TR_CallSite *callsite)
          return prexArgInfo;
          }
       }
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   else if (appendix != TR::KnownObjectTable::UNKNOWN)
+      {
+      TR_ASSERT_FATAL(!callsite->isIndirectCall(), "appendix with indirect call");
+      TR_ASSERT_FATAL(
+         comp()->fej9()->isLambdaFormGeneratedMethod(callsite->_initialCalleeMethod),
+         "appendix with non-LambdaForm method - expected a call site adapter");
+
+      TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+      if (!knot->isNull(appendix))
+         {
+         TR_PrexArgInfo* prexArgInfo =
+            new (comp()->trHeapMemory()) TR_PrexArgInfo(numOfArgs, comp()->trMemory());
+
+         auto arg = new (comp()->trHeapMemory()) TR_PrexArgument(appendix, comp());
+         prexArgInfo->set(numOfArgs - 1, arg);
+
+         if (tracer()->heuristicLevel())
+            {
+            alwaysTrace(tracer(), "argInfo from appendix object:");
+            prexArgInfo->dumpTrace();
+            }
+
+         return prexArgInfo;
+         }
+      }
+#endif
 
    return NULL;
    }
 
 void
-InterpreterEmulator::findTargetAndUpdateInfoForCallsite(TR_CallSite *callsite)
+InterpreterEmulator::findTargetAndUpdateInfoForCallsite(
+   TR_CallSite *callsite, TR::KnownObjectTable::Index appendix)
    {
    _currentCallSite = callsite;
    callsite->_callerBlock = _currentInlinedBlock;
-   callsite->_ecsPrexArgInfo = computePrexInfo(callsite);
+   callsite->_ecsPrexArgInfo = computePrexInfo(callsite, appendix);
 
    if (_ecs->isInlineable(_callStack, callsite))
       {
