@@ -1612,21 +1612,13 @@ static void initThreadAfterCreation(J9VMThread *vmThread)
    vmThread->jitCountDelta = 2; // by default we assume there are compilation threads active
    if (compInfo)
       {
-      if (compInfo->useSeparateCompilationThread())
+      compInfo->acquireCompMonitor(vmThread);
+      if (compInfo->getNumUsableCompilationThreads() > 0 && compInfo->getNumCompThreadsActive() == 0)
          {
-         compInfo->acquireCompMonitor(vmThread);
-         if (compInfo->getNumUsableCompilationThreads() > 0 && compInfo->getNumCompThreadsActive() == 0)
-            {
-            vmThread->jitCountDelta = 0;
-            }
-         compInfo->releaseCompMonitor(vmThread);
+         vmThread->jitCountDelta = 0;
          }
-      else
-         {
-         CompilationThreadState state = compInfo->getCompInfoForCompOnAppThread()->getCompilationThreadState();
-         if (state != COMPTHREAD_UNINITIALIZED && state != COMPTHREAD_ACTIVE)
-            vmThread->jitCountDelta = 0;
-         }
+      compInfo->releaseCompMonitor(vmThread);
+
       vmThread->maxProfilingCount = (UDATA)encodeCount(compInfo->getIprofilerMaxCount());
       }
 

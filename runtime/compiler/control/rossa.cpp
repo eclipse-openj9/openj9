@@ -1525,70 +1525,60 @@ onLoadInternal(
       }
 #endif
 
-   // create comp threads if compiling on separate thread
-   if (compInfo->useSeparateCompilationThread())
+   // Address the case where the number of compilation threads is higher than the
+   // maximum number of code caches
+   if (TR::Options::_numUsableCompilationThreads > maxNumberOfCodeCaches)
       {
-      // Address the case where the number of compilation threads is higher than the
-      // maximum number of code caches
-      if (TR::Options::_numUsableCompilationThreads > maxNumberOfCodeCaches)
-         {
 #if defined(J9VM_OPT_JITSERVER)
-         if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-            {
-            fprintf(stderr,
-               "Requested number of compilation threads is larger than the maximum number of code caches: %d > %d.\n"
-               "Use the -Xcodecachetotal option to increase the maximum total size of the code cache.",
-               TR::Options::_numUsableCompilationThreads, maxNumberOfCodeCaches
-            );
-            return -1;
-            }
-#endif /* defined(J9VM_OPT_JITSERVER) */
-         TR::Options::_numUsableCompilationThreads = maxNumberOfCodeCaches;
-         }
-
-      compInfo->updateNumUsableCompThreads(TR::Options::_numUsableCompilationThreads);
-
-      if (!compInfo->allocateCompilationThreads(TR::Options::_numUsableCompilationThreads))
+      if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
-         fprintf(stderr, "onLoadInternal: Failed to set up %d compilation threads\n", TR::Options::_numUsableCompilationThreads);
+         fprintf(stderr,
+            "Requested number of compilation threads is larger than the maximum number of code caches: %d > %d.\n"
+            "Use the -Xcodecachetotal option to increase the maximum total size of the code cache.",
+            TR::Options::_numUsableCompilationThreads, maxNumberOfCodeCaches
+         );
          return -1;
          }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      TR::Options::_numUsableCompilationThreads = maxNumberOfCodeCaches;
+      }
 
-      // create regular compilation threads
-      int32_t highestThreadID = 0;
-      for (; highestThreadID < TR::Options::_numUsableCompilationThreads; highestThreadID++)
-         {
-         if (compInfo->startCompilationThread(-1, highestThreadID, /* isDiagnosticThread */ false) != 0)
-            {
-            // Failed to start compilation thread.
-            Trc_JIT_startCompThreadFailed(curThread);
-            return -1;
-            }
-         }
+   compInfo->updateNumUsableCompThreads(TR::Options::_numUsableCompilationThreads);
 
-      // If more than one diagnostic compilation thread is created, MAX_DIAGNOSTIC_COMP_THREADS needs to be updated
-      // create diagnostic compilation thread
-      if (compInfo->startCompilationThread(-1, highestThreadID, /* isDiagnosticThread */ true) != 0)
+   if (!compInfo->allocateCompilationThreads(TR::Options::_numUsableCompilationThreads))
+      {
+      fprintf(stderr, "onLoadInternal: Failed to set up %d compilation threads\n", TR::Options::_numUsableCompilationThreads);
+      return -1;
+      }
+
+   // create regular compilation threads
+   int32_t highestThreadID = 0;
+   for (; highestThreadID < TR::Options::_numUsableCompilationThreads; highestThreadID++)
+      {
+      if (compInfo->startCompilationThread(-1, highestThreadID, /* isDiagnosticThread */ false) != 0)
          {
          // Failed to start compilation thread.
          Trc_JIT_startCompThreadFailed(curThread);
-         highestThreadID++;
-         return -1;
-         }
-
-      // Create the monitor used for log handling in presence of multiple compilation threads
-      // TODO: postpone this when we know that a log is actually used
-      if (!compInfo->createLogMonitor())
-         {
-         fprintf(stderr, "cannot create log monitor\n");
          return -1;
          }
       }
-   else
+
+   // If more than one diagnostic compilation thread is created, MAX_DIAGNOSTIC_COMP_THREADS needs to be updated
+   // create diagnostic compilation thread
+   if (compInfo->startCompilationThread(-1, highestThreadID, /* isDiagnosticThread */ true) != 0)
       {
-      // Compilation on application thread
-      if (!compInfo->initializeCompilationOnApplicationThread())
-         return -1; // failure
+      // Failed to start compilation thread.
+      Trc_JIT_startCompThreadFailed(curThread);
+      highestThreadID++;
+      return -1;
+      }
+
+   // Create the monitor used for log handling in presence of multiple compilation threads
+   // TODO: postpone this when we know that a log is actually used
+   if (!compInfo->createLogMonitor())
+      {
+      fprintf(stderr, "cannot create log monitor\n");
+      return -1;
       }
 
    if (!fe->isAOT_DEPRECATED_DO_NOT_USE() && !(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))

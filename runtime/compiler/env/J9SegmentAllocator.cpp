@@ -176,18 +176,14 @@ SegmentAllocator::preventAllocationOfBTLMemory(J9MemorySegment * &segment, J9Jav
             }
 
          // For scratch memory refuse to return memory below the line. Free the segment and let the compilation fail
-         // Compilation will be retried at lower opt level.
-         if (segmentType & MEMORY_TYPE_VIRTUAL)
+         // Compilation will be retried at lower opt level. However, We should not reject requests coming from hooks.
+         if (segmentType & MEMORY_TYPE_JIT_SCRATCH_SPACE)
             {
-            // We should not reject requests coming from hooks. Test if this is a comp thread
-            if (compInfo->useSeparateCompilationThread())
+            J9VMThread *crtVMThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+            if (compInfo->getCompInfoForThread(crtVMThread))
                {
-               J9VMThread *crtVMThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
-               if (compInfo->getCompInfoForThread(crtVMThread))
-                  {
-                  javaVM->internalVMFunctions->freeMemorySegment(javaVM, segment, TRUE);
-                  segment = NULL;
-                  }
+               javaVM->internalVMFunctions->freeMemorySegment(javaVM, segment, TRUE);
+               segment = NULL;
                }
             }
          }

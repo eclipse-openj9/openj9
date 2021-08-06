@@ -226,15 +226,11 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, uint32_t gpType, void *gpInf
    // probably compiling on separate thread
    else
       {
-      // make sure we're really compiling on separate thread
-      if (compInfo->useSeparateCompilationThread())
+      TR::CompilationInfoPerThread *compInfoPT = compInfo->getCompInfoForThread(vmThread);
+      if (compInfoPT)
          {
-         TR::CompilationInfoPerThread *compInfoPT = compInfo->getCompInfoForThread(vmThread);
-         if (compInfoPT)
-            {
-            comp = compInfoPT->getCompilation();
-            methodToBeCompiled = compInfoPT->getMethodBeingCompiled();
-            }
+         comp = compInfoPT->getCompilation();
+         methodToBeCompiled = compInfoPT->getMethodBeingCompiled();
          }
       }
 
@@ -1273,15 +1269,9 @@ void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
    _lastCompilationsShouldBeInterruptedTime = getPersistentInfo()->getElapsedTime(); // RAS
    }
 
-bool TR::CompilationInfo::useSeparateCompilationThread()
-   {
-   return true;
-   }
-
 bool TR::CompilationInfo::asynchronousCompilation()
    {
    static bool answer = (!TR::Options::getJITCmdLineOptions()->getOption(TR_DisableAsyncCompilation) &&
-                        useSeparateCompilationThread() &&
                         TR::Options::getJITCmdLineOptions()->getInitialBCount() &&
                         TR::Options::getJITCmdLineOptions()->getInitialCount() &&
                         TR::Options::getAOTCmdLineOptions()->getInitialSCount() &&
@@ -1442,7 +1432,7 @@ intptr_t TR::CompilationInfo::waitOnCompMonitorTimed(J9VMThread *vmThread, int64
 
 void TR::CompilationInfo::acquireCompilationLock()
    {
-   if (useSeparateCompilationThread() && _compilationMonitor)
+   if (_compilationMonitor)
       {
       acquireCompMonitor(0);
       debugPrint("\t\texternal user acquiring compilation monitor\n");
@@ -1451,7 +1441,7 @@ void TR::CompilationInfo::acquireCompilationLock()
 
 void TR::CompilationInfo::releaseCompilationLock()
    {
-   if (useSeparateCompilationThread() && _compilationMonitor)
+   if (_compilationMonitor)
       {
       debugPrint("\t\texternal user releasing compilatoin monitor\n");
       releaseCompMonitor(0);
@@ -2137,8 +2127,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
 
    // when the compilation fails we might retry
    //
-   if (entry->_compErrCode != compilationOK &&
-      useSeparateCompilationThread()) // Retrials for compilation on application thread are not implemented
+   if (entry->_compErrCode != compilationOK)
       {
       if (entry->_compilationAttemptsLeft > 0)
          {
@@ -2461,46 +2450,39 @@ void TR::CompilationInfo::suspendCompilationThread()
    // request queue and there is no compilation thread
    // There can only be one request that is in progress. All the others
    // will see the SUSPENDED state when they get the application monitor
-   if (!useSeparateCompilationThread())
-      {
-      if (_compInfoForCompOnAppThread->getCompilationThreadState() == COMPTHREAD_ACTIVE)
-         _compInfoForCompOnAppThread->setCompilationThreadState(COMPTHREAD_SUSPENDED); // for compilation on application thread there is only one state
-      }
-   else // compilation on separate thread
-      {
-      TR_ASSERT(_compilationMonitor, "Must have a compilation queue monitor\n");
-      J9JavaVM   *vm       = _jitConfig->javaVM;
-      J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
-      if (!vmThread)
-         return; // cannot do it without a vmThread  FIXME: why?
-      acquireCompMonitor(vmThread);
 
-      // Must visit all compilation threads
-      bool stoppedOneCompilationThread = false;
-      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
+   TR_ASSERT(_compilationMonitor, "Must have a compilation queue monitor\n");
+   J9JavaVM   *vm       = _jitConfig->javaVM;
+   J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+   if (!vmThread)
+      return; // cannot do it without a vmThread  FIXME: why?
+   acquireCompMonitor(vmThread);
+
+   // Must visit all compilation threads
+   bool stoppedOneCompilationThread = false;
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      {
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+      TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
+
+      // Only compilation threads that are active need to be suspended
+      if (curCompThreadInfoPT->compilationThreadIsActive())
          {
-         TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
-         TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
-
-         // Only compilation threads that are active need to be suspended
-         if (curCompThreadInfoPT->compilationThreadIsActive())
+         curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_SUSPEND);
+         decNumCompThreadsActive();
+         // should we try to interrupt the compilation in progress?
+         stoppedOneCompilationThread = true;
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
             {
-            curCompThreadInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_SUSPEND);
-            decNumCompThreadsActive();
-            // should we try to interrupt the compilation in progress?
-            stoppedOneCompilationThread = true;
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
-               {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Suspension request for compThread %d sleeping=%s",
-                  (uint32_t)getPersistentInfo()->getElapsedTime(), curCompThreadInfoPT->getCompThreadId(), curCompThreadInfoPT->getMethodBeingCompiled()?"NO":"YES");
-               }
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Suspension request for compThread %d sleeping=%s",
+               (uint32_t)getPersistentInfo()->getElapsedTime(), curCompThreadInfoPT->getCompThreadId(), curCompThreadInfoPT->getMethodBeingCompiled()?"NO":"YES");
             }
          }
-      if (stoppedOneCompilationThread)
-         purgeMethodQueue(compilationSuspended);
-      TR_ASSERT(_numCompThreadsActive == 0, "We must have all compilation threads suspended at this point\n");
-      releaseCompMonitor(vmThread);
-      } // endif
+      }
+   if (stoppedOneCompilationThread)
+      purgeMethodQueue(compilationSuspended);
+   TR_ASSERT(_numCompThreadsActive == 0, "We must have all compilation threads suspended at this point\n");
+   releaseCompMonitor(vmThread);
    }
 
 void TR::CompilationInfoPerThread::resumeCompilationThread()
@@ -2541,101 +2523,93 @@ void TR::CompilationInfoPerThread::resumeCompilationThread()
 //-----------------------------------------------------------------------------
 void TR::CompilationInfo::resumeCompilationThread()
    {
-   if (useSeparateCompilationThread())
+   J9JavaVM   *vm       = _jitConfig->javaVM;
+   J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+   acquireCompMonitor(vmThread);
+
+   /*
+    * Count active/suspended threads for sake of sanity.
+    * We can afford to do it because this method is not invoked very often
+    *
+    * FIXME:
+    *    we are now using an array, so there is no linked list to count;
+    *    therefore, we might be able to remove this entirely
+    */
+   int32_t numActiveCompThreads = 0; // RAS purposes
+   int32_t numHot = 0;
+   TR::CompilationInfoPerThread *compInfoPTHot = NULL;
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
       {
-      J9JavaVM   *vm       = _jitConfig->javaVM;
-      J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
-      acquireCompMonitor(vmThread);
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+      TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
 
-      /*
-       * Count active/suspended threads for sake of sanity.
-       * We can afford to do it because this method is not invoked very often
-       *
-       * FIXME:
-       *    we are now using an array, so there is no linked list to count;
-       *    therefore, we might be able to remove this entirely
-       */
-      int32_t numActiveCompThreads = 0; // RAS purposes
-      int32_t numHot = 0;
-      TR::CompilationInfoPerThread *compInfoPTHot = NULL;
-      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      CompilationThreadState currentThreadState = curCompThreadInfoPT->getCompilationThreadState();
+      if (currentThreadState == COMPTHREAD_ACTIVE ||
+          currentThreadState == COMPTHREAD_SIGNAL_WAIT ||
+          currentThreadState == COMPTHREAD_WAITING ||
+          currentThreadState == COMPTHREAD_SIGNAL_SUSPEND)
          {
-         TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
-         TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
-
-         CompilationThreadState currentThreadState = curCompThreadInfoPT->getCompilationThreadState();
-         if (currentThreadState == COMPTHREAD_ACTIVE ||
-             currentThreadState == COMPTHREAD_SIGNAL_WAIT ||
-             currentThreadState == COMPTHREAD_WAITING ||
-             currentThreadState == COMPTHREAD_SIGNAL_SUSPEND)
+         if (curCompThreadInfoPT->compilationThreadIsActive())
+            numActiveCompThreads++;
+         if (curCompThreadInfoPT->getMethodBeingCompiled() &&
+            curCompThreadInfoPT->getMethodBeingCompiled()->_hasIncrementedNumCompThreadsCompilingHotterMethods)
             {
-            if (curCompThreadInfoPT->compilationThreadIsActive())
-               numActiveCompThreads++;
-            if (curCompThreadInfoPT->getMethodBeingCompiled() &&
-               curCompThreadInfoPT->getMethodBeingCompiled()->_hasIncrementedNumCompThreadsCompilingHotterMethods)
-               {
-               numHot++;
-               if (currentThreadState == COMPTHREAD_SIGNAL_SUSPEND)
-                  compInfoPTHot = curCompThreadInfoPT; // memorize this for later
-               }
+            numHot++;
+            if (currentThreadState == COMPTHREAD_SIGNAL_SUSPEND)
+               compInfoPTHot = curCompThreadInfoPT; // memorize this for later
             }
          }
-
-      // Check that our view about the number of active compilation threads is correct
-      //
-      if (numActiveCompThreads != getNumCompThreadsActive())
-         {
-         TR_ASSERT(false, "Discrepancy regarding active compilation threads: numActiveCompThreads=%d getNumCompThreadsActive()=%d\n", numActiveCompThreads, getNumCompThreadsActive());
-         setNumCompThreadsActive(numActiveCompThreads); // Apply correction
-         }
-      if (getNumCompThreadsCompilingHotterMethods() != numHot)
-         {
-         TR_ASSERT(false, "Inconsistency with hot threads %d %d\n", getNumCompThreadsCompilingHotterMethods(), numHot);
-         setNumCompThreadsCompilingHotterMethods(numHot); // apply correction
-         }
-
-      // If there is a compilation thread executing a hot compilation and the state is
-      // SUSPENDING, activate this thread first (see defect 182392)
-      if (compInfoPTHot)
-         {
-         compInfoPTHot->setCompilationThreadState(COMPTHREAD_ACTIVE);
-         incNumCompThreadsActive();
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Resume compThread %d Qweight=%d active=%d",
-               (uint32_t)getPersistentInfo()->getElapsedTime(),
-               compInfoPTHot->getCompThreadId(),
-               getQueueWeight(),
-               getNumCompThreadsActive());
-            }
-         }
-
-      // If dynamicThreadActivation is used, wake compilation threads only as
-      // many as required; otherwise wake them all
-      for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
-         {
-         TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
-         TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
-
-         TR_YesNoMaybe activate = shouldActivateNewCompThread();
-         if (activate == TR_no)
-            break;
-
-         curCompThreadInfoPT->resumeCompilationThread();
-         }
-
-      if (getNumCompThreadsActive() == 0)
-         {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "No threads were activated following a resume all compilation threads call");
-         }
-
-      releaseCompMonitor(vmThread);
       }
-   else // compilation on application thread
+
+   // Check that our view about the number of active compilation threads is correct
+   //
+   if (numActiveCompThreads != getNumCompThreadsActive())
       {
-      if (_compInfoForCompOnAppThread->getCompilationThreadState() == COMPTHREAD_SUSPENDED)
-         _compInfoForCompOnAppThread->setCompilationThreadState(COMPTHREAD_ACTIVE);
+      TR_ASSERT(false, "Discrepancy regarding active compilation threads: numActiveCompThreads=%d getNumCompThreadsActive()=%d\n", numActiveCompThreads, getNumCompThreadsActive());
+      setNumCompThreadsActive(numActiveCompThreads); // Apply correction
       }
+   if (getNumCompThreadsCompilingHotterMethods() != numHot)
+      {
+      TR_ASSERT(false, "Inconsistency with hot threads %d %d\n", getNumCompThreadsCompilingHotterMethods(), numHot);
+      setNumCompThreadsCompilingHotterMethods(numHot); // apply correction
+      }
+
+   // If there is a compilation thread executing a hot compilation and the state is
+   // SUSPENDING, activate this thread first (see defect 182392)
+   if (compInfoPTHot)
+      {
+      compInfoPTHot->setCompilationThreadState(COMPTHREAD_ACTIVE);
+      incNumCompThreadsActive();
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"t=%6u Resume compThread %d Qweight=%d active=%d",
+            (uint32_t)getPersistentInfo()->getElapsedTime(),
+            compInfoPTHot->getCompThreadId(),
+            getQueueWeight(),
+            getNumCompThreadsActive());
+         }
+      }
+
+   // If dynamicThreadActivation is used, wake compilation threads only as
+   // many as required; otherwise wake them all
+   for (int32_t i = 0; i < getNumUsableCompilationThreads(); i++)
+      {
+      TR::CompilationInfoPerThread *curCompThreadInfoPT = _arrayOfCompilationInfoPerThread[i];
+      TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
+
+      TR_YesNoMaybe activate = shouldActivateNewCompThread();
+      if (activate == TR_no)
+         break;
+
+      curCompThreadInfoPT->resumeCompilationThread();
+      }
+
+   if (getNumCompThreadsActive() == 0)
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "No threads were activated following a resume all compilation threads call");
+      }
+
+   releaseCompMonitor(vmThread);
    }
 
 
@@ -3124,18 +3098,6 @@ void TR::CompilationInfo::stopCompilationThreads()
    {
    J9JavaVM   * const vm       = _jitConfig->javaVM;
    J9VMThread * const vmThread = vm->internalVMFunctions->currentVMThread(vm);
-   //fprintf(stderr, "stopCompilationThread\n");
-   // if we compile on application thread, there is no compilation
-   // request queue and there is no compilation thread
-   // The SMALL jit case is already treated separately
-   if (!useSeparateCompilationThread())
-      {
-      acquireCompMonitor(vmThread);
-      _compInfoForCompOnAppThread->setCompilationThreadState(COMPTHREAD_STOPPED);
-      _compInfoForCompOnAppThread->setCompilationShouldBeInterrupted(SHUTDOWN_COMP_INTERRUPT);
-      releaseCompMonitor(vmThread);
-      return;
-      }
 
    static char * printCompStats = feGetEnv("TR_PrintCompStats");
    if (printCompStats)
@@ -5689,70 +5651,6 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
       jitCheckScavengeOnResolve(vmThread);
 #endif
 
-   // A request has been made to compile the method on the given application
-   // thread. The compilation will actually occur either on this thread or a
-   // separate compilation thread depending on startup options.
-
-   // If compiling on this thread acquire the application thread monitor.
-   // This is the monitor that prevents compilation on multiple application
-   // threads at the same time. It is held for the duration of the compilation.
-   //
-   if (!useSeparateCompilationThread())
-      {
-      // If an async compile was required here, then bail out
-      //
-      if (requireAsyncCompile == TR_yes)
-         {
-         if (compErrCode)
-            *compErrCode = compilationFailure;
-
-         // again, why not for AOT?
-         if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
-            if (classPushed)
-               POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-
-         if (methodHandleThunkDetails)
-            deleteMethodHandleRef(*methodHandleThunkDetails, vmThread, fe);
-
-         return NULL;
-         }
-
-      // Initialize the application thread monitor if not already done
-      //
-      if (!_applicationThreadMonitor)
-         _applicationThreadMonitor = TR::Monitor::create("JIT-ApplicationThreadMonitor");
-
-      if (!_applicationThreadMonitor)
-         {
-         if (compErrCode)
-            *compErrCode = compilationFailure;
-
-         // why not for AOT?
-         if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
-            if (classPushed)
-               POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-
-         if (methodHandleThunkDetails)
-            deleteMethodHandleRef(*methodHandleThunkDetails, vmThread, fe);
-
-         return NULL;
-         }
-
-      // not for AOT....suspicious looking?
-      if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
-         releaseVMAccess(vmThread);
-
-      _applicationThreadMonitor->enter();
-      // acquire fe access, but ignore any JAVA suspend request until we finish the
-      // compilation and release the JIT-ApplicationThreadMonitor
-      // NOTE: we must not release-acquire fe access during compilation in this
-      // scenario (compileOnApplicationThread)
-
-      // what is the AOT connection here?
-      if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
-         acquireVMAccessNoSuspend(vmThread);
-      }
-
    void *startPC = 0;
    bool needCompile = true;
 
@@ -5778,7 +5676,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
          } // if
       else if (oldStartPC) // recompilation case
          {
-         if (!(useSeparateCompilationThread() && !fe->isAOT_DEPRECATED_DO_NOT_USE()))
+         if (fe->isAOT_DEPRECATED_DO_NOT_USE())
             {
             J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
             if (linkageInfo->recompilationAttempted())
@@ -5801,35 +5699,13 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
    if (needCompile)
       {
       // AOT goes to application thread?
-      if (useSeparateCompilationThread() && !fe->isAOT_DEPRECATED_DO_NOT_USE())
+      if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
          startPC = compileOnSeparateThread(vmThread, details, oldStartPC, requireAsyncCompile, compErrCode, queued, optimizationPlan);
-      else
-         startPC = compileOnApplicationThread(vmThread, details, oldStartPC, compErrCode, optimizationPlan);
       }
    else
       {
       if (compErrCode)
          *compErrCode = compilationNotNeeded;
-      }
-
-   if (!useSeparateCompilationThread())
-      {
-      _applicationThreadMonitor->exit();
-
-#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-      // After releasing the applicationThreadMonitor, let's see if we hold
-      // any other monitors by mistake
-      TR::Monitor * heldMonitor = TR::MonitorTable::get()->monitorHeldByCurrentThread();
-      TR_ASSERT(!heldMonitor, "After taking a longjmp comp thread is holding TR::Monitor %p called %s\n",
-              heldMonitor, ((TR_J9VMBase*)fe)->getJ9MonitorName((J9ThreadMonitor*)heldMonitor->getVMMonitor()));
-#endif // #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
-
-      if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
-         {
-         // Now, release VM access and re-acquire it looking at the suspend condition
-         releaseVMAccess(vmThread);
-         acquireVMAccess(vmThread);
-         }
       }
 
    if (!fe->isAOT_DEPRECATED_DO_NOT_USE())
@@ -10585,7 +10461,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
 
             TR_VerboseLog::write(" j9m=%p bcsz=%u", method, bytecodeSize);
 
-            if (_compInfo.useSeparateCompilationThread() && !_methodBeingCompiled->_async)
+            if (!_methodBeingCompiled->_async)
                TR_VerboseLog::write(" sync"); // flag the synchronous compilations
 
             if (isJniNative)
@@ -10686,7 +10562,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          char compilationAttributes[40] = { 0 };
          snprintf(compilationAttributes, sizeof(compilationAttributes), "%s %s %s %s %s %s %s",
                       prexString,
-                      (_compInfo.useSeparateCompilationThread() && !_methodBeingCompiled->_async) ? "sync" : "",
+                      !_methodBeingCompiled->_async ? "sync" : "",
                       compilee->isJNINative()? "JNI" : "",
                       compiler->getOption(TR_EnableOSR) ? "OSR" : "",
                       (compiler->getRecompilationInfo() && compiler->getRecompilationInfo()->getJittedBodyInfo()->getUsesGCR()) ? "GCR" : "",

@@ -69,15 +69,11 @@ void preventAllocationOfBTLMemory(J9MemorySegment * &segment, J9JavaVM * javaVM,
          // Compilation will be retried at lower opt level.
          if (freeSegmentOverride || segmentType == heapAlloc || segmentType == stackAlloc)
             {
-            // We should not reject requests coming from hooks. Test if this is a comp thread
-            if (compInfo->useSeparateCompilationThread())
+            J9VMThread *crtVMThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+            if (compInfo->getCompInfoForThread(crtVMThread))
                {
-               J9VMThread *crtVMThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
-               if (compInfo->getCompInfoForThread(crtVMThread))
-                  {
-                  javaVM->internalVMFunctions->freeMemorySegment(javaVM, segment, TRUE);
-                  segment = NULL;
-                  }
+               javaVM->internalVMFunctions->freeMemorySegment(javaVM, segment, TRUE);
+               segment = NULL;
                }
             }
          }

@@ -5857,7 +5857,7 @@ TR_J9VMBase::setInvocationCount(TR_OpaqueMethodBlock * methodInfo, int32_t oldCo
 bool
 TR_J9VMBase::startAsyncCompile(TR_OpaqueMethodBlock * method, void *oldStartPC, bool *queued, TR_OptimizationPlan *optimizationPlan)
    {
-   if (_compInfo && _compInfo->useSeparateCompilationThread())
+   if (_compInfo)
       {
       TR::VMAccessCriticalSection startAsyncCompile(this);
 

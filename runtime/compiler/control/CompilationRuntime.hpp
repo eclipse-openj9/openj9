@@ -448,7 +448,6 @@ public:
    static bool shouldRetryCompilation(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
    static bool shouldAbortCompilation(TR_MethodToBeCompiled *entry, TR::PersistentInfo *persistentInfo);
    static bool canRelocateMethod(TR::Compilation * comp);
-   static bool useSeparateCompilationThread();
    static int computeCompilationThreadPriority(J9JavaVM *vm);
    static void *compilationEnd(J9VMThread *context, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void * startPC,
                                void *oldStartPC, TR_FrontEnd *vm=0, TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
