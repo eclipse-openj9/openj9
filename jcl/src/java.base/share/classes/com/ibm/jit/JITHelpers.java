@@ -3,7 +3,7 @@
 package com.ibm.jit;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1170,4 +1170,6 @@ public final class JITHelpers {
 	public native int getClassFlagsFromJ9Class32(int j9clazz);
 
 	public native int getClassFlagsFromJ9Class64(long j9clazz);
+
+	public static native void dispatchComputedStaticCall();
 }

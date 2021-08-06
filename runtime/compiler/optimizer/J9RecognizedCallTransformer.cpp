@@ -355,7 +355,90 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    unsafeCall->removeChild(1); // remove object node
    unsafeCall->setSymbolReference(comp()->getSymRefTab()->findOrCreateCodeGenInlinedHelper(helper));
    }
+
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+
+/** \brief
+ *    Constructs signature strings for constructing methods representing computed calls
+ *    from the signature of the original INL calls. Adapted from getSignatureForLinkToStatic
+ *    in j9method.cpp
+ *
+ *  \param extraParamsBefore
+ *    the params to be prepended to the original signature
+ *
+ *  \param extraParamsAfter
+ *    the params to be appended to the original signature
+ *
+ *  \param comp
+ *    the current compilation
+ *
+ *  \param origSignature
+ *    the original signautre
+ *
+ *  \param signatureLength
+ *    the constructed signature length
+ *
+ *  \return
+ *    static char * the constructed signature
+ */
+
+static char *
+getSignatureForComputedCall(
+   const char * const extraParamsBefore,
+   const char * const extraParamsAfter,
+   TR::Compilation* comp,
+   const char * const origSignature,
+   int32_t &signatureLength)
+   {
+   const size_t extraParamsLength = strlen(extraParamsBefore) + strlen(extraParamsAfter);
+
+   const int origSignatureLength = strlen(origSignature);
+   signatureLength = origSignatureLength + extraParamsLength;
+
+   const int32_t signatureAllocSize = signatureLength + 28; // +1 for NULL terminator
+   char * computedCallSignature =
+      (char *)comp->trMemory()->allocateMemory(signatureAllocSize, heapAlloc);
+
+   // Can't simply strchr() for ')' because that can appear within argument
+   // types, in particular within class names. It's necessary to parse the
+   // signature.
+   const char * const paramsStart = origSignature + 1;
+   const char * paramsEnd = paramsStart;
+   const char * previousParam = paramsEnd;
+   const char * returnType = NULL;
+   while (*paramsEnd != ')')
+      {
+      paramsEnd = nextSignatureArgument(paramsEnd);
+      if (!strncmp(paramsEnd, "Ljava/lang/invoke/MemberName;", 29)) // MemberName object must be discarded
+         {
+         returnType = nextSignatureArgument(paramsEnd) + 1;
+         break;
+         }
+      }
+
+   if (!returnType) returnType = paramsEnd + 1;
+   const char * const returnTypeEnd = nextSignatureArgument(returnType);
+
+   // Check that the parsed length is sensible. This also ensures that it's
+   // safe to truncate the lengths of the params and the return type to int
+   // (since they'll be less than parsedLength).
+   //const ptrdiff_t parsedLength = returnTypeEnd - origSignature;
+
+   // Put together the new signature.
+   snprintf(
+      computedCallSignature,
+      signatureAllocSize,
+      "(%s%.*s%s)%.*s",
+      extraParamsBefore,
+      (int)(paramsEnd - paramsStart),
+      paramsStart,
+      extraParamsAfter,
+      (int)(returnTypeEnd - returnType),
+      returnType);
+
+   return computedCallSignature;
+   }
+
 void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_invokeBasic(TR::TreeTop * treetop, TR::Node* node)
    {
    TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
@@ -479,8 +562,21 @@ void J9::RecognizedCallTransformer::processVMInternalNativeFunction(TR::TreeTop*
       else
          jitAddress = TR::Node::create(TR::iadd, 2, TR::Node::createLoad(node, extraTempSlotSymRef), jitEntryOffset);
       }
+      TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
+      TR_OpaqueMethodBlock *dummyInvoke = fej9->getMethodFromName("com/ibm/jit/JITHelpers", "dispatchComputedStaticCall", "()V");
+      int signatureLength;
+      char * signature = getSignatureForComputedCall(
+         "J",
+         "",
+         comp(),
+         node->getSymbol()->castToMethodSymbol()->getMethod()->signatureChars(),
+         signatureLength);
 
-   TR::SymbolReference * computedCallSymbol = comp()->getSymRefTab()->findOrCreateComputedStaticCallSymbol();
+   // construct a dummy resolved method
+   TR::ResolvedMethodSymbol * owningMethodSymbol = node->getSymbolReference()->getOwningMethodSymbol(comp());
+   TR_ResolvedMethod * dummyMethod = fej9->createResolvedMethodWithSignature(comp()->trMemory(),dummyInvoke, NULL, signature,signatureLength, owningMethodSymbol->getResolvedMethod());
+   TR::SymbolReference * computedCallSymbol = comp()->getSymRefTab()->findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), -1, dummyMethod, TR::MethodSymbol::ComputedStatic);
+
    uint32_t numComputedCallArgs = argsList->size() + 1;
    TR::Node * computedCallNode = TR::Node::createWithSymRef(node, node->getSymbol()->castToMethodSymbol()->getMethod()->indirectCallOpCode(),numComputedCallArgs, computedCallSymbol);
    computedCallNode->setAndIncChild(0,jitAddress); // first arguments of computed calls is the method address to jump to

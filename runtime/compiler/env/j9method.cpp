@@ -3164,6 +3164,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16,                    "toUpperIntrinsicUTF16", "([C[CI)Z")},
       {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([B[BI)Z")},
       {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([C[CI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_dispatchComputedStaticCall,               "dispatchComputedStaticCall", "()V")},
       { TR::unknownMethod}
       };
 

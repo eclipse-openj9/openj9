@@ -2140,7 +2140,9 @@ TR::Instruction *J9::X86::PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR
       TR::Node *callNode = site.getCallNode();
       TR::ResolvedMethodSymbol *resolvedMethodSymbol = callNode->getSymbol()->getResolvedMethodSymbol();
       bool mayReachJ2IThunk = true;
-      if (resolvedMethodSymbol && resolvedMethodSymbol->getRecognizedMethod() == TR::java_lang_invoke_ComputedCalls_dispatchDirect)
+      if (resolvedMethodSymbol &&
+            (resolvedMethodSymbol->getRecognizedMethod() == TR::java_lang_invoke_ComputedCalls_dispatchDirect ||
+            resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_dispatchComputedStaticCall))
          mayReachJ2IThunk = false;
       if (mayReachJ2IThunk && dispatchOp.isCallOp())
          {

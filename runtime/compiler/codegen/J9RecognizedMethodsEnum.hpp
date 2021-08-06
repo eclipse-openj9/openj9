@@ -764,6 +764,7 @@
    com_ibm_jit_JITHelpers_acmplt,
    com_ibm_jit_JITHelpers_jitHelpers,
    com_ibm_jit_JITHelpers_getClassInitializeStatus,
+   com_ibm_jit_JITHelpers_dispatchComputedStaticCall,
 
    com_ibm_jit_DecimalFormatHelper_formatAsDouble,
    com_ibm_jit_DecimalFormatHelper_formatAsFloat,
