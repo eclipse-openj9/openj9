@@ -429,6 +429,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
        vectorMethod = true;
 
    if (vectorMethod &&
+       !comp()->getOption(TR_DisableForceInlineAnnotations) &&
        comp()->fej9()->isForceInline(calleeMethod))
       {
       if (comp()->trace(OMR::inlining))
@@ -2192,7 +2193,8 @@ TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callS
          vectorMethod = true;
    
       if (vectorMethod &&
-         comp()->fej9()->isForceInline(method))
+          !comp()->getOption(TR_DisableForceInlineAnnotations) &&
+          comp()->fej9()->isForceInline(method))
          {
          if (comp()->trace(OMR::inlining))
             traceMsg(comp(), "@ForceInline was specified for %s, in tryToInline\n", method->signature(comp()->trMemory()));

@@ -1338,7 +1338,6 @@ public:
    virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
    virtual bool               needRelocatableTarget()                          { return true; }
    virtual bool               isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp) { return false; }
-   virtual bool               isForceInline(TR_ResolvedMethod *method) { return false; }
 
    virtual bool               shouldDelayAotLoad();
 
