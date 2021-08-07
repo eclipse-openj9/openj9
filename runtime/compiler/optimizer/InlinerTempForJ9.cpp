@@ -3402,11 +3402,6 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
                }
             }
          }
-
-      if (tracer()->heuristicLevel())
-         {
-         tracer()->dumpInline(&_callTargets, "inline script");
-         }
       }
 
    if (prevCallStack == 0)
@@ -5079,7 +5074,7 @@ bool TR_J9InlinerPolicy::isJSR292SmallHelperMethod(TR_ResolvedMethod *resolvedMe
       case TR::java_lang_invoke_MethodHandle_doCustomizationLogic:
       case TR::java_lang_invoke_MethodHandle_undoCustomizationLogic:
          return true;
-      
+
       default:
          break;
       }
