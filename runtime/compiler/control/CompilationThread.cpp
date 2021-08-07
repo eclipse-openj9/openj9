@@ -7507,9 +7507,11 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          if (!doLocalCompilation &&
              !entry->_async &&
              !entry->isJNINative() &&
+             entry->_optimizationPlan->getOptLevel() > cold &&
              !details.isNewInstanceThunk() &&
              !details.isMethodHandleThunk() &&
-             TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) &&
+             (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) ||
+             _compInfo.getPersistentInfo()->isLocalSyncCompiles()) &&
              !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
              TR::Options::getCmdLineOptions()->allowRecompilation())
             {
