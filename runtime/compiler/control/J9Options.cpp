@@ -2028,6 +2028,17 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
                GET_OPTION_VALUE(xxJITServerAddressArgIndex, '=', &address);
                compInfo->getPersistentInfo()->setJITServerAddress(address);
                }
+
+            const char *xxJITServerLocalSyncCompilesOption = "-XX:+JITServerLocalSyncCompiles";
+            const char *xxDisableJITServerLocalSyncCompilesOption = "-XX:-JITServerLocalSyncCompiles";
+
+            int32_t xxJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerLocalSyncCompilesOption, 0);
+            int32_t xxDisableJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerLocalSyncCompilesOption, 0);
+
+            if (xxJITServerLocalSyncCompilesArgIndex > xxDisableJITServerLocalSyncCompilesArgIndex)
+               {
+               compInfo->getPersistentInfo()->setLocalSyncCompiles(true);
+               }
             }
          }
       if (!JITServerParseCommonOptions(vm, compInfo))

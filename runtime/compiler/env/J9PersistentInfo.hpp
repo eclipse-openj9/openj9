@@ -165,6 +165,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _clientUID(0),
          _JITServerUseAOTCache(false),
          _requireJITServer(false),
+         _localSyncCompiles(false),
 #endif /* defined(J9VM_OPT_JITSERVER) */
       OMR::PersistentInfoConnector(pm)
       {}
@@ -344,6 +345,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITServerUseAOTCache(bool use) { _JITServerUseAOTCache = use; }
    bool getRequireJITServer() const { return _requireJITServer; }
    void setRequireJITServer(bool requireJITServer) { _requireJITServer = requireJITServer; }
+   bool isLocalSyncCompiles() const { return _localSyncCompiles; }
+   void setLocalSyncCompiles(bool localSyncCompiles) { _localSyncCompiles = localSyncCompiles; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    private:
@@ -436,6 +439,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint64_t    _serverUID; // At the client, this represents the UID of the server the client is connected to
    bool        _JITServerUseAOTCache;
    bool        _requireJITServer;
+   bool        _localSyncCompiles;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
