@@ -4127,6 +4127,13 @@ TR_J9VMBase::isStable(J9Class *fieldClass, int cpIndex)
    return jitIsFieldStable(vmThread(), fieldClass, cpIndex);
    }
 
+bool
+TR_J9VMBase::isForceInline(TR_ResolvedMethod *method)
+   {
+   return jitIsMethodTaggedWithForceInline(vmThread(),
+                                           (J9Method*)method->getPersistentIdentifier());
+   }
+
 // Creates a node to initialize the local object flags field
 //
 TR::Node *
