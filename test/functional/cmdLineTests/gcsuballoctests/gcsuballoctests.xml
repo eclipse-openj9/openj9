@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2011, 2018 IBM Corp. and others
+  Copyright (c) 2011, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
  <test id="-Xgc:suballocatorInitialSize=100m">
   <command>$EXE$ -Xgc:suballocatorInitialSize=100m -version</command>
   <output regex="no" type="success">version</output>
-  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="required">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
@@ -42,7 +42,7 @@
  <test id="-Xgc:suballocatorCommitSize=10m">
   <command>$EXE$ -Xgc:suballocatorCommitSize=10m -version</command>
   <output regex="no" type="success">version</output>
-  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="required">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
@@ -57,7 +57,7 @@
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
-  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="failure">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
  </test>
@@ -70,7 +70,7 @@
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
-  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="failure">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
  </test>
@@ -83,7 +83,7 @@
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
-  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="failure">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
  </test>
@@ -96,7 +96,7 @@
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
-  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="failure">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
  </test>
@@ -104,7 +104,7 @@
  <test id="-Xgc:suballocatorCommitSize=256m -Xgc:suballocatorInitialSize=512m">
   <command>$EXE$ -Xgc:suballocatorCommitSize=256m -Xgc:suballocatorInitialSize=512m -version</command>
   <output regex="no" type="success">version</output>
-  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="required">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
@@ -114,7 +114,7 @@
  <test id="-Xgc:suballocatorCommitSize=1m -Xgc:suballocatorInitialSize=1m">
   <command>$EXE$ -Xgc:suballocatorCommitSize=1m -Xgc:suballocatorInitialSize=1m -version</command>
   <output regex="no" type="success">version</output>
-  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="required">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
@@ -124,7 +124,7 @@
  <test id="-Xmcrs100m">
   <command>$EXE$ -Xmcrs100m -version</command>
   <output regex="no" type="success">version</output>
-  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="required">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
@@ -138,7 +138,7 @@
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
-  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="failure">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
  </test>
@@ -146,7 +146,7 @@
  <test id="-Xmcrs10m -Xgc:suballocatorCommitSize=80m">
   <command>$EXE$ -Xmcrs10m -Xgc:suballocatorCommitSize=80m -version</command>
   <output regex="no" type="success">version</output>
-  <output regex="no" type="required">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="required">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">Exception</output>
   <output regex="no" type="failure">Error</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
@@ -160,7 +160,7 @@
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
-  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="failure">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
  </test>
@@ -170,7 +170,7 @@
   <output regex="no" type="success">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
-  <output regex="no" type="failure">Runtime Environment</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="failure">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
  </test>
