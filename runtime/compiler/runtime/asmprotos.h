@@ -177,6 +177,7 @@ JIT_HELPER(jitReportInstanceFieldWrite); // asm calling-convention helper
 JIT_HELPER(jitReportStaticFieldRead); // asm calling-convention helper
 JIT_HELPER(jitReportStaticFieldWrite); // asm calling-convention helper
 JIT_HELPER(jitSoftwareReadBarrier);  // asm calling-convention helper
+JIT_HELPER(jitHeapifyStackObject); // asm calling-convention helper
 
 #ifdef __cplusplus
 }

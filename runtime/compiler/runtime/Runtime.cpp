@@ -1110,6 +1110,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_jitResolveFieldSetterDirect,        (void *)jitResolveFieldSetterDirect,        TR_Helper);
    SET(TR_jitResolveStaticFieldDirect,        (void *)jitResolveStaticFieldDirect,        TR_Helper);
    SET(TR_jitResolveStaticFieldSetterDirect,  (void *)jitResolveStaticFieldSetterDirect,  TR_Helper);
+   SET(TR_jitHeapifyStackObject,              (void *)jitHeapifyStackObject,              TR_Helper);
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
    SET(TR_jitCheckIfFinalizeObject,   (void *)fast_jitCheckIfFinalizeObject, TR_CHelper);
 #else

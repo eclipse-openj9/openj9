@@ -3798,6 +3798,7 @@ typedef struct J9JITConfig {
 	void *old_fast_jitWriteBarrierStoreMetronome;
 	void *old_slow_jitCallJitAddPicToPatchOnClassUnload;
 	void *old_slow_jitCallCFunction;
+	void *old_slow_jitHeapifyStackObject;
 	void *fast_jitPreJNICallOffloadCheck;
 	void *fast_jitPostJNICallOffloadCheck;
 	void *old_fast_jitObjectHashCode;

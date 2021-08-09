@@ -6628,6 +6628,71 @@ done:
 		return rc;
 	}
 
+	static void
+	referenceFixOSlotIterator(J9VMThread *vmThread, J9StackWalkState *walkState, j9object_t *oSlotPointer, const void * stackLocation)
+	{
+		if (*oSlotPointer == (j9object_t)walkState->userData1) {
+			*oSlotPointer = (j9object_t)walkState->userData2;
+		}
+	}
+
+
+	VMINLINE void
+	heapifyObjectIfRequired(REGISTER_ARGS_LIST, j9object_t original)
+	{
+		if ((UDATA)original < (UDATA)(_currentThread->stackObject) || (UDATA)original >= (UDATA)(_currentThread->stackObject->end))
+			return;
+		j9object_t copy = NULL;
+		J9Class *objectClass = J9OBJECT_CLAZZ(_currentThread, original);
+		UDATA flags = J9CLASS_FLAGS(objectClass);
+		if (flags & J9AccClassArray) {
+			U_32 size = J9INDEXABLEOBJECT_SIZE(_currentThread, original);
+			copy = VM_VMHelpers::inlineAllocateIndexableObject(_currentThread, &_objectAllocate, objectClass, size, false, false, false);
+
+			if (NULL == copy) {
+				updateVMStruct(REGISTER_ARGS);
+				copy = _vm->memoryManagerFunctions->J9AllocateIndexableObject(_currentThread, objectClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				if (J9_UNEXPECTED(NULL == copy)) {
+					/* TODO: Add exception logic here */
+					return;
+				}
+				objectClass = VM_VMHelpers::currentClass(objectClass);
+			}
+			_objectAccessBarrier.cloneArray(_currentThread, original, copy, objectClass, size);
+		} else {
+			copy = _objectAllocate.inlineAllocateObject(_currentThread, objectClass, false, false);
+			if (NULL == copy) {
+				updateVMStruct(REGISTER_ARGS);
+				copy = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, objectClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				if (J9_UNEXPECTED(NULL == copy)) {
+					/* TODO: Add exception logic here */
+					return;
+				}
+				objectClass = VM_VMHelpers::currentClass(objectClass);
+			}
+			_objectAccessBarrier.cloneObject(_currentThread, original, copy, objectClass);
+			VM_VMHelpers::checkIfFinalizeObject(_currentThread, copy);
+		}
+		if (LN_HAS_LOCKWORD(_currentThread, original)) {
+			j9objectmonitor_t *originalLockEA = J9OBJECT_MONITOR_EA(_currentThread, original);
+			j9objectmonitor_t *newLockEA = J9OBJECT_MONITOR_EA(_currentThread, copy);
+			J9_STORE_LOCKWORD(_currentThread, newLockEA, J9_LOAD_LOCKWORD(_currentThread, originalLockEA));
+		}
+		// TODO: Monitor table and cache corrections
+		updateVMStruct(REGISTER_ARGS);
+		J9StackWalkState walkState;
+		walkState.walkThread = _currentThread;
+		walkState.flags = J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK;
+		walkState.objectSlotWalkFunction = referenceFixOSlotIterator;
+		walkState.userData1 = original;
+		walkState.userData2 = copy;
+		_vm->walkStackFrames(_currentThread, &walkState);
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+	}
+
+
 	/* ..., <1 or 2 slot value> => ... */
 	VMINLINE VM_BytecodeAction
 	putstatic(REGISTER_ARGS_LIST)

@@ -3822,6 +3822,80 @@ restore:
 	return addr;
 }
 
+static void
+referenceFixOSlotIterator(J9VMThread *vmThread, J9StackWalkState *walkState, j9object_t *oSlotPointer, const void * stackLocation)
+{
+	if (*oSlotPointer == (j9object_t)walkState->userData1) {
+		*oSlotPointer = (j9object_t)walkState->userData2;
+	}
+}
+
+
+static VMINLINE UDATA
+heapifyObject(J9VMThread *currentThread, j9object_t object)
+{
+	J9Class *objectClass = J9OBJECT_CLAZZ(currentThread, object);
+	UDATA classFlags = J9CLASS_FLAGS(objectClass);
+	j9object_t heapCopy = NULL;
+	MM_ObjectAllocationAPI allocationAPI(currentThread);
+	MM_ObjectAccessBarrierAPI objectAccessBarrierAPI(currentThread);
+	if (classFlags & J9AccClassArray) {
+		U_32 size = J9INDEXABLEOBJECT_SIZE(currentThread, object);
+		heapCopy = VM_VMHelpers::inlineAllocateIndexableObject(currentThread, &allocationAPI, objectClass, size, false, false, false);
+		if (heapCopy == NULL) {
+			heapCopy = currentThread->javaVM->memoryManagerFunctions->J9AllocateIndexableObject(currentThread, objectClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			if (J9_UNEXPECTED(NULL == heapCopy)) {
+				/* TODO: Add exception logic here */
+				return 0;
+			}
+			objectClass = VM_VMHelpers::currentClass(objectClass);
+		}
+		objectAccessBarrierAPI.cloneArray(currentThread, object, heapCopy, objectClass, size);
+	} else {
+		heapCopy = allocationAPI.inlineAllocateObject(currentThread, objectClass, false, false);
+		if (heapCopy == NULL) {
+			heapCopy = currentThread->javaVM->memoryManagerFunctions->J9AllocateObject(currentThread, objectClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			if (J9_UNEXPECTED(NULL == heapCopy)) {
+				/* TODO: Add exception logic here */
+				return 0;
+			}
+			objectClass = VM_VMHelpers::currentClass(objectClass);
+		}
+		objectAccessBarrierAPI.cloneObject(currentThread, object, heapCopy, objectClass);
+		VM_VMHelpers::checkIfFinalizeObject(currentThread, heapCopy);
+	}
+	
+	if (LN_HAS_LOCKWORD(currentThread, object)) {
+		j9objectmonitor_t *originalLockEA = J9OBJECT_MONITOR_EA(currentThread, object);
+		j9objectmonitor_t *newLockEA = J9OBJECT_MONITOR_EA(currentThread, heapCopy);
+		J9_STORE_LOCKWORD(currentThread, newLockEA, J9_LOAD_LOCKWORD(currentThread, originalLockEA));
+	}
+
+	// TODO: Monitor table and cache corrections
+	J9StackWalkState walkState;
+	walkState.walkThread = currentThread;
+	walkState.flags = J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK;
+	walkState.objectSlotWalkFunction = referenceFixOSlotIterator;
+	walkState.userData1 = object;
+	walkState.userData2 = heapCopy;
+	currentThread->javaVM->walkStackFrames(currentThread, &walkState);
+	return (UDATA)heapCopy;
+}
+
+
+void* J9FASTCALL
+old_slow_jitHeapifyStackObject(J9VMThread *currentThread)
+{
+	OLD_SLOW_ONLY_JIT_HELPER_PROLOGUE(1);
+	DECLARE_JIT_PARM(j9object_t, srcAddress, 1);
+	void *addr=NULL;
+	void *oldPC = buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
+	JIT_RETURN_UDATA(heapifyObject(currentThread, srcAddress));
+	addr = restoreJITResolveFrame(currentThread, oldPC);
+	SLOW_JIT_HELPER_EPILOGUE();
+	return addr;
+}
+
 void
 initPureCFunctionTable(J9JavaVM *vm)
 {
@@ -3980,6 +4054,7 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_slow_jitReportInstanceFieldWrite = (void*)old_slow_jitReportInstanceFieldWrite;
 	jitConfig->old_slow_jitReportStaticFieldRead = (void*)old_slow_jitReportStaticFieldRead;
 	jitConfig->old_slow_jitReportStaticFieldWrite = (void*)old_slow_jitReportStaticFieldWrite;
+	jitConfig->old_slow_jitHeapifyStackObject = (void*)old_slow_jitHeapifyStackObject;
 }
 
 } /* extern "C" */
