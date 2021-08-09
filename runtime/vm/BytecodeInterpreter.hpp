@@ -8299,11 +8299,9 @@ done:
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
-		bool fromNF = J9_ARE_ANY_BITS_SET(_currentThread->privateFlags2, J9_PRIVATE_FLAGS2_NF_INVOKE_BASIC);
-		_currentThread->privateFlags2 &= ~J9_PRIVATE_FLAGS2_NF_INVOKE_BASIC;
 		UDATA mhReceiverIndex = 0;
 
-		if (fromJIT || fromNF) {
+		if (fromJIT) {
 			/* tempSlot contains the number of stack slots for the arguments, and the MH
 			 * receiver is the first argument.
 			 */
@@ -8409,19 +8407,12 @@ throw_npe:
 		J9JNIMethodID *methodID = (J9JNIMethodID *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
 		UDATA methodArgCount = 0;
+		bool isVararg = J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccVarArgs);
 
-		if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccVarArgs)) {
+		if (isVararg) {
 			j9object_t methodType = J9VMJAVALANGINVOKEMEMBERNAME_TYPE(_currentThread, memberNameObject);
 			/* +1 to account for the receiver */
 			methodArgCount = VM_VMHelpers::methodTypeParameterSlotCount(_currentThread, methodType) + 1;
-
-			if (J9_CLASS_FROM_METHOD(methodID->method) == J9VMJAVALANGINVOKEMETHODHANDLE(_currentThread->javaVM)) {
-				J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
-				if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName), "invokeBasic")) {
-					_currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_NF_INVOKE_BASIC;
-					_currentThread->tempSlot = methodArgCount;
-				}
-			}
 		} else {
 			methodArgCount = romMethod->argCount;
 		}
@@ -8472,6 +8463,17 @@ foundITable:
 				}
 			}
 			_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
+		}
+
+		/* Check if the target is an invokeBasic call and inline the invokeBasic INL to avoid passing
+		 * additional flags during the VM transition
+		 */
+		if (isVararg
+		&& (J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC == J9_BCLOOP_DECODE_SEND_TARGET(_sendMethod->methodRunAddress))
+		) {
+			j9object_t lambdaForm = J9VMJAVALANGINVOKEMETHODHANDLE_FORM(_currentThread, receiverObject);
+			j9object_t memberName = J9VMJAVALANGINVOKELAMBDAFORM_VMENTRY(_currentThread, lambdaForm);
+			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
 		}
 
 		if (fromJIT) {
