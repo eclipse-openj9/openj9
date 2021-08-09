@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,7 @@ public:
 private:
 	bool initialize(MM_EnvironmentBase *env);
 	UDATA adjustExpansionWithinFreeLimits(MM_EnvironmentBase *env, UDATA expandSize);
-	UDATA adjustExpansionWithinSoftMax(MM_EnvironmentBase *env, UDATA expandSize, UDATA minimumBytesRequired);
+	UDATA adjustExpansionWithinSoftMx(MM_EnvironmentBase *env, UDATA expandSize, UDATA minimumBytesRequired);
 	UDATA checkForRatioExpand(MM_EnvironmentBase *env, UDATA bytesRequired);	
 	bool checkForRatioContract(MM_EnvironmentBase *env);
 	UDATA calculateExpandSize(MM_EnvironmentBase *env, UDATA bytesRequired, bool expandToSatisfy);
@@ -110,8 +110,8 @@ protected:
 public:
 	static MM_MemorySubSpaceTarok *newInstance(MM_EnvironmentBase *env, MM_PhysicalSubArena *physicalSubArena, MM_GlobalAllocationManagerTarok *gamt, bool usesGlobalCollector, UDATA minimumSize, UDATA initialSize, UDATA maximumSize, UDATA memoryType, U_32 objectFlags);
 	
-	virtual const char *getName() { return MEMORY_SUBSPACE_NAME_GENERIC; }
-	virtual const char *getDescription() { return MEMORY_SUBSPACE_DESCRIPTION_GENERIC; }
+	virtual const char *getName() { return "Tarok"; }
+	virtual const char *getDescription() { return "Tarok MemorySubSpace Description"; }
 
 	virtual MM_MemoryPool *getMemoryPool();
 	virtual MM_MemoryPool *getMemoryPool(void *addr);
