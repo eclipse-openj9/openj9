@@ -11878,25 +11878,12 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
    if (!callInlined && (symbol->isVMInternalNative() || symbol->isJITInternalNative()))
       {
       if (TR::TreeEvaluator::VMinlineCallEvaluator(node, false, cg))
-         returnRegister = node->getRegister();
+         return node->getRegister();
       else
-         returnRegister = TR::TreeEvaluator::performCall(node, false, true, cg);
-
-      callInlined = true;
+         return TR::TreeEvaluator::performCall(node, false, true, cg);
       }
-
-   if (callInlined)
+   else if (callInlined)
       {
-      // A strictfp caller needs to adjust double return values;
-      // a float callee always returns values that have correct precision.
-      //
-      if (returnRegister &&
-          returnRegister->needsPrecisionAdjustment() &&
-          comp->getCurrentMethod()->isStrictFP())
-         {
-         TR::TreeEvaluator::insertPrecisionAdjustment(returnRegister, node, cg);
-         }
-
       return returnRegister;
       }
 
