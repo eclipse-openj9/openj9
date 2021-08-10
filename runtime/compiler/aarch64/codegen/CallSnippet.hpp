@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,19 +130,34 @@ class ARM64VirtualUnresolvedSnippet : public TR::ARM64VirtualSnippet
 class ARM64InterfaceCallSnippet : public TR::ARM64VirtualSnippet
    {
    uint8_t *thunkAddress;
-
+   TR::LabelSymbol *_firstClassCacheSlotLabel;
+   TR::LabelSymbol *_firstBranchAddressCacheSlotLabel;
+   TR::LabelSymbol *_secondClassCacheSlotLabel;
+   TR::LabelSymbol *_secondBranchAddressCacheSlotLabel;
    public:
 
-   ARM64InterfaceCallSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, TR::LabelSymbol *retl)
-      : TR::ARM64VirtualSnippet(cg, c, lab, s, retl), thunkAddress(NULL)
+   ARM64InterfaceCallSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, TR::LabelSymbol *retl,
+        TR::LabelSymbol *firstClassCacheSlotLabel, TR::LabelSymbol *firstBranchAddressCacheSlotLabel,
+        TR::LabelSymbol *secondClassCacheSlotLabel, TR::LabelSymbol *secondBranchAddressCacheSlotLabel)
+      : TR::ARM64VirtualSnippet(cg, c, lab, s, retl), thunkAddress(NULL),
+        _firstClassCacheSlotLabel(firstClassCacheSlotLabel), _firstBranchAddressCacheSlotLabel(firstBranchAddressCacheSlotLabel),
+        _secondClassCacheSlotLabel(secondClassCacheSlotLabel), _secondBranchAddressCacheSlotLabel(secondBranchAddressCacheSlotLabel)
       {
       }
 
-   ARM64InterfaceCallSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, TR::LabelSymbol *retl, uint8_t *thunkPtr)
-      : TR::ARM64VirtualSnippet(cg, c, lab, s, retl), thunkAddress(thunkPtr)
+   ARM64InterfaceCallSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, TR::LabelSymbol *retl,
+        TR::LabelSymbol *firstClassCacheSlotLabel, TR::LabelSymbol *firstBranchAddressCacheSlotLabel,
+        TR::LabelSymbol *secondClassCacheSlotLabel, TR::LabelSymbol *secondBranchAddressCacheSlotLabel, uint8_t *thunkPtr)
+      : TR::ARM64VirtualSnippet(cg, c, lab, s, retl), thunkAddress(thunkPtr),
+        _firstClassCacheSlotLabel(firstClassCacheSlotLabel), _firstBranchAddressCacheSlotLabel(firstBranchAddressCacheSlotLabel),
+        _secondClassCacheSlotLabel(secondClassCacheSlotLabel), _secondBranchAddressCacheSlotLabel(secondBranchAddressCacheSlotLabel)
       {
       }
 
+   TR::LabelSymbol *getFirstClassCacheSlotLabel() { return _firstClassCacheSlotLabel; }
+   TR::LabelSymbol *getFirstBranchAddressCacheSlotLabel() { return _firstBranchAddressCacheSlotLabel; }
+   TR::LabelSymbol *getSecondClassCacheSlotLabel() { return _secondClassCacheSlotLabel; }
+   TR::LabelSymbol *getSecondBranchAddressCacheSlotLabel() { return _secondBranchAddressCacheSlotLabel; }
    virtual Kind getKind() { return IsInterfaceCall; }
 
    virtual uint8_t *emitSnippetBody();
