@@ -1387,11 +1387,10 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
 
    TR::Node *arrayStoreCHKNode = NULL;
    TR::TreeTop *arrayStoreTT = NULL;
-   bool addArrayStoreCheck = !skipArrayStoreChecks(comp, node);
 
    // Some JCL methods are known never to trigger an ArrayStoreException
    // Only add an ArrayStoreCHK if it's required
-   if (addArrayStoreCheck)
+   if (!skipArrayStoreChecks(comp, node))
       {
       TR::SymbolReference *arrayStoreCHKSymRef = comp->getSymRefTab()->findOrCreateTypeCheckArrayStoreSymbolRef(comp->getMethodSymbol());
       arrayStoreCHKNode = TR::Node::createWithRoomForThree(TR::ArrayStoreCHK, elementStoreNode, 0, arrayStoreCHKSymRef);
@@ -1415,7 +1414,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
 
    if (enableTrace)
       traceMsg(comp, "Isolated array element store treetop n%dn node n%dn in block_%d\n", arrayStoreTT->getNode()->getGlobalIndex(),
-            addArrayStoreCheck ? arrayStoreCHKNode->getGlobalIndex() : elementStoreNode->getGlobalIndex(), arrayElementStoreBlock->getNumber());
+            arrayStoreCHKNode ? arrayStoreCHKNode->getGlobalIndex() : elementStoreNode->getGlobalIndex(), arrayElementStoreBlock->getNumber());
 
    int32_t dataWidth = TR::Symbol::convertTypeToSize(TR::Address);
    if (comp->useCompressedPointers())
