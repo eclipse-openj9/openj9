@@ -3316,6 +3316,8 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_OSR_SAFE_POINT; /* Enable OSR safe point by default */
 	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_ENABLE_HCR; /* Enable HCR by default */
+	vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_UTF_CACHE; /* Enable UTF cache by default */
+
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_S390)
 	/* Enabled field watch by default on x86, Power, and S390 platforms */
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
@@ -3627,6 +3629,16 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
+
+	{
+		IDATA enableUTFCache = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLEUTFCACHE, NULL);
+		IDATA disableUTFCache = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLEUTFCACHE, NULL);
+		if (enableUTFCache > disableUTFCache) {
+			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_UTF_CACHE;
+		} else if (enableUTFCache < disableUTFCache) {
+			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_ENABLE_UTF_CACHE;
+		}
+	}
 
 	/* -Xbootclasspath and -Xbootclasspath/p are not supported from Java 9 onwards */
 	if (J2SE_VERSION(vm) >= J2SE_V11) {
