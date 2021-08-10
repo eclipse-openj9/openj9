@@ -970,8 +970,6 @@ TR::OptionTable OMR::Options::_feOptions[] = {
 #if defined(J9VM_OPT_JITSERVER)
    {"sharedROMClassCacheNumPartitions=", " \tnumber of JITServer ROMClass cache partitions (each has its own monitor)",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_sharedROMClassCacheNumPartitions, 0, "F%d", NOT_IN_SUBSET},
-   {"shareROMClasses", " \tstore a single copy of each distinct ROMClass shared by all clients at JITServer",
-        TR::Options::setStaticBool, (intptr_t)&TR::Options::_shareROMClasses, 1, "F", NOT_IN_SUBSET},
 #endif /* defined(J9VM_OPT_JITSERVER) */
    {"singleCache", "C\tallow only one code cache and one data cache to be allocated", RESET_JITCONFIG_RUNTIME_FLAG(J9JIT_GROW_CACHES) },
    {"smallMethodBytecodeSizeThreshold=", "O<nnn> Threshold for determining small methods\t "
@@ -1990,6 +1988,17 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          // Increase the default timeout value for JITServer.
          // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
          compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITSERVER_TIMEOUT);
+
+         // Check if cached ROM classes should be shared between clients
+         const char *xxJITServerShareROMClassesOption = "-XX:+JITServerShareROMClasses";
+         const char *xxDisableJITServerShareROMClassesOption = "-XX:-JITServerShareROMClasses";
+
+         int32_t xxJITServerShareROMClassesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerShareROMClassesOption, 0);
+         int32_t xxDisableJITServerShareROMClassesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerShareROMClassesOption, 0);
+         if (xxJITServerShareROMClassesArgIndex > xxDisableJITServerShareROMClassesArgIndex)
+            {
+            _shareROMClasses = true;
+            }
          }
       else
          {
