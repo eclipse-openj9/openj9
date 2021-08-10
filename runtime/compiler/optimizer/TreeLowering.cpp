@@ -1,5 +1,4 @@
 /*******************************************************************************
-
  * Copyright (c) 2021, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
