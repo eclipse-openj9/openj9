@@ -31,6 +31,10 @@
 #include "vm_api.h"
 #include "ut_j9jcl.h"
 
+#include "VMHelpers.hpp"
+
+extern "C" {
+
 #if JAVA_SPEC_VERSION >= 11
 static void setStackTraceElementFields(J9VMThread *vmThread, j9object_t element, J9ClassLoader *classLoader);
 #endif /* JAVA_SPEC_VERSION >= 11 */
@@ -89,7 +93,7 @@ setStackTraceElementSource(J9VMThread* vmThread, j9object_t stackTraceElement, J
 static UDATA
 getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
 {
-	J9GetStackTraceUserData * userData = voidUserData;
+	J9GetStackTraceUserData *userData = (J9GetStackTraceUserData*)voidUserData;
 	J9JavaVM * vm = vmThread->javaVM;
 	J9InternalVMFunctions const *  vmFuncs = vm->internalVMFunctions;
 	J9MemoryManagerFunctions const * mmfns = vm->memoryManagerFunctions;
@@ -174,7 +178,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 					J9Module *module = NULL;
 					if (NULL != ramClass) {
 						j9object_t moduleObject = J9VMJAVALANGCLASS_MODULE(vmThread, ramClass->classObject);
-						module = J9OBJECT_ADDRESS_LOAD(vmThread, moduleObject, vm->modulePointerOffset);
+						module = (J9Module*)J9OBJECT_ADDRESS_LOAD(vmThread, moduleObject, vm->modulePointerOffset);
 					} else {
 						UDATA length = packageNameLength(romClass);
 						omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
@@ -191,26 +195,13 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 #endif /* JAVA_SPEC_VERSION >= 11 */
 			}
 
-			/* Fill in method class */
-			string = NULL;
-			{
-				if (NULL != ramClass) {
-					string = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
-				}
+			if (NULL != ramClass) {
+				/* Fill in method class */
+				string = VM_VMHelpers::getClassNameString(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), JNI_TRUE);
 				if (NULL == string) {
-					UDATA flags = J9_STR_XLAT | J9_STR_TENURE | J9_STR_INTERN;
-					if (J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden)) {
-						flags |= J9_STR_ANON_CLASS_NAME;
-					}
-					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utfClassName), (U_32) J9UTF8_LENGTH(utfClassName), flags);
-					if (NULL == string) {
-						rc = FALSE;
-						/* exception is pending from the call */
-						goto done;
-					} else if (NULL != ramClass) {
-						/* Class name was interned so it's safe to write it back to the Class Object */
-						J9VMJAVALANGCLASS_SET_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), string);
-					}
+					rc = FALSE;
+					/* exception is pending from the call */
+					goto done;
 				}
 				element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
 				J9VMJAVALANGSTACKTRACEELEMENT_SET_DECLARINGCLASS(vmThread, element, string);
@@ -406,3 +397,5 @@ setStackTraceElementFields(J9VMThread *vmThread, j9object_t element, J9ClassLoad
 	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDEMODULEVERSION(vmThread, element, (U_32) includeModuleVersion);
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
+
+} /* extern "C" */

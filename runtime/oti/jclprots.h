@@ -900,7 +900,7 @@ jobject JNICALL Java_java_lang_Class_getDeclaredAnnotationsData(JNIEnv *env, job
 jobject JNICALL Java_java_lang_Class_getStackClasses(JNIEnv *env, jclass jlHeapClass, jint maxDepth, jboolean stopAtPrivileged);
 jobject JNICALL Java_java_security_AccessController_getAccSnapshot(JNIEnv* env, jclass jsAccessController, jint startingFrame, jboolean forDoPrivilegedWithCombiner);
 jobject JNICALL Java_java_security_AccessController_getCallerPD(JNIEnv* env, jclass jsAccessController, jint startingFrame);
-jobject JNICALL Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass);
+jobject JNICALL Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass, jboolean internAndAssign);
 jobject JNICALL Java_java_lang_Class_getDeclaredFieldImpl(JNIEnv *env, jobject recv, jstring jname);
 jarray JNICALL Java_java_lang_Class_getDeclaredFieldsImpl(JNIEnv *env, jobject recv);
 #if JAVA_SPEC_VERSION >= 11

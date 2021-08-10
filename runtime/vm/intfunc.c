@@ -406,4 +406,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	isCRIUSupportEnabled,
 	isCheckpointAllowed,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	getClassNameString,
 };
