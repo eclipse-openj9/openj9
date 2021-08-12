@@ -110,7 +110,3 @@ These are the steps to run the tests on your machine.
    ```
 
 For more advanced testing features, refer to [this guide](https://github.com/eclipse-openj9/openj9/blob/master/test/docs/OpenJ9TestUserGuide.md).
-
-## DOCKER
-
-Follow the [Docker.md](Docker.md) here for building then testing JITServer in Docker.
