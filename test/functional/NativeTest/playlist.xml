@@ -403,6 +403,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</test>
 	<test>
 		<testCaseName>shrtest_aix_SE80</testCaseName>
+		<disables>
+			<disable>
+				<comment>runtimes/infrastructure/issues/5965</comment>
+				<impl>ibm</impl>
+			</disable>
+		</disables>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
