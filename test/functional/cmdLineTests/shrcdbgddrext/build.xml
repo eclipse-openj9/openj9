@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2018, 2018 IBM Corp. and others
+  Copyright (c) 2018, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,8 @@
 		Build cmdLineTests shrcdbgddrext
 	</description>
 
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shrcdbgddrext" />
 	<property name="src" location="." />
@@ -38,7 +40,7 @@
 		</copy>
 	</target>
 
-	<target name="build" >
+	<target name="build" depends="buildCmdLineTestTools,buildCmdLineTestUtils">
 		<antcall target="dist" inheritall="true" />
 	</target>
 </project>

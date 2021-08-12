@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,8 @@
 		Build verbosetest
 	</description>
 
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/verbosetest" />
 	<property name="src" location="." />
@@ -38,8 +40,11 @@
 			<fileset dir="${src}" includes="*.mk"/>
 		</copy>
 	</target>
-	
-	<target name="build" >
+
+	<target name="build" depends="buildCmdLineTestTools">
+		<subant target="build">
+			<fileset dir="${TEST_ROOT}/functional/JIT_Test/" includes="build.xml" />
+		</subant>
 		<antcall target="dist" inheritall="true" />
 	</target>
 </project>

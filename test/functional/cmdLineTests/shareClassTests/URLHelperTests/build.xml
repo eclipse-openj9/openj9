@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,8 +28,12 @@
 		Build URLHelperTests
 	</description>
 
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/URLHelperTests" />
+	<property name="jarfile" value="${DEST}/URLHelperTests.jar" />
+
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src" location="."/>
 	<property name="build" location="./bin"/>
@@ -153,7 +157,7 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${DEST}/URLHelperTests.jar" filesonly="true">
+		<jar jarfile="${jarfile}" filesonly="true">
 			<fileset dir="${build}" />
 		</jar>
 		<copy todir="${DEST}">
@@ -167,7 +171,11 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="check-jar">
+		<available file="${jarfile}" property="jar.exist"/>
+	</target>
+
+	<target name="build" depends="check-jar,buildCmdLineTestTools" unless="jar.exist">
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />

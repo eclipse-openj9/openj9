@@ -28,6 +28,8 @@
 		Build jython hello
 	</description>
 
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/jython" />
 	<property name="src" location="./src"/>
@@ -70,7 +72,7 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="build" depends="buildCmdLineTestTools">
 		<antcall target="clean" inheritall="true" />
 	</target>
 </project>

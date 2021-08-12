@@ -28,8 +28,11 @@
 		Build utils
 	</description>
 
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/utils" />
+	<property name="jarfile" value="${DEST}/utils.jar" />
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
 	<property name="addExports" value="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
@@ -65,7 +68,7 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${DEST}/utils.jar" filesonly="true">
+		<jar jarfile="${jarfile}" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}" />
 		</jar>
@@ -80,10 +83,14 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="check-jar">
+		<available file="${jarfile}" property="jar.exist"/>
+	</target>
+
+	<target name="build" depends="check-jar" unless="jar.exist">
 		<if>
 			<or>
-				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
 			<then>

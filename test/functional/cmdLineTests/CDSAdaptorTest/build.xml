@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2001, 2020 IBM Corp. and others
+  Copyright (c) 2001, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,8 @@
 		Build CDSAdaptorTest 
 	</description>
 	
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/CDSAdaptorTest" />
 	<property name="dist" location="${DEST}"/>
@@ -102,7 +104,7 @@
 		<delete dir="${build_resource_weavinghookTest}" />
 	</target>
 
-	<target name="build" >
+	<target name="build" depends="buildCmdLineTestTools">
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />

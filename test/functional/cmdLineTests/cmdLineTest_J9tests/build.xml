@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,8 @@
 	<description>
 		Build cmdLineTest_J9tests
 	</description>
+
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
 
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/cmdLineTest_J9tests" />
@@ -66,7 +68,7 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="build" depends="buildCmdLineTestTools,buildCmdLineTestUtils">
 		<antcall target="clean" inheritall="true" />
 	</target>
 </project>
