@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -480,10 +480,13 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
 
          oldBits = *(int32_t *)((uint8_t *)callSite - encodingStartOffset);     // The load of the first IPIC cache slot or rldimi
 #if defined(TR_TARGET_64BIT)
-         if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+
+         distance = *(int32_t *)((uint8_t *)callSite - encodingStartOffset - 4);
+         // Testing if it is really a paddi case
+         if (TR::Compiler->target.cpu.isAtLeast(OMR_PROCESSOR_PPC_P10) &&
+             (((distance >> 20) & 0x00000FFF) == 0x061))
             {
             // oldBits is the latter half of paddi
-            distance = *(int32_t *)((uint8_t *)callSite - encodingStartOffset - 4);
             distance = (distance & 0x0003FFFF) << 16;  // Getting the top-18-bits and shifted into place
             distance |= oldBits & 0x0000FFFF;          // Concatenate with the bottom-16-bits
             distance = (distance << 30) >> 30;         // sign-extend
