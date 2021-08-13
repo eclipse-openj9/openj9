@@ -41,6 +41,9 @@ import sun.security.util.SecurityConstants;
  * @author  OTI
  * @version initial
  */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+@Deprecated(since="17", forRemoval=true)
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class AccessControlContext {
 
 	static final int STATE_NOT_AUTHORIZED = 0; // It has been confirmed that the ACC is NOT authorized

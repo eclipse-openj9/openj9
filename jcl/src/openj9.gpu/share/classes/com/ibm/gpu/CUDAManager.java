@@ -48,6 +48,9 @@ import sun.misc.Unsafe;
 /**
  * This class contains information important to IBM GPU enabled functions.
  */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+@SuppressWarnings("removal")
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class CUDAManager {
 
 	private static final class Configuration {

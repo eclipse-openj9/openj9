@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,9 @@ public final class CudaGPUAssistProvider implements GPUAssist.Provider {
 	}
 
 	@Override
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	@SuppressWarnings("removal")
+	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	public GPUAssist getGPUAssist() {
 		PrivilegedAction<CUDAManager> getInstance = () -> CUDAManager.instance();
 		CUDAManager manager = AccessController.doPrivileged(getInstance);
