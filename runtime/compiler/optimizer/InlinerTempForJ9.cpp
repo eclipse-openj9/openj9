@@ -4011,6 +4011,8 @@ bool TR_MultipleCallTargetInliner::inlineSubCallGraph(TR_CallTarget* calltarget)
     * keep the target if it meets either of the following condition:
     * 1. It's a JSR292 related method. This condition allows inlining method handle thunk chain without inlining the leaf java method.
     * 2. It's force inline target
+    * 3. It's a method deemed always worth inlining, e.g. an Unsafe method
+    *    which would otherwise generate a j2i transition.
     */
    TR::Node *callNode = NULL; // no call node has been generated yet
    if (j9inlinerPolicy->isJSR292Method(calltarget->_calleeMethod)
@@ -5096,6 +5098,8 @@ bool TR_J9InlinerPolicy::isJSR292SmallGetterMethod(TR_ResolvedMethod *resolvedMe
       {
       case TR::java_lang_invoke_MutableCallSite_getTarget:
       case TR::java_lang_invoke_MethodHandle_type:
+      case TR::java_lang_invoke_DirectMethodHandle_internalMemberName:
+      case TR::java_lang_invoke_MethodHandleImpl_CountingWrapper_getTarget:
          return true;
 
       default:

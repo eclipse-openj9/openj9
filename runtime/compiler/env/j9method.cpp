@@ -3733,6 +3733,12 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X MethodHandleImplCountingWrapperMethods[] =
+      {
+      {x(TR::java_lang_invoke_MethodHandleImpl_CountingWrapper_getTarget,   "getTarget",  "()Ljava/lang/invoke/MethodHandle;")},
+      {  TR::unknownMethod}
+      };
+
    static X DirectHandleMethods[] =
       {
       {x(TR::java_lang_invoke_DirectHandle_isAlreadyCompiled,   "isAlreadyCompiled",  "(J)Z")},
@@ -4192,6 +4198,12 @@ void TR_ResolvedJ9Method::construct()
       { 0 }
       };
 
+   static Y class49[] =
+      {
+      { "java/lang/invoke/MethodHandleImpl$CountingWrapper", MethodHandleImplCountingWrapperMethods },
+      { 0 }
+      };
+
    static Y class50[] =
       {
       { "java/util/concurrent/atomic/AtomicLongFieldUpdater", JavaUtilConcurrentAtomicLongFieldUpdaterMethods },
@@ -4216,7 +4228,7 @@ void TR_ResolvedJ9Method::construct()
       0, 0, 0, class13, class14, class15, class16, class17, class18, class19,
       class20, class21, class22, class23, class24, class25, 0, class27, class28, class29,
       class30, class31, class32, class33, class34, class35, class36, 0, class38, class39,
-      class40, class41, class42, class43, class44, class45, class46, 0, class48, 0,
+      class40, class41, class42, class43, class44, class45, class46, 0, class48, class49,
       class50, 0, 0, class53, 0, class55
       };
 
