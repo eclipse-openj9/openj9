@@ -4012,8 +4012,10 @@ bool TR_MultipleCallTargetInliner::inlineSubCallGraph(TR_CallTarget* calltarget)
     * 1. It's a JSR292 related method. This condition allows inlining method handle thunk chain without inlining the leaf java method.
     * 2. It's force inline target
     */
+   TR::Node *callNode = NULL; // no call node has been generated yet
    if (j9inlinerPolicy->isJSR292Method(calltarget->_calleeMethod)
-       || forceInline(calltarget))
+       || forceInline(calltarget)
+       || j9inlinerPolicy->alwaysWorthInlining(calltarget->_calleeMethod, callNode))
       {
       for (TR_CallSite* callsite = calltarget->_myCallees.getFirst(); callsite ; callsite = callsite->getNext())
          {
