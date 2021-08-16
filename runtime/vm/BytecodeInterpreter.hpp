@@ -8294,6 +8294,11 @@ done:
 	}
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	/* This INL only covers invokeBasic dispatched directly from bytecode, invokeBasic calls
+	 * dispatched from linkToVirtual is inlined to avoid need of flags and tempValues to
+	 * pass the correct argCount during VM transition since the ramCP index still points
+	 * to the invokeStatic bytecode for linkToVirtual.
+	 */
 	VMINLINE VM_BytecodeAction
 	invokeBasic(REGISTER_ARGS_LIST)
 	{
@@ -8406,7 +8411,20 @@ throw_npe:
 
 		J9JNIMethodID *methodID = (J9JNIMethodID *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
-		UDATA methodArgCount = romMethod->argCount;
+		UDATA methodArgCount = 0;
+		bool isInvokeBasic = (J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC == J9_BCLOOP_DECODE_SEND_TARGET(methodID->method->methodRunAddress));
+
+		/* In MethodHandle.loop API it may generate a invokeBasic NamedFunction (see LambdaForm$NamedFunction(MethodType basicInvokerType))
+		 * that is linked by linkToVirtual. As invokeBasic is signature polymorphic, the romMethod->argCount may not match the actual
+		 * parameter count on stack so VM have to retrieve the argCount from the target MemberName's methodType for these special cases.
+		 */
+		if (isInvokeBasic) {
+			j9object_t methodType = J9VMJAVALANGINVOKEMEMBERNAME_TYPE(_currentThread, memberNameObject);
+			/* +1 to account for the receiver */
+			methodArgCount = VM_VMHelpers::methodTypeParameterSlotCount(_currentThread, methodType) + 1;
+		} else {
+			methodArgCount = romMethod->argCount;
+		}
 
 		j9object_t receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
 		if (J9_UNEXPECTED(NULL == receiverObject)) {
@@ -8454,6 +8472,19 @@ foundITable:
 				}
 			}
 			_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
+		}
+
+		/* The invokeBasic INL uses the methodArgCount from ramCP to locate the receiver object,
+		 * so when dispatched using linkToVirtual, it will still access the ramCP of the linkToVirtual call
+		 * Hence if the argument count of linkToVirtual doesn't match invokeBasic's romMethod ArgCount, then
+		 * invokeBasic will be reading an incorrect receiver.
+		 * To avoid use of flags and tempValues to pass the correct argCount during VM transition, the
+		 * invokeBasic operation is inlined here to directly dispatch the actual target.
+		 */
+		if (isInvokeBasic) {
+			j9object_t lambdaForm = J9VMJAVALANGINVOKEMETHODHANDLE_FORM(_currentThread, receiverObject);
+			j9object_t memberName = J9VMJAVALANGINVOKELAMBDAFORM_VMENTRY(_currentThread, lambdaForm);
+			_sendMethod = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberName, _vm->vmtargetOffset);
 		}
 
 		if (fromJIT) {

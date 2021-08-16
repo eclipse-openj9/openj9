@@ -1857,6 +1857,20 @@ exit:
 		return oldPC;
 	}
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	static VMINLINE UDATA
+	methodTypeParameterSlotCount(J9VMThread *currentThread, j9object_t methodType)
+	{
+		j9object_t methodTypeForm = (j9object_t)J9VMJAVALANGINVOKEMETHODTYPE_FORM(currentThread, methodType);
+#if JAVA_SPEC_VERSION >= 14
+		return (UDATA)J9VMJAVALANGINVOKEMETHODTYPEFORM_PARAMETERSLOTCOUNT(currentThread, methodTypeForm);
+#else /* JAVA_SPEC_VERSION >= 14 */
+		U_64 argCounts = (U_64)J9VMJAVALANGINVOKEMETHODTYPEFORM_ARGCOUNTS(currentThread, methodTypeForm);
+		return (UDATA)((argCounts >> 16) & 0xFFFF);
+#endif /* JAVA_SPEC_VERSION >= 14 */
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
 };
 
 #endif /* VMHELPERS_HPP_ */
