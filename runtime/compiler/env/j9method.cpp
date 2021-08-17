@@ -2091,6 +2091,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Class_isAssignableFrom,     "isAssignableFrom",     "(Ljava/lang/Class;)Z")},
       {x(TR::java_lang_Class_isInstance,           "isInstance",           "(Ljava/lang/Object;)Z")},
       {x(TR::java_lang_Class_isInterface,          "isInterface",          "()Z")},
+      {x(TR::java_lang_Class_cast,                 "cast",                 "(Ljava/lang/Object;)Ljava/lang/Object;")},
       {  TR::unknownMethod}
       };
 

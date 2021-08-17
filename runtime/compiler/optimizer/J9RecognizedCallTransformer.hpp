@@ -85,6 +85,26 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *     \endcode
     */
    void process_java_lang_Class_IsAssignableFrom(TR::TreeTop* treetop, TR::Node* node);
+
+   /** \brief
+    *     Transforms java/lang/Class.cast(Ljava/lang/Object;)Ljava/lang/Object;
+    *     into a checkcast node.
+    *
+    *  \param treetop
+    *     The treetop which anchors the call node.
+    *
+    *  \param node
+    *     The call node for java/lang/Class.cast(Ljava/lang/Object;)Ljava/lang/Object;
+    *     which has the following shape:
+    *
+    *     \code
+    *     acall java/lang/Class.cast(Ljava/lang/Object;)Ljava/lang/Object;
+    *       <cast class object>
+    *       <instance to be checked>
+    *     \endcode
+    */
+   void process_java_lang_Class_cast(TR::TreeTop* treetop, TR::Node* node);
+
    /** \brief
     *     Transforms java/lang/StringCoding.encodeASCII(B[B)[B into a compiler intrinsic for codegen acceleration (i.e encodeASCII symbol).
     *
