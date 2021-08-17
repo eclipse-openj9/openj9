@@ -692,11 +692,12 @@ TR_MethodHandleTransformer::process_java_lang_invoke_Invokers_checkExactType(TR:
                                                                                          "java/lang/invoke/MethodHandle.type Ljava/lang/invoke/MethodType;");
    auto handleTypeNode = TR::Node::createWithSymRef(node, comp()->il.opCodeForIndirectLoad(TR::Address), 1, methodHandleNode, typeSymRef);
    auto cmpEqNode = TR::Node::create(node, TR::acmpeq, 2, expectedTypeNode, handleTypeNode);
-   prepareToReplaceNode(node);
-   TR::Node::recreate(node, TR::ZEROCHK);
-   node->setSymbolReference(comp()->getSymRefTab()->findOrCreateMethodTypeCheckSymbolRef(comp()->getMethodSymbol()));
-   node->setNumChildren(1);
-   node->setAndIncChild(0, cmpEqNode);
+   TR::Node* zerochkNode = TR::Node::createWithSymRef(TR::ZEROCHK, 1, 1,
+                                                       cmpEqNode,
+                                                       comp()->getSymRefTab()->findOrCreateMethodTypeCheckSymbolRef(comp()->getMethodSymbol()));
+   zerochkNode->setByteCodeInfo(node->getByteCodeInfo());
+   tt->insertBefore(TR::TreeTop::create(comp(), zerochkNode));
+   TR::TransformUtil::transformCallNodeToPassThrough(this, node, tt, node->getFirstArgument());
    }
 
 /*
