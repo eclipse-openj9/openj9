@@ -206,7 +206,7 @@ public class AttachHandler extends Thread {
 			if (isAttachApiTerminated()) { 
 				return false; /* abort if we decided to shut down */
 			}
-			String myId = TargetDirectory.createMyDirectory(pidProperty, false);
+			String myId = TargetDirectory.createMyDirectory(pidProperty, true);
 			/*[PR RTC 80844 problem in initialization, or we are shutting down ]*/
 			if (null == myId) { 
 				return false;

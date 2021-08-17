@@ -349,6 +349,9 @@ public abstract class CommonDirectory {
 	 */
 	static void deleteStaleDirectories(String myId) {
 		long myUid = IPC.getUid();
+		if (LOGGING_DISABLED != loggingStatus) {
+			IPC.logMessage("deleting stale dirs, myId = " + myId + ", myUid = " + myUid); //$NON-NLS-1$ //$NON-NLS-2$
+		}
 		File[] vmDirs = getCommonDirFileObject().listFiles(new DirectorySampler());
 		if (null == vmDirs) {
 			return;
@@ -356,6 +359,7 @@ public abstract class CommonDirectory {
 		for (File dirMember: vmDirs) {
 			/*[PR 169137 abort if we shutting down while checking]*/
 			if (AttachHandler.isAttachApiTerminated()) {
+				IPC.logMessage("deleteStaleDirectories aborted due to AttachAPI is terminated"); //$NON-NLS-1$
 				break;
 			}
 
@@ -445,7 +449,7 @@ public abstract class CommonDirectory {
 		pid = advert.getProcessId();
 		long uid = advert.getUid();
 		if (LOGGING_DISABLED != loggingStatus) {
-			IPC.logMessage("getPidFromFile pid = ", (int) pid, dirMember.getName()); //$NON-NLS-1$
+			IPC.logMessage("getPidFromFile pid = ", (int) pid, ", fileNmae = " + dirMember.getName()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		/*advertisement is from an older version or is corrupt, or claims to be owned by root.  Get the owner via file stat ]*/
 		if (0 == uid) {
