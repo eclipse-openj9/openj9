@@ -143,6 +143,7 @@
        {r(TR::Symbol::Java_lang_invoke_MutableCallSite_target,        "java/lang/invoke/MutableCallSite", "target", "Ljava/lang/invoke/MethodHandle;")},
        {r(TR::Symbol::Java_lang_invoke_MutableCallSiteDynamicInvokerHandle_mutableSite,"java/lang/invoke/MutableCallSiteDynamicInvokerHandle", "mutableSite", "Ljava/lang/invoke/MutableCallSite;")},
        {r(TR::Symbol::Java_lang_invoke_MemberName_vmtarget,           "java/lang/invoke/MemberName", "vmtarget", "J")},
+       {r(TR::Symbol::Java_lang_invoke_MemberName_vmindex,            "java/lang/invoke/MemberName", "vmindex", "J")},
        {r(TR::Symbol::Java_lang_invoke_MethodHandle_form,             "java/lang/invoke/MethodHandle", "form", "Ljava/lang/invoke/LambdaForm;")},
        {r(TR::Symbol::Java_lang_invoke_MethodHandle_thunks,           "java/lang/invoke/MethodHandle", "thunks", "Ljava/lang/invoke/ThunkTuple;")},
        {r(TR::Symbol::Java_lang_invoke_MethodHandle_type,             "java/lang/invoke/MethodHandle", "type", "Ljava/lang/invoke/MethodType;")},

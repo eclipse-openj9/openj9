@@ -2154,8 +2154,9 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
    TR::SymbolReference * symRef = node->getSymbolReference();
    TR::ResolvedMethodSymbol *method = symRef->getSymbol()->getResolvedMethodSymbol();
 
-   // dispatchComputedStaticCall call will end up here if the return type is an object
-   if (method && method->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_dispatchComputedStaticCall)
+   if (method &&
+         (method->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_dispatchComputedStaticCall ||
+          method->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_dispatchVirtual))
       return node;
 
    // For the special case of a direct call to Object.clone() the return type

@@ -153,6 +153,7 @@ public:
       Java_lang_invoke_MutableCallSite_target,
       Java_lang_invoke_MutableCallSiteDynamicInvokerHandle_mutableSite,
       Java_lang_invoke_MemberName_vmtarget,
+      Java_lang_invoke_MemberName_vmindex,
       Java_lang_invoke_MethodHandle_form,
       Java_lang_invoke_MethodHandle_thunks,
       Java_lang_invoke_MethodHandle_type,
