@@ -1172,4 +1172,6 @@ public final class JITHelpers {
 	public native int getClassFlagsFromJ9Class64(long j9clazz);
 
 	public static native void dispatchComputedStaticCall();
+
+	public static native void dispatchVirtual();
 }
