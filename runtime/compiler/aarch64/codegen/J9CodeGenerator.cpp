@@ -67,6 +67,7 @@ J9::ARM64::CodeGenerator::initialize()
       cg->setSupportsDirectJNICalls();
 
    cg->setSupportsPrimitiveArrayCopy();
+   cg->setSupportsReferenceArrayCopy();
    }
 
 TR::Linkage *
