@@ -130,6 +130,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static TR::Register *ArrayCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
+   static TR::Register *arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
    static TR::Register *ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Instruction *generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *preced=NULL);
@@ -172,6 +174,21 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     */
    static void generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *temp1Reg, TR::Register *temp2Reg, TR::CodeGenerator *cg, int32_t classFlag);
 
+   /**
+    * @brief Generates array copy code with array store check
+    * @param[in] node : node
+    * @param[in] cg : CodeGenerator
+    */
+   static void genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::CodeGenerator *cg);
+
+   /**
+    * @brief Generates write barrier code for array copy
+    * @param[in] node : node
+    * @param[in] srcObjReg : register for the source object
+    * @param[in] dstObjReg : register for the destination object
+    * @param[in] cg : CodeGenerator
+    */
+   static void genWrtbarForArrayCopy(TR::Node *node, TR::Register *srcObjReg, TR::Register *dstObjReg, TR::CodeGenerator *cg);
    };
 
 } // ARM64
