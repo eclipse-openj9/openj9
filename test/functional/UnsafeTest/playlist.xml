@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2016, 2022 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 		<variations>
 			<variation>-DScenario=Regular</variation>
 			<variation>-DScenario=Compiled</variation>
+			<variation>-DScenario=Compiled -Xjit:optLevel=noOpt</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
  	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)OpenJ9Unsafe.jar$(P).$(Q) \
@@ -53,6 +54,7 @@
 		<variations>
 			<variation>-DScenario=Regular</variation>
 			<variation>-DScenario=Compiled</variation>
+			<variation>-DScenario=Compiled -Xjit:optLevel=noOpt</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-opens java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED --add-opens java.base/jdk.internal.misc=ALL-UNNAMED \

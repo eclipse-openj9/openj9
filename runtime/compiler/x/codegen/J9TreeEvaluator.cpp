@@ -10149,51 +10149,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
                return true;
                }
             return false; // Call the native version of NativeThread.current()
-         case TR::jdk_internal_misc_Unsafe_copyMemory0:
-         case TR::sun_misc_Unsafe_copyMemory:
-            {
-            if (comp->canTransformUnsafeCopyToArrayCopy()
-               && methodSymbol->isNative()
-               && performTransformation(comp, "O^O Call arraycopy instead of Unsafe.copyMemory: %s\n", cg->getDebug()->getName(node)))
-               {
-               TR::Node *src = node->getChild(1);
-               TR::Node *srcOffset = node->getChild(2);
-               TR::Node *dest = node->getChild(3);
-               TR::Node *destOffset = node->getChild(4);
-               TR::Node *len = node->getChild(5);
-
-               if (comp->target().is32Bit())
-                  {
-                  srcOffset = TR::Node::create(TR::l2i, 1, srcOffset);
-                  destOffset = TR::Node::create(TR::l2i, 1, destOffset);
-                  len = TR::Node::create(TR::l2i, 1, len);
-                  src = TR::Node::create(TR::aiadd, 2, src, srcOffset);
-                  dest = TR::Node::create(TR::aiadd, 2, dest, destOffset);
-                  }
-               else
-                  {
-                  src = TR::Node::create(TR::aladd, 2, src, srcOffset);
-                  dest = TR::Node::create(TR::aladd, 2, dest, destOffset);
-                  }
-
-               TR::Node *arraycopyNode = TR::Node::createArraycopy(src, dest, len);
-               TR::TreeEvaluator::arraycopyEvaluator(arraycopyNode,cg);
-
-               if (node->getChild(0)->getRegister())
-                  cg->decReferenceCount(node->getChild(0));
-               else
-                  node->getChild(0)->recursivelyDecReferenceCount();
-
-               cg->decReferenceCount(node->getChild(1));
-               cg->decReferenceCount(node->getChild(2));
-               cg->decReferenceCount(node->getChild(3));
-               cg->decReferenceCount(node->getChild(4));
-               cg->decReferenceCount(node->getChild(5));
-
-               return true;
-               }
-               return false; // Perform the original Unsafe.copyMemory call
-            }
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             {
             if(node->isSafeForCGToFastPathUnsafeCall())
@@ -11881,7 +11836,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
       case TR::java_util_concurrent_atomic_Fences_orderWrites:
       case TR::java_util_concurrent_atomic_Fences_reachabilityFence:
       case TR::sun_nio_ch_NativeThread_current:
-      case TR::sun_misc_Unsafe_copyMemory:
          if (TR::TreeEvaluator::VMinlineCallEvaluator(node, false, cg))
             {
             returnRegister = node->getRegister();
