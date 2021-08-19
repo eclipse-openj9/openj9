@@ -935,6 +935,23 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
       case TR::java_lang_invoke_ILGenMacros_isShareableThunk:
          result = new (trStackMemory()) IconstOperand(0);
          break;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      case TR::java_lang_invoke_DelegatingMethodHandle_getTarget:
+         {
+         TR::KnownObjectTable::Index dmhIndex = top()->getKnownObjectIndex();
+         bool trace = tracer()->debugLevel();
+         TR::KnownObjectTable::Index targetIndex =
+            comp()->fej9()->delegatingMethodHandleTarget(comp(), dmhIndex, trace);
+
+         if (targetIndex == TR::KnownObjectTable::UNKNOWN)
+            return NULL;
+
+         result = new (trStackMemory()) KnownObjOperand(targetIndex);
+         break;
+         }
+#endif
+
       case TR::java_lang_invoke_MutableCallSite_getTarget:
       case TR::java_lang_invoke_Invokers_getCallSiteTarget:
          {

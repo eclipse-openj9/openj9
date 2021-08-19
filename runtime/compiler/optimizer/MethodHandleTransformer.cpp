@@ -387,6 +387,17 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
               }
            }
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         case TR::java_lang_invoke_DelegatingMethodHandle_getTarget:
+            {
+            TR::KnownObjectTable::Index dmhIndex =
+               getObjectInfoOfNode(node->getArgument(0));
+
+            return comp()->fej9()->delegatingMethodHandleTarget(
+               comp(), dmhIndex, trace());
+            }
+#endif
+
          default:
             break;
         }

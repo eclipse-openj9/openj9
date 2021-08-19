@@ -879,6 +879,22 @@ public:
     * \return char * the signature for linkToStatic
     */
    char * getSignatureForLinkToStaticForInvokeDynamic(TR::Compilation* comp, J9UTF8* romMethodSignature, int32_t &signatureLength);
+
+   /**
+    * \brief
+    *    Get the target of a DelegatingMethodHandle
+    *
+    * If the target cannot be determined (including any cases where dmhIndex
+    * does not indicate an instance of DelegatingMethodHandle), the result is
+    * TR::KnownObjectTable::UNKNOWN.
+    *
+    * \param comp the compilation object
+    * \param dmhIndex the known object index of the (purported) DelegatingMethodHandle
+    * \param trace whether to enable trace messages
+    * \return the known object index of the target, or TR::KnownObjectTable::UNKNOWN
+    */
+   TR::KnownObjectTable::Index delegatingMethodHandleTarget(
+      TR::Compilation *comp, TR::KnownObjectTable::Index dmhIndex, bool trace);
 #endif
 
    // JSR292 }}}

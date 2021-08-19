@@ -3739,6 +3739,12 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X DelegatingMethodHandleMethods[] =
+      {
+      {x(TR::java_lang_invoke_DelegatingMethodHandle_getTarget,   "getTarget",  "()Ljava/lang/invoke/MethodHandle;")},
+      {  TR::unknownMethod}
+      };
+
    static X DirectHandleMethods[] =
       {
       {x(TR::java_lang_invoke_DirectHandle_isAlreadyCompiled,   "isAlreadyCompiled",  "(J)Z")},
@@ -4140,6 +4146,7 @@ void TR_ResolvedJ9Method::construct()
    static Y class39[] =
       {
       { "com/ibm/jit/crypto/JITFullHardwareCrypt", ZCryptoMethods },
+      { "java/lang/invoke/DelegatingMethodHandle", DelegatingMethodHandleMethods },
       { 0 }
       };
 

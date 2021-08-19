@@ -5093,6 +5093,81 @@ TR_J9VMBase::getSignatureForLinkToStaticForInvokeDynamic(TR::Compilation* comp, 
         romMethodSignature,
         signatureLength);
    }
+
+TR::KnownObjectTable::Index
+TR_J9VMBase::delegatingMethodHandleTarget(
+   TR::Compilation *comp, TR::KnownObjectTable::Index dmhIndex, bool trace)
+   {
+   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+   if (knot == NULL)
+      return TR::KnownObjectTable::UNKNOWN;
+
+#if defined(J9VM_OPT_JITSERVER)
+   // TODO: JITServer support. It should be possible to handle this case by
+   // having the message handler call back into this function on the client.
+   if (comp->isOutOfProcessCompilation())
+      return TR::KnownObjectTable::UNKNOWN;
+#endif
+
+   if (dmhIndex == TR::KnownObjectTable::UNKNOWN || knot->isNull(dmhIndex))
+      return TR::KnownObjectTable::UNKNOWN;
+
+   const char * const cwClassName =
+      "java/lang/invoke/MethodHandleImpl$CountingWrapper";
+
+   const int cwClassNameLen = (int)strlen(cwClassName);
+   TR_OpaqueClassBlock *cwClass =
+      getSystemClassFromClassName(cwClassName, cwClassNameLen);
+
+   if (trace)
+      {
+      traceMsg(
+         comp,
+         "delegating method handle target: delegating mh obj%d(*%p) CountingWrapper %p\n",
+         dmhIndex,
+         knot->getPointerLocation(dmhIndex),
+         cwClass);
+      }
+
+   if (cwClass == NULL)
+      {
+      if (trace)
+         traceMsg(comp, "failed to find CountingWrapper\n");
+
+      return TR::KnownObjectTable::UNKNOWN;
+      }
+
+   TR_OpaqueClassBlock *dmhType =
+      getObjectClassFromKnownObjectIndex(comp, dmhIndex);
+
+   if (dmhType == NULL)
+      {
+      if (trace)
+         traceMsg(comp, "failed to determine concrete DelegatingMethodHandle type\n");
+
+      return TR::KnownObjectTable::UNKNOWN;
+      }
+   else if (isInstanceOf(dmhType, cwClass, true) != TR_yes)
+      {
+      if (trace)
+         traceMsg(comp, "object is not a CountingWrapper\n");
+
+      return TR::KnownObjectTable::UNKNOWN;
+      }
+
+   TR::VMAccessCriticalSection dereferenceKnownObjectField(this);
+   int32_t targetFieldOffset =
+      getInstanceFieldOffset(cwClass, "target", "Ljava/lang/invoke/MethodHandle;");
+
+   uintptr_t dmh = knot->getPointer(dmhIndex);
+   uintptr_t fieldAddress = getReferenceFieldAt(dmh, targetFieldOffset);
+   TR::KnownObjectTable::Index targetIndex = knot->getOrCreateIndex(fieldAddress);
+
+   if (trace)
+      traceMsg(comp, "target is obj%d\n", targetIndex);
+
+   return targetIndex;
+   }
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 TR::KnownObjectTable::Index
