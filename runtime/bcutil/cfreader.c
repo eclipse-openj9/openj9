@@ -2167,6 +2167,15 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 				if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Class)) {
 					errorCode = J9NLS_CFR_ERR_OUTER_CLASS_NOT_CLASS__ID;
 					goto _errorFound;
+				} else {
+					J9CfrConstantPoolInfo* outerClassInfoUtf8 = &cpBase[cpBase[value].slot1];
+					/* Capture the error if the outer_class_info_index points to an array class */
+					if ((CFR_CONSTANT_Utf8 == outerClassInfoUtf8->tag)
+					&& ('[' == outerClassInfoUtf8->bytes[0])
+					) {
+						errorCode = J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS__ID;
+						goto _errorFound;
+					}
 				}
 				/* Check class name integrity? */
 
