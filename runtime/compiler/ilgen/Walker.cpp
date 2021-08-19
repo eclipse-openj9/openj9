@@ -3493,7 +3493,7 @@ TR_J9ByteCodeIlGenerator::loadInvokeCacheArrayElements(TR::SymbolReference *tabl
       // the object reference of the appendix object from the invokeCacheArray entry
       TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
       TR::Node * appendixNode = _stack->top();
-      TR::SymbolReference * appendixSymRef = 
+      TR::SymbolReference * appendixSymRef =
          fej9()->refineInvokeCacheElementSymRefWithKnownObjectIndex(
                   comp(),
                   appendixNode->getSymbolReference(),
@@ -4151,6 +4151,20 @@ break
 
       loadConstant(TR::iconst, constVal);
       return NULL;
+      }
+
+   /**
+    * java/lang/invoke/MethodHandleImpl.profileBoolean() performs some internal profiling
+    * on the boolean parameter value before returning it.  Since the OpenJ9 JIT does not
+    * consume that profiling information the profiling overhead is not necessary.  Eliminate
+    * the call and simply replace it with a reference to the boolean parameter.
+    */
+   if (symbol->getRecognizedMethod() == TR::java_lang_invoke_MethodHandleImpl_profileBoolean)
+      {
+      pop();
+      TR::Node *resultNode = _stack->top();
+      genTreeTop(resultNode);
+      return resultNode;
       }
 
     // Can't use recognized methods since it's not enabled on AOT

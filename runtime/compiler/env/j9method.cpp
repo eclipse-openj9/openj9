@@ -504,7 +504,7 @@ TR_ResolvedJ9MethodBase::setOwningMethod(TR_ResolvedMethod *parent)
 bool
 TR_ResolvedJ9Method::owningMethodDoesntMatter()
    {
-   
+
    // Returning true here allows us to ignore the owning method, which lets us
    // share symrefs more aggressively and other goodies, but usually ignoring
    // the owning method will confuse inliner and others, so only do so when
@@ -1015,7 +1015,7 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
             SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
             SVM_ASSERT_ALREADY_VALIDATED(svm, containingClass());
             }
-         else if (owner) 
+         else if (owner)
             {
             // JITServer: in baseline, if owner doesn't exist then comp doesn't exist, so thi case is not possible
             // but in JITClient comp is initialized before creating resolved method for compilee, so need this guard.
@@ -3009,8 +3009,8 @@ void TR_ResolvedJ9Method::construct()
 
       {  TR::unknownMethod}
       };
-      
-   
+
+
    static X ArrayMethods[] =
       {
       {x(TR::java_lang_reflect_Array_getLength, "getLength", "(Ljava/lang/Object;)I")},
@@ -3863,6 +3863,13 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X JavaLangInvokeMethodHandleImplMethods [] =
+      {
+      {x(TR::java_lang_invoke_MethodHandleImpl_isCompileConstant, "isCompileConstant", "(Ljava/lang/Object;)Z")},
+      {x(TR::java_lang_invoke_MethodHandleImpl_profileBoolean, "profileBoolean", "(Z[I)Z")},
+      {  TR::unknownMethod}
+      };
+
    static X MTTenantContext[] =
       {
       {x(TR::com_ibm_tenant_TenantContext_switchTenant, "switchTenant", "(Lcom/ibm/tenant/TenantContext;)V")},
@@ -4078,6 +4085,7 @@ void TR_ResolvedJ9Method::construct()
       {
       { "java/util/stream/AbstractPipeline", JavaUtilStreamAbstractPipelineMethods },
       { "java/util/stream/IntPipeline$Head", JavaUtilStreamIntPipelineHeadMethods },
+      { "java/lang/invoke/MethodHandleImpl", JavaLangInvokeMethodHandleImplMethods },
       { 0 }
       };
 
@@ -7543,7 +7551,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          intptr_t methodDescriptorLength;
          char *methodDescriptor;
 
-#if defined(J9VM_OPT_JITSERVER)      
+#if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
@@ -8376,7 +8384,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             uint32_t spreadPositionOffset = fej9->getInstanceFieldOffset(fej9->getObjectClass(methodHandle), "spreadPosition", "I");
             if (spreadPositionOffset != ~0)
                spreadPosition = fej9->getInt32FieldAt(methodHandle, spreadPositionOffset);
-            
+
             leafClassNameChars = fej9->getClassNameChars((TR_OpaqueClassBlock*)leafClass, leafClassNameLength); // eww, TR_FrontEnd downcast
             isPrimitiveClass = TR::Compiler->cls.isPrimitiveClass(comp(), (TR_OpaqueClassBlock *) leafClass);
             }
@@ -8449,7 +8457,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          int32_t numNextArguments;
          int32_t spreadStart;
 
-#if defined(J9VM_OPT_JITSERVER) 
+#if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
@@ -8920,7 +8928,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                if (knotEnabled)
                   filterIndexList[i] = knot->getOrCreateIndex(fej9->getReferenceElement(filters, i));
                }
-               
+
 
             startPos = (int32_t)fej9->getInt32Field(methodHandle, "startPos");
             uintptr_t methodDescriptorRef = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
@@ -9271,7 +9279,7 @@ TR_ResolvedJ9Method::isFieldFlattened(TR::Compilation *comp, int32_t cpIndex, bo
       return false;
 
    J9VMThread *vmThread = fej9()->vmThread();
-   J9ROMFieldShape *fieldShape = NULL; 
+   J9ROMFieldShape *fieldShape = NULL;
    TR_OpaqueClassBlock *containingClass = definingClassAndFieldShapeFromCPFieldRef(comp, cp(), cpIndex, isStatic, &fieldShape);
 
    // No lock is required here. Entires in J9Class::flattenedClassCache are only written during classload.

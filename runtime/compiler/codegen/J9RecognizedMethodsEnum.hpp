@@ -445,7 +445,7 @@
    jdk_internal_vm_vector_VectorSupport_load,
    jdk_internal_vm_vector_VectorSupport_binaryOp,
    jdk_internal_vm_vector_VectorSupport_store,
-      
+
    java_lang_reflect_Array_getLength,
    java_lang_reflect_Method_invoke,
    java_util_Arrays_fill,
@@ -465,7 +465,7 @@
    sun_nio_cs_UTF_8_Decoder_decodeUTF_8,
    sun_nio_cs_UTF_8_Encoder_encodeUTF_8,
    sun_nio_cs_ext_IBM1388_Encoder_encodeArrayLoop,
-   
+
    sun_nio_cs_UTF_16_Encoder_encodeUTF16Big,
    sun_nio_cs_UTF_16_Encoder_encodeUTF16Little,
    com_ibm_jit_JITHelpers_transformedEncodeUTF16Big,
@@ -1067,6 +1067,10 @@
    java_lang_invoke_VirtualHandle_virtualCall,
    java_lang_invoke_VirtualHandle_invokeExact,
 
+   // OpenJDK MethodHandles
+   java_lang_invoke_MethodHandleImpl_profileBoolean,
+   java_lang_invoke_MethodHandleImpl_isCompileConstant,
+
    // Clone and Deep Copy
    java_lang_J9VMInternals_is32Bit,
    java_lang_J9VMInternals_isClassModifierPublic,
@@ -1107,7 +1111,7 @@
    com_ibm_jit_crypto_JITFullHardwareDigest_z_kimd,
    com_ibm_jit_crypto_JITFullHardwareDigest_z_klmd,
    com_ibm_jit_crypto_JITFullHardwareDigest_z_kmac,
-   
+
    java_lang_StringCoding_decode,
    java_lang_StringCoding_encode,
    java_lang_StringCoding_StringDecoder_decode,
