@@ -583,8 +583,19 @@ void J9::RecognizedCallTransformer::processVMInternalNativeFunction(TR::TreeTop*
       child_i++;
       }
    TR::TreeTop * computedCallTreeTop = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, computedCallNode));
+   TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
+   TR::Node *nullChkNode = NULL;
+   if (rm == TR::java_lang_invoke_MethodHandle_linkToSpecial || rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
+      {
+      TR::Node *passthroughNode = TR::Node::create(node, TR::PassThrough, 1);
+      passthroughNode->setAndIncChild(0, TR::Node::createLoad(node, argsList->front()));
+      TR::SymbolReference *symRef = comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());
+      nullChkNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, passthroughNode, symRef);
+      }
+
    TR::TreeTop * inlCallTreeTop = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, inlCallNode)); // original treetop gets deleted by createDiamondForCall
    TR::TransformUtil::createDiamondForCall(this, treetop, cmpCheckTreeTop, inlCallTreeTop, computedCallTreeTop, false, false);
+   if (nullChkNode) computedCallTreeTop->insertBefore(TR::TreeTop::create(comp(), nullChkNode));
    _processedINLCalls->set(inlCallNode->getGlobalIndex());
    }
 
@@ -691,8 +702,14 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
    TR::TreeTop * dispatchVirtualTreeTop = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, dispatchVirtualCallNode));
    TR::TreeTop * placeholderINLCallTreeTop = TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, placeholderINLCallNode));
 
+   TR::Node *passthroughNode = TR::Node::create(node, TR::PassThrough, 1);
+   passthroughNode->setAndIncChild(0, TR::Node::createLoad(node, argsList->front()));
+   TR::SymbolReference *nullSymRef = comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());
+   TR::Node* nullChkNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, passthroughNode, nullSymRef);
+
    node->removeAllChildren();
    TR::TransformUtil::createDiamondForCall(this, treetop, vtableOffsetIsNotZeroTreeTop, dispatchVirtualTreeTop, placeholderINLCallTreeTop, false, false);
+   dispatchVirtualTreeTop->insertBefore(TR::TreeTop::create(comp(), nullChkNode));
 
    // -------- path if vmIndex == 0 --------
    // now let's work with just the placeholder INL call as the main node, as if this is a linkToStatic/Special call. the original treetop was removed.
