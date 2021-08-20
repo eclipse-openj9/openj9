@@ -1791,7 +1791,7 @@ exit:
 	/**
 	 * Determine if the method is from a LambdaForm generated class.
 	 *
-	 * A LamddaForm generated method/class will have LambdaFrom.class as its hostclass
+	 * A LambdaForm generated method/class will have LambdaForm.class as its hostclass
 	 * and is either a hidden class or anonymous class.
 	 *
 	 * @param currentThread the VM thread
