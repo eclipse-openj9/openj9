@@ -4999,6 +4999,23 @@ TR_InlinerFailureReason
          break;
    }
 
+   /**
+    * Do not inline LambdaForm generated reinvoke() methods as they are on the
+    * slow path and may consume inlining budget.
+    */
+   if (comp->fej9()->isLambdaFormGeneratedMethod(resolvedMethod))
+      {
+      if (resolvedMethod->nameLength() == strlen("reinvoke") &&
+          !strncmp(resolvedMethod->nameChars(), "reinvoke", strlen("reinvoke")))
+         {
+         traceMsg(comp, "Intentionally avoided inlining generated %.*s.%.*s%.*s\n",
+                  resolvedMethod->classNameLength(), resolvedMethod->classNameChars(),
+                  resolvedMethod->nameLength(), resolvedMethod->nameChars(),
+                  resolvedMethod->signatureLength(), resolvedMethod->signatureChars());
+         return DontInline_Callee;
+         }
+      }
+
    if (comp->getOptions()->getEnableGPU(TR_EnableGPU))
       {
       switch (rm)
