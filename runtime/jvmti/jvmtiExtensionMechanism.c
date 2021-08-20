@@ -1748,7 +1748,7 @@ jvmtiInternalGetStackTraceIteratorExtended(J9VMThread * currentThread, J9StackWa
 
 	/* In extra info mode when method enter is enabled, exclude natives which have not had method enter reported for them */
 
-	type = (J9JVMTIStackTraceType) walkState->userData2;
+	type = (J9JVMTIStackTraceType) (UDATA) walkState->userData2;
 	if (type & J9JVMTI_STACK_TRACE_PRUNE_UNREPORTED_METHODS) {
 		if ((UDATA)walkState->pc == J9SF_FRAME_TYPE_NATIVE_METHOD) {
 			/* INL natives never have enter/exit reported */
