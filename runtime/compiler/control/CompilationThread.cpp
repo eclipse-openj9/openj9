@@ -573,7 +573,7 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
 #if defined(J9VM_OPT_JITSERVER)
       else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && JITServerHelpers::isServerAvailable())
          {
-         
+
          // For JITClient let's be more agressive with compilation thread activation
          // because the latencies are larger. Beyond 'numProc-1' we will use the
          // 'starvation activation schedule', but accelerated (divide those thresholds by 2)
@@ -2438,7 +2438,7 @@ void TR::CompilationInfoPerThread::suspendCompilationThread()
 
       if (!isDiagnosticThread())
          getCompilationInfo()->decNumCompThreadsActive();
-         
+
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u Suspension request for compThread %d sleeping=%s",
@@ -3147,9 +3147,9 @@ void TR::CompilationInfo::stopCompilationThreads()
 
       fprintf(stderr, "Number of compilations per level:\n");
       for (int i = 0; i < (int)numHotnessLevels; i++)
-         {	      
+         {
          if (_statsOptLevels[i] > 0)
-            {		 
+            {
             fprintf(stderr, "Level=%d\tnumComp=%d", i, _statsOptLevels[i]);
 #if defined(J9VM_OPT_JITSERVER)
             if (_statsRemoteOptLevels[i] > 0)
@@ -3488,7 +3488,7 @@ void TR::CompilationInfo::stopCompilationThreads()
    // generating a JitDump. Only at this point can we terminate the diagnostic threads. If a compilation thread did
    // crash we will actually never execute code following this comment. This is because the crashed thread will be
    // in an active state, since it has crashed during a compilation, and the we will be waiting on the comp monitor
-   // for the crashed thread in the loop above. However because the diagnostic data is generated on the crashed 
+   // for the crashed thread in the loop above. However because the diagnostic data is generated on the crashed
    // thread this thread will never return to execute the state processing loop, and thus will never terminate.
    // This is ok, because following the dump process in the JVM we will terminate the entire JVM process.
    for (int32_t i = 0; i < getNumTotalCompilationThreads(); i++)
@@ -3585,7 +3585,7 @@ void TR::CompilationInfo::stopCompilationThread(CompilationInfoPerThread* compIn
       case COMPTHREAD_SIGNAL_WAIT:
       case COMPTHREAD_WAITING:
          compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_TERMINATE);
-         
+
          if (!compInfoPT->isDiagnosticThread())
             decNumCompThreadsActive();
          break;
@@ -7040,7 +7040,7 @@ TR::CompilationInfoPerThreadBase::isMemoryCheapCompilation(uint32_t bcsz, TR_Hot
    if (freePhysicalMemorySizeB < 20 * 1024 * 1024) // 10MB <= freeMem < 20MB
       {
       // Very small methods at cold (expected to take 1MB max)
-      return (optLevel <= cold) && (bcsz <= 4); 
+      return (optLevel <= cold) && (bcsz <= 4);
       }
    if (freePhysicalMemorySizeB < 100 * 1024 * 1024) // 20MB <= freeMem < 100MB
       {
@@ -7073,7 +7073,7 @@ TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotnes
          }
       // If we have CPU available we could keep local even medium sized cold compilations
       CpuUtilization *cpuUtil = _compInfo.getCpuUtil();
-      if (cpuUtil->isFunctional() && 
+      if (cpuUtil->isFunctional() &&
           _compInfo.getPersistentInfo()->getElapsedTime() >= TR::Options::_classLoadingPhaseInterval && // For first 0.5 sec we don't have valid data
           cpuUtil->getCpuIdle() >= 15 && // There is idle CPU to use
           cpuUtil->getVmCpuUsage() + 15 <= cpuEntitlement) // I am allowed to use 15% more CPU
@@ -7084,7 +7084,7 @@ TR::CompilationInfoPerThreadBase::isCPUCheapCompilation(uint32_t bcsz, TR_Hotnes
    if (cpuEntitlement < 350.0) // [150, 350)
       {
       // Medium sized methods at noOpt/cold
-      return (optLevel <= cold) && (bcsz <= 31); 
+      return (optLevel <= cold) && (bcsz <= 31);
       }
 
    // CPU Entitlement >= 350%
@@ -7121,7 +7121,7 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
    TR_Hotness optLevel = entry->_optimizationPlan->getOptLevel();
    J9Method *method = entry->getMethodDetails().getMethod();
    uint32_t bcsz = TR::CompilationInfo::getMethodBytecodeSize(method);
-  
+
    return (isMemoryCheapCompilation(bcsz, optLevel) && isCPUCheapCompilation(bcsz, optLevel));
    }
 
@@ -7172,7 +7172,7 @@ TR::CompilationInfoPerThreadBase::downgradeLocalCompilationIfLowPhysicalMemory(T
                 TR_VerboseCompilationDispatch,
                 TR_VerbosePerformance,
                 TR_VerboseCompFailure))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u Downgraded a forced local compilation to cold due to low memory: j9method=%p", 
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u Downgraded a forced local compilation to cold due to low memory: j9method=%p",
                                            (uint32_t)_compInfo.getPersistentInfo()->getElapsedTime(), method);
          entry->_optimizationPlan->setOptLevel(cold);
          entry->_optimizationPlan->setOptLevelDowngraded(true);
@@ -8030,13 +8030,13 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
             TR::CompilationInfoPerThreadBase::UninterruptibleOperation jitDumpRecompilation(*this);
 
             protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
-                                                jitDumpSignalHandler, 
+                                                jitDumpSignalHandler,
                                                 vmThread, flags, &result);
             }
          else
             {
             protectedResult = j9sig_protect(wrappedCompile, static_cast<void*>(&compParam),
-                                                jitSignalHandler, 
+                                                jitSignalHandler,
                                                 vmThread, flags, &result);
             }
 
@@ -8847,6 +8847,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
                // Try to increase scratch space limit for JSR292 compilations
                proposedScratchMemoryLimit *= TR::Options::getScratchSpaceFactorWhenJSR292Workload();
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+               // Allow larger methods to be inlined into scorching bodies for JSR292 methods.
+               //
+               compiler->getOptions()->setBigCalleeScorchingOptThreshold(1024);
+#endif
                }
 #if defined(J9VM_OPT_JITSERVER)
             else if (compiler->isOutOfProcessCompilation())
@@ -11037,7 +11043,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
    if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileEnd, TR_VerboseCompFailure))
       {
       uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
-      
+
       char compilationTypeString[15] = { 0 };
       snprintf(compilationTypeString, sizeof(compilationTypeString), "%s%s",
          compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
