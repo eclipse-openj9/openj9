@@ -316,7 +316,7 @@ bool TR_ResolvedJ9Method::isMethodInValidLibrary()
 void
 TR_J9MethodBase::parseSignature(TR_Memory * trMemory)
    {
-   U_8 tempArgTypes[256];
+   U_8 tempArgTypes[512];
    jitParseSignature(_signature, tempArgTypes, &_paramElements, &_paramSlots);
    _argTypes = (U_8 *) trMemory->allocateHeapMemory((_paramElements + 1) * sizeof(U_8));
    memcpy(_argTypes, tempArgTypes, (_paramElements + 1));
