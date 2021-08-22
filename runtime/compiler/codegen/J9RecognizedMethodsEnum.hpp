@@ -1010,6 +1010,7 @@
    java_lang_invoke_MethodHandle_linkToSpecial,
    java_lang_invoke_MethodHandle_linkToVirtual,
    java_lang_invoke_MethodHandle_linkToInterface,
+   java_lang_invoke_MethodHandleImpl_CountingWrapper_getTarget,
    java_lang_invoke_DirectMethodHandle_internalMemberName,
    java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit,
    java_lang_invoke_DirectMethodHandle_constructorMethod,
