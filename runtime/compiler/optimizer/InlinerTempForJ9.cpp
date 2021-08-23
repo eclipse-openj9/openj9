@@ -5371,7 +5371,13 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
          {
          prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(symRef->getKnownObjectIndex(), comp);
          if (tracePrex)
-            traceMsg(comp, "PREX.inl:      %p: is known object obj%d\n", prexArg, symRef->getKnownObjectIndex());
+            traceMsg(comp, "PREX.inl:      %p: is symref known object obj%d\n", prexArg, symRef->getKnownObjectIndex());
+         }
+      else if (argument->hasKnownObjectIndex())
+         {
+         prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(argument->getKnownObjectIndex(), comp);
+         if (tracePrex)
+            traceMsg(comp, "PREX.inl:      %p: is node known object obj%d\n", prexArg, argument->getKnownObjectIndex());
          }
       else if (argument->getOpCodeValue() == TR::aload)
          {

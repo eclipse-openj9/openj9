@@ -350,9 +350,15 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
    if (node->getOpCode().isLoadDirect() &&
        symbol->isAutoOrParm())
       {
+      TR::KnownObjectTable::Index koi = (*_currentObjectInfo)[symbol->getLocalIndex()];
+      node->setKnownObjectIndex(koi);
+
       if (trace())
-         traceMsg(comp(), "getObjectInfoOfNode n%dn is load from auto or parm, local #%d\n", node->getGlobalIndex(), symbol->getLocalIndex());
-      return (*_currentObjectInfo)[symbol->getLocalIndex()];
+         {
+         traceMsg(comp(), "getObjectInfoOfNode n%dn is load from auto or parm, local #%d, set node known object=%d\n", node->getGlobalIndex(), symbol->getLocalIndex(), koi);
+         }
+
+      return koi;
       }
 
    auto knot = comp()->getKnownObjectTable();
@@ -371,7 +377,8 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
               {
               auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "member");
               if (trace())
-                 traceMsg(comp(), "Get DirectMethodHandle.member known object %d\n", mnIndex);
+                 traceMsg(comp(), "Get DirectMethodHandle.member known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
+              node->setKnownObjectIndex(mnIndex);
               return mnIndex;
               }
            }
@@ -382,7 +389,8 @@ TR_MethodHandleTransformer::getObjectInfoOfNode(TR::Node* node)
               {
               auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "initMethod");
               if (trace())
-                 traceMsg(comp(), "Get DirectMethodHandle.initMethod known object %d\n", mnIndex);
+                 traceMsg(comp(), "Get DirectMethodHandle.initMethod known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
+              node->setKnownObjectIndex(mnIndex);
               return mnIndex;
               }
            }
