@@ -580,7 +580,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
             fej9()->unknownByteCode(comp(), opcode);
             break;
          default:
-         	break;
+            break;
          }
 
       if (comp()->getOption(TR_TraceILGen))
@@ -3693,7 +3693,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
             opcode = TR::ihbit;
             break;
          case TR::java_lang_Integer_lowestOneBit:
-            if(comp()->target().cpu.isX86())
+            if(comp()->target().cpu.isX86() || comp()->target().cpu.isARM64())
                opcode = TR::ilbit;
             else
                opcode = TR::BadILOp;
@@ -3714,7 +3714,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
             opcode = TR::lhbit;
             break;
          case TR::java_lang_Long_lowestOneBit:
-            if(comp()->target().cpu.isX86())
+            if(comp()->target().cpu.isX86() || comp()->target().cpu.isARM64())
                opcode = TR::llbit;
             else
                opcode = TR::BadILOp;
@@ -3732,7 +3732,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
                opcode = TR::BadILOp;
             break;
          default:
-         	break;
+            break;
          }
       }
 
@@ -3881,7 +3881,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
             break;
             }
          default:
-         	break;
+            break;
          }
       }
 #endif
@@ -5495,7 +5495,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
             return;
             }
          default:
-         	break;
+            break;
          }
       }
 
