@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,8 @@
 package java.lang.management;
 
 /**
+ * Enumeration for HEAP or NON_HEAP memory types.
+ *
  * @since 1.5
  */
 public enum MemoryType {
