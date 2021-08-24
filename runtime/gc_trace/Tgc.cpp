@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -285,7 +285,7 @@ tgcInitializeRequestedOptions(J9JavaVM *javaVM)
 {
 	bool result = true;
 
-#if (defined(J9VM_GC_MODRON_STANDARD) || defined(J9VM_GC_VLHGC) || defined(J9VM_GC_SEGREGATED_HEAP))
+#if (defined(J9VM_GC_MODRON_STANDARD) || defined(J9VM_GC_VLHGC) || defined(OMR_GC_SEGREGATED_HEAP))
 
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	MM_TgcExtensions *tgcExtensions = MM_TgcExtensions::getExtensions(extensions);
@@ -429,7 +429,7 @@ tgcInitializeRequestedOptions(J9JavaVM *javaVM)
 	}
 
 
-#endif /* defined(J9VM_GC_MODRON_STANDARD) || defined(J9VM_GC_VLHGC)  || defined(J9VM_GC_SEGREGATED_HEAP) */
+#endif /* defined(J9VM_GC_MODRON_STANDARD) || defined(J9VM_GC_VLHGC)  || defined(OMR_GC_SEGREGATED_HEAP) */
 
 	return result;
 }

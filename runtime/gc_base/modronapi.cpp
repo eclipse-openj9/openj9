@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -847,7 +847,7 @@ j9gc_get_object_total_footprint_in_bytes(J9JavaVM *javaVM, j9object_t objectPtr)
 void
 j9gc_allocation_threshold_changed(J9VMThread *currentThread)
 {
-#if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(OMR_GC_SEGREGATED_HEAP)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(currentThread);
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
@@ -855,7 +855,7 @@ j9gc_allocation_threshold_changed(J9VMThread *currentThread)
 	vmFuncs->J9SignalAsyncEvent(vm, NULL, key);
 	vmFuncs->J9CancelAsyncEvent(vm, currentThread, key);
 	memoryManagerTLHAsyncCallbackHandler(currentThread, key, (void*)vm);
-#endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP) */
+#endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(OMR_GC_SEGREGATED_HEAP) */
 }
 
 /**

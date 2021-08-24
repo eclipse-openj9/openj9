@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2015 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,7 @@ public class GCExtensions {
 				isStandardGC = gcExtensions._isStandardGC();
 				isVLHGC = gcExtensions._isVLHGC();
 			} else {
-				isSegregatedHeap = J9BuildFlags.gc_segregatedHeap;
+				isSegregatedHeap = OmrBuildFlags.OMR_GC_SEGREGATED_HEAP;
 				isMetronomeGC = J9BuildFlags.gc_realtime;
 				isStandardGC = J9BuildFlags.gc_modronStandard;
 				isVLHGC = J9BuildFlags.gc_vlhgc;

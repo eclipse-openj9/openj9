@@ -95,7 +95,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	}
 
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 	if(try_scan(scan_start, "allocationCacheMinimumSize=")) {
 		if(!scan_udata_helper(javaVM, scan_start, &extensions->allocationCacheMinimumSize, "allocationCacheMinimumSize=")) {
 			goto _error;
@@ -120,7 +120,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		}
 		goto _exit;
 	}	
-#endif /* defined(J9VM_GC_SEGREGATED_HEAP) */
+#endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 
 
 #if defined(J9VM_GC_REALTIME)

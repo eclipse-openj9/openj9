@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -678,9 +678,9 @@ memoryManagerTLHAsyncCallbackHandler(J9VMThread *vmThread, IDATA handlerKey, voi
 			extensions->disableInlineCacheForAllocationThreshold = (extensions->lowAllocationThreshold < (extensions->tlhMaximumSize + extensions->tlhMinimumSize));
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 		} else if (extensions->isSegregatedHeap()) {
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 			extensions->disableInlineCacheForAllocationThreshold = (extensions->lowAllocationThreshold <= J9VMGC_SIZECLASSES_MAX_SMALL_SIZE_BYTES);
-#endif /* defined(J9VM_GC_SEGREGATED_HEAP) */
+#endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 		}
 	} else {
 		Trc_MM_memoryManagerTLHAsyncCallbackHandler_eventNotHooked(vmThread);
@@ -718,7 +718,7 @@ memoryManagerTLHAsyncCallbackHandler(J9VMThread *vmThread, IDATA handlerKey, voi
 
 #endif /* defined(J9VM_GC_THREAD_LOCAL_HEAP) */
 	} else if (extensions->isSegregatedHeap()) {
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 		if (extensions->needDisableInlineAllocation()) {
 			Trc_MM_memoryManagerTLHAsyncCallbackHandler_disableAllocationCache(vmThread,extensions->lowAllocationThreshold,extensions->highAllocationThreshold);
 			if (allocationInterface->cachedAllocationsEnabled(env)) {
@@ -730,7 +730,7 @@ memoryManagerTLHAsyncCallbackHandler(J9VMThread *vmThread, IDATA handlerKey, voi
 				allocationInterface->enableCachedAllocations(env);
 			}
 		}
-#endif /* defined(J9VM_GC_SEGREGATED_HEAP) */
+#endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 	}
 }
 } /* extern "C" */

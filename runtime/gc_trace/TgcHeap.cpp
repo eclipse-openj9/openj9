@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -208,7 +208,7 @@ tgcHookGlobalGcSweepEndPrintStats(J9HookInterface** hook, UDATA eventNum, void* 
 	tgcHeapMicroFragmentPrintStats(event->currentThread);
 }
 
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 static void
 tgcShowRegions(OMR_VMThread *omrVMThread, const char *comment)
 {
@@ -335,7 +335,7 @@ tgcHookSegregatedGlobalGcSynchronousGCStart(J9HookInterface** hook, UDATA eventN
 	}
 }
 
-#endif /*  defined(J9VM_GC_SEGREGATED_HEAP) */
+#endif /*  defined(OMR_GC_SEGREGATED_HEAP) */
 
 
 bool
@@ -352,11 +352,11 @@ if (extensions->isStandardGC() || extensions->isVLHGC()) {
 	(*omrHooks)->J9HookRegisterWithCallSite(omrHooks, J9HOOK_MM_OMR_LOCAL_GC_START, tgcHookHeapLocalPrintStats, OMR_GET_CALLSITE(), NULL);
 	(*privateHooks)->J9HookRegisterWithCallSite(privateHooks, J9HOOK_MM_PRIVATE_SWEEP_END, tgcHookGlobalGcSweepEndPrintStats, OMR_GET_CALLSITE(), NULL);
 } else if (extensions->isSegregatedHeap()) {
-#if defined(J9VM_GC_SEGREGATED_HEAP)
+#if defined(OMR_GC_SEGREGATED_HEAP)
 	(*privateHooks)->J9HookRegisterWithCallSite(privateHooks, J9HOOK_MM_PRIVATE_SWEEP_START, tgcHookSegregatedGlobalGcSweepStartPrintStats, OMR_GET_CALLSITE(), NULL);
 	(*privateHooks)->J9HookRegisterWithCallSite(privateHooks, J9HOOK_MM_PRIVATE_SWEEP_END, tgcHookSegregatedGlobalGcSweepEndPrintStats, OMR_GET_CALLSITE(), NULL);
 	(*privateHooks)->J9HookRegisterWithCallSite(privateHooks, J9HOOK_MM_PRIVATE_METRONOME_SYNCHRONOUS_GC_START, tgcHookSegregatedGlobalGcSynchronousGCStart, OMR_GET_CALLSITE(), NULL);
-#endif /* defined(J9VM_GC_SEGREGATED_HEAP) */
+#endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 	}
 	return result;
 }
