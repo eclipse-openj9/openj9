@@ -41,6 +41,9 @@ import openj9.management.internal.ThreadInfoBase;
  *
  * @since 1.5
  */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+@SuppressWarnings("removal")
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public class ThreadMXBeanImpl implements ThreadMXBean {
 
 	private static final ThreadMXBeanImpl instance = new ThreadMXBeanImpl();

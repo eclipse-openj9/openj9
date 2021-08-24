@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2020 IBM Corp. and others
+ * Copyright (c) 2013, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * The {@code Cuda} class provides general CUDA utilities.
  */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+@SuppressWarnings("removal")
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class Cuda {
 
 	private static final class Cleaner implements Runnable {
