@@ -3978,11 +3978,11 @@ J9::Z::CodeGenerator::inlineDirectCall(
          case TR::java_lang_StringLatin1_indexOf:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
                resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, false);
-               return true;
+               return resultReg != NULL;
          case TR::java_lang_StringUTF16_indexOf:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16:
                resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, true);
-               return true;
+               return resultReg != NULL;
          default:
             break;
          }
