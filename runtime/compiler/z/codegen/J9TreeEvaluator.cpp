@@ -584,6 +584,10 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
    TR_Debug *compDebug = comp->getDebug();
    TR::Instruction* cursor;
 
+   static bool disableIndexOfStringIntrinsic = feGetEnv("TR_DisableIndexOfStringIntrinsic") != NULL;
+   if (disableIndexOfStringIntrinsic)
+      return NULL;
+
    if (comp->getOption(TR_TraceCG))
       traceMsg(comp, "inlineVectorizedStringIndexOf. Is isUTF16 %d\n", isUTF16);
 
