@@ -39,6 +39,9 @@ import sun.reflect.CallerSensitive;
  * @author      OTI
  * @version     initial
  */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+@Deprecated(since="17", forRemoval=true)
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class AccessController {
 	static {
 		// Initialize vm-internal caches

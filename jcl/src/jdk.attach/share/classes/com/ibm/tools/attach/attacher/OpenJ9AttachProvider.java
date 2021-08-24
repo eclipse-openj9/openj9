@@ -45,6 +45,9 @@ import com.sun.tools.attach.spi.AttachProvider;
  * Concrete subclass of the class that lists the available target VMs
  * 
  */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+@SuppressWarnings("removal")
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public class OpenJ9AttachProvider extends AttachProvider {
 
 	/**

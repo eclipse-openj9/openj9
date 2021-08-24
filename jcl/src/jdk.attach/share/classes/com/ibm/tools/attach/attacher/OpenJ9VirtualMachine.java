@@ -65,6 +65,9 @@ import com.sun.tools.attach.spi.AttachProvider;
  * Handles the initiator end of an attachment to a target VM
  * 
  */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+@SuppressWarnings("removal")
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 
 	/* 

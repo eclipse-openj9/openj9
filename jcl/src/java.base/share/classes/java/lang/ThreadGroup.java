@@ -253,6 +253,9 @@ public boolean allowThreadSuspension(boolean b) {
  * If there is a SecurityManager installed, call <code>checkAccess</code>
  * in it passing the receiver as parameter, otherwise do nothing.
  */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+@Deprecated(since="17", forRemoval=true)
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final void checkAccess() {
 	// Forwards the message to the SecurityManager (if there's one)
 	// passing the receiver as parameter
