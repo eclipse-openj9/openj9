@@ -904,6 +904,9 @@ public class Test_JITHelpers {
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), 34, valueField.get("def"), 3, 5), 20);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), 34, valueField.get("defghijklmn"), 11, 5), 20);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghiklmnopqrstwyzabcdefghikabcdefghiklmnopqlmmnopqrstwyzabcdepoisd"), 71, valueField.get("abcdefghiklmnopqlmmnopqrstwyzabcdepoisd"), 39, 0), 32);
+				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghiklmnopqrstwyzabcdefghikabcdefghiklmnopqlmmnopqrstwyzabcdepoisd"), 37, valueField.get("zabcdefghikabcdefg"), 17, 5), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghiklmnopqrstwyzabcdefghikabcdefghiklmnopqlmmnopqrstwyzabcdepoisd"), 37, valueField.get("zabcdefghikabcdefg"), 17, 2), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghiklmnopqrstwyzabcdefghikabcdefghiklmnopqlmmnopqrstwyzabcdepoisd"), 38, valueField.get("zabcdefghikabcdefg"), 17, 5), 21);
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
@@ -1140,6 +1143,9 @@ public class Test_JITHelpers {
 			Assert.assertEquals(helpers.intrinsicIndexOfStringUTF16(valueField.get("\u0190\u019112\u0199456789012\u01994567c\u0196efghijklmn\u0194\u0197\u0198"), 34, valueField.get("\u0196e"), 2, 5), 20);
 			Assert.assertEquals(helpers.intrinsicIndexOfStringUTF16(valueField.get("\u0190\u019112\u0199456789012\u01994567c\u0196efghijklmn\u0194\u0197\u0198"), 34, valueField.get("\u0196ef"), 3, 5), 20);
 			Assert.assertEquals(helpers.intrinsicIndexOfStringUTF16(valueField.get("\u0190\u019112\u0199456789012\u01994567c\u0196efghijklmn\u0194\u0197\u0198"), 34, valueField.get("\u0196efghijklmn"), 11, 5), 20);
+			Assert.assertEquals(helpers.intrinsicIndexOfStringUTF16(valueField.get("\u0190\u019112\u0199456789012\u01994567c\u0196efghijklmn\u0194\u0197\u0198"), 29, valueField.get("\u0196efghijklmn"), 10, 3), -1);
+			Assert.assertEquals(helpers.intrinsicIndexOfStringUTF16(valueField.get("\u0190\u019112\u0199456789012\u01994567c\u0196efghijklmn\u0194\u0197\u0198"), 29, valueField.get("\u0196efghijklmn"), 10, 5), -1);
+			Assert.assertEquals(helpers.intrinsicIndexOfStringUTF16(valueField.get("\u0190\u019112\u0199456789012\u01994567c\u0196efghijklmn\u0194\u0197\u0198"), 30, valueField.get("\u0196efghijklmn"), 10, 5), 20);
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
 		} catch (NoSuchFieldException e) {

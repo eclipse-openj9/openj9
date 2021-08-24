@@ -741,6 +741,7 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
       cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, -1);
       iComment("needs -1 because VLL's third operand is the highest index to load");
       generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, stringVReg, loadLenReg, generateS390MemoryReference(stringCharPtrReg, headerSize, cg));
+      generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, 1);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelLoadStringLenDone);
       srm->reclaimScratchRegister(stringCharPtrReg);
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelLoadString16Bytes);
@@ -764,9 +765,9 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
 
       // pattern header not found in first 16 bytes of the string
       // Load the next 16 bytes of the string and continue
-      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, stringIndexReg, maxIndexReg, labelPatternNotFound, TR::InstOpCode::COND_BNL);
       generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, stringIndexReg, loadLenReg);
-      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, stringIndexReg, stringLenReg, labelPatternNotFound, TR::InstOpCode::COND_BNL);
+      cursor = generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, stringIndexReg, maxIndexReg, labelPatternNotFound, TR::InstOpCode::COND_BH);
+      iComment("Updated stringIndex for next iteration exceeds maxIndex of valid match. Full pattern cannot be matched.")
       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelFindPatternHead);
       iComment("neither full nor partial match was found for pattern head, load next 16 bytes of the string and try again");
 
@@ -781,6 +782,8 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
       generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, matchIndexReg, stringIndexReg);
       cursor = generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, patternLenReg, (int8_t)vectorSize, labelLoadResult, TR::InstOpCode::COND_BNH);
       iComment("if patternLen <= 16 then we are done, otherwise we continue to check the rest of pattern");
+      cursor = generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, stringIndexReg, maxIndexReg, labelPatternNotFound, TR::InstOpCode::COND_BH);
+      iComment("Updated stringIndex for start of matched section exceeds maxIndex. Full pattern cannot be matched.");
       generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, stringIndexReg, loadLenReg);
       generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, patternIndexReg, vectorSize);
       cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelMatchPatternResidue);
