@@ -3382,9 +3382,10 @@ public <U> Class<? extends U> asSubclass(Class<U> cls) {
  * @since 1.5
  */
 public T cast(Object object) {
-	if (object != null && !this.isInstance(object))
-/*[MSG "K0336", "Cannot cast {0} to {1}"]*/
-		throw new ClassCastException(com.ibm.oti.util.Msg.getString("K0336", object.getClass(), this)); //$NON-NLS-1$
+	if ((object != null) && !this.isInstance(object)) {
+		/*[MSG "K0336", "Cannot cast {0} to {1}"]*/
+		throw new ClassCastException(com.ibm.oti.util.Msg.getString("K0336", object.getClass().getName(), getName())); //$NON-NLS-1$
+	}
 	return (T)object;
 }
 
