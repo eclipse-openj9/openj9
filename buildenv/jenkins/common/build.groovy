@@ -56,6 +56,27 @@ def get_sources_with_authentication() {
 }
 
 def get_sources() {
+    // Check for ~/.ssh/known_hosts on the fly if needed
+    if (OPENJDK_REPO.contains('git@') || OPENJ9_REPO.contains('git@') || OMR_REPO.contains('git@') || VENDOR_REPO.contains('git@')) {
+        if (OPENJDK_REPO.contains('github.com') || OPENJ9_REPO.contains('github.com') || OMR_REPO.contains('github.com') || VENDOR_REPO.contains('github.com')) {
+            // Get SHA256_RSA from Github API
+            githubMetaRaw = sh returnStdout: true, script: "curl -s https://api.github.com/meta"
+            def slurper = new groovy.json.JsonSlurper()
+            def githubMetaJSON = slurper.parseText(githubMetaRaw)
+            SHA256_RSA = githubMetaJSON.ssh_key_fingerprints.SHA256_RSA
+            println "SHA256_RSA:${SHA256_RSA}"
+
+            // Get server fingerprint
+            githubSshRsa = sh returnStdout: true, script: "ssh-keyscan -t rsa github.com"
+            SHA256_RSA_SSH = sh returnStdout: true, script: "echo $githubSshRsa | tee github-key-temp | ssh-keygen -lf - | cut -d' ' -f2 | cut -d':' -f2"
+            if (SHA256_RSA == SHA256_RSA_SSH) {
+                echo "Verified github.com RSA Fingerprrint"
+                sh "echo $githubSshRsa >> ~/.known_hosts"
+            }
+
+        }
+    }
+
     // Temp workaround for Windows clones
     // See #3633 and JENKINS-54612
     if (SPEC.contains("win") || SPEC.contains("zos")) {
