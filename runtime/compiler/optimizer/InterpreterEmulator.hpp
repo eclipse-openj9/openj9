@@ -283,7 +283,8 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       /*
        * \brief Compute prex arg info for the given call site
        */
-      TR_PrexArgInfo* computePrexInfo(TR_CallSite *callsite);
+      TR_PrexArgInfo* computePrexInfo(
+         TR_CallSite *callsite, TR::KnownObjectTable::Index appendix);
       TR_PrexArgument* createPrexArgFromOperand(Operand* operand);
       Operand* createOperandFromPrexArg(TR_PrexArgument* arg);
 
@@ -403,7 +404,9 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       void visitInvokespecial();
       void visitInvokestatic();
       void visitInvokeinterface();
-      void findTargetAndUpdateInfoForCallsite(TR_CallSite *callsite);
+      void findTargetAndUpdateInfoForCallsite(
+         TR_CallSite *callsite,
+         TR::KnownObjectTable::Index appendix = TR::KnownObjectTable::UNKNOWN);
       bool isCurrentCallUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod, bool isUnresolvedInCP);
       void debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod);
       void maintainStackForAstore(int slotIndex);
