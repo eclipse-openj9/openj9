@@ -437,6 +437,7 @@
    sun_misc_Unsafe_fullFence,
 
    sun_misc_Unsafe_ensureClassInitialized,
+   sun_misc_Unsafe_allocateInstance,
 
    jdk_internal_misc_Unsafe_copyMemory0,
 

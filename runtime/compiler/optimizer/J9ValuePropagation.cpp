@@ -1420,13 +1420,21 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          // Transform java/lang/Object.newInstancePrototype into new and a call to default constructor of the given class
          // AOT class pointer relocation is only supported on aconst nodes. However aconst node cannot be a child work of
          // a TR::New node because it does not have a symref indicating the size of the instance of the class.
+         //
+         // Transform Unsafe.allocateInstance into just a new without a constructor call.
+         //
          case TR::java_lang_Object_newInstancePrototype:
+         case TR::sun_misc_Unsafe_allocateInstance:
             {
-            // The result of newInstancePrototype will never be null since it's equivalent to bytecode new
+            const bool isNewInstProto =
+               rm == TR::java_lang_Object_newInstancePrototype;
+
+            // The result will never be null since it's equivalent to bytecode new
             addGlobalConstraint(node, TR::VPNonNullObject::create(this));
             node->setIsNonNull(true);
 
-            TR::Node *classChild = node->getChild(1);
+            TR::Node *classChild = isNewInstProto ? node->getChild(1) : node->getArgument(1);
+
             bool classChildGlobal;
             TR::VPConstraint *classChildConstraint = getConstraint(classChild, classChildGlobal);
 
@@ -1434,7 +1442,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                 !classChildConstraint->isNonNullObject() ||
                 classChildConstraint->isJavaLangClassObject() != TR_yes ||
                 !classChildConstraint->getClassType() ||
-                !classChildConstraint->getClassType()->asFixedClass())
+                !classChildConstraint->getClassType()->asFixedClass() ||
+                !TR::Compiler->cls.isClassInitialized(comp(), classChildConstraint->getClass()))
                {
                if (trace())
                   traceMsg(comp(), "Class child %p is not a non-null java/lang/Class object with fixed class constraint, quit transforming Object.newInstancePrototype on node %p\n", classChild, node);
@@ -1443,22 +1452,27 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
             addGlobalConstraint(node, TR::VPFixedClass::create(this, classChildConstraint->getClass()));
 
-            TR::Node *callerClassChild = node->getChild(2);
-            bool callerClassChildGlobal;
-            TR::VPConstraint *callerClassChildConstraint = getConstraint(callerClassChild, callerClassChildGlobal);
-            if (!callerClassChildConstraint ||
-                !callerClassChildConstraint->isNonNullObject() ||
-                !callerClassChildConstraint->getClassType() ||
-                !callerClassChildConstraint->getClassType()->asFixedClass() ||
-                callerClassChildConstraint->isJavaLangClassObject() != TR_yes)
-               {
-               if (trace())
-                  traceMsg(comp(), "Caller class %p is not a non-null java/lang/Class object with fixed class constraint, quit transforming Object.newInstancePrototype on node %p\n", callerClassChild, node);
-               break;
-               }
-
             TR_OpaqueClassBlock *newClass = classChildConstraint->getClass();
-            TR_OpaqueClassBlock *callerClass = callerClassChildConstraint->getClass();
+            TR_OpaqueClassBlock *callerClass = NULL; // for newInstancePrototype only
+
+            if (isNewInstProto)
+               {
+               TR::Node *callerClassChild = node->getChild(2);
+               bool callerClassChildGlobal;
+               TR::VPConstraint *callerClassChildConstraint = getConstraint(callerClassChild, callerClassChildGlobal);
+               if (!callerClassChildConstraint ||
+                   !callerClassChildConstraint->isNonNullObject() ||
+                   !callerClassChildConstraint->getClassType() ||
+                   !callerClassChildConstraint->getClassType()->asFixedClass() ||
+                   callerClassChildConstraint->isJavaLangClassObject() != TR_yes)
+                  {
+                  if (trace())
+                     traceMsg(comp(), "Caller class %p is not a non-null java/lang/Class object with fixed class constraint, quit transforming Object.newInstancePrototype on node %p\n", callerClassChild, node);
+                  break;
+                  }
+
+               callerClass = callerClassChildConstraint->getClass();
+               }
 
             // The following classes cannot be instantiated normally, i.e. via the new bytecode
             // InstantiationException will be thrown when calling java/lang/Class.newInstance on the following classes
@@ -1472,26 +1486,67 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                }
 
             // Visibility check
-            if (!comp()->fej9()->isClassVisible(callerClass, newClass))
+            TR_OpaqueMethodBlock *constructor = NULL;
+            if (isNewInstProto)
                {
-               if (trace())
-                  traceMsg(comp(), "Class is not visialbe to caller class, quit transforming Object.newInstancePrototype on node %p\n", node);
-               break;
-               }
+               if (!comp()->fej9()->isClassVisible(callerClass, newClass))
+                  {
+                  if (trace())
+                     traceMsg(comp(), "Class is not visialbe to caller class, quit transforming Object.newInstancePrototype on node %p\n", node);
+                  break;
+                  }
 
-            // Look up the default constructor for newClass, visibility check will be done during the look up
-            TR_OpaqueMethodBlock *constructor = comp()->fej9()->getMethodFromClass(newClass, "<init>", "()V", callerClass);
+               // Look up the default constructor for newClass, visibility check will be done during the look up
+               constructor = comp()->fej9()->getMethodFromClass(newClass, "<init>", "()V", callerClass);
 
-            if (!constructor)
-               {
-               if (trace())
-                  traceMsg(comp(), "Cannot find the default constructor, quit transforming Object.newInstancePrototype on node %p\n", node);
-               break;
+               if (!constructor)
+                  {
+                  if (trace())
+                     traceMsg(comp(), "Cannot find the default constructor, quit transforming Object.newInstancePrototype on node %p\n", node);
+                  break;
+                  }
                }
 
             // Transform the call
-            if (performTransformation(comp(), "%sTransforming %s to new and a call to constructor on node %p\n", OPT_DETAILS, signature, node))
+            if (performTransformation(
+                  comp(),
+                  "%sTransforming %s to new%s on node %p\n",
+                  OPT_DETAILS,
+                  signature,
+                  isNewInstProto ? " and a call to constructor" : "",
+                  node))
                {
+               if (_curTree->getNode()->getOpCode().isNullCheck())
+                  {
+                  // An Unsafe.allocateInstance() call might be combined with a
+                  // NULLCHK, and if it is, we have to separate the NULLCHK
+                  // into its own tree. Otherwise we would generate:
+                  //
+                  //     NULLCHK
+                  //       new
+                  //         loadaddr C
+
+                  // Make sure that the trees have the expected shape
+                  TR_ASSERT_FATAL(
+                     _curTree->getNode()->getFirstChild() == node,
+                     "expected call n%un [%p] to be the child of the null check n%un [%p]",
+                     node->getGlobalIndex(),
+                     node,
+                     _curTree->getNode()->getGlobalIndex(),
+                     _curTree->getNode());
+
+                  // This had better be a plain null check (not ResolveAndNULLCHK)
+                  TR_ASSERT_FATAL(
+                     _curTree->getNode()->getOpCodeValue() == TR::NULLCHK,
+                     "in n%un [%p] expected opcode NULLCHK, but found %s (%d)",
+                     _curTree->getNode()->getGlobalIndex(),
+                     _curTree->getNode(),
+                     _curTree->getNode()->getOpCode().getName(),
+                     (int)_curTree->getNode()->getOpCodeValue());
+
+                  TR::TransformUtil::separateNullCheck(comp(), _curTree, trace());
+                  }
+
                anchorAllChildren(node, _curTree);
                node->removeAllChildren();
 
@@ -1501,14 +1556,17 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                TR::Node::recreateWithoutProperties(node, TR::New, 1, comp()->getSymRefTab()->findOrCreateNewObjectSymbolRef(node->getSymbolReference()->getOwningMethodSymbol(comp())));
                node->setAndIncChild(0, classPointerNode);
 
-               TR::SymbolReference *constructorSymRef = comp()->getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1,
-                  comp()->fej9()->createResolvedMethod(trMemory(), constructor), TR::MethodSymbol::Special);
+               if (isNewInstProto)
+                  {
+                  TR::SymbolReference *constructorSymRef = comp()->getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1,
+                     comp()->fej9()->createResolvedMethod(trMemory(), constructor), TR::MethodSymbol::Special);
 
-               TR::TreeTop *constructorCall = TR::TreeTop::create(comp(), _curTree,
-                   TR::Node::create(node, TR::treetop, 1,
-                      TR::Node::createWithSymRef(node, TR::call, 1,
-                         node,
-                         constructorSymRef)));
+                  TR::TreeTop *constructorCall = TR::TreeTop::create(comp(), _curTree,
+                      TR::Node::create(node, TR::treetop, 1,
+                         TR::Node::createWithSymRef(node, TR::call, 1,
+                            node,
+                            constructorSymRef)));
+                  }
 
                invalidateUseDefInfo();
                invalidateValueNumberInfo();

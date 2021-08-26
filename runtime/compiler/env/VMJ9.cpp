@@ -2927,6 +2927,11 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                dontInlineRecognizedMethod = true;
                }
             break;
+         case TR::sun_misc_Unsafe_allocateInstance:
+            // VP transforms this into a plain new if it can get a non-null
+            // known object java/lang/Class representing an initialized class
+            dontInlineRecognizedMethod = true;
+            break;
          case TR::java_lang_String_hashCodeImplDecompressed:
             /*
              * X86 and z want to avoid inlining both java_lang_String_hashCodeImplDecompressed and java_lang_String_hashCodeImplCompressed
