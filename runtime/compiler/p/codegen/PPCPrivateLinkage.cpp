@@ -1460,6 +1460,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
          numFloatArgRegs = 0;
          break;
       case TR::java_lang_invoke_ComputedCalls_dispatchVirtual:
+      case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
          specialArgReg = getProperties().getVTableIndexArgumentRegister();
          break;
       }
@@ -2271,6 +2272,7 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
       switch (methodSymbol->getMandatoryRecognizedMethod())
          {
          case TR::java_lang_invoke_ComputedCalls_dispatchVirtual:
+         case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
             {
             // Need a j2i thunk for the method that will ultimately be dispatched by this handle call
             char    *j2iSignature = fej9->getJ2IThunkSignatureForDispatchVirtual(methodSymbol->getMethod()->signatureChars(), methodSymbol->getMethod()->signatureLength(), comp());

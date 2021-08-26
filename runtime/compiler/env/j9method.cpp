@@ -316,7 +316,7 @@ bool TR_ResolvedJ9Method::isMethodInValidLibrary()
 void
 TR_J9MethodBase::parseSignature(TR_Memory * trMemory)
    {
-   U_8 tempArgTypes[256];
+   U_8 tempArgTypes[512];
    jitParseSignature(_signature, tempArgTypes, &_paramElements, &_paramSlots);
    _argTypes = (U_8 *) trMemory->allocateHeapMemory((_paramElements + 1) * sizeof(U_8));
    memcpy(_argTypes, tempArgTypes, (_paramElements + 1));
@@ -3165,6 +3165,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16,                    "toUpperIntrinsicUTF16", "([C[CI)Z")},
       {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([B[BI)Z")},
       {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([C[CI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_dispatchComputedStaticCall,               "dispatchComputedStaticCall", "()V")},
+      {x(TR::com_ibm_jit_JITHelpers_dispatchVirtual,                          "dispatchVirtual", "()V")},
       { TR::unknownMethod}
       };
 
@@ -3740,6 +3742,12 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X DelegatingMethodHandleMethods[] =
+      {
+      {x(TR::java_lang_invoke_DelegatingMethodHandle_getTarget,   "getTarget",  "()Ljava/lang/invoke/MethodHandle;")},
+      {  TR::unknownMethod}
+      };
+
    static X DirectHandleMethods[] =
       {
       {x(TR::java_lang_invoke_DirectHandle_isAlreadyCompiled,   "isAlreadyCompiled",  "(J)Z")},
@@ -4141,6 +4149,7 @@ void TR_ResolvedJ9Method::construct()
    static Y class39[] =
       {
       { "com/ibm/jit/crypto/JITFullHardwareCrypt", ZCryptoMethods },
+      { "java/lang/invoke/DelegatingMethodHandle", DelegatingMethodHandleMethods },
       { 0 }
       };
 
@@ -6329,6 +6338,12 @@ TR_ResolvedJ9Method::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpInde
          comp->failCompilation<TR::ILGenFailure>("Can't compile an archetype specimen with unresolved calls");
          }
       }
+
+   // With rtResolve option, INL calls that are required to be compile time
+   // resolved are left as unresolved.
+   if (shouldCompileTimeResolveMethod(cpIndex))
+      skipForDebugging = false;
+
 
    if (ramMethod && !skipForDebugging)
       {

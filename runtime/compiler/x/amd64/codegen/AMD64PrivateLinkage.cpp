@@ -962,6 +962,7 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node        
                      numSpecialArgs++;
                      break;
                   case TR::java_lang_invoke_ComputedCalls_dispatchVirtual:
+                  case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
                      rregIndex = getProperties().getVTableIndexArgumentRegister();
                      numSpecialArgs++;
                      break;

@@ -874,7 +874,6 @@ class TR_CallSiteInfo
    int32_t hasSamePartialBytecodeInfo(TR_ByteCodeInfo & persistentBytecodeInfo, TR_ByteCodeInfo & currentBytecodeInfo, TR::Compilation *comp);
    size_t getNumCallSites() { return _numCallSites;}
    TR_OpaqueMethodBlock *inlinedMethod(TR_ByteCodeInfo & persistentByteCodeInfo, TR::Compilation *comp);
-
    void dumpInfo(TR::FILE *);
 
    /**

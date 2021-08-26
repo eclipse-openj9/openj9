@@ -765,6 +765,8 @@
    com_ibm_jit_JITHelpers_acmplt,
    com_ibm_jit_JITHelpers_jitHelpers,
    com_ibm_jit_JITHelpers_getClassInitializeStatus,
+   com_ibm_jit_JITHelpers_dispatchComputedStaticCall,
+   com_ibm_jit_JITHelpers_dispatchVirtual,
 
    com_ibm_jit_DecimalFormatHelper_formatAsDouble,
    com_ibm_jit_DecimalFormatHelper_formatAsFloat,
@@ -1012,6 +1014,7 @@
    java_lang_invoke_MethodHandle_linkToVirtual,
    java_lang_invoke_MethodHandle_linkToInterface,
    java_lang_invoke_MethodHandleImpl_CountingWrapper_getTarget,
+   java_lang_invoke_DelegatingMethodHandle_getTarget,
    java_lang_invoke_DirectMethodHandle_internalMemberName,
    java_lang_invoke_DirectMethodHandle_internalMemberNameEnsureInit,
    java_lang_invoke_DirectMethodHandle_constructorMethod,

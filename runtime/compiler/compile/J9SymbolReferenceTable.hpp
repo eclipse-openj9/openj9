@@ -77,21 +77,34 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateOSRFrameIndexSymbolRef();
 
    /** \brief
-    * Find or create VMThread tempSlot symbol reference. J9VMThread.tempSlot provides a mechanism for the
-    * compiler to provide information that the VM can use for various reasons - such as locating items on
-    * the stack during a call to internal native methods that are signature-polymorphic.
+    *    Find or create VMThread tempSlot symbol reference. J9VMThread.tempSlot provides a mechanism for the
+    *    compiler to provide information that the VM can use for various reasons - such as locating items on
+    *    the stack during a call to internal native methods that are signature-polymorphic.
     *
-    * \return TR::SymbolReference* the VMThreadTempSlotField symbol reference
+    * \return
+    *    TR::SymbolReference* the VMThreadTempSlotField symbol reference
     */
    TR::SymbolReference * findOrCreateVMThreadTempSlotFieldSymbolRef();
 
    /** \brief
-    * Find or create VMThread.floatTemp1 symbol reference. J9VMThread.floatTemp1 provides an additional
-    * mechanism for the compiler to provide information that the VM can use for various reasons
+    *    Find or create VMThread.floatTemp1 symbol reference. J9VMThread.floatTemp1 provides an additional
+    *    mechanism for the compiler to provide information that the VM can use for various reasons
     *
-    * \return TR::SymbolReference* the VMThread.floatTemp1 symbol reference
+    * \return
+    *    TR::SymbolReference* the VMThread.floatTemp1 symbol reference
     */
    TR::SymbolReference * findOrCreateVMThreadFloatTemp1SymbolRef();
+
+   /** \brief
+    *    Find or create symref for vTableIndex field of struct J9JNIMethodID
+    *
+    * \param offset
+    *    The offsetof value for vTableIndex field
+    *
+    * \return
+    *    TR::SymbolReference* the symref representing vTableIndex field
+    */
+   TR::SymbolReference * findOrCreateJ9JNIMethodIDvTableIndexFieldSymbol(intptr_t offset);
 
    // CG linkage
    TR::SymbolReference * findOrCreateAcquireVMAccessSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol); // minor rework

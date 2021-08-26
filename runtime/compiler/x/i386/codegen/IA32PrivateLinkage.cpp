@@ -226,6 +226,7 @@ int32_t J9::X86::I386::PrivateLinkage::buildArgs(
          {
          case TR::java_lang_invoke_ComputedCalls_dispatchJ9Method:
          case TR::java_lang_invoke_ComputedCalls_dispatchVirtual:
+         case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
             linkageRegChildIndex = firstArgumentChild;
             receiverChildIndex = callNode->getOpCode().isIndirect()? firstArgumentChild+1 : -1;
          }
@@ -267,6 +268,7 @@ int32_t J9::X86::I386::PrivateLinkage::buildArgs(
                      cg()->decReferenceCount(child);
                      break;
                   case TR::java_lang_invoke_ComputedCalls_dispatchVirtual:
+                  case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
                      reg = cg()->evaluate(child);
                      if (reg->getRegisterPair())
                         reg = reg->getRegisterPair()->getLowOrder();

@@ -542,9 +542,9 @@ void TR_ValueProfiler::modifyTrees()
              !methodSymRef->isUnresolved() && !methodSymbol->isHelper() /* && !firstChild->getByteCodeInfo().doNotProfile() */)
             {
             TR::ResolvedMethodSymbol *method = firstChild->getSymbol()->getResolvedMethodSymbol();
-            if ((method->getRecognizedMethod() == TR::java_math_BigDecimal_add) ||
+            if (method && ((method->getRecognizedMethod() == TR::java_math_BigDecimal_add) ||
                 (method->getRecognizedMethod() == TR::java_math_BigDecimal_subtract) ||
-                (method->getRecognizedMethod() == TR::java_math_BigDecimal_multiply))
+                (method->getRecognizedMethod() == TR::java_math_BigDecimal_multiply)))
                {
                if (!firstChild->getByteCodeInfo().doNotProfile())
                   addProfilingTrees(firstChild, tt, 0, BigDecimalInfo);
@@ -1715,9 +1715,32 @@ TR_BlockFrequencyInfo::getFrequencyInfo(
       bool normalizeForCallers,
       bool trace)
    {
-   int64_t maxCount = normalizeForCallers ? getMaxRawCount() : getMaxRawCount(bci.getCallerIndex());
    int32_t callerIndex = bci.getCallerIndex();
-   int32_t frequency = getRawCount(callerIndex < 0 ? comp->getMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex), bci, _callSiteInfo, maxCount, comp);
+   int32_t queriedCallerIndex = callerIndex;
+   // Check if the callchain associated with bci matches the call chain from
+   // the persistent call site info stored in block frequency info.
+   bool isMatchingBCI = true;
+   if (callerIndex > -1)
+      {
+      // To make sure we are looking into the correct frequency data,
+      // Compute the effective caller index by preparing the callStack using the callSiteInfo from
+      // current compilation and see if we have a same callchain in the blockfrequnecy information.
+      TR_ByteCodeInfo bciCheck = bci;
+      TR::list<std::pair<TR_OpaqueMethodBlock*, TR_ByteCodeInfo> > callStackInfo(comp->allocator());
+      while (bciCheck.getCallerIndex() > -1)
+         {
+         TR_InlinedCallSite *callSite = &comp->getInlinedCallSite(bciCheck.getCallerIndex());
+         callStackInfo.push_back(std::make_pair(comp->fe()->getInlinedCallSiteMethod(callSite), bciCheck));
+         bciCheck = callSite->_byteCodeInfo;
+         }
+      isMatchingBCI = _callSiteInfo->computeEffectiveCallerIndex(comp, callStackInfo, queriedCallerIndex);
+      }
+   TR_ByteCodeInfo bciCheck(bci);
+   bciCheck.setCallerIndex(queriedCallerIndex);
+
+   int64_t maxCount = normalizeForCallers ? getMaxRawCount() : getMaxRawCount(queriedCallerIndex);
+
+   int32_t frequency = isMatchingBCI ? getRawCount(callerIndex < 0 ? comp->getMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex), bciCheck, _callSiteInfo, maxCount, comp) : -1;
    if (trace)
       traceMsg(comp,"raw frequency on outter level was %d for bci %d:%d\n", frequency, bci.getCallerIndex(), bci.getByteCodeIndex());
    if (frequency > -1 || _counterDerivationInfo == NULL)
