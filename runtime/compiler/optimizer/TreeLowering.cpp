@@ -43,6 +43,11 @@ TR::TreeLowering::perform()
       return 0;
       }
 
+   if (trace())
+      {
+      comp()->dumpMethodTrees("Trees before Tree Lowering Optimization");
+      }
+
    TransformationManager transformations(comp()->region());
 
    TR::ResolvedMethodSymbol* methodSymbol = comp()->getMethodSymbol();
@@ -56,6 +61,10 @@ TR::TreeLowering::perform()
 
    transformations.doTransformations();
 
+   if (trace())
+      {
+      comp()->dumpMethodTrees("Trees after Tree Lowering Optimization");
+      }
    return 0;
    }
 
@@ -849,6 +858,14 @@ class LoadArrayElementTransformer: public TR::TreeLowering::Transformer
    void lower(TR::Node* const node, TR::TreeTop* const tt);
    };
 
+static bool skipBoundChecks(TR::Compilation *comp, TR::Node *node)
+   {
+   TR::ResolvedMethodSymbol *method = comp->getOwningMethodSymbol(node->getOwningMethod());
+   if (method && method->skipBoundChecks())
+      return true;
+   return false;
+   }
+
 /*
  * LoadArrayElementTransformer transforms the block that contains the jitLoadFlattenableArrayElement helper call into three blocks:
  *   1. The merge block (blockAfterHelperCall) that contains the tree tops after the helper call
@@ -1065,12 +1082,17 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    if (comp->useCompressedPointers())
       dataWidth = TR::Compiler->om.sizeofReferenceField();
 
-   TR::Node *arraylengthNode = TR::Node::create(TR::arraylength, 1, anchoredArrayBaseAddressNode);
-   arraylengthNode->setArrayStride(dataWidth);
-
    //ILGen for array element load already generates a NULLCHK
 
-   elementLoadTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arraylengthNode, anchoredElementIndexNode, comp->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp->getMethodSymbol()))));
+   // Some JCL methods are known never to trigger an ArrayIndexOutOfBoundsException,
+   // so only add a BNDCHK if it's needed
+   if (!skipBoundChecks(comp, node))
+      {
+      TR::Node *arraylengthNode = TR::Node::create(TR::arraylength, 1, anchoredArrayBaseAddressNode);
+      arraylengthNode->setArrayStride(dataWidth);
+
+      elementLoadTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arraylengthNode, anchoredElementIndexNode, comp->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp->getMethodSymbol()))));
+      }
 
 
    ///////////////////////////////////////
@@ -1156,6 +1178,14 @@ class StoreArrayElementTransformer: public TR::TreeLowering::Transformer
 
    void lower(TR::Node* const node, TR::TreeTop* const tt);
    };
+
+static bool skipArrayStoreChecks(TR::Compilation *comp, TR::Node *node)
+   {
+   TR::ResolvedMethodSymbol *method = comp->getOwningMethodSymbol(node->getOwningMethod());
+   if (method && method->skipArrayStoreChecks())
+      return true;
+   return false;
+   }
 
 /*
  * StoreArrayElementTransformer transforms the block that contains the jitStoreFlattenableArrayElement helper call into three blocks:
@@ -1355,43 +1385,69 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    TR::SymbolReference *elementSymRef = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, anchoredArrayBaseAddressNode);
    TR::Node *elementStoreNode = TR::Node::createWithSymRef(TR::awrtbari, 3, 3, elementAddress, anchoredValueNode, anchoredArrayBaseAddressNode, elementSymRef);
 
-   TR::SymbolReference *arrayStoreCHKSymRef = comp->getSymRefTab()->findOrCreateTypeCheckArrayStoreSymbolRef(comp->getMethodSymbol());
-   TR::Node *arrayStoreCHKNode = TR::Node::createWithRoomForThree(TR::ArrayStoreCHK, elementStoreNode, 0, arrayStoreCHKSymRef);
-   arrayStoreCHKNode->copyByteCodeInfo(node);
+   TR::Node *arrayStoreCHKNode = NULL;
+   TR::TreeTop *arrayStoreTT = NULL;
 
-   TR::TreeTop *arrayStoreCHKTT = originalBlock->append(TR::TreeTop::create(comp, arrayStoreCHKNode));
-
-   if (enableTrace)
-      traceMsg(comp, "Created arrayStoreCHK treetop n%dn node n%dn\n", arrayStoreCHKTT->getNode()->getGlobalIndex(), arrayStoreCHKNode->getGlobalIndex());
-
+   // Some JCL methods are known never to trigger an ArrayStoreException
+   // Only add an ArrayStoreCHK if it's required
+   if (!skipArrayStoreChecks(comp, node))
+      {
+      TR::SymbolReference *arrayStoreCHKSymRef = comp->getSymRefTab()->findOrCreateTypeCheckArrayStoreSymbolRef(comp->getMethodSymbol());
+      arrayStoreCHKNode = TR::Node::createWithRoomForThree(TR::ArrayStoreCHK, elementStoreNode, 0, arrayStoreCHKSymRef);
+      arrayStoreCHKNode->copyByteCodeInfo(node);
+      arrayStoreTT = originalBlock->append(TR::TreeTop::create(comp, arrayStoreCHKNode));
+      if (enableTrace)
+         traceMsg(comp, "Created arrayStoreCHK treetop n%dn arrayStoreCHKNode n%dn\n", arrayStoreTT->getNode()->getGlobalIndex(), arrayStoreCHKNode->getGlobalIndex());
+      }
+   else
+      {
+      arrayStoreTT = originalBlock->append(TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, elementStoreNode)));
+      if (enableTrace)
+         traceMsg(comp, "Created treetop node with awrtbari child as treetop n%dn elementStoreNode n%dn\n", arrayStoreTT->getNode()->getGlobalIndex(), elementStoreNode->getGlobalIndex());
+      }
 
    ///////////////////////////////////////
    // 7. Split (3) at the regular array element store
-   TR::Block *arrayElementStoreBlock = originalBlock->split(arrayStoreCHKTT, cfg);
+   TR::Block *arrayElementStoreBlock = originalBlock->split(arrayStoreTT, cfg);
 
    arrayElementStoreBlock->setIsExtensionOfPreviousBlock(true);
 
    if (enableTrace)
-      traceMsg(comp, "Isolated array element store treetop n%dn node n%dn in block_%d\n", arrayStoreCHKTT->getNode()->getGlobalIndex(), arrayStoreCHKNode->getGlobalIndex(), arrayElementStoreBlock->getNumber());
+      traceMsg(comp, "Isolated array element store treetop n%dn node n%dn in block_%d\n", arrayStoreTT->getNode()->getGlobalIndex(),
+            arrayStoreCHKNode ? arrayStoreCHKNode->getGlobalIndex() : elementStoreNode->getGlobalIndex(), arrayElementStoreBlock->getNumber());
 
    int32_t dataWidth = TR::Symbol::convertTypeToSize(TR::Address);
    if (comp->useCompressedPointers())
       dataWidth = TR::Compiler->om.sizeofReferenceField();
 
-   TR::Node *arraylengthNode = TR::Node::create(TR::arraylength, 1, anchoredArrayBaseAddressNode);
-   arraylengthNode->setArrayStride(dataWidth);
+   const bool needNullCHK = !anchoredArrayBaseAddressNode->isNonNull() && (tt->getNode()->getOpCodeValue() == TR::NULLCHK);
+   const bool needBNDCHK = !skipBoundChecks(comp, node);
 
-   //ILGen for array element store already generates a NULLCHK
-   //If the helper call node is anchored under NULLCHK due to compactNullChecks, the NULLCHK is split into the helper call block.
-   //The NULLCHK is required for regular array block.
-   if (!anchoredArrayBaseAddressNode->isNonNull() && tt->getNode()->getOpCodeValue() == TR::NULLCHK)
-      arrayStoreCHKTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, arraylengthNode, comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol()))));
+   if (needNullCHK || needBNDCHK)
+      {
+      TR::Node *arraylengthNode = TR::Node::create(TR::arraylength, 1, anchoredArrayBaseAddressNode);
+      arraylengthNode->setArrayStride(dataWidth);
 
-   arrayStoreCHKTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arraylengthNode, anchoredElementIndexNode, comp->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp->getMethodSymbol()))));
+      //ILGen for array element store already generates a NULLCHK
+      //If the helper call node is anchored under NULLCHK due to compactNullChecks, the NULLCHK is split into the helper call block.
+      //The NULLCHK is required for regular array block.
+      if (needNullCHK)
+         {
+         arrayStoreTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, arraylengthNode, comp->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp->getMethodSymbol()))));
+         }
+
+
+      // Some JCL methods are known never to trigger an ArrayIndexOutOfBoundsException,
+      // so only add a BNDCHK if it's needed
+      if (needBNDCHK)
+         {
+         arrayStoreTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arraylengthNode, anchoredElementIndexNode, comp->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp->getMethodSymbol()))));
+         }
+      }
 
    if (comp->useCompressedPointers())
       {
-      arrayStoreCHKTT->insertAfter(TR::TreeTop::create(comp, TR::Node::createCompressedRefsAnchor(elementStoreNode)));
+      arrayStoreTT->insertAfter(TR::TreeTop::create(comp, TR::Node::createCompressedRefsAnchor(elementStoreNode)));
       }
 
 
