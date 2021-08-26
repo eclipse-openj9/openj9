@@ -316,7 +316,7 @@ bool TR_ResolvedJ9Method::isMethodInValidLibrary()
 void
 TR_J9MethodBase::parseSignature(TR_Memory * trMemory)
    {
-   U_8 tempArgTypes[256];
+   U_8 tempArgTypes[512];
    jitParseSignature(_signature, tempArgTypes, &_paramElements, &_paramSlots);
    _argTypes = (U_8 *) trMemory->allocateHeapMemory((_paramElements + 1) * sizeof(U_8));
    memcpy(_argTypes, tempArgTypes, (_paramElements + 1));
@@ -3165,6 +3165,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicUTF16,                    "toUpperIntrinsicUTF16", "([C[CI)Z")},
       {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([B[BI)Z")},
       {x(TR::com_ibm_jit_JITHelpers_toLowerIntrinsicUTF16,                    "toLowerIntrinsicUTF16", "([C[CI)Z")},
+      {x(TR::com_ibm_jit_JITHelpers_dispatchComputedStaticCall,               "dispatchComputedStaticCall", "()V")},
+      {x(TR::com_ibm_jit_JITHelpers_dispatchVirtual,                          "dispatchVirtual", "()V")},
       { TR::unknownMethod}
       };
 

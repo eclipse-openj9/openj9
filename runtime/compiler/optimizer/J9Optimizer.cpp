@@ -266,6 +266,9 @@ static const OptimizationStrategy coldStrategyOpts[] =
    { OMR::recompilationModifier,                     OMR::IfEnabled                  },
    { OMR::samplingJProfiling                                                    },
    { OMR::treeSimplification                                                    }, // cleanup before basicBlockExtension
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   { OMR::recognizedCallTransformer,                 OMR::MarkLastRun           },
+#endif
    { OMR::basicBlockExtension                                                   },
    { OMR::localValuePropagationGroup                                            },
    { OMR::deadTreesElimination                                                  },
@@ -338,6 +341,9 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::inductionVariableAnalysis,          OMR::IfLoopsAndNotProfiling            },
    { OMR::generalLoopUnroller,                OMR::IfLoopsAndNotProfiling            },
    { OMR::virtualGuardHeadMerger                                                },
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   { OMR::recognizedCallTransformer,               OMR::MarkLastRun             },
+#endif
    { OMR::basicBlockExtension,                     OMR::MarkLastRun                  }, // extend blocks; move trees around if reqd
    { OMR::treeSimplification                                                    }, // revisit; not really required ?
    { OMR::localValuePropagationGroup                                            },
@@ -403,6 +409,9 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    { OMR::treeSimplification                                                    },
    { OMR::deadTreesElimination                                                  },
    { OMR::treeSimplification                                                    },
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   { OMR::recognizedCallTransformer,                 OMR::MarkLastRun           },
+#endif
    { OMR::basicBlockExtension                                                   }, // extend blocks; move trees around if reqd
    { OMR::treeSimplification                                                    }, // revisit; not really required ?
    { OMR::localCSE                                                              },
@@ -449,6 +458,9 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::loopSpecializerGroup,                  OMR::IfLoopsAndNotProfiling   },
    { OMR::inductionVariableAnalysis,             OMR::IfLoopsAndNotProfiling   },
    { OMR::generalLoopUnroller,                   OMR::IfLoopsAndNotProfiling   }, // unroll Loops
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   { OMR::recognizedCallTransformer,             OMR::MarkLastRun              },
+#endif
    { OMR::blockManipulationGroup                                          },
    { OMR::lateLocalGroup                                                  },
    { OMR::sequentialStoreSimplificationGroup,                             }, // reduce sequential stores into an arrayset
@@ -535,6 +547,9 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
    { OMR::generalLoopUnroller,                   OMR::IfLoops     }, // unroll Loops
    { OMR::blockSplitter,                         OMR::MarkLastRun },
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   { OMR::recognizedCallTransformer,             OMR::MarkLastRun },
+#endif
    { OMR::blockManipulationGroup                             },
    { OMR::lateLocalGroup                                     },
    { OMR::sequentialStoreSimplificationGroup                 }, // reduce sequential stores into an arrayset
@@ -691,6 +706,9 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::blockSplitter                                                         },
    { OMR::treeSimplification                                                    }, // revisit; not really required ?
    { OMR::virtualGuardHeadMerger                                                },
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   { OMR::recognizedCallTransformer,                 OMR::MarkLastRun           },
+#endif
    { OMR::basicBlockExtension,                       OMR::MarkLastRun                }, // extend blocks; move trees around if reqd
    { OMR::localValuePropagationGroup                                            },
    { OMR::explicitNewInitialization,                 OMR::IfNews                },

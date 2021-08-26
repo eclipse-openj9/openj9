@@ -5890,10 +5890,10 @@ TR_J9VMBase::isBeingCompiled(TR_OpaqueMethodBlock * method, void * startPC)
    return _compInfo->isQueuedForCompilation((J9Method *)method, startPC);
    }
 
-U_32
+I_32
 TR_J9VMBase::vTableSlotToVirtualCallOffset(U_32 vTableSlot)
    {
-   return TR::Compiler->vm.getInterpreterVTableOffset() - vTableSlot;
+   return (int32_t) TR::Compiler->vm.getInterpreterVTableOffset() - (int32_t) vTableSlot;
    }
 
 U_32
