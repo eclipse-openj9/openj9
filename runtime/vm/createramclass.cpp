@@ -2184,7 +2184,21 @@ nativeOOM:
 				J9Module *module = state->ramClass->module;
 				j9object_t moduleObject = NULL;
 				if (J9_IS_J9MODULE_UNNAMED(javaVM, module)) {
-					moduleObject = J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(vmThread, classLoader->classLoaderObject);
+					/* Patch the module of HiddenClass to match hostClass
+					 *
+					 * A hiddenClass should have the same defining classLoader/runtime package as
+					 * the Loopkup class (ie. hostClass). When loading a hiddenClass, VM may use the
+					 * anonymous classLoader to load the class and update it after ramClass init to
+					 * match the hostClass. When setting moduleObject, named modules sets the
+					 * ramClass->module to the module of the hostClass before ramClass init. And for
+					 * unnamed module, VM has to use the unnamed module object from hostClass's
+					 * classLoader to avoid mismatching module between hostClass and hiddenClass.
+					 */
+					if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN)) {
+						moduleObject = J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(vmThread, hostClassLoader->classLoaderObject);
+					} else {
+						moduleObject = J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(vmThread, classLoader->classLoaderObject);
+					}
 				} else {
 					moduleObject = module->moduleObject;
 				}
