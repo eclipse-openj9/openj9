@@ -6339,6 +6339,12 @@ TR_ResolvedJ9Method::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpInde
          }
       }
 
+   // With rtResolve option, INL calls that are required to be compile time
+   // resolved are left as unresolved.
+   if (shouldCompileTimeResolveMethod(cpIndex))
+      skipForDebugging = false;
+
+
    if (ramMethod && !skipForDebugging)
       {
       TR_AOTInliningStats *aotStats = NULL;
