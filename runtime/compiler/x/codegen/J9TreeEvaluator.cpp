@@ -8165,13 +8165,29 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
 #ifdef TR_TARGET_64BIT
    if (isArrayNew)
       {
-      // Initialize dataAddr field to address of the first array elememt, address following the array header in our case.
+      /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
+       * simple as we just need to check first child of the node for array size. For variable length arrays
+       * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
+       *
+       * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
+       * discontiguous header layout.
+       */
       TR::MemoryReference *dataAddrSlotMR = NULL;
       TR::MemoryReference *dataAddrMR = NULL;
       if (TR::Compiler->om.compressObjectReferences() && NULL != sizeReg)
-         { // We need to check sizeReg at runtime to determine correct offset of dataAddr field.
+         {
+         /* We need to check sizeReg at runtime to determine correct offset of dataAddr field.
+          * Here we deal only with compressed refs because dataAddr field offset for discontiguous
+          * and contiguous arrays is the same in full refs.
+          */
          if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "Dealing with compressed refs variable length array.\n");
+            traceMsg(comp, "Node (%p): Dealing with compressed refs variable length array.\n", node);
+
+         TR_ASSERT_FATAL_WITH_NODE(node,
+               (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
+               "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. "
+               "But was %d bytes for discontigous and %d bytes for contiguous array.\n",
+               fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
 
          discontiguousDataAddrOffsetReg = cg->allocateRegister();
          generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, discontiguousDataAddrOffsetReg, discontiguousDataAddrOffsetReg, cg);
@@ -8183,7 +8199,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       else if (NULL == sizeReg && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
          {
          if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "Dealing with zero size fixed length array.\n");
+            traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
 
          dataAddrMR = generateX86MemoryReference(targetReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), cg);
          dataAddrSlotMR = generateX86MemoryReference(targetReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
@@ -8191,11 +8207,27 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       else
          {
          if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "Dealing with either contiguous array of non zero size or noncompressed refs variable length array.\n");
+            {
+            traceMsg(comp,
+               "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array "
+               "or full refs variable length array.\n",
+               node);
+            }
+
+         if (!TR::Compiler->om.compressObjectReferences())
+            {
+            TR_ASSERT_FATAL_WITH_NODE(node,
+               fej9->getOffsetOfDiscontiguousDataAddrField() == fej9->getOffsetOfContiguousDataAddrField(),
+               "dataAddr field offset is expected to be same for both contiguous and discontiguous arrays in full refs. "
+               "But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
+               fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
+            }
 
          dataAddrMR = generateX86MemoryReference(targetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
          dataAddrSlotMR = generateX86MemoryReference(targetReg, fej9->getOffsetOfContiguousDataAddrField(), cg);
          }
+
+      // write first data element address to dataAddr slot
       generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, tempReg, dataAddrMR, cg);
       generateMemRegInstruction(TR::InstOpCode::SMemReg(), node, dataAddrSlotMR, tempReg, cg);
       }
