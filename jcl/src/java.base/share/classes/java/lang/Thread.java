@@ -572,9 +572,9 @@ public static int activeCount(){
  * @see			java.lang.SecurityException
  * @see			java.lang.SecurityManager
  */
-/*[IF JAVA_SPEC_VERSION >= 17]*/
+/*[IF (JAVA_SPEC_VERSION >= 17) & OPENJDK_METHODHANDLES]*/
 @Deprecated(since="17", forRemoval=true)
-/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+/*[ENDIF] (JAVA_SPEC_VERSION >= 17) & OPENJDK_METHODHANDLES */
 public final void checkAccess() {
 	@SuppressWarnings("removal")
 	SecurityManager currentManager = System.getSecurityManager();
