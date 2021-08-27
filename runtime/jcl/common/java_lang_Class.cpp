@@ -299,90 +299,20 @@ Java_java_lang_Class_isCircularDeclaringClass(JNIEnv *env, jobject recv)
 }
 
 jobject JNICALL
-Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass)
+Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass, jboolean internAndAssign)
 {
 	J9VMThread *currentThread = (J9VMThread *) env;
 	J9JavaVM *vm = currentThread->javaVM;
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 	jobject classNameRef = NULL;
-	J9Class *clazz;
-	J9ROMClass *romClass;
-	U_8 *utfData = NULL;
-	UDATA utfLength;
-	UDATA freeUTFData = FALSE;
-	U_8 onStackBuffer[64];
-	bool anonClassName = false;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
-	clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(jlClass));
-	romClass = clazz->romClass;
-	if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
-		J9ArrayClass *arrayClazz = (J9ArrayClass*)clazz;
-		UDATA arity = arrayClazz->arity;
-		J9Class *leafComponentType = arrayClazz->leafComponentType;
-		J9ROMClass * leafROMClass = leafComponentType->romClass;
-		J9UTF8 *leafName = J9ROMCLASS_CLASSNAME(leafROMClass);
-		UDATA isPrimitive = J9ROMCLASS_IS_PRIMITIVE_TYPE(leafROMClass);
-
-		/* Compute the length of the class name.
-		 * 
-		 * Primitive arrays are one [ per level plus the primitive type code
-		 * 		e.g. [[[B
-		 * Object arrays are one [ per level plus L plus the leaf type name plus ;
-		 * 		e.g. [[[[Lpackage.name.Class;
-		 */
-		utfLength = arity;
-		if (isPrimitive) {
-			utfLength += 1;
-		} else {
-			utfLength += (J9UTF8_LENGTH(leafName) + 2);
-		}
-
-		/* Create the name in UTF8, using an on-stack buffer if possible */
-
-		if (utfLength <= sizeof(onStackBuffer)) {
-			utfData = onStackBuffer;
-		} else {
-			utfData = (U_8*)j9mem_allocate_memory(utfLength, J9MEM_CATEGORY_VM_JCL);
-			freeUTFData = TRUE;
-		}
-		if (NULL == utfData) {
+	j9object_t classNameObject = VM_VMHelpers::getClassNameString(currentThread, J9_JNI_UNWRAP_REFERENCE(jlClass), internAndAssign);
+	if (NULL != classNameObject) {
+		classNameRef = vmFuncs->j9jni_createLocalRef(env, classNameObject);
+		if (NULL == classNameRef) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-		} else {
-			memset(utfData, '[', arity);
-			if (isPrimitive) {
-				utfData[arity] = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(leafComponentType->arrayClass->romClass))[1];
-			} else {
-				/* The / to . conversion is done later, so just copy the RAW class name here */
-				utfData[arity] = 'L';
-				memcpy(utfData + arity + 1, J9UTF8_DATA(leafName), J9UTF8_LENGTH(leafName));
-				utfData[utfLength - 1] = ';';
-			}
-		}
-		anonClassName = J9_ARE_ANY_BITS_SET(leafROMClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
-	} else {
-		J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-		utfLength = J9UTF8_LENGTH(className);
-		utfData = J9UTF8_DATA(className);
-		anonClassName = J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden);
-	}
-
-	if (NULL != utfData) {
-		UDATA flags = J9_STR_INTERN | J9_STR_XLAT;
-		if (anonClassName) {
-			flags |= J9_STR_ANON_CLASS_NAME;
-		}
-		j9object_t classNameObject = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, utfData, utfLength, flags);
-		if (NULL != classNameObject) {
-			classNameRef = vmFuncs->j9jni_createLocalRef(env, classNameObject);
-			if (NULL == classNameRef) {
-				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-			}
-		}
-		if (freeUTFData) {
-			j9mem_free_memory(utfData);
 		}
 	}
 
@@ -1974,4 +1904,4 @@ Java_java_lang_Class_isHiddenImpl(JNIEnv *env, jobject recv)
 #endif /* JAVA_SPEC_VERSION >= 15 */
 }
 
-}
+} /* extern "C" */

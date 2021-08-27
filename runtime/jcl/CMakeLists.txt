@@ -124,7 +124,7 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/java_lang_ref_Reference.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jclcinit.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jcldefine.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/jclexception.c
+		${CMAKE_CURRENT_SOURCE_DIR}/common/jclexception.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jclglob.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jclreflect.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/jcltrace.c

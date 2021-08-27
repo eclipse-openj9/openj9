@@ -2046,9 +2046,7 @@ public String getName() {
 		return name;
 	}
 	//must have been null to set it
-	name = VM.getClassNameImpl(this).intern();
-	classNameString = name;
-	return name;
+	return VM.getClassNameImpl(this, true);
 }
 
 /**

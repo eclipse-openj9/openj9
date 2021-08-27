@@ -175,7 +175,7 @@ static String getPackageName(Class<?> theClass)
 	int index;
 
 	/*[PR 126182] Do not intern bootstrap class names when loading */
-	name = VM.getClassNameImpl(theClass);
+	name = VM.getClassNameImpl(theClass, false);
 	if((index = name.lastIndexOf('.')) == -1) return null;
 	return name.substring(0, index);
 }
