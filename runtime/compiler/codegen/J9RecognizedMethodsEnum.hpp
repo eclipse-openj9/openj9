@@ -167,6 +167,7 @@
    java_lang_String_decompressedArrayCopy_BICII,
    java_lang_String_decompressedArrayCopy_CIBII,
    java_lang_String_decompressedArrayCopy_CICII,
+   java_lang_StringLatin1_inflate,
    java_lang_String_concat,
    java_lang_String_length,
    java_lang_String_lengthInternal,
