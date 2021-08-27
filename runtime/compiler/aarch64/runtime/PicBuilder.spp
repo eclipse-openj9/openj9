@@ -955,6 +955,10 @@ L_picRegistration:
 	// x0: vtable offset
 	// x6: offset for First/Second Class slot
 	// x10: code cache RA
+	stp	d0, d1, [J9SP, #-64]!				// save argument FPRs
+	stp	d2, d3, [J9SP, #16]
+	stp	d4, d5, [J9SP, #32]
+	stp	d6, d7, [J9SP, #48]
 	stp	x0, x10, [sp, #-32]!				// save registers to native stack which is 16 byte aligned.
 	str	x30, [sp, #16]
 	add	x1, x7, x6					// address of class slot
@@ -963,6 +967,11 @@ L_picRegistration:
 	ldp	x0, x10, [sp]					// restore registers
 	ldr	x30, [sp, #16]
 	add	sp, sp, #32
+	ldp	d0, d1, [J9SP, #0]				// restore argument FPRs
+	ldp	d2, d3, [J9SP, #16]
+	ldp	d4, d5, [J9SP, #32]
+	ldp	d6, d7, [J9SP, #48]
+	add	J9SP, J9SP, #64
 	ret
 
 
