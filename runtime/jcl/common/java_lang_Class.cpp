@@ -308,7 +308,7 @@ Java_com_ibm_oti_vm_VM_getClassNameImpl(JNIEnv *env, jclass recv, jclass jlClass
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
-	j9object_t classNameObject = VM_VMHelpers::getClassNameString(currentThread, J9_JNI_UNWRAP_REFERENCE(jlClass), internAndAssign);
+	j9object_t classNameObject = VM_VMHelpers::getClassNameString(currentThread, J9_JNI_UNWRAP_REFERENCE(jlClass), JNI_FALSE != internAndAssign);
 	if (NULL != classNameObject) {
 		classNameRef = vmFuncs->j9jni_createLocalRef(env, classNameObject);
 		if (NULL == classNameRef) {
