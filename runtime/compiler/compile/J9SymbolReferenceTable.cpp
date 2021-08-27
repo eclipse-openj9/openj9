@@ -240,9 +240,9 @@ J9::SymbolReferenceTable::findOrCreateWriteBarrierBatchStoreSymbolRef(TR::Resolv
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateAcmpHelperSymbolRef(TR::ResolvedMethodSymbol * owningMEthodSymbol)
+J9::SymbolReferenceTable::findOrCreateAcmpeqHelperSymbolRef(TR::ResolvedMethodSymbol * owningMEthodSymbol)
    {
-   return findOrCreateRuntimeHelper(TR_acmpHelper, true, false, true);
+   return findOrCreateRuntimeHelper(TR_acmpeqHelper, true, false, true);
    }
 
 
