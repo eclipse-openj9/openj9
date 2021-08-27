@@ -61,11 +61,13 @@ class Simplifier : public OMR::Simplifier
     * \brief Checks whether this node represents a call to the value
     * comparison non-helper
     * \param node Call node to check
+    * \param nonHelperSymbol The value comparison non-helper symbol, if
+    *                        that is what this node represents
     * \return \c true if \c node is a call to the value
     *         comparison non-helper;
     *         \c false, otherwise.
     */
-   bool isObjectEqualityComparison(TR::Node *node);
+   bool isRecognizedObjectComparisonNonHelper(TR::Node *node, TR::SymbolReferenceTable::CommonNonhelperSymbol &nonHelperSymbol);
 
    TR::Node *getUnsafeIorByteChild(TR::Node * child, TR::ILOpCodes b2iOpCode, int32_t mulConst);
    TR::Node *getLastUnsafeIorByteChild(TR::Node * child);

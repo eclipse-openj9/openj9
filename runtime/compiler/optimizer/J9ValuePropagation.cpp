@@ -653,12 +653,19 @@ static bool owningMethodDoesNotContainBoundChecks(OMR::ValuePropagation *vp, TR:
 void
 J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    {
+   // IL Generation only uses the <objectInequalityComparison> non-helper today,
+   // but we should be prepared for <objectEqualityComparisonSymbol> as well.
    const bool isObjectEqualityCompare =
       comp()->getSymRefTab()->isNonHelper(
          node->getSymbolReference(),
          TR::SymbolReferenceTable::objectEqualityComparisonSymbol);
 
-   if (isObjectEqualityCompare)
+   const bool isObjectInequalityCompare =
+      comp()->getSymRefTab()->isNonHelper(
+         node->getSymbolReference(),
+         TR::SymbolReferenceTable::objectInequalityComparisonSymbol);
+
+   if (isObjectEqualityCompare || isObjectInequalityCompare)
       {
       // Only constrain the call in the last run of vp to avoid handling the candidate twice if the call is inside a loop
       if (lastTimeThrough())
@@ -687,11 +694,17 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       //
       if (isLhsValue == TR_no || isRhsValue == TR_no || areSameRef)
          {
+         TR::ILOpCode acmpOp = isObjectEqualityCompare ? comp()->il.opCodeForCompareEquals(TR::Address)
+                                                       : comp()->il.opCodeForCompareNotEquals(TR::Address);
+
          if (performTransformation(
                comp(),
-               "%sChanging n%un from <objectEqualityComparison> to acmpeq\n",
+               "%sChanging n%un from %s to %s\n",
                OPT_DETAILS,
-               node->getGlobalIndex()))
+               node->getGlobalIndex(),
+               comp()->getSymRefTab()->getNonHelperSymbolName(isObjectEqualityCompare ? TR::SymbolReferenceTable::objectEqualityComparisonSymbol
+                                                                                      : TR::SymbolReferenceTable::objectInequalityComparisonSymbol),
+               acmpOp.getName()))
             {
             // Add a delayed transformation just for the purpose of being able to
             // insert a dynamic debug counter
@@ -701,12 +714,13 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                                               ValueTypesHelperCallTransform::IsRefCompare
                                               | ValueTypesHelperCallTransform::InsertDebugCounter));
 
+
             // Replace the non-helper equality comparison with an address comparison
-            TR::Node::recreate(node, TR::acmpeq);
+            TR::Node::recreate(node, acmpOp.getOpCodeValue());
 
             // It might now be possible to fold.
-            ValuePropagationPtr acmpeqHandler = constraintHandlers[TR::acmpeq];
-            TR::Node *replacement = acmpeqHandler(this, node);
+            ValuePropagationPtr acmpHandler = constraintHandlers[acmpOp.getOpCodeValue()];
+            TR::Node *replacement = acmpHandler(this, node);
             TR_ASSERT_FATAL_WITH_NODE(node, replacement == node, "can't replace n%un here",
                   node->getGlobalIndex());
             }
