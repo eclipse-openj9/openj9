@@ -2954,6 +2954,11 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                dontInlineRecognizedMethod = true;
                }
             break;
+         case TR::java_lang_StringLatin1_inflate:
+            if (comp->cg()->getSupportsInlineStringLatin1Inflate())
+               {
+               dontInlineRecognizedMethod = true;
+               }
          default:
             break;
          }

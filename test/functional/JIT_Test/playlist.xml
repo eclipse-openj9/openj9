@@ -665,6 +665,7 @@
 			<variation>-Xint</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings -Xnoaot</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
