@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -199,20 +199,9 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_FRAMEMODULE(vmThread, frame, module->moduleObject);
 			}
 
-			stringObject = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
-			if (stringObject == NULL) {
-				UDATA flags = J9_STR_XLAT;
-				if (J9_ARE_ANY_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass | J9AccClassHidden)) {
-					flags |= J9_STR_ANON_CLASS_NAME;
-				}
-				J9UTF8 *nameUTF = J9ROMCLASS_CLASSNAME(romClass);
-				stringObject = utfToStringObject(env, nameUTF, flags);
-				if (VM_VMHelpers::exceptionPending(vmThread)) {
-					goto _pop_frame;
-				}
-				/* Class name was interned so it's safe to write it back to the Class Object */
-				Assert_JCL_false(J9CLASS_IS_ARRAY(ramClass));
-				J9VMJAVALANGCLASS_SET_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), stringObject);
+			stringObject = VM_VMHelpers::getClassNameString(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), JNI_TRUE);
+			if (VM_VMHelpers::exceptionPending(vmThread)) {
+				goto _pop_frame;
 			}
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_CLASSNAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
 
@@ -252,4 +241,5 @@ _done:
 
 	return result;
 }
-}
+
+} /* extern "C" */

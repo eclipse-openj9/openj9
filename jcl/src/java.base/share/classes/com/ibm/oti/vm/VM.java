@@ -543,7 +543,7 @@ public static int removeStringDuplicates() {
 }
 
 /*[PR 126182] Do not intern bootstrap class names when loading */
-public static native String getClassNameImpl(Class aClass);
+public static native String getClassNameImpl(Class aClass, boolean internAndAssign);
 
 /*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 /*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */

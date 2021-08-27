@@ -87,6 +87,7 @@ set(main_sources
 	classallocation.c
 	ClassInitialization.cpp
 	classloadersearch.c
+	classname.cpp
 	classseg.c
 	classsupport.c
 	createramclass.cpp

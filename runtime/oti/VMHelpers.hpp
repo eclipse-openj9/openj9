@@ -1871,6 +1871,28 @@ exit:
 	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
+	/**
+	 * Get the String representing the name of a Class. If the String has not been created
+	 * yet, create it and optionally intern and assign it to the Class.
+	 *
+	 * Current thread must have VM access and have a special frame on top of stack
+	 * with the J9VMThread roots up-to-date.
+	 *
+	 * @param[in] currentThread the current J9VMThread
+	 * @param[in] classObject the java/lang/Class being queried
+	 * @param[in] internAndAssign if true, intern the String and assign it to the Class object
+	 * @return the Class name String, or NULL on out of memory (exception will be pending)
+	 */
+	static VMINLINE j9object_t
+	getClassNameString(J9VMThread *currentThread, j9object_t classObject, bool internAndAssign)
+	{
+		j9object_t classNameObject = J9VMJAVALANGCLASS_CLASSNAMESTRING(currentThread, classObject);
+		if (NULL == classNameObject) {
+			classNameObject = J9_VM_FUNCTION(currentThread, getClassNameString)(currentThread, classObject, internAndAssign);
+		}
+		return classNameObject;
+	}
+
 };
 
 #endif /* VMHELPERS_HPP_ */

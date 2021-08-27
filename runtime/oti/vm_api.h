@@ -301,9 +301,24 @@ allocateClassLoader(J9JavaVM *javaVM);
 void
 freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThread, UDATA needsFrameBuild);
 
+/* ---------------- classsname.cpp ---------------- */
+
+/**
+ * Get the String representing the name of a Class. If the String has not been created
+ * yet, create it and optionally intern and assign it to the Class.
+ *
+ * Current thread must have VM access and have a special frame on top of stack
+ * with the J9VMThread roots up-to-date.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] classObject the java/lang/Class being queried
+ * @param[im] internAndAssign if true, intern the String and assign it to the Class object
+ * @return the Class name String, or NULL on out of memory (exception will be pending)
+ */
+j9object_t
+getClassNameString(J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
+
 /* ---------------- classsupport.c ---------------- */
-
-
 
 /**
 * @brief
@@ -3189,7 +3204,7 @@ addStatistic (J9JavaVM* javaVM, U_8 * name, U_8 dataType);
 void *
 getStatistic (J9JavaVM* javaVM, U_8 * name);
 
-/* ---------------- stringhelpers.c ---------------- */
+/* ---------------- stringhelpers.cpp ---------------- */
 
 /**
  * @brief Compare a java string to another java string for character equality.
