@@ -1326,6 +1326,7 @@ void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
       if (vm->runtimeFlags & J9_RUNTIME_TUNE_VIRTUALIZED)
          {
          _aggressivenessLevel = TR::Options::AGGRESSIVE_AOT;
+         _scratchSpaceFactorWhenJSR292Workload = 1;
          }
       if (_aggressivenessLevel == -1) // not yet set
          {
