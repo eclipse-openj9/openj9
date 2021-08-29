@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -101,6 +101,9 @@ public:
       {
       return TR::typed_allocator< T, TR::RawAllocator >(*this);
       }
+
+   // temporary until memory allocators unified with OMR
+   J9JavaVM * javaVM() { return _javaVM; }
 
 private:
 

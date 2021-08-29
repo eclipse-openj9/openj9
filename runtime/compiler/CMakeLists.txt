@@ -165,10 +165,8 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/infra/OMRMonitor.cpp
 	${omr_SOURCE_DIR}/compiler/runtime/Trampoline.cpp
 	${omr_SOURCE_DIR}/compiler/runtime/Runtime.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/IlInjector.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRBytecodeBuilder.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRIlBuilder.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/OMRIlType.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRIlValue.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRJitBuilderRecorder.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRJitBuilderRecorderBinaryBuffer.cpp
@@ -176,7 +174,6 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRJitBuilderRecorderTextFile.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRMethodBuilder.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRThunkBuilder.cpp
-	${omr_SOURCE_DIR}/compiler/ilgen/OMRTypeDictionary.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineOperandArray.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineOperandStack.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRVirtualMachineRegister.cpp
