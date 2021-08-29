@@ -8531,6 +8531,51 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    return startPC;
    }
 
+void
+TR::CompilationInfoPerThreadBase::setCompiledMethodOptimzationPlan(TR::CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, TR_J9VMBase *vm)
+   {
+      if (compilationInfo->_methodBeingCompiled->_optimizationPlan->isUpgradeRecompilation())
+         {
+         // TR_ASSERT(that->_methodBeingCompiled->_oldStartPC, "upgrade recompilations must have some oldstartpc");
+         // In JITServer mode, it doesn't have to.
+         TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*)compilee)->getExistingJittedBodyInfo();
+         if (bodyInfo->getIsAotedBody() || bodyInfo->getHotness() <= cold)
+            {
+            TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
+            if (sc)
+               sc->addHint(compilationInfo->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintUpgrade);
+            }
+         }
+   }
+
+TR_ResolvedMethod *
+TR::CompilationInfoPerThreadBase::createCompilee(TR::CompilationInfoPerThreadBase *compilationInfo, TR_J9VMBase *vm, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails)
+   {
+      TR_ResolvedMethod  *compilee = 0;
+      TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) methodDetails.getMethod();
+
+      // Create the compilee
+      if (methodDetails.isMethodHandleThunk())
+         {
+         J9::MethodHandleThunkDetails &mhDetails = static_cast<J9::MethodHandleThunkDetails &>(methodDetails);
+         compilee = vm->createMethodHandleArchetypeSpecimen(compileParameters->trMemory(), method, mhDetails.getHandleRef());
+         TR_ASSERT(compilee, "Cannot queue a thunk compilation for a MethodHandle without a suitable archetype");
+         }
+      else if (methodDetails.isNewInstanceThunk())
+         {
+         J9::NewInstanceThunkDetails &niDetails = static_cast<J9::NewInstanceThunkDetails &>(methodDetails);
+         compilee = vm->createResolvedMethod(compileParameters->trMemory(), method, NULL, (TR_OpaqueClassBlock *) niDetails.classNeedingThunk());
+         }
+      else
+         {
+         compilee = vm->createResolvedMethod(compileParameters->trMemory(), method);
+         }
+
+      setCompiledMethodOptimzationPlan(compilationInfo, compilee, vm);
+
+      return compilee;
+   }
+
 // static method
 TR_MethodMetaData *
 TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * opaqueParameters)
@@ -8567,36 +8612,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       InterruptibleOperation generatingCompilationObject(*that);
       TR::IlGeneratorMethodDetails & details = that->_methodBeingCompiled->getMethodDetails();
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) details.getMethod();
-
-      // Create the compilee
-      if (details.isMethodHandleThunk())
-         {
-         J9::MethodHandleThunkDetails &mhDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
-         compilee = vm->createMethodHandleArchetypeSpecimen(p->trMemory(), method, mhDetails.getHandleRef());
-         TR_ASSERT(compilee, "Cannot queue a thunk compilation for a MethodHandle without a suitable archetype");
-         }
-      else if (details.isNewInstanceThunk())
-         {
-         J9::NewInstanceThunkDetails &niDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
-         compilee = vm->createResolvedMethod(p->trMemory(), method, NULL, (TR_OpaqueClassBlock *) niDetails.classNeedingThunk());
-         }
-      else
-         {
-         compilee = vm->createResolvedMethod(p->trMemory(), method);
-         }
-
-      if (that->_methodBeingCompiled->_optimizationPlan->isUpgradeRecompilation())
-         {
-         // TR_ASSERT(that->_methodBeingCompiled->_oldStartPC, "upgrade recompilations must have some oldstartpc");
-         // In JITServer mode, it doesn't have to.
-         TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*)compilee)->getExistingJittedBodyInfo();
-         if (bodyInfo->getIsAotedBody() || bodyInfo->getHotness() <= cold)
-            {
-            TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
-            if (sc)
-               sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintUpgrade);
-            }
-         }
+      compilee = createCompilee(that, vm, p, details);
 
       // See if this method can be compiled and check it against the method
       // filters to see if compilation is to be suppressed.
