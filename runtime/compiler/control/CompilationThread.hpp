@@ -193,8 +193,10 @@ class CompilationInfoPerThreadBase
                                 );
 #endif
 
+   static bool isCompilingWithExcessiveCacheSize(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters);
+   static bool isCompilingRestrictedMethod(CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *&filterInfo);
    static void setCompiledMethodOptimzationPlan(CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, TR_J9VMBase *vm);
-   static TR_ResolvedMethod *createCompilee(CompilationInfoPerThreadBase *compilationInfo, TR_J9VMBase *vm, CompileParameters *compileParameters, IlGeneratorMethodDetails &methodDetails);
+   static TR_ResolvedMethod *createCompilee(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, IlGeneratorMethodDetails &methodDetails, TR_FilterBST *&filterInfo);
 
    /*
     * LdTM: This should, pedantically speaking, be an 'extern "C"' friend function rather than a static member function (with C++ linkage).

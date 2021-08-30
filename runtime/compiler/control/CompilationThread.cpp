@@ -8531,6 +8531,59 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    return startPC;
    }
 
+bool
+TR::CompilationInfoPerThreadBase::isCompilingWithExcessiveCacheSize(TR::CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters)
+   {
+      J9JITConfig *jitConfig = compilationInfo->_jitConfig;
+      J9VMThread *vmThread = compileParameters->_vmThread;
+
+      if (!(jitConfig->runtimeFlags & (J9JIT_CODE_CACHE_FULL | J9JIT_DATA_CACHE_FULL)))
+         {
+            return false;
+         }
+
+      // Optimization to disable future first time compilations from reaching the queue
+      compilationInfo->getCompilationInfo()->getPersistentInfo()->setDisableFurtherCompilation(true);
+
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"<WARNING: JIT CACHES FULL> Disable further compilation");
+         }
+      if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)
+         Trc_JIT_cacheFull(vmThread);
+      if (jitConfig->runtimeFlags & J9JIT_DATA_CACHE_FULL)
+         Trc_JIT_dataCacheFull(vmThread);
+      compilationInfo->_methodBeingCompiled->_compErrCode = compilationExcessiveSize;
+
+      return true;
+   }
+
+bool
+TR::CompilationInfoPerThreadBase::isCompilingRestrictedMethod(TR::CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *&filterInfo)
+   {
+      TR_J9VMBase *vm = compileParameters->_vm;
+      J9VMThread *vmThread = compileParameters->_vmThread;
+
+      // JITServer: methodCanBeCompiled check should have been done on the client, skip it on the server.
+      if (compilationInfo->_methodBeingCompiled->isOutOfProcessCompReq() || compilationInfo->methodCanBeCompiled(compileParameters->trMemory(), vm, compilee, filterInfo))
+         {
+            return false;
+         }
+
+      compilationInfo->_methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
+
+      TR::Options *options = TR::Options::getJITCmdLineOptions();
+      if (vm->isAOT_DEPRECATED_DO_NOT_USE())
+         options = TR::Options::getAOTCmdLineOptions();
+      if (options->getVerboseOption(TR_VerboseCompileExclude))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_COMPFAIL, "%s cannot be translated", compilee->signature(compileParameters->trMemory()));
+         }
+      Trc_JIT_noAttemptToJit(vmThread, compilee->signature(compileParameters->trMemory()));
+
+      return true;
+   }
+
 void
 TR::CompilationInfoPerThreadBase::setCompiledMethodOptimzationPlan(TR::CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, TR_J9VMBase *vm)
    {
@@ -8549,10 +8602,11 @@ TR::CompilationInfoPerThreadBase::setCompiledMethodOptimzationPlan(TR::Compilati
    }
 
 TR_ResolvedMethod *
-TR::CompilationInfoPerThreadBase::createCompilee(TR::CompilationInfoPerThreadBase *compilationInfo, TR_J9VMBase *vm, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails)
+TR::CompilationInfoPerThreadBase::createCompilee(TR::CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails, TR_FilterBST *&filterInfo)
    {
       TR_ResolvedMethod  *compilee = 0;
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) methodDetails.getMethod();
+      TR_J9VMBase *vm = compileParameters->_vm;
 
       // Create the compilee
       if (methodDetails.isMethodHandleThunk())
@@ -8572,6 +8626,13 @@ TR::CompilationInfoPerThreadBase::createCompilee(TR::CompilationInfoPerThreadBas
          }
 
       setCompiledMethodOptimzationPlan(compilationInfo, compilee, vm);
+
+      // See if this method can be compiled and check it against the method
+      // filters to see if compilation is to be suppressed.
+      if (isCompilingRestrictedMethod(compilationInfo, compilee, compileParameters, filterInfo) || isCompilingWithExcessiveCacheSize(compilationInfo, compileParameters))
+         {
+         compilee = 0;
+         }
 
       return compilee;
    }
@@ -8611,49 +8672,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
       InterruptibleOperation generatingCompilationObject(*that);
       TR::IlGeneratorMethodDetails & details = that->_methodBeingCompiled->getMethodDetails();
-      TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) details.getMethod();
-      compilee = createCompilee(that, vm, p, details);
-
-      // See if this method can be compiled and check it against the method
-      // filters to see if compilation is to be suppressed.
-
       TR_FilterBST *filterInfo = NULL;
-      // JITServer: methodCanBeCompiled check should have been done on the client, skip it on the server.
-      if (!that->_methodBeingCompiled->isOutOfProcessCompReq() && !that->methodCanBeCompiled(p->trMemory(), vm, compilee, filterInfo))
-         {
-         that->_methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
+      compilee = createCompilee(that, p, details, filterInfo);
 
-         TR::Options *options = TR::Options::getJITCmdLineOptions();
-         if (vm->isAOT_DEPRECATED_DO_NOT_USE())
-            options = TR::Options::getAOTCmdLineOptions();
-         if (options->getVerboseOption(TR_VerboseCompileExclude))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_COMPFAIL, "%s j9m=%p cannot be translated compThreadID=%d",
-                                           compilee->signature(p->trMemory()), method, that->getCompThreadId());
-            }
-         Trc_JIT_noAttemptToJit(vmThread, compilee->signature(p->trMemory()));
-
-         compilee = 0;
-         }
-      else if (jitConfig->runtimeFlags & (J9JIT_CODE_CACHE_FULL | J9JIT_DATA_CACHE_FULL))
+      if (compilee)
          {
-         // Optimization to disable future first time compilations from reaching the queue
-         that->getCompilationInfo()->getPersistentInfo()->setDisableFurtherCompilation(true);
-
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u <WARNING: JIT CACHES FULL> Disable further compilation",
-               (uint32_t)that->getCompilationInfo()->getPersistentInfo()->getElapsedTime());
-            }
-         if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)
-            Trc_JIT_cacheFull(vmThread);
-         if (jitConfig->runtimeFlags & J9JIT_DATA_CACHE_FULL)
-            Trc_JIT_dataCacheFull(vmThread);
-         that->_methodBeingCompiled->_compErrCode = compilationExcessiveSize;
-         compilee = 0;
-         }
-      else
-         {
+         TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) details.getMethod();
          int32_t optionSetIndex = filterInfo ? filterInfo->getOptionSet() : 0;
          int32_t lineNumber = filterInfo ? filterInfo->getLineNumber() : 0;
 
