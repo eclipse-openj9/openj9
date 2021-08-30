@@ -1254,7 +1254,7 @@ static void populateInlineCalls(
          TR_OpaqueClassBlock *clazzOfInlinedMethod = vm->getClassFromMethodBlock(inlinedCallSite->_methodInfo);
          if (comp->fej9()->isUnloadAssumptionRequired(clazzOfInlinedMethod, comp->getCurrentMethod()))
             {
-            if (comp->getOption(TR_AOT) && comp->getOption(TR_TraceRelocatableDataDetailsCG))
+            if (comp->compileRelocatableCode() && comp->getOption(TR_TraceRelocatableDataDetailsCG))
                {
                TR_OpaqueClassBlock *clazzOfCallerMethod =  comp->getCurrentMethod()->classOfMethod();
                traceMsg(comp, "createClassUnloadPicSite: clazzOfInlinedMethod %p, loader = %p, clazzOfCallerMethod %p, loader = %p, callsiteCursor %p\n",

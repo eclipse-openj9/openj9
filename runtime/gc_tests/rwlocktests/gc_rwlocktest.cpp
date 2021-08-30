@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include "omrutil.h"
 #include "thread_api.h"
 
-#include "LightweightNonReentrantReaderWriterLock.hpp"
+#include "LightweightNonReentrantRWLock.hpp"
 
 #define MILLI_TIMEOUT	10000
 #define NANO_TIMEOUT	0
@@ -35,12 +35,12 @@
 
 extern J9PortLibrary *sharedPortLibrary;
 
-MM_LightweightNonReentrantReaderWriterLock g_lock;
+MM_LightweightNonReentrantRWLock g_lock;
 BOOLEAN									   g_isInitialized = FALSE;
 
 /* structure used to pass info to concurrent threads for some tests */
 typedef struct SupportThreadInfo {
-	MM_LightweightNonReentrantReaderWriterLock* lock;
+	MM_LightweightNonReentrantRWLock* lock;
 	omrthread_monitor_t 			synchronization;
 	omrthread_entrypoint_t*	    functionsToRun;
 	UDATA			   			numberFunctions;
@@ -237,13 +237,13 @@ J9THREAD_PROC exit_rwlock_write(SupportThreadInfo* info)
 
 
 /**
- * validate that we can initialize a LightweightNonReentrantReaderWriterLock successfully
+ * validate that we can initialize a LightweightNonReentrantRWLock successfully
  */
 void
 Test_RWLock_InitializeTest(CuTest *tc)
 {
 	IDATA result;
-	MM_LightweightNonReentrantReaderWriterLock lock;
+	MM_LightweightNonReentrantRWLock lock;
 	/* initialize */
 	result = lock.initialize(128);
 	CuAssertTrue(tc, 0 == result);
@@ -253,13 +253,13 @@ Test_RWLock_InitializeTest(CuTest *tc)
 }
 
 /**
- * Validate that we can enter/exit a LightweightNonReentrantReaderWriterLock for read
+ * Validate that we can enter/exit a LightweightNonReentrantRWLock for read
  */
 void
 Test_RWLock_RWReadEnterExitTest(CuTest *tc)
 {
 	IDATA result;
-	MM_LightweightNonReentrantReaderWriterLock lock;
+	MM_LightweightNonReentrantRWLock lock;
 	/* initialize */
 	result = lock.initialize(128);
 	CuAssertTrue(tc, 0 == result);
@@ -275,13 +275,13 @@ Test_RWLock_RWReadEnterExitTest(CuTest *tc)
 }
 
 /**
- * Validate that we can enter/exit a LightweightNonReentrantReaderWriterLock for write
+ * Validate that we can enter/exit a LightweightNonReentrantRWLock for write
  */
 void
 Test_RWLock_RWWriteEnterExitTest(CuTest *tc)
 {
 	IDATA result;
-	MM_LightweightNonReentrantReaderWriterLock lock;
+	MM_LightweightNonReentrantRWLock lock;
 	/* initialize */
 	result = lock.initialize(128);
 	CuAssertTrue(tc, 0 == result);
@@ -297,13 +297,13 @@ Test_RWLock_RWWriteEnterExitTest(CuTest *tc)
 }
 
 /**
- * Validate threads can shared the LightweightNonReentrantReaderWriterLock for read
+ * Validate threads can shared the LightweightNonReentrantRWLock for read
  */
 void
 Test_RWLock_multipleReadersTest(CuTest *tc)
 {
 
-	/* Start concurrent thread acquired the LightweightNonReentrantReaderWriterLock for read */
+	/* Start concurrent thread acquired the LightweightNonReentrantRWLock for read */
 	SupportThreadInfo* info;
 	omrthread_entrypoint_t  functionsToRun[2];
 	functionsToRun[0] = (omrthread_entrypoint_t) &enter_rwlock_read;
@@ -318,7 +318,7 @@ Test_RWLock_multipleReadersTest(CuTest *tc)
 	exit_rwlock_read(info);
 	CuAssertTrue(tc, 1 == info->readCounter);
 
-	/* ok we were not blocked by the other thread holding the LightweightNonReentrantReaderWriterLock for read
+	/* ok we were not blocked by the other thread holding the LightweightNonReentrantRWLock for read
 	 * so ask it to release the lock
 	 */
 	triggerNextStepDone(info);
@@ -329,7 +329,7 @@ Test_RWLock_multipleReadersTest(CuTest *tc)
 /**
  * Validates the following
  *
- * readers are excludes while another thread holds the LightweightNonReentrantReaderWriterLock for write
+ * readers are excludes while another thread holds the LightweightNonReentrantRWLock for write
  * once writer exits, reader can enter
  */
 void
@@ -368,7 +368,7 @@ Test_RWLock_readersExcludedTest(CuTest *tc)
 /**
  * validates the following
  *
- * writer is excluded while another thread holds the LightweightNonReentrantReaderWriterLock for read
+ * writer is excluded while another thread holds the LightweightNonReentrantRWLock for read
  * once reader exits writer can enter
  */
 void

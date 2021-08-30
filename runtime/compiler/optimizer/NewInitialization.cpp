@@ -90,7 +90,7 @@ TR_LocalNewInitialization::optDetailString() const throw()
 int32_t TR_NewInitialization::performAnalysis(bool doGlobalAnalysis)
    {
    // AOT does not support TR_New optimizations at this time
-   if(comp()->getOption(TR_AOT))
+   if(comp()->compileRelocatableCode())
       return 0;
 
    //

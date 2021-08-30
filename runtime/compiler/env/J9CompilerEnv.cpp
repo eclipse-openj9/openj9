@@ -61,8 +61,7 @@ J9::CompilerEnv::isCodeTossed()
       return false;
       }
 
-   if ((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
-       (jitConfig->runtimeFlags & J9JIT_TESTMODE))
+   if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
       {
       return true;
       }
