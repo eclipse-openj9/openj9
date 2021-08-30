@@ -161,6 +161,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/infra/OMRMonitorTable.cpp \
     omr/compiler/infra/Random.cpp \
     omr/compiler/infra/SimpleRegex.cpp \
+    omr/compiler/infra/String.cpp \
     omr/compiler/infra/Timer.cpp \
     omr/compiler/infra/TreeServices.cpp \
     omr/compiler/optimizer/AsyncCheckInsertion.cpp \
