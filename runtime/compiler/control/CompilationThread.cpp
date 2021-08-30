@@ -29,10 +29,6 @@
 #define J9OS_STRNCMP strncmp
 #endif
 
-#if defined (_MSC_VER) && _MSC_VER < 1900
-#define snprintf _snprintf
-#endif
-
 #include "control/CompilationThread.hpp"
 
 #include <exception>
@@ -80,6 +76,7 @@
 #include "infra/CriticalSection.hpp"
 #include "infra/MonitorTable.hpp"
 #include "infra/Monitor.hpp"
+#include "infra/String.hpp"
 #include "ras/InternalFunctions.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/CodeCache.hpp"
@@ -6678,8 +6675,8 @@ TR::CompilationInfoPerThreadBase::generatePerfToolEntry()
       static const int maxPerfFilenameSize = 15 + sizeof(jvmPid)* 3; // "/tmp/perf-%ld.map"
       char perfFilename[maxPerfFilenameSize] = { 0 };
 
-      int numCharsWritten = snprintf(perfFilename, maxPerfFilenameSize, "/tmp/perf-%ld.map", jvmPid);
-      if (numCharsWritten > 0 && numCharsWritten < maxPerfFilenameSize)
+      bool truncated = TR::snprintfTrunc(perfFilename, maxPerfFilenameSize, "/tmp/perf-%ld.map", jvmPid);
+      if (!truncated)
          {
          TR::CompilationInfoPerThreadBase::_perfFile = j9jit_fopen(perfFilename, "a", true, false);
          }
@@ -9049,7 +9046,7 @@ TR::CompilationInfoPerThreadBase::compile(
       if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileStart))
          {
          char compilationTypeString[15]={0};
-         snprintf(compilationTypeString, sizeof(compilationTypeString), "%s%s",
+         TR::snprintfNoTrunc(compilationTypeString, sizeof(compilationTypeString), "%s%s",
                  vm.isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
                  compiler->isProfilingCompilation() ? "profiled " : ""
                 );
@@ -10208,7 +10205,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
       else
          {
          char compilationTypeString[15] = { 0 };
-         snprintf(compilationTypeString, sizeof(compilationTypeString), "%s%s",
+         TR::snprintfNoTrunc(compilationTypeString, sizeof(compilationTypeString), "%s%s",
             vm.isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
             compiler->isProfilingCompilation() ? "profiled " : "");
 
@@ -10424,7 +10421,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             }
 
          char compilationAttributes[40] = { 0 };
-         snprintf(compilationAttributes, sizeof(compilationAttributes), "%s %s %s %s %s %s %s",
+         TR::snprintfNoTrunc(compilationAttributes, sizeof(compilationAttributes), "%s %s %s %s %s %s %s",
                       prexString,
                       !_methodBeingCompiled->_async ? "sync" : "",
                       compilee->isJNINative()? "JNI" : "",
@@ -10433,11 +10430,6 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                       compiler->isDLT() ? "DLT" : "",
                       TR::CompilationInfo::isJSR292(method) ? "JSR292" : ""
                       );
-#if defined (_MSC_VER) && _MSC_VER < 1900
-         // Microsoft has a compliant version of snprintf only starting with Visual Studio 2015
-         // We should add the null terminator just in case
-         * (compilationAttributes + sizeof(compilationAttributes)-1) = '\0';
-#endif
 
          Trc_JIT_compileEnd15(vmThread, compilationTypeString, hotnessString, compiler->signature(),
                                startPC, endWarmPC, startColdPC, endPC,
@@ -10773,7 +10765,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
       uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
 
       char compilationTypeString[15] = { 0 };
-      snprintf(compilationTypeString, sizeof(compilationTypeString), "%s%s",
+      TR::snprintfNoTrunc(compilationTypeString, sizeof(compilationTypeString), "%s%s",
          compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
          compiler->isProfilingCompilation() ? "profiled " : "");
 

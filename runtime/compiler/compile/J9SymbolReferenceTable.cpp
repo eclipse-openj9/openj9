@@ -49,18 +49,13 @@
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/List.hpp"
+#include "infra/String.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "optimizer/TransformUtil.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "env/j9methodServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
-
-#include <stdio.h>
-
-#if defined (_MSC_VER) && _MSC_VER < 1900
-#define snprintf _snprintf
-#endif
 
 namespace J9
 {
@@ -786,7 +781,7 @@ J9::SymbolReferenceTable::findOrFabricateShadowSymbol(
 
    int qualifiedFieldNameSize = classNameLen + 1 + strlen(name) + 1 + strlen(signature) + 1;
    char *qualifiedFieldName = (char*)trHeapMemory().allocate(qualifiedFieldNameSize);
-   snprintf(
+   TR::snprintfNoTrunc(
       qualifiedFieldName,
       qualifiedFieldNameSize,
       "%.*s.%s %s",

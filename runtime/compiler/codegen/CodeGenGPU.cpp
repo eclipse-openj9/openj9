@@ -24,11 +24,6 @@
  * Support code for TR::CodeGenerator.  Code related to generating GPU
  */
 
-#if defined (_MSC_VER) && (_MSC_VER < 1900)
-#define snprintf _snprintf
-#endif
-
-#include <stdio.h>
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/RecognizedMethods.hpp"
@@ -39,6 +34,7 @@
 #include "il/ParameterSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
+#include "infra/String.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/annotations/GPUAnnotation.hpp"
@@ -547,25 +543,18 @@ static const char* getVarTypeName(TR::DataType type) {
 
 static void getParmName(int32_t slot, char * s, bool addr = true)
    {
-   int32_t len = 0;
-
-   len = snprintf(s, MAX_NAME, "%%p%" OMR_PRId32 "%s", slot,  addr ? ".addr" : "");
-
-   TR_ASSERT(len < MAX_NAME, "Auto's or parm's name is too long\n");
+   TR::snprintfNoTrunc(s, MAX_NAME, "%%p%" OMR_PRId32 "%s", slot,  addr ? ".addr" : "");
    }
 
 
 static void getAutoOrParmName(TR::Symbol *sym, char * s, bool addr = true)
    {
-   int32_t len = 0;
    TR_ASSERT(sym->isAutoOrParm(), "expecting auto or parm");
 
    if (sym->isParm())
-      len = snprintf(s, MAX_NAME, "%%p%" OMR_PRId32 "%s", sym->castToParmSymbol()->getSlot(),  addr ? ".addr" : "");
+      TR::snprintfNoTrunc(s, MAX_NAME, "%%p%" OMR_PRId32 "%s", sym->castToParmSymbol()->getSlot(),  addr ? ".addr" : "");
    else
-      len = snprintf(s, MAX_NAME, "%%a%" OMR_PRId32 "%s", sym->castToAutoSymbol()->getLiveLocalIndex(), addr ? ".addr" : "");
-
-   TR_ASSERT(len < MAX_NAME, "Auto's or parm's name is too long\n");
+      TR::snprintfNoTrunc(s, MAX_NAME, "%%a%" OMR_PRId32 "%s", sym->castToAutoSymbol()->getLiveLocalIndex(), addr ? ".addr" : "");
    }
 
 
@@ -626,7 +615,6 @@ class NVVMIRBuffer
 
 static void getNodeName(TR::Node* node, char * s, TR::Compilation *comp)
    {
-   int32_t len = 0;
    if (node->getOpCode().isLoadConst())
       {
       bool isUnsigned = node->getOpCode().isUnsigned();
@@ -634,24 +622,24 @@ static void getNodeName(TR::Node* node, char * s, TR::Compilation *comp)
          {
          case TR::Int8:
             if(isUnsigned)
-               len = snprintf(s, MAX_NAME, "%" OMR_PRIu8, node->getUnsignedByte());
+               TR::snprintfNoTrunc(s, MAX_NAME, "%" OMR_PRIu8, node->getUnsignedByte());
             else
-               len = snprintf(s, MAX_NAME, "%" OMR_PRId8, node->getByte());
+               TR::snprintfNoTrunc(s, MAX_NAME, "%" OMR_PRId8, node->getByte());
             break;
          case TR::Int16:
-            len = snprintf(s, MAX_NAME, "%" OMR_PRIu16, node->getConst<uint16_t>());
+            TR::snprintfNoTrunc(s, MAX_NAME, "%" OMR_PRIu16, node->getConst<uint16_t>());
             break;
          case TR::Int32:
             if(isUnsigned)
-               len = snprintf(s, MAX_NAME, "%" OMR_PRIu32, node->getUnsignedInt());
+               TR::snprintfNoTrunc(s, MAX_NAME, "%" OMR_PRIu32, node->getUnsignedInt());
             else
-               len = snprintf(s, MAX_NAME, "%" OMR_PRId32, node->getInt());
+               TR::snprintfNoTrunc(s, MAX_NAME, "%" OMR_PRId32, node->getInt());
             break;
          case TR::Int64:
             if(isUnsigned)
-               len = snprintf(s, MAX_NAME, "%" OMR_PRIu64, node->getUnsignedLongInt());
+               TR::snprintfNoTrunc(s, MAX_NAME, "%" OMR_PRIu64, node->getUnsignedLongInt());
             else
-               len = snprintf(s, MAX_NAME, "%" OMR_PRId64, node->getLongInt());
+               TR::snprintfNoTrunc(s, MAX_NAME, "%" OMR_PRId64, node->getLongInt());
             break;
          case TR::Float:
             union
@@ -660,14 +648,14 @@ static void getNodeName(TR::Node* node, char * s, TR::Compilation *comp)
                int64_t                 doubleBits;
                };
             doubleValue = node->getFloat();
-            len = snprintf(s, MAX_NAME, "0x%016" OMR_PRIx64, doubleBits);
+            TR::snprintfNoTrunc(s, MAX_NAME, "0x%016" OMR_PRIx64, doubleBits);
             break;
          case TR::Double:
-            len = snprintf(s, MAX_NAME, "0x%016" OMR_PRIx64, node->getDoubleBits());
+            TR::snprintfNoTrunc(s, MAX_NAME, "0x%016" OMR_PRIx64, node->getDoubleBits());
             break;
          case TR::Address:
             if (node->getAddress() == 0)
-               len = snprintf(s, MAX_NAME, "null");
+               TR::snprintfNoTrunc(s, MAX_NAME, "null");
             else
                TR_ASSERT(0, "Non-null Address constants should not occur.\n");
             break;
@@ -677,10 +665,8 @@ static void getNodeName(TR::Node* node, char * s, TR::Compilation *comp)
       }
    else
       {
-      len = snprintf(s, MAX_NAME, "%%%" OMR_PRIu32, node->getLocalIndex());
+      TR::snprintfNoTrunc(s, MAX_NAME, "%%%" OMR_PRIu32, node->getLocalIndex());
       }
-
-   TR_ASSERT(len < MAX_NAME, "Node's name is too long\n");
    }
 
 char* getNVVMMathFunctionName(TR::Node *node)
@@ -1309,8 +1295,7 @@ J9::CodeGenerator::printNVVMIR(
          }
       else
          {
-         int32_t len = snprintf(name0, MAX_NAME, "%" OMR_PRId32, smsize);
-         TR_ASSERT(len < MAX_NAME, "Node's name is too long\n");
+         TR::snprintfNoTrunc(name0, MAX_NAME, "%" OMR_PRId32, smsize);
          }
 
       getNodeName(node->getChild(1), name1, self()->comp());
