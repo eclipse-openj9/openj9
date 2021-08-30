@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,18 +176,14 @@ SegmentAllocator::preventAllocationOfBTLMemory(J9MemorySegment * &segment, J9Jav
             }
 
          // For scratch memory refuse to return memory below the line. Free the segment and let the compilation fail
-         // Compilation will be retried at lower opt level.
-         if (segmentType & MEMORY_TYPE_VIRTUAL)
+         // Compilation will be retried at lower opt level. However, We should not reject requests coming from hooks.
+         if (segmentType & MEMORY_TYPE_JIT_SCRATCH_SPACE)
             {
-            // We should not reject requests coming from hooks. Test if this is a comp thread
-            if (compInfo->useSeparateCompilationThread())
+            J9VMThread *crtVMThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+            if (compInfo->getCompInfoForThread(crtVMThread))
                {
-               J9VMThread *crtVMThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
-               if (compInfo->getCompInfoForThread(crtVMThread))
-                  {
-                  javaVM->internalVMFunctions->freeMemorySegment(javaVM, segment, TRUE);
-                  segment = NULL;
-                  }
+               javaVM->internalVMFunctions->freeMemorySegment(javaVM, segment, TRUE);
+               segment = NULL;
                }
             }
          }

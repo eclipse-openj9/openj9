@@ -448,7 +448,6 @@ public:
    static bool shouldRetryCompilation(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
    static bool shouldAbortCompilation(TR_MethodToBeCompiled *entry, TR::PersistentInfo *persistentInfo);
    static bool canRelocateMethod(TR::Compilation * comp);
-   static bool useSeparateCompilationThread();
    static int computeCompilationThreadPriority(J9JavaVM *vm);
    static void *compilationEnd(J9VMThread *context, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void * startPC,
                                void *oldStartPC, TR_FrontEnd *vm=0, TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
@@ -719,7 +718,6 @@ public:
    void freeAllResources();
 
    uintptr_t startCompilationThread(int32_t priority, int32_t id, bool isDiagnosticThread);
-   bool initializeCompilationOnApplicationThread();
    bool  asynchronousCompilation();
    void stopCompilationThreads();
 
@@ -740,9 +738,6 @@ public:
    void *compileMethod(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
       TR_YesNoMaybe async, TR_CompilationErrorCode *, bool *queued, TR_OptimizationPlan *optPlan);
 
-   void *compileOnApplicationThread(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
-                                    TR_CompilationErrorCode *,
-                                    TR_OptimizationPlan *optPlan);
    void *compileOnSeparateThread(J9VMThread * context, TR::IlGeneratorMethodDetails &details, void *oldStartPC,
                                  TR_YesNoMaybe async, TR_CompilationErrorCode*,
                                  bool *queued, TR_OptimizationPlan *optPlan);
@@ -867,7 +862,6 @@ public:
    void    incrementNumMethodsFoundInSharedCache() { _numMethodsFoundInSharedCache++; }
    int32_t numMethodsFoundInSharedCache() { return _numMethodsFoundInSharedCache; }
    int32_t getNumInvRequestsInCompQueue() const { return _numInvRequestsInCompQueue; }
-   TR::CompilationInfoPerThreadBase *getCompInfoForCompOnAppThread() const { return _compInfoForCompOnAppThread; }
    J9JITConfig *getJITConfig() { return _jitConfig; }
    TR::CompilationInfoPerThread *getCompInfoForThread(J9VMThread *vmThread);
    int32_t getNumUsableCompilationThreads() const { return _numCompThreads; }
@@ -1129,7 +1123,6 @@ private:
 
    TR::CompilationInfoPerThread **_arrayOfCompilationInfoPerThread; // First NULL entry means end of the array
    TR::CompilationInfoPerThread *_compInfoForDiagnosticCompilationThread; // compinfo for dump compilation thread
-   TR::CompilationInfoPerThreadBase *_compInfoForCompOnAppThread; // This is NULL for separate compilation thread
    TR_MethodToBeCompiled *_methodQueue;
    TR_MethodToBeCompiled *_methodPool;
    int32_t                _methodPoolSize; // shouldn't this and _methodPool be static?
@@ -1150,7 +1143,6 @@ private:
    TR::Monitor *_vlogMonitor;
    TR::Monitor *_rtlogMonitor;
    TR::Monitor *_iprofilerBufferArrivalMonitor;
-   TR::Monitor *_applicationThreadMonitor;
    TR::MonitorTable *_j9MonitorTable; // used only for RAS (debuggerExtensions); no accessor; use TR_J9MonitorTable::get() everywhere else
    TR_LinkHead0<TR_ClassHolder> _classesToCompileList; // used by compileClasses; adjusted by unload hooks
    intptr_t               _numSyncCompilations;
