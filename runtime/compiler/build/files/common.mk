@@ -68,6 +68,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/UnsafeFastPath.cpp \
     compiler/optimizer/VarHandleTransformer.cpp \
     compiler/optimizer/MethodHandleTransformer.cpp \
+    compiler/optimizer/VectorAPIExpansion.cpp \
     compiler/optimizer/VPBCDConstraint.cpp \
     compiler/optimizer/TreeLowering.cpp \
     omr/compiler/codegen/Analyser.cpp \
