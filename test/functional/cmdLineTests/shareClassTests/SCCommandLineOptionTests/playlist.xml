@@ -22,6 +22,7 @@
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TKG/playlist.xsd">
 	<!-- Exclude it on windows for issue https://github.com/eclipse-openj9/openj9/issues/1814 -->
+	<include>SCCOptionTestSetting.mk</include>
 	<test>
 		<testCaseName>cmdLineTester_SCCommandLineOptionTests</testCaseName>
 		<variations>
@@ -34,7 +35,7 @@
 	$(JAVA_COMMAND) $(JVM_OPTIONS) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) -DTEST_JDK_HOME=$(Q)$(TEST_JDK_HOME)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)CommandLineOptionTests.xml$(Q) \
-	-xids all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
+	-xids all,$(PLATFORM),$(VARIATION) -xlist $(Q)$(TEST_RESROOT)$(D)$(EXCLUDE_FILE)$(Q) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>
