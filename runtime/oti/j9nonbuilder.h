@@ -5535,15 +5535,12 @@ typedef struct J9JavaVM {
 	U_32 javaVM31PadTo8; /* Possible to optimize with future guarded U_32 member in ENV_DATA64. */
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	jclass criuResultTypeClass;
-	jfieldID criuSupportSuccess;
-	jfieldID criuSupportUnsupportedOperation;
-	jfieldID criuSupportInvalidArguments;
-	jfieldID criuSupportSystemCheckpointFailure;
-	jfieldID criuSupportJVMCheckpointFailure;
-	jfieldID criuSupportJVMRestoreFailure;
-	jclass criuResultClass;
-	jmethodID criuResultInit;
+	jclass criuJVMCheckpointExceptionClass;
+	jclass criuSystemCheckpointExceptionClass;
+	jclass criuRestoreExceptionClass;
+	jmethodID criuJVMCheckpointExceptionInit;
+	jmethodID criuSystemCheckpointExceptionInit;
+	jmethodID criuRestoreExceptionInit;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	J9CRIUCheckpointState *checkpointState;
 } J9JavaVM;

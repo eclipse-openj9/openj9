@@ -1,3 +1,4 @@
+/*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
  * Copyright (c) 2021, 2021 IBM Corp. and others
  *
@@ -19,20 +20,35 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package org.eclipse.openj9.criu;
 
-#ifndef _Included_org_eclipse_openj9_criu_CRIUSupport
-#define _Included_org_eclipse_openj9_criu_CRIUSupport
+/**
+ * Abstract CRIU exception superclass. Contains an error code returned from a failed operation.
+ */
+public abstract class JVMCRIUException extends RuntimeException {
+    private static final long serialVersionUID = 4486137934620495516L;
+    protected int errorCode;
 
-#include <jni.h>
-#include "j9.h"
+    protected JVMCRIUException(String message, int errorCode) {
+        super(message);
+        this.errorCode = errorCode;
+    }
 
-jboolean JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused);
+    /**
+     * Returns the error code.
+     *
+     * @return errorCode
+     */
+    public int getErrorCode() {
+        return errorCode;
+    }
 
-jboolean JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_isCheckpointAllowed(JNIEnv *env, jclass unused);
-
-void JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env, jclass unused, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile, jboolean fileLocks, jstring workDir);
-
-#endif
+    /**
+     * Sets the error code.
+     *
+     * @param errorCode the value to set to
+     */
+    public void setErrorCode(int errorCode) {
+        this.errorCode = errorCode;
+    }
+}
