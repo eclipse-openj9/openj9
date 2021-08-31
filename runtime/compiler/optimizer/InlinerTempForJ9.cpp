@@ -2501,6 +2501,11 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
          break;
       }
 
+   // VectorSupport intrinsic candidates should not be redefined by the user
+   if (rm > TR::First_vector_api_method &&
+       rm <= TR::Last_vector_api_intrinsic_method)
+      return true;
+
    // Skip HCR guard for non-public methods in java/lang/invoke package. These methods
    // are related to implementation details of MethodHandle and VarHandle
    int32_t length = callee->classNameLength();

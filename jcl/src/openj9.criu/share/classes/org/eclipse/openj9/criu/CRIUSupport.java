@@ -45,70 +45,6 @@ public final class CRIUSupport {
 		}
 	}
 
-	/**
-	 * CRIU operation return type
-	 */
-	public static enum CRIUResultType {
-		/**
-		 * The operation was successful.
-		 */
-		SUCCESS,
-		/**
-		 * The requested operation is unsupported.
-		 */
-		UNSUPPORTED_OPERATION,
-		/**
-		 * The arguments provided for the operation are invalid.
-		 */
-		INVALID_ARGUMENTS,
-		/**
-		 * A system failure occurred when attempting to checkpoint the JVM.
-		 */
-		SYSTEM_CHECKPOINT_FAILURE,
-		/**
-		 * A JVM failure occurred when attempting to checkpoint the JVM.
-		 */
-		JVM_CHECKPOINT_FAILURE,
-		/**
-		 * A non-fatal JVM failure occurred when attempting to restore the JVM.
-		 */
-		JVM_RESTORE_FAILURE;
-	}
-
-	/**
-	 * CRIU operation result. If there is a system failure the system error code will be set.
-	 * If there is a JVM failure the throwable will be set.
-	 *
-	 */
-	public final static class CRIUResult {
-		private final CRIUResultType type;
-
-		private final Throwable throwable;
-
-		CRIUResult(CRIUResultType type, Throwable throwable) {
-			this.type = type;
-			this.throwable = throwable;
-		}
-
-		/**
-		 * Returns CRIUResultType value
-		 *
-		 * @return CRIUResultType
-		 */
-		public CRIUResultType getType() {
-			return this.type;
-		}
-
-		/**
-		 * Returns Java error. This will never be set if the CRIUResultType is SUCCESS
-		 *
-		 * @return Java error
-		 */
-		public Throwable getThrowable() {
-			return this.throwable;
-		}
-	}
-
 	private static final CRIUDumpPermission CRIU_DUMP_PERMISSION = new CRIUDumpPermission();
 
 	private static final boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
@@ -117,7 +53,7 @@ public final class CRIUSupport {
 
 	private static native boolean isCheckpointAllowed();
 
-	private static native CRIUResult checkpointJVMImpl(String imageDir,
+	private static native void checkpointJVMImpl(String imageDir,
 			boolean leaveRunning,
 			boolean shellJob,
 			boolean extUnixSupport,
@@ -315,15 +251,14 @@ public final class CRIUSupport {
 	/**
 	 * Checkpoint the JVM. This operation will use the CRIU options set by the options setters.
 	 *
-	 * All errors will be stored in the throwable field of CRIUResult.
-	 *
-	 * @return return CRIUResult
+	 * @throws UnsupportedOperationException if CRIU is not supported
+	 * @throws JVMCheckpointException if a JVM error occurred before checkpoint
+	 * @throws SystemCheckpointException if a CRIU operation failed
+	 * @throws RestoreException if an error occurred during or after restore
 	 */
-	public CRIUResult checkpointJVM() {
-		CRIUResult ret;
-
+	public void checkpointJVM() {
 		if (isCRIUSupportEnabled()) {
-			ret = checkpointJVMImpl(imageDir,
+			checkpointJVMImpl(imageDir,
 					leaveRunning,
 					shellJob,
 					extUnixSupport,
@@ -332,9 +267,7 @@ public final class CRIUSupport {
 					fileLocks,
 					workDir);
 		} else {
-			ret = new CRIUResult(CRIUResultType.UNSUPPORTED_OPERATION, null);
+			throw new UnsupportedOperationException("CRIU support is not enabled");
 		}
-
-		return ret;
 	}
 }

@@ -1,3 +1,4 @@
+/*[INCLUDE-IF CRIU_SUPPORT]*/
 /*******************************************************************************
  * Copyright (c) 2021, 2021 IBM Corp. and others
  *
@@ -19,20 +20,21 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package org.eclipse.openj9.criu;
 
-#ifndef _Included_org_eclipse_openj9_criu_CRIUSupport
-#define _Included_org_eclipse_openj9_criu_CRIUSupport
+/**
+ * A CRIU exception representing a failure after restore.
+ */
+public final class RestoreException extends JVMCRIUException {
+    private static final long serialVersionUID = 1539393473417716292L;
 
-#include <jni.h>
-#include "j9.h"
-
-jboolean JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused);
-
-jboolean JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_isCheckpointAllowed(JNIEnv *env, jclass unused);
-
-void JNICALL
-Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env, jclass unused, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile, jboolean fileLocks, jstring workDir);
-
-#endif
+    /**
+     * Creates a RestoreException with the specified message and error code.
+     *
+     * @param message the message
+     * @param errorCode the error code
+     */
+    public RestoreException(String message, int errorCode) {
+        super(message, errorCode);
+    }
+}

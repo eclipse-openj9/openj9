@@ -29,3 +29,6 @@ TraceAssert=Assert_CRIU_false noEnv Overhead=1 Level=1 Assert="!(P1)"
 TraceAssert=Assert_CRIU_notNull noEnv Overhead=1 Level=1 Assert="(P1) != NULL"
 TraceAssert=Assert_CRIU_mustHaveVMAccess noEnv Overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
 TraceAssert=Assert_CRIU_mustNotHaveVMAccess noEnv Overhead=1 Level=1 Assert="0 == ((P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)"
+
+TraceException=Trc_CRIU_getNativeString_getStringSizeFail Overhead=1 Level=1 Template="Failed to get Java string size: mutf8String=%s mutf8StringSize=%zu"
+TraceException=Trc_CRIU_getNativeString_convertFail Overhead=1 Level=1 Template="Failed to convert Java string: mutf8String=%s mutf8StringSize=%zu requiredConvertedStringSize=%zd"
