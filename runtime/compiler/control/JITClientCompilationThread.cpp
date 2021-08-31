@@ -1129,6 +1129,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->vTableOrITableIndexFromMemberName(comp, std::get<0>(recv)));
          }
          break;
+      case MessageType::VM_delegatingMethodHandleTarget:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index, TR_OpaqueClassBlock *>();
+         TR::KnownObjectTable::Index idx = fe->delegatingMethodHandleTargetHelper(comp, std::get<0>(recv), std::get<1>(recv));
+         client->write(response, idx, knot->getPointerLocation(idx));
+         }
+         break;
       case MessageType::VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex:
          {
          auto recv = client->getRecvData<TR::KnownObjectTable::Index, std::string>();

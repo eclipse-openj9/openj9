@@ -2242,6 +2242,21 @@ TR_J9ServerVM::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::Know
       }
    return -1;
    }
+
+TR::KnownObjectTable::Index
+TR_J9ServerVM::delegatingMethodHandleTargetHelper(TR::Compilation *comp, TR::KnownObjectTable::Index dmhIndex, TR_OpaqueClassBlock *cwClass)
+   {
+   TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+   if (!knot) return TR::KnownObjectTable::UNKNOWN;
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_delegatingMethodHandleTarget, dmhIndex, cwClass);
+   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+
+   TR::KnownObjectTable::Index idx = std::get<0>(recv);
+   knot->updateKnownObjectTableAtServer(idx, std::get<1>(recv));
+   return idx;
+   }
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 TR::KnownObjectTable::Index
