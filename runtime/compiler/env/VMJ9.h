@@ -897,6 +897,8 @@ public:
       TR::Compilation *comp, TR::KnownObjectTable::Index dmhIndex, bool trace);
    virtual TR::KnownObjectTable::Index delegatingMethodHandleTargetHelper(
       TR::Compilation *comp, TR::KnownObjectTable::Index dmhIndex, TR_OpaqueClassBlock *cwClass);
+   virtual UDATA getVMTargetOffset();
+   virtual UDATA getVMIndexOffset();
 #endif
 
    // JSR292 }}}

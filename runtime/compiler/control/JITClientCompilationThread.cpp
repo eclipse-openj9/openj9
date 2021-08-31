@@ -463,6 +463,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                vmInfo._srConstructorAccessorClass = NULL;
 #endif // J9VM_OPT_SIDECAR
          vmInfo._extendedRuntimeFlags2 = javaVM->extendedRuntimeFlags2;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         // These offsets are initialized later on
+         vmInfo._vmtargetOffset = 0;
+         vmInfo._vmindexOffset = 0;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
          }
 
          // For multi-layered SCC support
@@ -1134,6 +1139,18 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<TR::KnownObjectTable::Index, TR_OpaqueClassBlock *>();
          TR::KnownObjectTable::Index idx = fe->delegatingMethodHandleTargetHelper(comp, std::get<0>(recv), std::get<1>(recv));
          client->write(response, idx, knot->getPointerLocation(idx));
+         }
+         break;
+      case MessageType::VM_getVMTargetOffset:
+         {
+         client->getRecvData<JITServer::Void>();
+         client->write(response, fe->getVMTargetOffset());
+         }
+         break;
+      case MessageType::VM_getVMIndexOffset:
+         {
+         client->getRecvData<JITServer::Void>();
+         client->write(response, fe->getVMIndexOffset());
          }
          break;
       case MessageType::VM_getMemberNameFieldKnotIndexFromMethodHandleKnotIndex:
