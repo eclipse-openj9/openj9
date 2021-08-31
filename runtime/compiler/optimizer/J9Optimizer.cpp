@@ -325,6 +325,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::treeSimplification                                                    },
    { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  }, // disabled by default, enabled by -Xjit:enableSequentialLoadStoreWarm
    { OMR::cheapGlobalValuePropagationGroup                                      },
+   { OMR::localCSE,                                    OMR::IfVectorAPI },
    { OMR::dataAccessAccelerator                                                 }, // globalValuePropagation and inlining might expose opportunities for dataAccessAccelerator
    { OMR::globalCopyPropagation,                       OMR::IfVoluntaryOSR          },
    { OMR::lastLoopVersionerGroup,                      OMR::IfLoops                  },
@@ -378,6 +379,9 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::arraysetStoreElimination                                              },
    { OMR::checkcastAndProfiledGuardCoalescer                                    },
    { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
+   { OMR::globalDeadStoreElimination,                OMR::IfVectorAPI                }, // global dead store removal
+   { OMR::deadTreesElimination,                      OMR::IfVectorAPI                }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                        OMR::IfVectorAPI                },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::treeLowering,                              OMR::MustBeDone                 },
@@ -419,6 +423,9 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    { OMR::treeSimplification,                        OMR::MarkLastRun                 },
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // cleanup at the end
    { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
+   { OMR::globalDeadStoreElimination,                OMR::IfVectorAPI           }, // global dead store removal
+   { OMR::deadTreesElimination,                      OMR::IfVectorAPI           }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                        OMR::IfVectorAPI},
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::treeLowering,                              OMR::MustBeDone                 },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
@@ -443,6 +450,7 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::loopReplicator,                        OMR::IfLoops                  }, // tail-duplication in loops
    { OMR::blockSplitter,                         OMR::IfNews                   }, // treeSimplification + blockSplitter + VP => opportunity for EA
    { OMR::expensiveGlobalValuePropagationGroup                            },
+   { OMR::localCSE,                              OMR::IfVectorAPI },
    { OMR::dataAccessAccelerator                                           },
    { OMR::osrGuardRemoval,                       OMR::IfEnabled           }, // run after calls/monents/asyncchecks have been removed
    { OMR::globalDeadStoreGroup,                                           },
@@ -485,6 +493,9 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::arraycopyTransformation      },
    { OMR::checkcastAndProfiledGuardCoalescer                              },
    { OMR::jProfilingRecompLoopTest,              OMR::IfLoops                  },
+   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI              },  // global dead store removal
+   { OMR::deadTreesElimination,                  OMR::IfVectorAPI              }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI              },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled                },
    { OMR::jProfilingValue,                           OMR::MustBeDone           },
    { OMR::treeLowering,                              OMR::MustBeDone           },
@@ -535,6 +546,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::globalDeadStoreGroup,                              },
    { OMR::idiomRecognition,                      OMR::IfLoopsAndNotProfiling   }, // Early pass of idiomRecognition - Loop Canonicalizer transformations break certain idioms (i.e. arrayTranslateAndTest)
    { OMR::globalCopyPropagation,                 OMR::IfNoLoops       },
+   { OMR::localCSE,                              OMR::IfVectorAPI },
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops     }, // canonicalize loops (improve fall throughs)
    { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
    { OMR::redundantInductionVarElimination,      OMR::IfLoops     },
@@ -569,6 +581,9 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::localValuePropagation,                 OMR::MarkLastRun              },
    { OMR::arraycopyTransformation      },
    { OMR::checkcastAndProfiledGuardCoalescer      },
+   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI               }, // global dead store removal
+   { OMR::deadTreesElimination,                  OMR::IfVectorAPI               }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI               },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled   },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::treeLowering,                              OMR::MustBeDone                 },
@@ -623,6 +638,7 @@ static const OptimizationStrategy AOTStrategyOpts[] =
    { OMR::stripMiningGroup,                      OMR::IfLoops   }, // strip mining in loops
    { OMR::loopReplicator,                        OMR::IfLoops   }, // tail-duplication in loops
    { OMR::expensiveGlobalValuePropagationGroup             },
+   { OMR::localCSE,                                    OMR::IfVectorAPI },
    { OMR::globalDeadStoreGroup,                            },
    { OMR::globalCopyPropagation,                 OMR::IfNoLoops },
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops   }, // canonicalize loops (improve fall throughs) and versioning
@@ -638,6 +654,9 @@ static const OptimizationStrategy AOTStrategyOpts[] =
    { OMR::localCSE,                              OMR::IfEnabled  },  //common up lit pool refs in the same block
    { OMR::signExtendLoadsGroup,                  OMR::IfEnabled }, // last opt before GRA
    { OMR::arraysetStoreElimination                                              },
+   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI            }, // global dead store removal
+   { OMR::deadTreesElimination,                  OMR::IfVectorAPI            }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI            },
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled },
    { OMR::treeLowering,                          OMR::MustBeDone},
    { OMR::globalCopyPropagation,                 OMR::IfMoreThanOneBlock}, // global copy propagation
@@ -687,6 +706,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  },
 #endif
    { OMR::cheapGlobalValuePropagationGroup                                      },
+   { OMR::localCSE,                                  OMR::IfVectorAPI },
    { OMR::dataAccessAccelerator                                                 },
 #ifdef TR_HOST_S390
    { OMR::globalCopyPropagation,                     OMR::IfVoluntaryOSR            },
@@ -741,6 +761,9 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::treeSimplification,                        OMR::IfEnabledMarkLastRun       }, // Simplify non-normalized address computations introduced by prefetch insertion
    { OMR::trivialDeadTreeRemoval,                    OMR::IfEnabled                  }, // final cleanup before opcode expansion
    { OMR::jProfilingRecompLoopTest,                  OMR::IfLoops                    },
+   { OMR::globalDeadStoreElimination,                OMR::IfVectorAPI                }, // global dead store removal
+   { OMR::deadTreesElimination,                      OMR::IfVectorAPI                }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion,                        OMR::IfVectorAPI                },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup, OMR::IfEnabled                  },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::treeLowering,                              OMR::MustBeDone                 },
@@ -748,7 +771,6 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::compactNullChecks,                         OMR::IfEnabled                  }, // cleanup at the end
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead anchors created by check/store removal
    { OMR::deadTreesElimination,                      OMR::IfEnabled                  }, // remove dead RegStores produced by previous deadTrees pass
-   { OMR::vectorAPIExpansion                                                    },
    { OMR::redundantGotoElimination,                  OMR::IfEnabledAndNotJitProfiling }, // dead store and dead tree elimination may have left empty blocks
    { OMR::compactLocals,                             OMR::IfNotJitProfiling          }, // analysis results are invalidated by profilingGroup
    { OMR::globalLiveVariablesForGC                                              },
