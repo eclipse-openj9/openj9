@@ -2257,6 +2257,32 @@ TR_J9ServerVM::delegatingMethodHandleTargetHelper(TR::Compilation *comp, TR::Kno
    knot->updateKnownObjectTableAtServer(idx, std::get<1>(recv));
    return idx;
    }
+
+UDATA
+TR_J9ServerVM::getVMTargetOffset()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   if (vmInfo->_vmtargetOffset)
+      return vmInfo->_vmtargetOffset;
+
+   stream->write(JITServer::MessageType::VM_getVMTargetOffset, JITServer::Void());
+   vmInfo->_vmtargetOffset = std::get<0>(stream->read<UDATA>());
+   return vmInfo->_vmtargetOffset;
+   }
+
+UDATA
+TR_J9ServerVM::getVMIndexOffset()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   if (vmInfo->_vmindexOffset)
+      return vmInfo->_vmindexOffset;
+
+   stream->write(JITServer::MessageType::VM_getVMIndexOffset, JITServer::Void());
+   vmInfo->_vmindexOffset = std::get<0>(stream->read<UDATA>());
+   return vmInfo->_vmindexOffset;
+   }
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 TR::KnownObjectTable::Index
