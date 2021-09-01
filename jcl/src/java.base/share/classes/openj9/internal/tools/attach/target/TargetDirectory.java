@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 package openj9.internal.tools.attach.target;
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,7 +66,7 @@ public final class TargetDirectory {
 			 */
 			IPC.logMessage("target directory file conflict: ", tgtDir.getAbsolutePath()); //$NON-NLS-1$
 			if (preserveId) {
-				deleteMyDirectory(false);
+				deleteMyDirectory(false, newId);
 			}
 			CommonDirectory.deleteStaleDirectories(null);
 		}
@@ -91,9 +91,13 @@ public final class TargetDirectory {
 			IPC.checkOwnerAccessOnly(targetDirectoryPath);
 		} else {
 			/* The directory exists but is unusable. */
-			IPC.logMessage("Attach API target directory already exists for VMID ", myVmId); //$NON-NLS-1$
-			/*[MSG "K0547", "Attach API target directory already exists for VMID {0}"]*/			  
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0547", myVmId));//$NON-NLS-1$
+			if (!preserveId) {
+				IPC.logMessage("Attach API target directory already exists but is unusable for VMID ", myVmId); //$NON-NLS-1$
+				/*[MSG "K0547", "Attach API target directory already exists for VMID {0}"]*/
+				throw new IOException(com.ibm.oti.util.Msg.getString("K0547", myVmId));//$NON-NLS-1$
+			} else {
+				IPC.logMessage("Attach API target directory already exists and reused for VMID: ", myVmId); //$NON-NLS-1$
+			}
 		}
 		File replyFile = new File(tgtDir, Reply.REPLY_FILENAME);
 		if (replyFile.exists()) {
@@ -130,33 +134,66 @@ public final class TargetDirectory {
 	 */
 	static boolean deleteMyFiles() {
 		if (LOGGING_DISABLED != loggingStatus) {
-			IPC.logMessage("deleting my files"); //$NON-NLS-1$
+			IPC.logMessage("deleting my files: attachInfo files and attachNotificationSync files."); //$NON-NLS-1$
 		}
 
 		if ((null != advertisementFileObject) && advertisementFileObject.delete()) {
+			IPC.logMessage("deleted ", advertisementFileObject.getAbsolutePath()); //$NON-NLS-1$
 			advertisementFileObject = null;		
 		} else {
 			return false;
 		}
 		if ((null != syncFileObject) && syncFileObject.delete()) {
+			IPC.logMessage("deleted ", syncFileObject.getAbsolutePath()); //$NON-NLS-1$
 			syncFileObject = null;
 		} else {
 			return false;
+		}
+		if (LOGGING_DISABLED != loggingStatus) {
+			IPC.logMessage("deleted my files with success."); //$NON-NLS-1$
 		}
 		return true;
 	}
 
 	/**
+	 * A helper to try the fast path for deleting files and directories, and
+	 * determine if the heavy-weight path is required.
+	 *
+	 * @param directoryEmpty set to true if the directory is supposedly empty
+	 *
+	 * @return true if the heavy-weight path is still required, otherwise false.
+	 */
+	private static boolean isHeavyweightRequiredAfterFastpathDeletion(boolean directoryEmpty) {
+		if (LOGGING_DISABLED != loggingStatus) {
+			IPC.logMessage("deleting my directory "); //$NON-NLS-1$
+		}
+		return ((!directoryEmpty && !deleteMyFiles()) || (null == targetDirectoryFileObject)
+				|| !targetDirectoryFileObject.delete());
+	}
+
+	/**
 	 * Remove this VM's target directory and the files within it
+	 *
 	 * @param directoryEmpty set to true if the directory is supposedly empty
 	 */
 	static void deleteMyDirectory(boolean directoryEmpty) {
-		if (LOGGING_DISABLED != loggingStatus) {
-			IPC.logMessage("deleting my directory "); //$NON-NLS-1$
-		}		
-		/* try the fast path for deleting files and directories. try the heavyweight path if something fails */
-		if ((!directoryEmpty && !deleteMyFiles()) || (null == targetDirectoryFileObject) || !targetDirectoryFileObject.delete()) {
-			deleteTargetDirectory(AttachHandler.getVmId());	
+		if (isHeavyweightRequiredAfterFastpathDeletion(directoryEmpty)) {
+			deleteTargetDirectory(AttachHandler.getVmId());
+		}
+	}
+
+	/**
+	 * Remove this VM's target directory and the files within it. The target vmId is
+	 * supplied for the case that AttachHandler.vmId hasn't been set properly at
+	 * early bootstapping stage.
+	 *
+	 * @param directoryEmpty set to true if the directory is supposedly empty
+	 * @vmId target VM ID
+	 */
+	static void deleteMyDirectory(boolean directoryEmpty, String vmId) {
+		if (isHeavyweightRequiredAfterFastpathDeletion(directoryEmpty)) {
+			IPC.logMessage("fast path for deleting files and dirs fail, trying the heavyweight path for vmId: ", vmId); //$NON-NLS-1$
+			deleteTargetDirectory(vmId);
 		}
 	}
 
@@ -181,6 +218,8 @@ public final class TargetDirectory {
 			} else if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("deleted directory ", tgtDir.getAbsolutePath()); //$NON-NLS-1$
 			}
+		} else {
+			IPC.logMessage("skip deleteTargetDirectory since the vmid was never set - we didn't create the directory"); //$NON-NLS-1$
 		}
 	}
 	
