@@ -20,7 +20,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 #
 
-
 # Externalised messages for the VM components of the JCL module.
 # New messages MUST be added at the end of this file.
 #
@@ -453,14 +452,6 @@ J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.system_action=The JVM will throw a JVMCheckpoi
 J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.user_response=Ensure the specified directory is accessible.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR=Could not open the work directory, errno=%li
-# START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.explanation=An error occured when the JVM attempted to open the specified directory.
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.system_action=The JVM will throw a JVMCheckpointException.
-J9NLS_JCL_CRIU_FAILED_TO_OPEN_DIR.user_response=Ensure the specified directory is accessible.
-# END NON-TRANSLATABLE
-
 J9NLS_JCL_CRIU_INIT_FAILED=Could not init CRIU options, err=%li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_INIT_FAILED.sample_input_1=1
@@ -485,18 +476,26 @@ J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw a RestoreExc
 J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.user_response=Ensure the specified directory is accessible.
 # END NON-TRANSLATABLE
 
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR=Could not close the work directory, errno=%li
-# START NON-TRANSLATABLE
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.sample_input_1=1
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.explanation=An error occured when the JVM attempted to close the specified directory.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.system_action=The JVM will throw a RestoreException or SystemCheckpointException.
-J9NLS_JCL_CRIU_FAILED_TO_CLOSE_DIR.user_response=Ensure the specified directory is accessible.
-# END NON-TRANSLATABLE
-
 J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING=Could not convert java string to native encoding, err=%li
 # START NON-TRANSLATABLE
 J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.sample_input_1=1
 J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.explanation=An error occured when the JVM attempted to convert a java string to native encoding.
 J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.system_action=The JVM will throw a JVMCheckpointException.
 J9NLS_JCL_CRIU_FAILED_TO_CONVERT_JAVA_STRING.user_response=Ensure the specified input strings are valid.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR=Could not open the work directory, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.explanation=An error occured when the JVM attempted to open the specified directory.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_OPEN_WORK_DIR.user_response=Ensure the specified directory is accessible.
+# END NON-TRANSLATABLE
+
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR=Could not close the work directory, errno=%li
+# START NON-TRANSLATABLE
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.sample_input_1=1
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.explanation=An error occured when the JVM attempted to close the specified directory.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.system_action=The JVM will throw a RestoreException or SystemCheckpointException.
+J9NLS_JCL_CRIU_FAILED_TO_CLOSE_WORK_DIR.user_response=Ensure the specified directory is accessible.
 # END NON-TRANSLATABLE
