@@ -82,7 +82,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/ClassFormatError"/>
 	<classref name="java/lang/StackTraceElement"/>
 	<classref name="java/lang/StackWalker$StackFrameImpl"/>
-	<classref name="java/lang/InternalRamClass"/>
+	<classref name="java/lang/InternalConstantPool"/>
 	<classref name="java/lang/ExceptionInInitializerError"/>
 	<classref name="java/io/UTFDataFormatException"/>
 	<classref name="java/lang/reflect/InvocationTargetException" flags="opt_reflect"/>
@@ -354,7 +354,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/Module" name="loader" signature="Ljava/lang/ClassLoader;" flags="opt_module" versions="9-"/>
 	<fieldref class="java/lang/Module" name="name" signature="Ljava/lang/String;" flags="opt_module" versions="9-"/>
 
-	<fieldref class="java/lang/InternalRamClass" name="vmref" signature="J" cast="struct J9Class *"/>
+	<fieldref class="java/lang/InternalConstantPool" name="vmref" signature="J" cast="struct J9ConstantPool *"/>
 
 	<fieldref class="com/ibm/oti/util/WeakReferenceNode" name="next" signature="Lcom/ibm/oti/util/WeakReferenceNode;" flags="opt_methodHandle"/>
 

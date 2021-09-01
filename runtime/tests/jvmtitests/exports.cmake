@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,6 +112,7 @@ omr_add_exports(jvmtitest
 	Java_com_ibm_jvmti_tests_redefineClasses_rc019b_redefineClass
 	Java_com_ibm_jvmti_tests_redefineClasses_rc019b_getValue
 	Java_com_ibm_jvmti_tests_redefineClasses_rc020_redefineClass
+	Java_com_ibm_jvmti_tests_redefineClasses_rc021_redefineClass
 	Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyOnLoadCapabilities
 	Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyLiveCapabilities
 	Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc002_verifyCapabilityRetention

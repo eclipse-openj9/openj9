@@ -81,7 +81,7 @@ getAnnotationDataAsByteArray(struct J9VMThread *vmThread, U_32 *annotationData)
 	U_32 byteCount = *annotationData;
 	U_8 *byteData = (U_8 *)(annotationData + 1);
 	j9object_t byteArray = vmThread->javaVM->memoryManagerFunctions->J9AllocateIndexableObject(
-		vmThread, vmThread->javaVM->byteArrayClass, byteCount, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		vmThread, vmThread->javaVM->byteArrayClass, byteCount + J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread), J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	if (NULL == byteArray) {
 		vmThread->javaVM->internalVMFunctions->setHeapOutOfMemoryError(vmThread);
 		return NULL;
@@ -113,7 +113,20 @@ getClassAnnotationData(struct J9VMThread *vmThread, struct J9Class *declaringCla
 	j9object_t result = NULL;
 	U_32 *annotationData = getClassAnnotationsDataForROMClass(declaringClass->romClass);
 	if (NULL != annotationData) {
+		J9ConstantPool *ramCP = J9_CP_FROM_CLASS(declaringClass);
 		result = getAnnotationDataAsByteArray(vmThread, annotationData);
+		if (NULL != result) {
+			U_32 byteCount = *annotationData;
+			/* Append J9ConstantPool* at end of array so Class.getAnnotationCache can use it to
+			* get a ConstantPool consistent with the annotation data in case of redefine
+			*/
+			J9ConstantPool *ramCPPtr = (J9ConstantPool *)(I_8 *)J9JAVAARRAY_EA(vmThread, result, byteCount, I_8);
+			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+				*(U_32 *)ramCPPtr = (U_32)(UDATA)ramCP;
+			} else {
+				*(UDATA *)ramCPPtr = (UDATA)ramCP;
+			}
+		}
 	}
 	return result;
 }
@@ -121,24 +134,35 @@ getClassAnnotationData(struct J9VMThread *vmThread, struct J9Class *declaringCla
 jbyteArray
 getClassTypeAnnotationsAsByteArray(JNIEnv *env, jclass jlClass)
 {
-    jobject result = NULL;
-    j9object_t clazz = NULL;
-    J9VMThread *vmThread = (J9VMThread *) env;
+	jobject result = NULL;
+	j9object_t clazz = NULL;
+	J9VMThread *vmThread = (J9VMThread *) env;
 
-    enterVMFromJNI(vmThread);
-    clazz = J9_JNI_UNWRAP_REFERENCE(jlClass);
-    if (NULL != clazz) {
-    	struct J9Class *declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, clazz);
-    	U_32 *annotationData = getClassTypeAnnotationsDataForROMClass(declaringClass->romClass);
-    	if (NULL != annotationData) {
-    		j9object_t annotationsByteArray = getAnnotationDataAsByteArray(vmThread, annotationData);
-    		if (NULL != annotationsByteArray) {
-    			result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, annotationsByteArray);
-    		}
-    	}
-    }
-    exitVMToJNI(vmThread);
-    return result;
+	enterVMFromJNI(vmThread);
+	clazz = J9_JNI_UNWRAP_REFERENCE(jlClass);
+	if (NULL != clazz) {
+		struct J9Class *declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, clazz);
+		U_32 *annotationData = getClassTypeAnnotationsDataForROMClass(declaringClass->romClass);
+		if (NULL != annotationData) {
+			J9ConstantPool *ramCP = J9_CP_FROM_CLASS(declaringClass);
+			j9object_t annotationsByteArray = getAnnotationDataAsByteArray(vmThread, annotationData);
+			if (NULL != annotationsByteArray) {
+				U_32 byteCount = *annotationData;
+				/* Append J9ConstantPool* at end of array so Class.getAnnotationCache can use it to
+				* get a ConstantPool consistent with the annotation data in case of redefine
+				*/
+				J9ConstantPool *ramCPPtr = (J9ConstantPool *)(I_8 *)J9JAVAARRAY_EA(vmThread, annotationsByteArray, byteCount, I_8);
+				if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+					*(U_32 *)ramCPPtr = (U_32)(UDATA)ramCP;
+				} else {
+					*(UDATA *)ramCPPtr = (UDATA)ramCP;
+				}
+				result = vmThread->javaVM->internalVMFunctions->j9jni_createLocalRef(env, annotationsByteArray);
+			}
+		}
+	}
+	exitVMToJNI(vmThread);
+	return result;
 }
 
 j9object_t
