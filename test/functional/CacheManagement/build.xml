@@ -26,7 +26,8 @@
 	<description>
 		Build CacheManagement Tests 
 	</description>
-	<import file="${TEST_ROOT}/functional/build.xml"/>
+
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/CacheManagement" />
@@ -86,8 +87,8 @@
        <!-- Delete the ${build} directory trees -->
        <delete dir="${build}"/>
     </target>
-	
-	<target name="build" >
+
+	<target name="build" depends="buildCmdLineTestUtils">
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />

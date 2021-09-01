@@ -27,7 +27,6 @@
 	<description>
 		Build J9 VM Java8andUp General Bucket
 	</description>
-	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/Java8andUp" />
@@ -362,6 +361,9 @@
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
 			<then>
+				<subant target="build">
+					<fileset dir="${TEST_ROOT}/functional/InstrumentationAgent" includes="build.xml" />
+				</subant>
 				<antcall target="clean" inheritall="true" />
 			</then>
 		</if>

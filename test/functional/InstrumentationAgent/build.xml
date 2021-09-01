@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 	<!--Properties for this particular build-->
 	<property name="src" location="./src" />
 	<property name="build" location="./bin" />
+	<property name="jarfile" value="${DEST}/instrumentation.jar" />
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -55,7 +56,7 @@
 	<target name="dist" depends="compile" description="generate the distribution" >
 		<echo>===DEST:				${DEST}</echo>
 	    <mkdir dir="${DEST}"/>
-	    <jar jarfile="${DEST}/instrumentation.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
+	    <jar jarfile="${jarfile}" filesonly="true" manifest="./META-INF/MANIFEST.MF">
 			<fileset dir="${build}"/>
 	    </jar>
 	</target>
@@ -65,7 +66,11 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="check-jar">
+		<available file="${jarfile}" property="jar.exist"/>
+	</target>
+
+	<target name="build" depends="check-jar" unless="jar.exist">
 		<antcall target="clean" inheritall="true" />
 	</target>
 </project>
