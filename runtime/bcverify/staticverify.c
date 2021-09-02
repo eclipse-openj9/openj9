@@ -183,6 +183,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 	bcIndex = bcStart;
 	bcInstructionStart = bcIndex;
 	while (bcIndex < bcEnd) {
+		BOOLEAN noZeroIndex = FALSE;
 		bcInstructionStart = bcIndex;
 		/* Don't need to check that an instruction is in the code range here as method entries
 			have 4 extra bytes at the end - exception and attribute counts so we won't exceed
@@ -608,6 +609,8 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 		case CFR_BC_jsr:
 			method->j9Flags |= CFR_J9FLAG_HAS_JSR;
 			classfile->j9Flags |= CFR_J9FLAG_HAS_JSR;
+			noZeroIndex = TRUE;
+
 			/* fall through */
 
 		case CFR_BC_goto:
@@ -636,6 +639,10 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			}
 			if (!map[target]) {
 				errorType = J9NLS_CFR_ERR_BC_JUMP_TARGET__ID;
+				goto _verifyError;
+			}
+			if (noZeroIndex && (0 == index)) {
+				errorType = J9NLS_CFR_ERR_BC_JUMP_RECURSIVE__ID;
 				goto _verifyError;
 			}
 			break;
@@ -1166,6 +1173,8 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 		case CFR_BC_jsr_w:
 			method->j9Flags |= CFR_J9FLAG_HAS_JSR;
 			classfile->j9Flags |= CFR_J9FLAG_HAS_JSR;
+			noZeroIndex = TRUE;
+
 			/* fall through */
 
 		case CFR_BC_goto_w:
@@ -1178,6 +1187,10 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			}
 			if (!map[target]) {
 				errorType = J9NLS_CFR_ERR_BC_JUMP_TARGET__ID;
+				goto _verifyError;
+			}
+			if (noZeroIndex && (0 == index)) {
+				errorType = J9NLS_CFR_ERR_BC_JUMP_RECURSIVE__ID;
 				goto _verifyError;
 			}
 			break;
