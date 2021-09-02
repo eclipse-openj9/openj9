@@ -1,29 +1,27 @@
 <?xml version="1.0"?>
-
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+Copyright (c) 2016, 2021 IBM Corp. and others
 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <project name="OpenJ9 Unsafe Tests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
+<taskdef resource="net/sf/antcontrib/antlib.xml" />
 	<description>
 		Build OpenJ9 Unsafe Tests
 	</description>
@@ -32,20 +30,20 @@
 	<property name="DEST" value="${BUILD_ROOT}/functional/UnsafeTest" />
 
 	<!--Properties for this particular build-->
-	<property name="src" location="./src" />
-	<property name="src_80" location="./src_80" />
-	<property name="src_90" location="./src_90" />
-	<property name="build" location="./bin" />
-	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
-	<property name="LIB" value="testng"/>
-	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
+	<property name="src" location="src" />
+	<property name="src_80" location="src_80" />
+	<property name="src_90" location="src_90" />
+	<property name="build" location="bin" />
+	<property name="transformerListener" location="${TEST_ROOT}/Utils/src" />
+	<property name="LIB" value="testng" />
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
 		<mkdir dir="${build}" />
 	</target>
 
-	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source ">
+	<target name="compile" depends="init,getDependentLibs" description="Using java ${JDK_VERSION} to compile the source">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
@@ -53,10 +51,12 @@
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 		<if>
-			<equals arg1="${JDK_VERSION}" arg2="8"/>
+			<equals arg1="${JDK_VERSION}" arg2="8" />
 			<then>
+				<property name="src_access" location="${TEST_ROOT}/functional/UnsafeAccess/src" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src_80}" />
+					<src path="${src_access}" />
 					<src path="${transformerListener}" />
 					<classpath>
 						<pathelement location="${LIB_DIR}/testng.jar" />
@@ -64,13 +64,30 @@
 				</javac>
 			</then>
 			<else>
+				<if>
+					<matches string="${JDK_VERSION}" pattern="^1[1-6]$$" />
+					<then>
+						<!-- Java 11-16 -->
+						<property name="src_access" location="${TEST_ROOT}/functional/UnsafeAccess/src_110" />
+					</then>
+					<else>
+						<!-- Java 17+ -->
+						<property name="src_access" location="${TEST_ROOT}/functional/UnsafeAccess/src_170" />
+					</else>
+				</if>
+				<property name="src_util" location="../TestUtilities/src" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src_90}" />
+					<src path="${src_access}" />
 					<src path="${transformerListener}" />
-					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
+					<src path="${src_util}" />
 					<classpath>
 						<pathelement location="${LIB_DIR}/testng.jar" />
 					</classpath>
+					<compilerarg value="--add-exports" />
+					<compilerarg value="java.base/jdk.internal.misc=ALL-UNNAMED" />
+					<compilerarg value="--add-exports" />
+					<compilerarg value="java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED" />
 				</javac>
 			</else>
 		</if>
@@ -93,10 +110,10 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="build">
 		<if>
 			<or>
-				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
 			<then>

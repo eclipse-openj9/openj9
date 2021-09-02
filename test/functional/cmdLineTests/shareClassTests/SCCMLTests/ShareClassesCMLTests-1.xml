@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-
 <!--
-  Copyright (c) 2012, 2021 IBM Corp. and others
+Copyright (c) 2012, 2021 IBM Corp. and others
 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <!-- Test 1 to Test 65: 103 tests -->
@@ -29,61 +27,60 @@
 <suite id="Shared Classes CommandLineOptionTests Suite ">
 
 	<!-- Our test modes for this suite -->
-	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests"/>
+	<variable name="mode204" value="-Xshareclasses:name=ShareClassesCMLTests" />
 
 	<!-- Set variables up -->
-	<variable name="JAVAC_DIR" value="$JAVA_HOME$$PATHSEP$bin"/>
-	<variable name="CACHE_DIR" value="cacheDir=."/>
-	
-	<variable name="currentMode" value="$mode204$"/>
-	<variable name="XXShareClassesEnableBCI" value="-XX:ShareClassesEnableBCI"/>
+	<variable name="JAVAC_DIR" value="$JAVA_HOME$$PATHSEP$bin" />
+	<variable name="CACHE_DIR" value="cacheDir=." />
 
- 	<variable name="CP_HANOI" value="-cp $UTILSJAR$" />
+	<variable name="currentMode" value="$mode204$" />
+	<variable name="XXShareClassesEnableBCI" value="-XX:ShareClassesEnableBCI" />
+
+	<variable name="CP_HANOI" value="-cp $UTILSJAR$" />
 	<!-- CP_UNSAFE uses the utils2.jar which contains the modified implmentation of the classes for the test 62 -->
 	<variable name="CP_UNSAFE" value="-cp $UTILSJAR_2$" />
- 	<variable name="BOOTCP_HANOI" value="-Xbootclasspath/a:$UTILSJAR$" />
- 	<variable name="PROGRAM_HANOI" value="org.openj9.test.ivj.Hanoi 2" />
- 	<variable name="PROGRAM_LAMBDA" value="org.openj9.test.lambdatests.Test1" />
+	<variable name="BOOTCP_HANOI" value="-Xbootclasspath/a:$UTILSJAR$" />
+	<variable name="PROGRAM_HANOI" value="org.openj9.test.ivj.Hanoi 2" />
+	<variable name="PROGRAM_LAMBDA" value="org.openj9.test.lambdatests.Test1" />
 	<variable name="PROGRAM_UNSAFE" value="org.openj9.test.classtests.ClassTest" />
- 	<variable name="BOOTSTRAP_CLASS" value="java/lang/Object" />
+	<variable name="BOOTSTRAP_CLASS" value="java/lang/Object" />
 
 	<variable name="EXPORTS" value="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
 	<!-- set variable EXPORTS to an empty string on Java 8. JDK version is passed in before bits -->
 	<exec command="echo " capture="EXPORTS" platforms="8_bits.*" />
-	
- 	<variable name="AGENT_NOCLASSMODIFICATION" value="-agentlib:jvmtitest=test:ecflh001,args:noModify" />
- 	<variable name="AGENT_RETRANSFORM" value="-agentlib:jvmtitest=test:rtc001" />
- 	
+
+	<variable name="AGENT_NOCLASSMODIFICATION" value="-agentlib:jvmtitest=test:ecflh001,args:noModify" />
+	<variable name="AGENT_RETRANSFORM" value="-agentlib:jvmtitest=test:rtc001" />
+
 	<variable name="DUMPFILE" value="shrcmltest" />
 	<variable name="SYSDUMP" value="-Xdump:system:file=$DUMPFILE$.dmp" />
 	<variable name="JAVADUMP" value="-Xdump:java:file=$DUMPFILE$.txt" />
 	<variable name="SNAPDUMP" value="-Xdump:snap:file=$DUMPFILE$.trc" />
 	<!-- Override -Xdump option on z/OS -->
 	<variable name="SYSDUMP" value="-Xdump:system:opts=IEATDUMP,dsn=%uid.J9CORE.DMP" platforms="zos.*" />
-	
+
 	<variable name="NON_64BIT_PLATFORMS" value=".*bits\.3[12]" />
 	<variable name="64BIT_PLATFORMS" value=".*bits\.64" />
 
+	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$" />
 
-	<if testVariable="SCMODE" testValue="204" resultVariable="currentMode" resultValue="$mode204$"/>
-	
-	<echo value=" "/>
-	<echo value="#######################################################"/>
-	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$"/>
-	<echo value="#######################################################"/>
-	<echo value=" "/>
-		
+	<echo value=" " />
+	<echo value="#######################################################" />
+	<echo value="Running tests in mode $SCMODE$ with command line options: $currentMode$" />
+	<echo value="#######################################################" />
+	<echo value=" " />
+
 	<!--
 	Note:
 	Most tests check for strings 'corrupt', 'JVM requested Java dump', and 'JVM requested Snap dump' in the output.
 	These checks are present because a cache may be found to be corrupt, and the test could otherwise pass.
-	
+
 	The string 'corrupt' is checked because it can appear several messages like below.
 		JVMSHRC443E Cache CRC is incorrect indicating a corrupt cache. Incorrect cache CRC: 0x0.
 		JVMDUMP013I Processed dump event "corruptcache", detail "".
 		JVMSHRC442E Shared cache "jim" is corrupt. Corruption code is -1. Corrupt value is 0x0. No new JVMs will be allowed to connect to the cache.
 	-->
-		
+
 	<test id="Start : Cleanup: persistent" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
@@ -95,20 +92,19 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 
-
 	<test id="Start: Cleanup: nonpersistent" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
-		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 
 	<!-- BEGIN: Test -Xshareclasses:storeClassDebugData (Jazz 21781) -->
-	
+
 	<test id="Test 1: Create a cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
@@ -117,7 +113,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-		
+
 	<test id="Test 2: Ensure -Xnolinenumbers is false" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xnolinenumbers[\s]*= false</output>
@@ -128,7 +124,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 2 - b: Add ROM classes to the existing shared cache without line numbers" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xnolinenumbers $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
@@ -147,7 +143,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 3: Build a new cache with -Xnolinenumbers" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xnolinenumbers $currentMode$,reset -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
@@ -156,7 +152,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 4 - a: Ensure -Xnolinenumbers is true and all the content is without line numbers" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xnolinenumbers[\s]*= true</output>
@@ -167,7 +163,6 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
 
 	<test id="Test 4 - b: Add ROM classes to the existing shared cache with line numbers" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ $CP_HANOI$ $PROGRAM_HANOI$</command>
@@ -196,7 +191,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 4 - e: Ensure -Xnolinenumbers is true and all the content is without line numbers" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">-Xnolinenumbers[\s]*= true</output>
@@ -207,7 +202,6 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
 
 	<test id="Test 4 - f: Add ROM classes to the existing shared cache with line numbers by using mprotect=all" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,mprotect=all $CP_HANOI$ $PROGRAM_HANOI$</command>
@@ -227,9 +221,9 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<!-- END: Test -Xshareclasses:storeClassDebugData (Jazz 21781) -->
-		
+
 	<test id="Test 5: Create a cache with 500K memory and ensure vm starts successfully" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xscmx500k $currentMode$,reset -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
@@ -267,7 +261,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 8: ensure zip cache info is printed in printAllStats output" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printAllStats</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">\[ERR\](.)*: 0x(.)* ZIPCACHE: (.)* Address: (.)* Size: (.)*</output>
@@ -306,7 +300,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 11: JAZZ 31726 test 2 ensure -Xzero:describe shows -Xzero:sharebootzip" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xzero:describe $currentMode$,printStats</command>
 		<output type="success" caseSensitive="yes" regex="yes">-Xzero:.*sharebootzip</output>
@@ -371,7 +365,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 16s: JAZZ 31726 setup for Test 16" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $BOOTCP_HANOI$ -Xzero $currentMode$,reset $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
@@ -409,7 +403,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-		
+
 	<test id="Test 19: JAZZ 31882 -Xshareclasses:verboseAOT testing" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,verboseAOT -version</command>
 		<output type="success" caseSensitive="yes" regex="no">[-Xshareclasses AOT verbose output enabled]</output>
@@ -418,7 +412,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 20: JAZZ 31882 -Xshareclasses:verboseHelper testing" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,verboseHelper -version</command>
 		<output type="success" caseSensitive="yes" regex="no">[-Xshareclasses Helper API verbose output enabled]</output>
@@ -427,7 +421,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 21: JAZZ 31882 -Xshareclasses:verbose testing" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,verbose -version</command>
 		<output type="success" caseSensitive="yes" regex="no">[-Xshareclasses verbose output enabled]</output>
@@ -436,7 +430,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 22: JAZZ 31882 -Xshareclasses:verboseData testing" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,verboseData -version</command>
 		<output type="success" caseSensitive="yes" regex="no">[-Xshareclasses byte data verbose output enabled]</output>
@@ -454,7 +448,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 24: JAZZ 31882 -Xshareclasses:verbosePages testing" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,reset,verbosePages -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">New cache rounded to page size of [\d]* bytes</output>
@@ -464,18 +458,18 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 25: JAZZ 3188 Cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
-		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 26: CMVC 168131 : Create a non persistent cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
@@ -484,7 +478,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 27: CMVC 168131 : Ensure Java 8 cache size is default (16 MB)" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">shared memory ID[\s]*= [\d]*</output>
@@ -494,7 +488,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 28: CMVC 168131 : Re-create by failing buildid match" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,testBadBuildId -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
@@ -503,7 +497,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 29: CMVC 168131 : Ensure Java 8 cache size is default (16 MB)" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">cache size[\s]* = 167[\d][\d][\d][\d][\d][\D]</output>
@@ -512,18 +506,18 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 30: CMVC 168131 : Cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
-		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 31: CMVC 168131 : Create a non persistent cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xscmx32m $currentMode$,nonpersistent -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
@@ -532,7 +526,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 32: CMVC 168131 : Ensure cache size is 32 MB" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">cache size[\s]*= 335[\d][\d][\d][\d][\d][\D]</output>
@@ -541,7 +535,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 33: CMVC 168131 : Re-create by failing buildid match" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,testBadBuildId -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
@@ -550,7 +544,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 34: CMVC 168131 : Ensure cache size is still 32 MB" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">cache size[\s]*= 335[\d][\d][\d][\d][\d][\D]</output>
@@ -559,19 +553,19 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 35: CMVC 168131 : Cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 
 		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
-		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 36: LIR 1445.1 : Debug Area PrintStats Test : Create a test cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
@@ -581,7 +575,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 37: LIR 1445.1 : Debug Area PrintStats Test : Ensure -Xshareclasses:printStats cache contains debug area info" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area size[\s]*= [\d]*</output>
@@ -596,19 +590,19 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 38: LIR 1445.1 : Debug Area PrintStats Test : Destroy test cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 
 		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
-		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 39: LIR 1445.1 : Debug Area PrintStats Test : Create a test cache with -Xscdmx0m" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xscdmx0m $currentMode$ -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
@@ -618,7 +612,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 40: LIR 1445.1 : Debug Area PrintStats Test : Ensure -Xshareclasses:printStats cache contains debug area info" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area size[\s]*= 0</output>
@@ -631,20 +625,19 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
-	
+
 	<test id="Test 41: LIR 1445.1 : Debug Area PrintStats Test : Destroy test cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 
 		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
-		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 42: LIR 1445.1 : Debug Area PrintStats Test : Create a test cache with -Xscdmx3m & java core with -Xnolinenumbers" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xdump:java:events=vmstop,file=javacore.txt -Xscmx16m -Xscdmx3m $currentMode$ $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
@@ -654,7 +647,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
-	
+
 	<test id="Test 43: LIR 1445.1 : Debug Area PrintStats Test : Ensure debug area is 3 MB in size and contains data" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area size[\s]*= 3145728</output>
@@ -667,7 +660,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 44: LIR 1445.1 : Debug Area PrintStats Test : This test checks the following: 1.) Ensure debug area is 3 MB in size and contains data (when using printDetails) 2.) Ensure printStats does not override printDetails and the extra information expected with printDetails option is present " timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats,printDetails -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">metadata start address[\s]*= 0x[\d]*</output>
@@ -711,21 +704,21 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-			
+
 	<test id="Test 45: LIR 1445.1 : Debug Area PrintStats Test : Ensure debug area sizes are correct in generated javacore" timeout="600" runPath=".">
-		<command>cat javacore.txt</command>				
+		<command>cat javacore.txt</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area size[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area % used[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class LocalVariableTable bytes[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class LineNumberTable bytes[\s]*= [\d]*</output>
-		
+
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area used bytes[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class debug area % used[\s]*= 0%</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class LocalVariableTable bytes[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Class LineNumberTable bytes[\s]*= 0</output>
 	</test>
-	
-	<exec command="rm -f javacore.txt" quiet="false"/>
+
+	<exec command="rm -f javacore.txt" quiet="false" />
 
 	<test id="Test 46: printDetails Test : Ensure that printDetails output appears with printAllStats option" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printAllStats,printDetails -version</command>
@@ -755,7 +748,7 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># JIT Profiles[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Java Objects[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># JCL Entries[\s]*= [\d]*</output>
-		
+
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">metadata start address[\s]*= 0x0\s</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">runtime flags[\s]*= 0x0\s</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">cache generation[\s]*= 0</output>
@@ -793,7 +786,7 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># JIT Profiles[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Java Objects[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># JCL Entries[\s]*= [\d]*</output>
-		
+
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">metadata start address[\s]*= 0x0\s</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">runtime flags[\s]*= 0x0\s</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">cache generation[\s]*= 0</output>
@@ -831,7 +824,7 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># JIT Profiles[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Java Objects[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># JCL Entries[\s]*= [\d]*</output>
-		
+
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">metadata start address[\s]*= 0x0\s</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">runtime flags[\s]*= 0x0\s</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">cache generation[\s]*= 0</output>
@@ -854,7 +847,7 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Maximum space for AOT bytes[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Reserved space for JIT data bytes[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Maximum space for JIT data bytes[\s]*= [\d]*</output>
-		
+
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">metadata start address[\s]*= 0x[\d]*</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">runtime flags[\s]*= 0x[\d]*</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">cache generation[\s]*= [\d]*</output>
@@ -882,7 +875,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 50: printDetails Test : Ensure that printDetails output does not appear with printAllStats output when printDetails option is not present" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printAllStats -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">AOT bytes[\s]*= [\d]*</output>
@@ -893,7 +886,7 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Maximum space for AOT bytes[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Reserved space for JIT data bytes[\s]*= [\d]*</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Maximum space for JIT data bytes[\s]*= [\d]*</output>
-		
+
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">metadata start address[\s]*= 0x[\d]*</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">runtime flags[\s]*= 0x[\d]*</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">cache generation[\s]*= [\d]*</output>
@@ -921,33 +914,33 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 51: printDetails Test : Cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="failure" caseSensitive="yes" regex="no">Cache does not exist</output>
-		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 52: JAZZ 85641: Test setting -Dcom.ibm.oti.shared.enabled=true incorrectly in the CML won't overwrite this property. And -Xshare:none turns off class sharing" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xshareclasses:none -Xtrace:print={j9shr.1297,j9shr.1514,j9shr.2270} -XshowSettings:properties -Dcom.ibm.oti.shared.enabled=true $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">com.ibm.oti.shared.enabled = false</output>
 		<output type="required" caseSensitive="yes" regex="no">Puzzle solved!</output>
-		
+
 		<output type="failure" caseSensitive="yes" regex="no">CM commitROMClass : Data was stored in the cache for J9ROMClass</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">CM findROMClass: class .* found at address</output>
 		<output type="failure" caseSensitive="yes" regex="no">com.ibm.oti.shared.enabled = true</output>
 		<output type="failure" caseSensitive="no" regex="no">INIT entering j9shr_init</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
- 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
- 	</test>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
 </test>
-	
+
 	<test id="Test 53: Make sure classes are being stored to the shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,verboseIO $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
@@ -959,7 +952,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 54: Make sure classes are being found in the shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,verboseIO $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
@@ -971,13 +964,13 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 54- cleanup: destroy cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -985,7 +978,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
-	
+
 	<test id="Test 55 Check default cache size on non-OpenJ9 Java 8" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -verbose:sizes $currentMode$ -Xtrace:print={j9shr.369,j9shr.734} -version</command>
 		<output type="success" caseSensitive="yes" regex="no" showMatch="yes">SH_OSCachemmap::startup: Successfully set cache length to 16777216</output>
@@ -997,7 +990,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 55 Check default cache size on OpenJ9 Java 8" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -verbose:sizes $currentMode$ -Xtrace:print={j9shr.369,j9shr.734} -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$NON_64BIT_PLATFORMS$">SH_OSCachemmap::startup: Successfully set cache length to 16777216</output>
@@ -1008,13 +1001,13 @@
 		<output type="success" caseSensitive="yes" regex="no" showMatch="yes" platforms="$64BIT_PLATFORMS$">SH_OSCachemmap::startup: Successfully set cache length to 67108864</output>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$64BIT_PLATFORMS$">OSCache startup.*length=314572800 create=1</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$64BIT_PLATFORMS$">(XX:SharedCacheHardLimit=300M(.)*[\n\r](.)*Xscmx64M|XX:SharedCacheHardLimit=64M)</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 55 Check default cache size on Java 9 and up" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -verbose:sizes $currentMode$ -Xtrace:print={j9shr.369,j9shr.734} -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$NON_64BIT_PLATFORMS$">SH_OSCachemmap::startup: Successfully set cache length to 16777216</output>
@@ -1025,19 +1018,19 @@
 		<output type="success" caseSensitive="yes" regex="no" showMatch="yes" platforms="$64BIT_PLATFORMS$">SH_OSCachemmap::startup: Successfully set cache length to 67108864</output>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$64BIT_PLATFORMS$">OSCache startup.*length=314572800 create=1</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes" platforms="$64BIT_PLATFORMS$">(XX:SharedCacheHardLimit=300M(.)*[\n\r](.)*Xscmx64M|XX:SharedCacheHardLimit=64M)</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 55 clean-up" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1045,74 +1038,73 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
-	
+
 	<test id="Test 56: Make sure option bootClassesOnly prevent non-bootstrap classes being stored to the shared cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,verboseIO,bootClassesOnly $CP_HANOI$ $PROGRAM_HANOI$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Stored class java/.* in shared cache for class-loader id 0 with URL .* \(index</output>
-		
+
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Stored class org/openj9/test/ivj/.* in shared cache for class-loader</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 57-a: Make sure that lambda classes work and get stored in the shared class cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} $CP_HANOI$ $PROGRAM_LAMBDA$ 0</command>
-		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
-    
-   		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
-   		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
-    	<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 
 	<test id="Test 57-b: Make sure that lambda classes are stored in the cache as orphans" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) at</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) at</output>
-	    
-	    <output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) at</output>
+
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) at</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 57-c: Make sure that when the program runs again lambda classes are used from the cache and not stored again" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 0</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
-	    
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
-	
+
 	<test id="Test 58: Make sure that when the program runs again without the first lambda class, the second lambda class is still used from the cache and not stored again" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 1</command>
 		<output type="success" caseSensitive="yes" regex="no">Lambda test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
-	    
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 58 clean-up" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1120,38 +1112,38 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
-	
+
 	<test id="Test 59-a: Run and store 10 lambda classes in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} $CP_HANOI$ $PROGRAM_LAMBDA$ 2</command>
-		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
-	    
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 59-b: Do not run the first lambda class to check if a class with 1 digit index number gets matched to the one stored in the cache but with 2 digits index number (10th class in the previous run will be matched to 9th in this run)" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 3</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
-	    
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 59 clean-up" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1159,41 +1151,41 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
-	
+
 	<test id="Test 60-a: Make sure that lambda classes work and get stored in the cache when another function with lambda classes in another file is being called from the current file" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} $CP_HANOI$ $PROGRAM_LAMBDA$ 4</command>
-		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
-		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
-		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
-	    
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 60-b: Make sure that the classes are used from the cache when the program is being run again" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_HANOI$ $PROGRAM_LAMBDA$ 4</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="no">Lambda test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)'</output>
-	    
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test2..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 60 clean-up" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1201,18 +1193,18 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
-	
+
 	<test id="Test 61-a: Make sure that when shared lambdas are disabled, no lambda classes are stored in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xtrace:print={j9shr.2259} -XX:-ShareAnonymousClasses $CP_HANOI$ $PROGRAM_LAMBDA$ 0</command>
 		<output type="success" caseSensitive="yes" regex="no">Lambda test done!</output>
 
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000) </output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/lambdatests/Test1..Lambda.([\d]+)/(0x00000000|0x0000000000000000)</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 61-b: Make sure that no lambda classes are in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/lambdatests/Test1 at</output>
@@ -1229,7 +1221,7 @@
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1253,12 +1245,12 @@
 
 	<test id="Test 62-b: Check whether they have been stored correctly" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/ClassTest at</output>		
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/ClassTest at</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/UnsafeBootClass at</output>
-	    
-	    <output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
+
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMCLASS: org/openj9/test/classtests/UnsafeBootClass at</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
@@ -1276,11 +1268,10 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest'</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000)'</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/UnsafeBootClass'</output>
-		
-		
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/AnonClassAndUnsafeClassTest </output>
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) </output>
-		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/UnsafeBootClass </output>
+
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/AnonClassAndUnsafeClassTest</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000)</output>
+		<output type="failure" caseSensitive="no" regex="yes" javaUtilPattern="yes">j9shr[\.]2259     > API j9shr_classStoreTransaction_createSharedClass : enter [\(]classname=org/openj9/test/classtests/UnsafeBootClass</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1292,12 +1283,12 @@
 		<command>$JAVA_EXE$ $EXPORTS$ $currentMode$ -Xtrace:print={j9shr.2259,j9bcu.270} $CP_UNSAFE$ $PROGRAM_UNSAFE$</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">test done!</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Another Test</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">World</output>		
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">World</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 0 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest'</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 0 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000)'</output>
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest'</output>
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000)'</output>	
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">compareROMClassForEquality returns 1 for class name 'org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000)'</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1309,7 +1300,7 @@
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1333,7 +1324,7 @@
 
 	<test id="Test 63-b: Check whether the Anonymous Class has been stored correctly" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
-		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/ClassTest at</output>	
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/ClassTest at</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/UnsafeBootClass at</output>
@@ -1350,7 +1341,7 @@
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1392,7 +1383,7 @@
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1407,7 +1398,7 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Test</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Hello</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">running UnsafeBootClass.bar()</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1417,7 +1408,7 @@
 	<test id="Test 65-b: Make sure none of the classes has been stored in the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printstats=orphan+romclass</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ORPHAN: org/openj9/test/classtests/ClassTest at</output>
-	    
+
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/AnonClassAndUnsafeClassTest/(0x00000000|0x0000000000000000) at</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/AnonClassAndUnsafeClassTest at</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">org/openj9/test/classtests/UnsafeBootClass at</output>
@@ -1440,7 +1431,7 @@
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
-		
+
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
@@ -1448,9 +1439,9 @@
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
 		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
 	</test>
-		
+
 	<!--
 	***** IMPORTANT NOTE *****
-	The last test in this file is normally a call to -Xshareclasses:destroy. When the test passes no files should ever be left behind. 
+	The last test in this file is normally a call to -Xshareclasses:destroy. When the test passes no files should ever be left behind.
 	-->
 </suite>
