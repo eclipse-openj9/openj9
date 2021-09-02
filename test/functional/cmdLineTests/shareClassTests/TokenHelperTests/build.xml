@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  Copyright (c) 2005, 2019 IBM Corp. and others
+  Copyright (c) 2005, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,9 +25,12 @@
 	<description>
 		Build TokenHelperTests
 	</description>
-		
+
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/shareClassTests/TokenHelperTests" />
+	<property name="jarfile" value="${DEST}/TokenHelperTests.jar" />
 	<property name="src" location="."/>
 	<property name="build" location="./bin"/>
 
@@ -116,21 +119,25 @@
 	</target>
 	
 	<target name="dist" depends="compile" description="generate the distribution">
- 		<jar jarfile="${DEST}/TokenHelperTests.jar" filesonly="true">
+		<jar jarfile="${jarfile}" filesonly="true">
 			<fileset dir="${build}"/>
 		</jar>
 		<copy todir="${DEST}">
 			<fileset dir="${src}" />
 			<fileset dir="${src}" includes="*.mk" />
 		</copy>
-  	</target>
+	</target>
 	
 	<target name="clean" depends="dist" description="clean up">
 		<!-- Delete the ${build} directory trees -->
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="check-jar">
+		<available file="${jarfile}" property="jar.exist"/>
+	</target>
+
+	<target name="build" depends="check-jar,buildCmdLineTestTools" unless="jar.exist">
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdline_options_testresources" />
+	<property name="jarfile" value="${DEST}/cmdlinetestresources.jar" />
 
 	<!--Properties for this particular build-->
 	<property name="src" location="./src"/>
@@ -80,7 +81,7 @@
 
 	<target name="dist" depends="compile" description="generate the distribution" >
 		<!-- Store all class files in cmdlinetestresources.jar file -->
-		<jar jarfile="${DEST}/cmdlinetestresources.jar" filesonly="true">
+		<jar jarfile="${jarfile}" filesonly="true">
 			<fileset dir="${build}"/>
 			<fileset dir="${src}"/>
 		</jar>
@@ -89,12 +90,16 @@
 		</copy>
 	</target>
 
+	<target name="check-jar">
+		<available file="${jarfile}" property="jar.exist"/>
+	</target>
+
 	<target name="clean" depends="dist" description="clean up" >
 		<!-- Delete the ${build} directory trees -->
 		<delete dir="${build}"/>
 	</target>
 
-	<target name="build" >
+	<target name="build" depends="check-jar" unless="jar.exist">
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
@@ -103,6 +108,6 @@
 			<then>
 				<antcall target="clean" inheritall="true" />
 			</then>
-		</if>		
+		</if>
 	</target>
 </project>
