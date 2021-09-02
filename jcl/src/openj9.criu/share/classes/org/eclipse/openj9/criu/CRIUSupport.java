@@ -60,7 +60,10 @@ public final class CRIUSupport {
 			int logLevel,
 			String logFile,
 			boolean fileLocks,
-			String workDir);
+			String workDir,
+			boolean tcpEstablished,
+			boolean autoDedup,
+			boolean trackMemory);
 
 	/**
 	 * Constructs a new {@code CRIUSupport}.
@@ -106,6 +109,9 @@ public final class CRIUSupport {
 	private String logFile;
 	private boolean fileLocks;
 	private String workDir;
+	private boolean tcpEstablished;
+	private boolean autoDedup;
+	private boolean trackMemory;
 
 	/**
 	 * Sets the directory that will hold the images upon checkpoint.
@@ -223,6 +229,42 @@ public final class CRIUSupport {
 	}
 
 	/**
+	 * Controls whether to re-establish TCP connects.
+	 * <p>Default: false
+	 *
+	 * @param tcpEstablished
+	 * @return this
+	 */
+	public CRIUSupport setTCPEstablished(boolean tcpEstablished) {
+		this.tcpEstablished = tcpEstablished;
+		return this;
+	}
+
+	/**
+	 * Controls whether auto dedup of memory pages is enabled.
+	 * <p>Default: false
+	 *
+	 * @param autoDedup
+	 * @return this
+	 */
+	public CRIUSupport setAutoDedup(boolean autoDedup) {
+		this.autoDedup = autoDedup;
+		return this;
+	}
+
+	/**
+	 * Controls whether memory tracking is enabled.
+	 * <p>Default: false
+	 *
+	 * @param trackMemory
+	 * @return this
+	 */
+	public CRIUSupport setTrackMemory(boolean trackMemory) {
+		this.trackMemory = trackMemory;
+		return this;
+	}
+
+	/**
 	 * Sets the directory where non-image files are stored (e.g. logs).
 	 * <p>Default: same as path set by {@link #setImageDir(Path)}.
 	 *
@@ -265,7 +307,10 @@ public final class CRIUSupport {
 					logLevel,
 					logFile,
 					fileLocks,
-					workDir);
+					workDir,
+					tcpEstablished,
+					autoDedup,
+					trackMemory);
 		} else {
 			throw new UnsupportedOperationException("CRIU support is not enabled");
 		}
