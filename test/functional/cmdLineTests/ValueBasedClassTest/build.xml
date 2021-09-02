@@ -28,6 +28,8 @@
 		Build cmdLineTester_ValueBasedClassTest
 	</description>
 
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/ValueBasedClassTest" />
 	<property name="src" location="./src"/>
@@ -67,7 +69,7 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="build" depends="buildCmdLineTestTools">
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />

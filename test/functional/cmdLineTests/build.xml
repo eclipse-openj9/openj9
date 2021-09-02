@@ -28,6 +28,7 @@
 		Build cmdLineTests
 	</description>
 	<import file="${TEST_ROOT}/functional/build.xml"/>
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
 
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests" />
@@ -36,7 +37,7 @@
 		<mkdir dir="${DEST}" />
 	</target>
 
-	<target name="build" depends="dist">
+	<target name="build" depends="dist,buildCmdLineTestTools">
 		<subant target="">
 			<fileset dir="." includes="*/build.xml" />
 		</subant>

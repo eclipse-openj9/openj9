@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2021 IBM Corp. and others
+  Copyright (c) 2021, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,26 +22,23 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<project name="cmdLineTests" default="build" basedir=".">
-	<taskdef resource="net/sf/antcontrib/antlib.xml" />
-	<description>
-		Build cmdLineTests
-	</description>
-
-	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
-
-	<!-- set properties for this build -->
-	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/ignoreUnrecognizedVMOptions" />
-	<property name="src" location="." />
-
-	<target name="dist" description="generate the distribution">
-		<copy todir="${DEST}">
-			<fileset dir="${src}" includes="*.xml"/>
-			<fileset dir="${src}" includes="*.mk"/>
-		</copy>
+<project name="cmdLineTests" default="buildCmdLineTestTools" basedir=".">
+	<target name="buildCmdLineTestTools" description="build command line test tools">
+		<subant target="build">
+			<fileset dir="${TEST_ROOT}/functional/cmdline_options_tester/" includes="build.xml" />
+			<fileset dir="${TEST_ROOT}/functional/cmdline_options_testresources/" includes="build.xml" />
+		</subant>
 	</target>
-	
-	<target name="build" depends="buildCmdLineTestTools">
-		<antcall target="dist" inheritall="true" />
+
+	<target name="buildCmdLineTestUtils" description="build command line test utils">
+		<subant target="build">
+			<fileset dir="${TEST_ROOT}/functional/cmdLineTests/utils" includes="build.xml" />
+		</subant>
+	</target>
+
+	<target name="buildCmdLineTestUtils2" description="build command line test utils">
+		<subant target="build">
+			<fileset dir="${TEST_ROOT}/functional/cmdLineTests/utils2" includes="build.xml" />
+		</subant>
 	</target>
 </project>

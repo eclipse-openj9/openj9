@@ -27,7 +27,9 @@
 		Build cmdLineTests GCCheck
 	</description>
 
-    <!-- set properties for this build -->
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
+	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/gcCheck" />
 	<property name="src" location="./src"/>
 	<property name="allocator" location="${TEST_ROOT}/functional/Java8andUp/src/org/openj9/test/nogc"/>
@@ -66,7 +68,7 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="build" depends="buildCmdLineTestTools">
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />

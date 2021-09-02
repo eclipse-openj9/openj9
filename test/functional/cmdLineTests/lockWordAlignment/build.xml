@@ -28,6 +28,8 @@
 		Build cmdLineTests_lockWordAlignment
 	</description>
 
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/lockWordAlignment" />
 	<property name="PROJECT_ROOT" location="." />
@@ -107,7 +109,7 @@
 		</delete>
 	</target>
 
-	<target name="build" >
+	<target name="build" depends="buildCmdLineTestTools">
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />

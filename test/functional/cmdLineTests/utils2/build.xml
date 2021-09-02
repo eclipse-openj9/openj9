@@ -28,8 +28,11 @@
 		Build utils2. It only contains the modified AnonClassAndUnsafeClassTest.java and the duplicated ClassTest.java which are used on the ShareClassesCMLTests-1 test 62-d.
 	</description>
 
+	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
+
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/utils2" />
+	<property name="jarfile" value="${DEST}/utils2.jar" />
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
 	<property name="addExports" value="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
@@ -65,7 +68,7 @@
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
-		<jar jarfile="${DEST}/utils2.jar" filesonly="true">
+		<jar jarfile="${jarfile}" filesonly="true">
 			<fileset dir="${build}" />
 			<fileset dir="${src}" />
 		</jar>
@@ -80,7 +83,11 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="check-jar">
+		<available file="${jarfile}" property="jar.exist"/>
+	</target>
+
+	<target name="build" depends="check-jar" unless="jar.exist">
 		<if>
 			<or>
 				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
