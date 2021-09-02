@@ -209,6 +209,13 @@ static bool insideIntPipelineForEach(TR_ResolvedMethod *method, TR::Compilation 
 bool
 TR_J9InlinerPolicy::inlineRecognizedMethod(TR::RecognizedMethod method)
    {
+
+   if (method > TR::First_vector_api_method &&
+       method < TR::Last_vector_api_method)
+      {
+      comp()->getMethodSymbol()->setHasVectorAPI(true);
+      }
+
 //    if (method ==
 //        TR::java_lang_String_init_String_char)
 //       return false;
