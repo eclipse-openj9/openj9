@@ -8371,9 +8371,34 @@ done:
 		if (fromJIT) {
 			/* Restore SP to before popping memberNameObject. */
 			_sp -= 1;
+			UDATA stackOffset = 1;
 
-			/* Shift arguments by 1 and place memberNameObject before the first argument. */
-			memmove(_sp, _sp + 1, methodArgCount * sizeof(UDATA));
+			/* The JIT stores the parameter slot count of the call in floatTemp1 for the unresolved case.
+			 * For the resolved case where the appendix object is known, the JIT stores -1 in floatTemp1.
+			 */
+			const IDATA jitResolvedCall = (IDATA)-1;
+
+			/* The JIT calls linkToStatic for unresolved invokedynamic and invokehandle sequences.
+			 * For invokedynamic and invokehandle, the appendix object should not be appended to the
+			 * stack if it is null. For the unresolved cases, the JIT does not know the value of the
+			 * appendix object prior to calling linkToStatic. For such JIT paths, the appendix object
+			 * should be removed from the stack if it is null.
+			 *
+			 * Stack shape should look like:
+			 *		_sp[0] = MemberName
+			 *		_sp[1] = Appendix (if not null)
+			 *		_sp[2] = Argument ...
+			 *
+			 * Or:
+			 *		_sp[0] = MemberName
+			 *		_sp[1] = Argument ...
+			 */
+			if ((jitResolvedCall != (IDATA)_currentThread->floatTemp1) && (NULL == ((j9object_t *)_sp)[1])) {
+				stackOffset = 2;
+			}
+
+			/* Shift arguments by stackOffset and place memberNameObject before the first argument. */
+			memmove(_sp, _sp + stackOffset, methodArgCount * sizeof(UDATA));
 			_sp[methodArgCount] = (UDATA)memberNameObject;
 
 			_currentThread->jitStackFrameFlags = 0;
