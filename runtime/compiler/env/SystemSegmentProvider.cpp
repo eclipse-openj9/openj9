@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,8 @@ J9::SystemSegmentProvider::SystemSegmentProvider(size_t defaultSegmentSize, size
    _systemSegmentAllocator(segmentAllocator),
    _systemSegments( SystemSegmentDequeAllocator(rawAllocator) ),
    _segments(std::less< TR::MemorySegment >(), SegmentSetAllocator(rawAllocator)),
-   _freeSegments( FreeSegmentDequeAllocator(rawAllocator) ),
+   _freeSegmentsEmpty(NULL, 0),
+   _freeSegments(&_freeSegmentsEmpty),
    _currentSystemSegment( TR::ref(_systemSegmentAllocator.request(systemSegmentSize) ) )
    {
    TR_ASSERT(defaultSegmentSize <= systemSegmentSize, "defaultSegmentSize should be smaller than or equal to systemSegmentSize");
@@ -79,12 +80,12 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
    {
    size_t const roundedSize = round(requiredSize);
    if (
-      !_freeSegments.empty()
+      _freeSegments != &_freeSegmentsEmpty
       && !(defaultSegmentSize() < roundedSize)
       )
       {
-      TR::MemorySegment &recycledSegment = _freeSegments.back().get();
-      _freeSegments.pop_back();
+      TR::MemorySegment &recycledSegment = *_freeSegments;
+      _freeSegments = &recycledSegment.unlink();
       recycledSegment.reset();
       return recycledSegment;
       }
@@ -133,7 +134,11 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
       //
       while (remaining(_currentSystemSegment) >= defaultSegmentSize())
          {
-         _freeSegments.push_back( TR::ref(allocateNewSegment(defaultSegmentSize(), _currentSystemSegment) ) );
+         TR::MemorySegment &remainingSegment =
+            allocateNewSegment(defaultSegmentSize(), _currentSystemSegment);
+
+         remainingSegment.link(*_freeSegments);
+         _freeSegments = &remainingSegment;
          }
 
       _currentSystemSegment = newSegmentRef;
@@ -158,7 +163,8 @@ J9::SystemSegmentProvider::release(TR::MemorySegment & segment) throw()
       {
       try
          {
-         _freeSegments.push_back(TR::ref(segment));
+         segment.link(*_freeSegments);
+         _freeSegments = &segment;
          }
       catch (...)
          {
@@ -190,26 +196,20 @@ J9::SystemSegmentProvider::release(TR::MemorySegment & segment) throw()
       }
    else
       {
-      size_t const oldSegmentSize = segmentSize;
-      void * const oldSegmentArea = segment.base();
+      // TODO (#13353): Eliminate this case. Previously the segment was carved
+      // up into default-sized segments here, but they weren't ever added to
+      // the free list, so they wouldn't ever actually be used to provide
+      // memory for later allocations. Furthermore, even if they were added the
+      // free list, the memory can't be reused for allocations of size similar
+      // to segment, which is effectively a memory leak.
+      //
+      // For the moment, just skip creating the default-sized segments. This is
+      // no worse for memory reuse than the previous state of affairs, and it
+      // avoids allocation during release().
 
       /* Removing segment from _segments */
       auto it = _segments.find(segment);
       _segments.erase(it);
-
-      TR_ASSERT(oldSegmentSize % defaultSegmentSize() == 0, "misaligned segment");
-      size_t const chunks = oldSegmentSize / defaultSegmentSize();
-      for (size_t i = 0; i < chunks; ++i)
-         {
-         try
-            {
-            createSegmentFromArea(defaultSegmentSize(), static_cast<uint8_t *>(oldSegmentArea) + (defaultSegmentSize() * i));
-            }
-         catch (...)
-            {
-            /* not much we can do here except leak */
-            }
-         }
       }
    }
 
