@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <!--
-  Copyright (c) 2016, 2020 IBM Corp. and others
+Copyright (c) 2016, 2021 IBM Corp. and others
 
-  This program and the accompanying materials are made available under
-  the terms of the Eclipse Public License 2.0 which accompanies this
-  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-  or the Apache License, Version 2.0 which accompanies this distribution and
-  is available at https://www.apache.org/licenses/LICENSE-2.0.
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
 
-  This Source Code may also be made available under the following
-  Secondary Licenses when the conditions for such availability set
-  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-  General Public License, version 2 with the GNU Classpath
-  Exception [1] and GNU General Public License, version 2 with the
-  OpenJDK Assembly Exception [2].
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
 
-  [1] https://www.gnu.org/software/classpath/license.html
-  [2] http://openjdk.java.net/legal/assembly-exception.html
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
 
-  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <project name="JVMTI tests" default="build" basedir=".">
 	<taskdef resource='net/sf/antcontrib/antlib.xml' />
 	<description>
@@ -30,22 +28,20 @@
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/jvmtitests" />
-	<property name="src" location="./src"/>
-	<property name="src_current" location="./src_current"/>
-	<property name="src_latest" location="./src_latest"/>
-	<property name="src_80" location="./src_80"/>
-	<property name="src_90" location="./src_90"/>
-	<property name="build" location="./bin"/>
+	<property name="src" location="src" />
+	<property name="src_current" location="src_current" />
+	<property name="src_latest" location="src_latest" />
+	<property name="build" location="bin" />
 	<property name="asm.jar" location="${LIB_DIR}/asm-all.jar" />
-	<property name="LIB" value="asm_all"/>
-	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
+	<property name="LIB" value="asm_all" />
+	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 
 	<target name="init">
 		<mkdir dir="${build}" />
 		<mkdir dir="${DEST}" />
 	</target>
 
-	<target name="compile" depends="init,getDependentLibs" description="compile the source ">
+	<target name="compile" depends="init,getDependentLibs" description="compile the source">
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
@@ -54,11 +50,10 @@
 		<echo>===destdir:                      ${build}</echo>
 
 		<if>
-			<equals arg1="${JDK_VERSION}" arg2="8"/>
+			<equals arg1="${JDK_VERSION}" arg2="8" />
 			<then>
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
-					<src path="${src_80}"/>
 					<classpath>
 						<pathelement location="${asm.jar}" />
 						<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
@@ -68,7 +63,7 @@
 			<else>
 				<property name="addExports" value="--add-exports java.base/jdk.internal.module=ALL-UNNAMED --add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach=ALL-UNNAMED --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED" />
 				<if>
-					<equals arg1="${JCL_VERSION}" arg2="latest"/>
+					<equals arg1="${JCL_VERSION}" arg2="latest" />
 					<then>
 						<property name="extraSrc" value="${src_latest}" />
 						<property name="excludeFile" value="**/modularityTests/**" />
@@ -79,9 +74,8 @@
 					</else>
 				</if>
 				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}"/>
-					<src path="${src_90}"/>
-					<src path="${extraSrc}"/>
+					<src path="${src}" />
+					<src path="${extraSrc}" />
 					<exclude name="${excludeFile}" />
 					<compilerarg line="${addExports}" />
 					<classpath>
@@ -93,7 +87,7 @@
 
 		<!-- Compile VersionedClass separately -->
 		<copy file="${src}/com/ibm/jvmti/tests/getClassVersionNumbers/VersionedClass.java.dont_auto_compile"
-			tofile="${build}/com/ibm/jvmti/tests/getClassVersionNumbers/VersionedClass/VersionedClass.java"/>
+			tofile="${build}/com/ibm/jvmti/tests/getClassVersionNumbers/VersionedClass/VersionedClass.java" />
 		<!-- If you modified the source and target level in this javac, you also need to modify the corresponding java class version
 		in /cmdLineTests/jvmtitests/src/com/ibm/jvmti/tests/getClassVersionNumbers/gcvn001.java -->
 		<javac srcdir="${build}" destdir="${build}" includes="com/ibm/jvmti/tests/getClassVersionNumbers/VersionedClass/VersionedClass.java"
@@ -128,10 +122,10 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="build" >
+	<target name="build">
 		<if>
 			<or>
-				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
 			<then>

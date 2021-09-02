@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,18 +19,41 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package org.openj9.test.classtests;
+package org.openj9.test.access;
 
-/* The AnonClassAndUnsafeClassTest.class will be used to create the Anonyomus Class and the Unsafe Class */
+import java.lang.reflect.Field;
+import java.security.ProtectionDomain;
 
-public class AnonClassAndUnsafeClassTest {
+import sun.misc.Unsafe;
 
-	public void func() {
-		System.out.println("Test");
+/**
+ * Helper for creating anonymous/hidden classes.
+ */
+public final class UnsafeClasses {
+
+	private static Unsafe unsafe;
+
+	static {
+		try {
+			Field f = Unsafe.class.getDeclaredField("theUnsafe");
+			f.setAccessible(true);
+			unsafe = (Unsafe) f.get(null);
+		} catch (IllegalAccessException | IllegalArgumentException | NoSuchFieldException | SecurityException e) {
+			e.printStackTrace();
+		}
 	}
 
-	public void funcunsafe() {
-		System.out.println("Hello");
+	public static Class<?> defineAnonClass(Class<?> hostClass, byte[] bytes) throws IllegalAccessException {
+		return unsafe.defineAnonymousClass(hostClass, bytes, null);
+	}
+
+	public static Class<?> defineAnonOrHiddenClass(Class<?> hostClass, byte[] bytes) throws IllegalAccessException {
+		return unsafe.defineAnonymousClass(hostClass, bytes, null);
+	}
+
+	public static Class<?> defineClass(String name, byte[] bytes, int offset, int length,
+			ClassLoader loader, ProtectionDomain domain) {
+		return unsafe.defineClass(name, bytes, offset, length, loader, domain);
 	}
 
 }
