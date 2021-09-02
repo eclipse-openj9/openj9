@@ -694,20 +694,25 @@ J9::SymbolReferenceTable::findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol *
    //J9::SymbolReferenceTable::findOrCreateShadowSymbol
    TR::SymbolReference * symRef = NULL;
    TR::Symbol * sym = NULL;
-   symRef = findShadowSymbol(owningMethod, -1, type, &recognizedField);
 
-   if (symRef)
-      return symRef;
-   else
+   if (!comp()->compileRelocatableCode()
+#if defined(J9VM_OPT_JITSERVER)
+       && !comp()->isOutOfProcessCompilation()
+#endif
+       )
       {
-      sym = createShadowSymbol(
-         type,
-         isVolatile,
-         isPrivate,
-         isFinal,
-         name,
-         recognizedField);
+      symRef = findShadowSymbol(owningMethod, -1, type, &recognizedField);
+
+      if (symRef)
+         return symRef;
       }
+   sym = createShadowSymbol(
+      type,
+      isVolatile,
+      isPrivate,
+      isFinal,
+      name,
+      recognizedField);
 
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
    // isResolved = true, isUnresolvedInCP = false
