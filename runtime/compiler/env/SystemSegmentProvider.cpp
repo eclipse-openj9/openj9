@@ -36,7 +36,7 @@ J9::SystemSegmentProvider::SystemSegmentProvider(size_t defaultSegmentSize, size
    _freeSegments(&_freeSegmentsEmpty),
    _currentSystemSegment( TR::ref(_systemSegmentAllocator.request(systemSegmentSize) ) )
    {
-   TR_ASSERT(defaultSegmentSize <= systemSegmentSize, "defaultSegmentSize should be smaller than or equal to systemSegmentSize");
+   TR_ASSERT_FATAL(defaultSegmentSize <= systemSegmentSize, "defaultSegmentSize should be smaller than or equal to systemSegmentSize");
 
    // We cannot simply assign systemSegmentSize to _systemSegmentSize because:
    // We want to make sure that _currentSystemSegment is always a small system segment, i.e. its size <= _systemSegmentSize. When
@@ -97,14 +97,14 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
    if (remaining(_currentSystemSegment) >= roundedSize)
       {
       // Only allocate small segments from _currentSystemSegment
-      TR_ASSERT(!isLargeSegment(remaining(_currentSystemSegment)), "_currentSystemSegment must be a small segment");
+      TR_ASSERT_FATAL(!isLargeSegment(remaining(_currentSystemSegment)), "_currentSystemSegment must be a small segment");
       return allocateNewSegment(roundedSize, _currentSystemSegment);
       }
 
    size_t systemSegmentSize = std::max(roundedSize, _systemSegmentSize);
 
    J9MemorySegment &newSegment = _systemSegmentAllocator.request(systemSegmentSize);
-   TR_ASSERT(
+   TR_ASSERT_FATAL(
       newSegment.heapAlloc == newSegment.heapBase,
       "Segment @ %p { heapBase: %p, heapAlloc: %p, heapTop: %p } is stale",
       &newSegment,
@@ -234,7 +234,7 @@ J9::SystemSegmentProvider::bytesAllocated() const throw()
 TR::MemorySegment &
 J9::SystemSegmentProvider::allocateNewSegment(size_t size, TR::reference_wrapper<J9MemorySegment> systemSegment)
    {
-   TR_ASSERT( (size % defaultSegmentSize()) == 0, "Misaligned segment");
+   TR_ASSERT_FATAL( (size % defaultSegmentSize()) == 0, "Misaligned segment");
    void *newSegmentArea = operator new(size, systemSegment);
    if (!newSegmentArea) throw std::bad_alloc();
    try
@@ -254,8 +254,8 @@ TR::MemorySegment &
 J9::SystemSegmentProvider::createSegmentFromArea(size_t size, void *newSegmentArea)
    {
    auto result = _segments.insert( TR::MemorySegment(newSegmentArea, size) );
-   TR_ASSERT(result.first != _segments.end(), "Bad iterator");
-   TR_ASSERT(result.second, "Insertion failed");
+   TR_ASSERT_FATAL(result.first != _segments.end(), "Bad iterator");
+   TR_ASSERT_FATAL(result.second, "Insertion failed");
    return const_cast<TR::MemorySegment &>(*(result.first));
    }
 
