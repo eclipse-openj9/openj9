@@ -63,7 +63,7 @@ checkNameImpl (J9CfrConstantPoolInfo * info, BOOLEAN isClass, BOOLEAN isMethod, 
 	}
 	
 	while (c < end) {
-		/* check for illegal characters:  46(.) 47(/) 59(;) 60(<) 70(>) 91([) */
+		/* check for illegal characters:  46(.) 47(/) 59(;) 60(<) 70(>) 91([) 123({) 125(}) */
 		switch(*c) {
 		case '.':
 			/* Only valid for the loading classes */
@@ -92,10 +92,16 @@ checkNameImpl (J9CfrConstantPoolInfo * info, BOOLEAN isClass, BOOLEAN isMethod, 
 			return -1;
 		case '<': /* Fall through */
 		case '>':
-			if (isMethod){
+			if (isMethod) {
 				return -1;
 			}
 			separator = FALSE; /* allow /<>/ as a pattern, per test suites */
+			break;
+		case '{': /* Fall through */
+		case '}':
+			if (isClass) {
+				return -1;
+			}
 			break;
 		case '[': return -1;
 		default:
