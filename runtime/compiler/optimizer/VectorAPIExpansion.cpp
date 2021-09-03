@@ -284,15 +284,49 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
       // check if VectorAPI method is supported
       TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
       int handlerIndex = index - _firstMethod;
-      //TODO: support mode per class
+
       if (methodElementType == TR::NoType ||
-          methodNumLanes == 0 ||
-          !methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, methodNumLanes, defaultCheckMode))
+          methodNumLanes == 0)
          {
          if (_trace)
-            traceMsg(comp(), "Invalidating #%d due to unsupported elementType=%d, numLanes=%d, or opcode in node %p\n",
+            traceMsg(comp(), "Invalidating #%d due to unknown elementType=%d, numLanes=%d in node %p\n",
                      node->getSymbolReference()->getReferenceNumber(), (int)methodElementType, methodNumLanes, node);
          invalidateSymRef(node->getSymbolReference());
+         }
+      else
+         {
+         int32_t elementSize = OMR::DataType::getSize(methodElementType);
+         vec_sz_t vectorLength = methodNumLanes*8*elementSize;
+
+         bool canVectorize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength,
+                                                                      checkVectorization);
+         bool canScalarize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength,
+                                                                         checkScalarization);
+         if (!canVectorize)
+            {
+            if (_trace)
+               traceMsg(comp(), "Can't vectorize #%d due to unsupported opcode in node %p\n",
+                                 node->getSymbolReference()->getReferenceNumber(), node);
+
+            _aliasTable[methodRefNum]._cantVectorize = true;
+
+            if (!canScalarize)
+               {
+               _aliasTable[methodRefNum]._cantScalarize = true;
+               if (_trace)
+                  traceMsg(comp(), "Invalidating #%d due to unsupported opcode in node %p\n",
+                           node->getSymbolReference()->getReferenceNumber(), node);
+               invalidateSymRef(node->getSymbolReference());
+               }
+            }
+         else if (!canScalarize)
+            {
+            if (_trace)
+               traceMsg(comp(), "Can't scalarize #%d due to unsupported opcode in node %p\n",
+                                 node->getSymbolReference()->getReferenceNumber(), node);
+
+            _aliasTable[methodRefNum]._cantScalarize = true;
+            }
          }
       }
    else if (opCode.isLoadAddr())
@@ -602,6 +636,21 @@ TR_VectorAPIExpansion::validateVectorAliasClasses()
             vectorClass = validateSymRef(id, i, classLength, classType);
             if (!vectorClass)
                break;
+
+            if (_aliasTable[i]._cantVectorize)
+               {
+               if (_trace)
+                  traceMsg(comp(), "Class #%d can't be vectorized due to #%d\n", id, i);
+
+               _aliasTable[id]._cantVectorize = true;
+               }
+
+            if (_aliasTable[i]._cantScalarize)
+               {
+               if (_trace)
+                  traceMsg(comp(), "Class #%d can't be scalarized due to #%d\n", id, i);
+               _aliasTable[id]._cantScalarize = true;
+               }
             }
          }
 
@@ -684,13 +733,27 @@ TR_VectorAPIExpansion::expandVectorAPI()
       if (_aliasTable[classId]._classId == -1)  // class was invalidated
          continue;
 
+      handlerMode checkMode = checkVectorization;
+      handlerMode doMode = doVectorization;
+
+      if (_aliasTable[classId]._cantVectorize)
+         {
+         TR_ASSERT_FATAL(!_aliasTable[classId]._cantScalarize, "Class %d should be either vectorizable or scalarizable",
+                                                                classId);
+         checkMode = checkScalarization;
+         doMode = doScalarization;
+         }
+
       if (!_seenClasses.isSet(classId))
          {
          _seenClasses.set(classId);
 
-         //printf("Expanding class %d in %s\n", classId, comp()->signature());
 
-         if (!performTransformation(comp(), "%s Starting to transform class #%d\n", optDetailString(), classId))
+         //printf("%s Starting to %s class #%d\n", optDetailString(), doMode == doVectorization ? "vectorize" : "scalarize", classId);
+
+         if (!performTransformation(comp(), "%s Starting to %s class #%d\n", optDetailString(),
+                                             doMode == doVectorization ? "vectorize" : "scalarize",
+                                             classId))
             {
             _aliasTable[classId]._classId = -1; // invalidate the whole class
             continue;
@@ -702,10 +765,6 @@ TR_VectorAPIExpansion::expandVectorAPI()
 
       TR::DataType elementType = _aliasTable[classId]._elementType;
       int32_t vectorLength = _aliasTable[classId]._vecLen;
-
-      // TODO: make it per class
-      handlerMode checkMode = defaultCheckMode;
-      handlerMode doMode = defaultDoMode;
 
       if (opCodeValue == TR::astore)
          {
@@ -989,7 +1048,8 @@ TR::Node *TR_VectorAPIExpansion::fromArrayHandler(TR_VectorAPIExpansion *opt, TR
    TR::Compilation *comp = opt->comp();
 
    if (mode == checkScalarization) return node;
-   if (mode == checkVectorization) return node;
+   if (mode == checkVectorization)
+      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
 
    if (opt->_trace)
       traceMsg(comp, "fromArrayHandler for node %p\n", node);
@@ -1009,7 +1069,8 @@ TR::Node *TR_VectorAPIExpansion::intoArrayHandler(TR_VectorAPIExpansion *opt, TR
    TR::Compilation *comp = opt->comp();
 
    if (mode == checkScalarization) return node;
-   if (mode == checkVectorization) return node;
+   if (mode == checkVectorization)
+      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
 
    if (opt->_trace)
       traceMsg(comp, "intoArrayHandler for node %p\n", node);
@@ -1027,10 +1088,15 @@ TR::Node *TR_VectorAPIExpansion::intoArrayHandler(TR_VectorAPIExpansion *opt, TR
 TR::Node *TR_VectorAPIExpansion::addHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                             TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
    {
+   // This handler is not for intrinsic and is currently disabled
+
    TR::Compilation *comp = opt->comp();
 
    if (mode == checkScalarization) return node;
-   if (mode == checkVectorization) return NULL;  // TODO: check type and platform
+   if (mode == checkVectorization)
+      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
+
+   // TODO: The above does not check the actual opcode and type
 
    if (opt->_trace)
       traceMsg(comp, "addHandler for node %p\n", node);
@@ -1050,7 +1116,8 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
    TR::Compilation *comp = opt->comp();
 
    if (mode == checkScalarization) return node;
-   if (mode == checkVectorization) return node;
+   if (mode == checkVectorization)
+      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
 
    if (opt->_trace)
       traceMsg(comp, "loadIntrinsicHandler for node %p\n", node);
@@ -1125,7 +1192,8 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
    TR::Compilation *comp = opt->comp();
 
    if (mode == checkScalarization) return node;
-   if (mode == checkVectorization) return node;
+   if (mode == checkVectorization)
+      return supportedOnPlatform(comp, vectorLength) ? node : NULL;
 
    if (opt->_trace)
       traceMsg(comp, "storeIntrinsicHandler for node %p\n", node);
@@ -1237,7 +1305,20 @@ TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *o
       return (scalarOpCode != TR::BadILOp) ? node : NULL;
 
    if (mode == checkVectorization)
-      return NULL;  // TODO: check opcode and platform
+      {
+      if (!supportedOnPlatform(comp, vectorLength)) return NULL;
+
+      TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOpCode);
+
+      if (vectorOpCode == TR::BadILOp)
+          return NULL;
+
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
+         return NULL;
+
+      return node;
+      }
+
 
    if (opt->_trace)
       traceMsg(comp, "binaryIntrinsicHandler for node %p\n", node);
@@ -1290,14 +1371,11 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int vectorOpCod
 TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                  TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
                                                  TR::Node *firstChild, TR::Node *secondChild,
-                                                 TR::ILOpCodes opcode)
+                                                 TR::ILOpCodes scalarOpCode)
    {
    TR::Compilation *comp = opt->comp();
 
    anchorOldChildren(opt, treeTop, node);
-   node->setAndIncChild(0, firstChild);
-   node->setAndIncChild(1, secondChild);
-   node->setNumChildren(2);
 
    if (mode == doScalarization)
       {
@@ -1307,11 +1385,14 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
       if (firstChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, firstChild, elementType, vectorLength, mode);
       if (secondChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, secondChild, elementType, vectorLength, mode);
 
-      TR::Node::recreate(node, opcode);
+      node->setAndIncChild(0, firstChild);
+      node->setAndIncChild(1, secondChild);
+      node->setNumChildren(2);
+      TR::Node::recreate(node, scalarOpCode);
 
       for (int i = 1; i < numLanes; i++)
          {
-         TR::Node *newAddNode = TR::Node::create(node, opcode, 2);
+         TR::Node *newAddNode = TR::Node::create(node, scalarOpCode, 2);
          addScalarNode(opt, node, numLanes, i, newAddNode);
          newAddNode->setAndIncChild(0, getScalarNode(opt, firstChild, i));
          newAddNode->setAndIncChild(1, getScalarNode(opt, secondChild, i));
@@ -1324,7 +1405,19 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
       if (firstChild->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, firstChild, vectorType);
       if (secondChild->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, secondChild, vectorType);
 
-      TR::Node::recreate(node, TR::vcall);
+      TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOpCode);
+
+      if (vectorOpCode != TR::BadILOp)
+         {
+         node->setAndIncChild(0, firstChild);
+         node->setAndIncChild(1, secondChild);
+         node->setNumChildren(2);
+         TR::Node::recreate(node, vectorOpCode);
+         }
+      else
+         {
+         TR::Node::recreate(node, TR::vcall);
+         }
       }
 
    return node;
@@ -1342,7 +1435,7 @@ TR_VectorAPIExpansion::methodTable[] =
    {unsupportedHandler /*intoArrayHandler*/,      TR::Float,  Unknown, {Vector}},  // jdk_incubator_vector_FloatVector_intoArray,
    {unsupportedHandler,    TR::Float,  Vector,  {Species}},                 // jdk_incubator_vector_FloatVector_fromArray_mask
    {unsupportedHandler,    TR::Float,  Unknown, {}},                        // jdk_incubator_vector_FloatVector_intoArray_mask
-   {addHandler,            TR::Float,  Vector,  {Vector, Vector}},          // jdk_incubator_vector_FloatVector_add
+   {unsupportedHandler /*addHandler*/,            TR::Float,  Vector,  {Vector, Vector}},          // jdk_incubator_vector_FloatVector_add
    {unsupportedHandler,    TR::Float,  Vector,  {}}                         // jdk_incubator_vector_VectorSpecies_indexInRange
    };
 
@@ -1358,11 +1451,7 @@ TR_VectorAPIExpansion::TR_VectorAPIExpansion(TR::OptimizationManager *manager)
 
 
 //TODOs:
-// 1) disable inlining of recognized intrinsics
-// 2) add disable and trace command line options
-// 3) enable inlining of all vector methods
 // 4) handle OSR guards
-// 5) make scalarization and vectorization per web
 // 6) make scalarization and vectorization coexist in one web
 // 7) handle all intrinsics
 // 8) box vector objects if passed to unvectorized methods
@@ -1371,10 +1460,7 @@ TR_VectorAPIExpansion::TR_VectorAPIExpansion(TR::OptimizationManager *manager)
 // 11) implement useDef based approach
 // 12) handle methods that return vector type different from the argument
 // 13) OPT: optimize java/util/Objects.checkIndex
-// 14) OPT: getClass() issue in FloatVector.binaryOp
 // 15) OPT: too many aliased temps (reused privatized args) that cause over-aliasing after GVP
 // 16) OPT: add to other opt levels
-// 17) OPT: second pass of GVP still needed to propagate opcode
 // 18) OPT: jdk/incubator/vector/VectorOperators.opCode() is not inlined with Byte,Short,Long add
-// 19) OPT: don't insert OSR guards for intrinsics
 // 20) Fix TR_ALLOC
