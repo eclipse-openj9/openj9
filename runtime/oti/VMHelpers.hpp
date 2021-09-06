@@ -42,6 +42,8 @@
 #include "j9cp.h"
 #include "ute.h"
 #include "ObjectAllocationAPI.hpp"
+#include "ObjectAccessBarrierAPI.hpp"
+#include "stackwalk.h"
 
 typedef enum {
 	J9_BCLOOP_SEND_TARGET_INITIAL_STATIC = 0,
@@ -1861,6 +1863,65 @@ exit:
 		currentThread->literals = NULL;
 		currentThread->jitStackFrameFlags = 0;
 		return oldPC;
+	}
+
+	static void
+	heapifyObjectFixOSlotIterator(J9VMThread *vmThread, J9StackWalkState *walkState, j9object_t *oSlotPointer, const void * stackLocation)
+	{
+		if (*oSlotPointer == (j9object_t)walkState->userData1) {
+			*oSlotPointer = (j9object_t)walkState->userData2;
+		}
+	}
+
+	static VMINLINE j9object_t
+	heapifyObject(J9VMThread *currentThread, j9object_t object)
+	{
+		J9Class *objectClass = J9OBJECT_CLAZZ(currentThread, object);
+		UDATA classFlags = J9CLASS_FLAGS(objectClass);
+		j9object_t heapCopy = NULL;
+		MM_ObjectAllocationAPI allocationAPI(currentThread);
+		MM_ObjectAccessBarrierAPI objectAccessBarrierAPI(currentThread);
+		if (J9_ARE_ANY_BITS_SET(classFlags, J9AccClassArray)) {
+			U_32 size = J9INDEXABLEOBJECT_SIZE(currentThread, object);
+			heapCopy = VM_VMHelpers::inlineAllocateIndexableObject(currentThread, &allocationAPI, objectClass, size, false, false, false);
+			if (heapCopy == NULL) {
+				heapCopy = currentThread->javaVM->memoryManagerFunctions->J9AllocateIndexableObject(currentThread, objectClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+				if (J9_UNEXPECTED(NULL == heapCopy)) {
+					// Possibly set OOM exception here; or caller can infer failure from the NULL return
+					goto done;
+				}
+				objectClass = VM_VMHelpers::currentClass(objectClass);
+			}
+			objectAccessBarrierAPI.cloneArray(currentThread, object, heapCopy, objectClass, size);
+		} else {
+			heapCopy = allocationAPI.inlineAllocateObject(currentThread, objectClass, false, false);
+			if (heapCopy == NULL) {
+				heapCopy = currentThread->javaVM->memoryManagerFunctions->J9AllocateObject(currentThread, objectClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+				if (J9_UNEXPECTED(NULL == heapCopy)) {
+					// Possibly set OOM exception here; or caller can infer failure from the NULL return
+					goto done;
+				}
+				objectClass = VM_VMHelpers::currentClass(objectClass);
+			}
+			objectAccessBarrierAPI.cloneObject(currentThread, object, heapCopy, objectClass);
+			VM_VMHelpers::checkIfFinalizeObject(currentThread, heapCopy);
+		}
+
+		if (LN_HAS_LOCKWORD(currentThread, object)) {
+			j9objectmonitor_t *originalLockEA = J9OBJECT_MONITOR_EA(currentThread, object);
+			j9objectmonitor_t *newLockEA = J9OBJECT_MONITOR_EA(currentThread, heapCopy);
+			J9_STORE_LOCKWORD(currentThread, newLockEA, J9_LOAD_LOCKWORD(currentThread, originalLockEA));
+		}
+
+		J9StackWalkState walkState;
+		walkState.walkThread = currentThread;
+		walkState.flags = J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK;
+		walkState.objectSlotWalkFunction = heapifyObjectFixOSlotIterator;
+		walkState.userData1 = object;
+		walkState.userData2 = heapCopy;
+		currentThread->javaVM->walkStackFrames(currentThread, &walkState);
+	done:
+		return heapCopy;
 	}
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
