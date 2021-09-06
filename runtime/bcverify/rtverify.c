@@ -170,6 +170,10 @@ j9rtv_verifyBytecodes (J9BytecodeVerificationData *verifyData)
 			(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)),
 			J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)));
 
+	if (0 == strncmp("Test4", (char*) J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)), J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)))) {
+		printf("found class 2 \n");
+	}
+
 	/* Go walk the bytecodes */
 	result = verifyBytecodes (verifyData);
 

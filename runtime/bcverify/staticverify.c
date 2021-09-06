@@ -169,6 +169,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 	UDATA sigChar;
 	UDATA errorType = 0;
 	UDATA errorDataIndex = 0;
+	UDATA errorExceptionType = CFR_ThrowVerifyError;
 
 
 	method = &(classfile->methods[methodIndex]);
@@ -919,8 +920,12 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				goto _verifyError;
 			}
 			info = &(classfile->constantPool[info->slot2]);
-			if (classfile->constantPool[info->slot1].bytes[0] == '<') {
+			if (classfile->constantPool[info
+										->slot1].bytes[0] == '<') {
 				errorType = J9NLS_CFR_ERR_BC_METHOD_INVALID__ID;
+#if JAVA_SPEC_VERSION >= 17
+				errorExceptionType = CFR_ThrowClassFormatError;
+#endif /* JAVA_SPEC_VERSION >= 17 */
 				goto _verifyError;
 			}
 			NEXT_U8(index, bcIndex);
@@ -1212,7 +1217,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 	buildMethodErrorWithExceptionDetails(error,
 		errorType,
 		0,
-		CFR_ThrowVerifyError,
+		errorExceptionType,
 		(I_32)methodIndex,
 		(U_32)start,
 		method,

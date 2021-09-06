@@ -2407,6 +2407,14 @@ internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *clas
 	J9MemorySegment *segment = NULL;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
+	if (0 == strncmp("com/ibm/oti/util/Util", (char*) J9UTF8_DATA(className), J9UTF8_LENGTH(className))) {
+		printf("found class 1\n");
+	}
+
+	if (0 == strncmp("Test4", (char*) J9UTF8_DATA(className), J9UTF8_LENGTH(className))) {
+		printf("found class 3\n");
+	}
+
 	state->retry = FALSE;
 	/* Ensure we have enough space in the emergency stackmap buffer for this class. */
 	result = j9maxmap_setMapMemoryBuffer(javaVM, romClass);
