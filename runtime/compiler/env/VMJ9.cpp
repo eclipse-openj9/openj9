@@ -5107,13 +5107,6 @@ TR_J9VMBase::delegatingMethodHandleTarget(
    if (knot == NULL)
       return TR::KnownObjectTable::UNKNOWN;
 
-#if defined(J9VM_OPT_JITSERVER)
-   // TODO: JITServer support. It should be possible to handle this case by
-   // having the message handler call back into this function on the client.
-   if (comp->isOutOfProcessCompilation())
-      return TR::KnownObjectTable::UNKNOWN;
-#endif
-
    if (dmhIndex == TR::KnownObjectTable::UNKNOWN || knot->isNull(dmhIndex))
       return TR::KnownObjectTable::UNKNOWN;
 
@@ -5160,19 +5153,30 @@ TR_J9VMBase::delegatingMethodHandleTarget(
       return TR::KnownObjectTable::UNKNOWN;
       }
 
-   TR::VMAccessCriticalSection dereferenceKnownObjectField(this);
-   int32_t targetFieldOffset =
-      getInstanceFieldOffset(cwClass, "target", "Ljava/lang/invoke/MethodHandle;");
-
-   uintptr_t dmh = knot->getPointer(dmhIndex);
-   uintptr_t fieldAddress = getReferenceFieldAt(dmh, targetFieldOffset);
-   TR::KnownObjectTable::Index targetIndex = knot->getOrCreateIndex(fieldAddress);
+   TR::KnownObjectTable::Index targetIndex = delegatingMethodHandleTargetHelper(comp, dmhIndex, cwClass);
 
    if (trace)
       traceMsg(comp, "target is obj%d\n", targetIndex);
 
    return targetIndex;
    }
+
+TR::KnownObjectTable::Index
+TR_J9VMBase::delegatingMethodHandleTargetHelper(
+   TR::Compilation *comp, TR::KnownObjectTable::Index dmhIndex, TR_OpaqueClassBlock *cwClass)
+   {
+   TR_ASSERT(!comp->isOutOfProcessCompilation(), "Should not be used in server mode");
+   TR::VMAccessCriticalSection dereferenceKnownObjectField(this);
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   int32_t targetFieldOffset =
+      getInstanceFieldOffset(cwClass, "target", "Ljava/lang/invoke/MethodHandle;");
+
+   uintptr_t dmh = knot->getPointer(dmhIndex);
+   uintptr_t fieldAddress = getReferenceFieldAt(dmh, targetFieldOffset);
+   TR::KnownObjectTable::Index targetIndex = knot->getOrCreateIndex(fieldAddress);
+   return targetIndex;
+   }
+
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 TR::KnownObjectTable::Index
