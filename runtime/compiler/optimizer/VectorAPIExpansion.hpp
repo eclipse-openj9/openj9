@@ -156,10 +156,6 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static const vec_sz_t vec_len_unknown = -1;
    static const vec_sz_t vec_len_default = 0;
 
-   static const handlerMode defaultCheckMode = checkScalarization;
-   static const handlerMode defaultDoMode = doScalarization;
-
-
   /** \brief
    *     Element of the alias table.
    *  -# After a call to \c buildVectorAliases():
@@ -182,7 +178,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
       TR_ALLOC(TR_Memory::Inliner);  // TODO: add new type
 
       vectorAliasTableElement() : _symRef(NULL), _vecSymRef(NULL),
-                                  _vecLen(vec_len_default), _elementType(TR::NoType), _aliases(NULL), _classId(0) {}
+                                  _vecLen(vec_len_default), _elementType(TR::NoType), _aliases(NULL), _classId(0),
+                                  _cantVectorize(false), _cantScalarize(false) {}
 
       TR::SymbolReference *_symRef;
       union
@@ -198,6 +195,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
       TR::DataType         _elementType;
       TR_BitVector        *_aliases;
       int32_t              _classId;
+      bool                 _cantVectorize;
+      bool                 _cantScalarize;
       };
 
 
@@ -224,6 +223,27 @@ class TR_VectorAPIExpansion : public TR::Optimization
    bool _trace;
    TR_BitVector _visitedNodes;
    TR_BitVector _seenClasses;
+
+  /** \brief
+   *     Checks if vector length is supported on current platform
+   *
+   *  \param comp
+   *     Compilation
+   *
+   *  \param vectorLength
+   *     Vector length in bits
+   *
+   *  \return
+   *     \c true if plaform supports \c vectorLength
+   *     \c false otherwise
+   */
+   static bool supportedOnPlatform(TR::Compilation *comp, vec_sz_t vectorLength)
+         {
+         if (comp->target().cpu.isPower() && vectorLength == 128)
+            return true;
+         else
+            return false;
+         }
 
    /** \brief
     *     Checks if the method being compiled contains any recognized Vector API methods

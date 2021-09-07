@@ -209,7 +209,10 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		jint logLevel,
 		jstring logFile,
 		jboolean fileLocks,
-		jstring workDir)
+		jstring workDir,
+		jboolean tcpEstablished,
+		jboolean autoDedup,
+		jboolean trackMemory)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -322,6 +325,10 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		criu_set_leave_running(JNI_FALSE != leaveRunning);
 		criu_set_ext_unix_sk(JNI_FALSE != extUnixSupport);
 		criu_set_file_locks(JNI_FALSE != fileLocks);
+		criu_set_tcp_established(JNI_FALSE != tcpEstablished);
+		criu_set_auto_dedup(JNI_FALSE != autoDedup);
+		criu_set_track_mem(JNI_FALSE != trackMemory);
+
 		if (NULL != workDir) {
 			criu_set_work_dir_fd(workDirFD);
 		}
