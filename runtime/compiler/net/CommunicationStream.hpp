@@ -34,7 +34,6 @@ namespace JITServer
 enum JITServerCompatibilityFlags
    {
    JITServerJavaVersionMask    = 0x00000FFF,
-   JITServerCompressedRef      = 0x00001000,
    };
 
 class CommunicationStream
