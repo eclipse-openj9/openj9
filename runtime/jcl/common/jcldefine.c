@@ -176,7 +176,7 @@ retry:
 	/* Try to find classLocation. Ignore return code because there are valid cases where it might not find it (ie. bytecode spinning).
 	 * If the class is not found the default class location is fine.
 	 */
-	dynFuncs->findLocallyDefinedClassFunction(currentThread, NULL, utf8Name, (U_32) utf8Length, classLoader, classLoader->classPathEntries, classLoader->classPathEntryCount, (UDATA) FALSE, &localBuffer);
+	dynFuncs->findLocallyDefinedClassFunction(currentThread, NULL, utf8Name, (U_32) utf8Length, classLoader, (UDATA) FALSE, &localBuffer);
 
 	/* skip if we are anonClass or hidden classes */
 	if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN)) {

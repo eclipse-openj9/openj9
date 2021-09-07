@@ -1496,7 +1496,7 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 * @return void
 */
 void
-freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry * entries, UDATA count);
+freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry **entries, UDATA count, UDATA initCount);
 
 /**
 * @brief
@@ -1700,12 +1700,12 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved);
  * @param[in] classPathSeparator platform specific class path separator
  * @param[in] cpFlags clas path entry flags
  * @param[in] initClassPathEntry if TRUE initialize each class path entry
- * @param[out] classPathEntries returns the class path entries allocated and initialized by the function
+ * @param[out] classPathEntries returns the pointer array of class path entries.
  *
  * @return number of class path entries initialized
  */
 UDATA
-initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 cpFlags, BOOLEAN initClassPathEntry, J9ClassPathEntry **classPathEntries);
+initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 cpFlags, BOOLEAN initClassPathEntry, J9ClassPathEntry ***classPathEntries);
 
 /*
  * Initialize the given class path entry. This involves determining what kind
