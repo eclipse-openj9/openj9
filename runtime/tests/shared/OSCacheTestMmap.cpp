@@ -55,9 +55,9 @@ SH_OSCacheTestMmap::testBasic(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
@@ -142,9 +142,9 @@ SH_OSCacheTestMmap::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
@@ -214,9 +214,9 @@ SH_OSCacheTestMmap::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 	J9PortShcVersion versionData;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
@@ -313,9 +313,9 @@ SH_OSCacheTestMmap::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
@@ -460,9 +460,9 @@ SH_OSCacheTestMmap::testGetAllCacheStatistics(J9JavaVM* vm)
 	}
 	piconfig->sharedClassDebugAreaBytes = -1;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /*  defined(OPENJ9_BUILD) */
+#endif /*  defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 
 	ret = j9shmem_getDir(ctrlDirName, flags, cacheDirName, J9SH_MAXPATH);
 	if (0 > ret) {
@@ -570,9 +570,9 @@ SH_OSCacheTestMmap::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
@@ -663,9 +663,9 @@ SH_OSCacheTestMmap::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
@@ -757,9 +757,9 @@ SH_OSCacheTestMmap::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 	UDATA childargc = 0;
 	U_32 flags = J9SHMEM_GETDIR_APPEND_BASEDIR;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;

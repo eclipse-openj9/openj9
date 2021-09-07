@@ -58,9 +58,9 @@ SH_OSCacheTestSysv::testBasic(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	void* allocatedMem = NULL;
 	UDATA memSize = 0;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
@@ -205,9 +205,9 @@ SH_OSCacheTestSysv::testMultipleCreate(J9PortLibrary* portLibrary, J9JavaVM *vm,
 	UDATA memSize = SH_OSCache::getRequiredConstrBytes();
 	void* allocatedMem = NULL;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /*  defined(OPENJ9_BUILD) */
+#endif /*  defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 	
@@ -362,9 +362,9 @@ SH_OSCacheTestSysv::testConstructor(J9PortLibrary *portLibrary, J9JavaVM *vm)
 	UDATA memSize = 0;
 	void* allocatedMem = NULL;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /*  defined(OPENJ9_BUILD) */
+#endif /*  defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -453,9 +453,9 @@ SH_OSCacheTestSysv::testFailedConstructor(J9PortLibrary *portLibrary, J9JavaVM *
 	UDATA memSize = 0;
 	void* allocatedMem = NULL;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -550,9 +550,9 @@ SH_OSCacheTestSysv::testGetAllCacheStatistics(J9JavaVM* vm)
 	}
 	memset(piconfig, 0 , sizeof(J9SharedClassPreinitConfig));
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= (J9SHMEM_GETDIR_USE_USERHOME | J9SHMEM_GETDIR_APPEND_BASEDIR);
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 
 	ret = j9shmem_getDir(ctrlDirName, flags, cacheDirName, J9SH_MAXPATH);
 	if (0 > ret) {
@@ -673,9 +673,9 @@ SH_OSCacheTestSysv::testMutex(J9PortLibrary *portLibrary, J9JavaVM *vm, struct j
 	UDATA memSize = 0;
 	void* allocatedMem = NULL;
 
-#if	defined(OPENJ9_BUILD)
+#if	defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -774,9 +774,9 @@ SH_OSCacheTestSysv::testMutexHang(J9PortLibrary *portLibrary, J9JavaVM *vm, stru
 	UDATA memSize = 0;
 	void* allocatedMem = NULL;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -872,9 +872,9 @@ SH_OSCacheTestSysv::testSize(J9PortLibrary* portLibrary, J9JavaVM *vm)
 	UDATA memSize = 0;
 	void* allocatedMem = NULL;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
@@ -1033,9 +1033,9 @@ SH_OSCacheTestSysv::testDestroy (J9PortLibrary* portLibrary, J9JavaVM *vm, struc
 	UDATA memSize = 0;
 	void *allocatedMem = NULL;
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	flags |= J9SHMEM_GETDIR_USE_USERHOME;
-#endif /* defined(OPENJ9_BUILD) */
+#endif /* defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 	setCurrentCacheVersion(vm, J2SE_CURRENT_VERSION, &versionData);
 	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
