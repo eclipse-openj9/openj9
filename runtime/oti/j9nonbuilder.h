@@ -1290,7 +1290,7 @@ typedef struct J9SharedClassConfig {
 	void  ( *jvmPhaseChange)(struct J9VMThread *currentThread, UDATA phase);
 	void  (*storeGCHints)(struct J9VMThread* currentThread, UDATA heapSize1, UDATA heapSize2, BOOLEAN forceReplace);
 	IDATA  (*findGCHints)(struct J9VMThread* currentThread, UDATA *heapSize1, UDATA *heapSize2);
-	void  ( *updateClasspathOpenState)(struct J9JavaVM* vm, struct J9ClassPathEntry* classPathEntries, UDATA entryIndex, UDATA entryCount, BOOLEAN isOpen);
+	void  ( *updateClasspathOpenState)(struct J9JavaVM* vm, struct J9ClassPathEntry** classPathEntries, UDATA entryIndex, UDATA entryCount, BOOLEAN isOpen);
 	struct J9MemorySegment* metadataMemorySegment;
 	struct J9Pool* classnameFilterPool;
 	U_32 softMaxBytes;
@@ -1712,7 +1712,7 @@ typedef struct J9Package {
 typedef struct J9ModuleExtraInfo {
 	struct J9Module* j9module;
 	struct J9UTF8* jrtURL;
-	struct J9ClassPathEntry* patchPathEntries;
+	struct J9ClassPathEntry** patchPathEntries;
 	UDATA patchPathCount;
 } J9ModuleExtraInfo;
 
@@ -1836,7 +1836,7 @@ typedef struct J9TranslationBufferSet {
 	U_8* classFileError;
 	UDATA classFileSize;
 	void* romClassBuilder;
-	IDATA  ( *findLocallyDefinedClassFunction)(struct J9VMThread * vmThread, struct J9Module * j9module, U_8 * className, U_32 classNameLength, struct J9ClassLoader * classLoader, struct J9ClassPathEntry * classPath, UDATA classPathEntryCount, UDATA options, struct J9TranslationLocalBuffer *localBuffer) ;
+	IDATA  ( *findLocallyDefinedClassFunction)(struct J9VMThread * vmThread, struct J9Module * j9module, U_8 * className, U_32 classNameLength, struct J9ClassLoader * classLoader, UDATA options, struct J9TranslationLocalBuffer *localBuffer) ;
 	struct J9Class*  ( *internalDefineClassFunction)(struct J9VMThread* vmThread, void* className, UDATA classNameLength, U_8* classData, UDATA classDataLength, j9object_t classDataObject, struct J9ClassLoader* classLoader, j9object_t protectionDomain, UDATA options, struct J9ROMClass *existingROMClass, struct J9Class *hostClass, struct J9TranslationLocalBuffer *localBuffer) ;
 	I_32  ( *closeZipFileFunction)(struct J9VMInterface* vmi, struct VMIZipFile* zipFile) ;
 	void  ( *reportStatisticsFunction)(struct J9JavaVM * javaVM, struct J9ClassLoader* loader, struct J9ROMClass* romClass, struct J9TranslationLocalBuffer *localBuffer) ;
@@ -1991,6 +1991,8 @@ typedef struct J9ClassPatchMap {
 #define CPE_STATUS_JXE_CORRUPT_IMAGE_HEADER  	0x4
 #define CPE_STATUS_JXE_OE_NOT_SUPPORTED  		0x8
 #define CPE_STATUS_IGNORE_ZIP_LOAD_STATE  		0x10
+
+#define CPE_COUNT_INCREMENT 64
 
 #define CPE_TYPE_UNKNOWN  						0
 #define CPE_TYPE_DIRECTORY						1
@@ -3319,7 +3321,7 @@ typedef struct J9ClassLoader {
 	struct J9HashTable* classHashTable;
 	struct J9HashTable* romClassOrphansHashTable;
 	j9object_t classLoaderObject;
-	struct J9ClassPathEntry* classPathEntries;
+	struct J9ClassPathEntry** classPathEntries;
 	UDATA classPathEntryCount;
 	struct J9ClassLoader* unloadLink;
 	struct J9ClassLoader* gcLinkNext;
@@ -3347,7 +3349,8 @@ typedef struct J9ClassLoader {
 	struct J9HashTable* classLocationHashTable;
 	struct J9HashTable* classRelationshipsHashTable;
 	struct J9Pool* hotFieldPool;
-	omrthread_monitor_t hotFieldPoolMutex; 
+	omrthread_monitor_t hotFieldPoolMutex;
+	UDATA initClassPathEntryCount;
 } J9ClassLoader;
 
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
@@ -4735,7 +4738,7 @@ typedef struct J9InternalVMFunctions {
 	struct J9ModuleExtraInfo* ( *findModuleInfoForModule)(struct J9VMThread *currentThread, struct J9ClassLoader *classLoader, J9Module *j9module);
 	struct J9ClassLocation* ( *findClassLocationForClass)(struct J9VMThread *currentThread, struct J9Class *clazz);
 	jclass ( *getJimModules) (struct J9VMThread *currentThread);
-	UDATA ( *initializeClassPath)(struct J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 cpFlags, BOOLEAN initClassPathEntry, struct J9ClassPathEntry **classPathEntries);
+	UDATA ( *initializeClassPath)(struct J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 cpFlags, BOOLEAN initClassPathEntry, struct J9ClassPathEntry ***classPathEntries);
 	IDATA ( *initializeClassPathEntry) (struct J9JavaVM * javaVM, struct J9ClassPathEntry *cpEntry);
 	BOOLEAN ( *setBootLoaderModulePatchPaths)(struct J9JavaVM * javaVM, struct J9Module * j9module, const char * moduleName);
 	BOOLEAN (*isAnyClassLoadedFromPackage)(struct J9ClassLoader* classLoader, U_8 *pkgName, UDATA pkgNameLength);

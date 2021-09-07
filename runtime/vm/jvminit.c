@@ -1323,7 +1323,7 @@ _error :
 #if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT))
 
 UDATA
-initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 cpFlags, BOOLEAN initClassPathEntry, J9ClassPathEntry **classPathEntries)
+initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 cpFlags, BOOLEAN initClassPathEntry, J9ClassPathEntry ***classPathEntries)
 {
 	UDATA classPathEntryCount = 0;
 	U_32 i = 0;
@@ -1349,17 +1349,30 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
 				lastWasSeparator = FALSE;
 			}
 			classPathLength += 1;
-                }
+		}
 	}
 
 	if (0 == classPathEntryCount) {
 		*classPathEntries = NULL;
 	} else {
-		/* classPathEntryCount is for number of null characters */
-		UDATA classPathSize = (sizeof(J9ClassPathEntry) * classPathEntryCount) + classPathLength + classPathEntryCount;
-		J9ClassPathEntry *cpEntries = j9mem_allocate_memory(classPathSize, OMRMEM_CATEGORY_VM);
+		UDATA cpePtrArraySize = 0;
+		UDATA cpePtrArrayMemSize = 0;
+		J9ClassPathEntry **cpePtrArray = NULL;
+		UDATA classPathMemSize = 0;
+		J9ClassPathEntry *cpEntries = NULL;
 
-	        if (NULL == cpEntries) {
+		cpePtrArraySize = ROUND_UP_TO(CPE_COUNT_INCREMENT, classPathEntryCount);
+		cpePtrArrayMemSize = sizeof(*classPathEntries) * cpePtrArraySize;
+		cpePtrArray = (J9ClassPathEntry**)j9mem_allocate_memory(cpePtrArrayMemSize, OMRMEM_CATEGORY_VM);
+		/* classPathEntryCount is for number of null characters */
+		classPathMemSize = (sizeof(J9ClassPathEntry) * classPathEntryCount) + classPathLength + classPathEntryCount;
+		cpEntries = j9mem_allocate_memory(classPathMemSize, OMRMEM_CATEGORY_VM);
+
+		if ((NULL == cpePtrArray)
+			|| (NULL == cpEntries)
+		) {
+			j9mem_free_memory(cpePtrArray);
+			j9mem_free_memory(cpEntries);
 			*classPathEntries = NULL;
 			classPathEntryCount = -1;
 		} else {
@@ -1369,7 +1382,8 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
 			char *entryEnd = classPath;
 			char *cpEnd = classPath + cpLength;
 
-			memset(cpEntries, 0, sizeof(J9ClassPathEntry) * classPathEntryCount);
+			memset(cpePtrArray, 0, cpePtrArrayMemSize);
+			memset(cpEntries, 0, classPathMemSize);
 
 			for (i = 0; i < classPathEntryCount; ) {
 				/* walk to the end of the entry */
@@ -1391,14 +1405,15 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
 					if (TRUE == initClassPathEntry) {
 						initializeClassPathEntry(vm, cpEntry);
 					}
+					cpePtrArray[i] = cpEntry;
 					cpPathMemory += (cpEntry->pathLength + 1);
 					cpEntry++;
 					i++;
 				}
 				entryStart = entryEnd + 1;
 			}
-			*classPathEntries = cpEntries;
-	        }
+			*classPathEntries = cpePtrArray;
+		}
 	}
 
 _end:
@@ -1633,7 +1648,9 @@ setBootLoaderModulePatchPaths(J9JavaVM * javaVM, J9Module * j9module, const char
 				void *node = hashTableAdd(loader->moduleExtraInfoHashTable, (void *)&moduleInfo);
 				if (NULL == node) {
 					J9VMThread *currentThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
-					freeClassLoaderEntries(currentThread, moduleInfo.patchPathEntries, moduleInfo.patchPathCount);
+					freeClassLoaderEntries(currentThread, moduleInfo.patchPathEntries, moduleInfo.patchPathCount, moduleInfo.patchPathCount);
+					j9mem_free_memory(moduleInfo.patchPathEntries);
+					moduleInfo.patchPathEntries = NULL;
 					result = FALSE;
 					goto _exitMutex;
 				}

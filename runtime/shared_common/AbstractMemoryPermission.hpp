@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,9 +26,6 @@
 /* @ddr_namespace: default */
 #include "j9.h"
 #include "ut_j9shr.h"
-
-#define ROUND_UP_TO(granularity, number) ( (((number) % (granularity)) ? ((number) + (granularity) - ((number) % (granularity))) : (number)))
-#define ROUND_DOWN_TO(granularity, number) ( (((number) % (granularity)) ? ((number) - ((number) % (granularity))) : (number)))
 
 class AbstractMemoryPermission
 {

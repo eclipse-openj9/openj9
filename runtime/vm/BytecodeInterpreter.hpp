@@ -4302,13 +4302,12 @@ done:
 		I_32 type = CPE_TYPE_UNUSABLE;
 		/* This native is only called for the boot loader, so vmRef is guaranteed to be initialized */
 		J9ClassLoader *classLoader = J9VMJAVALANGCLASSLOADER_VMREF(_currentThread, classLoaderObject);
-		/* Bounds check the parameter */
 		if ((cpIndex >= 0) && (cpIndex < (I_32)classLoader->classPathEntryCount)) {
 			/* Check the flags of the translation data struct */
 			J9TranslationBufferSet *translationData = _vm->dynamicLoadBuffers;
 			if (NULL != translationData) {
 				/* Initialize the class path entry */
-				J9ClassPathEntry *cpEntry = classLoader->classPathEntries + cpIndex;
+				J9ClassPathEntry *cpEntry = classLoader->classPathEntries[cpIndex];
 				type = (I_32)initializeClassPathEntry(_vm, cpEntry);
 			}
 		}

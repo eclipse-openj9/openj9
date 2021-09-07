@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2015 IBM Corp. and others
+ * Copyright (c) 2015, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,6 @@
 
 #ifndef jimage_reader_h
 #define jimage_reader_h
-
-#define ROUND_UP_TO(granularity, number) 			((((number) % (granularity)) ? ((number) + (granularity) - ((number) % (granularity))) : (number)))
 
 #define J9JIMAGE_READ_U8(value, cursor)				((value = *(U_8 *)cursor), cursor += sizeof(U_8), value)
 
