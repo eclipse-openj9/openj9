@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -208,7 +208,7 @@ SH_OSCache::getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDA
 		flags |= J9SHMEM_GETDIR_APPEND_BASEDIR;
 	}
 
-#if defined(OPENJ9_BUILD)
+#if defined(OPENJ9_BUILD) && !defined(J9ZOS390)
 	if ((NULL == ctrlDirName)
 		&& J9_ARE_NO_BITS_SET(vm->sharedCacheAPI->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_GROUP_ACCESS)
 	) {
@@ -218,7 +218,7 @@ SH_OSCache::getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDA
 
 		flags |= J9SHMEM_GETDIR_USE_USERHOME;
 	}
-#endif /*defined(OPENJ9_BUILD) */
+#endif /*defined(OPENJ9_BUILD) && !defined(J9ZOS390) */
 
 	rc = j9shmem_getDir(ctrlDirName, flags, buffer, bufferSize);
 

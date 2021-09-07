@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2020 IBM Corp. and others
+ * Copyright (c) 2010, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,7 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 			persistentList = new ArrayList<String>();
 			persistentList.add("cache1");
 			if (isWindows() == false) {
-				if (false == isIbmJava8()) {
+				if (false == isDefaultDirTmp()) {
 					persistentGroupAccessList = new ArrayList<String>();
 					persistentGroupAccessList.add("cache1_groupaccess");
 				} else {
@@ -56,7 +56,7 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 			nonpersistentList = new ArrayList<String>();
 			nonpersistentList.add("cache2");
 			if (isWindows() == false) {
-				if (false == isIbmJava8()) {
+				if (false == isDefaultDirTmp()) {
 					nonpersistentGroupAccessList = new ArrayList<String>();
 					nonpersistentGroupAccessList.add("cache2_groupaccess");
 				} else {
@@ -89,7 +89,7 @@ public class TestSharedCacheJavaAPI extends TestUtils {
     	runDestroyAllCaches();
     	if (false == isWindows()) {
     		runDestroyAllSnapshots();
-        	if (false == isIbmJava8()) {
+			if (false == isDefaultDirTmp()) {
         		runDestroyAllGroupAccessCaches();
             }
     	}
@@ -110,7 +110,7 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 	    		oldCacheCount = cacheList.size();
 	    	}
 
-	    	if (dir == null && false == isWindows() && false == isMVS() && false == isIbmJava8()) {
+			if (dir == null && false == isWindows() && false == isMVS() && false == isDefaultDirTmp()) {
 	    		dirGroupAccess = getCacheDir("Foo_groupaccess", false);
 	    		dirRemoveJavaSharedResources = removeJavaSharedResourcesDir(dirGroupAccess);
 	    		cacheGroupAccessList = SharedClassUtilities.getSharedCacheInfo(dirGroupAccess, SharedClassUtilities.NO_FLAGS, false);
@@ -605,7 +605,7 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 			runDestroyAllCaches();
 			if (false == isWindows()) {
 				runDestroyAllSnapshots();
-				if (false == isIbmJava8()) {
+				if (false == isDefaultDirTmp()) {
 					runDestroyAllGroupAccessCaches();
 				}
 			}
