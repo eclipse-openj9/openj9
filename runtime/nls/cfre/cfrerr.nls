@@ -1560,6 +1560,13 @@ J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.system_action=The JVM will throw a
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED_V1.user_response=Contact the provider of the class file for a corrected version, or remove the -XX:+EnableValhalla option and retry.
 # END NON-TRANSLATABLE
 
+J9NLS_CFR_ERR_BC_JUMP_RECURSIVE=A jsr instruction illegally points to its own bytecode index
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BC_JUMP_RECURSIVE.explanation=The JVM is unable to flatten the code block for a jsr instruction that refers to its own bytecode index.
+J9NLS_CFR_ERR_BC_JUMP_RECURSIVE.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BC_JUMP_RECURSIVE.user_response=Contact the provider of the class file for a corrected version.
+# END NON-TRANSLATABLE
+
 J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8=Outer class name must be a string
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.explanation=The outer class name of an InnerClasses attribute must be a string in the case of a non-zero outer class info index.
