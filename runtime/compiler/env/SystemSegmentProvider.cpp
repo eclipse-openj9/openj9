@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,10 +32,11 @@ J9::SystemSegmentProvider::SystemSegmentProvider(size_t defaultSegmentSize, size
    _systemSegmentAllocator(segmentAllocator),
    _systemSegments( SystemSegmentDequeAllocator(rawAllocator) ),
    _segments(std::less< TR::MemorySegment >(), SegmentSetAllocator(rawAllocator)),
-   _freeSegments( FreeSegmentDequeAllocator(rawAllocator) ),
+   _freeSegmentsEmpty(NULL, 0),
+   _freeSegments(&_freeSegmentsEmpty),
    _currentSystemSegment( TR::ref(_systemSegmentAllocator.request(systemSegmentSize) ) )
    {
-   TR_ASSERT(defaultSegmentSize <= systemSegmentSize, "defaultSegmentSize should be smaller than or equal to systemSegmentSize");
+   TR_ASSERT_FATAL(defaultSegmentSize <= systemSegmentSize, "defaultSegmentSize should be smaller than or equal to systemSegmentSize");
 
    // We cannot simply assign systemSegmentSize to _systemSegmentSize because:
    // We want to make sure that _currentSystemSegment is always a small system segment, i.e. its size <= _systemSegmentSize. When
@@ -79,12 +80,12 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
    {
    size_t const roundedSize = round(requiredSize);
    if (
-      !_freeSegments.empty()
+      _freeSegments != &_freeSegmentsEmpty
       && !(defaultSegmentSize() < roundedSize)
       )
       {
-      TR::MemorySegment &recycledSegment = _freeSegments.back().get();
-      _freeSegments.pop_back();
+      TR::MemorySegment &recycledSegment = *_freeSegments;
+      _freeSegments = &recycledSegment.unlink();
       recycledSegment.reset();
       return recycledSegment;
       }
@@ -96,14 +97,14 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
    if (remaining(_currentSystemSegment) >= roundedSize)
       {
       // Only allocate small segments from _currentSystemSegment
-      TR_ASSERT(!isLargeSegment(remaining(_currentSystemSegment)), "_currentSystemSegment must be a small segment");
+      TR_ASSERT_FATAL(!isLargeSegment(remaining(_currentSystemSegment)), "_currentSystemSegment must be a small segment");
       return allocateNewSegment(roundedSize, _currentSystemSegment);
       }
 
    size_t systemSegmentSize = std::max(roundedSize, _systemSegmentSize);
 
    J9MemorySegment &newSegment = _systemSegmentAllocator.request(systemSegmentSize);
-   TR_ASSERT(
+   TR_ASSERT_FATAL(
       newSegment.heapAlloc == newSegment.heapBase,
       "Segment @ %p { heapBase: %p, heapAlloc: %p, heapTop: %p } is stale",
       &newSegment,
@@ -133,7 +134,11 @@ J9::SystemSegmentProvider::request(size_t requiredSize)
       //
       while (remaining(_currentSystemSegment) >= defaultSegmentSize())
          {
-         _freeSegments.push_back( TR::ref(allocateNewSegment(defaultSegmentSize(), _currentSystemSegment) ) );
+         TR::MemorySegment &remainingSegment =
+            allocateNewSegment(defaultSegmentSize(), _currentSystemSegment);
+
+         remainingSegment.link(*_freeSegments);
+         _freeSegments = &remainingSegment;
          }
 
       _currentSystemSegment = newSegmentRef;
@@ -158,7 +163,8 @@ J9::SystemSegmentProvider::release(TR::MemorySegment & segment) throw()
       {
       try
          {
-         _freeSegments.push_back(TR::ref(segment));
+         segment.link(*_freeSegments);
+         _freeSegments = &segment;
          }
       catch (...)
          {
@@ -190,26 +196,20 @@ J9::SystemSegmentProvider::release(TR::MemorySegment & segment) throw()
       }
    else
       {
-      size_t const oldSegmentSize = segmentSize;
-      void * const oldSegmentArea = segment.base();
+      // TODO (#13353): Eliminate this case. Previously the segment was carved
+      // up into default-sized segments here, but they weren't ever added to
+      // the free list, so they wouldn't ever actually be used to provide
+      // memory for later allocations. Furthermore, even if they were added the
+      // free list, the memory can't be reused for allocations of size similar
+      // to segment, which is effectively a memory leak.
+      //
+      // For the moment, just skip creating the default-sized segments. This is
+      // no worse for memory reuse than the previous state of affairs, and it
+      // avoids allocation during release().
 
       /* Removing segment from _segments */
       auto it = _segments.find(segment);
       _segments.erase(it);
-
-      TR_ASSERT(oldSegmentSize % defaultSegmentSize() == 0, "misaligned segment");
-      size_t const chunks = oldSegmentSize / defaultSegmentSize();
-      for (size_t i = 0; i < chunks; ++i)
-         {
-         try
-            {
-            createSegmentFromArea(defaultSegmentSize(), static_cast<uint8_t *>(oldSegmentArea) + (defaultSegmentSize() * i));
-            }
-         catch (...)
-            {
-            /* not much we can do here except leak */
-            }
-         }
       }
    }
 
@@ -234,7 +234,7 @@ J9::SystemSegmentProvider::bytesAllocated() const throw()
 TR::MemorySegment &
 J9::SystemSegmentProvider::allocateNewSegment(size_t size, TR::reference_wrapper<J9MemorySegment> systemSegment)
    {
-   TR_ASSERT( (size % defaultSegmentSize()) == 0, "Misaligned segment");
+   TR_ASSERT_FATAL( (size % defaultSegmentSize()) == 0, "Misaligned segment");
    void *newSegmentArea = operator new(size, systemSegment);
    if (!newSegmentArea) throw std::bad_alloc();
    try
@@ -254,8 +254,8 @@ TR::MemorySegment &
 J9::SystemSegmentProvider::createSegmentFromArea(size_t size, void *newSegmentArea)
    {
    auto result = _segments.insert( TR::MemorySegment(newSegmentArea, size) );
-   TR_ASSERT(result.first != _segments.end(), "Bad iterator");
-   TR_ASSERT(result.second, "Insertion failed");
+   TR_ASSERT_FATAL(result.first != _segments.end(), "Bad iterator");
+   TR_ASSERT_FATAL(result.second, "Insertion failed");
    return const_cast<TR::MemorySegment &>(*(result.first));
    }
 
