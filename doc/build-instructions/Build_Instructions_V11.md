@@ -146,7 +146,7 @@ bash get_source.sh
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-boot-jdk=/usr/lib/jvm/adoptojdk-java-11
+bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk11
 ```
 :warning: The path in the example --with-boot-jdk= option is appropriate for the Docker installation. If not using the Docker environment, set the path appropriate for your setup, such as "<my_home_dir>/bootjdk11" as setup in the previous instructions.
 
