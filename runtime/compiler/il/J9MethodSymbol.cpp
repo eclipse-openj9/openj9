@@ -161,6 +161,7 @@ static TR::RecognizedMethod canSkipNullChecks[] =
    TR::java_util_ArrayList_add,
    TR::java_util_ArrayList_ensureCapacity,
    TR::java_util_ArrayList_get,
+#if JAVA_SPEC_VERSION < 17
    TR::java_lang_String_trim,
    TR::java_lang_String_replace,
    TR::java_lang_String_charAt,
@@ -179,6 +180,10 @@ static TR::RecognizedMethod canSkipNullChecks[] =
    TR::java_lang_String_isCompressed,
    TR::java_lang_String_coder,
    TR::java_lang_String_isLatin1,
+   TR::java_lang_String_init_int_String_int_String_String,
+   TR::java_lang_String_init_int_int_char_boolean,
+   TR::java_lang_String_split_str_int,
+#endif
    TR::java_lang_StringBuffer_capacityInternal,
    TR::java_lang_StringBuffer_lengthInternalUnsynchronized,
    TR::java_lang_StringBuilder_capacityInternal,
@@ -199,9 +204,6 @@ static TR::RecognizedMethod canSkipNullChecks[] =
    TR::java_util_TreeMapUnboundedValueIterator_next,
    TR::java_util_TreeMapSubMap_setFirstKey,
    TR::java_util_TreeMapSubMap_setLastKey,
-   TR::java_lang_String_init_int_String_int_String_String,
-   TR::java_lang_String_init_int_int_char_boolean,
-   TR::java_lang_String_split_str_int,
    TR::java_nio_Bits_getCharB,
    TR::java_nio_Bits_getCharL,
    TR::java_nio_Bits_getShortB,
