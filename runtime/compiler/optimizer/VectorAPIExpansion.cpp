@@ -350,6 +350,10 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
          invalidateSymRef(child->getSymbolReference());
          }
       }
+   else if (node->getOpCodeValue() == TR::checkcast)
+      {
+      // ignore for now and check the children
+      }
    else
       {
       for (int32_t i = 0; i < node->getNumChildren(); i++)
@@ -784,6 +788,19 @@ TR_VectorAPIExpansion::expandVectorAPI()
 
          TR::Node::recreate(parent, TR::treetop);
          methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, doMode);
+         }
+      else if (node->getOpCodeValue() == TR::checkcast)
+         {
+         TR::Node *firstChild = node->getFirstChild();
+         if (firstChild->getOpCode().hasSymbolReference())
+            {
+            int32_t childClassId = _aliasTable[firstChild->getSymbolReference()->getReferenceNumber()]._classId;
+            if (childClassId > 0)
+               {
+               // can be removed since the child will be scalarized or vectorized
+               TR::Node::recreate(node, TR::treetop);
+               }
+            }
          }
 
       if (doMode == doScalarization)
