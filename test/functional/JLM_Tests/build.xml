@@ -27,7 +27,6 @@
 	<description>
 		Build JLM Tests
 	</description>
-	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- Set global properties for this build. -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/JLM_Tests" />

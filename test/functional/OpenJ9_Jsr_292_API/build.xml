@@ -25,7 +25,6 @@
 	<description>
 		Build OpenJ9 JSR 292 API Tests 
 	</description>
-	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/OpenJ9_Jsr_292_API" />
