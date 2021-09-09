@@ -2180,26 +2180,33 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
    TR::ILOpCodes callOpCode = getTargetMethodCallOpCode(rm, node->getDataType());
 
    TR::SymbolReference* newSymRef = NULL;
+   uint32_t vTableSlot = 0;
+   int32_t jitVTableOffset = 0;
    if (rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
       {
-      uint32_t vTableSlot = fej9->vTableOrITableIndexFromMemberName(comp, mnIndex);
-      auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));
-      newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
-      newSymRef->setOffset(fej9->vTableSlotToVirtualCallOffset(vTableSlot));
+      vTableSlot = fej9->vTableOrITableIndexFromMemberName(comp, mnIndex);
+      jitVTableOffset = fej9->vTableSlotToVirtualCallOffset(vTableSlot);
+      // For private virtual methods and java/lang/Object; type virtual methods, there is no corresponding
+      // entry in the vtable, and for such methods the interpreter vtable index is 0.
+      // The dispatch is not performed through the vtable entry, but directly dispatched to the J9Method
+      // in Membername.vmtarget. In such cases, we can refine a linkToVirtual call similar to linkToStatic.
+      // jitVTableOffset is obtained using sizeof(J9Class) - interpreter vtable offset, resulting in a positive
+      // value when the interpreter vtable index we get (from MemberName.vmindex.vtableoffset) is set as 0.
+      if (jitVTableOffset > 0)
+         callKind = TR::MethodSymbol::Static;
       }
-   else
-      {
-      uint32_t vTableSlot = 0;
-      auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));
-      newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
-      }
+   auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));
+   newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
+   if (callKind == TR::MethodSymbol::Virtual)
+      newSymRef->setOffset(jitVTableOffset);
 
    bool needNullChk, needVftChild, needResolveChk;
    needNullChk = needVftChild = false;
    switch (rm)
       {
       case TR::java_lang_invoke_MethodHandle_linkToVirtual:
-         needVftChild = true;
+         if (callKind == TR::MethodSymbol::Virtual)
+            needVftChild = true;
          // fall through
       case TR::java_lang_invoke_MethodHandle_linkToSpecial:
          needNullChk = true;
