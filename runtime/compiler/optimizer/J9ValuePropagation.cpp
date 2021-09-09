@@ -768,11 +768,19 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
       TR::Node *indexNode = node->getChild(elementIndexOpIndex);
       TR::Node *arrayRefNode = node->getChild(arrayRefOpIndex);
-      TR::Node *storeValueNode = isStoreFlattenableArrayElement ? node->getChild(storeValueOpIndex) : NULL;
       TR::VPConstraint *arrayConstraint = getConstraint(arrayRefNode, arrayRefGlobal);
       TR_YesNoMaybe isCompTypeVT = isArrayCompTypeValueType(arrayConstraint);
 
-      TR_YesNoMaybe isStoreValueVT = isStoreFlattenableArrayElement ? isValue(getConstraint(storeValueNode, storeValueGlobal)) : TR_maybe;
+      TR::Node *storeValueNode = NULL;
+      TR::VPConstraint *storeValueConstraint = NULL;
+      TR_YesNoMaybe isStoreValueVT = TR_maybe;
+
+      if (isStoreFlattenableArrayElement)
+         {
+         storeValueNode = node->getChild(storeValueOpIndex);
+         storeValueConstraint = getConstraint(storeValueNode, storeValueGlobal);
+         isStoreValueVT = isValue(storeValueConstraint);
+         }
 
       // If the array's component type is definitely not a value type, or if the value
       // being assigned in an array store operation is definitely not a value type, add
@@ -789,12 +797,12 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          if (isStoreFlattenableArrayElement && !owningMethodDoesNotContainStoreChecks(this, node))
             {
             // If storing to an array whose component type is or might be a value type
-            // and the value that's being assigned is or might null, both a run-time
+            // and the value that's being assigned is or might be null, both a run-time
             // NULLCHK of the value is required (guarded by a check of whether the
             // component type is a value type) and an ArrayStoreCHK are required;
             // otherwise, only the ArrayStoreCHK is required.
             //
-            if ((isCompTypeVT != TR_no) && !storeValueNode->isNonNull())
+            if ((isCompTypeVT != TR_no) && (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()))
                {
                flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreAndNullCheck);
                }
