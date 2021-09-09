@@ -1347,12 +1347,12 @@ MM_MemorySubSpaceTarok::calculateExpandSize(MM_EnvironmentBase *env, UDATA bytes
 	/* Adjust within -XsoftMx limit */
 	if (expandToSatisfy){
 		/* we need at least bytesRequired or we will get an OOM */
-		expandSize = adjustExpansionWithinSoftMax(env, expandSize, bytesRequired);
+		expandSize = adjustExpansionWithinSoftMx(env, expandSize, bytesRequired);
 	} else {
 		/* we are adjusting based on other command line options, so fully respect softmx,
 		 * the minimum expand it can allow in this case is 0
 		 */
-		expandSize = adjustExpansionWithinSoftMax(env, expandSize, 0);
+		expandSize = adjustExpansionWithinSoftMx(env, expandSize, 0);
 	}
 	
 	Trc_MM_MemorySubSpaceTarok_calculateExpandSize_Exit1(env->getLanguageVMThread(), desiredFree, currentFree, expandSize);
@@ -1369,7 +1369,7 @@ MM_MemorySubSpaceTarok::calculateCollectorExpandSize(MM_EnvironmentBase *env)
 	UDATA expandSize = _heapRegionManager->getRegionSize(); 
 	
 	/* Adjust within -XsoftMx limit */
-	expandSize = adjustExpansionWithinSoftMax(env, expandSize,0);
+	expandSize = adjustExpansionWithinSoftMx(env, expandSize,0);
 	
 	Trc_MM_MemorySubSpaceTarok_calculateCollectorExpandSize_Exit1(env->getLanguageVMThread(), expandSize);
 
@@ -1511,7 +1511,7 @@ MM_MemorySubSpaceTarok::adjustExpansionWithinFreeLimits(MM_EnvironmentBase *env,
  * @return Updated expand size
  */		
 MMINLINE UDATA		
-MM_MemorySubSpaceTarok::adjustExpansionWithinSoftMax(MM_EnvironmentBase *env, UDATA expandSize, UDATA minimumBytesRequired)
+MM_MemorySubSpaceTarok::adjustExpansionWithinSoftMx(MM_EnvironmentBase *env, UDATA expandSize, UDATA minimumBytesRequired)
 {
 	MM_Heap * heap = env->getExtensions()->getHeap();
 	UDATA actualSoftMx = heap->getActualSoftMxSize(env);
