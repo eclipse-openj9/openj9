@@ -5141,6 +5141,18 @@ TR_J9VMBase::delegatingMethodHandleTargetHelper(
    return targetIndex;
    }
 
+UDATA
+TR_J9VMBase::getVMTargetOffset()
+   {
+   return vmThread()->javaVM->vmtargetOffset;
+   }
+
+UDATA
+TR_J9VMBase::getVMIndexOffset()
+   {
+   return vmThread()->javaVM->vmindexOffset;
+   }
+
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 TR::KnownObjectTable::Index

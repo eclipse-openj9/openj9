@@ -295,6 +295,10 @@ public:
       bool _isAllocateZeroedTLHPagesEnabled;
       uint32_t _staticObjectAllocateFlags;
       void *_referenceArrayCopyHelperAddress;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      UDATA _vmtargetOffset;
+      UDATA _vmindexOffset;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
       }; // struct VMInfo
 
    /**
