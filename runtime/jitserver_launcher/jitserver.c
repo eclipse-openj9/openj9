@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -294,7 +294,9 @@ main(int argc, char *argv[])
 	int32_t numJvmOptions = 0;
 	createJITServer createServer = NULL;
 
+#if defined(J9VM_ARCH_S390)
 	fprintf(stderr, "JITServer is currently a technology preview. Its use is not yet supported.\n");
+#endif
 
 	jvmLibPath = getJvmLibPath();
 	if (NULL == jvmLibPath) {
