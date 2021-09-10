@@ -61,6 +61,7 @@
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Annotations.hpp"
 #include "infra/Bit.hpp"
+#include "optimizer/VectorAPIExpansion.hpp"
 #include "p/codegen/ForceRecompilationSnippet.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/InterfaceCastSnippet.hpp"
@@ -6492,7 +6493,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
          /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
           * simple as we just need to check first child of the node for array size. For variable length arrays
           * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
-          * 
+          *
           * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
           * discontiguous header layout.
           */
@@ -6509,7 +6510,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
             if (comp->getOption(TR_TraceCG))
                traceMsg(comp, "Node (%p): Dealing with compressed refs variable length array.\n", node);
 
-            TR_ASSERT_FATAL_WITH_NODE(node, (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8, 
+            TR_ASSERT_FATAL_WITH_NODE(node, (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
             "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. But was %d bytes for discontigous and %d bytes for contiguous array.\n", fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
 
             iCursor = generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, offsetReg, enumReg, iCursor);
@@ -12098,6 +12099,53 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
       TR::Node::recreate(node, TR::vadd);
       return vaddEvaluator(node, cg);
       }
+   else if (callee->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp &&
+       node->getOpCodeValue() == TR::vcall) // was vectorized
+      {
+      // The following code is temporary and is only enabled under TR_UseVcall
+      // It's an example of how development of vector evaluators can proceed until vector IL opcodes
+      // are implemented. Eventually, all recognition of Vector API methods will be removed from this
+      // evaluator
+      //
+      int firstOperandIndex = 4;
+      int secondOperandIndex = 5;
+      TR::Node *opcodeNode = node->getChild(0);
+      TR::Node *dataTypeNode = node->getChild(2);
+      TR::Node *numLanesNode = node->getChild(3);
+      TR::Node *firstOperandNode = node->getChild(firstOperandIndex);
+      TR::Node *secondOperandNode = node->getChild(secondOperandIndex);
+
+      TR::DataType dataType = TR_VectorAPIExpansion::getDataTypeFromClassNode(cg->comp(), dataTypeNode);
+      bool supported = true;
+      if (dataType != TR::Float)
+         supported = false;
+      if (!opcodeNode->getOpCode().isLoadConst() ||
+          opcodeNode->getInt() != TR_VectorAPIExpansion::VECTOR_OP_ADD)
+         supported = false;
+      if (!numLanesNode->getOpCode().isLoadConst() ||
+          numLanesNode->getInt() != 4)
+         supported = false;
+
+      TR_ASSERT_FATAL_WITH_NODE(node, supported, "Vector API opcode, type, and number of lanes should be supported\n");
+
+      // evaluate unused children
+      for (int i = 0; i < node->getNumChildren(); i++)
+         {
+         TR::Node *child = node->getChild(i);
+         if (i != firstOperandIndex && i != secondOperandIndex)
+            {
+            cg->evaluate(child);
+            cg->recursivelyDecReferenceCount(child);
+            }
+         }
+
+      node->setChild(0, firstOperandNode);
+      node->setChild(1, secondOperandNode);
+      node->setNumChildren(2);
+      TR::Node::recreate(node, TR::vadd);
+      return vaddEvaluator(node, cg);
+      }
+
 
    if (!cg->inlineDirectCall(node, returnRegister))
       {
