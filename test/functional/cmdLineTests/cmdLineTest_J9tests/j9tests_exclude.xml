@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2009, 2020 IBM Corp. and others
+  Copyright (c) 2009, 2021 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,9 @@
 <exclude id="-Xthr:noSecondarySpinForObjectMonitors on command line" platform="aix.*" shouldFix="false"><reason>Only for platforms that three tier spin is enabled</reason></exclude>
 <exclude id="-Xthr:secondarySpinForObjectMonitors on command line" platform="aix.*" shouldFix="false"><reason>Only for platforms that three tier spin is enabled</reason></exclude>
 
+<exclude id="Verify -XX:+PortableSharedCache -XX:-PortableSharedCache behaves as expected with the portable shared cache feature disabled" platform=".*_aarch.*" shouldFix="true"><reason>unsupported on aarch</reason></exclude>
+<exclude id="Verify -XX:-PortableSharedCache -XX:+PortableSharedCache behaves as expected with the portable shared cache feature enabled" platform=".*_aarch.*" shouldFix="true"><reason>unsupported on aarch</reason></exclude>
+
 <include id="-Xpreloaduser32" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
 <include id="-Xpreloaduser32 -Xprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
 <include id="-Xpreloaduser32 -Xnoprotectcontiguous" platform="win_x86.*" shouldFix="false"><reason>Only available on Windows platforms</reason></include>
@@ -67,8 +70,5 @@
 <include id="-Xthr:yieldAlgorithm=2,yieldUsleepMultiplier=10" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
 <include id="-Xaggressive" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
 <include id="defaultBehaviourOfCFS" platform="linux.*" shouldFix="false"><reason>Only available on Linux platforms</reason></include>
-
-<include id="Verify -XX:+PortableSharedCache -XX:-PortableSharedCache behaves as expected with the portable shared cache feature disabled" platform=".*x86.*" shouldFix="false"><reason>Only available on x86 platforms</reason></include>
-<include id="Verify -XX:-PortableSharedCache -XX:+PortableSharedCache behaves as expected with the portable shared cache feature enabled" platform=".*x86.*" shouldFix="false"><reason>Only available on x86 platforms</reason></include>
 
 </suite>
