@@ -623,13 +623,16 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
       TR_J9VMBase *fe = TR_J9VMBase::get(_jitConfig, NULL);
       const J9ROMMethod * romMethod = methodDetails.getRomMethod(fe);
 
-      // Don't downgrade if method is JSR292. See CMVC 200145
-      if (_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccMethodHasMethodHandleInvokes))
-         {
-         doDowngrade = false;
-         }
-      // similarly don't downgrade a thunk archetype - inlining in these is also vital
-      else if (fe->isThunkArchetype(method))
+      // Don't downgrade if method is JSR292 because inlining in those is vital. See CMVC 200145
+      // However, during start-up phase, allow such downgrades if SCC has been specified on the command line
+      // (the check for J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES prevents the downgrading when
+      // the default SCC is used)
+      if (((_J9ROMMETHOD_J9MODIFIER_IS_SET(romMethod, J9AccMethodHasMethodHandleInvokes)) || fe->isThunkArchetype(method)) &&
+           (_jitConfig->javaVM->phase == J9VM_PHASE_NOT_STARTUP ||
+            !TR::Options::sharedClassCache() ||
+            !J9_ARE_ALL_BITS_SET(jitConfig->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES)
+           )
+         )
          {
          doDowngrade = false;
          }
