@@ -1128,7 +1128,7 @@ MM_MemorySubSpaceTarok::timeForHeapContract(MM_EnvironmentBase *env, MM_Allocate
 		if(actualSoftMx < getActiveMemorySize()) {
 			/* the softmx is less than the currentsize so we're going to attempt an aggressive contract */
 			_contractionSize = getActiveMemorySize() - actualSoftMx;
-			_extensions->heap->getResizeStats()->setLastContractReason(HEAP_RESIZE);
+			_extensions->heap->getResizeStats()->setLastContractReason(SOFT_MX_CONTRACT);
 			return true;
 		}
 	}
@@ -1347,12 +1347,12 @@ MM_MemorySubSpaceTarok::calculateExpandSize(MM_EnvironmentBase *env, UDATA bytes
 	/* Adjust within -XsoftMx limit */
 	if (expandToSatisfy){
 		/* we need at least bytesRequired or we will get an OOM */
-		expandSize = adjustExpansionWithinSoftMx(env, expandSize, bytesRequired);
+		expandSize = adjustExpansionWithinSoftMax(env, expandSize, bytesRequired);
 	} else {
 		/* we are adjusting based on other command line options, so fully respect softmx,
 		 * the minimum expand it can allow in this case is 0
 		 */
-		expandSize = adjustExpansionWithinSoftMx(env, expandSize, 0);
+		expandSize = adjustExpansionWithinSoftMax(env, expandSize, 0);
 	}
 	
 	Trc_MM_MemorySubSpaceTarok_calculateExpandSize_Exit1(env->getLanguageVMThread(), desiredFree, currentFree, expandSize);
@@ -1369,7 +1369,7 @@ MM_MemorySubSpaceTarok::calculateCollectorExpandSize(MM_EnvironmentBase *env)
 	UDATA expandSize = _heapRegionManager->getRegionSize(); 
 	
 	/* Adjust within -XsoftMx limit */
-	expandSize = adjustExpansionWithinSoftMx(env, expandSize,0);
+	expandSize = adjustExpansionWithinSoftMax(env, expandSize,0);
 	
 	Trc_MM_MemorySubSpaceTarok_calculateCollectorExpandSize_Exit1(env->getLanguageVMThread(), expandSize);
 
@@ -1505,34 +1505,3 @@ MM_MemorySubSpaceTarok::adjustExpansionWithinFreeLimits(MM_EnvironmentBase *env,
 	}
 	return result;
 }
-
-/**
- * Compare the specified expand amount with -XsoftMX value
- * @return Updated expand size
- */		
-MMINLINE UDATA		
-MM_MemorySubSpaceTarok::adjustExpansionWithinSoftMx(MM_EnvironmentBase *env, UDATA expandSize, UDATA minimumBytesRequired)
-{
-	MM_Heap * heap = env->getExtensions()->getHeap();
-	UDATA actualSoftMx = heap->getActualSoftMxSize(env);
-	UDATA activeMemorySize = getActiveMemorySize();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	
-	if (0 != actualSoftMx) {
-		if ((minimumBytesRequired != 0) && ((activeMemorySize + minimumBytesRequired) > actualSoftMx)) {
-			if (J9_EVENT_IS_HOOKED(MM_GCExtensions::getExtensions(env)->omrHookInterface, J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX)){
-				ALWAYS_TRIGGER_J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX(MM_GCExtensions::getExtensions(env)->omrHookInterface, env->getOmrVMThread(),
-						j9time_hires_clock(), heap->getMaximumMemorySize(), heap->getActiveMemorySize(), MM_GCExtensions::getExtensions(env)->softMx, minimumBytesRequired);
-				actualSoftMx = heap->getActualSoftMxSize(env);
-			}
-		}
-		if (actualSoftMx < activeMemorySize) {
-			/* if our softmx is smaller than our currentsize, we should be contracting not expanding */
-			expandSize = 0;
-		} else if((activeMemorySize + expandSize) > actualSoftMx) {
-			/* we would go past our -XsoftMx so just expand up to it instead */
-			expandSize = actualSoftMx - activeMemorySize;
-		}
-	}
-	return expandSize;
-}	
