@@ -64,6 +64,7 @@ import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
+import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
@@ -2042,9 +2043,12 @@ static void loadLibrary(Class<?> caller, String libName) {
 static long findNative(ClassLoader loader, String entryName) {
 	long result = 0;
 	if (loader == null) {
-		result = bootstrapClassLoader.nativelibs.find(entryName);
-	} else {
-		result = loader.nativelibs.find(entryName);
+		loader = bootstrapClassLoader;
+	}
+	result = loader.nativelibs.find(entryName);
+	if ((result == 0) && (loader == bootstrapClassLoader)) {
+		// Try BootLoader if bootstrapClassLoader didn't find the native.
+		result = BootLoader.getNativeLibraries().find(entryName);
 	}
 	return result;
 }
