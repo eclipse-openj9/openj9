@@ -33,15 +33,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.imageio.stream.FileImageInputStream;
@@ -51,6 +52,9 @@ import javax.imageio.stream.MemoryCacheImageInputStream;
 
 import com.ibm.j9ddr.StructureHeader.BlobID;
 import com.ibm.j9ddr.StructureReader.PackageNameType;
+import com.ibm.j9ddr.blobs.BlobFactory;
+import com.ibm.j9ddr.blobs.IBlobFactory;
+import com.ibm.j9ddr.blobs.IBlobFactory.Platforms;
 import com.ibm.j9ddr.corereaders.ICore;
 import com.ibm.j9ddr.corereaders.Platform;
 import com.ibm.j9ddr.corereaders.memory.IMemoryImageInputStream;
@@ -65,9 +69,6 @@ import com.ibm.j9ddr.exceptions.MissingDDRStructuresException;
 import com.ibm.j9ddr.exceptions.UnknownArchitectureException;
 import com.ibm.j9ddr.logging.LoggerNames;
 import com.ibm.j9ddr.util.WeakValueMap;
-import com.ibm.j9ddr.blobs.BlobFactory;
-import com.ibm.j9ddr.blobs.IBlobFactory;
-import com.ibm.j9ddr.blobs.IBlobFactory.Platforms;
 
 /**
  * Create IVMData instances for each VM found in a Process
@@ -129,71 +130,77 @@ public abstract class VMDataFactory {
 
 		// nothing in the cache for this process, so need to scan
 		// Get an ImageInputStream on the Structure Offset Data.  This may or may not be in the core file itself.
-		List<IVMData> data = new ArrayList<IVMData>();
-		ImageInputStream in = null;
-		boolean EOM = false; // End Of Memory
-		long address = 0;
+		List<IVMData> data = new ArrayList<>();
+		Set<Long> attemptedAddresses = new HashSet<>();
 		j9RASAddress = 0;
-		while (!EOM) {
+		for (;;) {
+			long address = j9RASAddress + 1;
+			if (!attemptedAddresses.add(Long.valueOf(address))) {
+				// we already tried this address: give up now
+				break;
+			}
 			try {
-				address = j9RASAddress + 1;
-				in = getStructureDataFile(process, address);
-				if (in != null) {
-					EOM = !(in instanceof IMemoryImageInputStream);
-					IVMData vmdata = getVMData(process, in);
-					data.add(vmdata);
-					if (vmdata.getClassLoader().getHeader().getCoreVersion() == 1) {
-						// version 1 does not support multiple blobs
-						EOM = true;
-						break;
-					}
-				} else {
-					EOM = true;
+				ImageInputStream in = getStructureDataFile(process, address);
+				if (in == null) {
+					break;
+				}
+				IVMData vmdata = getVMData(process, in);
+				data.add(vmdata);
+				if (vmdata.getClassLoader().getHeader().getCoreVersion() == 1) {
+					// version 1 does not support multiple blobs
+					break;
+				}
+				if (!(in instanceof IMemoryImageInputStream)) {
+					break;
 				}
 			} catch (JVMNotFoundException e) {
 				// no more JVMs were found
-				EOM = true;
+				break;
 			} catch (JVMNotDDREnabledException e) {
 				// an older JVM was found, so ignore that and carry on looking
-				EOM = EOM | (process.getPlatform() == Platform.ZOS); // on z/OS a failure with the j9ras symbol resolution aborts the scan
-				continue;
+				if (process.getPlatform() == Platform.ZOS) {
+					// on z/OS a failure with the j9ras symbol resolution aborts the scan
+					break;
+				}
 			} catch (MissingDDRStructuresException e) {
 				// cannot process as the structures are missing
-				EOM = EOM | (process.getPlatform() == Platform.ZOS); // on z/OS a failure with the j9ras symbol resolution aborts the scan
-				continue;
+				if (process.getPlatform() == Platform.ZOS) {
+					// on z/OS a failure with the j9ras symbol resolution aborts the scan
+					break;
+				}
 			} catch (CorruptStructuresException e) {
 				// cannot process as the structures are corrupt and cannot be read
-				EOM = EOM | (process.getPlatform() == Platform.ZOS); // on z/OS a failure with the j9ras symbol resolution aborts the scan
-				continue;
+				if (process.getPlatform() == Platform.ZOS) {
+					// on z/OS a failure with the j9ras symbol resolution aborts the scan
+					break;
+				}
 			} catch (IOException e) {
-				continue;
+				// ignore, but unless j9RASAddress has changed we'll give up
 			}
 		}
 
 		// For Node.JS only, if we have not found a BLOB at this point we do a more expensive scan. This extra
 		// scan is switched off for Java-only applications (specifically jdmpview) via a system property.
-		if ((data.size() == 0) && (System.getProperty(NOEXTRASEARCHFORNODE_PROPERTY) == null)) {
+		if (data.isEmpty() && (System.getProperty(NOEXTRASEARCHFORNODE_PROPERTY) == null)) {
 			StructureHeader header;
 			try {
 				header = findNodeVersion(process);
+			} catch (IOException e) {
+				throw e;
 			} catch (Exception e) {
-				if (e instanceof IOException) {
-					throw (IOException) e;
-				} else {
-					IOException ioe = new IOException();
-					ioe.initCause(e); // avoid use of IOException(throwable) to be compatible with J5
-					throw ioe;
-				}
+				throw new IOException(e);
 			}
 			if (header != null) {
-				in = getBlobFromLibrary(process, header);
+				ImageInputStream in = getBlobFromLibrary(process, header);
 				if (in != null) {
 					IVMData vmdata = getVMData(process, in);
 					data.add(vmdata);
 				}
 			}
 		}
+
 		vmDataCache.put(process, data);
+
 		return data;
 	}
 
@@ -326,24 +333,16 @@ public abstract class VMDataFactory {
 				try {
 					return getStructureDataFromFile(structureFileName, process);
 				} catch (Exception e1) {
-					IOException ioe = new IOException();
-					ioe.initCause(e);
-					throw ioe;
+					throw new IOException(e);
 				}
-			} else if (process.getPlatform() == Platform.ZOS) {
-				try {
-					return getStructureDataFileFromSymbol(process);
-				} catch (JVMNotFoundException e1) {
-					// Check for system property to force searching for JVMs via the eyecatcher
-					if (System.getProperty(SEARCHEYECATCHER_PROPERTY) != null) {
-						return getStructureDataFileFromRASEyecatcher(process, start);
-					} else {
-						throw e1; // no system property set so override
-					}
-				}
-			} else {
-				throw e;
 			}
+			if (process.getPlatform() == Platform.ZOS) {
+				// Check for system property to force searching for JVMs via the eyecatcher
+				if (System.getProperty(SEARCHEYECATCHER_PROPERTY) != null) {
+					return getStructureDataFileFromRASEyecatcher(process, start);
+				}
+			}
+			throw e;
 		}
 	}
 
