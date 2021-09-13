@@ -1240,7 +1240,7 @@ InterpreterEmulator::findNextByteCodeToVisit()
       else next();
       }
 
-   if (_InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::bbStart))
+   if (_bcIndex < _maxByteCodeIndex && _InterpreterEmulatorFlags[_bcIndex].testAny(InterpreterEmulator::BytecodePropertyFlag::bbStart))
       {
       if (isGenerated(_bcIndex))
          setIndex(Base::findNextByteCodeToGen());
