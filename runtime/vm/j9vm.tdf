@@ -810,10 +810,10 @@ TraceEntry=Trc_VM_lookupJNINative_Entry Overhead=1 Level=3 Template="lookupJNINa
 TraceEvent=Trc_VM_lookupJNINative_NullNativeLibrary Overhead=1 Level=3 Template="lookupJNINative (null native library) - nativeMethod (%p) symbolName (%s) signature (%s) functionAddress (%p)"
 TraceExit=Trc_VM_lookupJNINative_Exit Overhead=1 Level=3 Template="lookupJNINative - nativeLibrary (%p) nativeMethod (%p) nativeMethod->extra (%p) symbolName (%s) signature (%s) lookupResult (%zu)"
 TraceEntry=Trc_VM_lookupNativeAddress_Entry Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) shortJNI (%s) functionArgCount (%zu) bindJNINative (%zu)"
-TraceExit=Trc_VM_lookupNativeAddress_inlIntercept_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) rc (%zu)"
-TraceExit=Trc_VM_lookupNativeAddress_bindmethod_shortJNI_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) shortJNI (%s) argSignature (%s)"
-TraceExit=Trc_VM_lookupNativeAddress_bindmethod_longJNI_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) argSignature (%s)"
-TraceExit=Trc_VM_lookupNativeAddress_fail_Exit Overhead=1 Level=3 Template="lookupNativeAddress - nativeLibrary (%p) nativeMethod (%p) argSignature (%s)"
+TraceExit=Trc_VM_lookupNativeAddress_inlIntercept_Exit Overhead=1 Level=3 Template="lookupNativeAddress : inlIntercept exit - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) rc (%zu)"
+TraceExit=Trc_VM_lookupNativeAddress_bindmethod_shortJNI_Exit Overhead=1 Level=3 Template="lookupNativeAddress : bind success - nativeLibrary (%p) nativeMethod (%p) shortJNI (%s) argSignature (%s)"
+TraceExit=Trc_VM_lookupNativeAddress_bindmethod_longJNI_Exit Overhead=1 Level=3 Template="lookupNativeAddress : bind success - nativeLibrary (%p) nativeMethod (%p) longJNI (%s) argSignature (%s)"
+TraceExit=Trc_VM_lookupNativeAddress_fail_Exit Overhead=1 Level=3 Template="lookupNativeAddress : failed exit - nativeLibrary (%p) nativeMethod (%p) argSignature (%s)"
 
 TraceEntry=Trc_VM_registerBootstrapLibrary_Entry Overhead=1 Level=3 Template="registerBootstrapLibrary - libName (%s) libraryPtr (%p)"
 TraceExit=Trc_VM_registerBootstrapLibrary_Exit Overhead=1 Level=3 Template="registerBootstrapLibrary - libName (%s) libraryPtr (%p) result (%zu)"
@@ -880,3 +880,4 @@ TraceException=Trc_VM_CreateRAMClassFromROMClass_sealedSuperFromDifferentPackage
 
 TraceEvent=Trc_VM_callin_stackFree Overhead=1 Level=5 Template="OS Stack free=%zi, current native sp=%p"
 
+TraceEvent=Trc_VM_classLoaderRegisterLibrary_newNativeLibrary Overhead=1 Level=5 Template="classLoaderRegisterLibrary -- newNativeLibrary (0x%p) handle (0x%zx) logicalName (%s) name (%s) rc (0x%zx)"
