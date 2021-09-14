@@ -27,7 +27,6 @@
 	<description>
 		Build VM_Test
 	</description>
-	<import file="${TEST_ROOT}/functional/build.xml"/>
 	<property name="LIB" value="junit4,asm_all,javassist,testng"/>
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
