@@ -27,7 +27,6 @@
 	<description>
 		Build J9 JSR 292 Tests 
 	</description>
-	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/Jsr292" />

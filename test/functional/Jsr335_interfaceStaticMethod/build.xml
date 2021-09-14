@@ -27,7 +27,6 @@
 	<description>
 		Build JSR335 InterfaceStaticMethod Test
 	</description>
-	<import file="${TEST_ROOT}/functional/build.xml"/>
 
 	<!-- set global properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/Jsr335_interfaceStaticMethod" />

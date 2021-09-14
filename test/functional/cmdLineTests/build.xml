@@ -27,7 +27,6 @@
 	<description>
 		Build cmdLineTests
 	</description>
-	<import file="${TEST_ROOT}/functional/build.xml"/>
 	<import file="${TEST_ROOT}/functional/cmdLineTests/buildTools.xml"/>
 
 	<!-- set properties for this build -->
