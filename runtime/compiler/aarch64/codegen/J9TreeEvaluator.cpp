@@ -3886,7 +3886,7 @@ J9::ARM64::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Code
       snippet->gcMap().setGCRegisterMask(0xFFFFFFFF);
       }
 
-   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, exceptionSnippetLabel, TR::CC_NE, deps);
+   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, exceptionSnippetLabel, TR::CC_NE);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
 
    // ARM64HelperCallSnippet generates "bl" instruction
