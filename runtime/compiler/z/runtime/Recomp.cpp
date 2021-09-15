@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,8 +55,6 @@
 // -4   -4  method linkage info and flags
 //  0    0  1st instruction of method (must be at least 4 bytes)--will turn into BRC
 
-#define DEBUGIT (1==0)
-
 // Compare and swap a 4 byte object need to implement uses CS
 extern "C" int32_t _CompareAndSwap4(int32_t * addr, uint32_t oldInsn, uint32_t newInsn);
 
@@ -99,18 +97,7 @@ J9::Recompilation::getJittedBodyInfoFromPC(void * startPC)
    int32_t * jitEntry = (int32_t *) ((int8_t *) startPC + jitEntryOffset);
    TR_PersistentJittedBodyInfo * info = NULL;
 
-   if (false && DEBUGIT)
-      {
-      printf("calling getmethodinfo %x, jitEntryOffset %d jitEntry %x linkageInfo %x\n", startPC, jitEntryOffset, jitEntry,
-         linkageInfo);
-      }
-
    info = (*(TR_PersistentJittedBodyInfo * *) ((int8_t *) startPC + -(sizeof(uint32_t) + sizeof(intptr_t))));
-
-   if (false && DEBUGIT)
-      {
-      printf("info is %x\n", info);
-      }
 
    return info;
    }
@@ -126,10 +113,6 @@ J9::Recompilation::isAlreadyPreparedForRecompile(void * startPC)
 
    int32_t jumpSize = -OFFSET_INTEP_SAMPLING_RECOMPILE_METHOD_TRAMPOLINE - jitEntryOffset;
    uint32_t jumpBackInsn = (0x0000ffff & (jumpSize / 2)) | FOUR_BYTE_JUMP_INSTRUCTION;
-   if (DEBUGIT)
-      {
-      printf("MethodPC 0x%x is %sprepared for recompile\n", startPC, startInsn == jumpBackInsn ? "" : "not ");
-      }
    return startInsn == jumpBackInsn;
    }
 
@@ -153,11 +136,6 @@ J9::Recompilation::fixUpMethodCode(void * startPC)
    const bool is64Bit = false;
 #endif
    J9::PrivateLinkage::LinkageInfo * linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
-   if (DEBUGIT)
-      {
-      printf("fixup: 0x%p %s %s\n", linkageInfo, linkageInfo->isSamplingMethodBody() ? "samplingSet" : "",
-         linkageInfo->isCountingMethodBody() ? "CountingSet" : "");
-      }
 
    if (linkageInfo->isCountingMethodBody())
       {
@@ -184,22 +162,11 @@ J9::Recompilation::fixUpMethodCode(void * startPC)
       // if already a jump, then we've lost the race
       if ((0xffff0000 & preserved) == FOUR_BYTE_JUMP_INSTRUCTION)
          {
-         if (DEBUGIT)
-            {
-            printf("%p: already modified--do not attempt to fixup\n", startPC);
-            }
          return;
          }
 
       // This code will race with switchToInterpreter (NOTE2 in this file) if the following is not atomic
       s390compareAndExchange4(jitEntry, preserved, jumpBackInsn);
-
-      if (DEBUGIT)
-         {
-         printf("%p: modified %p from %p to %p, will jump to %p(%x)\n", startPC, jitEntry, preserved, jumpBackInsn,
-            (char *) jitEntry + jumpSize, *(int *) ((char *) jitEntry + jumpSize));
-         }
-
 
       if (debug("traceRecompilation"))
          {
@@ -216,10 +183,6 @@ J9::Recompilation::methodHasBeenRecompiled(void * oldStartPC, void * newStartPC,
    int32_t bytesToSaveAtStart;
    int32_t jitEntryOffset = getJitEntryOffset(linkageInfo);
 
-   if (DEBUGIT)
-      {
-      printf("Method successfully recompiled: %x -> %x\n", oldStartPC, newStartPC);
-      }
 #if defined(TR_HOST_64BIT)
    const bool is64Bit = true;
 #else
@@ -258,11 +221,6 @@ J9::Recompilation::methodHasBeenRecompiled(void * oldStartPC, void * newStartPC,
          ;//diagnostic("Patching counting prologue, starting at %p(%x)\n", patchInsnAddr, *patchInsnAddr);
          }
 
-      if (DEBUGIT)
-         {
-         printf("Patching counting prologue, starting at %p (%x)\n", patchInsnAddr, *patchInsnAddr);
-         }
-
       int32_t patchCodeOffset = OFFSET_JITEP_COUNTING_PATCH_CALL_SITE_SNIPPET_START;
       *patchInsnAddr = FOUR_BYTE_JUMP_INSTRUCTION | ((patchCodeOffset / 2) & 0x0000ffff);
 
@@ -294,11 +252,6 @@ J9::Recompilation::methodHasBeenRecompiled(void * oldStartPC, void * newStartPC,
       if (debug("traceRecompilation"))
          {
          ;//diagnostic("RC>>Attempted to patch %p from %p to %p...\n", patchAddr, oldAsmAddr, newAsmAddr);
-         }
-
-      if (DEBUGIT)
-         {
-         printf("Attempting to patch %p from %p to %p...\n", patchAddr, oldAsmAddr, newAsmAddr);
          }
 
 #if defined(TR_HOST_64BIT)
@@ -352,11 +305,6 @@ J9::Recompilation::methodCannotBeRecompiled(void * oldStartPC, TR_FrontEnd * fe)
    const bool is64Bit = false;
 #endif
 
-   if (DEBUGIT)
-      {
-      printf("Cannot recompile method @ %p\n", oldStartPC);
-      }
-
    if (debug("traceRecompilation"))
       {
       ;//diagnostic("RC>> Cannot recompile method @ %p\n", oldStartPC);
@@ -385,11 +333,6 @@ J9::Recompilation::methodCannotBeRecompiled(void * oldStartPC, TR_FrontEnd * fe)
       //
       if (!methodInfo->hasBeenReplaced()) // HCR: VM presumably already has the method in its proper state
          fej9->revertToInterpreted(methodInfo->getMethodInfo());
-
-      if (DEBUGIT)
-         {
-         printf("Reverted to interpreted method\n");
-         }
 
       if (debug("traceRecompilation"))
          {
@@ -439,10 +382,6 @@ J9::Recompilation::methodCannotBeRecompiled(void * oldStartPC, TR_FrontEnd * fe)
       }
    else
       {
-      if (DEBUGIT)
-         {
-         printf("Zeroed out method info for 0x%x\n", oldStartPC);
-         }
       // For async compilation, the old method is not fixed up anyway
       if (!fej9->isAsyncCompilation())
          {
