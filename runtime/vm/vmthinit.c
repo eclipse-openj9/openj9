@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,7 +83,9 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		omrthread_monitor_init_with_name(&vm->valueTypeVerificationMutex, 0, "Wait mutex for verifying valuetypes") ||
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
+#if JAVA_SPEC_VERSION >= 16
+		omrthread_monitor_init_with_name(&vm->thunkHeapWrapperMutex, 0, "Wait mutex for allocating the upcall thunk memory") ||
+#endif /* JAVA_SPEC_VERSION >= 16 */
 		initializeMonitorTable(vm)
 	)
 	{
@@ -163,6 +165,14 @@ void terminateVMThreading(J9JavaVM *vm)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	if (vm->valueTypeVerificationMutex) omrthread_monitor_destroy(vm->valueTypeVerificationMutex);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+#if JAVA_SPEC_VERSION >= 16
+	if (vm->thunkHeapWrapperMutex) {
+		omrthread_monitor_destroy(vm->thunkHeapWrapperMutex);
+		vm->thunkHeapWrapperMutex = NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 	destroyMonitorTable(vm);
 }
 

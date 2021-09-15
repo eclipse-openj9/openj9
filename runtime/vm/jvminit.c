@@ -811,6 +811,24 @@ freeJavaVM(J9JavaVM * vm)
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
+#if JAVA_SPEC_VERSION >= 16
+	/* Clean up any resources created by allocateThunkHeap and during allocateUpcallThunkMemory */
+	if (NULL != vm->thunkHeapWrapper) {
+		J9HeapWrapper *thunkHeapWrapper = vm->thunkHeapWrapper;
+		J9PortVmemIdentifier vmemID = thunkHeapWrapper->vmemID;
+		J9UpcallMetaDataList *metaDataNode = thunkHeapWrapper->metaDataHead;
+
+		j9vmem_free_memory(vmemID->address, vmemID->size, vmemID);
+		while (NULL != metaDataNode) {
+			J9UpcallMetaDataList *nextMetaDataNode = metaDataNode->next;
+			j9mem_free_memory(metaDataNode);
+			metaDataNode = nextMetaDataNode;
+		}
+		j9mem_free_memory(thunkHeapWrapper);
+		vm->thunkHeapWrapper = NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 	j9mem_free_memory(vm->vTableScratch);
 	vm->vTableScratch = NULL;
 
@@ -6439,6 +6457,12 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	/* check processor support for cache writeback */
 	vm->dCacheLineSize = 0;
 	vm->cpuCacheWritebackCapabilities = 0;
+
+#if JAVA_SPEC_VERSION >= 16
+	/* The thunk block should be allocated on demand */
+	vm->thunkHeapWrapper = NULL;
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 #if defined(J9X86) || defined(J9HAMMER)
 	{
 		J9ProcessorDesc desc;

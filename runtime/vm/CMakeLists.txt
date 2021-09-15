@@ -165,6 +165,7 @@ set(main_sources
 	threadhelp.cpp
 	threadpark.c
 	throwexception.c
+	UpcallThunkMem.cpp
 	ValueTypeHelpers.cpp
 	visible.c
 	VMAccess.cpp

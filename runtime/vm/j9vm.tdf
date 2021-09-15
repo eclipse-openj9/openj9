@@ -881,3 +881,17 @@ TraceException=Trc_VM_CreateRAMClassFromROMClass_sealedSuperFromDifferentPackage
 TraceEvent=Trc_VM_callin_stackFree Overhead=1 Level=5 Template="OS Stack free=%zi, current native sp=%p"
 
 TraceEvent=Trc_VM_classLoaderRegisterLibrary_newNativeLibrary Overhead=1 Level=5 Template="classLoaderRegisterLibrary -- newNativeLibrary (0x%p) handle (0x%zx) logicalName (%s) name (%s) rc (0x%zx)"
+
+TraceEntry=Trc_VM_subAllocateThunkFromHeap_Entry Overhead=1 Level=2 Template="Enter subAllocateThunkFromHeap - The requested thunk size(%zu)"
+TraceEvent=Trc_VM_subAllocateThunkFromHeap_alloc_metadata_failed Overhead=1 Level=3 Template="subAllocateThunkFromHeap - Failed to allocate memory to the metadata for the generated thunk(%p)"
+TraceEvent=Trc_VM_subAllocateThunkFromHeap_suballoc_thunk_success Overhead=1 Level=3 Template="subAllocateThunkFromHeap - A thunk(%p) with the requested size(%zu) is successfully suballocated from the heap(%p)"
+TraceEvent=Trc_VM_subAllocateThunkFromHeap_suballoc_thunk_failed Overhead=1 Level=3 Template="subAllocateThunkFromHeap - Failed to suballocate a thunk with the requested size(%zu) from the heap(%p)"
+TraceExit=Trc_VM_subAllocateThunkFromHeap_Exit Overhead=1 Level=2 Template="Exit subAllocateThunkFromHeap - The suballocated thunk address is %p"
+
+TraceEntry=Trc_VM_allocateThunkHeap_Entry Overhead=1 Level=2 Template="Enter allocateThunkHeap - The requested thunk size(%zu)"
+TraceEvent=Trc_VM_allocateThunkHeap_allocate_thunk_heap_wrapper_failed Overhead=1 Level=3 Template="allocateThunkHeap - Failed to allocate memory to the thunk heap wrapper"
+TraceEvent=Trc_VM_allocateThunkHeap_reserve_memory_failed Overhead=1 Level=3 Template="allocateThunkHeap - Failed to allocate reserve the memory with the requested page size(%zu)"
+TraceEvent=Trc_VM_allocateThunkHeap_alloc_metadata_failed Overhead=1 Level=3 Template="allocateThunkHeap - Failed to allocate memory to the metadata for the generated thunk(%p)"
+TraceEvent=Trc_VM_allocateThunkHeap_suballoc_thunk_success Overhead=1 Level=3 Template="allocateThunkHeap - A thunk(%p) with the requested size(%zu) is successfully suballocated from the heap(%p)"
+TraceEvent=Trc_VM_allocateThunkHeap_suballoc_thunk_failed Overhead=1 Level=3 Template="allocateThunkHeap - Failed to suballocate a thunk with the requested size(%zu) from the heap(%p)"
+TraceExit=Trc_VM_allocateThunkHeap_Exit Overhead=1 Level=2 Template="Exit allocateThunkHeap - The suballocated thunk address is %p"
