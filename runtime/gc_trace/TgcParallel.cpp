@@ -239,7 +239,7 @@ tgcHookGlobalGcMarkEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventDa
 static void
 tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData)
 {
-	MM_LocalGCStartEvent* event = (MM_LocalGCStartEvent*)eventData;
+	MM_LocalGCEndEvent* event = (MM_LocalGCEndEvent*)eventData;
 	J9VMThread* vmThread = (J9VMThread*)event->currentThread->_language_vmthread;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread->javaVM);
 	MM_TgcExtensions *tgcExtensions = MM_TgcExtensions::getExtensions(extensions);
@@ -258,7 +258,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	tgcExtensions->printf("          gc thrID     busy    stall   acquire   release   acquire   release   acquire     split avg split  alias to    deep      total deepest\n");
 	tgcExtensions->printf("                   (micros) (micros)  freelist  freelist  scanlist  scanlist      lock    arrays arraysize copycache   lists  deep objs    list\n");
 
-	scavengeTotalTime = extensions->scavengerStats._endTime - extensions->scavengerStats._startTime;
+	scavengeTotalTime = event->incrementEndTime - event->incrementStartTime;
 	uintptr_t gcCount = extensions->scavengerStats._gcCount;
 
 	GC_VMThreadListIterator scavengeThreadListIterator(vmThread);
