@@ -40,7 +40,7 @@
 			<variation>Mode609</variation>
 			<variation>Mode616</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)\
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJARPATH=$(Q)$(LIB_DIR)$(D)jython-standalone.jar$(P)$(TEST_RESROOT)$(D)cmdLineTester_jython.jar$(Q) \
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
 	-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)jython.xml$(Q) \
