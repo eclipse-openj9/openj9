@@ -32,6 +32,7 @@ import static org.objectweb.asm.Opcodes.V16;
 import org.openj9.test.modularity.pkgA.SuperClassSealed;
 import org.openj9.test.modularity.pkgA.SuperInterfaceSealed;
 import org.openj9.test.modularity.pkgB.SuperClassFromPkgB;
+import org.openj9.test.util.VersionCheck;
 
 /**
  * Test cases for JEP 397: Sealed Classes (Second Preview)
@@ -44,20 +45,14 @@ import org.openj9.test.modularity.pkgB.SuperClassFromPkgB;
 public class Test_SubClass {
 	/* sealed classes are still a preview feature as of jdk 16, and OpenJ9 requires that
 	 * major version match the latest supported version when --enable-preview flag is active
+	 *
+	 * It is a feature since JDK17.
 	 */
-	private static int latestPreviewVersion;
+	private static int classVersion;
 	static {
-		String runtimeVersion = System.getProperty("java.version");
-		int versionNum = Integer.parseInt(runtimeVersion.substring(0, 2));
-		switch (versionNum) {
-			case 16:
-				latestPreviewVersion = V16;
-				break;
-			case 17:
-				latestPreviewVersion = 61; // does ASM support jdk17 yet?
-				break;
-			default:
-				latestPreviewVersion = V16; // next release
+		classVersion = VersionCheck.classFile();
+		if (VersionCheck.major() < 17) {
+			classVersion |= V_PREVIEW;
 		}
 	}
 	
@@ -86,7 +81,7 @@ public class Test_SubClass {
 		}
 		
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cw.visit(latestPreviewVersion | V_PREVIEW, ACC_PUBLIC, className, null, superClassName, superInterfaceNames);
+		cw.visit(classVersion, ACC_PUBLIC, className, null, superClassName, superInterfaceNames);
 		cw.visitEnd();
 		return cw.toByteArray();
 	}

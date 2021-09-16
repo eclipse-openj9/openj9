@@ -37,6 +37,7 @@
 	<property name="module_src_root" location="./modules"/>
 	<property name="module_bin_root" location="./module_bin"/>
 	<property name="dest_module_bin" location="${DEST}/module_bin"/>
+	<property name="TestUtilities" location="../TestUtilities/src"/>
 	<property name="LIB" value="asm,testng,jcommander"/>
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml"/>
 
@@ -58,9 +59,22 @@
 				<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
 				<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
 				<mkdir dir="${module_bin_dir}" />
+				<if>
+					<equals arg1="@{mod}" arg2="moduleY"/>
+					<then>
+						<var name="TestUtilitiesModule" value="${TestUtilities}" />
+						<var name="moduleCompilerarg" value="--add-modules java.management,jdk.management,jdk.attach,java.instrument --add-reads ${MODULE_NAME_ROOT}.@{mod}=java.management --add-reads ${MODULE_NAME_ROOT}.@{mod}=jdk.management --add-reads ${MODULE_NAME_ROOT}.@{mod}=jdk.attach --add-reads ${MODULE_NAME_ROOT}.@{mod}=java.instrument" />
+					</then>
+					<else>
+						<var name="TestUtilitiesModule" value=""/>
+						<var name="moduleCompilerarg" value="" />
+					</else>
+				</if>
 				<var name="modpath" value="--module-path ${module_bin_root} -d ${module_bin_dir}" />
 				<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${module_src_dir}" />
+					<src path="${TestUtilitiesModule}" />
+					<compilerarg line="${moduleCompilerarg}" />
 					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
 					<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
 					<compilerarg line="${modpath}" />
@@ -85,6 +99,7 @@
 
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>
+			<src path="${TestUtilities}" />
 			<exclude name="**/modules/**" />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
 			<compilerarg line='--enable-preview --source ${JDK_VERSION}' />

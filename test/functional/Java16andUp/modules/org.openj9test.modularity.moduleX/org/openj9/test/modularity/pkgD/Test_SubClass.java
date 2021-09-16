@@ -42,22 +42,9 @@ public class Test_SubClass {
 	
 	/* sealed classes are still a preview feature as of jdk 16, and OpenJ9 requires that
 	 * major version match the latest supported version when --enable-preview flag is active
+	 *
+	 * It is a feature since JDK17.
 	 */
-	private static int latestPreviewVersion;
-	static {
-		String runtimeVersion = System.getProperty("java.version");
-		int versionNum = Integer.parseInt(runtimeVersion.substring(0, 2));
-		switch (versionNum) {
-			case 16:
-				latestPreviewVersion = V16;
-				break;
-			case 17:
-				latestPreviewVersion = 61; // does ASM support jdk17 yet?
-				break;
-			default:
-				latestPreviewVersion = V16; // next release
-		}
-	}
 	
 	@Test
 	public void test_subClassInTheDifferentPackageFromSealedSuperClass() throws ClassNotFoundException {
