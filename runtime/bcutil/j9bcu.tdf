@@ -273,7 +273,7 @@ TraceEvent=Trc_BCU_stringInternTableCreated NoEnv Overhead=1 Level=3 Template="B
 TraceException=Trc_BCU_stringInternTableCreationFailed NoEnv Overhead=1 Level=3 Template="BCU stringInternTableCreationFailed: nodeCount=%u"
 TraceEvent=Trc_BCU_stringInternTableNotCreated NoEnv Overhead=1 Level=3 Template="BCU stringInternTableNotCreated"
 
-TraceEvent=Trc_BCU_internalDefineClass_FullData Overhead=1 Level=7 Template="BCU Trc_BCU_internalDefineClass_FullData: data=%.*s, classLoader=%p"
+TraceEvent=Trc_BCU_internalDefineClass_FullData Overhead=1 Level=7 Template="BCU internalDefineClass_FullData: data=%.*s, classLoader=%p"
 
 TraceAssert=Trc_BCU_Assert_ShouldNeverHappen_CompressionMissmatch NoEnv Overhead=1 Level=1 Assert="(0)"
 TraceAssert=Trc_BCU_Assert_CorrectLineNumbersCount NoEnv Overhead=1 Level=1 Assert="(P1 == P2)"
