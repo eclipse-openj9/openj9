@@ -811,13 +811,13 @@ public:
     *    Return vtable or itable index of a method represented by MemberName
     *    Caller must acquire VM access
     */
-   virtual int32_t vTableOrITableIndexFromMemberName(uintptr_t memberName);
+   virtual uintptr_t vTableOrITableIndexFromMemberName(uintptr_t memberName);
    /*
     * \brief
     *    Return vtable or itable index of a method represented by MemberName
     *    VM access is not required
     */
-   virtual int32_t vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
+   virtual uintptr_t vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex);
    /*
     * \brief
     *    Create and return a resolved method from member name index of an invoke cache array.
