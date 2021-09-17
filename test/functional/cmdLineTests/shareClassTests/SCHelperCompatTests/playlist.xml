@@ -49,6 +49,7 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
+		<aot>nonapplicable</aot>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_SCHelperCompatTests_unix</testCaseName>
