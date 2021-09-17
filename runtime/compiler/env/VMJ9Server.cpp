@@ -2221,14 +2221,14 @@ TR_J9ServerVM::jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectT
    return NULL;
    }
 
-int32_t
+uintptr_t
 TR_J9ServerVM::vTableOrITableIndexFromMemberName(uintptr_t memberName)
    {
    TR_ASSERT_FATAL(false, "vTableOrITableIndexFromMemberName must not be called on JITServer");
    return 0;
    }
 
-int32_t
+uintptr_t
 TR_J9ServerVM::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
    {
    auto knot = comp->getKnownObjectTable();
@@ -2238,9 +2238,9 @@ TR_J9ServerVM::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::Know
       {
       JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
       stream->write(JITServer::MessageType::VM_vTableOrITableIndexFromMemberName, objIndex);
-      return std::get<0>(stream->read<int32_t>());
+      return std::get<0>(stream->read<uintptr_t>());
       }
-   return -1;
+   return (uintptr_t)-1;
    }
 
 TR::KnownObjectTable::Index
