@@ -2154,6 +2154,9 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_util_HashMap_putImpl,               "putImpl",       "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::java_util_HashMap_findNonNullKeyEntry,   "findNonNullKeyEntry",         "(Ljava/lang/Object;II)Ljava/util/HashMap$Entry;")},
       {x(TR::java_util_HashMap_resize,                "resize",         "()[Ljava/util/HashMap$Node;")},
+      {x(TR::java_util_HashMap_prepareArray,          "prepareArray",   "([Ljava/lang/Object;)[Ljava/lang/Object;")},
+      {x(TR::java_util_HashMap_keysToArray,           "keysToArray",    "([Ljava/lang/Object;)[Ljava/lang/Object;")},
+      {x(TR::java_util_HashMap_valuesToArray,         "valuesToArray",  "([Ljava/lang/Object;)[Ljava/lang/Object;")},
       {  TR::unknownMethod}
       };
 
