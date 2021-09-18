@@ -619,7 +619,7 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
       currentChild->recursivelyDecReferenceCount(); // ref count has to be decremented twice as there were two duplicates of the parent made
       }
 
-   TR::SymbolReference *mhSymRef = argsList->front();
+   TR::SymbolReference *receiverSymRef = argsList->front();
    TR::SymbolReference *mnSymRef = argsList->back();
 
    // -------- construct trees to obtain and check if vTableIndex > 0 --------
@@ -642,10 +642,10 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
    TR::SymbolReference* vtableOffsetTempSlotSymRef = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(),vtableIndexNode->getSymbol()->getDataType());
    vtableOffsetTempSlotSymRef->getSymbol()->setNotCollected();
    treetop->insertBefore(TR::TreeTop::create(comp(), TR::Node::createStore(node, vtableOffsetTempSlotSymRef, vtableIndexNode)));
-   TR::ILOpCodes xcmpne = comp()->target().is64Bit()? TR::iflcmpne : TR::ificmpne;
+   TR::ILOpCodes ifxcmpne = comp()->target().is64Bit()? TR::iflcmpne : TR::ificmpne;
    TR::Node *zero = comp()->target().is64Bit()? TR::Node::lconst(node, 0) : TR::Node::iconst(node, 0);
 
-   TR::Node* vTableOffsetIsNotZero = TR::Node::createif(xcmpne,
+   TR::Node* vTableOffsetIsNotZero = TR::Node::createif(ifxcmpne,
                                                          TR::Node::createLoad(node, vtableOffsetTempSlotSymRef),
                                                          zero,
                                                          NULL);
@@ -666,30 +666,32 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
    TR_ResolvedMethod * dummyMethod = fej9->createResolvedMethodWithSignature(comp()->trMemory(),dummyInvoke, NULL, signature, signatureLength, owningMethodSymbol->getResolvedMethod());
    TR::SymbolReference * methodSymRef = comp()->getSymRefTab()->findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), -1, dummyMethod, TR::MethodSymbol::ComputedStatic);
 
-   // construct trees to load target method address (which will either be a thunk or compiled method address) from VFT, but for simplicity let's call it a jitted method address
-   TR::Node* vtableOffset  =  TR::Node::create(TR::lsub, 2, TR::Node::createLoad(node, vtableOffsetTempSlotSymRef), TR::Node::lconst(node, sizeof(J9Class)));
-   TR::SymbolReference * vftSymRef = comp()->getSymRefTab()->findOrCreateVftSymbolRef();
-   TR::Node * vftNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, TR::Node::createLoad(node, mhSymRef), vftSymRef);
+   // construct trees to load target method address (which will either be a thunk or compiled method address) from VFT, but for simplicity let's call it a jitted method entry point
+   TR::Node * xconstSizeofJ9Class = comp()->target().is64Bit()
+      ? TR::Node::lconst(node, sizeof(J9Class))
+      : TR::Node::iconst(node, sizeof(J9Class));
+
    TR::ILOpCodes subOp = comp()->target().is64Bit() ? TR::lsub : TR::isub;
-   TR::ILOpCodes x2a = comp()->target().is64Bit() ? TR::l2a : TR::i2a;
-   TR::Node * jittedMethodAddressNode = TR::Node::create(x2a, 1, TR::Node::create(subOp, 2, vftNode, vtableOffset));
+   TR::ILOpCodes axadd = comp()->target().is64Bit() ? TR::aladd : TR::aiadd;
+   TR::Node* jitVFTOffset = TR::Node::create(subOp, 2, xconstSizeofJ9Class, TR::Node::createLoad(node, vtableOffsetTempSlotSymRef));
+   TR::SymbolReference * vftSymRef = comp()->getSymRefTab()->findOrCreateVftSymbolRef();
+   TR::Node * vftNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, TR::Node::createLoad(node, receiverSymRef), vftSymRef);
+   TR::Node * jitVFTSlotPtr = TR::Node::create(axadd, 2, vftNode, jitVFTOffset);
    TR::SymbolReference *tSymRef = comp()->getSymRefTab()->findOrCreateGenericIntShadowSymbolReference(0);
    tSymRef->getSymbol()->setNotCollected();
    TR::ILOpCodes loadOp = comp()->target().is64Bit() ? TR::lloadi : TR::iloadi;
    // arg0 ---> jitted method address (in JIT vtable)
-   TR::Node * jittedMethodAddressLoadNode = TR::Node::createWithSymRef(loadOp, 1, 1, jittedMethodAddressNode,tSymRef);
+   TR::Node * jittedMethodEntryPoint = TR::Node::createWithSymRef(loadOp, 1, 1, jitVFTSlotPtr, tSymRef);
 
-   // arg1 ---> vtable slot index
-   TR::ILOpCodes mulOp = comp()->target().is64Bit() ? TR::lmul : TR::imul;
-   TR::Node* vtableSlot = TR::Node::create(node, mulOp, 2, vtableOffset, TR::Node::lconst(node, -1));
+   // arg1 ---> vtable slot index (jitVFTOffset)
 
    // 2 additional args prepended (address in vtable entry and vtable slot index), and last arg (MemberName object) removed, so net 1 extra child
    uint32_t numChildren = node->getNumChildren() + 1;
    TR::Node * dispatchVirtualCallNode = TR::Node::createWithSymRef(node, node->getSymbol()->castToMethodSymbol()->getMethod()->indirectCallOpCode(), numChildren, methodSymRef);
 
    // set children for the dispatchVirtual call node
-   dispatchVirtualCallNode->setAndIncChild(0, jittedMethodAddressLoadNode);
-   dispatchVirtualCallNode->setAndIncChild(1, vtableSlot);
+   dispatchVirtualCallNode->setAndIncChild(0, jittedMethodEntryPoint);
+   dispatchVirtualCallNode->setAndIncChild(1, jitVFTOffset);
    argsList->pop_back(); //remove MemberName object
    int32_t child_i = 2;
    for (auto symRefIt = argsList->begin(); symRefIt != argsList->end(); ++symRefIt)
