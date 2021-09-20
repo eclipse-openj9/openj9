@@ -36,6 +36,78 @@ Java_jdk_internal_misc_ScopedMemoryAccess_registerNatives(JNIEnv *env, jclass cl
 {
 }
 
+typedef enum FrameCheckResult {
+	FrameCheckErrorOpaqueFrame,
+	FrameCheckErrorOutOfMemory,
+	FrameCheckWaitSleepPark,
+	FrameCheckErrorNoMoreFrames,
+	FrameCheckNoError
+} FrameCheckResult;
+
+J9_DECLARE_CONSTANT_UTF8(waitMethod, "wait");
+J9_DECLARE_CONSTANT_UTF8(sleepMethod, "sleep");
+J9_DECLARE_CONSTANT_UTF8(parkMethod, "park");
+
+static UDATA
+frameCheckIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	UDATA framesVisited = (UDATA)walkState->userData2;
+	J9Method *method = walkState->method;
+	J9ROMMethod *romMethod = NULL;
+
+	/* If there's no method, this must be a call-in frame - fail immediately */
+	if (NULL == method) {
+		walkState->userData1 = (void *)FrameCheckErrorOpaqueFrame;
+		return J9_STACKWALK_STOP_ITERATING;
+	}
+
+	/* Interrupt the thread if it is in wait/sleep/park */
+	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	if (1 == walkState->framesWalked) {
+		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
+		if (J9UTF8_LENGTH(methodName) > 0) {
+			if ((0 == memcmp(J9UTF8_DATA(methodName), J9UTF8_DATA(&waitMethod), J9UTF8_LENGTH(&waitMethod)))
+				|| (0 == memcmp(J9UTF8_DATA(methodName), J9UTF8_DATA(&sleepMethod), J9UTF8_LENGTH(&sleepMethod)))
+				|| (0 == memcmp(J9UTF8_DATA(methodName), J9UTF8_DATA(&parkMethod), J9UTF8_LENGTH(&parkMethod)))
+			) {
+				walkState->userData1 = (void *)FrameCheckWaitSleepPark;
+				return J9_STACKWALK_STOP_ITERATING;
+			}
+		}
+	}
+
+	/* If the frame being dropped is <clinit>, disallow it */
+	if (1 == walkState->framesWalked) {
+		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
+		if ((romMethod->modifiers & J9AccStatic) && ('<' == J9UTF8_DATA(methodName)[0])) {
+			walkState->userData1 = (void *)FrameCheckErrorOpaqueFrame;
+			return J9_STACKWALK_STOP_ITERATING;
+		}
+	}
+
+	if (NULL == walkState->jitInfo) {
+		/* Interpreted frame, no need for decompilation */
+		framesVisited += 1;
+	} else if (0 == walkState->inlineDepth) {
+		/* Outer JIT frame */
+		framesVisited += 1;
+		if (NULL == vm->jitConfig->jitAddDecompilationForFramePop(currentThread, walkState)) {
+			walkState->userData1 = (void *)FrameCheckErrorOutOfMemory;
+			return J9_STACKWALK_STOP_ITERATING;
+		}
+	}
+
+	/* Once both frames have been located, stop with success */
+	walkState->userData2 = (void *)framesVisited;
+	if (2 == framesVisited) {
+		walkState->userData1 = (void *)FrameCheckNoError;
+		return J9_STACKWALK_STOP_ITERATING;
+	}
+
+	return J9_STACKWALK_KEEP_ITERATING;
+}
+
 static UDATA
 closeScope0FrameWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState)
 {
@@ -130,11 +202,33 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 	current = head;
 	while (NULL != current) {
 		/* Scope is being accessed by a thread */
-		J9VMThread *scopeThread = current->thread;
+		J9VMThread *targetThread = current->thread;
 		LinkedThreads *prev = NULL;
 
 		/* TODO: throw exception */
-		scopeThread = scopeThread;
+		J9StackWalkState walkState;
+		FrameCheckResult result = FrameCheckErrorNoMoreFrames;
+
+		walkState.walkThread = targetThread;
+		walkState.userData1 = (void *)&result;
+		walkState.userData2 = (void *)0;
+		walkState.frameWalkFunction = frameCheckIterator;
+		walkState.skipCount = 0;
+		walkState.flags = J9_STACKWALK_INCLUDE_CALL_IN_FRAMES | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP;
+		vm->walkStackFrames(currentThread, &walkState);
+		switch (result) {
+		case FrameCheckErrorOutOfMemory: /* fall through */
+			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGOUTOFMEMORYERROR, NULL);
+		case FrameCheckErrorOpaqueFrame: /* fall through */
+		case FrameCheckErrorNoMoreFrames:
+			break;
+		case FrameCheckWaitSleepPark: /* fall through */
+			/* TODO: Interrupt thread */
+		case FrameCheckNoError:
+			/* TODO: Trigger async event */
+			/* vm->jitConfig->jitDecompileMethod? */
+			break;
+		}
 
 		prev = current;
 		current = current->next;
