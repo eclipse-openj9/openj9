@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1483,7 +1483,15 @@ j9mmap_test9(struct J9PortLibrary *portLibrary)
 		lastErrorNumber = j9error_last_error_number();
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Close of file %s after mapping failed: lastErrorNumber=%d, lastErrorMessage=%s\n", filename, lastErrorNumber, lastErrorMessage);
 	}
-	
+
+/* workaround to map remaining read only after changing prots to RW on s390x Ubuntu 20 */
+#if defined(LINUX) && (defined(S390) || defined(S39064))
+	memcpy(updatedBuffer, mapAddr, 4);
+	if ((0 == updatedBuffer[0]) && (1 == updatedBuffer[1]) && (2 == updatedBuffer[2]) && (3 == updatedBuffer[3])) {
+		outputComment(portLibrary, "Read from mmap before write as workaround for zLinux\n");
+	}
+#endif /* defined(LINUX) && (defined(S390) || defined(S39064)) */
+
 	/* try to write to region that was set to read only */
 	if (!j9sig_can_protect(signalHandlerFlags)) {
 		outputComment(portLibrary, "Signal handling framework not available, can't test readonly functionality without crashing, bypassing test");
@@ -1680,7 +1688,15 @@ j9mmap_test10(struct J9PortLibrary *portLibrary)
 		lastErrorNumber = j9error_last_error_number();
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Close of file %s after mapping failed: lastErrorNumber=%d, lastErrorMessage=%s\n", filename, lastErrorNumber, lastErrorMessage);
 	}
-	
+
+/* workaround to map remaining read only after changing prots to RW on s390x Ubuntu 20 */
+#if defined(LINUX) && (defined(S390) || defined(S39064))
+	memcpy(updatedBuffer, mapAddr, 4);
+	if ((0 == updatedBuffer[0]) && (1 == updatedBuffer[1]) && (2 == updatedBuffer[2]) && (3 == updatedBuffer[3])) {
+		outputComment(portLibrary, "Read from mmap before write as workaround for zLinux\n");
+	}
+#endif /* defined(LINUX) && (defined(S390) || defined(S39064)) */
+
 	/* try to write to region that was set to read only */
 	if (!j9sig_can_protect(signalHandlerFlags)) {
 		outputComment(portLibrary, "Signal handling framework not available, can't test readonly functionality without crashing, bypassing test");
