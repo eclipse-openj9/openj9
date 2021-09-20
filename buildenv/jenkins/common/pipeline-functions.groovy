@@ -105,7 +105,7 @@ def get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO,
 }
 
 def get_repository_sha(REPO, BRANCH) {
-   // use ssh-agent to avoid permission denied on private repositories
+    // use ssh-agent to avoid permission denied on private repositories
     if (USER_CREDENTIALS_ID != '') {
         return sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
             get_sha(REPO, BRANCH)
@@ -119,18 +119,17 @@ def get_sha(REPO, BRANCH) {
     // Get the SHA at the tip of the BRANCH in REPO.
     // Allows Pipelines to kick off multiple builds and have the same SHA built everywhere.
     return sh (
-            // "git ls-remote $REPO" will return all refs, adding "$BRANCH" will only return the specific branch we are interested in
-            // return the full 40 characters sha instead of the short version
-            // to avoid errors due to short sha ambiguousness due to multiple matches for a short sha
-            script: "git ls-remote $REPO refs/heads/$BRANCH | cut -c1-40",
+            // "git ls-remote $REPO" will return all refs, adding "$BRANCH" will only return the tip of the specific branch of interest
+            // return the full sha to avoid errors due to ambiguity of short shas (which may match multiple commits)
+            script: "git ls-remote $REPO refs/heads/$BRANCH | cut -f1",
             returnStdout: true
         ).trim()
 }
 
 def get_short_sha(SHA) {
     if (SHA) {
-        // return the first 7 characters of a given SHA.
-        return SHA.take(7)
+        // return the first few characters of a given SHA
+        return SHA.take(11)
     }
 
     return SHA
