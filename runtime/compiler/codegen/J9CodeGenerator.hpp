@@ -520,6 +520,16 @@ public:
    */
    void setSupportsInlineConcurrentLinkedQueue() { _j9Flags.set(SupportsInlineConcurrentLinkedQueue); }
 
+   /** \brief
+	*   Determines whether the code generator supports inlining of java/lang/StringCoding.encodeASCII
+	*/
+   bool getSupportsInlineEncodeASCII() { return _j9Flags.testAny(SupportsInlineEncodeASCII); }
+
+   /** \brief
+	*   The code generator supports inlining of java/lang/StringCoding.encodeASCII
+	*/
+   void setSupportsInlineEncodeASCII() { _j9Flags.set(SupportsInlineEncodeASCII); }
+
    /**
     * \brief
     *    The number of nodes between a monext and the next monent before
@@ -665,6 +675,7 @@ private:
       SupportsInlineStringLatin1Inflate                   = 0x00000080, /*! codegen inlining of Java StringLatin1.inflate */
       SupportsIntegerStringSize                           = 0x00000100,
       SupportsIntegerToChars                              = 0x00000200,
+      SupportsInlineEncodeASCII                           = 0x00000400,
       };
 
    flags32_t _j9Flags;

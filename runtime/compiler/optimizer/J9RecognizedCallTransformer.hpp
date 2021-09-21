@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017, 2021 IBM Corp. and others
+* Copyright (c) 2017, 2022 IBM Corp. and others
 *
 * This program and the accompanying materials are made available under
 * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,6 +85,22 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *     \endcode
     */
    void process_java_lang_Class_IsAssignableFrom(TR::TreeTop* treetop, TR::Node* node);
+   /** \brief
+    *     Transforms java/lang/StringCoding.encodeASCII(B[B)[B into a compiler intrinsic for codegen acceleration (i.e encodeASCII symbol).
+    *
+    *  \param treetop
+    *     The treetop which anchors the call node.
+    *
+    *  \param node
+    *     The call node representing a call to java/lang/StringCoding.encodeASCII(B[B)[B which has the following shape:
+    *
+    *     \code
+    *     acall <java/lang/StringCoding.encodeASCII(B[B)[B>
+    *       <coder>
+    *       <val>
+    *     \endcode
+    */
+   void process_java_lang_StringCoding_encodeASCII(TR::TreeTop* treetop, TR::Node* node);
    /** \brief
     *     Transforms java/lang/StringUTF16.toBytes([CII)[B into a fast allocate and arraycopy sequence with equivalent
     *     semantics.

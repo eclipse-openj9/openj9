@@ -50,6 +50,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    {
    public:
 
+   static void inlineEncodeASCII(TR::Node *node, TR::CodeGenerator *cg);
+
    /** \brief
     *     Evaluates a sequence of instructions which generate the current time in terms of 1/2048 of micro-seconds.
     *

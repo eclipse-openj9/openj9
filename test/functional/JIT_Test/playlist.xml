@@ -685,9 +685,12 @@
 		<testCaseName>jit_recognizedMethod</testCaseName>
 		<variations>
 			<variation>-Xint</variation>
+			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings -Xnoaot</variation>
+			<variation>-XX:+CompactStrings</variation>
+			<variation>-XX:+CompactStrings -Xnoaot</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
