@@ -641,11 +641,13 @@ def set_sdk_variables() {
     echo "SDK_FILENAME:'${SDK_FILENAME}'"
 
     TEST_FILENAME = "test-images.tar.gz"
+    CODE_COVERAGE_FILENAME = "code-coverage-files.tar.gz"
     JAVADOC_FILENAME = "OpenJ9-JDK${SDK_VERSION}-Javadoc-${SPEC}-${DATESTAMP}.tar.gz"
     JAVADOC_OPENJ9_ONLY_FILENAME = "OpenJ9-JDK${SDK_VERSION}-Javadoc-openj9-${SPEC}-${DATESTAMP}.tar.gz"
     DEBUG_IMAGE_FILENAME = "debug-image.tar.gz"
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
+    echo "Using CODE_COVERAGE_FILENAME = ${CODE_COVERAGE_FILENAME}"
     echo "Using JAVADOC_FILENAME = ${JAVADOC_FILENAME}"
     echo "Using JAVADOC_OPENJ9_ONLY_FILENAME = ${JAVADOC_OPENJ9_ONLY_FILENAME}"
     echo "Using DEBUG_IMAGE_FILENAME = ${DEBUG_IMAGE_FILENAME}"
@@ -1057,6 +1059,9 @@ def set_job_variables(job_type) {
     // Set ARCHIVE_JAVADOC flag
     ARCHIVE_JAVADOC = (params.ARCHIVE_JAVADOC) ? params.ARCHIVE_JAVADOC : false
     echo "Using ARCHIVE_JAVADOC = ${ARCHIVE_JAVADOC}"
+    // Set CODE_COVERAGE flag
+    CODE_COVERAGE = (params.CODE_COVERAGE) ? params.CODE_COVERAGE : false
+    echo "Using CODE_COVERAGE = ${CODE_COVERAGE}"
 
     switch (job_type) {
         case "build":
@@ -1360,6 +1365,30 @@ def set_build_extra_options(build_specs=null) {
         EXTRA_MAKE_OPTIONS = params.EXTRA_MAKE_OPTIONS
         if (!EXTRA_MAKE_OPTIONS) {
             EXTRA_MAKE_OPTIONS = buildspec.getVectorField("extra_make_options", SDK_VERSION).join(" ")
+        }
+        if (params.CODE_COVERAGE) {
+           if (EXTRA_MAKE_OPTIONS.contains("EXTRA_CMAKE_ARGS=")) {
+                EXTRA_MAKE_OPTIONS = EXTRA_MAKE_OPTIONS.replaceAll(/(-DCODE_COVERAGE=).*?(\"|\s|$)/, '$1ON$2')
+                if (EXTRA_MAKE_OPTIONS.contains("EXTRA_CMAKE_ARGS=\"")) { // multiple arguments for EXTRA_CMAKE_ARGS="XX YY"
+                    extracted_extra_cmake_args = EXTRA_MAKE_OPTIONS.find(/EXTRA_CMAKE_ARGS=\".*?\"/)
+                    if(!extracted_extra_cmake_args.contains("-DCODE_COVERAGE=ON")) {
+                        EXTRA_MAKE_OPTIONS = EXTRA_MAKE_OPTIONS.replace("EXTRA_CMAKE_ARGS=\"", "EXTRA_CMAKE_ARGS=\"-DCODE_COVERAGE=ON ")
+                    }
+                } else { // only one argument for EXTRA_CMAKE_ARGS=-D
+                    if(!EXTRA_MAKE_OPTIONS.contains("EXTRA_CMAKE_ARGS=-DCODE_COVERAGE=ON")) {
+                        sub_options = EXTRA_MAKE_OPTIONS.split(" ")
+                        sub_options.eachWithIndex { sub_option, index ->
+                            if (sub_option.contains("EXTRA_CMAKE_ARGS=")) {
+                                sub_option = sub_option.replace("EXTRA_CMAKE_ARGS=", "EXTRA_CMAKE_ARGS=\"-DCODE_COVERAGE=ON ")
+                                sub_options[index] = sub_option + "\""
+                            }
+                        }
+                        EXTRA_MAKE_OPTIONS = sub_options.join(" ")
+                    }
+                }
+            } else {
+                EXTRA_MAKE_OPTIONS += " EXTRA_CMAKE_ARGS=-DCODE_COVERAGE=ON"
+            }
         }
 
         OPENJDK_CLONE_DIR = params.OPENJDK_CLONE_DIR

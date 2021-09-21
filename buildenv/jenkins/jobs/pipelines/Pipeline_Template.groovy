@@ -106,6 +106,7 @@ pipelineJob("$JOB_NAME") {
         stringParam('SCM_BRANCH', SCM_BRANCH)
         stringParam('SCM_REFSPEC')
         booleanParam('ARCHIVE_JAVADOC', false)
+        booleanParam('CODE_COVERAGE', false)
 
         if (jobType == 'pipeline') {
             stringParam('TESTS_TARGETS')

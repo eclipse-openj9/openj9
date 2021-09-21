@@ -300,6 +300,18 @@ def archive_sdk() {
         def testDir = "test"
 
         dir(OPENJDK_CLONE_DIR) {
+            // Code coverage files archive for report
+            if (params.CODE_COVERAGE) {
+                // Use WORKSPACE since code coverage gcno files are in vm folder, java is in jdk and images folder, and omr and openj9 folders are in workspace.
+                def codeCoverageDir = "${env.WORKSPACE}"
+                sh "touch ${CODE_COVERAGE_FILENAME}"
+                if (SPEC.contains('zos')) {
+                    sh "pax --exclude=${CODE_COVERAGE_FILENAME} -wvzf ${CODE_COVERAGE_FILENAME} ${codeCoverageDir}"
+                } else {
+                    sh "tar --exclude=${CODE_COVERAGE_FILENAME} -zcvf ${CODE_COVERAGE_FILENAME} ${codeCoverageDir}"
+                }
+            }
+
             // The archiver receives pathnames on stdin and writes to stdout.
             def archiveCmd = SPEC.contains('zos') ? 'pax -wvz -p x' : 'tar -cvz -T -'
             // Filter out unwanted files (most of which are available in the debug-image).
@@ -377,6 +389,13 @@ def archive_sdk() {
                                                  "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
                     specs.add(javadocOpenJ9OnlySpec)
                 }
+                if (params.CODE_COVERAGE) {
+                    def codeCoverageSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${CODE_COVERAGE_FILENAME}",
+                                       "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
+                                       "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
+                    specs.add(codeCoverageSpec)
+                }
+
                 def uploadFiles = [files : specs]
                 def uploadSpec = JsonOutput.toJson(uploadFiles)
                 upload_artifactory(uploadSpec)
@@ -406,6 +425,14 @@ def archive_sdk() {
                         echo "Javadoc (OpenJ9 extensions only):'${JAVADOC_OPENJ9_ONLY_LIB_URL}'"
                     }
                 }
+                if (params.CODE_COVERAGE) {
+                    if (fileExists("${CODE_COVERAGE_FILENAME}")) {
+                        CODE_COVERAGE_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${CODE_COVERAGE_FILENAME}"
+                        currentBuild.description += "<br><a href='${CODE_COVERAGE_LIB_URL}'>${CODE_COVERAGE_FILENAME}</a>"
+                        env.CUSTOMIZED_SDK_URL += " " + CODE_COVERAGE_LIB_URL
+                        echo "Code Coverage:'${CODE_COVERAGE_LIB_URL}'"
+                    }
+                }
                 echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
             } else {
                 echo "ARTIFACTORY server is not set saving artifacts on jenkins."
@@ -413,6 +440,9 @@ def archive_sdk() {
                 if (params.ARCHIVE_JAVADOC) {
                     ARTIFACTS_FILES += ",**/${JAVADOC_FILENAME}"
                     ARTIFACTS_FILES += ",**/${JAVADOC_OPENJ9_ONLY_FILENAME}"
+                }
+                if (params.CODE_COVERAGE) {
+                    ARTIFACTS_FILES += ",**/${CODE_COVERAGE_FILENAME}"
                 }
                 archiveArtifacts artifacts: ARTIFACTS_FILES, fingerprint: false, onlyIfSuccessful: true
             }
@@ -504,7 +534,11 @@ def upload_artifactory(uploadSpec) {
             if (ARTIFACTORY_CONFIG[geo]['vpn'] == 'true' && !NODE_LABELS.contains("ci.geo.${geo}")) {
                 if (!ARTIFACTORY_CONFIG['stashed']) {
                     // Stash only what test needs (CUSTOMIZED_SDK_URL)
-                    stash includes: "**/${SDK_FILENAME},**/${TEST_FILENAME}", name: 'sdk'
+                    if (params.CODE_COVERAGE) {
+                        stash includes: "**/${SDK_FILENAME},**/${TEST_FILENAME},**/${CODE_COVERAGE_FILENAME}", name: 'sdk'
+                    } else {
+                        stash includes: "**/${SDK_FILENAME},**/${TEST_FILENAME}", name: 'sdk'
+                    }
                     ARTIFACTORY_CONFIG['stashed'] = true
                     ARTIFACTORY_CONFIG['uploadSpec'] = uploadSpec
                 }
