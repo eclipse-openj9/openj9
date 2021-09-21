@@ -1,7 +1,5 @@
-package org.openj9.test.jdk.internal;
-
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,40 +19,43 @@ package org.openj9.test.jdk.internal;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package org.openj9.test.jdk.internal;
 
-import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 
 import java.lang.reflect.Executable;
 
-/* some jdk.internal.misc classes have been moved in Java 12 to a new package jdk.internal.access. The purpose of this 
- * class is to provide access to those packages to prevent duplicating code */
-
+/* Some jdk.internal.misc classes have been moved in Java 12 to a new package
+ * jdk.internal.access. The purpose of this class is to provide access to
+ * those packages to prevent duplicating code.
+ */
 public class InternalAccessor {
 
-    private JavaLangAccess access;
+	private final JavaLangAccess access;
 
-    public InternalAccessor() {
-        this.access = SharedSecrets.getJavaLangAccess();
-    }
+	public InternalAccessor() {
+		this.access = SharedSecrets.getJavaLangAccess();
+	}
 
-    /* wrapper method for IbmTypeAnnotationsApiTest */
-    public byte[] getRawClassTypeAnnotations(Class<?> clazz) {
-        return this.access.getRawClassTypeAnnotations(clazz);
-    }
+	/* wrapper method for IbmTypeAnnotationsApiTest */
+	public byte[] getRawClassTypeAnnotations(Class<?> clazz) {
+		return this.access.getRawClassTypeAnnotations(clazz);
+	}
 
-    /* wrapper method for IbmTypeAnnotationsApiTest */
-    public byte[] getRawExecutableTypeAnnotations(Executable m) {
-        return this.access.getRawExecutableTypeAnnotations(m);
-    }
+	/* wrapper method for IbmTypeAnnotationsApiTest */
+	public byte[] getRawExecutableTypeAnnotations(Executable m) {
+		return this.access.getRawExecutableTypeAnnotations(m);
+	}
 
-    /* wrapper method for IbmTypeAnnotationsApiTest */
-    public byte[] getRawClassAnnotations(Class<?> clazz) {
-        return this.access.getRawClassAnnotations(clazz);
-    }
+	/* wrapper method for IbmTypeAnnotationsApiTest */
+	public byte[] getRawClassAnnotations(Class<?> clazz) {
+		return this.access.getRawClassAnnotations(clazz);
+	}
 
-    /* wrapper method for Test_Class */
-    public <E extends Enum<E>> E[] getEnumConstantsShared(Class<E> clazz) {
-        return this.access.getEnumConstantsShared(clazz);
-    }
+	/* wrapper method for Test_Class */
+	public <E extends Enum<E>> E[] getEnumConstantsShared(Class<E> clazz) {
+		return this.access.getEnumConstantsShared(clazz);
+	}
+
 }

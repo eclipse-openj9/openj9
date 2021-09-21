@@ -1013,6 +1013,7 @@ public final class Unsafe {
 	/* @return size of address on machine in use */
 	private native int addressSize0();
 
+	/*[IF JAVA_SPEC_VERSION < 17]*/
 	/* 
 	 * Define a class without making it known to the class loader.
 	 * 
@@ -1024,6 +1025,7 @@ public final class Unsafe {
 	 * @return class created from bytecodes and constPatches
 	 */
 	private native Class<?> defineAnonymousClass0(Class<?> hostingClass, byte[] bytecodes, Object[] constPatches);
+	/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 
 	/* 
 	 * Get the load average in the system.
@@ -1615,6 +1617,7 @@ public final class Unsafe {
 		return result;
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 17]*/
 	/**
 	 * Define a class without making it known to the class loader.
 	 * 
@@ -1638,6 +1641,7 @@ public final class Unsafe {
 
 		return defineAnonymousClass0(hostingClass, bytecodes, constPatches);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 
 	/**
 	 * Allocate new array of same type as class parameter and 
