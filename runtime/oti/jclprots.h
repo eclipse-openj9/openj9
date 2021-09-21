@@ -638,7 +638,7 @@ extern J9_CFUNC char* catPaths (J9PortLibrary* portLib, char* path1, char* path2
 
 /* BBjclNativesCommonUnsafe*/
 
-
+#if JAVA_SPEC_VERSION < 17
 /**
  * Unsafe method used to create anonClasses
  *
@@ -655,6 +655,7 @@ extern J9_CFUNC char* catPaths (J9PortLibrary* portLib, char* path1, char* path2
  */
 jclass JNICALL
 Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass hostClass, jbyteArray bytecodes, jobjectArray constPatches);
+#endif /* JAVA_SPEC_VERSION < 17 */
 jclass JNICALL
 Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2 (
 	JNIEnv *env, jobject receiver, jstring className, jbyteArray classRep, jint offset, jint length, jobject classLoader, jobject protectionDomain);

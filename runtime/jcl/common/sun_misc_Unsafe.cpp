@@ -66,6 +66,7 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 	return defineClassCommon(env, classLoader, className, classRep, offset, length, protectionDomain, &defineClassOptions, NULL, NULL, FALSE);
 }
 
+#if JAVA_SPEC_VERSION < 17
 jclass JNICALL
 Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass hostClass, jbyteArray bytecodes, jobjectArray constPatches)
 {
@@ -182,6 +183,7 @@ exit:
 
 	return anonClass;
 }
+#endif /* JAVA_SPEC_VERSION < 17 */
 
 /**
  * Initialization function called during VM bootstrap (Unsafe.<clinit>).
@@ -946,11 +948,13 @@ registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
 			(char*)"(Ljava/lang/String;[BIILjava/lang/ClassLoader;Ljava/security/ProtectionDomain;)Ljava/lang/Class;",
 			(void*)&Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2
 		},
+#if JAVA_SPEC_VERSION < 17
 		{
 			(char*)"defineAnonymousClass0",
 			(char*)"(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;",
 			(void*)&Java_sun_misc_Unsafe_defineAnonymousClass
 		},
+#endif /* JAVA_SPEC_VERSION < 17 */
 		{
 			(char*)"pageSize",
 			(char*)"()I",

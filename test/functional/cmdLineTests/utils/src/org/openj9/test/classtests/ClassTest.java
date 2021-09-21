@@ -19,23 +19,22 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.classtests;
 
-import java.io.*;
-import org.openj9.test.classtests.ClassTestHelper;
+import java.io.InputStream;
 
-/* 
- * Calls the helper class ClassTestHelper to generate the Anonymous class and the Unsafe class. 
- * A duplicate file is in the utils2/src/org/openj9/classtests folder, please also modify that file if this one is modified.
- * */
-
+/*
+ * Uses ClassTestHelper to generate the anonymous/hidden class and the unsafe class.
+ *
+ * A duplicate file is in the utils2/src/org/openj9/classtests folder,
+ * please also modify that file if this one is modified.
+ */
 public class ClassTest {
-    public static void main(String[] args) throws Throwable {
-        ClassTest ct = new ClassTest();
-        ClassTestHelper ch = new ClassTestHelper();
-        InputStream anonUnsafeClassStream = ct.getClass().getResourceAsStream("AnonClassAndUnsafeClassTest.class");
-        InputStream unsafeBootClassStream = ct.getClass().getResourceAsStream("UnsafeBootClass.class");
-        ch.func(ct.getClass(), anonUnsafeClassStream, unsafeBootClassStream);
-    }
+	public static void main(String[] args) throws Throwable {
+		ClassTest ct = new ClassTest();
+		ClassTestHelper ch = new ClassTestHelper();
+		InputStream anonUnsafeClassStream = ct.getClass().getResourceAsStream("AnonClassAndUnsafeClassTest.class");
+		InputStream unsafeBootClassStream = ct.getClass().getResourceAsStream("UnsafeBootClass.class");
+		ch.func(ct.getClass(), anonUnsafeClassStream, unsafeBootClassStream);
+	}
 }
