@@ -197,7 +197,7 @@ private:
    TR::SymbolReference *loadClassObjectForTypeTest(int32_t cpIndex, TR_CompilationOptions aotInhibit);
    void         loadClassObject(TR_OpaqueClassBlock *opaqueClass);
    void         loadArrayElement(TR::DataType dt){ loadArrayElement(dt, comp()->il.opCodeForIndirectArrayLoad(dt)); }
-   void         loadArrayElement(TR::DataType dt, TR::ILOpCodes opCode, bool checks = true);
+   void         loadArrayElement(TR::DataType dt, TR::ILOpCodes opCode, bool checks = true, bool mayBeValueType = true);
    void         loadMonitorArg();
 
    void         storeInstance(int32_t);
