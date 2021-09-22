@@ -22,7 +22,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<project name="cmdLineTests" default="buildCmdLineTestTools" basedir=".">
+<project name="cmdLineTestTools" default="buildCmdLineTestTools" basedir=".">
 	<target name="buildCmdLineTestTools" description="build command line test tools">
 		<subant target="build">
 			<fileset dir="${TEST_ROOT}/functional/cmdline_options_tester/" includes="build.xml" />
