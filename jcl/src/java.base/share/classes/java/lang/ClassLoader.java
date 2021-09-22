@@ -48,7 +48,7 @@ import java.lang.reflect.*;
 import java.security.cert.Certificate;
 import sun.security.util.SecurityConstants;
 
-/*[IF Sidecar19-SE]
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.lang.reflect.Modifier;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -64,7 +64,6 @@ import sun.reflect.CallerSensitive;
 /*[ENDIF]*/
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
-import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
@@ -2001,7 +2000,7 @@ static void loadLibrary(Class<?> caller, String name, boolean fullPath) {
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 static void loadLibrary(Class<?> caller, File file) {
 	ClassLoader loader = (caller == null) ? null : caller.getClassLoader();
-	NativeLibraries nls = (loader == null) ? bootstrapClassLoader.nativelibs : loader.nativelibs;
+	NativeLibraries nls = (loader == null) ? BootLoader.getNativeLibraries() : loader.nativelibs;
 	NativeLibrary nl = nls.loadLibrary(caller, file);
 	if (nl == null) {
 		/*[MSG "K0647", "Can't load {0}"]*/
@@ -2011,7 +2010,7 @@ static void loadLibrary(Class<?> caller, File file) {
 static void loadLibrary(Class<?> caller, String libName) {
 	ClassLoader loader = (caller == null) ? null : caller.getClassLoader();
 	if (loader == null) {
-		NativeLibrary nl = bootstrapClassLoader.nativelibs.loadLibrary(caller, libName);
+		NativeLibrary nl = BootLoader.getNativeLibraries().loadLibrary(caller, libName);
 		if (nl == null) {
 			/*[MSG "K0647", "Can't load {0}"]*/
 			throw new UnsatisfiedLinkError(com.ibm.oti.util.Msg.getString("K0647", libName));//$NON-NLS-1$
@@ -2041,16 +2040,13 @@ static void loadLibrary(Class<?> caller, String libName) {
 }
 
 static long findNative(ClassLoader loader, String entryName) {
-	long result = 0;
-	if (loader == null) {
-		loader = bootstrapClassLoader;
+	NativeLibraries nativelib;
+	if ((loader == null) || (loader == bootstrapClassLoader)) {
+		nativelib = BootLoader.getNativeLibraries();
+	} else {
+		nativelib = loader.nativelibs;
 	}
-	result = loader.nativelibs.find(entryName);
-	if ((result == 0) && (loader == bootstrapClassLoader)) {
-		// Try BootLoader if bootstrapClassLoader didn't find the native.
-		result = BootLoader.getNativeLibraries().find(entryName);
-	}
-	return result;
+	return nativelib.find(entryName);
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
