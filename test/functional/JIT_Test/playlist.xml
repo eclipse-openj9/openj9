@@ -558,6 +558,7 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
+		<aot>nonapplicable</aot>
 	</test>
 	<test>
 		<testCaseName>jit_hwWarm</testCaseName>
