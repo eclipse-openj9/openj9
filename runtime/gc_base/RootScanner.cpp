@@ -883,6 +883,26 @@ MM_RootScanner::scanDoubleMappedObjects(MM_EnvironmentBase *env)
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 /**
+ * Scan the per-thread UTF to String caches.
+ */
+void
+MM_RootScanner::scanUTFCaches(MM_EnvironmentBase *env)
+{
+//	TODO: reportScanningStarted(RootScannerEntity_MonitorLookupCaches);
+	GC_VMThreadListIterator vmThreadListIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm));
+	while (J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
+		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
+			J9HashTable *utfCache = walkThread->utfCache;
+			if (NULL != utfCache) {
+				hashTableFree(utfCache);
+				walkThread->utfCache = NULL;
+			}
+		}
+	}
+//	TODO: reportScanningEnded(RootScannerEntity_MonitorLookupCaches);
+}
+
+/**
  * Scan all root set references from the VM into the heap.
  * For all slots that are hard root references into the heap, the appropriate slot handler will be called.
  * @note This includes all references to classes.
@@ -1012,6 +1032,8 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 		scanDoubleMappedObjects(env);
 	}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
+	scanUTFCaches(env);
 }
 
 /**
