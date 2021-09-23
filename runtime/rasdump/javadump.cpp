@@ -56,7 +56,7 @@
 #include "omrutilbase.h"
 #include "j9version.h"
 #include "vendor_version.h"
-
+#include "jvminit.h"
 #include "zip_api.h"
 
 #include <limits.h>
@@ -1263,7 +1263,8 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	_OutputStream.writeCharacters("\n");
 
 	/* Write the user arguments section */
-	JavaVMInitArgs* args = _VirtualMachine->vmArgsArray->actualVMArgs;
+	J9VMInitArgs *j9args = _VirtualMachine->vmArgsArray;
+	JavaVMInitArgs *args = j9args->actualVMArgs;
 
 	_OutputStream.writeCharacters("1CIUSERARGS    UserArgs:\n");
 
@@ -1277,6 +1278,25 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 		}
 
 		_OutputStream.writeCharacters("\n");
+	}
+
+	{
+		/* write ignored options */
+		bool anyIgnored = false;
+
+		for (jint i = 0; i < args->nOptions; i++) {
+			if (IS_CONSUMABLE(j9args, i) && !IS_CONSUMED(j9args, i)) {
+				if (!anyIgnored) {
+					_OutputStream.writeCharacters("NULL\n");
+					_OutputStream.writeCharacters("1CIIGNOREDARGS Ignored Args:\n");
+					anyIgnored = true;
+				}
+
+				_OutputStream.writeCharacters("2CIIGNOREDARG            ");
+				_OutputStream.writeCharacters(args->options[i].optionString);
+				_OutputStream.writeCharacters("\n");
+			}
+		}
 	}
 
 	/* Write the user limits */
