@@ -260,10 +260,6 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 	}
 #endif
 
-	if (NULL != vmThread->utfCache) {
-		hashTableFree(vmThread->utfCache);
-	}
-
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if (NULL != vm->javaOffloadSwitchOffWithReasonFunc) {
 		vmThread->javaOffloadState = 0;
