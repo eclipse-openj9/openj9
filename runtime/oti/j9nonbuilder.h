@@ -3731,6 +3731,7 @@ typedef struct J9JITConfig {
 	void *old_fast_jitInstanceOf;
 	void *old_fast_jitLookupInterfaceMethod;
 	void *old_slow_jitLookupInterfaceMethod;
+	void *old_fast_jitLookupDynamicInterfaceMethod;
 	void *old_fast_jitMethodIsNative;
 	void *old_fast_jitMethodIsSync;
 	void *old_fast_jitMethodMonitorEntry;
