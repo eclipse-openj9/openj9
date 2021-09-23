@@ -855,7 +855,7 @@ indexContainsArray(TR::Compilation *comp, TR::Node *index, vcount_t visitCount)
 
    if (comp->trace(OMR::idiomRecognition))
       traceMsg(comp, "analyzing node %p\n", index);
-   
+
    if (index->getOpCode().hasSymbolReference() &&
          index->getSymbolReference()->getSymbol()->isArrayShadowSymbol())
       {
@@ -877,7 +877,7 @@ indexContainsArrayAccess(TR::Compilation *comp, TR::Node *aXaddNode)
    {
    if (comp->trace(OMR::idiomRecognition))
       traceMsg(comp, "axaddnode %p\n", aXaddNode);
-   
+
    TR::Node *loadNode1, *loadNode2, *topLevelIndex;
    findIndexLoad(aXaddNode, loadNode1, loadNode2, topLevelIndex);
    // topLevelIndex now contains the actual expression q in a[q]
@@ -5734,7 +5734,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
 
 
    int32_t postIncrement = checkForPostIncrement(comp, block, cmpIfAllCISCNode->getHeadOfTrNodeInfo()->_node, exitVarSymRef->getSymbol());
-   
+
    if (disptrace)
       traceMsg(comp, "detected postIncrement %d modLength %d modStartIdx %d\n", postIncrement, modLength, modStartIdx);
 
@@ -6163,7 +6163,7 @@ CISCTransform2ArrayCopyB2CorC2B(TR_CISCTransformer *trans)
 
    // check whether the transformation is valid
    //
-   if (outputMemNode->getOpCode().isShort() && outputMemNode->getOpCode().isUnsigned())
+   if (outputMemNode->getOpCode().isShort())
       {
       TR::Node * iorNode = trans->getP2TRepInLoop(P->getImportantNode(2))->getHeadOfTrNodeInfo()->_node;
       if (!checkByteToChar(comp, iorNode, inputNode, bigEndian))
