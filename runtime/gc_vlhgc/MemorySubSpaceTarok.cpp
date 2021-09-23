@@ -1085,8 +1085,8 @@ double MM_MemorySubSpaceTarok::mapMemoryPercentageToGcOverhead(MM_EnvironmentBas
 	double memoryScore = 0.0;
 
 	/* At this point, eden is full, so all the free space is all part of tenure */
-	uintptr_t tenureSize = getActiveMemorySize() - (uintptr_t)_extensions->globalVLHGCStats._heapSizingData.reservedSize;
-	uintptr_t freeTenure = (uintptr_t)_extensions->globalVLHGCStats._heapSizingData.freeTenure;
+	uintptr_t tenureSize = getActiveMemorySize() - _extensions->globalVLHGCStats._heapSizingData.reservedSize;
+	uintptr_t freeTenure = _extensions->globalVLHGCStats._heapSizingData.freeTenure;
 
 	if (0 == heapSizeChange) {
 		Trc_MM_MemorySubSpaceTarok_mapMemoryPercentageToGcOverhead_1(env->getLanguageVMThread(), tenureSize, freeTenure);
@@ -1562,7 +1562,7 @@ MM_MemorySubSpaceTarok::calculateGcPctForHeapChange(MM_EnvironmentBase *env, int
 				 * Determine what the gc cpu % would be if we changed the heap by heapSizeChange bytes
 				 * Main idea is that the change in number of pgc's (per gmp) will be proportional to how much free tenure changes;
 				 */
-				uintptr_t currentFreeTenure = (uintptr_t)_extensions->globalVLHGCStats._heapSizingData.freeTenure;
+				uintptr_t currentFreeTenure = _extensions->globalVLHGCStats._heapSizingData.freeTenure;
 				uintptr_t potentialFreeTenure = 0;
 				if (heapSizeChange <= (-1 * (intptr_t)currentFreeTenure) ) {
 					/* If we try to shrink too much, too fast, tenure will be way too small, causing lots of GC work */

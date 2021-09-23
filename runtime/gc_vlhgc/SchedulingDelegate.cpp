@@ -1031,8 +1031,8 @@ MM_SchedulingDelegate::updateHeapSizingData(MM_EnvironmentVLHGC *env)
 	_extensions->globalVLHGCStats._heapSizingData.reservedSize = reservedFreeMemory;
 
 	if (_extensions->globalVLHGCStats._heapSizingData.reservedSize + _liveSetBytesAfterPartialCollect < totalHeapSize) {
-		uintptr_t freeTenureEstimate = totalHeapSize - (uintptr_t)_extensions->globalVLHGCStats._heapSizingData.reservedSize - _liveSetBytesAfterPartialCollect;
-		uintptr_t freeTenureEstimateFromBeforePgc = (uintptr_t)_extensions->globalVLHGCStats._heapSizingData.freeTenure;
+		uintptr_t freeTenureEstimate = totalHeapSize - _extensions->globalVLHGCStats._heapSizingData.reservedSize - _liveSetBytesAfterPartialCollect;
+		uintptr_t freeTenureEstimateFromBeforePgc = _extensions->globalVLHGCStats._heapSizingData.freeTenure;
 
 		/*
 		 * Until a GMP occurs, and _estimatedFreeTenure is set, use the most conservative estimate between the free tenure estimate recorded before a PGC,
