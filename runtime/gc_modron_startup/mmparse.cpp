@@ -920,32 +920,33 @@ gcParseSovereignArguments(J9JavaVM *vm)
 	}
 
 
-	if (-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-Xmaxt", NULL)) {
+
+	result =  option_set_to_opt_percent(vm, "-Xmaxt", &index, EXACT_MEMORY_MATCH, &extensions->heapExpansionGCRatioThreshold._valueSpecified);
+	if (OPTION_OK != result) {
+		if (OPTION_MALFORMED == result) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, "-Xmaxt");
+		} else {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE, "-Xmaxt", 0.0, 1.0);
+		}
+		goto _error;
+	} else if (-1 != index)  {
 		extensions->heapExpansionGCRatioThreshold._wasSpecified = true;
-		result =  option_set_to_opt_percent(vm, "-Xmaxt", &index, EXACT_MEMORY_MATCH, &extensions->heapExpansionGCRatioThreshold._valueSpecified);
-		if (OPTION_OK != result) {
-			if (OPTION_MALFORMED == result) {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, "-Xmaxt");
-			} else {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE, "-Xmaxt", 0.0, 1.0);
-			}
-			goto _error;
-		}
 	}
 
 
-	if (-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-Xmint", NULL)) {
+
+	result =  option_set_to_opt_percent(vm, "-Xmint", &index, EXACT_MEMORY_MATCH, &extensions->heapContractionGCRatioThreshold._valueSpecified);
+	if (OPTION_OK != result) {
+		if (OPTION_MALFORMED == result) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, "-Xmint");
+		} else {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE, "-Xmint", 0.0, 1.0);
+		}
+		goto _error;
+	} else if (-1 != index) {
 		extensions->heapContractionGCRatioThreshold._wasSpecified = true;
-		result =  option_set_to_opt_percent(vm, "-Xmint", &index, EXACT_MEMORY_MATCH, &extensions->heapContractionGCRatioThreshold._valueSpecified);
-		if (OPTION_OK != result) {
-			if (OPTION_MALFORMED == result) {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, "-Xmint");
-			} else {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_PERCENT_OUT_OF_RANGE, "-Xmint", 0.0, 1.0);
-			}
-			goto _error;
-		}
 	}
+
 
 	if(-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, VMOPT_XGCTHREADS, NULL)) {
 		result = option_set_to_opt_integer(vm, VMOPT_XGCTHREADS, &index, EXACT_MEMORY_MATCH, &extensions->gcThreadCount);
