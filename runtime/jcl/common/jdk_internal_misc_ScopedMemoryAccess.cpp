@@ -27,6 +27,7 @@
 #include "jcl_internal.h"
 #include "rommeth.h"
 #include "omrlinkedlist.h"
+#include "VMHelpers.hpp"
 
 extern "C" {
 
@@ -51,18 +52,17 @@ J9_DECLARE_CONSTANT_UTF8(parkMethod, "park");
 static UDATA
 frameCheckIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
 {
-	J9JavaVM *vm = currentThread->javaVM;
-	UDATA framesVisited = (UDATA)walkState->userData2;
+	// J9JavaVM *vm = currentThread->javaVM;
 	J9Method *method = walkState->method;
 	J9ROMMethod *romMethod = NULL;
 
 	/* If there's no method, this must be a call-in frame - fail immediately */
 	if (NULL == method) {
-		walkState->userData1 = (void *)FrameCheckErrorOpaqueFrame;
+		*(FrameCheckResult *)walkState->userData1 = FrameCheckErrorOpaqueFrame;
 		return J9_STACKWALK_STOP_ITERATING;
 	}
 
-	/* Interrupt the thread if it is in wait/sleep/park */
+	/* Check if thread is in wait/sleep/park (should not happen) */
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 	if (1 == walkState->framesWalked) {
 		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
@@ -71,41 +71,48 @@ frameCheckIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
 				|| (0 == memcmp(J9UTF8_DATA(methodName), J9UTF8_DATA(&sleepMethod), J9UTF8_LENGTH(&sleepMethod)))
 				|| (0 == memcmp(J9UTF8_DATA(methodName), J9UTF8_DATA(&parkMethod), J9UTF8_LENGTH(&parkMethod)))
 			) {
-				walkState->userData1 = (void *)FrameCheckWaitSleepPark;
+				*(FrameCheckResult *)walkState->userData1 = FrameCheckWaitSleepPark;
 				return J9_STACKWALK_STOP_ITERATING;
 			}
 		}
+	}
+
+	// Temporary (TODO: Async check after jni)
+	if (romMethod->modifiers & J9AccNative) {
+		*(FrameCheckResult *)walkState->userData1 = FrameCheckErrorOpaqueFrame;
+		return J9_STACKWALK_STOP_ITERATING;
 	}
 
 	/* If the frame being dropped is <clinit>, disallow it */
 	if (1 == walkState->framesWalked) {
 		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
 		if ((romMethod->modifiers & J9AccStatic) && ('<' == J9UTF8_DATA(methodName)[0])) {
-			walkState->userData1 = (void *)FrameCheckErrorOpaqueFrame;
+			*(FrameCheckResult *)walkState->userData1 = FrameCheckErrorOpaqueFrame;
 			return J9_STACKWALK_STOP_ITERATING;
 		}
 	}
 
 	if (NULL == walkState->jitInfo) {
 		/* Interpreted frame, no need for decompilation */
-		framesVisited += 1;
-	} else if (0 == walkState->inlineDepth) {
+	} else {
 		/* Outer JIT frame */
-		framesVisited += 1;
-		if (NULL == vm->jitConfig->jitAddDecompilationForFramePop(currentThread, walkState)) {
-			walkState->userData1 = (void *)FrameCheckErrorOutOfMemory;
-			return J9_STACKWALK_STOP_ITERATING;
-		}
-	}
-
-	/* Once both frames have been located, stop with success */
-	walkState->userData2 = (void *)framesVisited;
-	if (2 == framesVisited) {
-		walkState->userData1 = (void *)FrameCheckNoError;
+		// jitAddDecompilationForFramePop hanging?
+		// if (NULL == vm->jitConfig->jitAddDecompilationForFramePop(currentThread, walkState)) {
+		// 	*(FrameCheckResult *)walkState->userData1 = FrameCheckErrorOutOfMemory;
+		// 	return J9_STACKWALK_STOP_ITERATING;
+		// }
+		*(FrameCheckResult *)walkState->userData1 = FrameCheckErrorOpaqueFrame;
 		return J9_STACKWALK_STOP_ITERATING;
 	}
 
-	return J9_STACKWALK_KEEP_ITERATING;
+	*(FrameCheckResult *)walkState->userData1 = FrameCheckNoError;
+	return J9_STACKWALK_STOP_ITERATING;
+}
+
+static void
+exceptionThrowAsyncHandler(J9VMThread *currentThread, IDATA handlerKey, void *userData)
+{
+	VM_VMHelpers::setExceptionPending(currentThread, J9_JNI_UNWRAP_REFERENCE(userData));
 }
 
 static UDATA
@@ -204,14 +211,16 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 		/* Scope is being accessed by a thread */
 		J9VMThread *targetThread = current->thread;
 		LinkedThreads *prev = NULL;
-
-		/* TODO: throw exception */
+		static IDATA exceptionThrowHandlerKey = -1;
 		J9StackWalkState walkState;
 		FrameCheckResult result = FrameCheckErrorNoMoreFrames;
 
+		if (exceptionThrowHandlerKey < 0) {
+			exceptionThrowHandlerKey = vmFuncs->J9RegisterAsyncEvent(vm, exceptionThrowAsyncHandler, (void *)exception);
+		}
+
 		walkState.walkThread = targetThread;
 		walkState.userData1 = (void *)&result;
-		walkState.userData2 = (void *)0;
 		walkState.frameWalkFunction = frameCheckIterator;
 		walkState.skipCount = 0;
 		walkState.flags = J9_STACKWALK_INCLUDE_CALL_IN_FRAMES | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP;
@@ -222,11 +231,12 @@ Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0(JNIEnv *env, jobject insta
 		case FrameCheckErrorOpaqueFrame: /* fall through */
 		case FrameCheckErrorNoMoreFrames:
 			break;
-		case FrameCheckWaitSleepPark: /* fall through */
-			/* TODO: Interrupt thread */
+		case FrameCheckWaitSleepPark:
+			Assert_JCL_unreachable();
+			break;
 		case FrameCheckNoError:
-			/* TODO: Trigger async event */
-			/* vm->jitConfig->jitDecompileMethod? */
+			/* vm->jitConfig->jitDecompileMethodForFramePop? */
+			vmFuncs->J9SignalAsyncEvent(vm, targetThread, exceptionThrowHandlerKey);
 			break;
 		}
 
