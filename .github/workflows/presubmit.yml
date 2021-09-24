@@ -22,16 +22,18 @@
 
 name: Linter
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore:
-      - '.gitignore'
-      - '*.md'
-      - 'doc/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/*.yml'
-      - 'buildenv/**'
+on: workflow_dispatch
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened, ready_for_review]
+#     branches: [master]
+#     paths-ignore:
+#       - '.gitignore'
+#       - '*.md'
+#       - 'buildenv/**'
+#       - 'doc/**'
+#       - '.github/ISSUE_TEMPLATE/**'
+#       - '.github/*.yml'
 jobs:
   Linter:
     runs-on: ubuntu-16.04
