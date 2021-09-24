@@ -633,7 +633,7 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 				/* if name/type field is uninitialized, create j.l.String from ROM field name/sig and store in MN fields. */
 				if (NULL == J9VMJAVALANGINVOKEMEMBERNAME_NAME(currentThread, membernameObject)) {
 					J9UTF8 *name = J9ROMFIELDSHAPE_NAME(field->field);
-					j9object_t nameString = vm->memoryManagerFunctions->j9gc_createJavaLangStringWithUTFCache(currentThread, name);
+					j9object_t nameString = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(name), (U_32)J9UTF8_LENGTH(name), J9_STR_INTERN);
 					if (NULL != nameString) {
 						/* Refetch reference after GC point */
 						membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
@@ -642,7 +642,7 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 				}
 				if (NULL == J9VMJAVALANGINVOKEMEMBERNAME_TYPE(currentThread, membernameObject)) {
 					J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field->field);
-					j9object_t signatureString = vm->memoryManagerFunctions->j9gc_createJavaLangStringWithUTFCache(currentThread, signature);
+					j9object_t signatureString = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(signature), (U_32)J9UTF8_LENGTH(signature), J9_STR_INTERN);
 					if (NULL != signatureString) {
 						/* Refetch reference after GC point */
 						membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
@@ -665,7 +665,7 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 				}
 				if (NULL == J9VMJAVALANGINVOKEMEMBERNAME_NAME(currentThread, membernameObject)) {
 					J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
-					j9object_t nameString = vm->memoryManagerFunctions->j9gc_createJavaLangStringWithUTFCache(currentThread, name);
+					j9object_t nameString = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(name), (U_32)J9UTF8_LENGTH(name), J9_STR_INTERN);
 					if (NULL != nameString) {
 						/* Refetch reference after GC point */
 						membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
@@ -674,7 +674,7 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 				}
 				if (NULL == J9VMJAVALANGINVOKEMEMBERNAME_TYPE(currentThread, membernameObject)) {
 					J9UTF8 *signature = J9ROMMETHOD_SIGNATURE(romMethod);
-					j9object_t signatureString = vm->memoryManagerFunctions->j9gc_createJavaLangStringWithUTFCache(currentThread, signature);
+					j9object_t signatureString = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(signature), (U_32)J9UTF8_LENGTH(signature), J9_STR_INTERN);
 					if (NULL != signatureString) {
 						/* Refetch reference after GC point */
 						membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
@@ -1622,7 +1622,7 @@ Java_java_lang_invoke_MethodHandleNatives_copyOutBootstrapArguments(JNIEnv *env,
 						obj = resolveRefToObject(currentThread, J9_CP_FROM_CLASS(callerClass), bsmCPIndex, true);
 					} else if (start == -3) {
 						J9UTF8 *name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
-						obj = vm->memoryManagerFunctions->j9gc_createJavaLangStringWithUTFCache(currentThread, name);
+						obj = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, J9UTF8_DATA(name), (U_32)J9UTF8_LENGTH(name), J9_STR_INTERN);
 					} else if (start == -2) {
 						J9UTF8 *signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 						/* Call VM Entry point to create the MethodType - Result is put into the

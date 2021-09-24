@@ -1,3 +1,4 @@
+
 /*******************************************************************************
  * Copyright (c) 1991, 2021 IBM Corp. and others
  *
@@ -451,8 +452,6 @@ public:
 	 */
 	void scanDoubleMappedObjects(MM_EnvironmentBase *env);
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-
-	virtual void scanUTFCaches(MM_EnvironmentBase *env);
 
 	virtual void doClassLoader(J9ClassLoader *classLoader);
 
