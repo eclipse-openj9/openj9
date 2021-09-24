@@ -165,6 +165,11 @@ struct J9MethodNameAndSignature
 class ClientSessionData
    {
 public:
+
+   // This constant is inserted into the list of unloaded classes to indicate
+   // that all caches must be cleared due to a class redefinition
+   static TR_OpaqueClassBlock * const mustClearCachesFlag;
+
    /**
       @class ClassInfo
       @brief Struct that holds cached data about a class loaded on the JITClient.
@@ -337,7 +342,8 @@ public:
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry, bool isCompiled);
    VMInfo *getOrCacheVMInfo(JITServer::ServerStream *stream);
-   void clearCaches(); // destroys _chTableClassMap, _romClassMap, _J9MethodMap and _unloadedClassAddresses
+   void clearCaches(bool locked=false); // destroys _chTableClassMap, _romClassMap, _J9MethodMap and _unloadedClassAddresses
+   void clearCachesLocked(TR_J9VMBase *fe);
    bool cachesAreCleared() const { return _requestUnloadedClasses; }
    void setCachesAreCleared(bool b) { _requestUnloadedClasses = b; }
    TR_AddressSet& getUnloadedClassAddresses()
