@@ -125,7 +125,6 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 		/* If there is a valid method at this frame, fill in the information for it in the StackTraceElement */
 		if (NULL != romMethod) {
 			J9UTF8 const * utfClassName = J9ROMCLASS_CLASSNAME(romClass);
-			J9UTF8 * utf = NULL;
 			j9object_t string = NULL;
 
 			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, element);
@@ -154,7 +153,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 					J9VMJAVALANGSTACKTRACEELEMENT_SET_CLASSLOADERNAME(vmThread, element, classLoaderName);
 				}
 				if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
-					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_BASE_MODULE, LITERAL_STRLEN(JAVA_BASE_MODULE), J9_STR_XLAT);
+					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_BASE_MODULE, LITERAL_STRLEN(JAVA_BASE_MODULE), J9_STR_XLAT | J9_STR_TENURE);
 					if (NULL == string) {
 						rc = FALSE;
 						/* exception is pending from the call */
@@ -163,7 +162,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 					element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
 					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, string);
 
-					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_SPEC_VERSION_STRING, LITERAL_STRLEN(JAVA_SPEC_VERSION_STRING), J9_STR_XLAT);
+					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_SPEC_VERSION_STRING, LITERAL_STRLEN(JAVA_SPEC_VERSION_STRING), J9_STR_XLAT | J9_STR_TENURE);
 					if (NULL == string) {
 						rc = FALSE;
 						/* exception is pending from the call */
@@ -207,9 +206,8 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 				J9VMJAVALANGSTACKTRACEELEMENT_SET_DECLARINGCLASS(vmThread, element, string);
 			}
 
-			/* Fill in method name - intern the string as it's also interned by the StackWalker API and by Reflection */
-			utf = J9ROMMETHOD_NAME(romMethod);
-			string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), J9_STR_TENURE | J9_STR_INTERN);
+			/* Fill in method name */
+			string = mmfns->j9gc_createJavaLangStringWithUTFCache(vmThread, J9ROMMETHOD_NAME(romMethod));
 			if (NULL == string) {
 				rc = FALSE;
 				/* exception is pending from the call */
@@ -246,7 +244,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 					element = J9JAVAARRAYOFOBJECT_LOAD(vmThread, result, currentIndex - 1);
 					string = J9VMJAVALANGSTACKTRACEELEMENT_FILENAME(vmThread, element);
 				} else {
-					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(fileName), (U_32) J9UTF8_LENGTH(fileName), 0);
+					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(fileName), (U_32) J9UTF8_LENGTH(fileName), J9_STR_TENURE);
 					if (NULL == string) {
 						rc = FALSE;
 						/* exception is pending from the call */
