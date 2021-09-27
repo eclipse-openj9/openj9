@@ -8533,6 +8533,13 @@ foundITable:
 	{
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		bool fromJIT = J9_ARE_ANY_BITS_SET(_currentThread->jitStackFrameFlags, J9_SSF_JIT_NATIVE_TRANSITION_FRAME);
+		J9JNIMethodID *methodID = NULL;
+		J9ROMMethod *romMethod = NULL;
+		UDATA methodArgCount = 0;
+		j9object_t receiverObject = NULL;
+		J9Class *receiverClass = NULL;
+		J9Method *method = NULL;
+		UDATA vTableOffset = 0;
 
 		/* Pop memberNameObject from the stack. */
 		j9object_t memberNameObject = *(j9object_t *)_sp++;
@@ -8542,26 +8549,28 @@ foundITable:
 				_sp -= 1;
 				buildJITResolveFrame(REGISTER_ARGS);
 			}
-			return THROW_NPE;
+			rc = THROW_NPE;
+			goto done;
 		}
 
-		J9JNIMethodID *methodID = (J9JNIMethodID *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
-		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
-		UDATA methodArgCount = romMethod->argCount;
+		methodID = (J9JNIMethodID *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmindexOffset);
+		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
+		methodArgCount = romMethod->argCount;
 
-		j9object_t receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
+		receiverObject = ((j9object_t *)_sp)[methodArgCount - 1];
 		if (J9_UNEXPECTED(NULL == receiverObject)) {
 			if (fromJIT) {
 				/* Restore SP to before popping memberNameObject. */
 				_sp -= 1;
 				buildJITResolveFrame(REGISTER_ARGS);
 			}
-			return THROW_NPE;
+			rc = THROW_NPE;
+			goto done;
 		}
 
-		J9Class *receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
-		J9Method *method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
-		UDATA vTableOffset = methodID->vTableIndex;
+		receiverClass = J9OBJECT_CLAZZ(_currentThread, receiverObject);
+		method = (J9Method *)(UDATA)J9OBJECT_U64_LOAD(_currentThread, memberNameObject, _vm->vmtargetOffset);
+		vTableOffset = methodID->vTableIndex;
 
 		/* vmindexOffset (J9JNIMethodID) is initialized using jnicsup.cpp::initializeMethodID.
 		 * initializeMethodID will set J9JNIMethodID->vTableIndex to 0 for private interface
@@ -8600,6 +8609,20 @@ foundITable:
 			_sendMethod = *(J9Method **)(((UDATA)receiverClass) + vTableOffset);
 		}
 
+		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
+		if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccPublic | J9AccPrivate)) {
+			if (fromJIT) {
+				_sp -= 1;
+				buildJITResolveFrame(REGISTER_ARGS);
+			}
+			updateVMStruct(REGISTER_ARGS);
+			prepareForExceptionThrow(_currentThread);
+			setIllegalAccessErrorNonPublicInvokeInterface(_currentThread, _sendMethod);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
+			rc = GOTO_THROW_CURRENT_EXCEPTION;
+			goto done;
+		}
+
 		if (fromJIT) {
 			/* Restore SP to before popping memberNameObject. */
 			_sp -= 1;
@@ -8613,6 +8636,7 @@ foundITable:
 			rc = j2iTransition(REGISTER_ARGS);
 		}
 
+done:
 		return rc;
 	}
 
