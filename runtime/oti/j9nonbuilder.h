@@ -4386,6 +4386,7 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *j9gc_objaccess_postStoreClassToClassLoader)(struct J9VMThread* vmThread, J9ClassLoader* destClassLoader, J9Class* srcClass) ;
 	I_32  ( *j9gc_objaccess_getObjectHashCode)(struct J9JavaVM *vm, J9Object* object) ;
 	j9object_t  ( *j9gc_createJavaLangString)(struct J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags) ;
+	j9object_t  ( *j9gc_createJavaLangStringWithUTFCache)(struct J9VMThread *vmThread, struct J9UTF8 *utf) ;
 	j9object_t  ( *j9gc_internString)(struct J9VMThread *vmThread, j9object_t sourceString) ;
 #if defined(J9VM_GC_FINALIZATION)
 	void  ( *j9gc_runFinalizersOnExit)(struct J9VMThread* vmThread, UDATA run) ;
@@ -5037,6 +5038,7 @@ typedef struct J9VMThread {
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	UDATA safePointCount;
+	struct J9HashTable * volatile utfCache;
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100
