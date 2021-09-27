@@ -918,7 +918,6 @@ setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newStri
 	return result;
 }
 
-
 j9object_t	
 j9gc_internString(J9VMThread *vmThread, j9object_t sourceString)
 {
@@ -974,6 +973,62 @@ j9gc_internString(J9VMThread *vmThread, j9object_t sourceString)
 	*candidatePtr = internedString;
 	Trc_MM_stringTableCacheMiss(vmThread, internedString);
 	return internedString;
+}
+
+typedef struct {
+	J9UTF8* utf;
+	j9object_t stringObject;
+} J9UTFCacheEntry;
+
+static UDATA
+utfCacheHashFn(void *key, void *userData)
+{
+	/* UTF8 pointers are 2-aligned, so shift the pointer for maximum entropy */
+	return ((UDATA)((J9UTFCacheEntry*)key)->utf) >> 1;
+}
+
+static UDATA
+utfCacheHashEqualFn(void *leftKey, void *rightKey, void *userData)
+{
+	return ((J9UTFCacheEntry*)leftKey)->utf == ((J9UTFCacheEntry*)rightKey)->utf;
+}
+
+j9object_t
+j9gc_createJavaLangStringWithUTFCache(J9VMThread *vmThread, J9UTF8 *utf)
+{
+	j9object_t result = NULL;
+	/* Allocation may cause a GC which frees the cache - ensure no local copy of the cache
+	 * is held across the allocation.
+	 */
+	{
+		J9HashTable *utfCache = vmThread->utfCache;
+		if (NULL != utfCache) {
+			J9UTFCacheEntry exemplar = { utf, NULL };
+			J9UTFCacheEntry *entry = (J9UTFCacheEntry*)hashTableFind(utfCache, &exemplar);
+			if (NULL != entry) {
+				result = J9WEAKROOT_OBJECT_LOAD(vmThread, &entry->stringObject);
+				goto done;
+			}
+		}
+	}
+	result = j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf), J9_STR_INTERN);
+	if (NULL != result) {
+		if (J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_UTF_CACHE)) {
+			J9HashTable *utfCache = vmThread->utfCache;
+			if (NULL == utfCache) {
+				/* Failure to allocate the cache is non-fatal and is ignored */
+				utfCache = hashTableNew(OMRPORT_FROM_J9PORT(vmThread->javaVM->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9UTFCacheEntry), sizeof(void*), 0, J9MEM_CATEGORY_VM, utfCacheHashFn, utfCacheHashEqualFn, NULL, NULL);
+				vmThread->utfCache = utfCache;
+			}
+			if (NULL != utfCache) {
+				J9UTFCacheEntry entry = { utf, result };
+				/* Failure to add to the cache is non-fatal and is ignored */
+				hashTableAdd(utfCache, (void*)&entry);
+			}
+		}
+	}
+done:
+	return result;
 }
 
 } /* end of extern "C" */

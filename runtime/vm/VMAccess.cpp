@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -594,13 +594,23 @@ void releaseExclusiveVMAccess(J9VMThread * vmThread)
 			/* Make sure stale thread pointers don't exist in the stats */
 			vm->omrVM->exclusiveVMAccessStats.requester = NULL;
 			vm->omrVM->exclusiveVMAccessStats.lastResponder = NULL;
-			/* Free any cached decompilation records */
+			/* Free any cached decompilation records and empty the UTF cache */
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			j9mem_free_memory(currentThread->lastDecompilation);
 			currentThread->lastDecompilation = NULL;
+			J9HashTable *utfCache = currentThread->utfCache;
+			if (NULL != utfCache) {
+				currentThread->utfCache = NULL;
+				hashTableFree(utfCache);
+			}
 			while ((currentThread = currentThread->linkNext) != vmThread) {
 				j9mem_free_memory(currentThread->lastDecompilation);
 				currentThread->lastDecompilation = NULL;
+				J9HashTable *utfCache = currentThread->utfCache;
+				if (NULL != utfCache) {
+					currentThread->utfCache = NULL;
+					hashTableFree(utfCache);
+				}
 				VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 			}
 			omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
@@ -845,6 +855,15 @@ releaseExclusiveVMAccessFromExternalThread(J9JavaVM * vm)
 		vm->exclusiveAccessState = J9_XACCESS_NONE;
 		currentThread = vm->mainThread;
 		do {
+			/* Free any cached decompilation records and empty the UTF cache */
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			j9mem_free_memory(currentThread->lastDecompilation);
+			currentThread->lastDecompilation = NULL;
+			J9HashTable *utfCache = currentThread->utfCache;
+			if (NULL != utfCache) {
+				currentThread->utfCache = NULL;
+				hashTableFree(utfCache);
+			}
 			VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE | J9_PUBLIC_FLAGS_NOT_COUNTED_BY_EXCLUSIVE);
 		} while ((currentThread = currentThread->linkNext) != vm->mainThread);
 		omrthread_monitor_notify_all(vm->exclusiveAccessMutex);
