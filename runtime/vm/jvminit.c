@@ -1275,7 +1275,7 @@ initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDAT
 /* This needs to be BEFORE the JCL library as we need to install hooks that are used
  * in the initialization of JCL library */
 
-	if (!createLoadInfo(portLibrary, returnVal, J9_DEFAULT_JCL_DLL_NAME, (LOAD_BY_DEFAULT | FATAL_NO_DLL), NULL, verboseFlags))
+	if (!createLoadInfo(portLibrary, returnVal, J9_JAVA_SE_DLL_NAME, (LOAD_BY_DEFAULT | FATAL_NO_DLL), NULL, verboseFlags))
 		goto _error;
 
 	if (NULL == createLoadInfo(portLibrary, returnVal, FUNCTION_ZERO_INIT, NOT_A_LIBRARY, (void*)&zeroInitStages, verboseFlags))
@@ -2197,7 +2197,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			/* Parse jcl options */
 			argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL);
 			if (argIndex >= 0) {
-				loadInfo = FIND_DLL_TABLE_ENTRY( J9_DEFAULT_JCL_DLL_NAME );
+				loadInfo = FIND_DLL_TABLE_ENTRY(J9_JAVA_SE_DLL_NAME);
 				/* we know there is a colon */
 				GET_OPTION_VALUE(argIndex, ':', &optionValue);
 				GET_OPTION_OPTION(argIndex, ':', ':', &optionExtra);			/* Eg. -jcl:cldc:library=foo */
@@ -2210,7 +2210,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				}
 				vm->jclDLLName = (char *)(loadInfo->dllName);
 			} else {
-				vm->jclDLLName = J9_DEFAULT_JCL_DLL_NAME;
+				vm->jclDLLName = J9_JAVA_SE_DLL_NAME;
 			}
 
 			/* Warm up the VM Interface */

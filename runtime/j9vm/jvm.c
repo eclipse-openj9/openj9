@@ -3654,11 +3654,11 @@ JVM_LoadLibrary(const char *libName)
 {
 	void *result = NULL;
 	J9JavaVM *javaVM = (J9JavaVM*)BFUjavaVM;
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 #if defined(WIN32)
 	char *libNameConverted = NULL;
 	UDATA libNameLen = strlen(libName);
-	PORT_ACCESS_FROM_JAVAVM(javaVM);
 	UDATA libNameLenConverted = j9str_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8, libName, libNameLen, NULL, 0);
 	if (libNameLenConverted > 0) {
 		libNameLenConverted += 1; /* adding an extra byte for null */
@@ -3674,21 +3674,7 @@ JVM_LoadLibrary(const char *libName)
 	if (libName == libNameConverted) {
 #endif /* defined(WIN32) */
 		Trc_SC_LoadLibrary_Entry(libName);
-		if (NULL == javaVM->applicationClassLoader) {
-			J9NativeLibrary *nativeLibrary = NULL;
-			J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
-			J9VMThread *currentThread = vmFuncs->currentVMThread(javaVM);
-			Assert_SC_notNull(currentThread);
-			vmFuncs->internalEnterVMFromJNI(currentThread);
-			vmFuncs->internalReleaseVMAccess(currentThread);
-			if (vmFuncs->registerBootstrapLibrary(currentThread, libName, &nativeLibrary, FALSE) == J9NATIVELIB_LOAD_OK) {
-				result = (void*)nativeLibrary->handle;
-			}
-			vmFuncs->internalAcquireVMAccess(currentThread);
-			vmFuncs->internalExitVMToJNI(currentThread);
-			Trc_SC_LoadLibrary_BootStrap(libName);
-		} else {
-			PORT_ACCESS_FROM_JAVAVM(javaVM);
+		{
 			UDATA handle = 0;
 			UDATA flags = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION) ? J9PORT_SLOPEN_LAZY : 0;
 			UDATA slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags);
