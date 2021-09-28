@@ -25,8 +25,6 @@
 
 #define J9_DLL_VERSION_STRING "29"
 
-#define J9_DEFAULT_JCL_DLL_NAME "jclse29"
-
 #define J9_MANAGEMENT_EXTENSIONS_DLL_NAME "management_ext"
 #define J9_JAVACORE_GENERATOR_DLL_NAME "jcoregen29"
 #define J9_VM_DLL_NAME "j9vm29"

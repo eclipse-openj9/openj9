@@ -543,7 +543,7 @@ initializeSystemProperties(J9JavaVM * vm)
 	J9VMSystemProperty *javaEndorsedDirsProperty = NULL;
 	jint i = 0;
 	JavaVMInitArgs *initArgs = NULL;
-	char *jclName = J9_DEFAULT_JCL_DLL_NAME;
+	char *jclName = J9_JAVA_SE_DLL_NAME;
 	UDATA j2seVersion = J2SE_VERSION(vm);
 	const char* propValue = NULL;
 	UDATA rc = J9SYSPROP_ERROR_NONE;
