@@ -109,11 +109,9 @@ static void rasDumpHookMonitorContendedEnter (J9HookInterface** hookInterface, U
 static void rasDumpHookCorruptCache(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
 static void rasDumpHookExcessiveGC(J9HookInterface** hookInterface, UDATA eventNum, void* eventData, void* userData);
 
-extern omr_error_t doHeapDump (J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
-extern omr_error_t doSystemDump (J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
+extern omr_error_t doHeapDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 extern omr_error_t doSilentDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
-extern omr_error_t doCEEDump (J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
-extern omr_error_t doToolDump (J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
+extern omr_error_t doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 
 extern void setAllocationThreshold(J9VMThread *vmThread, UDATA min, UDATA max);
 
