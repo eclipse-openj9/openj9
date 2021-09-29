@@ -3475,7 +3475,7 @@ TR_J9ByteCodeIlGenerator::loadInvokeCacheArrayElements(TR::SymbolReference *tabl
    {
    loadSymbol(TR::aload, tableEntrySymRef);
    loadConstant(TR::iconst, JSR292_invokeCacheArrayAppendixIndex);
-   loadArrayElement(TR::Address, comp()->il.opCodeForIndirectArrayLoad(TR::Address), false);
+   loadArrayElement(TR::Address, comp()->il.opCodeForIndirectArrayLoad(TR::Address), false, false);
    if (isUnresolved)
       {
       // When the callSite table entry (for invokedynamic) or methodType table entry (for invokehandle)
@@ -3484,7 +3484,7 @@ TR_J9ByteCodeIlGenerator::loadInvokeCacheArrayElements(TR::SymbolReference *tabl
       // obtain the actual target method and construct the call frame for it
       loadSymbol(TR::aload, tableEntrySymRef);
       loadConstant(TR::iconst, JSR292_invokeCacheArrayMemberNameIndex);
-      loadArrayElement(TR::Address, comp()->il.opCodeForIndirectArrayLoad(TR::Address), false);
+      loadArrayElement(TR::Address, comp()->il.opCodeForIndirectArrayLoad(TR::Address), false, false);
       }
    else
       {
@@ -6056,14 +6056,14 @@ TR_J9ByteCodeIlGenerator::loadFromCallSiteTable(int32_t callSiteIndex)
    }
 
 void
-TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes nodeop, bool checks)
+TR_J9ByteCodeIlGenerator::loadArrayElement(TR::DataType dataType, TR::ILOpCodes nodeop, bool checks, bool mayBeValueType)
    {
    // Value types prototype for flattened array elements does not yet support
    // GC policies that allow arraylets.  If arraylets are required, assume
    // we won't have flattening, so no call to flattenable array element access
    // helper is needed.
    //
-   if (TR::Compiler->om.areValueTypesEnabled() && !TR::Compiler->om.canGenerateArraylets() && dataType == TR::Address)
+   if (mayBeValueType && TR::Compiler->om.areValueTypesEnabled() && !TR::Compiler->om.canGenerateArraylets() && dataType == TR::Address)
       {
       TR::Node* elementIndex = pop();
       TR::Node* arrayBaseAddress = pop();
