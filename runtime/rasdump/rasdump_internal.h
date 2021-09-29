@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@
 *
 * This file contains implementation-private function prototypes and
 * type definitions for the OMR RASDUMP module.
-*
 */
 
 #include "j9comp.h"
@@ -52,8 +51,7 @@ typedef struct J9RASdumpQueue
 	struct J9RASdumpSettings *defaultSettings;
 	struct J9RASdumpAgent *defaultAgents;
 	struct J9RASdumpAgent *agentShutdownQueue;
-}\
-J9RASdumpQueue;
+} J9RASdumpQueue;
 
 #define DUMP_FACADE_KEY ((void*)(long)0xFacadeDA)
 
@@ -85,19 +83,18 @@ typedef struct J9RASdefaultOption {
 
 typedef enum J9RASdumpRequestState
 {
-	J9RAS_DUMP_GOT_LOCK                    = 1,
-	J9RAS_DUMP_GOT_VM_ACCESS               = 2,
-	J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS     = 4,
-	J9RAS_DUMP_HEAP_COMPACTED              = 8,
-	J9RAS_DUMP_HEAP_PREPARED               = 16,
-	J9RAS_DUMP_THREADS_HALTED              = 32,
-	J9RAS_DUMP_ATTACHED_THREAD             = 64,
-	J9RAS_DUMP_PREEMPT_THREADS             = 128,
-	J9RAS_DUMP_TRACE_DISABLED              = 256,
-	J9RAS_DUMP_GOT_JNI_VM_ACCESS           = 512, 
+	J9RAS_DUMP_GOT_LOCK                    = 0x0001,
+	J9RAS_DUMP_GOT_VM_ACCESS               = 0x0002,
+	J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS     = 0x0004,
+	J9RAS_DUMP_HEAP_COMPACTED              = 0x0008,
+	J9RAS_DUMP_HEAP_PREPARED               = 0x0010,
+	J9RAS_DUMP_ATTACHED_THREAD             = 0x0020,
+	J9RAS_DUMP_PREEMPT_THREADS             = 0x0040,
+	J9RAS_DUMP_TRACE_DISABLED              = 0x0080,
+	J9RAS_DUMP_GOT_JNI_VM_ACCESS           = 0x0100,
 } J9RASdumpRequestState;
 
-/* Internal function prototypes for rasdump module */ 
+/* Internal function prototypes for rasdump module */
 omr_error_t mapDumpSwitches(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum);
 omr_error_t mapDumpOptions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum);
 omr_error_t mapDumpActions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum, char *buf, IDATA condition);
@@ -130,8 +127,7 @@ void setAllocationThreshold(J9VMThread *vmThread, UDATA min, UDATA max);
 #define J9RAS_STDERR_NAME "/STDERR/"
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #endif /* rasdump_internal_h */
-
