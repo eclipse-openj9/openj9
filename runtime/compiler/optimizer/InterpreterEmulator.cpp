@@ -1070,10 +1070,9 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
       // refine the leaf method handle callees
       case TR::java_lang_invoke_VirtualHandle_virtualCall:
          isVirtual = true;
-         isIndirectCall = true;
       case TR::java_lang_invoke_DirectHandle_directCall:
          {
-         isIndirectCall = false;
+         isIndirectCall = isVirtual;
          TR_J9VMBase *fej9 = comp()->fej9();
          TR_J9VMBase::MethodOfHandle moh = fej9->methodOfDirectOrVirtualHandle(
             _calltarget->_calleeMethod->getMethodHandleLocation(), isVirtual);
