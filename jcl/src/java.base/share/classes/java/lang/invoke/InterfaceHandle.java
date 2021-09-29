@@ -80,7 +80,11 @@ final class InterfaceHandle extends IndirectHandle {
 		if (interfaceClass.isInstance(receiver)) {
 			long interfaceJ9Class = getJ9ClassFromClass(interfaceClass);
 			long receiverJ9Class = getJ9ClassFromClass(receiver.getClass());
-			return convertITableIndexToVTableIndex(interfaceJ9Class, (int)vmSlot, receiverJ9Class) << VTABLE_ENTRY_SHIFT;
+			int result = convertITableIndexToVTableIndex(interfaceJ9Class, (int)vmSlot, receiverJ9Class) << VTABLE_ENTRY_SHIFT;
+			if (result < 0) {
+				throw new IllegalAccessError();
+			}
+			return result;
 		} else {
 			throw new IncompatibleClassChangeError();
 		}
