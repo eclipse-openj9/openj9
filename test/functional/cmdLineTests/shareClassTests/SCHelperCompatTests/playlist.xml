@@ -44,7 +44,6 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<aot>explicit</aot>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
