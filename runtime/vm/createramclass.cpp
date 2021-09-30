@@ -2483,6 +2483,9 @@ fail:
 		|| !checkFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, packageID, module, &badClass)
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */			
 	) {
+		if (!hotswapping) {
+			popFromClassLoadingStack(vmThread);
+		}
 		omrthread_monitor_exit(javaVM->classTableMutex);
 		J9UTF8 *className = J9ROMCLASS_CLASSNAME(badClass);
 		if (incompatible) {
@@ -2585,7 +2588,9 @@ fail:
 			vTable = computeVTable(vmThread, hostClassLoader, superclass, romClass, packageID, methodRemapArray, interfaceHead, &defaultConflictCount, interfaceCount, inheritedInterfaceCount, &errorData);
 			if (vTable == NULL) {
 				unmarkInterfaces(interfaceHead);
-				popFromClassLoadingStack(vmThread);
+				if (!hotswapping) {
+					popFromClassLoadingStack(vmThread);
+				}
 				omrthread_monitor_exit(javaVM->classTableMutex);
 				if (NULL != errorData.loader1) {
 					J9UTF8 *methodNameUTF = errorData.methodNameUTF;
@@ -3343,6 +3348,7 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	J9Class *result = NULL;
 	J9ClassLoader* hostClassLoader = classLoader;
 	J9Module* module = NULL;
+	J9StackElement *loadingStack = vmThread->classLoadingStack;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	UDATA romFieldCount = romClass->romFieldCount;
 	UDATA valueTypeFlags = 0;
@@ -3389,7 +3395,8 @@ retry:
 	if (!hotswapping) {
 		/* check to see if this class is already in my list */
 		if (!verifyClassLoadingStack(vmThread, classLoader, romClass)) {
-			return internalCreateRAMClassDropAndReturn(vmThread, romClass, &state);
+			result = internalCreateRAMClassDropAndReturn(vmThread, romClass, &state);
+			goto done;
 		}
 	}
 
@@ -3463,7 +3470,8 @@ retry:
 		if (NULL == flattenedClassCache) {
 			setNativeOutOfMemoryError(vmThread, 0, 0);
 			omrthread_monitor_enter(javaVM->classTableMutex);
-			return internalCreateRAMClassDone(vmThread, classLoader, hostClassLoader, romClass, options, elementClass, className, &state, superclass, NULL);
+			result = internalCreateRAMClassDone(vmThread, classLoader, hostClassLoader, romClass, options, elementClass, className, &state, superclass, NULL);
+			goto done;
 		}
 		memset(flattenedClassCache, 0, flattenedClassCacheAllocSize);
 	}
@@ -3480,7 +3488,8 @@ retry:
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		omrthread_monitor_enter(javaVM->classTableMutex);
-		return internalCreateRAMClassDone(vmThread, classLoader, hostClassLoader, romClass, options, elementClass, className, &state, superclass, NULL);
+		result = internalCreateRAMClassDone(vmThread, classLoader, hostClassLoader, romClass, options, elementClass, className, &state, superclass, NULL);
+		goto done;
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -3593,6 +3602,10 @@ retry:
 
 		result->classFlags = classFlags;
 	}
+
+done:
+	/* Ensure the loading stack is the same on exit as it was on entry */
+	Assert_VM_true(loadingStack == vmThread->classLoadingStack);
 
 	return result;
 }
