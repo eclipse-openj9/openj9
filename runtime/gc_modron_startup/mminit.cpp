@@ -2259,6 +2259,15 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 			subSpaceTooLargeOption = "-Xmns";
 			goto _subSpaceTooLarge;
 		}
+		if (!isLessThanEqualOrUnspecifiedAgainstFixed(&extensions->userSpecifiedParameters._Xmns, ms)) {
+			if (!opt_XmsSet) {
+				extensions->initialMemorySize = extensions->userSpecifiedParameters._Xmns._valueSpecified;
+			} else {
+				memoryOption = "-Xmn";
+				subSpaceTooLargeOption = displayXmsOrInitialRAMPercentage(memoryParameters);
+				goto _subSpaceTooLarge;
+			}
+		}
 		/* now interpret the values */
 		UDATA idealEdenMin = 0;
 		UDATA idealEdenMax = 0;
