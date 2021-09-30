@@ -153,7 +153,19 @@ SPECS = ['ppc64_aix' : CURRENT_RELEASES,
          's390x_linux_aot'    : CURRENT_RELEASES,
          'x86-64_linux_aot'   : CURRENT_RELEASES,
          'x86-64_mac_aot'     : CURRENT_RELEASES,
-         'x86-64_windows_aot' : CURRENT_RELEASES]
+         'x86-64_windows_aot' : CURRENT_RELEASES,
+         'ppc64le_linux_valhalla'   : ['next'],
+         'ppc64le_linux_vt_standard' : ['next'],
+         'aarch64_linux_valhalla'   : ['next'],
+         'aarch64_linux_vt_standard' : ['next'],
+         'x86-64_mac_valhalla'   : ['next'],
+         'x86-64_mac_vt_standard' : ['next'],
+         's390x_linux_valhalla'   : ['next'],
+         's390x_linux_vt_standard' : ['next'],
+         'x86-64_windows_valhalla'   : ['next'],
+         'x86-64_windows_vt_standard' : ['next'],
+         'ppc64_aix_valhalla'   : ['next'],
+         'ppc64_aix_vt_standard' : ['next']]
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
@@ -262,7 +274,19 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','ppc64_aix'
             'zlinuxaot' : ['s390x_linux_aot'],
             'xlinuxaot' : ['x86-64_linux_aot'],
             'osxaot' : ['x86-64_mac_aot'],
-            'winaot' : ['x86-64_windows_aot']]
+            'winaot' : ['x86-64_windows_aot'],
+            'alinuxval' : ['aarch64_linux_valhalla'],
+            'alinuxvalst' : ['aarch64_linux_vt_standard'],
+            'zlinuxval' : ['s390x_linux_valhalla'],
+            'zlinuxvalst' : ['s390x_linux_vt_standard'],
+            'winval' : ['x86-64_windows_valhalla'],
+            'winvalst' : ['x86-64_windows_vt_standard'],
+            'osxval' : ['x86-64_mac_valhalla'],
+            'osxvalst' : ['x86-64_mac_vt_standard'],
+            'plinuxval' : ['ppc64le_linux_valhalla'],
+            'plinuxvalst' : ['ppc64le_linux_vt_standard'],
+            'aixval' : ['ppc64_aix_valhalla'],
+            'aixvalst' : ['ppc64_aix_vt_standard']]
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
