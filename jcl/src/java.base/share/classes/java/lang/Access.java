@@ -458,19 +458,8 @@ final class Access implements JavaLangAccess {
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
 /*[IF JAVA_SPEC_VERSION >= 17]*/
-	// This implementation can be replaced with invoking of String.decodeASCII() after switching to RI String.
 	public int decodeASCII(byte[] srcBytes, int srcPos, char[] dstChars, int dstPos, int length) {
-		int numDecoded = 0;
-		while (numDecoded < length) {
-			byte srcByte = srcBytes[srcPos++];
-			if (srcByte >= 0) {
-				dstChars[dstPos++] = (char) srcByte;
-				numDecoded += 1;
-				continue;
-			}
-			break;
-		}
-		return numDecoded;
+		return String.decodeASCII(srcBytes, srcPos, dstChars, dstPos, length);
 	}
 
 	public void inflateBytesToChars(byte[] srcBytes, int srcOffset, char[] dstChars, int dstOffset, int length) {
