@@ -877,7 +877,9 @@ GC_CheckEngine::checkClassStatics(J9JavaVM* vm, J9Class* clazz)
 				J9UTF8* sigUTF = J9ROMFIELDSHAPE_SIGNATURE(romFieldCursor);
 
 				/* interested in objects and all kinds of arrays */
-				if (('L' == J9UTF8_DATA(sigUTF)[0]) || ('[' == J9UTF8_DATA(sigUTF)[0])) {
+				if ((IS_REF_OR_VAL_SIGNATURE(J9UTF8_DATA(sigUTF)[0]))
+					|| ('[' == J9UTF8_DATA(sigUTF)[0])
+				) {
 					numberOfReferences += 1;
 
 					/* get address of next field */

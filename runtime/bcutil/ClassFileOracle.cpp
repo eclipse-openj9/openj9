@@ -357,7 +357,9 @@ ClassFileOracle::walkFields()
 					markStringAsReferenced(constantValueIndex);
 				}
 			}
-			if (('L' == fieldChar) || ('[' == fieldChar)) {
+			if ((IS_REF_OR_VAL_SIGNATURE(fieldChar))
+				|| ('[' == fieldChar)
+			) {
 				_objectStaticCount++;
 			} else if (('D' == fieldChar) || ('J' == fieldChar)) {
 				_doubleScalarStaticCount++;
