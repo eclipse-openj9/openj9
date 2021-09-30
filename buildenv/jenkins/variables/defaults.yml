@@ -473,16 +473,6 @@ x86-64_linux_xl:
 x86-64_linux_mixed:
   extends: ['x86-64_linux', 'mixedrefs', 'cmake']
 #========================================#
-# Linux x86 64bits Compressed Pointers / Valhalla
-#========================================#
-x86-64_linux_valhalla:
-  extends: ['x86-64_linux', 'valhalla']
-#========================================#
-# Linux x86 64bits Compressed Pointers / Valhalla Standard Testing
-#========================================#
-x86-64_linux_vt_standard:
-  extends: ['x86-64_linux', 'valhalla_standard']
-#========================================#
 # Linux Aarch 64bits Compressed Pointers
 #========================================#
 aarch64_linux:
@@ -771,3 +761,34 @@ x86-64_mac_aot:
   extends: ['x86-64_mac', 'aot']
 x86-64_windows_aot:
   extends: ['x86-64_windows', 'aot']
+#========================================#
+# Valhalla Testing
+#========================================#
+x86-64_linux_valhalla:
+  extends: ['x86-64_linux', 'valhalla']
+x86-64_linux_vt_standard:
+  extends: ['x86-64_linux', 'valhalla_standard']
+ppc64le_linux_valhalla:
+  extends: ['ppc64le_linux', 'valhalla']
+ppc64le_linux_vt_standard:
+  extends: ['ppc64le_linux', 'valhalla_standard']
+x86-64_mac_valhalla:
+  extends: ['x86-64_mac', 'valhalla']
+x86-64_mac_vt_standard:
+  extends: ['x86-64_mac', 'valhalla_standard']
+x86-64_windows_valhalla:
+  extends: ['x86-64_windows', 'valhalla']
+x86-64_windows_vt_standard:
+  extends: ['x86-64_windows', 'valhalla_standard']
+aarch64_linux_valhalla:
+  extends: ['aarch64_linux', 'valhalla']
+aarch64_linux_vt_standard:
+  extends: ['aarch64_linux', 'valhalla_standard']
+ppc64_aix_valhalla:
+  extends: ['ppc64_aix_linux', 'valhalla']
+ppc64_aix_vt_standard:
+  extends: ['ppc64_aix_linux', 'valhalla_standard']
+s390x_linux_valhalla:
+  extends: ['s390x_linux', 'valhalla']
+s390x_linux_vt_standard:
+  extends: ['s390x_linux', 'valhalla_standard']

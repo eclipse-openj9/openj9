@@ -691,14 +691,6 @@ prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdu
 		}
 	}
 
-	if ( (agent->requestMask & J9RAS_DUMP_DO_HALT_ALL_THREADS) &&
-	(state & J9RAS_DUMP_THREADS_HALTED) == 0 ) {
-
-		/**** NOT YET IMPLEMENTED (removed from -Xdump:request) ****/
-
-		newState |= J9RAS_DUMP_THREADS_HALTED;
-	}
-
 	return newState;
 }
 #endif /* J9VM_RAS_DUMP_AGENTS */
@@ -716,13 +708,6 @@ unwindAfterDump(struct J9JavaVM *vm, struct J9RASdumpContext *context, UDATA sta
 	/*
 	 * Must be in reverse order to the requested actions
 	 */
-
-	if (state & J9RAS_DUMP_THREADS_HALTED) {
-
-		/**** NOT YET IMPLEMENTED (removed from -Xdump:request) ****/
-
-		newState &= ~J9RAS_DUMP_THREADS_HALTED;
-	}
 
 	if (state & J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS) {
 
