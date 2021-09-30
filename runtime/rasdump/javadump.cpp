@@ -757,10 +757,6 @@ JavaCoreDumpWriter::writeTitleSection(void)
 			prefix = "+";
 		}
 
-		if (J9_ARE_ALL_BITS_SET(_Agent->requestMask, J9RAS_DUMP_DO_HALT_ALL_THREADS)) {
-			/* not yet implemented */
-		}
-
 		if (J9_ARE_ALL_BITS_SET(_Agent->requestMask, J9RAS_DUMP_DO_ATTACH_THREAD)) {
 			_OutputStream.writeCharacters(prefix);
 			_OutputStream.writeCharacters("attach");
@@ -818,12 +814,6 @@ JavaCoreDumpWriter::writeTitleSection(void)
 		if (J9_ARE_ALL_BITS_SET(_Agent->prepState, J9RAS_DUMP_HEAP_PREPARED)) {
 			_OutputStream.writeCharacters(prefix);
 			_OutputStream.writeCharacters("heap_prepared");
-			prefix = "+";
-		}
-
-		if (J9_ARE_ALL_BITS_SET(_Agent->prepState, J9RAS_DUMP_THREADS_HALTED)) {
-			_OutputStream.writeCharacters(prefix);
-			_OutputStream.writeCharacters("threads_halted");
 			prefix = "+";
 		}
 

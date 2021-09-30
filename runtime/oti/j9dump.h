@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,14 +115,13 @@ typedef struct J9RASdumpAgent {
 #define J9RAS_DUMP_ON_ANY 0x0FFFFFF /* mask of all bit flags above */
 
 /* ...additional VM requests... */
-#define J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS  1
-#define J9RAS_DUMP_DO_COMPACT_HEAP  2
-#define J9RAS_DUMP_DO_PREPARE_HEAP_FOR_WALK  4
-#define J9RAS_DUMP_DO_SUSPEND_OTHER_DUMPS  8
-#define J9RAS_DUMP_DO_HALT_ALL_THREADS  16
-#define J9RAS_DUMP_DO_ATTACH_THREAD  32
-#define J9RAS_DUMP_DO_MULTIPLE_HEAPS  64
-#define J9RAS_DUMP_DO_PREEMPT_THREADS  0x80
+#define J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS  0x01
+#define J9RAS_DUMP_DO_COMPACT_HEAP  0x02
+#define J9RAS_DUMP_DO_PREPARE_HEAP_FOR_WALK  0x04
+#define J9RAS_DUMP_DO_SUSPEND_OTHER_DUMPS  0x08
+#define J9RAS_DUMP_DO_ATTACH_THREAD  0x10
+#define J9RAS_DUMP_DO_MULTIPLE_HEAPS  0x020
+#define J9RAS_DUMP_DO_PREEMPT_THREADS  0x40
 
 typedef struct J9RASdumpContext {
 	struct J9JavaVM* javaVM;
