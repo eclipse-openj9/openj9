@@ -472,9 +472,6 @@ final class Access implements JavaLangAccess {
 		return VMAccess.findClassOrNull(name, ClassLoader.bootstrapClassLoader);
 	}
 
-	/*[IF OPENJDK_METHODHANDLES]*/
-	// This JPP flag is used to workaround the issue that latest 
-	// String update hasn't been promoted into openj9 branch. 
 	public String join(String prefix, String suffix, String delimiter, String[] elements, int size) {
 		return String.join(prefix, suffix, delimiter, elements, size);
 	}
@@ -500,7 +497,12 @@ final class Access implements JavaLangAccess {
 		Shutdown.exit(status);
 	}
 
-	/*[ENDIF] OPENJDK_METHODHANDLES*/
+	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	public int encodeASCII(char[] sa, int sp, byte[] da, int dp, int len) {
+		return StringCoding.implEncodeAsciiArray(sa, sp, da, dp, len);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 /*[ENDIF] Sidecar19-SE */
