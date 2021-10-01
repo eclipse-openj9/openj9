@@ -1110,7 +1110,7 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 									state->objectsSeen++;
 								}
 							} else {
-								U_32 size = fieldClass->totalInstanceSize;
+								U_32 size = (U_32)fieldClass->totalInstanceSize;
 								bool forceDoubleAlignment = false;
 								if (sizeof(U_32) == referenceSize) {
 									/** 
@@ -1134,7 +1134,7 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 									Assert_VM_true((state->result.offset + referenceSize) % sizeof(U_64) == 0);
 									state->currentFlatDoubleOffset += ROUND_UP_TO_POWEROF2(size, sizeof(U_64));
 								} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
-									size = ROUND_UP_TO_POWEROF2(size, referenceSize);
+									size = (U_32)ROUND_UP_TO_POWEROF2(size, referenceSize);
 									if (J9_ARE_ALL_BITS_SET(state->walkFlags, J9VM_FIELD_OFFSET_WALK_BACKFILL_FLAT_OBJECT_FIELD)
 										&& (state->flatBackFillSize == size)
 									) {
