@@ -2298,6 +2298,24 @@ TR_J9ServerVM::getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilat
    }
 
 bool
+TR_J9ServerVM::isMethodHandleExpectedType(
+   TR::Compilation *comp,
+   TR::KnownObjectTable::Index mhIndex,
+   TR::KnownObjectTable::Index expectedTypeIndex)
+   {
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (!knot)
+      return false;
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_isMethodHandleExpectedType, mhIndex, expectedTypeIndex);
+   auto recv = stream->read<bool, uintptr_t *, uintptr_t *>();
+
+   knot->updateKnownObjectTableAtServer(mhIndex, std::get<1>(recv));
+   knot->updateKnownObjectTableAtServer(expectedTypeIndex, std::get<2>(recv));
+   return std::get<0>(recv);
+   }
+
+bool
 TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_OpaqueMethodBlock *method)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
