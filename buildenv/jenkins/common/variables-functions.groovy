@@ -1598,6 +1598,9 @@ def download_boot_jdk(bootJDKVersion, bootJDK) {
     def dirStrip = buildspec.getScalarField('boot_jdk.dir_strip', SDK_VERSION)
     def sdkUrl = "https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk"
 
+    if (("${arch}" == "aarch64") && ("${bootJDKVersion}" == "17")) {
+        sdkUrl = "https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17%2B35_openj9-0.28.0-m2/ibm-semeru-open-jdk_aarch64_linux_17_35_openj9-0.28.0-m2.tar.gz"
+    }
     /*
      * Download bootjdk
      * Windows are zips from Adopt. Unzip doesn't have strip dir so we have to manually move.
