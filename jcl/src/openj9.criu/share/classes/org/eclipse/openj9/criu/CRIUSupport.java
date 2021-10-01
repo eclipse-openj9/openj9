@@ -23,11 +23,27 @@
 package org.eclipse.openj9.criu;
 
 import java.nio.file.Path;
+/*[IF JAVA_SPEC_VERSION < 17] */
 import java.security.AccessController;
+/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 import java.security.PrivilegedAction;
 import java.nio.file.Files;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+/*[IF JAVA_SPEC_VERSION == 8] */
+import sun.misc.Unsafe;
+/*[ELSE]
+import jdk.internal.misc.Unsafe;
+/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 import java.util.Objects;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * CRIU Support API
@@ -36,14 +52,29 @@ public final class CRIUSupport {
 
 	static {
 		try {
+			Field f = Unsafe.class.getDeclaredField("theUnsafe");
+			f.setAccessible(true);
+			unsafe = (Unsafe) f.get(null);
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			throw new InternalError(e);
+		}
+
+		try {
+			/* [IF JAVA_SPEC_VERSION < 17] */
 			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+			/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 				System.loadLibrary("j9criu29"); //$NON-NLS-1$
+			/* [IF JAVA_SPEC_VERSION < 17] */
 				return null;
 			});
+			/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 		} catch (UnsatisfiedLinkError e) {
 			throw new InternalError(e);
 		}
 	}
+
+	@SuppressWarnings("restriction")
+	private static Unsafe unsafe;
 
 	private static final CRIUDumpPermission CRIU_DUMP_PERMISSION = new CRIUDumpPermission();
 
@@ -69,25 +100,38 @@ public final class CRIUSupport {
 	 * Constructs a new {@code CRIUSupport}.
 	 *
 	 * The default CRIU dump options are:
-	 * <p>{@code imageDir} = imageDir, the directory where the images are to be created.
-	 * <p>{@code leaveRunning} = false
-	 * <p>{@code shellJob} = false
-	 * <p>{@code extUnixSupport} = false
-	 * <p>{@code logLevel} = 2
-	 * <p>{@code logFile} = criu.log
-	 * <p>{@code fileLocks} = false
-	 * <p>{@code workDir} = imageDir, the directory where the images are to be created.
+	 * <p>
+	 * {@code imageDir} = imageDir, the directory where the images are to be
+	 * created.
+	 * <p>
+	 * {@code leaveRunning} = false
+	 * <p>
+	 * {@code shellJob} = false
+	 * <p>
+	 * {@code extUnixSupport} = false
+	 * <p>
+	 * {@code logLevel} = 2
+	 * <p>
+	 * {@code logFile} = criu.log
+	 * <p>
+	 * {@code fileLocks} = false
+	 * <p>
+	 * {@code workDir} = imageDir, the directory where the images are to be created.
 	 *
-	 * @param imageDir the directory that will hold the dump files as a java.nio.file.Path
-	 * @throws NullPointerException if imageDir is null
-	 * @throws SecurityException if no permission to access imageDir or no CRIU_DUMP_PERMISSION
+	 * @param imageDir the directory that will hold the dump files as a
+	 *                 java.nio.file.Path
+	 * @throws NullPointerException     if imageDir is null
+	 * @throws SecurityException        if no permission to access imageDir or no
+	 *                                  CRIU_DUMP_PERMISSION
 	 * @throws IllegalArgumentException if imageDir is not a valid directory
 	 */
 	public CRIUSupport(Path imageDir) {
+		/* [IF JAVA_SPEC_VERSION < 17] */
 		SecurityManager manager = System.getSecurityManager();
 		if (manager != null) {
 			manager.checkPermission(CRIU_DUMP_PERMISSION);
 		}
+		/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 
 		setImageDir(imageDir);
 	}
@@ -101,6 +145,8 @@ public final class CRIUSupport {
 		return criuSupportEnabled;
 	}
 
+	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = 0;
+
 	private String imageDir;
 	private boolean leaveRunning;
 	private boolean shellJob;
@@ -112,15 +158,16 @@ public final class CRIUSupport {
 	private boolean tcpEstablished;
 	private boolean autoDedup;
 	private boolean trackMemory;
+	private Path envFile;
 
 	/**
-	 * Sets the directory that will hold the images upon checkpoint.
-	 * This must be set before calling {@link #checkpointJVM()}.
+	 * Sets the directory that will hold the images upon checkpoint. This must be
+	 * set before calling {@link #checkpointJVM()}.
 	 *
 	 * @param imageDir the directory as a java.nio.file.Path
 	 * @return this
-	 * @throws NullPointerException if imageDir is null
-	 * @throws SecurityException if no permission to access imageDir
+	 * @throws NullPointerException     if imageDir is null
+	 * @throws SecurityException        if no permission to access imageDir
 	 * @throws IllegalArgumentException if imageDir is not a valid directory
 	 */
 	public CRIUSupport setImageDir(Path imageDir) {
@@ -130,10 +177,12 @@ public final class CRIUSupport {
 		}
 		String dir = imageDir.toAbsolutePath().toString();
 
+		/* [IF JAVA_SPEC_VERSION < 17] */
 		SecurityManager manager = System.getSecurityManager();
 		if (manager != null) {
 			manager.checkWrite(dir);
 		}
+		/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 
 		this.imageDir = dir;
 		return this;
@@ -141,7 +190,8 @@ public final class CRIUSupport {
 
 	/**
 	 * Controls whether process trees are left running after checkpoint.
-	 * <p>Default: false
+	 * <p>
+	 * Default: false
 	 *
 	 * @param leaveRunning
 	 * @return this
@@ -153,7 +203,8 @@ public final class CRIUSupport {
 
 	/**
 	 * Controls ability to dump shell jobs.
-	 * <p>Default: false
+	 * <p>
+	 * Default: false
 	 *
 	 * @param shellJob
 	 * @return this
@@ -165,7 +216,8 @@ public final class CRIUSupport {
 
 	/**
 	 * Controls whether to dump only one end of a unix socket pair.
-	 * <p>Default: false
+	 * <p>
+	 * Default: false
 	 *
 	 * @param extUnixSupport
 	 * @return this
@@ -176,15 +228,15 @@ public final class CRIUSupport {
 	}
 
 	/**
-	 * Sets the verbosity of log output.
-	 * Available levels:
+	 * Sets the verbosity of log output. Available levels:
 	 * <ol>
 	 * <li>Only errors
 	 * <li>Errors and warnings
 	 * <li>Above + information messages and timestamps
 	 * <li>Above + debug
 	 * </ol>
-	 * <p>Default: 2
+	 * <p>
+	 * Default: 2
 	 *
 	 * @param logLevel verbosity from 1 to 4 inclusive
 	 * @return this
@@ -201,9 +253,11 @@ public final class CRIUSupport {
 
 	/**
 	 * Write log output to logFile.
-	 * <p>Default: criu.log
+	 * <p>
+	 * Default: criu.log
 	 *
-	 * @param logFile name of the file to write log output to. The path to the file can be set with {@link #setWorkDir(Path)}.
+	 * @param logFile name of the file to write log output to. The path to the file
+	 *                can be set with {@link #setWorkDir(Path)}.
 	 * @return this
 	 * @throws IllegalArgumentException if logFile is null or a path
 	 */
@@ -218,7 +272,8 @@ public final class CRIUSupport {
 
 	/**
 	 * Controls whether to dump file locks.
-	 * <p>Default: false
+	 * <p>
+	 * Default: false
 	 *
 	 * @param fileLocks
 	 * @return this
@@ -230,7 +285,8 @@ public final class CRIUSupport {
 
 	/**
 	 * Controls whether to re-establish TCP connects.
-	 * <p>Default: false
+	 * <p>
+	 * Default: false
 	 *
 	 * @param tcpEstablished
 	 * @return this
@@ -242,7 +298,8 @@ public final class CRIUSupport {
 
 	/**
 	 * Controls whether auto dedup of memory pages is enabled.
-	 * <p>Default: false
+	 * <p>
+	 * Default: false
 	 *
 	 * @param autoDedup
 	 * @return this
@@ -254,7 +311,8 @@ public final class CRIUSupport {
 
 	/**
 	 * Controls whether memory tracking is enabled.
-	 * <p>Default: false
+	 * <p>
+	 * Default: false
 	 *
 	 * @param trackMemory
 	 * @return this
@@ -266,12 +324,13 @@ public final class CRIUSupport {
 
 	/**
 	 * Sets the directory where non-image files are stored (e.g. logs).
-	 * <p>Default: same as path set by {@link #setImageDir(Path)}.
+	 * <p>
+	 * Default: same as path set by {@link #setImageDir(Path)}.
 	 *
 	 * @param workDir the directory as a java.nio.file.Path
 	 * @return this
-	 * @throws NullPointerException if workDir is null
-	 * @throws SecurityException if no permission to access workDir
+	 * @throws NullPointerException     if workDir is null
+	 * @throws SecurityException        if no permission to access workDir
 	 * @throws IllegalArgumentException if workDir is not a valid directory
 	 */
 	public CRIUSupport setWorkDir(Path workDir) {
@@ -281,36 +340,133 @@ public final class CRIUSupport {
 		}
 		String dir = workDir.toAbsolutePath().toString();
 
+		/* [IF JAVA_SPEC_VERSION < 17] */
 		SecurityManager manager = System.getSecurityManager();
 		if (manager != null) {
 			manager.checkWrite(dir);
 		}
+		/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 
 		this.workDir = dir;
 		return this;
 	}
 
 	/**
-	 * Checkpoint the JVM. This operation will use the CRIU options set by the options setters.
+	 * Append new environment variables to the set returned by ProcessEnvironment.getenv(...) upon
+	 * restore. All pre-existing (environment variables from checkpoint run) env
+	 * vars are retained. All environment variables specified in the envFile are
+	 * added as long as they do not modifiy pre-existeing environment variables.
+	 *
+	 * Format for envFile is the following: ENV_VAR_NAME1=ENV_VAR_VALUE1 ...
+	 * ENV_VAR_NAMEN=ENV_VAR_VALUEN
+	 *
+	 * @param envFile The file that contains the new environment variables to be
+	 *                added
+	 * @return this
+	 */
+	public CRIUSupport registerRestoreEnvFile(Path envFile) {
+		this.envFile = envFile;
+		return this;
+	}
+
+	@SuppressWarnings("restriction")
+	private void registerRestoreEnvVariables() {
+		J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY,
+				"Restore environment variables via env file: " + envFile, () -> { //$NON-NLS-1$
+					if (!Files.exists(this.envFile)) {
+						throw throwSetEnvException(new IllegalArgumentException(
+								"Restore environment variable file " + envFile + " does not exist."));
+					}
+
+					String file = envFile.toAbsolutePath().toString();
+
+					try (BufferedReader envFileReader = new BufferedReader(new FileReader(file))) {
+						/* [IF JAVA_SPEC_VERSION < 17] */
+						SecurityManager manager = System.getSecurityManager();
+						if (manager != null) {
+							manager.checkRead(file);
+						}
+						/* [ENDIF] JAVA_SPEC_VERSION < 17 */
+
+						Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment"); //$NON-NLS-1$
+						Class<?> stringEnvironmentClass = Class.forName("java.lang.ProcessEnvironment$StringEnvironment"); //$NON-NLS-1$
+						Class<?> variableClass = Class.forName("java.lang.ProcessEnvironment$Variable"); //$NON-NLS-1$
+						Class<?> valueClass = Class.forName("java.lang.ProcessEnvironment$Value"); //$NON-NLS-1$
+						Field theUnmodifiableEnvironmentHandle = processEnvironmentClass.getDeclaredField("theUnmodifiableEnvironment"); //$NON-NLS-1$
+						Field theEnvironmentHandle = processEnvironmentClass.getDeclaredField("theEnvironment"); //$NON-NLS-1$
+						Constructor<?> newStringEnvironment = stringEnvironmentClass.getConstructor(new Class<?>[] { Map.class });
+						Method variableValueOf = variableClass.getDeclaredMethod("valueOf", new Class<?>[] { String.class }); //$NON-NLS-1$
+						Method valueValueOf = valueClass.getDeclaredMethod("valueOf", new Class<?>[] { String.class }); //$NON-NLS-1$
+						theUnmodifiableEnvironmentHandle.setAccessible(true);
+						theEnvironmentHandle.setAccessible(true);
+						newStringEnvironment.setAccessible(true);
+						variableValueOf.setAccessible(true);
+						valueValueOf.setAccessible(true);
+
+						@SuppressWarnings("unchecked")
+						Map<String, String> oldTheUnmodifiableEnvironment = (Map<String, String>) theUnmodifiableEnvironmentHandle
+								.get(processEnvironmentClass);
+						@SuppressWarnings("unchecked")
+						Map<Object, Object> theEnvironment = (Map<Object, Object>) theEnvironmentHandle
+								.get(processEnvironmentClass);
+
+						String entry = null;
+
+						while ((entry = envFileReader.readLine()) != null) {
+							if (!entry.isBlank()) {
+								String entrySplit[] = entry.split("="); //$NON-NLS-1$
+								if (entrySplit.length != 2) {
+									throw new IllegalArgumentException(
+											"Env File entry is not in the correct format: [envVarName]=[envVarVal]: "
+													+ entry);
+								}
+
+								String name = entrySplit[0];
+								String value = entrySplit[1];
+
+								if (oldTheUnmodifiableEnvironment.containsKey(name)) {
+									throw new IllegalArgumentException(
+											"Env file entry cannot modifiy a pre-existing entry: " + entry);
+								}
+								theEnvironment.put(variableValueOf.invoke(null, name), valueValueOf.invoke(null, value));
+							}
+						}
+
+						@SuppressWarnings("unchecked")
+						Map<String, String> newTheUnmodifiableEnvironment = (Map<String, String>) newStringEnvironment.newInstance(theEnvironment);
+
+						unsafe.putObject(processEnvironmentClass, unsafe.staticFieldOffset(theUnmodifiableEnvironmentHandle),
+								Collections.unmodifiableMap(newTheUnmodifiableEnvironment));
+
+					} catch (Throwable t) {
+						throw throwSetEnvException(t);
+					}
+				});
+	}
+
+	private static RestoreException throwSetEnvException(Throwable cause) {
+		throw new RestoreException("Failed to setup new environment variables", 0, cause);
+	}
+
+	/**
+	 * Checkpoint the JVM. This operation will use the CRIU options set by the
+	 * options setters.
 	 *
 	 * @throws UnsupportedOperationException if CRIU is not supported
-	 * @throws JVMCheckpointException if a JVM error occurred before checkpoint
-	 * @throws SystemCheckpointException if a CRIU operation failed
-	 * @throws RestoreException if an error occurred during or after restore
+	 * @throws JVMCheckpointException        if a JVM error occurred before
+	 *                                       checkpoint
+	 * @throws SystemCheckpointException     if a CRIU operation failed
+	 * @throws RestoreException              if an error occurred during or after
+	 *                                       restore
 	 */
 	public void checkpointJVM() {
+
+		/* Add env variables restore hook */
+		registerRestoreEnvVariables();
+
 		if (isCRIUSupportEnabled()) {
-			checkpointJVMImpl(imageDir,
-					leaveRunning,
-					shellJob,
-					extUnixSupport,
-					logLevel,
-					logFile,
-					fileLocks,
-					workDir,
-					tcpEstablished,
-					autoDedup,
-					trackMemory);
+			checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks, workDir,
+					tcpEstablished, autoDedup, trackMemory);
 		} else {
 			throw new UnsupportedOperationException("CRIU support is not enabled");
 		}

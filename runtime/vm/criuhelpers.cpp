@@ -20,24 +20,52 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 #include "j9.h"
+#include "j9protos.h"
 #include "ut_j9vm.h"
+#include "vm_api.h"
+#include "j9comp.h"
+
+#include "VMHelpers.hpp"
 
 extern "C" {
+
+J9_DECLARE_CONSTANT_UTF8(runPostRestoreHooks_sig, "()V");
+J9_DECLARE_CONSTANT_UTF8(runPostRestoreHooks_name, "runPostRestoreHooks");
+J9_DECLARE_CONSTANT_UTF8(runPreCheckpointHooks_sig, "()V");
+J9_DECLARE_CONSTANT_UTF8(runPreCheckpointHooks_name, "runPreCheckpointHooks");
+J9_DECLARE_CONSTANT_UTF8(j9InternalCheckpointHookAPI_name, "org/eclipse/openj9/criu/J9InternalCheckpointHookAPI");
 
 BOOLEAN
 jvmCheckpointHooks(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+	BOOLEAN result = TRUE;
+	J9NameAndSignature nas = {0};
+	nas.name = (J9UTF8 *)&runPreCheckpointHooks_name;
+	nas.signature = (J9UTF8 *)&runPreCheckpointHooks_sig;
+
+	/* make sure Java hooks are the first thing run when initiating checkpoint */
+	runStaticMethod(currentThread, J9UTF8_DATA(&j9InternalCheckpointHookAPI_name), &nas, 0, NULL);
+
+	if (VM_VMHelpers::exceptionPending(currentThread)) {
+		result = FALSE;
+		goto done;
+	}
 
 	TRIGGER_J9HOOK_VM_PREPARING_FOR_CHECKPOINT(vm->hookInterface, currentThread);
 
-	return TRUE;
+done:
+	return result;
 }
 
 BOOLEAN
 jvmRestoreHooks(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+	BOOLEAN result = TRUE;
+	J9NameAndSignature nas = {0};
+	nas.name = (J9UTF8 *)&runPostRestoreHooks_name;
+	nas.signature = (J9UTF8 *)&runPostRestoreHooks_sig;
 
 	Assert_VM_notNull(vm->checkpointState);
 
@@ -47,7 +75,14 @@ jvmRestoreHooks(J9VMThread *currentThread)
 
 	TRIGGER_J9HOOK_VM_PREPARING_FOR_RESTORE(vm->hookInterface, currentThread);
 
-	return TRUE;
+	/* make sure Java hooks are the last thing run before restore */
+	runStaticMethod(currentThread, J9UTF8_DATA(&j9InternalCheckpointHookAPI_name), &nas, 0, NULL);
+
+	if (VM_VMHelpers::exceptionPending(currentThread)) {
+		result = FALSE;
+	}
+
+	return result;
 }
 
 BOOLEAN

@@ -23,32 +23,38 @@
 package org.eclipse.openj9.criu;
 
 /**
- * Abstract CRIU exception superclass. Contains an error code returned from a failed operation.
+ * Abstract CRIU exception superclass. Contains an error code returned from a
+ * failed operation.
  */
 public abstract class JVMCRIUException extends RuntimeException {
-    private static final long serialVersionUID = 4486137934620495516L;
-    protected int errorCode;
+	private static final long serialVersionUID = 4486137934620495516L;
+	protected int errorCode;
 
-    protected JVMCRIUException(String message, int errorCode) {
-        super(message);
-        this.errorCode = errorCode;
-    }
+	protected JVMCRIUException(String message, int errorCode) {
+		super(message);
+		this.errorCode = errorCode;
+	}
 
-    /**
-     * Returns the error code.
-     *
-     * @return errorCode
-     */
-    public int getErrorCode() {
-        return errorCode;
-    }
+	protected JVMCRIUException(String message, int errorCode, Throwable causedBy) {
+		super(message, causedBy);
+		this.errorCode = errorCode;
+	}
 
-    /**
-     * Sets the error code.
-     *
-     * @param errorCode the value to set to
-     */
-    public void setErrorCode(int errorCode) {
-        this.errorCode = errorCode;
-    }
+	/**
+	 * Returns the error code.
+	 *
+	 * @return errorCode
+	 */
+	public int getErrorCode() {
+		return errorCode;
+	}
+
+	/**
+	 * Sets the error code.
+	 *
+	 * @param errorCode the value to set to
+	 */
+	public void setErrorCode(int errorCode) {
+		this.errorCode = errorCode;
+	}
 }
