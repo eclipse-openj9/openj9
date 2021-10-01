@@ -50,7 +50,7 @@ ObjectFieldInfo::countInstanceFields(void)
 				U_8 *fieldSigBytes = J9UTF8_DATA(J9ROMFIELDSHAPE_SIGNATURE(field));
 				if ('Q' == *fieldSigBytes) {
 					J9Class *fieldClass = findJ9ClassInFlattenedClassCache(_flattenedClassCache, fieldSigBytes + 1, J9UTF8_LENGTH(fieldSig) - 2);
-					U_32 size = fieldClass->totalInstanceSize;
+					U_32 size = (U_32)fieldClass->totalInstanceSize;
 					if (!J9_IS_FIELD_FLATTENED(fieldClass, field)) {
 						_instanceObjectCount += 1;
 						_totalObjectCount += 1;
@@ -74,7 +74,7 @@ ObjectFieldInfo::countInstanceFields(void)
 							}
 							_totalFlatFieldDoubleBytes += (U_32) ROUND_UP_TO_POWEROF2(size, sizeof(U_64));
 						} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
-							size = (U_32) ROUND_UP_TO_POWEROF2(size, _referenceSize);
+							size = (U_32) ROUND_UP_TO_POWEROF2(size, (UDATA)_referenceSize);
 							_totalFlatFieldRefBytes += size;
 							setPotentialFlatObjectInstanceBackfill(size);
 						} else {
