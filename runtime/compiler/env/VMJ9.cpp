@@ -7724,17 +7724,40 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             }
          return callNode;
       case TR::java_lang_ref_Reference_getImpl:
+      case TR::java_lang_ref_Reference_refersTo:
+         {
          if (comp->getGetImplAndRefersToInlineable())
             {
             // Retrieve the offset of the instance "referent" field from Reference class
             TR::SymbolReference * callerSymRef = callNode->getSymbolReference();
             TR_ResolvedMethod * owningMethod = callerSymRef->getOwningMethod(comp);
-            int32_t len = owningMethod->classNameLength();
-            char * s = TR::Compiler->cls.classNameToSignature(owningMethod->classNameChars(), len, comp);
-            TR_OpaqueClassBlock * ReferenceClass = getClassFromSignature(s, len, owningMethod);
+            int32_t len = resolvedMethod->classNameLength();
+            char * s = TR::Compiler->cls.classNameToSignature(resolvedMethod->classNameChars(), len, comp);
+            TR_OpaqueClassBlock * ReferenceClass = getClassFromSignature(s, len, resolvedMethod);
             // defect 143867, ReferenceClass == 0 and crashed later in findFieldInClass()
             if (!ReferenceClass)
                return 0;
+
+            // This pointer of Reference
+            TR::Node * thisNode = callNode->getFirstChild();
+
+            // If there's a NULLCHK on the call, we must retain that.
+            // We do this by pulling the call out from under the nullchk
+            // before attempting to transform the call.
+            //
+            if (callNodeTreeTop->getNode()->getOpCode().isNullCheck())
+               {
+               // Put the call under its own tree after the NULLCHK
+               //
+               TR::TreeTop::create(comp, callNodeTreeTop, TR::Node::create(TR::treetop, 1, callNode));
+
+               // Replace the call under the nullchk with a PassThrough of the Reference
+               //
+               TR::Node *nullchk = callNodeTreeTop->getNode();
+               nullchk->getAndDecChild(0);
+               nullchk->setAndIncChild(0, TR::Node::create(TR::PassThrough, 1, thisNode));
+               }
+
             int32_t offset =
                getInstanceFieldOffset(ReferenceClass, REFERENCEFIELD, REFERENCEFIELDLEN, REFERENCERETURNTYPE, REFERENCERETURNTYPELEN, J9_RESOLVE_FLAG_INIT_CLASS);
             offset += (int32_t)getObjectHeaderSizeInBytes();  // size of a J9 object header to move past it
@@ -7742,18 +7765,26 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             // Generate reference symbol
             TR::SymbolReference * symRefField = comp->getSymRefTab()->findOrCreateJavaLangReferenceReferentShadowSymbol(callerSymRef->getOwningMethodSymbol(comp),
                                                                                                               true, TR::Address, offset, false);
-
-            // This pointer
-            TR::Node * thisNode = callNode->getFirstChild();
-
-            // Generate indirect load of referent into the callNode
-            TR::Node::recreate(callNode, comp->il.opCodeForIndirectLoad(TR::Address));
-            callNode->setSymbolReference(symRefField);
-            callNode->removeAllChildren();
-            callNode->setNumChildren(1);
-            callNode->setAndIncChild(0, thisNode);
+            if (methodID == TR::java_lang_ref_Reference_getImpl)
+               {
+               // Generate indirect load of referent into the callNode
+               TR::Node::recreate(callNode, comp->il.opCodeForIndirectLoad(TR::Address));
+               callNode->setSymbolReference(symRefField);
+               callNode->removeAllChildren();
+               callNode->setNumChildren(1);
+               callNode->setAndIncChild(0, thisNode);
+               }
+            else if (methodID == TR::java_lang_ref_Reference_refersTo)
+               {
+               // Generate reference comparison between the referent and parameter into the callNode
+               TR::Node::recreate(callNode, comp->il.opCodeForCompareEquals(TR::Address));
+               TR::Node * referentLoadNode = TR::Node::createWithSymRef(comp->il.opCodeForIndirectLoad(TR::Address), 1, 1, thisNode, symRefField);
+               callNode->setAndIncChild(0, referentLoadNode);
+               thisNode->decReferenceCount();
+               }
             }
-            return callNode;
+         return callNode;
+         }
       case TR::java_lang_J9VMInternals_rawNewArrayInstance:
          {
          TR::Node::recreate(callNode, TR::variableNewArray);
