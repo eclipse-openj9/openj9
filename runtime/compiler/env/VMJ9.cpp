@@ -6688,6 +6688,12 @@ TR_J9VM::classHasBeenReplaced(TR_OpaqueClassBlock * clazzPointer)
 bool
 TR_J9VMBase::isGetImplInliningSupported()
    {
+   return isGetImplAndRefersToInliningSupported();
+   }
+
+bool
+TR_J9VMBase::isGetImplAndRefersToInliningSupported()
+   {
    J9JavaVM * jvm = _jitConfig->javaVM;
    return jvm->memoryManagerFunctions->j9gc_modron_isFeatureSupported(jvm, j9gc_modron_feature_inline_reference_get) != 0;
    }
@@ -7718,7 +7724,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             }
          return callNode;
       case TR::java_lang_ref_Reference_getImpl:
-         if (comp->getGetImplInlineable())
+         if (comp->getGetImplAndRefersToInlineable())
             {
             // Retrieve the offset of the instance "referent" field from Reference class
             TR::SymbolReference * callerSymRef = callNode->getSymbolReference();
@@ -9146,6 +9152,12 @@ TR_J9SharedCacheVM::classHasBeenExtended(TR_OpaqueClassBlock * classPointer)
 
 bool
 TR_J9SharedCacheVM::isGetImplInliningSupported()
+   {
+   return isGetImplAndRefersToInliningSupported();
+   }
+
+bool
+TR_J9SharedCacheVM::isGetImplAndRefersToInliningSupported()
    {
    return false;
    }

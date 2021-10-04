@@ -161,8 +161,22 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    void *getCurMethodMetadata() {return _curMethodMetadata;}
    void setCurMethodMetadata(void *m) {_curMethodMetadata = m;}
 
-   void setGetImplInlineable(bool b) { _getImplInlineable = b; }
-   bool getGetImplInlineable() { return _getImplInlineable; }
+   void setGetImplInlineable(bool b) { setGetImplAndRefersToInlineable(b); }
+   /**
+    * \brief Sets whether the native \c java.lang.ref.Reference
+    * methods, \c getImpl and \c refersTo, can be inlined.
+    * \param[in] b A \c bool argument indicating whether \c getImpl
+    *              and \c refersTo can be inlined.
+    */
+   void setGetImplAndRefersToInlineable(bool b) { _getImplAndRefersToInlineable = b; }
+
+   /**
+    * \brief Indicates whether the native \c java.lang.ref.Reference
+    * methods, \c getImpl and \c refersTo, can be inlined.
+    *
+    * \return \c true if they can be inlined; \c false otherwise
+    */
+   bool getGetImplAndRefersToInlineable() { return _getImplAndRefersToInlineable; }
 
    //for converters
    bool canTransformConverterMethod(TR::RecognizedMethod method);
@@ -429,7 +443,7 @@ private:
 
    void * _curMethodMetadata;
 
-   bool _getImplInlineable;
+   bool _getImplAndRefersToInlineable;
 
    TR_ValueProfileInfoManager *_vpInfoManager;
 

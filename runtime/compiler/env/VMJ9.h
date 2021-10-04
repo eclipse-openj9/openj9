@@ -253,6 +253,14 @@ public:
 /////
    virtual bool isGetImplInliningSupported();
 
+   /**
+    * \brief Indicates whether the native \c java.lang.ref.Reference
+    * methods, \c getImpl and \c refersTo, can be inlined.
+    *
+    * \return \c true if they can be inlined; \c false otherwise
+    */
+   virtual bool isGetImplAndRefersToInliningSupported();
+
    virtual uintptr_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
    virtual uintptr_t getClassFlagsValue(TR_OpaqueClassBlock * classPointer);
 
@@ -1516,6 +1524,7 @@ public:
    virtual bool               isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *);
    virtual bool               classHasBeenExtended(TR_OpaqueClassBlock *);
    virtual bool               isGetImplInliningSupported();
+   virtual bool               isGetImplAndRefersToInliningSupported();
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
    virtual bool               hasFinalizer(TR_OpaqueClassBlock * classPointer);
    virtual uintptr_t         getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
