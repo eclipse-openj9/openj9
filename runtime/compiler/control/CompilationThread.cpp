@@ -8532,14 +8532,14 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    }
 
 bool
-TR::CompilationInfoPerThreadBase::isCompilingWithExcessiveCacheSize(TR::CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters)
+TR::CompilationInfoPerThreadBase::isCodeOrDataCacheFull(TR::CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters)
    {
       J9JITConfig *jitConfig = compilationInfo->_jitConfig;
       J9VMThread *vmThread = compileParameters->_vmThread;
 
       if (!(jitConfig->runtimeFlags & (J9JIT_CODE_CACHE_FULL | J9JIT_DATA_CACHE_FULL)))
          {
-            return false;
+         return false;
          }
 
       // Optimization to disable future first time compilations from reaching the queue
@@ -8559,15 +8559,16 @@ TR::CompilationInfoPerThreadBase::isCompilingWithExcessiveCacheSize(TR::Compilat
    }
 
 bool
-TR::CompilationInfoPerThreadBase::isCompilingRestrictedMethod(TR::CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *&filterInfo)
+TR::CompilationInfoPerThreadBase::isRestrictedMethod(TR::CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *&filterInfo)
    {
       TR_J9VMBase *vm = compileParameters->_vm;
       J9VMThread *vmThread = compileParameters->_vmThread;
 
       // JITServer: methodCanBeCompiled check should have been done on the client, skip it on the server.
-      if (compilationInfo->_methodBeingCompiled->isOutOfProcessCompReq() || compilationInfo->methodCanBeCompiled(compileParameters->trMemory(), vm, compilee, filterInfo))
+      if (compilationInfo->_methodBeingCompiled->isOutOfProcessCompReq() ||
+          compilationInfo->methodCanBeCompiled(compileParameters->trMemory(), vm, compilee, filterInfo))
          {
-            return false;
+         return false;
          }
 
       compilationInfo->_methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
@@ -8585,7 +8586,7 @@ TR::CompilationInfoPerThreadBase::isCompilingRestrictedMethod(TR::CompilationInf
    }
 
 void
-TR::CompilationInfoPerThreadBase::setCompiledMethodOptimzationPlan(TR::CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, TR_J9VMBase *vm)
+TR::CompilationInfoPerThreadBase::addUpgradeHintInSCCIfNeeded(TR::CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, TR_J9VMBase *vm)
    {
       if (compilationInfo->_methodBeingCompiled->_optimizationPlan->isUpgradeRecompilation())
          {
@@ -8625,11 +8626,12 @@ TR::CompilationInfoPerThreadBase::createCompilee(TR::CompilationInfoPerThreadBas
          compilee = vm->createResolvedMethod(compileParameters->trMemory(), method);
          }
 
-      setCompiledMethodOptimzationPlan(compilationInfo, compilee, vm);
+      addUpgradeHintInSCCIfNeeded(compilationInfo, compilee, vm);
 
       // See if this method can be compiled and check it against the method
       // filters to see if compilation is to be suppressed.
-      if (isCompilingRestrictedMethod(compilationInfo, compilee, compileParameters, filterInfo) || isCompilingWithExcessiveCacheSize(compilationInfo, compileParameters))
+      if (isRestrictedMethod(compilationInfo, compilee, compileParameters, filterInfo) ||
+          isCodeOrDataCacheFull(compilationInfo, compileParameters))
          {
          compilee = 0;
          }
