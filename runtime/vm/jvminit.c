@@ -3058,7 +3058,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	}
 
 	/* Temporarily disable JIT/AOT until it is fully implemented */
-#if defined(RISCV64)
+#if defined(RISCV64) || (defined(J9AARCH64) && defined(OSX))
 	xint = TRUE;
 	xjit = FALSE;
 	xaot = FALSE;

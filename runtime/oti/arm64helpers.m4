@@ -1,4 +1,4 @@
-dnl Copyright (c) 2019, 2019 IBM Corp. and others
+dnl Copyright (c) 2019, 2021 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,12 +28,22 @@ define({ALen},{8})
 define({J9VMTHREAD},{x19})
 define({J9SP},{x20})
 
+ifdef({OSX},{
+define({FUNC_LABEL},{_$1})
+
+define({DECLARE_PUBLIC},{
+	.globl FUNC_LABEL($1)
+})
+},{
+dnl LINUX
 define({FUNC_LABEL},{$1})
 
 define({DECLARE_PUBLIC},{
 	.globl FUNC_LABEL($1)
 	.type FUNC_LABEL($1),function
 })
+}) dnl ifdef(OSX)
+
 
 define({DECLARE_EXTERN},{.extern $1})
 
@@ -44,7 +54,14 @@ define({START_PROC},{
 FUNC_LABEL($1):
 })
 
+ifdef({OSX},{
 define({END_PROC})
+},{
+dnl LINUX
+define({END_PROC},{
+	.size	FUNC_LABEL($1), .-FUNC_LABEL($1)
+})
+})
 
 define({BRANCH_SYMBOL},{FUNC_LABEL($1)})
 
