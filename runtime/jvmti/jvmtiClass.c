@@ -1212,9 +1212,10 @@ redefineClassesCommon(jvmtiEnv* env,
 			/* Indicate that a redefine has occurred */
 			vm->hotSwapCount += 1;
 
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
 			/* Notify the JIT about redefined classes */
 			jitClassRedefineEvent(currentThread, &jitEventData, FALSE);
-
+#endif
 		} else {
 
 			/* Clear/suspend all breakpoints in the classes being replaced */

@@ -1392,7 +1392,9 @@ fixVTables_forNormalRedefine(J9VMThread *currentThread, J9HashTable *classPairs,
 		/* Under fastHCR, fix the vTable in place for the redefined class. */
 		if (fastHCR && (0 != (classPair->flags & J9JVMTI_CLASS_PAIR_FLAG_REDEFINED))) {
 			newVTableHeader = oldVTableHeader;
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
 			newJitVTable = oldJitVTable;
+#endif
 		}
 
 		Trc_hshelp_fixVTables_Shape(currentThread, vTableSize, getClassName(classPair->originalRAMClass));
