@@ -193,6 +193,9 @@ class CompilationInfoPerThreadBase
                                 );
 #endif
 
+   static void processNonOutOfProcessComp(CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *filterInfo, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, bool &reducedWarm, TR_J9VMBase *vm);
+   static void processOutOfProcessComp(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR_J9VMBase *vm, TR::Options *&options);
+   static bool isOutOfProcessCompReq(CompilationInfoPerThreadBase *compilationInfo);
    static bool isCodeOrDataCacheFull(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters);
    static bool isRestrictedMethod(CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *&filterInfo);
    static void addUpgradeHintInSCCIfNeeded(CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, TR_J9VMBase *vm);
