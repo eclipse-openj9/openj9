@@ -605,6 +605,14 @@ JIT_HELPER(_nativeStaticHelper);
 JIT_HELPER(__arrayCopy);
 JIT_HELPER(__forwardArrayCopy);
 JIT_HELPER(__backwardArrayCopy);
+JIT_HELPER(__fwHalfWordArrayCopy);
+JIT_HELPER(__fwWordArrayCopy);
+JIT_HELPER(__fwDoubleWordArrayCopy);
+JIT_HELPER(__fwQuadWordArrayCopy);
+JIT_HELPER(__bwHalfWordArrayCopy);
+JIT_HELPER(__bwWordArrayCopy);
+JIT_HELPER(__bwDoubleWordArrayCopy);
+JIT_HELPER(__bwQuadWordArrayCopy);
 
 #elif defined(TR_HOST_S390)
 JIT_HELPER(__double2Long);
@@ -1588,6 +1596,14 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_ARM64arrayCopy,                         (void *) __arrayCopy,                      TR_Helper);
    SET(TR_ARM64forwardArrayCopy,                  (void *) __forwardArrayCopy,               TR_Helper);
    SET(TR_ARM64backwardArrayCopy,                 (void *) __backwardArrayCopy,              TR_Helper);
+   SET(TR_ARM64forwardQuadWordArrayCopy,          (void *) __fwQuadWordArrayCopy,            TR_Helper);
+   SET(TR_ARM64forwardDoubleWordArrayCopy,        (void *) __fwDoubleWordArrayCopy,          TR_Helper);
+   SET(TR_ARM64forwardWordArrayCopy,              (void *) __fwWordArrayCopy,                TR_Helper);
+   SET(TR_ARM64forwardHalfWordArrayCopy,          (void *) __fwHalfWordArrayCopy,            TR_Helper);
+   SET(TR_ARM64backwardQuadWordArrayCopy,         (void *) __bwQuadWordArrayCopy,             TR_Helper);
+   SET(TR_ARM64backwardDoubleWordArrayCopy,       (void *) __bwDoubleWordArrayCopy,          TR_Helper);
+   SET(TR_ARM64backwardWordArrayCopy,             (void *) __bwWordArrayCopy,                TR_Helper);
+   SET(TR_ARM64backwardHalfWordArrayCopy,         (void *) __bwHalfWordArrayCopy,            TR_Helper);
 
 #elif defined(TR_HOST_S390)
    SET(TR_S390double2Long,                                (void *) 0,                                              TR_Helper);
