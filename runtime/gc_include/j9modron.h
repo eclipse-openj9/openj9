@@ -161,17 +161,6 @@ typedef jvmtiIterationControl J9MODRON_REFERENCE_CHAIN_WALKER_CALLBACK(J9Object 
  */
 
 /**
- * #defines representing tags used in the Remembered Set
- * @ingroup GC_Include
- * @{
- */
-#define DEFERRED_RS_REMOVE_FLAG 			0x1	
-/**
- * @}
- */
-
-
-/**
  * @ingroup GC_Include
  * @name Class loader flags
  * Borrowed from builder - should be made collector specific 
