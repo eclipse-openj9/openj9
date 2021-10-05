@@ -5331,6 +5331,30 @@ defToAutoOrParmInEBB(TR::Compilation* comp, TR::TreeTop* treetop, TR::SymbolRefe
    return NULL;
    }
 
+/** \brief
+ *     Find the first occurrence of the load in a extended basic block
+ *
+ *  \return
+ *     The treetop containing the first occurrence of the load
+ */
+static TR::TreeTop*
+getFirstOccurrenceOfLoad(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* loadNode)
+   {
+   // Get the first treetop of this EBB.
+   auto treetopEntry = treetop->getEnclosingBlock()->startOfExtendedBlock()->getEntry();
+   auto visitCount = comp->incOrResetVisitCount();
+
+   for (treetop = treetopEntry; treetop != NULL; treetop = treetop->getNextTreeTop())
+      {
+      auto ttNode = treetop->getNode();
+      if (ttNode->containsNode(loadNode, visitCount))
+         {
+         return treetop;
+         }
+      }
+   return NULL;
+   }
+
 TR_PrexArgInfo *
 TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR_PrexArgInfo *callerArgInfo)
    {
@@ -5443,7 +5467,9 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
          else if (symbol->isAuto())
             {
             TR::Node* valueNode = NULL;
-            defToAutoOrParmInEBB(comp, site->_callNodeTreeTop, symRef, &valueNode);
+            TR::TreeTop* ttForFirstOccurrence = getFirstOccurrenceOfLoad(comp, site->_callNodeTreeTop, argument);
+            TR_ASSERT_FATAL(ttForFirstOccurrence, "Could not get a treetop for the first occurence of %p", argument);
+            defToAutoOrParmInEBB(comp, ttForFirstOccurrence, symRef, &valueNode);
             if (valueNode &&
                 valueNode->getOpCode().hasSymbolReference() &&
                 valueNode->getSymbolReference()->hasKnownObjectIndex())
