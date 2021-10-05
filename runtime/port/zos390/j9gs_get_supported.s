@@ -46,15 +46,13 @@ GETGSSUP CELQPRLG BASEREG=6,DSASIZE=0
 *
          USING PSA,R0         Map PSA
          L     R1,FLCCVT      Get CVT
-*   CVTGSF bit is X'01' bit at byte X'17A' off CVT 
-         TM    X'17A'(R1),X'01'    
+*   CVTGSF bit is X'01' bit at byte X'17A' off CVT
+         TM    X'17A'(R1),X'01'
          BZ    EXIT
 * Load return value 0x1 into R3 to indicate success
          LA    R3,1
          B     EXIT           Without this branch fails at runtime
 EXIT     DS    0F
-         DROP  R2
-         DROP  R1
          DROP  R0
 
          AIF  ('&SYSPARM' EQ 'BIT64').JMP3
@@ -64,10 +62,10 @@ EXIT     DS    0F
          CELQEPLG
 .JMP4    ANOP
 *
-         LTORG ,
+         LTORG
 *
          IHAPSA
          IHACSD
          CVT DSECT=YES
 *
-         END   ,
+         END
