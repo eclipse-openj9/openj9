@@ -20,8 +20,6 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
-
 ###
 ### Basic housekeeping stuff
 ### i.e. things which need to be set up before including J9vmPlatform
@@ -141,7 +139,6 @@ add_custom_target(j9vm_nlsgen
 
 set(J9VM_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
 file(MAKE_DIRECTORY "${J9VM_INCLUDE_DIR}")
-
 
 # Note: the following does not appear to be needed anymore. It is left here in case we need it in the future.
 # On z/OS, some generated files must be converted to EBCDIC for consistency.
