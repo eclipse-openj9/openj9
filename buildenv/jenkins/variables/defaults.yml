@@ -176,6 +176,9 @@ boot_jdk_default:
       next: '17'
     dir_strip:
       all: '1'
+    url:
+      all: "https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk"
+      17: "https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17%2B35_openj9-0.28.0-m2/ibm-semeru-open-jdk_${arch}_${os}_17_35_openj9-0.28.0-m2.tar.gz"
 #========================================#
 # Cuda
 #========================================#
@@ -529,6 +532,9 @@ x86-64_windows:
       all: '/cygdrive/f/Users/jenkins/bootjdks'
     arch: 'x64'
     os: 'windows'
+    url:
+      all: "https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk"
+      17: "https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17%2B35_openj9-0.28.0-m2/ibm-semeru-open-jdk_${arch}_${os}_17_35_openj9-0.28.0-m2.zip"
   release:
     all: 'windows-x86_64-server-release'
     8: 'windows-x86_64-normal-server-release'

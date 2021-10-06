@@ -1596,10 +1596,13 @@ def download_boot_jdk(bootJDKVersion, bootJDK) {
     def os = buildspec.getScalarField('boot_jdk', 'os')
     def arch = buildspec.getScalarField('boot_jdk', 'arch')
     def dirStrip = buildspec.getScalarField('boot_jdk.dir_strip', SDK_VERSION)
-    def sdkUrl = "https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk"
+    def sdkUrl = buildspec.getScalarField('boot_jdk.url', bootJDKVersion)
 
-    if (("${arch}" == "aarch64") && ("${bootJDKVersion}" == "17")) {
-        sdkUrl = "https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17%2B35_openj9-0.28.0-m2/ibm-semeru-open-jdk_aarch64_linux_17_35_openj9-0.28.0-m2.tar.gz"
+    if (sdkUrl.contains('$')) {
+        // Add all variables that could be used in a template
+        def binding = ["os":os, "arch":arch, "bootJDKVersion":bootJDKVersion]
+        def engine = new groovy.text.SimpleTemplateEngine()
+        sdkUrl = engine.createTemplate(sdkUrl).make(binding)
     }
     /*
      * Download bootjdk
