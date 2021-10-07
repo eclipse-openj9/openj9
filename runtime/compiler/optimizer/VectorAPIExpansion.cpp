@@ -1462,8 +1462,7 @@ TR_VectorAPIExpansion::TR_VectorAPIExpansion(TR::OptimizationManager *manager)
       : TR::Optimization(manager), _trace(false), _aliasTable(trMemory()), _nodeTable(trMemory())
    {
    static_assert(sizeof(methodTable) / sizeof(methodTable[0]) == _numMethods,
-                 "methodTable should contain recognized methods between TR::First_vector_api_method and TR::Last_vector_api_method");
-
+                 "methodTable should contain recognized methods between TR::FirstVectorMethod and TR::LastVectorMethod");
    }
 
 
