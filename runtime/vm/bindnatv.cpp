@@ -276,6 +276,13 @@ static inlMapping mappings[] = {
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetLong__Ljava_lang_Object_2JJJ", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPLONG },
 	{ "Java_jdk_internal_misc_Unsafe_compareAndSetInt__Ljava_lang_Object_2JII", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT },
 	{ "Java_jdk_internal_misc_Unsafe_allocateInstance__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ALLOCATE_INSTANCE },
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	{ "Java_jdk_internal_misc_Unsafe_getValue__Ljava_lang_Object_2JLjava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE },
+	{ "Java_jdk_internal_misc_Unsafe_putValue__Ljava_lang_Object_2JLjava_lang_Class_2Ljava_lang_Object_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE },
+	{ "Java_jdk_internal_misc_Unsafe_uninitializedDefaultValue__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_UNINITIALIZEDDEFAULTVALUE },
+	{ "Java_jdk_internal_misc_Unsafe_valueHeaderSize__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE },
+	{ "Java_jdk_internal_misc_Unsafe_isFlattenedArray__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY },
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	{ "Java_java_lang_Thread_onSpinWait__", J9_BCLOOP_SEND_TARGET_INL_THREAD_ON_SPIN_WAIT },
 #if JAVA_SPEC_VERSION >= 11
 	{ "Java_jdk_internal_reflect_Reflection_getClassAccessFlags__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS },
