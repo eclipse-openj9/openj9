@@ -251,6 +251,11 @@ allocateVMThread(J9JavaVM * vm, omrthread_t osThread, UDATA privateFlags, void *
 #endif
 #endif
 
+#if JAVA_SPEC_VERSION >= 16
+	newThread->ffiArgs = NULL;
+	newThread->ffiArgCount = 0;
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 	/* If an exclusive access request is in progress, mark this thread */
 
 	omrthread_monitor_enter(vm->exclusiveAccessMutex);

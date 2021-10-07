@@ -4673,6 +4673,182 @@ done:
 		return rc;
 	}
 
+#if JAVA_SPEC_VERSION >= 16
+	/**
+	 * @brief Convert argument or return type from ffi_type to J9NativeTypeCode
+	 * @param type[in] The pointer to the J9Class of the type
+	 * @return The J9NativeTypeCode corresponding to the J9Class
+	 */
+	VMINLINE U_8
+	getJ9NativeTypeCodeFromFFIType(ffi_type *type)
+	{
+		U_8 typeCode = 0;
+		if (&ffi_type_void == type) {
+			typeCode = J9NtcVoid;
+		} else if (&ffi_type_uint32 == type) {
+			typeCode = J9NtcBoolean;
+		} else if (&ffi_type_sint8 == type) {
+			typeCode = J9NtcByte;
+		} else if (&ffi_type_uint16 == type) {
+			typeCode = J9NtcChar;
+		} else if (&ffi_type_sint16 == type) {
+			typeCode = J9NtcShort;
+		} else if (&ffi_type_sint32 == type) {
+			typeCode = J9NtcInt;
+		} else if (&ffi_type_sint64 == type) {
+			typeCode = J9NtcLong;
+		} else if (&ffi_type_float == type) {
+			typeCode = J9NtcFloat;
+		} else if (&ffi_type_double == type) {
+			typeCode = J9NtcDouble;
+		} else if (&ffi_type_pointer == type) {
+			typeCode = J9NtcPointer;
+		} else {
+			Assert_VM_unreachable();
+		}
+		return typeCode;
+	}
+
+	/* jdk.internal.foreign.abi.ProgrammableInvoker:
+	 * private native long invokeNative(long functionAddr, long calloutThunk, long[] argValues);
+	 */
+	VMINLINE VM_BytecodeAction
+	inlProgrammableInvokerInvokeNative(REGISTER_ARGS_LIST)
+	{
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+#if !defined(J9VM_ENV_LITTLE_ENDIAN)
+		/* Move forward by 4 bytes to the starting address of the int numbers on the platforms
+		 * with big-endianness given UDATA (8 bytes) is used to hold all types of arguments.
+		 */
+		const U_8 extraBytesOfInt = 4;
+		const U_8 extraBytesOfByte = extraBytesOfInt + 3;
+		const U_8 extraBytesOfShortAndChar = + extraBytesOfInt + 2;
+#endif /* J9VM_ENV_LITTLE_ENDIAN */
+#if FFI_NATIVE_RAW_API
+		/* Make sure we can fit a double in each sValues_raw[] slot but assuring we end up
+		 * with an int that is a  multiple of sizeof(ffi_raw)
+		 */
+		const U_8 valRawWorstCaseMulFactor = ((sizeof(double) - 1U) / sizeof(ffi_raw)) + 1U;
+		ffi_raw sValues_raw[valRawWorstCaseMulFactor * 16];
+		ffi_raw *values_raw = NULL;
+#endif /* FFI_NATIVE_RAW_API */
+		void *sValues[16];
+		U_64 spValues[16];
+		void **values = NULL;
+		U_64 *pointerValues = NULL;
+		UDATA *returnStorage = &(_currentThread->returnValue);
+		U_64 *ffiArgs = _currentThread->ffiArgs;
+		U_64 sFfiArgs[16];
+
+		j9object_t argValues = *(j9object_t *)_sp; // argValues
+		ffi_cif *cif = (ffi_cif *)(UDATA)*(I_64 *)(_sp + 1); // calloutThunk
+		void *function = (void *)(UDATA)*(I_64 *)(_sp + 3); // functionAddr
+		U_8 returnType = getJ9NativeTypeCodeFromFFIType(cif->rtype);
+		U_32 ffiArgCount = J9INDEXABLEOBJECT_SIZE(currentThread, argValues);
+		const U_8 minimalCallout = 16;
+		bool isMinimal = (ffiArgCount <= minimalCallout);
+
+		PORT_ACCESS_FROM_JAVAVM(_vm);
+
+		if (isMinimal) {
+			values = sValues;
+			pointerValues = spValues;
+			ffiArgs = sFfiArgs;
+#if FFI_NATIVE_RAW_API
+			values_raw = sValues_raw;
+#endif /* FFI_NATIVE_RAW_API */
+		} else {
+			values = (void **)j9mem_allocate_memory(sizeof(void *) * ffiArgCount, OMRMEM_CATEGORY_VM);
+			if (NULL == values) {
+				goto ffi_OOM;
+			}
+
+			pointerValues = (U_64 *)j9mem_allocate_memory(sizeof(U_64) * ffiArgCount, OMRMEM_CATEGORY_VM);
+			if (NULL == pointerValues) {
+				goto ffi_OOM;
+			}
+
+			/* Only reallocate if the size of the existing native memory is less than the requested size */
+			if ((NULL != ffiArgs) && (ffiArgCount > _currentThread->ffiArgCount)) {
+				j9mem_free_memory(ffiArgs);
+				ffiArgs = NULL;
+			}
+			if (NULL == ffiArgs) {
+				ffiArgs = (U_64 *)j9mem_allocate_memory(sizeof(U_64) * ffiArgCount, OMRMEM_CATEGORY_VM);
+				if (NULL == ffiArgs) {
+					goto ffi_OOM;
+				}
+				_currentThread->ffiArgs = ffiArgs;
+				_currentThread->ffiArgCount = ffiArgCount;
+			}
+
+#if FFI_NATIVE_RAW_API
+			values_raw = (ffi_raw *)j9mem_allocate_memory((valRawWorstCaseMulFactor * sizeof(ffi_raw)) * ffiArgCount, OMRMEM_CATEGORY_VM);
+			if (NULL == values_raw) {
+				goto ffi_OOM;
+			}
+#endif /* FFI_NATIVE_RAW_API */
+		}
+
+		/* Convert the argument array object on the stack to a native memory for access */
+		ffiArgs = convertToNativeArgArray(_currentThread, argValues, ffiArgs);
+
+		for (U_8 i = 0; i < ffiArgCount; i++) {
+			U_8 argType = getJ9NativeTypeCodeFromFFIType(cif->arg_types[i]);
+
+			if (0 == ffiArgs[i]) {
+				values[i] = &(ffiArgs[i]);
+			} else if (J9NtcPointer == argType) {
+				/* ffi_call expects the address of the pointer is the address of the stackslot */
+				pointerValues[i] = (U_64)ffiArgs[i];
+				values[i] = &pointerValues[i];
+			} else {
+				values[i] = &(ffiArgs[i]);
+#if !defined(J9VM_ENV_LITTLE_ENDIAN)
+				/* Note: A float number is converted to int by Float.floatToIntBits() in ProgrammableInvoker */
+				if ((J9NtcInt == argType) || (J9NtcBoolean == argType) || (J9NtcFloat == argType)) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
+				} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfShortAndChar);
+				} else if (J9NtcByte == argType) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfByte);
+				}
+#endif /*J9VM_ENV_LITTLE_ENDIAN */
+			}
+		}
+
+		VM_VMAccess::inlineExitVMToJNI(_currentThread);
+#if FFI_NATIVE_RAW_API
+		ffi_ptrarray_to_raw(cif, values, values_raw);
+		ffi_raw_call(cif, FFI_FN(function), returnStorage, values_raw);
+#else /* FFI_NATIVE_RAW_API */
+		ffi_call(cif, FFI_FN(function), returnStorage, values);
+#endif /* FFI_NATIVE_RAW_API */
+		VM_VMAccess::inlineEnterVMFromJNI(_currentThread);
+
+		VM_VMHelpers::convertJNIReturnValue(returnType, returnStorage);
+		returnDoubleFromINL(REGISTER_ARGS, _currentThread->returnValue, 6);
+		goto done;
+
+ffi_OOM:
+		updateVMStruct(REGISTER_ARGS);
+		setNativeOutOfMemoryError(_currentThread, J9NLS_VM_NATIVE_OOM);
+		VMStructHasBeenUpdated(REGISTER_ARGS);
+		rc = GOTO_THROW_CURRENT_EXCEPTION;
+
+done:
+		if (!isMinimal) {
+			j9mem_free_memory(values);
+			j9mem_free_memory(pointerValues);
+#if FFI_NATIVE_RAW_API
+			j9mem_free_memory(values_raw);
+#endif /* FFI_NATIVE_RAW_API */
+		}
+
+		return rc;
+	}
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 	/* Redirect to out of line INL methods */
 	VMINLINE VM_BytecodeAction
 	outOfLineINL(REGISTER_ARGS_LIST)
@@ -9455,6 +9631,9 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_METHODHANDLE_LINKTOINTERFACE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_MEMBERNAME_DEFAULT_CONFLICT),
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#if JAVA_SPEC_VERSION >= 16
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_PROGRAMMABLEINVOKER_INVOKENATIVE),
+#endif /* JAVA_SPEC_VERSION >= 16 */
 	};
 #endif /* !defined(USE_COMPUTED_GOTO) */
 
@@ -10045,6 +10224,10 @@ runMethod: {
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_MEMBERNAME_DEFAULT_CONFLICT):
 		PERFORM_ACTION(throwDefaultConflictForMemberName(REGISTER_ARGS));
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#if JAVA_SPEC_VERSION >= 16
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_PROGRAMMABLEINVOKER_INVOKENATIVE):
+		PERFORM_ACTION(inlProgrammableInvokerInvokeNative(REGISTER_ARGS));
+#endif /* JAVA_SPEC_VERSION >= 16 */
 #if !defined(USE_COMPUTED_GOTO)
 	default:
 		Assert_VM_unreachable();

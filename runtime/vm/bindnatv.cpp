@@ -282,6 +282,9 @@ static inlMapping mappings[] = {
 #else /* JAVA_SPEC_VERSION >= 11 */
 	{ "Java_sun_reflect_Reflection_getClassAccessFlags__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS },
 #endif /* JAVA_SPEC_VERSION >= 11 */
+#if JAVA_SPEC_VERSION >= 16
+	{ "Java_jdk_internal_foreign_abi_ProgrammableInvoker_invokeNative__JJ_3J", J9_BCLOOP_SEND_TARGET_INL_PROGRAMMABLEINVOKER_INVOKENATIVE },
+#endif /* JAVA_SPEC_VERSION >= 16 */
 };
 
 typedef struct J9OutOfLineINLMapping {
@@ -304,6 +307,10 @@ static J9OutOfLineINLMapping outOfLineINLmappings[] = {
 	{ "Java_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef___3Ljava_lang_String_2", OutOfLineINL_java_lang_invoke_NativeMethodHandle_initJ9NativeCalloutDataRef },
 	{ "Java_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef__", OutOfLineINL_java_lang_invoke_NativeMethodHandle_freeJ9NativeCalloutDataRef },
 #endif /* defined(J9VM_OPT_PANAMA) */
+#if JAVA_SPEC_VERSION >= 16
+	{ "Java_jdk_internal_foreign_abi_ProgrammableInvoker_resolveRequiredFields__", OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_resolveRequiredFields },
+	{ "Java_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData___3Ljava_lang_String_2Ljava_lang_String_2Z", OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker_initCifNativeThunkData },
+#endif /* JAVA_SPEC_VERSION >= 16 */
 };
 
 static UDATA

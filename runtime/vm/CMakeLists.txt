@@ -149,6 +149,7 @@ set(main_sources
 	OutOfLineINL_com_ibm_jit_JITHelpers.cpp
 	OutOfLineINL_java_lang_invoke_NativeMethodHandle.cpp
 	OutOfLineINL_jdk_internal_misc_Unsafe.cpp
+	OutOfLineINL_jdk_internal_foreign_abi_ProgrammableInvoker.cpp
 	ownedmonitors.c
 	profilingbc.c
 	rasdump.c

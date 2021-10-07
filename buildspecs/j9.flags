@@ -1833,6 +1833,10 @@ Only available on zOS</description>
 		<description>Enables support for Project Panama features such as native method handles</description>
 		<ifRemoved>No support for Project Panama features such as native method handles</ifRemoved>
 	</flag>
+	<flag id="opt_openjdkFfi">
+		<description>Enables support for Foreign Linker API (part of Project Panama) such as native invocations to ffi_call</description>
+		<ifRemoved>No support for Foreign Linker API</ifRemoved>
+	</flag>
 	<flag id="opt_valhallaValueTypes">
 		<description>Enables support for Project Valhalla L-World Value Types</description>
 		<ifRemoved>No support for Project Valhalla L-World Value Types</ifRemoved>
