@@ -1,4 +1,4 @@
-dnl Copyright (c) 2019, 2019 IBM Corp. and others
+dnl Copyright (c) 2019, 2021 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ START_PROC(c_cInterpreter)
 	str x28, [x27,{#}J9TR_ELS_jitGlobalStorageBase]
 	add x28, sp, {#}JIT_FPR_SAVE_OFFSET(0)
 	str x28, [x27,{#}J9TR_ELS_jitFPRegisterStorageBase]
-cInterpreter:
+FUNC_LABEL(cInterpreter):
 	mov x0, J9VMTHREAD
 	ldr x27, [J9VMTHREAD,{#}J9TR_VMThread_javaVM]
 	ldr x28, [x27,{#}J9TR_JavaVM_bytecodeLoop]

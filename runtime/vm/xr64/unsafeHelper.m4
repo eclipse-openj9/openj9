@@ -1,4 +1,4 @@
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,84 +18,60 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
-	.text
+include(arm64helpers.m4)
 
 # Prototype: void unsafePut64(I_64 *address, I_64 value);
 # Defined in: #Args: 2
-	.align	2
-	.global	unsafePut64
-	.type	unsafePut64, %function
-unsafePut64:
+START_PROC(unsafePut64)
 	str	x1, [x0]
 	ret
-	.size	unsafePut64, .-unsafePut64
+END_PROC(unsafePut64)
 
 # Prototype: void unsafePut32(I_32 *address, I_32 value);
 # Defined in: #Args: 2
-	.align	2
-	.global	unsafePut32
-	.type	unsafePut32, %function
-unsafePut32:
+START_PROC(unsafePut32)
 	str	w1, [x0]
 	ret
-	.size	unsafePut32, .-unsafePut32
+END_PROC(unsafePut32)
 
 # Prototype: void unsafePut16(I_16 *address, I_16 value);
 # Defined in: #Args: 2
-	.align	2
-	.global	unsafePut16
-	.type	unsafePut16, %function
-unsafePut16:
+START_PROC(unsafePut16)
 	strh	w1, [x0]
 	ret
-	.size	unsafePut16, .-unsafePut16
+END_PROC(unsafePut16)
 
 # Prototype: void unsafePut8(I_8 *address, I_8 value);
 # Defined in: #Args: 2
-	.align	2
-	.global	unsafePut8
-	.type	unsafePut8, %function
-unsafePut8:
+START_PROC(unsafePut8)
 	strb	w1, [x0]
 	ret
-	.size	unsafePut8, .-unsafePut8
+END_PROC(unsafePut8)
 
 # Prototype: I_64 unsafeGet64(I_64 *address);
 # Defined in: #Args: 1
-	.align	2
-	.global	unsafeGet64
-	.type	unsafeGet64, %function
-unsafeGet64:
+START_PROC(unsafeGet64)
 	ldr	x0, [x0]
 	ret
-	.size	unsafeGet64, .-unsafeGet64
+END_PROC(unsafeGet64)
 
 # Prototype: I_32 unsafeGet32(I_32 *address);
 # Defined in: #Args: 1
-	.align	2
-	.global	unsafeGet32
-	.type	unsafeGet32, %function
-unsafeGet32:
+START_PROC(unsafeGet32)
 	ldr	w0, [x0]
 	ret
-	.size	unsafeGet32, .-unsafeGet32
+END_PROC(unsafeGet32)
 
 # Prototype: I_16 unsafeGet16(I_16 *address);
 # Defined in: #Args: 1
-	.align	2
-	.global	unsafeGet16
-	.type	unsafeGet16, %function
-unsafeGet16:
+START_PROC(unsafeGet16)
 	ldrsh	w0, [x0]
 	ret
-	.size	unsafeGet16, .-unsafeGet16
+END_PROC(unsafeGet16)
 
 # Prototype: I_8 unsafeGet8(I_8 *address);
 # Defined in: #Args: 1
-	.align	2
-	.global	unsafeGet8
-	.type	unsafeGet8, %function
-unsafeGet8:
+START_PROC(unsafeGet8)
 	ldrsb	w0, [x0]
 	ret
-	.size	unsafeGet8, .-unsafeGet8
+END_PROC(unsafeGet8)
