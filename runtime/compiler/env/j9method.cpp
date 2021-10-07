@@ -4354,8 +4354,6 @@ void TR_ResolvedJ9Method::construct()
             }
          else if ((classNameLen == 32) && !strncmp(className, "java/lang/invoke/InterfaceHandle", 32))
             {
-            if (!strncmp(name, "interfaceCall_", 14))
-               setRecognizedMethodInfo(TR::java_lang_invoke_InterfaceHandle_interfaceCall);
             if (!strncmp(name, "invokeExact_thunkArchetype_", 27))
                setRecognizedMethodInfo(TR::java_lang_invoke_InterfaceHandle_invokeExact);
             }
@@ -7434,8 +7432,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
    // Random handy variables
    bool isVirtual = false;
-   bool isInterface = false;
-   bool isIndirect = false;
    bool returnFromArchetype = false;
    char *nextHandleSignature = NULL;
 
@@ -8209,12 +8205,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             }
          }
          return true;
-      case TR::java_lang_invoke_InterfaceHandle_interfaceCall:
-         isInterface = true;
-         // fall through
       case TR::java_lang_invoke_VirtualHandle_virtualCall:
-         isVirtual = !isInterface;
-         isIndirect = true;
+         isVirtual = true;
          // fall through
       case TR::java_lang_invoke_DirectHandle_directCall:
          {
@@ -8231,7 +8223,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
-            stream->write(JITServer::MessageType::runFEMacro_invokeDirectHandleDirectCall, thunkDetails->getHandleRef(), isInterface, isVirtual);
+            stream->write(JITServer::MessageType::runFEMacro_invokeDirectHandleDirectCall, thunkDetails->getHandleRef(), false, isVirtual);
             auto recv = stream->read<TR_OpaqueMethodBlock*, int64_t>();
             j9method = std::get<0>(recv);
             vmSlot = std::get<1>(recv);
@@ -8245,12 +8237,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
 
             jlClass = fej9->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
-            if (isInterface)
-                {
-                TR_OpaqueClassBlock *clazz = fej9->getClassFromJavaLangClass(jlClass);
-                j9method = (TR_OpaqueMethodBlock*)&(((J9Class *)clazz)->ramMethods[vmSlot]);
-                }
-            else if (isVirtual)
+            if (isVirtual)
                {
                TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptr_t)fej9->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
                int32_t index = (int32_t)((vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()) / sizeof(vtable[0]));
@@ -8266,7 +8253,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          TR_ResolvedMethod *method = fej9->createResolvedMethod(comp()->trMemory(), j9method);
          TR::Node *callNode;
-         if (isIndirect)
+         if (isVirtual)
             {
             callNode = genNodeAndPopChildren(method->indirectCallOpCode(), archetypeParmCount+1, symRef, 1);
             TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, callNode->getArgument(0), symRefTab()->findOrCreateVftSymbolRef());
@@ -8287,9 +8274,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          // Now we substitute the proper symref
          //
          TR::MethodSymbol::Kinds kind;
-         if (isInterface)
-            kind = TR::MethodSymbol::Interface;
-         else if (isVirtual)
+         if (isVirtual)
             kind = TR::MethodSymbol::Virtual;
          else if (method->isStatic())
             kind = TR::MethodSymbol::Static;

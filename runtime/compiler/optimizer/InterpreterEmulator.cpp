@@ -1038,7 +1038,6 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
       return;
 
    bool isVirtual = false;
-   bool isInterface = false;
    TR::RecognizedMethod rm = callee->getRecognizedMethod();
    switch (rm)
       {
@@ -1069,10 +1068,8 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
          return;
          }
       // refine the leaf method handle callees
-      case TR::java_lang_invoke_InterfaceHandle_interfaceCall:
-         isInterface = true;
       case TR::java_lang_invoke_VirtualHandle_virtualCall:
-         isVirtual = !isInterface;
+         isVirtual = true;
          isIndirectCall = true;
       case TR::java_lang_invoke_DirectHandle_directCall:
          {
@@ -1114,12 +1111,7 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
                debugTrace(tracer(), "refine resolved method for leaf methodHandle [obj%d]\n", knot ? knot->getOrCreateIndex(methodHandle) : -1);
                }
 
-            if (isInterface)
-               {
-               TR_OpaqueClassBlock *clazz = fej9->getClassFromJavaLangClass(jlClass);
-               j9method = (TR_OpaqueMethodBlock*)&(((J9Class *)clazz)->ramMethods[vmSlot]);
-               }
-            else if (isVirtual)
+            if (isVirtual)
                {
                TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptr_t)fej9->getClassFromJavaLangClass(jlClass)) + J9JIT_INTERP_VTABLE_OFFSET);
                int32_t index = (int32_t)((vmSlot - J9JIT_INTERP_VTABLE_OFFSET) / sizeof(vtable[0]));

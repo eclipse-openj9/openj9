@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17 & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -93,83 +93,34 @@ final class InterfaceHandle extends IndirectHandle {
 	private static final ThunkTable _thunkTable = new ThunkTable();
 	protected final ThunkTable thunkTable(){ return _thunkTable; }
 
-	protected static native void interfaceCall_V(Object receiver, int argPlaceholder);
-	protected static native int interfaceCall_I(Object receiver, int argPlaceholder);
-	protected static native long interfaceCall_J(Object receiver, int argPlaceholder);
-	protected static native float interfaceCall_F(Object receiver, int argPlaceholder);
-	protected static native double interfaceCall_D(Object receiver, int argPlaceholder);
-	protected static native Object interfaceCall_L(Object receiver, int argPlaceholder);
-
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, int argPlaceholder) {
-		/*[IF]*/
-		if (ILGenMacros.isCustomThunk()) {
-			interfaceCall_V(receiver, argPlaceholder);
-		} else 
-		/*[ENDIF]*/
-		{
-			ComputedCalls.dispatchVirtual_V(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
-		}
+		ComputedCalls.dispatchVirtual_V(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
 	}
 
 	@FrameIteratorSkip
 	private final int invokeExact_thunkArchetype_I(Object receiver, int argPlaceholder) {
-		/*[IF]*/
-		if (ILGenMacros.isCustomThunk()) {
-			return interfaceCall_I(receiver, argPlaceholder);
-		} else 
-		/*[ENDIF]*/
-		{
-			return ComputedCalls.dispatchVirtual_I(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
-		}
+		return ComputedCalls.dispatchVirtual_I(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
 	}
 
 	@FrameIteratorSkip
 	private final long invokeExact_thunkArchetype_J(Object receiver, int argPlaceholder) {
-		/*[IF]*/
-		if (ILGenMacros.isCustomThunk()) {
-			return interfaceCall_J(receiver, argPlaceholder);
-		} else 
-		/*[ENDIF]*/
-		{
-			return ComputedCalls.dispatchVirtual_J(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
-		}
+		return ComputedCalls.dispatchVirtual_J(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
 	}
 
 	@FrameIteratorSkip
 	private final float invokeExact_thunkArchetype_F(Object receiver, int argPlaceholder) {
-		/*[IF]*/
-		if (ILGenMacros.isCustomThunk()) {
-			return interfaceCall_F(receiver, argPlaceholder);
-		} else 
-		/*[ENDIF]*/
-		{
-			return ComputedCalls.dispatchVirtual_F(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
-		}
+		return ComputedCalls.dispatchVirtual_F(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
 	}
 
 	@FrameIteratorSkip
 	private final double invokeExact_thunkArchetype_D(Object receiver, int argPlaceholder) {
-		/*[IF]*/
-		if (ILGenMacros.isCustomThunk()) {
-			return interfaceCall_D(receiver, argPlaceholder);
-		} else 
-		/*[ENDIF]*/
-		{
-			return ComputedCalls.dispatchVirtual_D(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
-		}
+		return ComputedCalls.dispatchVirtual_D(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
 	}
 
 	@FrameIteratorSkip
 	private final Object invokeExact_thunkArchetype_L(Object receiver, int argPlaceholder) {
-		/*[IF]*/
-		if (ILGenMacros.isCustomThunk()) {
-			return interfaceCall_L(receiver, argPlaceholder);
-		} else 
-		/*[ENDIF]*/
-		{
-			return ComputedCalls.dispatchVirtual_L(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
-		}
+		return ComputedCalls.dispatchVirtual_L(jittedMethodAddress(receiver), vtableIndexArgument(receiver), receiver, argPlaceholder);
 	}
 
 	/// }}} JIT support
