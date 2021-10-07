@@ -57,7 +57,7 @@ Fast_java_lang_ref_Reference_refersTo(J9VMThread *currentThread, j9object_t refe
 	if (NULL == reference) {
 		vm->internalVMFunctions->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
 	} else {
-		j9object_t referent = vm->memoryManagerFunctions->j9gc_objaccess_referenceGet(currentThread, reference);
+		j9object_t referent = J9VMJAVALANGREFREFERENCE_REFERENT_VM(vm, reference);
 
 		if (referent == target) {
 			result = JNI_TRUE;
