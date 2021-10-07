@@ -144,6 +144,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="jdk/internal/loader/NativeLibraries" versions="15-"/>
 	<classref name="jdk/internal/loader/NativeLibraries$NativeLibraryImpl" versions="15-"/>
 
+	<classref name="jdk/internal/foreign/abi/ProgrammableInvoker" flags="opt_openjdkFfi" versions="16-"/>
+
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
 	whether or not to attempt the class load.  The flags sepcified on the fields are ignored.
@@ -377,6 +379,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/MethodTypeForm" name="parameterSlotCount" signature="S" flags="opt_openjdkMethodhandle" versions="14-"/>
 
 	<fieldref class="jdk/internal/loader/NativeLibraries$NativeLibraryImpl" name="fromClass" signature="Ljava/lang/Class;" versions="15-"/>
+
+	<fieldref class="jdk/internal/foreign/abi/ProgrammableInvoker" name="cifNativeThunkAddr" signature="J" flags="opt_openjdkFfi" versions="16-"/>
+	<fieldref class="jdk/internal/foreign/abi/ProgrammableInvoker" name="argTypesAddr" signature="J" flags="opt_openjdkFfi" versions="16-"/>
 
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine

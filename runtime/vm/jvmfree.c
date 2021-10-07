@@ -271,6 +271,11 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 	}
 #endif
 
+#if JAVA_SPEC_VERSION >= 16
+	j9mem_free_memory(vmThread->ffiArgs);
+	vmThread->ffiArgs = NULL;
+#endif /* JAVA_SPEC_VERSION >= 16 */
+
 	/* Detach the thread from OMR */
 	setOMRVMThreadNameWithFlagNoLock(vmThread->omrVMThread, NULL, 0);
 	detachVMThreadFromOMR(vm, vmThread);
