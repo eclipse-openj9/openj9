@@ -8561,6 +8561,137 @@ TR::CompilationInfoPerThreadBase::aotCompilationReUpgradedToWarm(CompilationInfo
    }
 
 void
+TR::CompilationInfoPerThreadBase::processSamplingJProfiling(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails, TR_J9VMBase *vm, TR::Options *&options)
+   {
+      J9Method *method = methodDetails.getMethod();
+
+      // Check if user allows us to do samplingJProfiling.
+      // If so, enable it programmatically on a method by method basis
+      //
+      if (!options->getOption(TR_DisableSamplingJProfiling))
+         {
+         // Check other preconditions
+         if (!TR::CompilationInfo::isCompiled((J9Method*)method) &&
+            // GCR is needed for moving away from profiling
+            !options->getOption(TR_DisableGuardedCountingRecompilations) &&
+            // recompilation must be allowed to move away from profiling
+            options->allowRecompilation() && !options->getOption(TR_NoRecompile) &&
+            // exclude newInstance, methodHandle
+            (methodDetails.isOrdinaryMethod() || (methodDetails.isMethodInProgress() && options->getOption(TR_UseSamplingJProfilingForDLT))) &&
+            // exclude natives
+            !TR::CompilationInfo::isJNINative((J9Method*)method))
+            // TODO: should we prevent SamplingJProfiling for AOT bodies?
+            {
+            // Check which heuristic is enabled
+            if (options->getOption(TR_UseSamplingJProfilingForAllFirstTimeComps))
+               {
+               // Enable SamplingJprofiling
+               options->setDisabled(OMR::samplingJProfiling, false);
+               }
+            if (options->getOption(TR_UseSamplingJProfilingForLPQ) &&
+               compilationInfo->_methodBeingCompiled->_reqFromSecondaryQueue)
+               {
+               // Enable SamplingJProfiling
+               options->setDisabled(OMR::samplingJProfiling, false);
+               // May want adjust the GCR count;
+               // TODO: Estimate the initial invocation count and subtract the current
+               // invocation count; this is how many invocations I am missing.
+               // Complication: interpreter sampling may have decremented the invocation count further.
+               options->setGCRCount(500); // add 500 more invocations
+               }
+            if (options->getOption(TR_UseSamplingJProfilingForDLT) &&
+               (methodDetails.isMethodInProgress() || compileParameters->_optimizationPlan->isInducedByDLT()))
+               {
+               // Enable SamplingJProfiling
+               options->setDisabled(OMR::samplingJProfiling, false);
+               }
+            if (options->getOption(TR_UseSamplingJProfilingForInterpSampledMethods))
+               {
+               int32_t skippedCount = compilationInfo->getCompilationInfo()->getInterpSamplTrackingInfo()->findAndDelete(method);
+               if (skippedCount > 0)
+                  {
+                  // Enable SamplingJProfiling
+                  options->setDisabled(OMR::samplingJProfiling, false);
+                  // Determine the count
+                  // Determine entry weight
+                  J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+                  if (J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod))
+                     {
+                     // Don't set a count too high for loopy methods
+                     options->setGCRCount(std::min(250, skippedCount));
+                     }
+                  else
+                     {
+                     options->setGCRCount(std::min(1000, skippedCount));
+                     }
+                  //fprintf(stderr, "skipped count=%d\n", skippedCount);
+                  }
+               }
+
+            // When using SamplingJProfiling downgrade to cold to avoid overhead
+            //
+            if (!options->isDisabled(OMR::samplingJProfiling) &&
+               // Check whether we are allowed to downgrade
+               !options->getOption(TR_DontDowngradeToCold))
+               {
+               compileParameters->_optimizationPlan->setOptLevel(cold);
+               compileParameters->_optimizationPlan->setDowngradedDueToSamplingJProfiling(true);
+               options->setOptLevel(cold);
+               // TODO: should we disable sampling to prevent upgrades before the method collects enough profiling info?
+               }
+            }
+         }
+
+      bool doJProfile = false;
+      if (compilationInfo->_methodBeingCompiled->_reqFromJProfilingQueue)
+         {
+         doJProfile = true;
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Processing req from JPQ", (uint32_t)compilationInfo->getCompilationInfo()->getPersistentInfo()->getElapsedTime());
+         }
+      else
+         {
+         // Is this request a candidate for JProfiling?
+         if (TR_JProfilingQueue::isJProfilingCandidate(compilationInfo->_methodBeingCompiled, options, vm))
+            {
+            static char *disableFilterOnJProfiling = feGetEnv("TR_DisableFilterOnJProfiling");
+            // Apply the filter based on time
+            if (disableFilterOnJProfiling)
+               {
+               doJProfile = true;
+               }
+            else if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP ||
+               compilationInfo->getCompilationInfo()->getPersistentInfo()->getJitState() == STARTUP_STATE)
+               {
+               // We want to JProfile this method, but maybe not just now
+               if (compilationInfo->getCompilationInfo()->canProcessJProfilingRequest())
+                  {
+                  doJProfile = true;
+                  }
+               else
+                  {
+                  compilationInfo->_addToJProfilingQueue = true;
+                  // Since we are going to recompile this method based on
+                  // the JProfiling queue, disable any GCR recompilation
+                  options->setOption(TR_DisableGuardedCountingRecompilations);
+                  }
+               }
+            }
+         }
+
+      // JProfiling may be enabled if TR_EnableJProfilingInProfilingCompilations is set and its a profiling compilation.
+      // See optimizer/JProfilingBlock.cpp
+      if (!doJProfile)
+         {
+         options->setOption(TR_EnableJProfiling, false);
+         }
+      else // JProfiling bodies should not use GCR trees
+         {
+         options->setOption(TR_DisableGuardedCountingRecompilations);
+         }
+   }
+
+void
 TR::CompilationInfoPerThreadBase::tweakNonAotLoadCompilationStrategy(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails, TR_J9VMBase *vm, TR::Options *&options, bool &reducedWarm)
    {
       J9JITConfig *jitConfig = compilationInfo->_jitConfig;
@@ -8589,130 +8720,7 @@ TR::CompilationInfoPerThreadBase::tweakNonAotLoadCompilationStrategy(Compilation
             options->setOption(TR_QuickProfile); // to reduce the frequency/count for profiling to 100/2
             }
 
-         // Check if user allows us to do samplingJProfiling.
-         // If so, enable it programmatically on a method by method basis
-         //
-         if (!options->getOption(TR_DisableSamplingJProfiling))
-            {
-            // Check other preconditions
-            if (!TR::CompilationInfo::isCompiled((J9Method*)method) &&
-               // GCR is needed for moving away from profiling
-               !options->getOption(TR_DisableGuardedCountingRecompilations) &&
-               // recompilation must be allowed to move away from profiling
-               options->allowRecompilation() && !options->getOption(TR_NoRecompile) &&
-               // exclude newInstance, methodHandle
-               (methodDetails.isOrdinaryMethod() || (methodDetails.isMethodInProgress() && options->getOption(TR_UseSamplingJProfilingForDLT))) &&
-               // exclude natives
-               !TR::CompilationInfo::isJNINative((J9Method*)method))
-               // TODO: should we prevent SamplingJProfiling for AOT bodies?
-               {
-               // Check which heuristic is enabled
-               if (options->getOption(TR_UseSamplingJProfilingForAllFirstTimeComps))
-                  {
-                  // Enable SamplingJprofiling
-                  options->setDisabled(OMR::samplingJProfiling, false);
-                  }
-               if (options->getOption(TR_UseSamplingJProfilingForLPQ) &&
-                  compilationInfo->_methodBeingCompiled->_reqFromSecondaryQueue)
-                  {
-                  // Enable SamplingJProfiling
-                  options->setDisabled(OMR::samplingJProfiling, false);
-                  // May want adjust the GCR count;
-                  // TODO: Estimate the initial invocation count and subtract the current
-                  // invocation count; this is how many invocations I am missing.
-                  // Complication: interpreter sampling may have decremented the invocation count further.
-                  options->setGCRCount(500); // add 500 more invocations
-                  }
-               if (options->getOption(TR_UseSamplingJProfilingForDLT) &&
-                  (methodDetails.isMethodInProgress() || compileParameters->_optimizationPlan->isInducedByDLT()))
-                  {
-                  // Enable SamplingJProfiling
-                  options->setDisabled(OMR::samplingJProfiling, false);
-                  }
-               if (options->getOption(TR_UseSamplingJProfilingForInterpSampledMethods))
-                  {
-                  int32_t skippedCount = compilationInfo->getCompilationInfo()->getInterpSamplTrackingInfo()->findAndDelete(method);
-                  if (skippedCount > 0)
-                     {
-                     // Enable SamplingJProfiling
-                     options->setDisabled(OMR::samplingJProfiling, false);
-                     // Determine the count
-                     // Determine entry weight
-                     J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-                     if (J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod))
-                        {
-                        // Don't set a count too high for loopy methods
-                        options->setGCRCount(std::min(250, skippedCount));
-                        }
-                     else
-                        {
-                        options->setGCRCount(std::min(1000, skippedCount));
-                        }
-                     //fprintf(stderr, "skipped count=%d\n", skippedCount);
-                     }
-                  }
-
-               // When using SamplingJProfiling downgrade to cold to avoid overhead
-               //
-               if (!options->isDisabled(OMR::samplingJProfiling) &&
-                  // Check whether we are allowed to downgrade
-                  !options->getOption(TR_DontDowngradeToCold))
-                  {
-                  compileParameters->_optimizationPlan->setOptLevel(cold);
-                  compileParameters->_optimizationPlan->setDowngradedDueToSamplingJProfiling(true);
-                  options->setOptLevel(cold);
-                  // TODO: should we disable sampling to prevent upgrades before the method collects enough profiling info?
-                  }
-               }
-            }
-
-         bool doJProfile = false;
-         if (compilationInfo->_methodBeingCompiled->_reqFromJProfilingQueue)
-            {
-            doJProfile = true;
-            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Processing req from JPQ", (uint32_t)compilationInfo->getCompilationInfo()->getPersistentInfo()->getElapsedTime());
-            }
-         else
-            {
-            // Is this request a candidate for JProfiling?
-            if (TR_JProfilingQueue::isJProfilingCandidate(compilationInfo->_methodBeingCompiled, options, vm))
-               {
-               static char *disableFilterOnJProfiling = feGetEnv("TR_DisableFilterOnJProfiling");
-               // Apply the filter based on time
-               if (disableFilterOnJProfiling)
-                  {
-                  doJProfile = true;
-                  }
-               else if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP ||
-                  compilationInfo->getCompilationInfo()->getPersistentInfo()->getJitState() == STARTUP_STATE)
-                  {
-                  // We want to JProfile this method, but maybe not just now
-                  if (compilationInfo->getCompilationInfo()->canProcessJProfilingRequest())
-                     {
-                     doJProfile = true;
-                     }
-                  else
-                     {
-                     compilationInfo->_addToJProfilingQueue = true;
-                     // Since we are going to recompile this method based on
-                     // the JProfiling queue, disable any GCR recompilation
-                     options->setOption(TR_DisableGuardedCountingRecompilations);
-                     }
-                  }
-               }
-            }
-
-         // JProfiling may be enabled if TR_EnableJProfilingInProfilingCompilations is set and its a profiling compilation.
-         // See optimizer/JProfilingBlock.cpp
-         if (!doJProfile)
-            {
-            options->setOption(TR_EnableJProfiling, false);
-            }
-         else // JProfiling bodies should not use GCR trees
-            {
-            options->setOption(TR_DisableGuardedCountingRecompilations);
-            }
+         processSamplingJProfiling(compilationInfo, compileParameters, methodDetails, vm, options);
 
          if (compilationInfo->_methodBeingCompiled->_oldStartPC != 0)
             {
