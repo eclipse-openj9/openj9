@@ -146,7 +146,6 @@ private:
 	bool _collectStringConstantsEnabled;  /**< Local cached value which determines whether string constants are roots */
 
 	bool _tracingEnabled;  /**< Temporary variable to enable tracing of activity */
-	bool _cacheTracingEnabled;  /**< Temporary variable to enable tracing of activity */
 	MM_AllocationContextTarok *_commonContext;	/**< The common context is used as an opaque token to represent cases where we don't want to relocate objects during NUMA-aware copy-forward since relocating to the common context is currently disabled */
 	MM_CopyForwardCompactGroup *_compactGroupBlock; /**< A block of MM_CopyForwardCompactGroup structs which is subdivided among the GC threads */ 
 	UDATA _arraySplitSize; /**< The number of elements to be scanned in each array chunk (this determines the degree of parallelization) */
@@ -289,7 +288,7 @@ private:
 	void addCacheEntryToScanCacheListAndNotify(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *newCacheEntry);
 	
 	void flushCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache);
-	void clearCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache);
+	bool clearCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache);
 
 	/**
 	 * add OwnableSynchronizerObject in the buffer if reason == SCAN_REASON_COPYSCANCACHE || SCAN_REASON_PACKET
@@ -1124,6 +1123,11 @@ public:
 		return false;
 	}
 
+	void abandonTLHRemainder(MM_EnvironmentVLHGC *env, bool preserveRemainders = false);
+
+	/* after Global GC or before first PGC after GMP, we need to reset all of TLHRemainders */
+	void resetAllTLHRemainders(MM_EnvironmentVLHGC *env);
+	MMINLINE void discardHeapChunk(MM_CopyForwardCompactGroup *compactGroupForMarkData, void *base, void *top);
 	friend class MM_CopyForwardGMPCardCleaner;
 	friend class MM_CopyForwardNoGMPCardCleaner;
 	friend class MM_CopyForwardSchemeTask;
