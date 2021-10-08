@@ -7953,6 +7953,36 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    return startPC;
    }
 
+void
+TR::CompilationInfoPerThreadBase::adjustOptionsForAotCompilation(bool isAotCompilationReUpgradedToWarm, TR_J9VMBase *vm, TR::Options *&options)
+   {
+      // Adjust Options for AOT compilation
+      if (vm->isAOT_DEPRECATED_DO_NOT_USE())
+         {
+         // Disable dynamic literal pool for AOT because of an unresolved data snippet patching issue in which
+         // the "Address Of Ref. Instruction" in the unresolved data snippet points to the wrong load instruction
+         options->setOption(TR_DisableOnDemandLiteralPoolRegister);
+
+         options->setOption(TR_DisableIPA);
+         options->setOption(TR_DisableEDO);
+         options->setDisabled(OMR::invariantArgumentPreexistence, true);
+         options->setOption(TR_DisableHierarchyInlining);
+         if (options->getInitialBCount() == 0 || options->getInitialCount() == 0)
+            options->setOption(TR_DisableDelayRelocationForAOTCompilations, true);
+
+         // Perform less inlining if we artificially upgraded this AOT compilation to warm
+         if (isAotCompilationReUpgradedToWarm)
+            options->setInlinerOptionsForAggressiveAOT();
+
+         TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
+
+         // Do not delay relocations for JITServer
+         // FIXME: JITServer does not reach this code
+         //if (compilationInfo->getCompilationInfo()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+         //   options->setOption(TR_DisableDelayRelocationForAOTCompilations);
+         }
+   }
+
 bool
 TR::CompilationInfoPerThreadBase::aotCompilationReUpgradedToWarm(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR_OpaqueMethodBlock *method)
    {
@@ -8051,31 +8081,7 @@ TR::CompilationInfoPerThreadBase::processNonOutOfProcessComp(CompilationInfoPerT
          options->setOption(TR_UseSymbolValidationManager, false);
          }
 
-      // Adjust Options for AOT compilation
-      if (vm->isAOT_DEPRECATED_DO_NOT_USE())
-         {
-         // Disable dynamic literal pool for AOT because of an unresolved data snippet patching issue in which
-         // the "Address Of Ref. Instruction" in the unresolved data snippet points to the wrong load instruction
-         options->setOption(TR_DisableOnDemandLiteralPoolRegister);
-
-         options->setOption(TR_DisableIPA);
-         options->setOption(TR_DisableEDO);
-         options->setDisabled(OMR::invariantArgumentPreexistence, true);
-         options->setOption(TR_DisableHierarchyInlining);
-         if (options->getInitialBCount() == 0 || options->getInitialCount() == 0)
-            options->setOption(TR_DisableDelayRelocationForAOTCompilations, true);
-
-         // Perform less inlining if we artificially upgraded this AOT compilation to warm
-         if (isAotCompilationReUpgradedToWarm)
-            options->setInlinerOptionsForAggressiveAOT();
-
-         TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
-
-         // Do not delay relocations for JITServer
-         // FIXME: JITServer does not reach this code
-         //if (compilationInfo->getCompilationInfo()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-         //   options->setOption(TR_DisableDelayRelocationForAOTCompilations);
-         }
+      adjustOptionsForAotCompilation(isAotCompilationReUpgradedToWarm, vm, options);
 
       if (compilationInfo->_methodBeingCompiled->_optimizationPlan->disableCHOpts())
          options->disableCHOpts();
