@@ -1084,6 +1084,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, result, jitConfig->javaVM->osrGlobalBufferSize);
          }
          break;
+      case MessageType::VM_methodOfDirectOrVirtualHandle:
+         {
+         auto recv = client->getRecvData<uintptr_t*, bool>();
+         uintptr_t *mh = std::get<0>(recv);
+         bool isVirtual = std::get<1>(recv);
+         TR_J9VMBase::MethodOfHandle moh =
+            fe->methodOfDirectOrVirtualHandle(mh, isVirtual);
+         client->write(response, moh.j9method, moh.vmSlot);
+         }
+         break;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
       case MessageType::VM_targetMethodFromMemberName:
          {
@@ -2179,35 +2189,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, sourceParmClass, targetParmClass);
          }
          break;
-      case MessageType::runFEMacro_invokeDirectHandleDirectCall:
-         {
-         auto recv = client->getRecvData<uintptr_t*, bool, bool>();
-         TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fe);
-         uintptr_t methodHandle   = *std::get<0>(recv);
-         int64_t vmSlot         = fe->getInt64Field(methodHandle, "vmSlot");
-         bool isInterface = std::get<1>(recv);
-         bool isVirtual = std::get<2>(recv);
-         TR_OpaqueMethodBlock * j9method;
-
-         uintptr_t jlClass = fe->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
-         if (isInterface)
-             {
-             TR_OpaqueClassBlock *clazz = fe->getClassFromJavaLangClass(jlClass);
-             j9method = (TR_OpaqueMethodBlock*)&(((J9Class *)clazz)->ramMethods[vmSlot]);
-             }
-         else if (isVirtual)
-            {
-            TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptr_t)fe->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
-            int32_t index = (int32_t)((vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()) / sizeof(vtable[0]));
-            j9method = vtable[index];
-            }
-         else
-            {
-            j9method = (TR_OpaqueMethodBlock*)(intptr_t)vmSlot;
-            }
-         client->write(response, j9method, vmSlot);
-         }
-         break;
       case MessageType::runFEMacro_invokeSpreadHandleArrayArg:
          {
          auto recv = client->getRecvData<uintptr_t*>();
@@ -2713,33 +2694,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             }
 
          client->write(response, resultIndex, objectPointerReference);
-         }
-         break;
-      case MessageType::KnownObjectTable_invokeDirectHandleDirectCall:
-         {
-         auto recv = (client->getRecvData<uintptr_t*, bool>());
-         uintptr_t *methodHandleLocation = std::get<0>(recv);
-         bool knotEnabled = std::get<1>(recv);
-
-         TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptr_t *objectPointerReference = NULL;
-         int64_t vmSlot = 0;
-         uintptr_t jlClass = 0;
-
-            {
-            TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fe);
-            uintptr_t methodHandle = *methodHandleLocation;
-            vmSlot = fe->getInt64Field(methodHandle, "vmSlot");
-            uintptr_t jlClass = fe->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
-
-            if (knotEnabled && knot)
-               {
-               resultIndex = knot->getOrCreateIndex(methodHandle);
-               objectPointerReference = knot->getPointerLocation(resultIndex);
-               }
-            }
-
-         client->write(response, vmSlot, jlClass, resultIndex, objectPointerReference);
          }
          break;
       case MessageType::KnownObjectTable_createSymRefWithKnownObject:

@@ -8214,44 +8214,12 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (!thunkDetails)
             return false;
 
-         TR_OpaqueMethodBlock *j9method;
-         uintptr_t methodHandle;
-         int64_t vmSlot;
-         uintptr_t jlClass;
+         TR_J9VMBase::MethodOfHandle moh = fej9->methodOfDirectOrVirtualHandle(
+            thunkDetails->getHandleRef(), isVirtual);
 
-#if defined(J9VM_OPT_JITSERVER)
-         if (comp()->isOutOfProcessCompilation())
-            {
-            auto stream = TR::CompilationInfo::getStream();
-            stream->write(JITServer::MessageType::runFEMacro_invokeDirectHandleDirectCall, thunkDetails->getHandleRef(), false, isVirtual);
-            auto recv = stream->read<TR_OpaqueMethodBlock*, int64_t>();
-            j9method = std::get<0>(recv);
-            vmSlot = std::get<1>(recv);
-            }
-         else
-#endif /* defined(J9VM_OPT_JITSERVER) */
-            {
-            TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fej9);
-            methodHandle   = *thunkDetails->getHandleRef();
-            vmSlot         = fej9->getInt64Field(methodHandle, "vmSlot");
+         TR_ASSERT_FATAL(moh.j9method != NULL, "Must have a j9method to generate a custom call");
 
-
-            jlClass = fej9->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
-            if (isVirtual)
-               {
-               TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptr_t)fej9->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
-               int32_t index = (int32_t)((vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()) / sizeof(vtable[0]));
-               j9method = vtable[index];
-               }
-            else
-               {
-               j9method = (TR_OpaqueMethodBlock*)(intptr_t)vmSlot;
-               }
-            }
-
-         TR_ASSERT(j9method, "Must have a j9method to generate a custom call");
-
-         TR_ResolvedMethod *method = fej9->createResolvedMethod(comp()->trMemory(), j9method);
+         TR_ResolvedMethod *method = fej9->createResolvedMethod(comp()->trMemory(), moh.j9method);
          TR::Node *callNode;
          if (isVirtual)
             {
@@ -8287,7 +8255,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (isVirtual)
             {
-            callNode->getSymbolReference()->setOffset(-(vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()));
+            callNode->getSymbolReference()->setOffset(-(moh.vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()));
             genTreeTop(genNullCheck(callNode));
             }
          else

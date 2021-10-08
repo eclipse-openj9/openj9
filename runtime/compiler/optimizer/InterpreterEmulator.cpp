@@ -1074,56 +1074,12 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
       case TR::java_lang_invoke_DirectHandle_directCall:
          {
          isIndirectCall = false;
-         TR_OpaqueMethodBlock *j9method;
-         int64_t vmSlot = 0;
-         uintptr_t jlClass = 0;
          TR_J9VMBase *fej9 = comp()->fej9();
-            {
-            TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-#if defined(J9VM_OPT_JITSERVER)
-            if (comp()->isOutOfProcessCompilation())
-               {
-               bool knotEnabled = (knot != NULL);
-               uintptr_t *methodHandleLocation = _calltarget->_calleeMethod->getMethodHandleLocation();
-               auto stream = TR::CompilationInfo::getStream();
-               stream->write(JITServer::MessageType::KnownObjectTable_invokeDirectHandleDirectCall, methodHandleLocation, knotEnabled);
+         TR_J9VMBase::MethodOfHandle moh = fej9->methodOfDirectOrVirtualHandle(
+            _calltarget->_calleeMethod->getMethodHandleLocation(), isVirtual);
 
-               auto recv = stream->read<int64_t, uintptr_t, TR::KnownObjectTable::Index, uintptr_t*>();
-               vmSlot = std::get<0>(recv);
-               jlClass = std::get<1>(recv);
-               TR::KnownObjectTable::Index resultIndex = std::get<2>(recv);
-               uintptr_t *objectPointerReference = std::get<3>(recv);
-
-               if (knot && (resultIndex != TR::KnownObjectTable::UNKNOWN))
-                  {
-                  knot->updateKnownObjectTableAtServer(resultIndex, objectPointerReference);
-                  }
-
-               debugTrace(tracer(), "refine resolved method for leaf methodHandle [obj%d]\n", resultIndex);
-               }
-            else
-#endif /* defined(J9VM_OPT_JITSERVER) */
-               {
-               TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fej9);
-               uintptr_t methodHandle = *_calltarget->_calleeMethod->getMethodHandleLocation();
-               vmSlot = fej9->getInt64Field(methodHandle, "vmSlot");
-               jlClass = fej9->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
-               debugTrace(tracer(), "refine resolved method for leaf methodHandle [obj%d]\n", knot ? knot->getOrCreateIndex(methodHandle) : -1);
-               }
-
-            if (isVirtual)
-               {
-               TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptr_t)fej9->getClassFromJavaLangClass(jlClass)) + J9JIT_INTERP_VTABLE_OFFSET);
-               int32_t index = (int32_t)((vmSlot - J9JIT_INTERP_VTABLE_OFFSET) / sizeof(vtable[0]));
-               j9method = vtable[index];
-               }
-            else
-               {
-               j9method = (TR_OpaqueMethodBlock*)(intptr_t)vmSlot;
-               }
-            }
-         TR_ASSERT(j9method, "Must have a j9method to generate a custom call");
-         callee = fej9->createResolvedMethod(this->trMemory(), j9method);
+         TR_ASSERT_FATAL(moh.j9method != NULL, "Must have a j9method to generate a custom call");
+         callee = fej9->createResolvedMethod(this->trMemory(), moh.j9method);
          return;
          }
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)

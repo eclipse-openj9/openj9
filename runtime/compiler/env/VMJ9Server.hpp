@@ -219,6 +219,8 @@ public:
    virtual UDATA getLowTenureAddress() override;
    virtual UDATA getHighTenureAddress() override;
 
+   virtual MethodOfHandle methodOfDirectOrVirtualHandle(uintptr_t *mh, bool isVirtual);
+
    // Openjdk implementation
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    virtual TR_OpaqueMethodBlock* targetMethodFromMemberName(uintptr_t memberName) override;
