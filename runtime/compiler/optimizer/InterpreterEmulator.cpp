@@ -1601,9 +1601,10 @@ InterpreterEmulator::visitInvokestatic()
          }
       else if (isIndirectCall)
          {
+         int32_t noCPIndex = -1; // The method is not referenced via the constant pool
          callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
                _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
-               interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex,
+               interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), noCPIndex,
                _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
                *_newBCInfo, comp(), _recursionDepth, allconsts);
          }
