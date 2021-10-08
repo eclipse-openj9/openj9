@@ -48,5 +48,7 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
+		<!-- Temporarily disable due to issue https://github.com/eclipse-openj9/openj9/issues/13657 -->
+		<aot>nonapplicable</aot>
 	</test>
 </playlist>
