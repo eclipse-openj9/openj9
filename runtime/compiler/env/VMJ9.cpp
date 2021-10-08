@@ -4837,8 +4837,11 @@ TR_J9VMBase::MethodOfHandle TR_J9VMBase::methodOfDirectOrVirtualHandle(
    uintptr_t methodHandle = *mh;
    result.vmSlot = getInt64Field(methodHandle, "vmSlot");
 
-   uintptr_t jlClass = getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
+   uintptr_t jlClass = getReferenceField(
+      methodHandle, "referenceClass", "Ljava/lang/Class;");
+
    TR_OpaqueClassBlock *clazz = getClassFromJavaLangClass(jlClass);
+
    if (isVirtual)
       {
       size_t vftStartOffset = TR::Compiler->vm.getInterpreterVTableOffset();

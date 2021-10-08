@@ -1072,15 +1072,23 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
          isVirtual = true;
       case TR::java_lang_invoke_DirectHandle_directCall:
          {
-         isIndirectCall = isVirtual;
          TR_J9VMBase *fej9 = comp()->fej9();
          TR_J9VMBase::MethodOfHandle moh = fej9->methodOfDirectOrVirtualHandle(
             _calltarget->_calleeMethod->getMethodHandleLocation(), isVirtual);
 
          TR_ASSERT_FATAL(moh.j9method != NULL, "Must have a j9method to generate a custom call");
          uint32_t vTableSlot = isVirtual ? (uint32_t)moh.vmSlot : 0;
-         callee = fej9->createResolvedMethodWithVTableSlot(
+         TR_ResolvedMethod *newCallee = fej9->createResolvedMethodWithVTableSlot(
             trMemory(), vTableSlot, moh.j9method, _calltarget->_calleeMethod);
+
+         // Don't refine virtualCall to an interface method, which will confuse
+         // the virtual call site logic in visitInvokestatic()
+         TR_OpaqueClassBlock *defClass = newCallee->classOfMethod();
+         if (isVirtual && TR::Compiler->cls.isInterfaceClass(comp(), defClass))
+            return;
+
+         isIndirectCall = isVirtual;
+         callee = newCallee;
          return;
          }
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
