@@ -170,7 +170,6 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	, _collectStringConstantsEnabled(false)
 	, _tracingEnabled(false)
-	, _cacheTracingEnabled(false)
 	, _commonContext(NULL)
 	, _compactGroupBlock(NULL)
 	, _arraySplitSize(0)
@@ -1121,7 +1120,7 @@ MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *o
 {
 	void *addrBase = NULL;
 	void *addrTop = NULL;
-	UDATA minimumRequiredCacheSize = objectReserveSizeInBytes;
+	uintptr_t minimumRequiredCacheSize = objectReserveSizeInBytes;
 
 	Assert_MM_objectAligned(env, objectReserveSizeInBytes);
 
@@ -1132,19 +1131,45 @@ MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *o
 	Assert_MM_true(compactGroup < _compactGroupMaxCount);
 
 	MM_CopyScanCacheVLHGC *copyCache = copyForwardCompactGroup->_copyCache;
-	if(NULL != copyCache) {
-		Assert_MM_false(copyCache->isSplitArray());
-		/* A survivor copy scan cache exists - check if there is room */
-		if((((UDATA)copyCache->cacheTop) - ((UDATA)copyCache->cacheAlloc)) >= minimumRequiredCacheSize) {
-			/* There is room, use the current copy cache */
-			if(_cacheTracingEnabled) {
-				PORT_ACCESS_FROM_ENVIRONMENT(env);
-				j9tty_printf(PORTLIB, "!", addrBase);
+	/* A survivor copy scan cache exists - check if there is room */
+	if ((NULL == copyCache) || (((uintptr_t)copyCache->cacheTop - (uintptr_t)copyCache->cacheAlloc) < minimumRequiredCacheSize)) {
+		/* There is no room for current copy cache */
+		MM_LightweightNonReentrantLock *listLock = NULL;
+		if (objectReserveSizeInBytes < copyForwardCompactGroup->_failedAllocateSize) {
+			/* try to use TLH remainder from previous discard */
+			if (((uintptr_t)copyForwardCompactGroup->_TLHRemainderTop - (uintptr_t)copyForwardCompactGroup->_TLHRemainderBase) >= minimumRequiredCacheSize) {
+				addrBase = copyForwardCompactGroup->_TLHRemainderBase;
+				addrTop = copyForwardCompactGroup->_TLHRemainderTop;
+				Assert_MM_true(NULL != copyForwardCompactGroup->_TLHRemainderBase);
+				Assert_MM_true(NULL != copyForwardCompactGroup->_TLHRemainderTop);
+				copyForwardCompactGroup->resetTLHRemainder();
+
+				uintptr_t sublistCount = _reservedRegionList[compactGroup]._sublistCount;
+				uintptr_t sublistIndex = env->getWorkerID() % sublistCount;
+				MM_ReservedRegionListHeader::Sublist *regionList = &_reservedRegionList[compactGroup]._sublists[sublistIndex];
+				listLock = &regionList->_lock;
+			} else if (_extensions->tlhSurvivorDiscardThreshold < minimumRequiredCacheSize) {
+				addrBase = reserveMemoryForObject(env, compactGroup, minimumRequiredCacheSize, &listLock);
+
+				if (NULL != addrBase) {
+					addrTop = (void *)(((U_8 *)addrBase) + minimumRequiredCacheSize);
+				} else {
+					/* failed to allocate - set the threshold to short-circuit future alloc attempts */
+					copyForwardCompactGroup->_failedAllocateSize = objectReserveSizeInBytes;
+				}
+			}  else {
+				UDATA desiredCacheSize = getDesiredCopyCacheSize(env, compactGroup);
+				if (!reserveMemoryForCache(env, compactGroup, desiredCacheSize, &addrBase, &addrTop, &listLock)) {
+					/* failed to allocate - set the threshold to short-circut future alloc attempts:
+					 * we should never (in this GC) attempt to allocate a cache (TLH) from this compact group
+					 */
+					copyForwardCompactGroup->_failedAllocateSize = 0;
+				}
 			}
-		} else {
-			/* we can't use this cache as a destination so stop, flush, and clear.  If we succeed 
-			 * in the allocate, we will find another cache.
-			 */
+		}
+
+		if (NULL != copyCache) {
+			/* we can't use this cache as a destination so release local cache first. */
 			MM_CopyScanCacheVLHGC * stoppedCache = stopCopyingIntoCache(env, compactGroup);
 			Assert_MM_true(stoppedCache == copyCache);
 
@@ -1157,7 +1182,7 @@ MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *o
 				Assert_MM_true(copyCache != env->_deferredScanCache);
 				/* Either cache is completely scanned or it has never been scanned.
 				 * If it has never been scanned, it is here that we should decide if there is scan work to do
-				 * and whether to add to the scan list 
+				 * and whether to add to the scan list
 				 */
 				if (copyCache->isScanWorkAvailable()) {
 					/* must not have local references still in use before adding to global list */
@@ -1166,7 +1191,7 @@ MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *o
 					Assert_MM_true(copyCache->scanCurrent <= copyCache->cacheAlloc);
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 					env->_copyForwardStats._releaseScanListCount += 1;
-#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */	
+#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 					addCacheEntryToScanCacheListAndNotify(env, copyCache);
 					copyCache = NULL;
 				} else {
@@ -1175,57 +1200,19 @@ MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *o
 					copyCache = NULL;
 				}
 			}
-			
-			Assert_MM_true(NULL == copyCache);
 		}
-	}
 
-	/* if objectReserveSizeInBytes is larger then the size we failed to allocate in past during this (aborted) collect, do not bother attempting again */
-	if (NULL == copyCache && (objectReserveSizeInBytes < copyForwardCompactGroup->_failedAllocateSize)) {
-		Assert_MM_true(NULL == copyForwardCompactGroup->_copyCache);
-	
-		/* The copy cache was null or did not have enough room */
-		bool allocateResult = false;
-		MM_LightweightNonReentrantLock *listLock = NULL;
-	
-		if(_minCacheSize < minimumRequiredCacheSize) {
-			addrBase = reserveMemoryForObject(env, compactGroup, minimumRequiredCacheSize, &listLock);
-	
-			if(NULL != addrBase) {
-				addrTop = (void *)(((U_8 *)addrBase) + minimumRequiredCacheSize);
-				if(_cacheTracingEnabled) {
-					PORT_ACCESS_FROM_ENVIRONMENT(env);
-					j9tty_printf(PORTLIB, "Cache specific size %zu allocated: %p %p\n", minimumRequiredCacheSize, addrBase, addrTop);
-				}
-				allocateResult = true;
-			} else {
-				/* failed to allocate - set the threshold to short-circuit future alloc attempts */
-				copyForwardCompactGroup->_failedAllocateSize = objectReserveSizeInBytes;
-			}
-		} else {
-			UDATA desiredCacheSize = getDesiredCopyCacheSize(env, compactGroup);
-			if(reserveMemoryForCache(env, compactGroup, desiredCacheSize, &addrBase, &addrTop, &listLock)) {
-				if(_cacheTracingEnabled) {
-					PORT_ACCESS_FROM_ENVIRONMENT(env);
-					j9tty_printf(PORTLIB, "Cache TLH %zu allocated: %p %p\n", ((UDATA)addrTop) - ((UDATA)addrBase), addrBase, addrTop);
-				}
-				allocateResult = true;
-			} else {
-				/* failed to allocate - set the threshold to short-circut future alloc attempts:
-				 * we should never (in this GC) attempt to allocate a cache (TLH) from this compact group 
-				 */
-				copyForwardCompactGroup->_failedAllocateSize = 0;
-			}
-		}
-	
-		if(allocateResult) {
+		if (NULL != addrBase) {
+			/* allocate from reserveMemory or TLHRemainder */
+			Assert_MM_true(NULL == copyCache);
+
 			/* If we didn't already have a copy cache structure or dropped it earlier in the call, allocate a new one */
 			copyCache = getFreeCache(env);
 			if (NULL != copyCache) {
 				copyForwardCompactGroup->_copyCache = copyCache;
 				copyForwardCompactGroup->_copyCacheLock = listLock;
 				reinitCache(env, copyCache, addrBase, addrTop, compactGroup);
-				
+
 				Assert_MM_true(NULL != listLock);
 				Assert_MM_true(0 == copyForwardCompactGroup->_freeMemoryMeasured);
 			} else {
@@ -1233,19 +1220,19 @@ MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *o
 				Assert_MM_true(abortFlagRaised());
 			}
 		}
-	}
 
-	if (NULL == copyCache) {
-		/* Record stats */
-		copyForwardCompactGroup->_failedCopiedObjects += 1;
-		copyForwardCompactGroup->_failedCopiedBytes += objectReserveSizeInBytes;
-	} else {
-		Assert_MM_true(NULL != copyCache->cacheAlloc);
-		Assert_MM_true(NULL != copyCache->cacheTop);
-		Assert_MM_true(NULL != copyCache->cacheBase);
-		if (_extensions->tarokEnableExpensiveAssertions) {
-			/* verify that the mark map for this range is clear */
-			Assert_MM_true(NULL == MM_HeapMapIterator(_extensions, _markMap, (UDATA*)copyCache->cacheAlloc, (UDATA*)copyCache->cacheTop, false).nextObject());
+		if (NULL == copyCache) {
+			/* Record stats */
+			copyForwardCompactGroup->_failedCopiedObjects += 1;
+			copyForwardCompactGroup->_failedCopiedBytes += objectReserveSizeInBytes;
+		} else {
+			Assert_MM_true(NULL != copyCache->cacheAlloc);
+			Assert_MM_true(NULL != copyCache->cacheTop);
+			Assert_MM_true(NULL != copyCache->cacheBase);
+			if (_extensions->tarokEnableExpensiveAssertions) {
+				/* verify that the mark map for this range is clear */
+				Assert_MM_true(NULL == MM_HeapMapIterator(_extensions, _markMap, (UDATA*)copyCache->cacheAlloc, (UDATA*)copyCache->cacheTop, false).nextObject());
+			}
 		}
 	}
 
@@ -1467,7 +1454,7 @@ MM_CopyForwardScheme::workerSetupForCopyForward(MM_EnvironmentVLHGC *env)
 	Assert_MM_true(NULL == env->_copyForwardCompactGroups);
 	Assert_MM_true(NULL != _compactGroupBlock);
 	env->_copyForwardCompactGroups = &_compactGroupBlock[env->getWorkerID() * _compactGroupMaxCount];
-	
+
 	for (UDATA compactGroup = 0; compactGroup < _compactGroupMaxCount; compactGroup++) {
 		env->_copyForwardCompactGroups[compactGroup].initialize(env);
 	}
@@ -1518,6 +1505,7 @@ MM_CopyForwardScheme::mergeGCStats(MM_EnvironmentVLHGC *env)
 		localStats->_scanBytesNonEden += compactGroup->_nonEdenStats._scannedBytes;
 
 		localStats->_copyDiscardBytesTotal += compactGroup->_discardedBytes;
+		localStats->_TLHRemainderCount += compactGroup->_TLHRemainderCount;
 
 		/* distribute the discard cost proportionately to Eden/non-Eden based on how many bytes were copied from each */
 		UDATA copyDiscardBytesEden = 
@@ -1771,25 +1759,46 @@ MM_CopyForwardScheme::flushCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC
 	}
 }
 
-void
+bool
 MM_CopyForwardScheme::clearCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache)
 {
-	UDATA discardSize = (UDATA)cache->cacheTop - (UDATA)cache->cacheAlloc;
+	uintptr_t discardSize = (uintptr_t)cache->cacheTop - (uintptr_t)cache->cacheAlloc;
 	Assert_MM_true(0 == (cache->flags & J9VM_MODRON_SCAVENGER_CACHE_TYPE_CLEARED));
 	Assert_MM_false(cache->isSplitArray());
+	bool remainderCreated = false;
 	
 	UDATA compactGroup = cache->_compactGroup;
 	Assert_MM_true(compactGroup < _compactGroupMaxCount);
-	env->_copyForwardCompactGroups[compactGroup]._discardedBytes += discardSize;
-	
-	/* Abandon the current entry in the cache */
-	env->_cycleState->_activeSubSpace->abandonHeapChunk(cache->cacheAlloc, cache->cacheTop);
-	
+	MM_CopyForwardCompactGroup *compactGroupForMarkData = &(env->_copyForwardCompactGroups[compactGroup]);
+
+	if (0 < discardSize) {
+		if ((discardSize < env->getExtensions()->tlhSurvivorDiscardThreshold) ||
+			(discardSize <= ((uintptr_t)compactGroupForMarkData->_TLHRemainderTop - (uintptr_t)compactGroupForMarkData->_TLHRemainderBase))) {
+			/* Abandon the current entry in the cache */
+			env->_cycleState->_activeSubSpace->abandonHeapChunk(cache->cacheAlloc, cache->cacheTop);
+			discardHeapChunk(compactGroupForMarkData, cache->cacheAlloc, cache->cacheTop);
+		} else {
+			if (NULL != compactGroupForMarkData->_TLHRemainderBase) {
+				/* Abandon the current entry in the cache */
+				env->_cycleState->_activeSubSpace->abandonHeapChunk(compactGroupForMarkData->_TLHRemainderBase, compactGroupForMarkData->_TLHRemainderTop);
+				discardHeapChunk(compactGroupForMarkData, compactGroupForMarkData->_TLHRemainderBase, compactGroupForMarkData->_TLHRemainderTop);
+				compactGroupForMarkData->resetTLHRemainder();
+			}
+			remainderCreated = true;
+			compactGroupForMarkData->_TLHRemainderCount += 1;
+			Assert_MM_true(NULL == compactGroupForMarkData->_TLHRemainderBase);
+			Assert_MM_true(NULL == compactGroupForMarkData->_TLHRemainderTop);
+			compactGroupForMarkData->setTLHRemainder(cache->cacheAlloc, cache->cacheTop);
+		}
+	}
+
 	/* Broadcast details of that portion of memory within which objects have been allocated */
 	TRIGGER_J9HOOK_MM_PRIVATE_CACHE_CLEARED(_extensions->privateHookInterface, env->getOmrVMThread(), env->_cycleState->_activeSubSpace,
 									cache->cacheBase, cache->cacheAlloc, cache->cacheTop);
-	
+
 	cache->flags |= J9VM_MODRON_SCAVENGER_CACHE_TYPE_CLEARED;
+
+	return remainderCreated;
 }
 
 MM_CopyScanCacheVLHGC *
@@ -1849,22 +1858,10 @@ void
 MM_CopyForwardScheme::discardRemainingCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache, MM_LightweightNonReentrantLock *cacheLock, UDATA wastedMemory)
 {
 	Assert_MM_false(cache->isSplitArray());
-	UDATA cacheAlloc = (UDATA)cache->cacheAlloc;
-	UDATA cacheTop = (UDATA)cache->cacheTop;
-	UDATA discardSize = cacheTop - cacheAlloc;
-	if ((0 != discardSize) || (0 != wastedMemory)) {
-		Assert_MM_true((0 == wastedMemory) || (wastedMemory < cacheAlloc - (UDATA)cache->cacheBase));
+	if (0 != wastedMemory) {
 		MM_HeapRegionDescriptorVLHGC *region = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(cache->cacheBase);
 		MM_MemoryPool *pool = region->getMemoryPool();
-		cacheLock->acquire();
-		UDATA totalFreeToReturn = wastedMemory + discardSize;
-
-		/* TODO: recycling remanining cache, maybe can connect to one exist free memory or build thread local list of remainders(per compactGroup) */
-		if (0 != totalFreeToReturn) {
-			pool->incrementDarkMatterBytes(totalFreeToReturn);
-			pool->fillWithHoles((void *)cacheAlloc, (void *)cacheTop);
-		}
-		cacheLock->release();
+		pool->incrementDarkMatterBytes(wastedMemory);
 	}
 }
 
@@ -4199,6 +4196,8 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	/* flush ownable synchronizer object buffer after rebuild the ownableSynchronizerObjectList during main scan phase */
 	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
 
+	abandonTLHRemainder(env);
+
 	/* No matter what happens, always sum up the gc stats */
 	mergeGCStats(env);
 
@@ -5527,4 +5526,45 @@ MM_CopyForwardScheme::cleanCompressedSurvivorCardTable(MM_EnvironmentVLHGC *env)
 {
 	UDATA compressedSurvivorTableSize = _extensions->heap->getMaximumPhysicalRange() / (CARD_SIZE * BITS_PER_BYTE);
 	memset((void*)_compressedSurvivorTable, AllCompressedCardsInByteClean, compressedSurvivorTableSize);
+}
+
+void
+MM_CopyForwardScheme::abandonTLHRemainder(MM_EnvironmentVLHGC *env, bool preserveRemainders)
+{
+	for (uintptr_t compactGroup = 0; compactGroup < _compactGroupMaxCount; compactGroup++) {
+		MM_CopyForwardCompactGroup *compactGroupForMarkData = &(env->_copyForwardCompactGroups[compactGroup]);
+		if (NULL != compactGroupForMarkData->_TLHRemainderBase) {
+			Assert_MM_true(NULL != compactGroupForMarkData->_TLHRemainderTop);
+			env->_cycleState->_activeSubSpace->abandonHeapChunk(compactGroupForMarkData->_TLHRemainderBase, compactGroupForMarkData->_TLHRemainderTop);
+			if (!preserveRemainders) {
+				/* discard the remainder for nursery regions */
+				discardHeapChunk(compactGroupForMarkData, compactGroupForMarkData->_TLHRemainderBase, compactGroupForMarkData->_TLHRemainderTop);
+				compactGroupForMarkData->resetTLHRemainder();
+			}
+		} else {
+			Assert_MM_true(NULL == compactGroupForMarkData->_TLHRemainderTop);
+		}
+	}
+}
+
+void
+MM_CopyForwardScheme::resetAllTLHRemainders(MM_EnvironmentVLHGC *env)
+{
+	MM_CopyForwardCompactGroup *copyForwardCompactGroups = NULL;
+	for (uintptr_t id = 0; id < _extensions->gcThreadCount; id++) {
+		copyForwardCompactGroups = &_compactGroupBlock[id * _compactGroupMaxCount];
+
+		for (uintptr_t compactGroup = 0; compactGroup < _compactGroupMaxCount; compactGroup++) {
+			copyForwardCompactGroups[compactGroup].resetTLHRemainder();
+		}
+	}
+}
+
+void
+MM_CopyForwardScheme::discardHeapChunk(MM_CopyForwardCompactGroup *compactGroupForMarkData, void *base, void *top)
+{
+	uintptr_t discardSize = ((uintptr_t)top - (uintptr_t)base);
+	compactGroupForMarkData->_discardedBytes += discardSize;
+	MM_HeapRegionDescriptorVLHGC *region = (MM_HeapRegionDescriptorVLHGC*)_regionManager->tableDescriptorForAddress(base);
+	region->getMemoryPool()->incrementDarkMatterBytes(discardSize);
 }

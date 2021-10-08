@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,8 @@ protected:
 public:
 	MM_CopyScanCacheVLHGC *_copyCache;  /**< The copy cache in this compact group for the owning thread */
 	MM_LightweightNonReentrantLock *_copyCacheLock; /**< The lock associated with the list this copy cache belongs to */
+	void *_TLHRemainderBase;  /**< base pointers of the last unused TLH copy cache, that might be reused  on next copy refresh */
+	void *_TLHRemainderTop;	  /**< top pointers of the last unused TLH copy cache, that might be reused  on next copy refresh */
 	void *_DFCopyBase;	/**< The base address of the inlined "copy cache" used by CopyForwardSchemeDepthFirst */
 	void *_DFCopyAlloc;	/**< The alloc pointer of the inlined "copy cache" used by CopyForwardSchemeDepthFirst */
 	void *_DFCopyTop;	/**< The top address of the inlined "copy cache" used by CopyForwardSchemeDepthFirst */
@@ -70,6 +72,7 @@ public:
 	UDATA _failedCopiedBytes; /**< The number of bytes which the owning thread failed to copy in this compact group */
 	UDATA _freeMemoryMeasured;	/**< The number of bytes which were wasted while this thread was working with the given _copyCache (due to alignment, etc) which is needs to save back into the pool when giving up the cache */
 	UDATA _discardedBytes; /**< The number of bytes discarded in survivor regions for this compact group by the owning thread due to incompletely filled copy caches and other inefficiencies */
+	UDATA _TLHRemainderCount; /**< number of TLHRemainders has been created for the compact group during the copyforward */
 	U_64 _allocationAge; /**< Average allocation age for this compact group */
 	
 	/* Mark map rebuilding cache values for the active MM_CopyScanCacheVLHGC associated with this group */
@@ -83,6 +86,8 @@ public:
 	void initialize(MM_EnvironmentVLHGC *env) {
 		_copyCache = NULL;
 		_copyCacheLock = NULL;
+		_TLHRemainderBase = NULL;
+		_TLHRemainderTop = NULL;
 		_DFCopyBase = NULL;
 		_DFCopyAlloc = NULL;
 		_DFCopyTop = NULL;
@@ -103,6 +108,7 @@ public:
 		_failedCopiedBytes = 0;
 		_freeMemoryMeasured = 0;
 		_discardedBytes = 0;
+		_TLHRemainderCount = 0;
 		_allocationAge = 0;
 		_markMapAtomicHeadSlotIndex = 0;
 		_markMapAtomicTailSlotIndex = 0;
@@ -116,6 +122,17 @@ public:
 private:
 protected:
 public:
+	MMINLINE void resetTLHRemainder()
+	{
+		_TLHRemainderBase = NULL;
+		_TLHRemainderTop = NULL;
+	}
+
+	MMINLINE void setTLHRemainder(void *base, void *top)
+	{
+		_TLHRemainderBase = base;
+		_TLHRemainderTop = top;
+	}
 };
 
 #endif /* COPYFORWARDCOMPACTGROUP_HPP_ */
