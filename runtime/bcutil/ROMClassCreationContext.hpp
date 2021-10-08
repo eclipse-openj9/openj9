@@ -238,6 +238,7 @@ public:
 	bool isClassHidden() const { return J9_FINDCLASS_FLAG_HIDDEN == (_findClassFlags & J9_FINDCLASS_FLAG_HIDDEN);}
 	bool isHiddenClassOptNestmateSet() const { return J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE == (_findClassFlags & J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE);}
 	bool isHiddenClassOptStrongSet() const { return J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG == (_findClassFlags & J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG);}
+	bool isDoNotShareClassFlagSet() const {return J9_ARE_ALL_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_DO_NOT_SHARE);}
 
 	bool isClassUnmodifiable() const {
 		bool unmodifiable = false;
@@ -288,6 +289,7 @@ public:
 	bool isROMClassShareable() const {
 		/*
 		 * Any of the following conditions prevent the sharing of a ROMClass:
+		 *  - J9_FINDCLASS_FLAG_DO_NOT_SHARE is set for this class
 		 *  - classloader is not shared classes enabled
 		 *  - cache is full
 		 *  - the class is unsafe and isUnsafeClassSharingEnabled returns false (see the function isUnsafeClassShareable() for more details)
@@ -297,6 +299,7 @@ public:
 		 *  - the class is loaded from a patch path
 		 */
 		if (isSharedClassesEnabled()
+			&& !isDoNotShareClassFlagSet()
 			&& isClassLoaderSharedClassesEnabled()
 			&& (!isClassUnsafe() || isUnsafeClassSharingEnabled())
 			&& (!isClassHidden() || isHiddenClassSharingEnabled())
