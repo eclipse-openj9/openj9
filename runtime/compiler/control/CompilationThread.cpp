@@ -8531,23 +8531,10 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    return startPC;
    }
 
-void
-TR::CompilationInfoPerThreadBase::processNonOutOfProcessComp(CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *filterInfo, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, bool &reducedWarm, TR_J9VMBase *vm)
+bool
+TR::CompilationInfoPerThreadBase::aotCompilationReUpgradedToWarm(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR_OpaqueMethodBlock *method)
    {
-      J9VMThread *vmThread = compileParameters->_vmThread;
-      TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) methodDetails.getMethod();
-
-#if defined(J9VM_OPT_JITSERVER)
-      // JITServer: we want to suppress log file for client mode
-      // Client will get the log files from server.
-      if (compilationInfo->_methodBeingCompiled->isRemoteCompReq())
-         {
-         TR::Options::suppressLogFileBecauseDebugObjectNotCreated();
-         }
-      TR_ASSERT(!compilationInfo->_methodBeingCompiled->isOutOfProcessCompReq(), "JITServer should not change options passed by client");
-#endif /* defined(J9VM_OPT_JITSERVER) */
-
-      bool aotCompilationReUpgradedToWarm = false;
+      bool isAotCompilationReUpgradedToWarm = false;
       if (compilationInfo->_methodBeingCompiled->_useAotCompilation)
          {
          // In some circumstances AOT compilations are performed at warm
@@ -8566,10 +8553,30 @@ TR::CompilationInfoPerThreadBase::processNonOutOfProcessComp(CompilationInfoPerT
             {
             compileParameters->_optimizationPlan->setOptLevel(warm);
             compileParameters->_optimizationPlan->setOptLevelDowngraded(false);
-            aotCompilationReUpgradedToWarm = true;
+            isAotCompilationReUpgradedToWarm = true;
             }
          }
 
+         return isAotCompilationReUpgradedToWarm;
+   }
+
+void
+TR::CompilationInfoPerThreadBase::processNonOutOfProcessComp(CompilationInfoPerThreadBase *compilationInfo, TR_ResolvedMethod *compilee, CompileParameters *compileParameters, TR_FilterBST *filterInfo, TR::IlGeneratorMethodDetails &methodDetails, TR::Options *&options, bool &reducedWarm, TR_J9VMBase *vm)
+   {
+      J9VMThread *vmThread = compileParameters->_vmThread;
+      TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) methodDetails.getMethod();
+
+#if defined(J9VM_OPT_JITSERVER)
+      // JITServer: we want to suppress log file for client mode
+      // Client will get the log files from server.
+      if (compilationInfo->_methodBeingCompiled->isRemoteCompReq())
+         {
+         TR::Options::suppressLogFileBecauseDebugObjectNotCreated();
+         }
+      TR_ASSERT(!compilationInfo->_methodBeingCompiled->isOutOfProcessCompReq(), "JITServer should not change options passed by client");
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+      bool isAotCompilationReUpgradedToWarm = aotCompilationReUpgradedToWarm(compilationInfo, compileParameters, method);
 
       TR_PersistentCHTable *cht = compilationInfo->_compInfo.getPersistentInfo()->getPersistentCHTable();
       if (cht && !cht->isActive())
@@ -8638,7 +8645,7 @@ TR::CompilationInfoPerThreadBase::processNonOutOfProcessComp(CompilationInfoPerT
             options->setOption(TR_DisableDelayRelocationForAOTCompilations, true);
 
          // Perform less inlining if we artificially upgraded this AOT compilation to warm
-         if (aotCompilationReUpgradedToWarm)
+         if (isAotCompilationReUpgradedToWarm)
             options->setInlinerOptionsForAggressiveAOT();
 
          TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
