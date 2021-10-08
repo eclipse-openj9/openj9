@@ -595,6 +595,16 @@ public:
     */
    uint32_t initializeLinkageInfo(void *linkageInfoPtr);
 
+   /**
+    * \brief Check if a profiled class is compatible with the call site
+    *
+    * \param[in] profiledClass : The J9Class obtained from profiling data
+    * \param[in] callSiteMethodClass : The J9Class from the J9Method of the call site target
+    *
+    * \return True if it can be determined that the profiled class is compatible, otherwise False
+    */
+   bool isProfiledClassAndCallSiteCompatible(TR_OpaqueClassBlock *profiledClass, TR_OpaqueClassBlock *callSiteMethodClass);
+
 private:
 
    enum // Flags

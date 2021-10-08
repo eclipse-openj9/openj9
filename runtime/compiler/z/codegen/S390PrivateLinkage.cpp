@@ -1833,11 +1833,10 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                   {
                   topValue = 0;
                   }
-               // We can't do this guarded devirtualization if the profile data is not correct for this context. See defect 98813
                else
                   {
-                  TR_OpaqueClassBlock *callSiteMethod = methodSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->classOfMethod();
-                  if( fej9->isInstanceOf( (TR_OpaqueClassBlock *)topValue, callSiteMethod, true, true ) != TR_yes )
+                  TR_OpaqueClassBlock *callSiteMethodClass = methodSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->classOfMethod();
+                  if (!cg()->isProfiledClassAndCallSiteCompatible((TR_OpaqueClassBlock *)topValue, callSiteMethodClass))
                      {
                      topValue = 0;
                      }
