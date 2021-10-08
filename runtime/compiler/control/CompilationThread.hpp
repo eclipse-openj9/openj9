@@ -194,6 +194,7 @@ class CompilationInfoPerThreadBase
                                 );
 #endif
 
+   static void processSamplingJProfiling(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails, TR_J9VMBase *vm, TR::Options *&options);
    static void tweakAotLoadCompilationStrategy(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR::IlGeneratorMethodDetails &methodDetails, TR_J9VMBase *vm, TR::Options *&options, bool &reducedWarm);
    static void adjustOptionsForAotCompilation(bool isAotCompilationReUpgradedToWarm, TR_J9VMBase *vm, TR::Options *&options);
    static bool aotCompilationReUpgradedToWarm(CompilationInfoPerThreadBase *compilationInfo, CompileParameters *compileParameters, TR_OpaqueMethodBlock *method);
