@@ -8629,36 +8629,6 @@ TR::CompilationInfoPerThreadBase::processNonOutOfProcessComp(CompilationInfoPerT
          options->setOption(TR_UseSymbolValidationManager, false);
          }
 
-      // Adjust Options for AOT compilation
-      if (vm->isAOT_DEPRECATED_DO_NOT_USE())
-         {
-         // Disable dynamic literal pool for AOT because of an unresolved data snippet patching issue in which
-         // the "Address Of Ref. Instruction" in the unresolved data snippet points to the wrong load instruction
-         options->setOption(TR_DisableOnDemandLiteralPoolRegister);
-
-         options->setOption(TR_DisableIPA);
-         options->setOption(TR_DisableEDO);
-         options->setDisabled(OMR::invariantArgumentPreexistence, true);
-         options->setOption(TR_DisableHierarchyInlining);
-         options->setOption(TR_DisableKnownObjectTable);
-         if (options->getInitialBCount() == 0 || options->getInitialCount() == 0)
-            options->setOption(TR_DisableDelayRelocationForAOTCompilations, true);
-
-         // Perform less inlining if we artificially upgraded this AOT compilation to warm
-         if (isAotCompilationReUpgradedToWarm)
-            options->setInlinerOptionsForAggressiveAOT();
-
-         TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
-
-         // Do not delay relocations for JITServer client when server side AOT caching is used (gives better performance)
-         // Testing the presence of the deserializer is sufficient, because the deserializer
-         // is only created at the client and only if server side AOT caching is enabled
-#if defined(J9VM_OPT_JITSERVER)
-         if (that->getCompilationInfo()->getJITServerAOTDeserializer())
-            options->setOption(TR_DisableDelayRelocationForAOTCompilations);
-#endif /* defined(J9VM_OPT_JITSERVER) */
-         }
-
       if (compilationInfo->_methodBeingCompiled->_optimizationPlan->disableCHOpts())
          options->disableCHOpts();
 
