@@ -77,8 +77,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
    typedef int vec_sz_t;
 
-   static int const _firstMethod = TR::First_vector_api_method + 1;
-   static int const _lastMethod = TR::Last_vector_api_method - 1;
+   static int const _firstMethod = TR::FirstVectorMethod;
+   static int const _lastMethod = TR::LastVectorMethod;
 
    static int const _numMethods = _lastMethod - _firstMethod + 1;
    static int const _numArguments = 15;
@@ -842,4 +842,4 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static TR::Node *transformBinary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *firstChild, TR::Node *secondChild, TR::ILOpCodes opcode);
 
    };
-#endif
+#endif /* VECTORAPIEXPANSION_INCL */
