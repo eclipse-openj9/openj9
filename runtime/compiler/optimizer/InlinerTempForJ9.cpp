@@ -210,12 +210,12 @@ bool
 TR_J9InlinerPolicy::inlineRecognizedMethod(TR::RecognizedMethod method)
    {
 
-   if (method > TR::First_vector_api_method &&
-       method < TR::Last_vector_api_method)
+   if (method >= TR::FirstVectorMethod &&
+       method <= TR::LastVectorMethod)
       {
       comp()->getMethodSymbol()->setHasVectorAPI(true);
 
-      if (method <= TR::Last_vector_api_intrinsic_method &&
+      if (method <= TR::LastVectorIntrinsicMethod &&
           !comp()->getOption(TR_DisableVectorAPIExpansion))
          return false;
       }
@@ -2513,8 +2513,8 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
       }
 
    // VectorSupport intrinsic candidates should not be redefined by the user
-   if (rm > TR::First_vector_api_method &&
-       rm <= TR::Last_vector_api_intrinsic_method)
+   if (rm >= TR::FirstVectorMethod &&
+       rm <= TR::LastVectorIntrinsicMethod)
       return true;
 
    // Skip HCR guard for non-public methods in java/lang/invoke package. These methods
