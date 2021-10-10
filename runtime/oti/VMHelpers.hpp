@@ -1881,6 +1881,8 @@ exit:
 		j9object_t heapCopy = NULL;
 		MM_ObjectAllocationAPI allocationAPI(currentThread);
 		MM_ObjectAccessBarrierAPI objectAccessBarrierAPI(currentThread);
+		UDATA* stackOffset = CONVERT_TO_RELATIVE_STACK_OFFSET(currentThread, object);
+
 		if (J9_ARE_ANY_BITS_SET(classFlags, J9AccClassArray)) {
 			U_32 size = J9INDEXABLEOBJECT_SIZE(currentThread, object);
 			heapCopy = VM_VMHelpers::inlineAllocateIndexableObject(currentThread, &allocationAPI, objectClass, size, false, false, false);
@@ -1892,6 +1894,7 @@ exit:
 				}
 				objectClass = VM_VMHelpers::currentClass(objectClass);
 			}
+			object = (j9object_t)(CONVERT_FROM_RELATIVE_STACK_OFFSET(currentThread, stackOffset));
 			objectAccessBarrierAPI.cloneArray(currentThread, object, heapCopy, objectClass, size);
 		} else {
 			heapCopy = allocationAPI.inlineAllocateObject(currentThread, objectClass, false, false);
@@ -1903,6 +1906,7 @@ exit:
 				}
 				objectClass = VM_VMHelpers::currentClass(objectClass);
 			}
+			object = (j9object_t)(CONVERT_FROM_RELATIVE_STACK_OFFSET(currentThread, stackOffset));
 			objectAccessBarrierAPI.cloneObject(currentThread, object, heapCopy, objectClass);
 			VM_VMHelpers::checkIfFinalizeObject(currentThread, heapCopy);
 		}
