@@ -492,6 +492,8 @@ enum INIT_STAGE {
 
 #define VMOPT_XCOMPRESSEDREFS "-Xcompressedrefs"
 #define VMOPT_XNOCOMPRESSEDREFS "-Xnocompressedrefs"
+#define VMOPT_XXUSECOMPRESSEDOOPS "-XX:+UseCompressedOops"
+#define VMOPT_XXNOUSECOMPRESSEDOOPS "-XX:-UseCompressedOops"
 
 #define VMOPT_XXTRANSPARENT_HUGEPAGE "-XX:+TransparentHugePage"
 #define VMOPT_XXNOTRANSPARENT_HUGEPAGE "-XX:-TransparentHugePage"
