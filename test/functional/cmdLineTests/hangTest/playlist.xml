@@ -34,7 +34,7 @@
 		</variations>
 		<command> $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DJARPATH=$(Q)$(TEST_RESROOT)$(D)hangTest.jar$(Q) \
-	-DEXE=$(SQ)bash $(TEST_RESROOT)$(D)hang.sh $(JAVA_COMMAND) $(JVM_OPTIONS) $(TEST_RESROOT)$(D)hangTest.jar $(SQ) -jar $(CMDLINETESTER_JAR) \
+	-DEXE=$(SQ)bash $(TEST_RESROOT)$(D)hang.sh $(JAVA_COMMAND) $(TEST_RESROOT)$(D)hangTest.jar $(JVM_OPTIONS) $(SQ) -jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)hang.xml$(Q) \
 	-xids all,$(PLATFORM) -explainExcludes -nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
