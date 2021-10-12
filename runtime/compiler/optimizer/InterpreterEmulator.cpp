@@ -1079,7 +1079,9 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
             _calltarget->_calleeMethod->getMethodHandleLocation(), isVirtual);
 
          TR_ASSERT_FATAL(moh.j9method != NULL, "Must have a j9method to generate a custom call");
-         callee = fej9->createResolvedMethod(this->trMemory(), moh.j9method);
+         uint32_t vTableSlot = isVirtual ? (uint32_t)moh.vmSlot : 0;
+         callee = fej9->createResolvedMethodWithVTableSlot(
+            trMemory(), vTableSlot, moh.j9method, _calltarget->_calleeMethod);
          return;
          }
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
