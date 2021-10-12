@@ -23,7 +23,7 @@
 #
 echo "Script executed from: ${PWD}"
 
-$1 -Xmx20m -Xrs:sync -cp $2 org.openj9.test.hangTest.Hang > output.txt 2>&1  &
+$1 -Xmx20m -Xrs:sync -cp $2 $3 org.openj9.test.hangTest.Hang > output.txt 2>&1  &
 sleep 5
 x=`ps -ef | grep Hang | grep java`
 echo $x
