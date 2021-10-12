@@ -37,6 +37,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			-DJCOMMANDERJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)jcommander.jar$(Q) \
 			-DTESTNGJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
+			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)flattenedvaluetypeddrtests.xml$(Q) \
 			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
@@ -74,6 +75,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			-DJCOMMANDERJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)jcommander.jar$(Q) \
 			-DTESTNGJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
+			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)unflattenedvaluetypeddrtests.xml$(Q) \
 			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
@@ -112,6 +114,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			-DJCOMMANDERJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)jcommander.jar$(Q) \
 			-DTESTNGJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
+			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)flattened32bitRefBackfillTest.xml$(Q) \
 			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
@@ -150,6 +153,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			-DJCOMMANDERJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)jcommander.jar$(Q) \
 			-DTESTNGJAR=$(Q)$(JVM_TEST_ROOT)$(D)TKG$(D)lib$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
+			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)flattened32bitRefBackfillTest.xml$(Q) \
 			-outputLimit 1000 -explainExcludes -nonZeroExitWhenError; \
