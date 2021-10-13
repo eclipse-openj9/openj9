@@ -3740,7 +3740,7 @@ J9::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *
    TR::Register *tmp2Reg = cg->allocateRegister();
    TR::Register *tmp3Reg = cg->allocateRegister();
 
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(16, 16, cg->trMemory());
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(17, 17, cg->trMemory());
 
    TR::addDependency(deps, x0Reg, TR::RealRegister::x0, TR_GPR, cg); // copy of metaReg
    TR::addDependency(deps, tmp1Reg, TR::RealRegister::x1, TR_GPR, cg); // copy of srcObjReg
@@ -3753,6 +3753,8 @@ J9::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *
       {
       TR::addDependency(deps, NULL, (TR::RealRegister::RegNum)i, TR_GPR, cg);
       }
+   // x16 and x17 are reserved registers
+   TR::addDependency(deps, NULL, TR::RealRegister::x18, TR_GPR, cg);
 
    generateMovInstruction(cg, node, x0Reg, metaReg);
    generateMovInstruction(cg, node, tmp1Reg, srcObjReg);
@@ -3854,7 +3856,7 @@ J9::ARM64::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Code
    //                         U_8 *srcAddress,
    //                         U_8 *destAddress,
    //                         I_32 lengthInSlots)
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(16, 16, cg->trMemory());
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(17, 17, cg->trMemory());
    TR::addDependency(deps, x0Reg, TR::RealRegister::x0, TR_GPR, cg);
    TR::addDependency(deps, srcObjReg, TR::RealRegister::x1, TR_GPR, cg);
    TR::addDependency(deps, dstObjReg, TR::RealRegister::x2, TR_GPR, cg);
@@ -3866,6 +3868,8 @@ J9::ARM64::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Code
       {
       TR::addDependency(deps, NULL, (TR::RealRegister::RegNum)i, TR_GPR, cg);
       }
+   // x16 and x17 are reserved registers
+   TR::addDependency(deps, NULL, TR::RealRegister::x18, TR_GPR, cg);
 
    intptr_t *funcdescrptr = (intptr_t *)fej9->getReferenceArrayCopyHelperAddress();
    loadAddressConstant(cg, node, (intptr_t)funcdescrptr, tmpReg, NULL, false, TR_ArrayCopyHelper);
