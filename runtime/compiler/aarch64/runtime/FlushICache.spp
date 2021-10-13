@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "aarch64/runtime/arm64asmdefs.inc"
+
 	.globl	flushICache
 
 	.text
@@ -44,7 +46,7 @@ flushICache:
 #if defined(__GNUC__)
 	// GCC built-in function in libgcc
 	// void __clear_cache(char *begin, char *end);
-	bl	 __clear_cache
+	bl	FUNC_LABEL(__clear_cache)
 #else
 #error Not supported yet
 #endif
