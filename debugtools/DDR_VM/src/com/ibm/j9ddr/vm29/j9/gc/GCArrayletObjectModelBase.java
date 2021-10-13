@@ -438,7 +438,11 @@ public abstract class GCArrayletObjectModelBase extends GCArrayObjectModel
 	{
 		UDATA numberArraylets = numExternalArraylets(array);
 
-		return numberArraylets.mult(arrayletLeafSize);
+		if (numberArraylets.isZero()) {
+			return numberArraylets;
+		} else {
+			return numberArraylets.mult(arrayletLeafSize);
+		}
 	}
 
 }
