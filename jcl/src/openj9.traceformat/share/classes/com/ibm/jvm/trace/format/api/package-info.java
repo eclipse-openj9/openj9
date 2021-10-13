@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,52 +26,52 @@
  * the UtTraceBuffer native type which wrap the UtTraceRecord type. However, in messages from the API they are
  * called buffers to keep the naming consistent across the information output of the formatter and the -Xtrace
  * options.
- * 
+ *
  * A single buffer contains trace data for a single thread with one exception:
- * 	"0x0 Exception trace pseudo-thread"
+ * 	<q>0x0 Exception trace pseudo-thread</q>
  * This "thread" contains data from any threads that have written into the exception buffer interleaved in
  * chronological order. There is no mapping from a trace point to its source thread for trace points in the
  * exception buffer.
- * 
+ *
  * An instance of a JVM corresponds to an instance of a TraceContext object within the API. It is
  * possible to have multiple TraceContext instances, each the accessor for trace data from a single JVM.
- * 
+ *
  * The primary inputs for the API are metadata from a JVM and trace buffers.
- * 
+ *
  * A TraceContext is constructed using metadata from the JVM that's generating the trace records needing
  * formatting. This metadata is either present as a file header at the start of a trace file or can
  * be acquired via a call to the JVMTI extension com.ibm.GetTraceMetadata.
  * Also required is a data file describing the format of trace points for that level of the JVM. At
  * least one data file is required to construct a trace context but additional files can be added later
  * and they will be searched for a trace point specification in the order they are added.
- * 
+ *
  * Trace buffers must be passed to the context corresponding to the JVM that produced them; they are not
  * valid in another context and must be added in-order within a single thread.  Detecting that a buffer
  * has been added to the wrong context is not always possible so don't depend on an error being produced
  * to deduce the correct context. Trace buffers from the same thread must be added in chronological order.
- * 
+ *
  * Trace points are organised by thread, and iterators are provided that allow access:
  * 	a. chronologically across all threads (global)
  * 	b. chronologically within a single thread (thread)
- *  
+ *
  * The global iterator uses the thread iterators meaning that once a trace point has
  * been returned via either type of iterator it will not be returned again via the other type.
  * The iterators may return null (without becoming invalid) when there are no more trace points available
  * but return data after a new trace buffer has been added. iterator.hasNext() indicates whether a call to
  * iterator.next() will return null and says nothing about whether more trace points can be expected for a given
- * context or thread. 
- * 
+ * context or thread.
+ *
  * Trace points are kept sorted across threads when using the global iterator, however this optimisation invariant
  * is broken by use of a thread iterator. Consequently there is a performance hit when the global iterator is
  * next used, as the threads must be resorted. This can be significant with large numbers of threads.
- * 
+ *
  * Example fragment parsing a single buffer via the API:
  * 		// metadata - byte[] either from the header in a trace file or via jvmti
  * 		// formatData - File containing the trace point specifications
  *
  * 		TraceContext context = TraceContext.getContext(metadata, formatData, System.out, System.err, System.err, null);
  * 		TraceThread thread = context.addData(buffer);
- * 
+ *
  * 		Iterator global = context.getTracepoints();
  * 		while (global.hasNext()) {
  * 			try {

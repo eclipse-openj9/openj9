@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2020 IBM Corp. and others
+ * Copyright (c) 2005, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 package com.ibm.lang.management;
 
 /**
- * OpenJ9 platform management extension interface for the Operating System on which the Java Virtual Machine is running. 
+ * OpenJ9 platform management extension interface for the Operating System on which the Java Virtual Machine is running.
  * <br>
  * <table border="1">
  * <caption><b>Usage example for the {@link com.ibm.lang.management.OperatingSystemMXBean}</b></caption>
@@ -43,7 +43,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 
 	/**
 	 * Returns the total available physical memory on the system in bytes.
-	 * 
+	 *
 	 * @since 1.8
 	 * @return the total available physical memory on the system in bytes.
 	 */
@@ -51,7 +51,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 
 	/**
 	 * Deprecated: use getTotalPhysicalMemorySize()
-	 * 
+	 *
 	 * @return the total available physical memory on the system in bytes.
 	 */
 	/*[IF Sidecar19-SE]
@@ -68,7 +68,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	 * 100 is equal to 1 physical processor. In environments without
 	 * such partitioning support, this call will return
 	 * getAvailableProcessors() * 100.
-	 * 
+	 *
 	 * @return the collective capacity of the virtual processors available
 	 * to the VM.
 	 */
@@ -78,11 +78,11 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	 * Returns total amount of time the process has been scheduled or
 	 * executed so far in both kernel and user modes. Returns -1 if the
 	 * value is unavailable on this platform or in the case of an error.
-	 * 
-	 * Note that as of Java 8 SR5 the returned value is in 1 ns units, unless the system property 
+	 *
+	 * Note that as of Java 8 SR5 the returned value is in 1 ns units, unless the system property
 	 * com.ibm.lang.management.OperatingSystemMXBean.isCpuTime100ns is set to "true".
 	 *
-	 * @return process cpu time.
+	 * @return process CPU time.
 	 */
 	public long getProcessCpuTime();
 
@@ -97,18 +97,18 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	public long getProcessCpuTimeByNS();
 
 	/**
-	 * Returns the "recent cpu usage" for the whole system. This value is a double in
+	 * Returns the recent CPU usage for the whole system. This value is a double in
 	 * the [0.0,1.0] interval. A value of 0.0 means all CPUs were idle in the recent
 	 * period of time observed, while a value of 1.0 means that all CPUs were actively
 	 * running 100% of the time during the recent period of time observed. All values
-	 * between 0.0 and 1.0 are possible. The first call to the method always 
+	 * between 0.0 and 1.0 are possible. The first call to the method always
 	 * returns {@link com.ibm.lang.management.CpuLoadCalculationConstants}.ERROR_VALUE
 	 * (-1.0), which marks the starting point. If the Java Virtual Machine's recent CPU
 	 * usage is not available, the method returns a negative error code from
 	 * {@link com.ibm.lang.management.CpuLoadCalculationConstants}.
 	 * <p>getSystemCpuLoad might not return the same value that is reported by operating system
-	 * utilities such as Unix "top" or Windows task manager.</p>
-	 *  
+	 * utilities such as Unix {@code top} or Windows task manager.</p>
+	 *
 	 * @return A value between 0 and 1.0, or a negative error code from
 	 *         {@link com.ibm.lang.management.CpuLoadCalculationConstants} in case
 	 *         of an error. On the first call to the API,
@@ -124,7 +124,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	public double getSystemCpuLoad();
 
 	/**
-	 * Returns the amount of physical memory that is available on the system in bytes. 
+	 * Returns the amount of physical memory that is available on the system in bytes.
 	 * Returns -1 if the value is unavailable on this platform or in the case of an error.
 	 * <ul>
 	 * <li>This information is not available on the z/OS platform.
@@ -198,14 +198,14 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	public long getFreeSwapSpaceSize();
 
 	/**
-	 * Returns the "recent cpu usage" for the Java Virtual Machine process.
+	 * Returns the recent CPU usage for the Java Virtual Machine process.
 	 * This value is a double in the [0.0,1.0] interval. A value of 0.0 means
 	 * that none of the CPUs were running threads from the JVM process during
 	 * the recent period of time observed, while a value of 1.0 means that all
 	 * CPUs were actively running threads from the JVM 100% of the time
 	 * during the recent period of time observed. Threads from the JVM include
 	 * application threads as well as JVM internal threads. All values
-	 * between 0.0 and 1.0 are possible. The first call to the method always 
+	 * between 0.0 and 1.0 are possible. The first call to the method always
 	 * returns {@link com.ibm.lang.management.CpuLoadCalculationConstants}.ERROR_VALUE
 	 * (-1.0), which marks the starting point. If the Java Virtual Machine's recent CPU
 	 * usage is not available, the method returns a negative error code from
@@ -265,7 +265,7 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	 *
 	 * @throws NullPointerException if a null reference is passed as parameter.
 	 * @throws ProcessorUsageRetrievalException if it failed obtaining Processor usage statistics.
-	 * @throws IllegalArgumentException if array provided has insufficient entries and there are more 
+	 * @throws IllegalArgumentException if array provided has insufficient entries and there are more
 	 *                   Processors to report on.
 	 *
 	 * <p>In case of an exception, the handler code might use toString() on the exception code
@@ -326,8 +326,8 @@ public interface OperatingSystemMXBean extends com.sun.management.OperatingSyste
 	 * hardware model information
 	 *
 	 * @return The new {@link java.lang.String} object or NULL in case of an error.
-	 * @throws UnsupportedOperationException if the operation is not implemented on this platform. 
-	 * UnsupportedOperationException will also be thrown if the operation is implemented but it 
+	 * @throws UnsupportedOperationException if the operation is not implemented on this platform.
+	 * UnsupportedOperationException will also be thrown if the operation is implemented but it
 	 * cannot be performed because the system does not satisfy all the requirements, for example,
 	 * an OS service is not installed.
 	 * @since   1.7
