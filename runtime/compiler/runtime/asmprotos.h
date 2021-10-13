@@ -78,6 +78,7 @@ JIT_HELPER(jitInstanceOf);  // asm calling-convention helper
 JIT_HELPER(jitInterpretNewInstanceMethod);  // asm calling-convention helper
 JIT_HELPER(jitLookupInterfaceMethod);  // asm calling-convention helper
 JIT_HELPER(jitLookupDynamicInterfaceMethod);  // asm calling-convention helper
+JIT_HELPER(jitLookupDynamicPublicInterfaceMethod);  // asm calling-convention helper
 JIT_HELPER(jitMethodIsNative);  // asm calling-convention helper
 JIT_HELPER(jitMethodIsSync);  // asm calling-convention helper
 JIT_HELPER(jitMethodMonitorEntry);  // asm calling-convention helper

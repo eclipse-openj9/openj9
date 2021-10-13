@@ -303,6 +303,13 @@ J9::SymbolReferenceTable::findOrCreateLookupDynamicInterfaceMethodSymbolRef()
 
 
 TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateLookupDynamicPublicInterfaceMethodSymbolRef()
+   {
+   return findOrCreateRuntimeHelper(TR_jitLookupDynamicPublicInterfaceMethod, false, true, true);
+   }
+
+
+TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateFloatSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
    {
    void * dataAddress = owningMethodSymbol->getResolvedMethod()->floatConstant(cpIndex);

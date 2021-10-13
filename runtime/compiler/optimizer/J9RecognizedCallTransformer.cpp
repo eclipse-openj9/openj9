@@ -742,6 +742,9 @@ void J9::RecognizedCallTransformer::process_java_lang_invoke_MethodHandle_linkTo
    virtualNullCheckBlock->append(TR::TreeTop::create(comp(), ifIsVFTOffset));
    cfg->addEdge(virtualNullCheckBlock, virtualDispatchBlock);
 
+   // TODO: For linkToInterface() we should instead use
+   // findOrCreateLookupDynamicPublicInterfaceMethodSymbolRef(), which will
+   // throw IllegalAccessError when the dispatched method is non-public.
    TR::Node *vftOffsetFromITable = TR::Node::createWithSymRef(
       node,
       comp()->target().is64Bit() ? TR::lcall : TR::icall,
