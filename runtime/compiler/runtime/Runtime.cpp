@@ -1068,7 +1068,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_ldFlattenableArrayElement,        (void *)jitLoadFlattenableArrayElement, TR_Helper);
    SET(TR_strFlattenableArrayElement,        (void *)jitStoreFlattenableArrayElement, TR_Helper);
 
-   SET(TR_acmpHelper,                  (void *)jitAcmpHelper, TR_Helper);
+   SET(TR_acmpeqHelper,               (void *)jitAcmpeqHelper, TR_Helper);
+   SET(TR_acmpneHelper,               (void *)jitAcmpneHelper, TR_Helper);
    SET(TR_multiANewArray,             (void *)jitAMultiNewArray, TR_Helper);
    SET(TR_aThrow,                     (void *)jitThrowException, TR_Helper);
 

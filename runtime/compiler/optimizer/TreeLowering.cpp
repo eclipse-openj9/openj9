@@ -1529,7 +1529,7 @@ TR::TreeLowering::lowerValueTypeOperations(TransformationManager& transformation
       if (symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
          {
          // turn the non-helper call into a VM helper call
-         node->setSymbolReference(symRefTab->findOrCreateAcmpHelperSymbolRef());
+         node->setSymbolReference(symRefTab->findOrCreateAcmpeqHelperSymbolRef());
          static const bool disableAcmpFastPath =  NULL != feGetEnv("TR_DisableVT_AcmpFastpath");
          if (!disableAcmpFastPath)
             {
