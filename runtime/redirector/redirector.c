@@ -35,6 +35,7 @@
 #include "exelib_api.h"
 #include "j9exelibnls.h"
 #include "j9arch.h"
+#include "jvminit.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -475,24 +476,24 @@ checkEnvOptions(char *envOptions, int *gcPolicy, char **xcompressedstr, char **x
 		parseGCPolicy(gcPolicyString + LENGTH_GC_POLICY_OPTION, gcPolicy);
 	}
 
-	if (hasEnvOption(envOptions, "-Xcompressedrefs")) {
+	if (hasEnvOption(envOptions, VMOPT_XCOMPRESSEDREFS)) {
 		xcompressed = 0;
-		*xcompressedstr = "-Xcompressedrefs";
+		*xcompressedstr = VMOPT_XCOMPRESSEDREFS;
 	}
-	if (hasEnvOption(envOptions, "-XX:+UseCompressedOops")) {
+	if (hasEnvOption(envOptions, VMOPT_XXUSECOMPRESSEDOOPS)) {
 		xcompressed = 0;
-		*xcompressedstr = "-XX:+UseCompressedOops";
+		*xcompressedstr = VMOPT_XXUSECOMPRESSEDOOPS;
 	}
-	if (hasEnvOption(envOptions, "-Xnocompressedrefs")) {
+	if (hasEnvOption(envOptions, VMOPT_XNOCOMPRESSEDREFS)) {
 		xnocompressed = 0;
-		*xnocompressedstr = "-Xnocompressedrefs";
+		*xnocompressedstr = VMOPT_XNOCOMPRESSEDREFS;
 	}
-	if (hasEnvOption(envOptions, "-XX:-UseCompressedOops")) {
+	if (hasEnvOption(envOptions, VMOPT_XXNOUSECOMPRESSEDOOPS)) {
 		xnocompressed = 0;
-		*xnocompressedstr = "-XX:-UseCompressedOops";
+		*xnocompressedstr = VMOPT_XXNOUSECOMPRESSEDOOPS;
 	}
 	
-	*xjvmstr = strstr(envOptions, "-Xjvm:");
+	*xjvmstr = strstr(envOptions, VMOPT_XJVM);
 	if (NULL != *xjvmstr) {
 		char *space = NULL;
 
@@ -565,13 +566,13 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 	}
 
 	for( i=0; i < args->nOptions; i++ ) {
-		if ( 0 == strcmp(args->options[i].optionString, "-Xcompressedrefs") || 0 == strcmp(args->options[i].optionString, "-XX:+UseCompressedOops") ) {
+		if ( 0 == strcmp(args->options[i].optionString, VMOPT_XCOMPRESSEDREFS) || 0 == strcmp(args->options[i].optionString, VMOPT_XXUSECOMPRESSEDOOPS) ) {
 			xcompressed = i+1;
 			xcompressedstr = args->options[i].optionString;
-		} else if( 0 == strcmp(args->options[i].optionString, "-Xnocompressedrefs")  || 0 == strcmp(args->options[i].optionString, "-XX:-UseCompressedOops") ) {
+		} else if( 0 == strcmp(args->options[i].optionString, VMOPT_XNOCOMPRESSEDREFS)  || 0 == strcmp(args->options[i].optionString, VMOPT_XXNOUSECOMPRESSEDOOPS) ) {
 			xnocompressed = i+1;
 			xnocompressedstr = args->options[i].optionString;
-		} else if( 0 == strncmp(args->options[i].optionString, "-Xjvm:", 6) ) {
+		} else if( 0 == strncmp(args->options[i].optionString, VMOPT_XJVM, 6) ) {
 			if ( (NULL != xjvmstr) && (0 != strcmp(xjvmstr, args->options[i].optionString)) ) {
 				fprintf( stdout, "incompatible options specified: %s %s\n", xjvmstr, args->options[i].optionString );
 				exit(-1);
