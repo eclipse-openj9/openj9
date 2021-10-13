@@ -309,8 +309,8 @@ public interface CudaError {
 	 * either because the Driver context was created using an older version
 	 * of the API, because the Runtime API call expects a primary driver
 	 * context and the Driver context is not primary, or because the Driver
-	 * context has been destroyed. Please see \ref CUDART_DRIVER "Interactions
-	 * with the CUDA Driver API" for more information.
+	 * context has been destroyed. Please see CUDART_DRIVER <q>Interactions
+	 * with the CUDA Driver API</q> for more information.
 	 */
 	int IncompatibleDriverContext = 49;
 
