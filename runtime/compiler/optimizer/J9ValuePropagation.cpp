@@ -688,9 +688,9 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       const bool areSameRef = (getValueNumber(lhsNode) == getValueNumber(rhsNode))
                               || (lhs != NULL && rhs != NULL && lhs->mustBeEqual(rhs, this));
 
-      // Non-helper equality comparison call is not needed if either operand
-      // is definitely not an instance of a value type or if both operands
-      // are definitely references to the same object
+      // Non-helper equality/inequality comparison call is not needed if
+      // either operand is definitely not an instance of a value type or
+      // if both operands are definitely references to the same object
       //
       if (isLhsValue == TR_no || isRhsValue == TR_no || areSameRef)
          {
@@ -715,7 +715,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                                               | ValueTypesHelperCallTransform::InsertDebugCounter));
 
 
-            // Replace the non-helper equality comparison with an address comparison
+            // Replace the non-helper equality/inequality comparison with an address comparison
             TR::Node::recreate(node, acmpOp.getOpCodeValue());
 
             // It might now be possible to fold.

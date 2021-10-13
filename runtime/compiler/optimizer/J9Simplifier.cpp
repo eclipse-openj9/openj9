@@ -290,10 +290,10 @@ J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
             rhs->getOpCodeValue() == TR::aconst
             && rhs->getConstValue() == 0;
 
-         // If either operand is null, no need to use the equality comparison helper,
-         // as value types cannot have null references.  Also, if both operands
-         // are the same node, no need to use the comparison helper - the comparison
-         // must be true.  Fold both cases to use acmpeq which might be further simplified
+         // If either operand is null, no need to use the equality/inequality comparison
+         // helper, as value types cannot have null references.  Also, if both operands
+         // are the same node, no need to use the comparison helper - the references must be
+         // equal.  Fold both cases to use acmpeq or acmpne which might be further simplified
          //
          if (lhsNull || rhsNull || lhs == rhs)
             {
