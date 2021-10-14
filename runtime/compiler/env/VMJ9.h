@@ -913,6 +913,16 @@ public:
     */
    virtual TR::KnownObjectTable::Index getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, char *fieldName);
 
+   /**
+    * \brief
+    *   Tell whether a method handle type at a given known object table index matches the expected type.
+    *
+    * \param comp the compilation object
+    * \param mhIndex known object index of the java/lang/invoke/MethodHandle object
+    * \param expectedTypeIndex known object index of  java/lang/invoke/MethodType object
+    */
+   virtual bool isMethodHandleExpectedType(TR::Compilation *comp, TR::KnownObjectTable::Index mhIndex, TR::KnownObjectTable::Index expectedTypeIndex);
+
    virtual uintptr_t getFieldOffset( TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef);
    /*
     * \brief

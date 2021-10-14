@@ -358,7 +358,8 @@ inlinedEntry:
 						while (NULL != ramClass) {
 							U_32 i = 0;
 							J9Method *methods = ramClass->ramMethods;
-							for (i = 0; i < romClass->romMethodCount; ++i) {
+							UDATA romMethodCount = ramClass->romClass->romMethodCount;
+							for (i = 0; i < romMethodCount; ++i) {
 								J9ROMMethod *possibleMethod = J9_ROM_METHOD_FROM_RAM_METHOD(&methods[i]);
 
 								/* Note that we cannot use `J9_BYTECODE_START_FROM_ROM_METHOD` here because native method PCs
@@ -367,6 +368,7 @@ inlinedEntry:
 								if ((methodPC >= (UDATA)possibleMethod) && (methodPC < (UDATA)J9_BYTECODE_END_FROM_ROM_METHOD(possibleMethod))) {
 									romMethod = possibleMethod;
 									methodPC -= (UDATA)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+									romClass = ramClass->romClass;
 									goto foundROMMethod;
 								}
 							}
