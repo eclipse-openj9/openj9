@@ -2108,6 +2108,18 @@ TR_J9ServerVM::getHighTenureAddress()
    return _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_highTenureAddress;
    }
 
+TR_J9VMBase::MethodOfHandle TR_J9ServerVM::methodOfDirectOrVirtualHandle(
+   uintptr_t *mh, bool isVirtual)
+   {
+   auto stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_methodOfDirectOrVirtualHandle, mh, isVirtual);
+   auto recv = stream->read<TR_OpaqueMethodBlock*, int64_t>();
+   MethodOfHandle result = {};
+   result.j9method = std::get<0>(recv);
+   result.vmSlot = std::get<1>(recv);
+   return result;
+   }
+
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 TR_OpaqueMethodBlock*
 TR_J9ServerVM::targetMethodFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)

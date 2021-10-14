@@ -4826,6 +4826,39 @@ TR::KnownObjectTable::Index TR_J9VMBase::mutableCallSiteEpoch(TR::Compilation *c
    return mh == 0 ? TR::KnownObjectTable::UNKNOWN : knot->getOrCreateIndex(mh);
    }
 
+
+TR_J9VMBase::MethodOfHandle TR_J9VMBase::methodOfDirectOrVirtualHandle(
+   uintptr_t *mh, bool isVirtual)
+   {
+   TR::VMAccessCriticalSection methodOfDirectOrVirtualHandle(this);
+
+   MethodOfHandle result = {};
+
+   uintptr_t methodHandle = *mh;
+   result.vmSlot = getInt64Field(methodHandle, "vmSlot");
+
+   uintptr_t jlClass = getReferenceField(
+      methodHandle, "referenceClass", "Ljava/lang/Class;");
+
+   TR_OpaqueClassBlock *clazz = getClassFromJavaLangClass(jlClass);
+
+   if (isVirtual)
+      {
+      size_t vftStartOffset = TR::Compiler->vm.getInterpreterVTableOffset();
+      TR_OpaqueMethodBlock **vtable =
+         (TR_OpaqueMethodBlock**)((uintptr_t)clazz + vftStartOffset);
+
+      int32_t index = (int32_t)((result.vmSlot - vftStartOffset) / sizeof(vtable[0]));
+      result.j9method = vtable[index];
+      }
+   else
+      {
+      result.j9method = (TR_OpaqueMethodBlock*)(intptr_t)result.vmSlot;
+      }
+
+   return result;
+   }
+
 bool
 TR_J9VMBase::hasMethodTypesSideTable()
    {

@@ -1038,7 +1038,6 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
       return;
 
    bool isVirtual = false;
-   bool isInterface = false;
    TR::RecognizedMethod rm = callee->getRecognizedMethod();
    switch (rm)
       {
@@ -1069,69 +1068,27 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
          return;
          }
       // refine the leaf method handle callees
-      case TR::java_lang_invoke_InterfaceHandle_interfaceCall:
-         isInterface = true;
       case TR::java_lang_invoke_VirtualHandle_virtualCall:
-         isVirtual = !isInterface;
-         isIndirectCall = true;
+         isVirtual = true;
       case TR::java_lang_invoke_DirectHandle_directCall:
          {
-         isIndirectCall = false;
-         TR_OpaqueMethodBlock *j9method;
-         int64_t vmSlot = 0;
-         uintptr_t jlClass = 0;
          TR_J9VMBase *fej9 = comp()->fej9();
-            {
-            TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-#if defined(J9VM_OPT_JITSERVER)
-            if (comp()->isOutOfProcessCompilation())
-               {
-               bool knotEnabled = (knot != NULL);
-               uintptr_t *methodHandleLocation = _calltarget->_calleeMethod->getMethodHandleLocation();
-               auto stream = TR::CompilationInfo::getStream();
-               stream->write(JITServer::MessageType::KnownObjectTable_invokeDirectHandleDirectCall, methodHandleLocation, knotEnabled);
+         TR_J9VMBase::MethodOfHandle moh = fej9->methodOfDirectOrVirtualHandle(
+            _calltarget->_calleeMethod->getMethodHandleLocation(), isVirtual);
 
-               auto recv = stream->read<int64_t, uintptr_t, TR::KnownObjectTable::Index, uintptr_t*>();
-               vmSlot = std::get<0>(recv);
-               jlClass = std::get<1>(recv);
-               TR::KnownObjectTable::Index resultIndex = std::get<2>(recv);
-               uintptr_t *objectPointerReference = std::get<3>(recv);
+         TR_ASSERT_FATAL(moh.j9method != NULL, "Must have a j9method to generate a custom call");
+         uint32_t vTableSlot = isVirtual ? (uint32_t)moh.vmSlot : 0;
+         TR_ResolvedMethod *newCallee = fej9->createResolvedMethodWithVTableSlot(
+            trMemory(), vTableSlot, moh.j9method, _calltarget->_calleeMethod);
 
-               if (knot && (resultIndex != TR::KnownObjectTable::UNKNOWN))
-                  {
-                  knot->updateKnownObjectTableAtServer(resultIndex, objectPointerReference);
-                  }
+         // Don't refine virtualCall to an interface method, which will confuse
+         // the virtual call site logic in visitInvokestatic()
+         TR_OpaqueClassBlock *defClass = newCallee->classOfMethod();
+         if (isVirtual && TR::Compiler->cls.isInterfaceClass(comp(), defClass))
+            return;
 
-               debugTrace(tracer(), "refine resolved method for leaf methodHandle [obj%d]\n", resultIndex);
-               }
-            else
-#endif /* defined(J9VM_OPT_JITSERVER) */
-               {
-               TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fej9);
-               uintptr_t methodHandle = *_calltarget->_calleeMethod->getMethodHandleLocation();
-               vmSlot = fej9->getInt64Field(methodHandle, "vmSlot");
-               jlClass = fej9->getReferenceField(methodHandle, "defc", "Ljava/lang/Class;");
-               debugTrace(tracer(), "refine resolved method for leaf methodHandle [obj%d]\n", knot ? knot->getOrCreateIndex(methodHandle) : -1);
-               }
-
-            if (isInterface)
-               {
-               TR_OpaqueClassBlock *clazz = fej9->getClassFromJavaLangClass(jlClass);
-               j9method = (TR_OpaqueMethodBlock*)&(((J9Class *)clazz)->ramMethods[vmSlot]);
-               }
-            else if (isVirtual)
-               {
-               TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptr_t)fej9->getClassFromJavaLangClass(jlClass)) + J9JIT_INTERP_VTABLE_OFFSET);
-               int32_t index = (int32_t)((vmSlot - J9JIT_INTERP_VTABLE_OFFSET) / sizeof(vtable[0]));
-               j9method = vtable[index];
-               }
-            else
-               {
-               j9method = (TR_OpaqueMethodBlock*)(intptr_t)vmSlot;
-               }
-            }
-         TR_ASSERT(j9method, "Must have a j9method to generate a custom call");
-         callee = fej9->createResolvedMethod(this->trMemory(), j9method);
+         isIndirectCall = isVirtual;
+         callee = newCallee;
          return;
          }
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -1652,9 +1609,10 @@ InterpreterEmulator::visitInvokestatic()
          }
       else if (isIndirectCall)
          {
+         int32_t noCPIndex = -1; // The method is not referenced via the constant pool
          callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
                _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
-               interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex,
+               interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), noCPIndex,
                _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
                *_newBCInfo, comp(), _recursionDepth, allconsts);
          }
