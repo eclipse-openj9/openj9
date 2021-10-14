@@ -840,8 +840,14 @@ public class PointerGenerator {
 
 	private void writeArrayMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
 		try {
-			String returnType = getArrayType(fieldDescriptor.getType());
-			if (returnType.equals("EnumPointer")) {
+			String fieldType = fieldDescriptor.getType();
+			String returnType = getArrayType(fieldType);
+
+			if (returnType == null) {
+				String error = String.format("Unhandled array type: %s->%s %s",
+						structure.getPointerName(), fieldDescriptor.getName(), fieldType);
+				System.out.println(error);
+			} else if (returnType.equals("EnumPointer")) {
 				writeEnumEAMethod(writer, returnType, structure, fieldDescriptor);
 			} else {
 				writeEAMethod(writer, returnType, structure, fieldDescriptor);
@@ -927,7 +933,7 @@ public class PointerGenerator {
 			}
 		}
 
-		throw new IllegalArgumentException("Type is not a recognized array: " + arrayDeclaration);
+		return null;
 	}
 
 	private void writeBoolMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor) {
@@ -1080,7 +1086,7 @@ public class PointerGenerator {
 			writer.format("\tprivate %s %s_cache;%n", typeString, getter);
 		}
 		if (writeMethodSignature(writer, returnType, getter, fieldDescriptor, true)) {
-			String accessor = simpleTypeAccessorMap.get(type);
+			String accessor = simpleTypeAccessorMap.get(Integer.valueOf(type));
 			switch (type) {
 			case TYPE_IDATA:
 			case TYPE_UDATA:
