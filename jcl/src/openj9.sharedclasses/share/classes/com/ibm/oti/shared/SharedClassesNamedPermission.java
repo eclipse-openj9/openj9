@@ -26,7 +26,7 @@ package com.ibm.oti.shared;
 import java.security.BasicPermission;
 
 /**
- * This class defines shared cache permissions as described in the table below.
+ * This class defines shared cache permissions as described in the following table.
  *
  * <table border=1 style="padding=5px">
  * <caption>Shared Cache Permissions</caption>

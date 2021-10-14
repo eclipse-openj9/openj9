@@ -26,7 +26,7 @@ import java.security.BasicPermission;
 import java.security.Permission;
 
 /**
- * This class defines GPU permissions as described in the table below.
+ * This class defines GPU permissions as described in the following table.
  *
  * <table border=1 style="padding:5px">
  * <caption>GPU Permissions</caption>
