@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,9 +66,9 @@ threadParkImpl(J9VMThread *vmThread, IDATA timeoutIsEpochRelative, I_64 timeout)
 			millis = timeout / 1000000;
 			nanos = (IDATA)(timeout % 1000000);
 		}
-		thrstate = J9_PUBLIC_FLAGS_THREAD_PARKED | J9_PUBLIC_FLAGS_THREAD_TIMED;
+		thrstate = J9_PUBLIC_FLAGS2_THREAD_PARKED | J9_PUBLIC_FLAGS2_THREAD_TIMED;
 	} else {
-		thrstate = J9_PUBLIC_FLAGS_THREAD_PARKED;
+		thrstate = J9_PUBLIC_FLAGS2_THREAD_PARKED;
 	}
 
 #ifdef J9VM_OPT_SIDECAR

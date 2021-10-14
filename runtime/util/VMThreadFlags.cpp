@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,12 @@ void
 clearEventFlag(J9VMThread *vmThread, UDATA flag)
 {
 	VM_VMAccess::clearPublicFlags(vmThread, flag);
+}
+
+void
+clearEventFlag2(J9VMThread *vmThread, UDATA flag)
+{
+	VM_VMAccess::clearPublicFlags2(vmThread, flag);
 }
 
 void

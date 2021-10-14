@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -179,7 +179,7 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 		/* Update j.l.management info */
 		currentThread->mgmtBlockedCount += 1;
 restart:
-		internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
+		internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS2_THREAD_BLOCKED);
 		omrthread_monitor_enter_using_threadId(monitor, osThread);
 #if defined(J9VM_THR_SMART_DEFLATION)
 		/* Update the anti-deflation vote because we had to block */
@@ -264,7 +264,7 @@ restart:
 				J9_STORE_LOCKWORD(currentThread, lwEA, lock);
 				goto done;
 			}
-			internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
+			internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS2_THREAD_BLOCKED);
 			SET_IGNORE_ENTER(monitor);
 			omrthread_monitor_wait_timed(monitor, (I_64)waitTime, 0);
 			CLEAR_IGNORE_ENTER(monitor);
@@ -274,7 +274,7 @@ restart:
 			}
 		}
 done:
-		clearEventFlag(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
+		clearEventFlag2(currentThread, J9_PUBLIC_FLAGS2_THREAD_BLOCKED);
 		/* Clear the SUPPRESS_CONTENDED_EXITS bit in the monitor saying that CONTENDED EXIT can be sent again */
 		((J9ThreadMonitor*)monitor)->flags &= ~(UDATA)J9THREAD_MONITOR_SUPPRESS_CONTENDED_EXIT;
 		VM_AtomicSupport::subtract(&monitor->pinCount, 1);

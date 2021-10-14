@@ -223,11 +223,12 @@ setJ9ThreadState(omrthread_t osthread, UDATA flags, omrthread_monitor_t blocker,
 }
 
 void
-setVMThreadState(J9VMThread *vmthread, omrthread_t osThread, UDATA publicFlags, 
+setVMThreadState(J9VMThread *vmthread, omrthread_t osThread, UDATA publicFlags, UDATA publicFlags2,
 		j9object_t blockingEnterObject, UDATA lockWord)
 {
 	vmthread->osThread = osThread;
 	vmthread->publicFlags = publicFlags;
+	vmthread->publicFlags2 = publicFlags2;
 	vmthread->blockingEnterObject = blockingEnterObject;
 	if (blockingEnterObject) {
 		J9OBJECT_SET_MONITOR(vmthread, blockingEnterObject, (j9objectmonitor_t)lockWord);

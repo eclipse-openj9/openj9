@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corp. and others
+ * Copyright (c) 2008, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,7 +45,7 @@ test_vBfOC_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 0));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 0));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
@@ -63,7 +63,7 @@ test_vBfOC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 0));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 0));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(selfOsthread), 1);
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
@@ -82,7 +82,7 @@ test_vBfOC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	UDATA rc = 0;
 	PORT_ACCESS_FROM_ENV(env);
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 0));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 0));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherOsthread), 1);
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
@@ -102,7 +102,7 @@ test_vBfOC_nBMNC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	UDATA rc = 0;
 	PORT_ACCESS_FROM_ENV(env);
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(unattachedOsthread), 1);
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
@@ -122,7 +122,7 @@ test_vBaOC_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
 	setJ9MonitorState(TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
@@ -137,7 +137,7 @@ test_vBaOC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
 	setJ9MonitorState(TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(selfOsthread), 1);
 
@@ -152,7 +152,7 @@ test_vBaOC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
 	setJ9MonitorState(TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherOsthread), 1);
 
@@ -167,7 +167,7 @@ test_vBaOC_nBMNC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
 	setJ9MonitorState(TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(unattachedOsthread), 1);
 
@@ -187,7 +187,7 @@ test_vBfOC_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
@@ -205,7 +205,7 @@ test_vBfOC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(selfOsthread), 1);
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
@@ -224,7 +224,7 @@ test_vBfOC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherOsthread), 1);
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
@@ -242,7 +242,7 @@ test_vBfOC_nWMNC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(selfVmthread), 1));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(unattachedOsthread), 1);
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
@@ -261,7 +261,7 @@ test_vBaOC_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
 	setJ9MonitorState(TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
@@ -276,7 +276,7 @@ test_vBaOC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
 	setJ9MonitorState(TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(selfOsthread), 1);
 
@@ -292,7 +292,7 @@ test_vBaOC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
 	setJ9MonitorState(TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherOsthread), 1);
 
@@ -307,7 +307,7 @@ test_vBaOC_nWMNC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getInflLock(TESTDATA(objMonitor)));
 	setJ9MonitorState(TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(unattachedOsthread), 1);
 
@@ -328,7 +328,7 @@ test_vBfVC_nStMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED, TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
@@ -341,7 +341,7 @@ test_vBfVC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
@@ -355,7 +355,7 @@ test_vBfVC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(objMonitor)->monitor, TESTDATA(selfOsthread), 1);
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
@@ -369,7 +369,7 @@ test_vBfVC_nStMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED, TESTDATA(objMonitor)->monitor, TESTDATA(otherOsthread), 1);
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
@@ -383,7 +383,7 @@ test_vBfVC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_WAITING, TESTDATA(objMonitor)->monitor, TESTDATA(otherOsthread), 1);
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
@@ -397,7 +397,7 @@ test_vBfVC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 {
 	UDATA rc = 0;
 	
-	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), J9_PUBLIC_FLAGS_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
+	setVMThreadState(TESTDATA(selfVmthread), TESTDATA(selfOsthread), 0, J9_PUBLIC_FLAGS2_THREAD_BLOCKED, TESTDATA(blockingObject), getFlatLock(TESTDATA(otherVmthread), 0));
 	setJ9ThreadState(TESTDATA(selfOsthread), J9THREAD_FLAG_STARTED|J9THREAD_FLAG_BLOCKED, TESTDATA(objMonitor)->monitor, TESTDATA(otherOsthread), 1);
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);

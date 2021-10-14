@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corp. and others
+ * Copyright (c) 2008, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@
 extern void setJ9ThreadState(omrthread_t thr, UDATA flags, omrthread_monitor_t blocker,
 		omrthread_t owner, UDATA count);
 extern void setVMThreadState(J9VMThread *vmthread, omrthread_t osThread,
-		UDATA publicFlags, j9object_t blockingEnterObject, UDATA lockWord);
+		UDATA publicFlags, UDATA publicFlags2, j9object_t blockingEnterObject, UDATA lockWord);
 extern void setJ9MonitorState(omrthread_monitor_t monitor, omrthread_t owner,	UDATA count);
 extern UDATA getFlatLock(J9VMThread *owner, UDATA count);
 extern UDATA getInflLock(J9ObjectMonitor *monitor);

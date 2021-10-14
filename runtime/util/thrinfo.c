@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,14 +218,13 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 	omrthread_monitor_t rawLock = NULL;
 	J9VMThread *lockOwner = NULL;
 	UDATA count = 0;
-	UDATA publicFlags;
-	omrthread_t j9self;
-	omrthread_state_t j9state;
 	
 	if (targetThread) {
+		UDATA publicFlags = targetThread->publicFlags;
+		UDATA publicFlags2 = targetThread->publicFlags2;
+		omrthread_t j9self = targetThread->osThread;
+		omrthread_state_t j9state;
 		vmstate = J9VMTHREAD_STATE_RUNNING;
-		publicFlags = targetThread->publicFlags;
-		j9self = targetThread->osThread;
 		/* j9self may be NULL if this function is used by RAS on a corrupt VM */
 		
 		if (j9self) {
@@ -234,7 +233,7 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 			memset(&j9state, 0, sizeof(j9state));
 		}
 		
-		if (publicFlags & (J9_PUBLIC_FLAGS_THREAD_BLOCKED | J9_PUBLIC_FLAGS_THREAD_WAITING)) {
+		if (J9_ARE_ANY_BITS_SET(publicFlags2, J9_PUBLIC_FLAGS2_THREAD_BLOCKED | J9_PUBLIC_FLAGS2_THREAD_WAITING)) {
 			j9objectmonitor_t lockWord;
 			
 			Assert_VMUtil_true(targetThread->blockingEnterObject != NULL);
@@ -256,7 +255,7 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 					j9owner = objmon->owner;
 					count = objmon->count;
 					
-					if (publicFlags & J9_PUBLIC_FLAGS_THREAD_BLOCKED) {
+					if (J9_ARE_ANY_BITS_SET(publicFlags2, J9_PUBLIC_FLAGS2_THREAD_BLOCKED)) {
 						if (j9owner && (j9owner != j9self)) {
 							/* 
 							 * The omrthread may be accessing other raw monitors, but
@@ -269,7 +268,7 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 						}
 					} else {
 						if (!j9self) {
-							if (publicFlags & J9_PUBLIC_FLAGS_THREAD_TIMED) {
+							if (J9_ARE_ANY_BITS_SET(publicFlags2, J9_PUBLIC_FLAGS2_THREAD_TIMED)) {
 								vmstate = J9VMTHREAD_STATE_WAITING_TIMED;
 							} else {
 								vmstate = J9VMTHREAD_STATE_WAITING;
@@ -293,7 +292,7 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 				 * Can't wait on an uninflated object monitor, so the thread
 				 * must be blocked.
 				 */
-				Assert_VMUtil_true(publicFlags & J9_PUBLIC_FLAGS_THREAD_BLOCKED);
+				Assert_VMUtil_true(J9_ARE_ANY_BITS_SET(publicFlags2, J9_PUBLIC_FLAGS2_THREAD_BLOCKED));
 				
 				lockOwner = (J9VMThread *)J9_FLATLOCK_OWNER(lockWord);
 	
@@ -312,11 +311,11 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 			 * the omrthread. e.g. The omrthread may be blocked on publicFlagsMutex.
 			 */
 			
-		} else if (publicFlags & J9_PUBLIC_FLAGS_THREAD_PARKED) {
+		} else if (J9_ARE_ANY_BITS_SET(publicFlags2, J9_PUBLIC_FLAGS2_THREAD_PARKED)) {
 			/* if the osthread is not parked, then the thread is runnable */
 			if (!j9self || (j9state.flags & J9THREAD_FLAG_PARKED)) {
 				lockObject = targetThread->blockingEnterObject;
-				if (publicFlags & J9_PUBLIC_FLAGS_THREAD_TIMED) {
+				if (J9_ARE_ANY_BITS_SET(publicFlags2, J9_PUBLIC_FLAGS2_THREAD_TIMED)) {
 					vmstate = J9VMTHREAD_STATE_PARKED_TIMED;
 				} else {
 					vmstate = J9VMTHREAD_STATE_PARKED;
@@ -347,7 +346,7 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 #endif /* defined(J9VM_OPT_SIDECAR) */
 			}
 				
-		} else if (publicFlags & J9_PUBLIC_FLAGS_THREAD_SLEEPING) {
+		} else if (J9_ARE_ANY_BITS_SET(publicFlags2, J9_PUBLIC_FLAGS2_THREAD_SLEEPING)) {
 			/* if the osthread is not sleeping, then the thread is runnable */
 			if (!j9self || (j9state.flags & J9THREAD_FLAG_SLEEPING)) {
 				vmstate = J9VMTHREAD_STATE_SLEEPING;
@@ -411,7 +410,7 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 			 * For compatibility with getVMThreadStatus(), ignore this flag if
 			 * raw state is requested. 
 			 */
-			if (publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND) {
+			if (J9_ARE_ANY_BITS_SET(publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND)) {
 				vmstate |= J9VMTHREAD_STATE_SUSPENDED;
 			}
 		}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,9 +91,9 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 	}
 	
 	if (millis | nanos) {
-		thrstate = J9_PUBLIC_FLAGS_THREAD_WAITING | J9_PUBLIC_FLAGS_THREAD_TIMED;
+		thrstate = J9_PUBLIC_FLAGS2_THREAD_WAITING | J9_PUBLIC_FLAGS2_THREAD_TIMED;
 	} else {
-		thrstate = J9_PUBLIC_FLAGS_THREAD_WAITING;
+		thrstate = J9_PUBLIC_FLAGS2_THREAD_WAITING;
 	}
 
 	monitor = getMonitorForWait(vmThread, object);
@@ -200,9 +200,9 @@ threadSleepImpl(J9VMThread* vmThread, I_64 millis, I_32 nanos)
 #endif
 
 	TRIGGER_J9HOOK_VM_SLEEP(javaVM->hookInterface, vmThread, millis, nanos);
-	internalReleaseVMAccessSetStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
+	internalReleaseVMAccessSetStatus(vmThread, J9_PUBLIC_FLAGS2_THREAD_SLEEPING);
 	rc = omrthread_sleep_interruptable(millis, nanos);
-	internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
+	internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS2_THREAD_SLEEPING);
 	TRIGGER_J9HOOK_VM_SLEPT(javaVM->hookInterface, vmThread);
 
 	if (rc == 0) {

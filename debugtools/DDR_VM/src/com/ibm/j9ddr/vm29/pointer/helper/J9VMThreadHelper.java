@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@ package com.ibm.j9ddr.vm29.pointer.helper;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.J9VMThreadPointerUtil;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
+import com.ibm.j9ddr.vm29.structure.J9Consts;
 
 public class J9VMThreadHelper
 {
@@ -46,5 +47,80 @@ public class J9VMThreadHelper
 		}
 		
 		return threadName;
+	}
+
+	public static boolean waiting(J9VMThreadPointer thread) throws CorruptDataException {
+		switch ((int)J9Consts.J9_PUBLIC_FLAGS_VERSION) {
+		case 0:
+			return thread.publicFlags().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS_THREAD_WAITING);
+		case 1:
+			try {
+				return thread.publicFlags2().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS2_THREAD_WAITING);
+			} catch (NoSuchFieldException e) {
+				throw new CorruptDataException(e);
+			}
+		default:
+			throw new CorruptDataException("Unexpected J9Consts.J9_PUBLIC_FLAGS_VERSION");
+		}
+	}
+
+	public static boolean blocked(J9VMThreadPointer thread) throws CorruptDataException {
+		switch ((int)J9Consts.J9_PUBLIC_FLAGS_VERSION) {
+		case 0:
+			return thread.publicFlags().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS_THREAD_BLOCKED);
+		case 1:
+			try {
+				return thread.publicFlags2().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS2_THREAD_BLOCKED);
+			} catch (NoSuchFieldException e) {
+				throw new CorruptDataException(e);
+			}
+		default:
+			throw new CorruptDataException("Unexpected J9Consts.J9_PUBLIC_FLAGS_VERSION");
+		}
+	}
+
+	public static boolean sleeping(J9VMThreadPointer thread) throws CorruptDataException {
+		switch ((int)J9Consts.J9_PUBLIC_FLAGS_VERSION) {
+		case 0:
+			return thread.publicFlags().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS_THREAD_SLEEPING);
+		case 1:
+			try {
+				return thread.publicFlags2().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS2_THREAD_SLEEPING);
+			} catch (NoSuchFieldException e) {
+				throw new CorruptDataException(e);
+			}
+		default:
+			throw new CorruptDataException("Unexpected J9Consts.J9_PUBLIC_FLAGS_VERSION");
+		}
+	}
+
+	public static boolean parked(J9VMThreadPointer thread) throws CorruptDataException {
+		switch ((int)J9Consts.J9_PUBLIC_FLAGS_VERSION) {
+		case 0:
+			return thread.publicFlags().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS_THREAD_PARKED);
+		case 1:
+			try {
+				return thread.publicFlags2().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS2_THREAD_PARKED);
+			} catch (NoSuchFieldException e) {
+				throw new CorruptDataException(e);
+			}
+		default:
+			throw new CorruptDataException("Unexpected J9Consts.J9_PUBLIC_FLAGS_VERSION");
+		}
+	}
+
+	public static boolean timed(J9VMThreadPointer thread) throws CorruptDataException {
+		switch ((int)J9Consts.J9_PUBLIC_FLAGS_VERSION) {
+		case 0:
+			return thread.publicFlags().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS_THREAD_TIMED);
+		case 1:
+			try {
+				return thread.publicFlags2().anyBitsIn(J9Consts.J9_PUBLIC_FLAGS2_THREAD_TIMED);
+			} catch (NoSuchFieldException e) {
+				throw new CorruptDataException(e);
+			}
+		default:
+			throw new CorruptDataException("Unexpected J9Consts.J9_PUBLIC_FLAGS_VERSION");
+		}
 	}
 }

@@ -599,6 +599,7 @@ J9VMThread.osThread = required
 J9VMThread.pc = required
 J9VMThread.privateFlags = required
 J9VMThread.publicFlags = required
+J9VMThread.publicFlags2 = UDATA
 J9VMThread.segregatedAllocationCache = required
 J9VMThread.sp = required
 J9VMThread.stackObject = required

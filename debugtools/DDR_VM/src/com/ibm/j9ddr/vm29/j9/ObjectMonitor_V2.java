@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 IBM Corp. and others
+ * Copyright (c) 2019, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@ import java.util.List;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ThreadHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9VMThreadHelper;
 import com.ibm.j9ddr.vm29.j9.gc.GCVMThreadListIterator;
 import com.ibm.j9ddr.vm29.pointer.ObjectMonitorReferencePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
@@ -39,7 +40,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ThreadAbstractMonitorPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.OmrBuildFlags;
-import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.types.IDATA;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
@@ -289,7 +289,7 @@ class ObjectMonitor_V2 extends ObjectMonitor
 			GCVMThreadListIterator iterator = GCVMThreadListIterator.from();
 			while (iterator.hasNext()) {
 				J9VMThreadPointer vmThread = iterator.next();
-				if(vmThread.publicFlags().allBitsIn(J9Consts.J9_PUBLIC_FLAGS_THREAD_BLOCKED)) {
+				if (J9VMThreadHelper.blocked(vmThread)) {
 					J9ObjectPointer object = vmThread.blockingEnterObject();
 					if(object.notNull()) {
 						List<J9VMThreadPointer> list = blockedThreadsCache.get(object);

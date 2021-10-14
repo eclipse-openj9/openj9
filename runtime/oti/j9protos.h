@@ -254,6 +254,7 @@ extern J9_CFUNC UDATA  genericStackDumpIterator (J9VMThread *currentThread, J9St
 #ifndef _J9VMTHREADFLAGS_
 #define _J9VMTHREADFLAGS_
 extern J9_CFUNC void  clearEventFlag (J9VMThread *vmThread, UDATA flag);
+extern J9_CFUNC void  clearEventFlag2 (J9VMThread *vmThread, UDATA flag);
 extern J9_CFUNC void  setEventFlag (J9VMThread *vmThread, UDATA flag);
 extern J9_CFUNC void  setHaltFlag (J9VMThread *vmThread, UDATA flag);
 extern J9_CFUNC void  clearHaltFlag (J9VMThread *vmThread, UDATA flag);

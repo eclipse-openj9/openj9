@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -132,32 +132,10 @@ public:
 	static VMINLINE void
 	inlineAcquireVMAccessClearStatus(J9VMThread *const vmThread, const UDATA flags)
 	{
-		{
-			UDATA savedPublicFlags = vmThread->publicFlags;
-			UDATA publicFlags = 0;
-
-			for (;;) {
-				if (savedPublicFlags & J9_PUBLIC_FLAGS_VMACCESS_OUTOFLINE_MASK) {
-					break;
-				}
-
-				publicFlags = VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags,
-						savedPublicFlags, (savedPublicFlags | J9_PUBLIC_FLAGS_VMACCESS_ACQUIRE_BITS) & ~flags);
-				if (savedPublicFlags == publicFlags) {
-					/* success */
-					VM_AtomicSupport::readBarrier();
-					return;
-				}
-
-				/* update the saved value and try again */
-				savedPublicFlags = publicFlags;
-			}
-		}
-
 		omrthread_monitor_t const publicFlagsMutex = vmThread->publicFlagsMutex;
 		omrthread_t const osThread = vmThread->osThread;
 		omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
-		VM_VMAccess::clearPublicFlags(vmThread, flags);
+		VM_VMAccess::clearPublicFlags2(vmThread, flags);
 		J9_VM_FUNCTION(vmThread, internalAcquireVMAccessNoMutex)(vmThread);
 		omrthread_monitor_exit_using_threadId(publicFlagsMutex, osThread);
 	}
@@ -195,30 +173,10 @@ public:
 	static VMINLINE void
 	inlineReleaseVMAccessSetStatus(J9VMThread *const vmThread, const UDATA flags)
 	{
-		UDATA savedPublicFlags = vmThread->publicFlags;
-		UDATA publicFlags = 0;
-
-		VM_AtomicSupport::writeBarrier();
-		for (;;) {
-			if (savedPublicFlags & J9_PUBLIC_FLAGS_VMACCESS_RELEASE_BITS) {
-				break;
-			}
-
-			publicFlags = VM_AtomicSupport::lockCompareExchange(&vmThread->publicFlags,
-					savedPublicFlags, (savedPublicFlags & (~J9_PUBLIC_FLAGS_VMACCESS_ACQUIRE_BITS)) | flags);
-			if (savedPublicFlags == publicFlags) {
-				/* success */
-				return;
-			}
-
-			/* update the saved value and try again */
-			savedPublicFlags = publicFlags;
-		}
-
 		omrthread_monitor_t const publicFlagsMutex = vmThread->publicFlagsMutex;
 		omrthread_t const osThread = vmThread->osThread;
 		omrthread_monitor_enter_using_threadId(publicFlagsMutex, osThread);
-		VM_VMAccess::setPublicFlags(vmThread, flags);
+		VM_VMAccess::setPublicFlags2(vmThread, flags);
 		J9_VM_FUNCTION(vmThread, internalReleaseVMAccessNoMutex)(vmThread);
 		omrthread_monitor_exit_using_threadId(publicFlagsMutex, osThread);
 	}
@@ -277,6 +235,65 @@ public:
 			omrthread_monitor_enter(vmThread->publicFlagsMutex);
 		}
 		clearPublicFlagsNoMutex(vmThread, flags, notifyThread);
+		if (notifyThread) {
+			omrthread_monitor_exit(vmThread->publicFlagsMutex);
+		}
+	}
+
+	/**
+	 * Atomically OR flags into the publicFlags2 of a J9VMThread.
+	 * Optionally indicate that an async event is pending.
+	 *
+	 * @param vmThread[in] the J9VMThread to modify
+	 * @param flags[in] the flags to OR in
+	 * @param indicateEvent[in] true to indicate an async pending, false (the default) not to
+	 */
+	static VMINLINE void
+	setPublicFlags2(J9VMThread *vmThread, UDATA flags, bool indicateEvent = false)
+	{
+		VM_AtomicSupport::bitOr(&vmThread->publicFlags2, flags);
+		if (indicateEvent) {
+			VM_VMHelpers::indicateAsyncMessagePending(vmThread);
+		}
+	}
+
+	/**
+	 * Atomically AND flags out of the publicFlags2 of a J9VMThread.
+	 * Optionally notify the publicFlagsMutex of the thread.
+	 *
+	 * @pre The current thread owns the publicFlagsMutex of vmThread if notifyThread is true.
+	 *
+	 * @param vmThread[in] the J9VMThread to modify
+	 * @param flags[in] the flags to AND out
+	 * @param notifyThread[in] true to indicate notify the mutex, false (the default) not to
+	 *
+	 * @return the publicFlags2 value before the bits were cleared
+	 */
+	static VMINLINE UDATA
+	clearPublicFlags2NoMutex(J9VMThread *vmThread, UDATA flag, bool notifyThread = false)
+	{
+		UDATA const oldFlags = VM_AtomicSupport::bitAnd(&vmThread->publicFlags2, ~flag);
+		if (notifyThread) {
+			omrthread_monitor_notify_all(vmThread->publicFlagsMutex);
+		}
+		return oldFlags;
+	}
+
+	/**
+	 * Atomically AND flags out of the publicFlags2 of a J9VMThread.
+	 * Optionally notify the publicFlagsMutex of the thread.
+	 *
+	 * @param vmThread[in] the J9VMThread to modify
+	 * @param flags[in] the flags to AND out
+	 * @param notifyThread[in] true to notify the mutex, false (the default) not to
+	 */
+	static VMINLINE void
+	clearPublicFlags2(J9VMThread *vmThread, UDATA flags, bool notifyThread = false)
+	{
+		if (notifyThread) {
+			omrthread_monitor_enter(vmThread->publicFlagsMutex);
+		}
+		clearPublicFlags2NoMutex(vmThread, flags, notifyThread);
 		if (notifyThread) {
 			omrthread_monitor_exit(vmThread->publicFlagsMutex);
 		}

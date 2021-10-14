@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,11 +30,6 @@ import static com.ibm.j9ddr.vm29.structure.J9AbstractThread.J9THREAD_FLAG_SUSPEN
 import static com.ibm.j9ddr.vm29.structure.J9AbstractThread.J9THREAD_FLAG_TIMER_SET;
 import static com.ibm.j9ddr.vm29.structure.J9AbstractThread.J9THREAD_FLAG_WAITING;
 import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND;
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_PUBLIC_FLAGS_THREAD_BLOCKED;
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_PUBLIC_FLAGS_THREAD_PARKED;
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_PUBLIC_FLAGS_THREAD_SLEEPING;
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_PUBLIC_FLAGS_THREAD_TIMED;
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_PUBLIC_FLAGS_THREAD_WAITING;
 import static com.ibm.j9ddr.vm29.structure.J9VMThread.J9VMTHREAD_STATE_BLOCKED;
 import static com.ibm.j9ddr.vm29.structure.J9VMThread.J9VMTHREAD_STATE_DEAD;
 import static com.ibm.j9ddr.vm29.structure.J9VMThread.J9VMTHREAD_STATE_INTERRUPTED;
@@ -55,6 +50,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ThreadMonitorPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.types.UDATA;
+import com.ibm.j9ddr.vm29.pointer.helper.J9VMThreadHelper;
 
 public class J9VMThreadPointerUtil {
 	
@@ -170,7 +166,7 @@ public class J9VMThreadPointerUtil {
 		/* j9self may be NULL if this function is used by RAS on a corrupt VM */
 		ThreadState j9state = new ThreadState(j9self);
 		
-		if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_BLOCKED | J9_PUBLIC_FLAGS_THREAD_WAITING)) {
+		if (J9VMThreadHelper.blocked(targetThread) || J9VMThreadHelper.waiting(targetThread)) {
 
 			/* Assert_VMUtil_true(targetThread->blockingEnterObject != NULL); */
 	
@@ -189,7 +185,7 @@ public class J9VMThreadPointerUtil {
 			
 				/* count = READU(objmon->count); */
 				
-				if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_BLOCKED)) {
+				if (J9VMThreadHelper.blocked(targetThread)) {
 					if (monitor.getOwner().notNull() && !monitor.getOwner().equals(j9self)) {
 						/* 
 						 * The omrthread may be accessing other raw monitors, but
@@ -201,7 +197,7 @@ public class J9VMThreadPointerUtil {
 					}
 				} else {
 					if (j9self.isNull()) {
-						if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_TIMED)) {
+						if (J9VMThreadHelper.timed(targetThread)) {
 							vmstate = J9VMTHREAD_STATE_WAITING_TIMED;
 						} else {
 							vmstate = J9VMTHREAD_STATE_WAITING;
@@ -221,7 +217,7 @@ public class J9VMThreadPointerUtil {
 				 * must be blocked.
 				 */
 				
-				/* Assert_VMUtil_true(publicFlags & J9_PUBLIC_FLAGS_THREAD_BLOCKED); */
+				/* Assert_VMUtil_true(J9VMThreadHelper.blocked(targetThread)); */
 				
 				if (monitor.getOwner().notNull() && (!monitor.getOwner().equals(targetThread))) {
 					/* count = J9_FLATLOCK_COUNT(lockWord); */
@@ -238,18 +234,18 @@ public class J9VMThreadPointerUtil {
 			 * the omrthread. e.g. The omrthread may be blocked on publicFlagsMutex.
 			 */
 			
-		} else if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_PARKED)) {
+		} else if (J9VMThreadHelper.parked(targetThread)) {
 			/* if the osthread is not parked, then the thread is runnable */
 			if (j9self.isNull() || (j9state.flags.anyBitsIn(J9THREAD_FLAG_PARKED))) {
 				thrinfo.lockObject = targetThread.blockingEnterObject();
-				if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_TIMED)) {
+				if (J9VMThreadHelper.timed(targetThread)) {
 					vmstate = J9VMTHREAD_STATE_PARKED_TIMED;
 				} else {
 					vmstate = J9VMTHREAD_STATE_PARKED;
 				}
 			}
 				
-		} else if (publicFlags.anyBitsIn(J9_PUBLIC_FLAGS_THREAD_SLEEPING)) {
+		} else if (J9VMThreadHelper.sleeping(targetThread)) {
 			/* if the osthread is not sleeping, then the thread is runnable */
 			if (j9self.isNull() || (j9state.flags.anyBitsIn(J9THREAD_FLAG_SLEEPING))) {
 				vmstate = J9VMTHREAD_STATE_SLEEPING;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ BOOLEAN
 objectIsBeingWaitedOn(J9VMThread *currentThread, J9VMThread *targetThread, j9object_t obj)
 {
 	BOOLEAN rc = FALSE;
-	if (J9_ARE_ANY_BITS_SET(targetThread->publicFlags, J9_PUBLIC_FLAGS_THREAD_WAITING)) {
+	if (J9_ARE_ANY_BITS_SET(targetThread->publicFlags2, J9_PUBLIC_FLAGS2_THREAD_WAITING)) {
 		rc = (obj == J9VMTHREAD_BLOCKINGENTEROBJECT(currentThread, targetThread));
 	}
 	return rc;
