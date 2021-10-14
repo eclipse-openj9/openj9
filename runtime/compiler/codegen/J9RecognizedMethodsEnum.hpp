@@ -1009,7 +1009,6 @@
    java_lang_invoke_InsertHandle_numPrefixArgs,
    java_lang_invoke_InsertHandle_numSuffixArgs,
    java_lang_invoke_InsertHandle_numValuesToInsert,
-   java_lang_invoke_InterfaceHandle_interfaceCall,
    java_lang_invoke_InterfaceHandle_invokeExact,
    java_lang_invoke_Invokers_checkCustomized,
    java_lang_invoke_Invokers_checkExactType,

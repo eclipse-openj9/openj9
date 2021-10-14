@@ -764,6 +764,14 @@ public:
    virtual uintptr_t mutableCallSiteCookie(uintptr_t mutableCallSite, uintptr_t potentialCookie=0);
    TR::KnownObjectTable::Index mutableCallSiteEpoch(TR::Compilation *comp, uintptr_t mutableCallSite);
 
+   struct MethodOfHandle
+      {
+      TR_OpaqueMethodBlock *j9method;
+      int64_t vmSlot;
+      };
+
+   virtual MethodOfHandle methodOfDirectOrVirtualHandle(uintptr_t *mh, bool isVirtual);
+
    bool hasMethodTypesSideTable();
 
    // Openjdk implementation

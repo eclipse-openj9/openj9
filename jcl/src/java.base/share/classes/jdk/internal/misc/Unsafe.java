@@ -6546,4 +6546,139 @@ public final class Unsafe {
 	private static char convEndian(boolean isBigEndian, char value) {
 		return (IS_BIG_ENDIAN == isBigEndian) ? value : Character.reverseBytes(value);
 	}
+
+	/*[IF INLINE-TYPES]*/
+	/**
+	 * ToDo: add comments for public methods - https://github.com/eclipse-openj9/openj9/issues/13614
+	 */
+	public native <V> V getValue(Object obj, long offset, Class<?> clz);
+	public native <V> void putValue(Object obj, long offset, Class<?> clz, V value);
+	public native <V> V uninitializedDefaultValue(Class<?> clz);
+	public native <V> long valueHeaderSize(Class<V> clz);
+	public native boolean isFlattenedArray(Class<?> clz);
+
+	public final <V> boolean compareAndSetValue(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object compareAndExchangeValue(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object compareAndExchangeValueAcquire(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object compareAndExchangeValueRelease(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> boolean weakCompareAndSetValuePlain(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> boolean weakCompareAndSetValueAcquire(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> boolean weakCompareAndSetValueRelease(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> boolean weakCompareAndSetValue(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object getValueVolatile(Object obj, long offset, Class<?> clz) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> void putValueVolatile(Object obj, long offset, Class<?> clz, V v) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object getValueAcquire(Object obj, long offset, Class<?> clz) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> void putValueRelease(Object obj, long offset, Class<?> clz, V v) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object getValueOpaque(Object obj, long offset, Class<?> clz) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> void putValueOpaque(Object obj, long offset, Class<?> clz, V v) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object getAndSetValue(Object obj, long offset, Class<?> clz, V v) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object getAndSetValueRelease(Object obj, long offset, Class<?> clz, V v) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object getAndSetValueAcquire(Object obj, long offset, Class<?> clz, V v) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public boolean isFlattened(java.lang.reflect.Field field) {
+		// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13614
+		return false;
+	}
+
+	public long getObjectSize(Object o) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> boolean compareAndSetReference(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> boolean weakCompareAndSetReferenceAcquire(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> boolean weakCompareAndSetReferenceRelease(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object compareAndExchangeReference(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object compareAndExchangeReferenceAcquire(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> Object compareAndExchangeReferenceRelease(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> boolean weakCompareAndSetReferencePlain(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public final <V> boolean weakCompareAndSetReference(Object obj, long offset, Class<?> clz, V v1, V v2) {
+		throw OpenJDKCompileStubThrowError();
+	}
+
+	public Object getReferenceVolatile(Object obj, long offset, Class<?> clz) {
+		// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13614
+		return getReferenceVolatile(obj, offset);
+	}
+
+	public Object getReference(Object obj, long offset, Class<?> clz) {
+		// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13614
+		return getReference(obj, offset);
+	}
+
+	private static InternalError OpenJDKCompileStubThrowError() {
+		// ToDo: https://github.com/eclipse-openj9/openj9/issues/13614
+		throw new InternalError("Compile stub invoked! Apart from deliberate reflective access, this should not happen. Please report this to the project so it can be addressed");	//$NON-NLS-1$
+	}
+	/*[ENDIF] INLINE-TYPES */
 }
