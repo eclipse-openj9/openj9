@@ -1164,6 +1164,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fieldKnotIndex, knot->getPointerLocation(fieldKnotIndex));
          }
          break;
+      case MessageType::VM_isMethodHandleExpectedType:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index, TR::KnownObjectTable::Index>();
+         TR::KnownObjectTable::Index mhIndex = std::get<0>(recv);
+         TR::KnownObjectTable::Index expectedTypeIndex = std::get<1>(recv);
+         bool result = fe->isMethodHandleExpectedType(comp, mhIndex, expectedTypeIndex);
+         client->write(response, result, knot->getPointerLocation(mhIndex), knot->getPointerLocation(expectedTypeIndex));
+         }
+         break;
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
       case MessageType::VM_isStable:
          {

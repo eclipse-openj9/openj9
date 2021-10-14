@@ -34,7 +34,6 @@
 #include "env/IO.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
-#include "env/VMAccessCriticalSection.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
 #include "il/MethodSymbol.hpp"
@@ -684,15 +683,11 @@ TR_MethodHandleTransformer::process_java_lang_invoke_Invokers_checkExactType(TR:
 
    TR::KnownObjectTable::Index mhIndex = getObjectInfoOfNode(methodHandleNode);
    TR::KnownObjectTable::Index expectedTypeIndex = getObjectInfoOfNode(expectedTypeNode);
-   auto knot = comp()->getKnownObjectTable();
-   if (knot && isKnownObject(mhIndex) && isKnownObject(expectedTypeIndex))
+   if (isKnownObject(mhIndex) && isKnownObject(expectedTypeIndex))
       {
-      TR::VMAccessCriticalSection vmAccess(fej9);
-      uintptr_t mhObject = knot->getPointer(mhIndex);
-      uintptr_t mtObject = fej9->getReferenceField(mhObject, "type", "Ljava/lang/invoke/MethodType;");
-      uintptr_t etObject = knot->getPointer(expectedTypeIndex);
+      bool typesMatch = fej9->isMethodHandleExpectedType(comp(), mhIndex, expectedTypeIndex);
 
-      if (etObject == mtObject && performTransformation(comp(), "%sChanging checkExactType call node n%dn to PassThrough\n", optDetailString(), node->getGlobalIndex()))
+      if (typesMatch && performTransformation(comp(), "%sChanging checkExactType call node n%dn to PassThrough\n", optDetailString(), node->getGlobalIndex()))
          {
          TR::TransformUtil::transformCallNodeToPassThrough(this, node, tt, node->getFirstArgument());
          return;
