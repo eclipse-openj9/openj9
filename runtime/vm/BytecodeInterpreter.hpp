@@ -3980,6 +3980,58 @@ done:
 		return rc;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* ToDo: unimplemented - https://github.com/eclipse-openj9/openj9/issues/13614 */
+	/* jdk.internal.misc.Unsafe: public native <V> V getValue(Object obj, long offset, Class<?> clz); */
+	VMINLINE VM_BytecodeAction
+	inlUnsafeGetValue(REGISTER_ARGS_LIST)
+	{
+		updateVMStruct(REGISTER_ARGS);
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+	}
+
+	/* ToDo: unimplemented - https://github.com/eclipse-openj9/openj9/issues/13614 */
+	/* jdk.internal.misc.Unsafe: public native <V> void putValue(Object obj, long offset, Class<?> clz, V value); */
+	VMINLINE VM_BytecodeAction
+	inlUnsafePutValue(REGISTER_ARGS_LIST)
+	{
+		updateVMStruct(REGISTER_ARGS);
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+	}
+
+	/* ToDo: unimplemented - https://github.com/eclipse-openj9/openj9/issues/13614 */
+	/* jdk.internal.misc.Unsafe: public native <V> V uninitializedDefaultValue(Class<?> clz); */
+	VMINLINE VM_BytecodeAction
+	inlUnsafeUninitializedDefaultValue(REGISTER_ARGS_LIST)
+	{
+		updateVMStruct(REGISTER_ARGS);
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+	}
+
+	/* ToDo: unimplemented - https://github.com/eclipse-openj9/openj9/issues/13614 */
+	/* jdk.internal.misc.Unsafe: public native <V> long valueHeaderSize(Class<V> clz); */
+	VMINLINE VM_BytecodeAction
+	inlUnsafeValueHeaderSize(REGISTER_ARGS_LIST)
+	{
+		updateVMStruct(REGISTER_ARGS);
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+	}
+
+	/* ToDo: unimplemented - https://github.com/eclipse-openj9/openj9/issues/13614 */
+	/* jdk.internal.misc.Unsafe: public native boolean isFlattenedArray(Class<?> clz); */
+	VMINLINE VM_BytecodeAction
+	inlUnsafeIsFlattenedArray(REGISTER_ARGS_LIST)
+	{
+		updateVMStruct(REGISTER_ARGS);
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+	}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+
 	/* java.lang.J9VMInternals: private native static void prepareClassImpl(Class clazz); */
 	VMINLINE VM_BytecodeAction
 	inlInternalsPrepareClassImpl(REGISTER_ARGS_LIST)
@@ -9593,6 +9645,13 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPOBJECT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPLONG),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT),
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_UNINITIALIZEDDEFAULTVALUE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY),
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASSLOADER_FIND_LOADED_CLASS_IMPL),
@@ -10150,6 +10209,18 @@ runMethod: {
 		PERFORM_ACTION(inlUnsafeCompareAndSwapLong(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_COMPAREANDSWAPINT):
 		PERFORM_ACTION(inlUnsafeCompareAndSwapInt(REGISTER_ARGS));
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_GETVALUE):
+		PERFORM_ACTION(inlUnsafeGetValue(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_PUTVALUE):
+		PERFORM_ACTION(inlUnsafePutValue(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_UNINITIALIZEDDEFAULTVALUE):
+		PERFORM_ACTION(inlUnsafeUninitializedDefaultValue(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_VALUEHEADERSIZE):
+		PERFORM_ACTION(inlUnsafeValueHeaderSize(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_UNSAFE_ISFLATTENEDARRAY):
+		PERFORM_ACTION(inlUnsafeIsFlattenedArray(REGISTER_ARGS));
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_INTERNALS_GET_INTERFACES):
 		PERFORM_ACTION(inlInternalsGetInterfaces(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_ARRAY_NEW_ARRAY_IMPL):

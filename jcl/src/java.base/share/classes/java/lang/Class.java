@@ -2405,6 +2405,26 @@ public native boolean isPrimitive();
  * @return	true if reciever is primitive class type, and false otherwise.
  */
 public native boolean isPrimitiveClass();
+
+/**
+ * ToDo: add comments for public methods - https://github.com/eclipse-openj9/openj9/issues/13615
+ */
+public Class<?> asPrimaryType() {
+	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
+	return this;
+}
+public Class<?> asValueType() {
+	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
+	return this;
+}
+public boolean isPrimaryType() {
+	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
+	return true;
+}
+public boolean isValueType() {
+	// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13615
+	return false;
+}
 /*[ENDIF] INLINE-TYPES */
 
 /**
