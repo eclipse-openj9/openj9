@@ -30,7 +30,7 @@ import com.ibm.cuda.CudaDevice.Limit;
 import com.ibm.cuda.CudaDevice.SharedMemConfig;
 
 /**
- * This class defines CUDA permissions as described in the table below.
+ * This class defines CUDA permissions as described in the following table.
  *
  * <table border=1 style="padding:5px">
  * <caption>CUDA Permissions</caption>

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corp. and others
+ * Copyright (c) 2008, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,11 +27,11 @@ import com.ibm.dtfj.image.DataUnavailable;
 
 /**
  * Represents a Java reference.
- * 
+ *
  */
 public interface JavaReference
 {
-    
+
 	/** Unknown heap root type */
     int HEAP_ROOT_UNKNOWN      = 0;
     /** JNI global reference heap root */
@@ -56,14 +56,14 @@ public interface JavaReference
     int HEAP_ROOT_CLASSLOADER = 10;
     /** Stringtable heap root */
     int HEAP_ROOT_STRINGTABLE = 11;
-    
+
 
      /** Unknown reference type */
     int REFERENCE_UNKNOWN           = 0;
-    /** Reference from an object to its class */ 
-    int REFERENCE_CLASS             = 1;  // 
+    /** Reference from an object to its class */
+    int REFERENCE_CLASS             = 1;  //
     /** Reference from an object to the value of one of its instance fields */
-    int REFERENCE_FIELD             = 2;  
+    int REFERENCE_FIELD             = 2;
     /** Reference from an array to one of its elements */
     int REFERENCE_ARRAY_ELEMENT     = 3;
     /** Reference from a class to its class loader */
@@ -75,7 +75,7 @@ public interface JavaReference
     /** Reference from a class to one of its interfaces */
     int REFERENCE_INTERFACE         = 7;
     /** Reference from a class to the value of one of its static fields */
-    int REFERENCE_STATIC_FIELD      = 8; 
+    int REFERENCE_STATIC_FIELD      = 8;
     /** Reference from a class to a resolved entry in the constant pool */
     int REFERENCE_CONSTANT_POOL     = 9;
     /** Reference from a class to its superclass */
@@ -103,26 +103,26 @@ public interface JavaReference
     /**
      * Get the root type, as defined in the JVMTI specification.
      *
-     * @return an integer representing the root type, see HEAP_ROOT_ statics above.
+     * @return an integer representing the root type, see the HEAP_ROOT_ static fields.
      */
     public int getRootType() throws CorruptDataException;
 
     /**
      * Get the reference type, as defined in the JVMTI specification.
-     * @return an integer representing the reference type, see REFERENCE_ statics above.
+     * @return an integer representing the reference type, see the REFERENCE_ static fields.
      */
     public int getReferenceType() throws CorruptDataException;
 
     /**
      * Get the reachability of the target object via this specific reference.
-     * @return an integer representing the reachability, see REACHABILITY_ statics above.
+     * @return an integer representing the reachability, see the REACHABILITY_ static fields.
      */
     public int getReachability() throws CorruptDataException;
 
     /**
      * Get a string describing the reference type.
      * Implementers should not depend on the contents or identity of this string.
-     * e.g. "JNI Weak global reference", "Instance field 'MyClass.value'", "Constant pool string constant"
+     * e.g. <q>JNI Weak global reference</q>, <q>Instance field 'MyClass.value'</q>, <q>Constant pool string constant</q>
      * @return a String describing the reference type
      */
     public String getDescription();
