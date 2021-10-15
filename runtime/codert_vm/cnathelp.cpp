@@ -1606,52 +1606,6 @@ old_fast_jitLookupInterfaceMethod(J9VMThread *currentThread)
 }
 
 void J9FASTCALL
-old_fast_jitLookupDynamicInterfaceMethod(J9VMThread *currentThread)
-{
-	OLD_JIT_HELPER_PROLOGUE(3);
-	DECLARE_JIT_CLASS_PARM(receiverClass, 1);
-	DECLARE_JIT_CLASS_PARM(interfaceClass, 2);
-	DECLARE_JIT_PARM(UDATA, iTableIndex, 3);
-	UDATA iTableOffset = sizeof(struct J9ITable) + (iTableIndex * sizeof(UDATA));
-	UDATA vTableOffset = convertITableOffsetToVTableOffset(currentThread, receiverClass, interfaceClass, iTableOffset);
-	Assert_CodertVM_false(0 == vTableOffset);
-	JIT_RETURN_UDATA(vTableOffset);
-}
-
-void* J9FASTCALL
-old_slow_jitLookupDynamicPublicInterfaceMethod(J9VMThread *currentThread)
-{
-	SLOW_JIT_HELPER_PROLOGUE();
-	J9Method *method = (J9Method*)currentThread->floatTemp1;
-	buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
-	TIDY_BEFORE_THROW();
-	currentThread->javaVM->internalVMFunctions->setIllegalAccessErrorNonPublicInvokeInterface(currentThread, method);
-	return J9_JITHELPER_ACTION_THROW;
-}
-
-void* J9FASTCALL
-old_fast_jitLookupDynamicPublicInterfaceMethod(J9VMThread *currentThread)
-{
-	void *slowPath = (void*)old_slow_jitLookupDynamicPublicInterfaceMethod;
-	OLD_JIT_HELPER_PROLOGUE(3);
-	DECLARE_JIT_CLASS_PARM(receiverClass, 1);
-	DECLARE_JIT_CLASS_PARM(interfaceClass, 2);
-	DECLARE_JIT_PARM(UDATA, iTableIndex, 3);
-	UDATA iTableOffset = sizeof(struct J9ITable) + (iTableIndex * sizeof(UDATA));
-	UDATA vTableOffset = convertITableOffsetToVTableOffset(currentThread, receiverClass, interfaceClass, iTableOffset);
-	Assert_CodertVM_false(0 == vTableOffset);
-	/* The receiver's implementation is required to be public */
-	J9Method *method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
-	if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPublic)) {
-		slowPath = NULL;
-		JIT_RETURN_UDATA(vTableOffset);
-	} else {
-		currentThread->floatTemp1 = (void*)method;
-	}
-	return slowPath;
-}
-
-void J9FASTCALL
 old_fast_jitMethodIsNative(J9VMThread *currentThread)
 {
 	OLD_JIT_HELPER_PROLOGUE(1);
@@ -3927,9 +3881,6 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_fast_jitInstanceOf = (void*)old_fast_jitInstanceOf;
 	jitConfig->old_fast_jitLookupInterfaceMethod = (void*)old_fast_jitLookupInterfaceMethod;
 	jitConfig->old_slow_jitLookupInterfaceMethod = (void*)old_slow_jitLookupInterfaceMethod;
-	jitConfig->old_fast_jitLookupDynamicInterfaceMethod = (void*)old_fast_jitLookupDynamicInterfaceMethod;
-	jitConfig->old_fast_jitLookupDynamicPublicInterfaceMethod = (void*)old_fast_jitLookupDynamicPublicInterfaceMethod;
-	jitConfig->old_slow_jitLookupDynamicPublicInterfaceMethod = (void*)old_slow_jitLookupDynamicPublicInterfaceMethod;
 	jitConfig->old_fast_jitMethodIsNative = (void*)old_fast_jitMethodIsNative;
 	jitConfig->old_fast_jitMethodIsSync = (void*)old_fast_jitMethodIsSync;
 	jitConfig->old_fast_jitMethodMonitorEntry = (void*)old_fast_jitMethodMonitorEntry;

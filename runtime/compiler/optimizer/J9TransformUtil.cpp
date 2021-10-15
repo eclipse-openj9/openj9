@@ -2173,6 +2173,9 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
 
    TR_ASSERT(targetMethod, "Can't get target method from MethodName obj%d\n", mnIndex);
 
+   if (!performTransformation(comp, "O^O Refine linkToXXX n%dn [%p] with known MemberName object\n", node->getGlobalIndex(), node))
+      return false;
+
    TR::MethodSymbol::Kinds callKind = getTargetMethodCallKind(rm);
    TR::ILOpCodes callOpCode = getTargetMethodCallOpCode(rm, node->getDataType());
 
@@ -2181,23 +2184,7 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
    int32_t jitVTableOffset = 0;
    if (rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
       {
-      uintptr_t slot = fej9->vTableOrITableIndexFromMemberName(comp, mnIndex);
-      if ((slot & J9_JNI_MID_INTERFACE) != 0)
-         {
-         // TODO: Refine this to an interface call to the method identified by
-         // the itable slot and the method's defining (interface) class from
-         // the MemberName.
-         //
-         // Unfortunately, such a call will not be representable until
-         // interface calls are allowed to be resolved. As it stands, code
-         // generation requires a CP index for the dispatch.
-         //
-         // For the moment, just leave the call unrefined.
-         //
-         return false;
-         }
-
-      vTableSlot = (uint32_t)slot;
+      vTableSlot = fej9->vTableOrITableIndexFromMemberName(comp, mnIndex);
       jitVTableOffset = fej9->vTableSlotToVirtualCallOffset(vTableSlot);
       // For private virtual methods and java/lang/Object; type virtual methods, there is no corresponding
       // entry in the vtable, and for such methods the interpreter vtable index is 0.
@@ -2208,10 +2195,6 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       if (jitVTableOffset > 0)
          callKind = TR::MethodSymbol::Static;
       }
-
-   if (!performTransformation(comp, "O^O Refine linkToXXX n%dn [%p] with known MemberName object\n", node->getGlobalIndex(), node))
-      return false;
-
    auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, targetMethod, symRef->getOwningMethod(comp));
    newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
    if (callKind == TR::MethodSymbol::Virtual)

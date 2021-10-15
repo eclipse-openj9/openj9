@@ -4959,15 +4959,15 @@ TR_J9VMBase::jniMethodIdFromMemberName(TR::Compilation* comp, TR::KnownObjectTab
    return NULL;
    }
 
-uintptr_t
+int32_t
 TR_J9VMBase::vTableOrITableIndexFromMemberName(uintptr_t memberName)
    {
    TR_ASSERT(haveAccess(), "vTableOrITableIndexFromMemberName requires VM access");
    auto methodID = jniMethodIdFromMemberName(memberName);
-   return methodID->vTableIndex;
+   return (int32_t)methodID->vTableIndex;
    }
 
-uintptr_t
+int32_t
 TR_J9VMBase::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownObjectTable::Index objIndex)
    {
    auto knot = comp->getKnownObjectTable();
@@ -4979,7 +4979,7 @@ TR_J9VMBase::vTableOrITableIndexFromMemberName(TR::Compilation* comp, TR::KnownO
       uintptr_t object = knot->getPointer(objIndex);
       return vTableOrITableIndexFromMemberName(object);
       }
-   return (uintptr_t)-1;
+   return -1;
    }
 
 TR::KnownObjectTable::Index
