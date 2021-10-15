@@ -191,11 +191,27 @@ J9::Simplifier::isRecognizedAbsMethod(TR::Node * node)
    }
 
 bool
-J9::Simplifier::isObjectEqualityComparison(TR::Node *node)
+J9::Simplifier::isRecognizedObjectComparisonNonHelper(TR::Node *node, TR::SymbolReferenceTable::CommonNonhelperSymbol &nonHelperSymbol)
    {
-   return node->getOpCode().isCall()
-          && comp()->getSymRefTab()->isNonHelper(node->getSymbolReference(),
-                   TR::SymbolReferenceTable::objectEqualityComparisonSymbol);
+   bool isRecognized = false;
+
+   if (node->getOpCode().isCall())
+      {
+      if (comp()->getSymRefTab()->isNonHelper(node->getSymbolReference(),
+                TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
+         {
+         isRecognized = true;
+         nonHelperSymbol = TR::SymbolReferenceTable::objectEqualityComparisonSymbol;
+         }
+      else if (comp()->getSymRefTab()->isNonHelper(node->getSymbolReference(),
+                     TR::SymbolReferenceTable::objectInequalityComparisonSymbol))
+         {
+         isRecognized = true;
+         nonHelperSymbol = TR::SymbolReferenceTable::objectInequalityComparisonSymbol;
+         }
+      }
+
+   return isRecognized;
    }
 
 TR::Node *
@@ -258,37 +274,45 @@ J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
          foldDoubleConstant(node, 10000.0, (TR::Simplifier *) this);
          }
       }
-   else if (isObjectEqualityComparison(node))
+   else
       {
-      TR::Node *lhs = node->getChild(0);
-      const bool lhsNull =
-         lhs->getOpCodeValue() == TR::aconst
-         && lhs->getConstValue() == 0;
+      TR::SymbolReferenceTable::CommonNonhelperSymbol nonHelperSymbol;
 
-      TR::Node *rhs = node->getChild(1);
-      const bool rhsNull =
-         rhs->getOpCodeValue() == TR::aconst
-         && rhs->getConstValue() == 0;
-
-      // If either operand is null, no need to use the equality comparison helper,
-      // as value types cannot have null references.  Also, if both operands
-      // are the same node, no need to use the comparison helper - the comparison
-      // must be true.  Fold both cases to use acmpeq which might be further simplified
-      //
-      if (lhsNull || rhsNull || lhs == rhs)
+      if (isRecognizedObjectComparisonNonHelper(node, nonHelperSymbol))
          {
-         if (performTransformation(
-               comp(),
-               "%sChanging n%un from <isObjectEqualityComparison> to acmpeq\n",
-               optDetailString(),
-               node->getGlobalIndex()))
-            {
-            const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/simplifier-xformed/acmp/(%s)/bc=%d",
-                                                            comp()->signature(), node->getByteCodeIndex());
-            TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
+         TR::Node *lhs = node->getChild(0);
+         const bool lhsNull =
+            lhs->getOpCodeValue() == TR::aconst
+            && lhs->getConstValue() == 0;
 
-            TR::Node::recreate(node, TR::acmpeq);
-            node = simplify(node, block);
+         TR::Node *rhs = node->getChild(1);
+         const bool rhsNull =
+            rhs->getOpCodeValue() == TR::aconst
+            && rhs->getConstValue() == 0;
+
+         // If either operand is null, no need to use the equality/inequality comparison
+         // helper, as value types cannot have null references.  Also, if both operands
+         // are the same node, no need to use the comparison helper - the references must be
+         // equal.  Fold both cases to use acmpeq or acmpne which might be further simplified
+         //
+         if (lhsNull || rhsNull || lhs == rhs)
+            {
+            const bool isEqualityComparison = (nonHelperSymbol == TR::SymbolReferenceTable::objectEqualityComparisonSymbol);
+            if (performTransformation(
+                  comp(),
+                  "%sChanging n%un from %s to %s\n",
+                  optDetailString(),
+                  node->getGlobalIndex(),
+                  comp()->getSymRefTab()->getNonHelperSymbolName(nonHelperSymbol),
+                  isEqualityComparison ? "acmpeq" : "acmpne"))
+               {
+               const char *counterName = TR::DebugCounter::debugCounterName(comp(), "vt-helper/simplifier-xformed/acmp/(%s)/bc=%d",
+                                                               comp()->signature(), node->getByteCodeIndex());
+               TR::DebugCounter::incStaticDebugCounter(comp(), counterName);
+
+               TR::Node::recreate(node, isEqualityComparison ? TR::acmpeq : TR::acmpne);
+               node = simplify(node, block);
+               }
             }
          }
       }

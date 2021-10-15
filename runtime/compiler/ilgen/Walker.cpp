@@ -2732,7 +2732,7 @@ TR_J9ByteCodeIlGenerator::genIfAcmpEqNe(TR::ILOpCodes ifacmpOp)
    TR::Node *lhs = pop();
 
    TR::SymbolReference *comparisonNonHelper =
-      comp()->getSymRefTab()->findOrCreateObjectEqualityComparisonSymbolRef();
+      comp()->getSymRefTab()->findOrCreateObjectInequalityComparisonSymbolRef();
 
    TR::Node *substitutabilityTest =
       TR::Node::createWithSymRef(TR::icall, 2, 2, lhs, rhs, comparisonNonHelper);
@@ -2746,7 +2746,7 @@ TR_J9ByteCodeIlGenerator::genIfAcmpEqNe(TR::ILOpCodes ifacmpOp)
 
    push(substitutabilityTest);
    push(TR::Node::iconst(0));
-   return genIfImpl(ifacmpOp == TR::ifacmpeq ? TR::ificmpne : TR::ificmpeq);
+   return genIfImpl(ifacmpOp == TR::ifacmpeq ? TR::ificmpeq : TR::ificmpne);
    }
 
 //----------------------------------------------

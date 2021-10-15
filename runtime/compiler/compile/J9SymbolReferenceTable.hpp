@@ -141,6 +141,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateWriteBarrierBatchStoreSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = 0);
 
    TR::SymbolReference * findOrCreateAcmpeqHelperSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
+   TR::SymbolReference * findOrCreateAcmpneHelperSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
 
    // these helpers are guaranteed to never throw if the receiving object is not null,
    // so we explicit generate NULLCHKs and assume the helpers will never throw
@@ -323,6 +324,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     *     The <objectEqualityComparison> symbol reference.
     */
    TR::SymbolReference *findOrCreateObjectEqualityComparisonSymbolRef();
+   TR::SymbolReference *findOrCreateObjectInequalityComparisonSymbolRef();
 
    /**
     * \brief

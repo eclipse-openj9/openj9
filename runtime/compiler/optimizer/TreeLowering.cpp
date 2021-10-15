@@ -248,17 +248,17 @@ class AcmpTransformer: public TR::TreeLowering::Transformer
  *
  * The transformation looks as follows:
  *
- *  +----------------------+
- *  |ttprev                |
- *  |treetop               |
- *  |  icall acmpHelper    |
- *  |    aload lhs         |
- *  |    aload rhs         |
- *  |ificmpeq --> ...      |
- *  |  ==> icall           |
- *  |  iconst 0            |
- *  |BBEnd                 |
- *  +----------------------+
+ *  +--------------------------+
+ *  |ttprev                    |
+ *  |treetop                   |
+ *  |  icall acmp{eq|ne}Helper |
+ *  |    aload lhs             |
+ *  |    aload rhs             |
+ *  |ificmpeq --> ...          |
+ *  |  ==> icall               |
+ *  |  iconst 0                |
+ *  |BBEnd                     |
+ *  +--------------------------+
  *
  *  ...becomes...
  *
@@ -266,25 +266,25 @@ class AcmpTransformer: public TR::TreeLowering::Transformer
  * +------------------------------+
  * |ttprev                        |
  * |iRegStore x                   |
- * |  iconst 1                    |
+ * |  iconst E                    |
  * |ifacmpeq  +->---------------------------+
  * |  aload lhs                   |         |
  * |  aload rhs                   |         |
  * |  GlRegDeps                   |         |
  * |    PassThrough x             |         |
- * |      ==> iconst 1            |         |
+ * |      ==> iconst E            |         |
  * |    PassThrough ...           |         |
  * |BBEnd                         |         |
  * +------------------------------+         |
  * |BBStart (extension)           |         |
  * |iRegStore x                   |         |
- * |  iconst 0                    |         |
+ * |  iconst U                    |         |
  * |ifacmpeq +->----------------------------+
  * |  aload lhs                   |         |
  * |  aconst 0                    |         |
  * |  GlRegDeps                   |         |
  * |    PassThrough x             |         |
- * |      ==> iconst 0            |         |
+ * |      ==> iconst U            |         |
  * |    PassThrough ...           |         |
  * |BBEnd                         |         |
  * +------------------------------+         |
@@ -294,7 +294,7 @@ class AcmpTransformer: public TR::TreeLowering::Transformer
  * |  ==> aconst 0                |         |
  * |  GlRegDeps                   |         |
  * |    PassThrough x             |         |
- * |      ==> iconst 0            |         |
+ * |      ==> iconst U            |         |
  * |    PassThrough ...           |         |
  * |BBEnd                         |         |
  * +------------------------------+         |
@@ -305,10 +305,10 @@ class AcmpTransformer: public TR::TreeLowering::Transformer
  * |      aloadi J9Class          |         |
  * |        aload lhs             |         |
  * |    iconst J9ClassIsValueType |         |
- * |  iconst 0                    |         |
+ * |  iconst U                    |         |
  * |  GlRegDeps                   |         |
  * |    PassThrough x             |         |
- * |      ==> iconst 0            |         |
+ * |      ==> iconst U            |         |
  * |    PassThrough ...           |         |
  * |BBEnd                         |         |
  * +------------------------------+         |
@@ -319,11 +319,11 @@ class AcmpTransformer: public TR::TreeLowering::Transformer
  * |      aloadi J9Class          |    |    |
  * |        aload rhs             |    |    |
  * |    iconst J9ClassIsValueType |    |    |
- * |  iconst 0                    |    |    |
+ * |  iconst U                    |    |    |
  * |BBEnd                         |    |    |
  * |  GlRegDeps                   |    |    |
  * |    PassThrough x             |    |    |
- * |      ==> iconst 0            |    |    |
+ * |      ==> iconst U            |    |    |
  * |    PassThrough ...           |    |    |
  * +------------------------------+    |    |
  *       |                             |    |
@@ -341,16 +341,21 @@ class AcmpTransformer: public TR::TreeLowering::Transformer
  * +------------------------------+    |    |
  * |BBStart                       *<---+    |
  * |iRegStore x                   |         |
- * |  icall acmpHelper            |         |
+ * |  icall acmp{eq|ne}Helper     |         |
  * |    aload lhs                 |         |
  * |    aload rhs                 |         |
  * |Goto -->----------------------*---------+
  * |  GlRegDeps                   |
  * |    PassThrough x             |
- * |      ==> icall acmpHelper    |
+ * |      ==> icall acmp...       |
  * |    PassThrough ...           |
  * |BBEnd                         |
  * +------------------------------+
+ *
+ * where E represents the result if the two references are equal, and U
+ * represents the result if the two references are unequal - that is,
+ * E == 1 and U == 0 if a call to acmpeqHelper is being lowered, and
+ * E == 0 and U == 1 if a call to acmpneHelper is being lowered.
  *
  * Any GlRegDeps on the extension block are created by OMR::Block::splitPostGRA
  * while those on the ifacmpeq at the end of the first block are copies of those,
@@ -386,6 +391,11 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
          node->getFirstChild()->getGlobalIndex(), node->getSecondChild()->getGlobalIndex(), anchoredCallArg1TT->getNode()->getGlobalIndex(), anchoredCallArg2TT->getNode()->getGlobalIndex());
       }
 
+   // Are we working with an equality comparison or an inequality comparison?
+   const bool isObjectEqualityTest = (node->getSymbolReference() == comp->getSymRefTab()->findOrCreateAcmpeqHelperSymbolRef());
+   const int cmpResultForEquality = isObjectEqualityTest ? 1 : 0;
+   const int cmpResultForInequality = isObjectEqualityTest ? 0 : 1;
+
    // Split the block at the call TreeTop so that the new block created
    // after the call can become a merge point for all the fastpaths.
    TR::Block* callBlock = tt->getEnclosingBlock();
@@ -405,7 +415,10 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    if (!performTransformation(comp, "%sInserting fastpath for lhs == rhs\n", optDetailString()))
       return;
 
-   // Insert store of constant 1 as the result of the fastpath.
+   // Insert store of constant cmpResultForEquality as the result of the fastpath.
+   // If the references are ultimately being tested for equality, cmpResultForEquality
+   // is 1, indicating the test is satisfied; if they are being tested for inequality,
+   // cmpResultForEquality is 0, indicating the test is unsatisfied.
    // The value must go wherever the value returned by the helper call goes
    // so that the code in the target block (merge point) picks up the constant
    // if the branch is taken. Use the TreeTop previously inserted to anchor the
@@ -413,26 +426,26 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    TR::Node* anchoredNode = anchoredCallTT->getNode()->getFirstChild(); // call node is under a treetop node
    if (trace())
       traceMsg(comp, "Anchored call has been transformed into %s node n%un\n", anchoredNode->getOpCode().getName(), anchoredNode->getGlobalIndex());
-   auto* const1Node = TR::Node::iconst(1);
+   auto* constForEqualityNode = TR::Node::iconst(cmpResultForEquality);
    TR::Node* storeNode = NULL;
    TR::Node* regDepForStoreNode = NULL; // this is the reg dep for the store if one is needed
    if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
       {
       if (trace())
-         traceMsg(comp, "Storing constant 1 in register %s\n", comp->getDebug()->getGlobalRegisterName(anchoredNode->getGlobalRegisterNumber()));
+         traceMsg(comp, "Storing constant %d in register %s\n", cmpResultForEquality, comp->getDebug()->getGlobalRegisterName(anchoredNode->getGlobalRegisterNumber()));
       auto const globalRegNum = anchoredNode->getGlobalRegisterNumber();
-      storeNode = TR::Node::create(TR::iRegStore, 1, const1Node);
+      storeNode = TR::Node::create(TR::iRegStore, 1, constForEqualityNode);
       storeNode->setGlobalRegisterNumber(globalRegNum);
       // Since the result is in a global register, we're going to need a PassThrough
       // on the exit point GlRegDeps.
-      regDepForStoreNode = TR::Node::create(TR::PassThrough, 1, const1Node);
+      regDepForStoreNode = TR::Node::create(TR::PassThrough, 1, constForEqualityNode);
       regDepForStoreNode->setGlobalRegisterNumber(globalRegNum);
       }
    else if (anchoredNode->getOpCodeValue() == TR::iload)
       {
       if (trace())
-         traceMsg(comp, "Storing constant 1 to symref %d (%s)\n", anchoredNode->getSymbolReference()->getReferenceNumber(), anchoredNode->getSymbolReference()->getName(comp->getDebug()));
-      storeNode = TR::Node::create(TR::istore, 1, const1Node);
+         traceMsg(comp, "Storing constant %d to symref %d (%s)\n", cmpResultForEquality, anchoredNode->getSymbolReference()->getReferenceNumber(), anchoredNode->getSymbolReference()->getName(comp->getDebug()));
+      storeNode = TR::Node::create(TR::istore, 1, constForEqualityNode);
       storeNode->setSymbolReference(anchoredNode->getSymbolReference());
       }
    else
@@ -464,10 +477,11 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    if (!performTransformation(comp, "%sInserting fastpath for lhs == NULL\n", optDetailString()))
       return;
 
-   // Create store of 0 as fastpath result by duplicate the node used to store
-   // the constant 1. Also duplicate the corresponding regdep if needed.
+   // Create store of cmpResultForInequality as fastpath result for cases where the references
+   // are unequal by duplicating the node used to store the constant cmpResultForEquality and
+   // updating the value being stored.  Also duplicate the corresponding regdep if needed.
    storeNode = storeNode->duplicateTree(true);
-   storeNode->getFirstChild()->setInt(0);
+   storeNode->getFirstChild()->setInt(cmpResultForInequality);
    tt->insertBefore(TR::TreeTop::create(comp, storeNode));
    if (regDepForStoreNode != NULL)
       {
@@ -524,7 +538,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
 
    auto* const lhsVft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredCallArg1TT->getNode()->getFirstChild(), vftSymRef);
    auto* const isLhsValueType = comp->fej9()->testIsClassValueType(lhsVft);
-   auto* const checkLhsIsVT = TR::Node::createif(TR::ificmpeq, isLhsValueType, storeNode->getFirstChild(), targetBlock->getEntry());
+   auto* const checkLhsIsVT = TR::Node::createif(TR::ificmpeq, isLhsValueType, TR::Node::iconst(0), targetBlock->getEntry());
    // regDepForStoreNode might or might not be NULL here depending on if (lhs == NULL) or  (rhs == NULL) is skipped
    exitGlRegDeps = copyBranchGlRegDepsAndSubstitute(checkLhsIsVT, exitGlRegDeps, regDepForStoreNode);
    // Set regDepForStoreNode to NULL so that the subsequent calls to copyBranchGlRegDepsAndSubstitute do not need to substitute it.
@@ -557,7 +571,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    // Create and insert branch.
    auto* const rhsVft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredCallArg2TT->getNode()->getFirstChild(), vftSymRef);
    auto* const isRhsValueType = comp->fej9()->testIsClassValueType(rhsVft);
-   auto* const checkRhsIsNotVT = TR::Node::createif(TR::ificmpne, isRhsValueType, storeNode->getFirstChild(), callBlock->getEntry());
+   auto* const checkRhsIsNotVT = TR::Node::createif(TR::ificmpne, isRhsValueType, TR::Node::iconst(0), callBlock->getEntry());
    // Because we've switched the fallthrough and target blocks, the register
    // dependencies also need to be switched.
    if (prevBlock->getExit()->getNode()->getNumChildren() > 0)
@@ -1526,10 +1540,17 @@ TR::TreeLowering::lowerValueTypeOperations(TransformationManager& transformation
 
    if (node->getOpCode().isCall())
       {
-      if (symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
+      // IL Generation only uses the <objectInequalityComparison> non-helper today,
+      // but just in case, make sure TreeLowering can handle both possibilities.
+      const bool isObjectEqualityTest = symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::objectEqualityComparisonSymbol);
+      const bool isObjectInequalityTest = symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::objectInequalityComparisonSymbol);
+
+      if (isObjectEqualityTest || isObjectInequalityTest)
          {
          // turn the non-helper call into a VM helper call
-         node->setSymbolReference(symRefTab->findOrCreateAcmpeqHelperSymbolRef());
+         node->setSymbolReference(isObjectEqualityTest ? symRefTab->findOrCreateAcmpeqHelperSymbolRef()
+                                                       : symRefTab->findOrCreateAcmpneHelperSymbolRef());
+
          static const bool disableAcmpFastPath =  NULL != feGetEnv("TR_DisableVT_AcmpFastpath");
          if (!disableAcmpFastPath)
             {
