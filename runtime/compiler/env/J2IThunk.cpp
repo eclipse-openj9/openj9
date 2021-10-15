@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,7 +56,7 @@ TR_J2IThunk::allocate(
 #if defined(J9VM_OPT_JITSERVER)
    if (cg->comp()->isOutOfProcessCompilation())
       {
-      // Don't need to use code cache because the entire thunk will be copied and sent to the client 
+      // Don't need to use code cache because the entire thunk will be copied and sent to the client
       result = (TR_J2IThunk*)cg->comp()->trMemory()->allocateMemory(totalSize, heapAlloc);
       }
    else
@@ -108,6 +108,7 @@ char TR_J2IThunkTable::terseTypeChar(char *type)
       {
       case '[':
       case 'L':
+      case 'Q':
          return TR::Compiler->target.is64Bit()? 'L' : 'I';
       case 'Z':
       case 'B':

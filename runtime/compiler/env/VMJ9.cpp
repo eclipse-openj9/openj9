@@ -2521,7 +2521,12 @@ TR_J9VMBase::getClassSignature_DEPRECATED(TR_OpaqueClassBlock * clazz, int32_t &
    for (i = 0; i < numDims; i++)
       sig[i] = '[';
    if (* name != '[')
-      sig[i++] = 'L';
+      {
+      if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isValueTypeClass(myClass))
+         sig[i++] = 'Q';
+      else
+         sig[i++] = 'L';
+      }
    memcpy(sig+i, name, len);
    i += len;
    if (* name != '[')
@@ -2543,13 +2548,18 @@ TR_J9VMBase::getClassSignature(TR_OpaqueClassBlock * clazz, TR_Memory * trMemory
    if (* name != '[')
       length += 2;
 
-    length++; //for null-termination
+   length++; //for null-termination
    char * sig = (char *)trMemory->allocateStackMemory(length);
    int32_t i;
    for (i = 0; i < numDims; i++)
       sig[i] = '[';
    if (* name != '[')
-      sig[i++] = 'L';
+      {
+      if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isValueTypeClass(myClass))
+         sig[i++] = 'Q';
+      else
+         sig[i++] = 'L';
+      }
    memcpy(sig+i, name, len);
    i += len;
    if (* name != '[')
@@ -4081,10 +4091,10 @@ TR_J9VMBase::isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilat
 
    if (comp->getOption(TR_DisableStableAnnotations))
       return false;
-   
+
    if (cpIndex < 0)
       return false;
-   
+
    J9Class *fieldClass = (J9Class*)owningMethod->classOfMethod();
    if (!fieldClass)
       return false;
@@ -4727,6 +4737,7 @@ TR_J9VMBase::lookupMethodHandleThunkArchetype(uintptr_t methodHandle)
       {
       case '[':
       case 'L':
+      case 'Q':
          // The thunkable signature might return some other class, but archetypes
          // returning a reference are always declared to return Object.
          //
@@ -7313,7 +7324,7 @@ TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPo
    J9Class * j9class = NULL;
    TR_OpaqueClassBlock * returnValue = NULL;
 
-   // For a non-array class type, strip off the first 'L' and last ';' of the
+   // For a non-array class type, strip off the first 'L' or 'Q' and last ';' of the
    // signature
    //
    if ((*sig == 'L' || *sig == 'Q') && sigLength > 2)
@@ -7656,9 +7667,9 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             {
             return 0;
             }
-            
+
          int32_t targetInlineDepth = 1;
-         
+
          int32_t callerIndex = callNode->getByteCodeInfo().getCallerIndex();
          J9Class *callerClass = NULL;
          J9Method *callerMethod = NULL;
@@ -7750,7 +7761,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             }
          }
          return callNode;
-         
+
       case TR::java_lang_Thread_currentThread:
          if (comp->cg()->getGRACompleted())
             {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@
 
 static int isReferenceSignature(char *signature)
 {
-     return ( (signature[0] == 'L' )  || (signature[0] == '[') );
+     return ( (signature[0] == 'L' )  || (signature[0] == '[') || (signature[0] == 'Q'));
 }
 
 int TR_VMField::isReference()

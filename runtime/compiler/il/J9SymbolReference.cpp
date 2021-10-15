@@ -272,12 +272,12 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
                        else
                           {
                           int32_t numParens = 0;
-                          while (s && (s[0] == '[') && (s[1] == 'L'))
+                          while (s && (s[0] == '[') && (s[1] == 'L' || s[1] == 'Q'))
                              {
                              numParens++;
                              classOfObject = comp->fe()->getComponentClassFromArrayClass(classOfObject);
                              s = TR::Compiler->cls.classNameChars(comp, classOfObject, len);
-                              }
+                             }
                           s = classNameToSignature(s, len, comp);
                           s = prependNumParensToSig(s, len, numParens);
                           }

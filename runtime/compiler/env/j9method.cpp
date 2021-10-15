@@ -7094,9 +7094,9 @@ TR_ResolvedJ9Method::makeParameterList(TR::ResolvedMethodSymbol *methodSym)
          }
 
       // Walk to the end of the class name, if this is a class name
-      if (*end == 'L')
+      if (*end == 'L' || *end == 'Q')
          {
-         // Assume the form is L<classname>; where <classname> is
+         // Assume the form is L<classname> or Q<classname>; where <classname> is
          // at least 1 char and therefore skip the first 2 chars
          end += 2;
          end = (char *)memchr(end, ';', sigEnd - end);
@@ -7275,71 +7275,72 @@ TR_J9MethodParameterIterator::TR_J9MethodParameterIterator(TR_J9MethodBase &j9Me
 
 TR::DataType TR_J9MethodParameterIterator::getDataType()
    {
-   if (*_sig == 'L' || *_sig == '[')
+   if (*_sig == 'L' || *_sig == '[' || *_sig == 'Q')
       {
       _nextIncrBy = 0;
       while (_sig[_nextIncrBy] == '[')
-    {
-    ++_nextIncrBy;
-    }
-      if (_sig[_nextIncrBy] != 'L')
-    {
-    // Primitive array
-    ++_nextIncrBy;
-    }
+         {
+         ++_nextIncrBy;
+         }
+
+      if (_sig[_nextIncrBy] != 'L' && _sig[_nextIncrBy] != 'Q')
+         {
+         // Primitive array
+         ++_nextIncrBy;
+         }
       else
-    {
-    while (_sig[_nextIncrBy++] != ';') ;
-    }
+         {
+         while (_sig[_nextIncrBy++] != ';') ;
+         }
       return TR::Aggregate;
       }
    else
       {
       _nextIncrBy = 1;
       if (*_sig == 'Z')
-    {
-    return TR::Int8;
-    }
+         {
+         return TR::Int8;
+         }
       else if (*_sig == 'B')
-    {
-    return TR::Int8;
-    }
+         {
+         return TR::Int8;
+         }
       else if (*_sig == 'C')
-    {
-    return TR::Int16;
-    }
+         {
+         return TR::Int16;
+         }
       else if (*_sig == 'S')
-    {
-    return TR::Int16;
-    }
+         {
+         return TR::Int16;
+         }
       else if (*_sig == 'I')
-    {
-    return TR::Int32;
-    }
+         {
+         return TR::Int32;
+         }
       else if (*_sig == 'J')
-    {
-    return TR::Int64;
-    }
+         {
+         return TR::Int64;
+         }
       else if (*_sig == 'F')
-    {
-    return TR::Float;
-    }
+         {
+         return TR::Float;
+         }
       else if (*_sig == 'D')
-    {
-    return TR::Double;
-    }
+         {
+         return TR::Double;
+         }
       else
-    {
-    TR_ASSERT(0, "Unknown character in Java signature.");
-    return TR::NoType;
-    }
+         {
+         TR_ASSERT(0, "Unknown character in Java signature.");
+         return TR::NoType;
+         }
       }
    }
 
 TR_OpaqueClassBlock * TR_J9MethodParameterIterator::getOpaqueClass()
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_comp.fe());
-   TR_ASSERT(*_sig == '[' || *_sig == 'L', "Asked for class of incorrect Java parameter.");
+   TR_ASSERT(*_sig == '[' || *_sig == 'L' || *_sig == 'Q', "Asked for class of incorrect Java parameter.");
    if (_nextIncrBy == 0) getDataType();
    return _resolvedMethod == NULL ? NULL :
       fej9->getClassFromSignature(_sig, _nextIncrBy, _resolvedMethod);
@@ -7358,7 +7359,7 @@ bool TR_J9MethodParameterIterator::isArray()
 
 bool TR_J9MethodParameterIterator::isClass()
    {
-   return (*_sig == 'L');
+   return (*_sig == 'L' || *_sig == 'Q');
    }
 
 bool TR_J9MethodParameterIterator::atEnd()
@@ -7408,6 +7409,7 @@ static TR::DataType typeFromSig(char sig)
       {
       case 'L':
       case '[':
+      case 'Q':
          return TR::Address;
       case 'I':
       case 'Z':
@@ -7659,7 +7661,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             if (strcmp(sourceType, targetType))
                {
                char methodName[30], methodSignature[50];
-               if (sourceType[0] == 'L' && isExplicit)
+               if ((sourceType[0] == 'L' || sourceType[0] == 'Q') && isExplicit)
                   sprintf(methodName, "explicitObject2%s", targetName);
                else
                   sprintf(methodName, "%s2%s", sourceName, targetName);
@@ -7680,7 +7682,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
             // Address conversions need a downcast after the call
             //
-            if (targetType[0] == 'L')
+            if (targetType[0] == 'L' || targetType[0] == 'Q')
                {
                uintptr_t methodHandle;
                uintptr_t sourceArguments;
@@ -7847,6 +7849,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                break;
             case 'L':
             case '[':
+            case 'Q':
                callOp = TR::acalli;
                break;
             case 'V':
@@ -7983,6 +7986,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      {
                      case 'L':
                      case '[':
+                     case 'Q':
                         sprintf(extraName, "extra_L");
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I)Ljava/lang/Object;");
                         break;
@@ -8066,6 +8070,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      {
                      case 'L':
                      case '[':
+                     case 'Q':
                         sprintf(extraName, "extra_L");
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I)Ljava/lang/Object;");
                         break;
