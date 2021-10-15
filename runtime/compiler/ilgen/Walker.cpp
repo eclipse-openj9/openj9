@@ -5008,6 +5008,7 @@ TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
                   break;
                case 'L':
                case '[':
+               case 'Q':
                   arrayElementDataType = TR::Address;
                   break;
                default:
