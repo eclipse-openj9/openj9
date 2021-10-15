@@ -1104,37 +1104,10 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
 
          uint32_t vTableSlot = 0;
          if (rm == TR::java_lang_invoke_MethodHandle_linkToVirtual)
-            {
-            uintptr_t slot = fej9->vTableOrITableIndexFromMemberName(comp(), memberNameIndex);
-            if ((slot & J9_JNI_MID_INTERFACE) == 0)
-               {
-               vTableSlot = (uint32_t)slot;
-               }
-            else
-               {
-               // TODO: Refine to the method identified by the itable slot
-               // together with the defining (interface) class of the method
-               // from the MemberName. For such a refinement to matter,
-               // TR_J9InterfaceCallSite will need to be able to find call
-               // targets without a CP index.
-               //
-               // For the moment, just leave the call unrefined.
-               //
-               return;
-               }
-            }
+            vTableSlot = fej9->vTableOrITableIndexFromMemberName(comp(), memberNameIndex);
 
-         // Direct or virtual dispatch. A vTableSlot of 0 indicates a direct
-         // call, in which case vTableSlot won't really be used as such.
          callee = fej9->createResolvedMethodWithVTableSlot(comp()->trMemory(), vTableSlot, targetMethod, _calltarget->_calleeMethod);
-
-         isIndirectCall = vTableSlot != 0;
-         TR_ASSERT_FATAL(
-            !isIndirectCall
-            || rm == TR::java_lang_invoke_MethodHandle_linkToVirtual
-            || rm == TR::java_lang_invoke_MethodHandle_linkToInterface,
-            "indirect linkTo call should only be linkToVirtual or linkToInterface");
-
+         isIndirectCall = rm == TR::java_lang_invoke_MethodHandle_linkToVirtual || rm == TR::java_lang_invoke_MethodHandle_linkToInterface;
          heuristicTrace(tracer(), "Refine linkTo to %s\n", callee->signature(trMemory(), stackAlloc));
          // The refined method doesn't take MemberName as an argument, pop MemberName out of the operand stack
          pop();
