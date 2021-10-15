@@ -1379,8 +1379,8 @@ MM_MemorySubSpaceTarok::calculateTargetContractSize(MM_EnvironmentBase *env, uin
 
 /**
  * Determine how much space we need to expand the heap by on this GC cycle to get to a better hybrid heap score
- * @note We use the approximate heap size to account for defered work that may during execution free up more memory.
- * @param expandToSatisfy - if TRUE ensure we epxand heap by at least "byteRequired" bytes
+ * @note We use the approximate heap size to account for deferred work that may during execution free up more memory.
+ * @param expandToSatisfy - if TRUE ensure we expand heap by at least "byteRequired" bytes
  * @return Number of bytes to expand. 0 if no expansion is required
  */
 uintptr_t
@@ -1396,9 +1396,10 @@ MM_MemorySubSpaceTarok::calculateExpansionSizeInternal(MM_EnvironmentBase *env, 
 		/* Only expand if we didn't expand in last _extensions->heapExpansionStabilizationCount global collections */
 		/* Note that the gcCount includes System GCs, PGCs, AFs and GMP increments */
 		uintptr_t heapSizeWithinGoodHybridRange = getHeapSizeWithinBounds(env);
+		uintptr_t activeMemorySize = getActiveMemorySize();
 
-		expandSize = heapSizeWithinGoodHybridRange - getActiveMemorySize();
-		if (0 != expandSize) {
+		if (heapSizeWithinGoodHybridRange > activeMemorySize) {
+			expandSize = heapSizeWithinGoodHybridRange - activeMemorySize;
 			_extensions->heap->getResizeStats()->setLastExpandReason(FREE_SPACE_LOW_OR_GC_HIGH);
 		}
 	}
