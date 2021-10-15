@@ -779,6 +779,8 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<description>
 			Triggered when a classloader is looking for a locally defined class. It looks first in its local cache,
 			then this hook allows a ROMClass to be provided before the classloader looks on disk.
+			Use the class path entries from classloader->classPathEntries if it is bootstrap class loader. Otherwise, use
+			classPathEntries passed in.
 		</description>
 		<struct>J9VMFindLocalClassEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
@@ -786,7 +788,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="struct J9Module*" name="j9module" description="the module the class belongs to" />
 		<data type="const char*" name="className" description="name of class to find" />
 		<data type="UDATA" name="classNameLength" description="length of the className param" />
-		<data type="struct J9ClassPathEntry*" name="classPathEntries" description="caller classloader classpath" />
+		<data type="struct J9ClassPathEntry**" name="classPathEntries" description="caller classpath, use this parameter if it is not bootstrap class loader" />
 		<data type="UDATA" name="entryCount" description="number of classpath entries" />
 		<data type="IDATA" name="confirmedCount" description="number of confirmed classpath entries" />
 		<data type="const struct J9UTF8*" name="partition" description="optional partition for relocating the class" />

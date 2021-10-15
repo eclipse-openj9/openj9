@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1648,7 +1648,8 @@ test20(J9JavaVM* vm)
 			(U_16) strlen(romclassName),
 			(U_8 *) romclassName,
 			FALSE,
-			takeStringTableLock);
+			takeStringTableLock,
+			TRUE);
 
 	if (sharedapi->classStoreTransaction_isOK((void *) &tobj) == FALSE) {
 		ERRPRINTF(("The transaction is not ok\n"));

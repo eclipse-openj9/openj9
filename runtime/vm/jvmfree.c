@@ -50,18 +50,19 @@
 static void trcModulesFreeJ9ModuleEntry(J9JavaVM *javaVM, J9Module *j9module);
 
 void 
-freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry * entries, UDATA count)
+freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry **entries, UDATA count, UDATA initCount)
 {
 	/* free memory allocated to class path entries */
 	J9JavaVM *vm = vmThread->javaVM;
 	J9TranslationBufferSet *dynLoadBuffers = vm->dynamicLoadBuffers;
 	U_32 i = 0;
-	J9ClassPathEntry *cpEntry = entries;
+	J9ClassPathEntry *cpEntry = NULL;
 	PORT_ACCESS_FROM_VMC(vmThread);
 
 	Trc_VM_freeClassLoaderEntries_Entry(vmThread, entries, count);
 
 	for (i = 0; i < count; i++) {
+		cpEntry = entries[i];
 		if (NULL != cpEntry->extraInfo) {
 			switch(cpEntry->type) {
 #if defined(J9VM_OPT_ZIP_SUPPORT) && defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT)
@@ -82,9 +83,15 @@ freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry * entries, UDATA 
 		}
 		cpEntry->path = NULL;
 		cpEntry->pathLength = 0;
-		cpEntry++;
+		if (i >= initCount) {
+			/* Additional entries are appended after initial entries, allocated separately. */
+			j9mem_free_memory(cpEntry);
+		}
 	}
-	j9mem_free_memory(entries);
+	/* Initial entries are allocated together, free them together. */
+	if (count > 0) {
+		j9mem_free_memory(entries[0]);
+	}
 
 	Trc_VM_freeClassLoaderEntries_Exit(vmThread);
 }
@@ -109,7 +116,7 @@ freeSharedCacheCLEntries(J9VMThread * vmThread, J9ClassLoader * classloader)
 	omrthread_monitor_enter(sharedClassConfig->jclCacheMutex);
 	cpCachePool = sharedClassConfig->jclClasspathCache;
 	if (cpCachePool) {
-		J9GenericByID *cachePoolItem = (J9GenericByID *)classloader->classPathEntries->extraInfo;
+		J9GenericByID *cachePoolItem = (J9GenericByID *)classloader->classPathEntries[0]->extraInfo;
 		if (NULL != cachePoolItem->cpData) {
 			sharedClassConfig->freeClasspathData(vm, cachePoolItem->cpData);
 		}
@@ -117,6 +124,7 @@ freeSharedCacheCLEntries(J9VMThread * vmThread, J9ClassLoader * classloader)
 	}
 	j9mem_free_memory(classloader->classPathEntries);
 	classloader->classPathEntries = NULL;
+	classloader->classPathEntryCount = 0;
 	omrthread_monitor_exit(sharedClassConfig->jclCacheMutex);
 
 	Trc_VM_freeSharedCacheCLEntries_Exit(vmThread);
@@ -365,7 +373,6 @@ void
 cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader) 
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
-	
 	Trc_VM_cleanUpClassLoaders_Entry(vmThread, classLoader);
 
 	Trc_VM_triggerClassLoaderUnloadHook_Entry(vmThread, classLoader);
@@ -388,13 +395,19 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 
 	if (NULL != classLoader->classPathEntries) {
 		if (classLoader == javaVM->systemClassLoader) {
+			PORT_ACCESS_FROM_VMC(vmThread);
 			/* Free the class path entries  in system class loader */
-			freeClassLoaderEntries(vmThread, classLoader->classPathEntries, classLoader->classPathEntryCount);
+			freeClassLoaderEntries(vmThread, classLoader->classPathEntries, classLoader->classPathEntryCount, classLoader->initClassPathEntryCount);
+			j9mem_free_memory(classLoader->classPathEntries);
+			classLoader->classPathEntryCount = 0;
+			issueWriteBarrier();
+			classLoader->classPathEntries = NULL;
 		} else {
-			/* Free the class path entries in non-system class loaders*/
+			/* Free the class path entries in non-system class loaders.
+			 * classLoader->classPathEntries is set to NULL inside freeSharedCacheCLEntries().
+			 */
 			freeSharedCacheCLEntries(vmThread, classLoader);
 		}
-		classLoader->classPathEntries = NULL;
 	}
 
 	Trc_VM_cleanUpClassLoaders_Exit(vmThread);

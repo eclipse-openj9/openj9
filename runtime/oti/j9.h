@@ -178,6 +178,9 @@ typedef struct J9ClassLoaderWalkState {
  */
 #define LITERAL_STRLEN(string_literal) ((IDATA)(sizeof(string_literal) - 1))
 
+#define ROUND_UP_TO(granularity, number) ((((number) % (granularity)) ? ((number) + (granularity) - ((number) % (granularity))) : (number)))
+#define ROUND_DOWN_TO(granularity, number) ((((number) % (granularity)) ? ((number) - ((number) % (granularity))) : (number)))
+
 #define ROUND_UP_TO_POWEROF2(value, powerof2) (((value) + ((powerof2) - 1)) & (UDATA)~((powerof2) - 1))
 #undef ROUND_DOWN_TO_POWEROF2
 #define ROUND_DOWN_TO_POWEROF2(value, powerof2) ((value) & (UDATA)~((powerof2) - 1))

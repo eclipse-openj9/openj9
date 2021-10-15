@@ -734,7 +734,8 @@ IDATA
 CorruptCacheTest::findDummyROMClass(J9JavaVM *vm, const char *romClassName)
 {
 	SH_CacheMap *cacheMap;
-	J9ClassPathEntry cpEntry;
+	J9ClassPathEntry cpEntry = {0};
+	J9ClassPathEntry* cpEntryPtr = &cpEntry;
 	ClasspathItem *cpi;
 	const char *currentDir = ".";
 	IDATA rc = PASS;
@@ -749,7 +750,7 @@ CorruptCacheTest::findDummyROMClass(J9JavaVM *vm, const char *romClassName)
 
 	cacheMap = (SH_CacheMap *)vm->sharedClassConfig->sharedClassCache;
 	cacheMap->enterLocalMutex(vm->mainThread, vm->classMemorySegments->segmentMutex, "class segment mutex", "findDummyROMClass");
-	cpi = createClasspath(vm->mainThread, &cpEntry, 1, 0, CP_TYPE_CLASSPATH, 0);
+	cpi = createClasspath(vm->mainThread, NULL, &cpEntryPtr, 1, 0, CP_TYPE_CLASSPATH, 0);
 	cacheMap->exitLocalMutex(vm->mainThread, vm->classMemorySegments->segmentMutex, "class segment mutex", "findDummyROMClass");
 	if (NULL == cpi) {
 		j9tty_printf(PORTLIB, "testCorruptCache: failed to create dummy classpath\n");

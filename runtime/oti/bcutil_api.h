@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -263,8 +263,6 @@ internalLoadROMClass(J9VMThread *vmThread, J9LoadROMClassData *loadData, J9Trans
 * @param className name of the class to be located
 * @param classNameLength length of className
 * @param classLoader pointer to J9ClassLoader loading the class
-* @param classPath pointer to class path entries
-* @param classPathEntryCount number of class path entries in classPath
 * @param options load options such as J9_FINDCLASS_FLAG_EXISTING_ONLY
 * @param flags flags such as BCU_BOOTSTRAP_ENTRIES_ONLY
 * @param [in/out] localBuffer contains values for entryIndex, loadLocationType and cpEntryUsed. This pointer can't be NULL.
@@ -272,7 +270,7 @@ internalLoadROMClass(J9VMThread *vmThread, J9LoadROMClassData *loadData, J9Trans
 * @return zero on success, -1 on failure.
 */
 IDATA 
-findLocallyDefinedClass(J9VMThread * vmThread, J9Module *j9module, U_8 * className, U_32 classNameLength, J9ClassLoader * classLoader, J9ClassPathEntry * classPath, UDATA classPathEntryCount, UDATA options, J9TranslationLocalBuffer *localBuffer);
+findLocallyDefinedClass(J9VMThread * vmThread, J9Module *j9module, U_8 * className, U_32 classNameLength, J9ClassLoader * classLoader, UDATA options, J9TranslationLocalBuffer *localBuffer);
 
 
 #endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */ /* End File Level Build Flags */

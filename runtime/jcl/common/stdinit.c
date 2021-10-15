@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -576,6 +576,7 @@ initializeBootstrapClassPath(J9JavaVM *vm)
 	if (-1 == (IDATA)loader->classPathEntryCount) {
 		return -1;
 	} else {
+		loader->initClassPathEntryCount = loader->classPathEntryCount;
 		/* Mark the class path as having been set */
 		loader->flags |= J9CLASSLOADER_CLASSPATH_SET;
 

@@ -1242,14 +1242,11 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 	/* Write the class path data */
 	J9ClassLoader* classLoader = _VirtualMachine->systemClassLoader;
-
 	_OutputStream.writeCharacters("1CISYSCP       Sys Classpath:   ");
-
 	for (UDATA i = 0; i < classLoader->classPathEntryCount; i++) {
-		_OutputStream.writeCharacters((char*)(classLoader->classPathEntries[i].path));
+		_OutputStream.writeCharacters((char*)(classLoader->classPathEntries[i]->path));
 		_OutputStream.writeCharacters(";");
 	}
-
 	_OutputStream.writeCharacters("\n");
 
 	/* Write the user arguments section */
