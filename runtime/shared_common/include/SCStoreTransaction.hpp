@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,15 +39,8 @@ public:
 			sharedapi = (SCAbstractAPI *)(currentThread->javaVM->sharedClassConfig->sharedAPIObject);
 			memset ((void*)&pieces,0,sizeof(J9SharedRomClassPieces));
 			if (sharedapi != NULL) {
-				J9ClassPathEntry* classPathEntries = NULL;
-				UDATA cpEntryCount = 0;
-				if ((NULL != classloader) && (false == isIntermediateROMClass)) {
-					if (classloader == currentThread->javaVM->systemClassLoader) {
-						classPathEntries = classloader->classPathEntries;
-						cpEntryCount = classloader->classPathEntryCount;
-					} 
-				}
-				sharedapi->classStoreTransaction_start((void *) &tobj, currentThread, classloader, classPathEntries, cpEntryCount, entryIndex, loadType, NULL, classnameLength, classnameData, ((isModifiedClassfile == true)?TRUE:FALSE), TRUE);
+				BOOLEAN useLoaderCpEntries = (NULL != classloader) && (classloader == currentThread->javaVM->systemClassLoader) && (!isIntermediateROMClass);
+				sharedapi->classStoreTransaction_start((void *) &tobj, currentThread, classloader, NULL, 0, entryIndex, loadType, NULL, classnameLength, classnameData, ((isModifiedClassfile == true)?TRUE:FALSE), TRUE, useLoaderCpEntries);
 			}
 		} else {
 			sharedapi = NULL;
