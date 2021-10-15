@@ -24,6 +24,7 @@
 #include "optimizer/Inliner.hpp"
 #include "optimizer/J9Inliner.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
+#include "optimizer/VectorAPIExpansion.hpp"
 
 #include "env/KnownObjectTable.hpp"
 #include "compile/InlineBlock.hpp"
@@ -209,17 +210,6 @@ static bool insideIntPipelineForEach(TR_ResolvedMethod *method, TR::Compilation 
 bool
 TR_J9InlinerPolicy::inlineRecognizedMethod(TR::RecognizedMethod method)
    {
-
-   if (method >= TR::FirstVectorMethod &&
-       method <= TR::LastVectorMethod)
-      {
-      comp()->getMethodSymbol()->setHasVectorAPI(true);
-
-      if (method <= TR::LastVectorIntrinsicMethod &&
-          !comp()->getOption(TR_DisableVectorAPIExpansion))
-         return false;
-      }
-
 //    if (method ==
 //        TR::java_lang_String_init_String_char)
 //       return false;
@@ -2577,6 +2567,11 @@ int32_t TR_Inliner::perform()
       comp()->getFlowGraph()->resetFrequencies();
       comp()->getFlowGraph()->setFrequencies();
       }
+
+   // this should run after all inlining is done in order not to
+   // miss any VectorAPI methods
+   if (TR_VectorAPIExpansion::findVectorMethods(comp()))
+      comp()->getMethodSymbol()->setHasVectorAPI(true);
 
    return 1; // cost??
    }
