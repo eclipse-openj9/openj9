@@ -97,7 +97,7 @@ typedef struct J9ClassLoaderWalkState {
 /* temporary define to allow JIT work to promote and be enabled at the same time as the vm side */
 #define NEW_FANIN_INFRA
 
-/* -------------- Add C-level global definitions below this point ------------------ */ 
+/* -------------- Add C-level global definitions below this point ------------------ */
 
 /*
  * Simultaneously check if the flags field has the sign bit set and the valueOffset is non-zero.
@@ -179,7 +179,7 @@ typedef struct J9ClassLoaderWalkState {
 #define LITERAL_STRLEN(string_literal) ((IDATA)(sizeof(string_literal) - 1))
 
 #define ROUND_UP_TO(granularity, number) ((((number) % (granularity)) ? ((number) + (granularity) - ((number) % (granularity))) : (number)))
-#define ROUND_DOWN_TO(granularity, number) ((((number) % (granularity)) ? ((number) - ((number) % (granularity))) : (number)))
+#define ROUND_DOWN_TO(granularity, number) ((number) - ((number) % (granularity)))
 
 #define ROUND_UP_TO_POWEROF2(value, powerof2) (((value) + ((powerof2) - 1)) & (UDATA)~((powerof2) - 1))
 #undef ROUND_DOWN_TO_POWEROF2
