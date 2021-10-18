@@ -2215,6 +2215,8 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                   entry->_optimizationPlan->setOptLevel(newHotness);
                   entry->_optimizationPlan->setInsertInstrumentation(false); // prevent profiling
                   entry->_optimizationPlan->setUseSampling(false); // disable recompilation of this method
+                  entry->_optimizationPlan->setDisableEDO(true); // disable EDO to prevent recompilation triggered from native code
+                  entry->_optimizationPlan->setDisableGCR(true); // disable GCR to prevent recompilation triggered from native code
                   }
                break;
             case compilationCHTableCommitFailure:
@@ -8087,6 +8089,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
             if (that->_methodBeingCompiled->_optimizationPlan->disableGCR())
                options->setOption(TR_DisableGuardedCountingRecompilations);
+
+            if (that->_methodBeingCompiled->_optimizationPlan->getDisableEDO())
+               options->setOption(TR_DisableEDO);
 
             if (options->getOption(TR_DisablePrexistenceDuringGracePeriod))
                {
