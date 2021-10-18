@@ -259,7 +259,7 @@ bool J9::TransformUtil::avoidFoldingInstanceField(
             break;
          }
       }
-   
+
    switch (field->getRecognizedField())
       {
       // In the LambdaForm-based JSR292 implementation, CallSite declares a
@@ -1637,6 +1637,7 @@ TR::Node * J9::TransformUtil::calculateElementAddress(TR::Compilation *comp, TR:
    else
       addrCalc = TR::Node::create(TR::aiadd, 2, array, TR::Node::create(TR::l2i, 1, offset));
 
+   addrCalc->setIsInternalPointer(true);
    return addrCalc;
 }
 
