@@ -52,6 +52,9 @@
 #define J9VMTHREAD x19
 #define J9SP x20
 
+	.text
+	.align	2
+
 FUNC_LABEL(_countingRecompileMethod):
 	hlt	#0	// Not implemented yet
 
