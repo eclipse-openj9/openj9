@@ -2271,17 +2271,15 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 		/* now interpret the values */
 		UDATA idealEdenMin = 0;
 		UDATA idealEdenMax = 0;
-		/* this implementation is meant to follow this design from JAZZ 39694
+		/*----------------------------------------------------------------
+		Arguments specified	|	initial Eden		|	maxEden
 		----------------------------------------------------------------
-		Arguments specified	|	minEden				|	maxEden
-		----------------------------------------------------------------
-		XmnA				|	OMR_MIN(A,Y)		|	A
+		XmnA				|	OMR_MIN(A,ms)		|	A
 		XmnsB				|	B					|	B
-		XmnxC				|	OMR_MIN(C,Y)		|	C
+		XmnxC				|	OMR_MIN(C,ms)		|	C
 		XmnsB XmnxC			|	B					|	C
-		(none)				|	OMR_MIN(X/4,Y)		|	X/4
-		----------------------------------------------------------------
-		 */
+		(none)				|	OMR_MIN(mx/4,ms)	|	mx*3/4
+		----------------------------------------------------------------*/
 		if (extensions->userSpecifiedParameters._Xmn._wasSpecified) {
 			/* earlier error checking would have ensured that we didn't specify -Xmns or -Xmnx with -Xmn */
 			UDATA mn = extensions->userSpecifiedParameters._Xmn._valueSpecified;
@@ -2303,8 +2301,10 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 			idealEdenMax = mnx;
 		} else {
 			UDATA quarterMax = mx/4;
+			UDATA threeQuarterMax = quarterMax * 3;
+
 			idealEdenMin = OMR_MIN(quarterMax, ms);
-			idealEdenMax = quarterMax;
+			idealEdenMax = threeQuarterMax;
 		}
 
 		/* eden size has to be aligned with region size */

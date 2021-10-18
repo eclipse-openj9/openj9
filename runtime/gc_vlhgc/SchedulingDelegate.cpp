@@ -134,24 +134,13 @@ MM_SchedulingDelegate::MM_SchedulingDelegate (MM_EnvironmentVLHGC *env, MM_HeapR
 bool
 MM_SchedulingDelegate::initialize(MM_EnvironmentVLHGC *env)
 {
-	uintptr_t maxHeapSize = _extensions->memoryMax;
-
-	double minEdenPercent = 0.00;
-	double maxEdenPercent = 0.75;
-
 	if (_extensions->userSpecifiedParameters._Xmn._wasSpecified || _extensions->userSpecifiedParameters._Xmns._wasSpecified) {
-		minEdenPercent = (double)_extensions->tarokIdealEdenMinimumBytes / maxHeapSize;
+		_minEdenRegionCount = _extensions->tarokIdealEdenMinimumBytes / _regionManager->getRegionSize();
+	} else {
+		/* default minimum = 2 regions for each numa node */
+		_minEdenRegionCount = 2 * (_extensions->_numaManager.getAffinityLeaderCount() + 1);
 	}
-
-	if (_extensions->userSpecifiedParameters._Xmn._wasSpecified || _extensions->userSpecifiedParameters._Xmnx._wasSpecified) {
-		maxEdenPercent = (double)_extensions->tarokIdealEdenMaximumBytes / maxHeapSize;
-	}
-
-	_minEdenRegionCount = (uintptr_t)(maxHeapSize * minEdenPercent) / _regionManager->getRegionSize();
-	_minEdenRegionCount = OMR_MAX(1, (uintptr_t)_minEdenRegionCount);
-
-	_maxEdenRegionCount = (uintptr_t)(maxHeapSize * maxEdenPercent) / _regionManager->getRegionSize();
-
+	_maxEdenRegionCount = _extensions->tarokIdealEdenMaximumBytes / _regionManager->getRegionSize();
 	_partialGcOverhead = _extensions->dnssExpectedRatioMaximum._valueSpecified;
 
 	return true;
