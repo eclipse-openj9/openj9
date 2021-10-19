@@ -335,6 +335,8 @@ static const struct { \
 #define IS_QTYPE(firstChar) FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
+#define J9_IS_STRING_DESCRIPTOR(str, strLen) (((strLen) > 2) && (IS_REF_OR_VAL_SIGNATURE(*(str))) && (';' == *((str) + (strLen) - 1)))
+
 #if defined(OPENJ9_BUILD)
 #define J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) TRUE
 #else /* defined(OPENJ9_BUILD) */
