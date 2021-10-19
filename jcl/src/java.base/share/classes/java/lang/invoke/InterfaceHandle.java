@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17 & !OPENJDK_METHODHANDLES]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,11 @@ final class InterfaceHandle extends IndirectHandle {
 		if (interfaceClass.isInstance(receiver)) {
 			long interfaceJ9Class = getJ9ClassFromClass(interfaceClass);
 			long receiverJ9Class = getJ9ClassFromClass(receiver.getClass());
-			return convertITableIndexToVTableIndex(interfaceJ9Class, (int)vmSlot, receiverJ9Class) << VTABLE_ENTRY_SHIFT;
+			int result = convertITableIndexToVTableIndex(interfaceJ9Class, (int)vmSlot, receiverJ9Class) << VTABLE_ENTRY_SHIFT;
+			if (result < 0) {
+				throw new IllegalAccessError();
+			}
+			return result;
 		} else {
 			throw new IncompatibleClassChangeError();
 		}

@@ -9435,7 +9435,12 @@ JNIEXPORT jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexT
          break;
    TR_ASSERT(itableEntry, "Shouldn't call convertITableIndexToVTableIndex without first ensuring the receiver implements the interface");
    UDATA *itableArray = (UDATA*)(itableEntry+1);
-   return (itableArray[itableIndex] - sizeof(J9Class))/sizeof(intptr_t);
+   UDATA vTableOffset = itableArray[itableIndex];
+   J9Method *method = *(J9Method**)((UDATA)receiverClass + vTableOffset);
+   if ((J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccPublic) == 0)
+      return -1;
+
+   return (vTableOffset - sizeof(J9Class))/sizeof(intptr_t);
 #if 0 // TODO:JSR292: We probably want to do something more like this instead, so it will properly handle exceptional cases
    struct
       {
