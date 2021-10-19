@@ -154,6 +154,20 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateLoadFlattenableArrayElementSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
    TR::SymbolReference * findOrCreateStoreFlattenableArrayElementSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol = NULL);
 
+   // This helper walks the iTables to find the VFT offset for an interface
+   // method that is not known until runtime (and therefore does not have an
+   // IPIC data snippet). The parameters are the receiver class, interface
+   // class, and iTable index (though in the trees they must appear as
+   // children in the opposite order), and the return value is the VFT offset.
+   //
+   // The given receiver class must implement the given interface class.
+   //
+   TR::SymbolReference * findOrCreateLookupDynamicInterfaceMethodSymbolRef();
+
+   // This helper is a variant of jitLookupDynamicInterfaceMethod that requires
+   // the dispatched callee to be public, otherwise throwing IllegalAccessError.
+   TR::SymbolReference * findOrCreateLookupDynamicPublicInterfaceMethodSymbolRef();
+
    TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore);
    TR::SymbolReference * findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::Symbol::RecognizedField recognizedField, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, char* name = NULL);
 
