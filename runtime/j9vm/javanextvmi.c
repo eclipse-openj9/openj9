@@ -166,3 +166,11 @@ JVM_DumpDynamicArchive(JNIEnv *env, jstring str)
 	assert(!"JVM_DumpDynamicArchive unimplemented");
 }
 #endif /* JAVA_SPEC_VERSION >= 17 */
+
+#if JAVA_SPEC_VERSION >= 18
+JNIEXPORT void JNICALL
+JVM_ReportFinalizationComplete(JNIEnv *env, jobject obj)
+{
+	assert(!"JVM_ReportFinalizationComplete unimplemented");
+}
+#endif /* JAVA_SPEC_VERSION >= 18 */
