@@ -307,6 +307,7 @@ public:
       UDATA _vmindexOffset;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
       bool _useAOTCache;
+      TR_AOTHeader _aotHeader;
       }; // struct VMInfo
 
    /**
@@ -433,6 +434,12 @@ public:
       return _aotCache;
       }
 
+   const AOTCacheAOTHeaderRecord *getAOTHeaderRecord() const
+      {
+      TR_ASSERT(_aotHeaderRecord, "Must have valid AOT header record");
+      return _aotHeaderRecord;
+      }
+
 private:
    void destroyMonitors();
 
@@ -511,6 +518,7 @@ private:
 
    std::string _aotCacheName;
    JITServerAOTCache *_aotCache;
+   const AOTCacheAOTHeaderRecord *_aotHeaderRecord;
    }; // class ClientSessionData
 
 

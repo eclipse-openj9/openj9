@@ -504,7 +504,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._isAllocateZeroedTLHPagesEnabled = fe->tlhHasBeenCleared();
          vmInfo._staticObjectAllocateFlags = fe->getStaticObjectFlags();
          vmInfo._referenceArrayCopyHelperAddress = fe->getReferenceArrayCopyHelperAddress();
+
          vmInfo._useAOTCache = comp->getPersistentInfo()->getJITServerUseAOTCache();
+         if (vmInfo._useAOTCache)
+            {
+            auto header = compInfoPT->reloRuntime()->getStoredAOTHeader(vmThread);
+            TR_ASSERT_FATAL(header, "Must have valid AOT header stored in SCC by now");
+            vmInfo._aotHeader = *header;
+            }
 
          client->write(response, vmInfo, listOfCacheDescriptors, comp->getPersistentInfo()->getJITServerAOTCacheName());
          }

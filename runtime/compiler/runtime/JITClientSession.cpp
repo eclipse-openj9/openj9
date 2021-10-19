@@ -55,7 +55,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _wellKnownClasses(),
    _isInStartupPhase(false),
-   _aotCacheName(), _aotCache(NULL)
+   _aotCacheName(), _aotCache(NULL), _aotHeaderRecord(NULL)
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = NULL;
@@ -758,6 +758,7 @@ ClientSessionData::getOrCreateAOTCache(JITServer::ServerStream *stream)
       if (auto aotCacheMap = TR::CompilationInfo::get()->getJITServerAOTCacheMap())
          {
          _aotCache = aotCacheMap->get(_aotCacheName, _clientUID);
+         _aotHeaderRecord = _aotCache->getAOTHeaderRecord(&_vmInfo->_aotHeader, _clientUID);
          }
       else
          {
