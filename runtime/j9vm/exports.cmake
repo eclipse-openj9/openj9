@@ -386,6 +386,13 @@ if(NOT JAVA_SPEC_VERSION LESS 17)
 	)
 endif()
 
+if(NOT JAVA_SPEC_VERSION LESS 18)
+	jvm_add_exports(jvm
+		# Additions for Java 18 (General)
+		JVM_ReportFinalizationComplete
+	)
+endif()
+
 if(J9VM_OPT_JITSERVER)
 	jvm_add_exports(jvm
 		JITServer_CreateServer
