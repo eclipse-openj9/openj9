@@ -1566,3 +1566,27 @@ J9NLS_CFR_ERR_BC_JUMP_RECURSIVE.explanation=The JVM is unable to flatten the cod
 J9NLS_CFR_ERR_BC_JUMP_RECURSIVE.system_action=The JVM will throw a verification or class loading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_BC_JUMP_RECURSIVE.user_response=Contact the provider of the class file for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8=Outer class name must be a string
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.explanation=The outer class name of an InnerClasses attribute must be a string in the case of a non-zero outer class info index.
+J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_OUTER_CLASS_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH=The length of outer class name is zero in an InnerClasses attribute
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH.explanation=The outer class name of an InnerClasses attribute must be a non-zero UTF8 string.
+J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_OUTER_CLASS_UTF8_ZERO_LENGTH.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS=Outer class is an array class in an InnerClasses attribute
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.explanation=The outer class of an InnerClasses attribute must be a non-array class.
+J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_OUTER_CLASS_BAD_ARRAY_CLASS.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
