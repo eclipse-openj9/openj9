@@ -4417,6 +4417,7 @@ typedef struct J9MemoryManagerFunctions {
 	I_32  ( *j9gc_get_jit_string_dedup_policy)(struct J9JavaVM *javaVM) ;
 	UDATA ( *j9gc_stringHashFn)(void *key, void *userData);
 	BOOLEAN ( *j9gc_stringHashEqualFn)(void *leftKey, void *rightKey, void *userData);
+	void  ( *j9gc_ensureLockedSynchronizersIntegrity)(struct J9VMThread *vmThread) ;
 } J9MemoryManagerFunctions;
 
 typedef struct J9InternalVMFunctions {
