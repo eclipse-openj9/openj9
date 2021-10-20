@@ -284,12 +284,10 @@ static void cleanCustomSpinOptions(void *element, void *userData);
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 
 /* Imports from vm/rasdump.c */
-#if (defined(J9VM_RAS_EYECATCHERS))
 extern void J9RASInitialize (J9JavaVM* javaVM);
 extern void J9RelocateRASData (J9JavaVM* javaVM);
 extern void J9RASShutdown (J9JavaVM* javaVM);
 extern void populateRASNetData (J9JavaVM *javaVM, J9RAS *rasStruct);
-#endif /* J9VM_RAS_EYECATCHERS */
 
 const U_8 J9CallInReturnPC[] = { 0xFF, 0x00, 0x00, 0xFF }; /* impdep2, parm, parm, impdep2 */
 #if defined(J9VM_OPT_METHOD_HANDLE)
@@ -881,11 +879,9 @@ freeJavaVM(J9JavaVM * vm)
 
 	freeSystemProperties(vm);
 
-#ifdef J9VM_RAS_EYECATCHERS
 	if (NULL != vm->j9ras) {
 		J9RASShutdown(vm);
 	}
-#endif
 
 	contendedLoadTableFree(vm);
 
@@ -2343,7 +2339,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			break;
 
 		case ALL_VM_ARGS_CONSUMED :
-#if defined(J9VM_RAS_EYECATCHERS)
 			/*
 			 * defer initialization of network data until after heap allocated, since the initialization
 			 * can initiate DLL loads which prevent allocation of large heaps.
@@ -2356,7 +2351,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			} else {
 				JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "\t\tdisabled network query to determine host name and IP address for RAS.\n");
 			}
-#endif
+
 			consumeVMArgs(vm, vm->vmArgsArray);
 			if (FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXALLOWVMSHUTDOWN, NULL) >= 0) {
 				vm->runtimeFlags &= ~(UDATA)J9_RUNTIME_DISABLE_VM_SHUTDOWN;
@@ -2608,14 +2603,12 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			/* Register this module with trace */
 			UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
 			Trc_VM_VMInitStages_Event1(vm->mainThread);
-#ifdef J9VM_RAS_EYECATCHERS
 			Trc_VM_Created(vm->mainThread,
 				vm,
 				vm->internalVMFunctions,
 				vm->portLibrary,
 				vm->j9ras
 			);
-#endif
 
 #if defined(OMR_THR_YIELD_ALG) && defined(LINUX)
 			Trc_VM_yieldAlgorithmSelected(vm->mainThread, j9util_sched_compat_yield_value(vm), **(UDATA**)omrthread_global("yieldAlgorithm"), **(UDATA**)omrthread_global("yieldUsleepMultiplier"));
@@ -3329,13 +3322,11 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	}
 #endif
 
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	if ( xdump ) {
 		entry = findDllLoadInfo(loadTable, J9_RAS_DUMP_DLL_NAME);
 		entry->loadFlags |= EARLY_LOAD;
 		JVMINIT_VERBOSE_INIT_VM_TRACE(vm, "Dump support required... whacking table\n");
 	}
-#endif
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	entry = findDllLoadInfo(loadTable, J9_IFA_DLL_NAME);
@@ -6597,9 +6588,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	/* At this point, the compressed/full determination has been made */
 
-#ifdef J9VM_RAS_EYECATCHERS
 	J9RASInitialize(vm);
-#endif
 
 	initializeROMClasses(vm);
 
@@ -6721,12 +6710,10 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 #endif
 
-#ifdef J9VM_RAS_DUMP_AGENTS
 	/* Setup primordial dump facade as early as possible */
 	if (JNI_OK != configureRasDump(vm)) {
 		goto error;
 	}
-#endif
 
 #ifdef J9VM_OPT_SIDECAR
 	if (JNI_OK != initializeJVMExtensionInterface(vm)) {

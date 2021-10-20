@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -322,7 +322,6 @@ rasCreateThread( JNIEnv *env, void (JNICALL *startFunc)(void*), void *args, int 
 
 int  JNICALL rasGenerateJavacore( JNIEnv *env )
 {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	int rc = JNI_OK;
 	omr_error_t result = OMR_ERROR_NONE;
 	J9VMThread *thr = (J9VMThread *)env;
@@ -335,9 +334,6 @@ int  JNICALL rasGenerateJavacore( JNIEnv *env )
 	omrthread_monitor_exit(jvmridumpmonitor);
 
 	return rc;
-#else
-	return JNI_ERR;
-#endif
 }
 
 static int  JNICALL rasRunDumpRoutine( JNIEnv *env, int componentID, int level,
@@ -385,7 +381,6 @@ static int  JNICALL rasInjectOutOfMemory( JNIEnv *env )
 
 static int  JNICALL rasSetOutOfMemoryHook( JNIEnv *env, void (*OutOfMemoryFunc)(void) )
 {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 	J9RASdumpAgent *rda;
@@ -421,9 +416,6 @@ static int  JNICALL rasSetOutOfMemoryHook( JNIEnv *env, void (*OutOfMemoryFunc)(
 	rc = vm->j9rasDumpFunctions->insertDumpAgent(vm, rda);
 
 	return (int)omrErrorCodeToJniErrorCode(rc);
-#else
-	return JNI_ERR;
-#endif
 }
 
 static int  JNICALL rasGetComponentDataArea( JNIEnv *env, char *componentName,
@@ -439,15 +431,11 @@ static int  JNICALL rasGetComponentDataArea( JNIEnv *env, char *componentName,
 
 int  JNICALL rasInitiateSystemDump( JNIEnv *env )
 {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 	omr_error_t rc = vm->j9rasDumpFunctions->triggerOneOffDump(vm, "system", DUMP_CALLER_NAME, NULL, 0);
 
 	return (int)omrErrorCodeToJniErrorCode(rc);
-#else
-	return JNI_ERR;
-#endif
 }
 
 static void JNICALL rasDynamicVerbosegc(JNIEnv *env, int vgc_switch,
@@ -465,7 +453,6 @@ static void JNICALL rasDynamicVerbosegc(JNIEnv *env, int vgc_switch,
 
 int  JNICALL rasGenerateHeapdump( JNIEnv *env )
 {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	int rc = JNI_OK;
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
@@ -479,9 +466,6 @@ int  JNICALL rasGenerateHeapdump( JNIEnv *env )
 	omrthread_monitor_exit(jvmridumpmonitor);
 	
 	return rc;
-#else
-	return JNI_ERR;
-#endif
 }
 
 int fillInDgRasInterface( DgRasInterface *dri )
@@ -556,20 +540,8 @@ static int JNICALL rasTraceSet(JNIEnv *env, const char *cmd)
 void JNICALL rasTraceSnap(JNIEnv *env, char *buffer)
 {
 	J9VMThread *thr = (J9VMThread *)env;
-
-#ifdef J9VM_RAS_DUMP_AGENTS
-
 	J9JavaVM *vm = thr->javaVM;
 	vm->j9rasDumpFunctions->triggerOneOffDump(vm, "snap", DUMP_CALLER_NAME, NULL, 0);
-
-#else /* !J9VM_RAS_DUMP_AGENTS */
-
-	J9UtServerInterface *utserverinterface = UTSINTERFACEFROMVM(thr->javaVM);
-	UtThreadData **tempThr = UT_THREAD_FROM_VM_THREAD(thr);
-
-	utserverinterface->TraceSnap(tempThr, NULL, NULL);
-
-#endif /* !J9VM_RAS_DUMP_AGENTS */
 }
 
 static void JNICALL rasTraceSuspend(JNIEnv *env)
@@ -592,7 +564,6 @@ static void JNICALL rasTraceResume(JNIEnv *env)
 
 static int JNICALL rasDumpRegister(JNIEnv *env, int (JNICALL *func)(JNIEnv *env2, void **threadLocal, int reason))
 {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 	J9RASdumpAgent *rda;
@@ -629,19 +600,15 @@ static int JNICALL rasDumpRegister(JNIEnv *env, int (JNICALL *func)(JNIEnv *env2
 
 	rc = vm->j9rasDumpFunctions->insertDumpAgent(vm, rda);
 	return (int)omrErrorCodeToJniErrorCode(rc);
-#else
-	return JNI_ERR;
-#endif
 }
 
 static int JNICALL rasDumpDeregister(JNIEnv *env, int (JNICALL *func)(JNIEnv *env2, void **threadLocal, int reason))
 {
 	int rc = JNI_ERR;
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 	J9RASdumpAgent *rda = NULL;
-							   
+
 	while (vm->j9rasDumpFunctions->seekDumpAgent(vm, &rda, rasDumpFn) == OMR_ERROR_NONE) {
 		if (rda->userData == J9RAS_THUNK(func))
 		{
@@ -649,7 +616,6 @@ static int JNICALL rasDumpDeregister(JNIEnv *env, int (JNICALL *func)(JNIEnv *en
 		}       
 	}
 	rc = JNI_OK;
-#endif
 	return rc;
 }
 
@@ -686,20 +652,14 @@ static void JNICALL rasTraceResumeThis(JNIEnv *env)
 }
 
 static omr_error_t oomHookFn(struct J9RASdumpAgent *agent, char *label, struct J9RASdumpContext *context){
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	void (*OutOfMemoryFunc)(void) = ( void (*)(void) )agent->userData;
 
 	OutOfMemoryFunc();
 
 	return OMR_ERROR_NONE;
-#else
-	/* This is not valid without RAS_DUMP */
-	return OMR_ERROR_INTERNAL;
-#endif
 }
 
 static omr_error_t rasDumpFn(struct J9RASdumpAgent *agent, char *label, struct J9RASdumpContext *context){
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	int (*dumpFn)(JNIEnv *, void **, int) = ( int (*)(JNIEnv *, void **, int) )agent->userData;
 	J9VMThread *thr = context->onThread;
 	JNIEnv *env = (JNIEnv *)thr;
@@ -708,9 +668,6 @@ static omr_error_t rasDumpFn(struct J9RASdumpAgent *agent, char *label, struct J
 	dumpFn(env, threadLocal, (int)context->eventFlags);
 
 	return OMR_ERROR_NONE;
-#else
-	return OMR_ERROR_INTERNAL;
-#endif
 }
 
 static omr_error_t
@@ -718,7 +675,6 @@ rasDumpAgentShutdownFn(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr)
 {
 	omr_error_t rc = OMR_ERROR_INTERNAL;
 
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	PORT_ACCESS_FROM_JAVAVM( vm );
 
 	rc = vm->j9rasDumpFunctions->removeDumpAgent(vm, *agentPtr);
@@ -726,7 +682,6 @@ rasDumpAgentShutdownFn(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr)
 	j9mem_free_memory( *agentPtr );
 	*agentPtr = NULL;
 	rc = OMR_ERROR_NONE;
-#endif
 
 	return rc;
 }

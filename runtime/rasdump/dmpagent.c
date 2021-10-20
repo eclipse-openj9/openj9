@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -186,13 +186,9 @@ static omr_error_t doConsoleDump (J9RASdumpAgent *agent, char *label, J9RASdumpC
 static omr_error_t doStackDump (J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 omr_error_t doSilentDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 static J9RASdumpAgent* createAgent (J9JavaVM *vm, IDATA kind, const J9RASdumpSettings *settings);
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static UDATA protectedDumpFunction (struct J9PortLibrary *portLibrary, void *userData);
-#endif /* J9VM_RAS_DUMP_AGENTS */
 static omr_error_t freeAgent (J9JavaVM *vm, J9RASdumpAgent **agentPtr);
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static UDATA signalHandler (struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData);
-#endif /* J9VM_RAS_DUMP_AGENTS */
 static UDATA scanRequests (J9JavaVM *vm, char **cursor, UDATA *actionPtr);
 static omr_error_t doJavaDump (J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 static UDATA scanEvents (J9JavaVM *vm, char **cursor, UDATA *actionPtr);
@@ -1808,9 +1804,6 @@ freeAgent(J9JavaVM *vm, J9RASdumpAgent **agentPtr)
 	return OMR_ERROR_NONE;
 }
 
-
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 printDumpSpec(struct J9JavaVM *vm, IDATA kind, IDATA verboseLevel)
 {
@@ -1903,10 +1896,7 @@ printDumpSpec(struct J9JavaVM *vm, IDATA kind, IDATA verboseLevel)
 
 	return OMR_ERROR_INTERNAL;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 printDumpEvents(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 {
@@ -1965,10 +1955,7 @@ printDumpEvents(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 printDumpRequests(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 {
@@ -1999,9 +1986,7 @@ printDumpRequests(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static IDATA
 writeIntoBuffer(void* buffer, IDATA buffer_length, IDATA* index, char* data) {
 	IDATA len;
@@ -2154,9 +2139,7 @@ queryAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, IDATA buffer_size,
 	*index = next_char;
 	return rc;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 printDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 {
@@ -2227,10 +2210,7 @@ printDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 const char*
 mapDumpEvent(UDATA eventFlag)
 {
@@ -2250,9 +2230,7 @@ mapDumpEvent(UDATA eventFlag)
 
 	return "unknown";
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 copyDumpSettings(struct J9JavaVM *vm, J9RASdumpSettings *src, J9RASdumpSettings *dst)
 {
@@ -2311,9 +2289,7 @@ copyDumpSettings(struct J9JavaVM *vm, J9RASdumpSettings *src, J9RASdumpSettings 
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 J9RASdumpSettings *
 copyDumpSettingsQueue(J9JavaVM *vm, J9RASdumpSettings *toCopy)
 {
@@ -2334,9 +2310,7 @@ copyDumpSettingsQueue(J9JavaVM *vm, J9RASdumpSettings *toCopy)
 	
 	return queue;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 struct J9RASdumpSettings *
 initDumpSettings(struct J9JavaVM *vm)
 {
@@ -2381,10 +2355,7 @@ initDumpSettings(struct J9JavaVM *vm)
 
 	return settings;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 freeDumpSettings(struct J9JavaVM *vm, struct J9RASdumpSettings *settings)
 {
@@ -2419,10 +2390,7 @@ freeDumpSettings(struct J9JavaVM *vm, struct J9RASdumpSettings *settings)
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 IDATA
 scanDumpType(char **optionStringPtr)
 {
@@ -2450,9 +2418,7 @@ scanDumpType(char **optionStringPtr)
 
 	return retVal;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 copyDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent *src, J9RASdumpAgent *dst)
 {
@@ -2517,10 +2483,8 @@ copyDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent *src, J9RASdumpAgent *dst)
     
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS))
-static void 
+static void
 freeQueueWithoutRunningShutdown(J9JavaVM *vm, J9RASdumpAgent *toFree)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -2533,9 +2497,6 @@ freeQueueWithoutRunningShutdown(J9JavaVM *vm, J9RASdumpAgent *toFree)
 	}
 }
 
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 J9RASdumpAgent *
 copyDumpAgentsQueue(J9JavaVM *vm, J9RASdumpAgent *toCopy)
 {
@@ -2565,9 +2526,7 @@ copyDumpAgentsQueue(J9JavaVM *vm, J9RASdumpAgent *toCopy)
 	
 	return queue;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 loadDumpAgent(struct J9JavaVM *vm, IDATA kind, char *optionString)
 {
@@ -2611,9 +2570,7 @@ loadDumpAgent(struct J9JavaVM *vm, IDATA kind, char *optionString)
 
 	return retVal;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 omr_error_t
 deleteMatchingAgents(struct J9JavaVM *vm, IDATA kind, char *optionString)
 {
@@ -2648,10 +2605,7 @@ deleteMatchingAgents(struct J9JavaVM *vm, IDATA kind, char *optionString)
 
 	return retVal;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 unloadDumpAgent(struct J9JavaVM *vm, IDATA kind)
 {
@@ -2671,9 +2625,6 @@ unloadDumpAgent(struct J9JavaVM *vm, IDATA kind)
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 
 /*
  * Function: createAndRunOneOffDumpAgent - creates a temporary dump agent and runs it
@@ -2722,10 +2673,6 @@ createAndRunOneOffDumpAgent(struct J9JavaVM *vm,J9RASdumpContext * context,IDATA
 	}
 }
 
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 /*
  * Function: runDumpAgent - executes a single dump agent
  * 
@@ -2849,11 +2796,7 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 	}
 	return retVal;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 /*
  * Execute the dump function from agent under signal protection.
  * If a signal occurs OMR_ERROR_INTERNAL is returned.
@@ -2889,10 +2832,6 @@ runDumpFunction(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 	}
 }
 
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 /*
  * See runDumpFunction()
  */
@@ -2904,10 +2843,6 @@ protectedDumpFunction(struct J9PortLibrary *portLibrary, void *userData)
 	return (UDATA)dumpData->agent->dumpFn(dumpData->agent, dumpData->label, dumpData->context);
 }
 
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 /*
  * See runDumpFunction()
  */
@@ -2916,11 +2851,6 @@ signalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void
 {
 	return J9PORT_SIG_EXCEPTION_RETURN;
 }
-
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 
 /**
  * Writes the appropriate "we're about to write a dump" message to the console depending on whether the
@@ -2973,10 +2903,6 @@ reportDumpRequest(struct J9PortLibrary* portLibrary, J9RASdumpContext * context,
 	}
 }
 
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))
-
 static char *
 scanSubFilter(J9JavaVM *vm, const J9RASdumpSettings *settings, const char **cursor, UDATA *actionPtr)
 {
@@ -2991,5 +2917,3 @@ scanSubFilter(J9JavaVM *vm, const J9RASdumpSettings *settings, const char **curs
 
         return subFilter;
 }
-
-#endif /* J9VM_RAS_DUMP_AGENTS */

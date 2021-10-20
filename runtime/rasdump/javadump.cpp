@@ -915,34 +915,12 @@ JavaCoreDumpWriter::writeProcessorSection(void)
 		"NULL           ================================\n"
 	);
 
-#ifdef J9VM_RAS_EYECATCHERS
 	/* Write the operating system description */
 	J9RAS* j9ras = _VirtualMachine->j9ras;
-
 	const char* osName         = (char*)(j9ras->osname);
 	const char* osVersion      = (char*)(j9ras->osversion);
 	const char* osArchitecture = (char*)(j9ras->osarch);
 	int         numberOfCpus   = j9ras->cpus;
-
-#else /* !J9VM_RAS_EYECATCHERS */
-
-	const char* osName         = j9sysinfo_get_OS_type();
-	const char* osVersion      = j9sysinfo_get_OS_version();
-	const char* osArchitecture = j9sysinfo_get_CPU_architecture();
-	int         numberOfCpus   = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
-
-	if (NULL == osName) {
-		osName = "[not available]";
-	}
-
-	if (NULL == osVersion) {
-		osVersion = "[not available]";
-	}
-
-	if (NULL == osArchitecture) {
-		osArchitecture = "[not available]";
-	}
-#endif /* !J9VM_RAS_EYECATCHERS */
 
 	/* Write the operating system description */
 	_OutputStream.writeCharacters("2XHOSLEVEL     OS Level         : ");

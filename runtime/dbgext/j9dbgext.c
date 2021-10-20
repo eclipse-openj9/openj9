@@ -256,10 +256,6 @@ dbgSniffForJavaVM(void)
 		return cachedVM;
 	}
 
-#if !defined (J9VM_RAS_EYECATCHERS)
-	dbgPrint("RAS not enabled, cannot search for VM -- use setvm instead\n");
-	return NULL;
-#else
 	dbgPrint("Searching for J9JavaVM...\n");
 
 	while (NULL != (eyecatcher = dbgFindPattern((U_8*)"J9VMRAS", sizeof("J9VMRAS"), 8, startFrom, &bytesRead))) {
@@ -321,8 +317,6 @@ dbgSniffForJavaVM(void)
 		dbgPrint("Use setvm if you know (or suspect) the address of the J9JavaVM or a J9VMThread\n");
 	}
 	return NULL;
-
-#endif
 }
 
 
@@ -1130,6 +1124,4 @@ dbgParseArgForStructDump(const char * args, UDATA* structAddress, const char** n
 	}
 
 	return result;
-
 }
-

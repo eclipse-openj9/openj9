@@ -514,11 +514,9 @@ typedef struct J9VTuneInterface {
  * New variables should be added at the end in order to maintain backward compatibility.
  */
 typedef struct J9JITExceptionTable {
-#if defined(J9VM_RAS_EYECATCHERS)
 	struct J9UTF8* className;
 	struct J9UTF8* methodName;
 	struct J9UTF8* methodSignature;
-#endif /* J9VM_RAS_EYECATCHERS */
 	struct J9ConstantPool* constantPool;
 	struct J9Method* ramMethod;
 	UDATA startPC;
@@ -4538,9 +4536,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *initializeMethodRunAddress)(struct J9VMThread *vmThread, struct J9Method *method) ;
 	UDATA  ( *growJavaStack)(struct J9VMThread * vmThread, UDATA newStackSize) ;
 	void  ( *freeStacks)(struct J9VMThread * vmThread, UDATA * bp) ;
-#if defined(J9VM_INTERP_SIG_QUIT_THREAD) || defined(J9VM_RAS_DUMP_AGENTS)
 	void  ( *printThreadInfo)(struct J9JavaVM *vm, struct J9VMThread *self, char *toFile, BOOLEAN allThreads) ;
-#endif /* J9VM_INTERP_SIG_QUIT_THREAD || J9VM_RAS_DUMP_AGENTS */
 	void  (JNICALL *initializeAttachedThread)(struct J9VMThread *vmContext, const char *name, j9object_t *group, UDATA daemon, struct J9VMThread *initializee) ;
 	void  ( *initializeMethodRunAddressNoHook)(struct J9JavaVM* vm, J9Method *method) ;
 	void  (JNICALL *sidecarInvokeReflectMethod)(struct J9VMThread *vmContext, jobject methodRef, jobject recevierRef, jobjectArray argsRef) ;
@@ -4754,9 +4750,7 @@ typedef struct J9InternalVMFunctions {
 	U_32 ( *getVMRuntimeState)(struct J9JavaVM *vm);
 	BOOLEAN ( *updateVMRuntimeState)(struct J9JavaVM *vm, U_32 newState);
 	U_32 ( *getVMMinIdleWaitTime)(struct J9JavaVM *vm);
-#if defined(J9VM_RAS_EYECATCHERS)
 	void ( *rasSetServiceLevel)(struct J9JavaVM *vm, const char *runtimeVersion);
-#endif /* J9VM_RAS_EYECATCHERS */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
 	void ( *flushProcessWriteBuffers)(struct J9JavaVM *vm);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */

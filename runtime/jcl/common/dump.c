@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,21 +38,11 @@ static void raiseExceptionFor(JNIEnv *env, omr_error_t result);
 jint JNICALL 
 Java_com_ibm_jvm_Dump_HeapDumpImpl(JNIEnv *env, jclass clazz)
 {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 	omr_error_t rc = vm->j9rasDumpFunctions->triggerOneOffDump(vm, "heap", "com.ibm.jvm.Dump.HeapDump", NULL, 0);
 
 	return omrErrorCodeToJniErrorCode(rc);
-#else
-	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
-	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class. */
-		return JNI_ERR;
-	}
-	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");
-	return JNI_ERR;
-#endif
 }
 
 /*
@@ -63,21 +53,11 @@ Java_com_ibm_jvm_Dump_HeapDumpImpl(JNIEnv *env, jclass clazz)
 jint JNICALL 
 Java_com_ibm_jvm_Dump_JavaDumpImpl(JNIEnv *env, jclass clazz)
 {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 	omr_error_t rc = vm->j9rasDumpFunctions->triggerOneOffDump(vm, "java", "com.ibm.jvm.Dump.JavaDump", NULL, 0);
 
 	return omrErrorCodeToJniErrorCode(rc);
-#else
-	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
-	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class. */
-		return JNI_ERR;
-	}
-	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");
-	return JNI_ERR;
-#endif
 }
 
 /*
@@ -88,21 +68,11 @@ Java_com_ibm_jvm_Dump_JavaDumpImpl(JNIEnv *env, jclass clazz)
 jint JNICALL 
 Java_com_ibm_jvm_Dump_SystemDumpImpl(JNIEnv *env, jclass clazz)
 {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 	omr_error_t rc = vm->j9rasDumpFunctions->triggerOneOffDump(vm, "system", "com.ibm.jvm.Dump.SystemDump", NULL, 0);
 	
 	return omrErrorCodeToJniErrorCode(rc);
-#else
-	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
-	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class. */
-		return JNI_ERR;
-	}
-	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");
-	return JNI_ERR;
-#endif
 }
 
 /*
@@ -112,21 +82,11 @@ Java_com_ibm_jvm_Dump_SystemDumpImpl(JNIEnv *env, jclass clazz)
  */
 jint JNICALL
 Java_com_ibm_jvm_Dump_SnapDumpImpl(JNIEnv *env, jclass clazz) {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 	omr_error_t rc = vm->j9rasDumpFunctions->triggerOneOffDump(vm, "Snap", "com.ibm.jvm.Dump.SnapDump", NULL, 0);
 	
 	return omrErrorCodeToJniErrorCode(rc);
-#else
-	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
-	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class. */
-		return JNI_ERR;
-	}
-	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");
-	return JNI_ERR;
-#endif
 }
 
 /* Scan the dump type string for "tool". Done in C to make sure we
@@ -168,7 +128,6 @@ static jboolean scanDumpTypeForToolDump(char **typeString)
 
 jboolean JNICALL
 Java_com_ibm_jvm_Dump_isToolDump(JNIEnv *env, jclass clazz, jstring jopts) {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	char *optsBuffer = NULL;
 	int optsLength = 0;
 	jboolean retVal = JNI_FALSE;
@@ -199,21 +158,11 @@ Java_com_ibm_jvm_Dump_isToolDump(JNIEnv *env, jclass clazz, jstring jopts) {
 		 retVal = JNI_FALSE;
 	}
 	return retVal;
-#else
-	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
-	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class. */
-		return JNI_FALSE;
-	}
-	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");
-	return JNI_FALSE;
-#endif
 }
 
 jstring JNICALL
 Java_com_ibm_jvm_Dump_triggerDumpsImpl (JNIEnv *env, jclass clazz, jstring jopts, jstring jevent)
 {
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 	char *optsBuffer = NULL;
@@ -272,15 +221,6 @@ Java_com_ibm_jvm_Dump_triggerDumpsImpl (JNIEnv *env, jclass clazz, jstring jopts
 		j9mem_free_memory(eventBuffer);
 	}
 	return toReturn;
-#else
-	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
-	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class. */
-		return JNI_ERR;
-	}
-	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");
-	return JNI_ERR;
-#endif
 }
 
 jstring JNICALL
@@ -297,8 +237,6 @@ Java_com_ibm_jvm_Dump_setDumpOptionsImpl (JNIEnv *env, jclass clazz, jstring jop
 	char *optsBuffer = NULL;
 	int optsLength = 0;
 	omr_error_t result = OMR_ERROR_NONE;
-
-#ifdef J9VM_RAS_DUMP_AGENTS
 
 	PORT_ACCESS_FROM_ENV(env);
 
@@ -332,15 +270,6 @@ Java_com_ibm_jvm_Dump_setDumpOptionsImpl (JNIEnv *env, jclass clazz, jstring jop
 	if( optsBuffer != NULL ) {
 		j9mem_free_memory(optsBuffer);
 	}
-#else
-	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
-	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class as an exception will be pending. */
-		return JNI_ERR;
-	}
-	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");
-	return JNI_ERR;
-#endif
 }
 
 jstring JNICALL
@@ -359,7 +288,6 @@ Java_com_ibm_jvm_Dump_queryDumpOptionsImpl (JNIEnv *env, jclass clazz) {
 	omr_error_t result = OMR_ERROR_NONE;
 	PORT_ACCESS_FROM_ENV(env);
 
-#ifdef J9VM_RAS_DUMP_AGENTS
 	memset(options_buffer, 0, buffer_size);
 	result = vm->j9rasDumpFunctions->queryVmDump(vm, buffer_size, options_buffer, data_size_ptr);
 
@@ -395,15 +323,6 @@ Java_com_ibm_jvm_Dump_queryDumpOptionsImpl (JNIEnv *env, jclass clazz) {
 	}
 
 	return toReturn;
-#else
-	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
-	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class. */
-		return JNI_ERR;
-	}
-	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");
-	return JNI_ERR;
-#endif
 }
 
 void JNICALL
@@ -413,7 +332,6 @@ Java_com_ibm_jvm_Dump_resetDumpOptionsImpl (JNIEnv *env, jclass clazz)
 	J9VMThread *thr = (J9VMThread *)env;
 	J9JavaVM *vm = thr->javaVM;
 
-#ifdef J9VM_RAS_DUMP_AGENTS
 	/* request dump reset from dump module */
 	result = vm->j9rasDumpFunctions->resetDumpOptions(vm);
 
@@ -424,15 +342,6 @@ Java_com_ibm_jvm_Dump_resetDumpOptionsImpl (JNIEnv *env, jclass clazz)
 	if (OMR_ERROR_NONE != result) {
 		raiseExceptionFor(env, result);
 	}
-#else
-	jclass exceptionClass = (*env)->FindClass(env, "java/lang/RuntimeException");
-	if (exceptionClass == 0) {
-		/* Just return if we can't load the exception class. */
-		return JNI_ERR;
-	}
-	(*env)->ThrowNew(env, exceptionClass, "Dumps not supported in this configuration");
-	return JNI_ERR;
-#endif
 }
 
 /**
