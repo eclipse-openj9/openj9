@@ -28,6 +28,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/GenerateInstructions.hpp"
+#include "compile/Compilation.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg);
@@ -47,6 +48,7 @@ J9::ARM64::CodeGenerator::initialize()
    self()->J9::CodeGenerator::initialize();
 
    TR::CodeGenerator *cg = self();
+   TR::Compilation *comp = cg->comp();
 
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
 
@@ -63,11 +65,17 @@ J9::ARM64::CodeGenerator::initialize()
 
    cg->setSupportsInliningOfTypeCoersionMethods();
    cg->setSupportsDivCheck();
-   if (!comp()->getOption(TR_FullSpeedDebug))
+   if (!comp->getOption(TR_FullSpeedDebug))
       cg->setSupportsDirectJNICalls();
 
    cg->setSupportsPrimitiveArrayCopy();
    cg->setSupportsReferenceArrayCopy();
+
+   static char *disableMonitorCacheLookup = feGetEnv("TR_disableMonitorCacheLookup");
+   if (!disableMonitorCacheLookup)
+      {
+      comp->setOption(TR_EnableMonitorCacheLookup);
+      }
    }
 
 TR::Linkage *

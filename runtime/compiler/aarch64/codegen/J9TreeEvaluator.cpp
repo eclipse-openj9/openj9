@@ -913,7 +913,7 @@ generateLoadJ9Class(TR::Node *node, TR::Register *j9classReg, TR::Register *objR
    }
 
 void
-J9::ARM64::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *temp1Reg, TR::Register *temp2Reg, TR::CodeGenerator *cg, int32_t classFlag)
+J9::ARM64::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *mergeLabel, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *temp1Reg, TR::Register *temp2Reg, TR::CodeGenerator *cg, int32_t classFlag)
 {
    // get class of object
    generateLoadJ9Class(node, temp1Reg, objReg, cg);
@@ -926,23 +926,166 @@ J9::ARM64::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *node
    loadConstant32(cg, node, classFlag, temp2Reg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::andw, node, temp1Reg, temp1Reg, temp2Reg);
 
+   bool generateOOLSection = helperCallLabel == NULL;
+   if (generateOOLSection)
+      helperCallLabel = generateLabelSymbol(cg);
+
    // If obj is value type or value based class instance, call VM helper and throw IllegalMonitorState exception, else continue as usual
    generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, helperCallLabel, TR::CC_NE);
+
+   // TODO: There is now the possibility of multiple distinct OOL sections with helper calls to be generated when
+   // evaluating the TR::monent or TR::monexit nodes:
+   //
+   // 1. Monitor cache lookup OOL (AArch64 does not use OOL for monitor cache lookup at the moment)
+   // 2. Lock reservation OOL (AArch64 does not implement lock reservation yet)
+   // 3. Value types or value based object OOL
+   // 4. Recursive CAS sequence for Locking
+   //
+   // These distinct OOL sections may perform non-trivial logic but what they all have in common is they all have a
+   // call to the same JIT helper which acts as a fall back. This complexity exists because of the way the evaluators
+   // are currently architected and due to the restriction that we cannot have nested OOL code sections. Whenever
+   // making future changes to these evaluators we should consider refactoring them to reduce the complexity and
+   // attempt to consolidate the calls to the JIT helper so as to not have multiple copies.
+   TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, helperCallLabel, mergeLabel, cg);
+   cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
 }
+
+/**
+ *  @brief Generates instruction sequence for looking up the address of lockword of the object
+ *
+ *  @param[in]        cg: Code Generator
+ *  @param[in]      node: node
+ *  @param[in]    objReg: register holding object pointer
+ *  @param[in]   addrReg: register for assigning address of the lockword
+ *  @param[in]   metaReg: register holding vmthread struct pointer
+ *  @param[in]       srm: scratch register manager
+ *  @param[in] callLabel: label for slow path
+ */
+static void
+generateLockwordAddressLookup(TR::CodeGenerator *cg, TR::Node *node, TR::Register *objReg, TR::Register *addrReg, TR::Register *metaReg,
+                                       TR_ARM64ScratchRegisterManager *srm, TR::LabelSymbol *callLabel)
+   {
+   /*
+    * Generating following intruction sequence.
+    *
+    *    ldrimmw  objectClassReg, [objReg, #0] ; throws an implicit NPE
+    *    andimmw  objectClassReg, 0xffffff00
+    *    ldrimmx  tempReg, [objectClassReg, offsetOfLockOffset]
+    *    cmpimmx  tempReg, #0
+    *    b.le     monitorLookupCacheLabel
+    *    addx     addrReg, objReg, tempReg
+    *    b        fallThruFromMonitorLookupCacheLabel
+    * monitorLookupCacheLabel:
+    *    ; slot = (object >> objectAlignmentShift) & (J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE-1)
+    *    ubfx     tempReg, objReg, #alignmentBits, #maskWidth ; maskWidth is popcount(J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE - 1)
+    *
+    *    ; vmThread->objectMonitorLookupCache[slot]
+    *    addx     tempReg, metaReg, tempReg, lsl #elementWidth ; elementWidth is log2(sizeof(j9objectmonitor_t))
+    *    ldrimmw  monitorReg, [tempReg, offsetOfMonitorLookupCache]
+    *
+    *    cbzx     monitorReg, callLabel ; if monitor is not found, then call out to helper
+    *    ldrimmx  tempReg, [monitorReg, offsetOfMonitor]
+    *    ldrimmx  tempReg, [tempReg, offsetOfUserData]
+    *    cmpx     tempReg, objReg
+    *    b.ne     callLabel ; if userData does not match object, then call out to helper
+    *    addimmx  addrReg, monitorReg, offsetOfAlternateLockWord
+    *
+    * fallThruFromMonitorLookupCacheLabel:
+    *
+    */
+   TR::Compilation *comp = TR::comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   TR::Register *tempReg = srm->findOrCreateScratchRegister();
+
+   TR::Register *objectClassReg = srm->findOrCreateScratchRegister();
+
+   // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
+   // In this case, nullcheck reference register is objReg and the memory reference does use it,
+   // so let InstructonDelegate::setupImplicitNullPointerException handle it.
+   generateLoadJ9Class(node, objectClassReg, objReg, cg);
+
+   TR::MemoryReference *lockOffsetMR = new (cg->trHeapMemory()) TR::MemoryReference(objectClassReg, offsetof(J9Class, lockOffset), cg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg, lockOffsetMR);
+   srm->reclaimScratchRegister(objectClassReg);
+
+   generateCompareImmInstruction(cg, node, tempReg, 0, true);
+
+   if (comp->getOption(TR_EnableMonitorCacheLookup))
+      {
+      TR::LabelSymbol *monitorLookupCacheLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *fallThruFromMonitorLookupCacheLabel = generateLabelSymbol(cg);
+
+      // If the lockword offset in the class pointer <= 0, then lookup monitor from the cache
+      auto branchInstrToLookup = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, monitorLookupCacheLabel, TR::CC_LE);
+      TR_Debug * debugObj = cg->getDebug();
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(branchInstrToLookup, "Branch to monitor lookup cache label");
+         }
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, addrReg, objReg, tempReg);
+      auto branchInstrToFallThru = generateLabelInstruction(cg, TR::InstOpCode::b, node, fallThruFromMonitorLookupCacheLabel);
+      if (debugObj)
+         {
+         debugObj->addInstructionComment(branchInstrToFallThru, "Branch to fall through label as lockOffset is positive");
+         }
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, monitorLookupCacheLabel);
+      static const uint32_t maskWidth = populationCount(J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE - 1);
+      uint32_t shiftAmount = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes()); // shift amount
+      generateUBFXInstruction(cg, node, tempReg, objReg, shiftAmount, maskWidth, true);
+
+#ifdef OMR_GC_FULL_POINTERS
+      // In mixed refs and large heap builds, the element type of monitorLookupCacheLabel is UDATA.
+      uint32_t elementWidth = trailingZeroes(sizeof(UDATA));
+#else
+      uint32_t elementWidth = trailingZeroes(sizeof(U_32));
+#endif
+      generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, tempReg, metaReg, tempReg, TR::ARM64ShiftCode::SH_LSL, elementWidth);
+
+      int32_t offsetOfObjectMonitorLookpCache = offsetof(J9VMThread, objectMonitorLookupCache);
+      TR::MemoryReference *monitorLookupMR = new (cg->trHeapMemory()) TR::MemoryReference(tempReg, offsetOfObjectMonitorLookpCache, cg);
+      TR::Register *monitorReg = srm->findOrCreateScratchRegister();
+
+      generateTrg1MemInstruction(cg, fej9->generateCompressedLockWord() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx, node, monitorReg, monitorLookupMR);
+      generateCompareBranchInstruction(cg, fej9->generateCompressedLockWord() ? TR::InstOpCode::cbzw : TR::InstOpCode::cbzx, node, monitorReg, callLabel);
+
+      int32_t offsetOfMonitor = offsetof(J9ObjectMonitor, monitor);
+      TR::MemoryReference *monitorMR = new (cg->trHeapMemory()) TR::MemoryReference(monitorReg, offsetOfMonitor, cg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg, monitorMR);
+
+      int32_t offsetOfUserData = offsetof(J9ThreadAbstractMonitor, userData);
+      TR::MemoryReference *userDataMR = new (cg->trHeapMemory()) TR::MemoryReference(tempReg, offsetOfUserData, cg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, tempReg, userDataMR);
+
+      generateCompareInstruction(cg, node, tempReg, objReg, true);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_NE);
+
+      int32_t offsetOfAlternateLockword = offsetof(J9ObjectMonitor, alternateLockword);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, monitorReg, offsetOfAlternateLockword);
+
+      srm->reclaimScratchRegister(monitorReg);
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, fallThruFromMonitorLookupCacheLabel);
+      }
+   else
+      {
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, callLabel, TR::CC_LE);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, addrReg, objReg, tempReg);
+      }
+
+   srm->reclaimScratchRegister(tempReg);
+   }
 
 TR::Register *
 J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = TR::comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   int32_t lwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
+   int32_t staticLwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
    TR::InstOpCode::Mnemonic op;
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
    if (comp->getOption(TR_FullSpeedDebug) ||
        (isMonitorValueBasedOrValueType == TR_yes) ||
-       comp->getOption(TR_DisableInlineMonExit) ||
-       lwOffset <= 0)
+       comp->getOption(TR_DisableInlineMonExit))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
       TR::Node::recreate(node, TR::call);
@@ -953,39 +1096,61 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    TR::Node *objNode = node->getFirstChild();
    TR::Register *objReg = cg->evaluate(objNode);
-   TR::Register *dataReg = cg->allocateRegister();
-   TR::Register *addrReg = cg->allocateRegister();
-   TR::Register *tempReg = cg->allocateRegister();
-   TR::Register *zeroReg = cg->allocateRegister();
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
-   TR::addDependency(deps, objReg, TR::RealRegister::x0, TR_GPR, cg);
-   /* We need following 3 registers at index 1-3 of regdeps as ARM64MonitorExitSnippet expects it. */
-   TR::addDependency(deps, dataReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *OOLLabel = generateLabelSymbol(cg);
 
-   TR::addDependency(deps, zeroReg, TR::RealRegister::xzr, TR_GPR, cg);
 
-   TR::LabelSymbol *callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol *decLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+   startLabel->setStartInternalControlFlow();
+
+   const bool isImplicitNullChkIsDoneAtLoadJ9Class = (isMonitorValueBasedOrValueType == TR_maybe) || (staticLwOffset <= 0);
+   // If lockword offset is not known at compile time, we need to jump into the OOL code section for helper call if monitor lookup fails.
+   // In that case, we cannot have inline recursive code in the OOL code section.
+   const bool inlineRecursive = staticLwOffset > 0;
 
    // If object is not known to be value type or value based class at compile time, check at run time
    if (isMonitorValueBasedOrValueType == TR_maybe)
       {
-      generateCheckForValueMonitorEnterOrExit(node, callLabel, objReg, tempReg, dataReg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+      TR::Register *temp1Reg = srm->findOrCreateScratchRegister();
+      TR::Register *temp2Reg = srm->findOrCreateScratchRegister();
+
+      // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
+      // In this case, nullcheck reference register is objReg and the memory reference does use it,
+      // so let InstructonDelegate::setupImplicitNullPointerException handle it.
+      //
+      // If we are generating code for MonitorCacheLookup then we will not have a separate OOL for inlineRecursive, and OOLLabel points
+      // to the OOL Containing only helper call. Otherwise, OOL will have other code apart from helper call which we do not want to execute
+      // for ValueType or ValueBased object and in that scenario we will need to generate another OOL that just contains helper call.
+      generateCheckForValueMonitorEnterOrExit(node, doneLabel, inlineRecursive ? NULL : OOLLabel, objReg, temp1Reg, temp2Reg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+
+      srm->reclaimScratchRegister(temp1Reg);
+      srm->reclaimScratchRegister(temp2Reg);
       }
 
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, lwOffset);
+   TR::Register *addrReg = srm->findOrCreateScratchRegister();
+
+   // If we do not know the lockword offset at compile time, obtrain it from the class pointer of the object being locked
+   if (staticLwOffset <= 0)
+      {
+      generateLockwordAddressLookup(cg, node, objReg, addrReg, metaReg, srm, OOLLabel);
+      }
+   else
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, staticLwOffset); // stlr instructions does not take immediate offset
+      }
+   TR::Register *dataReg = srm->findOrCreateScratchRegister();
+
    op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx;
    auto faultingInstruction = generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
 
    // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
    // In this case, nullcheck reference register is objReg, but the memory reference does not use it,
    // thus we need to explicitly set implicit exception point here.
-   if (cg->getHasResumableTrapHandler() && cg->getCurrentEvaluationTreeTop()->getNode()->getOpCode().isNullCheck())
+   if (cg->getHasResumableTrapHandler() && cg->getCurrentEvaluationTreeTop()->getNode()->getOpCode().isNullCheck() && (!isImplicitNullChkIsDoneAtLoadJ9Class))
       {
       if (cg->getImplicitExceptionPoint() == NULL)
          {
@@ -999,7 +1164,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    generateCompareInstruction(cg, node, dataReg, metaReg, true);
 
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, decLabel, TR::CC_NE);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, OOLLabel, TR::CC_NE);
 
    static const bool useMemoryBarrierForMonitorExit = feGetEnv("TR_aarch64UseMemoryBarrierForMonitorExit") != NULL;
    if (useMemoryBarrierForMonitorExit)
@@ -1012,18 +1177,81 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
       op = fej9->generateCompressedLockWord() ? TR::InstOpCode::stlrw : TR::InstOpCode::stlrx;
       }
 
+   // Avoid zeroReg from being reused by scratch register manager
+   TR::Register *zeroReg = cg->allocateRegister();
+
    generateMemSrc1Instruction(cg, op, node, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), zeroReg);
+
+   if (inlineRecursive)
+      {
+      /*
+       * OOLLabel:
+       *    subimmx  dataReg, dataReg, OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT
+       *    andimmx  tempReg, dataReg, ~OBJECT_HEADER_LOCK_RECURSION_MASK
+       *    cmpx     metaReg, tempReg
+       *    b.ne     snippetLabel
+       *    strimmx  dataReg, [addrReg]
+       * OOLEndLabel:
+       *    b        doneLabel
+       *
+       */
+
+      // This register is only required for OOL code section
+      // If we obtain this from scratch register manager, then one more register is used in mainline.
+      TR::Register *tempReg = cg->allocateRegister();
+
+      TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *OOLEndLabel = generateLabelSymbol(cg);
+      TR_ARM64OutOfLineCodeSection *oolSection = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(OOLLabel, doneLabel, cg);
+      cg->getARM64OutOfLineCodeSectionList().push_front(oolSection);
+      oolSection->swapInstructionListsWithCompilation();
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, OOLLabel);
+
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subimmx, node, dataReg, dataReg, OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT);
+      // OBJECT_HEADER_LOCK_RECURSION_MASK is 0xF0, immr=0x38, imms=0x3b for ~(0xF0)
+      generateLogicalImmInstruction(cg, TR::InstOpCode::andimmx, node, tempReg, dataReg, true, 0xe3b);
+      generateCompareInstruction(cg, node, metaReg, tempReg, true);
+
+      TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), OOLEndLabel);
+      cg->addSnippet(snippet);
+      TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+      gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+      snippet->gcMap().setGCRegisterMask(0xffffffff);
+
+      generateMemSrc1Instruction(cg, fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
+                                 node, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), dataReg);
+
+      TR::RegisterDependencyConditions *ooldeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg->trMemory());
+      ooldeps->addPostCondition(objReg, TR::RealRegister::x0);
+      ooldeps->addPostCondition(tempReg, TR::RealRegister::NoReg);
+      ooldeps->addPostCondition(dataReg, TR::RealRegister::NoReg);
+      ooldeps->addPostCondition(addrReg, TR::RealRegister::NoReg);
+
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, OOLEndLabel, ooldeps);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+
+      cg->stopUsingRegister(tempReg);
+      // ARM64HelperCallSnippet generates "bl" instruction
+      cg->machine()->setLinkRegisterKilled(true);
+      oolSection->swapInstructionListsWithCompilation();
+      }
+   else
+      {
+      TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, OOLLabel, doneLabel, cg);
+      cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+      }
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2 + srm->numAvailableRegisters(), cg->trMemory());
+   deps->addPostCondition(objReg, TR::RealRegister::NoReg);
+   deps->addPostCondition(zeroReg, TR::RealRegister::xzr);
+   srm->addScratchRegistersToDependencyList(deps);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
 
-   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64MonitorExitSnippet(cg, node, decLabel, callLabel, doneLabel);
-   cg->addSnippet(snippet);
    doneLabel->setEndInternalControlFlow();
 
-   cg->stopUsingRegister(dataReg);
-   cg->stopUsingRegister(addrReg);
-   cg->stopUsingRegister(tempReg);
    cg->stopUsingRegister(zeroReg);
+   srm->stopUsingRegisters();
 
    cg->decReferenceCount(objNode);
    cg->machine()->setLinkRegisterKilled(true);
@@ -2909,14 +3137,13 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = TR::comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   int32_t lwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
+   const int32_t staticLwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
    TR::InstOpCode::Mnemonic op;
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
 
    if (comp->getOption(TR_FullSpeedDebug) ||
        (isMonitorValueBasedOrValueType == TR_yes) ||
-       comp->getOption(TR_DisableInlineMonEnt) ||
-       lwOffset <= 0)
+       comp->getOption(TR_DisableInlineMonEnt))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
       TR::Node::recreate(node, TR::call);
@@ -2927,29 +3154,50 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    TR::Node *objNode = node->getFirstChild();
    TR::Register *objReg = cg->evaluate(objNode);
-   TR::Register *dataReg = cg->allocateRegister();
-   TR::Register *addrReg = cg->allocateRegister();
-   TR::Register *tempReg = cg->allocateRegister();
+   TR_ARM64ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
    TR::Register *metaReg = cg->getMethodMetaDataRegister();
 
-   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
-   TR::addDependency(deps, objReg, TR::RealRegister::x0, TR_GPR, cg);
-   TR::addDependency(deps, dataReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
-   TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *OOLLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
 
-   TR::LabelSymbol *callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol *incLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol *loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-   TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+   startLabel->setStartInternalControlFlow();
 
+   const bool isImplicitNullChkIsDoneAtLoadJ9Class = (isMonitorValueBasedOrValueType == TR_maybe) || (staticLwOffset <= 0);
+   const bool inlineRecursive = staticLwOffset > 0;
    // If object is not known to be value type or value based class at compile time, check at run time
    if (isMonitorValueBasedOrValueType == TR_maybe)
       {
-      generateCheckForValueMonitorEnterOrExit(node, callLabel, objReg, tempReg, dataReg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+      TR::Register *temp1Reg = srm->findOrCreateScratchRegister();
+      TR::Register *temp2Reg = srm->findOrCreateScratchRegister();
+
+      // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
+      // In this case, nullcheck reference register is objReg and the memory reference does use it,
+      // so let InstructonDelegate::setupImplicitNullPointerException handle it.
+      //
+      // If we are generating code for MonitorCacheLookup then we will not have a separate OOL for inlineRecursive, and OOLLabel points
+      // to the OOL Containing only helper call. Otherwise, OOL will have other code apart from helper call which we do not want to execute
+      // for ValueType or ValueBased object and in that scenario we will need to generate another OOL that just contains helper call.
+      generateCheckForValueMonitorEnterOrExit(node, doneLabel, inlineRecursive ? NULL : OOLLabel, objReg, temp1Reg, temp2Reg, cg, J9_CLASS_DISALLOWS_LOCKING_FLAGS);
+
+      srm->reclaimScratchRegister(temp1Reg);
+      srm->reclaimScratchRegister(temp2Reg);
       }
 
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, lwOffset); // ldxr/stxr instructions does not take immediate offset
+   TR::Register *addrReg = srm->findOrCreateScratchRegister();
+
+   // If we do not know the lockword offset at compile time, obtrain it from the class pointer of the object being locked
+   if (staticLwOffset <= 0)
+      {
+      generateLockwordAddressLookup(cg, node, objReg, addrReg, metaReg, srm, OOLLabel);
+      }
+   else
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, staticLwOffset); // ldxr/stxr instructions does not take immediate offset
+      }
+   TR::Register *dataReg = srm->findOrCreateScratchRegister();
 
    TR::Instruction *faultingInstruction;
    static const bool disableLSE = feGetEnv("TR_aarch64DisableLSE") != NULL;
@@ -2967,27 +3215,31 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
        * This needs to be fixed at some point.
        */
       faultingInstruction = generateTrg1MemSrc1Instruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
-      generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, incLabel);
+      generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, OOLLabel);
       }
    else
       {
+      TR::Register *tempReg = srm->findOrCreateScratchRegister();
+
       generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
       op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldxrw : TR::InstOpCode::ldxrx;
       faultingInstruction = generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
 
-      generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, incLabel);
+      generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, OOLLabel);
       op = fej9->generateCompressedLockWord() ? TR::InstOpCode::stxrw : TR::InstOpCode::stxrx;
 
       generateTrg1MemSrc1Instruction(cg, op, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
       generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tempReg, loopLabel);
 
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
+
+      srm->reclaimScratchRegister(tempReg);
       }
 
    // InstructonDelegate::setupImplicitNullPointerException checks if the memory reference uses nullcheck reference register.
    // In this case, nullcheck reference register is objReg, but the memory reference does not use it,
    // thus we need to explicitly set implicit exception point here.
-   if (cg->getHasResumableTrapHandler() && cg->getCurrentEvaluationTreeTop()->getNode()->getOpCode().isNullCheck())
+   if (cg->getHasResumableTrapHandler() && cg->getCurrentEvaluationTreeTop()->getNode()->getOpCode().isNullCheck() && (!isImplicitNullChkIsDoneAtLoadJ9Class))
       {
       if (cg->getImplicitExceptionPoint() == NULL)
          {
@@ -2999,15 +3251,71 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          }
       }
 
+   if (inlineRecursive)
+      {
+      /*
+       * OOLLabel:
+       *    addimmx  dataReg, dataReg, OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT
+       *    andimmx  tempReg, dataReg, ~(OBJECT_HEADER_LOCK_RECURSION_MASK)
+       *    cmpx     metaReg, tempReg
+       *    b.ne     snippetLabel
+       *    strimmx  dataReg, [addrReg]
+       * OOLEndLabel:
+       *    b        doneLabel
+       *
+       */
+      // This register is only required for OOL code section
+      // If we obtain this from scratch register manager, then one more register is used in mainline.
+      TR::Register *tempReg = cg->allocateRegister();
+      TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+      TR::LabelSymbol *OOLEndLabel = generateLabelSymbol(cg);
+      TR_ARM64OutOfLineCodeSection *oolSection = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(OOLLabel, doneLabel, cg);
+      cg->getARM64OutOfLineCodeSectionList().push_front(oolSection);
+      oolSection->swapInstructionListsWithCompilation();
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, OOLLabel);
+
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dataReg, dataReg, OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT);
+      // OBJECT_HEADER_LOCK_RECURSION_MASK is 0xF0, immr=0x38, imms=0x3b for ~(0xF0)
+      generateLogicalImmInstruction(cg, TR::InstOpCode::andimmx, node, tempReg, dataReg, true, 0xe3b);
+      generateCompareInstruction(cg, node, metaReg, tempReg, true);
+
+      TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), OOLEndLabel);
+      cg->addSnippet(snippet);
+      TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+      gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+      snippet->gcMap().setGCRegisterMask(0xffffffff);
+
+      generateMemSrc1Instruction(cg, fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx,
+                                 node, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), dataReg);
+
+      TR::RegisterDependencyConditions *ooldeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 4, cg->trMemory());
+      ooldeps->addPostCondition(objReg, TR::RealRegister::x0);
+      ooldeps->addPostCondition(tempReg, TR::RealRegister::NoReg);
+      ooldeps->addPostCondition(dataReg, TR::RealRegister::NoReg);
+      ooldeps->addPostCondition(addrReg, TR::RealRegister::NoReg);
+
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, OOLEndLabel, ooldeps);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+
+      cg->stopUsingRegister(tempReg);
+      // ARM64HelperCallSnippet generates "bl" instruction
+      cg->machine()->setLinkRegisterKilled(true);
+      oolSection->swapInstructionListsWithCompilation();
+      }
+   else
+      {
+      TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, OOLLabel, doneLabel, cg);
+      cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+      }
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 2 + srm->numAvailableRegisters(), cg->trMemory());
+   deps->addPostCondition(objReg, TR::RealRegister::NoReg);
+   srm->addScratchRegistersToDependencyList(deps);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
 
-   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64MonitorEnterSnippet(cg, node, incLabel, callLabel, doneLabel);
-   cg->addSnippet(snippet);
    doneLabel->setEndInternalControlFlow();
 
-   cg->stopUsingRegister(dataReg);
-   cg->stopUsingRegister(addrReg);
-   cg->stopUsingRegister(tempReg);
+   srm->stopUsingRegisters();
 
    cg->decReferenceCount(objNode);
    cg->machine()->setLinkRegisterKilled(true);
