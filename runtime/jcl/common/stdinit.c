@@ -209,6 +209,10 @@ standardInit( J9JavaVM *vm, char *dllName)
 			vmFuncs->internalReleaseVMAccess(vmThread);
 	#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 			vmFuncs->initializeAttachedThread(vmThread, threadName, (j9object_t *)threadGroup, FALSE, vmThread);
+#if JAVA_SPEC_VERSION >= 11
+			/* Trigger the VMStart event via jvmtiHookVMStarted handler if the can_generate_early_vmstart capability is set */
+			TRIGGER_J9HOOK_JAVA_BASE_LOADED(vm->hookInterface, vmThread);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 			vmFuncs->internalAcquireVMAccess(vmThread);
 
