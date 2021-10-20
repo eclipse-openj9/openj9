@@ -884,7 +884,6 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 							}
 
 							vm->runtimeFlags |= J9_RUNTIME_JAVA_BASE_MODULE_CREATED;
-							TRIGGER_J9HOOK_JAVA_BASE_LOADED(vm->hookInterface, currentThread);
 							Trc_MODULE_defineModule(currentThread, "java.base", j9mod);
 						}
 
