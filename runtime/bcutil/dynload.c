@@ -274,7 +274,10 @@ searchClassInBootstrapClassPath(J9VMThread * vmThread, U_8 * className, UDATA cl
 		return rc;
 	}
 	for (i = 0; i < classLoader->classPathEntryCount; i++) {
+		/* This loop goes to the file system, so cpEntriesMutex is not held during the entire loop. */
+		omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
 		cpEntry = classLoader->classPathEntries[i];
+		omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 		/* Warm up the entry */
 		vmFuncs->initializeClassPathEntry(javaVM, cpEntry);
 		rc = searchClassInCPEntry(vmThread, cpEntry, NULL, NULL, className, classNameLength, verbose);

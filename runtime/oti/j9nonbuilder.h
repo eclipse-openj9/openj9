@@ -3350,6 +3350,7 @@ typedef struct J9ClassLoader {
 	struct J9HashTable* classRelationshipsHashTable;
 	struct J9Pool* hotFieldPool;
 	omrthread_monitor_t hotFieldPoolMutex;
+	omrthread_rwmutex_t cpEntriesMutex;
 	UDATA initClassPathEntryCount;
 } J9ClassLoader;
 

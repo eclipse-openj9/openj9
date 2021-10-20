@@ -388,19 +388,24 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 		classLoader->romClassOrphansHashTable = NULL;
 	}
 
-	if (NULL != classLoader->classPathEntries) {
-		if (classLoader == javaVM->systemClassLoader) {
+	if (classLoader == javaVM->systemClassLoader) {
+		if (NULL != classLoader->classPathEntries) {
 			PORT_ACCESS_FROM_VMC(vmThread);
 			/* Free the class path entries  in system class loader */
 			freeClassLoaderEntries(vmThread, classLoader->classPathEntries, classLoader->classPathEntryCount, classLoader->initClassPathEntryCount);
 			j9mem_free_memory(classLoader->classPathEntries);
 			classLoader->classPathEntryCount = 0;
-			issueWriteBarrier();
 			classLoader->classPathEntries = NULL;
-		} else {
-			/* Free the class path entries in non-system class loaders.
-			 * classLoader->classPathEntries is set to NULL inside freeSharedCacheCLEntries().
-			 */
+			if (NULL != classLoader->cpEntriesMutex) {
+				j9thread_rwmutex_destroy(classLoader->cpEntriesMutex);
+				classLoader->cpEntriesMutex = NULL;
+			}
+		}
+	} else {
+		/* Free the class path entries in non-system class loaders.
+		 * classLoader->classPathEntries is set to NULL inside freeSharedCacheCLEntries().
+		 */
+		if (NULL != classLoader->classPathEntries) {
 			freeSharedCacheCLEntries(vmThread, classLoader);
 		}
 	}
