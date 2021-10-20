@@ -252,15 +252,20 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		}
 	}
 	
-	/* free the class path entries allocated ofr system and non-system class loaders */
-	if (NULL != classLoader->classPathEntries) {
-		if (javaVM->systemClassLoader == classLoader) {
+	/* free the class path entries allocated for system and non-system class loaders */
+	if (javaVM->systemClassLoader == classLoader) {
+		if (NULL != classLoader->classPathEntries) {
 			freeClassLoaderEntries(vmThread, classLoader->classPathEntries, classLoader->classPathEntryCount, classLoader->initClassPathEntryCount);
 			j9mem_free_memory(classLoader->classPathEntries);
 			classLoader->classPathEntryCount = 0;
-			issueWriteBarrier();
 			classLoader->classPathEntries = NULL;
-		} else {
+		}
+		if (NULL != classLoader->cpEntriesMutex) {
+			omrthread_rwmutex_destroy(classLoader->cpEntriesMutex);
+			classLoader->cpEntriesMutex = NULL;
+		}
+	} else {
+		if (NULL != classLoader->classPathEntries) {
 			freeSharedCacheCLEntries(vmThread, classLoader);
 		}
 	}

@@ -454,6 +454,9 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 		Trc_SHR_Assert_True(classloader == vm->systemClassLoader);
 		cpEntryCount = classloader->classPathEntryCount;
 		issueReadBarrier();
+		/* variable classPathEntries caches classloader->classPathEntries outside of cpEntriesMutex, this is fine because in the case useLoaderCpEntries
+		 * is true, classPathEntries is only used in NULL checks in this function.
+		 */
 		classPathEntries = classloader->classPathEntries;
 	}
 
@@ -513,7 +516,13 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 				 *
 				 * It is safe to cache the first entry pointer.
 				 */
-				firstcpe = classPathEntries[0];
+				if (useLoaderCpEntries) {
+					omrthread_rwmutex_enter_read(classloader->cpEntriesMutex);
+					firstcpe = classloader->classPathEntries[0];
+					omrthread_rwmutex_exit_read(classloader->cpEntriesMutex);
+				} else {
+					firstcpe = classPathEntries[0];
+				}
 				cpExtraInfo = firstcpe->extraInfo;
 				infoFound = translateExtraInfo(cpExtraInfo, &helperID, &cpType, &classpath);
 			}

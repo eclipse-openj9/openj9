@@ -35,8 +35,11 @@ getClassPathEntry(J9VMThread * currentThread, J9ClassLoader * classLoader, IDATA
 	}
 	if ((cpIndex < 0) || ((UDATA)cpIndex >= classLoader->classPathEntryCount)) {
 		rc = 1;
-	} else {	
+	} else {
+		Assert_VMUtil_true(classLoader == currentThread->javaVM->systemClassLoader);
+		omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
 		*cpEntry = *(classLoader->classPathEntries[cpIndex]);
+		omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 		rc = 0;
 	}
 	if (vmAccess == 0) {
@@ -226,6 +229,7 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 			}
 		}
 #endif
+		omrthread_rwmutex_enter_write(classLoader->cpEntriesMutex);
 		entryCount = classLoader->classPathEntryCount;
 		cpePtrArray = classLoader->classPathEntries;
 		if ((NULL == cpePtrArray)
@@ -247,6 +251,7 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 		issueWriteBarrier();
 		newCount = entryCount + 1;
 		classLoader->classPathEntryCount = newCount;
+		omrthread_rwmutex_exit_write(classLoader->cpEntriesMutex);
 	}
 done:
 	/* If any error occurred, discard any allocated memory and throw OutOfMemoryError */

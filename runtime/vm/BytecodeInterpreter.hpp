@@ -4358,8 +4358,10 @@ done:
 			/* Check the flags of the translation data struct */
 			J9TranslationBufferSet *translationData = _vm->dynamicLoadBuffers;
 			if (NULL != translationData) {
+				omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
 				/* Initialize the class path entry */
 				J9ClassPathEntry *cpEntry = classLoader->classPathEntries[cpIndex];
+				omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 				type = (I_32)initializeClassPathEntry(_vm, cpEntry);
 			}
 		}

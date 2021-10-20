@@ -576,6 +576,7 @@ initializeBootstrapClassPath(J9JavaVM *vm)
 	if (-1 == (IDATA)loader->classPathEntryCount) {
 		return -1;
 	} else {
+		omrthread_rwmutex_init(&loader->cpEntriesMutex, 0, "classPathEntries Mutex");
 		loader->initClassPathEntryCount = loader->classPathEntryCount;
 		/* Mark the class path as having been set */
 		loader->flags |= J9CLASSLOADER_CLASSPATH_SET;
