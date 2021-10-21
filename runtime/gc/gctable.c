@@ -256,5 +256,6 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_notifyGCOfClassReplacement,
 	j9gc_get_jit_string_dedup_policy,
 	j9gc_stringHashFn,
-	j9gc_stringHashEqualFn
+	j9gc_stringHashEqualFn,
+	j9gc_ensureLockedSynchronizersIntegrity
 };

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -274,10 +274,7 @@ MM_GCExtensions::computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCom
 MM_OwnableSynchronizerObjectList *
 MM_GCExtensions::getOwnableSynchronizerObjectListsExternal(J9VMThread *vmThread)
 {
-	if (isConcurrentScavengerInProgress()) {
-		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
-		((MM_MemorySpace *)vmThread->omrVMThread->memorySpace)->localGarbageCollect(env, J9MMCONSTANT_IMPLICIT_GC_COMPLETE_CONCURRENT);
-	}
+	Assert_MM_true(!isConcurrentScavengerInProgress());
 
 	return ownableSynchronizerObjectLists;
 }

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,7 @@
 
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
+#include "MemorySpace.hpp"
 #include "OMRVMInterface.hpp"
 
 extern "C" {
@@ -90,6 +91,25 @@ UDATA
 j9gc_arraylet_getLeafLogSize(J9JavaVM* javaVM)
 {
 	return javaVM->arrayletLeafLogSize;
+}
+
+/**
+ * This API ensures integrity of the Ownable List, it is to be used prior to building threadinfo externally.
+ * This should be called as early as possible, before gahtering any references, as this method may move the references.
+ */
+void
+j9gc_ensureLockedSynchronizersIntegrity(J9VMThread *vmThread)
+{
+	Assert_MM_true(vmThread->omrVMThread->exclusiveCount > 0);
+
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+	MM_GCExtensionsBase *extensions = env->getExtensions();
+
+	/* GC is only concerned when we're in the middle of a CS cycle, we must complete the
+	 * cycle to ensure integrity of the Ownable Sync list*/
+	if (extensions->isConcurrentScavengerInProgress()) {
+		((MM_MemorySpace *)vmThread->omrVMThread->memorySpace)->localGarbageCollect(env, J9MMCONSTANT_IMPLICIT_GC_COMPLETE_CONCURRENT);
+	}
 }
 
 } /* Extern C */
