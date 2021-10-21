@@ -3735,6 +3735,11 @@ IDATA J9THREAD_PROC protectedCompilationThreadProc(J9PortLibrary *, TR::Compilat
           (unsigned)(j9thread_get_self_cpu_time(j9thread_self())/1000000));
       }
 
+   if (TR::Options::isAnyVerboseOptionSet())
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,"Stopping compilation thread, vmThread pointer %p, thread ID %d", compThread, compInfoPT->getCompThreadId());
+      }
+
 #ifdef J9VM_OPT_JAVA_OFFLOAD_SUPPORT
    if ( vm->javaOffloadSwitchOffWithReasonFunc != NULL )
       (* vm->javaOffloadSwitchOffWithReasonFunc)(compThread, J9_JNI_OFFLOAD_SWITCH_JIT_COMPILATION_THREAD);
