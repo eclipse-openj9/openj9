@@ -151,7 +151,11 @@ final class MethodHandleResolver {
 		 */
 		try {
 /*[IF OPENJDK_METHODHANDLES]*/
-			result = MethodHandleNatives.linkDynamicConstant(classObject, 0, bsm, name, typeClass, (Object)staticArgs);
+			result = MethodHandleNatives.linkDynamicConstant(classObject,
+					/*[IF JAVA_SPEC_VERSION < 18] The second formal parameter was removed in Java 18 by 8272614. */
+					0,
+					/*[ENDIF] JAVA_SPEC_VERSION < 18 */
+					bsm, name, typeClass, (Object)staticArgs);
 /*[ELSE] OPENJDK_METHODHANDLES*/
 			result = (Object)invokeBsm(bsm, staticArgs);
 /*[ENDIF] OPENJDK_METHODHANDLES*/
@@ -256,7 +260,11 @@ final class MethodHandleResolver {
 		 * TODO: Investigate if the Throwable can be wrapped in a MemberName. This will help prevent type checks in the
 		 * interpreter since result[0] will always be a MemberName. This will improve performance.
 		 */
-		result[0] = MethodHandleNatives.linkCallSite(classObject, 0, bsm, name, type, (Object)staticArgs, appendixResult);
+		result[0] = MethodHandleNatives.linkCallSite(classObject,
+				/*[IF JAVA_SPEC_VERSION < 18] The second formal parameter was removed in Java 18 by 8272614. */
+				0,
+				/*[ENDIF] JAVA_SPEC_VERSION < 18 */
+				bsm, name, type, (Object)staticArgs, appendixResult);
 
 		/* result[1] stores a MethodHandle object, which is used as the last argument to the caller method. */
 		result[1] = appendixResult[0];
