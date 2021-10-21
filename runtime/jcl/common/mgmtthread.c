@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -679,6 +679,12 @@ Java_openj9_internal_tools_attach_target_DiagnosticUtils_dumpAllThreadsImpl(JNIE
 	vmfns->internalEnterVMFromJNI(currentThread);
 	vmfns->acquireExclusiveVMAccess(currentThread);
 
+	/* j9gc_ensureLockedSynchronizersIntegrity can't be delayed, it must be called before fetching any references as
+	 * it may complete any GC in progress and move references */
+	if (getLockedSynchronizers) {
+		vm->memoryManagerFunctions->j9gc_ensureLockedSynchronizersIntegrity(currentThread);
+	}
+
 	allinfolen = vm->totalThreadCount;
 
 	/* build array of ThreadInfo */
@@ -818,6 +824,12 @@ getArrayOfThreadInfo(JNIEnv *env,
 
 	vmfns->internalEnterVMFromJNI(currentThread);
 	vmfns->acquireExclusiveVMAccess(currentThread);
+
+	/* j9gc_ensureLockedSynchronizersIntegrity can't be delayed, it must be called before fetching any references as
+	 * it may complete any GC in progress and move references */
+	if (getLockedSynchronizers) {
+		vm->memoryManagerFunctions->j9gc_ensureLockedSynchronizersIntegrity(currentThread);
+	}
 
 	/** 
 	 * @todo Slightly evil.
