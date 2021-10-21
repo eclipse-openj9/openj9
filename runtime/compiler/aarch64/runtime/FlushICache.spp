@@ -42,13 +42,16 @@ flushICache:
 	stp	x12, x13, [sp, #96]
 	stp	x14, x15, [sp, #112]
 	str	x30, [sp, #128]
+#if defined(__clang__) && defined(__APPLE__)
+	// void sys_icache_invalidate(void *start, size_t len);
+	bl	FUNC_LABEL(sys_icache_invalidate)
+#elif defined(__GNUC__)
 	add	x1, x0, x1
-#if defined(__GNUC__)
 	// GCC built-in function in libgcc
 	// void __clear_cache(char *begin, char *end);
 	bl	FUNC_LABEL(__clear_cache)
 #else
-#error Not supported yet
+#error Unsupported platform
 #endif
 	ldp	x0, x1, [sp, #0] // restore volatile registers
 	ldp	x2, x3, [sp, #16]

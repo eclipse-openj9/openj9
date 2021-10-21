@@ -208,7 +208,7 @@ elseif(OMR_ARCH_ARM AND OMR_OS_LINUX)
 			arm/sysv.S
 			arm/trampoline.S
 	)
-elseif(OMR_ARCH_AARCH64 AND OMR_OS_LINUX)
+elseif(OMR_ARCH_AARCH64 AND (OMR_OS_LINUX OR OMR_OS_OSX))
 	target_include_directories(ffi
 		PUBLIC
 			aarch64
