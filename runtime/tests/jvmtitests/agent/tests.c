@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,6 +140,7 @@ static jvmtiTest jvmtiTestList[] =
 #endif /* JAVA_SPEC_VERSION >= 11 */
 	{ "gsp001", gsp001, "com.ibm.jvmti.tests.getSystemProperty.gsp001", "Ensure JVMTI GetSystemProperty can retrieve certain system properties at early phrase" },
 	{ "ee001", ee001, "com.ibm.jvmti.tests.eventException.ee001", "Ensure only single JVMTI Exception event gets generated with JNI frame before handler" },
+	{ "vmstart001", vmstart001, "com.ibm.jvmti.tests.eventVMStart.vmstart001", "EventVMStart - check for VMStart event with can_generate_early_vmstart (Java 11+)" },
 	{ NULL, NULL, NULL, NULL }
 };
 

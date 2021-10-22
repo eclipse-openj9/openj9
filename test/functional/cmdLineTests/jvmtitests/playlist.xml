@@ -622,7 +622,7 @@
 		</impls>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_jvmtitests_soae</testCaseName>
+		<testCaseName>cmdLineTester_jvmtitests_Java11andUp</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode148</variation>
@@ -636,7 +636,7 @@
 	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
 	-DMODE_HINTS=$(Q)$(MODE_HINTS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_soae.xml$(Q) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_Java11andUp.xml$(Q) \
 	-explainExcludes \
 	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
