@@ -1159,18 +1159,26 @@ internalFindClassInModule(J9VMThread* vmThread, J9Module *j9module, U_8* classNa
 
 				if (reportErrorFlags == (reportErrorFlags & vmThread->privateFlags)) {
 					UDATA i;
+					BOOLEAN holdCpMutex = FALSE;
 					/* same error message as displayed by internalFindKnownClass() on failure */
 #if defined (J9VM_SIZE_SMALL_CODE)
 					j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS, classNameLength, className);
 #else
 					j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_BEGIN_MULTI_LINE, J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS, classNameLength, className);
 #endif
+					if (classLoader->classPathEntryCount > 0) {
+						omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
+						holdCpMutex = TRUE;
+					}
 					for (i = 0; i < classLoader->classPathEntryCount; i++) {
 						J9ClassPathEntry *entry = classLoader->classPathEntries[i];
 						/* J9NLS_VM_SEARCHED_IN_DIR can only printed out for bootstrap class path, because classPathEntryCount is
 						 * always 0 for non-bootstrap class loader.
 						 */
 						j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_SEARCHED_IN_DIR, entry->pathLength, entry->path);
+					}
+					if (holdCpMutex) {
+						omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 					}
 					j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_CHECK_JAVA_HOME);
 					vmThread->privateFlags &= ~(J9_PRIVATE_FLAGS_REPORT_ERROR_LOADING_CLASS);
@@ -1251,7 +1259,9 @@ internalFindKnownClass(J9VMThread *vmThread, UDATA index, UDATA flags)
 				&& (LOAD_LOCATION_CLASSPATH == classLocation->locationType)
 				&& (classLocation->entryIndex < (IDATA)knownClass->classLoader->classPathEntryCount)
 			) {
+				omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
 				cpEntry = (knownClass->classLoader->classPathEntries[classLocation->entryIndex]);
+				omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 				if (NULL != cpEntry) {
 					if (0 == (CPE_FLAG_BOOTSTRAP & cpEntry->flags)) {
 						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_REQUIRED_CLASS_ON_WRONG_PATH, J9UTF8_LENGTH(utfWrapper), J9UTF8_DATA(utfWrapper), cpEntry->pathLength, cpEntry->path);
@@ -1286,15 +1296,23 @@ internalFindKnownClass(J9VMThread *vmThread, UDATA index, UDATA flags)
 _fail:
 	if ((0 == (J9_RUNTIME_INITIALIZED & vm->runtimeFlags)) || (0 == (J9_FINDKNOWNCLASS_FLAG_NON_FATAL & flags))) {
 		UDATA i;
+		BOOLEAN holdCpMutex = FALSE;
 #if defined (J9VM_SIZE_SMALL_CODE)
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS, J9UTF8_LENGTH(utfWrapper), J9UTF8_DATA(utfWrapper));
 #else
 		j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_BEGIN_MULTI_LINE, J9NLS_VM_UNABLE_TO_FIND_AND_INITIALIZE_REQUIRED_CLASS, J9UTF8_LENGTH(utfWrapper), J9UTF8_DATA(utfWrapper));
 #endif
+		if (classLoader->classPathEntryCount > 0) {
+			omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
+			holdCpMutex = TRUE;
+		}
 		for (i = 0; i < classLoader->classPathEntryCount; i++) {
 			J9ClassPathEntry *entry = classLoader->classPathEntries[i];
 			/* J9NLS_VM_SEARCHED_IN_DIR can only printed out for bootstrap class path, because classPathEntryCount is always 0 for non-bootstrap class loader */
 			j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_SEARCHED_IN_DIR, entry->pathLength, entry->path);
+		}
+		if (holdCpMutex) {
+			omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 		}
 		j9nls_printf(PORTLIB, J9NLS_INFO, J9NLS_VM_CHECK_JAVA_HOME);
 	}

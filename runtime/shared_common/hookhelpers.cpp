@@ -107,7 +107,9 @@ makeClasspathItems(J9JavaVM* vm, J9ClassLoader* classloader, J9ClassPathEntry** 
 	for (I_16 i = 0; i < entryCount; i++) {
 		J9ClassPathEntry* classPathEntry = NULL;
 		if (bootstrap) {
+			omrthread_rwmutex_enter_read(classloader->cpEntriesMutex);
 			classPathEntry = classloader->classPathEntries[i];
+			omrthread_rwmutex_exit_read(classloader->cpEntriesMutex);
 		} else {
 			classPathEntry = cpePtrArray[i];
 		}
@@ -288,7 +290,9 @@ createClasspath(J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPa
 		if (J2SE_VERSION(vm) >= J2SE_V11) {
 			vm->sharedClassConfig->lastBootstrapCPE = vm->modulesPathEntry;
 		} else {
+			omrthread_rwmutex_enter_read(classloader->cpEntriesMutex);
 			vm->sharedClassConfig->lastBootstrapCPE = classloader->classPathEntries[0];
+			omrthread_rwmutex_exit_read(classloader->cpEntriesMutex);
 		}
 		vm->sharedClassConfig->bootstrapCPI = classpath;
 	}
