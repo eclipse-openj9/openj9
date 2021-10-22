@@ -2782,7 +2782,7 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	ALLOC(classfile, J9CfrClassFile);
 
 	/* Verify the class version before any other checks. */
-	CHECK_EOF(8); /* magic, minor version, master version */
+	CHECK_EOF(8); /* magic, minor version, major version */
 	NEXT_U32(classfile->magic, index);
 	if (classfile->magic != (U_32) CFR_MAGIC) {
 		errorCode = J9NLS_CFR_ERR_MAGIC__ID;

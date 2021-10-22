@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -269,7 +269,7 @@ GetInitArgs(VMInterface* vmi);
  * <TR><TD>java.vm.specification.version</TD>	<TD>"1.8"</TD></TR>
  * <TR><TD>java.vm.specification.vendor</TD>	<TD>"Oracle Corporation"</TD></TR>
  * <TR><TD>java.vm.specification.name</TD>	<TD>"Java Virtual Machine Specification"</TD></TR>
- * <TR><TD>java.vm.version</TD>			<TD>"master-1ca0ab98"</TD></TR>
+ * <TR><TD>java.vm.version</TD>			<TD>"main-1ca0ab98"</TD></TR>
  * <TR><TD>java.vm.vendor</TD>			<TD>"Eclipse OpenJ9"</TD></TR>
  * <TR><TD>java.vm.name	</TD>		<TD>"Eclipse OpenJ9 VM"</TD></TR>
  * <TR><TD>java.vm.info</TD>			<TD>"JRE 1.8.0 Linux amd64-64-Bit Compressed References 20180601_201 (JIT enabled, AOT enabled)
