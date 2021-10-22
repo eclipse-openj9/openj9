@@ -202,9 +202,12 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 					/* exception is pending from the call */
 					goto done;
 				}
-				element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
-				J9VMJAVALANGSTACKTRACEELEMENT_SET_DECLARINGCLASS(vmThread, element, string);
+			} else {
+				/* Can't peek anon or hidden ramClasses */
+				string = mmfns->j9gc_createJavaLangStringWithUTFCache(vmThread, (J9UTF8 *)utfClassName);
 			}
+			element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+			J9VMJAVALANGSTACKTRACEELEMENT_SET_DECLARINGCLASS(vmThread, element, string);
 
 			/* Fill in method name */
 			string = mmfns->j9gc_createJavaLangStringWithUTFCache(vmThread, J9ROMMETHOD_NAME(romMethod));
