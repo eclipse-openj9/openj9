@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,11 +119,7 @@ sigQuitHandler(struct J9PortLibrary* portLibrary, void* userData)
 
 	/**** WARNING: do not try and attach a VM thread here, as we may be debugging a deadlock ****/
 
-#ifdef J9VM_RAS_DUMP_AGENTS
 	J9DMP_TRIGGER( vm, NULL, J9RAS_DUMP_ON_USER_SIGNAL );
-#else
-	vm->internalVMFunctions->printThreadInfo(vm, NULL, NULL, TRUE);
-#endif
 
 	/* Listeners to this event may deadlock, so run dumps first */
 	TRIGGER_J9HOOK_VM_USER_INTERRUPT(vm->hookInterface, vm);
@@ -157,6 +153,3 @@ sigQuitWrapper(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, voi
 	return result;
 }
 #endif /* J9VM_INTERP_SIG_QUIT_THREAD  (autogen) */
-
-
-

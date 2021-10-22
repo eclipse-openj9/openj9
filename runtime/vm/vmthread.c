@@ -59,12 +59,10 @@
 #define LEADING_SPACE "   "
 #define LEADING_SPACE_EXTRA "      "
 
-#if (defined(J9VM_RAS_DUMP_AGENTS))  || (defined(J9VM_INTERP_SIG_QUIT_THREAD)) 
 static char *getJ9ThreadStatus(J9VMThread *vmThread);
 static void printJ9ThreadStatusMonitorInfo (J9VMThread *vmStruct, IDATA tracefd);
 static void trace_printf (struct J9PortLibrary *portLib, IDATA tracefd, char * format, ...);
 static UDATA printMethodInfo (J9VMThread *currentThread , J9StackWalkState *stackWalkState);
-#endif /* J9VM_('RAS_DUMP_AGENTS' 'INTERP_SIG_QUIT_THREAD') */
 
 #if defined(J9ZOS390)
 static IDATA setFailedToForkThreadException(J9VMThread *currentThread, IDATA retVal, omrthread_os_errno_t os_errno, omrthread_os_errno_t os_errno2);
@@ -1464,8 +1462,6 @@ fatalRecursiveStackOverflow(J9VMThread *currentThread)
 	Assert_VM_true(fatalRecursiveStackOverflowDetected);
 }
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))  || (defined(J9VM_INTERP_SIG_QUIT_THREAD)) 
 static UDATA printMethodInfo(J9VMThread *currentThread , J9StackWalkState *state)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -1517,11 +1513,7 @@ static UDATA printMethodInfo(J9VMThread *currentThread , J9StackWalkState *state
 
 	return J9_STACKWALK_KEEP_ITERATING;
 }
-#endif /* J9VM_('RAS_DUMP_AGENTS' 'INTERP_SIG_QUIT_THREAD') */
 
-
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))  || (defined(J9VM_INTERP_SIG_QUIT_THREAD)) 
 void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allThreads)
 {
 	J9VMThread *currentThread = NULL, *firstThread = NULL;
@@ -1627,10 +1619,7 @@ void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allTh
 		}
 	}
 }
-#endif /* J9VM_('RAS_DUMP_AGENTS' 'INTERP_SIG_QUIT_THREAD') */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))  || (defined(J9VM_INTERP_SIG_QUIT_THREAD))
 static char *
 getJ9ThreadStatus(J9VMThread *vmThread)
 {
@@ -1658,11 +1647,8 @@ getJ9ThreadStatus(J9VMThread *vmThread)
 	}
 	return "Running";
 }
-#endif
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))  || (defined(J9VM_INTERP_SIG_QUIT_THREAD)) 
-static void 
+static void
 printJ9ThreadStatusMonitorInfo(J9VMThread *vmThread, IDATA tracefd)
 {
 	PORT_ACCESS_FROM_VMC(vmThread);
@@ -1717,13 +1703,7 @@ printJ9ThreadStatusMonitorInfo(J9VMThread *vmThread, IDATA tracefd)
 		releaseOMRVMThreadName(owner->omrVMThread);
 	}
 }
-#endif /* J9VM_('RAS_DUMP_AGENTS' 'INTERP_SIG_QUIT_THREAD') */
 
-
-
-
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))  || (defined(J9VM_INTERP_SIG_QUIT_THREAD)) 
 static void trace_printf(struct J9PortLibrary *portLib, IDATA tracefd, char * format, ...) {
 	va_list args;
 	char buffer[1024];
@@ -1741,8 +1721,6 @@ static void trace_printf(struct J9PortLibrary *portLib, IDATA tracefd, char * fo
 	if (!wroteToFile)
 		j9tty_err_printf(PORTLIB, buffer);
 }
-#endif /* J9VM_('RAS_DUMP_AGENTS' 'INTERP_SIG_QUIT_THREAD') */
-
 
 j9object_t
 createCachedOutOfMemoryError(J9VMThread * currentThread, j9object_t threadObject)
@@ -1779,7 +1757,6 @@ createCachedOutOfMemoryError(J9VMThread * currentThread, j9object_t threadObject
 		}
 	}
 
-
 	return outOfMemoryError;
 }
 
@@ -1790,7 +1767,7 @@ startJavaThread(J9VMThread * currentThread, j9object_t threadObject, UDATA priva
 {
 	UDATA rc;
 	UDATA setException = (privateFlags & J9_PRIVATE_FLAGS_NO_EXCEPTION_IN_START_JAVA_THREAD) == 0;
- 	j9object_t lock;
+	j9object_t lock;
 	j9object_t cachedOutOfMemoryError;
 	J9JavaVM * vm = currentThread->javaVM;
 	J9MemoryManagerFunctions* gcFuncs = vm->memoryManagerFunctions;
@@ -1966,10 +1943,10 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 	J9VMJAVALANGTHREAD_SET_THREADREF(currentThread, threadObject, newThread);
 
 #if (JAVA_SPEC_VERSION >= 14)
-    /* If thread was interrupted before start, make sure interrupt flag is set for running thread. */
-    if (J9VMJAVALANGTHREAD_DEADINTERRUPT(currentThread, threadObject)) {
-        omrthread_interrupt(osThread);
-    }
+	/* If thread was interrupted before start, make sure interrupt flag is set for running thread. */
+	if (J9VMJAVALANGTHREAD_DEADINTERRUPT(currentThread, threadObject)) {
+		omrthread_interrupt(osThread);
+	}
 #endif
 
 	/* Allow the thread to run */
@@ -2424,4 +2401,3 @@ threadAboutToStart(J9VMThread *currentThread)
 
 	TRIGGER_J9HOOK_THREAD_ABOUT_TO_START(vm->hookInterface, currentThread);
 }
-

@@ -499,7 +499,6 @@ matchesFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDATA eventFl
 	return J9RAS_DUMP_NO_MATCH;
 }
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 printLabelSpec(struct J9JavaVM *vm)
 {
@@ -532,10 +531,7 @@ printLabelSpec(struct J9JavaVM *vm)
 	j9tty_err_printf(PORTLIB, labelSpec);
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 UDATA
 prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdumpContext *context, UDATA state)
 {
@@ -693,10 +689,7 @@ prepareForDump(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, struct J9RASdu
 
 	return newState;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 UDATA
 unwindAfterDump(struct J9JavaVM *vm, struct J9RASdumpContext *context, UDATA state)
 {
@@ -757,10 +750,7 @@ unwindAfterDump(struct J9JavaVM *vm, struct J9RASdumpContext *context, UDATA sta
 
 	return newState;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 /*
  * Function : dumpLabel()
  * Convert a dump label template into an actual dump label by expanding all the tokens.
@@ -851,11 +841,7 @@ dumpLabel(struct J9JavaVM *vm, J9RASdumpAgent *agent, J9RASdumpContext *context,
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *fileName, size_t fileNameLength)
 {
@@ -917,10 +903,7 @@ triggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *f
 
 	return retVal;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData)
 {
@@ -1056,8 +1039,6 @@ triggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags
 
 	return OMR_ERROR_INTERNAL;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
 
 omr_error_t
 rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags)

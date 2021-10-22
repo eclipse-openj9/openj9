@@ -1812,9 +1812,7 @@ onLoadInternal(
       }
 #endif
 
-#ifdef J9VM_RAS_DUMP_AGENTS
    jitConfig->runJitdump = runJitdump;
-#endif
 
    jitConfig->printAOTHeaderProcessorFeatures = printAOTHeaderProcessorFeatures;
 

@@ -146,9 +146,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	initializeMethodRunAddress,
 	growJavaStack,
 	freeStacks,
-#if defined(J9VM_INTERP_SIG_QUIT_THREAD) || defined(J9VM_RAS_DUMP_AGENTS)
 	printThreadInfo,
-#endif /* J9VM_INTERP_SIG_QUIT_THREAD || J9VM_RAS_DUMP_AGENTS */
 	initializeAttachedThread,
 	initializeMethodRunAddressNoHook,
 	sidecarInvokeReflectMethod,
@@ -358,9 +356,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	getVMRuntimeState,
 	updateVMRuntimeState,
 	getVMMinIdleWaitTime,
-#if defined(J9VM_RAS_EYECATCHERS)
 	j9rasSetServiceLevel,
-#endif /* J9VM_RAS_EYECATCHERS */
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
 	flushProcessWriteBuffers,
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */

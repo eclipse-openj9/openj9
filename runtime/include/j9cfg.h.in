@@ -262,9 +262,6 @@ extern "C" {
 #cmakedefine J9VM_PROF_COUNT_ARGS_TEMPS
 #cmakedefine J9VM_PROF_EVENT_REPORTING
 #cmakedefine J9VM_PROF_JVMTI
-#cmakedefine J9VM_RAS_DUMP_AGENTS
-#cmakedefine J9VM_RAS_EYECATCHERS
-#cmakedefine J9VM_RAS_FATAL_ASSERT
 #cmakedefine J9VM_SIZE_SMALL_CODE
 #cmakedefine J9VM_SIZE_SMALL_OS_STACK
 #cmakedefine J9VM_SIZE_SMALL_RAM
@@ -289,7 +286,7 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #endif /* J9CFG_H */

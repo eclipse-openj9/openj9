@@ -46,7 +46,6 @@
 
 #define RAS_NETWORK_WARNING_TIME 60000
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static omr_error_t primordialTriggerDumpAgents (struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData);
 static omr_error_t primordialSeekDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J9RASdumpFn dumpFn);
 static omr_error_t primordialInsertDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
@@ -55,9 +54,7 @@ static omr_error_t primordialSetDumpOption (struct J9JavaVM *vm, char *optionStr
 static omr_error_t primordialResetDumpOption (struct J9JavaVM *vm);
 static omr_error_t primordialRemoveDumpAgent (struct J9JavaVM *vm, struct J9RASdumpAgent *agent);
 static omr_error_t primordialQueryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size);
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if defined(J9VM_RAS_EYECATCHERS)
 void J9RASInitialize (J9JavaVM* javaVM);
 void J9RASShutdown (J9JavaVM* javaVM);
 void J9RASCheckDump(J9JavaVM* javaVM);
@@ -76,10 +73,6 @@ typedef struct J9AllocatedRAS {
 	struct J9PortVmemIdentifier vmemid;
 } J9AllocatedRAS;
 
-#endif /* J9VM_RAS_EYECATCHERS */
-
-#ifdef J9VM_RAS_DUMP_AGENTS
-
 /* Basic dump facade */
 static const J9RASdumpFunctions
 primordialDumpFacade = {
@@ -94,9 +87,6 @@ primordialDumpFacade = {
 	primordialQueryVmDump
 };
 
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static omr_error_t
 primordialTriggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *caller, char *fileName, size_t fileNameLength)
 {
@@ -110,10 +100,7 @@ primordialTriggerOneOffDump(struct J9JavaVM *vm, char *optionString, char *calle
 
 	return OMR_ERROR_INTERNAL;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static omr_error_t
 primordialInsertDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 {
@@ -123,10 +110,7 @@ primordialInsertDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 
 	return OMR_ERROR_INTERNAL;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static omr_error_t
 primordialRemoveDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 {
@@ -136,10 +120,7 @@ primordialRemoveDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 
 	return OMR_ERROR_INTERNAL;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static omr_error_t
 primordialSeekDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J9RASdumpFn dumpFn)
 {
@@ -149,10 +130,7 @@ primordialSeekDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent **agentPtr, J
 
 	return OMR_ERROR_INTERNAL;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static omr_error_t
 primordialTriggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA eventFlags, struct J9RASdumpEventData *eventData)
 {
@@ -183,10 +161,7 @@ primordialTriggerDumpAgents(struct J9JavaVM *vm, struct J9VMThread *self, UDATA 
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 static omr_error_t
 primordialSetDumpOption(struct J9JavaVM *vm, char *optionString)
 {
@@ -221,10 +196,6 @@ primordialQueryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer
 
 	return OMR_ERROR_NONE;
 }
-
-#endif /* J9VM_RAS_DUMP_AGENTS */
-
-
 
 IDATA 
 gpThreadDump(struct J9JavaVM *vm, struct J9VMThread *currentThread)
@@ -278,8 +249,7 @@ gpThreadDump(struct J9JavaVM *vm, struct J9VMThread *currentThread)
 	return JNI_OK;
 }
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
-IDATA 
+IDATA
 configureRasDump(J9JavaVM *vm)
 {
 	/* Setup initial dump facade */
@@ -287,9 +257,7 @@ configureRasDump(J9JavaVM *vm)
 
 	return JNI_OK;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if defined(J9VM_RAS_EYECATCHERS)
 void
 J9RASInitialize(J9JavaVM* javaVM)
 {
@@ -719,5 +687,3 @@ J9RASCheckDump(J9JavaVM* javaVM)
 #endif
 #endif
 }
-
-#endif /* J9VM_RAS_EYECATCHERS */

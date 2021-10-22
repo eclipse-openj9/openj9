@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -542,7 +542,6 @@ Java_java_lang_System_startSNMPAgent(JNIEnv *env, jclass jlClass)
 void JNICALL
 Java_java_lang_System_rasInitializeVersion(JNIEnv * env, jclass unusedClass, jstring javaRuntimeVersion)
 {
-#if defined(J9VM_RAS_EYECATCHERS)
 	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
 	jboolean isCopy = JNI_FALSE;
 	const char *utfRuntimeVersion = NULL;
@@ -556,5 +555,4 @@ Java_java_lang_System_rasInitializeVersion(JNIEnv * env, jclass unusedClass, jst
 	if (NULL != utfRuntimeVersion) {
 		(*env)->ReleaseStringUTFChars(env, javaRuntimeVersion, utfRuntimeVersion);
 	}
-#endif /* J9VM_RAS_EYECATCHERS */
 }
