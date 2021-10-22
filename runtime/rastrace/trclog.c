@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2541,9 +2541,7 @@ raiseAssertion(UtThreadData **thread, UtModuleInfo *modInfo, uint32_t traceId)
  * in trcengine.c and set to be triggered on asserts by
  * the default settings in trcengine.c
  * See work item: 64106
-#if defined(J9VM_RAS_DUMP_AGENTS)
 	J9DMP_TRIGGER(vm, thr, J9RAS_DUMP_ON_TRACE_ASSERT);
-#endif
 */
 	if (UT_GLOBAL(fatalassert))
 	{

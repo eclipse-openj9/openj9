@@ -1968,18 +1968,6 @@ Pass J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR into j9sig_set_options()  before the fir
 			<require flag="prof_eventReporting"/>
 		</requires>
 	</flag>
-	<flag id="ras_dumpAgents">
-		<description>Support multiple dump agents</description>
-		<ifRemoved>Standard console dump</ifRemoved>
-	</flag>
-	<flag id="ras_eyecatchers">
-		<description>Add eyecatcher blocks to key structures</description>
-		<ifRemoved>No eyecatchers</ifRemoved>
-	</flag>
-	<flag id="ras_fatalAssert">
-		<description>Make assertion tracepoints fatal by default.</description>
-		<ifRemoved>Assertion tracepoints are not fatal by default - can be enabled via command-line.</ifRemoved>
-	</flag>
 	<flag id="size_optimizeSendTargets">
 		<description>Determines if extra optimized send targets will be generated.</description>
 		<ifRemoved>Space saving at the cost of some speed.</ifRemoved>

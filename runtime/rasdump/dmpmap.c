@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -198,8 +198,6 @@ static const DgDumpEnvDefault dgDefaults[] = {
 
 static const int numDumpEnvDefaults = ( sizeof(dgDefaults) / sizeof(DgDumpEnvDefault) );
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 /* Function to process the migration RAS environment variables IBM_JAVA_HEAPDUMP_TEXT
  * and IBM_JAVA_HEAPDUMP_TEST (heapdump type options)
  */
@@ -257,10 +255,7 @@ mapDumpDefaults(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum)
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 /* Function to process the main migration RAS environment variables JAVA_DUMP_OPTS and 
  * JAVA_DUMP_TOOL. Note that the older RAS environment variables (DISABLE_JAVADUMP etc)
  * are processed earlier in function mapDumpSwitches().
@@ -332,10 +327,7 @@ mapDumpOptions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum)
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 /* Function to process JAVA_DUMP_OPTS actions. These are multiple comma-separate dump types, with and
  * optional dump count, e.g. JAVA_DUMP_OPTS=ONERROR(JAVADUMP,SYSDUMP,HEAPDUMP[2])
  */
@@ -436,10 +428,7 @@ mapDumpActions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum, char 
 	
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 /* Function to process the older RAS environment variables (DISABLE_JAVADUMP etc). Note that 
  * the JAVA_DUMP_OPTS and JAVA_DUMP_TOOL environment variables are processed separately (later) 
  * in function mapDumpOptions().
@@ -563,10 +552,7 @@ enableDumpOnOutOfMemoryError(J9RASdumpOption agentOpts[], IDATA *agentNum)
 		*agentNum += 1;
 	}
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 /* Function to process additional RAS environment variable IBM_XE_COE_NAME
  * (support for dump on filtered exception).
  */
@@ -608,4 +594,3 @@ mapDumpSettings(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum)
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */

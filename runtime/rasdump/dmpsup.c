@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -828,7 +828,6 @@ printDumpUsage(J9JavaVM *vm)
 }
 
 
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 omr_error_t
 queryVmDump(struct J9JavaVM *vm, int buffer_size, void* options_buffer, int* data_size)
 {
@@ -998,9 +997,7 @@ setDumpOption(struct J9JavaVM *vm, char *optionString)
 
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS)) 
 omr_error_t
 resetDumpOptions(struct J9JavaVM *vm)
 {
@@ -1057,7 +1054,6 @@ resetDumpOptions(struct J9JavaVM *vm)
 	unlockConfig();
 	return OMR_ERROR_NONE;
 }
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
 static omr_error_t
 pushDumpFacade(J9JavaVM *vm)
@@ -1647,4 +1643,3 @@ processZOSDumpOptions(J9JavaVM *vm, J9RASdumpOption* agentOpts, int optIndex)
 	return J9VMDLLMAIN_OK;
 }
 #endif
-

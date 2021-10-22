@@ -5591,11 +5591,9 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
       }
    memset((uint8_t *)eTbl, 0, size);
 
-   #if defined(J9VM_RAS_EYECATCHERS)
    eTbl->className       = J9ROMCLASS_CLASSNAME(romClassPtr());
    eTbl->methodName      = J9ROMMETHOD_NAME(romMethod());
    eTbl->methodSignature = J9ROMMETHOD_SIGNATURE(romMethod());
-   #endif
 
    J9ConstantPool *cpool;
    if (isNewInstanceImplThunk())

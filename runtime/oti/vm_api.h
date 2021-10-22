@@ -2250,7 +2250,6 @@ profilingBytecodeBufferFullHookRegistered(J9JavaVM* vm);
 
 /* ---------------- rasdump.c ---------------- */
 
-#if (defined(J9VM_RAS_DUMP_AGENTS))
 /**
 * @brief
 * @param *vm
@@ -2258,7 +2257,6 @@ profilingBytecodeBufferFullHookRegistered(J9JavaVM* vm);
 */
 IDATA
 configureRasDump(J9JavaVM *vm);
-#endif /* J9VM_RAS_DUMP_AGENTS */
 
 
 struct J9JavaVM;
@@ -4133,7 +4131,6 @@ IDATA J9THREAD_PROC
 javaThreadProc(void *entryarg);
 
 
-#if (defined(J9VM_RAS_DUMP_AGENTS))  || (defined(J9VM_INTERP_SIG_QUIT_THREAD))
 /**
 * @brief
 * @param *vm
@@ -4143,7 +4140,6 @@ javaThreadProc(void *entryarg);
 */
 void
 printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allThreads);
-#endif /* J9VM_('RAS_DUMP_AGENTS' 'INTERP_SIG_QUIT_THREAD') */
 
 
 /**

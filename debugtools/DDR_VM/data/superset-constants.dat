@@ -961,9 +961,6 @@ C|port_zosCEEHDLRSupport
 C|prof_countArgsTemps
 C|prof_eventReporting
 C|prof_jvmti
-C|ras_dumpAgents
-C|ras_eyecatchers
-C|ras_fatalAssert
 C|size_optimizeSendTargets
 C|size_smallCode
 C|size_smallOsStack

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,10 +122,6 @@ validateDump(JNIEnv *env, jboolean disableBuildIdCheck)
 		return JNI_FALSE;
 	}
 
-#if !defined(J9VM_RAS_EYECATCHERS)
-	(*env)->ThrowNew(env, errorClazz, "RAS is not enabled on this platform");
-	return JNI_FALSE;
-#else
 	for(;;) {
 		J9RAS *ras = NULL;
 		const char *rasString = "J9VMRAS";
@@ -217,7 +213,6 @@ validateDump(JNIEnv *env, jboolean disableBuildIdCheck)
 		/* this isn't it -- look for the next occurrence */
 		startFrom = eyecatcher + 8;
 	}
-#endif
 }
 
 /*
