@@ -332,7 +332,9 @@ UDATA bytecodeLoopCompressed(J9VMThread *currentThread);
 UDATA debugBytecodeLoopCompressed(J9VMThread *currentThread);
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 
+#if (defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)) || (defined(LINUX) && defined(J9VM_GC_REALTIME))
 static BOOLEAN isGCPolicyMetronome(J9JavaVM *javaVM);
+#endif /* (defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)) || (defined(LINUX) && defined(J9VM_GC_REALTIME)) */
 
 #if defined(COUNT_BYTECODE_PAIRS)
 static jint
@@ -3998,6 +4000,7 @@ static void registerIgnoredOptions(J9PortLibrary *portLibrary, J9VMInitArgs* j9v
 	}
 }
 
+#if (defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)) || (defined(LINUX) && defined(J9VM_GC_REALTIME))
 /**
  * Check if -Xgcpolicy:metronome is specified on the command line
  *
@@ -4020,6 +4023,7 @@ isGCPolicyMetronome(J9JavaVM *javaVM)
 
 	return isSRT;
 }
+#endif /* (defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)) || (defined(LINUX) && defined(J9VM_GC_REALTIME)) */
 
 #if defined(LINUX) && defined(J9VM_GC_REALTIME) 
 /* Linux SRT only */
