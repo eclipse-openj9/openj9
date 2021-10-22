@@ -1220,10 +1220,18 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 	/* Write the class path data */
 	J9ClassLoader* classLoader = _VirtualMachine->systemClassLoader;
+	bool holdCpMutex = false;
+	if (classLoader->classPathEntryCount > 0) {
+		omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
+		holdCpMutex = true;
+	}
 	_OutputStream.writeCharacters("1CISYSCP       Sys Classpath:   ");
 	for (UDATA i = 0; i < classLoader->classPathEntryCount; i++) {
 		_OutputStream.writeCharacters((char*)(classLoader->classPathEntries[i]->path));
 		_OutputStream.writeCharacters(";");
+	}
+	if (holdCpMutex) {
+		omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 	}
 	_OutputStream.writeCharacters("\n");
 

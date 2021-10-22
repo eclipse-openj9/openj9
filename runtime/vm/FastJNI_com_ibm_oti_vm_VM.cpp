@@ -76,8 +76,10 @@ Fast_com_ibm_oti_vm_VM_getClassPathEntryType(J9VMThread *currentThread, j9object
 		/* Check the flags of the translation data struct */
 		J9TranslationBufferSet *translationData = vm->dynamicLoadBuffers;
 		if (NULL != translationData) {
+			omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
 			/* Initialize the class path entry */
 			J9ClassPathEntry *cpEntry = classLoader->classPathEntries[cpIndex];
+			omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 			type = (jint)initializeClassPathEntry(vm, cpEntry);
 		}
 	}
