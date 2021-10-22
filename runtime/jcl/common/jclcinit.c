@@ -46,7 +46,7 @@
 
 /* The vm version which must match the JCL.
  * It has the format 0xAABBCCCC
- *	AA - vm version, BB - jcl version, CCCC - master version
+ *	AA - vm version, BB - jcl version, CCCC - main version
  * CCCC must match exactly with the JCL
  * Up the vm version (AA) when adding natives
  * BB is the required level of JCL to run the vm
