@@ -162,7 +162,7 @@ extern "C" {
 
    J9VMThread * getJ9VMThreadFromTR_VM(void * vm);
    J9JITConfig * getJ9JitConfigFromFE(void *vm);
-   TR::FILE *j9jit_fopen(char *fileName, const char *mode, bool useJ9IO, bool encrypt);
+   TR::FILE *j9jit_fopen(char *fileName, const char *mode, bool useJ9IO);
    void j9jit_fclose(TR::FILE *pFile);
    void j9jit_seek(void *voidConfig, TR::FILE *pFile, IDATA offset, I_32 whence);
    IDATA j9jit_read(void *voidConfig, TR::FILE *pFile, void *buf, IDATA nbytes);
@@ -964,7 +964,7 @@ public:
     *
     */
    virtual bool isForceInline(TR_ResolvedMethod *method);
-   
+
    /*
     * \brief
     *    tell whether it's possible to dereference a field given the field symbol at compile time

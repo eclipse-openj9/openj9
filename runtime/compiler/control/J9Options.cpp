@@ -2280,7 +2280,7 @@ J9::Options::fePreProcess(void * base)
    return true;
    }
 
-static TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *name, char *permission, bool b1, bool b2)
+static TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *name, char *permission, bool b1)
    {
    PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
    char tmp[1025];
@@ -2295,7 +2295,7 @@ static TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *na
       }
    if (NULL != formattedTmp)
       {
-      return j9jit_fopen(formattedTmp, permission, b1, b2);
+      return j9jit_fopen(formattedTmp, permission, b1);
       }
    return NULL;
    }
@@ -2305,11 +2305,11 @@ J9::Options::openLogFiles(J9JITConfig *jitConfig)
    {
    char *vLogFileName = ((TR_JitPrivateConfig*)jitConfig->privateConfig)->vLogFileName;
    if (vLogFileName)
-      ((TR_JitPrivateConfig*)jitConfig->privateConfig)->vLogFile = fileOpen(self(), jitConfig, vLogFileName, "wb", true, false);
+      ((TR_JitPrivateConfig*)jitConfig->privateConfig)->vLogFile = fileOpen(self(), jitConfig, vLogFileName, "wb", true);
 
    char *rtLogFileName = ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFileName;
    if (rtLogFileName)
-      ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFile = fileOpen(self(), jitConfig, rtLogFileName, "wb", true, false);
+      ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFile = fileOpen(self(), jitConfig, rtLogFileName, "wb", true);
    }
 
 #if defined(J9VM_OPT_JITSERVER)
