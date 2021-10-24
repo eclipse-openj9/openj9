@@ -58,7 +58,6 @@ FilePointer::initialize(::FILE *stream, bool encrypt)
    {
    _stream  = stream;
    _useJ9IO = false;
-   _buffer  = 0;
 
    initialize(encrypt);
    }
@@ -70,7 +69,6 @@ FilePointer::initialize(J9PortLibrary *portLib, int32_t fileId, bool encrypt)
    PORT_ACCESS_FROM_PORT(portLib);
    _fileId  = fileId;
    _useJ9IO = true;
-   _buffer = 0;
 
    initialize(encrypt);
    }
@@ -79,7 +77,6 @@ FilePointer::initialize(J9PortLibrary *portLib, int32_t fileId, bool encrypt)
 void
 FilePointer::initialize(bool enc)
    {
-   _pos = 0;
    _encrypt = enc;
    _i = 0;
    _j = 0;
@@ -142,8 +139,6 @@ FilePointer::close(J9PortLibrary *portLib)
       flush(portLib);
       j9file_sync(_fileId);
       j9file_close(_fileId);
-      if (_buffer)
-         j9mem_free_memory(_buffer);
       }
    else
       {
@@ -156,15 +151,7 @@ void
 FilePointer::flush(J9PortLibrary *portLib)
    {
    PORT_ACCESS_FROM_PORT(portLib);
-   if (_useJ9IO)
-      {
-      if (_pos > 0)
-         {
-         j9file_write(_fileId, _buffer, _pos);
-         _pos = 0;
-         }
-      }
-   else
+   if (!_useJ9IO)
       fflush(_stream);
    }
 

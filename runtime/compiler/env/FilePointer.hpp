@@ -72,10 +72,6 @@ namespace TR
       bool _encrypt;
       uint32_t _i, _j;
       uint8_t _s[256];
-
-      /* used only for J9IO */
-      uint8_t *_buffer;
-      uint32_t  _pos;
       };
 
 }
