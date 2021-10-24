@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,8 +38,6 @@ extern "C"
 
 extern char *feGetEnv(const char *);
 
-const int32_t TR::FilePointer::BUFFER_SIZE = 0;
-
 namespace TR
 {
 
@@ -72,10 +70,7 @@ FilePointer::initialize(J9PortLibrary *portLib, int32_t fileId, bool encrypt)
    PORT_ACCESS_FROM_PORT(portLib);
    _fileId  = fileId;
    _useJ9IO = true;
-   if (BUFFER_SIZE)
-      _buffer  = (uint8_t*)j9mem_allocate_memory(BUFFER_SIZE, J9MEM_CATEGORY_JIT);
-   else
-      _buffer = 0;
+   _buffer = 0;
 
    initialize(encrypt);
    }
@@ -128,38 +123,7 @@ FilePointer::write(J9PortLibrary *portLib, char *buf, int32_t length)
 
       if (_useJ9IO)
          {
-         if ((BUFFER_SIZE == 0) ||
-             (_pos == 0 && length > BUFFER_SIZE))
-            return j9file_write(_fileId, buf, length);
-
-         int32_t available = BUFFER_SIZE - _pos;
-
-         if (length < available) available = length;
-
-         if (available > 0)
-            {
-            memcpy(_buffer+_pos, buf, available);
-            _pos += available;
-            }
-
-         if (_pos == BUFFER_SIZE)
-            {
-            j9file_write(_fileId, _buffer, BUFFER_SIZE);
-            _pos = 0;
-
-            if (length > available)
-               {
-               int32_t offset = available;
-               available = length - available;
-               if (available >= BUFFER_SIZE)
-                  j9file_write(_fileId, buf+offset, available);
-               else
-                  {
-                  memcpy(_buffer+_pos, buf+offset, available);
-                  _pos += available;
-                  }
-               }
-            }
+         return j9file_write(_fileId, buf, length);
          }
       else
          length = fwrite(buf, 1, length, _stream);
