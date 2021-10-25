@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@ set(J9VM_INTERP_TWO_PASS_EXCLUSIVE ON CACHE BOOL "")
 set(J9VM_INTERP_USE_UNSAFE_HELPER OFF CACHE BOOL "")
 set(J9VM_MODULE_GDB OFF CACHE BOOL "")
 set(J9VM_MODULE_GDB_PLUGIN OFF CACHE BOOL "")
-set(J9VM_MODULE_THRTRACE ON CACHE BOOL "")
 set(J9VM_MODULE_WINDBG ON CACHE BOOL "")
 set(J9VM_MODULE_CODEGEN_IA32 ON CACHE BOOL "")
 set(J9VM_MODULE_CODERT_IA32 ON CACHE BOOL "")

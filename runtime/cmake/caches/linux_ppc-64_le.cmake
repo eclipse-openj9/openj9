@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 1991, 2020 IBM Corp. and others
+# Copyright (c) 1991, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-#TODO Platform hacks
+# TODO Platform hacks
 set(J9VM_ARCH_POWER ON CACHE BOOL "")
 set(J9VM_ENV_DATA64 ON CACHE BOOL "")
 set(J9VM_ENV_HAS_FPU ON CACHE BOOL "")
@@ -34,7 +34,6 @@ set(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH ON CACHE BOOL "")
 set(J9VM_INTERP_TWO_PASS_EXCLUSIVE ON CACHE BOOL "")
 set(J9VM_JIT_RUNTIME_INSTRUMENTATION ON CACHE BOOL "")
 set(J9VM_MODULE_CODEGEN_PPC ON CACHE BOOL "")
-set(J9VM_MODULE_THRTRACE ON CACHE BOOL "")
 set(J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER OFF CACHE BOOL "")
 set(J9VM_PORT_RUNTIME_INSTRUMENTATION ON CACHE BOOL "")
 
