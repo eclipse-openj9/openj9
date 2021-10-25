@@ -48,7 +48,7 @@ TR_VectorAPIExpansion::perform()
    if (J2SE_VERSION(TR::Compiler->javaVM) >= J2SE_V17 &&
        !disableVectorAPIExpansion &&
        !TR::Compiler->om.canGenerateArraylets() &&
-       findVectorMethods())
+       findVectorMethods(comp()))
       expandVectorAPI();
 
    return 0;
@@ -506,12 +506,14 @@ TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Node *classNode)
 
 
 bool
-TR_VectorAPIExpansion::findVectorMethods()
+TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp)
    {
-   if (_trace)
-      traceMsg(comp(), "%s in findVectorMethods\n", OPT_DETAILS_VECTOR);
+   bool trace = comp->getOption(TR_TraceVectorAPIExpansion);
 
-   for (TR::TreeTop *tt = comp()->getMethodSymbol()->getFirstTreeTop(); tt ; tt = tt->getNextTreeTop())
+   if (trace)
+      traceMsg(comp, "%s in findVectorMethods\n", OPT_DETAILS_VECTOR);
+
+   for (TR::TreeTop *tt = comp->getMethodSymbol()->getFirstTreeTop(); tt ; tt = tt->getNextTreeTop())
       {
       TR::Node *node = tt->getNode();
       TR::ILOpCodes opCodeValue = node->getOpCodeValue();
@@ -529,6 +531,8 @@ TR_VectorAPIExpansion::findVectorMethods()
 
          if (isVectorAPIMethod(methodSymbol))
             {
+            if (trace)
+               traceMsg(comp, "%s found Vector API method\n", OPT_DETAILS_VECTOR);
             return true;
             }
          }
