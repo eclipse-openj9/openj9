@@ -679,3 +679,7 @@ TraceException=Trc_JCL_initializeRequiredClasses_moduleForPackageNotFound Overhe
 TraceException=Trc_JCL_initializeRequiredClasses_unexpectedModuleForPackage Overhead=1 Level=1 Template="initializeRequiredClasses: package %s found in module %s (expected %s) - not loading"
 TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleEntry Overhead=1 Level=3 Template="initializeRequiredClasses: Adding %s as root module"
 TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty Overhead=1 Level=3 Template="initializeRequiredClasses: Adding property %s=%s"
+
+TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_SetCPE Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: Set CPE of class loader %p to %p"
+TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange2_SetCPE Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange2: Set CPE of class loader %p to NULL"
+TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_SetCPE Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Set CPE of class loader %p to %p"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,14 +71,15 @@ Fast_com_ibm_oti_vm_VM_getClassPathEntryType(J9VMThread *currentThread, j9object
 	jint type = CPE_TYPE_UNUSABLE;
 	/* This native is only called for the boot loader, so vmRef is guaranteed to be initialized */
 	J9ClassLoader *classLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, classLoaderObject);
-	/* Bounds check the parameter */
 	if ((cpIndex >= 0) && (cpIndex < (jint)classLoader->classPathEntryCount)) {
 		J9JavaVM *vm = currentThread->javaVM;
 		/* Check the flags of the translation data struct */
 		J9TranslationBufferSet *translationData = vm->dynamicLoadBuffers;
 		if (NULL != translationData) {
+			omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
 			/* Initialize the class path entry */
-			J9ClassPathEntry *cpEntry = classLoader->classPathEntries + cpIndex;
+			J9ClassPathEntry *cpEntry = classLoader->classPathEntries[cpIndex];
+			omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 			type = (jint)initializeClassPathEntry(vm, cpEntry);
 		}
 	}

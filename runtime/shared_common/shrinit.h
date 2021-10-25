@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ IDATA j9shr_sharedClassesFinishInitialization(J9JavaVM *vm);
 void j9shr_guaranteed_exit(J9JavaVM *vm, BOOLEAN exitForDebug);
 void j9shr_shutdown(J9JavaVM *vm);
 IDATA j9shr_print_stats(J9JavaVM *vm, UDATA parseResult, U_64 runtimeFlags, UDATA printStatsOptions);
-void j9shr_updateClasspathOpenState(J9JavaVM* vm, J9ClassPathEntry* classPathEntries, UDATA entryIndex, UDATA entryCount, BOOLEAN isOpen);
+void j9shr_updateClasspathOpenState(J9JavaVM* vm, J9ClassPathEntry** classPathEntries, UDATA entryIndex, UDATA entryCount, BOOLEAN isOpen);
 
 void hookFindSharedClass(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, void* userData);
 void hookSerializeSharedCache(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, void* userData);

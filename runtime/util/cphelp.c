@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,8 +35,11 @@ getClassPathEntry(J9VMThread * currentThread, J9ClassLoader * classLoader, IDATA
 	}
 	if ((cpIndex < 0) || ((UDATA)cpIndex >= classLoader->classPathEntryCount)) {
 		rc = 1;
-	} else {	
-		*cpEntry = classLoader->classPathEntries[cpIndex];
+	} else {
+		Assert_VMUtil_true(classLoader == currentThread->javaVM->systemClassLoader);
+		omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
+		*cpEntry = *(classLoader->classPathEntries[cpIndex]);
+		omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 		rc = 0;
 	}
 	if (vmAccess == 0) {
@@ -75,7 +78,7 @@ getClassLocation(J9VMThread * currentThread, J9Class * clazz, UDATA *length)
 					/* If the class is loaded from patch path, then an entry should be present in classloader's moduleExtraInfoHashTable */
 					Assert_VMUtil_true(NULL != moduleInfo);
 
-					entry = moduleInfo->patchPathEntries[classLocation->entryIndex];
+					entry = *(moduleInfo->patchPathEntries[classLocation->entryIndex]);
 					*length = entry.pathLength;
 					path = entry.path;
 				}
@@ -193,37 +196,24 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 {
 	J9ClassLoader *classLoader = vm->systemClassLoader;
 	UDATA newCount = 0;
-	U_32 entryIndex = 0;
-	J9ClassPathEntry *newEntries = NULL;
+	J9ClassPathEntry *newEntry = NULL;
+	UDATA jarPathSize = strlen(filename);
+	UDATA classPathLength = jarPathSize + 1; /* add space for a terminating null character */
+	UDATA newMemSize = sizeof(J9ClassPathEntry) + classPathLength;
+	J9ClassPathEntry *cpEntry = NULL;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	UDATA jarPathSize = strlen(filename);
-	J9ClassPathEntry *oldEntries = classLoader->classPathEntries;
-	UDATA entryCount = classLoader->classPathEntryCount;
-	/* PR121889: the classpath strings may be allocated with the J9ClassPathEntry structs. Need to copy them too. */
-	UDATA classPathLength = jarPathSize + 1; /* add space for a terminating null character */
-	for (entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
-		classPathLength += oldEntries[entryIndex].pathLength + 1;	/* add 1 for a null character */
-	}
-	/* Copy and grow the classPathEntries array */
-	newEntries = (J9ClassPathEntry*) j9mem_allocate_memory(sizeof(J9ClassPathEntry) * (entryCount + 1) + classPathLength, J9MEM_CATEGORY_CLASSES);
-	if (NULL != newEntries) {
-		J9ClassPathEntry *cpEntry = &newEntries[entryCount];
+	cpEntry = (J9ClassPathEntry*) j9mem_allocate_memory(newMemSize, OMRMEM_CATEGORY_VM);
+	if (NULL != cpEntry) {
+		J9ClassPathEntry **cpePtrArray = NULL;
+		UDATA entryCount = 0;
 		U_8 *stringCursor = (U_8 *)(cpEntry + 1);
-		memcpy(newEntries, oldEntries, sizeof(J9ClassPathEntry) * entryCount);
-		/* copy the old entries */
-		for (entryIndex = 0; entryIndex < entryCount; ++entryIndex) {
-			memcpy(stringCursor, newEntries[entryIndex].path, newEntries[entryIndex].pathLength);
-			newEntries[entryIndex].path = stringCursor;
-			newEntries[entryIndex].path[newEntries[entryIndex].pathLength] = 0;	/* null character terminated */
-			stringCursor += newEntries[entryIndex].pathLength + 1;
-		}
+		memset(cpEntry, 0, newMemSize);
 		/* Create the new entry */
 		memcpy(stringCursor, filename, jarPathSize);
 		cpEntry->pathLength = (U_32) jarPathSize;
 		cpEntry->path = stringCursor;
-		cpEntry->path[cpEntry->pathLength] = 0;	/* null character terminated */
+		cpEntry->path[cpEntry->pathLength] = 0; /* null character terminated */
 		cpEntry->extraInfo = NULL;
 		cpEntry->type = CPE_TYPE_UNKNOWN;
 		cpEntry->flags = CPE_FLAG_BOOTSTRAP;
@@ -239,17 +229,36 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 			}
 		}
 #endif
-		/* Everything OK, install the new array and discard the old one */
-		TRIGGER_J9HOOK_VM_CLASS_LOADER_CLASSPATH_ENTRY_ADDED(vm->hookInterface, vm, classLoader, cpEntry);
+		omrthread_rwmutex_enter_write(classLoader->cpEntriesMutex);
+		entryCount = classLoader->classPathEntryCount;
+		cpePtrArray = classLoader->classPathEntries;
+		if ((NULL == cpePtrArray)
+			|| (0 == entryCount % CPE_COUNT_INCREMENT)
+		) {
+			/* class path entry pointer array needs to be incremented */
+			UDATA count = ROUND_UP_TO(CPE_COUNT_INCREMENT, entryCount + 1);
+			newMemSize = sizeof(J9ClassPathEntry*) * count;
+			cpePtrArray = (J9ClassPathEntry **)j9mem_reallocate_memory(cpePtrArray, newMemSize, OMRMEM_CATEGORY_VM);
+			if (NULL == cpePtrArray) {
+				goto done;
+			} else {
+				memset(cpePtrArray + entryCount, 0, (count - entryCount) * sizeof(J9ClassPathEntry*));
+			}
+		}
+		/* Everything OK, install the new array and discard the old one. */
+		cpePtrArray[entryCount] = cpEntry;
+		classLoader->classPathEntries = cpePtrArray;
+		issueWriteBarrier();
 		newCount = entryCount + 1;
-		classLoader->classPathEntries = newEntries;
 		classLoader->classPathEntryCount = newCount;
-		j9mem_free_memory(oldEntries);
+		omrthread_rwmutex_exit_write(classLoader->cpEntriesMutex);
 	}
 done:
 	/* If any error occurred, discard any allocated memory and throw OutOfMemoryError */
 	if (0 == newCount) {
-		j9mem_free_memory(newEntries);
+		j9mem_free_memory(cpEntry);
+	} else {
+		TRIGGER_J9HOOK_VM_CLASS_LOADER_CLASSPATH_ENTRY_ADDED(vm->hookInterface, vm, classLoader, cpEntry);
 	}
 	return newCount;
 }

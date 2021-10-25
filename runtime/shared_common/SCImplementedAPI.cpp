@@ -326,11 +326,15 @@ j9shr_classStoreTransaction_updateUnstoredBytes(U_32 romClassSizeFullSize, void 
  * @param [in] tobj transaction object memory
  * @param [in] currentThread thread using this transaction
  * @param [in] classloader classloader being used for this new class
+ * @param [in] classPathEntries from which the class is loaded. This parameter is ignored if useLoaderCpEntries is true, then classloader->classPathEntries is used.
+ * @param [in] cpEntryCount the number of entries in classPathEntries
  * @param [in] entryIndex classpath index
  * @param [in] loadType load type for the new class
  * @param [in] classnameLength class name length
  * @param [in] classnameData class name data
  * @param [in] isModifiedClassfile true if the class to be stored is modified
+ * @param [in] takeReadWriteLock Whether the readWrite lock will be taken
+ * @param [in] useLoaderCpEntries Whether to use the classPathEntries from the classloader passed in. Currently this parameter can be true only for bootstrap classloader.
  *
  * @return 0 if ok, otherwise something is wrong
  *
@@ -340,7 +344,7 @@ j9shr_classStoreTransaction_updateUnstoredBytes(U_32 romClassSizeFullSize, void 
  *  - shared classes: 	write mutex (if not readonly, if cache is not full)
  */
 IDATA
-j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry* classPathEntries, UDATA cpEntryCount, UDATA entryIndex, UDATA loadType, const J9UTF8* partition, U_16 classnameLength, U_8 * classnameData, BOOLEAN isModifiedClassfile, BOOLEAN takeReadWriteLock)
+j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry** classPathEntries, UDATA cpEntryCount, UDATA entryIndex, UDATA loadType, const J9UTF8* partition, U_16 classnameLength, U_8 * classnameData, BOOLEAN isModifiedClassfile, BOOLEAN takeReadWriteLock, BOOLEAN useLoaderCpEntries)
 {
 	const char * fname = "j9shr_classStoreTransaction_start";
 	IDATA retval = 0;
@@ -446,6 +450,16 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 
 	obj->transactionState = TSTATE_ENTER_SEGMENTMUTEX;
 
+	if (useLoaderCpEntries) {
+		Trc_SHR_Assert_True(classloader == vm->systemClassLoader);
+		cpEntryCount = classloader->classPathEntryCount;
+		issueReadBarrier();
+		/* variable classPathEntries caches classloader->classPathEntries outside of cpEntriesMutex, this is fine because in the case useLoaderCpEntries
+		 * is true, classPathEntries is only used in NULL checks in this function.
+		 */
+		classPathEntries = classloader->classPathEntries;
+	}
+
 	if (sconfig->classnameFilterPool) {
 		if (checkForStoreFilter(vm, classloader, (const char*) classnameData, (UDATA)classnameLength, sconfig->classnameFilterPool)) {
 			Trc_SHR_API_j9shr_classStoreTransaction_start_StoreFilt_Event(currentThread, (UDATA)classnameLength, classnameData);
@@ -490,9 +504,26 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 			/* For class loaded from modules that entryIndex is -1. classPathEntries can be NULL. */
 			void* cpExtraInfo = NULL;
 			UDATA infoFound = 0;
+			J9ClassPathEntry* firstcpe = NULL;
 
 			if (NULL != classPathEntries) {
-				cpExtraInfo= classPathEntries->extraInfo;
+				/*
+				 * class path entries are never freed during j9shr_classStoreTransaction.
+				 * For bootstrap class loader class path entries are never freed.
+				 * For non-bootstrap class loader, its classPathEntries is only used by the shared class code
+				 * (j9shr_classStoreTransaction, hookFindSharedClass and shared.c). They are all protected by
+				 * SharedClassURLClasspathHelperImpl.urlcpReadWriteLock.
+				 *
+				 * It is safe to cache the first entry pointer.
+				 */
+				if (useLoaderCpEntries) {
+					omrthread_rwmutex_enter_read(classloader->cpEntriesMutex);
+					firstcpe = classloader->classPathEntries[0];
+					omrthread_rwmutex_exit_read(classloader->cpEntriesMutex);
+				} else {
+					firstcpe = classPathEntries[0];
+				}
+				cpExtraInfo = firstcpe->extraInfo;
 				infoFound = translateExtraInfo(cpExtraInfo, &helperID, &cpType, &classpath);
 			}
 
@@ -519,14 +550,18 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 						retval = -1;
 						goto done;
 					}
-					classpath = getBootstrapClasspathItem(currentThread, classPathEntries, pathEntryCount);
+					classpath = getBootstrapClasspathItem(currentThread, firstcpe, pathEntryCount);
 				}
 			}
 
 			if (!classpath) {
 				/* No cached classpath found. Need to create a new one. */
 				if ((NULL != classPathEntries) || (classloader == vm->systemClassLoader)) {
-					classpath = createClasspath(currentThread, classPathEntries, cpEntryCount, helperID, cpType, infoFound);
+					if (useLoaderCpEntries) {
+						classpath = createClasspath(currentThread, classloader, NULL, 0, helperID, cpType, infoFound);
+					} else {
+						classpath = createClasspath(currentThread, NULL, classPathEntries, cpEntryCount, helperID, cpType, infoFound);
+					}
 					if (NULL == classpath) {
 						retval = -1;
 						goto done;
@@ -1058,7 +1093,7 @@ j9shr_classStoreTransaction_updateSharedClassSize(void * tobj, U_32 sizeUsed)
  * THREADING: Uses J9SharedClassTransaction functions.
  */
 J9ROMClass *
-j9shr_jclUpdateROMClassMetaData(J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry* classPathEntries, UDATA cpEntryCount, UDATA entryIndex, const J9UTF8* partition, const J9ROMClass * existingClass)
+j9shr_jclUpdateROMClassMetaData(J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry** classPathEntries, UDATA cpEntryCount, UDATA entryIndex, const J9UTF8* partition, const J9ROMClass * existingClass)
 {
 	J9SharedClassTransaction tobj;
 	J9SharedClassConfig * sconfig = currentThread->javaVM->sharedClassConfig;
@@ -1099,7 +1134,7 @@ j9shr_jclUpdateROMClassMetaData(J9VMThread* currentThread, J9ClassLoader* classl
 		goto done;
 	}
 
-	if (j9shr_classStoreTransaction_start((void *) &tobj, currentThread, classloader, classPathEntries, cpEntryCount, entryIndex, J9SHR_LOADTYPE_NORMAL, partition, classnameLength, classnameData, isModifiedClassfile, FALSE) != 0) {
+	if (j9shr_classStoreTransaction_start((void *) &tobj, currentThread, classloader, classPathEntries, cpEntryCount, entryIndex, J9SHR_LOADTYPE_NORMAL, partition, classnameLength, classnameData, isModifiedClassfile, FALSE, FALSE) != 0) {
 		Trc_SHR_API_j9shr_jclUpdateROMClassMetaData_StartFailed_Event(currentThread, (UDATA)classnameLength, classnameData);
 		/* If j9shr_classStoreTransaction_start() fails we still
 		 * need to release some of the locks that have been taken.

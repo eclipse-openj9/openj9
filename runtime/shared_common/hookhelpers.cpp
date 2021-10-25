@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
 #define HOOKHELPERS_TRACE6_NOTAG(verbose, var, p1, p2, p3, p4, p5, p6) if (verbose) j9nls_printf(PORTLIB, J9NLS_DO_NOT_PRINT_MESSAGE_TAG, var, p1, p2, p3, p4, p5, p6)
 #define HOOKHELPERS_TRACE_NOTAG(verbose, var) if (verbose) j9nls_printf(PORTLIB, J9NLS_DO_NOT_PRINT_MESSAGE_TAG, var)
 
-static bool makeClasspathItems(J9JavaVM* vm, J9ClassPathEntry* classPathEntries, I_16 entryCount, ClasspathItem* classpath, bool bootstrap);
+static bool makeClasspathItems(J9JavaVM* vm, J9ClassLoader* classloader, J9ClassPathEntry** cpePtrArray, I_16 entryCount, ClasspathItem* classpath);
 
 UDATA
 translateExtraInfo(void* extraInfo, IDATA* helperID, U_16* cpType, ClasspathItem** cachedCPI)
@@ -48,7 +48,7 @@ translateExtraInfo(void* extraInfo, IDATA* helperID, U_16* cpType, ClasspathItem
 }
 
 /**
- * THREADING: callers hold the VM classMemorySegments->segmentMutex
+ * THREADING: callers hold the VM classMemorySegments->segmentMutex.
  */
 ClasspathItem*
 getBootstrapClasspathItem(J9VMThread* currentThread, J9ClassPathEntry* bootstrapCPE, UDATA entryCount)
@@ -66,11 +66,12 @@ getBootstrapClasspathItem(J9VMThread* currentThread, J9ClassPathEntry* bootstrap
 }
 
 static bool
-makeClasspathItems(J9JavaVM* vm, J9ClassPathEntry* classPathEntries, I_16 entryCount, ClasspathItem* classpath, bool bootstrap)
+makeClasspathItems(J9JavaVM* vm, J9ClassLoader* classloader, J9ClassPathEntry** cpePtrArray, I_16 entryCount, ClasspathItem* classpath)
 {
 	IDATA prototype = PROTO_UNKNOWN;
 	bool ret = true;
 	bool ignoreStateChange = false;
+	bool bootstrap = classloader == vm->systemClassLoader;
 
 	if (bootstrap && (J2SE_VERSION(vm) >= J2SE_V11)) {
 		J9ClassPathEntry* modulePath = vm->modulesPathEntry;
@@ -94,26 +95,39 @@ makeClasspathItems(J9JavaVM* vm, J9ClassPathEntry* classPathEntries, I_16 entryC
 			((SH_CacheMap*) (vm->sharedClassConfig->sharedClassCache))->notifyClasspathEntryStateChange(currentThread, (const char*) modulePath->path, J9ZIP_STATE_IGNORE_STATE_CHANGES);
 		}
 	}
-
-	if (NULL == classPathEntries) {
-		goto done;
+	if (bootstrap) {
+		if (NULL == classloader->classPathEntries) {
+			goto done;
+		}
+	} else {
+		if (NULL == cpePtrArray) {
+			goto done;
+		}
 	}
 	for (I_16 i = 0; i < entryCount; i++) {
-		char* path = (char*) classPathEntries[i].path;
-		IDATA pathLen = classPathEntries[i].pathLength;
+		J9ClassPathEntry* classPathEntry = NULL;
+		if (bootstrap) {
+			omrthread_rwmutex_enter_read(classloader->cpEntriesMutex);
+			classPathEntry = classloader->classPathEntries[i];
+			omrthread_rwmutex_exit_read(classloader->cpEntriesMutex);
+		} else {
+			classPathEntry = cpePtrArray[i];
+		}
+		char* path = (char*) classPathEntry->path;
+		IDATA pathLen = classPathEntry->pathLength;
 		prototype = PROTO_UNKNOWN;
 		ignoreStateChange = false;
 
-		if (classPathEntries[i].type == CPE_TYPE_JAR) {
+		if (CPE_TYPE_JAR == classPathEntry->type) {
 			prototype = PROTO_JAR;
-		} else if (CPE_TYPE_JIMAGE == classPathEntries[i].type) {
+		} else if (CPE_TYPE_JIMAGE == classPathEntry->type) {
 			prototype = PROTO_JIMAGE;
 			ignoreStateChange = true;
-		} else if (classPathEntries[i].type == CPE_TYPE_DIRECTORY) {
+		} else if (CPE_TYPE_DIRECTORY == classPathEntry->type) {
 			prototype = PROTO_DIR;
-		} else if (classPathEntries[i].type == CPE_TYPE_UNUSABLE) {
+		} else if (CPE_TYPE_UNUSABLE == classPathEntry->type) {
 			prototype = PROTO_TOKEN;
-		} else if (classPathEntries[i].type == 0) {
+		} else if (0 == classPathEntry->type) {
 			char* endsWith = path + (pathLen - 4);
 			if ((strcmp(endsWith, ".jar") == 0) || (strcmp(endsWith, ".zip") == 0)) {
 				prototype = PROTO_JAR;
@@ -121,17 +135,17 @@ makeClasspathItems(J9JavaVM* vm, J9ClassPathEntry* classPathEntries, I_16 entryC
 				prototype = PROTO_DIR;
 			}
 		}
-		if ((classpath)->addItem(vm->internalVMFunctions, (const char*) classPathEntries[i].path, classPathEntries[i].pathLength, prototype) < 0) {
+		if ((classpath)->addItem(vm->internalVMFunctions, (const char*)path, (U_16)pathLen, prototype) < 0) {
 			ret = false; /* Serious problem */
 			goto done;
 		}
-		if ((vm->sharedClassConfig) && (classPathEntries[i].status & CPE_STATUS_IGNORE_ZIP_LOAD_STATE)) {
+		if ((vm->sharedClassConfig) && (classPathEntry->status & CPE_STATUS_IGNORE_ZIP_LOAD_STATE)) {
 			ignoreStateChange = true;
 		}
 		if (ignoreStateChange) {
 			J9VMThread* currentThread = vm->internalVMFunctions->currentVMThread(vm);
 
-			((SH_CacheMap*) (vm->sharedClassConfig->sharedClassCache))->notifyClasspathEntryStateChange(currentThread, (const char*) classPathEntries[i].path, J9ZIP_STATE_IGNORE_STATE_CHANGES);
+			((SH_CacheMap*) (vm->sharedClassConfig->sharedClassCache))->notifyClasspathEntryStateChange(currentThread, (const char*)path, J9ZIP_STATE_IGNORE_STATE_CHANGES);
 		}
 	}
 done:
@@ -216,17 +230,30 @@ storeClassVerboseIO( J9VMThread* currentThread, ClasspathItem * classpath, I_16 
 }
 
 /**
- * Create a ClasspathItem for the specified classloader.
+ * Create a ClasspathItem.
+ *
+ * @param [in] currentThread Current thread
+ * @param [in] classloader The class loader from which the class path entries are from. This parameter is only used when cpePtrArray is NUUL.
+ * @param [in] cpePtrArray The Array of class path entries pointer, which is used to create the ClasspathItem.
+ * 				If this parameter is NULL, classloader->classPathEntries will be used.
+ * @param [in] entryCount The number of entries in cpePtrArray.
+ * @param [in] helperID The class loader helper ID.
+ * @param [in] cpType The type of class path entries.
+ * @param [in] infoFound Extra info of class path entries.
+ *
+ * @return pointer to ClasspathItem
+ *
  * THREADING: callers hold the VM classMemorySegments->segmentMutex
  */
 ClasspathItem *
-createClasspath(J9VMThread* currentThread, J9ClassPathEntry* classPathEntries, UDATA entryCount, IDATA helperID, U_16 cpType, UDATA infoFound)
+createClasspath(J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry** cpePtrArray, UDATA entryCount, IDATA helperID, U_16 cpType, UDATA infoFound)
 {
 	ClasspathItem *classpath;
 	PORT_ACCESS_FROM_VMC(currentThread);
 	Trc_SHR_Assert_ShouldHaveLocalMutex(currentThread->javaVM->classMemorySegments->segmentMutex);
 
-	I_16 supportedEntries = (I_16)entryCount;
+	I_16 cpeCount = (cpePtrArray == NULL) ? (I_16)classloader->classPathEntryCount : (I_16)entryCount;
+	I_16 supportedEntries = (I_16)cpeCount;
 	
 	if (!infoFound && J2SE_VERSION(currentThread->javaVM) >= J2SE_V11) {
 		/* Add module entry */
@@ -247,13 +274,13 @@ createClasspath(J9VMThread* currentThread, J9ClassPathEntry* classPathEntries, U
 	memset(cpPtr, 0, sizeNeeded);
 	/* Note: modContext does not change, so no need to enter config mutex */
 	classpath = ClasspathItem::newInstance(currentThread->javaVM, supportedEntries, helperID, cpType, cpPtr);
-	if (!makeClasspathItems(currentThread->javaVM, classPathEntries, (I_16)entryCount, classpath, (0 == infoFound))) {
+	if (!makeClasspathItems(currentThread->javaVM, classloader, cpePtrArray, cpeCount, classpath)) {
 		/* Serious problem - error msg already reported */
 		j9mem_free_memory(cpPtr);
 		return NULL;
 	}
 	if (infoFound) {
-		J9GenericByID* generic = (J9GenericByID*) classPathEntries->extraInfo;
+		J9GenericByID* generic = (J9GenericByID*)cpePtrArray[0]->extraInfo;
 		generic->cpData = classpath;
 	} else {
 		J9JavaVM *vm = currentThread->javaVM;
@@ -263,7 +290,9 @@ createClasspath(J9VMThread* currentThread, J9ClassPathEntry* classPathEntries, U
 		if (J2SE_VERSION(vm) >= J2SE_V11) {
 			vm->sharedClassConfig->lastBootstrapCPE = vm->modulesPathEntry;
 		} else {
-			vm->sharedClassConfig->lastBootstrapCPE = classPathEntries;
+			omrthread_rwmutex_enter_read(classloader->cpEntriesMutex);
+			vm->sharedClassConfig->lastBootstrapCPE = classloader->classPathEntries[0];
+			omrthread_rwmutex_exit_read(classloader->cpEntriesMutex);
 		}
 		vm->sharedClassConfig->bootstrapCPI = classpath;
 	}

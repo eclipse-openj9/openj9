@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,13 +57,13 @@ static IDATA readZip (J9JavaVM * javaVM, J9ClassPathEntry * cpEntry);
 static IDATA convertToOSFilename (J9JavaVM * javaVM, U_8 * dir, UDATA dirLength, U_8 * moduleName, U_8 * className, UDATA classNameLength);
 static IDATA checkSunClassFileBuffers (J9JavaVM * javaVM, U_32 sunClassFileSize);
 static IDATA searchClassInModule(J9VMThread * vmThread, J9Module * j9module, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer);
-static IDATA searchClassInClassPath(J9VMThread * vmThread, J9ClassPathEntry * classPath, UDATA classPathCount, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer);
-static IDATA searchClassInPatchPaths(J9VMThread * vmThread, J9ClassPathEntry * patchPaths, UDATA patchPathCount, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer);
+static IDATA searchClassInBootstrapClassPath(J9VMThread * vmThread, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer);
+static IDATA searchClassInPatchPaths(J9VMThread * vmThread, J9ClassPathEntry** patchPaths, UDATA patchPathCount, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer);
 static IDATA searchClassInCPEntry(J9VMThread * vmThread, J9ClassPathEntry * cpEntry, J9Module * j9module, U_8 * moduleName, U_8 * className, UDATA classNameLength, BOOLEAN verbose);
 static IDATA readFileFromJImage (J9VMThread * vmThread, J9Module * j9module, U_8 * moduleName, J9ClassPathEntry *cpEntry);
 
 IDATA 
-findLocallyDefinedClass(J9VMThread * vmThread, J9Module * j9module, U_8 * className, U_32 classNameLength, J9ClassLoader * classLoader, J9ClassPathEntry * classPath, UDATA classPathEntryCount, UDATA options, J9TranslationLocalBuffer *localBuffer)
+findLocallyDefinedClass(J9VMThread * vmThread, J9Module * j9module, U_8 * className, U_32 classNameLength, J9ClassLoader * classLoader, UDATA options, J9TranslationLocalBuffer *localBuffer)
 {
 	IDATA result = 0;
 	J9JavaVM *javaVM = vmThread->javaVM;
@@ -75,6 +75,9 @@ findLocallyDefinedClass(J9VMThread * vmThread, J9Module * j9module, U_8 * classN
 	U_8 localString[LOCAL_MAX];
 	UDATA mbLength = classNameLength;
 	U_8 *mbString = localString;
+	J9ClassPathEntry** classPath = NULL;
+	UDATA classPathEntryCount = 0;
+	BOOLEAN releaseBootLoaderCpMutex = FALSE;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	/* localBuffer should not be NULL */
@@ -167,8 +170,13 @@ findLocallyDefinedClass(J9VMThread * vmThread, J9Module * j9module, U_8 * classN
 		}
 	}
 
-	/* If the class is still not found, search it in classpath */
-	result = searchClassInClassPath(vmThread, classPath, classPathEntryCount, mbString, mbLength, verbose, localBuffer);
+	/*
+	 * If the class is still not found, search it in the bootstrap loader classpath.
+	 * The class path entry count is 0 for non-bootstrap class loader, no need to search if it is non-bootstrap class loader
+	 */
+	if (classLoader == javaVM->systemClassLoader) {
+		result = searchClassInBootstrapClassPath(vmThread, mbString, mbLength, verbose, localBuffer);
+	}
 
 _end:
 	if (0 != result) {
@@ -235,11 +243,9 @@ _end:
 }
 
 /**
- * Search a class in the classpath.
+ * Search a class in the bootstrap classpath.
  *
  * @param [in] vmThread pointer to current J9VMThread
- * @param [in] classPath array of class path entries in which to search the class
- * @param [in] classPathCount number of entries in classPath array
  * @param [in] className name of the class to be searched
  * @param [in] classNameLength length of the className
  * @param [in] verbose if TRUE record the class loading stats
@@ -248,20 +254,30 @@ _end:
  * @return 0 on success, 1 if the class is not found, -1 on error
  */
 static IDATA
-searchClassInClassPath(J9VMThread * vmThread, J9ClassPathEntry * classPath, UDATA classPathCount, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer)
+searchClassInBootstrapClassPath(J9VMThread * vmThread, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = javaVM->internalVMFunctions;
 	J9ClassPathEntry *cpEntry = NULL;
+	J9ClassPathEntry **classPath = NULL;
+	UDATA classPathCount = 0;
+	J9ClassLoader* classLoader = javaVM->systemClassLoader;
 	IDATA rc = 1;
 	UDATA i = 0;
 
 	/* localBuffer should not be NULL */
 	Trc_BCU_Assert_True(NULL != localBuffer);
-
-	for (i = 0; i < classPathCount; i++) {
-		cpEntry = &classPath[i];
-
+	if ((0 == classLoader->classPathEntryCount)
+		|| (NULL == classLoader->classPathEntries)
+	) {
+		/* There is no bootstrap class path on Java 11 and up by default. There can be a bootstrap class path if -Xbootclasspath/a: is used. */
+		return rc;
+	}
+	for (i = 0; i < classLoader->classPathEntryCount; i++) {
+		/* This loop goes to the file system, so cpEntriesMutex is not held during the entire loop. */
+		omrthread_rwmutex_enter_read(classLoader->cpEntriesMutex);
+		cpEntry = classLoader->classPathEntries[i];
+		omrthread_rwmutex_exit_read(classLoader->cpEntriesMutex);
 		/* Warm up the entry */
 		vmFuncs->initializeClassPathEntry(javaVM, cpEntry);
 		rc = searchClassInCPEntry(vmThread, cpEntry, NULL, NULL, className, classNameLength, verbose);
@@ -290,7 +306,7 @@ searchClassInClassPath(J9VMThread * vmThread, J9ClassPathEntry * classPath, UDAT
  * @return 0 on success, 1 if the class is not found, -1 on error
  */
 static IDATA
-searchClassInPatchPaths(J9VMThread * vmThread, J9ClassPathEntry * patchPaths, UDATA patchPathCount, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer)
+searchClassInPatchPaths(J9VMThread * vmThread, J9ClassPathEntry** patchPaths, UDATA patchPathCount, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = javaVM->internalVMFunctions;
@@ -302,7 +318,7 @@ searchClassInPatchPaths(J9VMThread * vmThread, J9ClassPathEntry * patchPaths, UD
 	Trc_BCU_Assert_True(NULL != localBuffer);
 
 	for (i = 0; i < patchPathCount; i++) {
-		patchEntry = &patchPaths[i];
+		patchEntry = patchPaths[i];
 		vmFuncs->initializeClassPathEntry(javaVM, patchEntry);
 		rc = searchClassInCPEntry(vmThread, patchEntry, NULL, NULL, className, classNameLength, verbose);
 		if (0 == rc) {
