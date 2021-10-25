@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 Copyright (c) 2006, 2021 IBM Corp. and others
- 
+
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
 distribution and is available at https://www.eclipse.org/legal/epl-2.0/
@@ -1656,10 +1656,6 @@ Only available on zOS</description>
 	</flag>
 	<flag id="module_thread">
 		<description>Enables compilation of the thread module.</description>
-		<ifRemoved>The module will not be compiled.</ifRemoved>
-	</flag>
-	<flag id="module_thrtrace">
-		<description>Enables compilation of the thrtrace module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_util">

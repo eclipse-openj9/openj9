@@ -466,26 +466,17 @@ static UDATA setGlobalConvertersAware(J9JavaVM *vm) {
 
 void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 {
-	J9JavaVM* vm = NULL;
-
-#ifdef OMR_THR_TRACING
-	omrthread_monitor_dump_all();
-	omrthread_dump_trace(omrthread_self());
-#endif /* OMR_THR_TRACING */
+	J9JavaVM *vm = NULL;
 
 	/* if no VM is specified, just try to exit from the first VM.
 	 * Arguably, we should shutdown ALL the VMs.
 	 */
 	if (vmThread == NULL) {
-		jint nVMs;
-		if (JNI_OK == J9_GetCreatedJavaVMs( (JavaVM**)&vm, 1, &nVMs)) {
-			if (nVMs != 1) {
-				vm = NULL;
-			} else {
+		jint nVMs = 0;
+		if (JNI_OK == J9_GetCreatedJavaVMs((JavaVM **)&vm, 1, &nVMs)) {
+			if (nVMs == 1) {
 				vmThread = currentVMThread(vm);
 			}
-		} else {
-			vm = NULL;
 		}
 	} else {
 		vm = vmThread->javaVM;
@@ -723,12 +714,6 @@ freeJavaVM(J9JavaVM * vm)
 		hashTableFree(vm->classLoadingConstraints);
 		vm->classLoadingConstraints = NULL;
 	}
-
-#ifdef OMR_THR_TRACING
-	/* dump any monitors or threads which are left */
-	omrthread_monitor_dump_all();
-	omrthread_dump_trace(omrthread_self());
-#endif /* OMR_THR_TRACING */
 
 #ifdef J9VM_OPT_ZIP_SUPPORT
 	if (NULL != vm->zipCachePool) {
