@@ -48,7 +48,7 @@ Indicate if this issue is specific for a given JDK level, such as JDK8.
 
 Component
 ---
-Indicate the likely component for this issue.  Segregating by component
+Indicate the likely component for this issue.  Separating by component
 helps to keep the list of issues to review managable and to guide
 contributors for a particular area to the relevant items.
 
