@@ -6683,7 +6683,7 @@ TR::CompilationInfoPerThreadBase::generatePerfToolEntry()
       bool truncated = TR::snprintfTrunc(perfFilename, maxPerfFilenameSize, "/tmp/perf-%ld.map", jvmPid);
       if (!truncated)
          {
-         TR::CompilationInfoPerThreadBase::_perfFile = j9jit_fopen(perfFilename, "a", true, false);
+         TR::CompilationInfoPerThreadBase::_perfFile = j9jit_fopen(perfFilename, "a", true);
          }
       if (!getPerfFile()) // couldn't open the file
          {
