@@ -449,7 +449,7 @@ void TR_ValueProfiler::modifyTrees()
                TR::Method *interfaceMethod = methodSymbol->getMethod();
                int32_t         cpIndex      = methodSymRef->getCPIndex();
                int32_t len = interfaceMethod->classNameLength();
-               char * s = classNameToSignature(interfaceMethod->classNameChars(), len, comp());
+               char * s = TR::Compiler->cls.classNameToSignature(interfaceMethod->classNameChars(), len, comp());
                TR_OpaqueClassBlock *thisClass = comp()->fe()->getClassFromSignature(s, len, methodSymRef->getOwningMethod(comp()));
                if (thisClass)
                   {

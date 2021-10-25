@@ -4898,7 +4898,7 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
                TR::Method * originalMethod = sym->getMethod();
                int32_t len = originalMethod->classNameLength();
-               char *s = classNameToSignature(originalMethod->classNameChars(), len, comp());
+               char *s = TR::Compiler->cls.classNameToSignature(originalMethod->classNameChars(), len, comp());
                TR_OpaqueClassBlock *originalMethodClass = comp()->fej9()->getClassFromSignature(s, len, owningMethod);
                TR_OpaqueClassBlock *thisType = (TR_OpaqueClassBlock *) candidate->_node->getFirstChild()->getSymbol()->castToStaticSymbol()->getStaticAddress();
                int32_t offset = -1;

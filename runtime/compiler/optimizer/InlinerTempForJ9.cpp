@@ -5699,7 +5699,7 @@ TR_PrexArgInfo* TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(TR::ResolvedMeth
 static void populateClassNameSignature(TR::Method *m, TR_ResolvedMethod* caller, TR_OpaqueClassBlock* &c, char* &nc, int32_t &nl, char* &sc, int32_t &sl)
    {
    int32_t len = m->classNameLength();
-   char* cs = classNameToSignature(m->classNameChars(), len, TR::comp());
+   char* cs = TR::Compiler->cls.classNameToSignature(m->classNameChars(), len, TR::comp());
    c = caller->fe()->getClassFromSignature(cs, len, caller);
    nc = m->nameChars();
    nl = m->nameLength();
@@ -5710,7 +5710,7 @@ static void populateClassNameSignature(TR::Method *m, TR_ResolvedMethod* caller,
 static char* classSignature (TR::Method * m, TR::Compilation* comp) //tracer helper
    {
    int32_t len = m->classNameLength();
-   return classNameToSignature(m->classNameChars(), len /*don't care, cos this gives us a null terminated string*/, comp);
+   return TR::Compiler->cls.classNameToSignature(m->classNameChars(), len /*don't care, cos this gives us a null terminated string*/, comp);
    }
 
 static bool treeMatchesCallSite(TR::TreeTop* tt, TR::ResolvedMethodSymbol* callerSymbol, TR_CallSite* callsite, TR_LogTracer* tracer)
