@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,8 +36,8 @@ namespace TR
 
       FilePointer(::FILE *stream);
 
-      void initialize(J9PortLibrary *portLib, int32_t fileId, bool encrypt);
-      void initialize(::FILE *stream, bool encrypt);
+      void initialize(J9PortLibrary *portLib, int32_t fileId);
+      void initialize(::FILE *stream);
 
       int32_t write(J9PortLibrary *portLib, char *buf, int32_t length);
 
@@ -63,20 +63,10 @@ namespace TR
       static FILE _stdout;
       static FILE _stderr;
 
-      void initialize(bool encrypt);
       void swap();
       uint8_t cipher(uint8_t c);
-      void encrypt(char *buf, int32_t len);
 
       bool _useJ9IO;
-      bool _encrypt;
-      uint32_t _i, _j;
-      uint8_t _s[256];
-
-      /* used only for J9IO */
-      static const int32_t BUFFER_SIZE;
-      uint8_t *_buffer;
-      uint32_t  _pos;
       };
 
 }

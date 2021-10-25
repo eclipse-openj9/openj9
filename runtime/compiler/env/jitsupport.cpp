@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,7 +127,7 @@ I_32 j9jit_fopenName(char *fileName)
 
 
 TR::FILE *
-j9jit_fopen(char *fileName, const char *mode, bool useJ9IO, bool encrypt)
+j9jit_fopen(char *fileName, const char *mode, bool useJ9IO)
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    TR::FILE *pFile;
@@ -151,7 +151,7 @@ j9jit_fopen(char *fileName, const char *mode, bool useJ9IO, bool encrypt)
          j9tty_printf(privatePortLibrary, "Non-Fatal Error: Unable to open file (%s)\n", fileName);
          return NULL;
          }
-      pFile->initialize(privatePortLibrary, fileId, encrypt);
+      pFile->initialize(privatePortLibrary, fileId);
       }
    else
       {
@@ -169,7 +169,7 @@ j9jit_fopen(char *fileName, const char *mode, bool useJ9IO, bool encrypt)
          return NULL;
          }
 
-      pFile->initialize(f, encrypt);
+      pFile->initialize(f);
       }
 
    return pFile;
