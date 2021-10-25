@@ -50,6 +50,14 @@
 	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<platformRequirements>bits.64</platformRequirements>
+		<disables>
+			<disable>
+				<comment>github_ibm/runtimes/infrastructure/issues/6123</comment>
+				<version>8</version>
+				<impl>ibm</impl>
+				<variation>Mode650</variation>
+			</disable>
+		</disables>
 		<levels>
 			<level>sanity</level>
 		</levels>
