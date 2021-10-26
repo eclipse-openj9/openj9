@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2020 IBM Corp. and others
+ * Copyright (c) 2013, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,6 @@ import javax.imageio.stream.ImageInputStream;
  * Represents the header for the blob
  *
  * @author adam
- *
  */
 public class StructureHeader {
 
@@ -39,13 +38,11 @@ public class StructureHeader {
 	 * Identifies the type of blob by its name
 	 *
 	 * @author adam
-	 *
 	 */
 	public static enum BlobID {
 		J9("IBM J9 VM"),
 		node("node.js"),
 		unknown("unknown");
-
 
 		private final String name;
 
@@ -57,7 +54,6 @@ public class StructureHeader {
 		public String toString() {
 			return name;
 		}
-
 
 	}
 
@@ -73,15 +69,17 @@ public class StructureHeader {
 	private byte configVersion;
 	private BlobID blobID = BlobID.J9;
 	private int blobVersion;
-	private String packageID = DEFAULT_J9_PACKAGE_PREFIX;		//set the default Java package name
-	private final long headerSize;								//size of the header based on the number of bytes being read from the stream -1 = unknown
+	private String packageID = DEFAULT_J9_PACKAGE_PREFIX;	// set the default Java package name
+	private final long headerSize;							// size of the header based on the number of bytes being read from the stream -1 = unknown
 
 	public StructureHeader(ImageInputStream ddrStream) throws IOException {
 		long start = ddrStream.getStreamPosition();
 		readCommonData(ddrStream);
-		switch(coreVersion) {
-			case 2 :
+		switch (coreVersion) {
+			case 2:
 				readBlobVersion(ddrStream);
+				break;
+			default:
 				break;
 		}
 		headerSize = ddrStream.getStreamPosition() - start;
@@ -125,7 +123,7 @@ public class StructureHeader {
 	 * @param in
 	 */
 	public StructureHeader(InputStream in) {
-		//do nothing as the header can only be read from a blob image, not a superset file
+		// do nothing as the header can only be read from a blob image, not a superset file
 		headerSize = -1;
 	}
 
@@ -144,15 +142,15 @@ public class StructureHeader {
 		sizeofBool = ddrStream.readByte();
 		sizeofUDATA = ddrStream.readByte();
 		bitfieldFormat = ddrStream.readByte();
-		configVersion = ddrStream.readByte();	//unused byte alignment field
+		configVersion = ddrStream.readByte(); // unused byte alignment field
 		structDataSize = ddrStream.readInt();
 		stringTableDataSize = ddrStream.readInt();
 		structureCount = ddrStream.readInt();
 	}
 
 	public void readBlobVersion(ImageInputStream ddrStream) throws IOException {
-		switch(configVersion) {
-			case 1 :
+		switch (configVersion) {
+			case 1:
 				int id = ddrStream.readInt();
 				if (id < 0 || id >= BlobID.unknown.ordinal()) {
 					blobID = BlobID.unknown;
@@ -162,19 +160,19 @@ public class StructureHeader {
 				blobVersion = ddrStream.readInt();
 				StringBuilder builder = new StringBuilder();
 				boolean terminated = false;
-				for(int i = 0; i < 32; i++) {
-					char c = (char)ddrStream.readByte();
-					if(c == 0) {
+				for (int i = 0; i < 32; i++) {
+					char c = (char) ddrStream.readByte();
+					if (c == 0) {
 						terminated = true;
 					} else {
-						if(!terminated) {
+						if (!terminated) {
 							builder.append(c);
 						}
 					}
 				}
 				packageID = builder.toString();
 				break;
-			default :
+			default:
 				throw new IOException("Blob config version " + configVersion + " is not supported");
 		}
 	}
@@ -235,4 +233,5 @@ public class StructureHeader {
 	public long getHeaderSize() {
 		return headerSize;
 	}
+
 }
