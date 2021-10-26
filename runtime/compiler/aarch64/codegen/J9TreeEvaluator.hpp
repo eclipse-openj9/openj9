@@ -165,14 +165,15 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    /**
     * @brief Generates the sequence to handle cases where the monitor object is value type
     * @param[in] node : the monitor enter/exit node
-    * @param[in] helperCallLabel : the label for OOL code calling VM monitor enter/exit helpers
+    * @param[in] mergeLabel : the label to return from OOL code
+    * @param[in] helperCallLabel : the label for OOL code calling VM monitor enter/exit helpers. If null, an OOL code section is created.
     * @param[in] objReg : register for the monitor object
     * @param[in] temp1Reg : temporary register 1
     * @param[in] temp2Reg : temporary register 2
     * @param[in] cg : CodeGenerator
     * @param[in] classFlag : class flag
     */
-   static void generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *temp1Reg, TR::Register *temp2Reg, TR::CodeGenerator *cg, int32_t classFlag);
+   static void generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *mergeLabel, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *temp1Reg, TR::Register *temp2Reg, TR::CodeGenerator *cg, int32_t classFlag);
 
    /**
     * @brief Generates array copy code with array store check
