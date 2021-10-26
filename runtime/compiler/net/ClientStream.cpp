@@ -47,7 +47,7 @@ int ClientStream::_numConnectionsClosed = 0;
 int ClientStream::_incompatibilityCount = 0;
 uint64_t ClientStream::_incompatibleStartTime = 0;
 const uint64_t ClientStream::RETRY_COMPATIBILITY_INTERVAL_MS = 10000; //ms
-const int ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 5;
+const int ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 1; // This needs to be smaller than the recompilation retry count (3)
 
 // Create SSL context, load certs and keys. Only needs to be done once.
 // This is called during startup from rossa.cpp
