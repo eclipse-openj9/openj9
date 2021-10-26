@@ -120,7 +120,7 @@ public StringBuilder(int capacity) {
 	 * NegativeArraySizeException is thrown if capacity argument is less than 0.
 	 */
 	if (capacity < 0) {
-		throw new NegativeArraySizeException();
+		throw new NegativeArraySizeException(String.valueOf(capacity));
 	}
 	int arraySize = capacity;
 	

@@ -573,7 +573,7 @@ newObjectArray(JNIEnv *env, jsize length, jclass clazz, jobject initialElement)
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
 	if (length < 0) {
-		gpCheckSetCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNEGATIVEARRAYSIZEEXCEPTION, NULL);
+		gpCheckSetNegativeArraySizeException(currentThread, (I_32)length);
 	} else {
 		J9Class *j9clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(clazz));
 		J9Class *arrayClass = fetchArrayClass(currentThread, j9clazz);
@@ -741,7 +741,7 @@ newBaseTypeArray(JNIEnv *env, IDATA length, UDATA arrayClassOffset)
 	j9object_t resultObject = NULL;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
 	if (length < 0) {
-		gpCheckSetCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNEGATIVEARRAYSIZEEXCEPTION, NULL);
+		gpCheckSetNegativeArraySizeException(currentThread, (I_32)length);
 	} else {
 		J9JavaVM *vm = currentThread->javaVM;
 		J9Class *arrayClass = *(J9Class**)((UDATA)vm + arrayClassOffset);

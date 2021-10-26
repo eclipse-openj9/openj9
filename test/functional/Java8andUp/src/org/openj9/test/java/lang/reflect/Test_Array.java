@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang.reflect;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -424,14 +424,18 @@ public class Test_Array {
 			Array.newInstance(Object.class, new int[] { -1 });
 			Assert.fail("NegativeArraySizeException should be thrown when a specified array length is negative");
 		} catch (NegativeArraySizeException e) {
-			// Correct behavior
+			if (!e.getMessage().contains("-1")) {
+				Assert.fail("NegativeArraySizeException should specify supplied nagative size");
+			}
 		}
 
 		try {
 			Array.newInstance(Object.class, new int[] { Integer.MIN_VALUE });
 			Assert.fail("NegativeArraySizeException should be thrown when a specified array length is negative");
 		} catch (NegativeArraySizeException e) {
-			// Correct behavior
+			if (!e.getMessage().contains(Integer.toString(Integer.MIN_VALUE))) {
+				Assert.fail("NegativeArraySizeException should specify supplied nagative size");
+			}
 		}
 	}
 

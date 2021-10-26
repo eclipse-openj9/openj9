@@ -849,11 +849,6 @@ walkStackForExceptionThrow(J9VMThread * currentThread, j9object_t exception, UDA
 	return walkState->restartException;
 }
 
-
-
-
-
-
 void  
 setClassCastException(J9VMThread *currentThread, J9Class * instanceClass, J9Class * castClass)
 {
@@ -864,8 +859,14 @@ setClassCastException(J9VMThread *currentThread, J9Class * instanceClass, J9Clas
 	setCurrentException(currentThread, J9_EX_CTOR_CLASS_CLASS + J9VMCONSTANTPOOL_JAVALANGCLASSCASTEXCEPTION, (UDATA *) &detailMessage);
 }
 
-
-
+void
+setNegativeArraySizeException(J9VMThread *currentThread, I_32 size)
+{
+	PORT_ACCESS_FROM_VMC(currentThread);
+	char buffer[15];
+	j9str_printf(PORTLIB, buffer, sizeof(buffer), "%d", size);
+	setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNEGATIVEARRAYSIZEEXCEPTION, buffer);
+}
 
 void  
 setClassLoadingConstraintError(J9VMThread * currentThread, J9ClassLoader * initiatingLoader, J9Class * existingClass)

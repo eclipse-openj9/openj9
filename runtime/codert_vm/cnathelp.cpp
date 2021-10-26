@@ -382,6 +382,14 @@ setCurrentExceptionFromJIT(J9VMThread *currentThread, UDATA exceptionNumber, j9o
 }
 
 static VMINLINE void*
+setNegativeArraySizeExceptionFromJIT(J9VMThread *currentThread, I_32 size)
+{
+	TIDY_BEFORE_THROW();
+	currentThread->javaVM->internalVMFunctions->setNegativeArraySizeException(currentThread, size);
+	return J9_JITHELPER_ACTION_THROW;
+}
+
+static VMINLINE void*
 setCurrentExceptionNLSFromJIT(J9VMThread *currentThread, UDATA exceptionNumber, U_32 moduleName, U_32 messageNumber)
 {
 	TIDY_BEFORE_THROW();
@@ -1112,7 +1120,7 @@ slow_jitANewArrayImpl(J9VMThread *currentThread, bool nonZeroTLH)
 	}
 	if (size < 0) {
 		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
-		addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNEGATIVEARRAYSIZEEXCEPTION, NULL);
+		addr = setNegativeArraySizeExceptionFromJIT(currentThread, size);
 		goto done;
 	}
 	if (NULL == arrayClass) {
@@ -1218,7 +1226,7 @@ slow_jitNewArrayImpl(J9VMThread *currentThread, bool nonZeroTLH)
 	}
 	if (size < 0) {
 		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
-		addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGNEGATIVEARRAYSIZEEXCEPTION, NULL);
+		addr = setNegativeArraySizeExceptionFromJIT(currentThread, size);
 		goto done;
 	}
 	buildJITResolveFrameWithPC(currentThread, J9_STACK_FLAGS_JIT_ALLOCATION_RESOLVE | J9_SSF_JIT_RESOLVE, parmCount, true, 0, oldPC);

@@ -233,6 +233,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	fullTraversalFieldOffsetsStartDo,
 	fullTraversalFieldOffsetsNextDo,
 	setClassCastException,
+	setNegativeArraySizeException,
 	compareStrings,
 	compareStringToUTF8,
 	prepareForExceptionThrow,
