@@ -633,8 +633,7 @@ public class Constants {
 	public static final String DEADLOCK_OWNED_BY = "which is owned by:";
 	public static final String DEADLOCK_FIRST_MON = "First Monitor lock";
 	public static final String DEADLOCK_SECOND_MON = "Second Monitor lock";
-	public static final String DEADLOCK_JAVA_OBJ = "java/lang/Object";
-	public static final String DEADLOCK_JAVA_IDENTITY = "java/lang/Identity";
+	public static final String DEADLOCK_JAVA_OBJ = "j9vm/test/corehelper/DeadlockCoreGenerator\\$LockObject";
 	public static final String DEADLOCK_CMD = "deadlock";
 
 	/* Constants related to testing of runtime type resolution */
