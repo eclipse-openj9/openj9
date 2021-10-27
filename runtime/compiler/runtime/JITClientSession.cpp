@@ -34,6 +34,7 @@
 #include "env/VerboseLog.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
+TR_OpaqueClassBlock * const ClientSessionData::mustClearCachesFlag = reinterpret_cast<TR_OpaqueClassBlock *>(~0);
 
 ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_PersistentMemory *persistentMemory, bool usesPerClientMemory) :
    _clientUID(clientUID), _maxReceivedSeqNo(seqNo), _lastProcessedCriticalSeqNo(seqNo),
@@ -493,10 +494,11 @@ ClientSessionData::destroyJ9SharedClassCacheDescriptorList()
 
 
 void
-ClientSessionData::clearCaches()
+ClientSessionData::clearCaches(bool locked)
    {
    TR_ASSERT(!_inUse || _sequencingMonitor->owned_by_self(), "Must have sequencing monitor");
-   TR_ASSERT(_numActiveThreads == 0, "Must have no active threads");
+
+   TR_ASSERT(_numActiveThreads == 0 || locked, "Must have no active threads when accessing without locks");
 
    _classBySignatureMap.clear();
 
@@ -506,7 +508,6 @@ ClientSessionData::clearCaches()
       _persistentMemory->freePersistentMemory(_unloadedClassAddresses);
       _unloadedClassAddresses = NULL;
       }
-   _requestUnloadedClasses = true;
 
    // Free memory for all hashtables with IProfiler info
    for (auto& it : _J9MethodMap)
@@ -550,6 +551,21 @@ ClientSessionData::clearCaches()
       }
 
    _wellKnownClasses.clear();
+   setCachesAreCleared(true);
+   }
+
+void
+ClientSessionData::clearCachesLocked(TR_J9VMBase *fe)
+   {
+   // Acquire all required locks to clear client session caches
+   // This should be used when caches need to be cleared
+   // while the client is still sending requests
+   writeAcquireClassUnloadRWMutex();
+      {
+      OMR::CriticalSection processUnloadedClasses(getROMMapMonitor());
+      clearCaches(true);
+      }
+   writeReleaseClassUnloadRWMutex();
    }
 
 void

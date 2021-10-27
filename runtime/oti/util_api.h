@@ -2252,7 +2252,7 @@ flushClassLoaderReflectCache(J9VMThread * currentThread, J9HashTable * classPair
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 void
-jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEventData, UDATA extensionsEnabled);
+jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEventData, UDATA extensionsEnabled, UDATA extensionsUsed);
 #endif
 
 void

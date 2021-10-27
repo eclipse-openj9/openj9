@@ -1213,7 +1213,7 @@ redefineClassesCommon(jvmtiEnv* env,
 			vm->hotSwapCount += 1;
 
 			/* Notify the JIT about redefined classes */
-			jitClassRedefineEvent(currentThread, &jitEventData, FALSE);
+			jitClassRedefineEvent(currentThread, &jitEventData, FALSE, FALSE);
 
 		} else {
 
@@ -1283,7 +1283,7 @@ redefineClassesCommon(jvmtiEnv* env,
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 			/* Notify the JIT about redefined classes */
-			jitClassRedefineEvent(currentThread, &jitEventData, extensionsEnabled);
+			jitClassRedefineEvent(currentThread, &jitEventData, extensionsEnabled, extensionsUsed);
 #endif
 		}
 		notifyGCOfClassReplacement(currentThread, classPairs, !extensionsEnabled);
