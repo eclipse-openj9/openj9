@@ -2326,14 +2326,14 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 	}
 	if ((NULL != classLoaderNameUTF) && (NULL != moduleNameUTF)) {
 		Trc_MODULE_setPackage(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classLoaderNameUTF, classLoader, moduleNameUTF, ramClass->module);
-		if (moduleNameBuf != moduleNameUTF) {
-			PORT_ACCESS_FROM_VMC(vmThread);
-			j9mem_free_memory(moduleNameUTF);
-		}
-		if (classLoaderNameBuf != classLoaderNameUTF) {
-			PORT_ACCESS_FROM_VMC(vmThread);
-			j9mem_free_memory(classLoaderNameUTF);
-		}
+	}
+	if (moduleNameBuf != moduleNameUTF) {
+		PORT_ACCESS_FROM_VMC(vmThread);
+		j9mem_free_memory(moduleNameUTF);
+	}
+	if (classLoaderNameBuf != classLoaderNameUTF) {
+		PORT_ACCESS_FROM_VMC(vmThread);
+		j9mem_free_memory(classLoaderNameUTF);
 	}
 }
 

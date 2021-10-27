@@ -189,12 +189,6 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 				moduleNameUTF, moduleVersionUTF,
 				sourceFileNameLen, sourceFileName,
 				lineNumber); /* line number will be ignored in if it's not used in the format string */
-			if (TRUE == freeModuleVersion) {
-				j9mem_free_memory(moduleVersionUTF);
-			}
-			if (TRUE == freeModuleName) {
-				j9mem_free_memory(moduleNameUTF);
-			}
 		} else {
 			if (0 != lineNumber) {
 				format = j9nls_lookup_message(
@@ -212,6 +206,12 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 				(UDATA)J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
 				sourceFileNameLen, sourceFileName,
 				lineNumber); /* line number will be ignored in if it's not used in the format string */
+		}
+		if (freeModuleVersion) {
+			j9mem_free_memory(moduleVersionUTF);
+		}
+		if (freeModuleName) {
+			j9mem_free_memory(moduleNameUTF);
 		}
 	}
 
