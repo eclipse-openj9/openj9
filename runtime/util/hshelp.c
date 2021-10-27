@@ -4099,13 +4099,13 @@ hshelpUTRegister(J9JavaVM *vm)
  * jit to patch the compiled code to account for the redefined classes.
  */
 void
-jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEventData, UDATA extensionsEnabled)
+jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEventData, UDATA extensionsEnabled, UDATA extensionsUsed)
 {
 	J9JavaVM * vm = currentThread->javaVM;
 	J9JITConfig *jitConfig = vm->jitConfig;
 
 	if (NULL != jitConfig) {
-		jitConfig->jitClassesRedefined(currentThread, jitEventData->classCount, (J9JITRedefinedClass*)jitEventData->data);
+		jitConfig->jitClassesRedefined(currentThread, jitEventData->classCount, (J9JITRedefinedClass*)jitEventData->data, extensionsUsed);
 		if (extensionsEnabled) {
 			/* Toss the whole code cache */
 			jitConfig->jitHotswapOccurred(currentThread);

@@ -2233,7 +2233,7 @@ static bool methodsAreRedefinedInPlace()
 #define VM_PASSES_SAME_CLASS_TWICE 1
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRedefinedClass *classList)
+void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRedefinedClass *classList, UDATA extensionsUsed)
    {
    reportHook(currentThread, "jitClassesRedefined");
 
@@ -2372,11 +2372,12 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
 #if defined(J9VM_OPT_JITSERVER)
       // Add to JITServer unload list
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+         {
          compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
-      if (auto deserializer = compInfo->getJITServerAOTDeserializer())
-         deserializer->invalidateClass(currentThread, classPair->oldClass);
+         if (auto deserializer = compInfo->getJITServerAOTDeserializer())
+            deserializer->invalidateClass(currentThread, classPair->oldClass);
+         }
 #endif
-
       freshClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->newClass);
       if (VM_PASSES_SAME_CLASS_TWICE)
          staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(((J9Class*)freshClass)->replacedClass);
@@ -2429,8 +2430,16 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
          reportHookDetail(currentThread, "jitClassesRedefined", "  Notify CHTable on class old=%p fresh=%p", oldClass, freshClass);
          table->classGotRedefined(fe, oldClass, freshClass);
          }
+
       classPair = (J9JITRedefinedClass *) ((char *) classPair->methodList + (classPair->methodCount * sizeof(struct J9JITMethodEquivalence)));
       }
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && extensionsUsed)
+      {
+      compInfo->getUnloadedClassesTempList()->push_back(ClientSessionData::mustClearCachesFlag);
+      }
+#endif
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableNoVMAccess))
       {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1388,7 +1388,7 @@ jitDataBreakpointAdded(J9VMThread * currentThread)
 			/* Make all future compilations inline the field watch code */
 			jitConfig->inlineFieldWatches = TRUE;
 		} else {
-			jitConfig->jitClassesRedefined(currentThread, 0, NULL);			
+			jitConfig->jitClassesRedefined(currentThread, 0, NULL, 0);
 		}
 
 		/* Find every method which has been translated and mark it for retranslation */

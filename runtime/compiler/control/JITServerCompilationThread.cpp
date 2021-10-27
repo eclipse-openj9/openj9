@@ -557,6 +557,19 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       clientSession->incNumActiveThreads();
       hasIncNumActiveThreads = true;
 
+      // If class redefinition using HCR extensions occurred, must clear all the caches
+      bool mustClearCaches = std::find(unloadedClasses.begin(), unloadedClasses.end(), ClientSessionData::mustClearCachesFlag) != unloadedClasses.end();
+      if (mustClearCaches)
+         {
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITServer, TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "compThreadID=%d clearing all caches for clientUID=%llu due to class redefinition using HCR extensions",
+               getCompThreadId(), (unsigned long long) clientId);
+         Trc_JITServerClearCaches(compThread, getCompThreadId(), clientSession, (unsigned long long) clientId);
+
+         clientSession->clearCachesLocked(_vm);
+         }
+
       // We can release the sequencing monitor now because no critical request with a
       // larger sequence number can pass until I increment lastProcessedCriticalSeqNo
       clientSession->getSequencingMonitor()->exit();
