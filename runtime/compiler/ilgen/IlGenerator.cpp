@@ -1062,17 +1062,10 @@ TR_J9ByteCodeIlGenerator::prependEntryCode(TR::Block * firstBlock)
       TR::Node * firstChild = pop();
       TR::SymbolReference * monEnterSymRef = symRefTab()->findOrCreateMethodMonitorEntrySymbolRef(_methodSymbol);
 
-      if (TR::Compiler->cls.classesOnHeap())
+      if (firstChild->getOpCodeValue() == TR::loadaddr && firstChild->getSymbol()->isClassObject())
          {
-         if (firstChild->getOpCodeValue() == TR::loadaddr && firstChild->getSymbol()->isClassObject())
-            {
-            monitorEnter = TR::Node::createWithSymRef(TR::aloadi, 1, 1, firstChild, symRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
-            monitorEnter = TR::Node::createWithSymRef(TR::monent, 1, 1, monitorEnter, monEnterSymRef);
-            }
-         else
-            {
-            monitorEnter = TR::Node::createWithSymRef(TR::monent, 1, 1, firstChild, monEnterSymRef);
-            }
+         monitorEnter = TR::Node::createWithSymRef(TR::aloadi, 1, 1, firstChild, symRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
+         monitorEnter = TR::Node::createWithSymRef(TR::monent, 1, 1, monitorEnter, monEnterSymRef);
          }
       else
          {
@@ -1546,12 +1539,9 @@ TR_J9ByteCodeIlGenerator::genNewInstanceImplThunk()
       //the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 since it is guarded by !isAOT check in createResolvedMethodWithSignature
       loadSymbol(TR::loadaddr, symRefTab()->findOrCreateClassSymbol(_methodSymbol, -1, classId)); // This Class
 
-      if (TR::Compiler->cls.classesOnHeap())
-         {
-         TR::Node* node = pop();
-         node = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node, symRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
-         push(node);
-         }
+      TR::Node* node = pop();
+      node = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node, symRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
+      push(node);
 
       genTreeTop(genNodeAndPopChildren(TR::call, 3, accessCheckSymRef));
       }
@@ -1583,30 +1573,16 @@ TR_J9ByteCodeIlGenerator::genNewInstanceImplCall(TR::Node *classNode)
    TR_ResolvedMethod *caller = method()->owningMethod(); // the caller of Class.newInstance()
    TR_ASSERT(caller, "should only be transforming newInstanceImpl call if newInstance is being inlined");
 
-   TR::Node *callNode;
-   if (TR::Compiler->cls.classesOnHeap())
-      {
-      TR::Node *classNodeAsClass = TR::Node::createWithSymRef(TR::aloadi, 1, 1, classNode, symRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
-      //the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 since we check for !compileRelocatableCode() in the caller
-      TR::Node *node         = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassSymbol(_methodSymbol, -1, caller->classOfMethod()));
-      TR::Node *nodeAsObject = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node, symRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
+   TR::Node *classNodeAsClass = TR::Node::createWithSymRef(TR::aloadi, 1, 1, classNode, symRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
+   //the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 since we check for !compileRelocatableCode() in the caller
+   TR::Node *node         = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateClassSymbol(_methodSymbol, -1, caller->classOfMethod()));
+   TR::Node *nodeAsObject = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node, symRefTab()->findOrCreateJavaLangClassFromClassSymbolRef());
 
-      callNode = TR::Node::createWithSymRef(TR::acalli, 3, 3,
-                      classNodeAsClass,
-                      classNode,
-                      nodeAsObject,
-                      symRefTab()->findOrCreateObjectNewInstanceImplSymbol(_methodSymbol));
-      }
-   else
-      {
-      //the call to findOrCreateClassSymbol is safe even though we pass CPI of -1 since we check for !compileRelocatableCode() in the caller
-      callNode = TR::Node::createWithSymRef(TR::acalli, 3, 3,
-                      classNode,
-                      classNode,
-                      TR::Node::createWithSymRef(TR::loadaddr, 0,
-                                      symRefTab()->findOrCreateClassSymbol(_methodSymbol, -1, caller->classOfMethod())),
-                      symRefTab()->findOrCreateObjectNewInstanceImplSymbol(_methodSymbol));
-      }
+   TR::Node *callNode = TR::Node::createWithSymRef(TR::acalli, 3, 3,
+                     classNodeAsClass,
+                     classNode,
+                     nodeAsObject,
+                     symRefTab()->findOrCreateObjectNewInstanceImplSymbol(_methodSymbol));
 
    return callNode;
    }
