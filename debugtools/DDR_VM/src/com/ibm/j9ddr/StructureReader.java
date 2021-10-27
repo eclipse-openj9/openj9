@@ -543,12 +543,20 @@ public class StructureReader {
 		header = new StructureHeader(inputStream);
 		structures = new HashMap<>();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-		String line = reader.readLine();
 		StructureDescriptor structure = null;
-		while (line != null) {
+
+		for (;;) {
+			String line = reader.readLine();
+			if (line == null) {
+				break;
+			}
+			int hash = line.indexOf('#');
+			if (hash >= 0) {
+				// remove comments
+				line = line.substring(0, hash);
+			}
 			if (line.isEmpty()) {
-				// we don't expect blank lines, but it's simplest to just ignore them
+				// ignore blank lines
 				continue;
 			}
 			char type = line.charAt(0);
@@ -572,9 +580,8 @@ public class StructureReader {
 				structure.constants.add(constant);
 				break;
 			default:
-				throw new IllegalArgumentException("Superset stream contained unknown line: " + line);
+				throw new IllegalArgumentException("Superset stream contains unknown line: " + line);
 			}
-			line = reader.readLine();
 		}
 	}
 

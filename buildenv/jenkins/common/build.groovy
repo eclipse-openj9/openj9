@@ -316,7 +316,7 @@ def archive_sdk() {
             def archiveCmd = SPEC.contains('zos') ? 'pax -wvz -p x' : 'tar -cvz -T -'
             // Filter out unwanted files (most of which are available in the debug-image).
             def filterCmd = "sed -e '/\\.dbg\$/d' -e '/\\.debuginfo\$/d' -e '/\\.diz\$/d' -e '/\\.dSYM\\//d' -e '/\\.map\$/d' -e '/\\.pdb\$/d'"
-            sh "( cd ${buildDir} && find ${JDK_FOLDER} -type f | ${filterCmd} | ${archiveCmd} ) > ${SDK_FILENAME}"
+            sh "( cd ${buildDir} && find ${JDK_FOLDER} '(' -type f -o -type l ')' | ${filterCmd} | ${archiveCmd} ) > ${SDK_FILENAME}"
             // test if the test natives directory is present, only in JDK11+
             if (fileExists("${buildDir}${testDir}")) {
                 if (SPEC.contains('zos')) {
