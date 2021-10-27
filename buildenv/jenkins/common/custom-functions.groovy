@@ -46,7 +46,7 @@ def set_gskit() {
 
             // extract gskit_lib.tar into gskit/lib
             dir(gskitLibDir) {
-                sh "${extractCommand} ${WORKSPACE}/gskit_lib.tar"
+                sh "${extractCommand} ${WORKSPACE}/gskit_lib.tar libjgsk8iccs_64.so N"
             }
 
             if (SPEC.contains('zos')) {
