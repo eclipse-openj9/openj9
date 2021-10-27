@@ -159,6 +159,7 @@
 	<configuration
 		  label="JAVA17"
 		  outputpath="JAVA17/src"
+		  flags="OPENJDK_METHODHANDLES"
 		  dependencies="JAVA16"
 		  jdkcompliance="1.8">
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
