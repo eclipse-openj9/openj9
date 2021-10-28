@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@ public class SwitchTest extends jit.test.jitt.Test {
 			Assert.fail("tstSwitch failed!");	
 	}
 
-	static int tstSwitch() {
+	private static int tstSwitch() {
 		//CASE1: Large Range of int case labels
 		int test1 = 5;
 		int check1 = 0;
