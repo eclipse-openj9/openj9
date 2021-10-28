@@ -211,6 +211,7 @@
 		<export name="Java_com_ibm_jvmti_tests_getSystemProperty_gsp001_cleanup" />
 		<export name="Java_com_ibm_jvmti_tests_eventException_ee001_invoke" />
 		<export name="Java_com_ibm_jvmti_tests_eventException_ee001_check" />
+		<export name="Java_com_ibm_jvmti_tests_eventVMStart_vmstart001_check" />
 	</exports>
 		
 	<exports group="jdk9">

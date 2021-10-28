@@ -207,6 +207,7 @@ omr_add_exports(jvmtitest
 	Java_com_ibm_jvmti_tests_getSystemProperty_gsp001_cleanup
 	Java_com_ibm_jvmti_tests_eventException_ee001_invoke
 	Java_com_ibm_jvmti_tests_eventException_ee001_check
+	Java_com_ibm_jvmti_tests_eventVMStart_vmstart001_check
 )
 
 if(NOT JAVA_SPEC_VERSION LESS 9)
