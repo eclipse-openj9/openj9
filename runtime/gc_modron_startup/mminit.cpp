@@ -2261,7 +2261,9 @@ combinationMemoryParameterVerification(J9JavaVM *javaVM, IDATA* memoryParameters
 		}
 		if (!isLessThanEqualOrUnspecifiedAgainstFixed(&extensions->userSpecifiedParameters._Xmns, ms)) {
 			if (!opt_XmsSet) {
-				extensions->initialMemorySize = extensions->userSpecifiedParameters._Xmns._valueSpecified;
+				ms = extensions->userSpecifiedParameters._Xmns._valueSpecified;
+				extensions->initialMemorySize = ms;
+				extensions->oldSpaceSize = extensions->initialMemorySize;
 			} else {
 				memoryOption = "-Xmn";
 				subSpaceTooLargeOption = displayXmsOrInitialRAMPercentage(memoryParameters);
