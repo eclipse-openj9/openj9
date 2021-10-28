@@ -30,6 +30,8 @@
 #include "j9jclnls.h"
 #include "criusupport.h"
 #include "ut_j9criu.h"
+#include "omrlinkedlist.h"
+#include "omrthread.h"
 
 #define STRING_BUFFER_SIZE 256
 
@@ -199,6 +201,34 @@ free:
 	return res;
 }
 
+/**
+ * Caller must first acquire exclusive VMAccess
+ */
+static void
+toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	UDATA javaThreads = J9THREAD_CATEGORY_RESOURCE_MONITOR_THREAD | J9THREAD_CATEGORY_APPLICATION_THREAD;
+
+	Assert_CRIU_true(J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState);
+
+	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
+
+	while (NULL != walkThread) {
+		if (J9_ARE_ANY_BITS_SET(javaThreads, omrthread_get_category(walkThread->osThread))
+		&& (currentThread != walkThread)
+		) {
+			if (suspend) {
+				vmFuncs->setHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+			} else {
+				vmFuncs->clearHaltFlag(walkThread, J9_PUBLIC_FLAGS_HALT_THREAD_FOR_CHECKPOINT);
+			}
+		}
+		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
+	}
+}
+
 void JNICALL
 Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 		jclass unused,
@@ -335,25 +365,35 @@ Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env,
 
 		vmFuncs->acquireExclusiveVMAccess(currentThread);
 
+		toggleSuspendOnJavaThreads(currentThread, TRUE);
+
+		vmFuncs->releaseExclusiveVMAccess(currentThread);
+
 		if (FALSE == vmFuncs->jvmCheckpointHooks(currentThread)) {
-			goto releaseExclusive;
+			/* throw the pending exception */
+			goto wakeJavaThreads;
 		}
 
 		systemReturnCode = criu_dump();
 		if (systemReturnCode < 0) {
 			currentExceptionClass = vm->criuSystemCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JCL_CRIU_DUMP_FAILED, NULL);
-			goto releaseExclusive;
+			goto wakeJavaThreads;
 		}
 
 		/* We can only end up here if the CRIU restore was successful */
 		isAfterCheckpoint = TRUE;
 
 		if (FALSE == vmFuncs->jvmRestoreHooks(currentThread)) {
-			goto releaseExclusive;
+			/* throw the pending exception */
+			goto wakeJavaThreads;
 		}
 
-releaseExclusive:
+wakeJavaThreads:
+		vmFuncs->acquireExclusiveVMAccess(currentThread);
+
+		toggleSuspendOnJavaThreads(currentThread, FALSE);
+
 		vmFuncs->releaseExclusiveVMAccess(currentThread);
 closeWorkDirFD:
 		if ((0 != close(workDirFD)) && (NULL == currentExceptionClass)) {
@@ -392,7 +432,10 @@ freeDir:
 #endif /* defined(LINUX) */
 	}
 
-	if (NULL != currentExceptionClass) {
+	/*
+	 * Pending exceptions will be set by the JVM hooks, these exception will take precedence.
+	 */
+	if ((NULL != currentExceptionClass) && (NULL == currentThread->currentException)) {
 		msgCharLength = j9str_printf(PORTLIB, NULL, 0, nlsMsgFormat, systemReturnCode);
 		exceptionMsg = j9mem_allocate_memory(msgCharLength, J9MEM_CATEGORY_VM);
 

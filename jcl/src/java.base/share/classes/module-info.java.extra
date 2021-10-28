@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,3 +43,6 @@ exports jdk.internal.module to openj9.dtfj, openj9.dtfjview;
 uses com.ibm.sharedclasses.spi.SharedClassProvider;
 uses com.ibm.gpu.spi.GPUAssist.Provider;
 exports com.ibm.gpu.spi to openj9.gpu;
+exports jdk.internal.misc to openj9.criu;
+opens jdk.internal.misc to openj9.criu;
+opens java.lang to openj9.criu;
