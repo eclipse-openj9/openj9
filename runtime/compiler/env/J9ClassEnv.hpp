@@ -185,6 +185,30 @@ public:
    char *classSignature_DEPRECATED(TR::Compilation *comp, TR_OpaqueClassBlock * clazz, int32_t & length, TR_Memory *);
    char *classSignature(TR::Compilation *comp, TR_OpaqueClassBlock * clazz, TR_Memory *);
 
+   /**
+    * \brief
+    *    Constructs a class signature char string based on the class name
+    *
+    * \param[in] name
+    *    The class name
+    *
+    * \param[in,out] len
+    *    The input is the length of the class name. Returns the length of the signature
+    *
+    * \param[in] comp
+    *    The compilation object
+    *
+    * \param[in] allocKind
+    *    The type of the memory allocation
+    *
+    * \param[in] clazz
+    *    The class that the class name belongs to
+    *
+    * \return
+    *    A class signature char string
+    */
+   char *classNameToSignature(const char *name, int32_t &len, TR::Compilation *comp, TR_AllocationKind allocKind = stackAlloc, TR_OpaqueClassBlock *clazz = NULL);
+
    int32_t vTableSlot(TR::Compilation *comp, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
    int32_t flagValueForPrimitiveTypeCheck(TR::Compilation *comp);
    int32_t flagValueForArrayCheck(TR::Compilation *comp);
