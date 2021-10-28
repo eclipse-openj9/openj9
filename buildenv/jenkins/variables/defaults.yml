@@ -44,6 +44,9 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.git'
       branch: 'openj9'
+    [aarch64_linux_valhalla, aarch64_linux_vt_standard, ppc64_aix_valhalla, ppc64_aix_vt_standard, ppc64le_linux_valhalla, ppc64le_linux_vt_standard, s390x_linux_valhalla, s390x_linux_vt_standard, x86-64_mac_valhalla, x86-64_mac_vt_standard, x86-64_linux_valhalla, x86-64_linux_vt_standard, x86-64_windows_valhalla, x86-64_windows_vt_standard]:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk.valuetypes.git'
+      branch: 'openj9'
 # OpenJ9 & OMR Repos (used by ref repo updater)
 openj9:
   default:
