@@ -186,6 +186,8 @@ j9vm_add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/eventException/ee001.c
 
 	com/ibm/jvmti/tests/fieldwatch/fw001.c
+
+	com/ibm/jvmti/tests/eventVMStart/vmstart001.c
 )
 
 target_link_libraries(jvmti_test_src
