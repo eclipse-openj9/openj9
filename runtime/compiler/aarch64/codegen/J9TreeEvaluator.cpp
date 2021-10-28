@@ -1035,9 +1035,9 @@ generateLockwordAddressLookup(TR::CodeGenerator *cg, TR::Node *node, TR::Registe
 
 #ifdef OMR_GC_FULL_POINTERS
       // In mixed refs and large heap builds, the element type of monitorLookupCacheLabel is UDATA.
-      uint32_t elementWidth = trailingZeroes(sizeof(UDATA));
+      uint32_t elementWidth = trailingZeroes((uint32_t)sizeof(UDATA));
 #else
-      uint32_t elementWidth = trailingZeroes(sizeof(U_32));
+      uint32_t elementWidth = trailingZeroes((uint32_t)sizeof(U_32));
 #endif
       generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, tempReg, metaReg, tempReg, TR::ARM64ShiftCode::SH_LSL, elementWidth);
 
