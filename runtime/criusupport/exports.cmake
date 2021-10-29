@@ -26,9 +26,4 @@ if(J9VM_OPT_CRIU_SUPPORT)
 		Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl
 		Java_org_eclipse_openj9_criu_CRIUSupport_isCheckpointAllowed
 	)
-
-	target_link_libraries(j9criu
-	PRIVATE
-		j9thr
-	)
 endif()

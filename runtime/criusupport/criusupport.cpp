@@ -25,13 +25,16 @@
 #include <errno.h>
 #endif /* defined(LINUX) */
 
+#include "criusupport.hpp"
+
 #include "jni.h"
 #include "j9.h"
 #include "j9jclnls.h"
-#include "criusupport.h"
 #include "ut_j9criu.h"
 #include "omrlinkedlist.h"
 #include "omrthread.h"
+
+extern "C" {
 
 #define STRING_BUFFER_SIZE 256
 
@@ -45,25 +48,25 @@ setupJNIFieldIDs(JNIEnv *env)
 	jclass criuSystemCheckpointExceptionClass = NULL;
 	jclass criuRestoreExceptionClass = NULL;
 
-	criuJVMCheckpointExceptionClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/JVMCheckpointException");
+	criuJVMCheckpointExceptionClass = env->FindClass("org/eclipse/openj9/criu/JVMCheckpointException");
 	Assert_CRIU_notNull(criuJVMCheckpointExceptionClass);
-	vm->criuJVMCheckpointExceptionClass = (*env)->NewGlobalRef(env, criuJVMCheckpointExceptionClass);
+	vm->criuJVMCheckpointExceptionClass = (jclass) env->NewGlobalRef(criuJVMCheckpointExceptionClass);
 
-	vm->criuJVMCheckpointExceptionInit = (*env)->GetMethodID(env, criuJVMCheckpointExceptionClass, "<init>", "(Ljava/lang/String;I)V");
+	vm->criuJVMCheckpointExceptionInit = env->GetMethodID(criuJVMCheckpointExceptionClass, "<init>", "(Ljava/lang/String;I)V");
 	Assert_CRIU_notNull(vm->criuJVMCheckpointExceptionInit);
 
-	criuSystemCheckpointExceptionClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/SystemCheckpointException");
+	criuSystemCheckpointExceptionClass = env->FindClass("org/eclipse/openj9/criu/SystemCheckpointException");
 	Assert_CRIU_notNull(criuSystemCheckpointExceptionClass);
-	vm->criuSystemCheckpointExceptionClass = (*env)->NewGlobalRef(env, criuSystemCheckpointExceptionClass);
+	vm->criuSystemCheckpointExceptionClass = (jclass) env->NewGlobalRef(criuSystemCheckpointExceptionClass);
 
-	vm->criuSystemCheckpointExceptionInit = (*env)->GetMethodID(env, criuSystemCheckpointExceptionClass, "<init>", "(Ljava/lang/String;I)V");
+	vm->criuSystemCheckpointExceptionInit = env->GetMethodID(criuSystemCheckpointExceptionClass, "<init>", "(Ljava/lang/String;I)V");
 	Assert_CRIU_notNull(vm->criuSystemCheckpointExceptionInit);
 
-	criuRestoreExceptionClass = (*env)->FindClass(env, "org/eclipse/openj9/criu/RestoreException");
+	criuRestoreExceptionClass = env->FindClass("org/eclipse/openj9/criu/RestoreException");
 	Assert_CRIU_notNull(criuRestoreExceptionClass);
-	vm->criuRestoreExceptionClass = (*env)->NewGlobalRef(env, criuRestoreExceptionClass);
+	vm->criuRestoreExceptionClass = (jclass) env->NewGlobalRef(criuRestoreExceptionClass);
 
-	vm->criuRestoreExceptionInit = (*env)->GetMethodID(env, criuRestoreExceptionClass, "<init>", "(Ljava/lang/String;I)V");
+	vm->criuRestoreExceptionInit = env->GetMethodID(criuRestoreExceptionClass, "<init>", "(Ljava/lang/String;I)V");
 	Assert_CRIU_notNull(vm->criuRestoreExceptionInit);
 
 	if (NULL == vm->criuJVMCheckpointExceptionClass
@@ -163,7 +166,7 @@ getNativeString(J9VMThread *currentThread, j9object_t javaString, char **nativeS
 	requiredConvertedStringSize += 1;
 
 	if (requiredConvertedStringSize > nativeStringBufSize) {
-		localNativeString = j9mem_allocate_memory(requiredConvertedStringSize, OMRMEM_CATEGORY_VM);
+		localNativeString = (char*) j9mem_allocate_memory(requiredConvertedStringSize, OMRMEM_CATEGORY_VM);
 		if (NULL == localNativeString) {
 			res = J9_NATIVE_STRING_OUT_OF_MEMORY;
 			goto free;
@@ -210,10 +213,9 @@ toggleSuspendOnJavaThreads(J9VMThread *currentThread, BOOLEAN suspend)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	UDATA javaThreads = J9THREAD_CATEGORY_RESOURCE_MONITOR_THREAD | J9THREAD_CATEGORY_APPLICATION_THREAD;
+	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 
 	Assert_CRIU_true(J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState);
-
-	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 
 	while (NULL != walkThread) {
 		if (J9_ARE_ANY_BITS_SET(javaThreads, omrthread_get_category(walkThread->osThread))
@@ -437,7 +439,7 @@ freeDir:
 	 */
 	if ((NULL != currentExceptionClass) && (NULL == currentThread->currentException)) {
 		msgCharLength = j9str_printf(PORTLIB, NULL, 0, nlsMsgFormat, systemReturnCode);
-		exceptionMsg = j9mem_allocate_memory(msgCharLength, J9MEM_CATEGORY_VM);
+		exceptionMsg = (char*) j9mem_allocate_memory(msgCharLength, J9MEM_CATEGORY_VM);
 
 		j9str_printf(PORTLIB, exceptionMsg, msgCharLength, nlsMsgFormat, systemReturnCode);
 
@@ -449,12 +451,12 @@ freeDir:
 		} else {
 			init = vm->criuRestoreExceptionInit;
 		}
-		jstring jExceptionMsg = (*env)->NewStringUTF(env, exceptionMsg);
+		jstring jExceptionMsg = env->NewStringUTF(exceptionMsg);
 
-		if (JNI_FALSE == (*env)->ExceptionCheck(env)) {
-			jobject exception = (*env)->NewObject(env, currentExceptionClass, init, jExceptionMsg, (jint)systemReturnCode);
+		if (JNI_FALSE == env->ExceptionCheck()) {
+			jobject exception = env->NewObject(currentExceptionClass, init, jExceptionMsg, (jint)systemReturnCode);
 			if (NULL != exception) {
-				(*env)->Throw(env, (jthrowable)exception);
+				env->Throw((jthrowable)exception);
 			}
 		}
 
@@ -463,3 +465,5 @@ freeDir:
 		}
 	}
 }
+
+} /* extern "C" */

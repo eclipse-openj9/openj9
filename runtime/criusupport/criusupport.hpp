@@ -26,6 +26,8 @@
 #include <jni.h>
 #include "j9.h"
 
+extern "C" {
+
 jboolean JNICALL
 Java_org_eclipse_openj9_criu_CRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused);
 
@@ -34,5 +36,7 @@ Java_org_eclipse_openj9_criu_CRIUSupport_isCheckpointAllowed(JNIEnv *env, jclass
 
 void JNICALL
 Java_org_eclipse_openj9_criu_CRIUSupport_checkpointJVMImpl(JNIEnv *env, jclass unused, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile, jboolean fileLocks, jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory);
+
+} /* extern "C" */
 
 #endif
