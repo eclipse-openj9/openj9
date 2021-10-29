@@ -371,6 +371,10 @@ public final class CRIUSupport {
 
 	@SuppressWarnings("restriction")
 	private void registerRestoreEnvVariables() {
+		if (this.envFile == null) {
+			return;
+		}
+
 		J9InternalCheckpointHookAPI.registerPostRestoreHook(RESTORE_ENVIRONMENT_VARIABLES_PRIORITY,
 				"Restore environment variables via env file: " + envFile, () -> { //$NON-NLS-1$
 					if (!Files.exists(this.envFile)) {
