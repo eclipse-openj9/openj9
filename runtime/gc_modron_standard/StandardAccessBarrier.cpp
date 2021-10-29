@@ -147,7 +147,7 @@ MM_StandardAccessBarrier::preObjectStoreImpl(J9VMThread *vmThread, J9Object *des
 {
 	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 
-	if (isSATBBarrierActive(env)) {
+	if (isSATBBarrierActive()) {
 		if (NULL != destObject) {
 			if (isDoubleBarrierActiveOnThread(vmThread)) {
 				rememberObjectToRescan(env, value);
@@ -170,7 +170,7 @@ MM_StandardAccessBarrier::preObjectStoreImpl(J9VMThread *vmThread, J9Object **de
 {
 	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 
-	if (isSATBBarrierActive(env)) {
+	if (isSATBBarrierActive()) {
 		if (isDoubleBarrierActiveOnThread(vmThread)) {
 			rememberObjectToRescan(env, value);
 		}
