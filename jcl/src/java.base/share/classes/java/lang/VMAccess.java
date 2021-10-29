@@ -34,7 +34,6 @@ import sun.reflect.ConstantPool;
 
 
 import com.ibm.oti.vm.*;
-import com.ibm.jit.JITHelpers;
 
 /**
  * Helper class to allow privileged access to classes
@@ -186,56 +185,26 @@ final class VMAccess implements VMLangAccess {
 	/*[ENDIF]*/
 
 	/**
-	 * Returns an InternalConstantPool object.
-	 *
-	 * @param addr - the native addr of the J9ConstantPool
-	 * @return An InternalConstantPool reference object
-	 */
+	 * Returns a InternalRamClass object.
+	 * 
+	 * @param addr - the native addr of the J9Class
+	 * @return A InternalRamClass reference object
+	 */ 
 	@Override
-	public Object createInternalConstantPool(long addr) {
-		return new InternalConstantPool(addr);
+	public Object createInternalRamClass(long addr) {
+		return new InternalRamClass(addr);
 	}
-
+	
 	/**
 	 * Returns a ConstantPool object
-	 * @param internalConstantPool An object ref to a j9constantpool
+	 * @param internalRamClass An object ref to a j9class
 	 * @return ConstantPool instance
 	 */
 	@Override
-	public ConstantPool getConstantPool(Object internalConstantPool) {
-		return Access.getConstantPool(internalConstantPool);
+	public ConstantPool getConstantPool(Object internalRamClass) {
+		return Access.getConstantPool(internalRamClass);
 	}
-
-	/**
-	 * Returns an InternalConstantPool object from a J9Class address. The ConstantPool
-	 * natives expect an InternalConstantPool as the constantPoolOop parameter.
-	 *
-	 * @param j9class the native address of the J9Class
-	 * @return InternalConstantPool a wrapper for a j9constantpool
-	 */
-	public Object getInternalConstantPoolFromJ9Class(long j9class) {
-		long j9constantpool = VM.getJ9ConstantPoolFromJ9Class(j9class);
-		return createInternalConstantPool(j9constantpool);
-	}
-
-	/**
-	 * Returns an InternalConstantPool object from a Class. The ConstantPool
-	 * natives expect an InternalConstantPool as the constantPoolOop parameter.
-	 *
-	 * @param clazz the Class to fetch the constant pool from
-	 * @return an InternalConstantPool wrapper for a j9constantpool
-	 */
-	public Object getInternalConstantPoolFromClass(Class clazz) {
-		JITHelpers helpers = JITHelpers.getHelpers();
-		long j9class;
-		if (helpers.is32Bit()) {
-			j9class = helpers.getJ9ClassFromClass32(clazz);
-		} else {
-			j9class = helpers.getJ9ClassFromClass64(clazz);
-		}
-		return getInternalConstantPoolFromJ9Class(j9class);
-	}
-
+	
 	/*[IF Sidecar19-SE]*/
 	@Override
 	public void addPackageToList(java.lang.Class<?> newClass, ClassLoader loader) {

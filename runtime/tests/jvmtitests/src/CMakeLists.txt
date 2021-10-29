@@ -150,7 +150,6 @@ j9vm_add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/redefineClasses/rc019a.c
 	com/ibm/jvmti/tests/redefineClasses/rc019b.c
 	com/ibm/jvmti/tests/redefineClasses/rc020.c
-	com/ibm/jvmti/tests/redefineClasses/rc021.c
 	com/ibm/jvmti/tests/redefineClasses/rtc003.c
 
 	com/ibm/jvmti/tests/registerNativesWithRetransformation/rnwr001.c
