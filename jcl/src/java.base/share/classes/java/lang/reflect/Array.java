@@ -2,7 +2,7 @@
 package java.lang.reflect;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -345,7 +345,7 @@ public static Object newInstance(Class<?> componentType, int... dimensions) thro
 	
 	for (int i = 0; i < length; i++) {
 		if (dimensions[i] < 0) {
-			throw new NegativeArraySizeException();
+			throw new NegativeArraySizeException(String.valueOf(dimensions[i]));
 		} else {
 			reversed[length - i - 1] = dimensions[i];
 		}
@@ -374,7 +374,7 @@ public static Object newInstance(Class<?> componentType, int size) throws Negati
 		throw new NullPointerException();
 	}
 	if (size < 0) { 
-		throw new NegativeArraySizeException();
+		throw new NegativeArraySizeException(String.valueOf(size));
 	}
 	if (componentType == Void.TYPE) {
 		throw new IllegalArgumentException();

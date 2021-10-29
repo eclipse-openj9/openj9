@@ -730,6 +730,14 @@ setClassLoadingConstraintError(J9VMThread * currentThread, J9ClassLoader * initi
 void
 setClassCastException(J9VMThread *currentThread, J9Class * instanceClass, J9Class * castClass);
 
+/**
+ * @brief
+ * @param *currentThread
+ * @param size
+ * @return void
+ */
+void
+setNegativeArraySizeException(J9VMThread *currentThread, I_32 size);
 
 /**
 * @brief
@@ -1172,6 +1180,16 @@ gpCheckSetCurrentExceptionNLS(J9VMThread* env, UDATA exceptionNumber, U_32 modul
 */
 void JNICALL
 gpCheckSetNativeOutOfMemoryError(J9VMThread* env, U_32 moduleName, U_32 messageNumber);
+
+
+/**
+* @brief
+* @param env
+* @param size
+* @return void
+*/
+void JNICALL
+gpCheckSetNegativeArraySizeException(J9VMThread* env, I_32 size);
 
 
 /**

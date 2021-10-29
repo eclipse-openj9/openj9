@@ -7739,6 +7739,7 @@ done:
 		U_8 arrayType = _pc[1];
 		I_32 size = *(I_32*)_sp;
 		if (J9_UNEXPECTED(size < 0)) {
+			_currentThread->tempSlot = size;
 			rc = THROW_NEGATIVE_ARRAY_SIZE;
 		} else {
 			J9Class *arrayClass = (&(_vm->booleanArrayClass))[arrayType - 4];
@@ -7771,6 +7772,7 @@ retry:
 		J9Class* volatile resolvedClass = ramCPEntry->value;
 		I_32 size = *(I_32*)_sp;
 		if (J9_UNEXPECTED(size < 0)) {
+			_currentThread->tempSlot = size;
 			rc = THROW_NEGATIVE_ARRAY_SIZE;
 			goto done;
 		}
@@ -10441,7 +10443,7 @@ incompatibleClassChange:
 negativeArraySize:
 	updateVMStruct(REGISTER_ARGS);
 	prepareForExceptionThrow(_currentThread);
-	setCurrentExceptionUTF(_currentThread, J9VMCONSTANTPOOL_JAVALANGNEGATIVEARRAYSIZEEXCEPTION, NULL);
+	setNegativeArraySizeException(_currentThread, (I_32) _currentThread->tempSlot);
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 

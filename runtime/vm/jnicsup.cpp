@@ -88,6 +88,7 @@ static jobject JNICALL gpCheckToReflectedMethod (JNIEnv * env, jclass clazz, jme
 #endif /* !INTERP_MINIMAL_JNI */
 
 static UDATA gpProtectedSetNativeOutOfMemoryError(void * entryArg);
+static UDATA gpProtectedSetNegativeArraySizeException(void * entryArg);
 static UDATA gpProtectedSetHeapOutOfMemoryError(void * entryArg);
 static UDATA gpProtectedSetCurrentExceptionNLS (void * entryArg);
 static UDATA gpProtectedRunCallInMethod (void *entryArg);
@@ -1223,6 +1224,26 @@ void JNICALL gpCheckSetNativeOutOfMemoryError(J9VMThread* env, U_32 moduleName, 
 	}
 }
 
+static UDATA
+gpProtectedSetNegativeArraySizeException(void * entryArg)
+{
+	J9RedirectedNegativeArraySizeExceptionArgs * args = (J9RedirectedNegativeArraySizeExceptionArgs *) entryArg;
+	setNegativeArraySizeException(args->env, args->size);
+	return 0;
+}
+
+void JNICALL gpCheckSetNegativeArraySizeException(J9VMThread* env, I_32 size)
+{
+	/* Check if already protected or -Xrs is set and short-circuit the path through gpProtectAndRun */
+	if ((((J9VMThread *) env)->gpProtected) || (J9_ARE_ALL_BITS_SET(((J9VMThread *) env)->javaVM->sigFlags, J9_SIG_XRS_SYNC))) {
+		setNegativeArraySizeException(env, size);
+	} else {
+		J9RedirectedNegativeArraySizeExceptionArgs args;
+		args.env = env;
+		args.size = size;
+		gpProtectAndRun(gpProtectedSetNegativeArraySizeException, (JNIEnv*)env, &args);
+	}
+}
 
 static UDATA
 gpProtectedSetHeapOutOfMemoryError(void * entryArg)
@@ -1984,7 +2005,7 @@ newString(JNIEnv *env, const jchar* uchars, jsize len)
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 
 	if (len < 0) {
-		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNEGATIVEARRAYSIZEEXCEPTION, NULL);
+		setNegativeArraySizeException(vmThread, len);
 	} else {
 		j9object_t stringObject = vmThread->javaVM->memoryManagerFunctions->j9gc_createJavaLangString(vmThread, (U_8 *) uchars, ((UDATA)len) * 2, J9_STR_UNICODE);
 
