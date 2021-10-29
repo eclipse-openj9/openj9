@@ -3,6 +3,8 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
+/* Source is modified from the original zlib version in order to resolve https://github.com/madler/zlib/issues/245 */
+
 /*
  * Change history:
  *
@@ -228,6 +230,8 @@ int stream_size;
     state->strm = strm;
     state->window = Z_NULL;
     state->mode = HEAD;     /* to pass state test in inflateReset2() */
+    /* Source is modified from the original zlib version in order to resolve https://github.com/madler/zlib/issues/245 */
+    state->check = 0;
     ret = inflateReset2(strm, windowBits);
     if (ret != Z_OK) {
         ZFREE(strm, state);
