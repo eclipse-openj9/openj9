@@ -129,38 +129,20 @@ public interface VMLangAccess {
 	/*[ENDIF]*/
 	
 	/**
-	 * Returns an InternalConstantPool object.
-	 *
-	 * @param addr - the native addr of the J9ConstantPool
-	 * @return An InternalConstantPool object
-	 */
-	public Object createInternalConstantPool(long addr);
-
+	 * Returns an InternalRamClass object.
+	 * 
+	 * @param addr - the native addr of the J9Class
+	 * @return An InternalRamClass object
+	 */ 
+	public Object createInternalRamClass(long addr);
+	
 	/**
 	 * Returns a ConstantPool object
 	 * 
-	 * @param internalConstantPool An object ref to an InternalConstantPool
+	 * @param internalRamClass An object ref to an internalRamClass
 	 * @return ConstantPool instance
 	 */
-	public ConstantPool getConstantPool(Object internalConstantPool);
-
-	/**
-	 * Returns an InternalConstantPool object from a J9Class address. The ConstantPool
-	 * natives expect an InternalConstantPool as the constantPoolOop parameter.
-	 *
-	 * @param j9class the native address of the J9Class
-	 * @return InternalConstantPool a wrapper for a j9constantpool
-	 */
-	public Object getInternalConstantPoolFromJ9Class(long j9class);
-
-	/**
-	 * Returns an InternalConstantPool object from a Class. The ConstantPool
-	 * natives expect an InternalConstantPool as the constantPoolOop parameter.
-	 *
-	 * @param clazz the Class to fetch the constant pool from
-	 * @return an InternalConstantPool wrapper for a j9constantpool
-	 */
-	public Object getInternalConstantPoolFromClass(Class clazz);
+	public ConstantPool getConstantPool(Object internalRamClass);
 
 	/*[IF Sidecar19-SE]*/
 	/**
