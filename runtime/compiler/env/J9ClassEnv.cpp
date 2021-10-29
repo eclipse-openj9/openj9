@@ -951,3 +951,29 @@ J9::ClassEnv::isClassRefValueType(TR::Compilation *comp, TR_OpaqueClassBlock *cp
       return vm->internalVMFunctions->isClassRefQtype(j9class, cpIndex);
       }
    }
+
+char *
+J9::ClassEnv::classNameToSignature(const char *name, int32_t &len, TR::Compilation *comp, TR_AllocationKind allocKind, TR_OpaqueClassBlock *clazz)
+   {
+   char *sig;
+
+   if (name[0] == '[')
+      {
+      sig = (char *)comp->trMemory()->allocateMemory(len+1, allocKind);
+      memcpy(sig,name,len);
+      }
+   else
+      {
+      len += 2;
+      sig = (char *)comp->trMemory()->allocateMemory(len+1, allocKind);
+      if (clazz && TR::Compiler->om.areValueTypesEnabled() && self()->isValueTypeClass(clazz))
+         sig[0] = 'Q';
+      else
+         sig[0] = 'L';
+      memcpy(sig+1,name,len-2);
+      sig[len-1]=';';
+      }
+
+   sig[len] = '\0';
+   return sig;
+   }
