@@ -73,5 +73,4 @@
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getNativeThreadIdsImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_findNativeThreadIDImpl" />
 	<export name="Java_com_ibm_oti_vm_VM_markCurrentThreadAsSystemImpl" />
-	<export name="Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class" />
 </exports>

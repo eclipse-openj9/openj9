@@ -3302,20 +3302,10 @@ private AnnotationCache getAnnotationCache() {
 		if (annotationsData == null) {
 			annotationCacheResult = new AnnotationCache(null, buildAnnotations(null));
 		} else {
-			long offset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((annotationsData.length * Unsafe.ARRAY_BYTE_INDEX_SCALE) - VM.FJ9OBJECT_SIZE);
-			long ramCPAddr = 0;
-			if (VM.FJ9OBJECT_SIZE == 4) {
-				/* Compressed object refs */
-				ramCPAddr = unsafe.getInt(annotationsData, offset);
-			} else {
-				ramCPAddr = unsafe.getLong(annotationsData, offset);
-			}
-			Object internalCP = VM.getVMLangAccess().createInternalConstantPool(ramCPAddr);
-
 			Annotation[] directAnnotations = sun.reflect.annotation.AnnotationParser.toArray(
 						sun.reflect.annotation.AnnotationParser.parseAnnotations(
 								annotationsData,
-								getConstantPool(internalCP),
+								getConstantPool(),
 								this));
 			
 			LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap = new LinkedHashMap<>(directAnnotations.length * 4 / 3);
@@ -4897,8 +4887,8 @@ Object setMethodHandleCache(Object cache) {
 	return result;
 }
 
-ConstantPool getConstantPool(Object internalCP) {
-	return VM.getVMLangAccess().getConstantPool(internalCP);
+ConstantPool getConstantPool() {
+	return SharedSecrets.getJavaLangAccess().getConstantPool(this);
 }
 
 /*[IF Sidecar19-SE]*/

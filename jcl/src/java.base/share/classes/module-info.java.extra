@@ -43,6 +43,8 @@ exports jdk.internal.module to openj9.dtfj, openj9.dtfjview;
 uses com.ibm.sharedclasses.spi.SharedClassProvider;
 uses com.ibm.gpu.spi.GPUAssist.Provider;
 exports com.ibm.gpu.spi to openj9.gpu;
+/*[IF CRIU_SUPPORT]*/
 exports jdk.internal.misc to openj9.criu;
 opens jdk.internal.misc to openj9.criu;
 opens java.lang to openj9.criu;
+/*[ENDIF]*/
