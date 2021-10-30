@@ -2733,7 +2733,7 @@ TR_J9VMBase::maybeHighlyPolymorphic(TR::Compilation *comp, TR_ResolvedMethod *ca
       else
          {
          int32_t len = callee->classNameLength();
-         char *s = classNameToSignature(callee->classNameChars(), len, comp);
+         char *s = TR::Compiler->cls.classNameToSignature(callee->classNameChars(), len, comp);
          classOfMethod = getClassFromSignature(s, len, caller, true);
          }
       if (classOfMethod)
@@ -5359,7 +5359,7 @@ TR_J9VMBase::getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRe
    fprintf(stderr,"  (len is %d)\n",len);fflush(stderr);
    **/
 
-   char* classSignature = classNameToSignature((char*)u8ClassString, len, comp);
+   char* classSignature = TR::Compiler->cls.classNameToSignature((char*)u8ClassString, len, comp);
 
    /**
    fprintf(stderr,"classSignature is \n");
@@ -7820,7 +7820,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
             TR::SymbolReference * callerSymRef = callNode->getSymbolReference();
             TR_ResolvedMethod * owningMethod = callerSymRef->getOwningMethod(comp);
             int32_t len = owningMethod->classNameLength();
-            char * s = classNameToSignature(owningMethod->classNameChars(), len, comp);
+            char * s = TR::Compiler->cls.classNameToSignature(owningMethod->classNameChars(), len, comp);
             TR_OpaqueClassBlock * ReferenceClass = getClassFromSignature(s, len, owningMethod);
             // defect 143867, ReferenceClass == 0 and crashed later in findFieldInClass()
             if (!ReferenceClass)

@@ -1182,7 +1182,7 @@ TR::X86CallSite::X86CallSite(TR::Node *callNode, TR::Linkage *calleeLinkage)
       //
       TR::Method *interfaceMethod = getMethodSymbol()->getMethod();
       int32_t len = interfaceMethod->classNameLength();
-      char * s = classNameToSignature(interfaceMethod->classNameChars(), len, comp());
+      char * s = TR::Compiler->cls.classNameToSignature(interfaceMethod->classNameChars(), len, comp());
       _interfaceClassOfMethod = fej9->getClassFromSignature(s, len, getSymbolReference()->getOwningMethod(comp()));
       }
 

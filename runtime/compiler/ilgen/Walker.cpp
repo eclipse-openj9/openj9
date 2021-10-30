@@ -1825,7 +1825,7 @@ TR_J9ByteCodeIlGenerator::loadConstantValueIfPossible(TR::Node *topNode, uintptr
          classNameOfFieldOrStatic = symRef->getOwningMethod(comp())->classNameOfFieldOrStatic(symRef->getCPIndex(), len);
          if (classNameOfFieldOrStatic)
             {
-            classNameOfFieldOrStatic=classNameToSignature(classNameOfFieldOrStatic, len, comp());
+            classNameOfFieldOrStatic = TR::Compiler->cls.classNameToSignature(classNameOfFieldOrStatic, len, comp());
             TR_OpaqueClassBlock * curClass = fej9->getClassFromSignature(classNameOfFieldOrStatic, len, symRef->getOwningMethod(comp()));
             TR_OpaqueClassBlock * owningClass = comp()->getJittedMethodSymbol()->getResolvedMethod()->containingClass();
             if (owningClass == curClass)
@@ -4170,7 +4170,7 @@ break
     // Can't use recognized methods since it's not enabled on AOT
     //if (symbol->getRecognizedMethod() == TR::com_ibm_rmi_io_FastPathForCollocated_isVMDeepCopySupported)
     int32_t len = calledMethod->classNameLength();
-    char * s = classNameToSignature(calledMethod->classNameChars(), len, comp());
+    char * s = TR::Compiler->cls.classNameToSignature(calledMethod->classNameChars(), len, comp());
 
     if (strstr(s, "com/ibm/rmi/io/FastPathForCollocated") &&
         !strncmp(calledMethod->nameChars(), "isVMDeepCopySupported", calledMethod->nameLength()))
@@ -4228,7 +4228,7 @@ break
          performClassLookahead(_classInfo);
 
       int32_t len = calledMethod->classNameLength();
-      char * s = classNameToSignature(calledMethod->classNameChars(), len, comp());
+      char * s = TR::Compiler->cls.classNameToSignature(calledMethod->classNameChars(), len, comp());
 
       TR::Node * thisObject = invokedynamicReceiver ? invokedynamicReceiver : _stack->element(_stack->topIndex() - (numArgs-1));
       TR_PersistentFieldInfo * fieldInfo = _classInfo->getFieldInfo() ? _classInfo->getFieldInfo()->findFieldInfo(comp(), thisObject, false) : NULL;
@@ -5524,7 +5524,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
       classNameOfFieldOrStatic = symRef->getOwningMethod(comp())->classNameOfFieldOrStatic(symRef->getCPIndex(), len);
       if (classNameOfFieldOrStatic)
          {
-         classNameOfFieldOrStatic=classNameToSignature(classNameOfFieldOrStatic, len, comp());
+         classNameOfFieldOrStatic = TR::Compiler->cls.classNameToSignature(classNameOfFieldOrStatic, len, comp());
          TR_OpaqueClassBlock * curClass = fej9->getClassFromSignature(classNameOfFieldOrStatic, len, symRef->getOwningMethod(comp()));
          TR_OpaqueClassBlock * owningClass = comp()->getJittedMethodSymbol()->getResolvedMethod()->containingClass();
          if (owningClass == curClass)

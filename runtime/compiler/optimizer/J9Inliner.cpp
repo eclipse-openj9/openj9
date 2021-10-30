@@ -659,7 +659,7 @@ bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inl
    if (!_receiverClass)
       {
       int32_t len = _interfaceMethod->classNameLength();
-      char * s = classNameToSignature(_interfaceMethod->classNameChars(), len, comp());
+      char * s = TR::Compiler->cls.classNameToSignature(_interfaceMethod->classNameChars(), len, comp());
       _receiverClass = comp()->fej9()->getClassFromSignature(s, len, _callerResolvedMethod, true);
       }
 
@@ -690,7 +690,7 @@ bool TR_J9InterfaceCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inl
 TR_OpaqueClassBlock* TR_J9InterfaceCallSite::getClassFromMethod ()
    {
    int32_t len = _interfaceMethod->classNameLength();
-   char * s = classNameToSignature(_interfaceMethod->classNameChars(), len, comp());
+   char * s = TR::Compiler->cls.classNameToSignature(_interfaceMethod->classNameChars(), len, comp());
    return comp()->fej9()->getClassFromSignature(s, len, _callerResolvedMethod, true);
    }
 

@@ -267,7 +267,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
                        const char * s = TR::Compiler->cls.classNameChars(comp, classOfObject, len);
                        if (s && (s[0] != '['))
                           {
-                          s = classNameToSignature(s, len, comp);
+                          s = TR::Compiler->cls.classNameToSignature(s, len, comp);
                           }
                        else
                           {
@@ -278,7 +278,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
                              classOfObject = comp->fe()->getComponentClassFromArrayClass(classOfObject);
                              s = TR::Compiler->cls.classNameChars(comp, classOfObject, len);
                              }
-                          s = classNameToSignature(s, len, comp);
+                          s = TR::Compiler->cls.classNameToSignature(s, len, comp);
                           s = prependNumParensToSig(s, len, numParens);
                           }
 
@@ -298,7 +298,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
                len = 18;
                return "Ljava/lang/Object;";
                }
-            return classNameToSignature(sig, len, comp, allocKind);
+            return TR::Compiler->cls.classNameToSignature(sig, len, comp, allocKind);
             }
 
          if (_symbol->isConstString())

@@ -7064,7 +7064,7 @@ TR_ResolvedJ9Method::makeParameterList(TR::ResolvedMethodSymbol *methodSym)
       parmSymbol->setOrdinal(ordinal++);
 
       int32_t len = classNameLen; // len is passed by reference and changes during the call
-      char * s = classNameToSignature(className, len, methodSym->comp(), heapAlloc);
+      char * s = TR::Compiler->cls.classNameToSignature(className, len, methodSym->comp(), heapAlloc);
 
       la.add(parmSymbol);
       parmSymbol->setTypeSignature(s, len);

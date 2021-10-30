@@ -5309,7 +5309,7 @@ bool TR::CoarseningInterProceduralAnalyzer::analyzeNode(TR::Node *node, vcount_t
                 if (originalMethod)
                    {
                    classnameLength = originalMethod->classNameLength();
-                   className = classNameToSignature(originalMethod->classNameChars(), classnameLength, comp());
+                   className = TR::Compiler->cls.classNameToSignature(originalMethod->classNameChars(), classnameLength, comp());
                    }
                 }
 

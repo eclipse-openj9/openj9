@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -216,7 +216,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
       int32_t cpIndex = symRef->getCPIndex();
       TR::Method * originalMethod = methodSymbol->getMethod();
       int32_t len = originalMethod->classNameLength();
-      char *s = classNameToSignature(originalMethod->classNameChars(), len, comp());
+      char *s = TR::Compiler->cls.classNameToSignature(originalMethod->classNameChars(), len, comp());
       clazz = fe()->getClassFromSignature(s, len, owningMethod);
       if (!clazz)
          {
