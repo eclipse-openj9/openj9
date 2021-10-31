@@ -7920,7 +7920,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             options = TR::Options::getAOTCmdLineOptions();
          if (options->getVerboseOption(TR_VerboseCompileExclude))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_COMPFAIL, "%s cannot be translated", compilee->signature(p->trMemory()));
+            TR_VerboseLog::writeLineLocked(TR_Vlog_COMPFAIL, "%s j9m=%p cannot be translated compThreadID=%d",
+                                           compilee->signature(p->trMemory()), method, that->getCompThreadId());
             }
          Trc_JIT_noAttemptToJit(vmThread, compilee->signature(p->trMemory()));
 
@@ -10684,12 +10685,23 @@ TR::CompilationInfoPerThreadBase::processException(
       if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileEnd, TR_VerboseCompFailure))
          {
          uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
+         char compilationTypeString[15] = { 0 };
+         TR::snprintfNoTrunc(compilationTypeString, sizeof(compilationTypeString), "%s%s",
+            compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
+            compiler->isProfilingCompilation() ? "profiled " : "");
          TR_VerboseLog::writeLineLocked(
             TR_Vlog_COMPFAIL,
-            "%s time=%dus %s",
+            "(%s%s) %s Q_SZ=%d Q_SZI=%d QW=%d j9m=%p time=%dus %s compThreadID=%d",
+            compilationTypeString,
+            compiler->getHotnessName(compiler->getMethodHotness()),
             compiler->signature(),
+            _compInfo.getMethodQueueSize(),
+            _compInfo.getNumQueuedFirstTimeCompilations(),
+            _compInfo.getQueueWeight(),
+            _methodBeingCompiled->getMethodDetails().getMethod(),
             translationTime,
-            "Class chain persistence failure"
+            "Class chain persistence failure",
+            getCompThreadId()
             );
          }
       Trc_JIT_compilationFailed(vmThread, compiler->signature(), -1);
@@ -10700,12 +10712,23 @@ TR::CompilationInfoPerThreadBase::processException(
       if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseCompileEnd, TR_VerboseCompFailure))
          {
          uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
+         char compilationTypeString[15] = { 0 };
+         TR::snprintfNoTrunc(compilationTypeString, sizeof(compilationTypeString), "%s%s",
+            compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE() ? "AOT " : "",
+            compiler->isProfilingCompilation() ? "profiled " : "");
          // This assertion will only be generated in production, when softFailOnAssumes is set.
          TR_VerboseLog::writeLineLocked(
             TR_Vlog_COMPFAIL,
-            "Assertion Failure: %s time=%dus",
+            "(%s%s) %s Q_SZ=%d Q_SZI=%d QW=%d j9m=%p time=%dus Assertion Failure compThreadID=%d",
+            compilationTypeString,
+            compiler->getHotnessName(compiler->getMethodHotness()),
             compiler->signature(),
-            translationTime
+            _compInfo.getMethodQueueSize(),
+            _compInfo.getNumQueuedFirstTimeCompilations(),
+            _compInfo.getQueueWeight(),
+            _methodBeingCompiled->getMethodDetails().getMethod(),
+            translationTime,
+            getCompThreadId()
             );
          }
          Trc_JIT_compilationFailed(vmThread, compiler->signature(), -1);
@@ -10783,42 +10806,42 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
       if (_methodBeingCompiled->_compErrCode != compilationFailure)
          {
          if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && _methodBeingCompiled->_compErrCode == compilationInterrupted)
-            TR_VerboseLog::write(TR_Vlog_FAILURE, "Translating %s -- Interrupted because of %s", compiler->signature(), exceptionName);
+            {
+            TR_VerboseLog::write(TR_Vlog_FAILURE, "Translating %s j9m=%p time=%dus-- Interrupted because of %s",
+                                 compiler->signature(), _methodBeingCompiled->getMethodDetails().getMethod(), translationTime, exceptionName);
+            }
          else
             {
-            bool incomplete;
-            uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incomplete);
-            if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE)
+            TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s Q_SZ=%d Q_SZI=%d QW=%d j9m=%p time=%dus %s memLimit=%zu KB",
+                                 compilationTypeString,
+                                 hotnessString,
+                                 compiler->signature(),
+                                 _compInfo.getMethodQueueSize(),
+                                 _compInfo.getNumQueuedFirstTimeCompilations(),
+                                 _compInfo.getQueueWeight(),
+                                 _methodBeingCompiled->getMethodDetails().getMethod(),
+                                 translationTime,
+                                 compilationErrorNames[_methodBeingCompiled->_compErrCode],
+                                 scratchSegmentProvider.allocationLimit() >> 10);
+            if (TR::Options::getVerboseOption(TR_VerbosePerformance))
                {
-               TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s time=%dus %s memLimit=%zu KB freePhysicalMemory=%llu MB",
-                                           compilationTypeString,
-                                           hotnessString,
-                                           compiler->signature(),
-                                           translationTime,
-                                           compilationErrorNames[_methodBeingCompiled->_compErrCode],
-                                           scratchSegmentProvider.allocationLimit() >> 10,
-                                           freePhysicalMemorySizeB >> 20);
-               }
-            else
-               {
-               TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s time=%dus %s memLimit=%zu KB",
-                                           compilationTypeString,
-                                           hotnessString,
-                                           compiler->signature(),
-                                           translationTime,
-                                           compilationErrorNames[_methodBeingCompiled->_compErrCode],
-                                           scratchSegmentProvider.allocationLimit() >> 10);
+               bool incomplete;
+               uint64_t freePhysicalMemorySizeB = _compInfo.computeAndCacheFreePhysicalMemory(incomplete);
+               if (freePhysicalMemorySizeB != OMRPORT_MEMINFO_NOT_AVAILABLE)
+                  TR_VerboseLog::write(" freePhysicalMemory=%llu MB", freePhysicalMemorySizeB >> 20);
                }
             }
          }
       else
          {
-         uintptr_t translationTime = j9time_usec_clock() - getTimeWhenCompStarted(); //get the time it took to fail the compilation
-         TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s compThreadID=%d time=%dus <TRANSLATION FAILURE: %s>",
+         TR_VerboseLog::write(TR_Vlog_COMPFAIL, "(%s%s) %s Q_SZ=%d Q_SZI=%d QW=%d j9m=%p time=%dus <TRANSLATION FAILURE: %s>",
                                         compilationTypeString,
                                         hotnessString,
                                         compiler->signature(),
-                                        compiler->getCompThreadID(),
+                                        _compInfo.getMethodQueueSize(),
+                                        _compInfo.getNumQueuedFirstTimeCompilations(),
+                                        _compInfo.getQueueWeight(),
+                                        _methodBeingCompiled->getMethodDetails().getMethod(),
                                         translationTime,
                                         exceptionName);
          }
@@ -10830,8 +10853,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
             static_cast<unsigned long long>(scratchSegmentProvider.regionBytesAllocated())/1024,
             static_cast<unsigned long long>(scratchSegmentProvider.systemBytesAllocated())/1024);
          }
-
-      TR_VerboseLog::writeLine("");
+      TR_VerboseLog::writeLine(" compThreadID=%d", compiler->getCompThreadID());
       TR_VerboseLog::vlogRelease();
       }
 
