@@ -76,18 +76,18 @@ final class MethodHandleResolver {
 	
 	/**
 	 * Get the class name from a constant pool class element, which is located
-	 * at the specified <i>index</i> in <i>clazz</i>'s constant pool.
+	 * at the specified <i>index</i> in <i>internalConstantPool</i>.
 	 * 
-	 * @param   an instance of class - its constant pool is accessed
-	 * @param   the constant pool index
+	 * @param   internalConstantPool the constant pool as an InternalConstantPool object
+	 * @param   index the constant pool index
 	 * 
 	 * @return  instance of String which contains the class name or NULL in
 	 *          case of error
 	 * 
-	 * @throws  NullPointerException if <i>clazz</i> is null
+	 * @throws  NullPointerException if <i>internalConstantPool</i> is null
 	 * @throws  IllegalArgumentException if <i>index</i> has wrong constant pool type
 	 */
-	private static final native String getCPClassNameAt(Class<?> clazz, int index);
+	private static final native String getCPClassNameAt(Object internalConstantPool, int index);
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 	/*
@@ -566,7 +566,7 @@ final class MethodHandleResolver {
 		case 1:
 			cpEntry = cp.getClassAt(index);
 			if (cpEntry == null) {
-				throw throwNoClassDefFoundError(classObject, index);
+				throw throwNoClassDefFoundError(internalConstantPool, index);
 			}
 			break;
 		case 2:
@@ -629,19 +629,19 @@ final class MethodHandleResolver {
 	
 	/**
 	 * Retrieve the class name of the constant pool class element located at the specified
-	 * index in clazz's constant pool. Then, throw a NoClassDefFoundError with the cause
+	 * index in internalConstantPool. Then, throw a NoClassDefFoundError with the cause
 	 * set as ClassNotFoundException. The message of NoClassDefFoundError and 
 	 * ClassNotFoundException contains the name of the class, which couldn't be found.
 	 * 
-	 * @param   an instance of Class - its constant pool is accessed
-	 * @param   integer value of the constant pool index
+	 * @param   internalConstantPool the constant pool as an InternalConstantPool object
+	 * @param   index the integer value of the constant pool index
 	 * 
 	 * @return  Throwable to prevent any fall through case
 	 * 
 	 * @throws  NoClassDefFoundError with the cause set as ClassNotFoundException
 	 */
-	private static final Throwable throwNoClassDefFoundError(Class<?> clazz, int index) {
-		String className = getCPClassNameAt(clazz, index);
+	private static final Throwable throwNoClassDefFoundError(Object internalConstantPool, int index) {
+		String className = getCPClassNameAt(internalConstantPool, index);
 		NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(className);
 		noClassDefFoundError.initCause(new ClassNotFoundException(className));
 		throw noClassDefFoundError;	
