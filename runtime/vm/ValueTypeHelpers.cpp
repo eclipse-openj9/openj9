@@ -175,9 +175,12 @@ getFlattenableFieldOffset(J9Class *fieldOwner, J9ROMFieldShape *field)
 BOOLEAN
 isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field)
 {
-        Assert_VM_notNull(fieldOwner);
-        Assert_VM_notNull(field);
-        BOOLEAN fieldFlattened = J9_IS_FIELD_FLATTENED(getFlattenableFieldType(fieldOwner, field), field);
+        BOOLEAN fieldFlattened = FALSE;
+        if (NULL != fieldOwner->flattenedClassCache) {
+                Assert_VM_notNull(fieldOwner);
+                Assert_VM_notNull(field);
+                fieldFlattened = J9_IS_FIELD_FLATTENED(getFlattenableFieldType(fieldOwner, field), field);
+        }
 
         return fieldFlattened;
 }
