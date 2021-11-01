@@ -185,7 +185,7 @@ public:
 
    struct ClassInfo
       {
-      ClassInfo();
+      ClassInfo(TR_PersistentMemory *persistentMemory);
       void freeClassInfo(TR_PersistentMemory *persistentMemory); // this method is in place of a destructor. We can't have destructor
       // because it would be called after inserting ClassInfo into the ROM map, freeing romClass
 
@@ -224,7 +224,6 @@ public:
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
       PersistentUnorderedSet<J9ClassLoader *> _referencingClassLoaders;
       }; // struct ClassInfo
-
 
    /**
       @class J9MethodInfo

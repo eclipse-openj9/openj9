@@ -382,7 +382,7 @@ JITServerHelpers::packROMClass(J9ROMClass *romClass, TR_Memory *trMemory, size_t
 // insertIntoOOSequenceEntryList needs to be executed with sequencingMonitor in hand.
 // This method belongs to ClientSessionData, but is temporarily moved here to be able
 // to push the ClientSessionData related code as a standalone piece.
-void 
+void
 JITServerHelpers::insertIntoOOSequenceEntryList(ClientSessionData *clientData, TR_MethodToBeCompiled *entry)
    {
    uint32_t seqNo = ((TR::CompilationInfoPerThreadRemote*)(entry->_compInfoPT))->getSeqNo();
@@ -403,11 +403,11 @@ JITServerHelpers::insertIntoOOSequenceEntryList(ClientSessionData *clientData, T
 void
 JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
-   unsigned totalMsgCount = 0;	   
+   unsigned totalMsgCount = 0;
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    j9tty_printf(PORTLIB, "JITServer Message Type Statistics:\n");
    j9tty_printf(PORTLIB, "Type# #called");
-#ifdef MESSAGE_SIZE_STATS  
+#ifdef MESSAGE_SIZE_STATS
    j9tty_printf(PORTLIB, "\t\tMax\t\tMin\t\tMean\t\tStdDev\t\tSum");
 #endif // defined(MESSAGE_SIZE_STATS)
    j9tty_printf(PORTLIB, "\t\tTypeName\n");
@@ -418,8 +418,8 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::Compilation
          if (JITServerHelpers::serverMsgTypeCount[i] > 0)
             {
             j9tty_printf(PORTLIB, "#%04d %7u", i, JITServerHelpers::serverMsgTypeCount[i]);
-#ifdef MESSAGE_SIZE_STATS            
-            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(), 
+#ifdef MESSAGE_SIZE_STATS
+            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(),
                      JITServer::CommunicationStream::collectMsgStat[i].minVal(), JITServer::CommunicationStream::collectMsgStat[i].mean(),
                      JITServer::CommunicationStream::collectMsgStat[i].stddev(), JITServer::CommunicationStream::collectMsgStat[i].sum());
 #endif // defined(MESSAGE_SIZE_STATS)
@@ -434,13 +434,13 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::Compilation
       {
       // to print in server, run ./jitserver -Xdump:jit:events=user
       // then kill -3 <pidof jitserver>
-#ifdef MESSAGE_SIZE_STATS  
+#ifdef MESSAGE_SIZE_STATS
       for (int i = 0; i < JITServer::MessageType_MAXTYPE; ++i)
          {
          if (JITServer::CommunicationStream::collectMsgStat[i].samples() > 0)
-            { 
-            j9tty_printf(PORTLIB, "#%04d %7u", i, JITServer::CommunicationStream::collectMsgStat[i].samples());            
-            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(), 
+            {
+            j9tty_printf(PORTLIB, "#%04d %7u", i, JITServer::CommunicationStream::collectMsgStat[i].samples());
+            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(),
                      JITServer::CommunicationStream::collectMsgStat[i].minVal(), JITServer::CommunicationStream::collectMsgStat[i].mean(),
                      JITServer::CommunicationStream::collectMsgStat[i].stddev(), JITServer::CommunicationStream::collectMsgStat[i].sum());
 
@@ -506,79 +506,86 @@ JITServerHelpers::printJITServerCacheStats(J9JITConfig *jitConfig, TR::Compilati
 void
 JITServerHelpers::freeRemoteROMClass(J9ROMClass *romClass, TR_PersistentMemory *persistentMemory)
    {
-   if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache()) 
-      cache->release(romClass); 
-   else 
+   if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
+      cache->release(romClass);
+   else
       persistentMemory->freePersistentMemory(romClass);
    }
 
 /*
  * `cacheRemoteROMClassOrFreeIt` takes a romClass data structure allocated with
- * persistent memory and attempts to cache it in the per-client data session. 
- * If caching suceeds, the method returns a pointer to the romClass received as parameter. 
- * If the caching fails, the memory for romClass received as parameter is freed 
+ * persistent memory and attempts to cache it in the per-client data session.
+ * If caching suceeds, the method returns a pointer to the romClass received as parameter.
+ * If the caching fails, the memory for romClass received as parameter is freed
  * and the method returns a pointer to the romClass from the cache
  */
 J9ROMClass *
-JITServerHelpers::cacheRemoteROMClassOrFreeIt(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass,
-                                              ClassInfoTuple *classInfoTuple, TR_PersistentMemory *persistentMemory)
+JITServerHelpers::cacheRemoteROMClassOrFreeIt(ClientSessionData *clientSessionData, J9Class *clazz,
+                                              J9ROMClass *romClass, const ClassInfoTuple &classInfoTuple)
    {
-   ClientSessionData::ClassInfo classInfo;
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
-   auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
+   auto it = clientSessionData->getROMClassMap().find(clazz);
    if (it == clientSessionData->getROMClassMap().end())
       {
-      JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple, classInfo);
+      JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple);
       return romClass;
       }
    // romClass is already present in the cache; must free the duplicate
-   JITServerHelpers::freeRemoteROMClass(romClass, persistentMemory);
+   JITServerHelpers::freeRemoteROMClass(romClass, clientSessionData->persistentMemory());
    // Return the cached romClass
    return it->second._romClass;
    }
 
-void
-JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfoStruct)
+ClientSessionData::ClassInfo &
+JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz,
+                                      J9ROMClass *romClass, const ClassInfoTuple &classInfoTuple)
    {
-   ClassInfoTuple &classInfo = *classInfoTuple;
+   ClientSessionData::ClassInfo classInfoStruct(clientSessionData->persistentMemory());
 
    classInfoStruct._romClass = romClass;
-   classInfoStruct._methodsOfClass = std::get<1>(classInfo);
-   J9Method *methods = classInfoStruct._methodsOfClass;
-   classInfoStruct._baseComponentClass = std::get<2>(classInfo);
-   classInfoStruct._numDimensions = std::get<3>(classInfo);
-   classInfoStruct._parentClass = std::get<4>(classInfo);
-   auto &tmpInterfaces = std::get<5>(classInfo);
-   classInfoStruct._interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
-      (tmpInterfaces.begin(), tmpInterfaces.end(),
-       PersistentVector<TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
-   auto &methodTracingInfo = std::get<6>(classInfo);
-   classInfoStruct._classHasFinalFields = std::get<7>(classInfo);
-   classInfoStruct._classDepthAndFlags = std::get<8>(classInfo);
-   classInfoStruct._classInitialized = std::get<9>(classInfo);
-   classInfoStruct._byteOffsetToLockword = std::get<10>(classInfo);
-   classInfoStruct._leafComponentClass = std::get<11>(classInfo);
-   classInfoStruct._classLoader = std::get<12>(classInfo);
-   classInfoStruct._hostClass = std::get<13>(classInfo);
-   classInfoStruct._componentClass = std::get<14>(classInfo);
-   classInfoStruct._arrayClass = std::get<15>(classInfo);
-   classInfoStruct._totalInstanceSize = std::get<16>(classInfo);
-   classInfoStruct._remoteRomClass = std::get<17>(classInfo);
-   classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfo);
-   classInfoStruct._classFlags = std::get<19>(classInfo);
-   classInfoStruct._classChainOffsetOfIdentifyingLoaderForClazz = std::get<20>(classInfo);
-   clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
+   J9Method *methods = std::get<1>(classInfoTuple);
+   classInfoStruct._methodsOfClass = methods;
+   classInfoStruct._baseComponentClass = std::get<2>(classInfoTuple);
+   classInfoStruct._numDimensions = std::get<3>(classInfoTuple);
+   classInfoStruct._parentClass = std::get<4>(classInfoTuple);
+   auto &tmpInterfaces = std::get<5>(classInfoTuple);
+   auto &persistentAllocator = clientSessionData->persistentMemory()->_persistentAllocator.get();
+   classInfoStruct._interfaces = new (persistentAllocator) PersistentVector<TR_OpaqueClassBlock *>(
+      tmpInterfaces.begin(), tmpInterfaces.end(),
+      PersistentVector<TR_OpaqueClassBlock *>::allocator_type(persistentAllocator)
+   );
+   auto &methodTracingInfo = std::get<6>(classInfoTuple);
+   classInfoStruct._classHasFinalFields = std::get<7>(classInfoTuple);
+   classInfoStruct._classDepthAndFlags = std::get<8>(classInfoTuple);
+   classInfoStruct._classInitialized = std::get<9>(classInfoTuple);
+   classInfoStruct._byteOffsetToLockword = std::get<10>(classInfoTuple);
+   classInfoStruct._leafComponentClass = std::get<11>(classInfoTuple);
+   classInfoStruct._classLoader = std::get<12>(classInfoTuple);
+   classInfoStruct._hostClass = std::get<13>(classInfoTuple);
+   classInfoStruct._componentClass = std::get<14>(classInfoTuple);
+   classInfoStruct._arrayClass = std::get<15>(classInfoTuple);
+   classInfoStruct._totalInstanceSize = std::get<16>(classInfoTuple);
+   classInfoStruct._remoteRomClass = std::get<17>(classInfoTuple);
+   classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfoTuple);
+   classInfoStruct._classFlags = std::get<19>(classInfoTuple);
+   classInfoStruct._classChainOffsetOfIdentifyingLoaderForClazz = std::get<20>(classInfoTuple);
+   auto &origROMMethods = std::get<21>(classInfoTuple);
 
-   auto &origROMMethods = std::get<21>(classInfo);
+   auto result = clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct });
 
+   auto &methodMap = clientSessionData->getJ9MethodMap();
    uint32_t numMethods = romClass->romMethodCount;
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
       {
-      clientSessionData->getJ9MethodMap().insert({&methods[i],
-            {romMethod, origROMMethods[i], NULL, static_cast<bool>(methodTracingInfo[i]), (TR_OpaqueClassBlock *)clazz, false}});
+      methodMap.insert({ &methods[i],
+         { romMethod, origROMMethods[i], NULL, static_cast<bool>(methodTracingInfo[i]), (TR_OpaqueClassBlock *)clazz, false }
+      });
       romMethod = nextROMMethod(romMethod);
       }
+
+   // Return a reference to the ClassInfo structure stored in the map in the client session
+   return result.first->second;
    }
 
 J9ROMClass *
@@ -651,12 +658,12 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    }
 
 J9ROMClass *
-JITServerHelpers::romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory)
+JITServerHelpers::romClassFromString(const std::string &romClassStr, TR_PersistentMemory *persistentMemory)
    {
    if (auto cache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache())
       return cache->getOrCreate((const J9ROMClass *)romClassStr.data());
 
-   auto romClass = (J9ROMClass *)(trMemory->allocatePersistentMemory(romClassStr.size(), TR_Memory::ROMClass));
+   auto romClass = (J9ROMClass *)persistentMemory->allocatePersistentMemory(romClassStr.size(), TR_Memory::ROMClass);
    if (!romClass)
       throw std::bad_alloc();
    memcpy(romClass, romClassStr.data(), romClassStr.size());
@@ -664,36 +671,26 @@ JITServerHelpers::romClassFromString(const std::string &romClassStr, TR_Persiste
    }
 
 J9ROMClass *
-JITServerHelpers::getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple)
+JITServerHelpers::getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *stream,
+                                    TR_PersistentMemory *persistentMemory, ClassInfoTuple &classInfoTuple)
    {
    stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
-   const auto &recv = stream->read<ClassInfoTuple>();
-   *classInfoTuple = std::get<0>(recv);
-   return romClassFromString(std::get<0>(*classInfoTuple), trMemory->trPersistentMemory());
-   }
-
-J9ROMClass *
-JITServerHelpers::getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *stream, TR_PersistentMemory *trMemory, ClassInfoTuple *classInfoTuple)
-   {
-   stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
-   const auto &recv = stream->read<ClassInfoTuple>();
-   *classInfoTuple = std::get<0>(recv);
-   return romClassFromString(std::get<0>(*classInfoTuple), trMemory);
+   auto recv = stream->read<ClassInfoTuple>();
+   classInfoTuple = std::get<0>(recv);
+   return romClassFromString(std::get<0>(classInfoTuple), persistentMemory);
    }
 
 // Return true if able to get data from cache, return false otherwise.
 bool
-JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType, void *data)
+JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData,
+                                          JITServer::ServerStream *stream, ClassInfoDataType dataType, void *data)
    {
-   JITServerHelpers::ClassInfoTuple classInfoTuple;
-   ClientSessionData::ClassInfo classInfo;
    if (!clazz)
-      {
       return false;
-      }
+
       {
       OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
-      auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
+      auto it = clientSessionData->getROMClassMap().find(clazz);
       if (it != clientSessionData->getROMClassMap().end())
          {
          JITServerHelpers::getROMClassData(it->second, dataType, data);
@@ -702,16 +699,16 @@ JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *cli
       }
 
    stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
-   const auto &recv = stream->read<ClassInfoTuple>();
-   classInfoTuple = std::get<0>(recv);
+   auto recv = stream->read<ClassInfoTuple>();
+   auto &classInfoTuple = std::get<0>(recv);
 
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
    auto it = clientSessionData->getROMClassMap().find(clazz);
    if (it == clientSessionData->getROMClassMap().end())
       {
-      auto romClass = romClassFromString(std::get<0>(classInfoTuple), TR::comp()->trMemory()->trPersistentMemory());
-      JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
-      JITServerHelpers::getROMClassData(classInfo, dataType, data);
+      auto romClass = romClassFromString(std::get<0>(classInfoTuple), clientSessionData->persistentMemory());
+      auto &classInfoStruct = JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple);
+      JITServerHelpers::getROMClassData(classInfoStruct, dataType, data);
       }
    else
       {
@@ -722,17 +719,16 @@ JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *cli
 
 // Return true if able to get data from cache, return false otherwise.
 bool
-JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2)
+JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData,
+                                          JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1,
+                                          ClassInfoDataType dataType2, void *data2)
    {
-   JITServerHelpers::ClassInfoTuple classInfoTuple;
-   ClientSessionData::ClassInfo classInfo;
    if (!clazz)
-      {
       return false;
-      }
+
       {
       OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
-      auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
+      auto it = clientSessionData->getROMClassMap().find(clazz);
       if (it != clientSessionData->getROMClassMap().end())
          {
          JITServerHelpers::getROMClassData(it->second, dataType1, data1);
@@ -740,18 +736,19 @@ JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *cli
          return true;
          }
       }
+
    stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
-   const auto &recv = stream->read<ClassInfoTuple>();
-   classInfoTuple = std::get<0>(recv);
+   auto recv = stream->read<ClassInfoTuple>();
+   auto &classInfoTuple = std::get<0>(recv);
 
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
    auto it = clientSessionData->getROMClassMap().find(clazz);
    if (it == clientSessionData->getROMClassMap().end())
       {
-      auto romClass = romClassFromString(std::get<0>(classInfoTuple), TR::comp()->trMemory()->trPersistentMemory());
-      JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
-      JITServerHelpers::getROMClassData(classInfo, dataType1, data1);
-      JITServerHelpers::getROMClassData(classInfo, dataType2, data2);
+      auto romClass = romClassFromString(std::get<0>(classInfoTuple), clientSessionData->persistentMemory());
+      auto &classInfoStruct = JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple);
+      JITServerHelpers::getROMClassData(classInfoStruct, dataType1, data1);
+      JITServerHelpers::getROMClassData(classInfoStruct, dataType2, data2);
       }
    else
       {
@@ -978,20 +975,20 @@ JITServerHelpers::walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<
    }
 
 uintptr_t
-JITServerHelpers::getRemoteClassDepthAndFlagsWhenROMClassNotCached(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream)
+JITServerHelpers::getRemoteClassDepthAndFlagsWhenROMClassNotCached(J9Class *clazz, ClientSessionData *clientSessionData,
+                                                                   JITServer::ServerStream *stream)
 {
-   ClientSessionData::ClassInfo classInfo;
    stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
-   const auto &recv = stream->read<JITServerHelpers::ClassInfoTuple>();
-   JITServerHelpers::ClassInfoTuple classInfoTuple = std::get<0>(recv);
+   auto recv = stream->read<JITServerHelpers::ClassInfoTuple>();
+   auto &classInfoTuple = std::get<0>(recv);
 
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
    auto it = clientSessionData->getROMClassMap().find(clazz);
    if (it == clientSessionData->getROMClassMap().end())
       {
-      auto romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), TR::comp()->trMemory()->trPersistentMemory());
-      JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
-      return classInfo._classDepthAndFlags;
+      auto romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), clientSessionData->persistentMemory());
+      auto &classInfoStruct = JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple);
+      return classInfoStruct._classDepthAndFlags;
       }
    else
       {

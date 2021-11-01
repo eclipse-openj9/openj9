@@ -1523,7 +1523,7 @@ TR_ResolvedJ9JITServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, T
    _literals = methodInfoStruct.literals;
    _ramClass = methodInfoStruct.ramClass;
 
-   _romClass = threadCompInfo->getAndCacheRemoteROMClass(_ramClass, trMemory);
+   _romClass = threadCompInfo->getAndCacheRemoteROMClass(_ramClass);
    _romMethod = romMethodAtClassIndex(_romClass, methodInfoStruct.methodIndex);
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA) _romClass + sizeof(J9ROMClass));
 

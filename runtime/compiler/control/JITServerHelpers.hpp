@@ -80,20 +80,25 @@ class JITServerHelpers
 
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory, bool serializeClass);
    static void freeRemoteROMClass(J9ROMClass *romClass, TR_PersistentMemory *persistentMemory);
-   static J9ROMClass *cacheRemoteROMClassOrFreeIt(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, TR_PersistentMemory *persistentMemory);
-   static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfo);
+   static J9ROMClass *cacheRemoteROMClassOrFreeIt(ClientSessionData *clientSessionData, J9Class *clazz,
+                                                  J9ROMClass *romClass, const ClassInfoTuple &classInfoTuple);
+   static ClientSessionData::ClassInfo &cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz,
+                                                            J9ROMClass *romClass, const ClassInfoTuple &classInfoTuple);
    static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
-   static J9ROMClass *getRemoteROMClass(J9Class *, JITServer::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple);
-   static J9ROMClass *getRemoteROMClass(J9Class *, JITServer::ServerStream *stream, TR_PersistentMemory *trMemory, ClassInfoTuple *classInfoTuple);
-   static J9ROMClass *romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory);
-   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType, void *data);
-   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1,
+   static J9ROMClass *getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *stream,
+                                        TR_PersistentMemory *persistentMemory, ClassInfoTuple &classInfoTuple);
+   static J9ROMClass *romClassFromString(const std::string &romClassStr, TR_PersistentMemory *persistentMemory);
+   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData,
+                                       JITServer::ServerStream *stream, ClassInfoDataType dataType, void *data);
+   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData,
+                                       JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1,
                                        ClassInfoDataType dataType2, void *data2);
    static J9ROMMethod *romMethodOfRamMethod(J9Method* method);
 
    static void insertIntoOOSequenceEntryList(ClientSessionData *clientData, TR_MethodToBeCompiled *entry);
 
-   static uintptr_t getRemoteClassDepthAndFlagsWhenROMClassNotCached(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream);
+   static uintptr_t getRemoteClassDepthAndFlagsWhenROMClassNotCached(J9Class *clazz, ClientSessionData *clientSessionData,
+                                                                     JITServer::ServerStream *stream);
 
    // Functions used for allowing the client to compile locally when server is unavailable.
    // Should be used only on the client side.

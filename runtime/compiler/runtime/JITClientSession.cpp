@@ -26,13 +26,12 @@
 #include "control/MethodToBeCompiled.hpp" // for TR_MethodToBeCompiled
 #include "control/JITServerHelpers.hpp"
 #include "control/JITServerCompilationThread.hpp"
-#include "env/ut_j9jit.h"
-#include "net/ServerStream.hpp" // for JITServer::ServerStream
-#include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
-#include "runtime/JITServerSharedROMClassCache.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
+#include "env/ut_j9jit.h"
 #include "env/VerboseLog.hpp"
-#include "runtime/SymbolValidationManager.hpp"
+#include "net/ServerStream.hpp" // for JITServer::ServerStream
+#include "runtime/JITServerSharedROMClassCache.hpp"
+#include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
 
 
 TR_OpaqueClassBlock * const ClientSessionData::mustClearCachesFlag = reinterpret_cast<TR_OpaqueClassBlock *>(~0);
@@ -139,7 +138,7 @@ ClientSessionData::initializeUnloadedClassAddrRanges(const std::vector<TR_Addres
    OMR::CriticalSection getUnloadedClasses(getROMMapMonitor());
 
    if (!_unloadedClassAddresses)
-      _unloadedClassAddresses = new (PERSISTENT_NEW) TR_AddressSet(_persistentMemory, maxRanges);
+      _unloadedClassAddresses = new (_persistentMemory) TR_AddressSet(_persistentMemory, maxRanges);
    _unloadedClassAddresses->setRanges(unloadedClassRanges);
    }
 
@@ -350,7 +349,9 @@ ClientSessionData::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byt
             it->second._isCompiledWhenProfiling = true;
 
          // allocate a new iProfiler map
-         iProfilerMap = new (PERSISTENT_NEW) IPTable_t(IPTable_t::allocator_type(TR::Compiler->persistentAllocator()));
+         iProfilerMap = new (_persistentMemory->_persistentAllocator.get()) IPTable_t(
+            IPTable_t::allocator_type(_persistentMemory->_persistentAllocator.get())
+         );
          if (iProfilerMap)
             {
             it->second._IPData = iProfilerMap;
@@ -387,7 +388,7 @@ ClientSessionData::printStats()
    j9tty_printf(PORTLIB, "\tTotal size of cached ROM classes + methods: %d bytes\n", total);
    }
 
-ClientSessionData::ClassInfo::ClassInfo() :
+ClientSessionData::ClassInfo::ClassInfo(TR_PersistentMemory *persistentMemory) :
    _romClass(NULL),
    _remoteRomClass(NULL),
    _methodsOfClass(NULL),
@@ -408,17 +409,17 @@ ClientSessionData::ClassInfo::ClassInfo() :
    _constantPool(NULL),
    _classFlags(0),
    _classChainOffsetOfIdentifyingLoaderForClazz(0),
-   _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _constantClassPoolCache(decltype(_constantClassPoolCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _fieldAttributesCacheAOT(decltype(_fieldAttributesCacheAOT)::allocator_type(TR::Compiler->persistentAllocator())),
-   _staticAttributesCacheAOT(decltype(_fieldAttributesCacheAOT)::allocator_type(TR::Compiler->persistentAllocator())),
-   _jitFieldsCache(decltype(_jitFieldsCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _fieldOrStaticDeclaringClassCache(decltype(_fieldOrStaticDeclaringClassCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _fieldOrStaticDefiningClassCache(decltype(_fieldOrStaticDefiningClassCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _J9MethodNameCache(decltype(_J9MethodNameCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _referencingClassLoaders(decltype(_referencingClassLoaders)::allocator_type(TR::Compiler->persistentAllocator()))
+   _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _constantClassPoolCache(decltype(_constantClassPoolCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _fieldAttributesCacheAOT(decltype(_fieldAttributesCacheAOT)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _staticAttributesCacheAOT(decltype(_fieldAttributesCacheAOT)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _jitFieldsCache(decltype(_jitFieldsCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _fieldOrStaticDeclaringClassCache(decltype(_fieldOrStaticDeclaringClassCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _fieldOrStaticDefiningClassCache(decltype(_fieldOrStaticDefiningClassCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _J9MethodNameCache(decltype(_J9MethodNameCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _referencingClassLoaders(decltype(_referencingClassLoaders)::allocator_type(persistentMemory->_persistentAllocator.get()))
    {
    }
 
@@ -439,7 +440,7 @@ ClientSessionData::getOrCacheVMInfo(JITServer::ServerStream *stream)
       {
       stream->write(JITServer::MessageType::VM_getVMInfo, JITServer::Void());
       auto recv = stream->read<VMInfo, std::vector<CacheDescriptor>, std::string>();
-      _vmInfo = new (PERSISTENT_NEW) VMInfo(std::get<0>(recv));
+      _vmInfo = new (_persistentMemory->_persistentAllocator.get()) VMInfo(std::get<0>(recv));
       _vmInfo->_j9SharedClassCacheDescriptorList = reconstructJ9SharedClassCacheDescriptorList(std::get<1>(recv));
       _aotCacheName = std::get<2>(recv);
       }
@@ -455,7 +456,7 @@ ClientSessionData::reconstructJ9SharedClassCacheDescriptorList(const std::vector
    for (size_t i = 0; i < listOfCacheDescriptors.size(); i++)
       {
       auto cacheDesc = listOfCacheDescriptors[i];
-      cur = new (PERSISTENT_NEW) J9SharedClassCacheDescriptor();
+      cur = new (_persistentMemory->_persistentAllocator.get()) J9SharedClassCacheDescriptor();
       cur->cacheStartAddress = (J9SharedCacheHeader *)cacheDesc.cacheStartAddress;
       cur->cacheSizeBytes = cacheDesc.cacheSizeBytes;
       cur->romclassStartAddress = (void *)cacheDesc.romClassStartAddress;
@@ -646,7 +647,7 @@ ClientSessionData::getCHTable()
    {
    if (!_chTable)
       {
-      _chTable = new (PERSISTENT_NEW) JITServerPersistentCHTable(_persistentMemory);
+      _chTable = new (_persistentMemory) JITServerPersistentCHTable(_persistentMemory);
       }
    return _chTable;
    }
@@ -777,14 +778,15 @@ ClientSessionData::getOrCreateAOTCache(JITServer::ServerStream *stream)
 ClientSessionHT*
 ClientSessionHT::allocate()
    {
-   return new (PERSISTENT_NEW) ClientSessionHT();
+   return new (TR::Compiler->persistentGlobalAllocator()) ClientSessionHT();
    }
 
-ClientSessionHT::ClientSessionHT() : _clientSessionMap(decltype(_clientSessionMap)::allocator_type(TR::Compiler->persistentAllocator())),
-                                     TIME_BETWEEN_PURGES(TR::Options::_timeBetweenPurges),
-                                     OLD_AGE(TR::Options::_oldAge), // 1000 minutes
-                                     OLD_AGE_UNDER_LOW_MEMORY(TR::Options::_oldAgeUnderLowMemory), // 5 minutes
-                                     _compInfo(TR::CompilationController::getCompilationInfo())
+ClientSessionHT::ClientSessionHT() :
+   _clientSessionMap(decltype(_clientSessionMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
+   TIME_BETWEEN_PURGES(TR::Options::_timeBetweenPurges),
+   OLD_AGE(TR::Options::_oldAge), // 1000 minutes
+   OLD_AGE_UNDER_LOW_MEMORY(TR::Options::_oldAgeUnderLowMemory), // 5 minutes
+   _compInfo(TR::CompilationController::getCompilationInfo())
    {
    PORT_ACCESS_FROM_PORT(TR::Compiler->portLib);
    _timeOfLastPurge = j9time_current_time_millis();
