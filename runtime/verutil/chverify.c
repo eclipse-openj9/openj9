@@ -30,7 +30,8 @@
  * Methods, fields, local variables can not contain: '.', ';', '[' '/'.
  * Methods, other than <init> and <clinit> cannot contain '<' or '>'.
  * Classes can contain '[' only at the front if they are array classes.
- * Classes can end with ';' only if they are array classes or valuetypes.
+ * Classes can end with ';' only if they are array classes for class file major version < 62
+ * 				For class major file version >= 62. They can be array classes or descriptors of form "LClassName;" or "QClassName;".
  * Classes can contain '/'
  * 		if not the first character,
  * 		if not the last character,
@@ -83,11 +84,28 @@ checkNameImpl (J9CfrConstantPoolInfo * info, BOOLEAN isClass, BOOLEAN isMethod, 
 			return -1;
 		case ';':
 			if (isClass) {
-				/* Valid at the end of array classes or for valuetypes */
-				if ((arity || IS_QTYPE(*info->bytes))
-					&& ((c + 1) == end)) {
-					break;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (J9_ARE_ALL_BITS_SET(info->flags1, CFR_CLASS_FILE_VERSION_SUPPORT_VALUE_TYPE)) {
+					/* If CFR_CLASS_FILE_VERSION_SUPPORT_VALUE_TYPE is set (class major file version >= 62)
+					 * Valid at the end of array classes
+					 * or descriptors of form "LClassName;" or "QClassName;".
+					 */
+					if ((arity || IS_REF_OR_VAL_SIGNATURE(*info->bytes))
+						&& ((c + 1) == end)
+					) {
+						break;
+					}
+				} else {
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+					/* Valid at the end of array classes */
+					if ((arity)
+						&& ((c + 1) == end)
+					) {
+						break;
+					}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 			return -1;
 		case '<': /* Fall through */
