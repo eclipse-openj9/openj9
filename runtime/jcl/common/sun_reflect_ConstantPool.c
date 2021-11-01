@@ -474,7 +474,7 @@ Java_sun_reflect_ConstantPool_getFieldAtIfLoaded0(JNIEnv *env, jobject unusedObj
  *
  * @param env[in]             the JNI env
  * @param unusedObject[in]    unused
- * @param constantPoolOop[in] the class - its constant pool is accessed
+ * @param constantPoolOop[in] the constant pool as an InternalConstantPool object
  * @param cpIndex[in]         the constant pool index
  *
  * @return  instance of String which contains the class name or NULL in

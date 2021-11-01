@@ -165,6 +165,11 @@ Java_com_ibm_oti_vm_VM_markCurrentThreadAsSystemImpl(JNIEnv *env)
 jlong JNICALL
 Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class(JNIEnv *env, jclass unused, jlong j9clazz)
 {
-	J9Class *clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class *clazz = (J9Class *)(IDATA)j9clazz;
+	/*
+	 * Casting to UDATA first means the value will be zero-extended
+	 * instead of sign-extended on platforms where jlong and UDATA
+	 * are different sizes.
+	 */
 	return (jlong)(UDATA)clazz->ramConstantPool;
 }
