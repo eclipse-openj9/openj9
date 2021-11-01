@@ -3477,12 +3477,12 @@ strerrorSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpIn
 }
 
 static void
-throwNewUnsatisfiedLinkError(JNIEnv *env, char *message) {
+throwNewUnsatisfiedLinkError(JNIEnv *env, char *message)
+{
 	jclass exceptionClass = (*env)->FindClass(env, "java/lang/UnsatisfiedLinkError");
 	if (NULL != exceptionClass) {
 		(*env)->ThrowNew(env, exceptionClass, message);
- 	}
- 	return;
+	}
 }
 
 /*
@@ -3559,11 +3559,8 @@ JVM_OnExit(void (*func)(void))
 void* JNICALL
 JVM_LoadSystemLibrary(const char *libName)
 {
-	JNIEnv *env;
-	char errMsg[512];
-
 #ifdef WIN32
-	UDATA dllHandle;
+	UDATA dllHandle = 0;
 	size_t libNameLen = strlen(libName);
 	UDATA flags = 0;
 
@@ -3582,11 +3579,10 @@ JVM_LoadSystemLibrary(const char *libName)
 		Trc_SC_LoadSystemLibrary_Exit(dllHandle);
 		return (void *)dllHandle;
 	}
-
 #endif
 
 #if defined(J9UNIX) || defined(J9ZOS390)
-	void *dllHandle;
+	void *dllHandle = NULL;
 
 	Trc_SC_LoadSystemLibrary_Entry(libName);
 
@@ -3602,9 +3598,9 @@ JVM_LoadSystemLibrary(const char *libName)
 	 * time. We can then call dlopen() as per normal and the just loaded library will be found.
 	 * */
 	loadAndInit((char *)libName, L_RTLD_LOCAL, NULL);
-#endif
-	dllHandle = dlopen( (char *)libName, RTLD_LAZY );
-	if(NULL != dllHandle ) {
+#endif /* defined(AIXPPC) */
+	dllHandle = dlopen((char *)libName, RTLD_LAZY);
+	if (NULL != dllHandle) {
 		Trc_SC_LoadSystemLibrary_Exit(dllHandle);
 		return dllHandle;
 	}
@@ -3615,11 +3611,13 @@ JVM_LoadSystemLibrary(const char *libName)
 	Trc_SC_LoadSystemLibrary_LoadFailed(libName);
 
 	if (NULL != BFUjavaVM) {
-		JavaVM *vm = (JavaVM *) BFUjavaVM;
-		(*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_2);
+		JNIEnv *env = NULL;
+		JavaVM *vm = (JavaVM *)BFUjavaVM;
+		(*vm)->GetEnv(vm, (void **)&env, JNI_VERSION_1_2);
 		if (NULL != env) {
+			char errMsg[512];
 			jio_snprintf(errMsg, sizeof(errMsg), "Failed to load library \"%s\"", libName);
-			errMsg[sizeof(errMsg)-1] = '\0';
+			errMsg[sizeof(errMsg) - 1] = '\0';
 			throwNewUnsatisfiedLinkError(env, errMsg);
 		}
 	}
@@ -3628,32 +3626,37 @@ JVM_LoadSystemLibrary(const char *libName)
 	return NULL;
 }
 
-
-
 /**
- *  void * JNICALL JVM_LoadLibrary(char *libName)
+ * Prior to jdk18:
+ *   void * JNICALL JVM_LoadLibrary(char *libName)
  *
- *	Attempts to load the shared library specified by libName.  If
- *	successful, returns the file handle, otherwise returns NULL.
+ * Beginning in jdk18:
+ *   void * JNICALL JVM_LoadLibrary(char *libName, jboolean throwOnFailure)
  *
- *	@param libName a null terminated string containing the libName.
- *	  For Windows platform, this incoming libName is encoded as J9STR_CODE_WINDEFAULTACP,
- *	  and is required to be converted to J9STR_CODE_MUTF8 for internal usages.
+ * Attempts to load the shared library specified by libName.
+ * If successful, returns the file handle, otherwise returns NULL or throws
+ * UnsatisfiedLinkError if throwOnFailure.
  *
- *	@return the shared library's handle if successful, throws java/lang/UnsatisfiedLinkError on failure
+ * @param libName a null terminated string containing the libName.
+ *   For Windows platform, this incoming libName is encoded as J9STR_CODE_WINDEFAULTACP,
+ *   and is required to be converted to J9STR_CODE_MUTF8 for internal usages.
  *
- *	DLL: jvm
+ * @return the shared library's handle if successful, throws java/lang/UnsatisfiedLinkError on failure
+ *
+ * DLL: jvm
+ *
+ * NOTE this is required by jdk15+ jdk.internal.loader.NativeLibraries.load().
+ * It is only invoked by jdk.internal.loader.BootLoader.loadLibrary().
  */
-
-/* NOTE this is required by JDK15+ jdk.internal.loader.NativeLibraries.load().
- *  it is only invoked by jdk.internal.loader.BootLoader.loadLibrary().
- */
-
-void* JNICALL
+void * JNICALL
+#if JAVA_SPEC_VERSION < 18
 JVM_LoadLibrary(const char *libName)
+#else /* JAVA_SPEC_VERSION < 18 */
+JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
+#endif /* JAVA_SPEC_VERSION < 18 */
 {
 	void *result = NULL;
-	J9JavaVM *javaVM = (J9JavaVM*)BFUjavaVM;
+	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 #if defined(WIN32)
@@ -3661,7 +3664,7 @@ JVM_LoadLibrary(const char *libName)
 	UDATA libNameLen = strlen(libName);
 	UDATA libNameLenConverted = j9str_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8, libName, libNameLen, NULL, 0);
 	if (libNameLenConverted > 0) {
-		libNameLenConverted += 1; /* adding an extra byte for null */
+		libNameLenConverted += 1; /* an extra byte for null */
 		libNameConverted = j9mem_allocate_memory(libNameLenConverted, OMRMEM_CATEGORY_VM);
 		if (NULL != libNameConverted) {
 			libNameLenConverted = j9str_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8, libName, libNameLen, libNameConverted, libNameLenConverted);
@@ -3685,7 +3688,7 @@ JVM_LoadLibrary(const char *libName)
 				Trc_SC_LoadLibrary_OpenShared_Decorate(libName);
 			}
 			if (0 == slOpenResult) {
-				result = (void*)handle;
+				result = (void *)handle;
 			}
 		}
 #if defined(WIN32)
@@ -3694,6 +3697,21 @@ JVM_LoadLibrary(const char *libName)
 		j9mem_free_memory(libNameConverted);
 	}
 #endif /* defined(WIN32) */
+
+#if JAVA_SPEC_VERSION >= 18
+	if ((NULL == result) && throwOnFailure) {
+		JNIEnv *env = NULL;
+		JavaVM *vm = (JavaVM *)javaVM;
+		(*vm)->GetEnv(vm, (void **)&env, JNI_VERSION_1_2);
+		if (NULL != env) {
+			char errMsg[512];
+			jio_snprintf(errMsg, sizeof(errMsg), "Failed to load library \"%s\"", libName);
+			errMsg[sizeof(errMsg) - 1] = '\0';
+			throwNewUnsatisfiedLinkError(env, errMsg);
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 18 */
+
 	Trc_SC_LoadLibrary_Exit(result);
 
 	return result;
@@ -6140,4 +6158,3 @@ JVM_BeforeHalt()
 {
 	/* To be implemented via https://github.com/eclipse-openj9/openj9/issues/1459 */
 }
-
