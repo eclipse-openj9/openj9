@@ -36,6 +36,31 @@ public class rc021 {
 	final static int ITERATIONS = 100;
 	static boolean result;
 
+	static byte classBytesO_1[];
+	static byte classBytesR_1[];
+	static byte classBytesO_2[];
+	static byte classBytesR_2[];
+
+	static {
+		classBytesO_1 = Util.getClassBytes(rc021_testAnnotationCache_O.class);
+		if (classBytesO_1 == null) {
+			throw new RuntimeException("Class bytes null");
+		}
+		classBytesR_1 = Util.loadRedefinedClassBytesWithOriginalClassName(rc021_testAnnotationCache_O.class, rc021_testAnnotationCache_R.class);
+		if (classBytesR_1 == null) {
+			throw new RuntimeException("Class bytes null");
+		}
+
+		classBytesO_2 = Util.getClassBytes(rc021_testAnnotatedType_O.class);
+		if (classBytesO_2 == null) {
+			throw new RuntimeException("Class bytes null");
+		}
+		classBytesR_2 = Util.loadRedefinedClassBytesWithOriginalClassName(rc021_testAnnotatedType_O.class, rc021_testAnnotatedType_R.class);
+		if (classBytesR_2 == null) {
+			throw new RuntimeException("Class bytes null");
+		}
+	}
+
 	public boolean testAnnotationCacheAfterRedefine() {
 		result = true;
 		try {
@@ -63,12 +88,12 @@ public class rc021 {
 			final class Redef implements Runnable {
 				@Override
 				public void run() {
-					boolean redefined = Util.redefineClass(rc021.class, rc021_testAnnotationCache_O.class, rc021_testAnnotationCache_R.class);
+					boolean redefined = redefineClass(rc021_testAnnotationCache_O.class, classBytesR_1.length, classBytesR_1);
 					if (!redefined) {
 						System.out.println("Error during redefine from original to redefined");
 						result = false;
 					}
-					redefined = Util.redefineClass(rc021.class, rc021_testAnnotationCache_R.class, rc021_testAnnotationCache_O.class);
+					redefined = redefineClass(rc021_testAnnotationCache_O.class, classBytesO_1.length, classBytesO_1);
 					if (!redefined) {
 						System.out.println("Error during redefine from redefined to original");
 						result = false;
@@ -133,12 +158,12 @@ public class rc021 {
 			final class Redef implements Runnable {
 				@Override
 				public void run() {
-					boolean redefined = Util.redefineClass(rc021.class, rc021_testAnnotatedType_O.class, rc021_testAnnotatedType_R.class);
+					boolean redefined = redefineClass(rc021_testAnnotatedType_O.class, classBytesR_2.length, classBytesR_2);
 					if (!redefined) {
 						System.out.println("Error during redefine from original to redefined");
 						result = false;
 					}
-					redefined = Util.redefineClass(rc021.class, rc021_testAnnotatedType_R.class, rc021_testAnnotatedType_O.class);
+					redefined = redefineClass(rc021_testAnnotatedType_O.class, classBytesO_2.length, classBytesO_2);
 					if (!redefined) {
 						System.out.println("Error during redefine from redefined to original");
 						result = false;
