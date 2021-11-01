@@ -1,4 +1,4 @@
-dnl Copyright (c) 2018, 2019 IBM Corp. and others
+dnl Copyright (c) 2018, 2021 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,7 +18,6 @@ dnl [2] http://openjdk.java.net/legal/assembly-exception.html
 dnl
 dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 divert([-1])
-
 
 # Prevent `format` macro expanding without arguments
 define([_real_format], defn([format]))
@@ -45,7 +44,6 @@ define([get_arg_type],
 # eg. get_arg_name(int foo) => foo
 define([get_arg_name],[ifelse([$1],[void],[],[substr([$1],regexp([$1],[[^ *]*$]))])])
 
-
 # args_names_list(ARGS ...)
 # Given a list of C-style argument strings, return a list of the argument names separated by ","
 # eg . arg_names_list("int foo", "char* bar", "double baz") => "foo, bar, baz"
@@ -59,7 +57,6 @@ define([strip_r], [patsubst([$1], [ *$])])
 # remove leading and trailing whitespace from a string
 define([strip],
 	[patsubst(strip_r([$1]),[^ *])])
-
 
 # invokePrefix(return_type)
 # if return_type == "void" evaluate to empty string, else evaluate to "return"
@@ -82,28 +79,34 @@ define([get_arg_size_impl],[ifelse(type_is_ptr($1),[1],[4],type_is_wide($1),[1],
 # given a C-Style argument string (eg. "int x"), get its size in bytes
 define([get_arg_size],[get_arg_size_impl(strip(get_arg_type($1)))])
 
-
 define([get_function_arg_size_impl], [get_arg_size($1) ifelse(eval($# >= 2),[1],[+ get_function_arg_size_impl(shift($@))])])
 
 # get_function_arg_size(ARGS ...)
 # Given a list of C-style argument strings, calculate the size of all the arguments
 define([get_function_arg_size], [eval(get_function_arg_size_impl($@))])
 
-# decorate_impl(func_name, ignored, ignored, ignored, ARGS ...)
+# decorate_impl(func_name, ARGS ...)
 # Given a function name and a list of C-style argument strings, get the decorated function name.
-# This uses Microsoft-style C name mangling for stdcall functions.
-# see https://docs.microsoft.com/en-us/cpp/build/reference/decorated-names#FormatC
-# ex: decorate_impl("foo", ignored, ignored,ignored, "int foo", "int bar") => "_foo@8"
-define([decorate_impl], [_$1@get_function_arg_size(mshift(4,$@))])
+# ex: decorate_impl("foo", "int foo", "int bar") => DECORATED_NAME(foo, 8)
+# The expectation is that DECORATED_NAME will yield "_foo@8" or "foo" depending
+# on whether the target platform is 32-bit Windows or not, respectively.
+define([decorate_impl], [DECORATED_NAME($1, get_function_arg_size(mshift(1,$@)))])
 
-# decorate_function_name(func_name, ignored, decorate, ignored, ARGS ..)
-# if decorate == true, evaluate to the decorated function name, else evaluate to func_name
-# see decorate_impl
-define([decorate_function_name], [ifelse($3,[true],decorate_impl($@),$1)])
-
+# decorate_function_name(func_name, ignored, decorate, ignored, ARGS ...)
+# for 32-bit Windows if decorate == true, evaluate to the decorated function name,
+# else evaluate to func_name. See decorate_impl.
+define([decorate_function_name],[ifelse($3,[true],decorate_impl($1,mshift(4,$@)),"$1")])
 
 # join(separator, ARGS ...)
 # evaluate to all of ARGS separated by separator
 define([join], [$2[]ifelse([$#],[2],[],[$1join([$1],mshift(2,$@))])])
+
+define([_IF],
+[#if $1
+$2
+ifelse(strip($3),,,
+#else /* $1 */
+$3
+)#endif /* $1 */])
 
 divert[]dnl

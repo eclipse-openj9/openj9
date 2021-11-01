@@ -197,7 +197,7 @@ add_custom_ascii_command(OUTPUT "${J9VM_INCLUDE_DIR}/jvmti.h"
 # its own rule to create it, which leads race conditions when building in parallel.
 
 add_custom_ascii_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/redirector/generated.c"
-	DEPENDS oti/helpers.m4 redirector/generated.c.m4
+	DEPENDS oti/helpers.m4 redirector/forwarders.m4 redirector/generated.c.m4
 	COMMAND m4 -I "${CMAKE_CURRENT_SOURCE_DIR}/oti" -I "${CMAKE_CURRENT_SOURCE_DIR}/redirector" "${CMAKE_CURRENT_SOURCE_DIR}/redirector/generated.c.m4" > generated.c
 	VERBATIM
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/redirector"
