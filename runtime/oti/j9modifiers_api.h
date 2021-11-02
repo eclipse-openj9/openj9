@@ -54,6 +54,7 @@
 #define J9ROMCLASS_IS_INTERMEDIATE_DATA_A_CLASSFILE(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIntermediateDataIsClassfile)
 #define J9ROMCLASS_IS_UNSAFE(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassUnsafe)
 #define J9ROMCLASS_IS_HIDDEN(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHidden)
+#define J9ROMCLASS_IS_ANON_OR_HIDDEN(romClass)			_J9ROMCLASS_J9MODIFIER_IS_ANY_SET((romClass), J9AccClassAnonClass | J9AccClassHidden)
 #define J9ROMCLASS_IS_OPTIONNESTMATE_SET(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHiddenOptionNestmate)
 #define J9ROMCLASS_IS_OPTIONSTRONG_SET(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHiddenOptionStrong)
 #define J9ROMCLASS_HAS_VERIFY_DATA(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHasVerifyData)
