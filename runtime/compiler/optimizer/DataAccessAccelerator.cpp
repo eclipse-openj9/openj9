@@ -2693,7 +2693,7 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop* treeTop, TR::Node* cal
          TR_ASSERT(false, "unsupported decimalType.\n");
          }
 
-      TR::Node * pd2decimalNode;
+      TR::Node * pd2decimalNode = NULL;
       if (isPD2UD || type == 1)
          {
          pd2decimalNode = TR::Node::create(op, 1, pdload);
