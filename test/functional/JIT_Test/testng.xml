@@ -582,6 +582,7 @@
       <class name="jit.test.recognizedMethod.TestJavaLangMath" />
       <class name="jit.test.recognizedMethod.TestJavaLangStringLatin1" />
       <class name="jit.test.recognizedMethod.TestRecognizedCallTransformer" />
+      <class name="jit.test.recognizedMethod.TestJavaIntegerAndLongToString" />
     </classes>
   </test>
 
