@@ -70,11 +70,45 @@ jstring JNICALL Java_java_lang_System_getEncoding(JNIEnv *env, jclass clazz, jin
 	return getEncoding(env, encodingType);
 }
 
+#if JAVA_SPEC_VERSION >= 18
+jstring JNICALL
+Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass clazz, jint sysPropID)
+{
+	const char *sysPropValue = NULL;
+	jstring result = NULL;
+	PORT_ACCESS_FROM_ENV(env);
+
+	switch (sysPropID) {
+	case 0: /* os.version */
+		/* Same logic as vmprops.c:initializeSystemProperties(vm) - j9sysinfo_get_OS_version() */
+		sysPropValue = j9sysinfo_get_OS_version();
+		if (NULL != sysPropValue) {
+#if defined(WIN32)
+			char *cursor = strchr(sysPropValue, ' ');
+			if (NULL != cursor) {
+				*cursor = '\0';
+			}
+#endif /* defined(WIN32) */
+		} else {
+			sysPropValue = "unknown";
+		}
+		break;
+
+	default:
+		break;
+	}
+	if (NULL != sysPropValue) {
+		result = (*env)->NewStringUTF(env, sysPropValue);
+	}
+
+	return result;
+}
+#endif /* JAVA_SPEC_VERSION >= 18 */
+
 jobject JNICALL Java_java_lang_System_getPropertyList(JNIEnv *env, jclass clazz)
 {
 	return getPropertyList(env);
 }
-
 
 jstring JNICALL Java_java_lang_System_mapLibraryName(JNIEnv * env, jclass unusedClass, jstring inName)
 {

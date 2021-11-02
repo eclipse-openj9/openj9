@@ -183,6 +183,9 @@ Java_com_ibm_java_lang_management_internal_MemoryManagerMXBeanImpl_isManagedPool
 void JNICALL Java_java_lang_System_setFieldImpl (JNIEnv * env, jclass cls, jstring name, jobject stream);
 jobject createSystemPropertyList (JNIEnv *env, const char *defaultValues[], int defaultCount);
 jstring JNICALL Java_java_lang_System_getEncoding (JNIEnv *env, jclass clazz, jint encodingType);
+#if JAVA_SPEC_VERSION >= 18
+jstring JNICALL Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass clazz, jint sysPropID);
+#endif /* JAVA_SPEC_VERSION >= 18 */
 jobject JNICALL Java_java_lang_System_getPropertyList (JNIEnv *env, jclass clazz);
 jstring JNICALL Java_java_lang_System_mapLibraryName (JNIEnv * env, jclass unusedClass, jstring inName);
 void JNICALL Java_java_lang_System_initLocale (JNIEnv *env, jclass clazz);
