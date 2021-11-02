@@ -57,6 +57,7 @@
 	.globl	FUNC_LABEL(_nativeStaticHelper)
 	.globl	FUNC_LABEL(_interfaceCompleteSlot2)
 	.globl	FUNC_LABEL(_interfaceSlotsUnavailable)
+	.globl	FUNC_LABEL(_patchGCRHelper)
 
 	.extern	FUNC_LABEL(jitResolveClass)
 	.extern	FUNC_LABEL(jitResolveClassFromStaticField)
@@ -1104,3 +1105,12 @@ FUNC_LABEL(_nativeStaticHelper):
 	ldr	x30, [x30, #J9TR_SCSnippet_codeCacheReturnAddress]	// get code cache return address
 	and	x0, x0, #(~clinit_bit)				// clear the "<clinit>" bit
 	b	FUNC_LABEL(icallVMprJavaSendNativeStatic)	// jump to VM helper
+
+// x0 holds address of the compare instruction
+// trashes x1
+FUNC_LABEL(_patchGCRHelper):
+	ldr	w1, [x0]						// load compare instruction
+	orr	w1, w1, #2048					// set bit 11 (change immediate to 3)
+	str	w1, [x0]						// write updated compare instruction
+	mov	x1, #4						// 1 instruction to flush
+	b	flushICache
