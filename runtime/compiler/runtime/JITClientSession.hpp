@@ -54,7 +54,6 @@ using TR_JitFieldsCache = PersistentUnorderedMap<int32_t, TR_JitFieldsCacheEntry
    @class TR_J9MethodFieldAttributes
    @brief Class used for caching various field attributes of a j9method
  */
-
 class TR_J9MethodFieldAttributes
    {
    public:
@@ -163,7 +162,6 @@ struct J9MethodNameAndSignature
    (several compilation threads from the client can issue compilation requests)
    access to most fields need to be protected by monitors.
  */
-
 class ClientSessionData
    {
 public:
@@ -182,7 +180,6 @@ public:
       HCR mechanism (which JITServer also treats as a class unload event). At that point,
       JITServer will be notified and the cache will be purged.
    */
-
    struct ClassInfo
       {
       ClassInfo(TR_PersistentMemory *persistentMemory);
@@ -197,19 +194,21 @@ public:
       int32_t _numDimensions;
       TR_OpaqueClassBlock *_parentClass;
       PersistentVector<TR_OpaqueClassBlock *> *_interfaces;
-      bool _classHasFinalFields;
-      uintptr_t _classDepthAndFlags;
-      bool _classInitialized;
       uint32_t _byteOffsetToLockword;
-      TR_OpaqueClassBlock * _leafComponentClass;
+      bool _classHasFinalFields;
+      bool _classInitialized;
+      uintptr_t _classDepthAndFlags;
+      TR_OpaqueClassBlock *_leafComponentClass;
       void *_classLoader;
-      TR_OpaqueClassBlock * _hostClass;
-      TR_OpaqueClassBlock * _componentClass; // caching the componentType of the J9ArrayClass
-      TR_OpaqueClassBlock * _arrayClass;
+      TR_OpaqueClassBlock *_hostClass;
+      TR_OpaqueClassBlock *_componentClass; // caching the componentType of the J9ArrayClass
+      TR_OpaqueClassBlock *_arrayClass;
       uintptr_t _totalInstanceSize;
       J9ConstantPool *_constantPool;
       uintptr_t _classFlags;
       uintptr_t _classChainOffsetIdentifyingLoader;
+      std::string _classNameIdentifyingLoader;
+
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _constantClassPoolCache;
       TR_FieldAttributesCache _fieldAttributesCache;
@@ -532,7 +531,6 @@ private:
    compilation. The StatistcisThread can also perform purging duties.
    Entried with inUse > 0 must not be purged.
  */
-
 class ClientSessionHT
    {
    public:

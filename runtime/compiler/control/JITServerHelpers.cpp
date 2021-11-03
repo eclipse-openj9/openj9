@@ -570,6 +570,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    classInfoStruct._classFlags = std::get<19>(classInfoTuple);
    classInfoStruct._classChainOffsetIdentifyingLoader = std::get<20>(classInfoTuple);
    auto &origROMMethods = std::get<21>(classInfoTuple);
+   classInfoStruct._classNameIdentifyingLoader = std::get<22>(classInfoTuple);
 
    auto result = clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct });
 
@@ -636,8 +637,16 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    uintptr_t cp = fe->getConstantPoolFromClass((TR_OpaqueClassBlock *)clazz);
    uintptr_t classFlags = fe->getClassFlagsValue((TR_OpaqueClassBlock *)clazz);
    auto sharedCache = fe->sharedCache();
+   uintptr_t *classChainIdentifyingLoader = NULL;
    uintptr_t classChainOffsetIdentifyingLoader = sharedCache ?
-      sharedCache->getClassChainOffsetIdentifyingLoaderNoFail((TR_OpaqueClassBlock *)clazz) : 0;
+      sharedCache->getClassChainOffsetIdentifyingLoaderNoFail((TR_OpaqueClassBlock *)clazz, &classChainIdentifyingLoader) : 0;
+
+   std::string classNameIdentifyingLoader;
+   if (fe->getPersistentInfo()->getJITServerUseAOTCache() && classChainIdentifyingLoader)
+      {
+      const J9UTF8 *name = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(classChainIdentifyingLoader));
+      classNameIdentifyingLoader = std::string((const char *)J9UTF8_DATA(name), J9UTF8_LENGTH(name));
+      }
 
    std::string packedROMClassStr;
    if (serializeClass)
@@ -651,9 +660,9 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    return std::make_tuple(
       packedROMClassStr, methodsOfClass, baseClass, numDims, parentClass,
       TR::Compiler->cls.getITable((TR_OpaqueClassBlock *)clazz), methodTracingInfo,
-      classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword,
-      leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize,
-      clazz->romClass, cp, classFlags, classChainOffsetIdentifyingLoader, origROMMethods
+      classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass,
+      classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass,
+      cp, classFlags, classChainOffsetIdentifyingLoader, origROMMethods, classNameIdentifyingLoader
    );
    }
 
@@ -922,7 +931,7 @@ JITServerHelpers::isAddressInROMClass(const void *address, const J9ROMClass *rom
 
 
 uintptr_t
-JITServerHelpers::walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<uintptr_t>& listOfOffsets, uintptr_t receiver)
+JITServerHelpers::walkReferenceChainWithOffsets(TR_J9VM *fe, const std::vector<uintptr_t> &listOfOffsets, uintptr_t receiver)
    {
    uintptr_t result = receiver;
    for (size_t i = 0; i < listOfOffsets.size(); i++)

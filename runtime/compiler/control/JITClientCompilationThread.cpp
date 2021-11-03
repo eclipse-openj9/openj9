@@ -2087,9 +2087,19 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::SharedCache_getClassChainOffsetIdentifyingLoader:
          {
-         auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         uintptr_t classChainOffsetInSharedCache = fe->sharedCache()->getClassChainOffsetIdentifyingLoader(j9class);
-         client->write(response, classChainOffsetInSharedCache);
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, bool>();
+         auto j9class = std::get<0>(recv);
+         bool getName = std::get<1>(recv);
+         auto sharedCache = fe->sharedCache();
+         uintptr_t *chain = NULL;
+         uintptr_t offset = sharedCache->getClassChainOffsetIdentifyingLoader(j9class, &chain);
+         std::string nameStr;
+         if (getName && chain)
+            {
+            const J9UTF8 *name = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(chain));
+            nameStr = std::string((const char *)J9UTF8_DATA(name), J9UTF8_LENGTH(name));
+            }
+         client->write(response, offset, nameStr);
          }
          break;
       case MessageType::SharedCache_rememberClass:

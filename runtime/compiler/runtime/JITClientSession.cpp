@@ -396,10 +396,10 @@ ClientSessionData::ClassInfo::ClassInfo(TR_PersistentMemory *persistentMemory) :
    _numDimensions(0),
    _parentClass(NULL),
    _interfaces(NULL),
-   _classHasFinalFields(false),
-   _classDepthAndFlags(0),
-   _classInitialized(false),
    _byteOffsetToLockword(0),
+   _classHasFinalFields(false),
+   _classInitialized(false),
+   _classDepthAndFlags(0),
    _leafComponentClass(NULL),
    _classLoader(NULL),
    _hostClass(NULL),
@@ -409,6 +409,7 @@ ClientSessionData::ClassInfo::ClassInfo(TR_PersistentMemory *persistentMemory) :
    _constantPool(NULL),
    _classFlags(0),
    _classChainOffsetIdentifyingLoader(0),
+   _classNameIdentifyingLoader(),
    _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _constantClassPoolCache(decltype(_constantClassPoolCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
@@ -597,6 +598,7 @@ ClientSessionData::destroy(ClientSessionData *clientSession)
          {
          if (sharedROMClassCache)
             sharedROMClassCache->release(it.second._romClass);
+         it.second._classNameIdentifyingLoader.~basic_string();
          for (auto &kv : it.second._J9MethodNameCache)
             kv.second.~J9MethodNameAndSignature();
          }

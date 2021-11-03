@@ -26,9 +26,10 @@
 #include "net/MessageTypes.hpp"
 #include "runtime/JITClientSession.hpp"
 
+
 class JITServerHelpers
    {
-   public:
+public:
    enum ClassInfoDataType
       {
       CLASSINFO_ROMCLASS_MODIFIERS,
@@ -59,17 +60,29 @@ class JITServerHelpers
    // to not mess with the established order.
    using ClassInfoTuple = std::tuple
       <
-      std::string, J9Method *,                                       // 0:  string                  1:  _methodsOfClass
-      TR_OpaqueClassBlock *, int32_t,                                // 2:  _baseComponentClass     3:  _numDimensions
-      TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>,     // 4:  _parentClass            5:  _tmpInterfaces
-      std::vector<uint8_t>, bool,                                    // 6:  _methodTracingInfo      7:  _classHasFinalFields
-      uintptr_t, bool,                                               // 8:  _classDepthAndFlags     9:  _classInitialized
-      uint32_t, TR_OpaqueClassBlock *,                               // 10: _byteOffsetToLockword   11: _leafComponentClass
-      void *, TR_OpaqueClassBlock *,                                 // 12: _classLoader            13: _hostClass
-      TR_OpaqueClassBlock *, TR_OpaqueClassBlock *,                  // 14: _componentClass         15: _arrayClass
-      uintptr_t, J9ROMClass *,                                       // 16: _totalInstanceSize      17: _remoteRomClass
-      uintptr_t, uintptr_t,                                          // 18: _constantPool           19: _classFlags
-      uintptr_t, std::vector<J9ROMMethod *>                          // 20: _classChainOffsetIdentifyingLoader 21. _origROMMethods
+      std::string,                       // 0:  _packedROMClass
+      J9Method *,                        // 1:  _methodsOfClass
+      TR_OpaqueClassBlock *,             // 2:  _baseComponentClass
+      int32_t,                           // 3:  _numDimensions
+      TR_OpaqueClassBlock *,             // 4:  _parentClass
+      std::vector<TR_OpaqueClassBlock *>,// 5:  _tmpInterfaces
+      std::vector<uint8_t>,              // 6:  _methodTracingInfo
+      bool,                              // 7:  _classHasFinalFields
+      uintptr_t,                         // 8:  _classDepthAndFlags
+      bool,                              // 9:  _classInitialized
+      uint32_t,                          // 10: _byteOffsetToLockword
+      TR_OpaqueClassBlock *,             // 11: _leafComponentClass
+      void *,                            // 12: _classLoader
+      TR_OpaqueClassBlock *,             // 13: _hostClass
+      TR_OpaqueClassBlock *,             // 14: _componentClass
+      TR_OpaqueClassBlock *,             // 15: _arrayClass
+      uintptr_t,                         // 16: _totalInstanceSize
+      J9ROMClass *,                      // 17: _remoteRomClass
+      uintptr_t,                         // 18: _constantPool
+      uintptr_t,                         // 19: _classFlags
+      uintptr_t,                         // 20: _classChainOffsetIdentifyingLoader
+      std::vector<J9ROMMethod *>,        // 21: _origROMMethods
+      std::string                        // 22: _classNameIdentifyingLoader
       >;
 
    // Packs a ROMClass to be transferred to the server.
@@ -116,10 +129,11 @@ class JITServerHelpers
 
    static bool isAddressInROMClass(const void *address, const J9ROMClass *romClass);
 
-   static uintptr_t walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<uintptr_t>& listOfOffsets, uintptr_t receiver);
+   static uintptr_t walkReferenceChainWithOffsets(TR_J9VM *fe, const std::vector<uintptr_t> &listOfOffsets, uintptr_t receiver);
 
-   private:
+private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
+
    static TR::Monitor *getClientStreamMonitor()
       {
       if (!_clientStreamMonitor)

@@ -30,6 +30,7 @@ class TR_PersistentClassLoaderTable;
 class TR_ResolvedMethod;
 namespace TR { class ResolvedMethodSymbol; }
 
+
 class TR_SharedCache
    {
 public:
@@ -64,7 +65,7 @@ public:
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *loader) { return NULL; }
 
-   virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz) { return 0; }
+   virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) { return 0; }
 
    void setPersistentClassLoaderTable(TR_PersistentClassLoaderTable *table) { _persistentClassLoaderTable = table; }
    TR_PersistentClassLoaderTable *persistentClassLoaderTable() { return _persistentClassLoaderTable; }
