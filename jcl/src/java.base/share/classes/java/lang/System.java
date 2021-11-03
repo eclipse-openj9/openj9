@@ -114,6 +114,11 @@ public final class System {
 	private static String fileEncoding;
 	private static String osEncoding;
 
+	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	private static final int sysPropID_OSVersion = 0;
+	private static final String sysPropOSVersion;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private static boolean hasSetErrEncoding;
 	private static boolean hasSetOutEncoding;
@@ -132,6 +137,9 @@ public final class System {
 	// Initialize all the slots in System on first use.
 	static {
 		initEncodings();
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		sysPropOSVersion = getSysPropBeforePropertiesInitialized(sysPropID_OSVersion);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	}
 
 	//	get following system properties in clinit and make it available via static variables
@@ -593,6 +601,10 @@ private static void ensureProperties(boolean isInitialization) {
 	Properties initializedProperties = new Properties();
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 
+	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	initializedProperties.put("os.version", sysPropOSVersion); //$NON-NLS-1$
+	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+
 	if (osEncoding != null) {
 		initializedProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
 	}
@@ -825,7 +837,13 @@ public static String getProperty(String prop, String defaultValue) {
 	if (!propertiesInitialized
 			&& !prop.equals("com.ibm.IgnoreMalformedInput") //$NON-NLS-1$
 			&& !prop.equals("file.encoding.pkg") //$NON-NLS-1$
-			&& !prop.equals("sun.nio.cs.map")) { //$NON-NLS-1$
+			&& !prop.equals("sun.nio.cs.map") //$NON-NLS-1$
+	) {
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		if (prop.equals("os.version")) { //$NON-NLS-1$
+			return sysPropOSVersion;
+		} else
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 		if (prop.equals("os.encoding")) { //$NON-NLS-1$
 			return osEncoding;
 		} else if (prop.equals("ibm.system.encoding")) { //$NON-NLS-1$
@@ -880,6 +898,16 @@ private static native String [] getPropertyList();
  * 		3 - command line defined os.encoding
  */
 private static native String getEncoding(int type);
+
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+/**
+ * Before propertiesInitialized is set to true,
+ * this returns the requested system property according to sysPropID:
+ * 		0 - os.version
+ * 		Reserved for future
+ */
+private static native String getSysPropBeforePropertiesInitialized(int sysPropID);
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 /**
  * Answers the active security manager.

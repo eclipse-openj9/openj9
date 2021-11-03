@@ -812,6 +812,7 @@ initializeSystemProperties(J9JavaVM * vm)
 		goto fail;
 	}
 
+#if JAVA_SPEC_VERSION < 18
 	propValue = j9sysinfo_get_OS_version();
 	if (NULL != propValue) {
 #if defined(WIN32)
@@ -819,10 +820,10 @@ initializeSystemProperties(J9JavaVM * vm)
 		 * The port library includes build information which derails the Java
 		 * code.  Chop off the version after the major/minor. */
 		char *cursor = strchr(propValue, ' ');
-		if (cursor != NULL) {
+		if (NULL != cursor) {
 			*cursor = '\0';
 		}
-#endif
+#endif /* defined(WIN32) */
 	} else {
 		propValue = "unknown";
 	}
@@ -830,6 +831,7 @@ initializeSystemProperties(J9JavaVM * vm)
 	if (J9SYSPROP_ERROR_NONE != rc) {
 		goto fail;
 	}
+#endif /* JAVA_SPEC_VERSION < 18 */
 
 	/* Create the -D properties. This may override any of the writeable properties above. 
 	    Should the command line override read-only props? */

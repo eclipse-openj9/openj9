@@ -1,6 +1,6 @@
 changequote(`[',`]')dnl
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,15 +21,15 @@ changequote(`[',`]')dnl
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 /* generated.c */
-#ifdef WIN32
+#if defined(WIN32)
 #include <windows.h>
 #include <tchar.h>
 #include <io.h>
-#endif /* WIN32 */
+#endif /* defined(WIN32) */
 
 #if defined(AIXPPC) || defined(J9ZOS390) || defined(LINUX) || defined(OSX)
 #include <dlfcn.h>
-#endif /* AIXPPC || J9ZOS390 || LINUX || OSX */
+#endif /* defined(AIXPPC) || defined(J9ZOS390) || defined(LINUX) || defined(OSX) */
 
 #include "j9.h"
 #include "jni.h"
@@ -45,16 +45,9 @@ changequote(`[',`]')dnl
 #define dlsym   dllqueryfn
 #define dlopen(a,b)     dllload(a)
 #define dlclose dllfree
-#endif
+#endif /* defined(J9ZOS390) */
 
 include(helpers.m4)
-
-define([_IF],
-[#if $1
-$2
-#endif
-])
-dnl (name, cc, decorate, ret, args...)
 
 /* Manual typedefs for functions that can't be generated easily. */
 typedef int (*jio_fprintf_Type)(FILE *stream, const char *format, ...);
@@ -62,17 +55,19 @@ typedef int (*jio_snprintf_Type)(char *str, int n, const char *format, ...);
 typedef void (JNICALL *JVM_OnExit_Type)(void (*func)(void));
 
 /* Generated typedefs for all forwarded functions. */
+dnl (1-name, 2-cc, 3-decorate, 4-ret, 5-args...)
 define([_X],
 [typedef $4 ($2 *$1_Type)(join([, ],mshift(4,$@)));])dnl
-include([forwarders.m4])
+include([forwarders.m4])dnl
 typedef void *(JNICALL *JVM_LoadSystemLibrary_Type)(const char *libName);
 
 /* Manually declared functions for non-generated forwarders. */
 static JVM_OnExit_Type global_JVM_OnExit;
 
 /* Declare a static variable to hold each dynamically resolved function pointer. */
+dnl (1-name, 2-cc, 3-decorate, 4-ret, 5-args...)
 define([_X],[static $1_Type global_$1;])
-include([forwarders.m4])
+include([forwarders.m4])dnl
 
 static volatile JVM_LoadSystemLibrary_Type global_JVM_LoadSystemLibrary;
 
@@ -81,7 +76,7 @@ static int table_initialized = 0;
 
 /* defined in redirector.c */
 int openLibraries(const char *libraryDir);
-#endif
+#endif /* defined(AIXPPC) */
 
 int
 jio_fprintf(FILE *stream, const char *format, ...)
@@ -121,102 +116,91 @@ define([_X],
 $4 $2
 $1(join([, ],mshift(4,$@)))
 {
-	if (NULL != global_$1) {
-		invokePrefix($4)[]global_$1(arg_names_list(mshift(4,$@)));
+	while (NULL == global_$1) {
 #if defined(AIXPPC)
-	} else if (!table_initialized) {
-		/* attempt to open the 'main redirector' and try again */
-		int openedLibraries = openLibraries("");
-		if (JNI_ERR == openedLibraries) {
-			fprintf(stdout, "Internal Error: Failed to initialize redirector - exiting\n");
-			exit(998);
+		if (!table_initialized) {
+			/* attempt to open the 'main redirector' so we can try again */
+			int openedLibraries = openLibraries("");
+			if (JNI_ERR == openedLibraries) {
+				fprintf(stdout, "Internal Error: Failed to initialize redirector - exiting\n");
+				exit(998);
+			}
+		} else
+#endif /* defined(AIXPPC) */
+		{
+			fprintf(stdout, "Fatal Error: Missing forwarder for %s[]()\n", "$1");
+			exit(969);
 		}
-		/* re-try to run this function */
-		invokePrefix($4)[]$1(arg_names_list(mshift(4,$@)));
-#endif
-	} else {
-		printf("Fatal Error: Missing forwarder for $1[]()");
-		exit(969);
 	}
+	invokePrefix($4)[]global_$1(arg_names_list(mshift(4,$@)));
 }
-])
-include([forwarders.m4])
+])dnl
+include([forwarders.m4])dnl
 
 static void *
-functionLookup(void *dllAddr, const char *functionName)
+functionLookup(void *vmdll, const char *functionName)
 {
-#if defined(WIN32) && !defined(J9VM_ENV_DATA64)
-	return GetProcAddress(dllAddr, functionName);
-#else
-	/* remove the decorations (leading _ and trailing @<number>) if present. */
-#define J9_SYM_MAX 256
-	char localFunctionName[[J9_SYM_MAX]];
-	char *addrOfAtSymbol = strchr(functionName, '@');
-
-	if (strlen(functionName) >= J9_SYM_MAX) {
-		printf("Symbol too long - %s - exiting\n", functionName);
-	}
-
-	if (NULL != addrOfAtSymbol) {
-		const char *startOfFunctionName = ('_' == functionName[[0]]) ? (functionName + 1) : functionName;
-
-		memcpy(localFunctionName, startOfFunctionName, addrOfAtSymbol - startOfFunctionName);
-		localFunctionName[[addrOfAtSymbol - startOfFunctionName]] = '\0';
-	} else {
-		strcpy(localFunctionName, functionName);
-	}
-
 #if defined(WIN32)
-	/* this is actually for 64 bit windows only - ifdef above for win32 filtered 64 bit only down this path */
-	return GetProcAddress(dllAddr, localFunctionName);
-#else
-	return (void *)dlsym(dllAddr, localFunctionName);
-#endif
-
-#endif
+	return GetProcAddress(vmdll, functionName);
+#else /* defined(WIN32) */
+	return (void *)dlsym(vmdll, functionName);
+#endif /* defined(WIN32) */
 }
 
-dnl (1-name, 2-cc, 3-decorate, 4-ret, 5-args...)
-define([_X],[	global_$1 = ($1_Type) functionLookup(vmdll, "decorate_function_name($@)");])dnl
+#if defined(WIN32) && !defined(J9VM_ENV_DATA64)
+	/*
+	 * Use Microsoft-style C name mangling for stdcall functions;
+	 * see https://docs.microsoft.com/en-us/cpp/build/reference/decorated-names#FormatC.
+	 */
+	#define DECORATED_NAME(name, arg_size) "_" #name "@" #arg_size
+#else /* defined(WIN32) && !defined(J9VM_ENV_DATA64) */
+	/* No name mangling required. */
+	#define DECORATED_NAME(name, arg_size) #name
+#endif /* defined(WIN32) && !defined(J9VM_ENV_DATA64) */
 
 void
 lookupJVMFunctions(void *vmdll)
 {
-	global_JVM_OnExit = (JVM_OnExit_Type) functionLookup(vmdll, "_JVM_OnExit@4");
-include([forwarders.m4])
-	global_JVM_LoadSystemLibrary = (JVM_LoadSystemLibrary_Type) functionLookup(vmdll, "_JVM_LoadSystemLibrary@4");
+	global_JVM_OnExit = (JVM_OnExit_Type)functionLookup(vmdll, DECORATED_NAME(JVM_OnExit, 4));
+dnl (1-name, 2-cc, 3-decorate, 4-ret, 5-args...)
+define([_X],[	global_$1 = ($1_Type)functionLookup(vmdll, decorate_function_name($@));])dnl
+include([forwarders.m4])dnl
+	global_JVM_LoadSystemLibrary = (JVM_LoadSystemLibrary_Type)functionLookup(vmdll, DECORATED_NAME(JVM_LoadSystemLibrary, 4));
 #if defined(AIXPPC)
 	table_initialized = 1;
-#endif
+#endif /* defined(AIXPPC) */
 }
 
 void * JNICALL
 JVM_LoadSystemLibrary(const char *libName)
 {
 	int count = 0;
-	while ((NULL == global_JVM_LoadSystemLibrary) && (6000 != count)) {
-#ifdef WIN32
-		Sleep(5); // 5ms
-#else
-		usleep(5000); // 5ms
-#endif
+#if defined(AIXPPC)
+retry:
+#endif /* defined(AIXPPC) */
+	while ((NULL == global_JVM_LoadSystemLibrary) && (count < 6000)) {
+#if defined(WIN32)
+		Sleep(5); /* 5 milliseconds */
+#else /* defined(WIN32) */
+		usleep(5000); /* 5 milliseconds */
+#endif /* defined(WIN32) */
 		count += 1;
 	}
 	if (NULL != global_JVM_LoadSystemLibrary) {
 		return global_JVM_LoadSystemLibrary(libName);
 #if defined(AIXPPC)
 	} else if (!table_initialized) {
-		/* attempt to open the 'main redirector' and try again */
+		/* attempt to open the 'main redirector' so we can try again */
 		int openedLibraries = openLibraries("");
 		if (JNI_ERR == openedLibraries) {
 			fprintf(stdout, "Internal Error: Failed to initialize redirector - exiting\n");
 			exit(998);
 		}
-		/* re-try to run this function */
-		return JVM_LoadSystemLibrary(libName);
-#endif
+		count = 0;
+		goto retry;
+#endif /* defined(AIXPPC) */
 	} else {
-		printf("Fatal Error: Missing forwarder for JVM_LoadSystemLibrary()");
+		fprintf(stdout, "Fatal Error: Missing forwarder for %s()\n", "JVM_LoadSystemLibrary");
 		exit(969);
 	}
 }
