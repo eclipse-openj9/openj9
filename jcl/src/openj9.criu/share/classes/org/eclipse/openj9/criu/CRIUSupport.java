@@ -28,8 +28,10 @@ import java.security.AccessController;
 /*[ENDIF] JAVA_SPEC_VERSION < 17 */
 import java.security.PrivilegedAction;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 /*[IF JAVA_SPEC_VERSION == 8] */
@@ -410,6 +412,7 @@ public final class CRIUSupport {
 
 						String entry = null;
 
+						List<String> illegalKeys = new ArrayList<>(0);
 						while ((entry = envFileReader.readLine()) != null) {
 							if (!entry.isBlank()) {
 								// Only split into 2 (max) allow "=" to be contained in the value.
@@ -421,14 +424,20 @@ public final class CRIUSupport {
 								}
 
 								String name = entrySplit[0];
-								String value = entrySplit[1];
-
-								if (oldTheUnmodifiableEnvironment.containsKey(name)) {
-									throw new IllegalArgumentException(
-											"Env file entry cannot modifiy a pre-existing entry: " + entry);
+								String newValue = entrySplit[1];
+								String oldValue = oldTheUnmodifiableEnvironment.get(name);
+								if (oldValue != null) {
+									if (!Objects.equals(oldValue, newValue)) {
+										illegalKeys.add(name);
+									}
+								} else {
+									theEnvironment.put(variableValueOf.invoke(null, name), valueValueOf.invoke(null, newValue));
 								}
-								theEnvironment.put(variableValueOf.invoke(null, name), valueValueOf.invoke(null, value));
 							}
+						}
+
+						if (!illegalKeys.isEmpty()) {
+							throw new IllegalArgumentException(String.format("Env file entry cannot modifiy pre-existing environment keys: %s", String.valueOf(illegalKeys)));
 						}
 
 						@SuppressWarnings("unchecked")
