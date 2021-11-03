@@ -176,6 +176,9 @@ getCurrentClassLoader(J9VMThread *currentThread)
 			/* special case - if jdk/internal/loader/NativeLibraries.load(NativeLibraryImpl impl, String name, boolean isBuiltin, boolean isJNI)
 			 * is the current native method, use the class loader of "impl.fromClass".
 			 * This nativeMethod can't be cached cause HCR might make it invalid.
+			 *
+			 * Note that in jdk18, the signature of that method changed to
+			 *   NativeLibraries.load(NativeLibraryImpl impl, String name, boolean isBuiltin, boolean isJNI, boolean throwOnFailure)
 			 */
 			if (J9VMJDKINTERNALLOADERNATIVELIBRARIES_LOAD_METHOD(currentThread->javaVM) == nativeMethod) {
 				/* The current native method has a NativeLibraryImpl instance as its first argument */
