@@ -615,6 +615,13 @@ if(NOT JAVA_SPEC_VERSION LESS 16)
 	)
 endif()
 
+# java 18+
+if(NOT JAVA_SPEC_VERSION LESS 18)
+	omr_add_exports(jclse
+		Java_java_lang_System_getSysPropBeforePropertiesInitialized
+	)
+endif()
+
 # OpenJDK methodhandle support
 if(J9VM_OPT_OPENJDK_METHODHANDLE)
 	omr_add_exports(jclse
