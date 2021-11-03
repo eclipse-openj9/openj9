@@ -42,6 +42,7 @@
 class ClientSessionData;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 class AOTCacheClassChainRecord;
+class AOTCacheWellKnownClassesRecord;
 
 
 #define SVM_ASSERT_LOCATION_INNER(line) __FILE__ ":" #line
@@ -696,7 +697,10 @@ public:
    bool validateWellKnownClasses(const uintptr_t *wellKnownClassChainOffsets);
    bool isWellKnownClass(TR_OpaqueClassBlock *clazz);
    bool classCanSeeWellKnownClasses(TR_OpaqueClassBlock *clazz);
-   const void *wellKnownClassChainOffsets() { return _wellKnownClassChainOffsets; }
+   const void *wellKnownClassChainOffsets() const { return _wellKnownClassChainOffsets; }
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheWellKnownClassesRecord *aotCacheWellKnownClassesRecord() const { return _aotCacheWellKnownClassesRecord; }
+#endif /* defined(J9VM_OPT_JITSERVER */
 
    enum Presence
       {
@@ -903,6 +907,9 @@ private:
 
    TR_OpaqueClassBlock *_rootClass;
    const void *_wellKnownClassChainOffsets;
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheWellKnownClassesRecord *_aotCacheWellKnownClassesRecord;
+#endif /* defined(J9VM_OPT_JITSERVER */
 
    /* List of validation records to be written to the AOT buffer */
    SymbolValidationRecordList _symbolValidationRecords;

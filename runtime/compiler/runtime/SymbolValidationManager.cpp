@@ -26,7 +26,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/AOTFailure.hpp"
-#include "compile/Compilation.hpp"
+#include "compile/J9Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "infra/String.hpp"
@@ -68,12 +68,15 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
         _vmThread,
 #if defined(J9VM_OPT_JITSERVER)
         TR::CompilationInfo::get()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ? TR_J9VMBase::J9_SERVER_VM : 
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
         TR_J9VMBase::DEFAULT_VM)),
      _trMemory(_comp->trMemory()),
      _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
      _rootClass(compilee->classOfMethod()),
      _wellKnownClassChainOffsets(NULL),
+#if defined(J9VM_OPT_JITSERVER)
+     _aotCacheWellKnownClassesRecord(NULL),
+#endif /* defined(J9VM_OPT_JITSERVER) */
      _symbolValidationRecords(_region),
      _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
      _classesFromAnyCPIndex(LessClassFromAnyCPIndex(), _region),
@@ -235,6 +238,13 @@ TR::SymbolValidationManager::populateWellKnownClasses()
    uintptr_t *classCount = &classChainOffsets[0];
    uintptr_t *nextClassChainOffset = &classChainOffsets[1];
 
+#if defined(J9VM_OPT_JITSERVER)
+   ClientSessionData *clientData = _comp->getClientData();
+   bool aotCacheStore = _comp->isAOTCacheStore();
+   const AOTCacheClassChainRecord *classChainRecords[WELL_KNOWN_CLASS_COUNT] = {0};
+   bool missingClassChainRecords = false;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    for (int i = 0; i < WELL_KNOWN_CLASS_COUNT; i++)
       {
       const char *name = names[i];
@@ -243,11 +253,24 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 
       void *chain = NULL;
       if (wkClass == NULL)
+         {
          traceMsg(_comp, "well-known class %s not found\n", name);
+         }
       else if (!_fej9->isPublicClass(wkClass))
+         {
          traceMsg(_comp, "well-known class %s is not public\n", name);
+         }
       else
+         {
+#if defined(J9VM_OPT_JITSERVER)
+         auto recordPtr = &classChainRecords[_wellKnownClasses.size()];
+         chain = _fej9->sharedCache()->rememberClass(wkClass, recordPtr);
+         if (aotCacheStore && !*recordPtr)
+            missingClassChainRecords = true;
+#else /* defined(J9VM_OPT_JITSERVER) */
          chain = _fej9->sharedCache()->rememberClass(wkClass);
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         }
 
       if (chain == NULL)
          {
@@ -271,12 +294,12 @@ TR::SymbolValidationManager::populateWellKnownClasses()
    *classCount = _wellKnownClasses.size();
 
 #if defined(J9VM_OPT_JITSERVER)
-   ClientSessionData *clientData = _comp->getClientData();
    if (clientData)
       {
       // This is an out-of-process compilation; check the cache in the client session first
       _wellKnownClassChainOffsets = clientData->getCachedWellKnownClassChainOffsets(
-         includedClasses, _wellKnownClasses.size(), classChainOffsets + 1);
+         includedClasses, _wellKnownClasses.size(), classChainOffsets + 1, _aotCacheWellKnownClassesRecord
+      );
       if (_wellKnownClassChainOffsets)
          return;
       }
@@ -302,8 +325,10 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       {
       // This is an out-of process compilation; cache the pointer to the newly created well-known
       // class chain offsets in the client session to avoid sending repeated requests to the client
-      clientData->cacheWellKnownClassChainOffsets(includedClasses, _wellKnownClasses.size(),
-                                                  classChainOffsets + 1, _wellKnownClassChainOffsets);
+      clientData->cacheWellKnownClassChainOffsets(
+         includedClasses, _wellKnownClasses.size(), classChainOffsets + 1, _wellKnownClassChainOffsets,
+         (aotCacheStore && !missingClassChainRecords) ? classChainRecords : NULL, _aotCacheWellKnownClassesRecord
+      );
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

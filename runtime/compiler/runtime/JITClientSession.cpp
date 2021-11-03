@@ -718,30 +718,35 @@ ClientSessionData::writeReleaseClassUnloadRWMutex()
 
 const void *
 ClientSessionData::getCachedWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
-                                                       const uintptr_t *classChainOffsets)
+                                                       const uintptr_t *classChainOffsets,
+                                                       const AOTCacheWellKnownClassesRecord *&wellKnownClassesRecord)
    {
    TR_ASSERT(numClasses <= WELL_KNOWN_CLASS_COUNT, "Too many well-known classes");
-
    OMR::CriticalSection wellKnownClasses(_wellKnownClassesMonitor);
+
    if (_wellKnownClasses._includedClasses == includedClasses &&
        memcmp(_wellKnownClasses._classChainOffsets, classChainOffsets,
               numClasses * sizeof(classChainOffsets[0])) == 0)
       {
       TR_ASSERT(_wellKnownClasses._wellKnownClassChainOffsets, "Cached well-known class chain offsets pointer is NULL");
+      wellKnownClassesRecord = _wellKnownClasses._aotCacheWellKnownClassesRecord;
       return _wellKnownClasses._wellKnownClassChainOffsets;
       }
+
+   wellKnownClassesRecord = NULL;
    return NULL;
    }
 
 void
 ClientSessionData::cacheWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
-                                                   const uintptr_t *classChainOffsets,
-                                                   const void *wellKnownClassChainOffsets)
+                                                   const uintptr_t *classChainOffsets, const void *wellKnownClassChainOffsets,
+                                                   const AOTCacheClassChainRecord *const *classChainRecords,
+                                                   const AOTCacheWellKnownClassesRecord *&wellKnownClassesRecord)
    {
    TR_ASSERT(wellKnownClassChainOffsets, "Well-known class chain offsets pointer is NULL");
    TR_ASSERT(numClasses <= WELL_KNOWN_CLASS_COUNT, "Too many well-known classes");
-
    OMR::CriticalSection wellKnownClasses(_wellKnownClassesMonitor);
+
    _wellKnownClasses._includedClasses = includedClasses;
    memcpy(_wellKnownClasses._classChainOffsets, classChainOffsets,
           numClasses * sizeof(classChainOffsets[0]));
@@ -749,6 +754,11 @@ ClientSessionData::cacheWellKnownClassChainOffsets(unsigned int includedClasses,
    memset(_wellKnownClasses._classChainOffsets + numClasses, 0,
           (WELL_KNOWN_CLASS_COUNT - numClasses) * sizeof(classChainOffsets[0]));
    _wellKnownClasses._wellKnownClassChainOffsets = wellKnownClassChainOffsets;
+
+   // Create and save AOT cache well-known classes record if requested
+   wellKnownClassesRecord = classChainRecords ?
+      _aotCache->getWellKnownClassesRecord(classChainRecords, numClasses, includedClasses) : NULL;
+   _wellKnownClasses._aotCacheWellKnownClassesRecord = wellKnownClassesRecord;
    }
 
 JITServerAOTCache *

@@ -429,10 +429,13 @@ public:
    // Returns the cached client-side pointer to well-known class chain offsets
    // if included classes and their SCC offsets match, otherwise returns NULL
    const void *getCachedWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
-                                                   const uintptr_t *classChainOffsets);
+                                                   const uintptr_t *classChainOffsets,
+                                                   const AOTCacheWellKnownClassesRecord *&wellKnownClassesRecord);
    // Cache the client-side pointer to well-known class chain offsets
    void cacheWellKnownClassChainOffsets(unsigned int includedClasses, size_t numClasses,
-                                        const uintptr_t *classChainOffsets, const void *wellKnownClassChainOffsets);
+                                        const uintptr_t *classChainOffsets, const void *wellKnownClassChainOffsets,
+                                        const AOTCacheClassChainRecord *const *classChainRecords,
+                                        const AOTCacheWellKnownClassesRecord *&wellKnownClassesRecord);
 
    bool isInStartupPhase() const { return _isInStartupPhase; }
    void setIsInStartupPhase(bool isInStartupPhase) { _isInStartupPhase = isInStartupPhase; }
@@ -530,6 +533,7 @@ private:
       unsigned int _includedClasses;// bitset of indices in the list of well-known classes
       uintptr_t _classChainOffsets[WELL_KNOWN_CLASS_COUNT];// ROMClass SCC offsets
       const void *_wellKnownClassChainOffsets;// client-side pointer to "well-known class chain offsets" in SCC
+      const AOTCacheWellKnownClassesRecord *_aotCacheWellKnownClassesRecord;
       };
 
    WellKnownClassesCache _wellKnownClasses;
