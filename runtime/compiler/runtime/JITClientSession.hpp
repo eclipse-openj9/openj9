@@ -208,6 +208,7 @@ public:
       uintptr_t _classFlags;
       uintptr_t _classChainOffsetIdentifyingLoader;
       std::string _classNameIdentifyingLoader;
+      const AOTCacheClassRecord *_aotCacheClassRecord;
 
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _constantClassPoolCache;
@@ -438,8 +439,13 @@ public:
       return _aotHeaderRecord;
       }
 
+   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, JITServer::ServerStream *stream);
+
 private:
    void destroyMonitors();
+
+   const AOTCacheClassRecord *getClassRecord(ClientSessionData::ClassInfo &classInfo);
+   const AOTCacheClassRecord *getClassRecord(J9Class *clazz, bool &missingLoaderRecord);
 
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms

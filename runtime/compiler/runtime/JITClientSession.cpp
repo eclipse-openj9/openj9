@@ -410,6 +410,7 @@ ClientSessionData::ClassInfo::ClassInfo(TR_PersistentMemory *persistentMemory) :
    _classFlags(0),
    _classChainOffsetIdentifyingLoader(0),
    _classNameIdentifyingLoader(),
+   _aotCacheClassRecord(NULL),
    _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _constantClassPoolCache(decltype(_constantClassPoolCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(persistentMemory->_persistentAllocator.get())),
@@ -774,6 +775,94 @@ ClientSessionData::getOrCreateAOTCache(JITServer::ServerStream *stream)
       }
 
    return _aotCache;
+   }
+
+const AOTCacheClassRecord *
+ClientSessionData::getClassRecord(ClientSessionData::ClassInfo &classInfo)
+{
+   if (!classInfo._aotCacheClassRecord)
+      {
+      auto &name = classInfo._classNameIdentifyingLoader;
+      if (name.empty())
+         {
+         TR_ASSERT(!classInfo._classChainOffsetIdentifyingLoader,
+                   "Valid class chain offset but missing class name identifying loader");
+         return NULL;
+         }
+
+      auto classLoaderRecord = _aotCache->getClassLoaderRecord((const uint8_t *)name.data(), name.size());
+      classInfo._aotCacheClassRecord = _aotCache->getClassRecord(classLoaderRecord, classInfo._romClass);
+      if (classInfo._aotCacheClassRecord)
+         {
+         // The name string is no longer needed; free the memory used by it by setting it to an empty string
+         std::string().swap(classInfo._classNameIdentifyingLoader);
+         }
+      }
+
+   return classInfo._aotCacheClassRecord;
+}
+
+const AOTCacheClassRecord *
+ClientSessionData::getClassRecord(J9Class *clazz, bool &missingLoaderRecord)
+   {
+   TR_ASSERT(getROMMapMonitor()->owned_by_self(), "Must hold ROMMapMonitor");
+
+   auto it = getROMClassMap().find(clazz);
+   if (it == getROMClassMap().end())
+      return NULL;
+
+   auto record = getClassRecord(it->second);
+   missingLoaderRecord = !record;
+   return record;
+   }
+
+const AOTCacheClassRecord *
+ClientSessionData::getClassRecord(J9Class *clazz, JITServer::ServerStream *stream)
+   {
+   const AOTCacheClassRecord *record = NULL;
+   bool missingLoaderRecord = false;
+      {
+      OMR::CriticalSection cs(getROMMapMonitor());
+      record = getClassRecord(clazz, missingLoaderRecord);
+      }
+
+   if (missingLoaderRecord)
+      {
+      // Request and cache missing class loader info from the client
+      stream->write(JITServer::MessageType::SharedCache_getClassChainOffsetIdentifyingLoader, clazz, true);
+      auto recv = stream->read<uintptr_t, std::string>();
+      uintptr_t offset = std::get<0>(recv);
+      auto &name = std::get<1>(recv);
+
+      if (offset)
+         {
+         OMR::CriticalSection cs(getROMMapMonitor());
+         auto it = getROMClassMap().find((J9Class *)clazz);
+         TR_ASSERT(it != getROMClassMap().end(), "Class %p must be already cached", clazz);
+         it->second._classChainOffsetIdentifyingLoader = offset;
+         it->second._classNameIdentifyingLoader = name;
+         record = getClassRecord(it->second);
+         }
+      else if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "ERROR: clientUID %llu failed to get class name identifying loader for class %p",
+            (unsigned long long)_clientUID, clazz
+         );
+         }
+      }
+   else if (!record)
+      {
+      // Request and cache class info from the client
+      JITServerHelpers::ClassInfoTuple classInfoTuple;
+      auto romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, _persistentMemory, classInfoTuple);
+      JITServerHelpers::cacheRemoteROMClassOrFreeIt(this, clazz, romClass, classInfoTuple);
+
+      OMR::CriticalSection cs(getROMMapMonitor());
+      record = getClassRecord(clazz, missingLoaderRecord);
+      }
+
+   return record;
    }
 
 
