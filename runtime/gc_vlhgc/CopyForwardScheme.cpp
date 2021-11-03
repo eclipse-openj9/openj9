@@ -4702,6 +4702,7 @@ MM_CopyForwardScheme::verifyClassObjectSlots(MM_EnvironmentVLHGC *env, J9Object 
 			/*
 			 * scan VarHandle MethodTypes
 			 */
+#if defined(J9VM_OPT_METHOD_HANDLE)
 			GC_MethodTypesIterator varHandleMethodTypesIterator(classPtr->romClass->varHandleMethodTypeCount, classPtr->varHandleMethodTypes);
 			while(NULL != (slotPtr = varHandleMethodTypesIterator.nextSlot())) {
 				J9Object *dstObject = *slotPtr;
@@ -4718,6 +4719,7 @@ MM_CopyForwardScheme::verifyClassObjectSlots(MM_EnvironmentVLHGC *env, J9Object 
 					Assert_MM_unreachable();
 				}
 			}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 			/*
 			 * scan constant pool objects

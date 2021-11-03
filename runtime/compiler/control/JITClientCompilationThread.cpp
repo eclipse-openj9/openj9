@@ -1595,6 +1595,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, mirror->callSiteTableEntryAddress(callSiteIndex));
          }
          break;
+#if defined(J9VM_OPT_METHOD_HANDLE)
       case MessageType::ResolvedMethod_varHandleMethodTypeTableEntryAddress:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
@@ -1611,6 +1612,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, mirror->isUnresolvedVarHandleMethodTypeTableEntry(cpIndex));
          }
          break;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
       case MessageType::ResolvedMethod_getResolvedDynamicMethod:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();

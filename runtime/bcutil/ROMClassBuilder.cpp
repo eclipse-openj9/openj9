@@ -479,7 +479,10 @@ ROMClassBuilder::getSizeInfo(ROMClassCreationContext *context, ROMClassWriter *r
 				ROMClassWriter::MARK_AND_COUNT_ONLY);
 	}
 	/* NOTE: the size of the VarHandle MethodType lookup table is already included in
-	 * rcWithOutUTF8sSize; see ROMClassWriter::writeVarHandleMethodTypeLookupTable() */
+	 * rcWithOutUTF8sSize; see ROMClassWriter::writeVarHandleMethodTypeLookupTable().
+	 * VarHandleMethodTypeLookupTable is disabled for OpenJDK MethodHandles because
+	 * it is not used.
+	 */
 	sizeInformation->rcWithOutUTF8sSize = mainAreaCursor.getCount();
 	sizeInformation->lineNumberSize = lineNumberCursor.getCount();
 	sizeInformation->variableInfoSize = variableInfoCursor.getCount();
@@ -1104,7 +1107,10 @@ ROMClassBuilder::finishPrepareAndLaydown(
 									ROMClassWriter::MARK_AND_COUNT_ONLY);
 
 		/* NOTE: the size of the VarHandle MethodType lookup table is already included in
-		 * rcWithOutUTF8sSize; see ROMClassWriter::writeVarHandleMethodTypeLookupTable() */
+		 * rcWithOutUTF8sSize; see ROMClassWriter::writeVarHandleMethodTypeLookupTable().
+		 * VarHandleMethodTypeLookupTable is disabled for OpenJDK MethodHandles because
+		 * it is not used.
+		 */
 		sizeInformation->rcWithOutUTF8sSize = mainAreaCursor.getCount();
 		sizeInformation->lineNumberSize = 0;
 		sizeInformation->variableInfoSize = 0;
