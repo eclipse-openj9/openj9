@@ -59,8 +59,7 @@ _X(JVM_GC,JNICALL,true,void,void)
 _X(JVM_GCNoCompact,JNICALL,true,void,void)
 _X(JVM_GetAllThreads,JNICALL,true,jobjectArray,JNIEnv *env, jclass aClass)
 _IF([JAVA_SPEC_VERSION < 11],
-	[_X(JVM_GetCallerClass,JNICALL,true,jobject,JNIEnv *env, jint depth)])
-_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_GetCallerClass,JNICALL,true,jobject,JNIEnv *env, jint depth)],
 	[_X(JVM_GetCallerClass,JNICALL,true,jobject,JNIEnv *env)])
 _X(JVM_GetClassAccessFlags,JNICALL,true,jint,JNIEnv *env, jclass clazzRef)
 _X(JVM_GetClassAnnotations,JNICALL,true,jbyteArray,JNIEnv *env, jclass target)
@@ -68,8 +67,7 @@ _X(JVM_GetClassConstantPool,JNICALL,true,jobject,JNIEnv *env, jclass target)
 _X(JVM_GetClassContext,JNICALL,true,jobject,JNIEnv *env)
 _X(JVM_GetClassLoader,JNICALL,true,jobject,JNIEnv *env, jobject obj)
 _IF([JAVA_SPEC_VERSION < 11],
-	[_X(JVM_GetClassName,JNICALL,true,jstring, JNIEnv *env, jclass theClass)])
-_IF([JAVA_SPEC_VERSION >= 11],
+	[_X(JVM_GetClassName,JNICALL,true,jstring, JNIEnv *env, jclass theClass)],
 	[_X(JVM_InitClassName,JNICALL,true,jstring, JNIEnv *env, jclass theClass)])
 _X(JVM_GetClassSignature,JNICALL,true,jstring,JNIEnv *env, jclass target)
 _X(JVM_GetEnclosingMethodInfo,JNICALL,true,jobjectArray,JNIEnv *env, jclass theClass)
@@ -193,8 +191,7 @@ _X(JVM_StartThread,JNICALL,true,void,JNIEnv *env, jobject newThread)
 _X(JVM_StopThread,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)
 _X(JVM_SuspendThread,JNICALL,true,jobject,jint arg0, jint arg1)
 _IF([JAVA_SPEC_VERSION < 15],
-	[_X(JVM_UnloadLibrary, JNICALL, true, jobject, jint arg0)])
-_IF([JAVA_SPEC_VERSION >= 15],
+	[_X(JVM_UnloadLibrary, JNICALL, true, jobject, jint arg0)],
 	[_X(JVM_UnloadLibrary, JNICALL, true, void, void *handle)])
 _X(JVM_Yield,JNICALL,true,jobject,jint arg0, jint arg1)
 _X(JVM_SetSockOpt,JNICALL,true,jint,jint fd, int level, int optname, const char *optval, int optlen)
