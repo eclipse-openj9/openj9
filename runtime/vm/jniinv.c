@@ -78,7 +78,6 @@ J9_DECLARE_CONSTANT_UTF8(j9_shutdown, "shutdown");
 J9_DECLARE_CONSTANT_UTF8(j9_exit, "exit");
 J9_DECLARE_CONSTANT_UTF8(j9_run, "run");
 J9_DECLARE_CONSTANT_UTF8(j9_initCause, "initCause");
-J9_DECLARE_CONSTANT_UTF8(j9_completeInitialization, "completeInitialization");
 J9_DECLARE_CONSTANT_UTF8(j9_void_void, "()V");
 J9_DECLARE_CONSTANT_UTF8(j9_class_void, "(Ljava/lang/Class;)V");
 J9_DECLARE_CONSTANT_UTF8(j9_class_class_void, "(Ljava/lang/Class;Ljava/lang/Class;)V");
@@ -88,7 +87,6 @@ J9_DECLARE_CONSTANT_UTF8(j9_throwable_throwable, "(Ljava/lang/Throwable;)Ljava/l
 J9_DECLARE_CONSTANT_UTF8(j9_int_void, "(I)V");
 
 J9_DECLARE_CONSTANT_NAS(initCauseNameAndSig, j9_initCause, j9_throwable_throwable);
-J9_DECLARE_CONSTANT_NAS(completeInitializationNameAndSig, j9_completeInitialization, j9_void_void);
 J9_DECLARE_CONSTANT_NAS(threadRunNameAndSig, j9_run, j9_void_void);
 J9_DECLARE_CONSTANT_NAS(initNameAndSig, j9_init, j9_void_void);
 J9_DECLARE_CONSTANT_NAS(printStackTraceNameAndSig, j9_printStackTrace, j9_void_void);
