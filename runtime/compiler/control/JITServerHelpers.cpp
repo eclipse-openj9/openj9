@@ -568,7 +568,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    classInfoStruct._remoteRomClass = std::get<17>(classInfoTuple);
    classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfoTuple);
    classInfoStruct._classFlags = std::get<19>(classInfoTuple);
-   classInfoStruct._classChainOffsetOfIdentifyingLoaderForClazz = std::get<20>(classInfoTuple);
+   classInfoStruct._classChainOffsetIdentifyingLoader = std::get<20>(classInfoTuple);
    auto &origROMMethods = std::get<21>(classInfoTuple);
 
    auto result = clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct });
@@ -604,40 +604,40 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    // attempt validation and return NULL for many methods invoked here.
    // We do not want that, because these values will be cached and later used in non-AOT
    // compilations, where we always need a non-NULL result.
-   TR_J9VM *fe = (TR_J9VM *) TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
-   J9Method *methodsOfClass = (J9Method*) fe->getMethods((TR_OpaqueClassBlock*) clazz);
+   TR_J9VM *fe = (TR_J9VM *)TR_J9VMBase::get(vmThread->javaVM->jitConfig, vmThread);
+   J9Method *methodsOfClass = (J9Method *)fe->getMethods((TR_OpaqueClassBlock *)clazz);
    int32_t numDims = 0;
-   TR_OpaqueClassBlock *baseClass = fe->getBaseComponentClass((TR_OpaqueClassBlock *) clazz, numDims);
-   TR_OpaqueClassBlock *parentClass = fe->getSuperClass((TR_OpaqueClassBlock *) clazz);
+   TR_OpaqueClassBlock *baseClass = fe->getBaseComponentClass((TR_OpaqueClassBlock *)clazz, numDims);
+   TR_OpaqueClassBlock *parentClass = fe->getSuperClass((TR_OpaqueClassBlock *)clazz);
 
    uint32_t numMethods = clazz->romClass->romMethodCount;
-
    std::vector<uint8_t> methodTracingInfo;
    methodTracingInfo.reserve(numMethods);
 
    std::vector<J9ROMMethod *> origROMMethods;
    origROMMethods.reserve(numMethods);
-   for(uint32_t i = 0; i < numMethods; ++i)
+   for (uint32_t i = 0; i < numMethods; ++i)
       {
-      methodTracingInfo.push_back(static_cast<uint8_t>(fe->isMethodTracingEnabled((TR_OpaqueMethodBlock *) &methodsOfClass[i])));
+      methodTracingInfo.push_back(static_cast<uint8_t>(fe->isMethodTracingEnabled((TR_OpaqueMethodBlock *)&methodsOfClass[i])));
       // record client-side pointers to ROM methods
       origROMMethods.push_back(fe->getROMMethodFromRAMMethod(&methodsOfClass[i]));
       }
 
    bool classHasFinalFields = fe->hasFinalFieldsInClass((TR_OpaqueClassBlock *)clazz);
    uintptr_t classDepthAndFlags = fe->getClassDepthAndFlagsValue((TR_OpaqueClassBlock *)clazz);
-   bool classInitialized =  fe->isClassInitialized((TR_OpaqueClassBlock *)clazz);
+   bool classInitialized = fe->isClassInitialized((TR_OpaqueClassBlock *)clazz);
    uint32_t byteOffsetToLockword = fe->getByteOffsetToLockword((TR_OpaqueClassBlock *)clazz);
-   TR_OpaqueClassBlock * leafComponentClass = fe->getLeafComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
-   void * classLoader = fe->getClassLoader((TR_OpaqueClassBlock *)clazz);
-   TR_OpaqueClassBlock * hostClass = fe->convertClassPtrToClassOffset(clazz->hostClass);
-   TR_OpaqueClassBlock * componentClass = fe->getComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
-   TR_OpaqueClassBlock * arrayClass = fe->getArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
+   TR_OpaqueClassBlock *leafComponentClass = fe->getLeafComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
+   void *classLoader = fe->getClassLoader((TR_OpaqueClassBlock *)clazz);
+   TR_OpaqueClassBlock *hostClass = fe->convertClassPtrToClassOffset(clazz->hostClass);
+   TR_OpaqueClassBlock *componentClass = fe->getComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
+   TR_OpaqueClassBlock *arrayClass = fe->getArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
    uintptr_t totalInstanceSize = clazz->totalInstanceSize;
    uintptr_t cp = fe->getConstantPoolFromClass((TR_OpaqueClassBlock *)clazz);
    uintptr_t classFlags = fe->getClassFlagsValue((TR_OpaqueClassBlock *)clazz);
-   uintptr_t classChainOffsetOfIdentifyingLoaderForClazz = fe->sharedCache() ? 
-      fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCacheNoFail((TR_OpaqueClassBlock *)clazz) : 0;
+   auto sharedCache = fe->sharedCache();
+   uintptr_t classChainOffsetIdentifyingLoader = sharedCache ?
+      sharedCache->getClassChainOffsetIdentifyingLoaderNoFail((TR_OpaqueClassBlock *)clazz) : 0;
 
    std::string packedROMClassStr;
    if (serializeClass)
@@ -650,10 +650,10 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
 
    return std::make_tuple(
       packedROMClassStr, methodsOfClass, baseClass, numDims, parentClass,
-      TR::Compiler->cls.getITable((TR_OpaqueClassBlock *) clazz), methodTracingInfo,
+      TR::Compiler->cls.getITable((TR_OpaqueClassBlock *)clazz), methodTracingInfo,
       classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword,
       leafComponentClass, classLoader, hostClass, componentClass, arrayClass, totalInstanceSize,
-      clazz->romClass, cp, classFlags, classChainOffsetOfIdentifyingLoaderForClazz, origROMMethods
+      clazz->romClass, cp, classFlags, classChainOffsetIdentifyingLoader, origROMMethods
    );
    }
 
@@ -764,109 +764,67 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
    switch (dataType)
       {
       case CLASSINFO_ROMCLASS_MODIFIERS :
-         {
          *(uint32_t *)data = classInfo._romClass->modifiers;
-         }
          break;
       case CLASSINFO_ROMCLASS_EXTRAMODIFIERS :
-         {
          *(uint32_t *)data = classInfo._romClass->extraModifiers;
-         }
          break;
       case CLASSINFO_BASE_COMPONENT_CLASS :
-         {
          *(TR_OpaqueClassBlock **)data = classInfo._baseComponentClass;
-         }
          break;
       case CLASSINFO_NUMBER_DIMENSIONS :
-         {
          *(int32_t *)data = classInfo._numDimensions;
-         }
          break;
       case CLASSINFO_PARENT_CLASS :
-         {
          *(TR_OpaqueClassBlock **)data = classInfo._parentClass;
-         }
          break;
       case CLASSINFO_CLASS_HAS_FINAL_FIELDS :
-         {
          *(bool *)data = classInfo._classHasFinalFields;
-         }
          break;
       case CLASSINFO_CLASS_DEPTH_AND_FLAGS :
-         {
          *(uintptr_t *)data = classInfo._classDepthAndFlags;
-         }
          break;
       case CLASSINFO_CLASS_INITIALIZED :
-         {
          *(bool *)data = classInfo._classInitialized;
-         }
          break;
       case CLASSINFO_BYTE_OFFSET_TO_LOCKWORD :
-         {
          *(uint32_t *)data = classInfo._byteOffsetToLockword;
-         }
          break;
       case CLASSINFO_LEAF_COMPONENT_CLASS :
-         {
          *(TR_OpaqueClassBlock **)data = classInfo._leafComponentClass;
-         }
          break;
       case CLASSINFO_CLASS_LOADER :
-         {
          *(void **)data = classInfo._classLoader;
-         }
          break;
       case CLASSINFO_HOST_CLASS :
-         {
          *(TR_OpaqueClassBlock **)data = classInfo._hostClass;
-         }
          break;
       case CLASSINFO_COMPONENT_CLASS :
-         {
          *(TR_OpaqueClassBlock **)data = classInfo._componentClass;
-         }
          break;
       case CLASSINFO_ARRAY_CLASS :
-         {
          *(TR_OpaqueClassBlock **)data = classInfo._arrayClass;
-         }
          break;
       case CLASSINFO_TOTAL_INSTANCE_SIZE :
-         {
          *(uintptr_t *)data = classInfo._totalInstanceSize;
-         }
          break;
       case CLASSINFO_REMOTE_ROM_CLASS :
-         {
          *(J9ROMClass **)data = classInfo._remoteRomClass;
-         }
          break;
       case CLASSINFO_CLASS_FLAGS :
-         {
          *(uintptr_t *)data = classInfo._classFlags;
-         }
          break;
       case CLASSINFO_METHODS_OF_CLASS :
-         {
          *(J9Method **)data = classInfo._methodsOfClass;
-         }
          break;
       case CLASSINFO_CONSTANT_POOL :
-         {
          *(J9ConstantPool **)data = classInfo._constantPool;
-         }
          break;
-      case CLASSINFO_CLASS_CHAIN_OFFSET:
-         {
-         *(uintptr_t *)data = classInfo._classChainOffsetOfIdentifyingLoaderForClazz;
-         }
+      case CLASSINFO_CLASS_CHAIN_OFFSET_IDENTIFYING_LOADER:
+         *(uintptr_t *)data = classInfo._classChainOffsetIdentifyingLoader;
          break;
-      default :
-         {
-         TR_ASSERT(0, "Class Info not supported %u \n", dataType);
-         }
+      default:
+         TR_ASSERT(false, "Class Info not supported %u\n", dataType);
          break;
       }
    }

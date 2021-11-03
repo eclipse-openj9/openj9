@@ -1273,7 +1273,7 @@ TR_J9SharedCache::lookupClassFromChainAndLoader(uintptr_t *chainData, void *clas
    }
 
 uintptr_t
-TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
+TR_J9SharedCache::getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz)
    {
    void *loaderForClazz = _fe->getClassLoader(clazz);
    void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
@@ -1321,9 +1321,10 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
 
 #if defined(J9VM_OPT_JITSERVER)
 uintptr_t
-TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCacheNoFail(TR_OpaqueClassBlock *clazz)
+TR_J9SharedCache::getClassChainOffsetIdentifyingLoaderNoFail(TR_OpaqueClassBlock *clazz)
    {
-   TR_ASSERT_FATAL(TR::comp() && !TR::comp()->isOutOfProcessCompilation(), "getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCacheNoFail should be called only the JVM client");
+   TR_ASSERT_FATAL(TR::comp() && !TR::comp()->isOutOfProcessCompilation(),
+                   "getClassChainOffsetIdentifyingLoaderNoFail should be called only the JVM client");
    void *loaderForClazz = _fe->getClassLoader(clazz);
    void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
    uintptr_t classChainOffsetInSharedCache;
@@ -1393,28 +1394,29 @@ TR_J9JITServerSharedCache::getCacheDescriptorList()
    }
 
 uintptr_t
-TR_J9JITServerSharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
+TR_J9JITServerSharedCache::getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz)
    {
-   uintptr_t  classChainOffset = 0;
+   uintptr_t classChainOffset = 0;
    TR_ASSERT(_stream, "stream must be initialized by now");
    ClientSessionData *clientData = TR::compInfoPT->getClientData();
    JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, clientData, _stream,
-                                             JITServerHelpers::CLASSINFO_CLASS_CHAIN_OFFSET, (void *)&classChainOffset);
+                                             JITServerHelpers::CLASSINFO_CLASS_CHAIN_OFFSET_IDENTIFYING_LOADER,
+                                             (void *)&classChainOffset);
    // Test if cached value of `classChainOffset` is initialized. Ask the client if it's not.
    // This situation is possible if we cache ClassInfo during a non-AOT compilation.
    if (classChainOffset == 0)
       {
-      _stream->write(JITServer::MessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
+      _stream->write(JITServer::MessageType::SharedCache_getClassChainOffsetIdentifyingLoader, clazz);
       classChainOffset = std::get<0>(_stream->read<uintptr_t>());
 
       // If we got a valid value back, cache that
       if (classChainOffset)
          {
          OMR::CriticalSection getRemoteROMClass(clientData->getROMMapMonitor());
-         auto it = clientData->getROMClassMap().find((J9Class*) clazz);
+         auto it = clientData->getROMClassMap().find((J9Class *)clazz);
          if (it != clientData->getROMClassMap().end())
             {
-            it->second._classChainOffsetOfIdentifyingLoaderForClazz = classChainOffset;
+            it->second._classChainOffsetIdentifyingLoader = classChainOffset;
             }
          }
       }

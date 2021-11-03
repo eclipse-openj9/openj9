@@ -2085,10 +2085,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, entries, fieldNames, typeSignatures); 
          }
          break;
-      case MessageType::SharedCache_getClassChainOffsetInSharedCache:
+      case MessageType::SharedCache_getClassChainOffsetIdentifyingLoader:
          {
          auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         uintptr_t classChainOffsetInSharedCache = fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         uintptr_t classChainOffsetInSharedCache = fe->sharedCache()->getClassChainOffsetIdentifyingLoader(j9class);
          client->write(response, classChainOffsetInSharedCache);
          }
          break;

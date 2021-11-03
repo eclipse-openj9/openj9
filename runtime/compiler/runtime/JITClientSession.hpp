@@ -209,7 +209,7 @@ public:
       uintptr_t _totalInstanceSize;
       J9ConstantPool *_constantPool;
       uintptr_t _classFlags;
-      uintptr_t _classChainOffsetOfIdentifyingLoaderForClazz;
+      uintptr_t _classChainOffsetIdentifyingLoader;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _constantClassPoolCache;
       TR_FieldAttributesCache _fieldAttributesCache;

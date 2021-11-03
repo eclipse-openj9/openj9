@@ -220,7 +220,7 @@ enum MessageType : uint16_t
    ClassEnv_enumerateFields,
 
    // For TR_J9SharedCache
-   SharedCache_getClassChainOffsetInSharedCache,
+   SharedCache_getClassChainOffsetIdentifyingLoader,
    SharedCache_rememberClass,
    SharedCache_addHint,
    SharedCache_storeSharedData,
@@ -462,7 +462,7 @@ static const char *messageNames[] =
    "ClassEnv_iTableRomClass",
    "ClassEnv_getITable",
    "ClassEnv_enumerateFields",
-   "SharedCache_getClassChainOffsetInSharedCache",
+   "SharedCache_getClassChainOffsetIdentifyingLoader",
    "SharedCache_rememberClass",
    "SharedCache_addHint",
    "SharedCache_storeSharedData",

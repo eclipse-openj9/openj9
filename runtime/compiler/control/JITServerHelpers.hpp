@@ -52,8 +52,9 @@ class JITServerHelpers
       CLASSINFO_CLASS_FLAGS,
       CLASSINFO_METHODS_OF_CLASS,
       CLASSINFO_CONSTANT_POOL,
-      CLASSINFO_CLASS_CHAIN_OFFSET,
+      CLASSINFO_CLASS_CHAIN_OFFSET_IDENTIFYING_LOADER,
       };
+
    // NOTE: when adding new elements to this tuple, add them to the end,
    // to not mess with the established order.
    using ClassInfoTuple = std::tuple
@@ -68,7 +69,7 @@ class JITServerHelpers
       TR_OpaqueClassBlock *, TR_OpaqueClassBlock *,                  // 14: _componentClass         15: _arrayClass
       uintptr_t, J9ROMClass *,                                       // 16: _totalInstanceSize      17: _remoteRomClass
       uintptr_t, uintptr_t,                                          // 18: _constantPool           19: _classFlags
-      uintptr_t, std::vector<J9ROMMethod *>                          // 20: _classChainOffsetOfIdentifyingLoaderForClazz 21. _origROMMethods
+      uintptr_t, std::vector<J9ROMMethod *>                          // 20: _classChainOffsetIdentifyingLoader 21. _origROMMethods
       >;
 
    // Packs a ROMClass to be transferred to the server.
