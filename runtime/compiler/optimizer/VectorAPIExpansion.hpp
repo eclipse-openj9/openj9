@@ -83,6 +83,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int const _numMethods = _lastMethod - _firstMethod + 1;
    static int const _numArguments = 15;
 
+   public:
+
    // TODO: get up to date values from VectorSupport class
 
    // Unary
@@ -112,8 +114,6 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
    static int const VECTOR_OP_CAST        = 17;
    static int const VECTOR_OP_REINTERPRET = 18;
-
-   public:
 
   /** \brief
    *  Is passed to methods handlers during analysis and transforamtion phases
@@ -397,10 +397,13 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     Maps object of type \c java/lang/Class (e.g., \c java/lang/Float.TYPE)
    *     into corresponding \c TR::DataType
    *
+   *  \param comp
+   *     Compilation
+   *
    *  \param classNode
    *     Node that loads SPECIES object
    */
-   TR::DataType getDataTypeFromClassNode(TR::Node *classNode);
+   static TR::DataType getDataTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode);
 
   /** \brief
    *     Anchors all node's children before transforming it into a new node
