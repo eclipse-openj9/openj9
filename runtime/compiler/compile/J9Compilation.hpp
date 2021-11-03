@@ -342,6 +342,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
       }
 
    TR::list<TR_OpaqueMethodBlock *>& getMethodsRequiringTrampolines() { return _methodsRequiringTrampolines; }
+
+   bool isAOTCacheStore() const { return _aotCacheStore; }
+   void setAOTCacheStore(bool store) { _aotCacheStore = store; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
@@ -454,6 +457,10 @@ private:
    // It needs to be sent to the client at the end of compilation
    // so that trampolines can be reserved there.
    TR::list<TR_OpaqueMethodBlock *> _methodsRequiringTrampolines;
+
+   // True if the result of this out-of-process compilation will be
+   // stored in JITServer AOT cache; always false at the client
+   bool _aotCacheStore;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *_symbolValidationManager;
