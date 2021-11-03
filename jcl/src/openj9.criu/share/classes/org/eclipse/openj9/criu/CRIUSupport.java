@@ -385,12 +385,6 @@ public final class CRIUSupport {
 					String file = envFile.toAbsolutePath().toString();
 
 					try (BufferedReader envFileReader = new BufferedReader(new FileReader(file))) {
-						/* [IF JAVA_SPEC_VERSION < 17] */
-						SecurityManager manager = System.getSecurityManager();
-						if (manager != null) {
-							manager.checkRead(file);
-						}
-						/* [ENDIF] JAVA_SPEC_VERSION < 17 */
 
 						Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment"); //$NON-NLS-1$
 						Class<?> stringEnvironmentClass = Class.forName("java.lang.ProcessEnvironment$StringEnvironment"); //$NON-NLS-1$
