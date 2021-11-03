@@ -412,7 +412,8 @@ public final class CRIUSupport {
 
 						while ((entry = envFileReader.readLine()) != null) {
 							if (!entry.isBlank()) {
-								String entrySplit[] = entry.split("="); //$NON-NLS-1$
+								// Only split into 2 (max) allow "=" to be contained in the value.
+								String entrySplit[] = entry.split("=", 2); //$NON-NLS-1$
 								if (entrySplit.length != 2) {
 									throw new IllegalArgumentException(
 											"Env File entry is not in the correct format: [envVarName]=[envVarVal]: "
