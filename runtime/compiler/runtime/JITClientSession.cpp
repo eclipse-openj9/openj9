@@ -865,6 +865,27 @@ ClientSessionData::getClassRecord(J9Class *clazz, JITServer::ServerStream *strea
    return record;
    }
 
+const AOTCacheMethodRecord *
+ClientSessionData::getMethodRecord(J9Method *method, J9Class *definingClass, JITServer::ServerStream *stream)
+   {
+      {
+      OMR::CriticalSection cs(getROMMapMonitor());
+      auto it = getJ9MethodMap().find(method);
+      if ((it != getJ9MethodMap().end()) && it->second._aotCacheMethodRecord)
+         return it->second._aotCacheMethodRecord;
+      }
+
+   auto classRecord = getClassRecord(definingClass, stream);
+   if (!classRecord)
+      return NULL;
+
+   OMR::CriticalSection cs(getROMMapMonitor());
+   auto it = getJ9MethodMap().find(method);
+   TR_ASSERT(it != getJ9MethodMap().end(), "Method %p must be already cached", method);
+   it->second._aotCacheMethodRecord = _aotCache->getMethodRecord(classRecord, it->second._index, it->second._romMethod);
+   return it->second._aotCacheMethodRecord;
+   }
+
 
 ClientSessionHT*
 ClientSessionHT::allocate()

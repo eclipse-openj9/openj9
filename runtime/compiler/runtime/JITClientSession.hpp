@@ -231,15 +231,23 @@ public:
    */
    struct J9MethodInfo
       {
+      J9MethodInfo(J9ROMMethod *romMethod, J9ROMMethod *origROMMethod,
+                   TR_OpaqueClassBlock *owningClass, uint32_t index, bool isMethodTracingEnabled) :
+         _romMethod(romMethod), _origROMMethod(origROMMethod), _IPData(NULL),
+         _owningClass(owningClass), _index(index), _isMethodTracingEnabled(isMethodTracingEnabled),
+         _isCompiledWhenProfiling(false), _isLambdaFormGeneratedMethod(false), _aotCacheMethodRecord(NULL) { }
+
       J9ROMMethod *_romMethod; // pointer to local/server cache
       J9ROMMethod *_origROMMethod; // pointer to the client-side method
       // The following is a hashtable that maps a bcIndex to IProfiler data
       // The hashtable is created on demand (NULL means it is missing)
       IPTable_t *_IPData;
-      bool _isMethodTracingEnabled;
       TR_OpaqueClassBlock * _owningClass;
+      uint32_t _index;// Index in the array of methods of the defining class
+      bool _isMethodTracingEnabled;
       bool _isCompiledWhenProfiling; // To record if the method is compiled when doing Profiling
       bool _isLambdaFormGeneratedMethod;
+      const AOTCacheMethodRecord * _aotCacheMethodRecord;
       }; // struct J9MethodInfo
 
    /**
@@ -440,6 +448,7 @@ public:
       }
 
    const AOTCacheClassRecord *getClassRecord(J9Class *clazz, JITServer::ServerStream *stream);
+   const AOTCacheMethodRecord *getMethodRecord(J9Method *method, J9Class *definingClass, JITServer::ServerStream *stream);
 
 private:
    void destroyMonitors();
