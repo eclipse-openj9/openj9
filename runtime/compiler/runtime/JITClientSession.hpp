@@ -416,8 +416,8 @@ public:
    J9SharedClassCacheDescriptor * reconstructJ9SharedClassCacheDescriptorList(const std::vector<CacheDescriptor> &listOfCacheDescriptors);
    void destroyJ9SharedClassCacheDescriptorList();
 
-   volatile bool isClassUnloadingAttempted() const { return _bClassUnloadingAttempt; }
-   volatile bool isReadingClassUnload() { return !omrthread_rwmutex_is_writelocked(_classUnloadRWMutex); }
+   bool isClassUnloadingAttempted() const { return _bClassUnloadingAttempt; }
+   bool isReadingClassUnload() { return !omrthread_rwmutex_is_writelocked(_classUnloadRWMutex); }
 
    void readAcquireClassUnloadRWMutex(TR::CompilationInfoPerThreadBase *compInfoPT);
    void readReleaseClassUnloadRWMutex(TR::CompilationInfoPerThreadBase *compInfoPT);
