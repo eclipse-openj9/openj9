@@ -131,6 +131,16 @@ public:
 
    static uintptr_t walkReferenceChainWithOffsets(TR_J9VM *fe, const std::vector<uintptr_t> &listOfOffsets, uintptr_t receiver);
 
+   // Called by the client as part of handling the SharedCache_rememberClass message when AOT cache is enabled.
+   // Returns the list of RAMClasses in the class chain for clazz and populates uncachedRAMClasses and
+   // uncachedClassInfos with the classes (and their data) that the client has not yet sent to the server.
+   static std::vector<J9Class *>
+   getRAMClassChain(J9Class *clazz, size_t length, J9VMThread *vmThread, TR_Memory *trMemory, TR::CompilationInfo *compInfo,
+                    std::vector<J9Class *> &uncachedRAMClasses, std::vector<ClassInfoTuple> &uncachedClassInfos);
+
+   static void cacheRemoteROMClassBatch(ClientSessionData *clientData, const std::vector<J9Class *> &ramClasses,
+                                        const std::vector<ClassInfoTuple> &classInfoTuples);
+
 private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
 

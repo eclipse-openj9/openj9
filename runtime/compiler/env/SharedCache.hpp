@@ -29,19 +29,20 @@
 class TR_PersistentClassLoaderTable;
 class TR_ResolvedMethod;
 namespace TR { class ResolvedMethodSymbol; }
+class AOTCacheClassChainRecord;
 
 
 class TR_SharedCache
    {
 public:
-   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *) { return; }
-   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *) { return; }
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *) { }
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *) { }
 
    virtual bool isMostlyFull() { return false; }
 
-   virtual bool canRememberClass(TR_OpaqueClassBlock *clazz) { return 0; }
-   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *clazz) { return 0; }
-   virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *clazz, uintptr_t *chainData=NULL) { return false; }
+   virtual bool canRememberClass(TR_OpaqueClassBlock *clazz) { return false; }
+   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL) { return NULL; }
+   virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *clazz, uintptr_t *chainData = NULL) { return false; }
 
    virtual void *pointerFromOffsetInSharedCache(uintptr_t offset) { return NULL; }
    virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr) { return 0; }

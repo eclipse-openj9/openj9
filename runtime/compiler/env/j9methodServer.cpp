@@ -2066,7 +2066,8 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
       }
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
-   void *classChain = fej9->sharedCache()->rememberClass(definingClass);
+   const AOTCacheClassChainRecord *classChainRecord = NULL;
+   void *classChain = fej9->sharedCache()->rememberClass(definingClass, &classChainRecord);
    if (!classChain)
       return false;
 
@@ -2111,7 +2112,10 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
       return true;
       }
 
-   TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(fej9, (TR_OpaqueClassBlock *)definingClass, (void *) classChain, (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind);
+   TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(
+      fej9, (TR_OpaqueClassBlock *)definingClass, (void *)classChain,
+      (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind, classChainRecord
+   );
    if (classInfo)
       {
       traceMsg(comp, "\tCreated new AOT class info %p\n", classInfo);

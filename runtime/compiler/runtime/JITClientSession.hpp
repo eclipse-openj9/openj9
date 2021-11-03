@@ -329,6 +329,12 @@ public:
       uintptr_t metadataStartAddress;
       };
 
+   struct ClassChainData
+      {
+      uintptr_t *_classChain;
+      const AOTCacheClassChainRecord *_aotCacheClassChainRecord;
+      };
+
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
    ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_PersistentMemory *persistentMemory, bool usesPerClientMemory);
    ~ClientSessionData();
@@ -337,13 +343,13 @@ public:
    TR_PersistentMemory *persistentMemory() { return _persistentMemory; }
    bool usesPerClientMemory() { return _usesPerClientMemory; }
    void setJavaLangClassPtr(TR_OpaqueClassBlock* j9clazz) { _javaLangClassPtr = j9clazz; }
-   TR_OpaqueClassBlock * getJavaLangClassPtr() const { return _javaLangClassPtr; }
+   TR_OpaqueClassBlock *getJavaLangClassPtr() const { return _javaLangClassPtr; }
    TR_PersistentCHTable *getCHTable();
-   PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
-   PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
-   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassBySignatureMap() { return _classBySignatureMap; }
-   PersistentUnorderedMap<J9Class *, UDATA *> & getClassChainDataCache() { return _classChainDataMap; }
-   PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock*> & getConstantPoolToClassMap() { return _constantPoolToClassMap; }
+   PersistentUnorderedMap<J9Class *, ClassInfo> &getROMClassMap() { return _romClassMap; }
+   PersistentUnorderedMap<J9Method *, J9MethodInfo> &getJ9MethodMap() { return _J9MethodMap; }
+   PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock *> &getClassBySignatureMap() { return _classBySignatureMap; }
+   PersistentUnorderedMap<J9Class *, ClassChainData> &getClassChainDataMap() { return _classChainDataMap; }
+   PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock *> &getConstantPoolToClassMap() { return _constantPoolToClassMap; }
    void initializeUnloadedClassAddrRanges(const std::vector<TR_AddressRange> &unloadedClassRanges, int32_t maxRanges);
    void processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*> &classes, bool updateUnloadedClasses);
    void processIllegalFinalFieldModificationList(const std::vector<TR_OpaqueClassBlock*> &classes);
@@ -449,6 +455,8 @@ public:
 
    const AOTCacheClassRecord *getClassRecord(J9Class *clazz, JITServer::ServerStream *stream);
    const AOTCacheMethodRecord *getMethodRecord(J9Method *method, J9Class *definingClass, JITServer::ServerStream *stream);
+   const AOTCacheClassChainRecord *getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
+                                                       const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream);
 
 private:
    void destroyMonitors();
@@ -471,7 +479,7 @@ private:
    // All classes in here are loaded by the systemClassLoader so we know they cannot be unloaded
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> _classBySignatureMap;
 
-   PersistentUnorderedMap<J9Class *, UDATA *> _classChainDataMap;
+   PersistentUnorderedMap<J9Class *, ClassChainData> _classChainDataMap;
    //Constant pool to class map
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock *> _constantPoolToClassMap;
    TR::Monitor *_romMapMonitor;

@@ -173,17 +173,19 @@ public:
 
    static const uint32_t maxClassChainLength = 32;
 
-   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr)
+   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr) override
       {
-      return (rememberClass((J9Class *) classPtr, false) != NULL);
+      return rememberClass((J9Class *)classPtr, NULL, false) != NULL;
       }
 
-   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *classPtr)
+   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *classPtr,
+                                    const AOTCacheClassChainRecord **classChainRecord = NULL) override
       {
-      return (uintptr_t *) rememberClass((J9Class *) classPtr, true);
+      return (uintptr_t *)rememberClass((J9Class *)classPtr, classChainRecord, true);
       }
 
-   virtual UDATA *rememberClass(J9Class *clazz, bool create=true);
+   virtual uintptr_t *rememberClass(J9Class *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL,
+                                    bool create = true);
 
    virtual UDATA rememberDebugCounterName(const char *name);
    virtual const char *getDebugCounterName(UDATA offset);
@@ -569,7 +571,8 @@ public:
    virtual void addHint(J9Method *, TR_SharedCacheHint) override;
    virtual bool isMostlyFull() override { TR_ASSERT_FATAL(false, "called"); return false;}
 
-   virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override;
+   virtual uintptr_t *rememberClass(J9Class *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL,
+                                    bool create = true) override;
 
    virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT_FATAL(false, "called"); return 0;}
    virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT_FATAL(false, "called"); return NULL;}

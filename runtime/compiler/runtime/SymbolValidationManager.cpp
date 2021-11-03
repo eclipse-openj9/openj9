@@ -35,9 +35,10 @@
 
 #if defined(J9VM_OPT_JITSERVER)
 #include "runtime/JITClientSession.hpp"
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #include "j9protos.h"
+
 
 TR::SymbolValidationManager::SystemClassNotWorthRemembering
 TR::SymbolValidationManager::_systemClassesNotWorthRemembering[] = {
@@ -579,13 +580,17 @@ TR::SymbolValidationManager::getClassChainInfo(
       {
       // info._baseComponent is a non-array reference type. It can't be a
       // primitive because primitives always satisfy isAlreadyValidated().
+      const AOTCacheClassChainRecord *classChainRecord = NULL;
       info._baseComponentClassChain =
-         _fej9->sharedCache()->rememberClass(info._baseComponent);
+         _fej9->sharedCache()->rememberClass(info._baseComponent, &classChainRecord);
       if (info._baseComponentClassChain == NULL)
          {
          _region.deallocate(record);
          return false;
          }
+#if defined(J9VM_OPT_JITSERVER)
+      info._baseComponentAOTCacheClassChainRecord = classChainRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
       }
 
    return true;
@@ -615,7 +620,11 @@ TR::SymbolValidationManager::appendClassChainInfoRecords(
          info._baseComponent,
          new (_region) ClassChainRecord(
             info._baseComponent,
-            info._baseComponentClassChain));
+            info._baseComponentClassChain
+#if defined(J9VM_OPT_JITSERVER)
+            , info._baseComponentAOTCacheClassChainRecord
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         ));
       }
    }
 
@@ -661,13 +670,17 @@ TR::SymbolValidationManager::addClassRecordWithChain(TR::ClassValidationRecordWi
 
    if (!_fej9->isPrimitiveClass(record->_class))
       {
-      record->_classChain = _fej9->sharedCache()->rememberClass(record->_class);
+      const AOTCacheClassChainRecord *classChainRecord = NULL;
+      record->_classChain = _fej9->sharedCache()->rememberClass(record->_class, &classChainRecord);
       if (record->_classChain == NULL)
          {
          _region.deallocate(record);
          return false;
          }
 
+#if defined(J9VM_OPT_JITSERVER)
+      record->_aotCacheClassChainRecord = classChainRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
       appendRecordIfNew(record->_class, record);
       }
 
@@ -761,12 +774,13 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
 
-   void *classChain = _fej9->sharedCache()->rememberClass(clazz);
+   const AOTCacheClassChainRecord *classChainRecord = NULL;
+   void *classChain = _fej9->sharedCache()->rememberClass(clazz, &classChainRecord);
    if (classChain == NULL)
       return false;
 
    if (!isAlreadyValidated(clazz))
-      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChain));
+      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChain, classChainRecord));
 
    addMultipleArrayRecords(clazz, arrayDims);
    return true;

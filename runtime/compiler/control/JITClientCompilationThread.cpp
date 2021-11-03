@@ -2104,10 +2104,21 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::SharedCache_rememberClass:
          {
-         auto recv = client->getRecvData<J9Class *, bool>();
+         auto recv = client->getRecvData<J9Class *, bool, bool>();
          auto clazz = std::get<0>(recv);
          bool create = std::get<1>(recv);
-         client->write(response, fe->sharedCache()->rememberClass(clazz, create));
+         bool getClasses = std::get<2>(recv);
+         uintptr_t *classChain = fe->sharedCache()->rememberClass(clazz, NULL, create);
+         std::vector<J9Class *> ramClassChain;
+         std::vector<J9Class *> uncachedRAMClasses;
+         std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
+         if (create && getClasses && classChain)
+            {
+            uintptr_t len = classChain[0] / sizeof(classChain[0]) - 1;
+            ramClassChain = JITServerHelpers::getRAMClassChain(clazz, len, vmThread, trMemory, compInfo,
+                                                               uncachedRAMClasses, uncachedClassInfos);
+            }
+         client->write(response, classChain, ramClassChain, uncachedRAMClasses, uncachedClassInfos);
          }
          break;
       case MessageType::SharedCache_addHint:
@@ -2778,6 +2789,24 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          knot->getKnownObjectTableDumpInfo(knownObjectTableDumpInfoList);
 
          client->write(response, knownObjectTableDumpInfoList);
+         }
+         break;
+      case MessageType::AOTCache_getROMClassBatch:
+         {
+         auto recv = client->getRecvData<std::vector<J9Class *>>();
+         auto &ramClasses = std::get<0>(recv);
+         std::vector<JITServerHelpers::ClassInfoTuple> classInfos;
+         classInfos.reserve(ramClasses.size());
+
+         for (J9Class *ramClass : ramClasses)
+            classInfos.push_back(JITServerHelpers::packRemoteROMClassInfo(ramClass, fe->vmThread(), trMemory, true));
+
+            {
+            OMR::CriticalSection cs(compInfo->getclassesCachedAtServerMonitor());
+            compInfo->getclassesCachedAtServer().insert(ramClasses.begin(), ramClasses.end());
+            }
+
+         client->write(response, classInfos);
          }
          break;
       default:

@@ -886,6 +886,86 @@ ClientSessionData::getMethodRecord(J9Method *method, J9Class *definingClass, JIT
    return it->second._aotCacheMethodRecord;
    }
 
+const AOTCacheClassChainRecord *
+ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
+                                       const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream)
+   {
+   TR_ASSERT(!ramClassChain.empty() && (ramClassChain.size() <= TR_J9SharedCache::maxClassChainLength),
+             "Invalid class chain length: %zu", ramClassChain.size());
+
+   // Check if this class chain record is already cached
+      {
+      OMR::CriticalSection cs(getClassChainDataMapMonitor());
+      auto it = getClassChainDataMap().find(clazz);
+      if ((it != getClassChainDataMap().end()) && it->second._aotCacheClassChainRecord)
+         return it->second._aotCacheClassChainRecord;
+      }
+
+   const AOTCacheClassRecord *classRecords[TR_J9SharedCache::maxClassChainLength] = {0};
+   size_t uncachedIndexes[TR_J9SharedCache::maxClassChainLength] = {0};
+   std::vector<J9Class *> uncachedRAMClasses;
+   uncachedRAMClasses.reserve(ramClassChain.size());
+   size_t missingLoaderRecordIndexes[TR_J9SharedCache::maxClassChainLength] = {0};
+   size_t numMissingLoaderRecords = 0;
+
+   // Get class records for which all info is already available, remembering classes that we need to request info for
+      {
+      OMR::CriticalSection cs(getROMMapMonitor());
+
+      for (size_t i = 0; i < ramClassChain.size(); ++i)
+         {
+         bool missingLoaderRecord = false;
+         classRecords[i] = getClassRecord(ramClassChain[i], missingLoaderRecord);
+         if (missingLoaderRecord)
+            {
+            missingLoaderRecordIndexes[numMissingLoaderRecords++] = i;
+            }
+         else if (!classRecords[i])
+            {
+            uncachedIndexes[uncachedRAMClasses.size()] = i;
+            uncachedRAMClasses.push_back(ramClassChain[i]);
+            }
+         }
+      }
+
+   if (!uncachedRAMClasses.empty())
+      {
+      // Request uncached classes from the client and cache them
+      stream->write(JITServer::MessageType::AOTCache_getROMClassBatch, uncachedRAMClasses);
+      auto recv = stream->read<std::vector<JITServerHelpers::ClassInfoTuple>>();
+      auto classInfoTuples = std::get<0>(recv);
+      JITServerHelpers::cacheRemoteROMClassBatch(this, uncachedRAMClasses, classInfoTuples);
+
+      // Get class records for newly cached classes, remembering classes with missing class loader info
+      OMR::CriticalSection cs(getROMMapMonitor());
+      for (size_t i = 0; i < uncachedRAMClasses.size(); ++i)
+         {
+         bool missingLoaderRecord = false;
+         if (!(classRecords[uncachedIndexes[i]] = getClassRecord(uncachedRAMClasses[i], missingLoaderRecord)))
+            {
+            TR_ASSERT(missingLoaderRecord, "Class %p must be already cached", uncachedRAMClasses[i]);
+            missingLoaderRecordIndexes[numMissingLoaderRecords++] = uncachedIndexes[i];
+            }
+         }
+      }
+
+   // Get remaining class records, requesting their missing class loader info from the client
+   for (size_t i = 0; i < numMissingLoaderRecords; ++i)
+      {
+      size_t idx = missingLoaderRecordIndexes[i];
+      if (!(classRecords[idx] = getClassRecord(ramClassChain[idx], stream)))
+         return NULL;
+      }
+
+   // Cache the new class chain record
+   auto record = _aotCache->getClassChainRecord(classRecords, ramClassChain.size());
+   OMR::CriticalSection cs(getClassChainDataMapMonitor());
+   auto result = getClassChainDataMap().insert({ clazz, { classChain, record } });
+   if (!result.second)
+      result.first->second._aotCacheClassChainRecord = record;
+   return record;
+   }
+
 
 ClientSessionHT*
 ClientSessionHT::allocate()

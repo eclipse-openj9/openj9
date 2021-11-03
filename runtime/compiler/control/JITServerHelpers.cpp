@@ -962,3 +962,57 @@ JITServerHelpers::getRemoteClassDepthAndFlagsWhenROMClassNotCached(J9Class *claz
       return it->second._classDepthAndFlags;
       }
 }
+
+static void
+addRAMClassToChain(std::vector<J9Class *> &chain, J9Class *clazz, std::vector<J9Class *> &uncached,
+                   PersistentUnorderedSet<J9Class *> &cached)
+   {
+   chain.push_back(clazz);
+   if (cached.insert(clazz).second)
+      uncached.push_back(clazz);
+   }
+
+std::vector<J9Class *>
+JITServerHelpers::getRAMClassChain(J9Class *clazz, size_t length, J9VMThread *vmThread, TR_Memory *trMemory,
+                                   TR::CompilationInfo *compInfo, std::vector<J9Class *> &uncachedRAMClasses,
+                                   std::vector<ClassInfoTuple> &uncachedClassInfos)
+   {
+   TR_ASSERT(uncachedRAMClasses.empty(), "Must pass empty vector");
+   TR_ASSERT(uncachedClassInfos.empty(), "Must pass empty vector");
+   TR_ASSERT(length <= TR_J9SharedCache::maxClassChainLength, "Class chain is too long");
+
+   std::vector<J9Class *> chain;
+   chain.reserve(length);
+   uncachedRAMClasses.reserve(length);
+   auto &cached = compInfo->getclassesCachedAtServer();
+
+      {
+      OMR::CriticalSection cs(compInfo->getclassesCachedAtServerMonitor());
+
+      addRAMClassToChain(chain, clazz, uncachedRAMClasses, cached);
+      for (size_t i = 0; i < J9CLASS_DEPTH(clazz); ++i)
+         addRAMClassToChain(chain, clazz->superclasses[i], uncachedRAMClasses, cached);
+      for (auto it = (J9ITable *)clazz->iTable; it; it = it->next)
+         addRAMClassToChain(chain, it->interfaceClass, uncachedRAMClasses, cached);
+      TR_ASSERT(chain.size() == length, "Invalid RAM class chain length: %zu != %zu", chain.size(), length);
+      }
+
+   uncachedClassInfos.reserve(uncachedRAMClasses.size());
+   for (J9Class *c : uncachedRAMClasses)
+      uncachedClassInfos.push_back(packRemoteROMClassInfo(c, vmThread, trMemory, true));
+
+   return chain;
+   }
+
+void
+JITServerHelpers::cacheRemoteROMClassBatch(ClientSessionData *clientData, const std::vector<J9Class *> &ramClasses,
+                                           const std::vector<ClassInfoTuple> &classInfoTuples)
+   {
+   TR_ASSERT_FATAL(ramClasses.size() == classInfoTuples.size(), "Must have equal length");
+
+   for (size_t i = 0; i < ramClasses.size(); ++i)
+      {
+      auto romClass = romClassFromString(std::get<0>(classInfoTuples[i]), clientData->persistentMemory());
+      cacheRemoteROMClassOrFreeIt(clientData, ramClasses[i], romClass, classInfoTuples[i]);
+      }
+   }
