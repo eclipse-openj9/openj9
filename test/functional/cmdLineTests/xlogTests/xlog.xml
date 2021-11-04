@@ -91,6 +91,30 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<output regex="no" type="failure">JVMJ9VM007</output>
 	</test>
 
+	<test id="-Xlog:gc=trace">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=trace -version</command>
+		<output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="success">(openjdk|java|semeru) version</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="required">JVMJ9VM007</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc=debug">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=debug -version</command>
+		<output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="success">(openjdk|java|semeru) version</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="required">JVMJ9VM007</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc=info">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=info -version</command>
+		<output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="success">(openjdk|java|semeru) version</output>
+		<output regex="no" type="required">verbosegc</output>
+		<output regex="no" type="required">JVMJ9VM007</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
 	<test id="-Xlog:gc:">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc: -version</command>
 		<output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="success">(openjdk|java|semeru) version</output>
@@ -178,6 +202,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<test id="-Xlog:gc=off">
 		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=off -version</command>
+		<output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="success">(openjdk|java|semeru) version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc=warning">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=warning -version</command>
+		<output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="success">(openjdk|java|semeru) version</output>
+		<output regex="no" type="required">JVMJ9VM007W</output>
+		<output regex="no" type="failure">verbosegc</output>
+		<output regex="no" type="failure">JVMJ9VM085</output>
+	</test>
+
+	<test id="-Xlog:gc=error">
+		<command>$EXE$ $ENABLEXLOG$ -Xlog:gc=error -version</command>
 		<output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="success">(openjdk|java|semeru) version</output>
 		<output regex="no" type="required">JVMJ9VM007W</output>
 		<output regex="no" type="failure">verbosegc</output>
