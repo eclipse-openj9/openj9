@@ -27,6 +27,7 @@
 #include "env/PersistentCollections.hpp" // for PersistentUnorderedMap
 #include "il/DataTypes.hpp" // for DataType
 #include "env/VMJ9.h" // for TR_StaticFinalData
+#include "runtime/JITServerAOTCache.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
 class J9ROMClass;
@@ -47,6 +48,7 @@ namespace JITServer { class ServerStream; }
 using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 using TR_JitFieldsCacheEntry = std::pair<J9Class*, UDATA>;
 using TR_JitFieldsCache = PersistentUnorderedMap<int32_t, TR_JitFieldsCacheEntry>;
+
 
 /**
    @class TR_J9MethodFieldAttributes
@@ -304,6 +306,7 @@ public:
       UDATA _vmtargetOffset;
       UDATA _vmindexOffset;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+      bool _useAOTCache;
       }; // struct VMInfo
 
    /**
@@ -419,7 +422,17 @@ public:
 
    bool isInStartupPhase() const { return _isInStartupPhase; }
    void setIsInStartupPhase(bool isInStartupPhase) { _isInStartupPhase = isInStartupPhase; }
- 
+
+   JITServerAOTCache *getOrCreateAOTCache(JITServer::ServerStream *stream);
+
+   bool usesAOTCache() const { return _aotCache != NULL; }
+
+   JITServerAOTCache *getAOTCache() const
+      {
+      TR_ASSERT(_aotCache, "Must have valid AOTCache");
+      return _aotCache;
+      }
+
 private:
    void destroyMonitors();
 
@@ -456,8 +469,8 @@ private:
 
    uint32_t _lastProcessedCriticalSeqNo; // highest seqNo processed request carrying info that needs to be applied in order
 
-   int32_t  _inUse; // Number of concurrent compilations from the same client
-                    // Accessed with compilation monitor in hand
+   int32_t _inUse; // Number of concurrent compilations from the same client
+                   // Accessed with compilation monitor in hand
    int32_t _numActiveThreads; // Number of threads working on compilations for this client
                               // This is smaller or equal to _inUse because some threads
                               // could be just starting or waiting in _OOSequenceEntryList
@@ -495,6 +508,9 @@ private:
    TR::Monitor *_wellKnownClassesMonitor;
    
    bool _isInStartupPhase;
+
+   std::string _aotCacheName;
+   JITServerAOTCache *_aotCache;
    }; // class ClientSessionData
 
 

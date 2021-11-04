@@ -34,6 +34,7 @@
 #include "env/VerboseLog.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
+
 TR_OpaqueClassBlock * const ClientSessionData::mustClearCachesFlag = reinterpret_cast<TR_OpaqueClassBlock *>(~0);
 
 ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_PersistentMemory *persistentMemory, bool usesPerClientMemory) :
@@ -53,7 +54,8 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _registeredJ2IThunksMap(decltype(_registeredJ2IThunksMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _wellKnownClasses(),
-   _isInStartupPhase(false)
+   _isInStartupPhase(false),
+   _aotCacheName(), _aotCache(NULL)
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = NULL;
@@ -436,9 +438,10 @@ ClientSessionData::getOrCacheVMInfo(JITServer::ServerStream *stream)
    if (!_vmInfo)
       {
       stream->write(JITServer::MessageType::VM_getVMInfo, JITServer::Void());
-      auto recv = stream->read<VMInfo, std::vector<CacheDescriptor> >();
+      auto recv = stream->read<VMInfo, std::vector<CacheDescriptor>, std::string>();
       _vmInfo = new (PERSISTENT_NEW) VMInfo(std::get<0>(recv));
       _vmInfo->_j9SharedClassCacheDescriptorList = reconstructJ9SharedClassCacheDescriptorList(std::get<1>(recv));
+      _aotCacheName = std::get<2>(recv);
       }
    return _vmInfo;
    }
@@ -588,7 +591,7 @@ ClientSessionData::destroy(ClientSessionData *clientSession)
       {
       // Destroy objects that are allocated globally:
       // shared ROMClasses (if enabled), monitors, std::strings
-      auto sharedROMClassCache = TR::CompilationInfo::get()->getJITServerSharedROMClassCache();
+      auto sharedROMClassCache = compInfo->getJITServerSharedROMClassCache();
       for (auto &it : clientSession->_romClassMap)
          {
          if (sharedROMClassCache)
@@ -607,6 +610,7 @@ ClientSessionData::destroy(ClientSessionData *clientSession)
       clientSession->destroyMonitors();
       if (clientSession->_chTable)
          TR::Monitor::destroy(clientSession->_chTable->getCHTableMonitor());
+      clientSession->_aotCacheName.~basic_string();
       }
    else
       {
@@ -742,6 +746,32 @@ ClientSessionData::cacheWellKnownClassChainOffsets(unsigned int includedClasses,
           (WELL_KNOWN_CLASS_COUNT - numClasses) * sizeof(classChainOffsets[0]));
    _wellKnownClasses._wellKnownClassChainOffsets = wellKnownClassChainOffsets;
    }
+
+JITServerAOTCache *
+ClientSessionData::getOrCreateAOTCache(JITServer::ServerStream *stream)
+   {
+   if (!_vmInfo)
+      getOrCacheVMInfo(stream);
+
+   if (!_aotCache && _vmInfo->_useAOTCache)
+      {
+      if (auto aotCacheMap = TR::CompilationInfo::get()->getJITServerAOTCacheMap())
+         {
+         _aotCache = aotCacheMap->get(_aotCacheName, _clientUID);
+         }
+      else
+         {
+         _vmInfo->_useAOTCache = false;
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "clientUID=%llu requested AOT cache while it is disabled at the server", (unsigned long long)_clientUID
+            );
+         }
+      }
+
+   return _aotCache;
+   }
+
 
 ClientSessionHT*
 ClientSessionHT::allocate()

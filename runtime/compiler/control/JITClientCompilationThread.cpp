@@ -504,8 +504,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._isAllocateZeroedTLHPagesEnabled = fe->tlhHasBeenCleared();
          vmInfo._staticObjectAllocateFlags = fe->getStaticObjectFlags();
          vmInfo._referenceArrayCopyHelperAddress = fe->getReferenceArrayCopyHelperAddress();
+         vmInfo._useAOTCache = comp->getPersistentInfo()->getJITServerUseAOTCache();
 
-         client->write(response, vmInfo, listOfCacheDescriptors);
+         client->write(response, vmInfo, listOfCacheDescriptors, comp->getPersistentInfo()->getJITServerAOTCacheName());
          }
          break;
       case MessageType::VM_getObjectClass:
