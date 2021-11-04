@@ -75,7 +75,7 @@ Java_java_lang_ref_Reference_refersTo(JNIEnv *env, jobject reference, jobject ta
 	} else {
 		j9object_t j9reference = J9_JNI_UNWRAP_REFERENCE(reference);
 		j9object_t j9target = (NULL != target) ? J9_JNI_UNWRAP_REFERENCE(target) : NULL;
-		j9object_t referent = vm->memoryManagerFunctions->j9gc_objaccess_referenceGet(currentThread, j9reference);
+		j9object_t referent = J9VMJAVALANGREFREFERENCE_REFERENT_VM(vm, j9reference);
 
 		if (referent == j9target) {
 			result = JNI_TRUE;
