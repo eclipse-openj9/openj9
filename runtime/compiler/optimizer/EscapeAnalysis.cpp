@@ -8166,8 +8166,11 @@ static TR_DependentAllocations *getDependentAllocationsFor(Candidate *c, List<TR
 static Candidate *getCandidate(TR_LinkHead<Candidate> *candidates, FlushCandidate *flushCandidate)
    {
    Candidate *candidate = flushCandidate->getCandidate();
-   if (candidate)
+   if (candidate || flushCandidate->getIsKnownToLackCandidate())
+      {
       return candidate;
+      }
+
    for (candidate = candidates->getFirst(); candidate; candidate = candidate->getNext())
       {
       if (flushCandidate->getAllocation() == candidate->_node)
@@ -8175,6 +8178,11 @@ static Candidate *getCandidate(TR_LinkHead<Candidate> *candidates, FlushCandidat
          flushCandidate->setCandidate(candidate);
          break;
          }
+      }
+
+   if (!candidate)
+      {
+      flushCandidate->setIsKnownToLackCandidate(true);
       }
 
    return candidate;
