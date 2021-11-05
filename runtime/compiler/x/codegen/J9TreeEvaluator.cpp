@@ -1450,13 +1450,9 @@ TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::Co
 TR::Register *J9::X86::TreeEvaluator::newEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   TR::Register *targetRegister=NULL;
+   TR::Register *targetRegister = NULL;
 
-   // If the helper symbol set on the node is TR_newValue, we are (expecting to be)
-   // dealing with a value type. Since we do not fully support value types yet, always
-   // call the JIT helper to do the allocation.
-   //
-   if (TR::Compiler->om.areValueTypesEnabled() && node->getSymbolReference() == comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol()))
+   if (TR::TreeEvaluator::requireHelperCallValueTypeAllocation(node, cg))
       {
       TR_OpaqueClassBlock *classInfo;
       bool spillFPRegs = comp->canAllocateInlineOnStack(node, classInfo) <= 0;
@@ -7855,7 +7851,9 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    //
    if (node->canSkipZeroInitialization() && !comp->getOption(TR_DisableDualTLH) && !comp->getOptions()->realTimeGC())
       {
-      if (node->getOpCodeValue() == TR::New)
+      // For value types, it should use jitNewValue helper call which is set up before code gen
+      if ((node->getOpCodeValue() == TR::New)
+          && (!TR::Compiler->om.areValueTypesEnabled() || (node->getSymbolReference() != comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol()))))
          node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewObjectNoZeroInitSymbolRef(comp->getMethodSymbol()));
       else if (node->getOpCodeValue() == TR::newarray)
          node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));

@@ -2775,7 +2775,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    bool generateArraylets = comp->generateArraylets();
 
-   if (comp->suppressAllocationInlining())
+   if (comp->suppressAllocationInlining() || TR::TreeEvaluator::requireHelperCallValueTypeAllocation(node, cg))
       return NULL;
 
    if (comp->getOption(TR_DisableTarokInlineArrayletAllocation) && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray))
