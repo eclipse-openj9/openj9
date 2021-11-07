@@ -687,7 +687,10 @@ TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Nod
       *(uint8_t *)cursor++ = 0xe7;
       }
 
-   traceMsg(comp, "\n-- ( Created invokeExact J2I thunk " POINTER_PRINTF_FORMAT " for node " POINTER_PRINTF_FORMAT " )", thunk, callNode);
+   if (comp->getOption(TR_TraceCG))
+      {
+      traceMsg(comp, "\n-- ( Created invokeExact J2I thunk " POINTER_PRINTF_FORMAT " for node " POINTER_PRINTF_FORMAT " )", thunk, callNode);
+      }
 
    return thunk;
    }
@@ -923,7 +926,11 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node        
          uint32_t frameSize = parmAreaSize + cg()->getFrameSizeInBytes() + getProperties().getRetAddressWidth();
          frameSize += stackFrameAlignment - (frameSize % stackFrameAlignment);
          alignedParmAreaSize = frameSize - cg()->getFrameSizeInBytes() - getProperties().getRetAddressWidth();
-         traceMsg(comp(), "parm area size was %d, and is aligned to %d\n", parmAreaSize, alignedParmAreaSize);
+
+         if (comp()->getOption(TR_TraceCG))
+            {
+            traceMsg(comp(), "parm area size was %d, and is aligned to %d\n", parmAreaSize, alignedParmAreaSize);
+            }
          }
       if (alignedParmAreaSize > 0)
          generateRegImmInstruction((alignedParmAreaSize <= 127 ? TR::InstOpCode::SUBRegImms() : TR::InstOpCode::SUBRegImm4()), callNode, stackPointer, alignedParmAreaSize, cg());
