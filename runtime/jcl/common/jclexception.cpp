@@ -203,8 +203,13 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 					goto done;
 				}
 			} else {
-				/* Can't peek anon or hidden ramClasses */
-				string = mmfns->j9gc_createJavaLangStringWithUTFCache(vmThread, (J9UTF8 *)utfClassName);
+				/* Can't peek all classes. Ie. anon/hidden classes or cases where classloader is NULL */
+				UDATA flags = J9_STR_XLAT | J9_STR_INTERN;
+
+				if (J9ROMCLASS_IS_ANON_OR_HIDDEN(romClass)) {
+					flags |= J9_STR_ANON_CLASS_NAME;
+				}
+				string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName), flags);
 			}
 			element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
 			J9VMJAVALANGSTACKTRACEELEMENT_SET_DECLARINGCLASS(vmThread, element, string);
