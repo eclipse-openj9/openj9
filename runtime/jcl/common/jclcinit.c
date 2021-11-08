@@ -280,6 +280,7 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 					Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForInstanceFieldRef(vm->mainThread, romFieldConstantPool[i].classRefCPIndex, i);
 				}  else {
 					Trc_JCL_initializeKnownClasses_ExitError(vm->mainThread, i);
+					Trc_JCL_Assert_StartupFailure();
 					return JNI_ERR;
 				}
 			}
@@ -307,6 +308,7 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 						Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForMethodRef(vm->mainThread, romMethodConstantPool[i].classRefCPIndex, i);
 					} else {
 						Trc_JCL_initializeKnownClasses_ExitError(vm->mainThread, i);
+						Trc_JCL_Assert_StartupFailure();
 						return JNI_ERR;
 					}
 				}
@@ -323,6 +325,7 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 						Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForMethodRef(vm->mainThread, romMethodConstantPool[i].classRefCPIndex, i);
 					} else {
 						Trc_JCL_initializeKnownClasses_ExitError(vm->mainThread, i);
+						Trc_JCL_Assert_StartupFailure();
 						return JNI_ERR;
 					}
 				} else {
@@ -339,6 +342,7 @@ jint initializeKnownClasses(J9JavaVM* vm, U_32 runtimeFlags)
 						Trc_JCL_initializeKnownClasses_ClassRefNotResolvedForMethodRef(vm->mainThread, romMethodConstantPool[i].classRefCPIndex, i);
 					} else {
 						Trc_JCL_initializeKnownClasses_ExitError(vm->mainThread, i);
+						Trc_JCL_Assert_StartupFailure();
 						return JNI_ERR;
 					}
 				} else {
@@ -743,6 +747,8 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	for (i=0; i < sizeof(requiredClasses) / sizeof(UDATA); i++) {
 		clazz = vmFuncs->internalFindKnownClass(vmThread, requiredClasses[i], J9_FINDKNOWNCLASS_FLAG_NON_FATAL);
 		if ((NULL == clazz) || (NULL != vmThread->currentException)) {
+			Trc_JCL_initializeRequiredClasses_ExitError(vmThread, i);
+			Trc_JCL_Assert_StartupFailure();
 			return 1;
 		}
 		vmFuncs->initializeClass(vmThread, clazz);
