@@ -683,3 +683,6 @@ TraceEvent=Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty Overhead=
 TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl_SetCPE Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl findSharedClassImpl: Set CPE of class loader %p to %p"
 TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange2_SetCPE Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange2: Set CPE of class loader %p to NULL"
 TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_SetCPE Overhead=1 Level=1 Template="JCL: SharedClassURLClasspathHelperImpl notifyClasspathChange3: Set CPE of class loader %p to %p"
+
+TraceEvent=Trc_JCL_initializeRequiredClasses_ExitError Overhead=1 Level=1 Template="initializeRequiredClasses() requiredClasses[%zu] failed"
+TraceAssert=Trc_JCL_Assert_StartupFailure NoEnv Overhead=1 Level=1 Assert="(0 /* Fatal VM error */)"
