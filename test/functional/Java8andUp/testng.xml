@@ -488,5 +488,10 @@
 			<class name="org.openj9.test.annotation.ContainsRuntimeAnnotationTest"/>
 		</classes>
 	</test>
+	<test name="ConstantPoolTests">
+		<classes>
+			<class name="org.openj9.test.constantpool.ClassInitTest"/>
+		</classes>
+	</test>
 </suite>
 <!-- Suite -->
