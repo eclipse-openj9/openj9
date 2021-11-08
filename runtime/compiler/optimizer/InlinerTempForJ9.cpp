@@ -421,16 +421,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
    else if (length == 15 && !strncmp(className, "sun/misc/Unsafe", 15))
       return true;
 
-   // This is a temporary check to apply @ForceInline to the VectorAPI methods only
-   // @ForceInline will be fully enabled after broader performance testing
-   bool vectorMethod = false;
-   if (length >= 23 && !strncmp(className, "jdk/internal/vm/vector/", 23))
-       vectorMethod = true;
-   if (length >= 21 && !strncmp(className, "jdk/incubator/vector/", 21))
-       vectorMethod = true;
-
-   if (vectorMethod &&
-       !comp()->getOption(TR_DisableForceInlineAnnotations) &&
+   if (!comp()->getOption(TR_DisableForceInlineAnnotations) &&
        comp()->fej9()->isForceInline(calleeMethod))
       {
       if (comp()->trace(OMR::inlining))
@@ -2182,19 +2173,7 @@ TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callS
 
    if (toInline)
       {
-      // This is a temporary check to apply @ForceInline to the VectorAPI methods only
-      // @ForceInline will be fully enabled after broader performance testing
-      int32_t length = method->classNameLength();
-      char* className = method->classNameChars();
-
-      bool vectorMethod = false;
-      if (length >= 23 && !strncmp(className, "jdk/internal/vm/vector/", 23))
-         vectorMethod = true;
-      if (length >= 21 && !strncmp(className, "jdk/incubator/vector/", 21))
-         vectorMethod = true;
-
-      if (vectorMethod &&
-          !comp()->getOption(TR_DisableForceInlineAnnotations) &&
+      if (!comp()->getOption(TR_DisableForceInlineAnnotations) &&
           comp()->fej9()->isForceInline(method))
          {
          if (comp()->trace(OMR::inlining))
@@ -2446,6 +2425,27 @@ TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
    if (strncmp(calltarget->_calleeMethod->classNameChars(), "com/ibm/gpu/Kernel", 18) == 0)
       return true;
 #endif
+
+
+   if (!comp()->getOption(TR_DisableForceInlineAnnotations) &&
+       comp()->fej9()->isForceInline(method))
+      {
+      int32_t length = method->classNameLength();
+      char* className = method->classNameChars();
+
+      bool vectorMethod = false;
+      if (length >= 23 && !strncmp(className, "jdk/internal/vm/vector/", 23))
+         vectorMethod = true;
+      if (length >= 21 && !strncmp(className, "jdk/incubator/vector/", 21))
+         vectorMethod = true;
+
+      if (vectorMethod)
+         {
+         if (comp()->trace(OMR::inlining))
+            traceMsg(comp(), "@ForceInline was specified for %s, in callMustBeInlined\n", method->signature(comp()->trMemory()));
+         return true;
+         }
+      }
 
    return false;
    }
