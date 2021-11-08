@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,6 +55,7 @@
 #define J9PORT_ERROR_STARTUP_SHSEM (J9PORT_ERROR_STARTUP_EXTENDED -3)
 #define J9PORT_ERROR_STARTUP_SHMEM (J9PORT_ERROR_STARTUP_EXTENDED -4)
 #define J9PORT_ERROR_STARTUP_SHMEM_MOSERVICE (J9PORT_ERROR_STARTUP_EXTENDED -5)
+#define J9PORT_ERROR_STARTUP_HYPERVISOR_MONITOR_INIT (J9PORT_ERROR_STARTUP_EXTENDED -6)
 
 /** @} */
 

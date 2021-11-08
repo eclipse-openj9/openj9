@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@ j9hypervisor_startup(struct J9PortLibrary *portLibrary)
 	ret = omrthread_monitor_init(&(PHD_vendorMonitor), 0);
 	if (0 != ret) {
 		/* If monitor initialization fails, fail JVM startup */
-		return (int32_t)ret;
+		return J9PORT_ERROR_STARTUP_HYPERVISOR_MONITOR_INIT;
 	}
 
 	detect_hypervisor(portLibrary);
