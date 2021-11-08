@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2020, 2020 IBM Corp. and others
+# Copyright (c) 2020, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,6 +62,9 @@ endfunction()
 # add_library/add_executable calls.
 
 function(j9vm_add_library name)
+	# Apply our warnings as errors value.
+	# Note: the enclosing function scope means we don't need to restore old value.
+	set(OMR_WARNINGS_AS_ERRORS "${J9VM_WARNINGS_AS_ERRORS}")
 	omr_add_library("${name}" ${ARGN})
 	get_target_property(target_type "${name}" TYPE)
 	if(target_type STREQUAL "SHARED_LIBRARY")
@@ -70,5 +73,8 @@ function(j9vm_add_library name)
 endfunction()
 
 function(j9vm_add_executable name)
+	# Apply our warnings as errors value.
+	# Note: the enclosing function scope means we don't need to restore old value.
+	set(OMR_WARNINGS_AS_ERRORS "${J9VM_WARNINGS_AS_ERRORS}")
 	omr_add_executable("${name}" ${ARGN})
 endfunction()
