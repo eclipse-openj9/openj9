@@ -178,7 +178,7 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		}
 
 		nameObject = J9VMJAVALANGREFLECTMETHOD_NAME(currentThread, refObject);
-		clazzObject = J9VMJAVALANGREFLECTMETHOD_DECLARINGCLASS(currentThread, refObject);
+		clazzObject = J9VMJAVALANGREFLECTMETHOD_CLAZZ(currentThread, refObject);
 	} else if (refClass == J9VMJAVALANGREFLECTCONSTRUCTOR(vm)) {
 		J9JNIMethodID *methodID = vm->reflectFunctions.idFromConstructorObject(currentThread, refObject);
 		vmindex = (jlong)methodID;
@@ -192,7 +192,7 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		}
 		flags |= MN_IS_CONSTRUCTOR | (MH_REF_INVOKESPECIAL << MN_REFERENCE_KIND_SHIFT);
 
-		clazzObject = J9VMJAVALANGREFLECTMETHOD_DECLARINGCLASS(currentThread, refObject);
+		clazzObject = J9VMJAVALANGREFLECTMETHOD_CLAZZ(currentThread, refObject);
 	} else {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 	}

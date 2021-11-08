@@ -236,12 +236,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/reflect/Field" name="modifiers" signature="I"/>
 	<fieldref class="java/lang/reflect/Field" name="trustedFinal" signature="Z" versions="15-"/>
 	<fieldref class="java/lang/reflect/Field" name="annotations" signature="[B"/>
-	<fieldref class="java/lang/reflect/Field" name="intFieldID" signature="I">
-		<fieldalias name="slot"/>
-	</fieldref>
-	<fieldref class="java/lang/reflect/Field" name="declaringClass" signature="Ljava/lang/Class;">
-		<fieldalias name="clazz"/>
-	</fieldref>
+	<fieldref class="java/lang/reflect/Field" name="slot" signature="I"/>
+	<fieldref class="java/lang/reflect/Field" name="clazz" signature="Ljava/lang/Class;"/>
 	<fieldref class="java/lang/reflect/Method" name="name" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/reflect/Method" name="returnType" signature="Ljava/lang/Class;"/>
 	<fieldref class="java/lang/reflect/Method" name="parameterTypes" signature="[Ljava/lang/Class;"/>
@@ -251,24 +247,16 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/reflect/Method" name="annotations" signature="[B"/>
 	<fieldref class="java/lang/reflect/Method" name="parameterAnnotations" signature="[B"/>
 	<fieldref class="java/lang/reflect/Method" name="annotationDefault" signature="[B"/>
-	<fieldref class="java/lang/reflect/Method" name="intMethodID" signature="I">
-		<fieldalias name="slot"/>
-	</fieldref>
-	<fieldref class="java/lang/reflect/Method" name="declaringClass" signature="Ljava/lang/Class;">
-		<fieldalias name="clazz"/>
-	</fieldref>
+	<fieldref class="java/lang/reflect/Method" name="slot" signature="I"/>
+	<fieldref class="java/lang/reflect/Method" name="clazz" signature="Ljava/lang/Class;"/>
 	<fieldref class="java/lang/reflect/Constructor" name="parameterTypes" signature="[Ljava/lang/Class;"/>
 	<fieldref class="java/lang/reflect/Constructor" name="exceptionTypes" signature="[Ljava/lang/Class;"/>
 	<fieldref class="java/lang/reflect/Constructor" name="signature" signature="Ljava/lang/String;"/>
 	<fieldref class="java/lang/reflect/Constructor" name="modifiers" signature="I"/>
 	<fieldref class="java/lang/reflect/Constructor" name="annotations" signature="[B"/>
 	<fieldref class="java/lang/reflect/Constructor" name="parameterAnnotations" signature="[B"/>
-	<fieldref class="java/lang/reflect/Constructor" name="intMethodID" signature="I">
-		<fieldalias name="slot"/>
-	</fieldref>
-	<fieldref class="java/lang/reflect/Constructor" name="declaringClass" signature="Ljava/lang/Class;">
-		<fieldalias name="clazz"/>
-	</fieldref>
+	<fieldref class="java/lang/reflect/Constructor" name="slot" signature="I"/>
+	<fieldref class="java/lang/reflect/Constructor" name="clazz" signature="Ljava/lang/Class;"/>
 	<fieldref class="java/lang/reflect/RecordComponent" name="clazz" signature="Ljava/lang/Class;" versions="14-"/>
 	<fieldref class="java/lang/reflect/RecordComponent" name="name" signature="Ljava/lang/String;" versions="14-"/>
 	<fieldref class="java/lang/reflect/RecordComponent" name="type" signature="Ljava/lang/Class;" versions="14-"/>
