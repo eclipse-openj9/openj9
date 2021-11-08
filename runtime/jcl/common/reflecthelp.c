@@ -721,10 +721,10 @@ fillInReflectMethod(j9object_t methodObject, struct J9Class *declaringClass, jme
 
 	methodObject = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 
-	J9VMJAVALANGREFLECTMETHOD_SET_DECLARINGCLASS(vmThread, methodObject, J9VM_J9CLASS_TO_HEAPCLASS(declaringClass));
+	J9VMJAVALANGREFLECTMETHOD_SET_CLAZZ(vmThread, methodObject, J9VM_J9CLASS_TO_HEAPCLASS(declaringClass));
 
 	/* Java 7 uses int field and method ids to avoid modifying Sun JCL code */
-	J9VMJAVALANGREFLECTMETHOD_SET_INTMETHODID(vmThread, methodObject, (U_32)getMethodIndex(ramMethod));
+	J9VMJAVALANGREFLECTMETHOD_SET_SLOT(vmThread, methodObject, (U_32)getMethodIndex(ramMethod));
 
 	J9VMJAVALANGREFLECTMETHOD_SET_MODIFIERS(vmThread, methodObject, romMethod->modifiers & CFR_METHOD_ACCESS_MASK);
 }
@@ -808,9 +808,9 @@ createField(struct J9VMThread *vmThread, jfieldID fieldID)
 	fieldObject = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 
 	/* Java 7 uses int field ID's to avoid modifying Sun JCL code */
-	J9VMJAVALANGREFLECTFIELD_SET_INTFIELDID(vmThread, fieldObject, (U_32)(j9FieldID->index));
+	J9VMJAVALANGREFLECTFIELD_SET_SLOT(vmThread, fieldObject, (U_32)(j9FieldID->index));
 
-	J9VMJAVALANGREFLECTFIELD_SET_DECLARINGCLASS(vmThread, fieldObject, J9VM_J9CLASS_TO_HEAPCLASS(j9FieldID->declaringClass));
+	J9VMJAVALANGREFLECTFIELD_SET_CLAZZ(vmThread, fieldObject, J9VM_J9CLASS_TO_HEAPCLASS(j9FieldID->declaringClass));
 	J9VMJAVALANGREFLECTFIELD_SET_MODIFIERS(vmThread, fieldObject, j9FieldID->field->modifiers & CFR_FIELD_ACCESS_MASK);
 #if JAVA_SPEC_VERSION >= 15
 	/* trust that static final fields and final record or hidden class fields will not be modified. */
@@ -954,8 +954,8 @@ createConstructor(struct J9VMThread *vmThread, J9JNIMethodID *methodID, j9object
 	}
 
 	constructorObject = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-	J9VMJAVALANGREFLECTCONSTRUCTOR_SET_DECLARINGCLASS(vmThread, constructorObject, J9VM_J9CLASS_TO_HEAPCLASS(declaringClass));
-	J9VMJAVALANGREFLECTCONSTRUCTOR_SET_INTMETHODID(vmThread, constructorObject, (U_32)getMethodIndex(ramMethod));
+	J9VMJAVALANGREFLECTCONSTRUCTOR_SET_CLAZZ(vmThread, constructorObject, J9VM_J9CLASS_TO_HEAPCLASS(declaringClass));
+	J9VMJAVALANGREFLECTCONSTRUCTOR_SET_SLOT(vmThread, constructorObject, (U_32)getMethodIndex(ramMethod));
 	J9VMJAVALANGREFLECTCONSTRUCTOR_SET_MODIFIERS(vmThread, constructorObject, romMethod->modifiers & CFR_METHOD_ACCESS_MASK);
 
 	return constructorObject;
@@ -966,9 +966,9 @@ idFromFieldObject(J9VMThread* vmThread, j9object_t declaringClassObject, j9objec
 {
 	J9JNIFieldID *fieldID = NULL;
 	J9Class *declaringClass = NULL;
-	U_32 index = J9VMJAVALANGREFLECTFIELD_INTFIELDID(vmThread, fieldObject);
+	U_32 index = J9VMJAVALANGREFLECTFIELD_SLOT(vmThread, fieldObject);
 	if (NULL == declaringClassObject) {
-		j9object_t declaringClassObjectTmp = J9VMJAVALANGREFLECTFIELD_DECLARINGCLASS(vmThread, fieldObject);
+		j9object_t declaringClassObjectTmp = J9VMJAVALANGREFLECTFIELD_CLAZZ(vmThread, fieldObject);
 		declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, declaringClassObjectTmp);
 	} else {
 		declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, declaringClassObject);
@@ -982,8 +982,8 @@ static struct J9JNIMethodID *
 idFromMethodObject(J9VMThread* vmThread, j9object_t methodObject)
 {
 	J9JNIMethodID *methodID = NULL;
-	U_32 index = J9VMJAVALANGREFLECTMETHOD_INTMETHODID(vmThread, methodObject);
-	j9object_t declaringClassObject = J9VMJAVALANGREFLECTMETHOD_DECLARINGCLASS(vmThread, methodObject);
+	U_32 index = J9VMJAVALANGREFLECTMETHOD_SLOT(vmThread, methodObject);
+	j9object_t declaringClassObject = J9VMJAVALANGREFLECTMETHOD_CLAZZ(vmThread, methodObject);
 	J9Class *declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, declaringClassObject);
 	methodID = (J9JNIMethodID *)(declaringClass->jniIDs[index]);
 
@@ -994,8 +994,8 @@ static struct J9JNIMethodID *
 idFromConstructorObject(J9VMThread* vmThread, j9object_t constructorObject)
 {
 	J9JNIMethodID *methodID = NULL;
-	U_32 index = J9VMJAVALANGREFLECTCONSTRUCTOR_INTMETHODID(vmThread, constructorObject);
-	j9object_t declaringClassObject = J9VMJAVALANGREFLECTCONSTRUCTOR_DECLARINGCLASS(vmThread, constructorObject);
+	U_32 index = J9VMJAVALANGREFLECTCONSTRUCTOR_SLOT(vmThread, constructorObject);
+	j9object_t declaringClassObject = J9VMJAVALANGREFLECTCONSTRUCTOR_CLAZZ(vmThread, constructorObject);
 	J9Class *declaringClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, declaringClassObject);
 	methodID = (J9JNIMethodID *)(declaringClass->jniIDs[index]);
 
