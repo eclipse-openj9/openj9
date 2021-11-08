@@ -613,6 +613,7 @@ JIT_HELPER(__bwHalfWordArrayCopy);
 JIT_HELPER(__bwWordArrayCopy);
 JIT_HELPER(__bwDoubleWordArrayCopy);
 JIT_HELPER(__bwQuadWordArrayCopy);
+JIT_HELPER(_patchGCRHelper);
 
 #elif defined(TR_HOST_S390)
 JIT_HELPER(__double2Long);
@@ -1610,6 +1611,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_ARM64backwardDoubleWordArrayCopy,       (void *) __bwDoubleWordArrayCopy,          TR_Helper);
    SET(TR_ARM64backwardWordArrayCopy,             (void *) __bwWordArrayCopy,                TR_Helper);
    SET(TR_ARM64backwardHalfWordArrayCopy,         (void *) __bwHalfWordArrayCopy,            TR_Helper);
+   SET(TR_ARM64PatchGCRHelper,                    (void *) _patchGCRHelper,                  TR_Helper);
 
 #elif defined(TR_HOST_S390)
    SET(TR_S390double2Long,                                (void *) 0,                                              TR_Helper);
