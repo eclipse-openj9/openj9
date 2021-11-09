@@ -4095,17 +4095,17 @@ J9::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *
       cg->stopUsingRegister(srcObjReg);
    if (stopUsingCopyReg2)
       cg->stopUsingRegister(dstObjReg);
-   if (stopUsingCopyReg3)
-      cg->stopUsingRegister(srcAddrReg);
-   if (stopUsingCopyReg4)
-      cg->stopUsingRegister(dstAddrReg);
-   if (stopUsingCopyReg5)
-      cg->stopUsingRegister(lengthReg);
 
-   cg->stopUsingRegister(x0Reg);
-   cg->stopUsingRegister(tmp1Reg);
-   cg->stopUsingRegister(tmp2Reg);
-   cg->stopUsingRegister(tmp3Reg);
+   TR::Register *retRegisters[3];
+   int retRegCount = 0;
+   if (!stopUsingCopyReg3)
+      retRegisters[retRegCount++] = srcAddrReg;
+   if (!stopUsingCopyReg4)
+      retRegisters[retRegCount++] = dstAddrReg;
+   if (!stopUsingCopyReg5)
+      retRegisters[retRegCount++] = lengthReg;
+
+   deps->stopUsingDepRegs(cg, retRegCount, retRegisters);
 
    return NULL;
 #else /* OMR_GC_CONCURRENT_SCAVENGER */
@@ -4204,19 +4204,20 @@ J9::ARM64::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Code
    // ARM64HelperCallSnippet generates "bl" instruction
    cg->machine()->setLinkRegisterKilled(true);
 
-   if (stopUsingCopyReg1)
-      cg->stopUsingRegister(srcObjReg);
-   if (stopUsingCopyReg2)
-      cg->stopUsingRegister(dstObjReg);
-   if (stopUsingCopyReg3)
-      cg->stopUsingRegister(srcAddrReg);
-   if (stopUsingCopyReg4)
-      cg->stopUsingRegister(dstAddrReg);
-   if (stopUsingCopyReg5)
-      cg->stopUsingRegister(lengthReg);
+   TR::Register *retRegisters[5];
+   int retRegCount = 0;
+   if (!stopUsingCopyReg1)
+      retRegisters[retRegCount++] = srcObjReg;
+   if (!stopUsingCopyReg2)
+      retRegisters[retRegCount++] = dstObjReg;
+   if (!stopUsingCopyReg3)
+      retRegisters[retRegCount++] = srcAddrReg;
+   if (!stopUsingCopyReg4)
+      retRegisters[retRegCount++] = dstAddrReg;
+   if (!stopUsingCopyReg5)
+      retRegisters[retRegCount++] = lengthReg;
 
-   cg->stopUsingRegister(x0Reg);
-   cg->stopUsingRegister(tmpReg);
+   deps->stopUsingDepRegs(cg, retRegCount, retRegisters);
 
    cg->decReferenceCount(srcObjNode);
    cg->decReferenceCount(dstObjNode);
