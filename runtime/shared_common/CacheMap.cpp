@@ -1259,7 +1259,12 @@ SH_CacheMap::refreshHashtables(J9VMThread* currentThread, bool hasClassSegmentMu
 
 	Trc_SHR_CM_refreshHashtables_Entry(currentThread);
 
-	_ccHead->updateRuntimeFullFlags(currentThread);
+	if (!_ccHead->hasReadMutex(currentThread)) {
+		/* It is possible to enter write mutex in updateRuntimeFullFlags(), we cannot acquire write mutex after read mutex.
+		 * For readers, updateRuntimeFullFlags() is called at the beginning of SH_CompositeCacheImpl::enterReadMutex().
+		 */
+		_ccHead->updateRuntimeFullFlags(currentThread);
+	}
 
 	if (enterRefreshMutex(currentThread, "refreshHashtables")==0) {
 		itemsRead = readCacheUpdates(currentThread);
@@ -1274,7 +1279,8 @@ SH_CacheMap::refreshHashtables(J9VMThread* currentThread, bool hasClassSegmentMu
 				/* Only refresh the segment list if we hold the class segment mutex. This is because:
 				 * a) we need the mutex to call the function
 				 * b) the class segment mutex cannot be entered if we hold the write mutex
-				 * findROMClass and storeROMClass prereq holding the class segment mutex.
+				 * storeROMClass prereq holding the class segment mutex.
+				 * findROMClass() calls updateROMSegmentList() before it returns.
 				 * For other types of find and store, the segment list is irrelevant */ 
 				updateROMSegmentList(currentThread, true);
 			}
@@ -1614,6 +1620,8 @@ SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const
 	} else if (itemsAdded > 0) {
 		bool doExitMutex = false;
 		bool hasMutex = false;
+		bool exitReader = false;
+		const char* fnName = "runEntryPointChecks";
 
 		/* If we don't have write mutex, then we are certainly being called during 'find' operation.
 		 * In that case protect partially filled pages only if "mprotect=onfind" is set.
@@ -1621,6 +1629,11 @@ SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const
 		if (_ccHead->hasWriteMutex(currentThread)) {
 			hasMutex = true;
 		} else if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND)) {
+			exitReader = _ccHead->hasReadMutex(currentThread);
+			if (exitReader) {
+				/* cannot enter write mutex afer read mutex, exit here */
+				_ccHead->exitReadMutex(currentThread, fnName);
+			}
 			hasMutex = (0 == _ccHead->enterWriteMutex(currentThread, false, "runEntryPointChecks"));
 			if (hasMutex) {
 				doExitMutex = true;
@@ -1632,6 +1645,9 @@ SH_CacheMap::runEntryPointChecks(J9VMThread* currentThread, void* address, const
 			if (doExitMutex) {
 				_ccHead->exitWriteMutex(currentThread, "runEntryPointChecks");
 			}
+		}
+		if (exitReader) {
+			_ccHead->enterReadMutex(currentThread, fnName);
 		}
 	}
 

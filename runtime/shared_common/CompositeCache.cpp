@@ -1895,6 +1895,7 @@ SH_CompositeCacheImpl::enterWriteMutex(J9VMThread* currentThread, bool lockCache
 	Trc_SHR_Assert_NotEquals(currentThread, _commonCCInfo->hasWriteMutexThread);
 	Trc_SHR_Assert_NotEquals(currentThread, _commonCCInfo->hasReadWriteMutexThread);
 	Trc_SHR_Assert_NotEquals(currentThread, _commonCCInfo->hasRefreshMutexThread);
+	Trc_SHR_Assert_False(hasReadMutex(currentThread));
 
 	if (oscacheToUse) {
 		rc = oscacheToUse->acquireWriteLock(_commonCCInfo->writeMutexID);
@@ -2295,6 +2296,12 @@ SH_CompositeCacheImpl::enterReadMutex(J9VMThread* currentThread, const char* cal
 	}
 
 	Trc_SHR_CC_enterReadMutex_Enter(currentThread, caller);
+
+	/* updateRuntimeFullFlags() could acuqire write mutex. We cannot aquire write mutex after read mutex,
+	 * so for readers, update the runtime full flags before the read mutex.
+	 * For writers, the runtime full flags are updated in SH_CacheMap::refreshHashtables()
+	 */
+	updateRuntimeFullFlags(currentThread);
 
 	if (_commonCCInfo->writeMutexID == CC_READONLY_LOCK_VALUE) {
 		IDATA cntr = 0;

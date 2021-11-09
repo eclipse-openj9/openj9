@@ -6315,9 +6315,24 @@ xlogerr:
 							if ('\0' == *upToComma) {
 								goto xlogerr;
 							}
-							gclog = 0 != j9_cmdla_stricmp("off", upToComma);
-							if (gclog) {
+							/* only levels trace, debug, info, and not off, warning, error, enable the gc verbose log */
+							if (0 == j9_cmdla_stricmp("off", upToComma)) {
+								gclog = FALSE;
+							} else if ((0 == j9_cmdla_stricmp("warning", upToComma))
+								|| (0 == j9_cmdla_stricmp("error", upToComma))
+							) {
+								gclog = FALSE;
 								/* OpenJ9 doesn't understand log levels */
+								unrecognizedOption = TRUE;
+							} else if ((0 == j9_cmdla_stricmp("trace", upToComma))
+								|| (0 == j9_cmdla_stricmp("debug", upToComma))
+								|| (0 == j9_cmdla_stricmp("info", upToComma))
+							) {
+								gclog = TRUE;
+								/* OpenJ9 doesn't understand log levels */
+								unrecognizedOption = TRUE;
+							} else {
+								/* unrecognized log level */
 								unrecognizedOption = TRUE;
 							}
 						}
