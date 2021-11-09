@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,10 @@
 #include "pcstack.h"
 #include "VMHelpers.hpp"
 #include "OMR/Bytes.hpp"
+
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
 
 extern "C" {
 
@@ -258,6 +262,10 @@ jitResetAllMethods(J9VMThread *currentThread)
 		J9Method *method = clazz->ramMethods;
 		U_32 methodCount = clazz->romClass->romMethodCount;
 
+#if defined(OSX) && defined(AARCH64)
+		pthread_jit_write_protect_np(0);
+#endif
+
 		while (methodCount != 0) {
 			UDATA extra = (UDATA)method->extra;
 			if (0 == (extra & J9_STARTPC_NOT_TRANSLATED)) {
@@ -277,6 +285,11 @@ jitResetAllMethods(J9VMThread *currentThread)
 			method += 1;
 			methodCount -= 1;
 		}
+
+#if defined(OSX) && defined(AARCH64)
+		pthread_jit_write_protect_np(1);
+#endif
+
 		clazz = vmFuncs->allClassesNextDo(&state);
 	}
 	vmFuncs->allClassesEndDo(&state);

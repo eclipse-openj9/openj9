@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2021, 2021 IBM Corp. and others
+# Copyright (c) 2021, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,8 @@ set(J9VM_GC_ENABLE_DOUBLE_MAP OFF CACHE BOOL "")
 set(J9VM_INTERP_ATOMIC_FREE_JNI ON CACHE BOOL "")
 set(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH ON CACHE BOOL "")
 set(J9VM_INTERP_TWO_PASS_EXCLUSIVE ON CACHE BOOL "")
+
+set(J9VM_JIT_NEW_DUAL_HELPERS OFF CACHE BOOL "")
 
 set(J9VM_PORT_RUNTIME_INSTRUMENTATION OFF CACHE BOOL "")
 
