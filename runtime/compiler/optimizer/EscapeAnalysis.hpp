@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -341,7 +341,7 @@ class FlushCandidate : public TR_Link<FlushCandidate>
    {
    public:
    FlushCandidate(TR::TreeTop *flushNode, TR::Node *node, int32_t blockNum, Candidate *candidate = 0)
-     : _flushNode(flushNode), _node(node), _blockNum(blockNum), _candidate(candidate)
+     : _flushNode(flushNode), _node(node), _blockNum(blockNum), _candidate(candidate), _isKnownToLackCandidate(false)
      {
      }
 
@@ -357,11 +357,35 @@ class FlushCandidate : public TR_Link<FlushCandidate>
    Candidate *getCandidate() { return _candidate;}
    void setCandidate(Candidate *c) {_candidate = c;}
 
+   /**
+    * \brief Indicates whether this \c FlushCandidate is known to have no
+    * candidate for stack allocation associated with it.  That is, that
+    * the \ref getCandidate() method will always return \c NULL.
+    *
+    * \return \c true if this \c FlushCandidate is known to have no
+    * candidate for stack allocation associated with it;
+    * \c false if this \c FlushCandidate is known to have a candidate
+    * for stack allocation associated with it, or if it has not yet
+    * been determined whether there is a candidate for stack allocation
+    * associated with it.
+    */
+   bool getIsKnownToLackCandidate() { return _isKnownToLackCandidate;}
+
+   /**
+    * \brief Sets the status of this \c FlushCandidate, indicating whether
+    * it is known to have no candidate for stack allocation associated with it.
+    *
+    * \param setting The updated status indicating whether this \c FlushCandidate
+    * is known to have no candidate for stack allocation associated with it
+    */
+   void setIsKnownToLackCandidate(bool setting) {_isKnownToLackCandidate = setting;}
+
    private:
    TR::Node *_node;
    TR::TreeTop *_flushNode;
    int32_t _blockNum;
    Candidate *_candidate;
+   bool _isKnownToLackCandidate;
    };
 
 
