@@ -5104,3 +5104,35 @@ J9::CodeGenerator::isMonitorValueBasedOrValueType(TR::Node* monNode)
       }
    return TR_no;
    }
+
+bool
+J9::CodeGenerator::isProfiledClassAndCallSiteCompatible(TR_OpaqueClassBlock *profiledClass, TR_OpaqueClassBlock *callSiteMethodClass)
+   {
+   /* Check if the profiled class should be allowed to be used for a guarded devirtualization of a particular call site.
+      A call site can end up with an incompatible profiled class in two ways.
+        1) The inlining context of this compile might allow for type refinement of a callSite class. If this the profiledClass
+           is from a call chain that differs to the current compile inlining, then it's possible that the profiledClass is
+           incompatible with the refined type at the callSite in this compile. Historically the JIT would go as far as
+           converting an invokeInterface to an invokeVirtual based on this type refinement, which would result in a crash if the
+           profiledClass was incompatible. Due to correctness issues, interface->virtual conversions was removed, but we can
+           still refine the class type for an invokevirtual resulting in the same profiledClass incompatibility which can result
+           in an ineffectual guarded devirtualization but not a crash.
+        2) With shared classes, a J9ROMClass can be shared among classes of different class-loaders. Since profiling data is keyed
+           by the bytecode address, the profiled data from all classes sharing the same J9ROMClass will be merged. Because of this,
+           a profiled class can be derived from the profiling of a method in a class that is incompatible with the call site.
+      So how to do we ensure compatibility?
+        In most cases an isInstanceOf() check is enough to ensure that the profiled class is compatible, but this can fail when the
+        callSiteMethodClass is an Interface. This happens when the call site is calling a method of an Abstract class which is
+        not implemented by the class but is required by an Interface that the Abstract class implements. In such a case the Abstract
+        class's VFT entries for all unimplemented methods will point at the Interface methods. By default the JIT uses the class of
+        the VFT entry method to populate the callSiteMethodClass. When the Interface is defined in a parent class-loader, it's
+        possible for an incompatible profiled class to implement the same parent class-loader Interface and as a result pass the
+        isInstanceOf() test. Therefore we can only use the isInstanceOf() check when the callSiteMethodClass is not an Interface.
+
+   */
+   if (!fej9()->isInterfaceClass(callSiteMethodClass) && fej9()->isInstanceOf(profiledClass, callSiteMethodClass, true, true) == TR_yes)
+      {
+      return true;
+      }
+   return false;
+   }

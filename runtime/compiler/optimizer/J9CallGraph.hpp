@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "optimizer/CallInfo.hpp"
+#include "il/J9DataTypes.hpp"
 
 class TR_ResolvedMethod;
 
@@ -35,6 +36,7 @@ class TR_ProfileableCallSite : public  TR_IndirectCallSite
       //capabilities
       void findSingleProfiledReceiver(ListIterator<TR_ExtraAddressInfo>&, TR_AddressInfo * valueInfo, TR_InlinerBase* inliner);
       virtual void findSingleProfiledMethod(ListIterator<TR_ExtraAddressInfo>&, TR_AddressInfo * valueInfo, TR_InlinerBase* inliner);
+      virtual TR_YesNoMaybe isCallingObjectMethod() { return TR_maybe; };
    };
 
 
@@ -61,7 +63,7 @@ class TR_J9MutableCallSite : public  TR_FunctionPointerCallSite
 class TR_J9VirtualCallSite : public TR_ProfileableCallSite
    {
    public:
-      TR_CALLSITE_TR_ALLOC_AND_INHERIT_EMPTY_CONSTRUCTOR(TR_J9VirtualCallSite, TR_ProfileableCallSite)
+      TR_CALLSITE_TR_ALLOC_AND_INHERIT_CONSTRUCTOR(TR_J9VirtualCallSite, TR_ProfileableCallSite) { _isCallingObjectMethod = TR_maybe; }
       virtual bool findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner);
       virtual TR_ResolvedMethod* findSingleJittedImplementer (TR_InlinerBase *inliner);
       virtual const char*  name () { return "TR_J9VirtualCallSite"; }
@@ -70,7 +72,12 @@ class TR_J9VirtualCallSite : public TR_ProfileableCallSite
 		//capabilities
 		bool findCallSiteForAbstractClass(TR_InlinerBase* inliner);
 		//queries
+		bool isBasicInvokeVirtual();
       virtual TR_OpaqueClassBlock* getClassFromMethod ();
+      // Is the call site calling a method of java/lang/Object
+      virtual TR_YesNoMaybe isCallingObjectMethod() { return _isCallingObjectMethod; };
+   private:
+      TR_YesNoMaybe _isCallingObjectMethod;
 
    };
 
