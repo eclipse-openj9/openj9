@@ -759,7 +759,11 @@ static const char * const excludeArray[] = {
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
    "java/security/AccessController.doPrivileged(Ljava/security/PrivilegedExceptionAction;Ljava/security/AccessControlContext;[Ljava/security/Permission;)Ljava/lang/Object;",
    "java/lang/NullPointerException.fillInStackTrace()Ljava/lang/Throwable;",
+#if JAVA_SPEC_VERSION >= 18
+   "jdk/internal/loader/NativeLibraries.load(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z",
+#else /* JAVA_SPEC_VERSION >= 18 */
    "jdk/internal/loader/NativeLibraries.load(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z",
+#endif /* JAVA_SPEC_VERSION >= 18 */
 };
 
 bool
@@ -2996,7 +3000,11 @@ void TR_ResolvedJ9Method::construct()
 
    static X NativeLibrariesMethods[] =
       {
+#if JAVA_SPEC_VERSION >= 18
+      {x(TR::jdk_internal_loader_NativeLibraries_load, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZZ)Z")},
+#else /* JAVA_SPEC_VERSION >= 18 */
       {x(TR::jdk_internal_loader_NativeLibraries_load, "load", "(Ljdk/internal/loader/NativeLibraries$NativeLibraryImpl;Ljava/lang/String;ZZ)Z")},
+#endif /* JAVA_SPEC_VERSION >= 18 */
       {  TR::unknownMethod}
       };
 
