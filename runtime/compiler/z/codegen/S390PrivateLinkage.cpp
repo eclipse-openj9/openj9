@@ -658,11 +658,6 @@ J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
    lowGCOffset = stackIndex;
    int32_t firstLocalGCIndex = atlas->getNumberOfParmSlotsMapped();
 
-   if (firstLocalGCIndex != 0)
-      {
-      setStackSizeCheckNeeded(true);
-      }
-
    stackIndex -= (atlas->getNumberOfSlotsMapped() - firstLocalGCIndex) * TR::Compiler->om.sizeofReferenceAddress();
 
    uint32_t localObjectAlignment = 1 << TR::Compiler->om.compressedReferenceShift();
@@ -679,8 +674,6 @@ J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
    //
    for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
       {
-      setStackSizeCheckNeeded(true);
-
       if (localCursor->getGCMapIndex() >= 0)
          {
          localCursor->setOffset(stackIndex + TR::Compiler->om.sizeofReferenceAddress() * (localCursor->getGCMapIndex() - firstLocalGCIndex));
@@ -725,7 +718,6 @@ J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
       {
       if (localCursor->getGCMapIndex() < 0 && !TR::Linkage::needsAlignment(localCursor->getDataType(), cg()))
          {
-         setStackSizeCheckNeeded(true);
          mapSingleAutomatic(localCursor, stackIndex);
          }
       localCursor = automaticIterator.getNext();
@@ -739,8 +731,6 @@ J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
       {
       if (localCursor->getGCMapIndex() < 0 && TR::Linkage::needsAlignment(localCursor->getDataType(), cg()))
          {
-         setStackSizeCheckNeeded(true);
-
          stackIndex -= (stackIndex & 0x4) ? 4 : 0;
          mapSingleAutomatic(localCursor, stackIndex);
          }
@@ -1115,11 +1105,6 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
    regSaveSize = calculateRegisterSaveSize(firstUsedReg, lastUsedReg,
                                            registerSaveDescription,
                                            numIntSaved, numFloatSaved);
-
-   if (regSaveSize != 0)
-      {
-      setStackSizeCheckNeeded(true);
-      }
 
    if (0 && comp()->target().is64Bit())
       {
