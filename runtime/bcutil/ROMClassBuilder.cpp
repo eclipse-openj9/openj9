@@ -280,18 +280,28 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda, 
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-	/* InjectedInvoker is a hidden class without the nestmate and strong
-	 * attributes set. It is created by MethodHandleImpl.makeInjectedInvoker on
-	 * the JCL side. ROM class name for InjectedInvoker is set using the hidden
-	 * class name, which contains the correct host class name. The below filter
-	 * is used to reduce the number of memcmps when identifying if a hidden
-	 * class is named InjectedInvoker. Class name for InjectedInvoker:
+	/* InjectedInvoker is a hidden class without the strong attribute set. It
+	 * is created by MethodHandleImpl.makeInjectedInvoker on the OpenJDK side.
+	 * So, OpenJ9 does not have control over the implementation of InjectedInvoker.
+	 * ROM class name for InjectedInvoker is set using the hidden class name, which
+	 * contains the correct host class name. The below filter is used to reduce
+	 * the number of memcmps when identifying if a hidden class is named
+	 * InjectedInvoker. Class name for InjectedInvoker:
 	 *    - in class file bytecodes: "InjectedInvoker"; and
 	 *    - during hidden class creation: "<HOST_CLASS>$$InjectedInvoker".
 	 */
 	if (context->isClassHidden()
 	&& !context->isHiddenClassOptStrongSet()
+	/* In JDK17, InjectedInvoker does not have the nestmate attribute. In JDK18,
+	 * InjectedInvoker has the nestmate attribute due to change in implementation.
+	 * This filter checks for the nestmate attribute based upon the Java version
+	 * in order to identify a InjectedInvoker class.
+	 */
+#if JAVA_SPEC_VERSION <= 17
 	&& !context->isHiddenClassOptNestmateSet()
+#else /* JAVA_SPEC_VERSION <= 17 */
+	&& context->isHiddenClassOptNestmateSet()
+#endif /* JAVA_SPEC_VERSION <= 17 */
 	) {
 #define J9_INJECTED_INVOKER_CLASSNAME "$$InjectedInvoker"
 		U_8 *nameData = context->className();
