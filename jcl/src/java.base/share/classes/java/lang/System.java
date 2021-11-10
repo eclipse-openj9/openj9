@@ -603,6 +603,12 @@ private static void ensureProperties(boolean isInitialization) {
 
 	/*[IF JAVA_SPEC_VERSION >= 18]*/
 	initializedProperties.put("os.version", sysPropOSVersion); //$NON-NLS-1$
+
+	/* Setting jdk.reflect.useDirectMethodHandle to false disables the new JEP 416
+	 * changes where core reflection is reimplemented with MethodHandles. This flag
+	 * will be reenabled once OpenJ9 completely supports JEP 416.
+	 */
+	initializedProperties.put("jdk.reflect.useDirectMethodHandle", "false"); //$NON-NLS-1$
 	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 	if (osEncoding != null) {
