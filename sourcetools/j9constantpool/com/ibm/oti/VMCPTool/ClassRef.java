@@ -27,7 +27,7 @@ import org.w3c.dom.Element;
 
 public class ClassRef extends PrimaryItem implements Constants {
 
-	private static class Alias extends PrimaryItem.Alias {
+	private static final class Alias extends PrimaryItem.Alias {
 		final J9UTF8 name;
 
 		Alias(VersionRange[] versions, String[] flags, J9UTF8 name) {
@@ -56,7 +56,7 @@ public class ClassRef extends PrimaryItem implements Constants {
 					System.err.println("Error: tool cannot handle complex flag expressions");
 					System.exit(-1);
 				}
-				flag = Main.getRuntimeFlag( flags[0] );
+				flag = Main.getRuntimeFlag(flags[0]);
 			}
 			ds.writeInt(flag.value);
 		}

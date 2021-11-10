@@ -23,6 +23,7 @@ package com.ibm.oti.VMCPTool;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -89,6 +90,16 @@ public class ConstantPool {
 
 	public int getIndex(PrimaryItem item) {
 		return 1 + primaryItems.indexOf(item);
+	}
+
+	public void removeNonApplicableItems(int version, Set<String> flags) {
+		for (Iterator<PrimaryItem> items = primaryItems.iterator(); items.hasNext();) {
+			PrimaryItem item = items.next();
+
+			if (item.alias(version, flags) == null) {
+				items.remove();
+			}
+		}
 	}
 
 }
