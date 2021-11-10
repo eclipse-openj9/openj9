@@ -39,16 +39,48 @@ public class GetNanoTimeAdjustment extends TestCase {
 	}
 
 	/*
-	 * Make getNanoTime returns a value similar to System.currentTimeMillis()
+	 * Make sure getNanoTime() returns a value similar to System.currentTimeMillis().
 	 */
 	public void test_EnsureWallClockTime() {
-		String nanoTime = Long.valueOf(SupportJVM.GetNanoTimeAdjustment(0)).toString();
-		String milliTime = Long.valueOf(System.currentTimeMillis()).toString();
+		long start = System.currentTimeMillis();
+		long maxDuration = 1_000; // one second
+		int equalMillisNeeded = 10;
+		/*
+		 * On some platforms, e.g. s390 systems, millisecond precision time is
+		 * derived from a different source than nanosecond precision time, so
+		 * we allow them to differ a little.
+		 */
+		long tolerance = 1_000; // one second
 
-		/* accuracy of 1 second */
-		milliTime = milliTime.substring(0, milliTime.length() - 3);
+		for (;;) {
+			/*
+			 * In general, we have no control over the elapsed time between
+			 * the following three method invocations. On the other hand, we
+			 * do expect the return values of GetNanoTimeAdjustment(0) to be
+			 * consistent with the values returned by currentTimeMillis()
+			 * (but scaled by a factor of a million).
+			 */
+			long millis1 = System.currentTimeMillis();
+			long nanoAdjustment = SupportJVM.GetNanoTimeAdjustment(0);
+			long millis2 = System.currentTimeMillis();
 
-		assertTrue("nanotime is not similar to millitime", nanoTime.contains(milliTime));
+			long elapsed = millis2 - start;
+			long nanosAsMillis = nanoAdjustment / 1_000_000;
+
+			if (((millis1 - nanosAsMillis) > tolerance) // too much before millis1?
+			||  ((nanosAsMillis - millis2) > tolerance) // too much after millis2?
+			) {
+				fail(String.format("nanotime(%d) is not similar to millitime(%d..%d)",
+						nanoAdjustment, millis1, millis2));
+			} else if (elapsed > maxDuration) {
+				break;
+			} else if (millis1 == millis2) {
+				equalMillisNeeded -= 1;
+				if (equalMillisNeeded <= 0) {
+					break;
+				}
+			}
+		}
 	}
 
 	/*
