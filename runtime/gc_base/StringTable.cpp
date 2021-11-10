@@ -32,7 +32,7 @@
 #include "StringTable.hpp"
 #include "VMHelpers.hpp"
 
-/* the following is all ones except the least significant bit */
+/* the following is all zeros except the least significant bit */
 #define TYPE_UTF8 ((UDATA)1)
 
 extern "C" {
@@ -785,17 +785,17 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 
 		if (compressStrings) {
 			if (isASCIIorLatin1) {
-				if (J2SE_VERSION(vm) >= J2SE_V11) {
-					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 0);
-				} else {
-					J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength);
-				}
+#if JAVA_SPEC_VERSION >= 11
+				J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 0);
+#else /* JAVA_SPEC_VERSION >= 11 */
+				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 			} else {
-				if (J2SE_VERSION(vm) >= J2SE_V11) {
-					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
-				} else {
-					J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength | (I_32)0x80000000);
-				}
+#if JAVA_SPEC_VERSION >= 11
+				J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
+#else /* JAVA_SPEC_VERSION >= 11 */
+				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength | (I_32)0x80000000);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 				if (J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
 					/*
@@ -818,11 +818,11 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				}
 			}
 		} else {
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
-				J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
-			} else {
-				J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength);
-			}
+#if JAVA_SPEC_VERSION >= 11
+			J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 1);
+#else /* JAVA_SPEC_VERSION >= 11 */
+			J9VMJAVALANGSTRING_SET_COUNT(vmThread, result, (I_32)unicodeLength);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 		}
 
 		MM_AtomicOperations::writeBarrier();
@@ -906,11 +906,11 @@ setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newStri
 
 		J9VMJAVALANGSTRING_SET_VALUE(vmThread, newString, newChars);
 
-		if (J2SE_VERSION(vm) >= J2SE_V11) {
-			J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, J9VMJAVALANGSTRING_CODER(vmThread, sourceString));
-		} else {
-			J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, J9VMJAVALANGSTRING_COUNT(vmThread, sourceString));
-		}
+#if JAVA_SPEC_VERSION >= 11
+		J9VMJAVALANGSTRING_SET_CODER(vmThread, newString, J9VMJAVALANGSTRING_CODER(vmThread, sourceString));
+#else /* JAVA_SPEC_VERSION >= 11 */
+		J9VMJAVALANGSTRING_SET_COUNT(vmThread, newString, J9VMJAVALANGSTRING_COUNT(vmThread, sourceString));
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 		result = newString;
 	}
@@ -918,7 +918,7 @@ setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newStri
 	return result;
 }
 
-j9object_t	
+j9object_t
 j9gc_internString(J9VMThread *vmThread, j9object_t sourceString)
 {
 	J9JavaVM *vm = vmThread->javaVM;

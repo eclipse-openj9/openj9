@@ -2711,6 +2711,9 @@ UDATA
 setVMState(J9VMThread *currentThread, UDATA newState);
 
 /* ---------------- modularityHelper.c ---------------- */
+
+#if JAVA_SPEC_VERSION >= 11
+
 #define ERRCODE_SUCCESS                             0
 #define ERRCODE_GENERAL_FAILURE                     1
 #define ERRCODE_PACKAGE_ALREADY_DEFINED             2
@@ -2824,6 +2827,8 @@ addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, const char 
  */
 J9Package*
 getPackageDefinitionWithName(J9VMThread *currentThread, J9Module *fromModule, U_8 *packageName, U_16 len, UDATA *errCode);
+
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 /* ---------------- strhelp.c ---------------- */
 /* This function searches for the last occurrence of the character c in a string given its length

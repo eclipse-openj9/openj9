@@ -39,9 +39,6 @@
 
 extern "C" {
 
-static bool isAccessibleToAllModulesViaReflection(J9VMThread *currentThread, J9Class *clazz, bool javaBaseLoaded);
-
-
 UDATA
 pushReflectArguments(J9VMThread *currentThread, j9object_t parameterTypes, j9object_t arguments)
 {
@@ -740,8 +737,10 @@ sendCompleteInitialization(J9VMThread *currentThread)
 	Trc_VM_sendCompleteInitialization_Exit(currentThread);
 }
 
+#if JAVA_SPEC_VERSION >= 11
 static bool
-isAccessibleToAllModulesViaReflection(J9VMThread *currentThread, J9Class *clazz, bool javaBaseLoaded) {
+isAccessibleToAllModulesViaReflection(J9VMThread *currentThread, J9Class *clazz, bool javaBaseLoaded)
+{
 	J9JavaVM *vm = currentThread->javaVM;
 	bool isAccessible = true;
 	J9Module *module = clazz->module;
@@ -767,11 +766,11 @@ isAccessibleToAllModulesViaReflection(J9VMThread *currentThread, J9Class *clazz,
 		} else {
 			isAccessible = false;
 		}
-
 	}
 
 	return isAccessible;
 }
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 void JNICALL
 sendInit(J9VMThread *currentThread, j9object_t object, J9Class *senderClass, UDATA lookupOptions)
@@ -789,7 +788,11 @@ sendInit(J9VMThread *currentThread, j9object_t object, J9Class *senderClass, UDA
 				bool javaBaseLoaded = J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED);
 				if (J9_ARE_ANY_BITS_SET(clazz->romClass->modifiers, J9AccPublic)) {
 					if (J9_ARE_ANY_BITS_SET(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers, J9AccPublic)) {
-						if (!J9_ARE_MODULES_ENABLED(vm) || isAccessibleToAllModulesViaReflection(currentThread, clazz, javaBaseLoaded)) {
+						if (!J9_ARE_MODULES_ENABLED(vm)
+#if JAVA_SPEC_VERSION >= 11
+						|| isAccessibleToAllModulesViaReflection(currentThread, clazz, javaBaseLoaded)
+#endif /* JAVA_SPEC_VERSION >= 11 */
+						) {
 							clazz->initializerCache = method;
 						} else if (javaBaseLoaded) {
 							/* remember that this class is not accessible to all. We can only set this
@@ -930,6 +933,7 @@ sendResolveMethodHandle(J9VMThread *currentThread, UDATA cpIndex, J9ConstantPool
 void JNICALL
 sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg)
 {
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	Trc_VM_sendForGenericInvoke_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
 	if (buildCallInStackFrame(currentThread, &newELS, true, false)) {
@@ -943,6 +947,9 @@ sendForGenericInvoke(J9VMThread *currentThread, j9object_t methodHandle, j9objec
 		restoreCallInFrame(currentThread);
 	}
 	Trc_VM_sendForGenericInvoke_Exit(currentThread);
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	Assert_VM_unreachable();
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 }
 
 void JNICALL
@@ -982,6 +989,7 @@ sendResolveOpenJDKInvokeHandle(J9VMThread *currentThread, J9ConstantPool *ramCP,
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
+#if JAVA_SPEC_VERSION >= 11
 void JNICALL
 sendResolveConstantDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature *nameAndSig, U_16 *bsmData)
 {
@@ -1028,6 +1036,7 @@ sendResolveConstantDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDA
 	}
 	Trc_VM_sendResolveConstantDynamic_Exit(currentThread);
 }
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 void JNICALL
 sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature *nameAndSig, U_16 *bsmData)

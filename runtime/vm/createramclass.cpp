@@ -180,7 +180,9 @@ static I_32 interfaceDepthCompare(const void *a, const void *b);
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
 static void checkForCustomSpinOptions(void *element, void *userData);
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
+#if JAVA_SPEC_VERSION >= 11
 static void trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader *classLoader, J9UTF8 *className);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 static void initializeClassLinks(J9Class *ramClass, J9Class *superclass, J9MemorySegment *segment, UDATA options);
 /*
  * A class which extends (perhaps indirectly) the 'magic'
@@ -1803,7 +1805,9 @@ static VMINLINE BOOLEAN
 checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options,
 	UDATA packageID, BOOLEAN hotswapping, J9Class *superclass, J9Module *module, J9ROMClass **badClassOut, bool *incompatibleOut)
 {
+#if JAVA_SPEC_VERSION >= 11
 	J9JavaVM *vm = vmThread->javaVM;
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	BOOLEAN isExemptFromValidation = J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_UNSAFE);
 
 	if (!hotswapping) {
@@ -1840,7 +1844,9 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 				 */
 				bool superClassIsPublic = J9_ARE_ALL_BITS_SET(superROMClass->modifiers, J9AccPublic);
 				if ((!superClassIsPublic && (packageID != superclass->packageID))
+#if JAVA_SPEC_VERSION >= 11
 					|| (superClassIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(vmThread, vm, romClass, module, superclass->romClass, superclass->module, superclass->packageID, 0)))
+#endif /* JAVA_SPEC_VERSION >= 11 */
 				) {
 					Trc_VM_CreateRAMClassFromROMClass_superclassNotVisible(vmThread, superclass, superclass->classLoader, classLoader);
 					return FALSE;
@@ -1881,7 +1887,9 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
 					 */
 					bool interfaceIsPublic = J9_ARE_ALL_BITS_SET(interfaceROMClass->modifiers, J9AccPublic);
 					if ((!interfaceIsPublic && (packageID != interfaceClass->packageID))
+#if JAVA_SPEC_VERSION >= 11
 						|| (interfaceIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(vmThread, vm, romClass, module, interfaceROMClass, interfaceClass->module, interfaceClass->packageID, 0)))
+#endif /* JAVA_SPEC_VERSION >= 11 */
 					) {
 						Trc_VM_CreateRAMClassFromROMClass_interfaceNotVisible(vmThread, interfaceClass, interfaceClass->classLoader, classLoader);
 						return FALSE;
@@ -2039,7 +2047,9 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 				bool classIsPublic = J9_ARE_ALL_BITS_SET(valueROMClass->modifiers, J9AccPublic);
 
 				if ((!classIsPublic && (packageID != valueClass->packageID))
+#if JAVA_SPEC_VERSION >= 11
 					|| (classIsPublic && (J9_VISIBILITY_ALLOWED != checkModuleAccess(currentThread, currentThread->javaVM, romClass, module, valueROMClass, valueClass->module, valueClass->packageID, 0)))
+#endif /* JAVA_SPEC_VERSION >= 11 */
 				) {
 					Trc_VM_CreateRAMClassFromROMClass_nestedValueClassNotVisible(currentThread, valueClass, valueClass->classLoader, classLoader);
 					*badClassOut = valueROMClass;
@@ -2047,7 +2057,7 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 					break;
 				}
 			}
-		}	
+		}
 		field = romFieldsNextDo(&fieldWalkState);
 	}
 	return result;
@@ -2180,6 +2190,7 @@ nativeOOM:
 			/* store the classObject using an access barrier */
 			J9STATIC_OBJECT_STORE(vmThread, state->ramClass, (j9object_t*)&state->ramClass->classObject, (j9object_t)state->classObject);
 
+#if JAVA_SPEC_VERSION >= 11
 			if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 				J9Module *module = state->ramClass->module;
 				j9object_t moduleObject = NULL;
@@ -2205,6 +2216,7 @@ nativeOOM:
 				Assert_VM_notNull(moduleObject);
 				J9VMJAVALANGCLASS_SET_MODULE(vmThread, state->ramClass->classObject, moduleObject);
 			}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 		}
 
 		/* Ensure all previous writes have completed before making the new class visible. */
@@ -2282,6 +2294,7 @@ checkForCustomSpinOptions(void *element, void *userData)
 }
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 
+#if JAVA_SPEC_VERSION >= 11
 static void
 trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader *classLoader, J9UTF8 *className)
 {
@@ -2295,17 +2308,17 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 	if (javaVM->unamedModuleForSystemLoader == ramClass->module) {
 #define SYSTEMLOADER_UNNAMED_NAMED_MODULE   "unnamed module for system loader"
 		memcpy(moduleNameBuf, SYSTEMLOADER_UNNAMED_NAMED_MODULE, sizeof(SYSTEMLOADER_UNNAMED_NAMED_MODULE));
-#undef	SYSTEMLOADER_UNNAMED_NAMED_MODULE
+#undef SYSTEMLOADER_UNNAMED_NAMED_MODULE
 		moduleNameUTF = moduleNameBuf;
 	} else if (javaVM->javaBaseModule == ramClass->module) {
 #define JAVABASE_MODULE   "java.base module"
 		memcpy(moduleNameBuf, JAVABASE_MODULE, sizeof(JAVABASE_MODULE));
-#undef	JAVABASE_MODULE
+#undef JAVABASE_MODULE
 		moduleNameUTF = moduleNameBuf;
 	} else if (NULL == ramClass->module) {
 #define UNNAMED_NAMED_MODULE   "unnamed module"
 		memcpy(moduleNameBuf, UNNAMED_NAMED_MODULE, sizeof(UNNAMED_NAMED_MODULE));
-#undef	UNNAMED_NAMED_MODULE
+#undef UNNAMED_NAMED_MODULE
 		moduleNameUTF = moduleNameBuf;
 	} else {
 		moduleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
@@ -2321,7 +2334,7 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 	} else {
 #define UNNAMED_NAMED_MODULE   "system classloader"
 		memcpy(classLoaderNameBuf, UNNAMED_NAMED_MODULE, sizeof(UNNAMED_NAMED_MODULE));
-#undef	UNNAMED_NAMED_MODULE
+#undef UNNAMED_NAMED_MODULE
 		classLoaderNameUTF = classLoaderNameBuf;
 	}
 	if ((NULL != classLoaderNameUTF) && (NULL != moduleNameUTF)) {
@@ -2336,6 +2349,7 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 		j9mem_free_memory(classLoaderNameUTF);
 	}
 }
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 /**
  * This function initializes the subclass traversal links in the ramclass and the
@@ -3257,12 +3271,14 @@ fail:
 					omrthread_monitor_exit(javaVM->classLoaderModuleAndLocationMutex);
 				}
 			}
-			if ((J2SE_VERSION(javaVM) >= J2SE_V11) && (NULL == classBeingRedefined)) {
+#if JAVA_SPEC_VERSION >= 11
+			if (NULL == classBeingRedefined) {
 				ramClass->module = module;
 				if (TrcEnabled_Trc_MODULE_setPackage) {
 					trcModulesSettingPackage(vmThread, ramClass, classLoader, className);
 				}
 			}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 		} else {
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
 				/* fill in the special array class fields */

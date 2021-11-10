@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,12 +24,15 @@
 #include "j9cp.h"
 #include "j2sever.h"
 
+#if JAVA_SPEC_VERSION >= 11
+
 #define JVMTI_PACKAGE_NAME_BUFFER_LENGTH 80
 
 static void
-charReplace(J9UTF8 * utf8, char oldChar, char newChar) {
+charReplace(J9UTF8 * utf8, char oldChar, char newChar)
+{
 	IDATA i = 0;
-	for (;i < J9UTF8_LENGTH(utf8); i++) {
+	for (; i < J9UTF8_LENGTH(utf8); i++) {
 		if (oldChar == J9UTF8_DATA(utf8)[i]) {
 			J9UTF8_DATA(utf8)[i] = newChar;
 		}
@@ -665,3 +668,5 @@ done:
 	}
 	return rc;
 }
+
+#endif /* JAVA_SPEC_VERSION >= 11 */

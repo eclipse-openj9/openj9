@@ -4709,7 +4709,9 @@ typedef struct J9InternalVMFunctions {
 	j9object_t ( *resolveConstantDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
 	j9object_t  ( *resolveInvokeDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
 	void  (JNICALL *sendResolveOpenJDKInvokeHandle)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature* nameAndSig) ;
+#if JAVA_SPEC_VERSION >= 11
 	void  (JNICALL *sendResolveConstantDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData) ;
+#endif /* JAVA_SPEC_VERSION >= 11 */
 	void  (JNICALL *sendResolveInvokeDynamic)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData) ;
 	j9object_t  ( *resolveMethodHandleRef)(struct J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags) ;
 	UDATA  ( *resolveNativeAddress)(struct J9VMThread *currentThread, J9Method *nativeMethod, UDATA runtimeBind) ;
@@ -4734,7 +4736,9 @@ typedef struct J9InternalVMFunctions {
 	omrthread_monitor_t  ( *getMonitorForWait)(struct J9VMThread* vmThread, j9object_t object) ;
 	void  ( *jvmPhaseChange)(struct J9JavaVM* vm, UDATA phase) ;
 	void  ( *prepareClass)(struct J9VMThread *currentThread, struct J9Class *clazz) ;
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	struct J9SFMethodTypeFrame*  ( *buildMethodTypeFrame)(struct J9VMThread *currentThread, j9object_t methodType) ;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	void  ( *fatalRecursiveStackOverflow)(struct J9VMThread *currentThread) ;
 	void  ( *setIllegalAccessErrorNonPublicInvokeInterface)(struct J9VMThread *currentThread, J9Method *method) ;
 	IDATA ( *createThreadWithCategory)(omrthread_t* handle, UDATA stacksize, UDATA priority, UDATA suspend, omrthread_entrypoint_t entrypoint, void* entryarg, U_32 category) ;

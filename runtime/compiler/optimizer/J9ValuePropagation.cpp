@@ -1370,6 +1370,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                }
             break;
             }
+#if defined(J9VM_OPT_METHOD_HANDLE)
          case TR::java_lang_invoke_PrimitiveHandle_initializeClassIfRequired:
             {
             TR::Node* mh = node->getArgument(0);
@@ -1414,6 +1415,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                }
             break;
             }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
          case TR::java_lang_invoke_DirectHandle_nullCheckIfRequired:
             {
             TR::Node* mh = node->getArgument(0);

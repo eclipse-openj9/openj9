@@ -147,52 +147,50 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 			}
 
 			/* Fill in module name and version */
-			if (JAVA_SPEC_VERSION >= 11) {
-				if (NULL != classLoader) {
-					j9object_t classLoaderName = J9VMJAVALANGCLASSLOADER_CLASSLOADERNAME(vmThread, classLoader->classLoaderObject);
-					J9VMJAVALANGSTACKTRACEELEMENT_SET_CLASSLOADERNAME(vmThread, element, classLoaderName);
-				}
-				if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
-					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_BASE_MODULE, LITERAL_STRLEN(JAVA_BASE_MODULE), J9_STR_XLAT | J9_STR_TENURE);
-					if (NULL == string) {
-						rc = FALSE;
-						/* exception is pending from the call */
-						goto done;
-					}
-					element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
-					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, string);
-
-					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_SPEC_VERSION_STRING, LITERAL_STRLEN(JAVA_SPEC_VERSION_STRING), J9_STR_XLAT | J9_STR_TENURE);
-					if (NULL == string) {
-						rc = FALSE;
-						/* exception is pending from the call */
-						goto done;
-					}
-					element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
-					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULEVERSION(vmThread, element, string);
-				} else {
-					/* Fetch the J9Module from the j.l.Class->j.l.Module field if we have a class.
-					 * Otherwise the more painful package-based lookup must be performed
-					 */
-					J9Module *module = NULL;
-					if (NULL != ramClass) {
-						j9object_t moduleObject = J9VMJAVALANGCLASS_MODULE(vmThread, ramClass->classObject);
-						module = (J9Module*)J9OBJECT_ADDRESS_LOAD(vmThread, moduleObject, vm->modulePointerOffset);
-					} else {
-						UDATA length = packageNameLength(romClass);
-						omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-						module = vmFuncs->findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(utfClassName), (U_32) length);
-						omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
-					}
-					if (NULL != module) {
-						J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, module->moduleName);
-						J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULEVERSION(vmThread, element, module->version);
-					}
-				}
 #if JAVA_SPEC_VERSION >= 11
-				setStackTraceElementFields(vmThread, element, classLoader);
-#endif /* JAVA_SPEC_VERSION >= 11 */
+			if (NULL != classLoader) {
+				j9object_t classLoaderName = J9VMJAVALANGCLASSLOADER_CLASSLOADERNAME(vmThread, classLoader->classLoaderObject);
+				J9VMJAVALANGSTACKTRACEELEMENT_SET_CLASSLOADERNAME(vmThread, element, classLoaderName);
 			}
+			if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
+				string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_BASE_MODULE, LITERAL_STRLEN(JAVA_BASE_MODULE), J9_STR_XLAT | J9_STR_TENURE);
+				if (NULL == string) {
+					rc = FALSE;
+					/* exception is pending from the call */
+					goto done;
+				}
+				element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+				J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, string);
+
+				string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_SPEC_VERSION_STRING, LITERAL_STRLEN(JAVA_SPEC_VERSION_STRING), J9_STR_XLAT | J9_STR_TENURE);
+				if (NULL == string) {
+					rc = FALSE;
+					/* exception is pending from the call */
+					goto done;
+				}
+				element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+				J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULEVERSION(vmThread, element, string);
+			} else {
+				/* Fetch the J9Module from the j.l.Class->j.l.Module field if we have a class.
+				 * Otherwise the more painful package-based lookup must be performed
+				 */
+				J9Module *module = NULL;
+				if (NULL != ramClass) {
+					j9object_t moduleObject = J9VMJAVALANGCLASS_MODULE(vmThread, ramClass->classObject);
+					module = (J9Module*)J9OBJECT_ADDRESS_LOAD(vmThread, moduleObject, vm->modulePointerOffset);
+				} else {
+					UDATA length = packageNameLength(romClass);
+					omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
+					module = vmFuncs->findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(utfClassName), (U_32) length);
+					omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
+				}
+				if (NULL != module) {
+					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, module->moduleName);
+					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULEVERSION(vmThread, element, module->version);
+				}
+			}
+			setStackTraceElementFields(vmThread, element, classLoader);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 			if (NULL != ramClass) {
 				/* Fill in method class */

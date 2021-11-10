@@ -174,7 +174,6 @@ private:
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		return next;
 	}
-#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	/**
 	 * Modify the MH.invocationCount so that invocations from the interpreter don't
@@ -195,6 +194,7 @@ private:
 		I_32 count = J9VMJAVALANGINVOKEMETHODHANDLE_INVOCATIONCOUNT(_currentThread, methodHandle);
 		J9VMJAVALANGINVOKEMETHODHANDLE_SET_INVOCATIONCOUNT(_currentThread, methodHandle, count - 1);
 	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 #if defined(DO_SINGLE_STEP)
 	void VMINLINE
@@ -8966,7 +8966,7 @@ done:
 	VMINLINE VM_BytecodeAction
 	invokevarhandle(REGISTER_ARGS_LIST)
 	{
-#if defined(J9VM_OPT_METHOD_HANDLE)
+#if defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11)
 		VM_BytecodeAction rc = GOTO_RUN_METHODHANDLE;
 
 		/* Determine stack shape */
@@ -9042,11 +9042,11 @@ done:
 		}
 done:
 		return rc;
-#else /* defined(J9VM_OPT_METHOD_HANDLE) */
-	/* invokevarhandle is not used for OpenJDK VarHandles (J9VM_OPT_OPENJDK_METHODHANDLE). */
-	Assert_VM_unreachable();
-	return EXECUTE_BYTECODE;
-#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
+#else /* defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11) */
+		/* invokevarhandle is not used for OpenJDK VarHandles (J9VM_OPT_OPENJDK_METHODHANDLE). */
+		Assert_VM_unreachable();
+		return EXECUTE_BYTECODE;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11) */
 	}
 
 	VMINLINE VM_BytecodeAction

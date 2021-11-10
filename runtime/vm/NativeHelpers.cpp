@@ -162,6 +162,7 @@ convertToNativeArgArray(J9VMThread *currentThread, j9object_t argArray, U_64 *ff
 	return ffiArgs;
 }
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 J9SFMethodTypeFrame *
 buildMethodTypeFrame(J9VMThread * currentThread, j9object_t methodType)
 {
@@ -170,9 +171,9 @@ buildMethodTypeFrame(J9VMThread * currentThread, j9object_t methodType)
 	j9object_t stackDescriptionBits = J9VMJAVALANGINVOKEMETHODTYPE_STACKDESCRIPTIONBITS(currentThread, methodType);
 	U_32 descriptionInts = J9INDEXABLEOBJECT_SIZE(currentThread, stackDescriptionBits);
 	U_32 descriptionBytes = ROUND_U32_TO(sizeof(UDATA), descriptionInts * sizeof(I_32));
-	I_32 * description;
-	U_32 i;
-	J9SFMethodTypeFrame * methodTypeFrame;
+	I_32 * description = NULL;
+	U_32 i = 0;
+	J9SFMethodTypeFrame * methodTypeFrame = NULL;
 	UDATA * newA0 = currentThread->sp + argSlots;
 
 	/* Push the description bits */
@@ -203,5 +204,6 @@ buildMethodTypeFrame(J9VMThread * currentThread, j9object_t methodType)
 	return methodTypeFrame;
 #undef ROUND_U32_TO
 }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
-}
+} /* extern "C" */

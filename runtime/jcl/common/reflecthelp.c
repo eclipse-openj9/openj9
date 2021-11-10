@@ -1722,6 +1722,7 @@ done:
 	return result;
 }
 
+#if JAVA_SPEC_VERSION >= 14
 /* Determine whether currentMethod is the accessor method for a record component with name componentName.
  * an accessor method will have the same name as the component and take zero parameters.
  */
@@ -1859,8 +1860,8 @@ getRecordComponentsHelper(JNIEnv *env, jobject cls)
 			nameUTF = J9ROMRECORDCOMPONENTSHAPE_NAME(recordComponent);
 			nameString = mmFuncs->j9gc_createJavaLangStringWithUTFCache(vmThread, nameUTF);
 			if (NULL == nameString) {
-			 	DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
-			 	goto heapoutofmemory;
+				DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
+				goto heapoutofmemory;
 			}
 			recordComponentObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
 			J9VMJAVALANGREFLECTRECORDCOMPONENT_SET_NAME(vmThread, recordComponentObject, nameString);
@@ -1952,6 +1953,7 @@ done:
 	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }
+#endif /* JAVA_SPEC_VERSION >= 14 */
 
 /* Create an array of string names for class's PermittedSubclasses */
 jarray

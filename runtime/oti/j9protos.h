@@ -1356,7 +1356,9 @@ extern J9_CFUNC void  JNICALL sendFromMethodDescriptorString (J9VMThread *vmThre
 extern J9_CFUNC void  JNICALL sendResolveMethodHandle (J9VMThread *vmThread, UDATA cpIndex, J9ConstantPool *ramCP, J9Class *definingClass, J9ROMNameAndSignature* nameAndSig);
 extern J9_CFUNC void  JNICALL sendForGenericInvoke (J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg);
 extern J9_CFUNC void  JNICALL sendResolveOpenJDKInvokeHandle (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, I_32 refKind, J9Class *resolvedClass, J9ROMNameAndSignature* nameAndSig);
+#if JAVA_SPEC_VERSION >= 11
 extern J9_CFUNC void  JNICALL sendResolveConstantDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 extern J9_CFUNC void  JNICALL sendResolveInvokeDynamic (J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA callSiteIndex, J9ROMNameAndSignature* nameAndSig, U_16* bsmData);
 extern J9_CFUNC void  JNICALL jitFillOSRBuffer (struct J9VMThread *vmContext, void *osrBlock);
 extern J9_CFUNC void  JNICALL sendRunThread(J9VMThread *vmContext, j9object_t tenantContext);

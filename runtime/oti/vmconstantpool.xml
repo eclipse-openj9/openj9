@@ -100,7 +100,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/invoke/FilterReturnHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/FoldHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/FilterArgumentsHandle" flags="opt_methodHandle"/>
-	<classref name="java/lang/invoke/FilterArgumentsWithCombinerHandle" flags="opt_methodHandle" versions="12-"/>
 	<classref name="java/lang/invoke/GuardWithTestHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/VarargsCollectorHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/InvokeExactHandle" flags="opt_methodHandle"/>
@@ -292,8 +291,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/ConvertHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="combiner" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle" versions="12-"/>
-	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="combiner" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle" versions="12-"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="startPos" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FilterArgumentsHandle" name="filters" signature="[Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
@@ -336,8 +333,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/VarHandle" name="modifiers" signature="I" versions="9-" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="foldPosition" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FoldHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="filterPosition" signature="I" flags="opt_methodHandle" versions="12-"/>
-	<fieldref class="java/lang/invoke/FilterArgumentsWithCombinerHandle" name="argumentIndices" signature="[I" flags="opt_methodHandle" versions="12-"/>
 	<fieldref class="java/lang/invoke/MethodHandleCache" name="directHandlesHead" signature="Lcom/ibm/oti/util/WeakReferenceNode;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="operation" signature="I" versions="9-" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/VarHandleInvokeHandle" name="accessModeType" signature="Ljava/lang/invoke/MethodType;" versions="9-" flags="opt_methodHandle"/>
@@ -392,7 +387,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="foldHandlePlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="guardWithTestPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<specialmethodref class="java/lang/invoke/MethodHandle" name="filterArgumentsPlaceHolder" signature="(III)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
-	<specialmethodref class="java/lang/invoke/MethodHandle" name="filterArgumentsWithCombinerPlaceHolder" signature="()Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle" versions="12-"/>
 	<virtualmethodref class="java/lang/ClassLoader" name="loadClass" signature="(Ljava/lang/String;)Ljava/lang/Class;"/>
 	<specialmethodref class="java/lang/Thread" name="uncaughtException" signature="(Ljava/lang/Throwable;)V"/>
 	<specialmethodref class="java/lang/Thread" name="&lt;init>" signature="(Ljava/lang/String;Ljava/lang/Object;IZ)V"/>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -300,6 +300,7 @@ J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldNam
       int32_t offs = simpleNameOffset(className, len);
       trfprintf(file, "%*s%s%sobj%d @ %p hash %8x %.*s", indent, "", fieldName, sep, i, *ref, hashCode, len-offs, className+offs);
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
       if (len == 29 && !strncmp("java/lang/invoke/DirectHandle", className, 29))
          {
          J9Method *j9method  = (J9Method*)J9VMJAVALANGINVOKEPRIMITIVEHANDLE_VMSLOT(j9fe->vmThread(), (J9Object*)(*ref));
@@ -310,6 +311,7 @@ J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldNam
             J9UTF8_LENGTH(className)-offs, utf8Data(className)+offs,
             J9UTF8_LENGTH(methName),       utf8Data(methName));
          }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
       TR_VMFieldsInfo *fieldsInfo = fieldsInfoByIndex[i];
       if (fieldsInfo)
