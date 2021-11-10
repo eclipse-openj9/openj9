@@ -25,6 +25,7 @@ package com.ibm.oti.jvmtests;
 import junit.framework.TestCase;
 
 public class GetNanoTimeAdjustment extends TestCase {
+
 	static final long NANO_TIME_DIGITS = 19L;
 	static final long NANO_SECONDS_IN_SECOND = 1000000000L;
 	static final long TIME_MAX = 4294967295000000000L;
@@ -38,16 +39,40 @@ public class GetNanoTimeAdjustment extends TestCase {
 	}
 
 	/*
-	 * Make getNanoTime returns a value similar to System.currentTimeMillis()
+	 * Make sure getNanoTime() returns a value similar to System.currentTimeMillis().
 	 */
 	public void test_EnsureWallClockTime() {
-		String nanoTime = Long.valueOf(SupportJVM.GetNanoTimeAdjustment(0)).toString();
-		String milliTime = Long.valueOf(System.currentTimeMillis()).toString();
+		long start = System.currentTimeMillis();
+		long maxDuration = 1_000; // one second
+		int equalMillisNeeded = 10;
 
-		/* accuracy of 1 second */
-		milliTime = milliTime.substring(0, milliTime.length() - 3);
+		for (;;) {
+			/*
+			 * In general, we have no control over the elapsed time between
+			 * the following three method invocations. On the other hand, we
+			 * do expect the return values of GetNanoTimeAdjustment(0) to be
+			 * consistent with the values returned by currentTimeMillis()
+			 * (but scaled by a factor of a million).
+			 */
+			long millis1 = System.currentTimeMillis();
+			long nanoAdjustment = SupportJVM.GetNanoTimeAdjustment(0);
+			long millis2 = System.currentTimeMillis();
 
-		assertTrue("nanotime is not similar to millitime", nanoTime.contains(milliTime));
+			long elapsed = millis2 - start;
+			long nanosAsMillis = nanoAdjustment / 1_000_000;
+
+			if ((nanosAsMillis < millis1) || (millis2 < nanosAsMillis)) {
+				fail(String.format("nanotime(%d) is not similar to millitime(%d..%d)",
+						nanoAdjustment, millis1, millis2));
+			} else if (elapsed > maxDuration) {
+				break;
+			} else if (millis1 == millis2) {
+				equalMillisNeeded -= 1;
+				if (equalMillisNeeded <= 0) {
+					break;
+				}
+			}
+		}
 	}
 
 	/*
