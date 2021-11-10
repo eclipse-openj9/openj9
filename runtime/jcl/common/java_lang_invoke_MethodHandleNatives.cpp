@@ -1494,18 +1494,39 @@ Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass cl
 				arrayObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 				j9object_t membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
 				jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
-				jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
 				j9object_t target = NULL;
+
+				/* For fields, vmindexOffset (J9JNIFieldID) is initialized using the field offset in
+				 * jnicsup.cpp::getJNIFieldID. For methods, vmindexOffset (J9JNIMethodID) is initialized
+				 * using jnicsup.cpp::initializeMethodID.
+				 */
+				jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
+
 				if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
+					/* vmindex points to the field offset. */
 					vmindex = ((J9JNIFieldID*)vmindex)->offset;
 					target = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, membernameObject);
 				} else {
 					J9JNIMethodID *methodID = (J9JNIMethodID*)vmindex;
 					if (J9_ARE_ANY_BITS_SET(methodID->vTableIndex, J9_JNI_MID_INTERFACE)) {
+						/* vmindex points to an iTable index. */
 						vmindex = methodID->vTableIndex & ~J9_JNI_MID_INTERFACE;
 					} else if (0 == methodID->vTableIndex) {
-						vmindex = -1;
+						jint refKind = (flags >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK;
+						if ((MH_REF_INVOKEVIRTUAL == refKind) || (MH_REF_INVOKEINTERFACE == refKind)) {
+							/* initializeMethodID will set J9JNIMethodID->vTableIndex to 0 for private interface
+							 * methods and j.l.Object methods. Reference implementation (RI) expects vmindex to
+							 * be 0 in such cases.
+							 */
+							vmindex = 0;
+						} else {
+							/* RI expects direct invocation, i.e. !invokevirtual and !invokeinterface ref kinds,
+							 * to have a negative vmindex.
+							 */
+							vmindex = -1;
+						}
 					} else {
+						/* vmindex points to a vTable index. */
 						vmindex = methodID->vTableIndex;
 					}
 					target = membernameObject;
