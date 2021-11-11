@@ -178,7 +178,7 @@ boot_jdk_default:
       all: '1'
     url:
       all: "https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk"
-      17: "https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17%2B35_openj9-0.28.0-m2/ibm-semeru-open-jdk_${arch}_${os}_17_35_openj9-0.28.0-m2.tar.gz"
+      17: "https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.1%2B12_openj9-0.29.1-m1/ibm-semeru-open-jdk_${arch}_${os}_17.0.1_12_openj9-0.29.1-m1.tar.gz"
 #========================================#
 # Cuda
 #========================================#
