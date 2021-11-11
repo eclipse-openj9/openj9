@@ -95,7 +95,6 @@ jvm_add_exports(jvm
 	_JVM_IsNaN@8
 	_JVM_LatestUserDefinedLoader@4
 	_JVM_Listen@8
-	_JVM_LoadLibrary@4
 	_JVM_LoadSystemLibrary@4
 	_JVM_Lseek@16
 	_JVM_MaxMemory@0
@@ -290,6 +289,12 @@ jvm_add_exports(jvm
 	_JVM_CopySwapMemory@44
 	JVM_BeforeHalt
 )
+
+if(JAVA_SPEC_VERSION LESS 18)
+	jvm_add_exports(jvm _JVM_LoadLibrary@4)
+else()
+	jvm_add_exports(jvm _JVM_LoadLibrary@8)
+endif()
 
 if(JAVA_SPEC_VERSION LESS 11)
 	# i.e. JAVA_SPEC_VERSION < 11

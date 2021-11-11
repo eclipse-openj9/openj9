@@ -85,7 +85,9 @@ _X(JVM_InvokeMethod,JNICALL,true,jobject,JNIEnv *env, jobject method, jobject ob
 _X(JVM_IsNaN,JNICALL,true,jboolean,jdouble dbl)
 _X(JVM_LatestUserDefinedLoader,JNICALL,true,jobject,JNIEnv *env)
 _X(JVM_Listen,JNICALL,true,jint,jint descriptor, jint count)
-_X(JVM_LoadLibrary,JNICALL,true,void *,const char *libName)
+_IF([JAVA_SPEC_VERSION < 18],
+	_X(JVM_LoadLibrary,JNICALL,true,void *,const char *libName),
+	_X(JVM_LoadLibrary,JNICALL,true,void *,const char *libName, jboolean throwOnFailure))
 _X(JVM_Lseek,JNICALL,true,jlong,jint descriptor, jlong bytesToSeek, jint origin)
 _X(JVM_MaxMemory,JNICALL,true,jlong,void)
 _X(JVM_MaxObjectInspectionAge,JNICALL,true,jlong,void)
