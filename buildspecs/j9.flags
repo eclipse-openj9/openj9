@@ -20,7 +20,6 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
-
 <flags xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.ibm.com/j9/builder/flags" xsi:schemaLocation="http://www.ibm.com/j9/builder/flags flags-v1.xsd">
 	<flag id="arch_aarch64">
 		<description>This spec targets AArch64 processors.</description>
@@ -391,7 +390,7 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 	</flag>
 	<flag id="gc_debugAsserts">
 		<description>Specialized GC assertions are used instead of standard trace asserts for GC assertions</description>
-		<ifRemoved>GC Assertions during startup may not cause an abort. No messages for GC asserts. </ifRemoved>
+		<ifRemoved>GC Assertions during startup may not cause an abort. No messages for GC asserts.</ifRemoved>
 	</flag>
 	<flag id="gc_dynamicClassUnloading">
 		<description>Dynamic class unloading is supported</description>
@@ -888,7 +887,7 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 		<ifRemoved>Float and double bytecodes and natives are removed.</ifRemoved>
 	</flag>
 	<flag id="interp_floatmathTracing">
-		<description>TRACING FEATURE.  Determines if the interpreter produces trace information at every math bytecode. </description>
+		<description>TRACING FEATURE.  Determines if the interpreter produces trace information at every math bytecode.</description>
 		<ifRemoved>No math trace available.</ifRemoved>
 		<requires>
 			<require flag="interp_floatSupport"/>
@@ -898,7 +897,7 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 		</precludes>
 	</flag>
 	<flag id="interp_floatmathlibTracing">
-		<description>TRACING FEATURE.  Determines if the interpreter produces trace information at every math library call. </description>
+		<description>TRACING FEATURE.  Determines if the interpreter produces trace information at every math library call.</description>
 		<ifRemoved>No math lib trace available.</ifRemoved>
 		<requires>
 			<require flag="interp_floatSupport"/>
@@ -1817,10 +1816,10 @@ Only available on zOS</description>
 		<description>Enables New Reality Runtime (NRR) features.</description>
 		<ifRemoved></ifRemoved>
 	</flag>
-        <flag id="opt_openjdkMethodhandle">
-                <description>Enables support for OpenJDK MethodHandles. opt_methodHandle should be disabled.</description>
-                <ifRemoved>Disables support for OpenJDK MethodHandles.</ifRemoved>
-        </flag>
+	<flag id="opt_openjdkMethodhandle">
+		<description>Enables support for OpenJDK MethodHandles. opt_methodHandle should be disabled.</description>
+		<ifRemoved>Disables support for OpenJDK MethodHandles.</ifRemoved>
+	</flag>
 	<flag id="opt_packed">
 		<description>Enables support for @Packed types (Structs)</description>
 		<ifRemoved>No support for @Packed types (Structs)</ifRemoved>
@@ -1942,7 +1941,7 @@ Only available on zOS</description>
 	<flag id="port_zosCEEHDLRSupport">
 		<description>If set, j9sig_protect will include support for registering a handler using CEEHDLR.
 
-Pass J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR into j9sig_set_options()  before the first call to j9sig_protect() to turn on the use of CEEHDLR at runtime.</description>
+Pass J9PORT_SIG_OPTIONS_ZOS_USE_CEEHDLR into j9sig_set_options() before the first call to j9sig_protect() to turn on the use of CEEHDLR at runtime.</description>
 		<ifRemoved>If removed j9sig_protect will not include support for CEEHDLR.</ifRemoved>
 		<requires>
 			<require flag="port_signalSupport"/>
