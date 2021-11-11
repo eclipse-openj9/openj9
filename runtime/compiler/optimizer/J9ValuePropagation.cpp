@@ -775,6 +775,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          }
 
       bool arrayRefGlobal;
+      bool storeValueGlobal;
+      const int storeValueOpIndex = isLoadFlattenableArrayElement ? -1 : 0;
       const int elementIndexOpIndex = isLoadFlattenableArrayElement ? 0 : 1;
       const int arrayRefOpIndex = elementIndexOpIndex+1;
 
@@ -783,11 +785,24 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
       TR::VPConstraint *arrayConstraint = getConstraint(arrayRefNode, arrayRefGlobal);
       TR_YesNoMaybe isCompTypeVT = isArrayCompTypeValueType(arrayConstraint);
 
-      // If the array's component type is definitely not a value type, add a delayed
-      // transformation to replace the helper call with inline code to perform the
-      // array element access
+      TR::Node *storeValueNode = NULL;
+      TR::VPConstraint *storeValueConstraint = NULL;
+      TR_YesNoMaybe isStoreValueVT = TR_maybe;
+
+      if (isStoreFlattenableArrayElement)
+         {
+         storeValueNode = node->getChild(storeValueOpIndex);
+         storeValueConstraint = getConstraint(storeValueNode, storeValueGlobal);
+         isStoreValueVT = isValue(storeValueConstraint);
+         }
+
+      // If the array's component type is definitely not a value type, or if the value
+      // being assigned in an array store operation is definitely not a value type, add
+      // a delayed transformation to replace the helper call with inline code to
+      // perform the array element access.
       //
-      if (arrayConstraint != NULL && isCompTypeVT == TR_no)
+      if ((arrayConstraint != NULL && isCompTypeVT == TR_no)
+          || (isStoreFlattenableArrayElement && isStoreValueVT == TR_no))
          {
          flags8_t flagsForTransform(isLoadFlattenableArrayElement ? ValueTypesHelperCallTransform::IsArrayLoad
                                                                   : ValueTypesHelperCallTransform::IsArrayStore);
@@ -795,7 +810,20 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
          if (isStoreFlattenableArrayElement && !owningMethodDoesNotContainStoreChecks(this, node))
             {
-            flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreCheck);
+            // If storing to an array whose component type is or might be a value type
+            // and the value that's being assigned is or might be null, both a run-time
+            // NULLCHK of the value is required (guarded by a check of whether the
+            // component type is a value type) and an ArrayStoreCHK are required;
+            // otherwise, only the ArrayStoreCHK is required.
+            //
+            if ((isCompTypeVT != TR_no) && (storeValueConstraint == NULL || !storeValueConstraint->isNonNullObject()))
+               {
+               flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreAndNullCheck);
+               }
+            else
+               {
+               flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreCheck);
+               }
             }
 
          if (!owningMethodDoesNotContainBoundChecks(this, node))
@@ -1738,6 +1766,7 @@ J9::ValuePropagation::doDelayedTransformations()
       const bool isStore = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsArrayStore);
       const bool isCompare = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::IsRefCompare);
       const bool needsStoreCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresStoreCheck);
+      const bool needsStoreAndNullCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresStoreAndNullCheck);
       const bool needsBoundCheck = callToTransform->_flags.testAny(ValueTypesHelperCallTransform::RequiresBoundCheck);
 
       // performTransformation was already checked for comparison non-helper call
@@ -1789,6 +1818,11 @@ J9::ValuePropagation::doDelayedTransformations()
          TR::Node *bndChkNode = TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arrayLengthNode, indexNode,
                                              comp()->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp()->getMethodSymbol()));
          callTree->insertBefore(TR::TreeTop::create(comp(), bndChkNode));
+
+         // This might be the first time the array bounds check symbol reference is used
+         // Need to ensure aliasing for them is correctly constructed
+         //
+         optimizer()->setAliasSetsAreValid(false);
          }
 
       TR::SymbolReference *elementSymRef = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, arrayRefNode);
@@ -1814,12 +1848,26 @@ J9::ValuePropagation::doDelayedTransformations()
          TR::Node *elementStoreNode = TR::Node::recreateWithoutProperties(callNode, TR::awrtbari, 3, elementAddressNode,
                                                    valueNode, arrayRefNode, elementSymRef);
 
-         if (needsStoreCheck)
+         if (needsStoreCheck || needsStoreAndNullCheck)
             {
             TR::ResolvedMethodSymbol *methodSym = comp()->getMethodSymbol();
             TR::SymbolReference *storeCheckSymRef = comp()->getSymRefTab()->findOrCreateTypeCheckArrayStoreSymbolRef(methodSym);
             TR::Node *storeCheckNode = TR::Node::createWithRoomForThree(TR::ArrayStoreCHK, elementStoreNode, 0, storeCheckSymRef);
+            storeCheckNode->setByteCodeInfo(elementStoreNode->getByteCodeInfo());
             callTree->setNode(storeCheckNode);
+
+            if (needsStoreAndNullCheck)
+               {
+               TR::SymbolReference *nonNullableArrayNullStoreCheckSymRef = comp()->getSymRefTab()->findOrCreateNonNullableArrayNullStoreCheckSymbolRef();
+               TR::Node *nullCheckNode = TR::Node::createWithSymRef(TR::call, 2, 2, valueNode, arrayRefNode, nonNullableArrayNullStoreCheckSymRef);
+               nullCheckNode->setByteCodeInfo(elementStoreNode->getByteCodeInfo());
+               callTree->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1,  nullCheckNode)));
+               }
+
+            // This might be the first time the various checking symbol references are used
+            // Need to ensure aliasing for them is correctly constructed
+            //
+            optimizer()->setAliasSetsAreValid(false);
             }
          else
             {

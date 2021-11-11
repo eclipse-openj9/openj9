@@ -65,6 +65,7 @@ TR::TreeLowering::perform()
       {
       comp()->dumpMethodTrees("Trees after Tree Lowering Optimization");
       }
+
    return 0;
    }
 
@@ -613,11 +614,37 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
       }
    }
 
+static void
+copyRegisterDependency(TR::Node *fromNode, TR::Node *toNode)
+   {
+   if (fromNode->getNumChildren() != 0)
+      {
+      TR::Node *blkDeps = fromNode->getFirstChild();
+      TR::Node *newDeps = TR::Node::create(blkDeps, TR::GlRegDeps);
 
-class ArrayStoreCHKTransformer: public TR::TreeLowering::Transformer
+      for (int i = 0; i < blkDeps->getNumChildren(); i++)
+         {
+         TR::Node *regDep = blkDeps->getChild(i);
+
+         if (regDep->getOpCodeValue() == TR::PassThrough)
+            {
+            TR::Node *orig= regDep;
+            regDep = TR::Node::create(orig, TR::PassThrough, 1, orig->getFirstChild());
+            regDep->setLowGlobalRegisterNumber(orig->getLowGlobalRegisterNumber());
+            regDep->setHighGlobalRegisterNumber(orig->getHighGlobalRegisterNumber());
+            }
+
+         newDeps->addChildren(&regDep, 1);
+         }
+
+      toNode->addChildren(&newDeps, 1);
+      }
+   }
+
+class NonNullableArrayNullStoreCheckTransformer: public TR::TreeLowering::Transformer
    {
    public:
-   explicit ArrayStoreCHKTransformer(TR::TreeLowering* opt)
+   explicit NonNullableArrayNullStoreCheckTransformer(TR::TreeLowering* opt)
       : TR::TreeLowering::Transformer(opt)
       {}
 
@@ -625,140 +652,143 @@ class ArrayStoreCHKTransformer: public TR::TreeLowering::Transformer
    };
 
 /**
- * If value types are enabled, and the value that is being assigned to the array
- * element might be a null reference, lower the ArrayStoreCHK by splitting the
- * block before the ArrayStoreCHK, and inserting a NULLCHK guarded by a check
- * of whether the array's component type is a value type.
+ * If value types are enabled, a check of whether a null reference is being
+ * assigned to a value type array might be needed.  This is represented in the
+ * IL with a call to the <nonNullableArrayNullStoreCheck> non-helper.
+ *
+ * Lower the call by splitting the block before the call, and replacing it
+ a with a NULLCHK guarded by tests of whether the value is null and whether
+ * the array's component type is a value type.  If the value is known to be
+ * non-null at this point in the compilation, the call is simply removed.
  *
  * @param node is the current node in the tree walk
  * @param tt is the treetop at the root of the tree ancoring the current node
  */
 void
-ArrayStoreCHKTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
+NonNullableArrayNullStoreCheckTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    {
-   // Pattern match the ArrayStoreCHK operands to get the source of the assignment
-   // (sourceChild) and the array to which an element will have a value assigned (destChild)
-   TR::Node *firstChild = node->getFirstChild();
-
-   // The only kind of child for an ArrayStoreCHK should be an awrtbari.  If something
-   // else can appear (such as astorei) will need to rework the logic to determine the
-   // destination of the element store
+   // Transform
+   //   +-----------------------------------------+
+   //   | ttprev                                  |
+   //   | treetop                                 |
+   //   |   call <nonNullableArrayNullStoreCheck> |
+   //   |     <value-reference>                   |
+   //   |     <array-reference>                   |
+   //   | ttnext                                  |
+   //   +-----------------------------------------+
    //
-   TR_ASSERT_FATAL_WITH_NODE(node, firstChild->getOpCodeValue() == TR::awrtbari, "Expected child of ArrayStoreCHK to be awrtbari");
+   // into
+   //   +--------------------------------+
+   //   | ttprev                         |
+   //   | treetop                        |
+   //   |   <array-reference>            |
+   //   | treetop                        |
+   //   |   <value-reference>            |
+   //   | ifacmpne  -->------------------*---------+
+   //   |   ==><value-reference>         |         |
+   //   |   aconst 0                     |         |
+   //   | BBEnd                          |         |
+   //   +--------------------------------+         |
+   //   | BBStart (Extension)            |         |
+   //   | ificmpeq  -->------------------*---------+
+   //   |   iand                         |         |
+   //   |     iloadi <isClassFlags>      |         |
+   //   |       aloadi <componentClass>  |         |
+   //   |         aloadi <vft-symbol>    |         |
+   //   |           ==><array-reference> |         |
+   //   |     iconst J9ClassIsValueType  |         |
+   //   |   iconst 0                     |         |
+   //   | BBEnd                          |         |
+   //   +--------------------------------+         |
+   //   | BBStart (Extension)            |         |
+   //   | NULLCHK                        |         |
+   //   |   Passthrough                  |         |
+   //   |     ==><value-reference>       |         |
+   //   | BBEnd                          |         |
+   //   +--------------------------------+         |
+   //                   |                          |
+   //                   +--------------------------+
+   //                   |
+   //                   v
+   //   +--------------------------------+
+   //   | BBStart                        |
+   //   | ttnext                         |
+   //   +--------------------------------+
+   //
+   TR::Node *sourceChild = node->getFirstChild();
+   TR::Node *destChild = node->getSecondChild();
 
-   TR::Node *sourceChild = firstChild->getSecondChild();
-   TR::Node *destChild = firstChild->getChild(2);
-
-   // Only need to lower if it is possible that the value is a null reference
    if (!sourceChild->isNonNull())
       {
       TR::CFG * cfg = comp()->getFlowGraph();
       cfg->invalidateStructure();
 
       TR::Block *prevBlock = tt->getEnclosingBlock();
-
-      performTransformation(comp(), "%sTransforming ArrayStoreCHK n%dn [%p] by splitting block block_%d, and inserting a NULLCHK guarded with a check of whether the component type of the array is a value type\n", optDetailString(), node->getGlobalIndex(), node, prevBlock->getNumber());
-
-      // Anchor the node containing the source of the array element
-      // assignment and the node that contains the destination array
-      // to ensure they are available for the ificmpeq and NULLCHK
       TR::TreeTop *anchoredArrayTT = TR::TreeTop::create(comp(), tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, destChild));
       TR::TreeTop *anchoredSourceTT = TR::TreeTop::create(comp(), anchoredArrayTT, TR::Node::create(TR::treetop, 1, sourceChild));
 
-      // Transform
-      //   +--------------------------------+
-      //   | ttprev                         |
-      //   | ArrayStoreCHK                  |
-      //   |   awrtbari                     |
-      //   |     aladd                      |
-      //   |       <array-reference>        |
-      //   |       index-offset-calculation |
-      //   |     <value>                    |
-      //   |     <array-reference>          |
-      //   +--------------------------------+
+      TR::TreeTop *nextTT = tt->getNextTreeTop();
+      tt->getPrevTreeTop()->join(nextTT);
+      TR::Block *nextBlock = prevBlock->splitPostGRA(nextTT, cfg);
+
+      TR::Node *ifNode = comp()->fej9()->checkArrayCompClassValueType(destChild, TR::ificmpeq);
+
+      ifNode->setBranchDestination(nextBlock->getEntry());
+
+      // Copy register dependencies from the end of the block split
+      // to the ificmpeq, which checks for a value type, that's being
+      // added to the end of that block
       //
-      // into
-      //   +--------------------------------+
-      //   | treetop                        |
-      //   |   <array-reference>            |
-      //   | treetop                        |
-      //   |   <value-reference>            |
-      //   | ificmpeq  -->------------------*---------+
-      //   |   iand                         |         |
-      //   |     iloadi <isClassFlags>      |         |
-      //   |       aloadi <componentClass>  |         |
-      //   |         aloadi <vft-symbol>    |         |
-      //   |           <array-reference>    |         |
-      //   |     iconst J9ClassIsValueType  |         |
-      //   |   iconst 0                     |         |
-      //   | BBEnd                          |         |
-      //   +--------------------------------+         |
-      //   | BBStart (Extension)            |         |
-      //   | NULLCHK                        |         |
-      //   |   Passthrough                  |         |
-      //   |     <value-reference>          |         |
-      //   | BBEnd                          |         |
-      //   +--------------------------------+         |
-      //                   |                          |
-      //                   +--------------------------+
-      //                   |
-      //                   v
-      //   +--------------------------------+
-      //   | BBStart                        |
-      //   | ArrayStoreCHK                  |
-      //   |   awrtbari                     |
-      //   |     aladd                      |
-      //   |       aload <array>            |
-      //   |       index-offset-calculation |
-      //   |     aload <value>              |
-      //   +--------------------------------+
+      copyRegisterDependency(prevBlock->getExit()->getNode(), ifNode);
+
+      TR::TreeTop *ifArrayCompClassValueTypeTT = prevBlock->append(TR::TreeTop::create(comp(), ifNode));
+
+      bool enableTrace = trace();
+      auto* const nullConst = TR::Node::aconst(0);
+      auto* const checkValueNull = TR::Node::createif(TR::ifacmpne, sourceChild, nullConst, nextBlock->getEntry());
+
+      // Copy register dependencies from the end of the block split to the
+      // ifacmpne, which checks for a null value, that's being added to the
+      // end of that block
       //
-      TR::Node *ifNode = comp()->fej9()->checkArrayCompClassValueType(anchoredArrayTT->getNode()->getFirstChild(), TR::ificmpeq);
+      copyRegisterDependency(prevBlock->getExit()->getNode(), checkValueNull);
 
-      TR::Node *passThru  = TR::Node::create(node, TR::PassThrough, 1, sourceChild);
-      TR::ResolvedMethodSymbol *currentMethod = comp()->getMethodSymbol();
+      TR::TreeTop *checkValueNullTT = ifArrayCompClassValueTypeTT->insertBefore(TR::TreeTop::create(comp(), checkValueNull));
 
-      TR::Block *arrayStoreCheckBlock = prevBlock->splitPostGRA(tt, cfg);
-
-      ifNode->setBranchDestination(arrayStoreCheckBlock->getEntry());
-
-      // Copy register dependencies from the end of the block split before the
-      // ArrayStoreCHK to the ificmpeq that's being added to the end of that block
-      if (prevBlock->getExit()->getNode()->getNumChildren() != 0)
+      if (enableTrace)
          {
-         TR::Node *blkDeps = prevBlock->getExit()->getNode()->getFirstChild();
-         TR::Node *ifDeps = TR::Node::create(blkDeps, TR::GlRegDeps);
-
-         for (int i = 0; i < blkDeps->getNumChildren(); i++)
-            {
-            TR::Node *regDep = blkDeps->getChild(i);
-
-            if (regDep->getOpCodeValue() == TR::PassThrough)
-               {
-               TR::Node *orig= regDep;
-               regDep = TR::Node::create(orig, TR::PassThrough, 1, orig->getFirstChild());
-               regDep->setLowGlobalRegisterNumber(orig->getLowGlobalRegisterNumber());
-               regDep->setHighGlobalRegisterNumber(orig->getHighGlobalRegisterNumber());
-               }
-
-            ifDeps->addChildren(&regDep, 1);
-            }
-
-         ifNode->addChildren(&ifDeps, 1);
+         traceMsg(comp(),"checkValueNull n%dn is inserted before  n%dn in prevBlock %d\n", checkValueNull->getGlobalIndex(), ifNode->getGlobalIndex(), prevBlock->getNumber());
          }
 
-      prevBlock->append(TR::TreeTop::create(comp(), ifNode));
+      TR::Block *compTypeTestBlock = prevBlock->split(ifArrayCompClassValueTypeTT, cfg);
+      compTypeTestBlock->setIsExtensionOfPreviousBlock(true);
 
+      cfg->addEdge(prevBlock, nextBlock);
+
+      if (enableTrace)
+         {
+         traceMsg(comp(),"ifArrayCompClassValueTypeTT n%dn is isolated in compTypeTestBlock %d\n", ifNode->getGlobalIndex(), compTypeTestBlock->getNumber());
+         }
+
+      TR::ResolvedMethodSymbol *currentMethod = comp()->getMethodSymbol();
+
+      TR::Node *passThru  = TR::Node::create(node, TR::PassThrough, 1, sourceChild);
       TR::Node *nullCheck = TR::Node::createWithSymRef(node, TR::NULLCHK, 1, passThru,
                                comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(currentMethod));
-      TR::TreeTop *nullCheckTT = prevBlock->append(TR::TreeTop::create(comp(), nullCheck));
+      TR::TreeTop *nullCheckTT = compTypeTestBlock->append(TR::TreeTop::create(comp(), nullCheck));
 
-      TR::Block *nullCheckBlock = prevBlock->split(nullCheckTT, cfg);
+      TR::Block *nullCheckBlock = compTypeTestBlock->split(nullCheckTT, cfg);
 
       nullCheckBlock->setIsExtensionOfPreviousBlock(true);
 
-      cfg->addEdge(prevBlock, arrayStoreCheckBlock);
+      cfg->addEdge(compTypeTestBlock, nextBlock);
       }
+   else
+      {
+      tt->getPrevTreeTop()->join(tt->getNextTreeTop());
+      }
+
+   node->recursivelyDecReferenceCount();
    }
 
 static TR::Node *
@@ -833,33 +863,6 @@ createStoreNodeForAnchoredNode(TR::Node *anchoredNode, TR::Node *nodeToBeStored,
       }
 
    return storeNode;
-   }
-
-static void
-copyRegisterDependency(TR::Node *fromNode, TR::Node *toNode)
-   {
-   if (fromNode->getNumChildren() != 0)
-      {
-      TR::Node *blkDeps = fromNode->getFirstChild();
-      TR::Node *newDeps = TR::Node::create(blkDeps, TR::GlRegDeps);
-
-      for (int i = 0; i < blkDeps->getNumChildren(); i++)
-         {
-         TR::Node *regDep = blkDeps->getChild(i);
-
-         if (regDep->getOpCodeValue() == TR::PassThrough)
-            {
-            TR::Node *orig= regDep;
-            regDep = TR::Node::create(orig, TR::PassThrough, 1, orig->getFirstChild());
-            regDep->setLowGlobalRegisterNumber(orig->getLowGlobalRegisterNumber());
-            regDep->setHighGlobalRegisterNumber(orig->getHighGlobalRegisterNumber());
-            }
-
-         newDeps->addChildren(&regDep, 1);
-         }
-
-      toNode->addChildren(&newDeps, 1);
-      }
    }
 
 class LoadArrayElementTransformer: public TR::TreeLowering::Transformer
@@ -1106,6 +1109,11 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       arraylengthNode->setArrayStride(dataWidth);
 
       elementLoadTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arraylengthNode, anchoredElementIndexNode, comp->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp->getMethodSymbol()))));
+
+      // This might be the first time the various checking symbol references are used
+      // Need to ensure aliasing for them is correctly constructed
+      //
+      this->optimizer()->setAliasSetsAreValid(false);
       }
 
 
@@ -1412,6 +1420,11 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       arrayStoreTT = originalBlock->append(TR::TreeTop::create(comp, arrayStoreCHKNode));
       if (enableTrace)
          traceMsg(comp, "Created arrayStoreCHK treetop n%dn arrayStoreCHKNode n%dn\n", arrayStoreTT->getNode()->getGlobalIndex(), arrayStoreCHKNode->getGlobalIndex());
+
+      // This might be the first time the various checking symbol references are used
+      // Need to ensure aliasing for them is correctly constructed
+      //
+      this->optimizer()->setAliasSetsAreValid(false);
       }
    else
       {
@@ -1457,6 +1470,11 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
          {
          arrayStoreTT->insertBefore(TR::TreeTop::create(comp, TR::Node::createWithSymRef(TR::BNDCHK, 2, 2, arraylengthNode, anchoredElementIndexNode, comp->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp->getMethodSymbol()))));
          }
+
+      // This might be the first time the various checking symbol references are used
+      // Need to ensure aliasing for them is correctly constructed
+      //
+      this->optimizer()->setAliasSetsAreValid(false);
       }
 
    if (comp->useCompressedPointers())
@@ -1557,6 +1575,10 @@ TR::TreeLowering::lowerValueTypeOperations(TransformationManager& transformation
             transformations.addTransformation(getTransformer<AcmpTransformer>(), node, tt);
             }
          }
+      else if (symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::nonNullableArrayNullStoreCheckSymbol))
+         {
+         transformations.addTransformation(getTransformer<NonNullableArrayNullStoreCheckTransformer>(), node, tt);
+         }
       else if (node->getSymbolReference()->getReferenceNumber() == TR_ldFlattenableArrayElement)
          {
          static char *disableInliningCheckAaload = feGetEnv("TR_DisableVT_AALOAD_Inlining");
@@ -1580,11 +1602,5 @@ TR::TreeLowering::lowerValueTypeOperations(TransformationManager& transformation
             transformations.addTransformation(getTransformer<StoreArrayElementTransformer>(), node, tt);
             }
          }
-      }
-   // If inlining check for aastore is enabled, the NULLCHK on the value reference is
-   // taken care of by StoreArrayElementTransformer.
-   else if (node->getOpCodeValue() == TR::ArrayStoreCHK && disableInliningCheckAastore)
-      {
-      transformations.addTransformation(getTransformer<ArrayStoreCHKTransformer>(), node, tt);
       }
    }

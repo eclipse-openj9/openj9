@@ -2477,6 +2477,18 @@ J9::SymbolReferenceTable::findOrCreateObjectEqualityComparisonSymbolRef()
    return symRef;
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateNonNullableArrayNullStoreCheckSymbolRef()
+   {
+   TR::SymbolReference *symRef = element(nonNullableArrayNullStoreCheckSymbol);
+   if (symRef != NULL)
+      return symRef;
+
+   symRef = self()->findOrCreateCodeGenInlinedHelper(nonNullableArrayNullStoreCheckSymbol);
+   symRef->setCanGCandExcept();
+   return symRef;
+   }
+
 TR::ParameterSymbol *
 J9::SymbolReferenceTable::createParameterSymbol(
       TR::ResolvedMethodSymbol *owningMethodSymbol,
