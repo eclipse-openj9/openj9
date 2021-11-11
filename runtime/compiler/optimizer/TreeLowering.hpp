@@ -67,6 +67,8 @@ class TreeLowering : public TR::Optimization
 
       TR::Compilation* comp() { return _comp; }
 
+      TR::Optimizer* optimizer() { return _treeLoweringOpt->optimizer(); }
+
       bool trace() { return _treeLoweringOpt->trace(); }
 
       const char* optDetailString() { return _treeLoweringOpt->optDetailString(); }
