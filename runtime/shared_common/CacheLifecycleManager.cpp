@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2021 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -207,9 +207,9 @@ j9shr_iterateSharedCaches(J9JavaVM *vm,	const char *ctrlDirName, UDATA groupPerm
 			callbackData.lastDetach = cacheInfo->lastdetach;
 			callbackData.layer = cacheInfo->layer;
 
-			callbackData.cacheSize = (UDATA)J9SH_OSCACHE_UNKNOWN;
-			callbackData.softMaxBytes = (UDATA)J9SH_OSCACHE_UNKNOWN;
-			callbackData.freeBytes = (UDATA)J9SH_OSCACHE_UNKNOWN;
+			callbackData.cacheSize = J9SH_OSCACHE_UNKNOWN;
+			callbackData.softMaxBytes = J9SH_OSCACHE_UNKNOWN;
+			callbackData.freeBytes = J9SH_OSCACHE_UNKNOWN;
 			
 			if (J9_ARE_ALL_BITS_SET(cacheInfo->versionData.feature, J9SH_FEATURE_COMPRESSED_POINTERS)) {
 				Trc_SHR_Assert_True(J9SH_ADDRMODE_32 != callbackData.addrMode);
@@ -317,19 +317,19 @@ printSharedCache(void* element, void* param)
 			j9tty_printf(PORTLIB, "%-7s", "");
 		}
 #if !defined(WIN32)
-		if (currentItem->os_shmid != (UDATA)J9SH_OSCACHE_UNKNOWN) {
+		if (currentItem->os_shmid != J9SH_OSCACHE_UNKNOWN) {
 			j9tty_printf(PORTLIB, "%-15d", currentItem->os_shmid);
 		} else {
 			j9tty_printf(PORTLIB, "%-15s", "");
 		}
-		if (currentItem->os_semid != (UDATA)J9SH_OSCACHE_UNKNOWN) {
+		if (currentItem->os_semid != J9SH_OSCACHE_UNKNOWN) {
 			j9tty_printf(PORTLIB, "%-15d", currentItem->os_semid);
 		} else {
 			j9tty_printf(PORTLIB, "%-15s", "");
 		}
 #endif
 		if (currentItem->nattach == 0) {
-			if (J9SH_OSCACHE_UNKNOWN == currentItem->lastdetach) {
+			if (J9SH_OSCACHE_UNKNOWN == (UDATA)(U_64)currentItem->lastdetach) {
 				j9tty_printf(PORTLIB, "%s\n", "Unknown");
 			} else {
 				OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
@@ -339,7 +339,7 @@ printSharedCache(void* element, void* param)
 				j9tty_printf(PORTLIB, "%s\n", buffer);
 #undef FORMAT
 			}
-		} else if ((currentItem->nattach == J9SH_OSCACHE_UNKNOWN) || (currentItem->lastdetach == J9SH_OSCACHE_UNKNOWN)) {
+		} else if ((J9SH_OSCACHE_UNKNOWN == currentItem->nattach) || (J9SH_OSCACHE_UNKNOWN == (UDATA)(U_64)currentItem->lastdetach)) {
 			if (J9PORT_SHR_CACHE_TYPE_SNAPSHOT == currentItem->versionData.cacheType) {
 				/* no last detach time for snapshot,  currentItem->nattach and currentItem->lastdetach are both J9SH_OSCACHE_UNKNOWN */
 				j9tty_printf(PORTLIB, "\n");

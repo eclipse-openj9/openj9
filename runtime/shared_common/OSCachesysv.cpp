@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1745,23 +1745,23 @@ SH_OSCachesysv::getCacheStatsHelper(J9JavaVM* vm, const char* cacheDirName, UDAT
 			return -1;
 		}
 #endif /* defined(J9ZOS390) */
-		cacheInfo->os_shmid = (statbuf.shmid!=(UDATA)-1)?statbuf.shmid:(UDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->os_shmid = statbuf.shmid;
 		/* os_semid is populated in getJavacoreData() as we can't access _semid here */
-		cacheInfo->os_semid = (UDATA)J9SH_OSCACHE_UNKNOWN;
-		cacheInfo->lastattach = (statbuf.lastAttachTime!=-1)?(statbuf.lastAttachTime*1000):J9SH_OSCACHE_UNKNOWN;
-		cacheInfo->lastdetach = (statbuf.lastDetachTime!=-1)?(statbuf.lastDetachTime*1000):J9SH_OSCACHE_UNKNOWN;
-		cacheInfo->createtime = J9SH_OSCACHE_UNKNOWN;
-		cacheInfo->nattach = (statbuf.nattach!=(UDATA)-1)?statbuf.nattach:(UDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->os_semid = J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->lastattach = (-1 != statbuf.lastAttachTime) ? (statbuf.lastAttachTime * 1000) : (IDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->lastdetach = (-1 != statbuf.lastDetachTime) ? (statbuf.lastDetachTime * 1000) : (IDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->createtime = (IDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->nattach = statbuf.nattach;
 	} else if ((SHR_STATS_REASON_DESTROY == reason) || (SHR_STATS_REASON_EXPIRE == reason)) {
 		/* When destroying the cache, we can ignore failure to get shared memory stats.
 		 * This allows to delete control files for cache which does not have shared memory.
 		 */
-		cacheInfo->os_shmid = (UDATA)J9SH_OSCACHE_UNKNOWN;
-		cacheInfo->os_semid = (UDATA)J9SH_OSCACHE_UNKNOWN;
-		cacheInfo->lastattach = J9SH_OSCACHE_UNKNOWN;
-		cacheInfo->lastdetach = J9SH_OSCACHE_UNKNOWN;
-		cacheInfo->createtime = J9SH_OSCACHE_UNKNOWN;
-		cacheInfo->nattach = (UDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->os_shmid = J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->os_semid = J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->lastattach = (IDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->lastdetach = (IDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->createtime = (IDATA)J9SH_OSCACHE_UNKNOWN;
+		cacheInfo->nattach = J9SH_OSCACHE_UNKNOWN;
 	} else {
 		Trc_SHR_OSC_Sysv_getCacheStatsHelper_cacheStatFailed();
 		return -1;
@@ -2005,12 +2005,12 @@ SH_OSCachesysv::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescripto
 {
 #if !defined(WIN32)
 	SH_OSCache_Info cacheInfo;
-#endif
+#endif /* !defined(WIN32)*/
 
 	descriptor->cacheGen = _activeGeneration;
 #if defined(WIN32)
 	descriptor->shmid = descriptor->semid = -2;
-#else
+#else /* defined(WIN32) */
 	if (getCacheStatsHelper(vm, _cacheDirName, _groupPerm, _cacheNameWithVGen, &cacheInfo, SHR_STATS_REASON_ITERATE) != 0) {
 		return 0;
 	}
@@ -2019,8 +2019,13 @@ SH_OSCachesysv::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescripto
 	if (_semid != -1) {
 		descriptor->semid = cacheInfo.os_semid = _semid;
 	}
-#endif
+#endif /* defined(WIN32) */
 	descriptor->cacheDir = _cachePathName;
+#if defined(WIN32)
+	descriptor->nattach = J9SH_OSCACHE_UNKNOWN;
+#else /* defined(WIN32) */
+	descriptor->nattach = cacheInfo.nattach;
+#endif /* defined(WIN32) */
 	return 1;
 }
 

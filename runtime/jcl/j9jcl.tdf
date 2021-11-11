@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2021 IBM Corp. and others
+// Copyright (c) 2006, 2022 IBM Corp. and others
 //	
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -686,3 +686,8 @@ TraceEvent=Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyCl
 
 TraceEvent=Trc_JCL_initializeRequiredClasses_ExitError Overhead=1 Level=1 Template="initializeRequiredClasses() requiredClasses[%zu] failed"
 TraceAssert=Trc_JCL_Assert_StartupFailure NoEnv Overhead=1 Level=1 Assert="(0 /* Fatal VM error */)"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_cachePathImpl_Entry Overhead=1 Level=2 Template="JCL: SharedClassStatistics cacheNameImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_cachePathImpl_Exit Overhead=1 Level=2 Template="JCL: SharedClassStatistics cacheNameImpl: Exiting with result %p (%s)"
+TraceEntry=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_numberAttachedImpl_Entry Overhead=1 Level=2 Template="JCL: SharedClassStatistics numberAttachedImpl: Entering"
+TraceExit=Trc_JCL_com_ibm_oti_shared_SharedClassStatistics_numberAttachedImpl_Exit Overhead=1 Level=2 Template="JCL: SharedClassStatistics numberAttachedImpl: Exiting with result %lld"
