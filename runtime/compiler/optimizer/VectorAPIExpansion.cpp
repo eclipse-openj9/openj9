@@ -84,7 +84,7 @@ TR_VectorAPIExpansion::dataType(TR::MethodSymbol * methodSymbol)
    }
 
 bool
-TR_VectorAPIExpansion::isArgType(TR::MethodSymbol *methodSymbol, int i, vapiArgType type)
+TR_VectorAPIExpansion::isArgType(TR::MethodSymbol *methodSymbol, int32_t i, vapiArgType type)
    {
    if (!isVectorAPIMethod(methodSymbol)) return false;
 
@@ -187,12 +187,12 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
       {
       TR::MethodSymbol * methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
       TR::DataType methodElementType = TR::NoType;
-      int methodNumLanes = 0;
+      int32_t methodNumLanes = 0;
       int32_t methodRefNum = node->getSymbolReference()->getReferenceNumber();
 
-      int numChildren = node->getNumChildren();
+      int32_t numChildren = node->getNumChildren();
 
-      for (int i = 0; i < numChildren; i++)
+      for (int32_t i = 0; i < numChildren; i++)
          {
          if (!isVectorAPIMethod(methodSymbol) || isArgType(methodSymbol, i, Vector))
             {
@@ -283,7 +283,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
 
       // check if VectorAPI method is supported
       TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
-      int handlerIndex = index - _firstMethod;
+      int32_t handlerIndex = index - _firstMethod;
 
       if (methodElementType == TR::NoType ||
           methodNumLanes == 0)
@@ -350,10 +350,6 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
          invalidateSymRef(child->getSymbolReference());
          }
       }
-   else if (node->getOpCodeValue() == TR::checkcast)
-      {
-      // ignore for now and check the children
-      }
    else
       {
       for (int32_t i = 0; i < node->getNumChildren(); i++)
@@ -368,6 +364,12 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
             }
          }
       }
+
+   // skip PassTrough only if it's a child of a known parent
+   if ((node->getOpCodeValue() == TR::checkcast ||
+        node->getOpCodeValue() == TR::NULLCHK) &&
+        node->getFirstChild()->getOpCodeValue() == TR::PassThrough)
+      node = node->getFirstChild();
 
    for (int32_t i = 0; i < node->getNumChildren(); i++)
       {
@@ -464,7 +466,7 @@ TR_VectorAPIExpansion::getVectorSizeFromVectorSpecies(TR::Node *vectorSpeciesNod
 
          uintptr_t vectorSpeciesLocation = comp()->getKnownObjectTable()->getPointer(vSpeciesSymRef->getKnownObjectIndex());
          uintptr_t vectorShapeLocation = fej9->getReferenceField(vectorSpeciesLocation, "vectorShape", "Ljdk/incubator/vector/VectorShape;");
-         int vectorBitSize = fej9->getInt32Field(vectorShapeLocation, "vectorBitSize");
+         int32_t vectorBitSize = fej9->getInt32Field(vectorShapeLocation, "vectorBitSize");
          return (vec_sz_t)vectorBitSize;
          }
       }
@@ -785,7 +787,7 @@ TR_VectorAPIExpansion::expandVectorAPI()
          TR_ASSERT_FATAL(parent, "All VectorAPI calls are expected to have a treetop");
 
          TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
-         int handlerIndex = index - _firstMethod;
+         int32_t handlerIndex = index - _firstMethod;
 
          TR_ASSERT_FATAL(methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, checkMode),
                          "Analysis should've proved that method is supported");
@@ -793,27 +795,14 @@ TR_VectorAPIExpansion::expandVectorAPI()
          TR::Node::recreate(parent, TR::treetop);
          methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, doMode);
          }
-      else if (node->getOpCodeValue() == TR::checkcast)
-         {
-         TR::Node *firstChild = node->getFirstChild();
-         if (firstChild->getOpCode().hasSymbolReference())
-            {
-            int32_t childClassId = _aliasTable[firstChild->getSymbolReference()->getReferenceNumber()]._classId;
-            if (childClassId > 0)
-               {
-               // can be removed since the child will be scalarized or vectorized
-               TR::Node::recreate(node, TR::treetop);
-               }
-            }
-         }
 
       if (doMode == doScalarization)
          {
          int32_t elementSize = OMR::DataType::getSize(elementType);
-         int numLanes = vectorLength/8/elementSize;
+         int32_t numLanes = vectorLength/8/elementSize;
 
          TR::TreeTop *prevTreeTop = treeTop;
-         for (int i = 1; i < numLanes; i++)
+         for (int32_t i = 1; i < numLanes; i++)
             {
             TR::Node *scalarNode = getScalarNode(this, node, i);
             TR::TreeTop *newTreeTop;
@@ -870,7 +859,7 @@ TR_VectorAPIExpansion::vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node
    }
 
 void
-TR_VectorAPIExpansion::scalarizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType elementType, int numLanes)
+TR_VectorAPIExpansion::scalarizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType elementType, int32_t numLanes)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -886,7 +875,7 @@ TR_VectorAPIExpansion::scalarizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node
       {
       scalarSymRefs = new (comp->trStackMemory()) TR_Array<TR::SymbolReference*>(comp->trMemory(), numLanes, true, stackAlloc);
 
-      for (int i = 0; i < numLanes; i++)
+      for (int32_t i = 0; i < numLanes; i++)
          {
          (*scalarSymRefs)[i] = comp->cg()->allocateLocalTemp(elementType);
          if (opt->_trace)
@@ -907,7 +896,7 @@ TR_VectorAPIExpansion::scalarizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node
 
 
 void
-TR_VectorAPIExpansion::addScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node, int numLanes, int i, TR::Node *scalarNode)
+TR_VectorAPIExpansion::addScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node, int32_t numLanes, int32_t i, TR::Node *scalarNode)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -926,7 +915,7 @@ TR_VectorAPIExpansion::addScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node,
    }
 
 TR::Node *
-TR_VectorAPIExpansion::getScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node, int i)
+TR_VectorAPIExpansion::getScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node, int32_t i)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -939,7 +928,7 @@ TR_VectorAPIExpansion::getScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node,
 
 void TR_VectorAPIExpansion::anchorOldChildren(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node)
    {
-   for (int i = 0; i < node->getNumChildren(); i++)
+   for (int32_t i = 0; i < node->getNumChildren(); i++)
       {
       TR::Node *oldNode = node->getChild(i);
       treeTop->insertBefore(TR::TreeTop::create(opt->comp(), TR::Node::create(TR::treetop, 1, oldNode)));
@@ -985,7 +974,7 @@ void TR_VectorAPIExpansion::aloadHandler(TR_VectorAPIExpansion *opt, TR::TreeTop
    if (mode == doScalarization)
       {
       int32_t elementSize = OMR::DataType::getSize(elementType);
-      int numLanes = vectorLength/8/elementSize;
+      int32_t numLanes = vectorLength/8/elementSize;
       int32_t id = node->getSymbolReference()->getReferenceNumber();
 
       scalarizeLoadOrStore(opt, node, elementType, numLanes);
@@ -993,7 +982,7 @@ void TR_VectorAPIExpansion::aloadHandler(TR_VectorAPIExpansion *opt, TR::TreeTop
       TR_Array<TR::SymbolReference*>  *scalarSymRefs = (opt->_aliasTable)[id]._scalarSymRefs;
       TR_ASSERT_FATAL(scalarSymRefs, "reference should not be NULL");
 
-      for (int i = 1; i < numLanes; i++)
+      for (int32_t i = 1; i < numLanes; i++)
          {
          TR_ASSERT_FATAL((*scalarSymRefs)[i], "reference should not be NULL");
          TR::Node *loadNode = TR::Node::createWithSymRef(node, comp->il.opCodeForDirectLoad(elementType), 0, (*scalarSymRefs)[i]);
@@ -1021,7 +1010,7 @@ void TR_VectorAPIExpansion::astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTo
    if (mode == doScalarization)
       {
       int32_t elementSize = OMR::DataType::getSize(elementType);
-      int numLanes = vectorLength/8/elementSize;
+      int32_t numLanes = vectorLength/8/elementSize;
       int32_t id = node->getSymbolReference()->getReferenceNumber();
 
       TR::ILOpCodes storeOpCode = comp->il.opCodeForDirectStore(elementType);
@@ -1034,7 +1023,7 @@ void TR_VectorAPIExpansion::astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTo
 
       if (rhs->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, rhs, elementType, vectorLength, mode);
 
-      for (int i = 1; i < numLanes; i++)
+      for (int32_t i = 1; i < numLanes; i++)
          {
          TR_ASSERT_FATAL((*scalarSymRefs)[i], "reference should not be NULL");
 
@@ -1165,10 +1154,8 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
 
    if (mode == doScalarization)
       {
-      int numLanes = vectorLength/8/elementSize;
+      int32_t numLanes = vectorLength/8/elementSize;
       TR::ILOpCodes loadOpCode = TR::ILOpCode::indirectLoadOpCode(elementType);
-
-      // Scalarization
       TR::SymbolReference *scalarShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(elementType, NULL);
 
       TR::Node::recreate(node, loadOpCode);
@@ -1182,7 +1169,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
          node->setAndIncChild(0, newLoadNode);
          }
 
-      for (int i = 1; i < numLanes; i++)
+      for (int32_t i = 1; i < numLanes; i++)
          {
          TR::Node *newLoadNode = TR::Node::createWithSymRef(node, loadOpCode, 1, scalarShadow);
          TR::Node *newAddressNode = TR::Node::create(TR::aladd, 2, aladdNode, TR::Node::create(TR::lconst, 0, i*elementSize));
@@ -1244,7 +1231,7 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
 
    if (mode == doScalarization)
       {
-      int numLanes = vectorLength/8/elementSize;
+      int32_t numLanes = vectorLength/8/elementSize;
 
       // TODO: use TR::ILOpCode::indirectLoadOpCode(elementType) after adding it to OMR
       TR_ASSERT_FATAL(elementType < TR::NumOMRTypes, "unexpected type");
@@ -1267,7 +1254,7 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
          }
 
 
-      for (int i = 1; i < numLanes; i++)
+      for (int32_t i = 1; i < numLanes; i++)
          {
          TR::Node *newStoreNode = TR::Node::createWithSymRef(node, storeOpCode, 2, scalarShadow);
          TR::Node *newAddressNode = TR::Node::create(TR::aladd, 2, aladdNode, TR::Node::create(TR::lconst, 0, i*elementSize));
@@ -1308,7 +1295,7 @@ TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *o
 
    if (opcodeNode->getOpCode().isLoadConst())
       {
-      int vectorAPIOpcode = opcodeNode->get32bitIntegralValue();
+      int32_t vectorAPIOpcode = opcodeNode->get32bitIntegralValue();
       TR::DataType opType = elementType;
 
       // Byte and Short are promoted after being loaded from array
@@ -1351,7 +1338,85 @@ TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *o
    }
 
 
-TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int vectorOpCode, TR::DataType elementType)
+
+TR::Node *TR_VectorAPIExpansion::broadcastCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                        TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+   {
+   TR::Compilation *comp = opt->comp();
+
+   if (mode == checkScalarization)
+      return node;
+
+   if (mode == checkVectorization)
+      {
+      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::vsplats, elementType))
+         return NULL;
+      else
+         return node;
+      }
+
+   if (opt->_trace)
+      traceMsg(comp, "broadcastCoercedIntrinsicHandler for node %p\n", node);
+
+   int32_t elementSize = OMR::DataType::getSize(elementType);
+   TR::Node *valueToBroadcast = node->getChild(3);
+
+   anchorOldChildren(opt, treeTop, node);
+
+   TR::Node *newNode;
+
+   switch (elementType) {
+      case TR::Float:
+          newNode = TR::Node::create(node, TR::ibits2f, 1, TR::Node::create(node, TR::l2i, 1, valueToBroadcast));
+          break;
+      case TR::Double:
+          newNode = TR::Node::create(node, TR::lbits2d, 1, valueToBroadcast);
+          break;
+      case TR::Int8:
+          newNode = TR::Node::create(node, TR::l2b, 1, valueToBroadcast);
+          break;
+      case TR::Int16:
+          newNode = TR::Node::create(node, TR::l2s, 1, valueToBroadcast);
+          break;
+      case TR::Int32:
+          newNode = TR::Node::create(node, TR::l2i, 1, valueToBroadcast);
+          break;
+      case TR::Int64:
+          // redundant conversion to simplify node recreation
+          newNode = TR::Node::create(node, TR::dbits2l, 1, TR::Node::create(node, TR::lbits2d, 1, valueToBroadcast));
+          break;
+      default:
+         TR_ASSERT_FATAL(false, "Unexpected vector element type for the Vector API\n");
+         break;
+   }
+
+   if (mode == doScalarization)
+      {
+      // modify original node in place
+      node->setAndIncChild(0, newNode->getChild(0));
+      node->setNumChildren(1);
+
+      int32_t numLanes = vectorLength/8/elementSize;
+
+      TR::Node::recreate(node, newNode->getOpCodeValue());
+
+      for (int32_t i = 1; i < numLanes; i++)
+         {
+         addScalarNode(opt, node, numLanes, i, node);
+         }
+      }
+   else if (mode == doVectorization)
+      {
+      node->setAndIncChild(0, newNode);
+      node->setNumChildren(1);
+      TR::Node::recreate(node, TR::vsplats);
+      }
+
+   return node;
+   }
+
+
+TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType)
    {
    switch (vectorOpCode)
       {
@@ -1401,7 +1466,7 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
       anchorOldChildren(opt, treeTop, node);
 
       int32_t elementSize = OMR::DataType::getSize(elementType);
-      int numLanes = vectorLength/8/elementSize;
+      int32_t numLanes = vectorLength/8/elementSize;
 
       if (firstChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, firstChild, elementType, vectorLength, mode);
       if (secondChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, secondChild, elementType, vectorLength, mode);
@@ -1411,7 +1476,7 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
       node->setNumChildren(2);
       TR::Node::recreate(node, scalarOpCode);
 
-      for (int i = 1; i < numLanes; i++)
+      for (int32_t i = 1; i < numLanes; i++)
          {
          TR::Node *newAddNode = TR::Node::create(node, scalarOpCode, 2);
          addScalarNode(opt, node, numLanes, i, newAddNode);
@@ -1455,6 +1520,8 @@ TR_VectorAPIExpansion::methodTable[] =
    {loadIntrinsicHandler,  TR::NoType, Vector,  {Unknown, elementType, numLanes}},                           // jdk_internal_vm_vector_VectorSupport_load
    {storeIntrinsicHandler, TR::NoType, Unknown, {Unknown, elementType, numLanes, Unknown, Unknown, Vector}}, // jdk_internal_vm_vector_VectorSupport_store
    {binaryIntrinsicHandler,TR::NoType, Vector,  {Unknown, Unknown, elementType, numLanes, Vector, Vector}},  // jdk_internal_vm_vector_VectorSupport_binaryOp
+   {broadcastCoercedIntrinsicHandler,TR::NoType, Vector, {Unknown, elementType, numLanes, Unknown, Unknown, Unknown}},  // jdk_internal_vm_vector_VectorSupport_broadcastCoerced
+
    {unsupportedHandler /*fromArrayHandler*/,      TR::Float,  Vector,  {Species}}, // jdk_incubator_vector_FloatVector_fromArray,
    {unsupportedHandler /*intoArrayHandler*/,      TR::Float,  Unknown, {Vector}},  // jdk_incubator_vector_FloatVector_intoArray,
    {unsupportedHandler,    TR::Float,  Vector,  {Species}},                 // jdk_incubator_vector_FloatVector_fromArray_mask
