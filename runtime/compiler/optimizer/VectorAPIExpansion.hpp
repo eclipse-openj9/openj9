@@ -75,45 +75,45 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
    private:
 
-   typedef int vec_sz_t;
+   typedef int32_t vec_sz_t;
 
-   static int const _firstMethod = TR::FirstVectorMethod;
-   static int const _lastMethod = TR::LastVectorMethod;
+   static int32_t const _firstMethod = TR::FirstVectorMethod;
+   static int32_t const _lastMethod = TR::LastVectorMethod;
 
-   static int const _numMethods = _lastMethod - _firstMethod + 1;
-   static int const _numArguments = 15;
+   static int32_t const _numMethods = _lastMethod - _firstMethod + 1;
+   static int32_t const _numArguments = 15;
 
    public:
 
    // TODO: get up to date values from VectorSupport class
 
    // Unary
-   static int const VECTOR_OP_ABS  = 0;
-   static int const VECTOR_OP_NEG  = 1;
-   static int const VECTOR_OP_SQRT = 2;
+   static int32_t const VECTOR_OP_ABS  = 0;
+   static int32_t const VECTOR_OP_NEG  = 1;
+   static int32_t const VECTOR_OP_SQRT = 2;
 
    // Binary
-   static int const VECTOR_OP_ADD  = 4;
-   static int const VECTOR_OP_SUB  = 5;
-   static int const VECTOR_OP_MUL  = 6;
-   static int const VECTOR_OP_DIV  = 7;
-   static int const VECTOR_OP_MIN  = 8;
-   static int const VECTOR_OP_MAX  = 9;
+   static int32_t const VECTOR_OP_ADD  = 4;
+   static int32_t const VECTOR_OP_SUB  = 5;
+   static int32_t const VECTOR_OP_MUL  = 6;
+   static int32_t const VECTOR_OP_DIV  = 7;
+   static int32_t const VECTOR_OP_MIN  = 8;
+   static int32_t const VECTOR_OP_MAX  = 9;
 
-   static int const VECTOR_OP_AND  = 10;
-   static int const VECTOR_OP_OR   = 11;
-   static int const VECTOR_OP_XOR  = 12;
+   static int32_t const VECTOR_OP_AND  = 10;
+   static int32_t const VECTOR_OP_OR   = 11;
+   static int32_t const VECTOR_OP_XOR  = 12;
 
    // Ternary
-   static int const VECTOR_OP_FMA  = 13;
+   static int32_t const VECTOR_OP_FMA  = 13;
 
    // Broadcast int
-   static int const VECTOR_OP_LSHIFT  = 14;
-   static int const VECTOR_OP_RSHIFT  = 15;
-   static int const VECTOR_OP_URSHIFT = 16;
+   static int32_t const VECTOR_OP_LSHIFT  = 14;
+   static int32_t const VECTOR_OP_RSHIFT  = 15;
+   static int32_t const VECTOR_OP_URSHIFT = 16;
 
-   static int const VECTOR_OP_CAST        = 17;
-   static int const VECTOR_OP_REINTERPRET = 18;
+   static int32_t const VECTOR_OP_CAST        = 17;
+   static int32_t const VECTOR_OP_REINTERPRET = 18;
 
   /** \brief
    *  Is passed to methods handlers during analysis and transforamtion phases
@@ -313,7 +313,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     \c true if the argument is the same as \c type,
    *     \c false otherwise
    */
-   bool isArgType(TR::MethodSymbol *methodSymbol, int i, vapiArgType type);
+   bool isArgType(TR::MethodSymbol *methodSymbol, int32_t i, vapiArgType type);
 
   /** \brief
    *     Aliases symbol references with each other as described above
@@ -450,7 +450,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \return
    *     TR::IL opcode
    */
-   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int vectorOpCode, TR::DataType elementType);
+   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType);
 
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
@@ -485,7 +485,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param numLanes
    *    Element type used to create new temporary
    */
-   static void scalarizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType elementType, int numLanes);
+   static void scalarizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType elementType, int32_t numLanes);
 
 
   /** \brief
@@ -508,7 +508,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Scalar node
    *
    */
-   static void addScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node, int numLanes, int i, TR::Node *scalarNode);
+   static void addScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node, int32_t numLanes, int32_t i, TR::Node *scalarNode);
 
 
   /** \brief
@@ -524,8 +524,10 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param i
    *      Lane number to which scalar node corresponds to
    *
+   *   \return
+   *      Scalar node
    */
-   static TR::Node *getScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node, int i);
+   static TR::Node *getScalarNode(TR_VectorAPIExpansion *opt, TR::Node *node, int32_t i);
 
   /** \brief
    *    Scalarizes or vectorizes \c aload node. In both cases, the node is modified in place.
@@ -611,6 +613,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param mode
    *      Handler mode
    *
+   *   \return
+   *      Transformed node
+   *
    */
    static TR::Node *loadIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
@@ -637,6 +642,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *
    *   \param mode
    *      Handler mode
+   *
+   *   \return
+   *      Transformed node
    *
    */
    static TR::Node *storeIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
@@ -665,8 +673,39 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param mode
    *      Handler mode
    *
+   *   \return
+   *      Transformed node
+   *
    */
    static TR::Node *binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.broadcastCoerced() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   */
+   static TR::Node *broadcastCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
 
   /** \brief
@@ -691,6 +730,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *
    *   \param mode
    *      Handler mode
+   *
+   *   \return
+   *      Transformed node
    *
    */
    static TR::Node *intoArrayHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
@@ -719,6 +761,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param mode
    *      Handler mode
    *
+   *   \return
+   *      Transformed node
+   *
    */
 
    static TR::Node *fromArrayHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
@@ -745,6 +790,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *
    *   \param mode
    *      Handler mode
+   *
+   *   \return
+   *      Transformed node
    *
    */
    static TR::Node *addHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
@@ -775,6 +823,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *
    *   \param arrayIndex
    *      array index node
+   *
+   *   \return
+   *      Transformed node
    *
    */
    static TR::Node *transformLoadFromArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *array, TR::Node *arrayIndex);
@@ -810,6 +861,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param arrayIndex
    *      array index node
    *
+   *   \return
+   *      Transformed node
+   *
    */
    static TR::Node *transformStoreToArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *valueToWrite, TR::Node *array, TR::Node *arrayIndex);
 
@@ -843,6 +897,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *
    *   \param opcode
    *      Opcode
+   *
+   *   \return
+   *      Transformed node
    */
    static TR::Node *transformBinary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *firstChild, TR::Node *secondChild, TR::ILOpCodes opcode);
 

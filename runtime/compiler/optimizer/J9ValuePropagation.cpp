@@ -2272,11 +2272,15 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_load;
          bool isVectorSupportBinaryOp =
          method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp;
+         bool isVectorSupportBroadcastCoerced =
+         method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_broadcastCoerced;
 
-         if (isVectorSupportLoad || isVectorSupportBinaryOp)
+         if (isVectorSupportLoad ||
+             isVectorSupportBinaryOp ||
+             isVectorSupportBroadcastCoerced)
             {
             bool isGlobal; // dummy
-            int typeChildIndex = isVectorSupportLoad ? 0 : 1;
+            int typeChildIndex = (isVectorSupportLoad || isVectorSupportBroadcastCoerced) ? 0 : 1;
             TR::VPConstraint *jlClass = getConstraint(node->getChild(typeChildIndex), isGlobal);
 
             TR::VPResolvedClass *resultType = NULL;
