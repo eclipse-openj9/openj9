@@ -977,3 +977,20 @@ J9::ClassEnv::classNameToSignature(const char *name, int32_t &len, TR::Compilati
    sig[len] = '\0';
    return sig;
    }
+
+int32_t
+J9::ClassEnv::flattenedArrayElementSize(TR::Compilation *comp, TR_OpaqueClassBlock *arrayClass)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      stream->write(JITServer::MessageType::ClassEnv_flattenedArrayElementSize, arrayClass);
+      return std::get<0>(stream->read<int32_t>());
+      }
+   else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      {
+      J9JavaVM *vm = comp->fej9()->getJ9JITConfig()->javaVM;
+      return vm->internalVMFunctions->arrayElementSize((J9ArrayClass*)self()->convertClassOffsetToClassPtr(arrayClass));
+      }
+   }

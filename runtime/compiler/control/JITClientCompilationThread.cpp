@@ -2073,6 +2073,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, TR::Compiler->cls.isClassRefValueType(comp, clazz, cpIndex));
          }
          break;
+      case MessageType::ClassEnv_flattenedArrayElementSize:
+         {
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
+         auto arrayClass = std::get<0>(recv);
+         client->write(response, TR::Compiler->cls.flattenedArrayElementSize(comp, arrayClass));
+         }
+         break;
       case MessageType::ClassEnv_enumerateFields:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *>();
