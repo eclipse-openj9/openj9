@@ -210,6 +210,8 @@ static bool portLibCall_sysinfo_has_resumable_trap_handler();
 static bool portLibCall_sysinfo_has_fixed_frame_C_calling_convention();
 static bool portLibCall_sysinfo_has_floating_point_unit();
 
+TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *name, char *permission, bool b1);
+
 TR::CompilationInfo *getCompilationInfo(J9JITConfig *jitConfig);
 
 class TR_J9VMBase : public TR_FrontEnd

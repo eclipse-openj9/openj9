@@ -2307,26 +2307,6 @@ J9::Options::fePreProcess(void * base)
    return true;
    }
 
-static TR::FILE *fileOpen(TR::Options *options, J9JITConfig *jitConfig, char *name, char *permission, bool b1)
-   {
-   PORT_ACCESS_FROM_ENV(jitConfig->javaVM);
-   char tmp[1025];
-   char *formattedTmp = NULL;
-   if (!options->getOption(TR_EnablePIDExtension))
-      {
-      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, NULL, false);
-      }
-   else
-      {
-      formattedTmp = TR_J9VMBase::getJ9FormattedName(jitConfig, PORTLIB, tmp, sizeof(tmp), name, options->getSuffixLogsFormat(), true);
-      }
-   if (NULL != formattedTmp)
-      {
-      return j9jit_fopen(formattedTmp, permission, b1);
-      }
-   return NULL;
-   }
-
 void
 J9::Options::openLogFiles(J9JITConfig *jitConfig)
    {
