@@ -146,6 +146,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<classref name="jdk/internal/foreign/abi/ProgrammableInvoker" flags="opt_openjdkFfi" versions="16-"/>
 
+	<classref name="java/lang/invoke/MethodHandleNatives" flags="opt_openjdkMethodhandle" versions="18-"/>
+
 <!--
 	NOTE: the resolution code in jclcinit.c only looks at the J9ROMClassRef->runtimeFlags to determine
 	whether or not to attempt the class load.  The flags sepcified on the fields are ignored.

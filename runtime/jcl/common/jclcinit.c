@@ -590,6 +590,9 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 			J9VMCONSTANTPOOL_JDKINTERNALLOADERNATIVELIBRARIES,
 			J9VMCONSTANTPOOL_JDKINTERNALLOADERNATIVELIBRARIESNATIVELIBRARYIMPL,
 #endif /* JAVA_SPEC_VERSION >= 15 */
+#if JAVA_SPEC_VERSION >= 18
+			J9VMCONSTANTPOOL_JAVALANGINVOKEMETHODHANDLENATIVES,
+#endif /* JAVA_SPEC_VERSION >= 18 */
 	};
 
 	/* Determine java/lang/String.value signature before any required class is initialized */
