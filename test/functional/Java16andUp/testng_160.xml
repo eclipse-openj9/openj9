@@ -35,9 +35,4 @@
 			<class name="org.openj9.test.jep389.downcall.PrimitiveTypeTests"/>
 		</classes>
 	</test>
-	<test name="CloseScope0Tests">
-		<classes>
-			<class name="org.openj9.test.foreignMemoryAccess.TestCloseScope0"/>
-		</classes>
-	</test>
 </suite>
