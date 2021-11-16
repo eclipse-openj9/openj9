@@ -383,7 +383,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
          }
       generateTrg1Src2Instruction(cg, TR::InstOpCode::subx, node, temp1Reg, dstReg, temp1Reg);
 
-      if (comp->getOptions()->isVariableHeapSizeForBarrierRange0())
+      if (comp->getOptions()->isVariableHeapSizeForBarrierRange0() || comp->compileRelocatableCode())
          {
          generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp2Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapSizeForBarrierRange0), cg));
          }
@@ -463,7 +463,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
       // If doCrdMrk is false, then temp2Reg still contains heapSize
       if (doCrdMrk)
          {
-         if (comp->getOptions()->isVariableHeapSizeForBarrierRange0())
+         if (comp->getOptions()->isVariableHeapSizeForBarrierRange0() || comp->compileRelocatableCode())
             {
             generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp2Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapSizeForBarrierRange0), cg));
             }
@@ -577,7 +577,7 @@ VMCardCheckEvaluator(
    // If we know the object is definitely in heap, then we skip the check.
    if (!node->isHeapObjectWrtBar())
       {
-      if (comp->getOptions()->isVariableHeapSizeForBarrierRange0())
+      if (comp->getOptions()->isVariableHeapSizeForBarrierRange0() || comp->compileRelocatableCode())
          {
          generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmx, node, temp2Reg, new (cg->trHeapMemory()) TR::MemoryReference(metaReg, offsetof(J9VMThread, heapSizeForBarrierRange0), cg));
          }
