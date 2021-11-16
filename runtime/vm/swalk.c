@@ -102,8 +102,16 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	void  (*savedOSlotIterator) (struct J9VMThread * vmThread, struct J9StackWalkState * walkState, j9object_t * objectSlot, const void * stackLocation) =
 		walkState->objectSlotWalkFunction;
 
-	Trc_VRB_WalkStackFrames_Entry(currentThread, walkState->walkThread, walkState->flags);
-#endif
+	Trc_VRB_WalkStackFrames_Entry(currentThread, walkState->walkThread, walkState->flags,
+			walkState->walkThread->sp, walkState->walkThread->arg0EA,
+			walkState->walkThread->pc, walkState->walkThread->literals,
+			walkState->walkThread->entryLocalStorage, walkState->walkThread->j2iFrame);
+#else /* J9VM_INTERP_STACKWALK_TRACING */
+	Trc_VM_WalkStackFrames_Entry(currentThread, walkState->walkThread, walkState->flags,
+			walkState->walkThread->sp, walkState->walkThread->arg0EA,
+			walkState->walkThread->pc, walkState->walkThread->literals,
+			walkState->walkThread->entryLocalStorage, walkState->walkThread->j2iFrame);
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 	if (J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_RESUME)) {
 		if (NULL != walkState->jitInfo) {
@@ -383,7 +391,9 @@ terminationPoint:
 #if defined(J9VM_INTERP_STACKWALK_TRACING) 
 	walkState->objectSlotWalkFunction = savedOSlotIterator;
 	Trc_VRB_WalkStackFrames_Exit(currentThread, walkState->walkThread, rc);
-#endif
+#else /* J9VM_INTERP_STACKWALK_TRACING */
+	Trc_VM_WalkStackFrames_Exit(currentThread, walkState->walkThread, rc);
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 	if (currentThread != NULL) {
 		currentThread->activeWalkState = oldState;
