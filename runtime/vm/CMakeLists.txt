@@ -52,7 +52,7 @@ if(OMR_ARCH_POWER AND OMR_OS_AIX)
 		]]
 	endif()
 elseif(OMR_OS_ZOS)
-	#TODO need to handle optimized debug info
+	# TODO need to handle optimized debug info
 	list(APPEND interp_flags_to_remove "-O3" "-g" "-qdebug=nohook")
 
 	list(APPEND interp_new_flags
@@ -91,7 +91,6 @@ set(main_sources
 	classseg.c
 	classsupport.c
 	createramclass.cpp
-	criuhelpers.cpp
 	description.c
 	dllsup.c
 	drophelp.c
@@ -182,6 +181,13 @@ set(main_sources
 
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vm.c
 )
+
+if(J9VM_OPT_CRIU_SUPPORT)
+	list(APPEND main_sources
+		criuhelpers.cpp
+	)
+endif()
+
 set(interpreter_sources
 	BytecodeInterpreterCompressed.cpp
 	BytecodeInterpreterFull.cpp
@@ -218,7 +224,6 @@ if(interp_new_flags)
 	omr_stringify(flags_str ${interp_new_flags})
 	set_property(SOURCE ${interpreter_sources} APPEND_STRING PROPERTY COMPILE_FLAGS " ${flags_str}")
 endif()
-
 
 if(OMR_OS_WINDOWS AND (OMR_TOOLCONFIG STREQUAL "msvc"))
 	# JIT helper methods require us to disable buffer security checks on Windows

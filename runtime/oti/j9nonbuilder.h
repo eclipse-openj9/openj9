@@ -621,19 +621,19 @@ typedef struct J9HotField {
 	struct J9HotField* next;
 	uint32_t hotness;
 	uint16_t cpuUtil;
-	uint8_t hotFieldOffset; 
+	uint8_t hotFieldOffset;
 } J9HotField;
 
 typedef struct J9ClassHotFieldsInfo {
 	struct J9HotField* hotFieldListHead;
 	struct J9ClassLoader* classLoader;
-	BOOLEAN isClassHotFieldListDirty;	
+	BOOLEAN isClassHotFieldListDirty;
 	uint8_t hotFieldOffset1;
 	uint8_t hotFieldOffset2;
 	uint8_t hotFieldOffset3;
-	uint8_t consecutiveHotFieldSelections; 
-	uint8_t hotFieldListLength;  
- } J9ClassHotFieldsInfo;
+	uint8_t consecutiveHotFieldSelections;
+	uint8_t hotFieldListLength;
+} J9ClassHotFieldsInfo;
 
 typedef struct J9ROMNameAndSignature {
 	J9SRP name;
@@ -2877,11 +2877,11 @@ typedef struct J9Object {
 	/**
 	 * An aligned class pointer representing the type of the object. The low order bits must be masked off prior to
 	 * dereferencing this pointer. The bit values are described below.
-	 * 
-	 * @details 
-	 * 
+	 *
+	 * @details
+	 *
 	 * The following diagram describes the metadata stored in the low order bit flags of an object class pointer:
-	 * 
+	 *
 	 * Bit   31                23                15                7 6 5 4 3 2 1 0
 	 *      ┌─────────────────────────────────────────────────────────────────────┐
 	 * Word │0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0   0 0 0 0 0 0 0 0│
@@ -2892,11 +2892,11 @@ typedef struct J9Object {
 	 *                                                                │    │ └──────► [3] Slot contains forwarded pointer
 	 *                                                                │    └────────► [4] Object has been hashed
 	 *                                                                └─────────────► [5] Nursery age (0 - 14) or various remembered states
-	 * 
+	 *
 	 * [1] If bit is 0, the slot represents the start of object, ie object header, which depending of forwarded bit
 	 *     could be class slot or forwarded pointer.
 	 *     If bit is 1, the slot represents the start of a hole, in which case the value is the address of the next
-	 *	   connected hole (as part of free memory pool). The address could be null, in which case it is a small 
+	 *	   connected hole (as part of free memory pool). The address could be null, in which case it is a small
 	 *	   stand-alone hole that is not part of the list, so called dark-matter. A hole will also have one more slot,
 	 *	   with info about its size/length.
 	 *	   This bit designation is needed when heap objects are iterated in address order - once an object is found,
@@ -2904,18 +2904,18 @@ typedef struct J9Object {
 	 * [2] If object is hashed (hash bit 4 set), and object is moved by a GC, the object will grow by a hash slot
 	 *     (position of hash slot is found in class struct), and this bit will be set.
 	 *     This bit is used to find hash value (from object address if not moved or from hash slot if moved) and to
-	 *     find proper size of object (for example when heap objects are iterated, to find the position of the next 
+	 *     find proper size of object (for example when heap objects are iterated, to find the position of the next
 	 *     object).
 	 * [3] If the object has been moved on the heap and we encounter a stale reference, this bit tells us that the a
 	 *     slot within the object contains a forwarding pointer (FP) to where we can find the moved object. FP
 	 *     partially overlaps with class slot (it's not quite following it). In 32bit it exactly overlaps (both FP and
 	 *     class slots are 32 bit). In 64bit non-CR, again it exactly overlaps (both FP and class slots are 64 bit ).
-	 *     In 64bit CR, 1/2 of FP overlaps with class slot, and the other 1/2 of FP follows the class slots (FP is 
+	 *     In 64bit CR, 1/2 of FP overlaps with class slot, and the other 1/2 of FP follows the class slots (FP is
 	 *     uncommpressed 64 bit, and class slot is 32 bit).
 	 * [4] Object has been hashed by application thread, for example by using the object as a key in a hash map
 	 * [5] If the object is in the nursery (gencon) these four bits count how many times the object has been flipped.
 	 *     If the object is in tenure (gencon) these bits describe the various tenure states. These bits are not used
-	 *     under the balanced GC policy. 
+	 *     under the balanced GC policy.
 	 */
 	j9objectclass_t clazz;
 } J9Object;
@@ -3641,29 +3641,29 @@ typedef struct J9Method {
 
 	/**
 	 * This field is overloaded and can have several meanings:
-	 * 
+	 *
 	 * 1. If the J9_STARTPC_NOT_TRANSLATED bit is set, this method is interpreted
 	 *    a. If the value is non-negative, then the field contains the invocation count which is decremented towards
 	 *    zero. When the invocation count reaches zero, the method will be queued for JIT compilation. The invocation
 	 *    count is represented as:
-	 * 
+	 *
 	 *    ```
 	 *    (invocationCount << 1) | J9_STARTPC_NOT_TRANSLATED
 	 *    ```
-	 * 
+	 *
 	 *    b. If the method is a default method which has conflicts then this field contains the RAM method to execute.
 	 *    That is, the extra field will contain:
-	 * 
+	 *
 	 *    ```
 	 *    ((J9Method*)<default method to execute>) | J9_STARTPC_NOT_TRANSLATED
 	 *    ```
-	 * 
+	 *
 	 *    c. If the value is negative, then it can be one of (see definition for documentation on these):
 	 *        - J9_JIT_NEVER_TRANSLATE
 	 *              The VM will not decrement the count and the method will stay interpreted
 	 *        - J9_JIT_QUEUED_FOR_COMPILATION
 	 *              The method has been queued for JIT compilation
-	 * 
+	 *
 	 * 2. If the J9_STARTPC_NOT_TRANSLATED bit is not set, this method is JIT compiled
 	 * 		a. The field contains the address of the start PC of the JIT compiled method
 	 */
@@ -5101,6 +5101,7 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_DISCONTIGUOUS_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull))
 
 typedef struct J9CRIUCheckpointState {
+	BOOLEAN isCheckPointEnabled;
 	BOOLEAN isCheckPointAllowed;
 	BOOLEAN isNonPortableRestoreMode;
 } J9CRIUCheckpointState;
@@ -5558,8 +5559,8 @@ typedef struct J9JavaVM {
 	jmethodID criuJVMCheckpointExceptionInit;
 	jmethodID criuSystemCheckpointExceptionInit;
 	jmethodID criuRestoreExceptionInit;
+	J9CRIUCheckpointState checkpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-	J9CRIUCheckpointState *checkpointState;
 #if JAVA_SPEC_VERSION >= 16
 	struct J9Pool *cifNativeCalloutDataCache;
 	omrthread_monitor_t cifNativeCalloutDataCacheMutex;

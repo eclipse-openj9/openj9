@@ -173,7 +173,7 @@ getNativeString(J9VMThread *currentThread, j9object_t javaString, char **nativeS
 		}
 	}
 
-	(localNativeString)[requiredConvertedStringSize - 1] = '\0';
+	localNativeString[requiredConvertedStringSize - 1] = '\0';
 
 	/* convert the string */
 	requiredConvertedStringSize = omrstr_convert(J9STR_CODE_MUTF8, J9STR_CODE_PLATFORM_RAW,
