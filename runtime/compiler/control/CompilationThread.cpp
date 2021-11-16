@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5605,7 +5605,7 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
    bool verbose = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest);
    if (verbose)
       {
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       TR_VerboseLog::write(TR_Vlog_CR, "%p   Compile request %s", vmThread, details.name());
 
       if (newInstanceThunkDetails)
@@ -5634,7 +5634,6 @@ void *TR::CompilationInfo::compileMethod(J9VMThread * vmThread, TR::IlGeneratorM
          TR_VerboseLog::write(" OBSOLETE class=%p -- request declined", clazz);
          }
       TR_VerboseLog::writeLine("");
-      TR_VerboseLog::vlogRelease();
       }
 
    // Pin the class of the method in case GC wants to unload it
@@ -6413,7 +6412,7 @@ TR::CompilationInfoPerThreadBase::outputVerboseMMapEntries(
    struct tm date;
    if (!localtime_r(&time.tv_sec, &date)) return;
 
-   TR_VerboseLog::vlogAcquire();
+   TR_VerboseLog::CriticalSection vlogLock;
    outputVerboseMMapEntry(
       compilee,
       date,
@@ -6435,7 +6434,6 @@ TR::CompilationInfoPerThreadBase::outputVerboseMMapEntries(
          profiledString,
          compileString
          );
-   TR_VerboseLog::vlogRelease();
    }
 #endif // ifdef TR_HOST_S390
 
@@ -6525,7 +6523,7 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
             reloTime = j9time_usec_clock() - reloRuntime()->reloStartTime();
             }
 
-         TR_VerboseLog::vlogAcquire();
+         TR_VerboseLog::CriticalSection vlogLock;
          TR_VerboseLog::write(TR_Vlog_COMP, "(AOT load) ");
          CompilationInfo::printMethodNameToVlog(method);
          TR_VerboseLog::write(" @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT, metaData->startPC, metaData->endWarmPC);
@@ -6540,7 +6538,6 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
             TR_VerboseLog::write(" compThreadID=%d", getCompThreadId());
 
          TR_VerboseLog::writeLine("");
-         TR_VerboseLog::vlogRelease();
          }
 
 #if defined(TR_HOST_S390)
@@ -7568,11 +7565,10 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          {
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompFailure))
             {
-            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::CriticalSection vlogLock;
             TR_VerboseLog::write(TR_Vlog_COMP, "Method ");
             CompilationInfo::printMethodNameToVlog(method);
             TR_VerboseLog::writeLine(" will continue as interpreted");
-            TR_VerboseLog::vlogRelease();
             }
          if (entry->_compErrCode != compilationRestrictedMethod && // do not look at methods excluded by filters
              entry->_compErrCode != compilationExcessiveSize) // do not look at failures due to code cache size
@@ -9401,9 +9397,8 @@ TR::CompilationInfoPerThreadBase::compile(
          {
          if (compiler->getMaxYieldInterval() > TR::Options::_compYieldStatsThreshold)
             {
-            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::CriticalSection vlogLock;
             compiler->printCompYieldStats();
-            TR_VerboseLog::vlogRelease();
             }
          }
 
@@ -10396,7 +10391,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             {
             const uint32_t bytecodeSize = TR::CompilationInfo::getMethodBytecodeSize(method);
             const bool isJniNative = compilee->isJNINative();
-            TR_VerboseLog::vlogAcquire();
+            TR_VerboseLog::CriticalSection vlogLock;
             TR_VerboseLog::write(TR_Vlog_COMP,"(%s%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
                compilationTypeString,
                hotnessString,
@@ -10517,7 +10512,6 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                }
 
             TR_VerboseLog::writeLine("");
-            TR_VerboseLog::vlogRelease();
             }
 
          char compilationAttributes[40] = { 0 };
@@ -10607,9 +10601,8 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       if (compiler->getMaxYieldInterval() > TR::Options::_compYieldStatsThreshold)
          {
-         TR_VerboseLog::vlogAcquire();
+         TR_VerboseLog::CriticalSection vlogLock;
          compiler->printCompYieldStats();
-         TR_VerboseLog::vlogRelease();
          }
       }
 
@@ -10897,7 +10890,7 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
 
       const char *hotnessString = compiler->getHotnessName(compiler->getMethodHotness());
 
-      TR_VerboseLog::vlogAcquire();
+      TR_VerboseLog::CriticalSection vlogLock;
       if (_methodBeingCompiled->_compErrCode != compilationFailure)
          {
          if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && _methodBeingCompiled->_compErrCode == compilationInterrupted)
@@ -10949,7 +10942,6 @@ TR::CompilationInfoPerThreadBase::processExceptionCommonTasks(
             static_cast<unsigned long long>(scratchSegmentProvider.systemBytesAllocated())/1024);
          }
       TR_VerboseLog::writeLine(" compThreadID=%d", compiler->getCompThreadID());
-      TR_VerboseLog::vlogRelease();
       }
 
    if(_methodBeingCompiled->_compErrCode == compilationFailure)
