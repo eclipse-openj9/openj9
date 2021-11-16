@@ -7149,7 +7149,7 @@ resolve:
 
 			/* Run search in receiverClass->lastITable */
 			J9ITable *iTable = receiverClass->lastITable;
-			if (interfaceClass == iTable->interfaceClass) {
+			if ((NULL != iTable) && (interfaceClass == iTable->interfaceClass)) {
 				goto foundITableCache;
 			}
 

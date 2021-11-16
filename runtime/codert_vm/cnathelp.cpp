@@ -110,8 +110,8 @@ static VMINLINE UDATA
 convertITableOffsetToVTableOffset(J9VMThread *currentThread, J9Class *receiverClass, J9Class *interfaceClass, UDATA iTableOffset)
 {
 	UDATA vTableOffset = 0;
-	J9ITable * iTable = receiverClass->lastITable;
-	if (interfaceClass == iTable->interfaceClass) {
+	J9ITable *iTable = receiverClass->lastITable;
+	if ((NULL != iTable) && (interfaceClass == iTable->interfaceClass)) {
 		goto foundITable;
 	}
 	
