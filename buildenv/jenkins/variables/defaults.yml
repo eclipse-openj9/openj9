@@ -402,9 +402,33 @@ x86-64_mac:
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
-    build: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_14'
+    build: 'ci.role.build && hw.arch.x86 && sw.os.mac.10_14'
   build_env:
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
+  excluded_tests:
+    8:
+      - special.system
+    11:
+      - special.system
+#========================================#
+# Mac M1 Aarch64
+#========================================#
+aarch64_mac:
+  extends: ['boot_jdk_default']
+  boot_jdk:
+    arch: 'aarch64'
+    os: 'mac'
+    dir_strip:
+      all: '3'
+  release:
+    all: 'macosx-aarch64-server-release'
+    8: 'macosx-aarch64-normal-server-release'
+    11: 'macosx-aarch64-normal-server-release'
+  extra_configure_options:
+    all: '--disable-warnings-as-errors --with-noncompressedrefs --disable-ddr'
+  openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
+  node_labels:
+    build: 'ci.role.build && hw.arch.aarch64 && sw.os.mac'
   excluded_tests:
     8:
       - special.system
