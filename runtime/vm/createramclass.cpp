@@ -3037,7 +3037,7 @@ fail:
 			 *                 + J9ClassIsValueBased
 			 *                + J9ClassHasIdentity (inherited)
 			 *
-			 *              + J9ClassEnsureHashed (inherited)
+			 *              + Unused
 			 *             + Unused
 			 *            + Unused
 			 *           + Unused
@@ -3514,10 +3514,8 @@ retry:
 			 * watched fields tag and exemption from validation are inherited from the superclass.
 			 * J9ClassHasIdentity is also inherited. If a class cannot be super class
 			 * of value types, its subclasses cannot be super of value types either.
-			 * J9ClassEnsureHashed inherited as subclasses of commonly hashed classes are likely
-			 * to be hashed as well.
 			 */
-			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation | J9ClassHasIdentity | J9ClassEnsureHashed;
+			const U_32 inheritedFlags = J9ClassHasWatchedFields | J9ClassIsExemptFromValidation | J9ClassHasIdentity;
 			classFlags |= (superclass->classFlags & inheritedFlags);
 		}
 		if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_ANON)) {
@@ -3538,14 +3536,6 @@ retry:
 		}
 		if (J9ROMCLASS_IS_VALUEBASED(romClass)) {
 			classFlags |= J9ClassIsValueBased;
-		}
-		if (NULL != javaVM->ensureHashedClasses) {
-			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-			J9UTF8 **entry = (J9UTF8 **)hashTableFind(javaVM->ensureHashedClasses, &className);
-
-			if (NULL != entry) {
-				classFlags |= J9ClassEnsureHashed;
-			}
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)

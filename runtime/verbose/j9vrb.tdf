@@ -1,4 +1,4 @@
-// Copyright (c) 2006, 2017 IBM Corp. and others
+// Copyright (c) 2006, 2021 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@ Submodules=j9vmutil,j9util,pool,avl
 DATFileName=J9TraceFormat.dat
 
 TraceEvent=Trc_VRB_VMInitStages_Event1 Overhead=1 Level=1 Template="Trace engine initialized for module j9vrb"
-TraceEntry=Trc_VRB_WalkStackFrames_Entry Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p flags=%p"
+TraceEntry=Trc_VRB_WalkStackFrames_Entry Obsolete Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p flags=%p"
 TraceExit=Trc_VRB_WalkStackFrames_Exit Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p, rc=%d"
 TraceEvent=Trc_VRB_WalkStackFrames_swPrintf Overhead=1 Level=1 Template="%s"
 
@@ -45,3 +45,5 @@ TraceException=Trc_VRB_WriteMessageBuffer_Failed noEnv Overhead=1 Level=1 Templa
 TraceAssert=Assert_VRB_ShouldNeverHappen NoEnv Overhead=1 Level=2 Assert="(0 /* Should never happen */)"
 TraceAssert=Assert_VRB_Equals NoEnv Overhead=1 Level=2 Assert="(P1 == P2)"
 TraceAssert=Assert_VRB_NotEquals NoEnv Overhead=1 Level=2 Assert="(P1 != P2)"
+
+TraceEntry=Trc_VRB_WalkStackFrames_Entry Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p flags=%p sp=%p a0=%p pc=%p literals=%p els=%p j2i=%p"

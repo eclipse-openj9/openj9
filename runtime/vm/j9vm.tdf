@@ -881,3 +881,6 @@ TraceException=Trc_VM_CreateRAMClassFromROMClass_sealedSuperFromDifferentPackage
 TraceEvent=Trc_VM_callin_stackFree Overhead=1 Level=5 Template="OS Stack free=%zi, current native sp=%p"
 
 TraceEvent=Trc_VM_classLoaderRegisterLibrary_newNativeLibrary Overhead=1 Level=5 Template="classLoaderRegisterLibrary -- newNativeLibrary (0x%p) handle (0x%zx) logicalName (%s) name (%s) rc (0x%zx)"
+
+TraceEntry=Trc_VM_WalkStackFrames_Entry Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p flags=%p sp=%p a0=%p pc=%p literals=%p els=%p j2i=%p"
+TraceExit=Trc_VM_WalkStackFrames_Exit Overhead=1 Level=1 Template="WalkStackFrames - walkThread=%p, rc=%d"
