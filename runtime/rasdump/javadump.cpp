@@ -830,7 +830,9 @@ JavaCoreDumpWriter::writeTitleSection(void)
 		}
 
 		if (J9_ARE_ALL_BITS_SET(_Agent->prepState, J9RAS_DUMP_TRACE_DISABLED)) {
+			_OutputStream.writeCharacters(prefix);
 			_OutputStream.writeCharacters("trace_disabled");
+			prefix = "+";
 		}
 
 		if (' ' != *prefix) {
