@@ -67,10 +67,10 @@ jvmRestoreHooks(J9VMThread *currentThread)
 	nas.name = (J9UTF8 *)&runPostRestoreHooks_name;
 	nas.signature = (J9UTF8 *)&runPostRestoreHooks_sig;
 
-	Assert_VM_notNull(vm->checkpointState);
+	Assert_VM_true(vm->checkpointState.isCheckPointEnabled);
 
-	if (vm->checkpointState->isNonPortableRestoreMode) {
-		vm->checkpointState->isCheckPointAllowed = FALSE;
+	if (vm->checkpointState.isNonPortableRestoreMode) {
+		vm->checkpointState.isCheckPointAllowed = FALSE;
 	}
 
 	TRIGGER_J9HOOK_VM_PREPARING_FOR_RESTORE(vm->hookInterface, currentThread);
@@ -88,22 +88,19 @@ jvmRestoreHooks(J9VMThread *currentThread)
 BOOLEAN
 isCRIUSupportEnabled(J9VMThread *currentThread)
 {
-	return NULL != currentThread->javaVM->checkpointState;
+	return currentThread->javaVM->checkpointState.isCheckPointEnabled;
 }
 
 BOOLEAN
 isCheckpointAllowed(J9VMThread *currentThread)
 {
-	J9JavaVM *vm = currentThread->javaVM;
-	BOOLEAN res = FALSE;
+	BOOLEAN result = FALSE;
 
 	if (isCRIUSupportEnabled(currentThread)) {
-		res = vm->checkpointState->isCheckPointAllowed;
+		result = currentThread->javaVM->checkpointState.isCheckPointAllowed;
 	}
 
-	return res;
+	return result;
 }
 
-
-
-}/* extern "C" */
+} /* extern "C" */

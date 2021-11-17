@@ -1089,7 +1089,7 @@ gcInitializeXmxXmdxVerification(J9JavaVM *javaVM, IDATA* memoryParameters, bool 
 				/* Fail to initialize if assertions are off */
 				return JNI_ERR;
 			}
-	
+
 			/* Adjust heap ceiling value if it is necessary */
 			if (extensions->heapCeiling > maxHeapForCR) {
 				extensions->heapCeiling = maxHeapForCR;
@@ -2918,11 +2918,11 @@ gcInitializeDefaults(J9JavaVM* vm)
 
 				if (hwSupported) {
 					/* Software Barrier request overwrites HW usage on supported HW */
-					extensions->concurrentScavengerHWSupport = hwSupported 
-						&& !extensions->softwareRangeCheckReadBarrier 
+					extensions->concurrentScavengerHWSupport = hwSupported
+						&& !extensions->softwareRangeCheckReadBarrier
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 						&& !vm->internalVMFunctions->isCRIUSupportEnabled(vm->internalVMFunctions->currentVMThread(vm))
-#endif
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 						&& !J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE);
 					extensions->concurrentScavenger = hwSupported || extensions->softwareRangeCheckReadBarrier;
 				} else {

@@ -488,11 +488,12 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, J9Class *hostClass);
 
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+
 /* ---------------- criuhelpers.cpp ---------------- */
 /**
  * @brief Queries if CRIU support is enabled. By default support
  * is not enabled, it can be enabled with `-XX:+EnableCRIUSupport`
- *
  *
  * @param currentThread vmthread token
  * @return TRUE if enabled, FALSE otherwise
@@ -505,7 +506,6 @@ isCRIUSupportEnabled(J9VMThread *currentThread);
  * -XX:+CRIURestoreNonPortableMode option is specified checkpointing
  * will not be permitted after the JVM has been restored from a checkpoint
  * (checkpoint once mode).
- *
  *
  * @param currentThread vmthread token
  * @return TRUE if permitted, FALSE otherwise
@@ -531,6 +531,8 @@ jvmCheckpointHooks(J9VMThread *currentThread);
  */
 BOOLEAN
 jvmRestoreHooks(J9VMThread *currentThread);
+
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */
 
@@ -4712,7 +4714,7 @@ void
 throwNewJavaIoIOException(JNIEnv *env, const char *message);
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #endif /* vm_api_h */
