@@ -402,18 +402,26 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
 
    method->methodRunAddress = jitGetCountingSendTarget(vmThread, method);
 
+   bool countInOptionSet = false;
+
    if (TR::Options::getJITCmdLineOptions()->anOptionSetContainsACountValue())
       {
       TR::OptionSet * optionSet = findOptionSet(method, false);
       if (optionSet)
+         {
          optionsJIT = optionSet->getOptions();
+         countInOptionSet = true;
+         }
       }
 
    if (TR::Options::getAOTCmdLineOptions()->anOptionSetContainsACountValue())
       {
       TR::OptionSet * optionSet = findOptionSet(method, true);
       if (optionSet)
+         {
          optionsAOT = optionSet->getOptions();
+         countInOptionSet = true;
+         }
       }
 
    int32_t count = -1; // means we didn't set the value yet
@@ -470,7 +478,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                compInfo->incrementNumMethodsFoundInSharedCache();
                }
             // AOT Body not in SCC, so scount was not set
-            else if (!TR::Options::getCountsAreProvidedByUser())
+            else if (!TR::Options::getCountsAreProvidedByUser() && !countInOptionSet)
                {
                bool useLowerCountsForAOTCold = false;
                if (TR::Options::getCmdLineOptions()->getOption(TR_LowerCountsForAotCold) && compInfo->isWarmSCC() == TR_no)
