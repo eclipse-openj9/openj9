@@ -29,16 +29,18 @@ usage() {
   echo "Generate a Dockerfile for building OpenJ9"
   echo ""
   echo "Options:"
-  echo "  --help|-h      print this help, then exit"
-  echo "  --arch=...     specify the processor architecture (default: host architecture)"
-  echo "  --build        build the docker image (overrides '--print')"
-  echo "  --cuda         include CUDA header files"
-  echo "  --dist=...     specify the Linux distribution (e.g. centos, ubuntu)"
-  echo "  --freemarker   include freemarker.jar"
-  echo "  --print        write the Dockerfile to stdout (default; overrides '--build')"
-  echo "  --tag=...      specify a name for the docker image (may be repeated, default: none)"
-  echo "  --user=...     specify the user name (default: 'jenkins')"
-  echo "  --version=...  specify the distribution version (e.g. 6, 16.04)"
+  echo "  --help|-h              print this help, then exit"
+  echo "  --arch=...             specify the processor architecture (default: host architecture)"
+  echo "  --build                build the docker image (overrides '--print')"
+  echo "  --cuda                 include CUDA header files"
+  echo "  --dist=...             specify the Linux distribution (e.g. centos, ubuntu)"
+  echo "  --freemarker           include freemarker.jar"
+  echo "  --gitcache={yes|no}    generate the git cache (default: yes)"
+  echo "  --jdk=...              specify which jdks can be built (default: all)"
+  echo "  --print                write the Dockerfile to stdout (default; overrides '--build')"
+  echo "  --tag=...              specify a name for the docker image (may be repeated, default: none)"
+  echo "  --user=...             specify the user name (default: 'jenkins')"
+  echo "  --version=...          specify the distribution version (e.g. 6, 16.04)"
   echo ""
   local arch="$(uname -m)"
   echo "Supported build patterns on this host ($arch):"
@@ -57,9 +59,12 @@ fi
 # Global configuration variables.
 action=print
 arch=
+bootjdk_versions=
 cuda=no
 dist=unspecified
 freemarker=no
+gen_git_cache=yes
+jdk_versions=all
 tags=()
 user=jenkins
 userid=1000
@@ -88,6 +93,12 @@ parse_options() {
         ;;
       --freemarker)
         freemarker=yes
+        ;;
+      --gitcache=*)
+        gen_git_cache="${arg#*=}"
+        ;;
+      --jdk=*)
+        jdk_versions="${arg#*=}"
         ;;
       --print)
         action=print
@@ -187,6 +198,12 @@ validate_options() {
         ;;
     esac
   fi
+
+  if [ $jdk_versions = all ] ; then
+    jdk_versions="8 11 17 next"
+  fi
+  bootjdk_versions="${jdk_versions/17/16}"
+  bootjdk_versions="${bootjdk_versions/next/}"
 }
 
 build_cmd() {
@@ -580,16 +597,15 @@ bootjdk_url() {
 }
 
 install_bootjdks() {
-  local versions="8 11 16"
   echo ""
   echo "# Download and install boot JDKs from AdoptOpenJDK."
   echo "RUN cd /tmp \\"
-for version in $versions ; do
-  echo " && $wget_O jdk$version.tar.gz $(bootjdk_url $version) \\"
+for bootjdk_version in $bootjdk_versions ; do
+  echo " && $wget_O jdk$bootjdk_version.tar.gz $(bootjdk_url $bootjdk_version) \\"
 done
-  echo " && mkdir -p" $(bootjdk_dirs $versions) "\\"
-for version in $versions ; do
-  echo " && tar -xzf jdk$version.tar.gz --directory=$(bootjdk_dirs $version)/ --strip-components=1 \\"
+  echo " && mkdir -p" $(bootjdk_dirs $bootjdk_versions) "\\"
+for bootjdk_version in $bootjdk_versions ; do
+  echo " && tar -xzf jdk$bootjdk_version.tar.gz --directory=$(bootjdk_dirs $bootjdk_version)/ --strip-components=1 \\"
 done
   echo " && rm -f jdk*.tar.gz"
 }
@@ -644,15 +660,19 @@ create_git_cache() {
   echo "RUN mkdir $git_cache_dir \\"
   echo " && cd $git_cache_dir \\"
   echo " && git init --bare \\"
-  add_git_remote jdk8    https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
-  add_git_remote jdk11   https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
-  add_git_remote jdk16   https://github.com/ibmruntimes/openj9-openjdk-jdk16.git
-  add_git_remote jdk17   https://github.com/ibmruntimes/openj9-openjdk-jdk17.git
-  add_git_remote jdknext https://github.com/ibmruntimes/openj9-openjdk-jdk.git
+for jdk_version in $jdk_versions ; do
+  if [ $jdk_version = next ] ; then
+    add_git_remote jdknext         https://github.com/ibmruntimes/openj9-openjdk-jdk.git
+  else
+    add_git_remote jdk$jdk_version https://github.com/ibmruntimes/openj9-openjdk-jdk$jdk_version.git
+  fi
+done
   add_git_remote omr     https://github.com/eclipse-openj9/openj9-omr.git
   add_git_remote openj9  https://github.com/eclipse-openj9/openj9.git
   echo " && echo Fetching repository cache... \\"
+if [[ $jdk_versions == *"17"* ]] ; then
   echo " && git fetch jdk17 \\"
+fi
   echo " && git fetch --all \\"
   echo " && echo Shrinking repository cache... \\"
   echo " && git gc --aggressive --prune=all"
@@ -693,7 +713,9 @@ fi
   configure_ssh
 
   install_bootjdks
+if [ $gen_git_cache = yes ] ; then
   create_git_cache
+fi
   adjust_user_directory_perms
 }
 
