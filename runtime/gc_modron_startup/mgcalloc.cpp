@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2021 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -105,9 +105,6 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 	
 	if(!traceObjectCheck(vmThread)){
 		allocateFlags |= OMR_GC_ALLOCATE_OBJECT_NO_GC;
-		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassEnsureHashed)) {
-			allocateFlags |= OMR_GC_ALLOCATE_OBJECT_HASHED;
-		}
 		MM_MixedObjectAllocationModel mixedOAM(env, clazz, allocateFlags);
 		if (mixedOAM.initializeAllocateDescription(env)) {
 			env->_isInNoGCAllocationCall = true;
@@ -406,9 +403,6 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 	 * with a replaced class, update to the current version and allocate that.
 	 */
 	clazz = J9_CURRENT_CLASS(clazz);
-	if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassEnsureHashed)) {
-		allocateFlags |= OMR_GC_ALLOCATE_OBJECT_HASHED;
-	}
 	MM_MixedObjectAllocationModel mixedOAM(env, clazz, allocateFlags);
 	if (mixedOAM.initializeAllocateDescription(env)) {
 		objectPtr = OMR_GC_AllocateObject(vmThread->omrVMThread, &mixedOAM);
