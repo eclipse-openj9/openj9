@@ -9453,9 +9453,9 @@ TR_J9VMBase::inSnapshotMode()
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    return getJ9JITConfig()->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread());
-#else
+#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
    return false;
-#endif
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
    }
 
 
