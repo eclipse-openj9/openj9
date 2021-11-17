@@ -183,7 +183,8 @@ J9::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalReloca
    reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
    reloRecord->setFlag(reloTarget, wideOffsets);
 
-   self()->initializePlatformSpecificAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
+   if (!self()->initializePlatformSpecificAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind))
+      self()->initializeCommonAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
 
    cursor += self()->getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
    return cursor;

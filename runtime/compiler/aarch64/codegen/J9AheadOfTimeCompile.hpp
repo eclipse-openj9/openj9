@@ -58,15 +58,9 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public J9::AheadOfTimeCompile
 
 
    /**
-    * @brief Initialization of relocation record headers for whom data for the fields are acquired
-    *        in a manner that is specific to this platform
-    *
-    * @param relocation pointer to the iterated external relocation
-    * @param reloTarget pointer to the TR_RelocationTarget object
-    * @param reloRecord pointer to the associated
-    * @param targetKind the TR_ExternalRelocationTargetKind enum value
+    * @brief Refer to J9::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader
     */
-   void initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t targetKind);
+   bool initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t targetKind);
 
    static bool classAddressUsesReloRecordInfo() { return false; }
 

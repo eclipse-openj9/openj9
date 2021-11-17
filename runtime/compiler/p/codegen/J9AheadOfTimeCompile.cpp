@@ -111,12 +111,13 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
       }
    }
 
-void
+bool
 J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation,
                                                                              TR_RelocationTarget *reloTarget,
                                                                              TR_RelocationRecord *reloRecord,
                                                                              uint8_t targetKind)
    {
+   bool platformSpecificReloInitialized = true;
    TR::Compilation *comp = self()->comp();
    TR_J9VMBase *fej9 = comp->fej9();
    TR_SharedCache *sharedCache = fej9->sharedCache();
@@ -369,7 +370,9 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          break;
 
       default:
-         self()->initializeCommonAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
+         platformSpecificReloInitialized = false;
       }
+
+   return platformSpecificReloInitialized;
    }
 
