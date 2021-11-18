@@ -35,6 +35,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<property name="module_src_root" location="modules" />
 	<property name="module_bin_root" location="module_bin" />
 	<property name="dest_module_bin" location="${DEST}/module_bin" />
+	<property name="TestUtilities" location="../TestUtilities/src"/>
 	<property name="LIB" value="asm,testng,jcommander" />
 	<import file="${TEST_ROOT}/TKG/scripts/getDependencies.xml" />
 
@@ -95,6 +96,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}" />
 			<src path="${src_160}" />
+			<src path="${TestUtilities}" />
 			<exclude name="**/modules/**" />
 			<compilerarg line='--enable-preview --source ${JDK_VERSION}' />
 			<compilerarg line='--add-modules jdk.incubator.foreign' />
