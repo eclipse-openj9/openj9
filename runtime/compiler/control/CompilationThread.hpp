@@ -489,8 +489,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    TR_J9SharedCacheServerVM *getSharedCacheServerVM() const { return _sharedCacheServerVM; }
    void                      setSharedCacheServerVM(TR_J9SharedCacheServerVM *vm) { _sharedCacheServerVM = vm; }
    JITServer::ServerStream  *getStream();
-   J9ROMClass               *getAndCacheRemoteROMClass(J9Class *clazz);
-   J9ROMClass               *getRemoteROMClassIfCached(J9Class *clazz);
+   J9ROMClass               *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=NULL);
+   J9ROMClass               *getRemoteROMClassIfCached(J9Class *);
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() const { return _classesThatShouldNotBeNewlyExtended; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

@@ -1197,8 +1197,6 @@ static bool JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
 
    if (xxJITServerUseAOTCacheArgIndex > xxDisableJITServerUseAOTCacheArgIndex)
       compInfo->getPersistentInfo()->setJITServerUseAOTCache(true);
-   else
-      compInfo->getPersistentInfo()->setJITServerUseAOTCache(false);
 
    if (xxJITServerLogConnectionsArgIndex > xxDisableJITServerLogConnectionsArgIndex)
       {
@@ -2052,16 +2050,6 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             if (xxJITServerLocalSyncCompilesArgIndex > xxDisableJITServerLocalSyncCompilesArgIndex)
                {
                compInfo->getPersistentInfo()->setLocalSyncCompiles(true);
-               }
-
-            const char *xxJITServerAOTCacheNameOption = "-XX:JITServerAOTCacheName=";
-            int32_t xxJITServerAOTCacheNameArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAOTCacheNameOption, 0);
-
-            if (xxJITServerAOTCacheNameArgIndex >= 0)
-               {
-               char *name = NULL;
-               GET_OPTION_VALUE(xxJITServerAOTCacheNameArgIndex, '=', &name);
-               compInfo->getPersistentInfo()->setJITServerAOTCacheName(name);
                }
             }
          }
