@@ -694,9 +694,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             // a previous request, info which the server is expected to cache. However, this
             // could be a new JITServer instance.
             // Send a message to the client to retrieve desired info.
-            romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, clientSession->persistentMemory(), classInfoTuple);
+            romClass = JITServerHelpers::getRemoteROMClass(clazz, stream, clientSession->persistentMemory(), &classInfoTuple);
             }
-         romClass = JITServerHelpers::cacheRemoteROMClassOrFreeIt(clientSession, clazz, romClass, classInfoTuple);
+         romClass = JITServerHelpers::cacheRemoteROMClassOrFreeIt(getClientData(), clazz, romClass, &classInfoTuple, clientSession->persistentMemory());
          TR_ASSERT_FATAL(romClass, "ROM class of J9Class=%p must be cached at this point", clazz);
          }
 

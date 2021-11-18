@@ -1523,7 +1523,7 @@ TR_ResolvedJ9JITServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, T
    _literals = methodInfoStruct.literals;
    _ramClass = methodInfoStruct.ramClass;
 
-   _romClass = threadCompInfo->getAndCacheRemoteROMClass(_ramClass);
+   _romClass = threadCompInfo->getAndCacheRemoteROMClass(_ramClass, trMemory);
    _romMethod = romMethodAtClassIndex(_romClass, methodInfoStruct.methodIndex);
    _romLiterals = (J9ROMConstantPoolItem *) ((UDATA) _romClass + sizeof(J9ROMClass));
 
@@ -2066,8 +2066,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
       }
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
-   const AOTCacheClassChainRecord *classChainRecord = NULL;
-   void *classChain = fej9->sharedCache()->rememberClass(definingClass, &classChainRecord);
+   void *classChain = fej9->sharedCache()->rememberClass(definingClass);
    if (!classChain)
       return false;
 
@@ -2112,10 +2111,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
       return true;
       }
 
-   TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(
-      fej9, (TR_OpaqueClassBlock *)definingClass, (void *)classChain,
-      (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind, classChainRecord
-   );
+   TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(fej9, (TR_OpaqueClassBlock *)definingClass, (void *) classChain, (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind);
    if (classInfo)
       {
       traceMsg(comp, "\tCreated new AOT class info %p\n", classInfo);

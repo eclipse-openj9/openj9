@@ -195,7 +195,6 @@ J9::Compilation::Compilation(int32_t id,
    _globalMemory(*::trPersistentMemory, heapMemoryRegion),
    _perClientMemory(_trMemory),
    _methodsRequiringTrampolines(getTypedAllocator<TR_OpaqueMethodBlock *>(self()->allocator())),
-   _aotCacheStore(false),
 #endif /* defined(J9VM_OPT_JITSERVER) */
    _osrProhibitedOverRangeOfTrees(false)
    {
