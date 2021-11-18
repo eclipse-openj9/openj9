@@ -173,17 +173,19 @@ public:
 
    static const uint32_t maxClassChainLength = 32;
 
-   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr)
+   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr) override
       {
-      return (rememberClass((J9Class *) classPtr, false) != NULL);
+      return rememberClass((J9Class *)classPtr, NULL, false) != NULL;
       }
 
-   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *classPtr)
+   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *classPtr,
+                                    const AOTCacheClassChainRecord **classChainRecord = NULL) override
       {
-      return (uintptr_t *) rememberClass((J9Class *) classPtr, true);
+      return (uintptr_t *)rememberClass((J9Class *)classPtr, classChainRecord, true);
       }
 
-   virtual UDATA *rememberClass(J9Class *clazz, bool create=true);
+   virtual uintptr_t *rememberClass(J9Class *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL,
+                                    bool create = true);
 
    virtual UDATA rememberDebugCounterName(const char *name);
    virtual const char *getDebugCounterName(UDATA offset);
@@ -296,17 +298,17 @@ public:
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
 
-   virtual uintptr_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz);
+   virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) override;
 
-   #if defined(J9VM_OPT_JITSERVER)
+#if defined(J9VM_OPT_JITSERVER)
    /**
      * \brief Finds the offset in SCC of the class chain identifying the class loader of the given class.
-     *        This is very similar to getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache
+     *        This is very similar to getClassChainOffsetIdentifyingLoader
      *        except that it will not fail the compilation if the offset is not valid.
      * \return Returns the offset of the class chain that identifies given class or 0 is such offset is not valid.
     */
-   uintptr_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCacheNoFail(TR_OpaqueClassBlock *clazz);
-   #endif
+   uintptr_t getClassChainOffsetIdentifyingLoaderNoFail(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL);
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    virtual const void *storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor);
 
@@ -569,7 +571,8 @@ public:
    virtual void addHint(J9Method *, TR_SharedCacheHint) override;
    virtual bool isMostlyFull() override { TR_ASSERT_FATAL(false, "called"); return false;}
 
-   virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override;
+   virtual uintptr_t *rememberClass(J9Class *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL,
+                                    bool create = true) override;
 
    virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT_FATAL(false, "called"); return 0;}
    virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
@@ -583,7 +586,7 @@ public:
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo) { TR_ASSERT_FATAL(false, "called"); return TR_no;}
    static void setStoreSharedDataFailedLength(UDATA length) { TR_ASSERT_FATAL(false, "called"); }
 
-   virtual uintptr_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
+   virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) override;
 
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 
