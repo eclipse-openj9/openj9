@@ -456,19 +456,20 @@ done:
 
 	/**
 	 * Performs an aaload operation on an object. Handles flattened and non-flattened cases.
+	 * This function could call into J9AllocateObject() which might trigger GC in the slow path, so receiverObject might be moved by GC.
+	 * If the caller caches receiverObject and uses it after calling this function in the slow path, it needs to re-read receiverObject.
 	 *
 	 * Assumes recieverObject is not null.
 	 * All AIOB exceptions must be thrown before calling.
 	 *
 	 * Returns null if newObjectRef retrieval fails.
 	 *
-	 * If fast == false, special stack frame must be built and receiverObject must be pushed onto it.
-	 *
 	 * @param[in] currentThread thread token
 	 * @param[in] _objectAccessBarrier access barrier
 	 * @param[in] _objectAllocate allocator
 	 * @param[in] receiverObject arrayobject
 	 * @param[in] index array index
+	 * @param[in] fast Fast path if true. Slow path if false.
 	 *
 	 * @return array element
 	 */
@@ -486,7 +487,9 @@ done:
 					goto done;
 				}
 			} else {
+				VM_VMHelpers::pushObjectInSpecialFrame(currentThread, receiverObject);
 				newObjectRef = currentThread->javaVM->memoryManagerFunctions->J9AllocateObject(currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+				receiverObject = VM_VMHelpers::popObjectInSpecialFrame(currentThread);
 				if (J9_UNEXPECTED(NULL == newObjectRef)) {
 					goto done;
 				}

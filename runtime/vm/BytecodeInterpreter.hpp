@@ -6170,11 +6170,9 @@ done:
 				if ((NULL == value) && J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
 					/* We only get here due to an allocation failure */
 					buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
-					pushObjectInSpecialFrame(REGISTER_ARGS, arrayref);
 					updateVMStruct(REGISTER_ARGS);
 					value = VM_ValueTypeHelpers::loadFlattenableArrayElement(_currentThread, _objectAccessBarrier, _objectAllocate, arrayref, index, false);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
-					arrayref = popObjectInSpecialFrame(REGISTER_ARGS);
 					restoreGenericSpecialStackFrame(REGISTER_ARGS);
 					if (J9_UNEXPECTED(NULL == value)) {
 						rc = THROW_HEAP_OOM;
