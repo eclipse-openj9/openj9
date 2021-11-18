@@ -173,13 +173,13 @@ public:
 
    static const uint32_t maxClassChainLength = 32;
 
-   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr) override
+   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr)
       {
       return rememberClass((J9Class *)classPtr, NULL, false) != NULL;
       }
 
    virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *classPtr,
-                                    const AOTCacheClassChainRecord **classChainRecord = NULL) override
+                                    const AOTCacheClassChainRecord **classChainRecord = NULL)
       {
       return (uintptr_t *)rememberClass((J9Class *)classPtr, classChainRecord, true);
       }
@@ -298,7 +298,7 @@ public:
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
 
-   virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) override;
+   virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL);
 
 #if defined(J9VM_OPT_JITSERVER)
    /**

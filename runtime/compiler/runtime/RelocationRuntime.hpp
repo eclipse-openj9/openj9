@@ -351,11 +351,11 @@ public:
       TR_SharedCacheRelocationRuntime(J9JITConfig *jitCfg) :
          _sharedCacheIsFull(false), TR_RelocationRuntime(jitCfg) {}
 
-      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread) override;
-      virtual const TR_AOTHeader *getStoredAOTHeader(J9VMThread *curThread) override;
-      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe) override;
-      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread) override;
-      virtual OMRProcessorDesc getProcessorDescriptionFromSCC(J9VMThread *curThread) override;
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual const TR_AOTHeader *getStoredAOTHeader(J9VMThread *curThread);
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual OMRProcessorDesc getProcessorDescriptionFromSCC(J9VMThread *curThread);
 
 private:
       uint32_t getCurrentLockwordOptionHashValue(J9JavaVM *vm) const;
