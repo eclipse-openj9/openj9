@@ -25,9 +25,11 @@ package org.openj9.test.foreignMemoryAccess;
 import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
+import org.openj9.test.util.VersionCheck;
 
 import java.lang.reflect.*;
 import java.lang.ref.Cleaner;
+import jdk.internal.misc.ScopedMemoryAccess.*;
 
 import org.objectweb.asm.*;
 import static org.objectweb.asm.Opcodes.*;
@@ -83,14 +85,25 @@ public class TestCloseScope0 {
 	@Test(expectedExceptions=java.lang.IllegalStateException.class)
 	public static void closeScopeDuringAccess() throws Throwable {
 		/* Reflect setup */
-		Class c = Class.forName("jdk.internal.foreign.MemoryScope");
-		Method createShared = c.getDeclaredMethod("createShared", new Class[] {Object.class, Runnable.class, Cleaner.class});
-		createShared.setAccessible(true);
-		Method close = c.getDeclaredMethod("close");
-		close.setAccessible(true);
-		final Object scope = createShared.invoke(null, null, new Thread(), null);
+		Class memoryOrResourceScope;
+		Method createShared;
+		Method close;
+		Object scope;
 
-		Class Scope = Class.forName("jdk.internal.misc.ScopedMemoryAccess$Scope");
+		int version = VersionCheck.major();
+		if (version == 16) {
+			memoryOrResourceScope = Class.forName("jdk.internal.foreign.MemoryScope");
+			createShared = memoryOrResourceScope.getDeclaredMethod("createShared", new Class[] {Object.class, Runnable.class, Cleaner.class});
+			createShared.setAccessible(true);
+			scope = createShared.invoke(null, null, new Thread(), null);
+		} else {
+			memoryOrResourceScope = Class.forName("jdk.internal.foreign.ResourceScopeImpl");
+			createShared = memoryOrResourceScope.getDeclaredMethod("createShared", new Class[] {Cleaner.class});
+			createShared.setAccessible(true);
+			scope = createShared.invoke(null, Cleaner.create());
+		}
+		close = memoryOrResourceScope.getDeclaredMethod("close");
+		close.setAccessible(true);
 		/* End Reflect setup */
 
 		/* ASM setup */
@@ -99,15 +112,15 @@ public class TestCloseScope0 {
 		ClassLoader loader = ClassLoader.getSystemClassLoader();
 		Class cls = Class.forName("java.lang.ClassLoader");
 		Method defineClass = cls.getDeclaredMethod(
-						"defineClass", 
+						"defineClass",
 						new Class[] { String.class, byte[].class, int.class, int.class });
 		defineClass.setAccessible(true);
-		
+
 		Object[] dcArgs = new Object[] {"jdk.internal.misc.RunInScoped", classBytes, 0, classBytes.length};
 		Class RunInScoped = (Class)defineClass.invoke(loader, dcArgs);
-		Method runInScoped = RunInScoped.getDeclaredMethod("runInScoped", new Class[] {Runnable.class, Scope});
+		Method runInScoped = RunInScoped.getDeclaredMethod("runInScoped", new Class[] {Runnable.class, Scope.class});
 		/* End ASM setup */
-		
+
 		Synch synch1 = new Synch();
 		Synch synch2 = new Synch();
 
@@ -132,7 +145,7 @@ public class TestCloseScope0 {
 				}
 			}
 		}, "ScopeCloserThread");
-		
+
 		class MyRunnable implements Runnable {
 			public void run() {
 				try {
@@ -151,7 +164,7 @@ public class TestCloseScope0 {
 				}
 			}
 		}
-		
+
 		MyRunnable r = new MyRunnable();
 		Thread t2 = new Thread(()->{
 			try {

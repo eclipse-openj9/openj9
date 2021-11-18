@@ -29,4 +29,9 @@
             <class name="org.openj9.test.java.lang.Test_Class"/>
         </classes>
     </test>
+    <test name="CloseScope0Tests">
+        <classes>
+            <class name="org.openj9.test.foreignMemoryAccess.TestCloseScope0"/>
+        </classes>
+    </test>
 </suite>
