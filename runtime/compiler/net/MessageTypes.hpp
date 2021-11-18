@@ -218,9 +218,10 @@ enum MessageType : uint16_t
    ClassEnv_iTableRomClass,
    ClassEnv_getITable,
    ClassEnv_enumerateFields,
+   ClassEnv_isClassRefValueType,
 
    // For TR_J9SharedCache
-   SharedCache_getClassChainOffsetInSharedCache,
+   SharedCache_getClassChainOffsetIdentifyingLoader,
    SharedCache_rememberClass,
    SharedCache_addHint,
    SharedCache_storeSharedData,
@@ -275,7 +276,7 @@ enum MessageType : uint16_t
    KnownObjectTable_getReferenceField,
    KnownObjectTable_getKnownObjectTableDumpInfo,
 
-   ClassEnv_isClassRefValueType,
+   AOTCache_getROMClassBatch,
 
    MessageType_MAXTYPE
    };
@@ -462,7 +463,8 @@ static const char *messageNames[] =
    "ClassEnv_iTableRomClass",
    "ClassEnv_getITable",
    "ClassEnv_enumerateFields",
-   "SharedCache_getClassChainOffsetInSharedCache",
+   "ClassEnv_isClassRefValueType",
+   "SharedCache_getClassChainOffsetIdentifyingLoader",
    "SharedCache_rememberClass",
    "SharedCache_addHint",
    "SharedCache_storeSharedData",
@@ -506,7 +508,7 @@ static const char *messageNames[] =
    "KnownObjectTable_createSymRefWithKnownObject",
    "KnownObjectTable_getReferenceField",
    "KnownObjectTable_getKnownObjectTableDumpInfo",
-   "ClassEnv_isClassRefValueType",
+   "AOTCache_getROMClassBatch",
    };
 
    static_assert(sizeof(messageNames) / sizeof(messageNames[0]) == MessageType_MAXTYPE,

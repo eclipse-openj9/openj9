@@ -499,7 +499,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromROMClass(sharedCache, romClass);
          traceMsg(comp, "class is %p, romclass is %p, offset is %llu\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
 
-         uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(inlinedCodeClass);
+         uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoader(inlinedCodeClass);
 
          uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(inlinedCodeClass);
 
@@ -540,7 +540,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR_OpaqueClassBlock *j9class = fej9->getClassFromMethodBlock(j9method);
 
-         uintptr_t classChainOffsetOfCLInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         uintptr_t classChainOffsetOfCLInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoader(j9class);
          uintptr_t classChainForInlinedMethodOffsetInSharedCache = self()->getClassChainOffset(j9class);
 
          uintptr_t vTableOffset = static_cast<uintptr_t>(fej9->getInterpreterVTableSlot(j9method, j9class));
@@ -580,7 +580,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
                j9class = reinterpret_cast<TR_OpaqueClassBlock *>(aconstNode->getAddress());
             }
 
-         uintptr_t classChainOffsetOfCLInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         uintptr_t classChainOffsetOfCLInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoader(j9class);
          uintptr_t classChainForInlinedMethodOffsetInSharedCache = self()->getClassChainOffset(j9class);
 
          cpRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
@@ -596,7 +596,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo*>(relocation->getTargetAddress2());
          TR_OpaqueClassBlock *classToValidate = aotCI->_clazz;
 
-         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
+         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetIdentifyingLoader(classToValidate);
 
          void *classChainForClassToValidate = aotCI->_classChain;
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
@@ -642,7 +642,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          void *classChainForClassToValidate = svmRecord->_classChain;
 
          //store the classchain's offset for the classloader for the class
-         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
+         uintptr_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetIdentifyingLoader(classToValidate);
 
          //store the classchain's offset for the class that needs to be validated in the second run
          uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
@@ -1074,7 +1074,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          void *constantPool = symRef->getOwningMethod(comp)->constantPool();
          inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(constantPool, inlinedSiteIndex);
 
-         uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoader(j9class);
          uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(j9class);
 
          acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
