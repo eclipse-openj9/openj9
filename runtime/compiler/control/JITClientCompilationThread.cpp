@@ -505,7 +505,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._staticObjectAllocateFlags = fe->getStaticObjectFlags();
          vmInfo._referenceArrayCopyHelperAddress = fe->getReferenceArrayCopyHelperAddress();
 
-         client->write(response, vmInfo, listOfCacheDescriptors);
+         vmInfo._useAOTCache = comp->getPersistentInfo()->getJITServerUseAOTCache();
+         if (vmInfo._useAOTCache)
+            {
+            auto header = compInfoPT->reloRuntime()->getStoredAOTHeader(vmThread);
+            TR_ASSERT_FATAL(header, "Must have valid AOT header stored in SCC by now");
+            vmInfo._aotHeader = *header;
+            }
+
+         client->write(response, vmInfo, listOfCacheDescriptors, comp->getPersistentInfo()->getJITServerAOTCacheName());
          }
          break;
       case MessageType::VM_getObjectClass:
@@ -2077,19 +2085,40 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, entries, fieldNames, typeSignatures); 
          }
          break;
-      case MessageType::SharedCache_getClassChainOffsetInSharedCache:
+      case MessageType::SharedCache_getClassChainOffsetIdentifyingLoader:
          {
-         auto j9class = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         uintptr_t classChainOffsetInSharedCache = fe->sharedCache()->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         client->write(response, classChainOffsetInSharedCache);
+         auto recv = client->getRecvData<TR_OpaqueClassBlock *, bool>();
+         auto j9class = std::get<0>(recv);
+         bool getName = std::get<1>(recv);
+         auto sharedCache = fe->sharedCache();
+         uintptr_t *chain = NULL;
+         uintptr_t offset = sharedCache->getClassChainOffsetIdentifyingLoader(j9class, &chain);
+         std::string nameStr;
+         if (getName && chain)
+            {
+            const J9UTF8 *name = J9ROMCLASS_CLASSNAME(sharedCache->startingROMClassOfClassChain(chain));
+            nameStr = std::string((const char *)J9UTF8_DATA(name), J9UTF8_LENGTH(name));
+            }
+         client->write(response, offset, nameStr);
          }
          break;
       case MessageType::SharedCache_rememberClass:
          {
-         auto recv = client->getRecvData<J9Class *, bool>();
+         auto recv = client->getRecvData<J9Class *, bool, bool>();
          auto clazz = std::get<0>(recv);
          bool create = std::get<1>(recv);
-         client->write(response, fe->sharedCache()->rememberClass(clazz, create));
+         bool getClasses = std::get<2>(recv);
+         uintptr_t *classChain = fe->sharedCache()->rememberClass(clazz, NULL, create);
+         std::vector<J9Class *> ramClassChain;
+         std::vector<J9Class *> uncachedRAMClasses;
+         std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
+         if (create && getClasses && classChain)
+            {
+            uintptr_t len = classChain[0] / sizeof(classChain[0]) - 1;
+            ramClassChain = JITServerHelpers::getRAMClassChain(clazz, len, vmThread, trMemory, compInfo,
+                                                               uncachedRAMClasses, uncachedClassInfos);
+            }
+         client->write(response, classChain, ramClassChain, uncachedRAMClasses, uncachedClassInfos);
          }
          break;
       case MessageType::SharedCache_addHint:
@@ -2760,6 +2789,24 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          knot->getKnownObjectTableDumpInfo(knownObjectTableDumpInfoList);
 
          client->write(response, knownObjectTableDumpInfoList);
+         }
+         break;
+      case MessageType::AOTCache_getROMClassBatch:
+         {
+         auto recv = client->getRecvData<std::vector<J9Class *>>();
+         auto &ramClasses = std::get<0>(recv);
+         std::vector<JITServerHelpers::ClassInfoTuple> classInfos;
+         classInfos.reserve(ramClasses.size());
+
+         for (J9Class *ramClass : ramClasses)
+            classInfos.push_back(JITServerHelpers::packRemoteROMClassInfo(ramClass, fe->vmThread(), trMemory, true));
+
+            {
+            OMR::CriticalSection cs(compInfo->getclassesCachedAtServerMonitor());
+            compInfo->getclassesCachedAtServer().insert(ramClasses.begin(), ramClasses.end());
+            }
+
+         client->write(response, classInfos);
          }
          break;
       default:
