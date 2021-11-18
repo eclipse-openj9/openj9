@@ -834,6 +834,14 @@ TR_J9ServerVM::isString(TR_OpaqueClassBlock * clazz)
    return std::get<0>(stream->read<bool>());
    }
 
+bool
+TR_J9ServerVM::isJavaLangObject(TR_OpaqueClassBlock *clazz)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return clazz == vmInfo->_JavaLangObject;
+   }
+
 void *
 TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
    {
@@ -2630,7 +2638,7 @@ TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method,
    bool skipFrames = false;
    TR::Compilation *comp = _compInfoPT->getCompilation();
    // For AOT with SVM do not optimize the messages by calling TR_J9ServerVM::stackWalkerMaySkipFrames
-   // because this will call isInstanceOf() and then isSuperClass() which will fail the 
+   // because this will call isInstanceOf() and then isSuperClass() which will fail the
    // the SVM validation check and result in an AOT compilation failure
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       {
