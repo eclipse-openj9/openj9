@@ -146,8 +146,11 @@ if(J9VM_OPT_JITSERVER)
 	add_subdirectory(net)
 endif()
 
-add_subdirectory(${TR_HOST_ARCH})
-if(NOT TR_TARGET_ARCH STREQUAL TR_HOST_ARCH)
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TR_HOST_ARCH}")
+	add_subdirectory(${TR_HOST_ARCH})
+endif()
+
+if(NOT TR_TARGET_ARCH STREQUAL TR_HOST_ARCH AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TR_TARGET_ARCH}")
 	add_subdirectory(${TR_TARGET_ARCH})
 endif()
 
