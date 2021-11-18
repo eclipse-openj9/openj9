@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,20 +29,18 @@
 class TR_PersistentClassLoaderTable;
 class TR_ResolvedMethod;
 namespace TR { class ResolvedMethodSymbol; }
-class AOTCacheClassChainRecord;
-
 
 class TR_SharedCache
    {
 public:
-   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *) { }
-   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *) { }
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *) { return; }
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *) { return; }
 
    virtual bool isMostlyFull() { return false; }
 
-   virtual bool canRememberClass(TR_OpaqueClassBlock *clazz) { return false; }
-   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL) { return NULL; }
-   virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *clazz, uintptr_t *chainData = NULL) { return false; }
+   virtual bool canRememberClass(TR_OpaqueClassBlock *clazz) { return 0; }
+   virtual uintptr_t *rememberClass(TR_OpaqueClassBlock *clazz) { return 0; }
+   virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *clazz, uintptr_t *chainData=NULL) { return false; }
 
    virtual void *pointerFromOffsetInSharedCache(uintptr_t offset) { return NULL; }
    virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr) { return 0; }
@@ -64,11 +62,12 @@ public:
    virtual bool isPtrToROMClassesSectionInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL) { return false; }
    virtual bool isOffsetOfPtrToROMClassesSectionInSharedCache(uintptr_t offset, void **ptr = NULL) { return false; }
 
-   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *loader) { return NULL; }
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *cinaData, void *loader) { return NULL; }
 
-   virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) { return 0; }
+   virtual uintptr_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) { return 0; }
 
    void setPersistentClassLoaderTable(TR_PersistentClassLoaderTable *table) { _persistentClassLoaderTable = table; }
+
    TR_PersistentClassLoaderTable *persistentClassLoaderTable() { return _persistentClassLoaderTable; }
 
 private:

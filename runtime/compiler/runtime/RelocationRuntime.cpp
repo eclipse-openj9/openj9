@@ -755,36 +755,22 @@ TR_RelocationRuntime::aotMethodHeaderVersionsMatch()
 bool
 TR_RelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    {
-   TR_ASSERT_FATAL(false, "Error: storeAOTHeader not supported in this relocation runtime");
+   TR_ASSERT(0, "Error: storeAOTHeader not supported in this relocation runtime");
    return false;
-   }
-
-const TR_AOTHeader *
-TR_RelocationRuntime::getStoredAOTHeader(J9VMThread *curThread)
-   {
-   TR_ASSERT_FATAL(false, "Error: getStoredAOTHeader not supported in this relocation runtime");
-   return NULL;
    }
 
 TR_AOTHeader *
 TR_RelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
    {
-   TR_ASSERT_FATAL(false, "Error: createAOTHeader not supported in this relocation runtime");
+   TR_ASSERT(0, "Error: createAOTHeader not supported in this relocation runtime");
    return NULL;
    }
 
 bool
 TR_RelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    {
-   TR_ASSERT_FATAL(false, "Error: validateAOTHeader not supported in this relocation runtime");
+   TR_ASSERT(0, "Error: validateAOTHeader not supported in this relocation runtime");
    return false;
-   }
-
-OMRProcessorDesc
-TR_RelocationRuntime::getProcessorDescriptionFromSCC(J9VMThread *curThread)
-   {
-   TR_ASSERT_FATAL(false, "Error: getProcessorDescriptionFromSCC not supported in this relocation runtime");
-   return OMRProcessorDesc();
    }
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -937,7 +923,7 @@ TR_SharedCacheRelocationRuntime::generateError(U_32 module_name, U_32 reason, ch
    }
 
 void
-TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(const TR_AOTHeader *hdrInCache, intptr_t featureFlags)
+TR_SharedCacheRelocationRuntime::checkAOTHeaderFlags(TR_AOTHeader *hdrInCache, intptr_t featureFlags)
    {
    bool defaultMessage = true;
 
@@ -999,15 +985,26 @@ TR_SharedCacheRelocationRuntime::getCurrentLockwordOptionHashValue(J9JavaVM *vm)
    }
 
 OMRProcessorDesc
-TR_SharedCacheRelocationRuntime::getProcessorDescriptionFromSCC(J9VMThread *curThread)
+TR_SharedCacheRelocationRuntime::getProcessorDescriptionFromSCC(TR_FrontEnd *fe, J9VMThread *curThread)
    {
-   const TR_AOTHeader *hdrInCache = getStoredAOTHeader(curThread);
-   TR_ASSERT_FATAL(hdrInCache, "No Shared Class Cache available for Processor Description\n");
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+   J9SharedDataDescriptor firstDescriptor;
+   firstDescriptor.address = NULL;
+   javaVM()->sharedClassConfig->findSharedData(curThread,
+                                             aotHeaderKey,
+                                             aotHeaderKeyLength,
+                                             J9SHR_DATA_TYPE_AOTHEADER,
+                                             FALSE,
+                                             &firstDescriptor,
+                                             NULL);
+
+   const void* result = firstDescriptor.address;
+   TR_ASSERT_FATAL(result, "No Shared Class Cache available for Processor Description\n");
+   TR_AOTHeader * hdrInCache = (TR_AOTHeader *)result;
    return hdrInCache->processorDescription;
    }
 
-static void
-setAOTHeaderInvalid(TR_JitPrivateConfig *privateConfig)
+static void setAOTHeaderInvalid(TR_JitPrivateConfig *privateConfig)
    {
    TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
    TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
@@ -1048,10 +1045,23 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
       }
 
    /* Look for an AOT header in the cache and see if this JVM is compatible */
-   const TR_AOTHeader *hdrInCache = getStoredAOTHeader(curThread);
-   if (hdrInCache)
+
+   J9SharedDataDescriptor firstDescriptor;
+   firstDescriptor.address = NULL;
+   javaVM()->sharedClassConfig->findSharedData(curThread,
+                                             aotHeaderKey,
+                                             aotHeaderKeyLength,
+                                             J9SHR_DATA_TYPE_AOTHEADER,
+                                             FALSE,
+                                             &firstDescriptor,
+                                             NULL);
+
+   const void* result = firstDescriptor.address;
+   if (result)
       {
       /* check compatibility */
+      TR_AOTHeader * hdrInCache = (TR_AOTHeader * )result;
+
       intptr_t featureFlags = generateFeatureFlags(fe);
 
       TR_Version currentVersion;
@@ -1117,16 +1127,6 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
       // static_cast<TR_JitPrivateConfig *>(jitConfig()->privateConfig)->aotValidHeader = TR_maybe;
       return false;
       }
-   }
-
-const TR_AOTHeader *
-TR_SharedCacheRelocationRuntime::getStoredAOTHeader(J9VMThread *curThread)
-   {
-   J9SharedDataDescriptor firstDescriptor;
-   firstDescriptor.address = NULL;
-   javaVM()->sharedClassConfig->findSharedData(curThread, aotHeaderKey, aotHeaderKeyLength,
-                                               J9SHR_DATA_TYPE_AOTHEADER, FALSE, &firstDescriptor, NULL);
-   return (const TR_AOTHeader *)firstDescriptor.address;
    }
 
 TR_AOTHeader *

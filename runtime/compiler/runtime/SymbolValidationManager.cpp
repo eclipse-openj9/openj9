@@ -26,7 +26,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/AOTFailure.hpp"
-#include "compile/J9Compilation.hpp"
+#include "compile/Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "infra/String.hpp"
@@ -35,10 +35,9 @@
 
 #if defined(J9VM_OPT_JITSERVER)
 #include "runtime/JITClientSession.hpp"
-#endif /* defined(J9VM_OPT_JITSERVER) */
+#endif
 
 #include "j9protos.h"
-
 
 TR::SymbolValidationManager::SystemClassNotWorthRemembering
 TR::SymbolValidationManager::_systemClassesNotWorthRemembering[] = {
@@ -68,15 +67,12 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
         _vmThread,
 #if defined(J9VM_OPT_JITSERVER)
         TR::CompilationInfo::get()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ? TR_J9VMBase::J9_SERVER_VM : 
-#endif /* defined(J9VM_OPT_JITSERVER) */
+#endif
         TR_J9VMBase::DEFAULT_VM)),
      _trMemory(_comp->trMemory()),
      _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
      _rootClass(compilee->classOfMethod()),
      _wellKnownClassChainOffsets(NULL),
-#if defined(J9VM_OPT_JITSERVER)
-     _aotCacheWellKnownClassesRecord(NULL),
-#endif /* defined(J9VM_OPT_JITSERVER) */
      _symbolValidationRecords(_region),
      _alreadyGeneratedRecords(LessSymbolValidationRecord(), _region),
      _classesFromAnyCPIndex(LessClassFromAnyCPIndex(), _region),
@@ -238,13 +234,6 @@ TR::SymbolValidationManager::populateWellKnownClasses()
    uintptr_t *classCount = &classChainOffsets[0];
    uintptr_t *nextClassChainOffset = &classChainOffsets[1];
 
-#if defined(J9VM_OPT_JITSERVER)
-   ClientSessionData *clientData = _comp->getClientData();
-   bool aotCacheStore = _comp->isAOTCacheStore();
-   const AOTCacheClassChainRecord *classChainRecords[WELL_KNOWN_CLASS_COUNT] = {0};
-   bool missingClassChainRecords = false;
-#endif /* defined(J9VM_OPT_JITSERVER) */
-
    for (int i = 0; i < WELL_KNOWN_CLASS_COUNT; i++)
       {
       const char *name = names[i];
@@ -253,24 +242,11 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 
       void *chain = NULL;
       if (wkClass == NULL)
-         {
          traceMsg(_comp, "well-known class %s not found\n", name);
-         }
       else if (!_fej9->isPublicClass(wkClass))
-         {
          traceMsg(_comp, "well-known class %s is not public\n", name);
-         }
       else
-         {
-#if defined(J9VM_OPT_JITSERVER)
-         auto recordPtr = &classChainRecords[_wellKnownClasses.size()];
-         chain = _fej9->sharedCache()->rememberClass(wkClass, recordPtr);
-         if (aotCacheStore && !*recordPtr)
-            missingClassChainRecords = true;
-#else /* defined(J9VM_OPT_JITSERVER) */
          chain = _fej9->sharedCache()->rememberClass(wkClass);
-#endif /* defined(J9VM_OPT_JITSERVER) */
-         }
 
       if (chain == NULL)
          {
@@ -294,12 +270,12 @@ TR::SymbolValidationManager::populateWellKnownClasses()
    *classCount = _wellKnownClasses.size();
 
 #if defined(J9VM_OPT_JITSERVER)
+   ClientSessionData *clientData = _comp->getClientData();
    if (clientData)
       {
       // This is an out-of-process compilation; check the cache in the client session first
       _wellKnownClassChainOffsets = clientData->getCachedWellKnownClassChainOffsets(
-         includedClasses, _wellKnownClasses.size(), classChainOffsets + 1, _aotCacheWellKnownClassesRecord
-      );
+         includedClasses, _wellKnownClasses.size(), classChainOffsets + 1);
       if (_wellKnownClassChainOffsets)
          return;
       }
@@ -325,10 +301,8 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       {
       // This is an out-of process compilation; cache the pointer to the newly created well-known
       // class chain offsets in the client session to avoid sending repeated requests to the client
-      clientData->cacheWellKnownClassChainOffsets(
-         includedClasses, _wellKnownClasses.size(), classChainOffsets + 1, _wellKnownClassChainOffsets,
-         (aotCacheStore && !missingClassChainRecords) ? classChainRecords : NULL, _aotCacheWellKnownClassesRecord
-      );
+      clientData->cacheWellKnownClassChainOffsets(includedClasses, _wellKnownClasses.size(),
+                                                  classChainOffsets + 1, _wellKnownClassChainOffsets);
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -605,17 +579,13 @@ TR::SymbolValidationManager::getClassChainInfo(
       {
       // info._baseComponent is a non-array reference type. It can't be a
       // primitive because primitives always satisfy isAlreadyValidated().
-      const AOTCacheClassChainRecord *classChainRecord = NULL;
       info._baseComponentClassChain =
-         _fej9->sharedCache()->rememberClass(info._baseComponent, &classChainRecord);
+         _fej9->sharedCache()->rememberClass(info._baseComponent);
       if (info._baseComponentClassChain == NULL)
          {
          _region.deallocate(record);
          return false;
          }
-#if defined(J9VM_OPT_JITSERVER)
-      info._baseComponentAOTCacheClassChainRecord = classChainRecord;
-#endif /* defined(J9VM_OPT_JITSERVER) */
       }
 
    return true;
@@ -645,11 +615,7 @@ TR::SymbolValidationManager::appendClassChainInfoRecords(
          info._baseComponent,
          new (_region) ClassChainRecord(
             info._baseComponent,
-            info._baseComponentClassChain
-#if defined(J9VM_OPT_JITSERVER)
-            , info._baseComponentAOTCacheClassChainRecord
-#endif /* defined(J9VM_OPT_JITSERVER) */
-         ));
+            info._baseComponentClassChain));
       }
    }
 
@@ -695,17 +661,13 @@ TR::SymbolValidationManager::addClassRecordWithChain(TR::ClassValidationRecordWi
 
    if (!_fej9->isPrimitiveClass(record->_class))
       {
-      const AOTCacheClassChainRecord *classChainRecord = NULL;
-      record->_classChain = _fej9->sharedCache()->rememberClass(record->_class, &classChainRecord);
+      record->_classChain = _fej9->sharedCache()->rememberClass(record->_class);
       if (record->_classChain == NULL)
          {
          _region.deallocate(record);
          return false;
          }
 
-#if defined(J9VM_OPT_JITSERVER)
-      record->_aotCacheClassChainRecord = classChainRecord;
-#endif /* defined(J9VM_OPT_JITSERVER) */
       appendRecordIfNew(record->_class, record);
       }
 
@@ -799,13 +761,12 @@ TR::SymbolValidationManager::addProfiledClassRecord(TR_OpaqueClassBlock *clazz)
    int32_t arrayDims = 0;
    clazz = getBaseComponentClass(clazz, arrayDims);
 
-   const AOTCacheClassChainRecord *classChainRecord = NULL;
-   void *classChain = _fej9->sharedCache()->rememberClass(clazz, &classChainRecord);
+   void *classChain = _fej9->sharedCache()->rememberClass(clazz);
    if (classChain == NULL)
       return false;
 
    if (!isAlreadyValidated(clazz))
-      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChain, classChainRecord));
+      appendNewRecord(clazz, new (_region) ProfiledClassRecord(clazz, classChain));
 
    addMultipleArrayRecords(clazz, arrayDims);
    return true;
