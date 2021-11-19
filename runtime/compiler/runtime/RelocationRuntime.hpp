@@ -136,7 +136,7 @@ class TR_RelocationRuntime {
       TR_J9VMBase *fej9()                                         { return (TR_J9VMBase *)_fe; }
       J9JavaVM *javaVM()                                          { return _javaVM; }
       TR_Memory *trMemory()                                       { return _trMemory; }
-      TR::CompilationInfo *compInfo()                              { return _compInfo; }
+      TR::CompilationInfo *compInfo()                             { return _compInfo; }
       J9VMThread *currentThread()                                 { return _currentThread; }
       J9Method *method()                                          { return _method; }
       TR::CodeCache *codeCache()                                  { return _codeCache; }
@@ -164,11 +164,11 @@ class TR_RelocationRuntime {
       int32_t returnCode()                                        { return _returnCode; }
       void setReturnCode(int32_t rc)                              { _returnCode = rc; }
 
-      TR::Options *options()                                       { return _options; }
-      TR::Compilation *comp()                                    { return _comp; }
+      TR::Options *options()                                      { return _options; }
+      TR::Compilation *comp()                                     { return _comp; }
       TR_ResolvedMethod *currentResolvedMethod()                  { return _currentResolvedMethod; }
 
-      TR::PersistentInfo *getPersistentInfo()                      { return comp()->getPersistentInfo(); }
+      TR::PersistentInfo *getPersistentInfo()                     { return comp()->getPersistentInfo(); }
 
       // current main entry point
       J9JITExceptionTable *prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
@@ -183,9 +183,10 @@ class TR_RelocationRuntime {
                                                          uint8_t *existingCode = NULL);
 
       virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual const TR_AOTHeader *getStoredAOTHeader(J9VMThread *curThread);
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
-      virtual OMRProcessorDesc getProcessorDescriptionFromSCC(TR_FrontEnd *fe, J9VMThread *curThread) { TR_ASSERT_FATAL(0, "Error: getProcessorDescriptionFromSCC not supported in this relocation runtime"); return OMRProcessorDesc();}
+      virtual OMRProcessorDesc getProcessorDescriptionFromSCC(J9VMThread *curThread);
 
       static uintptr_t    getGlobalValue(uint32_t g)
          {
@@ -351,9 +352,10 @@ public:
          _sharedCacheIsFull(false), TR_RelocationRuntime(jitCfg) {}
 
       virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual const TR_AOTHeader *getStoredAOTHeader(J9VMThread *curThread);
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
-      virtual OMRProcessorDesc getProcessorDescriptionFromSCC(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual OMRProcessorDesc getProcessorDescriptionFromSCC(J9VMThread *curThread);
 
 private:
       uint32_t getCurrentLockwordOptionHashValue(J9JavaVM *vm) const;
@@ -364,7 +366,7 @@ private:
 
       virtual void incompatibleCache(U_32 module, U_32 reason, char *assumeMessage);
 
-      void checkAOTHeaderFlags(TR_AOTHeader * hdrInCache, intptr_t featureFlags);
+      void checkAOTHeaderFlags(const TR_AOTHeader *hdrInCache, intptr_t featureFlags);
       bool generateError(U_32 module_name, U_32 reason, char *assumeMessage);
 
       bool _sharedCacheIsFull;
@@ -382,10 +384,16 @@ public:
       void * operator new(size_t, J9JITConfig *);
       TR_JITServerRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
       // The following public APIs should not be used with this class
-      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
-      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
-      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
-      virtual OMRProcessorDesc getProcessorDescriptionFromSCC(TR_FrontEnd *fe, J9VMThread *curThread) override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return OMRProcessorDesc(); }
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread) override
+         { TR_ASSERT_FATAL(false, "Should not be called in this RelocationRuntime!"); return false; }
+      virtual const TR_AOTHeader *getStoredAOTHeader(J9VMThread *curThread) override
+         { TR_ASSERT_FATAL(false, "Should not be called in this RelocationRuntime!"); return NULL; }
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe) override
+         { TR_ASSERT_FATAL(false, "Should not be called in this RelocationRuntime!"); return NULL; }
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread) override
+         { TR_ASSERT_FATAL(false, "Should not be called in this RelocationRuntime!"); return false; }
+      virtual OMRProcessorDesc getProcessorDescriptionFromSCC(J9VMThread *curThread) override
+         { TR_ASSERT_FATAL(false, "Should not be called in this RelocationRuntime!"); return OMRProcessorDesc(); }
 
       static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
 

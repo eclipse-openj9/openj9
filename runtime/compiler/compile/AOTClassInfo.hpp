@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,8 @@
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
 
+class AOTCacheClassChainRecord;
+
 
 // AOTClassInfo is a structure used to record assumptions on classes made by the
 // current compilation.  There are two types of validations: ones based on a
@@ -47,7 +49,7 @@ namespace TR
 
 class AOTClassInfo
    {
-   public:
+public:
 
    TR_ALLOC(TR_Memory::AOTClassInfo)
 
@@ -57,27 +59,43 @@ class AOTClassInfo
          void *classChain,
          TR_OpaqueMethodBlock *method,
          uint32_t cpIndex,
-         TR_ExternalRelocationTargetKind
-         reloKind) :
+         TR_ExternalRelocationTargetKind reloKind,
+         const AOTCacheClassChainRecord *aotCacheClassChainRecord = NULL
+   ) :
       _clazz(clazz),
       _classChain(classChain),
       _method(method),
       _constantPool((void *) ((TR_J9VMBase *)fe)->getConstantPoolFromMethod(method)),
       _cpIndex(cpIndex),
       _reloKind(reloKind)
-      {}
+      {
+#if defined(J9VM_OPT_JITSERVER)
+      TR_ASSERT(!aotCacheClassChainRecord || (fe->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER),
+                "Must always be NULL at JIT client");
+      _aotCacheClassChainRecord = aotCacheClassChainRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      }
+
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return _aotCacheClassChainRecord; }
+#else /* defined(J9VM_OPT_JITSERVER) */
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return NULL; }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_ExternalRelocationTargetKind _reloKind;   // identifies validation needed (instance field, static field, class, arbitrary class)
-
+   uint32_t _cpIndex;                           // cpindex identifying the cp entry if known otherwise -1
    TR_OpaqueMethodBlock *_method;               // inlined method owning the cp entry or to which assumption is attached
                                                 // _method must be compiled method or some method in the inlined site table
    void *_constantPool;                         // constant pool owning the cp entry, initialized based on _method
-
-   uint32_t _cpIndex;                           // cpindex identifying the cp entry if known otherwise -1
    TR_OpaqueClassBlock *_clazz;                 // class on which assumption is formed
    void *_classChain;                           // class chain for clazz: captures the assumption
                                                 // == NULL for TR_ValidateStaticField validations
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheClassChainRecord *_aotCacheClassChainRecord; // NULL at JITServer if compiled method won't be cached
+                                                              // Always NULL at JIT client
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 }
+
 #endif

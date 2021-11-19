@@ -40,7 +40,10 @@
 
 #if defined(J9VM_OPT_JITSERVER)
 class ClientSessionData;
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
+class AOTCacheClassChainRecord;
+class AOTCacheWellKnownClassesRecord;
+
 
 #define SVM_ASSERT_LOCATION_INNER(line) __FILE__ ":" #line
 #define SVM_ASSERT_LOCATION(line) SVM_ASSERT_LOCATION_INNER(line)
@@ -156,12 +159,25 @@ struct ClassValidationRecordWithChain : public ClassValidationRecord
    {
    ClassValidationRecordWithChain(TR_ExternalRelocationTargetKind kind, TR_OpaqueClassBlock *clazz)
       : ClassValidationRecord(kind), _class(clazz), _classChain(NULL)
-      {}
+      {
+#if defined(J9VM_OPT_JITSERVER)
+      _aotCacheClassChainRecord = NULL;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      }
 
    virtual void printFields();
 
-   TR_OpaqueClassBlock * _class;
-   void * _classChain;
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return _aotCacheClassChainRecord; }
+#else /* defined(J9VM_OPT_JITSERVER) */
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return NULL; }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   TR_OpaqueClassBlock *_class;
+   void *_classChain;
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheClassChainRecord *_aotCacheClassChainRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 struct ClassByNameRecord : public ClassValidationRecordWithChain
@@ -180,16 +196,30 @@ struct ClassByNameRecord : public ClassValidationRecordWithChain
 
 struct ProfiledClassRecord : public ClassValidationRecord
    {
-   ProfiledClassRecord(TR_OpaqueClassBlock *clazz, void *classChain)
+   ProfiledClassRecord(TR_OpaqueClassBlock *clazz, void *classChain,
+                       const AOTCacheClassChainRecord *aotCacheClassChainRecord = NULL)
       : ClassValidationRecord(TR_ValidateProfiledClass),
         _class(clazz), _classChain(classChain)
-      {}
+      {
+#if defined(J9VM_OPT_JITSERVER)
+      _aotCacheClassChainRecord = aotCacheClassChainRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      }
 
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
-   TR_OpaqueClassBlock * _class;
-   void * _classChain;
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return _aotCacheClassChainRecord; }
+#else /* defined(J9VM_OPT_JITSERVER) */
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return NULL; }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
+   TR_OpaqueClassBlock *_class;
+   void *_classChain;
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheClassChainRecord *_aotCacheClassChainRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 struct ClassFromCPRecord : public ClassValidationRecord
@@ -358,17 +388,31 @@ struct ConcreteSubClassFromClassRecord : public ClassValidationRecord
 
 struct ClassChainRecord : public SymbolValidationRecord
    {
-   ClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain)
+   ClassChainRecord(TR_OpaqueClassBlock *clazz, void *classChain,
+                    const AOTCacheClassChainRecord *aotCacheClassChainRecord = NULL)
       : SymbolValidationRecord(TR_ValidateClassChain),
         _class(clazz),
         _classChain(classChain)
-      {}
+      {
+#if defined(J9VM_OPT_JITSERVER)
+      _aotCacheClassChainRecord = aotCacheClassChainRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      }
 
    virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
    virtual void printFields();
 
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return _aotCacheClassChainRecord; }
+#else /* defined(J9VM_OPT_JITSERVER) */
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return NULL; }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    TR_OpaqueClassBlock *_class;
    void *_classChain;
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheClassChainRecord *_aotCacheClassChainRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 struct MethodValidationRecord : public SymbolValidationRecord
@@ -653,7 +697,10 @@ public:
    bool validateWellKnownClasses(const uintptr_t *wellKnownClassChainOffsets);
    bool isWellKnownClass(TR_OpaqueClassBlock *clazz);
    bool classCanSeeWellKnownClasses(TR_OpaqueClassBlock *clazz);
-   const void *wellKnownClassChainOffsets() { return _wellKnownClassChainOffsets; }
+   const void *wellKnownClassChainOffsets() const { return _wellKnownClassChainOffsets; }
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheWellKnownClassesRecord *aotCacheWellKnownClassesRecord() const { return _aotCacheWellKnownClassesRecord; }
+#endif /* defined(J9VM_OPT_JITSERVER */
 
    enum Presence
       {
@@ -801,11 +848,19 @@ private:
    struct ClassChainInfo
       {
       ClassChainInfo()
-         : _baseComponent(NULL), _baseComponentClassChain(NULL), _arrayDims(0) {}
+         : _baseComponent(NULL), _baseComponentClassChain(NULL), _arrayDims(0)
+         {
+#if defined(J9VM_OPT_JITSERVER)
+         _baseComponentAOTCacheClassChainRecord = NULL;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         }
 
       TR_OpaqueClassBlock *_baseComponent;
       void *_baseComponentClassChain;
       int32_t _arrayDims;
+#if defined(J9VM_OPT_JITSERVER)
+      const AOTCacheClassChainRecord *_baseComponentAOTCacheClassChainRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
       };
 
    bool getClassChainInfo(TR_OpaqueClassBlock *clazz, TR::SymbolValidationRecord *record, ClassChainInfo &info);
@@ -852,6 +907,9 @@ private:
 
    TR_OpaqueClassBlock *_rootClass;
    const void *_wellKnownClassChainOffsets;
+#if defined(J9VM_OPT_JITSERVER)
+   const AOTCacheWellKnownClassesRecord *_aotCacheWellKnownClassesRecord;
+#endif /* defined(J9VM_OPT_JITSERVER */
 
    /* List of validation records to be written to the AOT buffer */
    SymbolValidationRecordList _symbolValidationRecords;

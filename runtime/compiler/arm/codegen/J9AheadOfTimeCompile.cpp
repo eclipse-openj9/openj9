@@ -237,7 +237,7 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          // flags stored in data3 are currently unused
          uintptr_t inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(symRef->getOwningMethod(comp)->constantPool(), recordInfo->data2);
 
-         uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
+         uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoader(j9class);
          uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(j9class);
 
          acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
