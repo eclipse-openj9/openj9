@@ -424,7 +424,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto req = stream->readCompileRequest<
          uint64_t, uint32_t, uint32_t, J9Method *, J9Class *, TR_OptimizationPlan, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock *>, std::vector<TR_OpaqueClassBlock *>,
-         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool, bool
+         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool, bool, uint32_t,
+         uintptr_t *, std::vector<J9Class *>, std::vector<J9Class *>, std::vector<JITServerHelpers::ClassInfoTuple>
       >();
 
       clientId                      = std::get<0>(req);
@@ -444,6 +445,11 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto &chtableMods             = std::get<14>(req);
       useAotCompilation             = std::get<15>(req);
       bool isInStartupPhase         = std::get<16>(req);
+      uint32_t methodIndex          = std::get<17>(req);
+      uintptr_t *classChain         = std::get<18>(req);
+      auto &ramClassChain           = std::get<19>(req);
+      auto &uncachedRAMClasses      = std::get<20>(req);
+      auto &uncachedClassInfos      = std::get<21>(req);
 
       TR_ASSERT_FATAL(TR::Compiler->persistentMemory() == compInfo->persistentMemory(),
                       "per-client persistent memory must not be set at this point");
@@ -729,6 +735,25 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // If we want something then we need to increaseQueueWeightBy(weight) while holding compilation monitor
       entry._weight = 0;
       entry._useAotCompilation = useAotCompilation;
+
+      auto aotCache = clientSession->getOrCreateAOTCache(stream);
+      entry._aotCacheStore = classChain && aotCache;
+      entry._methodIndex = methodIndex;
+
+      if (entry._aotCacheStore)
+         {
+         JITServerHelpers::cacheRemoteROMClassBatch(clientSession, uncachedRAMClasses, uncachedClassInfos);
+         entry._definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChain, ramClassChain, stream);
+         if (!entry._definingClassChainRecord)
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                  "Failed to get defining class chain record for %p; method %p won't be stored in AOT cache",
+                  clazz, ramMethod
+               );
+            entry._aotCacheStore = false;
+            }
+         }
       }
    catch (const JITServer::StreamFailure &e)
       {
