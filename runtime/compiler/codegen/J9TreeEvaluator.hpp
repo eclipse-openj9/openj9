@@ -61,13 +61,13 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
 
       InstanceOfOrCheckCastMaxSequences
       };
-   
+
    /** \brief
      *   A structure containing following information
      *   1. class
      *   2. boolean representing if the class is instanceof cast class or not
      *   3. probability
-     */    
+     */
    struct InstanceOfOrCheckCastProfiledClasses
       {
       TR_OpaqueClassBlock *profiledClass;
@@ -169,8 +169,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
    static TR::Register *pdSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pdModifyPrecisionEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *countDigitsEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *BCDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg); 
- 
+   static TR::Register *BCDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
    static uint32_t calculateInstanceOfOrCheckCastSequences(TR::Node *instanceOfOrCheckCastNode, InstanceOfOrCheckCastSequences *sequences, TR_OpaqueClassBlock **compileTimeGuessClass, TR::CodeGenerator *cg, InstanceOfOrCheckCastProfiledClasses *profiledClassList, uint32_t *numberOfProfiledClass, uint32_t maxProfileClass, float *topClassProbability, bool *topClassWasCastClass);
 
    static uint8_t interpreterProfilingInstanceOfOrCheckCastInfo(TR::CodeGenerator * cg, TR::Node * node, TR_OpaqueClassBlock **classArray, float* probability=NULL, bool recordAll = false);
@@ -243,6 +243,14 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
 
    static TR::Register *resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
+   /*
+    * \brief
+    *  Checks if inline allocation is allowed when value type is enabled.
+    *  The helper call is required if the first child of the "new" node, the class node, is a value type class
+    *  but it tries to create a non-value type instance, or if the class node is non-value type class but it
+    *  tries to create a value type instance.
+    */
+   static bool requireHelperCallValueTypeAllocation(TR::Node *node, TR::CodeGenerator *cg);
    };
 
 }

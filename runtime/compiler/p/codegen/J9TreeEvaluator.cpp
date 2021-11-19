@@ -1900,13 +1900,9 @@ TR::Register *J9::Power::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node *n
 
 TR::Register *J9::Power::TreeEvaluator::newObjectEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   // If the helper symbol set on the node is TR_newValue, we are (expecting to be)
-   // dealing with a value type. Since we do not fully support value types yet, always
-   // call the JIT helper to do the allocation.
-   //
    TR::Compilation* comp = cg->comp();
    if (comp->suppressAllocationInlining() ||
-       (TR::Compiler->om.areValueTypesEnabled() && node->getSymbolReference() == comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol())))
+       TR::TreeEvaluator::requireHelperCallValueTypeAllocation(node, cg))
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
       TR::Node::recreate(node, TR::acall);
@@ -6458,7 +6454,9 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
       //To retrieve the destination node->getSymbolReference() is used below after genHeapAlloc.
       if (isDualTLH && node->canSkipZeroInitialization())
          {
-         if (node->getOpCodeValue() == TR::New)
+         // For value types, the backout path should call jitNewValue helper call which is set up before code gen
+         if ((node->getOpCodeValue() == TR::New)
+             && (!TR::Compiler->om.areValueTypesEnabled() || (node->getSymbolReference() != comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol()))))
             node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewObjectNoZeroInitSymbolRef(comp->getMethodSymbol()));
          else if (node->getOpCodeValue() == TR::newarray)
             node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
