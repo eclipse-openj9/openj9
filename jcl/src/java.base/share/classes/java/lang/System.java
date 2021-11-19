@@ -114,6 +114,9 @@ public final class System {
 	private static String fileEncoding;
 	private static String osEncoding;
 
+	private static final int sysPropID_PlatformEncoding = 1;
+	private static final int sysPropID_FileEncoding = 2;
+	private static final int sysPropID_OSEncoding = 3;
 	/*[IF JAVA_SPEC_VERSION >= 18]*/
 	private static final int sysPropID_OSVersion = 0;
 	private static final String sysPropOSVersion;
@@ -136,19 +139,16 @@ public final class System {
 
 	// Initialize all the slots in System on first use.
 	static {
-		initEncodings();
+		/* Get following system properties in clinit and make it available via static variables
+		 * at early boot stage in which System is not fully initialized
+		 * os.version, os.encoding, ibm.system.encoding/sun.jnu.encoding, file.encoding
+		 */
 		/*[IF JAVA_SPEC_VERSION >= 18]*/
 		sysPropOSVersion = getSysPropBeforePropertiesInitialized(sysPropID_OSVersion);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
-	}
-
-	//	get following system properties in clinit and make it available via static variables
-	//	at early boot stage in which System is not fully initialized
-	//	os.encoding, ibm.system.encoding/sun.jnu.encoding, file.encoding
-	private static void initEncodings() {
-		platformEncoding = getEncoding(PlatformEncoding);
-		String definedFileEncoding = getEncoding(FileEncoding);
-		String definedOSEncoding = getEncoding(OSEncoding);
+		platformEncoding = getSysPropBeforePropertiesInitialized(sysPropID_PlatformEncoding);;
+		String definedFileEncoding = getSysPropBeforePropertiesInitialized(sysPropID_FileEncoding);
+		String definedOSEncoding = getSysPropBeforePropertiesInitialized(sysPropID_OSEncoding);
 		if (definedFileEncoding != null) {
 			fileEncoding = definedFileEncoding;
 			// if file.encoding is defined, and os.encoding is not, use the detected
@@ -160,8 +160,9 @@ public final class System {
 			fileEncoding = platformEncoding;
 		}
 		// if os.encoding is not defined, file.encoding will be used
-		if (osEncoding == null)
+		if (osEncoding == null) {
 			osEncoding = definedOSEncoding;
+		}
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
@@ -289,6 +290,10 @@ public final class System {
 
 		/*[PR CMVC 150472] sun.misc.SharedSecrets needs access to java.lang. */
 		SharedSecrets.setJavaLangAccess(new Access());
+
+		/*[IF JAVA_SPEC_VERSION >= 11]*/
+		initJCLPlatformEncoding();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 		/*[REM] Initialize the JITHelpers needed in J9VMInternals since the class can't do it itself */
 		try {
@@ -567,12 +572,6 @@ private static void arraycopy(Object[] A1, int offset1, Object[] A2, int offset2
  * @return		the time in milliseconds.
  */
 public static native long currentTimeMillis();
-
-
-private static final int InitLocale = 0;
-private static final int PlatformEncoding = 1;
-private static final int FileEncoding = 2;
-private static final int OSEncoding = 3;
 
 /*[IF OpenJ9-RawBuild]*/
 	/* This is a JCL native required only by OpenJ9 raw build.
@@ -895,25 +894,23 @@ public static String setProperty(String prop, String value) {
  */
 private static native String [] getPropertyList();
 
-
+/*[IF JAVA_SPEC_VERSION >= 11]*/
 /**
- * Return the requested encoding.
- * 		0 - initialize locale
- * 		1 - detected platform encoding
- * 		2 - command line defined file.encoding
- * 		3 - command line defined os.encoding
+ * Invoke JCL native to initialize platform encoding explicitly.
  */
-private static native String getEncoding(int type);
+private static native void initJCLPlatformEncoding();
+/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
-/*[IF JAVA_SPEC_VERSION >= 18]*/
 /**
  * Before propertiesInitialized is set to true,
  * this returns the requested system property according to sysPropID:
- * 		0 - os.version
- * 		Reserved for future
+ *   0 - os.version
+ *   1 - platform encoding
+ *   2 - file.encoding
+ *   3 - os.encoding
+ *   Reserved for future
  */
 private static native String getSysPropBeforePropertiesInitialized(int sysPropID);
-/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
 /**
  * Answers the active security manager.

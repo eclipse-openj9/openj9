@@ -345,7 +345,7 @@ omr_add_exports(jclse
 	Java_java_lang_J9VMInternals_dumpString
 	Java_java_lang_J9VMInternals_getStackTrace
 	Java_java_lang_J9VMInternals_newInstance
-	Java_java_lang_System_getEncoding
+	Java_java_lang_System_getSysPropBeforePropertiesInitialized
 	Java_java_lang_System_getPropertyList
 	Java_java_lang_System_mapLibraryName
 	Java_java_lang_System_rasInitializeVersion
@@ -588,6 +588,7 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 		Java_java_lang_Class_getNestHostImpl
 		Java_java_lang_Class_getNestMembersImpl
 		Java_java_lang_invoke_MethodHandleResolver_getCPConstantDynamicAt
+		Java_java_lang_System_initJCLPlatformEncoding
 	)
 endif()
 
@@ -612,13 +613,6 @@ if(NOT JAVA_SPEC_VERSION LESS 16)
 		Java_jdk_internal_misc_ScopedMemoryAccess_closeScope0
 		Java_jdk_internal_vm_vector_VectorSupport_registerNatives
 		Java_jdk_internal_vm_vector_VectorSupport_getMaxLaneCount
-	)
-endif()
-
-# java 18+
-if(NOT JAVA_SPEC_VERSION LESS 18)
-	omr_add_exports(jclse
-		Java_java_lang_System_getSysPropBeforePropertiesInitialized
 	)
 endif()
 
