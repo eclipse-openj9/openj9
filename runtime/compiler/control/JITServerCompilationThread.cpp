@@ -403,7 +403,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // Release compMonitor before doing the blocking read
    compInfo->releaseCompMonitor(compThread);
 
-   char * clientOptions = NULL;
+   char *clientOptions = NULL;
    TR_OptimizationPlan *optPlan = NULL;
    _vm = NULL;
    bool useAotCompilation = false;
@@ -421,33 +421,35 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    bool hasIncNumActiveThreads = false;
    try
       {
-      auto req = stream->readCompileRequest<uint64_t, uint32_t, uint32_t, uint32_t, J9Method *, J9Class*,
-         TR_OptimizationPlan, std::string, J9::IlGeneratorMethodDetailsType,
-         std::vector<TR_OpaqueClassBlock*>, std::vector<TR_OpaqueClassBlock*>, 
-         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool, bool>();
+      auto req = stream->readCompileRequest<
+         uint64_t, uint32_t, uint32_t, J9Method *, J9Class *, TR_OptimizationPlan, std::string,
+         J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock *>, std::vector<TR_OpaqueClassBlock *>,
+         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool, bool
+      >();
 
-      clientId                           = std::get<0>(req);
-      seqNo                              = std::get<1>(req); // Sequence number at the client
-      uint32_t criticalSeqNo             = std::get<2>(req); // Sequence number of the request this request depends upon
-      uint32_t romMethodOffset           = std::get<3>(req);
-      J9Method *ramMethod                = std::get<4>(req);
-      J9Class *clazz                     = std::get<5>(req);
-      TR_OptimizationPlan clientOptPlan  = std::get<6>(req);
-      std::string detailsStr             = std::get<7>(req);
-      auto detailsType                   = std::get<8>(req);
-      auto &unloadedClasses              = std::get<9>(req);
-      auto &illegalModificationList      = std::get<10>(req);
-      auto &classInfoTuple               = std::get<11>(req);
-      std::string clientOptStr           = std::get<12>(req);
-      std::string recompInfoStr          = std::get<13>(req);
-      const std::string &chtableUnloads  = std::get<14>(req);
-      const std::string &chtableMods     = std::get<15>(req);
-      useAotCompilation                  = std::get<16>(req);
+      clientId                      = std::get<0>(req);
+      seqNo                         = std::get<1>(req); // Sequence number at the client
+      uint32_t criticalSeqNo        = std::get<2>(req); // Sequence number of the request this request depends upon
+      J9Method *ramMethod           = std::get<3>(req);
+      J9Class *clazz                = std::get<4>(req);
+      auto &clientOptPlan           = std::get<5>(req);
+      auto &detailsStr              = std::get<6>(req);
+      auto detailsType              = std::get<7>(req);
+      auto &unloadedClasses         = std::get<8>(req);
+      auto &illegalModificationList = std::get<9>(req);
+      auto &classInfoTuple          = std::get<10>(req);
+      auto &clientOptStr            = std::get<11>(req);
+      auto &recompInfoStr           = std::get<12>(req);
+      auto &chtableUnloads          = std::get<13>(req);
+      auto &chtableMods             = std::get<14>(req);
+      useAotCompilation             = std::get<15>(req);
+      bool isInStartupPhase         = std::get<16>(req);
 
-      TR_ASSERT_FATAL(TR::Compiler->persistentMemory() == compInfo->persistentMemory(), "per-client persistent memory must not be set at this point");
+      TR_ASSERT_FATAL(TR::Compiler->persistentMemory() == compInfo->persistentMemory(),
+                      "per-client persistent memory must not be set at this point");
 
       TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
-      *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
+      *(uintptr_t *)clientDetails = 0; // smash remote vtable pointer to catch bugs early
       TR::IlGeneratorMethodDetails serverDetailsStorage;
       TR::IlGeneratorMethodDetails *serverDetails = TR::IlGeneratorMethodDetails::clone(serverDetailsStorage, *clientDetails, detailsType);
 
@@ -481,23 +483,24 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       setExpectedSeqNo(criticalSeqNo); // Memorize the message I have to wait for
 
       bool sessionDataWasEmpty = false;
-      {
-      // Get a pointer to this client's session data
-      // Obtain monitor RAII style because creating a new hastable entry may throw bad_alloc
-      OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
-      compInfo->getClientSessionHT()->purgeOldDataIfNeeded(); // Try to purge old data
-      if (!(clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId, criticalSeqNo, &sessionDataWasEmpty, _jitConfig)))
-         throw std::bad_alloc();
+         {
+         // Get a pointer to this client's session data
+         // Obtain monitor RAII style because creating a new hastable entry may throw bad_alloc
+         OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
+         compInfo->getClientSessionHT()->purgeOldDataIfNeeded(); // Try to purge old data
+         if (!(clientSession = compInfo->getClientSessionHT()->findOrCreateClientSession(clientId, criticalSeqNo, &sessionDataWasEmpty, _jitConfig)))
+            throw std::bad_alloc();
 
-      setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object
+         setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object
 
-      // After this line, all persistent allocations are made per-client,
-      // until exitPerClientAllocationRegion is called
-      enterPerClientAllocationRegion();
-      TR_ASSERT(!clientSession->usesPerClientMemory() || TR::Compiler->persistentMemory() != compInfo->persistentMemory(), "per-client persistent memory must be set at this point");
+         // After this line, all persistent allocations are made per-client,
+         // until exitPerClientAllocationRegion is called
+         enterPerClientAllocationRegion();
+         TR_ASSERT(!clientSession->usesPerClientMemory() || (TR::Compiler->persistentMemory() != compInfo->persistentMemory()),
+                   "per-client persistent memory must be set at this point");
 
-      clientSession->setIsInStartupPhase(std::get<17>(req));
-      } // End critical section
+         clientSession->setIsInStartupPhase(isInStartupPhase);
+         } // End critical section
 
      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d %s clientSessionData=%p for clientUID=%llu seqNo=%u (isCritical=%d) (criticalSeqNo=%u lastProcessedCriticalReq=%u)",
@@ -699,8 +702,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          romClass = JITServerHelpers::cacheRemoteROMClassOrFreeIt(clientSession, clazz, romClass, classInfoTuple);
          TR_ASSERT_FATAL(romClass, "ROM class of J9Class=%p must be cached at this point", clazz);
          }
-
-      J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);
 
       // Optimization plan needs to use the global allocator,
       // because there is a global pool of plans

@@ -3043,14 +3043,8 @@ updateCompThreadActivationPolicy(TR::CompilationInfoPerThreadBase *compInfoPT, J
    }
 
 TR_MethodMetaData *
-remoteCompile(
-   J9VMThread * vmThread,
-   TR::Compilation * compiler,
-   TR_ResolvedMethod * compilee,
-   J9Method * method,
-   TR::IlGeneratorMethodDetails &details,
-   TR::CompilationInfoPerThreadBase *compInfoPT
-   )
+remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod *compilee, J9Method *method,
+              TR::IlGeneratorMethodDetails &details, TR::CompilationInfoPerThreadBase *compInfoPT)
    {
    TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Client must work with VM access");
    // JITServer: if TR_EnableJITServerPerCompConn is set, then each remote compilation establishes a new connection
@@ -3061,8 +3055,7 @@ remoteCompile(
    J9Class *clazz = J9_CLASS_FROM_METHOD(method);
    J9ROMClass *romClass = clazz->romClass;
    J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-   uint32_t romMethodOffset = uint32_t((uint8_t*) romMethod - (uint8_t*) romClass);
-   std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
+   std::string detailsStr((const char *)&details, sizeof(details));
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
    bool useAotCompilation = compInfoPT->getMethodBeingCompiled()->_useAotCompilation;
 
@@ -3191,12 +3184,15 @@ remoteCompile(
 
       Trc_JITServerRemoteCompileRequest(vmThread, seqNo, compiler->signature(), compiler->getHotnessName());
 
-      client->buildCompileRequest(compiler->getPersistentInfo()->getClientUID(), seqNo, lastCriticalSeqNo, romMethodOffset, method,
-                                  clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr,
-                                  details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr, recompMethodInfoStr,
-                                  chtableUpdates.first, chtableUpdates.second, useAotCompilation, TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()));
+      client->buildCompileRequest(
+         compiler->getPersistentInfo()->getClientUID(), seqNo, lastCriticalSeqNo, method, clazz,
+         *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr, details.getType(), unloadedClasses,
+         illegalModificationList, classInfoTuple, optionsStr, recompMethodInfoStr, chtableUpdates.first,
+         chtableUpdates.second, useAotCompilation, TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig())
+      );
+
       JITServer::MessageType response;
-      while(!handleServerMessage(client, compiler->fej9vm(), response));
+      while (!handleServerMessage(client, compiler->fej9vm(), response));
 
       // Re-acquire VM access
       // handleServerMessage will always acquire VM access after read() and release VM access at the end
