@@ -144,11 +144,16 @@ struct TR_MethodToBeCompiled
    uint8_t                _weight; // Up to 256 levels of weight
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
+
 #if defined(J9VM_OPT_JITSERVER)
-   bool                   _remoteCompReq; // Comp request should be sent remotely to JITServer
-   JITServer::ServerStream  *_stream; // A non-NULL field denotes an out-of-process compilation request
-   TR_Hotness             _origOptLevel; //  Cache original optLevel when transforming a remote sync compilation to a local cheap one
-   bool                   _shouldUpgradeOutOfProcessCompilation; // Flag used to determine whether a cold local compilation should be upgraded by LPQ
+   bool                     _remoteCompReq; // Comp request should be sent remotely to JITServer
+   JITServer::ServerStream *_stream; // A non-NULL field denotes an out-of-process compilation request
+   TR_Hotness               _origOptLevel; // Cache original optLevel when transforming a
+                                           // remote sync compilation to a local cheap one
+   bool                     _shouldUpgradeOutOfProcessCompilation; // Flag used to determine whether a cold local
+                                                                   // compilation should be upgraded by LPQ
+   bool                     _aotCacheStore; // True if the result of this out-of-process compilation will be
+                                            // stored in JITServer AOT cache; always false at the client
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // TR_MethodToBeCompiled
 
