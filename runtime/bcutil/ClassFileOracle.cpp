@@ -168,6 +168,7 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_doubleScalarStaticCount(0),
 	_memberAccessFlags(0),
 	_innerClassCount(0),
+	_enclosedInnerClassCount(0),
 #if JAVA_SPEC_VERSION >= 11
 	_nestMembersCount(0),
 	_nestHost(0),
@@ -459,7 +460,7 @@ ClassFileOracle::walkAttributes()
 				if (outerClassUTF8 == thisClassUTF8) {
 					/* Member class - mark the class' name. */
 					markClassNameAsReferenced(entry->innerClassInfoIndex);
-					_innerClassCount++;
+					_innerClassCount += 1;
 				} else if (innerClassUTF8 == thisClassUTF8) {
 					_isInnerClass = true;
 					_memberAccessFlags = entry->innerClassAccessFlags;
@@ -474,6 +475,13 @@ ClassFileOracle::walkAttributes()
 						markConstantUTF8AsReferenced(entry->innerNameIndex);
 						_simpleNameIndex = entry->innerNameIndex;
 					}
+				} else {
+					/* Count all entries in the InnerClass attribute (except the inner class itself) so as
+					 * to check the InnerClass attribute between the inner classes and the enclosing class.
+					 * See getDeclaringClass() for details.
+					 */
+					markClassNameAsReferenced(entry->innerClassInfoIndex);
+					_enclosedInnerClassCount += 1;
 				}
 			}
 			Trc_BCU_Assert_Equals(NULL, _innerClasses);

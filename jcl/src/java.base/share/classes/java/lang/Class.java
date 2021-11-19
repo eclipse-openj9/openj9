@@ -278,6 +278,8 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private transient Class<?> cachedEnclosingClass;
 	private static long cachedEnclosingClassOffset = -1;
 
+	private transient boolean cachedCheckInnerClassAttr;
+
 	private static Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
 	
 	static MethodHandles.Lookup implLookup;
@@ -1293,6 +1295,13 @@ public Class<?> getDeclaringClass() {
 	 */
 	Class<?> declaringClass = cachedDeclaringClass == ClassReflectNullPlaceHolder.class ? null : cachedDeclaringClass;
 	if (declaringClass == null) {
+		if (!cachedCheckInnerClassAttr) {
+			/* Check whether the enclosing class has an valid inner class entry to the current class.
+			 * Note: the entries are populated with the InnerClass attribute when creating ROM class.
+			 */
+			checkInnerClassAttrOfEnclosingClass();
+			cachedCheckInnerClassAttr = true;
+		}
 		return declaringClass;
 	}
 	if (declaringClass.isClassADeclaredClass(this)) {
@@ -1320,7 +1329,23 @@ public Class<?> getDeclaringClass() {
 	
 	/*[MSG "K0555", "incompatible InnerClasses attribute between \"{0}\" and \"{1}\""]*/
 	throw new IncompatibleClassChangeError(
-			com.ibm.oti.util.Msg.getString("K0555", this.getName(),	declaringClass.getName())); //$NON-NLS-1$
+			com.ibm.oti.util.Msg.getString("K0555", this.getName(), declaringClass.getName())); //$NON-NLS-1$
+}
+
+/**
+ * Checks whether the current class exists in the InnerClass attribute of the specified enclosing class
+ * when this class is not defined directly inside the enclosing class (e.g. defined inside a method).
+ *
+ * Note: The direct inner classes of the declaring class is already checked in getDeclaringClass()
+ * when the enclosing class is the declaring class.
+ */
+private void checkInnerClassAttrOfEnclosingClass() {
+	Class<?> enclosingClass = getEnclosingObjectClass();
+	if ((enclosingClass != null) && !enclosingClass.isClassAnEnclosedClass(this)) {
+		/*[MSG "K0555", "incompatible InnerClasses attribute between \"{0}\" and \"{1}\""]*/
+		throw new IncompatibleClassChangeError(
+				com.ibm.oti.util.Msg.getString("K0555", this.getName(), enclosingClass.getName())); //$NON-NLS-1$
+	}
 }
 
 /**
@@ -1341,6 +1366,18 @@ private native boolean isCircularDeclaringClass();
  *
  */
 private native boolean isClassADeclaredClass(Class<?> aClass);
+
+/**
+ * Returns true if the class passed in to the method is an enclosed class of
+ * this class, which includes both the declared classes and the classes defined
+ * inside a method of this class.
+ *
+ * @param		aClass		The class to validate
+ * @return		true if aClass an enclosed class of this class
+ * 				false otherwise.
+ *
+ */
+private native boolean isClassAnEnclosedClass(Class<?> aClass);
 
 /**
  * Answers the class which declared the class represented
