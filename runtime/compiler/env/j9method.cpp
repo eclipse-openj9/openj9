@@ -5926,6 +5926,7 @@ TR_ResolvedJ9Method::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex)
    return *(j9object_t*)callSiteTableEntryAddress(callSiteIndex) == NULL;
    }
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 void *
 TR_ResolvedJ9Method::varHandleMethodTypeTableEntryAddress(int32_t cpIndex)
    {
@@ -5962,6 +5963,7 @@ TR_ResolvedJ9Method::isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex)
    {
    return *(j9object_t*)varHandleMethodTypeTableEntryAddress(cpIndex) == NULL;
    }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 void *
 TR_ResolvedJ9Method::methodTypeTableEntryAddress(int32_t cpIndex)

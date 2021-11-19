@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,9 +52,9 @@ ConstantPoolMap::ConstantPoolMap(BufferManager *bufferManager, ROMClassCreationC
 	_invokeCacheCount(0),
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	_methodTypeCount(0),
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	_varHandleMethodTypeCount(0),
 	_varHandleMethodTypeLookupTable(NULL),
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	_callSiteCount(0),
 	_ramConstantPoolCount(0),
 	_romConstantPoolCount(0),
@@ -70,7 +70,9 @@ ConstantPoolMap::~ConstantPoolMap()
 	_bufferManager->free(_constantPoolEntries);
 	_bufferManager->free(_romConstantPoolEntries);
 	_bufferManager->free(_romConstantPoolTypes);
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	j9mem_free_memory(_varHandleMethodTypeLookupTable);
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 }
 
 void
@@ -323,6 +325,7 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 	}
 }
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 void
 ConstantPoolMap::findVarHandleMethodRefs()
 {
@@ -374,7 +377,7 @@ ConstantPoolMap::findVarHandleMethodRefs()
 		j9mem_free_memory(varHandleMethodTable);
 	}
 }
-
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 void
 ConstantPoolMap::constantPoolDo(ConstantPoolVisitor *visitor)

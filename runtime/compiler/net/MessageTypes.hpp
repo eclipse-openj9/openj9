@@ -81,8 +81,10 @@ enum MessageType : uint16_t
    ResolvedMethod_stringConstant,
    ResolvedMethod_getResolvedVirtualMethod,
    ResolvedMethod_getMultipleResolvedMethods,
+#if defined(J9VM_OPT_METHOD_HANDLE)
    ResolvedMethod_varHandleMethodTypeTableEntryAddress,
    ResolvedMethod_isUnresolvedVarHandleMethodTypeTableEntry,
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
    ResolvedMethod_getConstantDynamicTypeFromCP,
    ResolvedMethod_isUnresolvedConstantDynamic,
    ResolvedMethod_dynamicConstant,
@@ -333,8 +335,10 @@ static const char *messageNames[] =
    "ResolvedMethod_stringConstant",
    "ResolvedMethod_getResolvedVirtualMethod",
    "ResolvedMethod_getMultipleResolvedMethods",
+#if defined(J9VM_OPT_METHOD_HANDLE)
    "ResolvedMethod_varHandleMethodTypeTableEntryAddress",
    "ResolvedMethod_isUnresolvedVarHandleMethodTypeTableEntry",
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
    "ResolvedMethod_getConstantDynamicTypeFromCP",
    "ResolvedMethod_isUnresolvedConstantDynamic",
    "ResolvedMethod_dynamicConstant",

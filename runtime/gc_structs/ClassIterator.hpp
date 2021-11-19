@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,9 @@ enum {
 	classiterator_state_slots,
 	classiterator_state_callsites,
 	classiterator_state_methodtypes,
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	classiterator_state_varhandlemethodtypes,
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	classiterator_state_valuetypes,
 	classiterator_state_end
 };
@@ -73,7 +75,9 @@ protected:
 	GC_ConstantPoolObjectSlotIterator _constantPoolObjectSlotIterator;
 	GC_CallSitesIterator _callSitesIterator;
 	GC_MethodTypesIterator _methodTypesIterator;
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	GC_MethodTypesIterator _varHandlesMethodTypesIterator;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	GC_ValueTypesIterator _valueTypesIterator;
 	const bool _shouldScanClassObject; /**< Boolean needed for balanced GC to prevent ClassObject from being scanned twice  */
 
@@ -89,8 +93,8 @@ public:
 		, _methodTypesIterator(clazz->romClass->invokeCacheCount, clazz->invokeCache)
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _methodTypesIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _valueTypesIterator(clazz)
 		, _shouldScanClassObject(shouldScanClassObject)
 	{}
@@ -106,8 +110,8 @@ public:
 		, _methodTypesIterator(clazz->romClass->invokeCacheCount, clazz->invokeCache)
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _methodTypesIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _valueTypesIterator(clazz)
 		, _shouldScanClassObject(true)
 	{}
