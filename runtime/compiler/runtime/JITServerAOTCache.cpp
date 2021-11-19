@@ -691,7 +691,7 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
    if (it != _map.end())
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Created AOT cache %s for clientUID %llu",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Using existing AOT cache %s for clientUID %llu",
                                         name.c_str(), (unsigned long long)clientUID);
       return it->second;
       }
@@ -712,7 +712,7 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
       }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Using existing AOT cache %s for clientUID %llu",
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Created AOT cache %s for clientUID %llu",
                                      name.c_str(), (unsigned long long)clientUID);
    return cache;
    }
