@@ -3420,8 +3420,8 @@ typedef struct J9ROMClass {
 	U_32 invokeCacheCount;
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 methodTypeCount;
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 varHandleMethodTypeCount;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 bsmCount;
 	U_32 callSiteCount;
 	J9SRP callSiteData;
@@ -3431,7 +3431,9 @@ typedef struct J9ROMClass {
 	U_16 specialSplitMethodRefCount;
 	J9SRP staticSplitMethodRefIndexes;
 	J9SRP specialSplitMethodRefIndexes;
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	J9SRP varHandleMethodTypeLookupTable;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 #if defined(J9VM_ENV_DATA64)
 #if JAVA_SPEC_VERSION >= 11
 	U_32 padding;
@@ -3573,8 +3575,8 @@ typedef struct J9ROMReflectClass {
 	U_32 invokeCacheCount;
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 methodTypeCount;
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 varHandleMethodTypeCount;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	U_32 bsmCount;
 	U_32 callSiteCount;
 	J9SRP callSiteData;
@@ -3584,7 +3586,9 @@ typedef struct J9ROMReflectClass {
 	U_16 specialSplitMethodRefCount;
 	J9SRP staticSplitMethodRefIndexes;
 	J9SRP specialSplitMethodRefIndexes;
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	J9SRP varHandleMethodTypeLookupTable;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 #if defined(J9VM_ENV_DATA64)
 #if JAVA_SPEC_VERSION >= 11
 	U_32 padding;

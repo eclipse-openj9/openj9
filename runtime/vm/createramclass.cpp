@@ -2528,10 +2528,10 @@ fail:
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		/* add in the method types */
 		classSize += romClass->methodTypeCount;
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 		/* add in the varhandle method types */
 		classSize += romClass->varHandleMethodTypeCount;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 		/* add in the static and special split tables */
 		classSize += (romClass->staticSplitMethodRefCount + romClass->specialSplitMethodRefCount);
@@ -2790,7 +2790,11 @@ fail:
 			/* varhandle method types fragment */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignment = sizeof(UDATA);
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignedSize = 0;
+#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignedSize = romClass->varHandleMethodTypeCount * sizeof(UDATA);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address = NULL;
 
 			/* static split table fragment */

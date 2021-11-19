@@ -1402,6 +1402,7 @@ done:
 		return (jobject)ref;
 	}
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	static VMINLINE U_32
 	lookupVarHandleMethodTypeCacheIndex(J9ROMClass *romClass, UDATA cpIndex)
 	{
@@ -1421,6 +1422,7 @@ done:
 
 		return index;
 	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	/**
 

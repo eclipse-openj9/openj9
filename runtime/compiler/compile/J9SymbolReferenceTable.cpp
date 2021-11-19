@@ -573,6 +573,7 @@ J9::SymbolReferenceTable::findOrCreateMethodTypeTableEntrySymbol(TR::ResolvedMet
    return symRef;
    }
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateVarHandleMethodTypeTableEntrySymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
    {
@@ -604,6 +605,7 @@ J9::SymbolReferenceTable::findOrCreateVarHandleMethodTypeTableEntrySymbol(TR::Re
    aliasBuilder.methodTypeTableEntrySymRefs().set(symRef->getReferenceNumber());
    return symRef;
    }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 
 TR::SymbolReference *

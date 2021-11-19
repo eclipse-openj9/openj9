@@ -171,6 +171,7 @@ TR::RecognizedMethod TR_VarHandleTransformer::getVarHandleAccessMethod(TR::Node 
  */
 int32_t TR_VarHandleTransformer::perform()
 {
+#if defined(J9VM_OPT_METHOD_HANDLE)
    TR::ResolvedMethodSymbol *methodSymbol = comp()->getMethodSymbol();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
    for (TR::TreeTop * tt = methodSymbol->getFirstTreeTop(); tt != NULL; tt = tt->getNextTreeTop())
@@ -358,6 +359,7 @@ int32_t TR_VarHandleTransformer::perform()
             }
          }
       }
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 return 0;
 }
 

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,12 +94,14 @@ GC_ClassIterator::nextSlot()
 		}
 		_state += 1;
 
+#if defined(J9VM_OPT_METHOD_HANDLE)
 	case classiterator_state_varhandlemethodtypes:
 		slotPtr = _varHandlesMethodTypesIterator.nextSlot();
 		if (NULL != slotPtr) {
 			return slotPtr;
 		}
 		_state += 1;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	case classiterator_state_valuetypes:
 		slotPtr = _valueTypesIterator.nextSlot();
