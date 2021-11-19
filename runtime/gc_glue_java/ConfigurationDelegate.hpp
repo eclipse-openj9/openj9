@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -302,7 +302,7 @@ public:
 
 		extensions->accessBarrier->initializeForNewThread(env);
 
-		if (extensions->isConcurrentMarkEnabled()) {
+		if ((extensions->isConcurrentMarkEnabled()) && (!extensions->usingSATBBarrier())) {
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
 			vmThread->cardTableVirtualStart = (U_8*)j9gc_incrementalUpdate_getCardTableVirtualStart(omrVM);
 			vmThread->cardTableShiftSize = j9gc_incrementalUpdate_getCardTableShiftValue(omrVM);

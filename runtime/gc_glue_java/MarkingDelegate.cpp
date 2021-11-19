@@ -192,7 +192,7 @@ MM_MarkingDelegate::mainCleanupAfterGC(MM_EnvironmentBase *env)
 }
 
 void
-MM_MarkingDelegate::scanRoots(MM_EnvironmentBase *env)
+MM_MarkingDelegate::startRootListProcessing(MM_EnvironmentBase *env)
 {
 	/* Start unfinalized object and ownable synchronizer processing */
 	if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
@@ -217,6 +217,14 @@ MM_MarkingDelegate::scanRoots(MM_EnvironmentBase *env)
 				}
 			}
 		}
+	}
+}
+
+void
+MM_MarkingDelegate::scanRoots(MM_EnvironmentBase *env, bool processLists)
+{
+	if (processLists) {
+		startRootListProcessing(env);
 	}
 
 	/* Reset MM_RootScanner base class for scanning */

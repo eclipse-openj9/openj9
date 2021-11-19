@@ -109,10 +109,10 @@ public:
 
 	void rememberObjectToRescan(MM_EnvironmentBase *env, J9Object *object);
 
-	MMINLINE bool isSATBBarrierActive(MM_EnvironmentBase* env)
+	MMINLINE bool isSATBBarrierActive()
 	{
 		return ((_extensions->configuration->isSnapshotAtTheBeginningBarrierEnabled()) &&
-				(!_extensions->sATBBarrierRememberedSet->isGlobalFragmentIndexPreserved(env)));
+				(!_extensions->sATBBarrierRememberedSet->isGlobalFragmentIndexPreserved()));
 	}
 
 	MMINLINE bool isIncrementalUpdateBarrierActive(J9VMThread *vmThread)
