@@ -803,15 +803,18 @@ JITServerAOTDeserializer::deserializationFailure(const SerializedAOTMethod *meth
 bool
 JITServerAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset)
    {
-   //NOTE: Defining class chain record is validated by now
+   //NOTE: Defining class chain record is validated by now; there is no corresponding SCC offset to be updated
 
-   auto header = (TR_AOTMethodHeader *)(method->data() + sizeof(J9JITDataCacheHeader));
-   if (header->offsetToRelocationDataItems == 0)
-      {
-      TR_ASSERT_FATAL(method->numRecords() == 0, "Unexpected serialization records in serialized method %s",
-                      comp->signature());
-      return true;
-      }
+   auto header = (const TR_AOTMethodHeader *)(method->data() + sizeof(J9JITDataCacheHeader));
+   TR_ASSERT_FATAL((header->minorVersion == TR_AOTMethodHeader_MinorVersion) &&
+                   (header->majorVersion == TR_AOTMethodHeader_MajorVersion),
+                   "Invalid TR_AOTMethodHeader version: %d.%d", header->majorVersion, header->minorVersion);
+   TR_ASSERT_FATAL((header->offsetToRelocationDataItems != 0) || (method->numRecords() == 0),
+                   "Unexpected %zu serialization records in serialized method %s with no relocation data",
+                   method->numRecords(), comp->signature());
+
+   uint8_t *start = method->data() + header->offsetToRelocationDataItems;
+   uint8_t *end = start + *(uintptr_t *)start;// Total size of relocation data is stored in the first word
 
    for (size_t i = 0; i < method->numRecords(); ++i)
       {
@@ -822,9 +825,10 @@ JITServerAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Comp
          return false;
 
       // Update the SCC offset stored in AOT method relocation data
-      uint8_t *ptr = method->data() + header->offsetToRelocationDataItems + serializedOffset.reloDataOffset();
-      TR_ASSERT_FATAL(ptr < method->data() + method->dataSize(),
-                      "Out-of-bounds relocation data offset in serialized method %s", comp->signature());
+      uint8_t *ptr = start + serializedOffset.reloDataOffset();
+      TR_ASSERT_FATAL((ptr >= start + sizeof(uintptr_t)/*skip the size word*/) && (ptr < end),
+                      "Out-of-bounds relocation data offset %zu in serialized method %s",
+                      serializedOffset.reloDataOffset(), comp->signature());
       *(uintptr_t *)ptr = sccOffset;
       }
 
