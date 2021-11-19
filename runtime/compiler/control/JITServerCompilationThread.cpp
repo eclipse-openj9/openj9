@@ -419,6 +419,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // hasIncNumActiveThreads is used to determine if decNumActiveThreads() should be
    // called when an exception is thrown.
    bool hasIncNumActiveThreads = false;
+   // Keep track of whether the lastProcessedCriticalSeqNo in the client session was updated
+   bool hasUpdatedSeqNo = false;
+
    try
       {
       auto req = stream->readCompileRequest<
@@ -645,7 +648,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             }
          }
 
-
       // Critical requests must update lastProcessedCriticalSeqNo and notify any waiting threads.
       // Dependent threads will pass through once we've released the sequencing monitor.
       if (isCriticalRequest)
@@ -657,6 +659,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             clientSession->getLastProcessedCriticalSeqNo(), clientSession->getNumActiveThreads());
       
          clientSession->setLastProcessedCriticalSeqNo(seqNo);
+         hasUpdatedSeqNo = true;
          Trc_JITServerUpdateSeqNo(getCompilationThread(), getCompThreadId(), clientSession,
                                  (unsigned long long)clientSession->getClientUID(),
                                  getSeqNo(), criticalSeqNo, clientSession->getNumActiveThreads(),
@@ -670,7 +673,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // can process their lists of unloaded classes
          clientSession->getSequencingMonitor()->exit();
          }
-
 
       // Copy the option string
       copyClientOptions(clientOptStr, clientSession->persistentMemory());
@@ -823,11 +825,11 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       Trc_JITServerStreamInterrupted(compThread, getCompThreadId(), __FUNCTION__, "", "", e.what());
 
       abortCompilation = true;
-      // If the client aborted this compilation it could have happened only while asking for entire
+      // If the client aborted this compilation, it could have happened while asking for entire
       // CHTable and unloaded class address ranges and at that point the seqNo was not updated.
-      // We must update seqNo now to allow for blocking threads to pass through.
+      // In such case, we must update seqNo now to allow for blocking threads to pass through.
       // Since the caches are already cleared there is no harm in discarding this message.
-      if (isCriticalRequest)
+      if (isCriticalRequest && !hasUpdatedSeqNo)
          {
          clientSession->getSequencingMonitor()->enter();
          if (seqNo > clientSession->getLastProcessedCriticalSeqNo())
