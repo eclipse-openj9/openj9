@@ -123,7 +123,7 @@ private:
 	MMINLINE bool isBarrierActive(MM_EnvironmentBase* env)
 	{
 		MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(env);
-		return !extensions->sATBBarrierRememberedSet->isGlobalFragmentIndexPreserved(env);
+		return !extensions->sATBBarrierRememberedSet->isGlobalFragmentIndexPreserved();
 	}
 
 	MMINLINE bool isDoubleBarrierActiveOnThread(J9VMThread *vmThread)

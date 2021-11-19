@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,8 +106,10 @@ public:
 	void mainSetupForGC(MM_EnvironmentBase *env);
 	void mainSetupForWalk(MM_EnvironmentBase *env);
 	void mainCleanupAfterGC(MM_EnvironmentBase *env);
-	void scanRoots(MM_EnvironmentBase *env);
+	void scanRoots(MM_EnvironmentBase *env, bool processLists = true);
 	void completeMarking(MM_EnvironmentBase *env);
+
+	void startRootListProcessing(MM_EnvironmentBase *env);
 
 	uintptr_t setupIndexableScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo, uintptr_t *sizeInElementsToDo, fomrobject_t **basePtr, uintptr_t *flags) { return 0; }
 

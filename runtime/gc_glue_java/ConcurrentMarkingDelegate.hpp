@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -249,12 +249,6 @@ public:
 
 	void signalThreadsToDeactivateWriteBarrier(MM_EnvironmentBase *env);
 
-	//TODO: STAB remove two methods bellow after the initial changes are in
-	void signalThreadsToDirtyCards(MM_EnvironmentBase *env);
-
-	void signalThreadsToStopDirtyingCards(MM_EnvironmentBase *env);
-
-
 	/**
 	 * This method is called during card cleaning for each object associated with an uncleaned, dirty card in the card
 	 * table. No client actions are necessary but this method may be overridden if desired to hook into card cleaning.
@@ -324,10 +318,18 @@ public:
 	{
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		if (0 != bytesTraced) {
-			_scanClassesMode.setScanClassesMode(MM_ScanClassesMode::SCAN_CLASSES_NEED_TO_BE_EXECUTED); /* need more iterations */
+			setConcurrentScanning(env);/* need more iterations */
 		} else {
 			_scanClassesMode.setScanClassesMode(MM_ScanClassesMode::SCAN_CLASSES_COMPLETE); /* complete for now */
 		}
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+	}
+
+	MMINLINE void
+	setConcurrentScanning(MM_EnvironmentBase *env)
+	{
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+		_scanClassesMode.setScanClassesMode(MM_ScanClassesMode::SCAN_CLASSES_NEED_TO_BE_EXECUTED);
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	}
 
@@ -350,6 +352,8 @@ public:
 		return 0;
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	}
+
+	bool setupClassScanning(MM_EnvironmentBase *env);
 
 	/**
 	 * Constructor.

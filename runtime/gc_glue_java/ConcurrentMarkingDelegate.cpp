@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -124,37 +124,6 @@ MM_ConcurrentMarkingDelegate::signalThreadsToDeactivateWriteBarrier(MM_Environme
 	}
 }
 
-void
-MM_ConcurrentMarkingDelegate::signalThreadsToDirtyCards(MM_EnvironmentBase *env)
-{
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	GC_VMInterface::lockVMThreadList(extensions);
-
-	J9VMThread *walkThread;
-	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
-	while((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
-		walkThread->privateFlags |= J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE;
-	}
-	GC_VMInterface::unlockVMThreadList(extensions);
-}
-
-void
-MM_ConcurrentMarkingDelegate::signalThreadsToStopDirtyingCards(MM_EnvironmentBase *env)
-{
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(_javaVM);
-	if (extensions->optimizeConcurrentWB) {
-		GC_VMInterface::lockVMThreadList(extensions);
-		GC_VMThreadListIterator vmThreadListIterator(_javaVM);
-		J9VMThread *walkThread;
-
-		/* Reset vmThread flag so mutators don't dirty cards until next concurrent KO */
-		while((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
-			walkThread->privateFlags &= ~J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE;
-		}
-		GC_VMInterface::unlockVMThreadList(extensions);
-	}
-}
-
 bool
 MM_ConcurrentMarkingDelegate::scanThreadRoots(MM_EnvironmentBase *env)
 {
@@ -229,13 +198,8 @@ MM_ConcurrentMarkingDelegate::collectClassRoots(MM_EnvironmentBase *env, bool *c
 	*completedClassRoots = false;
 	*classesMarkedAsRoots = false;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-	MM_GCExtensions::DynamicClassUnloading dynamicClassUnloadingFlag = (MM_GCExtensions::DynamicClassUnloading )extensions->dynamicClassUnloading;
-	if (MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER != dynamicClassUnloadingFlag) {
-		_scanClassesMode.setScanClassesMode(MM_ScanClassesMode::SCAN_CLASSES_NEED_TO_BE_EXECUTED);
-	} else
-#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-	{
+
+	if (!setupClassScanning(env)) {
 		/* mark classes as roots, scanning classes is disabled by default */
 		*classesMarkedAsRoots = true;
 
@@ -374,6 +338,22 @@ MM_ConcurrentMarkingDelegate::abortCollection(MM_EnvironmentBase *env)
 	}
 }
 
+
+bool
+MM_ConcurrentMarkingDelegate::setupClassScanning(MM_EnvironmentBase *env)
+{
+#if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_GCExtensions::DynamicClassUnloading dynamicClassUnloadingFlag = (MM_GCExtensions::DynamicClassUnloading )extensions->dynamicClassUnloading;
+	if (MM_GCExtensions::DYNAMIC_CLASS_UNLOADING_NEVER != dynamicClassUnloadingFlag) {
+		setConcurrentScanning(env);
+		return true;
+	}
+#endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
+
+	return false;
+}
+
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 uintptr_t
 MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool *completedClassMark)
@@ -384,9 +364,10 @@ MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool 
 
 	Trc_MM_concurrentClassMarkStart(env->getLanguageVMThread());
 
-	Assert_GC_true_with_message(env, ((J9VMThread *)env->getLanguageVMThread())->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE, "MM_ConcurrentStats::_executionMode = %zu\n", _collector->getConcurrentGCStats()->getExecutionMode());
-
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+
+	Assert_GC_true_with_message(env, (((J9VMThread *)env->getLanguageVMThread())->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE) || (extensions->isSATBBarrierActive()), "MM_ConcurrentStats::_executionMode = %zu\n", _collector->getConcurrentGCStats()->getExecutionMode());
+
 	GC_VMInterface::lockClasses(extensions);
 	GC_VMInterface::lockClassLoaders(extensions);
 
