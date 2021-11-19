@@ -42,6 +42,10 @@ namespace J9 { typedef J9::Compilation CompilationConnector; }
 #include "env/OMRMemory.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "runtime/SymbolValidationManager.hpp"
+#if defined(J9VM_OPT_JITSERVER)
+#include "env/PersistentCollections.hpp"
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 
 class TR_AOTGuardSite;
 class TR_FrontEnd;
@@ -59,7 +63,8 @@ namespace TR { class IlGenRequest; }
 #ifdef J9VM_OPT_JITSERVER
 struct SerializedRuntimeAssumption;
 class ClientSessionData;
-#endif
+class AOTCacheRecord;
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #define COMPILATION_AOT_HAS_INVOKEHANDLE -9
 #define COMPILATION_RESERVE_RESOLVED_TRAMPOLINE_FATAL_ERROR -10
@@ -73,7 +78,6 @@ class ClientSessionData;
 #define COMPILATION_RESERVE_NTRAMPOLINES_INSUFFICIENT_SPACE -18
 #define COMPILATION_RESERVE_NTRAMPOLINES_ERROR_INBINARYENCODING -19
 #define COMPILATION_AOT_RELOCATION_FAILED -20
-
 
 
 namespace J9
@@ -346,6 +350,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool isAOTCacheStore() const { return _aotCacheStore; }
    void setAOTCacheStore(bool store) { _aotCacheStore = store; }
+
+   Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &getSerializationRecords() { return _serializationRecords; }
+   // Adds an AOT cache record and the corresponding offset into AOT relocation data to the list that
+   // will be used when the result of this out-of-process compilation is serialized and stored in
+   // JITServer AOT cache. If record is NULL, fails serialization by setting _aotCacheStore to false.
+   void addSerializationRecord(const AOTCacheRecord *record, uintptr_t reloDataOffset);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
@@ -464,6 +474,9 @@ private:
    // True if the result of this out-of-process compilation will be
    // stored in JITServer AOT cache; always false at the client
    bool _aotCacheStore;
+   // List of AOT cache records and corresponding offsets into AOT relocation data that will
+   // be used to store the result of this compilation in AOT cache; always empty at the client
+   Vector<std::pair<const AOTCacheRecord *, uintptr_t>> _serializationRecords;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *_symbolValidationManager;
