@@ -845,15 +845,14 @@ TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    }
 
 J9ROMClass *
-TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memory *trMemory)
+TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz)
    {
    auto romClass = getRemoteROMClassIfCached(clazz);
    if (romClass == NULL)
       {
       JITServerHelpers::ClassInfoTuple classInfoTuple;
-      TR_Memory *currentMemory = trMemory ? trMemory : TR::comp()->trMemory();
-      romClass = JITServerHelpers::getRemoteROMClass(clazz, getStream(), currentMemory, &classInfoTuple);
-      romClass = JITServerHelpers::cacheRemoteROMClassOrFreeIt(getClientData(), clazz, romClass, &classInfoTuple, currentMemory->trPersistentMemory());
+      romClass = JITServerHelpers::getRemoteROMClass(clazz, getStream(), getClientData()->persistentMemory(), classInfoTuple);
+      romClass = JITServerHelpers::cacheRemoteROMClassOrFreeIt(getClientData(), clazz, romClass, classInfoTuple);
       TR_ASSERT_FATAL(romClass, "ROM class of J9Class=%p must be cached at this point", clazz);
       }
    return romClass;
