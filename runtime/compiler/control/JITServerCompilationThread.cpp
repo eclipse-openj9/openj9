@@ -110,33 +110,28 @@ computeServerActiveThreadsState(TR::CompilationInfo *compInfo)
  * @brief Method executed by JITServer to process the end of a compilation.
  */
 void
-outOfProcessCompilationEnd(
-   TR_MethodToBeCompiled *entry,
-   TR::Compilation *comp)
+outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    {
    entry->_tryCompilingAgain = false; // TODO: Need to handle recompilations gracefully when relocation fails
-   auto compInfoPT = ((TR::CompilationInfoPerThreadRemote*)(entry->_compInfoPT));
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *)entry->_compInfoPT;
 
    TR::CodeCache *codeCache = comp->cg()->getCodeCache();
 
    TR_ASSERT(comp->getAotMethodDataStart(), "The header must have been set");
-   TR_AOTMethodHeader   *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
+   TR_AOTMethodHeader *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
 
-   U_8 *codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
-   OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*)codeStart;
+   uint8_t *codeStart = (uint8_t *)aotMethodHeaderEntry->compileMethodCodeStartPC;
+   OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader *)codeStart;
 
-   TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
-   TR_ASSERT(dataCache, "A dataCache must be reserved for JITServer compilations\n");
+   TR_DataCache *dataCache = (TR_DataCache *)comp->getReservedDataCache();
+   TR_ASSERT(dataCache, "A dataCache must be reserved for JITServer compilations");
    J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
-   J9JITExceptionTable *metaData = compInfoPT->getMetadata();
 
-   size_t codeSize = codeCache->getWarmCodeAlloc() - (uint8_t*)codeCacheHeader;
-   size_t dataSize = dataCache->getSegment()->heapAlloc - (uint8_t*)dataCacheHeader;
+   size_t codeSize = codeCache->getWarmCodeAlloc() - (uint8_t *)codeCacheHeader;
+   size_t dataSize = dataCache->getSegment()->heapAlloc - (uint8_t *)dataCacheHeader;
 
-   //TR_ASSERT(((OMR::RuntimeAssumption*)metaData->runtimeAssumptionList)->getNextAssumptionForSameJittedBody() == metaData->runtimeAssumptionList, "assuming no assumptions");
-
-   std::string codeCacheStr((char*) codeCacheHeader, codeSize);
-   std::string dataCacheStr((char*) dataCacheHeader, dataSize);
+   std::string codeCacheStr((const char *)codeCacheHeader, codeSize);
+   std::string dataCacheStr((const char *)dataCacheHeader, dataSize);
 
    CHTableCommitData chTableData;
    if (!comp->getOption(TR_DisableCHOpts) && !entry->_useAotCompilation)
@@ -183,15 +178,15 @@ outOfProcessCompilationEnd(
          }
       }
 
-   entry->_stream->finishCompilation(codeCacheStr, dataCacheStr, chTableData,
-                                     std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
-                                     logFileStr, svmSymbolToIdStr,
-                                     (resolvedMirrorMethodsPersistIPInfo) ?
-                                                         std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
-                                                         std::vector<TR_ResolvedJ9Method*>(),
-                                     *entry->_optimizationPlan, serializedRuntimeAssumptions, memoryState,
-                                      activeThreadState, methodsRequiringTrampolines
-                                     );
+   entry->_stream->finishCompilation(
+      codeCacheStr, dataCacheStr, chTableData,
+      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
+      logFileStr, svmSymbolToIdStr,
+      resolvedMirrorMethodsPersistIPInfo
+         ? std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end())
+         : std::vector<TR_ResolvedJ9Method*>(),
+      *entry->_optimizationPlan, serializedRuntimeAssumptions, memoryState, activeThreadState, methodsRequiringTrampolines
+   );
    compInfoPT->clearPerCompilationCaches();
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -202,6 +197,22 @@ outOfProcessCompilationEnd(
 
    Trc_JITServerCompileEnd(compInfoPT->getCompilationThread(), compInfoPT->getCompThreadId(),
          compInfoPT->getCompilation()->signature(), compInfoPT->getCompilation()->getHotnessName());
+
+   if (entry->_aotCacheStore)
+      {
+      if (comp->isAOTCacheStore())
+         {
+         auto clientData = comp->getClientData();
+         auto cache = clientData->getAOTCache();
+         cache->storeMethod(entry->_definingClassChainRecord, entry->_methodIndex, entry->_optimizationPlan->getOptLevel(),
+                            clientData->getAOTHeaderRecord(), comp->getSerializationRecords(), codeCacheHeader,
+                            codeSize, dataCacheHeader, dataSize, comp->signature(), clientData->getClientUID());
+         }
+      else if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Failed to serialize AOT method %s", comp->signature());
+         }
+      }
    }
 
 TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)

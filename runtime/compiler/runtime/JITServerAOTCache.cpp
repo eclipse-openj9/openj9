@@ -590,9 +590,10 @@ JITServerAOTCache::storeMethod(const AOTCacheClassChainRecord *definingClassChai
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-         "AOT cache %s: stored method %s @ %s index %u class ID %zu AOT header ID %zu for clientUID %llu",
+         "AOT cache %s: stored method %s @ %s index %u class ID %zu "
+         "AOT header ID %zu with %zu serialization records for clientUID %llu",
          _name.c_str(), signature, levelName, index, definingClassId,
-         aotHeaderRecord->data().id(), (unsigned long long)clientUID
+         aotHeaderRecord->data().id(), records.size(), (unsigned long long)clientUID
       );
 
    return true;
