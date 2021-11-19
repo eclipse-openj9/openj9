@@ -2887,7 +2887,7 @@ J9::Options::printPID()
    }
 
 #if defined(J9VM_OPT_JITSERVER)
-void getTRPID(char *buf);
+void getTRPID(char *buf, size_t size);
 
 static void
 appendRegex(TR::SimpleRegex *&regexPtr, uint8_t *&curPos)
@@ -2948,8 +2948,8 @@ J9::Options::packOptions(const TR::Options *origOptions)
       {
       origLogFileName = origOptions->_logFileName;
       char pidBuf[20];
-      memset(pidBuf, 0, 20);
-      getTRPID(pidBuf);
+      memset(pidBuf, 0, sizeof(pidBuf));
+      getTRPID(pidBuf, sizeof(pidBuf));
       logFileNameLength = strlen(origOptions->_logFileName) + strlen(".") + strlen(pidBuf) + strlen(".server") + 1;
       // If logFileNameLength is greater than JITSERVER_LOG_FILENAME_MAX_SIZE, PID might not be appended to the log file name
       // and the log file name could be truncated as well.
