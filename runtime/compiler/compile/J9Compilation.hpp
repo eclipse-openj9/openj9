@@ -327,21 +327,22 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 #if defined(J9VM_OPT_JITSERVER)
    static bool isOutOfProcessCompilation() { return _outOfProcessCompilation; } // server side
    static void setOutOfProcessCompilation() { _outOfProcessCompilation = true; }
+
    bool isRemoteCompilation() const { return _remoteCompilation; } // client side
    void setRemoteCompilation() { _remoteCompilation = true; }
-   TR::list<SerializedRuntimeAssumption*>& getSerializedRuntimeAssumptions() { return _serializedRuntimeAssumptions; }
+
+   TR::list<SerializedRuntimeAssumption *> &getSerializedRuntimeAssumptions() { return _serializedRuntimeAssumptions; }
+
    ClientSessionData *getClientData() const { return _clientData; }
    void setClientData(ClientSessionData *clientData) { _clientData = clientData; }
-   void switchToPerClientMemory()
-      {
-      _trMemory = _perClientMemory;
-      }
-   void switchToGlobalMemory()
-      {
-      _trMemory = &_globalMemory;
-      }
 
-   TR::list<TR_OpaqueMethodBlock *>& getMethodsRequiringTrampolines() { return _methodsRequiringTrampolines; }
+   JITServer::ServerStream *getStream() const { return _stream; }
+   void setStream(JITServer::ServerStream *stream) { _stream = stream; }
+
+   void switchToPerClientMemory() { _trMemory = _perClientMemory; }
+   void switchToGlobalMemory() { _trMemory = &_globalMemory; }
+
+   TR::list<TR_OpaqueMethodBlock *> &getMethodsRequiringTrampolines() { return _methodsRequiringTrampolines; }
 
    bool isAOTCacheStore() const { return _aotCacheStore; }
    void setAOTCacheStore(bool store) { _aotCacheStore = store; }
@@ -439,7 +440,7 @@ private:
 #if defined(J9VM_OPT_JITSERVER)
    // This list contains assumptions created during the compilation at the JITServer
    // It needs to be sent to the client at the end of compilation
-   TR::list<SerializedRuntimeAssumption*> _serializedRuntimeAssumptions;
+   TR::list<SerializedRuntimeAssumption *> _serializedRuntimeAssumptions;
    // The following flag is set when this compilation is performed in a
    // VM that does not have the runtime part (server side in JITServer)
    static bool _outOfProcessCompilation;
@@ -449,6 +450,8 @@ private:
    // Client session data for the client that requested this out-of-process
    // compilation (at the JITServer); unused (always NULL) at the client side
    ClientSessionData *_clientData;
+   // Server stream used by this out-of-process compilation; always NULL at the client
+   JITServer::ServerStream *_stream;
 
    TR_Memory *_perClientMemory;
    TR_Memory _globalMemory;
