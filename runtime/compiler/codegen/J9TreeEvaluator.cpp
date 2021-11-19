@@ -622,7 +622,7 @@ void
 J9::TreeEvaluator::rdWrtbarHelperForFieldWatch(TR::Node *node, TR::CodeGenerator *cg, TR::Register *sideEffectRegister, TR::Register *valueReg)
    {
    TR_ASSERT_FATAL(J9ClassHasWatchedFields >= std::numeric_limits<uint16_t>::min() && J9ClassHasWatchedFields <= std::numeric_limits<uint16_t>::max(), "Expecting value of J9ClassHasWatchedFields to be within 16 bits. Currently it's %d(%p).", J9ClassHasWatchedFields, J9ClassHasWatchedFields);
-   
+
    // Populate a data snippet with the required information so we can call a VM helper to report the Field Watch event.
    TR::SymbolReference *symRef = node->getSymbolReference();
    J9Method *owningMethod = reinterpret_cast<J9Method *>(node->getOwningMethod());
@@ -630,7 +630,7 @@ J9::TreeEvaluator::rdWrtbarHelperForFieldWatch(TR::Node *node, TR::CodeGenerator
    bool isWrite = node->getOpCode().isWrtBar();
    bool isUnresolved = symRef->isUnresolved();
    int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
-   
+
    TR::Snippet *dataSnippet = NULL;
    if (symRef->getSymbol()->isStatic())
       {
@@ -1170,7 +1170,7 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
    // verification, we could end up generating code where we have a defined
    // relationship between profiled class and cast class which could not be
    // true in load run and we could end up with incorrect execution in the
-   // application. 
+   // application.
    // TODO: Once we have validation record for instanceOfOrCheckCastNoCacheUpdate
    // enable profiled class test in AOT when SVM is enabled.
    if (!valueProfileInfo || comp->compileRelocatableCode())
@@ -1309,7 +1309,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
       {
       if (instanceOfOrCheckCastNode->getOpCodeValue() == TR::checkcastAndNULLCHK)
          sequences[i++] = NullTest;
-      sequences[i++] = HelperCall;  
+      sequences[i++] = HelperCall;
       }
    // Object is known to be null, usually removed by the optimizer, but in case they're not we know the result of the cast/instanceof.
    //
@@ -1422,7 +1422,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
 
          // If the caller doesn't provide the output param don't bother with guessing.
          //
-         if ((!cg->comp()->compileRelocatableCode() || cg->comp()->getOption(TR_UseSymbolValidationManager)) 
+         if ((!cg->comp()->compileRelocatableCode() || cg->comp()->getOption(TR_UseSymbolValidationManager))
                && compileTimeGuessClass
                && !TR::Compiler->cls.isConcreteClass(cg->comp(), castClass))
             {
@@ -2277,4 +2277,32 @@ TR::Register *J9::TreeEvaluator::resolveCHKEvaluator(TR::Node *node, TR::CodeGen
    cg->evaluate(firstChild);
    cg->decReferenceCount(firstChild);
    return NULL;
+   }
+
+
+bool
+J9::TreeEvaluator::requireHelperCallValueTypeAllocation(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   if (TR::Compiler->om.areValueTypesEnabled() && node->getOpCodeValue() == TR::New)
+      {
+      TR::Compilation *comp = cg->comp();
+      TR::SymbolReference *newValueSymRef = comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol());
+      TR::SymbolReference *nodeSymRef = node->getSymbolReference();
+      TR::SymbolReference *classSymRef = node->getFirstChild()->getSymbolReference();
+
+      TR_OpaqueClassBlock *clazz = NULL;
+      if (!classSymRef->isUnresolved())
+         clazz = (TR_OpaqueClassBlock *)classSymRef->getSymbol()->getStaticSymbol()->getStaticAddress();
+
+      bool isValueTypeClass = clazz ? TR::Compiler->cls.isValueTypeClass(clazz) : false;
+
+      // If "new jitNewValue" is used to create a non value type, or if "new jitNewObject" is used to
+      // create a value type, InstantiationError exception needs to be thrown. Use helper call in these cases.
+      if (((nodeSymRef == newValueSymRef) && !isValueTypeClass)
+          || ((nodeSymRef != newValueSymRef) && isValueTypeClass))
+         {
+         return true;
+         }
+      }
+   return false;
    }

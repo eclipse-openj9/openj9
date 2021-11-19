@@ -3987,13 +3987,9 @@ J9::Z::TreeEvaluator::generateHelperCallForVMNewEvaluators(TR::Node *node, TR::C
 TR::Register *
 J9::Z::TreeEvaluator::newObjectEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
-   // If the helper symbol set on the node is TR_jitNewValue, we are (expecting to be)
-   // dealing with a value type. Since we do not fully support value types yet, always
-   // call the JIT helper to do the allocation.
-   //
    TR::Compilation* comp = cg->comp();
    if (cg->comp()->suppressAllocationInlining() ||
-       (TR::Compiler->om.areValueTypesEnabled() && node->getSymbolReference() == comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol())))
+       TR::TreeEvaluator::requireHelperCallValueTypeAllocation(node, cg))
       return generateHelperCallForVMNewEvaluators(node, cg);
    else
       return TR::TreeEvaluator::VMnewEvaluator(node, cg);
@@ -4102,7 +4098,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
 
    // If there's enough space, then we can continue to allocate.
    generateRXInstruction(cg, TR::InstOpCode::STG, node, temp1Reg, generateS390MemoryReference(vmThreadReg, offsetof(J9VMThread, heapAlloc), cg));
-   
+
    bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
 
    // Init class field, then jump to end of ICF
@@ -4664,7 +4660,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
               ((firstChild->getOpCode().isLoadVar() &&
                firstChild->getReferenceCount() == 1 &&
                firstChild->getRegister() == NULL) ||
-               (secondChild->getOpCode().isLoadVar() && 
+               (secondChild->getOpCode().isLoadVar() &&
                secondChild->getReferenceCount() == 1 &&
                secondChild->getRegister() == NULL)) &&
               cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12))
@@ -4675,7 +4671,7 @@ J9::Z::TreeEvaluator::BNDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          TR::InstOpCode::S390BranchCondition compareCondition = TR::InstOpCode::COND_BNL;
 
          // Check if first child is really the memory operand
-         if (!(firstChild->getOpCode().isLoadVar() && 
+         if (!(firstChild->getOpCode().isLoadVar() &&
                firstChild->getReferenceCount() == 1 &&
                firstChild->getRegister() == NULL))
             {
@@ -6297,7 +6293,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
       {
       usingCompressedPointers = true;
-      while (sourceChild->getNumChildren() > 0 
+      while (sourceChild->getNumChildren() > 0
          && sourceChild->getOpCodeValue() != TR::a2l)
          {
          sourceChild = sourceChild->getFirstChild();
@@ -8581,7 +8577,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR_S390OutOfLineCodeSection *outlinedHelperCall = NULL;
    TR::Instruction *cursor;
    TR::LabelSymbol *returnLabel = generateLabelSymbol(cg);
-   
+
    outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(callLabel, cFlowRegionEnd, cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
    outlinedHelperCall->swapInstructionListsWithCompilation();
@@ -8728,7 +8724,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR::Register      *metaReg             = cg->getMethodMetaDataRealRegister();
    TR::Register      *scratchRegister     = NULL;
    TR::Instruction         *startICF                  = NULL;
-   
+
    static char * disableInlineRecursiveMonitor = feGetEnv("TR_DisableInlineRecursiveMonitor");
    bool inlineRecursive = true;
    if (disableInlineRecursiveMonitor)
@@ -8977,11 +8973,11 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    generateSILInstruction(cg, moveImmOp, node, generateS390MemoryReference(baseReg, lwOffset, cg), 0);
 
    TR_S390OutOfLineCodeSection *outlinedHelperCall = NULL;
-   
+
    outlinedHelperCall = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(callLabel,cFlowRegionEnd,cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
    outlinedHelperCall->swapInstructionListsWithCompilation();
-   
+
    TR::Instruction *cursor = generateS390LabelInstruction(cg,TR::InstOpCode::label,node,callLabel);
 
    if (inlineRecursive)
@@ -9070,7 +9066,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       }
    // Done using OOL with manual code generation
    outlinedHelperCall->swapInstructionListsWithCompilation();
-   
+
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
    cg->stopUsingRegister(monitorReg);
@@ -9906,7 +9902,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             static char * allocZeroArrayWithVM = feGetEnv("TR_VMALLOCZEROARRAY");
             // DualTLH: Remove when performance confirmed
             static char * useDualTLH = feGetEnv("TR_USEDUALTLH");
-            
+
             if (comp->getOption(TR_DisableDualTLH) && useDualTLH || allocZeroArrayWithVM == NULL)
                {
                iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, startOOLLabel, iCursor);
@@ -9992,12 +9988,14 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       //To retrieve the destination node->getSymbolReference() is used below after genHeapAlloc.
       if(!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization())
          {
-         if (node->getOpCodeValue() == TR::New)
-         node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewObjectNoZeroInitSymbolRef(comp->getMethodSymbol()));
+         // For value types, the backout path should call jitNewValue helper call which is set up before code gen
+         if ((node->getOpCodeValue() == TR::New)
+             && (!TR::Compiler->om.areValueTypesEnabled() || (node->getSymbolReference() != comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol()))))
+            node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewObjectNoZeroInitSymbolRef(comp->getMethodSymbol()));
          else if (node->getOpCodeValue() == TR::newarray)
-         node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
+            node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
          else if (node->getOpCodeValue() == TR::anewarray)
-         node->setSymbolReference(comp->getSymRefTab()->findOrCreateANewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
+            node->setSymbolReference(comp->getSymRefTab()->findOrCreateANewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
          }
 
       if (enumReg == NULL && opCode != TR::New)

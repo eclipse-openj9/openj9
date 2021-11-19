@@ -1087,7 +1087,7 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
 
    if (isClassInitialized)
       {
-      if (modifiers & (J9AccAbstract | J9AccInterface | J9AccValueType))
+      if (modifiers & (J9AccAbstract | J9AccInterface))
          {
          return false;
          }
@@ -2630,7 +2630,7 @@ TR_J9SharedCacheServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method,
    bool skipFrames = false;
    TR::Compilation *comp = _compInfoPT->getCompilation();
    // For AOT with SVM do not optimize the messages by calling TR_J9ServerVM::stackWalkerMaySkipFrames
-   // because this will call isInstanceOf() and then isSuperClass() which will fail the 
+   // because this will call isInstanceOf() and then isSuperClass() which will fail the
    // the SVM validation check and result in an AOT compilation failure
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       {
