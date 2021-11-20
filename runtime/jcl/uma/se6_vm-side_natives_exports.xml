@@ -244,7 +244,7 @@
 	<export name="Java_java_lang_reflect_Proxy_defineClass0__Ljava_lang_ClassLoader_2Ljava_lang_String_2_3BIILjava_lang_Object_2_3Ljava_lang_Object_2Ljava_lang_Object_2" />
 	<export name="Java_java_lang_reflect_Proxy_defineClassImpl" />
 	<export name="Java_java_lang_reflect_Array_multiNewArrayImpl" />
-	<export name="Java_java_lang_System_getEncoding" />
+	<export name="Java_java_lang_System_getSysPropBeforePropertiesInitialized" />
 	<export name="Java_java_lang_System_getPropertyList" />
 	<export name="Java_java_lang_System_mapLibraryName" />
 	<export name="Java_java_lang_System_setFieldImpl" />

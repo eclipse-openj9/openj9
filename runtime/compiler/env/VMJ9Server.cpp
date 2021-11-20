@@ -834,6 +834,14 @@ TR_J9ServerVM::isString(TR_OpaqueClassBlock * clazz)
    return std::get<0>(stream->read<bool>());
    }
 
+bool
+TR_J9ServerVM::isJavaLangObject(TR_OpaqueClassBlock *clazz)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return clazz == vmInfo->_JavaLangObject;
+   }
+
 void *
 TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
    {

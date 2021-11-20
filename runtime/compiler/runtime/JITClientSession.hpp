@@ -92,7 +92,7 @@ class TR_J9MethodFieldAttributes
       if (_definingClass != other._definingClass) return false;
       return true;
       }
-   
+
    void setMethodFieldAttributesResult(uint32_t *fieldOffset, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result, TR_OpaqueClassBlock **definingClass = NULL)
       {
       setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result, definingClass);
@@ -120,7 +120,7 @@ class TR_J9MethodFieldAttributes
       }
 
    uintptr_t _fieldOffsetOrAddress; // Stores a uint32_t representing an offset for non-static fields, or an address for static fields.
-   TR::DataType _type; 
+   TR::DataType _type;
    bool _volatileP;
    bool _isFinal;
    bool _isPrivate;
@@ -174,7 +174,7 @@ public:
       @class ClassInfo
       @brief Struct that holds cached data about a class loaded on the JITClient.
 
-      It contains the ROM class, which is copied in full to the JITServer, as well 
+      It contains the ROM class, which is copied in full to the JITServer, as well
       as other items which are just pointers to data on the JITClient. ClassInfo will
       persist on the server until corresponding Java class gets unloaded or replaced by
       HCR mechanism (which JITServer also treats as a class unload event). At that point,
@@ -315,6 +315,7 @@ public:
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
       bool _useAOTCache;
       TR_AOTHeader _aotHeader;
+      TR_OpaqueClassBlock *_JavaLangObject;
       }; // struct VMInfo
 
    /**
@@ -538,7 +539,7 @@ private:
 
    WellKnownClassesCache _wellKnownClasses;
    TR::Monitor *_wellKnownClassesMonitor;
-   
+
    bool _isInStartupPhase;
 
    std::string _aotCacheName;

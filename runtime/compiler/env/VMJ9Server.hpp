@@ -28,14 +28,14 @@
 
 /**
  * @class TR_J9ServerVM
- * @brief Class used by JITServer for querying client-side VM information 
+ * @brief Class used by JITServer for querying client-side VM information
  *
- * This class is an extension of the TR_J9VM class which overrides a number 
- * of TR_J9VM's APIs. TR_J9ServerVM is used by JITServer and the overridden 
- * APIs mostly send remote messages to JITClient to query information from 
- * the TR_J9VM on the client. The information is needed for JITServer to 
- * compile code that is compatible with the client-side VM. To minimize the 
- * number of remote messages as a way to optimize JITServer performance, a 
+ * This class is an extension of the TR_J9VM class which overrides a number
+ * of TR_J9VM's APIs. TR_J9ServerVM is used by JITServer and the overridden
+ * APIs mostly send remote messages to JITClient to query information from
+ * the TR_J9VM on the client. The information is needed for JITServer to
+ * compile code that is compatible with the client-side VM. To minimize the
+ * number of remote messages as a way to optimize JITServer performance, a
  * lot of client-side TR_J9VM information are cached on JITServer.
  */
 
@@ -101,6 +101,7 @@ public:
    virtual int32_t getInitialLockword(TR_OpaqueClassBlock* clazzPointer) override;
    virtual bool isEnableGlobalLockReservationSet() override;
    virtual bool isString(TR_OpaqueClassBlock * clazz) override;
+   virtual bool isJavaLangObject(TR_OpaqueClassBlock *clazz) override;
    virtual void * getMethods(TR_OpaqueClassBlock * clazz) override;
    virtual void getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;
@@ -257,7 +258,7 @@ protected:
  * additional handling for AOT compilation
  *
  * This class is an extension of the TR_J9ServerVM class. This class conceptually
- * does very similar things compared to TR_J9ServerVM except it's used for AOT 
+ * does very similar things compared to TR_J9ServerVM except it's used for AOT
  * compilation.
  */
 
@@ -353,7 +354,7 @@ public:
 
 protected :
    bool validateClass(TR_OpaqueMethodBlock * method, TR_OpaqueClassBlock* j9class, bool isVettedForAOT);
- 
+
    };
 
 #endif // VMJ9SERVER_H

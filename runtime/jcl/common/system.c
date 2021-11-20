@@ -60,21 +60,53 @@ typedef struct {
 } CreateSystemPropertiesData;
 
 jint propertyListAddString( JNIEnv *env, jarray array, jint arrayIndex, const char *value);
-jstring getEncoding(JNIEnv *env, jint encodingType);
 static void JNICALL systemPropertyIterator(char* key, char* value, void* userData);
 char* getDefinedEncoding(JNIEnv *env, char *defArg);
 jobject getPropertyList(JNIEnv *env);
 
-jstring JNICALL Java_java_lang_System_getEncoding(JNIEnv *env, jclass clazz, jint encodingType)
+#if JAVA_SPEC_VERSION >= 11
+void JNICALL
+Java_java_lang_System_initJCLPlatformEncoding(JNIEnv *env, jclass clazz)
 {
-	return getEncoding(env, encodingType);
-}
+	UDATA handle = 0;
+	J9JavaVM * const vm = ((J9VMThread*)env)->javaVM;
+	char dllPath[EsMaxPath] = {0};
+	UDATA written = 0;
+	const char *encoding = NULL;
+	PORT_ACCESS_FROM_ENV(env);
 
-#if JAVA_SPEC_VERSION >= 18
+#if defined(OSX)
+	encoding = "UTF-8";
+#else
+	char property[128] = {0};
+	encoding = getPlatformFileEncoding(env, property, sizeof(property), 1); /* platform encoding */
+#endif /* defined(OSX) */
+	/* libjava.[so|dylib] is in the jdk/lib/ directory, one level up from the default/ & compressedrefs/ directories */
+	written = j9str_printf(PORTLIB, dllPath, sizeof(dllPath), "%s/../java", vm->j2seRootDirectory);
+	/* Assert the number of characters written (not including the null) fit within the dllPath buffer */
+	Assert_JCL_true(written < (sizeof(dllPath) - 1));
+	if (0 == j9sl_open_shared_library(dllPath, &handle, J9PORT_SLOPEN_DECORATE)) {
+		void (JNICALL *nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
+		if (0 == j9sl_lookup_name(handle, "InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
+			/* invoke JCL native to initialize platform encoding explicitly */
+			nativeFuncAddrJNU(env, encoding);
+		}
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 11 */
+
+/**
+ * sysPropID
+ *    0 - os.version
+ *    1 - platform encoding
+ *    2 - file.encoding
+ *    3 - os.encoding
+ */
 jstring JNICALL
 Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass clazz, jint sysPropID)
 {
 	const char *sysPropValue = NULL;
+	char property[128] = {0};
 	jstring result = NULL;
 	PORT_ACCESS_FROM_ENV(env);
 
@@ -94,6 +126,39 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 		}
 		break;
 
+	case 1: /* platform encoding: ibm.system.encoding, sun.jnu.encoding, native.encoding when file.encoding is NULL */
+#if defined(OSX)
+		sysPropValue = "UTF-8";
+#else
+		sysPropValue = getPlatformFileEncoding(env, property, sizeof(property), sysPropID);
+#endif /* defined(OSX) */
+		break;
+
+	case 2: /* file.encoding */
+		sysPropValue = getDefinedEncoding(env, "-Dfile.encoding=");
+		if (NULL == sysPropValue) {
+			sysPropValue = getPlatformFileEncoding(env, property, sizeof(property), sysPropID);
+		}
+#if defined(J9ZOS390)
+		if (__CSNameType(sysPropValue) == _CSTYPE_ASCII) {
+			__ccsid_t ccsid;
+			ccsid = __toCcsid(sysPropValue);
+			atoe_setFileTaggingCcsid(&ccsid);
+		}
+#endif /* defined(J9ZOS390) */
+		break;
+
+	case 3: /* os.encoding */
+		sysPropValue = getDefinedEncoding(env, "-Dos.encoding=");
+		if (NULL == sysPropValue) {
+#if defined(J9ZOS390) || defined(J9ZTPF)
+			sysPropValue = "ISO8859_1";
+#elif defined(WIN32) /* defined(J9ZOS390) || defined(J9ZTPF) */
+			sysPropValue = "UTF8";
+#endif /* defined(J9ZOS390) || defined(J9ZTPF) */
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -103,7 +168,6 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 
 	return result;
 }
-#endif /* JAVA_SPEC_VERSION >= 18 */
 
 jobject JNICALL Java_java_lang_System_getPropertyList(JNIEnv *env, jclass clazz)
 {
@@ -418,87 +482,6 @@ jobject getPropertyList(JNIEnv *env)
 		jclmem_free_memory(env, usernameAlloc);
 	}
 	return propertyList;
-}
-
-
-/**
- * encodingType
- *    0 - initialize the locale
- *    1 - platform encoding
- *    2 - file.encoding
- *    3 - os.encoding
- */
-jstring getEncoding(JNIEnv *env, jint encodingType)
-{
-	char *encoding = NULL;
-	char property[128];
-	jstring result = NULL;
-
-	switch (encodingType) {
-	case 0:		/* initialize the locale */
-		getPlatformFileEncoding(env, NULL, 0, encodingType);
-		break;
-
-	case 1: 		/* platform encoding */
-#if defined(OSX)
-		encoding = "UTF-8";
-#else
-		encoding = getPlatformFileEncoding(env, property, sizeof(property), encodingType);
-#endif /* defined(OSX) */
-#if JAVA_SPEC_VERSION >= 11
-		{
-			UDATA handle = 0;
-			J9JavaVM * const vm = ((J9VMThread*)env)->javaVM;
-			char dllPath[EsMaxPath];
-			UDATA written = 0;
-			PORT_ACCESS_FROM_ENV(env);
-			/* libjava.[so|dylib] is in the jdk/lib/ directory, one level up from the default/ & compressedrefs/ directories */
-			written = j9str_printf(PORTLIB, dllPath, sizeof(dllPath), "%s/../java", vm->j2seRootDirectory);
-			/* Assert the number of characters written (not including the null) fit within the dllPath buffer */
-			Assert_JCL_true(written < (sizeof(dllPath) - 1));
-			if (0 == j9sl_open_shared_library(dllPath, &handle, J9PORT_SLOPEN_DECORATE)) {
-				void (JNICALL *nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
-				if (0 == j9sl_lookup_name(handle, "InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
-					/* invoke JCL native to initialize platform encoding explicitly */
-					nativeFuncAddrJNU(env, encoding);
-				}
-			}
-		}
-#endif /* JAVA_SPEC_VERSION >= 11 */
-		break;
-
-	case 2:		/* file.encoding */
-		encoding = getDefinedEncoding(env, "-Dfile.encoding=");
-		if (NULL == encoding) {
-			encoding = getPlatformFileEncoding(env, property, sizeof(property), encodingType);
-		}
-#if defined(J9ZOS390)
-		if (__CSNameType(encoding) == _CSTYPE_ASCII) {
-			__ccsid_t ccsid;
-			ccsid = __toCcsid(encoding);
-			atoe_setFileTaggingCcsid(&ccsid);
-		}
-#endif /* defined(J9ZOS390) */
-		break;
-
-	case 3:		/* os.encoding */
-		encoding = getDefinedEncoding(env, "-Dos.encoding=");
-		if (NULL == encoding) {
-#if defined(J9ZOS390) || defined(J9ZTPF)
-			encoding = "ISO8859_1";
-#elif defined(WIN32)
-			encoding = "UTF8";
-#endif /* defined(J9ZOS390) || defined(J9ZTPF) */
-		 } 
-		break;
-
-	default:
-		break;
-	}
-	if (NULL != encoding) {
-		result = (*env)->NewStringUTF(env, encoding);
-	}
-	return result;
 }
 
 static void JNICALL

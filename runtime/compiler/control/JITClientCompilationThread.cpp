@@ -504,6 +504,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._isAllocateZeroedTLHPagesEnabled = fe->tlhHasBeenCleared();
          vmInfo._staticObjectAllocateFlags = fe->getStaticObjectFlags();
          vmInfo._referenceArrayCopyHelperAddress = fe->getReferenceArrayCopyHelperAddress();
+         vmInfo._JavaLangObject = (TR_OpaqueClassBlock*)J9VMJAVALANGOBJECT(vmThread->javaVM);
 
          vmInfo._useAOTCache = comp->getPersistentInfo()->getJITServerUseAOTCache();
          if (vmInfo._useAOTCache)
@@ -1175,7 +1176,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto recv = client->getRecvData<TR::KnownObjectTable::Index, std::string>();
          auto &memberNameStr = std::get<1>(recv);
-         TR::KnownObjectTable::Index fieldKnotIndex = 
+         TR::KnownObjectTable::Index fieldKnotIndex =
             fe->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(
                comp, std::get<0>(recv),
                &memberNameStr[0]);
@@ -2084,7 +2085,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             fieldNames.push_back(std::string(entry._fieldname));
             typeSignatures.push_back(std::string(entry._typeSignature));
             }
-         client->write(response, entries, fieldNames, typeSignatures); 
+         client->write(response, entries, fieldNames, typeSignatures);
          }
          break;
       case MessageType::SharedCache_getClassChainOffsetIdentifyingLoader:
@@ -3066,8 +3067,8 @@ remoteCompile(
    bool useAotCompilation = compInfoPT->getMethodBeingCompiled()->_useAotCompilation;
 
    // For JitDump recompilations need to use the same stream as for the original compile
-   JITServer::ClientStream *client = 
-      enableJITServerPerCompConn && !details.isJitDumpMethod() ? 
+   JITServer::ClientStream *client =
+      enableJITServerPerCompConn && !details.isJitDumpMethod() ?
       NULL
       : compInfoPT->getClientStream();
    if (!client)
@@ -3161,7 +3162,7 @@ remoteCompile(
        || !unloadedClasses.empty()
        || details.isJitDumpMethod())
       compInfo->setLastCriticalSeqNo(seqNo);
-   
+
    compInfo->getSequencingMonitor()->exit();
 
    uint32_t statusCode = compilationFailure;
@@ -3244,12 +3245,12 @@ remoteCompile(
          releaseVMAccess(vmThread);
          while(!handleServerMessage(client, compiler->fej9vm(), response));
          acquireVMAccessNoSuspend(vmThread);
-         
+
          TR_ASSERT_FATAL(
             response == JITServer::MessageType::compilationThreadCrashed
             || response == JITServer::MessageType::compilationFailure,
             "Expected JITServer::MessageType::compilationThreadCrashed or JITServer::MessageType::compilationFailure but received %s\n",
-            JITServer::messageNames[response]); 
+            JITServer::messageNames[response]);
 
          if (response == JITServer::MessageType::compilationThreadCrashed)
             {
@@ -3305,7 +3306,7 @@ remoteCompile(
          statusCode = std::get<0>(recv);
          uint64_t otherData = std::get<1>(recv);
          if (statusCode == compilationLowPhysicalMemory && otherData != -1) // if failed due to low memory, should've received an updated memory state
-            updateCompThreadActivationPolicy(compInfoPT, (JITServer::ServerMemoryState) otherData, JITServer::ServerActiveThreadsState::NORMAL_THREAD); 
+            updateCompThreadActivationPolicy(compInfoPT, (JITServer::ServerMemoryState) otherData, JITServer::ServerActiveThreadsState::NORMAL_THREAD);
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "remoteCompile: compilationFailure statusCode %u\n", statusCode);
 
