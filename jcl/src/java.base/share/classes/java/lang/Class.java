@@ -179,6 +179,9 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	/* Cache filename on Class to avoid repeated lookups / allocations in stack traces */
 	private transient String fileNameString;
 
+	/* Cache the packageName of the Class */
+	private transient String packageNameString;
+
 	private static final class AnnotationVars {
 		AnnotationVars() {}
 		static long annotationTypeOffset = -1;
@@ -2170,26 +2173,33 @@ private static String getNonArrayClassPackageName(Class<?> clz) {
  * @see			#getPackage
  */
 /*[IF Sidecar19-SE]*/
-public 
+public
 /*[ENDIF] Sidecar19-SE */
 String getPackageName() {
+	String packageName = this.packageNameString;
+	if (null == packageName) {
 /*[IF Sidecar19-SE]*/
-	if (isPrimitive()) {
-		return "java.lang"; //$NON-NLS-1$
-	}
-	if (isArray()) {
-		Class<?> componentType = getComponentType();
-		while (componentType.isArray()) {
-			componentType = componentType.getComponentType();
-		}
-		if (componentType.isPrimitive()) {
-			return "java.lang"; //$NON-NLS-1$
+		if (isPrimitive()) {
+			packageName = "java.lang"; //$NON-NLS-1$
+		} else if (isArray()) {
+			Class<?> componentType = getComponentType();
+			while (componentType.isArray()) {
+				componentType = componentType.getComponentType();
+			}
+			if (componentType.isPrimitive()) {
+				packageName = "java.lang"; //$NON-NLS-1$
+			} else {
+				packageName = getNonArrayClassPackageName(componentType);
+			}
 		} else {
-			return getNonArrayClassPackageName(componentType);
+			packageName = getNonArrayClassPackageName(this);
 		}
-	}
+/*[ELSE] Sidecar19-SE */
+		packageName = getNonArrayClassPackageName(this);
 /*[ENDIF] Sidecar19-SE */
-	return getNonArrayClassPackageName(this);
+		this.packageNameString = packageName;
+	}
+	return packageName;
 }
 
 /**
