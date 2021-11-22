@@ -480,8 +480,6 @@ public:
    virtual uintptr_t         getOffsetOfClassInitializeStatus();
 
    virtual uintptr_t         getOffsetOfJ9ObjectJ9Class();
-   virtual uintptr_t         getObjectHeaderHasBeenMovedInClass();
-   virtual uintptr_t         getObjectHeaderHasBeenHashedInClass();
    virtual uintptr_t         getJ9ObjectFlagsMask32();
    virtual uintptr_t         getJ9ObjectFlagsMask64();
    uintptr_t                 getOffsetOfJ9ThreadJ9VM();
