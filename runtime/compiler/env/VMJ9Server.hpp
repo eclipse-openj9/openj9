@@ -116,6 +116,7 @@ public:
    virtual const char *sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufLen, TR_Memory *memory) override;
    virtual TR_OpaqueClassBlock * getHostClass(TR_OpaqueClassBlock *clazzOffset) override;
    virtual intptr_t getStringUTF8Length(uintptr_t objectPointer) override;
+   virtual uint32_t getVarHandleHandleTableOffset(TR::Compilation *) override;
    virtual bool classInitIsFinished(TR_OpaqueClassBlock *) override;
    virtual int32_t getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;

@@ -1193,6 +1193,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          }
          break;
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
+      case MessageType::VM_varHandleHandleTableOffset:
+         {
+         client->getRecvData<JITServer::Void>();
+         client->write(response, fe->getVarHandleHandleTableOffset(comp));
+         }
+         break;
       case MessageType::VM_isStable:
          {
          auto recv = client->getRecvData<J9Class *, int>();

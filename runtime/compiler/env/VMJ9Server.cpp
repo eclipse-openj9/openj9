@@ -1029,6 +1029,14 @@ TR_J9ServerVM::getStringUTF8Length(uintptr_t objectPointer)
    return std::get<0>(stream->read<intptr_t>());
    }
 
+uint32_t
+TR_J9ServerVM::getVarHandleHandleTableOffset(TR::Compilation * comp)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_varHandleHandleTableOffset, JITServer::Void());
+   return std::get<0>(stream->read<uint32_t>());
+   }
+
 bool
 TR_J9ServerVM::classInitIsFinished(TR_OpaqueClassBlock *clazz)
    {

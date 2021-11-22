@@ -197,6 +197,7 @@ enum MessageType : uint16_t
    VM_delegatingMethodHandleTarget,
    VM_getVMTargetOffset,
    VM_getVMIndexOffset,
+   VM_varHandleHandleTableOffset,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,
@@ -448,6 +449,7 @@ static const char *messageNames[] =
    "VM_delegatingMethodHandleTarget",
    "VM_getVMTargetOffset",
    "VM_getVMIndexOffset",
+   "VM_varHandleHandleTableOffset",
    "CompInfo_isCompiled",
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",
