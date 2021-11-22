@@ -3630,10 +3630,10 @@ JVM_LoadSystemLibrary(const char *libName)
 }
 
 /**
- * Prior to jdk18:
+ * Prior to jdk17:
  *   void * JNICALL JVM_LoadLibrary(char *libName)
  *
- * Beginning in jdk18:
+ * Beginning in jdk17:
  *   void * JNICALL JVM_LoadLibrary(char *libName, jboolean throwOnFailure)
  *
  * Attempts to load the shared library specified by libName.
@@ -3652,11 +3652,11 @@ JVM_LoadSystemLibrary(const char *libName)
  * It is only invoked by jdk.internal.loader.BootLoader.loadLibrary().
  */
 void * JNICALL
-#if JAVA_SPEC_VERSION < 18
+#if JAVA_SPEC_VERSION < 17
 JVM_LoadLibrary(const char *libName)
-#else /* JAVA_SPEC_VERSION < 18 */
+#else /* JAVA_SPEC_VERSION < 17 */
 JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
-#endif /* JAVA_SPEC_VERSION < 18 */
+#endif /* JAVA_SPEC_VERSION < 17 */
 {
 	void *result = NULL;
 	J9JavaVM *javaVM = (J9JavaVM *)BFUjavaVM;
@@ -3701,7 +3701,7 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 	}
 #endif /* defined(WIN32) */
 
-#if JAVA_SPEC_VERSION >= 18
+#if JAVA_SPEC_VERSION >= 17
 	if ((NULL == result) && throwOnFailure) {
 		JNIEnv *env = NULL;
 		JavaVM *vm = (JavaVM *)javaVM;
@@ -3713,7 +3713,7 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 			throwNewUnsatisfiedLinkError(env, errMsg);
 		}
 	}
-#endif /* JAVA_SPEC_VERSION >= 18 */
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 	Trc_SC_LoadLibrary_Exit(result);
 
