@@ -57,6 +57,26 @@ static UDATA classLocationHashEqualFn(void *leftKey, void *rightKey, void *userD
 
 static void addLocationGeneratedClass(J9VMThread *vmThread, J9ClassLoader *classLoader, KeyHashTableClassEntry *existingPackageEntry, IDATA entryIndex, I_32 locationType);
 
+#if defined(J9_EXTENDED_DEBUG)
+static void checkClassAlignment(J9Class *clazz, char const *caller)
+{
+	if (J9_ARE_ANY_BITS_SET((UDATA)clazz, J9_REQUIRED_CLASS_ALIGNMENT - 1)) {
+		J9JavaVM *vm = NULL;
+		jint nVMs = 0;
+		if (JNI_OK == J9_GetCreatedJavaVMs((JavaVM **)&vm, 1, &nVMs)) {
+			if (nVMs == 1) {
+				PORT_ACCESS_FROM_JAVAVM(vm);
+				J9VMThread *currentThread = currentVMThread(vm);
+				j9tty_printf(PORTLIB, "\n<%p> %s: Unaligned class value %p\n", currentThread, caller, clazz);
+			}
+		}
+		Assert_VM_unreachable();
+	}
+}
+#else /* J9_EXTENDED_DEBUG */
+#define checkClassAlignment(clazz, caller) Assert_VM_false(J9_ARE_ANY_BITS_SET((UDATA)(clazz), J9_REQUIRED_CLASS_ALIGNMENT - 1))
+#endif /* J9_EXTENDED_DEBUG */
+
 static UDATA
 classHashGetName(KeyHashTableClassEntry *entry, const U_8 **name, UDATA *nameLength)
 {
@@ -310,7 +330,7 @@ hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLeng
 	result = hashTableFind(table, &key);
 	if (NULL != result) {
 		J9Class *clazz = result->ramClass;
-		Assert_VM_false(J9_ARE_ANY_BITS_SET((UDATA)clazz, J9_REQUIRED_CLASS_ALIGNMENT - 1));
+		checkClassAlignment(clazz, "hashClassTableAt");
 		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
 			return NULL;
 		}
@@ -633,7 +653,7 @@ hashClassTableAtString(J9ClassLoader *classLoader, j9object_t stringObject)
 	result = hashTableFind(table, &key);
 	if (NULL != result) {
 		J9Class *clazz = result->ramClass;
-		Assert_VM_false(J9_ARE_ANY_BITS_SET((UDATA)clazz, J9_REQUIRED_CLASS_ALIGNMENT - 1));
+		checkClassAlignment(clazz, "hashClassTableAtString");
 		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
 			return NULL;
 		}

@@ -390,6 +390,11 @@ target_link_libraries(j9vm
 		j9thr
 )
 
+target_compile_definitions(j9vm
+	PRIVATE
+		-DJ9_EXTENDED_DEBUG
+)
+
 omr_add_exports(j9vm
 	J9_CreateJavaVM
 	J9_GetCreatedJavaVMs

@@ -59,6 +59,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<flag name="-qsuppress=1500-010" asmflag="false" definition="false">
 				<include-if condition="spec.aix.*"/>
 			</flag>
+			<flag name="J9_EXTENDED_DEBUG"/>
 		</flags>
 		<includes>
 			<include path="j9include"/>
