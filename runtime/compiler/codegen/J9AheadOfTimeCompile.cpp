@@ -1814,7 +1814,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Stack Walker May Skip Frames: methodID=%d, methodClassID=%d, beholderID=%d, skipFrames=%s ",
+            traceMsg(self()->comp(), "\n Validate Stack Walker May Skip Frames: methodID=%d, methodClassID=%d, skipFrames=%s ",
                      (uint32_t)swmsfRecord->methodID(reloTarget),
                      (uint32_t)swmsfRecord->methodClassID(reloTarget),
                      swmsfRecord->skipFrames(reloTarget) ? "true" : "false");
