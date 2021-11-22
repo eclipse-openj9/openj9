@@ -91,12 +91,14 @@ void J9::ARM64::AheadOfTimeCompile::processRelocations()
       }
    }
 
-void
+bool
 J9::ARM64::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation,
                                                                              TR_RelocationTarget *reloTarget,
                                                                              TR_RelocationRecord *reloRecord,
                                                                              uint8_t targetKind)
    {
+   bool platformSpecificReloInitialized = true;
+
    switch (targetKind)
       {
       case TR_DiscontiguousSymbolFromManager:
@@ -127,7 +129,9 @@ J9::ARM64::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          break;
 
       default:
-         self()->initializeCommonAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
+         platformSpecificReloInitialized = false;
       }
+
+   return platformSpecificReloInitialized;
    }
 

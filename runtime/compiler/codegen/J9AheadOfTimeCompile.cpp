@@ -183,7 +183,8 @@ J9::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedExternalReloca
    reloRecord->setType(reloTarget, static_cast<TR_RelocationRecordType>(targetKind));
    reloRecord->setFlag(reloTarget, wideOffsets);
 
-   self()->initializePlatformSpecificAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
+   if (!self()->initializePlatformSpecificAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind))
+      self()->initializeCommonAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
 
    cursor += self()->getSizeOfAOTRelocationHeader(static_cast<TR_RelocationRecordType>(targetKind));
    return cursor;
@@ -1813,7 +1814,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Stack Walker May Skip Frames: methodID=%d, methodClassID=%d, beholderID=%d, skipFrames=%s ",
+            traceMsg(self()->comp(), "\n Validate Stack Walker May Skip Frames: methodID=%d, methodClassID=%d, skipFrames=%s ",
                      (uint32_t)swmsfRecord->methodID(reloTarget),
                      (uint32_t)swmsfRecord->methodClassID(reloTarget),
                      swmsfRecord->skipFrames(reloTarget) ? "true" : "false");
