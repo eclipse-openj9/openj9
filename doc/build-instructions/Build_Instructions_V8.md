@@ -73,7 +73,7 @@ wget https://raw.githubusercontent.com/eclipse-openj9/openj9/master/buildenv/doc
 
 3. Next, run the following command to build a Docker image, called **openj9**:
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16.04 --build
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16.04 --gitcache=no --jdk=8 --build
 ```
 
 4. Start a Docker container from the **openj9** image with the following command, where `-v` maps any directory, `<host_directory>`,
@@ -91,7 +91,7 @@ Now that you have the Docker image running, you are ready to move to the next st
 If you don't want to user Docker, you can still build directly on your Ubuntu system or in a Ubuntu virtual machine. Use the output of the following command like a recipe card to determine the software dependencies that must be installed on the system, plus a few configuration steps.
 
 ```
-bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16.04 --print
+bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16.04 --gitcache=no --jdk=8 --print
 ```
 
 1. Install the list of dependencies that can be obtained with the `apt-get` command from the following section of the Dockerfile:
