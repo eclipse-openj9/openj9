@@ -531,6 +531,17 @@ getCompleteNPEMessage(J9VMThread *vmThread, U_8 *bcCurrentPtr, J9ROMClass *romCl
 			J9UTF8* methodSig = J9ROMNAMEANDSIGNATURE_SIGNATURE(methodNameAndSig);
 			bool npeMsgRequired = true;
 
+#if JAVA_SPEC_VERSION >= 18
+			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(definingClassFullQualifiedName), J9UTF8_LENGTH(definingClassFullQualifiedName), "jdk/internal/reflect/DirectConstructorHandleAccessor")) {
+				if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName), "invokeImpl")) {
+					/* JEP416 - jdk.internal.reflect.DirectConstructorHandleAccessor.invokeImpl() is invoked by DirectConstructorHandleAccessor.newInstance().
+					 * No message generated for new NullPointerException().getMessage() or new NullPointerException(null).getMessage()
+					 */
+					npeMsgRequired = false;
+					Trc_VM_GetCompleteNPEMessage_Not_Required(vmThread);
+				}
+			} else
+#endif /* JAVA_SPEC_VERSION >= 18 */
 			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(definingClassFullQualifiedName), J9UTF8_LENGTH(definingClassFullQualifiedName), "java/lang/NullPointerException")) {
 				if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName), "<init>")) {
 					/* No message generated for new NullPointerException().getMessage() or new NullPointerException(null).getMessage() */

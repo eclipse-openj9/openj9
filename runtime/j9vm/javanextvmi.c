@@ -70,14 +70,22 @@ typedef struct GetStackTraceElementUserData {
 static UDATA
 getStackTraceElementIterator(J9VMThread *vmThread, void *voidUserData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader *classLoader, J9Class* ramClass)
 {
-	GetStackTraceElementUserData *userData = voidUserData;
+	UDATA result = J9_STACKWALK_STOP_ITERATING;
 
-	/* We are done, only first stack frame is needed. */
-	userData->romClass = romClass;
-	userData->romMethod = romMethod;
-	userData->bytecodeOffset = bytecodeOffset;
+	if ((NULL != romMethod)
+		&& J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccMethodFrameIteratorSkip)
+	) {
+		/* Skip methods with java.lang.invoke.FrameIteratorSkip / jdk.internal.vm.annotation.Hidden / java.lang.invoke.LambdaForm$Hidden annotation */
+		result = J9_STACKWALK_KEEP_ITERATING;
+	} else {
+		GetStackTraceElementUserData *userData = voidUserData;
 
-	return FALSE;
+		/* We are done, first non-hidden stack frame is found. */
+		userData->romClass = romClass;
+		userData->romMethod = romMethod;
+		userData->bytecodeOffset = bytecodeOffset;
+	}
+	return result;
 }
 
 #if defined(DEBUG_BCV)

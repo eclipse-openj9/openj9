@@ -37,6 +37,7 @@
 	<property name="src_80" location="./src_80"/>
 	<property name="src_90" location="./src_90"/>
 	<property name="build" location="./bin"/>
+	<property name="TestUtilities" location="../TestUtilities/src"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -73,7 +74,11 @@
 				<javac srcdir="${src}" destdir="${build}" source="1.9" target="1.9" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${src_90}" />
+					<src path="${TestUtilities}" />
 					<compilerarg line='${addExports}' />
+					<classpath>
+						<pathelement location="${LIB_DIR}/testng.jar"/>
+					</classpath>
 				</javac>
 			</else>
 		</if>

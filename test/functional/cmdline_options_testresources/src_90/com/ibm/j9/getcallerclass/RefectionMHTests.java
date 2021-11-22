@@ -27,11 +27,17 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import org.openj9.test.util.VersionCheck;
 
 /**
  * Test cases intended for reflection and MethodHandle
  */
 public class RefectionMHTests {
+
+	private static boolean isSecurityFrameOrInjectedInvoker(Class<?> cls) {
+		return ("java.lang.invoke.SecurityFrame" == cls.getName()
+			|| cls.getName().startsWith(RefectionMHTests.class.getName() + "$$InjectedInvoker/"));
+	}
 
 	/**
 	 * Call getCallerClass() with a helper method via reflection from the bootstrap/extension
@@ -46,7 +52,14 @@ public class RefectionMHTests {
 			method = GetCallerClassTests.class.getDeclaredMethod("test_getCallerClass_MethodHandle");
 			cls = (Class<?>) method.invoke(null, new Object[0]);
 
-			if (cls == RefectionMHTests.class) {
+			boolean isClassNameExpected;
+			if (VersionCheck.major() >= 18) {
+				isClassNameExpected = isSecurityFrameOrInjectedInvoker(cls);
+			} else {
+				isClassNameExpected = (cls == RefectionMHTests.class);
+			}
+
+			if (isClassNameExpected) {
 				System.out.println(TESTCASE_NAME + ": PASSED: return " + cls.getName());
 				return true;
 			} else {
@@ -108,9 +121,7 @@ public class RefectionMHTests {
 			methodHandle = lookup.findStatic(GetCallerClassTests.class, "test_getCallerClass_MethodHandle", methodType);
 			cls = (Class<?>) methodHandle.invoke();
 
-			if (("java.lang.invoke.SecurityFrame" == cls.getName())
-				|| cls.getName().startsWith(RefectionMHTests.class.getName() + "$$InjectedInvoker/")
-			) {
+			if (isSecurityFrameOrInjectedInvoker(cls)) {
 				System.out.println(TESTCASE_NAME + ": PASSED: return " + cls.getName());
 				return true;
 			} else {
@@ -176,9 +187,7 @@ public class RefectionMHTests {
 			MethodHandle mhResult = MethodHandles.foldArguments(mhTarget, mhCombiner);
 			cls = (Class<?>) mhResult.invoke();
 
-			if ("java.lang.invoke.SecurityFrame" == cls.getName()
-				|| cls.getName().startsWith(RefectionMHTests.class.getName() + "$$InjectedInvoker/")
-			) {
+			if (isSecurityFrameOrInjectedInvoker(cls)) {
 				System.out.println(TESTCASE_NAME + ": PASSED: return " + cls.getName());
 				return true;
 			} else {
