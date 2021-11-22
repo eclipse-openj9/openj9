@@ -118,12 +118,14 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
       }
    }
 
-void
+bool
 J9::X86::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation,
                                                                            TR_RelocationTarget *reloTarget,
                                                                            TR_RelocationRecord *reloRecord,
                                                                            uint8_t targetKind)
    {
+   bool platformSpecificReloInitialized = true;
+
    switch (targetKind)
       {
       case TR_PicTrampolines:
@@ -137,7 +139,9 @@ J9::X86::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
         break;
 
       default:
-         self()->initializeCommonAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
+         platformSpecificReloInitialized = false;
       }
+
+   return platformSpecificReloInitialized;
    }
 

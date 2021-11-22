@@ -123,12 +123,14 @@ void J9::Z::AheadOfTimeCompile::processRelocations()
       }
    }
 
-void
+bool
 J9::Z::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation,
                                                                          TR_RelocationTarget *reloTarget,
                                                                          TR_RelocationRecord *reloRecord,
                                                                          uint8_t targetKind)
    {
+   bool platformSpecificReloInitialized = true;
+
    switch (targetKind)
       {
       case TR_EmitClass:
@@ -145,7 +147,9 @@ J9::Z::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::Ite
          break;
 
       default:
-         self()->initializeCommonAOTRelocationHeader(relocation, reloTarget, reloRecord, targetKind);
+         platformSpecificReloInitialized = false;
       }
+
+   return platformSpecificReloInitialized;
    }
 

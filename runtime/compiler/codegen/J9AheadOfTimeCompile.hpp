@@ -57,17 +57,26 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
    uint8_t* dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose);
 
    /**
-    * @brief Initializes the common fields in the raw relocation record header. It then delegates
-    *        to initializePlatformSpecificAOTRelocationHeader which must be implemented on all
-    *        platforms that support AOT.
+    * @brief Initializes the relocation record header.
     *
     * @param relocation pointer to the iterated external relocation
     * @return pointer into the buffer right after the fields of the header (ie the offsets section)
     */
    virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
 
-   void initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t targetKind)
-      { TR_ASSERT_FATAL(false, "Should not be called!\n"); return; }
+   /**
+    * @brief Initialization of relocation record headers for whom data for the fields are acquired
+    *        in a manner that is specific to a particular platform. This is the default implementation.
+    *
+    * @param relocation pointer to the iterated external relocation
+    * @param reloTarget pointer to the TR_RelocationTarget object
+    * @param reloRecord pointer to the TR_RelocationRecord object
+    * @param targetKind the TR_ExternalRelocationTargetKind enum value
+    *
+    * @return true if a platform specific relocation record header was initialized; false otherwise
+    */
+   bool initializePlatformSpecificAOTRelocationHeader(TR::IteratedExternalRelocation *relocation, TR_RelocationTarget *reloTarget, TR_RelocationRecord *reloRecord, uint8_t targetKind)
+      { return false; }
 
    static void interceptAOTRelocation(TR::ExternalRelocation *relocation);
 
