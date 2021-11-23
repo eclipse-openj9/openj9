@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,12 +56,12 @@ public class Test_Class {
 	};
 
 	/* descriptor strings */
-	String objectResult = "Ljava/lang/Object;";
+	String objectResult = "Ljava/lang/Thread;";
 	String arrayResult = "[D";
 	String arrayResult2 = "[[[D";
 
 	/* test classes */
-	Class<?> objectTest = new Object().getClass();
+	Class<?> objectTest = new Thread().getClass();
 	Class<?> arrayTest = new double[0].getClass();
 	Class<?> arrayTest2 = new double[0][][].getClass();
 	Runnable lambdaExp = () -> System.out.println("test");
