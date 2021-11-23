@@ -2502,6 +2502,7 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
        rm <= TR::LastVectorIntrinsicMethod)
       return true;
 
+#if !defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    // Skip HCR guard for non-public methods in java/lang/invoke package. These methods
    // are related to implementation details of MethodHandle and VarHandle
    int32_t length = callee->classNameLength();
@@ -2510,6 +2511,7 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
        && !strncmp("java/lang/invoke/", className, 17)
        && !callee->isPublic())
       return true;
+#endif
 
    return false;
    }
