@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2017, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ set(gc_modron_standard_sources
 	ReferenceObjectBufferStandard.cpp
 	RootScannerReadBarrierVerifier.cpp
 	StandardAccessBarrier.cpp
+	StandardSATBAccessBarrier.cpp
 	UnfinalizedObjectBufferStandard.cpp
 )
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,6 +58,7 @@
 #include "ReferenceObjectList.hpp"
 #include "ScavengerJavaStats.hpp"
 #include "StandardAccessBarrier.hpp"
+#include "StandardSATBAccessBarrier.hpp"
 #include "VMThreadListIterator.hpp"
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -107,7 +108,7 @@ MM_GlobalCollectorDelegate::initialize(MM_EnvironmentBase *env, MM_GlobalCollect
 		} else
 #endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 		{
-			_extensions->accessBarrier = MM_StandardAccessBarrier::newInstance(env);
+			_extensions->accessBarrier = (_extensions->usingSATBBarrier() ? MM_StandardSATBAccessBarrier::newInstance(env) : MM_StandardAccessBarrier::newInstance(env));
 		}
 
 		if (NULL == _extensions->accessBarrier) {
