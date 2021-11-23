@@ -122,6 +122,8 @@ typedef struct {
 	UDATA *sp;
 	UDATA *arg0EA;
 	J9Method *literals;
+	void *jitArtifactSearchCache;
+	UDATA privateFlags2;
 } ASGCT_parms;
 
 static UDATA
@@ -137,6 +139,17 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 		parms->arg0EA = currentThread->arg0EA;
 		parms->literals = currentThread->literals;
 		parms->num_frames = ticks_not_walkable_Java;
+		parms->jitArtifactSearchCache = currentThread->jitArtifactSearchCache;
+		parms->privateFlags2 = currentThread->privateFlags2;
+		/* Disable the JIT metadata cache. The cache may be in an inconsistent state, and may
+		 * need to allocate memory (which is undesireable in a signal handler).
+		 */
+		currentThread->jitArtifactSearchCache = (void*)((UDATA)currentThread->jitArtifactSearchCache | J9_STACKWALK_NO_JIT_CACHE);
+		/* Disable trace and assertions. The current thread may be in the process of updating the trace
+		 * buffers when it was interrupted. Assertions during ASGCT are also undesireable, better to let
+		 * the thread continue on to crash, which is handled.
+		 */
+		currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE;
 		J9JITConfig *jitConfig = BFUjavaVM->jitConfig;
 		if (NULL != jitConfig) {
 			void *ucontext = parms->ucontext;
@@ -164,15 +177,6 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 				}
 			}
 		}
-		/* Disable the JIT metadata cache. The cache may be in an inconsistent state, and may
-		 * need to allocate memory (which is undesireable in a signal handler).
-		 */
-		currentThread->jitArtifactSearchCache = (void*)((UDATA)currentThread->jitArtifactSearchCache | J9_STACKWALK_NO_JIT_CACHE);
-		/* Disable trace and assertions. The current thread may be in the process of updating the trace
-		 * buffers when it was interrupted. Assertions during ASGCT are also undesireable, better to let
-		 * the thread continue on to crash, which is handled.
-		 */
-		currentThread->privateFlags2 |= J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE;
 		J9StackWalkState walkState = {0};
 		walkState.walkThread = currentThread;
 		walkState.skipCount = 0;
@@ -199,7 +203,7 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void *ucontext)
 #if defined(ASGCT_SUPPORTED)
 	if (NULL != BFUjavaVM) {
 		PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
-		ASGCT_parms parms = { trace, depth, ucontext, currentThread, num_frames, NULL, NULL, NULL, NULL };
+		ASGCT_parms parms = { trace, depth, ucontext, currentThread, num_frames, NULL, NULL, NULL, NULL, NULL, 0 };
 		UDATA result = 0;
 		j9sig_protect(
 				protectedASGCT, (void*)&parms, 
@@ -210,8 +214,8 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void *ucontext)
 		currentThread = parms.currentThread;
 		if (NULL != currentThread) {
 			/* Restore any modified J9VMThread fields */
-			currentThread->jitArtifactSearchCache = (void*)((UDATA)currentThread->jitArtifactSearchCache & ~(UDATA)J9_STACKWALK_NO_JIT_CACHE);
-			currentThread->privateFlags2 &= ~(UDATA)J9_PRIVATE_FLAGS2_ASYNC_GET_CALL_TRACE;
+			currentThread->jitArtifactSearchCache = parms.jitArtifactSearchCache;
+			currentThread->privateFlags2 = parms.privateFlags2;
 			currentThread->pc = parms.pc;
 			currentThread->sp = parms.sp;
 			currentThread->arg0EA = parms.arg0EA;
