@@ -3910,11 +3910,11 @@ typedef struct J9JITConfig {
 	UDATA codeCacheTotalKB;
 	UDATA dataCacheTotalKB;
 	struct J9JITExceptionTable*  ( *jitGetExceptionTableFromPC)(struct J9VMThread * vmThread, UDATA jitPC) ;
-	void*  ( *jitGetStackMapFromPC)(struct J9JavaVM * javaVM, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
-	void*  ( *jitGetInlinerMapFromPC)(struct J9JavaVM * javaVM, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
+	void*  ( *jitGetStackMapFromPC)(struct J9VMThread * currentThread, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
+	void*  ( *jitGetInlinerMapFromPC)(struct J9VMThread * currentThread, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
 	UDATA  ( *getJitInlineDepthFromCallSite)(struct J9JITExceptionTable *metaData, void *inlinedCallSite) ;
 	void*  ( *getJitInlinedCallInfo)(struct J9JITExceptionTable * md) ;
-	void*  ( *getStackMapFromJitPC)(struct J9JavaVM * javaVM, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
+	void*  ( *getStackMapFromJitPC)(struct J9VMThread * currentThread, struct J9JITExceptionTable * exceptionTable, UDATA jitPC) ;
 	void*  ( *getFirstInlinedCallSite)(struct J9JITExceptionTable * metaData, void * stackMap) ;
 	void*  ( *getNextInlinedCallSite)(struct J9JITExceptionTable * metaData, void * inlinedCallSite) ;
 	UDATA  ( *hasMoreInlinedMethods)(void * inlinedCallSite) ;
