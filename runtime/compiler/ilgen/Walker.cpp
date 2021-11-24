@@ -5363,16 +5363,6 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
             loadConstant(TR::iconst, (int32_t)fej9->getOffsetOfJ9ObjectJ9Class());
             return;
             }
-         case TR::Symbol::Com_ibm_jit_JITHelpers_OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS:
-            {
-            loadConstant(TR::iconst, (int32_t)fej9->getObjectHeaderHasBeenMovedInClass());
-            return;
-            }
-         case TR::Symbol::Com_ibm_jit_JITHelpers_OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS:
-            {
-            loadConstant(TR::iconst, (int32_t)fej9->getObjectHeaderHasBeenHashedInClass());
-            return;
-            }
          case TR::Symbol::Com_ibm_jit_JITHelpers_J9OBJECT_FLAGS_MASK32:
             {
             loadConstant(TR::iconst, (int32_t)fej9->getJ9ObjectFlagsMask32());

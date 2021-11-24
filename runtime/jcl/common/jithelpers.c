@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2020 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,18 +47,6 @@ jint JNICALL
 Java_com_ibm_jit_JITHelpers_j9ObjectJ9ClassOffset(JNIEnv *env, jclass ignored)
 {
 	return (jint) offsetof(J9Object, clazz);
-}
-
-jint JNICALL
-Java_com_ibm_jit_JITHelpers_objectHeaderHasBeenMovedInClass(JNIEnv *env, jclass ignored)
-{
-	return (jint) OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS;
-}
-
-jint JNICALL
-Java_com_ibm_jit_JITHelpers_objectHeaderHasBeenHashedInClass(JNIEnv *env, jclass ignored)
-{
-	return (jint) OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS;
 }
 
 jint JNICALL
