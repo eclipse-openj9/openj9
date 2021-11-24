@@ -883,8 +883,8 @@ public abstract class VarHandle extends VarHandleInternal
 	}
 	
 	/**
-	 * Inserts a release memory fence, ensuring that no stores before this fence
-	 * are reordered with any loads/stores after the fence. 
+	 * Inserts a release memory fence, ensuring that no loads and stores before
+	 * this fence are reordered with any stores after the fence.
 	 */
 	public static void releaseFence() {
 		// TODO: storeStore + loadStore
@@ -984,7 +984,7 @@ public abstract class VarHandle extends VarHandleInternal
 		
 	/**
 	 * Sets the value of the field referenced by this {@link VarHandle} using acquire semantics.
-	 * Preceding stores will not be reordered with subsequent loads/stores.
+	 * Preceding loads and stores will not be reordered after this access.
 	 * 
 	 * @param args The arguments for this operation are determined by the field type
 	 * 				(see {@link VarHandle#accessModeType(AccessMode) accessModeType()}) 
