@@ -89,9 +89,6 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _stream = NULL;
    _origOptLevel = unknownHotness;
    _shouldUpgradeOutOfProcessCompilation = false;
-   _aotCacheStore = false;
-   _methodIndex = (uint32_t)-1;
-   _definingClassChainRecord = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_ASSERT_FATAL(_freeTag & ENTRY_IN_POOL_FREE, "initializing an entry which is not free");

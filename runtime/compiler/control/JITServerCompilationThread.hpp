@@ -42,7 +42,7 @@ namespace TR
 // Objects of this type are instantiated at JITServer
 class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    {
-   public:
+public:
    friend class TR::CompilationInfo;
    CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread);
 
@@ -109,7 +109,11 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    void decrementClassUnloadReadMutexDepth() { _classUnloadReadMutexDepth--; }
    int32_t getClassUnloadReadMutexDepth() { return _classUnloadReadMutexDepth; }
 
-   private:
+   bool isAOTCacheStore() const { return _aotCacheStore; }
+   uint32_t getMethodIndex() const { return _methodIndex; }
+   const AOTCacheClassChainRecord *getDefiningClassChainRecord() { return _definingClassChainRecord; }
+
+private:
    /* Template method for allocating a cache of type T on the heap.
     * Cache pointer must be NULL.
     */
@@ -173,13 +177,17 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    size_t _clientOptionsSize;
    IPTableHeap_t *_methodIPDataPerComp;
    TR_ResolvedMethodInfoCache *_resolvedMethodInfoMap;
-   ResolvedMirrorMethodsPersistIP_t *_resolvedMirrorMethodsPersistIPInfo; //list of mirrors of resolved methods for persisting IProfiler info
+   ResolvedMirrorMethodsPersistIP_t *_resolvedMirrorMethodsPersistIPInfo; // list of mirrors of resolved methods for persisting IProfiler info
    ClassOfStatic_t *_classOfStaticMap;
    FieldOrStaticAttrTable_t *_fieldAttributesCache;
    FieldOrStaticAttrTable_t *_staticAttributesCache;
    UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_IsUnresolvedString> *_isUnresolvedStrCache;
    int32_t _classUnloadReadMutexDepth;
-   static int32_t _numClearedCaches; //number of instances JITServer was forced to clear its internal per-client caches
+   bool _aotCacheStore; // True if the result of this compilation will be stored in AOT cache
+   uint32_t _methodIndex; // Index of the method being compiled in the array of methods of its defining class
+   const AOTCacheClassChainRecord *_definingClassChainRecord; // Used to store the result of the compilation in AOT cache
+
+   static int32_t _numClearedCaches; // number of instances JITServer was forced to clear its internal per-client caches
 
    }; // class CompilationInfoPerThreadRemote
 } // namespace TR

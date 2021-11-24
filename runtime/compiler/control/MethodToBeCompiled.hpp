@@ -45,7 +45,6 @@ namespace TR { class CompilationInfoPerThreadBase; }
 class TR_OptimizationPlan;
 #if defined(J9VM_OPT_JITSERVER)
 namespace JITServer { class ServerStream; }
-class AOTCacheClassChainRecord;
 #endif /* defined(J9VM_OPT_JITSERVER) */
 namespace TR { class Monitor; }
 struct J9JITConfig;
@@ -154,10 +153,6 @@ struct TR_MethodToBeCompiled
                                            // remote sync compilation to a local cheap one
    bool                     _shouldUpgradeOutOfProcessCompilation; // Flag used to determine whether a cold local
                                                                    // compilation should be upgraded by LPQ
-   bool                     _aotCacheStore; // True if the result of this out-of-process compilation will be
-                                            // stored in JITServer AOT cache; always false at the client
-   uint32_t                 _methodIndex; // Index in the array of methods of the defining class
-   const AOTCacheClassChainRecord *_definingClassChainRecord;// Only used at the JITServer
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // TR_MethodToBeCompiled
 

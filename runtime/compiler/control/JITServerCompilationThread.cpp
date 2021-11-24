@@ -198,15 +198,16 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    Trc_JITServerCompileEnd(compInfoPT->getCompilationThread(), compInfoPT->getCompThreadId(),
          compInfoPT->getCompilation()->signature(), compInfoPT->getCompilation()->getHotnessName());
 
-   if (entry->_aotCacheStore)
+   if (compInfoPT->isAOTCacheStore())
       {
       if (comp->isAOTCacheStore())
          {
          auto clientData = comp->getClientData();
          auto cache = clientData->getAOTCache();
-         cache->storeMethod(entry->_definingClassChainRecord, entry->_methodIndex, entry->_optimizationPlan->getOptLevel(),
-                            clientData->getAOTHeaderRecord(), comp->getSerializationRecords(), codeCacheHeader,
-                            codeSize, dataCacheHeader, dataSize, comp->signature(), clientData->getClientUID());
+         cache->storeMethod(compInfoPT->getDefiningClassChainRecord(), compInfoPT->getMethodIndex(),
+                            entry->_optimizationPlan->getOptLevel(), clientData->getAOTHeaderRecord(),
+                            comp->getSerializationRecords(), codeCacheHeader, codeSize,
+                            dataCacheHeader, dataSize, comp->signature(), clientData->getClientUID());
          }
       else if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          {
@@ -229,7 +230,10 @@ TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::Compilati
    _fieldAttributesCache(NULL),
    _staticAttributesCache(NULL),
    _isUnresolvedStrCache(NULL),
-   _classUnloadReadMutexDepth(0)
+   _classUnloadReadMutexDepth(0),
+   _aotCacheStore(false),
+   _methodIndex((uint32_t)-1),
+   _definingClassChainRecord(NULL)
    {}
 
 /**
@@ -433,6 +437,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // Keep track of whether the lastProcessedCriticalSeqNo in the client session was updated
    bool hasUpdatedSeqNo = false;
 
+   _aotCacheStore = false;
+   _methodIndex = (uint32_t)-1;
+   _definingClassChainRecord = NULL;
+
    try
       {
       auto req = stream->readCompileRequest<
@@ -459,7 +467,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto &chtableMods             = std::get<14>(req);
       useAotCompilation             = std::get<15>(req);
       bool isInStartupPhase         = std::get<16>(req);
-      uint32_t methodIndex          = std::get<17>(req);
+      _methodIndex                  = std::get<17>(req);
       uintptr_t *classChain         = std::get<18>(req);
       auto &ramClassChain           = std::get<19>(req);
       auto &uncachedRAMClasses      = std::get<20>(req);
@@ -750,21 +758,19 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       entry._useAotCompilation = useAotCompilation;
 
       auto aotCache = clientSession->getOrCreateAOTCache(stream);
-      entry._aotCacheStore = classChain && aotCache;
-      entry._methodIndex = methodIndex;
-
-      if (entry._aotCacheStore)
+      _aotCacheStore = classChain && aotCache;
+      if (_aotCacheStore)
          {
          JITServerHelpers::cacheRemoteROMClassBatch(clientSession, uncachedRAMClasses, uncachedClassInfos);
-         entry._definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChain, ramClassChain, stream);
-         if (!entry._definingClassChainRecord)
+         _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChain, ramClassChain, stream);
+         if (!_definingClassChainRecord)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                   "Failed to get defining class chain record for %p; method %p won't be stored in AOT cache",
                   clazz, ramMethod
                );
-            entry._aotCacheStore = false;
+            _aotCacheStore = false;
             }
          }
       }

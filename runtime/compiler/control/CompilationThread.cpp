@@ -8569,7 +8569,8 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             compiler->getOrCreateKnownObjectTable();
             compiler->setClientData(that->getClientData());
             compiler->setStream(that->_methodBeingCompiled->_stream);
-            compiler->setAOTCacheStore(that->_methodBeingCompiled->_aotCacheStore);
+            auto compInfoPTRemote = static_cast<TR::CompilationInfoPerThreadRemote *>(that);
+            compiler->setAOTCacheStore(compInfoPTRemote->isAOTCacheStore());
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
