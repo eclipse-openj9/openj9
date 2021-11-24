@@ -78,8 +78,6 @@
 
       {r(TR::Symbol::Com_ibm_jit_JITHelpers_IS_32_BIT, "com/ibm/jit/JITHelpers", "IS_32_BIT", "Z")}, //22
       {r(TR::Symbol::Com_ibm_jit_JITHelpers_J9OBJECT_J9CLASS_OFFSET, "com/ibm/jit/JITHelpers", "J9OBJECT_J9CLASS_OFFSET", "I")}, //22
-      {r(TR::Symbol::Com_ibm_jit_JITHelpers_OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS, "com/ibm/jit/JITHelpers", "OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS", "I")}, //22
-      {r(TR::Symbol::Com_ibm_jit_JITHelpers_OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS, "com/ibm/jit/JITHelpers", "OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS", "I")}, //22
       {r(TR::Symbol::Com_ibm_jit_JITHelpers_J9OBJECT_FLAGS_MASK32, "com/ibm/jit/JITHelpers", "J9OBJECT_FLAGS_MASK32", "I")}, //22
       {r(TR::Symbol::Com_ibm_jit_JITHelpers_J9OBJECT_FLAGS_MASK64, "com/ibm/jit/JITHelpers", "J9OBJECT_FLAGS_MASK64", "I")}, //22
       {r(TR::Symbol::Com_ibm_jit_JITHelpers_JLTHREAD_J9THREAD_OFFSET, "com/ibm/jit/JITHelpers", "JLTHREAD_J9THREAD_OFFSET", "I")}, //22

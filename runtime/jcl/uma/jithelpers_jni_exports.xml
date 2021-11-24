@@ -1,58 +1,56 @@
-<!-- 
-	Copyright (c) 2011, 2020 IBM Corp. and others
-	
-	This program and the accompanying materials are made available under
-	the terms of the Eclipse Public License 2.0 which accompanies this
-	distribution and is available at https://www.eclipse.org/legal/epl-2.0/
-	or the Apache License, Version 2.0 which accompanies this distribution and
-	is available at https://www.apache.org/licenses/LICENSE-2.0.
-	
-	This Source Code may also be made available under the following
-	Secondary Licenses when the conditions for such availability set
-	forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-	General Public License, version 2 with the GNU Classpath
-	Exception [1] and GNU General Public License, version 2 with the
-	OpenJDK Assembly Exception [2].
-	
-	[1] https://www.gnu.org/software/classpath/license.html
-	[2] http://openjdk.java.net/legal/assembly-exception.html
+<!--
+Copyright (c) 2011, 2021 IBM Corp. and others
 
-	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <exports group="jithelpers">
-	<export name="Java_com_ibm_jit_JITHelpers_javaLangClassJ9ClassOffset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectJ9ClassOffset" />
-	<export name="Java_com_ibm_jit_JITHelpers_objectHeaderHasBeenMovedInClass" />
-	<export name="Java_com_ibm_jit_JITHelpers_objectHeaderHasBeenHashedInClass" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectFlagsMask32" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectFlagsMask64" />
-	<export name="Java_com_ibm_jit_JITHelpers_javaLangThreadJ9ThreadOffset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9ThreadJ9JavaVMOffset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9ROMArrayClassArrayShapeOffset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9ClassBackfillOffsetOffset" />
-	<export name="Java_com_ibm_jit_JITHelpers_arrayShapeElementCountMask" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9JavaVMIdentityHashDataOffset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashDataHashData1Offset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashDataHashData2Offset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashDataHashData3Offset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashDataHashSaltTableOffset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashSaltPolicyStandard" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashSaltPolicyRegion" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashSaltPolicyNone" />
-	<export name="Java_com_ibm_jit_JITHelpers_identityHashSaltPolicy" />
+	<export name="Java_com_ibm_jit_JITHelpers_javaLangClassJ9ClassOffset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectJ9ClassOffset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectFlagsMask32"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectFlagsMask64"/>
+	<export name="Java_com_ibm_jit_JITHelpers_javaLangThreadJ9ThreadOffset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9ThreadJ9JavaVMOffset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9ROMArrayClassArrayShapeOffset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9ClassBackfillOffsetOffset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_arrayShapeElementCountMask"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9JavaVMIdentityHashDataOffset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashDataHashData1Offset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashDataHashData2Offset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashDataHashData3Offset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashDataHashSaltTableOffset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashSaltPolicyStandard"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashSaltPolicyRegion"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9IdentityHashSaltPolicyNone"/>
+	<export name="Java_com_ibm_jit_JITHelpers_identityHashSaltPolicy"/>
 
-	<export name="Java_com_ibm_jit_JITHelpers_j9ContiguousArrayHeaderSize" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9DiscontiguousArrayHeaderSize" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectContiguousLengthOffset" />
-	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectDiscontiguousLengthOffset" />
-	
-	<export name="Java_com_ibm_jit_JITHelpers_isBigEndian" />
-	<export name="Java_com_ibm_jit_JITHelpers_is32Bit" />
-	<export name="Java_com_ibm_jit_JITHelpers_getNumBitsInReferenceField" />
-	<export name="Java_com_ibm_jit_JITHelpers_getNumBytesInReferenceField" />
-	<export name="Java_com_ibm_jit_JITHelpers_getNumBitsInDescriptionWord" />
-	<export name="Java_com_ibm_jit_JITHelpers_getNumBytesInDescriptionWord" />
-	<export name="Java_com_ibm_jit_JITHelpers_getNumBytesInJ9ObjectHeader" />
+	<export name="Java_com_ibm_jit_JITHelpers_j9ContiguousArrayHeaderSize"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9DiscontiguousArrayHeaderSize"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectContiguousLengthOffset"/>
+	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectDiscontiguousLengthOffset"/>
+
+	<export name="Java_com_ibm_jit_JITHelpers_isBigEndian"/>
+	<export name="Java_com_ibm_jit_JITHelpers_is32Bit"/>
+	<export name="Java_com_ibm_jit_JITHelpers_getNumBitsInReferenceField"/>
+	<export name="Java_com_ibm_jit_JITHelpers_getNumBytesInReferenceField"/>
+	<export name="Java_com_ibm_jit_JITHelpers_getNumBitsInDescriptionWord"/>
+	<export name="Java_com_ibm_jit_JITHelpers_getNumBytesInDescriptionWord"/>
+	<export name="Java_com_ibm_jit_JITHelpers_getNumBytesInJ9ObjectHeader"/>
 	<export name="Java_com_ibm_jit_JITHelpers_getJ9ClassFromClass64">
 		<include-if condition="spec.flags.env_data64"/>
 	</export>
