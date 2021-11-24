@@ -187,10 +187,24 @@ public class RomClassWalker extends ClassWalker {
 		srpCursor = romClass.innerClasses();
 		count = romClass.innerClassCount().intValue();
 		classWalkerCallback.addSection(clazz, srpCursor, count * SelfRelativePointer.SIZEOF, "innerClassesSRPs", true);
-		for (; count > 0; count--) {
+		for (; 0 != count; count--) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, srpCursor, "innerClassNameUTF8");
 			srpCursor = srpCursor.add(1);
 		}
+
+		try {
+			/* walk enclosed inner classes SRPs block */
+			srpCursor = romClass.enclosedInnerClasses();
+			count = romClass.enclosedInnerClassCount().intValue();
+			classWalkerCallback.addSection(clazz, srpCursor, count * SelfRelativePointer.SIZEOF, "enclosedInnerClassesSRPs", true);
+			for (; 0 != count; count--) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, srpCursor, "enclosedInnerClassesNameUTF8");
+				srpCursor = srpCursor.add(1);
+			}
+		} catch (NoSuchFieldException e) {
+			// ignore: VM that generated the core dump doesn't have enclosedInnerClasses or enclosedInnerClassCount
+		}
+
 		/* add CP NAS section */
 		J9ROMMethodPointer firstMethod = romClass.romMethods();
 		long size = (firstMethod.getAddress() - srpCursor.getAddress());
