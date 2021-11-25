@@ -1985,6 +1985,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
    if (!JITServerAlreadyParsed) // Avoid processing twice for AOT and JIT and produce duplicate messages
       {
       JITServerAlreadyParsed = true;
+      bool disabledShareROMClasses = false;
       if (vm->internalVMFunctions->isJITServerEnabled(vm))
          {
          J9::PersistentInfo::_remoteCompilationMode = JITServer::SERVER;
@@ -2001,6 +2002,10 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          if (xxJITServerShareROMClassesArgIndex > xxDisableJITServerShareROMClassesArgIndex)
             {
             _shareROMClasses = true;
+            }
+         else if (xxDisableJITServerShareROMClassesArgIndex > xxJITServerShareROMClassesArgIndex)
+            {
+            disabledShareROMClasses = true;
             }
          }
       else
@@ -2112,6 +2117,13 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          compInfo->getPersistentInfo()->setServerUID(0);
          jitConfig->clientUID = 0;
          jitConfig->serverUID = 0;
+         }
+
+      if ((compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER) &&
+          compInfo->getPersistentInfo()->getJITServerUseAOTCache() && !disabledShareROMClasses)
+         {
+         // Enable ROMClass sharing at the server by default (unless explicitly disabled) if using AOT cache
+         _shareROMClasses = true;
          }
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
