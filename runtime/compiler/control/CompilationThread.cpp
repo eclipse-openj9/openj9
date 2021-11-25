@@ -10891,7 +10891,7 @@ TR::CompilationInfo::debugPrint(char * debugString)
    {
    if (!_traceCompiling)
       return;
-   fprintf(stderr, debugString);
+   fprintf(stderr, "%s", debugString);
    }
 
 void
@@ -10899,8 +10899,8 @@ TR::CompilationInfo::debugPrint(J9VMThread * vmThread, char * debugString)
    {
    if (!_traceCompiling)
       return;
-   fprintf(stderr, "%8x:", vmThread);
-   fprintf(stderr, debugString);
+   fprintf(stderr, "%8" OMR_PRIxPTR ":", (uintptr_t)vmThread);
+   fprintf(stderr, "%s", debugString);
    }
 
 void
@@ -10916,7 +10916,7 @@ TR::CompilationInfo::debugPrint(J9VMThread * vmThread, char * debugString, IDATA
    {
    if (!_traceCompiling)
       return;
-   fprintf(stderr, "%8x:", vmThread);
+   fprintf(stderr, "%8" OMR_PRIxPTR ":", (uintptr_t)vmThread);
    fprintf(stderr, debugString, val);
    }
 
@@ -10954,7 +10954,7 @@ TR::CompilationInfo::debugPrint(char * debugString, TR::IlGeneratorMethodDetails
    {
    if (!_traceCompiling)
       return;
-   fprintf(stderr, "%8x:", vmThread);
+   fprintf(stderr, "%8" OMR_PRIxPTR ":", (uintptr_t)vmThread);
    if (details.isNewInstanceThunk())
       {
       J9Class *classForNewInstance = static_cast<J9::NewInstanceThunkDetails &>(details).classNeedingThunk();
@@ -10977,7 +10977,7 @@ TR::CompilationInfo::debugPrint(J9VMThread * vmThread, char * msg, TR_MethodToBe
    {
    if (!_traceCompiling)
       return;
-   fprintf(stderr, "%8x:%s%d\n", vmThread, msg, entry->_index);
+   fprintf(stderr, "%8" OMR_PRIxPTR ":%s%d\n", (uintptr_t)vmThread, msg, entry->_index);
    }
 
 // This method must be called with the Compilation Monitor in hand
