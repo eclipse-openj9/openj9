@@ -79,6 +79,7 @@ public:
 
    void incNumCacheBypasses() { ++_numCacheBypasses; }
    void incNumCacheMisses() { ++_numCacheMisses; }
+   size_t getNumDeserializedMethods() const { return _numDeserializedMethods; }
 
    void printStats(FILE *f) const;
 

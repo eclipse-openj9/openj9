@@ -291,6 +291,7 @@ public:
 
    void incNumCacheBypasses() { ++_numCacheBypasses; }
    void incNumCacheMisses() { ++_numCacheMisses; }
+   size_t getNumDeserializedMethods() const { return _numDeserializedMethods; }
    void incNumDeserializedMethods() { ++_numDeserializedMethods; }
    void incNumDeserializationFailures() { ++_numDeserializationFailures; }
 
@@ -402,6 +403,8 @@ public:
    ~JITServerAOTCacheMap();
 
    JITServerAOTCache *get(const std::string &name, uint64_t clientUID);
+
+   size_t getNumDeserializedMethods() const;
 
    void printStats(FILE *f) const;
 

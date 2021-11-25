@@ -758,6 +758,16 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
    }
 
 
+size_t
+JITServerAOTCacheMap::getNumDeserializedMethods() const
+   {
+   size_t result = 0;
+   OMR::CriticalSection cs(_monitor);
+   for (auto &it : _map)
+      result += it.second->getNumDeserializedMethods();
+   return result;
+   }
+
 void
 JITServerAOTCacheMap::printStats(FILE *f) const
    {

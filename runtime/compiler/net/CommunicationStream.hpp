@@ -43,9 +43,9 @@ public:
    static bool useSSL();
    static void initSSL();
 
-#ifdef MESSAGE_SIZE_STATS
-   static TR_Stats collectMsgStat[JITServer::MessageType_MAXTYPE];
-#endif
+#if defined(MESSAGE_SIZE_STATS)
+   static TR_Stats msgSizeStats[JITServer::MessageType_MAXTYPE];
+#endif /* defined(MESSAGE_SIZE_STATS) */
 
    static void initConfigurationFlags();
 
