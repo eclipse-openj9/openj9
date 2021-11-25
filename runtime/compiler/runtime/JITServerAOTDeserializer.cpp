@@ -30,7 +30,7 @@
 
 
 JITServerAOTDeserializer::JITServerAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable) :
-   _loaderTable(loaderTable), _sharedCache(NULL),
+   _loaderTable(loaderTable), _sharedCache(loaderTable->getSharedCache()),
    _classLoaderIdMap(decltype(_classLoaderIdMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classLoaderPtrMap(decltype(_classLoaderPtrMap)::allocator_type(TR::Compiler->persistentAllocator())),
    _classLoaderMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerClassLoaderMonitor")),

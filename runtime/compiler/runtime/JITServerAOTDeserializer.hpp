@@ -57,8 +57,6 @@ public:
    JITServerAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable);
    ~JITServerAOTDeserializer();
 
-   void setSharedCache(TR_J9SharedCache *sharedCache) { _sharedCache = sharedCache; }
-
    // Deserializes in place a serialized AOT method received from JITServer. Returns true on success.
    // Caches new serialization records and adds their IDs to the set of new known IDs.
    bool deserialize(SerializedAOTMethod *method, const std::vector<std::string> &records,
@@ -130,7 +128,7 @@ private:
    bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset);
 
    TR_PersistentClassLoaderTable *const _loaderTable;
-   TR_J9SharedCache *_sharedCache;
+   TR_J9SharedCache *const _sharedCache;
 
    //NOTE: Locking hierarchy used in this class follows cycle-free dependency order
    // between serialization record types and guarantees that there are no deadlocks:
