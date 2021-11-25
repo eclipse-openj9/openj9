@@ -86,11 +86,12 @@ typedef enum {
    compilationAOTValidateOSRFailure                = 60,
 #if defined(J9VM_OPT_JITSERVER)
    compilationFirstJITServerFailure,
-   compilationStreamFailure                        = compilationFirstJITServerFailure,
-   compilationStreamLostMessage                    = compilationFirstJITServerFailure+1,
-   compilationStreamMessageTypeMismatch            = compilationFirstJITServerFailure+2,
-   compilationStreamVersionIncompatible            = compilationFirstJITServerFailure+3,
-   compilationStreamInterrupted                    = compilationFirstJITServerFailure+4,
+   compilationStreamFailure                        = compilationFirstJITServerFailure, // 61
+   compilationStreamLostMessage                    = compilationFirstJITServerFailure + 1, // 62
+   compilationStreamMessageTypeMismatch            = compilationFirstJITServerFailure + 2, // 63
+   compilationStreamVersionIncompatible            = compilationFirstJITServerFailure + 3, // 64
+   compilationStreamInterrupted                    = compilationFirstJITServerFailure + 4, // 65
+   aotCacheDeserializationFailure                  = compilationFirstJITServerFailure + 5, // 66
 #endif /* defined(J9VM_OPT_JITSERVER) */
    /* please insert new codes before compilationMaxError which is used in jar2jxe to test the error codes range */
    /* If new codes are added then add the corresponding names in compilationErrorNames table in rossa.cpp */

@@ -217,11 +217,12 @@ char *compilationErrorNames[]={
    "compilationAotRecompQueuedFlagReloFailure", //59
    "compilationAOTValidateOSRFailure", //60
 #if defined(J9VM_OPT_JITSERVER)
-   "compilationStreamFailure", //compilationFirstJITServerFailure=61
-   "compilationStreamLostMessage", // compilationFirstJITServerFailure+1
-   "compilationStreamMessageTypeMismatch", //compilationFirstJITServerFailure+2
-   "compilationStreamVersionIncompatible", //compilationFirstJITServerFailure+3
-   "compilationStreamInterrupted", //compilationFirstJITServerFailure+4
+   "compilationStreamFailure", // compilationFirstJITServerFailure = 61
+   "compilationStreamLostMessage", // 62
+   "compilationStreamMessageTypeMismatch", // 63
+   "compilationStreamVersionIncompatible", // 64
+   "compilationStreamInterrupted", // 65
+   "aotCacheDeserializationFailure", // 66
 #endif /* defined(J9VM_OPT_JITSERVER) */
    "compilationMaxError",
 };

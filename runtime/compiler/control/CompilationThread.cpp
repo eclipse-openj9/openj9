@@ -2131,6 +2131,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
             case compilationStreamMessageTypeMismatch:
             case compilationStreamVersionIncompatible:
             case compilationStreamLostMessage:
+            case aotCacheDeserializationFailure:
 #endif
             case compilationInterrupted:
             case compilationCodeReservationFailure:
@@ -9945,7 +9946,11 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          else // Non-AOT compilation or remote JIT/AOT compilations (at the JITClient)
             {
-            if (trvm->isAOT_DEPRECATED_DO_NOT_USE() && !TR::CompilationInfo::canRelocateMethod(comp))
+            if ((trvm->isAOT_DEPRECATED_DO_NOT_USE()
+#if defined(J9VM_OPT_JITSERVER)
+                || comp->isDeserializedAOTMethod()
+#endif /* defined(J9VM_OPT_JITSERVER) */
+                ) && !TR::CompilationInfo::canRelocateMethod(comp))
                {
                // Handle the case when relocations are delayed.
                // Delete any assumptions that might still exist in persistent memory
@@ -10774,6 +10779,10 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       // no need to set error code here because error code is set
       // in remoteCompile at JITClient when the compilation failed.
+      }
+   catch (const J9::AOTCacheDeserializationFailure &e)
+      {
+      // error code was already set in remoteCompile()
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    catch (...)

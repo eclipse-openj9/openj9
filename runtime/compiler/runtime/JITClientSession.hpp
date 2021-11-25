@@ -462,6 +462,9 @@ public:
    const AOTCacheClassChainRecord *getClassChainRecord(J9Class *clazz, uintptr_t *classChain,
                                                        const std::vector<J9Class *> &ramClassChain, JITServer::ServerStream *stream);
 
+   JITServerAOTCache::KnownIdSet &getAOTCacheKnownIds() { return _aotCacheKnownIds; }
+   TR::Monitor *getAOTCacheKnownIdsMonitor() const { return _aotCacheKnownIdsMonitor; }
+
 private:
    void destroyMonitors();
 
@@ -545,6 +548,9 @@ private:
    std::string _aotCacheName;
    JITServerAOTCache *_aotCache;
    const AOTCacheAOTHeaderRecord *_aotHeaderRecord;
+
+   JITServerAOTCache::KnownIdSet _aotCacheKnownIds;
+   TR::Monitor *_aotCacheKnownIdsMonitor;
    }; // class ClientSessionData
 
 

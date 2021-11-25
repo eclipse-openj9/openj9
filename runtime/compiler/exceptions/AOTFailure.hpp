@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -137,7 +137,18 @@ class AOTRelocationRecordGenerationFailure: public virtual TR::CompilationExcept
    {
    virtual const char* what() const throw() { return "AOT Relocation Record Generation Failed"; }
    };
+
+#if defined(J9VM_OPT_JITSERVER)
+/**
+ * AOT Cache Deserialization Failure exception type.
+ *
+ * Thrown when the client JVM fails to deserialize an AOT method received from the JITServer AOT cache.
+ */
+class AOTCacheDeserializationFailure : public virtual RuntimeFailure
+   {
+   virtual const char *what() const throw() { return "AOT cache deserialization failure"; }
+   };
+#endif /* defined(J9VM_OPT_JITSERVER) */
 }
 
 #endif // AOT_FAILURE_HPP
-
