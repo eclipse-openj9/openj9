@@ -29,6 +29,7 @@
 
 #include "j9cel4ro64.h"
 #include "jni.h"
+#include "j9cfg.h"
 
 /* High tag bits to signify 31-bit function handles that are passed to 64-bit. */
 #define HANDLE31_HIGHTAG 0x31000000

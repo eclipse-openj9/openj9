@@ -192,6 +192,26 @@ add_custom_ascii_command(OUTPUT "${J9VM_INCLUDE_DIR}/jvmti.h"
 	WORKING_DIRECTORY "${J9VM_INCLUDE_DIR}"
 )
 
+# Generate zOS 31/64-bit interoperability compatible jni.h and copy other dependent headers.
+if(J9VM_ZOS_3164_INTEROPERABILITY)
+	set(J9VM_INCLUDE31_DIR "${CMAKE_CURRENT_BINARY_DIR}/include31")
+	file(MAKE_DIRECTORY "${J9VM_INCLUDE31_DIR}")
+	file(INSTALL "${CMAKE_CURRENT_SOURCE_DIR}/include/jni_convert.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/jniport.h"
+		DESTINATION "${J9VM_INCLUDE31_DIR}")
+
+	add_custom_ascii_command(OUTPUT "${J9VM_INCLUDE31_DIR}/jni.h"
+		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/jni.h.m4"
+		COMMAND m4 -D "J9_ZOS_3164_INTEROPERABILITY=1" -D "JAVA_SPEC_VERSION=${JAVA_SPEC_VERSION}" "${CMAKE_CURRENT_SOURCE_DIR}/include/jni.h.m4" ${ASCII_TO_NATIVE} > "jni.h"
+		VERBATIM
+		WORKING_DIRECTORY "${J9VM_INCLUDE31_DIR}"
+	)
+
+	add_custom_target(j9vm31_m4gen
+		DEPENDS
+			"${J9VM_INCLUDE31_DIR}/jni.h"
+	)
+endif()
+
 # Note we do this here rather than in the redirector directory to work around
 # issues in cmake. If we did it there each target which consumed generated.c would need
 # its own rule to create it, which leads race conditions when building in parallel.
@@ -486,6 +506,9 @@ if(J9VM_MODULE_HOOKABLE)
 endif()
 if(J9VM_MODULE_J9VM)
 	add_subdirectory(j9vm)
+endif()
+if(J9VM_ZOS_3164_INTEROPERABILITY)
+	add_subdirectory(j9vm31)
 endif()
 # NOTE this is not conditional in the UMA module.xml
 add_subdirectory(jcl)
