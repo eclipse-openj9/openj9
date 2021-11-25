@@ -914,7 +914,7 @@ generateLoadJ9Class(TR::Node *node, TR::Register *j9classReg, TR::Register *objR
 
 void
 J9::ARM64::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *node, TR::LabelSymbol *mergeLabel, TR::LabelSymbol *helperCallLabel, TR::Register *objReg, TR::Register *temp1Reg, TR::Register *temp2Reg, TR::CodeGenerator *cg, int32_t classFlag)
-{
+   {
    // get class of object
    generateLoadJ9Class(node, temp1Reg, objReg, cg);
 
@@ -924,7 +924,7 @@ J9::ARM64::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *node
 
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldrimmw, node, temp1Reg, classFlagsMemRef);
    loadConstant32(cg, node, classFlag, temp2Reg);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::andw, node, temp1Reg, temp1Reg, temp2Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::andsw, node, temp1Reg, temp1Reg, temp2Reg);
 
    bool generateOOLSection = helperCallLabel == NULL;
    if (generateOOLSection)
@@ -946,9 +946,12 @@ J9::ARM64::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(TR::Node *node
    // are currently architected and due to the restriction that we cannot have nested OOL code sections. Whenever
    // making future changes to these evaluators we should consider refactoring them to reduce the complexity and
    // attempt to consolidate the calls to the JIT helper so as to not have multiple copies.
-   TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, helperCallLabel, mergeLabel, cg);
-   cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
-}
+   if (generateOOLSection)
+      {
+      TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, helperCallLabel, mergeLabel, cg);
+      cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+      }
+   }
 
 /**
  *  @brief Generates instruction sequence for looking up the address of lockword of the object
