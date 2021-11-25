@@ -6553,7 +6553,21 @@ public final class Unsafe {
 	 */
 	public native <V> V getValue(Object obj, long offset, Class<?> clz);
 	public native <V> void putValue(Object obj, long offset, Class<?> clz, V value);
+
+	/**
+	 * Returns the uninitialized default instance of the specified primitive class
+	 *
+	 * @param clz the specificed primitive class
+	 * @return the uninitialized default instance of clz
+	 */
 	public native <V> V uninitializedDefaultValue(Class<?> clz);
+
+	/**
+	 * Determines the size of the header for a specified primitive class
+	 *
+	 * @param clz the specified primitive class
+	 * @return the size of the header for clz
+	 */
 	public native <V> long valueHeaderSize(Class<V> clz);
 
 	/**
