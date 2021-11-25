@@ -77,6 +77,11 @@ public:
    // This function returns the list of IDs cached since the last call, and clears the set of new known IDs.
    std::vector<uintptr_t/*idAndType*/> getNewKnownIds();
 
+   void incNumCacheBypasses() { ++_numCacheBypasses; }
+   void incNumCacheMisses() { ++_numCacheMisses; }
+
+   void printStats(FILE *f) const;
+
 private:
    struct ClassLoaderEntry
       {
@@ -160,6 +165,15 @@ private:
 
    volatile bool _resetInProgress;
    TR::Monitor *const _resetMonitor;
+
+   // Statistics
+   size_t _numCacheBypasses;
+   size_t _numCacheHits;
+   size_t _numCacheMisses;
+   size_t _numDeserializedMethods;
+   size_t _numDeserializationFailures;
+   size_t _numClassSizeMismatches;
+   size_t _numClassHashMismatches;
    };
 
 

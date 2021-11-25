@@ -46,7 +46,9 @@ JITServerAOTDeserializer::JITServerAOTDeserializer(TR_PersistentClassLoaderTable
    _newKnownIds(decltype(_newKnownIds)::allocator_type(TR::Compiler->persistentAllocator())),
    _newKnownIdsMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerNewKnownIdsMonitor")),
    _resetInProgress(false),
-   _resetMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerResetMonitor"))
+   _resetMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerResetMonitor")),
+   _numCacheBypasses(0), _numCacheHits(0), _numCacheMisses(0), _numDeserializedMethods(0),
+   _numDeserializationFailures(0), _numClassSizeMismatches(0), _numClassHashMismatches(0)
    {
    bool allMonitors = _classLoaderMonitor && _classMonitor && _methodMonitor &&
                       _classChainMonitor && _wellKnownClassesMonitor && _resetMonitor;
@@ -72,6 +74,7 @@ JITServerAOTDeserializer::deserialize(SerializedAOTMethod *method, const std::ve
    {
    TR_ASSERT((comp->j9VMThread()->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) &&
              !comp->j9VMThread()->omrVMThread->exclusiveCount, "Must have shared VM access");
+   ++_numCacheHits;
 
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
    Vector<uintptr_t> newIds(Vector<uintptr_t>::allocator_type(comp->trMemory()->currentStackRegion()));
@@ -118,6 +121,7 @@ JITServerAOTDeserializer::deserialize(SerializedAOTMethod *method, const std::ve
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Deserialized AOT method %s", comp->signature());
+   ++_numDeserializedMethods;
    return true;
    }
 
@@ -241,6 +245,29 @@ JITServerAOTDeserializer::getNewKnownIds()
    }
 
 
+void
+JITServerAOTDeserializer::printStats(FILE *f) const
+   {
+   fprintf(f,
+      "JITServer AOT cache statistics:\n"
+      "\tcache bypasses: %zu\n"
+      "\tcache hits: %zu\n"
+      "\tcache misses: %zu\n"
+      "\tdeserialized methods: %zu\n"
+      "\tdeserialization failures: %zu\n"
+      "\tclass size mismatches: %zu\n"
+      "\tclass hash mismatches: %zu\n",
+      _numCacheBypasses,
+      _numCacheHits,
+      _numCacheMisses,
+      _numDeserializedMethods,
+      _numDeserializationFailures,
+      _numClassSizeMismatches,
+      _numClassHashMismatches
+   );
+   }
+
+
 bool
 JITServerAOTDeserializer::cacheRecord(const AOTSerializationRecord *record, TR::Compilation *comp,
                                       bool &isNew, bool &wasReset)
@@ -289,6 +316,7 @@ JITServerAOTDeserializer::isClassMatching(const ClassSerializationRecord *record
             "ERROR: ROMClass size mismatch for class %.*s ID %zu: %zu != %u",
             RECORD_NAME(record), record->id(), packedSize, record->romClassSize()
          );
+      ++_numClassSizeMismatches;
       return false;
       }
 
@@ -305,6 +333,7 @@ JITServerAOTDeserializer::isClassMatching(const ClassSerializationRecord *record
             record->hash().toString(expected, sizeof(expected))
          );
          }
+      ++_numClassHashMismatches;
       return false;
       }
 
@@ -792,6 +821,8 @@ bool
 JITServerAOTDeserializer::deserializationFailure(const SerializedAOTMethod *method,
                                                  TR::Compilation *comp, bool wasReset)
    {
+   ++_numDeserializationFailures;
+
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
          "ERROR: Failed to deserialize AOT method %s%s",

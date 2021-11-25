@@ -3041,10 +3041,13 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    TR_MethodToBeCompiled *entry = compInfoPT->getMethodBeingCompiled();
    TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
    bool useAotCompilation = entry->_useAotCompilation;
+
    bool aotCacheStore = useAotCompilation && persistentInfo->getJITServerUseAOTCache();
    bool aotCacheLoad = useAotCompilation && persistentInfo->getJITServerUseAOTCache() &&
                        !entry->_doNotLoadFromJITServerAOTCache;
    auto deserializer = compInfo->getJITServerAOTDeserializer();
+   if (!aotCacheLoad && deserializer)
+      deserializer->incNumCacheBypasses();
 
    // For JitDump recompilations need to use the same stream as for the original compile
    JITServer::ClientStream *client = (enableJITServerPerCompConn && !details.isJitDumpMethod()) ? NULL
@@ -3140,6 +3143,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Failed to get defining class chain for method %s",
                                         compiler->signature());
+         if (aotCacheLoad)
+            deserializer->incNumCacheBypasses();
          aotCacheStore = false;
          aotCacheLoad = false;
          }
@@ -3235,6 +3240,9 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          methodsRequiringTrampolines = std::get<11>(recv);
 
          updateCompThreadActivationPolicy(compInfoPT, nextMemoryState, nextActiveThreadState);
+
+         if (aotCacheLoad)
+            deserializer->incNumCacheMisses();
          }
       else if (JITServer::MessageType::AOTCache_serializedAOTMethod == response)
          {
