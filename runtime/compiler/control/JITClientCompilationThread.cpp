@@ -231,25 +231,29 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             unloadedClasses->getRanges(ranges);
             }
          // Add the entire CHTable as well
-         auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
-         std::string encoded = FlatPersistentClassInfo::serializeHierarchy(table);
+         auto table = (JITClientPersistentCHTable *)comp->getPersistentInfo()->getPersistentCHTable();
+         std::string serializedCHTable = FlatPersistentClassInfo::serializeHierarchy(table);
 
-         client->write(response, ranges, unloadedClasses->getMaxRanges(), encoded);
             {
             OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());
             compInfo->getclassesCachedAtServer().clear();
             }
 
-         if (previousUID != serverUID && TR::Options::getVerboseOption(TR_VerboseJITServerConns))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                                          "t=%6u Connected to a server (serverUID=%llu)",
-                                          (uint32_t) compInfo->getPersistentInfo()->getElapsedTime(),
-                                          serverUID);
-            }
-         break;
-         }
+         auto deserializer = compInfo->getJITServerAOTDeserializer();
+         // Reset AOT deserializer if connected to a new server (cached serialization records are now invalid)
+         if (deserializer && (previousUID != serverUID))
+            deserializer->reset();
 
+         client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable);
+
+         if ((previousUID != serverUID) && TR::Options::getVerboseOption(TR_VerboseJITServerConns))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u Connected to a server (serverUID=%llu)",
+                                           (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+                                           (unsigned long long)serverUID);
+            }
+         }
+         break;
       case MessageType::VM_isClassLibraryClass:
          {
          bool rv = fe->isClassLibraryClass(std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>()));
