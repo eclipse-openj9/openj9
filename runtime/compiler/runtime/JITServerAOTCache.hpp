@@ -289,6 +289,13 @@ public:
    Vector<const AOTSerializationRecord *>
    getSerializationRecords(const CachedAOTMethod *method, const KnownIdSet &knownIds, TR_Memory &trMemory) const;
 
+   void incNumCacheBypasses() { ++_numCacheBypasses; }
+   void incNumCacheMisses() { ++_numCacheMisses; }
+   void incNumDeserializedMethods() { ++_numDeserializedMethods; }
+   void incNumDeserializationFailures() { ++_numDeserializationFailures; }
+
+   void printStats(FILE *f) const;
+
 private:
    struct ClassLoaderKey
       {
@@ -375,6 +382,13 @@ private:
 
    PersistentUnorderedMap<CachedMethodKey, CachedAOTMethod *> _cachedMethodMap;
    TR::Monitor *const _cachedMethodMonitor;
+
+   // Statistics
+   size_t _numCacheBypasses;
+   size_t _numCacheHits;
+   size_t _numCacheMisses;
+   size_t _numDeserializedMethods;
+   size_t _numDeserializationFailures;
    };
 
 
@@ -388,6 +402,8 @@ public:
    ~JITServerAOTCacheMap();
 
    JITServerAOTCache *get(const std::string &name, uint64_t clientUID);
+
+   void printStats(FILE *f) const;
 
 private:
    PersistentUnorderedMap<std::string, JITServerAOTCache *> _map;

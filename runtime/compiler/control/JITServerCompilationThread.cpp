@@ -813,6 +813,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto aotCache = clientSession->getOrCreateAOTCache(stream);
       _aotCacheStore = classChain && aotCache;
       aotCacheLoad = aotCacheLoad && classChain && aotCache;
+      if (aotCache && !aotCacheLoad)
+         aotCache->incNumCacheBypasses();
 
       if (_aotCacheStore || aotCacheLoad)
          {
@@ -827,6 +829,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
                   "method %p won't be loaded from or stored in AOT cache",
                   (unsigned long long)clientId, clazz, ramMethod
                );
+            if (aotCacheLoad)
+               aotCache->incNumCacheMisses();
             _aotCacheStore = false;
             aotCacheLoad = false;
             }

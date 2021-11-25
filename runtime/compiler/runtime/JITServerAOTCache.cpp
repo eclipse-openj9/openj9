@@ -361,7 +361,9 @@ JITServerAOTCache::JITServerAOTCache(const std::string &name) :
    _nextAOTHeaderId(1),// ID 0 is invalid
    _aotHeaderMonitor(TR::Monitor::create("JIT-JITServerAOTCacheAOTHeaderMonitor")),
    _cachedMethodMap(decltype(_cachedMethodMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
-   _cachedMethodMonitor(TR::Monitor::create("JIT-JITServerAOTCacheCachedMethodMonitor"))
+   _cachedMethodMonitor(TR::Monitor::create("JIT-JITServerAOTCacheCachedMethodMonitor")),
+   _numCacheBypasses(0), _numCacheHits(0), _numCacheMisses(0),
+   _numDeserializedMethods(0), _numDeserializationFailures(0)
    {
    bool allMonitors = _classLoaderMonitor && _classMonitor && _methodMonitor &&
                       _classChainMonitor && _wellKnownClassesMonitor &&
@@ -608,8 +610,12 @@ JITServerAOTCache::findMethod(const AOTCacheClassChainRecord *definingClassChain
 
    auto it = _cachedMethodMap.find(key);
    if (it == _cachedMethodMap.end())
+      {
+      ++_numCacheMisses;
       return NULL;
+      }
 
+   ++_numCacheHits;
    return it->second;
    }
 
@@ -660,6 +666,40 @@ JITServerAOTCache::addRecord(const AOTCacheRecord *record, Vector<const AOTSeria
 
    newRecords.insert(record);
    result.push_back(data);
+   }
+
+
+void
+JITServerAOTCache::printStats(FILE *f) const
+   {
+   fprintf(f,
+      "JITServer AOT cache %s statistics:\n"
+      "\tstored methods: %zu\n"
+      "\tclass loader records: %zu\n"
+      "\tclass records: %zu\n"
+      "\tmethod records: %zu\n"
+      "\tclass chain records: %zu\n"
+      "\twell-known classes records: %zu\n"
+      "\tAOT header records: %zu\n"
+      "\tcache bypasses: %zu\n"
+      "\tcache hits: %zu\n"
+      "\tcache misses: %zu\n"
+      "\tdeserialized methods: %zu\n"
+      "\tdeserialization failures: %zu\n",
+      _name.c_str(),
+      _cachedMethodMap.size(),
+      _classLoaderMap.size(),
+      _classMap.size(),
+      _methodMap.size(),
+      _classChainMap.size(),
+      _wellKnownClassesMap.size(),
+      _aotHeaderMap.size(),
+      _numCacheBypasses,
+      _numCacheHits,
+      _numCacheMisses,
+      _numDeserializedMethods,
+      _numDeserializationFailures
+   );
    }
 
 
@@ -715,4 +755,13 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID)
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Created AOT cache %s for clientUID %llu",
                                      name.c_str(), (unsigned long long)clientUID);
    return cache;
+   }
+
+
+void
+JITServerAOTCacheMap::printStats(FILE *f) const
+   {
+   OMR::CriticalSection cs(_monitor);
+   for (auto &it : _map)
+      it.second->printStats(f);
    }
