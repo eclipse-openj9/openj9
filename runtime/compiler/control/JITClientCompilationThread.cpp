@@ -3245,9 +3245,11 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          updateCompThreadActivationPolicy(compInfoPT, nextMemoryState, nextActiveThreadState);
 
          auto method = SerializedAOTMethod::get(methodStr);
-         if (deserializer->deserialize(method, records, compiler))
+         bool usesSVM = false;
+         if (deserializer->deserialize(method, records, compiler, usesSVM))
             {
             compiler->setDeserializedAOTMethod(true);
+            compiler->setDeserializedAOTMethodUsingSVM(usesSVM);
             statusCode = compilationOK;
             codeCacheStr = std::string((const char *)method->code(), method->codeSize());
             dataCacheStr = std::string((const char *)method->data(), method->dataSize());

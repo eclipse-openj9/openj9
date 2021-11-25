@@ -197,6 +197,7 @@ J9::Compilation::Compilation(int32_t id,
    _perClientMemory(_trMemory),
    _methodsRequiringTrampolines(getTypedAllocator<TR_OpaqueMethodBlock *>(self()->allocator())),
    _deserializedAOTMethod(false),
+   _deserializedAOTMethodUsingSVM(false),
    _aotCacheStore(false),
    _serializationRecords(decltype(_serializationRecords)::allocator_type(heapMemoryRegion)),
 #endif /* defined(J9VM_OPT_JITSERVER) */

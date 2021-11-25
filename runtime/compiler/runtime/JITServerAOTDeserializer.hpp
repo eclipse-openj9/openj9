@@ -60,7 +60,7 @@ public:
    // Deserializes in place a serialized AOT method received from JITServer. Returns true on success.
    // Caches new serialization records and adds their IDs to the set of new known IDs.
    bool deserialize(SerializedAOTMethod *method, const std::vector<std::string> &records,
-                    TR::Compilation *comp);
+                    TR::Compilation *comp, bool &usesSVM);
 
    // Invalidation functions called from class and class loader unload JIT hooks to invalidate RAMClass
    // and class loader pointers cached by the deserializer. Note that cached SCC offsets stay valid.
@@ -125,7 +125,7 @@ private:
 
    bool deserializationFailure(const SerializedAOTMethod *method, TR::Compilation *comp, bool wasReset);
    // Returns false on failure
-   bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset);
+   bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM);
 
    TR_PersistentClassLoaderTable *const _loaderTable;
    TR_J9SharedCache *const _sharedCache;

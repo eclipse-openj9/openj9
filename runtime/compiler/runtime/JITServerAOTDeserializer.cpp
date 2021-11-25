@@ -68,7 +68,7 @@ JITServerAOTDeserializer::~JITServerAOTDeserializer()
 
 bool
 JITServerAOTDeserializer::deserialize(SerializedAOTMethod *method, const std::vector<std::string> &records,
-                                      TR::Compilation *comp)
+                                      TR::Compilation *comp, bool &usesSVM)
    {
    TR_ASSERT((comp->j9VMThread()->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) &&
              !comp->j9VMThread()->omrVMThread->exclusiveCount, "Must have shared VM access");
@@ -113,7 +113,7 @@ JITServerAOTDeserializer::deserialize(SerializedAOTMethod *method, const std::ve
       return deserializationFailure(method, comp, wasReset);
 
    // Update SCC offsets in relocation data so that the method can be stored in the local SCC and AOT-loaded
-   if (!updateSCCOffsets(method, comp, wasReset))
+   if (!updateSCCOffsets(method, comp, wasReset, usesSVM))
       return deserializationFailure(method, comp, wasReset);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -801,7 +801,8 @@ JITServerAOTDeserializer::deserializationFailure(const SerializedAOTMethod *meth
    }
 
 bool
-JITServerAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset)
+JITServerAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp,
+                                           bool &wasReset, bool &usesSVM)
    {
    //NOTE: Defining class chain record is validated by now; there is no corresponding SCC offset to be updated
 
@@ -812,6 +813,7 @@ JITServerAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR::Comp
    TR_ASSERT_FATAL((header->offsetToRelocationDataItems != 0) || (method->numRecords() == 0),
                    "Unexpected %zu serialization records in serialized method %s with no relocation data",
                    method->numRecords(), comp->signature());
+   usesSVM = (header->flags & TR_AOTMethodHeader_UsesSymbolValidationManager) != 0;
 
    uint8_t *start = method->data() + header->offsetToRelocationDataItems;
    uint8_t *end = start + *(uintptr_t *)start;// Total size of relocation data is stored in the first word
