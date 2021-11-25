@@ -4720,20 +4720,7 @@ JavaCoreDumpWriter::writeFrame(J9StackWalkState* state)
 	}
 
 	UDATA offsetPC = state->bytecodePCOffset;
-	bool compiledMethod = false;
-
-#ifdef J9VM_INTERP_NATIVE_SUPPORT
-	J9JITConfig*         jitConfig = _VirtualMachine->jitConfig;
-	J9JITExceptionTable* metaData  = state->jitInfo;
-	void*                stackMap  = NULL;
-
-	if ((NULL != jitConfig) && (NULL != metaData)) {
-		stackMap = jitConfig->jitGetInlinerMapFromPC(_VirtualMachine, metaData, (UDATA)state->pc);
-		if (NULL != stackMap) {
-			compiledMethod = true;
-		}
-	}
-#endif
+	bool compiledMethod = (NULL != state->jitInfo);
 
 #ifdef J9VM_OPT_DEBUG_INFO_SERVER
 	/* Write source file and line number info, if available and we can take locks. */
