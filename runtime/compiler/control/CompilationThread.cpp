@@ -99,6 +99,7 @@
 #include "control/JITServerCompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "runtime/JITClientSession.hpp"
+#include "runtime/JITServerAOTDeserializer.hpp"
 #include "net/ClientStream.hpp"
 #include "net/ServerStream.hpp"
 #include "omrformatconsts.h"
@@ -3328,11 +3329,12 @@ void TR::CompilationInfo::stopCompilationThreads()
       {
       if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
-         TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(_jitConfig, 0));
+         TR_J9VMBase *vmj9 = (TR_J9VMBase *)TR_J9VMBase::get(_jitConfig, NULL);
          JITServerIProfiler *iProfiler = (JITServerIProfiler *)vmj9->getIProfiler();
          iProfiler->printStats();
          }
       }
+
    static char *printJITServerConnStats = feGetEnv("TR_PrintJITServerConnStats");
    if (printJITServerConnStats)
       {
@@ -3346,6 +3348,15 @@ void TR::CompilationInfo::stopCompilationThreads()
          fprintf(stderr, "Number of connections opened = %u\n", JITServer::ClientStream::getNumConnectionsOpened());
          fprintf(stderr, "Number of connections closed = %u\n", JITServer::ClientStream::getNumConnectionsClosed());
          }
+      }
+
+   static char *printJITServerAOTCacheStats = feGetEnv("TR_PrintJITServerAOTCacheStats");
+   if (printJITServerAOTCacheStats)
+      {
+      if (auto aotCacheMap = getJITServerAOTCacheMap())
+         aotCacheMap->printStats(stderr);
+      if (auto deserializer = getJITServerAOTDeserializer())
+         deserializer->printStats(stderr);
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
