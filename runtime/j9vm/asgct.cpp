@@ -132,6 +132,7 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 	ASGCT_parms *parms = (ASGCT_parms*)arg;
 	J9VMThread *currentThread = BFUjavaVM->internalVMFunctions->currentVMThread(BFUjavaVM);
 	if (NULL != currentThread) {
+		J9SFJITResolveFrame resolveFrame = {0};
 		parms->currentThread = currentThread;
 		/* Back up the J9VMThread root values for restoration in the caller */
 		parms->pc = currentThread->pc;
@@ -163,13 +164,11 @@ protectedASGCT(J9PortLibrary *portLib, void *arg)
 					 * stack in the signal handler. Update the J9VMThread roots to point to
 					 * the resolve frame (will be restored in the caller).
 					 */
-					J9SFJITResolveFrame resolveFrame = {
-						NULL, /* savedJITException */
-						J9_SSF_JIT_RESOLVE, /* specialFrameFlags */
-						0, /* parmCount */
-						(U_8*)rip, /* returnAddress */
-						(UDATA*)(((U_8 *)rsp) + J9SF_A0_INVISIBLE_TAG) /* taggedRegularReturnSP */
-					};
+					resolveFrame.savedJITException = NULL;
+					resolveFrame.specialFrameFlags = J9_SSF_JIT_RESOLVE;
+					resolveFrame.parmCount = 0;
+					resolveFrame.returnAddress = (U_8*)rip;
+					resolveFrame.taggedRegularReturnSP = (UDATA*)(((U_8 *)rsp) + J9SF_A0_INVISIBLE_TAG);
 					currentThread->pc = (U_8*)J9SF_FRAME_TYPE_JIT_RESOLVE;
 					currentThread->arg0EA = (UDATA*)&(resolveFrame.taggedRegularReturnSP);
 					currentThread->literals = NULL;
