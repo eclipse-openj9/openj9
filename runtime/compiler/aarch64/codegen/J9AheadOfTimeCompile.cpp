@@ -35,6 +35,7 @@ J9::ARM64::AheadOfTimeCompile::AheadOfTimeCompile(TR::CodeGenerator *cg) :
 
 void J9::ARM64::AheadOfTimeCompile::processRelocations()
    {
+   TR::Compilation *comp = self()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
    TR::IteratedExternalRelocation *r;
 
@@ -53,7 +54,7 @@ void J9::ARM64::AheadOfTimeCompile::processRelocations()
    // Note that when using the SymbolValidationManager, the well-known classes
    // must be checked even if no explicit records were generated, since they
    // might be responsible for the lack of records.
-   bool useSVM = self()->comp()->getOption(TR_UseSymbolValidationManager);
+   bool useSVM = comp->getOption(TR_UseSymbolValidationManager);
 
    if (self()->getSizeOfAOTRelocations() != 0 || useSVM)
       {
@@ -64,7 +65,7 @@ void J9::ARM64::AheadOfTimeCompile::processRelocations()
       uintptr_t reloBufferSize =
          self()->getSizeOfAOTRelocations() + SIZEPOINTER + wellKnownClassesOffsetSize;
       uint8_t *relocationDataCursor =
-         self()->setRelocationData(fej9->allocateRelocationData(self()->comp(), reloBufferSize));
+         self()->setRelocationData(fej9->allocateRelocationData(comp, reloBufferSize));
 
       // set up the size for the region
       *(uintptr_t *)relocationDataCursor = reloBufferSize;
@@ -72,11 +73,13 @@ void J9::ARM64::AheadOfTimeCompile::processRelocations()
 
       if (useSVM)
          {
-         TR::SymbolValidationManager *svm =
-            self()->comp()->getSymbolValidationManager();
-         void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
-         *(uintptr_t *)relocationDataCursor =
-            self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
+         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+         void *offsets = const_cast<void *>(svm->wellKnownClassChainOffsets());
+         uintptr_t *wkcOffsetAddr = (uintptr_t *)relocationDataCursor;
+         *wkcOffsetAddr = self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
+#if defined(J9VM_OPT_JITSERVER)
+         self()->addWellKnownClassesSerializationRecord(svm->aotCacheWellKnownClassesRecord(), wkcOffsetAddr);
+#endif /* defined(J9VM_OPT_JITSERVER) */
          relocationDataCursor += SIZEPOINTER;
          }
 

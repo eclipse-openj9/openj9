@@ -973,17 +973,17 @@ addRAMClassToChain(std::vector<J9Class *> &chain, J9Class *clazz, std::vector<J9
    }
 
 std::vector<J9Class *>
-JITServerHelpers::getRAMClassChain(J9Class *clazz, size_t length, J9VMThread *vmThread, TR_Memory *trMemory,
+JITServerHelpers::getRAMClassChain(J9Class *clazz, size_t numClasses, J9VMThread *vmThread, TR_Memory *trMemory,
                                    TR::CompilationInfo *compInfo, std::vector<J9Class *> &uncachedRAMClasses,
                                    std::vector<ClassInfoTuple> &uncachedClassInfos)
    {
    TR_ASSERT(uncachedRAMClasses.empty(), "Must pass empty vector");
    TR_ASSERT(uncachedClassInfos.empty(), "Must pass empty vector");
-   TR_ASSERT(length <= TR_J9SharedCache::maxClassChainLength, "Class chain is too long");
+   TR_ASSERT(numClasses <= TR_J9SharedCache::maxClassChainLength, "Class chain is too long");
 
    std::vector<J9Class *> chain;
-   chain.reserve(length);
-   uncachedRAMClasses.reserve(length);
+   chain.reserve(numClasses);
+   uncachedRAMClasses.reserve(numClasses);
    auto &cached = compInfo->getclassesCachedAtServer();
 
       {
@@ -994,7 +994,7 @@ JITServerHelpers::getRAMClassChain(J9Class *clazz, size_t length, J9VMThread *vm
          addRAMClassToChain(chain, clazz->superclasses[i], uncachedRAMClasses, cached);
       for (auto it = (J9ITable *)clazz->iTable; it; it = it->next)
          addRAMClassToChain(chain, it->interfaceClass, uncachedRAMClasses, cached);
-      TR_ASSERT(chain.size() == length, "Invalid RAM class chain length: %zu != %zu", chain.size(), length);
+      TR_ASSERT(chain.size() == numClasses, "Invalid RAM class chain length: %zu != %zu", chain.size(), numClasses);
       }
 
    uncachedClassInfos.reserve(uncachedRAMClasses.size());

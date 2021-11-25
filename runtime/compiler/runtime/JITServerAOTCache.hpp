@@ -133,12 +133,15 @@ private:
 
 
 // Helper template class to avoid duplicating code for class chain records and well-known classes records
+// D is one of: ClassChainSerializationRecord, WellKnownClassesSerializationRecord
+// R is one of: AOTCacheClassRecord, AOTCacheClassChainRecord
 template<class D, class R, typename... Args>
 class AOTCacheListRecord : public AOTCacheRecord
    {
 public:
    const D &data() const { return _data; }
    const AOTSerializationRecord *dataAddr() const override { return &_data; }
+   // Array of record pointers is stored inline after the array of IDs that is stored inline after struct D header
    const R *const *records() const { return (const R *const *)_data.end(); }
 
    void subRecordsDo(const std::function<void(const AOTCacheRecord *)> &f) const override;
@@ -151,8 +154,8 @@ protected:
       return offsetof(AOTCacheListRecord, _data) + D::size(length) + length * sizeof(R *);
       }
 
+   // Layout: struct D header, uintptr_t ids[length], const R *records[length]
    D _data;
-   // Array of record pointers is stored inline after serialization record data
    };
 
 
@@ -160,6 +163,9 @@ class AOTCacheClassChainRecord final : public AOTCacheListRecord<ClassChainSeria
    {
 public:
    static AOTCacheClassChainRecord *create(uintptr_t id, const AOTCacheClassRecord *const *records, size_t length);
+
+   const AOTCacheClassRecord *rootClassRecord() const { return records()[0]; }
+   const AOTCacheClassLoaderRecord *rootClassLoaderRecord() const { return rootClassRecord()->classLoaderRecord(); }
 
 private:
    using AOTCacheListRecord::AOTCacheListRecord;
