@@ -99,9 +99,12 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
       if (useSVM)
          {
          TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
-         void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
-         *(uintptr_t *)relocationDataCursor =
-            self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
+         void *offsets = const_cast<void *>(svm->wellKnownClassChainOffsets());
+         uintptr_t *wkcOffsetAddr = (uintptr_t *)relocationDataCursor;
+         *wkcOffsetAddr = self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
+#if defined(J9VM_OPT_JITSERVER)
+         self()->addWellKnownClassesSerializationRecord(svm->aotCacheWellKnownClassesRecord(), wkcOffsetAddr);
+#endif /* defined(J9VM_OPT_JITSERVER) */
          relocationDataCursor += SIZEPOINTER;
          }
 

@@ -9447,7 +9447,7 @@ JIT_HELPER(initialInvokeExactThunkGlue);
 JIT_HELPER(_initialInvokeExactThunkGlue);
 #endif
 
-JNIEXPORT jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
+jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
    (JNIEnv *env, jclass clazz)
    {
 #if defined(J9ZOS390)
@@ -9465,7 +9465,7 @@ JNIEXPORT jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
  * (private interface method, methods in Object) have been adapted away by the java code, so this
  * native only ever deals with iTable interface methods.
  */
-JNIEXPORT jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexToVTableIndex
+jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexToVTableIndex
   (JNIEnv *env, jclass InterfaceMethodHandle, jlong interfaceArg, jint itableIndex, jlong receiverClassArg)
    {
    J9Class  *interfaceClass = (J9Class*)(intptr_t)interfaceArg;
@@ -9498,12 +9498,7 @@ JNIEXPORT jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexT
    }
 
 
-extern "C" {
-JNIEXPORT void JNICALL Java_java_lang_invoke_MutableCallSite_invalidate
-  (JNIEnv *env, jclass MutableCallSite, jlongArray cookieArrayObject);
-}
-
-JNIEXPORT void JNICALL Java_java_lang_invoke_MutableCallSite_invalidate
+void JNICALL Java_java_lang_invoke_MutableCallSite_invalidate
   (JNIEnv *env, jclass MutableCallSite, jlongArray cookieArrayObject)
    {
    J9VMThread          *vmThread  = (J9VMThread*)env;

@@ -36,22 +36,111 @@ namespace J9 { typedef J9::AheadOfTimeCompile AheadOfTimeCompileConnector; }
 #include "env/jittypes.h"
 
 namespace TR { class Compilation; }
+class AOTCacheRecord;
+class AOTCacheClassChainRecord;
+class AOTCacheWellKnownClassesRecord;
+
 
 namespace J9
 {
 
 class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnector
    {
-   public:
+public:
    static const size_t SIZEPOINTER = sizeof(uintptr_t);
 
-   AheadOfTimeCompile(uint32_t *headerSizeMap, TR::Compilation * c) :
+   AheadOfTimeCompile(uint32_t *headerSizeMap, TR::Compilation *c) :
       OMR::AheadOfTimeCompileConnector(headerSizeMap, c)
       {
       }
 
-   uintptr_t getClassChainOffset(TR_OpaqueClassBlock* classToRemember);
+   /**
+    * @brief Gets the class chain offset for a given RAMClass. Calls TR_SharedCache::rememberClass()
+    *        and fails the compilation if the class chain cannot be created.
+    *
+    * @param[in] classToRemember the RAMClass to get the class chain offset for
+    * @param[out] classChainRecord pointer to the AOT cache class chain record corresponding to the class chain, if this
+    *                              is an out-of-process compilation that will be stored in JITServerAOT cache;
+    *                              ignored for local compilations and out-of-process compilations not stored in AOT cache
+    * @return class chain SCC offset
+    */
+   uintptr_t getClassChainOffset(TR_OpaqueClassBlock *classToRemember, const AOTCacheClassChainRecord *&classChainRecord);
+
    uintptr_t findCorrectInlinedSiteIndex(void *constantPool, uintptr_t currentInlinedSiteIndex);
+
+#if defined(J9VM_OPT_JITSERVER)
+   /**
+    * @brief Adds an AOT cache class record corresponding to a ROMClass SCC offset
+    *        if this out-of-process compilation will be stored in AOT cache.
+    *
+    * The resulting AOT cache class record is the root class record of the class chain record.
+    *
+    * @param classChainRecord pointer to the AOT cache class chain record for the class
+    * @param romClassOffsetAddr pointer to the binary relocation record field that stores the ROMClass SCC offset
+    */
+   void addClassSerializationRecord(const AOTCacheClassChainRecord *classChainRecord, const uintptr_t *romClassOffsetAddr);
+
+   /**
+    * @brief Adds an AOT cache class record corresponding to a ROMClass SCC offset
+    *        if this out-of-process compilation will be stored in AOT cache.
+    *
+    * The AOT cache class record is looked up in the client session or created
+    * on demand, possibly requesting missing information from the client.
+    *
+    * @param ramClass the RAMClass that the ROMClass SCC offset is for
+    * @param romClassOffsetAddr pointer to the binary relocation record field that stores the ROMClass SCC offset
+    */
+   void addClassSerializationRecord(TR_OpaqueClassBlock *ramClass, const uintptr_t *romClassOffsetAddr);
+
+   /**
+    * @brief Adds an AOT cache method record corresponding to a ROMMethod SCC offset
+    *        if this out-of-process compilation will be stored in AOT cache.
+    *
+    * The AOT cache method record is looked up in the client session or created
+    * on demand, possibly requesting missing information from the client.
+    *
+    * @param method the RAMMethod that the ROMMethod SCC offset is for
+    * @param definingClass RAMClass for the defining class of the method
+    * @param romMethodOffsetAddr pointer to the binary relocation record field that stores the ROMMethod SCC offset
+    */
+   void addMethodSerializationRecord(J9Method *method, TR_OpaqueClassBlock *definingClass, const uintptr_t *romMethodOffsetAddr);
+
+   /**
+    * @brief Adds an AOT cache class chain record corresponding to a class chain SCC
+    *        offset if this out-of-process compilation will be stored in AOT cache.
+    *
+    * @param classChainRecord pointer to the AOT cache class chain record
+    * @param classChainOffsetAddr pointer to the binary relocation record field that stores the class chain SCC offset
+    */
+   void addClassChainSerializationRecord(const AOTCacheClassChainRecord *classChainRecord, const uintptr_t *classChainOffsetAddr);
+
+   /**
+    * @brief Adds an AOT cache class loader record corresponding to a class chain SCC offset identifying
+    *        a class loader if this out-of-process compilation will be stored in AOT cache.
+    *
+    * The resulting AOT cache class loader record is the class loader record of the root class of the class chain.
+    * Note that while the AOT cache class chain record passed to this method is the one for the class being
+    * remembered, i.e. the same as the one passed to addClassChainSerializationRecord(), the AOT cache record
+    * associated with this SCC offset is the one identifying the class loader of the class being remembered.
+    * The JITServer AOT cache identifies class loaders by the name of the first loaded class (not by its class
+    * chain), hence the AOT cache class loader records are a distinct type from the class chain records.
+    *
+    * @param classChainRecord pointer to the AOT cache class chain record for the class
+    *                         whose loader is identified by the class chain SCC offset
+    * @param loaderChainOffsetAddr pointer to the binary relocation record field that stores
+    *                              the class chain SCC offset identifying the class loader
+    */
+   void addClassLoaderSerializationRecord(const AOTCacheClassChainRecord *classChainRecord, const uintptr_t *loaderChainOffsetAddr);
+
+   /**
+    * @brief Adds an AOT cache well-known classes record corresponding to a well-known classes
+    *        SCC offset if this out-of-process compilation will be stored in AOT cache.
+    *
+    * @param wkcRecord pointer to the AOT cache well-known classes record
+    * @param wkcOffsetAddr pointer to the binary relocation record field that stores the well-known classes SCC offset
+    */
+   void addWellKnownClassesSerializationRecord(const AOTCacheWellKnownClassesRecord *wkcRecord, const uintptr_t *wkcOffsetAddr);
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    void dumpRelocationData();
    uint8_t* dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose);
@@ -89,7 +178,20 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
     */
    static bool classAddressUsesReloRecordInfo() { return false; }
 
-   protected:
+protected:
+
+#if defined(J9VM_OPT_JITSERVER)
+   /**
+    * @brief Associates an AOT cache record with the corresponding SCC offset stored in AOT relocation data.
+    *
+    * If this is an out-of-process compilation that will be stored in JITServer AOT cache, computes the offset into
+    * AOT relocation data and calls Compilation::addSerializationRecord(record, offset), otherwise does nothing.
+    *
+    * @param record pointer to the AOT cache record to be added to this compilation
+    * @param sccOffsetAddr pointer to the binary relocation record field that stores the SCC offset
+    */
+   void addSerializationRecord(const AOTCacheRecord *record, const uintptr_t *sccOffsetAddr);
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    /**
     * @brief TR_J9SharedCache::offsetInSharedCacheFrom* asserts if the pointer

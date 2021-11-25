@@ -230,7 +230,7 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          TR_RelocationRecordArbitraryClassAddress *acaRecord = reinterpret_cast<TR_RelocationRecordArbitraryClassAddress *>(reloRecord);
 
          // ExternalRelocation data is as expected for TR_ClassAddress
-         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
+         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation *)relocation->getTargetAddress();
 
          auto symRef = (TR::SymbolReference *)recordInfo->data1;
          auto sym = symRef->getSymbol()->castToStaticSymbol();
@@ -239,11 +239,13 @@ J9::ARM::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR::I
          uintptr_t inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(symRef->getOwningMethod(comp)->constantPool(), recordInfo->data2);
 
          uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoader(j9class);
-         uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(j9class);
+         const AOTCacheClassChainRecord *classChainRecord = NULL;
+         uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(j9class, classChainRecord);
 
          acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
-         acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache);
-         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
+         acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache,
+                                                                      self(), classChainRecord);
+         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache, self(), classChainRecord);
          }
          break;
 

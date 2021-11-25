@@ -192,10 +192,12 @@ J9::Compilation::Compilation(int32_t id,
    _remoteCompilation(false),
    _serializedRuntimeAssumptions(getTypedAllocator<SerializedRuntimeAssumption *>(self()->allocator())),
    _clientData(NULL),
+   _stream(NULL),
    _globalMemory(*::trPersistentMemory, heapMemoryRegion),
    _perClientMemory(_trMemory),
    _methodsRequiringTrampolines(getTypedAllocator<TR_OpaqueMethodBlock *>(self()->allocator())),
    _aotCacheStore(false),
+   _serializationRecords(decltype(_serializationRecords)::allocator_type(heapMemoryRegion)),
 #endif /* defined(J9VM_OPT_JITSERVER) */
    _osrProhibitedOverRangeOfTrees(false)
    {
@@ -1562,3 +1564,14 @@ J9::Compilation::incompleteOptimizerSupportForReadWriteBarriers()
    return self()->getOption(TR_EnableFieldWatch);
    }
 
+#if defined(J9VM_OPT_JITSERVER)
+void
+J9::Compilation::addSerializationRecord(const AOTCacheRecord *record, uintptr_t reloDataOffset)
+   {
+   TR_ASSERT_FATAL(_aotCacheStore, "Trying to add serialization record for compilation that is not an AOT cache store");
+   if (record)
+      _serializationRecords.push_back({ record, reloDataOffset });
+   else
+      _aotCacheStore = false;// Serialization failed; method won't be stored in AOT cache
+   }
+#endif /* defined(J9VM_OPT_JITSERVER) */

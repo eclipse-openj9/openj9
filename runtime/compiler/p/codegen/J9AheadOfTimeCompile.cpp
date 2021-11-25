@@ -92,11 +92,13 @@ void J9::Power::AheadOfTimeCompile::processRelocations()
 
       if (useSVM)
          {
-         TR::SymbolValidationManager *svm =
-            comp->getSymbolValidationManager();
-         void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
-         *(uintptr_t *)relocationDataCursor =
-            self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
+         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+         void *offsets = const_cast<void *>(svm->wellKnownClassChainOffsets());
+         uintptr_t *wkcOffsetAddr = (uintptr_t *)relocationDataCursor;
+         *wkcOffsetAddr = self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
+#if defined(J9VM_OPT_JITSERVER)
+         self()->addWellKnownClassesSerializationRecord(svm->aotCacheWellKnownClassesRecord(), wkcOffsetAddr);
+#endif /* defined(J9VM_OPT_JITSERVER) */
          relocationDataCursor += SIZEPOINTER;
          }
 
@@ -292,7 +294,7 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          TR_RelocationRecordArbitraryClassAddress *acaRecord = reinterpret_cast<TR_RelocationRecordArbitraryClassAddress *>(reloRecord);
 
          // ExternalRelocation data is as expected for TR_ClassAddress
-         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation*) relocation->getTargetAddress();
+         TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation *)relocation->getTargetAddress();
 
          auto symRef = (TR::SymbolReference *)recordInfo->data1;
          auto sym = symRef->getSymbol()->castToStaticSymbol();
@@ -301,13 +303,15 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          uintptr_t inlinedSiteIndex = self()->findCorrectInlinedSiteIndex(symRef->getOwningMethod(comp)->constantPool(), recordInfo->data2);
 
          uintptr_t classChainIdentifyingLoaderOffsetInSharedCache = sharedCache->getClassChainOffsetIdentifyingLoader(j9class);
-         uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(j9class);
+         const AOTCacheClassChainRecord *classChainRecord = NULL;
+         uintptr_t classChainOffsetInSharedCache = self()->getClassChainOffset(j9class, classChainRecord);
 
-         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+         TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0, "reloFlags bits overlap cross-platform flags bits");
          acaRecord->setReloFlags(reloTarget, flags);
          acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
-         acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache);
-         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache);
+         acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache,
+                                                                      self(), classChainRecord);
+         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache, self(), classChainRecord);
          }
          break;
 

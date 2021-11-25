@@ -1167,6 +1167,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _activationPolicy = JITServer::CompThreadActivationPolicy::AGGRESSIVE;
    _sharedROMClassCache = NULL;
    _JITServerAOTCacheMap = NULL;
+   _JITServerAOTDeserializer = NULL;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
@@ -8567,6 +8568,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             // Create the KOT by default at the server as long as it is not disabled at the client.
             compiler->getOrCreateKnownObjectTable();
             compiler->setClientData(that->getClientData());
+            compiler->setStream(that->_methodBeingCompiled->_stream);
+            auto compInfoPTRemote = static_cast<TR::CompilationInfoPerThreadRemote *>(that);
+            compiler->setAOTCacheStore(compInfoPTRemote->isAOTCacheStore());
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
