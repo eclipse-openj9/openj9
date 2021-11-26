@@ -1375,13 +1375,13 @@ extern J9_CFUNC UDATA  hasMoreInlinedMethods (void * inlinedCallSite);
 extern J9_CFUNC UDATA  getByteCodeIndex (void * inlinedCallSite);
 extern J9_CFUNC void  jitReportDynamicCodeLoadEvents (J9VMThread * currentThread);
 extern J9_CFUNC UDATA  getJitInlineDepthFromCallSite (J9JITExceptionTable *metaData, void *inlinedCallSite);
-extern J9_CFUNC void*  jitGetInlinerMapFromPC (J9VMThread * currentThread, J9JITExceptionTable * exceptionTable, UDATA jitPC);
-extern J9_CFUNC void*  getStackMapFromJitPC (J9VMThread * currentThread, struct J9JITExceptionTable * exceptionTable, UDATA jitPC);
+extern J9_CFUNC void*  jitGetInlinerMapFromPC (J9JavaVM * javaVM, J9JITExceptionTable * exceptionTable, UDATA jitPC);
+extern J9_CFUNC void*  getStackMapFromJitPC (J9JavaVM * javaVM, struct J9JITExceptionTable * exceptionTable, UDATA jitPC);
 extern J9_CFUNC UDATA  getCurrentByteCodeIndexAndIsSameReceiver (J9JITExceptionTable *metaData, void *stackMap, void *currentInlinedCallSite, UDATA * isSameReceiver);
 extern J9_CFUNC void  clearFPStack (void);
 extern J9_CFUNC void  jitExclusiveVMShutdownPending (J9VMThread *vmThread);
 extern J9_CFUNC void*  getNextInlinedCallSite (J9JITExceptionTable * metaData, void * inlinedCallSite);
-extern J9_CFUNC void*  jitGetStackMapFromPC (J9VMThread * currentThread, struct J9JITExceptionTable * exceptionTable, UDATA jitPC);
+extern J9_CFUNC void*  jitGetStackMapFromPC (J9JavaVM * javaVM, struct J9JITExceptionTable * exceptionTable, UDATA jitPC);
 extern J9_CFUNC void  jitAddPicToPatchOnClassUnload (void *classPointer, void *addressToBePatched);
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 #endif /* _J9VMNATIVEHELPERSLARGE_ */
