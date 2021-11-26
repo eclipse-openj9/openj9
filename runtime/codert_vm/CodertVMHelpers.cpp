@@ -323,7 +323,7 @@ jitGetExceptionCatcher(J9VMThread *currentThread, void *handlerPC, J9JITExceptio
 	 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value passed in is
 	 * the start address of the compiled exception handler.
 	 */
-	jitGetMapsFromPC(currentThread, metaData, (UDATA)handlerPC + 1, &stackMap, &inlineMap);
+	jitGetMapsFromPC(currentThread->javaVM, metaData, (UDATA)handlerPC + 1, &stackMap, &inlineMap);
 	Assert_CodertVM_false(NULL == inlineMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
 		inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
