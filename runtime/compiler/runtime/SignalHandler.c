@@ -398,7 +398,7 @@ UDATA jitX86Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
 					}
 				}
 
-				stackMap = jitConfig->jitGetStackMapFromPC(vmThread->javaVM, exceptionTable, (UDATA) (eip + 1));
+				stackMap = jitConfig->jitGetStackMapFromPC(vmThread, exceptionTable, (UDATA) (eip + 1));
 				if (stackMap ) {
 					registerMap = jitConfig->getJitRegisterMap(exceptionTable, stackMap);
 					*espPtr += (((registerMap >> 16) & 0xFF) * sizeof(UDATA));

@@ -1714,7 +1714,7 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 			J9JavaVM *vm = currentThread->javaVM;
 			J9JITExceptionTable *metaData = vm->jitConfig->jitGetExceptionTableFromPC(currentThread, (UDATA)oldPC);
 			Assert_CodertVM_false(NULL == metaData);
-			jitGetMapsFromPC(vm, metaData, (UDATA)oldPC, &stackMap, &inlineMap);
+			jitGetMapsFromPC(currentThread, metaData, (UDATA)oldPC, &stackMap, &inlineMap);
 			Assert_CodertVM_false(NULL == inlineMap);
 			if ((NULL == getJitInlinedCallInfo(metaData)) || (NULL == getFirstInlinedCallSite(metaData, inlineMap))) {
 				J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)currentThread->sp;
