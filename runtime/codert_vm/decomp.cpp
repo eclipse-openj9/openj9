@@ -1236,7 +1236,7 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value stored in the
 	 * decomp record is the start address of the compiled exception handler.
 	 */
-	jitGetMapsFromPC(vm, metaData, (UDATA)jitPC + 1, &stackMap, &inlineMap);
+	jitGetMapsFromPC(currentThread, metaData, (UDATA)jitPC + 1, &stackMap, &inlineMap);
 	Assert_CodertVM_false(NULL == inlineMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
 		inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
@@ -1826,13 +1826,12 @@ osrFrameSizeRomMethod(J9ROMMethod *romMethod)
 static UDATA
 osrAllFramesSize(J9VMThread *currentThread, J9JITExceptionTable *metaData, void *jitPC, UDATA resolveFrameFlags)
 {
-	J9JavaVM *vm = currentThread->javaVM;
 	UDATA totalSize = 0;
 	void * stackMap = NULL;
 	void * inlineMap = NULL;
 
 	/* Count the inlined methods */
-	jitGetMapsFromPC(vm, metaData, (UDATA)jitPC, &stackMap, &inlineMap);
+	jitGetMapsFromPC(currentThread, metaData, (UDATA)jitPC, &stackMap, &inlineMap);
 	Assert_CodertVM_false(NULL == inlineMap);
 	if (NULL != getJitInlinedCallInfo(metaData)) {
 		void *inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
@@ -2157,7 +2156,6 @@ static UDATA
 initializeOSRBuffer(J9VMThread *currentThread, J9OSRBuffer *osrBuffer, J9OSRData *osrData)
 {
 	UDATA result = OSR_OK;
-	J9JavaVM *vm = currentThread->javaVM;
 	J9JITExceptionTable *metaData = osrData->metaData;
 	void *jitPC = osrData->jitPC;
 	UDATA resolveFrameFlags = osrData->resolveFrameFlags;
@@ -2170,7 +2168,7 @@ initializeOSRBuffer(J9VMThread *currentThread, J9OSRBuffer *osrBuffer, J9OSRData
 	U_16 numberOfMapBits = 0;
 
 	/* Get the stack map, inline map and live monitor metadata */
-	jitGetMapsFromPC(vm, metaData, (UDATA)jitPC, &stackMap, &inlineMap);
+	jitGetMapsFromPC(currentThread, metaData, (UDATA)jitPC, &stackMap, &inlineMap);
 	liveMonitorMap = getJitLiveMonitors(metaData, stackMap);
 	gcStackAtlas = (J9JITStackAtlas *)getJitGCStackAtlas(metaData);
 	numberOfMapBits = getJitNumberOfMapBytes(gcStackAtlas) << 3;
