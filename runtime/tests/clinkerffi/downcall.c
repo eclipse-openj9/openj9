@@ -21,8 +21,8 @@
  *******************************************************************************/
 
 /**
- * This file contains the native code used by org.openj9.test.jep389.downcall.PrimitiveTypeTests
- * via a Clinker FFI DownCall.
+ * This file contains the native code used by the test suites in org.openj9.test.jep389.downcall
+ * and org.openj9.test.jep419.downcall via a Clinker FFI DownCall.
  *
  * Created by jincheng@ca.ibm.com
  */
@@ -126,10 +126,10 @@ add2IntsReturnVoid(int intArg1, int intArg2)
  * @param boolArg2 the 2nd boolean
  * @return the result of the OR operation
  */
-int
-add2BoolsWithOr(int boolArg1, int boolArg2)
+bool
+add2BoolsWithOr(bool boolArg1, bool boolArg2)
 {
-	int result = (boolArg1 || boolArg2);
+	bool result = (boolArg1 || boolArg2);
 	return result;
 }
 
@@ -140,10 +140,10 @@ add2BoolsWithOr(int boolArg1, int boolArg2)
  * @param boolArg2 a pointer to boolean
  * @return the result of the OR operation
  */
-int
-addBoolAndBoolFromPointerWithOr(int boolArg1, int *boolArg2)
+bool
+addBoolAndBoolFromPointerWithOr(bool boolArg1, bool *boolArg2)
 {
-	int result = (boolArg1 || *boolArg2);
+	bool result = (boolArg1 || *boolArg2);
 	return result;
 }
 

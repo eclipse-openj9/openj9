@@ -23,18 +23,17 @@
 -->
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Java17andUp test suite" parallel="none" verbose="2">
-	<test name="Jep389Tests_testClinkerFfi">
+<suite name="Java18andUp test suite" parallel="none" verbose="2">
+	<test name="Jep419Tests_testClinkerFfi">
 		<classes>
-			<class name="org.openj9.test.jep389.downcall.InvalidDownCallTests"/>
-			<class name="org.openj9.test.jep389.downcall.MultiCallTests"/>
-			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests1"/>
-			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests2"/>
-			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests3"/>
-			<class name="org.openj9.test.jep389.downcall.MultiThreadingTests4"/>
-			<class name="org.openj9.test.jep389.downcall.PrimitiveTypeTests1"/>
-			<class name="org.openj9.test.jep389.downcall.PrimitiveTypeTests2"/>
-			<class name="org.openj9.test.jep389.downcall.PrimitiveTypeTests3"/>
+			<class name="org.openj9.test.jep419.downcall.InvalidDownCallTests"/>
+			<class name="org.openj9.test.jep419.downcall.MultiCallTests"/>
+			<class name="org.openj9.test.jep419.downcall.MultiThreadingTests1"/>
+			<class name="org.openj9.test.jep419.downcall.MultiThreadingTests2"/>
+			<class name="org.openj9.test.jep419.downcall.MultiThreadingTests3"/>
+			<class name="org.openj9.test.jep419.downcall.MultiThreadingTests4"/>
+			<class name="org.openj9.test.jep419.downcall.PrimitiveTypeTests1"/>
+			<class name="org.openj9.test.jep419.downcall.PrimitiveTypeTests2"/>
 		</classes>
 	</test>
 </suite>

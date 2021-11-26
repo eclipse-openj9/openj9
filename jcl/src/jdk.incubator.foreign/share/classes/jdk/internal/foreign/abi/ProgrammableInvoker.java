@@ -25,6 +25,7 @@ package jdk.internal.foreign.abi;
 import java.util.Optional;
 import java.util.List;
 import java.util.HashMap;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import static java.lang.invoke.MethodHandles.*;
@@ -33,17 +34,22 @@ import java.lang.invoke.MethodType;
 import static java.lang.invoke.MethodType.methodType;
 import java.lang.invoke.WrongMethodTypeException;
 
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.ValueLayout;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
+/*[IF JAVA_SPEC_VERSION <= 17]*/
 import jdk.incubator.foreign.CLinker.TypeKind;
 import static jdk.incubator.foreign.CLinker.TypeKind.*;
+/*[ENDIF] JAVA_SPEC_VERSION <= 17 */
+import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
+/*[IF JAVA_SPEC_VERSION >= 18]*/
+import jdk.incubator.foreign.NativeSymbol;
+/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
 import jdk.incubator.foreign.SegmentAllocator;
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+import jdk.incubator.foreign.ValueLayout;
 
 /**
  * The counterpart in OpenJDK is replaced with this class that wrap up a method handle
@@ -53,18 +59,25 @@ public class ProgrammableInvoker {
 
 	private final MethodType funcMethodType;
 	private final FunctionDescriptor funcDescriptor;
+	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	private NativeSymbol functionAddr;
+	private static final Class<?> addrClass = Addressable.class;
+	/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 	private Addressable functionAddr;
+	private static final Class<?> addrClass = MemoryAddress.class;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	private long cifNativeThunkAddr;
 	private long argTypesAddr;
+	private List<Class<?>> argTypes;
 	private List<MemoryLayout> argLayouts;
 	private MemoryLayout[] argLayoutArray;
 	private MemoryLayout realReturnLayout;
 
-	static final Lookup lookup = MethodHandles.lookup();
+	private static final Lookup lookup = MethodHandles.lookup();
 
-	/* The prep_cif and the corresponding argument layouts are cached & shared in multiple downcalls/threads */
+	/* The prep_cif and the corresponding argument types are cached & shared in multiple downcalls/threads */
 	private static final HashMap<Integer, Long> cachedCifNativeThunkAddr = new HashMap<>();
-	private static final HashMap<List<MemoryLayout>, Long> cachedArgLayouts = new HashMap<>();
+	private static final HashMap<Integer, Long> cachedArgTypes = new HashMap<>();
 
 	/* Argument filters that convert the primitive types or MemoryAddress to long */
 	private static final MethodHandle booleanToLongArgFilter;
@@ -107,7 +120,7 @@ public class ProgrammableInvoker {
 			intToLongArgFilter = lookup.findStatic(ProgrammableInvoker.class, "intToLongArg", methodType(long.class, int.class)); //$NON-NLS-1$
 			floatToLongArgFilter = lookup.findStatic(ProgrammableInvoker.class, "floatToLongArg", methodType(long.class, float.class)); //$NON-NLS-1$
 			doubleToLongArgFilter = lookup.findStatic(Double.class, "doubleToLongBits", methodType(long.class, double.class)); //$NON-NLS-1$
-			memAddrToLongArgFilter = lookup.findStatic(ProgrammableInvoker.class, "memAddrToLongArg", methodType(long.class, MemoryAddress.class)); //$NON-NLS-1$
+			memAddrToLongArgFilter = lookup.findStatic(ProgrammableInvoker.class, "memAddrToLongArg", methodType(long.class, addrClass)); //$NON-NLS-1$
 
 			/* Set up the return value filters for the primitive types and MemoryAddress */
 			longObjToVoidRetFilter = lookup.findStatic(ProgrammableInvoker.class, "longObjToVoidRet", methodType(void.class, Object.class)); //$NON-NLS-1$
@@ -168,9 +181,17 @@ public class ProgrammableInvoker {
 		return Float.floatToIntBits(argValue);
 	}
 
-	/* Intended for memAddrToLongArgFilter that converts the memory address to long */
-	private static final long memAddrToLongArg(MemoryAddress argValue) {
-		return argValue.toRawLongValue();
+	/* Intended for memAddrToLongArgFilter that converts the memory address to long.
+	 * Note: the passed-in argument can be an instance of MemoryAddress, MemorySegment
+	 * or VaList which extends Addressable in OpenJDK since Java 18.
+	 */
+	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	private static final long memAddrToLongArg(Addressable argValue)
+	/*[ELSE] JAVA_SPEC_VERSION >= 18 */
+	private static final long memAddrToLongArg(MemoryAddress argValue)
+	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+	{
+		return argValue.address().toRawLongValue();
 	}
 
 	/* Intended for longObjToVoidRetFilter that converts the Long object to void */
@@ -233,7 +254,23 @@ public class ProgrammableInvoker {
 	ProgrammableInvoker(Addressable downcallAddr, MethodType functionMethodType, FunctionDescriptor functionDescriptor)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 	{
+		argTypes = functionMethodType.parameterList();
+		Optional<MemoryLayout> returnLayout = functionDescriptor.returnLayout();
+		realReturnLayout = returnLayout.orElse(null); // set to null for void
+		argLayouts = functionDescriptor.argumentLayouts();
+		argLayoutArray = argLayouts.toArray(new MemoryLayout[argLayouts.size()]);
+
+		/*[IF JAVA_SPEC_VERSION <= 17]*/
+		/* The layout check against the method type is still required for Java 16 & 17 in that
+		 * both the function descriptor and the method type are passed in as arguments by users.
+		 * Note: skip the validity check on function descriptor in Java 18 as it is done before
+		 * initializing ProgrammableInvoker in OpenJDK. Meanwhile, the method type is directly
+		 * deduced from the function descriptor itself, in which case there is no need to
+		 * check the layout against the method type.
+		 */
 		checkIfValidLayoutAndType(functionMethodType, functionDescriptor);
+		/*[ENDIF] JAVA_SPEC_VERSION <= 17 */
+
 		/*[IF JAVA_SPEC_VERSION >= 17]*/
 		/* The native function address has been removed from the parameter lists of downcallHandle() APIs
 		 * so as to being passed in as the first argument when invoking the returned downcall handle
@@ -249,6 +286,7 @@ public class ProgrammableInvoker {
 		 */
 		functionAddr = downcallAddr;
 		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
 		funcMethodType = functionMethodType;
 		funcDescriptor = functionDescriptor;
 		cifNativeThunkAddr = 0;
@@ -259,30 +297,40 @@ public class ProgrammableInvoker {
 	/* Map the layouts of return type & argument types to the underlying prep_cif */
 	private void generateAdapter() {
 		/* Set the void layout string intended for the underlying native code as the corresponding layout doesn't exist in the Spec */
-		String retLayoutStr = (realReturnLayout == null) ? "b0[abi/kind=VOID]" : realReturnLayout.toString(); //$NON-NLS-1$
+		String retLayoutStr = (realReturnLayout == null) ? "b0[abi/kind=VOID]" : convertToNativeTypeString(realReturnLayout); //$NON-NLS-1$
 
 		int argLayoutCount = argLayoutArray.length;
 		String[] argLayoutStrs = new String[argLayoutCount];
 		for (int argIndex = 0; argIndex < argLayoutCount; argIndex++) {
 			MemoryLayout argLayout = argLayoutArray[argIndex];
-			argLayoutStrs[argIndex] = argLayout.toString();
+			argLayoutStrs[argIndex] = convertToNativeTypeString(argLayout);
 		}
 
-		synchronized (privateClassLock) {
+		synchronized(privateClassLock) {
 			/* If a prep_cif for a given function descriptor exists, then the corresponding return & argument layouts
 			 * were already set up for this prep_cif, in which case there is no need to check the layouts.
 			 * If not the case, check at first whether the same return & argument layouts exist in the cache
 			 * in case of duplicate memory allocation for the same layouts.
+			 * Note: the signature information are removed from the string of function descriptor since Java 18,
+			 * e.g. (long,long)long (method type) corresponds to ([8%b64, 8%b64])8%b64 (function descriptor).
+			 * So we have to rely on the method type (deduced from the function descriptor in OpenJDK)
+			 * to differentiate the functions' signature (Only for primitives).
 			 */
-			int funcDescHash = funcDescriptor.hashCode();
-			Long cifNativeThunk = cachedCifNativeThunkAddr.get(funcDescHash);
+			/*[IF JAVA_SPEC_VERSION >= 18]*/
+			int funcSigHash = funcMethodType.hashCode();
+			int argTypesHash = argTypes.hashCode();
+			/*[ELSE] JAVA_SPEC_VERSION >= 18 */
+			int funcSigHash = funcDescriptor.hashCode();
+			int argTypesHash = argLayouts.hashCode();
+			/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+			Long cifNativeThunk = cachedCifNativeThunkAddr.get(funcSigHash);
 			if (cifNativeThunk != null) {
 				cifNativeThunkAddr = cifNativeThunk.longValue();
-				argTypesAddr = cachedArgLayouts.get(argLayouts).longValue();
+				argTypesAddr = cachedArgTypes.get(argTypesHash).longValue();
 			} else {
-				boolean newArgTypes = cachedArgLayouts.containsKey(argLayouts) ? false : true;
+				boolean newArgTypes = cachedArgTypes.containsKey(argTypesHash) ? false : true;
 				if (!newArgTypes) {
-					argTypesAddr = cachedArgLayouts.get(argLayouts).longValue();
+					argTypesAddr = cachedArgTypes.get(argTypesHash).longValue();
 				}
 
 				/* Prepare the prep_cif for the native function specified by the arguments/return layouts */
@@ -290,11 +338,38 @@ public class ProgrammableInvoker {
 
 				/* Cache the address of prep_cif and argTypes after setting up via the out-of-line native code */
 				if (newArgTypes) {
-					cachedArgLayouts.put(argLayouts, Long.valueOf(argTypesAddr));
+					cachedArgTypes.put(argTypesHash, Long.valueOf(argTypesAddr));
 				}
-				cachedCifNativeThunkAddr.put(funcDescHash, Long.valueOf(cifNativeThunkAddr));
+				cachedCifNativeThunkAddr.put(funcSigHash, Long.valueOf(cifNativeThunkAddr));
 			}
 		}
+	}
+
+	/* Convert the specified layout to the TypeKind-based native type string to
+	 * keep backward compatibility with Java17 in native during the downcall.
+	 */
+	private static String convertToNativeTypeString(MemoryLayout targetLayout) {
+		String typeKindStr = null;
+
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		typeKindStr = "b" + targetLayout.bitSize() + "[abi/kind=";
+		Class<?> javaType = ((ValueLayout)targetLayout).carrier();
+
+		if (javaType == byte.class) { // JAVA_BYTE corresponds to C_CHAR (1 byte) in native
+			typeKindStr += "CHAR"; //$NON-NLS-1$
+		} else if (javaType == char.class) { // JAVA_CHAR in Java corresponds to C_SHORT (2 bytes) in native
+			typeKindStr += "SHORT"; //$NON-NLS-1$
+		} else if (javaType == MemoryAddress.class) {
+			typeKindStr += "POINTER"; //$NON-NLS-1$
+		} else {
+			typeKindStr += javaType.getSimpleName().toUpperCase();
+		}
+		typeKindStr += "]"; //$NON-NLS-1$
+		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
+		typeKindStr = targetLayout.toString();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+
+		return typeKindStr;
 	}
 
 	/**
@@ -317,14 +392,19 @@ public class ProgrammableInvoker {
 		/*[ELSE] JAVA_SPEC_VERSION >= 17 */
 		ProgrammableInvoker nativeInvoker = new ProgrammableInvoker(downcallAddr, functionMethodType, funcDesc);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 17]*/
-			MethodHandle boundHandle = lookup.bind(nativeInvoker, "runNativeMethod", //$NON-NLS-1$
-					methodType(Object.class, Addressable.class, SegmentAllocator.class, long[].class));
+			/*[IF JAVA_SPEC_VERSION >= 18]*/
+			MethodType nativeMethodType = methodType(Object.class, NativeSymbol.class, SegmentAllocator.class, long[].class);
+			/*[ELSE] JAVA_SPEC_VERSION >= 18 */
+			MethodType nativeMethodType = methodType(Object.class, Addressable.class, SegmentAllocator.class, long[].class);
+			/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 			/*[ELSE] JAVA_SPEC_VERSION >= 17 */
-			MethodHandle boundHandle = lookup.bind(nativeInvoker, "runNativeMethod", //$NON-NLS-1$
-					methodType(Object.class, long[].class));
+			MethodType nativeMethodType = methodType(Object.class, long[].class);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+
+			MethodHandle boundHandle = lookup.bind(nativeInvoker, "runNativeMethod", nativeMethodType); //$NON-NLS-1$
 
 			/* Replace the original handle with the specified types of the C function */
 			boundHandle = nativeInvoker.permuteMH(boundHandle, functionMethodType);
@@ -379,7 +459,11 @@ public class ProgrammableInvoker {
 			filterMH = floatToLongArgFilter;
 		} else if (argTypeClass == double.class) {
 			filterMH = doubleToLongArgFilter;
-		} else if (argTypeClass == MemoryAddress.class) {
+		} else if ((argTypeClass == MemoryAddress.class)
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		|| (argTypeClass == Addressable.class)
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+		) {
 			filterMH = memAddrToLongArgFilter;
 		}
 
@@ -408,7 +492,11 @@ public class ProgrammableInvoker {
 			filterMH = longObjToFloatRetFilter;
 		} else if (returnType == double.class) {
 			filterMH = longObjToDoubleRetFilter;
-		} else if (returnType == MemoryAddress.class) {
+		} else if ((returnType == MemoryAddress.class)
+		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		|| (returnType == Addressable.class)
+		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
+		) {
 			filterMH = longObjToMemAddrRetFilter;
 		}
 
@@ -417,7 +505,11 @@ public class ProgrammableInvoker {
 
 	/* The method (bound by the method handle to the native code) intends to invoke the C function via the inlined code */
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	/*[IF JAVA_SPEC_VERSION >= 18]*/
+	Object runNativeMethod(NativeSymbol downcallAddr, SegmentAllocator segmtAllocator, long[] args)
+	/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 	Object runNativeMethod(Addressable downcallAddr, SegmentAllocator segmtAllocator, long[] args)
+	/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	/*[ELSE] JAVA_SPEC_VERSION >= 17 */
 	Object runNativeMethod(long[] args)
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
@@ -432,6 +524,7 @@ public class ProgrammableInvoker {
 		return Long.valueOf(returnVal);
 	}
 
+	/*[IF JAVA_SPEC_VERSION <= 17]*/
 	/* Verify whether the specified layout and the corresponding type are valid and match each other.
 	 * Note: will update after the struct layout (phase 2 & 3) is fully implemented.
 	 */
@@ -440,14 +533,10 @@ public class ProgrammableInvoker {
 		if (!validateArgRetTypeClass(retType) && (retType != void.class)) {
 			throw new IllegalArgumentException("The return type must be primitive/void or MemoryAddress" + ": retType = " + retType);  //$NON-NLS-1$ //$NON-NLS-2$
 		}
-
-		Optional<MemoryLayout> returnLayout = funcDesc.returnLayout();
-		realReturnLayout = returnLayout.orElse(null); // set to null for void
 		validateLayoutAgainstType(realReturnLayout, targetMethodType.returnType());
 
 		Class<?>[] argTypes = targetMethodType.parameterArray();
 		int argTypeCount = argTypes.length;
-		argLayouts = funcDesc.argumentLayouts();
 		int argLayoutCount = argLayouts.size();
 		if (argTypeCount != argLayoutCount) {
 			throw new IllegalArgumentException("The arity (" + argTypeCount //$NON-NLS-1$
@@ -455,7 +544,6 @@ public class ProgrammableInvoker {
 				+ argLayoutCount + ") of the argument layouts");  //$NON-NLS-1$
 		}
 
-		argLayoutArray = argLayouts.toArray(new MemoryLayout[argLayoutCount]);
 		for (int argIndex = 0; argIndex < argLayoutCount; argIndex++) {
 			if (!validateArgRetTypeClass(argTypes[argIndex])) {
 				throw new IllegalArgumentException("The passed-in argument type at index " + argIndex + " is neither primitive nor MemoryAddress"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -475,8 +563,6 @@ public class ProgrammableInvoker {
 
 	/* Check the validity of the layout against the corresponding type */
 	private static void validateLayoutAgainstType(MemoryLayout targetLayout, Class<?> targetType) {
-		boolean isPrimitiveLayout = false;
-
 		if (targetLayout != null) {
 			if (!targetLayout.hasSize()) {
 				throw new IllegalArgumentException("The layout's size is expected: layout = " + targetLayout); //$NON-NLS-1$
@@ -509,13 +595,15 @@ public class ProgrammableInvoker {
 
 		switch (layoutSize) {
 		case 8:
-			/* the 8-bits layout in Java only matches with byte in C */
-			if (targetType != byte.class) {
+			/* The 8-bit layout is shared by boolean and byte
+			 * given the boolean size specified in Java18 is 8 bits.
+			 */
+			if ((targetType != boolean.class) && (targetType != byte.class)) {
 				mismatchedSize = true;
 			}
 			break;
 		case 16:
-			/* The 16-bits layout is shared by char and short
+			/* The 16-bit layout is shared by char and short
 			 * given the char size is 16 bits in Java.
 			 */
 			if ((targetType != char.class) && (targetType != short.class) ) {
@@ -523,19 +611,17 @@ public class ProgrammableInvoker {
 			}
 			break;
 		case 32:
-			/* The 32-bits layout is shared by boolean, int and float
-			 * given the boolean type is treated as int in Java.
+			/* The 32-bit layout is shared by int and float
+			 * given the float size is 32 bits in Java.
 			 */
-			if ((targetType != boolean.class)
-			&& (targetType != int.class)
-			&& (targetType != float.class)
+			if ((targetType != int.class) && (targetType != float.class)
 			) {
 				mismatchedSize = true;
 			}
 			break;
 		case 64:
-			/* The 32-bits layout is shared by long, double and the MemoryAddress class
-			 * given the corresponding pointer size is 32 bits in C.
+			/* The 64-bit layout is shared by long, double and the MemoryAddress class
+			 * given the corresponding pointer size is 64 bits in C.
 			 */
 			if ((targetType != long.class)
 			&& (targetType != double.class)
@@ -577,7 +663,7 @@ public class ProgrammableInvoker {
 			break;
 		case INT:
 			/* the INT layout (32bits) in Java only matches boolean and int in C */
-			if ((targetType != boolean.class) && (targetType != int.class)) {
+			if (targetType != int.class) {
 				mismatchType = true;
 			}
 			break;
@@ -615,4 +701,5 @@ public class ProgrammableInvoker {
 			throw new IllegalArgumentException("Mismatch between the layout and the type: layout = " + targetLayout + ", type = " + targetType);  //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION <= 17 */
 }
