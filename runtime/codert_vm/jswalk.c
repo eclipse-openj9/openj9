@@ -186,7 +186,7 @@ UDATA  jitWalkStackFrames(J9StackWalkState *walkState)
 		walkState->outgoingArgCount = walkState->argCount;
 
 		if ((!(walkState->flags & J9_STACKWALK_SKIP_INLINES)) && getJitInlinedCallInfo(walkState->jitInfo)) {
-			jitGetMapsFromPC(walkState->walkThread->javaVM, walkState->jitInfo, (UDATA) walkState->pc, &(walkState->stackMap), &(walkState->inlineMap));
+			jitGetMapsFromPC(walkState->currentThread, walkState->jitInfo, (UDATA) walkState->pc, &(walkState->stackMap), &(walkState->inlineMap));
 			if (NULL != walkState->inlineMap) {
 				walkState->inlinedCallSite = getFirstInlinedCallSite(walkState->jitInfo, walkState->inlineMap);
 
@@ -217,7 +217,7 @@ resumeWalkInline:
 				}
 			}
 		} else if (walkState->flags & J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET) {
-			jitGetMapsFromPC(walkState->walkThread->javaVM, walkState->jitInfo, (UDATA) walkState->pc, &(walkState->stackMap), &(walkState->inlineMap));
+			jitGetMapsFromPC(walkState->currentThread, walkState->jitInfo, (UDATA) walkState->pc, &(walkState->stackMap), &(walkState->inlineMap));
 		}
 
 		SET_A0_CP_METHOD(walkState);
@@ -517,7 +517,7 @@ static void jitWalkFrame(J9StackWalkState *walkState, UDATA walkLocals, void *st
 	WALK_METHOD_CLASS(walkState);
 
 	if (stackMap == NULL) {
-		stackMap = getStackMapFromJitPC(walkState->walkThread->javaVM, walkState->jitInfo, (UDATA) walkState->pc);
+		stackMap = getStackMapFromJitPC(walkState->currentThread, walkState->jitInfo, (UDATA) walkState->pc);
 		if (stackMap == NULL) {
 			if (J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
 				return;
@@ -554,7 +554,7 @@ static void jitWalkFrame(J9StackWalkState *walkState, UDATA walkLocals, void *st
 	variableInternalPtrSize = 0;
 	registerMap = getJitRegisterMap(walkState->jitInfo, stackMap);
 	jitDescriptionCursor = getJitStackSlots(walkState->jitInfo, stackMap);
-	stackAllocMapCursor = getStackAllocMapFromJitPC(walkState->walkThread->javaVM, walkState->jitInfo, (UDATA) walkState->pc, stackMap);
+	stackAllocMapCursor = getStackAllocMapFromJitPC(walkState->currentThread, walkState->jitInfo, (UDATA) walkState->pc, stackMap);
 
 	walkState->slotType = J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL;
 	walkState->slotIndex = 0;
@@ -1061,7 +1061,7 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 			}
 			return;
 		}
-		jitGetMapsFromPC(walkState->walkThread->javaVM, metaData, (UDATA)walkState->pc, &stackMap, &inlineMap);
+		jitGetMapsFromPC(walkState->currentThread, metaData, (UDATA)walkState->pc, &stackMap, &inlineMap);
 
 		/* If there are no inlines, use the outer method.  Otherwise, use the innermost inline at the current PC */
 
@@ -1680,7 +1680,7 @@ jitGetOwnedObjectMonitors(J9StackWalkState *walkState)
 	}
 
 	/* get the stackmap and inline map for the given pc (this is a single walk of jit metadata) */
-	jitGetMapsFromPC(walkState->walkThread->javaVM, walkState->jitInfo, (UDATA)walkState->pc, &stackMap, &inlineMap);
+	jitGetMapsFromPC(walkState->currentThread, walkState->jitInfo, (UDATA)walkState->pc, &stackMap, &inlineMap);
 
 	/* get a slot map of all live monitors on the JIT frame.  May include slots from inlined methods */
 	liveMonitorMap = getJitLiveMonitors(walkState->jitInfo, stackMap);
@@ -1732,7 +1732,7 @@ countOwnedObjectMonitors(J9StackWalkState *walkState)
 	U_16 numberOfMapBits;
 
 	/* get the stackmap and inline map for the given pc (this is a single walk of jit metadata) */
-	jitGetMapsFromPC(walkState->walkThread->javaVM, walkState->jitInfo, (UDATA)walkState->pc, &stackMap, &inlineMap);
+	jitGetMapsFromPC(walkState->currentThread, walkState->jitInfo, (UDATA)walkState->pc, &stackMap, &inlineMap);
 
 	/* get a slot map of all live monitors on the JIT frame.  May include slots from inlined methods */
 	liveMonitorMap = getJitLiveMonitors(walkState->jitInfo, stackMap);
