@@ -49,6 +49,7 @@ public:
 #endif /* defined(J9VM_OPT_JITSERVER) */
    void removeClassLoader(J9VMThread *vmThread, void *loader);
 
+   TR_J9SharedCache *getSharedCache() const { return _sharedCache; }
    void setSharedCache(TR_J9SharedCache *sharedCache) { _sharedCache = sharedCache; }
 
 private:

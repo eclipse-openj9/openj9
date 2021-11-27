@@ -169,6 +169,10 @@ private:
       cache = NULL;
       }
 
+   bool serveCachedAOTMethod(TR_MethodToBeCompiled &entry, J9Method *method, J9Class *definingClass,
+                             TR_OptimizationPlan *optPlan, ClientSessionData *clientData,
+                             J9::J9SegmentProvider &scratchSegmentProvider);
+
    TR_PersistentMethodInfo *_recompilationMethodInfo;
    uint32_t _seqNo;
    uint32_t _expectedSeqNo; // this request is allowed to go if _expectedSeqNo is processed

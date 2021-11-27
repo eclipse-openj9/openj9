@@ -54,7 +54,8 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _wellKnownClasses(),
    _isInStartupPhase(false),
-   _aotCacheName(), _aotCache(NULL), _aotHeaderRecord(NULL)
+   _aotCacheName(), _aotCache(NULL), _aotHeaderRecord(NULL),
+   _aotCacheKnownIds(decltype(_aotCacheKnownIds)::allocator_type(persistentMemory->_persistentAllocator.get()))
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = NULL;
@@ -81,6 +82,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    TR::SymbolValidationManager::populateSystemClassesNotWorthRemembering(this);
 
    _wellKnownClassesMonitor = TR::Monitor::create("JIT-JITServerWellKnownClassesMonitor");
+   _aotCacheKnownIdsMonitor = TR::Monitor::create("JIT-JITServerAOTCacheKnownIdsMonitor");
    }
 
 ClientSessionData::~ClientSessionData()
@@ -122,6 +124,7 @@ ClientSessionData::destroyMonitors()
    omrthread_rwmutex_destroy(_classUnloadRWMutex);
    _classUnloadRWMutex = NULL;
    TR::Monitor::destroy(_wellKnownClassesMonitor);
+   TR::Monitor::destroy(_aotCacheKnownIdsMonitor);
    }
 
 void
@@ -503,7 +506,6 @@ void
 ClientSessionData::clearCaches(bool locked)
    {
    TR_ASSERT(!_inUse || _sequencingMonitor->owned_by_self(), "Must have sequencing monitor");
-
    TR_ASSERT(_numActiveThreads == 0 || locked, "Must have no active threads when accessing without locks");
 
    _classBySignatureMap.clear();
@@ -516,13 +518,13 @@ ClientSessionData::clearCaches(bool locked)
       }
 
    // Free memory for all hashtables with IProfiler info
-   for (auto& it : _J9MethodMap)
+   for (auto &it : _J9MethodMap)
       {
       IPTable_t *ipDataHT = it.second._IPData;
       // It it exists, walk the collection of <pc, TR_IPBytecodeHashTableEntry*> mappings
       if (ipDataHT)
          {
-         for (auto& entryIt : *ipDataHT)
+         for (auto &entryIt : *ipDataHT)
             {
             auto entryPtr = entryIt.second;
             if (entryPtr)
@@ -536,7 +538,7 @@ ClientSessionData::clearCaches(bool locked)
 
    _J9MethodMap.clear();
    // Free memory for j9class info
-   for (auto& it : _romClassMap)
+   for (auto &it : _romClassMap)
       it.second.freeClassInfo(_persistentMemory);
 
    _romClassMap.clear();
@@ -557,6 +559,8 @@ ClientSessionData::clearCaches(bool locked)
       }
 
    _wellKnownClasses.clear();
+   _aotCacheKnownIds.clear();
+
    setCachesAreCleared(true);
    }
 

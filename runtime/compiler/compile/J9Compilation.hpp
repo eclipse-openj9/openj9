@@ -348,6 +348,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    TR::list<TR_OpaqueMethodBlock *> &getMethodsRequiringTrampolines() { return _methodsRequiringTrampolines; }
 
+   bool isDeserializedAOTMethod() const { return _deserializedAOTMethod; }
+   void setDeserializedAOTMethod(bool deserialized) { _deserializedAOTMethod = deserialized; }
+
+   bool isDeserializedAOTMethodUsingSVM() const { return _deserializedAOTMethodUsingSVM; }
+   void setDeserializedAOTMethodUsingSVM(bool usingSVM) { _deserializedAOTMethodUsingSVM = usingSVM; }
+
    bool isAOTCacheStore() const { return _aotCacheStore; }
    void setAOTCacheStore(bool store) { _aotCacheStore = store; }
 
@@ -471,6 +477,12 @@ private:
    // so that trampolines can be reserved there.
    TR::list<TR_OpaqueMethodBlock *> _methodsRequiringTrampolines;
 
+   // True if this remote compilation resulted in deserializing an AOT method
+   // received from the JITServer AOT cache; always false at the server
+   bool _deserializedAOTMethod;
+   // True if this deserialized AOT method received from the
+   // JITServer AOT cache uses SVM; always false at the server
+   bool _deserializedAOTMethodUsingSVM;
    // True if the result of this out-of-process compilation will be
    // stored in JITServer AOT cache; always false at the client
    bool _aotCacheStore;

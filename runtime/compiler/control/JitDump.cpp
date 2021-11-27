@@ -34,10 +34,13 @@
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerCompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
+#include "runtime/JITServerAOTCache.hpp"
+#include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
 #include "runtime/Listener.hpp"
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 
 struct ILOfCrashedThreadParamenters
    {
@@ -295,23 +298,36 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
       TR::CompilationInfo *compInfo = TR::CompilationInfo::get(context->javaVM->jitConfig);
       if (compInfo)
          {
-         static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
+         static char *isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
          if (isPrintJITServerMsgStats)
             JITServerHelpers::printJITServerMsgStats(jitConfig, compInfo);
-         if (feGetEnv("TR_PrintJITServerCHTableStats"))
+
+         static char *isPrintJITServerCHTableStats = feGetEnv("TR_PrintJITServerCHTableStats");
+         if (isPrintJITServerCHTableStats)
             JITServerHelpers::printJITServerCHTableStats(jitConfig, compInfo);
-         if (feGetEnv("TR_PrintJITServerIPMsgStats"))
+
+         static char *isPrintJITServerIPMsgStats = feGetEnv("TR_PrintJITServerIPMsgStats");
+         if (isPrintJITServerIPMsgStats)
             {
             if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
                {
-               TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(context->javaVM->jitConfig, 0));
+               TR_J9VMBase *vmj9 = (TR_J9VMBase *)TR_J9VMBase::get(context->javaVM->jitConfig, NULL);
                JITServerIProfiler *iProfiler = (JITServerIProfiler *)vmj9->getIProfiler();
                iProfiler->printStats();
                }
             }
+
+         static char *isPrintJITServerAOTCacheStats = feGetEnv("TR_PrintJITServerAOTCacheStats");
+         if (isPrintJITServerAOTCacheStats)
+            {
+            if (auto aotCacheMap = compInfo->getJITServerAOTCacheMap())
+               aotCacheMap->printStats(stderr);
+            if (auto deserializer = compInfo->getJITServerAOTDeserializer())
+               deserializer->printStats(stderr);
+            }
          }
       }
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    char *crashedThreadName = getOMRVMThreadName(crashedThread->omrVMThread);
    j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_OCCURRED_THREAD_NAME_ID, "JIT", crashedThreadName, crashedThread);

@@ -30,6 +30,7 @@
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/JITServerAllocationRegion.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
+#include "env/SystemSegmentProvider.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/ut_j9jit.h"
 #include "runtime/CodeCache.hpp"
@@ -99,11 +100,11 @@ computeServerActiveThreadsState(TR::CompilationInfo *compInfo)
    int32_t numOfActiveThreads = compInfo->getNumCompThreadsActive();
 
    JITServer::ServerActiveThreadsState activeThreadState = numOfActiveThreads > veryHighActiveThreadThreshold ?
-      JITServer::ServerActiveThreadsState::VERY_HIGH_THREAD : 
+      JITServer::ServerActiveThreadsState::VERY_HIGH_THREAD :
       (numOfActiveThreads > highActiveThreadThreshold ?
          JITServer::ServerActiveThreadsState::HIGH_THREAD :
          JITServer::ServerActiveThreadsState::NORMAL_THREAD);
-   return activeThreadState;      
+   return activeThreadState;
    }
 
 /**
@@ -393,6 +394,46 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
       } while (criticalSeqNo > clientSession->getLastProcessedCriticalSeqNo());
    }
 
+bool
+TR::CompilationInfoPerThreadRemote::serveCachedAOTMethod(TR_MethodToBeCompiled &entry, J9Method *method, J9Class *definingClass,
+                                                         TR_OptimizationPlan *optPlan, ClientSessionData *clientData,
+                                                         J9::J9SegmentProvider &scratchSegmentProvider)
+   {
+   auto aotCache = clientData->getAOTCache();
+   auto serializedMethod = aotCache->findMethod(_definingClassChainRecord, _methodIndex,
+                                                optPlan->getOptLevel(), clientData->getAOTHeaderRecord());
+   if (!serializedMethod)
+      return false;
+
+   size_t segmentSize = scratchSegmentProvider.getPreferredSegmentSize();
+   if (!segmentSize)
+      segmentSize = 1 << 24/*16 MB*/;
+   TR::RawAllocator rawAllocator(getCompilationThread()->javaVM);
+   J9::SystemSegmentProvider segmentProvider(1 << 16/*64 KB*/, segmentSize, TR::Options::getScratchSpaceLimit(),
+                                             scratchSegmentProvider, rawAllocator);
+   TR::Region region(segmentProvider, rawAllocator);
+   TR_Memory trMemory(*clientData->persistentMemory(), region);
+
+   VectorAllocator<const AOTSerializationRecord *> recordsAllocator(trMemory.heapMemoryRegion());
+   Vector<const AOTSerializationRecord *> records(recordsAllocator);
+      {
+      OMR::CriticalSection cs(clientData->getAOTCacheKnownIdsMonitor());
+      records = aotCache->getSerializationRecords(serializedMethod, clientData->getAOTCacheKnownIds(), trMemory);
+      }
+
+   std::vector<std::string> serializedRecords;
+   serializedRecords.reserve(records.size());
+   for (auto r : records)
+      serializedRecords.push_back(std::string((const char *)r, r->size()));
+
+   //NOTE: Leaving optimization plan unchanged. This can be changed in the future.
+   entry._stream->write(JITServer::MessageType::AOTCache_serializedAOTMethod,
+                        std::string((const char *)&serializedMethod->data(), serializedMethod->data().size()),
+                        serializedRecords, *optPlan, computeServerMemoryState(getCompilationInfo()),
+                        computeServerActiveThreadsState(getCompilationInfo()));
+
+   return true;
+   }
 
 /**
  * @brief Method executed by JITServer to process the compilation request.
@@ -436,6 +477,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    bool hasIncNumActiveThreads = false;
    // Keep track of whether the lastProcessedCriticalSeqNo in the client session was updated
    bool hasUpdatedSeqNo = false;
+   bool aotCacheHit = false;
 
    _aotCacheStore = false;
    _methodIndex = (uint32_t)-1;
@@ -446,8 +488,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto req = stream->readCompileRequest<
          uint64_t, uint32_t, uint32_t, J9Method *, J9Class *, TR_OptimizationPlan, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock *>, std::vector<TR_OpaqueClassBlock *>,
-         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string, bool, bool, uint32_t,
-         uintptr_t *, std::vector<J9Class *>, std::vector<J9Class *>, std::vector<JITServerHelpers::ClassInfoTuple>
+         JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string,
+         bool, bool, bool, uint32_t, uintptr_t *, std::vector<J9Class *>, std::vector<J9Class *>,
+         std::vector<JITServerHelpers::ClassInfoTuple>, std::vector<uintptr_t>
       >();
 
       clientId                      = std::get<0>(req);
@@ -467,16 +510,18 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto &chtableMods             = std::get<14>(req);
       useAotCompilation             = std::get<15>(req);
       bool isInStartupPhase         = std::get<16>(req);
-      _methodIndex                  = std::get<17>(req);
-      uintptr_t *classChain         = std::get<18>(req);
-      auto &ramClassChain           = std::get<19>(req);
-      auto &uncachedRAMClasses      = std::get<20>(req);
-      auto &uncachedClassInfos      = std::get<21>(req);
+      bool aotCacheLoad             = std::get<17>(req);
+      _methodIndex                  = std::get<18>(req);
+      uintptr_t *classChain         = std::get<19>(req);
+      auto &ramClassChain           = std::get<20>(req);
+      auto &uncachedRAMClasses      = std::get<21>(req);
+      auto &uncachedClassInfos      = std::get<22>(req);
+      auto &newKnownIds             = std::get<23>(req);
 
       TR_ASSERT_FATAL(TR::Compiler->persistentMemory() == compInfo->persistentMemory(),
                       "per-client persistent memory must not be set at this point");
 
-      TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
+      TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails *)detailsStr.data();
       *(uintptr_t *)clientDetails = 0; // smash remote vtable pointer to catch bugs early
       TR::IlGeneratorMethodDetails serverDetailsStorage;
       TR::IlGeneratorMethodDetails *serverDetails = TR::IlGeneratorMethodDetails::clone(serverDetailsStorage, *clientDetails, detailsType);
@@ -531,12 +576,20 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          } // End critical section
 
      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d %s clientSessionData=%p for clientUID=%llu seqNo=%u (isCritical=%d) (criticalSeqNo=%u lastProcessedCriticalReq=%u)",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "compThreadID=%d %s clientSessionData=%p for clientUID=%llu seqNo=%u (isCritical=%d) (criticalSeqNo=%u lastProcessedCriticalReq=%u)",
             getCompThreadId(), sessionDataWasEmpty ? "created" : "found", clientSession, (unsigned long long)clientId, seqNo, 
             isCriticalRequest, criticalSeqNo, clientSession->getLastProcessedCriticalSeqNo());
 
       Trc_JITServerClientSessionData1(compThread, getCompThreadId(), sessionDataWasEmpty ? "created" : "found",
          clientSession, (unsigned long long)clientId, seqNo, isCriticalRequest, criticalSeqNo, clientSession->getLastProcessedCriticalSeqNo());
+
+      if (!newKnownIds.empty())
+         {
+         OMR::CriticalSection cs(clientSession->getAOTCacheKnownIdsMonitor());
+         clientSession->getAOTCacheKnownIds().insert(newKnownIds.begin(), newKnownIds.end());
+         }
+
       // We must process unloaded classes lists in the same order they were generated at the client
       // Use a sequencing scheme to re-order compilation requests
       //
@@ -702,7 +755,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // freed in populateBodyInfo(), no need to free it at the end of the compilation in this method.
       if (recompInfoStr.size() > 0)
          {
-         _recompilationMethodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
+         _recompilationMethodInfo = new (clientSession->persistentMemory()) TR_PersistentMethodInfo();
          memcpy(_recompilationMethodInfo, recompInfoStr.data(), sizeof(TR_PersistentMethodInfo));
          J9::Recompilation::resetPersistentProfileInfo(_recompilationMethodInfo);
          }
@@ -759,20 +812,32 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       auto aotCache = clientSession->getOrCreateAOTCache(stream);
       _aotCacheStore = classChain && aotCache;
-      if (_aotCacheStore)
+      aotCacheLoad = aotCacheLoad && classChain && aotCache;
+      if (aotCache && !aotCacheLoad)
+         aotCache->incNumCacheBypasses();
+
+      if (_aotCacheStore || aotCacheLoad)
          {
+         // Get defining class chain record to use as a part of the key to lookup or store the method in AOT cache
          JITServerHelpers::cacheRemoteROMClassBatch(clientSession, uncachedRAMClasses, uncachedClassInfos);
          _definingClassChainRecord = clientSession->getClassChainRecord(clazz, classChain, ramClassChain, stream);
          if (!_definingClassChainRecord)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                  "Failed to get defining class chain record for %p; method %p won't be stored in AOT cache",
-                  clazz, ramMethod
+                  "clientUID %llu failed to get defining class chain record for %p; "
+                  "method %p won't be loaded from or stored in AOT cache",
+                  (unsigned long long)clientId, clazz, ramMethod
                );
+            if (aotCacheLoad)
+               aotCache->incNumCacheMisses();
             _aotCacheStore = false;
+            aotCacheLoad = false;
             }
          }
+
+      if (aotCacheLoad)
+         aotCacheHit = serveCachedAOTMethod(entry, ramMethod, clazz, &clientOptPlan, clientSession, scratchSegmentProvider);
       }
    catch (const JITServer::StreamFailure &e)
       {
@@ -972,18 +1037,27 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    //   J9Class  *classForNewInstance = newInstanceDetails.classNeedingThunk();
    //   TR::CompilationInfo::setJ9MethodExtra(ramMethod, (uintptr_t)classForNewInstance | J9_STARTPC_NOT_TRANSLATED);
    //   }
+
 #ifdef STATS
    statQueueSize.update(compInfo->getMethodQueueSize());
 #endif
-   // The following call will return with compilation monitor in hand
-   //
-   stream->setClientData(clientSession);
-   getClientData()->readAcquireClassUnloadRWMutex(this);
+   void *startPC = NULL;
+   // The following block of code will return with compilation monitor in hand
+   if (aotCacheHit)
+      {
+      compInfo->acquireCompMonitor(compThread);
+      stream->setClientData(NULL);
+      }
+   else
+      {
+      stream->setClientData(clientSession);
+      getClientData()->readAcquireClassUnloadRWMutex(this);
 
-   void *startPC = compile(compThread, &entry, scratchSegmentProvider);
+      startPC = compile(compThread, &entry, scratchSegmentProvider);
 
-   getClientData()->readReleaseClassUnloadRWMutex(this);
-   stream->setClientData(NULL);
+      getClientData()->readReleaseClassUnloadRWMutex(this);
+      stream->setClientData(NULL);
+      }
 
    deleteClientOptions(getClientData()->persistentMemory());
 

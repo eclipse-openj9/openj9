@@ -43,9 +43,9 @@ public:
    static bool useSSL();
    static void initSSL();
 
-#ifdef MESSAGE_SIZE_STATS
-   static TR_Stats collectMsgStat[JITServer::MessageType_MAXTYPE];
-#endif
+#if defined(MESSAGE_SIZE_STATS)
+   static TR_Stats msgSizeStats[JITServer::MessageType_MAXTYPE];
+#endif /* defined(MESSAGE_SIZE_STATS) */
 
    static void initConfigurationFlags();
 
@@ -99,7 +99,7 @@ protected:
    ClientMessage _cMsg;
 
    static const uint8_t MAJOR_NUMBER = 1;
-   static const uint16_t MINOR_NUMBER = 33;
+   static const uint16_t MINOR_NUMBER = 34;
    static const uint8_t PATCH_NUMBER = 0;
    static uint32_t CONFIGURATION_FLAGS;
 

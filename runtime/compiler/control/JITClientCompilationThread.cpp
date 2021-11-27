@@ -41,6 +41,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/JITClientSession.hpp"
+#include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/RelocationTarget.hpp"
 #include "env/TypeLayout.hpp"
@@ -48,7 +49,9 @@
 #include "jitprotos.h"
 #include "vmaccess.h"
 
+
 extern TR::Monitor *assumptionTableMutex;
+
 // TODO: This method is copied from runtime/jit_vm/ctsupport.c,
 // in the future it's probably better to make that method publicly accessible
 static UDATA
@@ -228,25 +231,29 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             unloadedClasses->getRanges(ranges);
             }
          // Add the entire CHTable as well
-         auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
-         std::string encoded = FlatPersistentClassInfo::serializeHierarchy(table);
+         auto table = (JITClientPersistentCHTable *)comp->getPersistentInfo()->getPersistentCHTable();
+         std::string serializedCHTable = FlatPersistentClassInfo::serializeHierarchy(table);
 
-         client->write(response, ranges, unloadedClasses->getMaxRanges(), encoded);
             {
             OMR::CriticalSection romClassCache(compInfo->getclassesCachedAtServerMonitor());
             compInfo->getclassesCachedAtServer().clear();
             }
 
-         if (previousUID != serverUID && TR::Options::getVerboseOption(TR_VerboseJITServerConns))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                                          "t=%6u Connected to a server (serverUID=%llu)",
-                                          (uint32_t) compInfo->getPersistentInfo()->getElapsedTime(),
-                                          serverUID);
-            }
-         break;
-         }
+         auto deserializer = compInfo->getJITServerAOTDeserializer();
+         // Reset AOT deserializer if connected to a new server (cached serialization records are now invalid)
+         if (deserializer && (previousUID != serverUID))
+            deserializer->reset();
 
+         client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable);
+
+         if ((previousUID != serverUID) && TR::Options::getVerboseOption(TR_VerboseJITServerConns))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u Connected to a server (serverUID=%llu)",
+                                           (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+                                           (unsigned long long)serverUID);
+            }
+         }
+         break;
       case MessageType::VM_isClassLibraryClass:
          {
          bool rv = fe->isClassLibraryClass(std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>()));
@@ -2795,6 +2802,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, knownObjectTableDumpInfoList);
          }
          break;
+      case MessageType::AOTCache_serializedAOTMethod:
+         done = true;
+         break;
       case MessageType::AOTCache_getROMClassBatch:
          {
          auto recv = client->getRecvData<std::vector<J9Class *>>();
@@ -2823,14 +2833,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
    }
 
 static TR_MethodMetaData *
-remoteCompilationEnd(
-   J9VMThread * vmThread,
-   TR::Compilation *comp,
-   TR_ResolvedMethod * compilee,
-   J9Method * method,
-   TR::CompilationInfoPerThreadBase *compInfoPT,
-   const std::string& codeCacheStr,
-   const std::string& dataCacheStr)
+remoteCompilationEnd(J9VMThread *vmThread, TR::Compilation *comp, TR_ResolvedMethod *compilee,
+                     J9Method *method, TR::CompilationInfoPerThreadBase *compInfoPT,
+                     const std::string &codeCacheStr, const std::string &dataCacheStr)
    {
    TR_MethodMetaData *relocatedMetaData = NULL;
    TR_J9VM *fe = comp->fej9vm();
@@ -2840,21 +2845,14 @@ remoteCompilationEnd(
    const J9JITDataCacheHeader *storedCompiledMethod = NULL;
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
 
-   if (!fe->isAOT_DEPRECATED_DO_NOT_USE()) // For relocating received JIT compilations
+   if (!fe->isAOT_DEPRECATED_DO_NOT_USE() && !comp->isDeserializedAOTMethod()) // For relocating received JIT compilations
       {
       compInfoPT->reloRuntime()->setReloStartTime(compInfoPT->getTimeWhenCompStarted());
 
       relocatedMetaData = compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
-         vmThread,
-         fe,
-         comp->cg()->getCodeCache(),
-         (J9JITDataCacheHeader *)&dataCacheStr[0],
-         method,
-         false,
-         comp->getOptions(),
-         comp,
-         compilee,
-         (uint8_t *)&codeCacheStr[0]);
+         vmThread, fe, comp->cg()->getCodeCache(), (J9JITDataCacheHeader *)dataCacheStr.data(),
+         method, false, comp->getOptions(), comp, compilee, (uint8_t *)codeCacheStr.data()
+      );
 
       if (!relocatedMetaData)
          {
@@ -2873,24 +2871,16 @@ remoteCompilationEnd(
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
    else // For relocating received AOT compilations
       {
-      TR_ASSERT(entry->_useAotCompilation, "entry must be an AOT compilation");
+      TR_ASSERT(entry->_useAotCompilation || comp->isDeserializedAOTMethod(),
+                "entry must be an AOT compilation or a deserialized AOT method");
       TR_ASSERT(entry->isRemoteCompReq(), "entry must be a remote compilation");
       J9ROMMethod *romMethod = comp->fej9()->getROMMethodFromRAMMethod(method);
       TR::CompilationInfo::storeAOTInSharedCache(
-         vmThread,
-         romMethod,
-         (U_8 *)(&dataCacheStr[0]),
-         dataCacheStr.size(),
-         (U_8 *)(&codeCacheStr[0]),
-         codeCacheStr.size(),
-         comp,
-         jitConfig,
-         entry
-         );
+         vmThread, romMethod, (uint8_t *)dataCacheStr.data(), dataCacheStr.size(),
+         (uint8_t *)codeCacheStr.data(), codeCacheStr.size(), comp, jitConfig, entry
+      );
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
-
-      TR_Debug *debug = TR::Options::getDebug();
       bool canRelocateMethod = TR::CompilationInfo::canRelocateMethod(comp);
 
       if (canRelocateMethod)
@@ -2899,14 +2889,11 @@ remoteCompilationEnd(
          int32_t returnCode = 0;
 
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            {
-            TR_VerboseLog::writeLineLocked(
-               TR_Vlog_JITServer,
-               "JITClient: Applying remote AOT relocations to newly AOT compiled body for %s @ %s",
-               comp->signature(),
-               comp->getHotnessName()
-               );
-            }
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+               "JITClient: Applying remote AOT relocations to %s AOT body for %s @ %s",
+               comp->isDeserializedAOTMethod() ? "deserialized" : "newly compiled",
+               comp->signature(), comp->getHotnessName()
+            );
 
          Trc_JITServerApplyRemoteAOTRelocation(vmThread, comp->signature(), comp->getHotnessName());
 
@@ -2915,17 +2902,9 @@ remoteCompilationEnd(
             // Need to get a non-shared cache VM to relocate
             TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
             relocatedMetaData = entry->_compInfoPT->reloRuntime()->prepareRelocateAOTCodeAndData(
-               vmThread,
-               fe,
-               comp->cg()->getCodeCache(),
-               (J9JITDataCacheHeader *)&dataCacheStr[0],
-               method,
-               false,
-               comp->getOptions(),
-               comp,
-               compilee,
-               (uint8_t *)&codeCacheStr[0]
-               );
+               vmThread, fe, comp->cg()->getCodeCache(), (J9JITDataCacheHeader *)dataCacheStr.data(),
+               method, false, comp->getOptions(), comp, compilee, (uint8_t *)codeCacheStr.data()
+            );
             returnCode = entry->_compInfoPT->reloRuntime()->returnCode();
             }
          catch (std::exception &e)
@@ -2960,6 +2939,7 @@ remoteCompilationEnd(
             // Relocation failed, fail compilation
             // attempt to recompile in non-AOT mode
             entry->_doNotUseAotCodeFromSharedCache = true;
+            entry->_doNotLoadFromJITServerAOTCache = true;
             entry->_compErrCode = returnCode;
 
             if (entry->_compilationAttemptsLeft > 0)
@@ -2976,7 +2956,7 @@ remoteCompilationEnd(
          // but canRelocateMethod == false
          // We still need metadata, because metaData->startPC != 0 indicates that compilation
          // didn't actually fail.
-         J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *) &dataCacheStr[0];
+         J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)dataCacheStr.data();
          J9JITExceptionTable *metaData = compInfoPT->reloRuntime()->copyMethodMetaData(dataCacheHeader);
          // Temporarily store meta data pointer.
          // This is not exactly how it's used in baseline, but in remote AOT we do not use
@@ -3061,7 +3041,13 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    TR_MethodToBeCompiled *entry = compInfoPT->getMethodBeingCompiled();
    TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
    bool useAotCompilation = entry->_useAotCompilation;
+
    bool aotCacheStore = useAotCompilation && persistentInfo->getJITServerUseAOTCache();
+   bool aotCacheLoad = useAotCompilation && persistentInfo->getJITServerUseAOTCache() &&
+                       !entry->_doNotLoadFromJITServerAOTCache;
+   auto deserializer = compInfo->getJITServerAOTDeserializer();
+   if (!aotCacheLoad && deserializer)
+      deserializer->incNumCacheBypasses();
 
    // For JitDump recompilations need to use the same stream as for the original compile
    JITServer::ClientStream *client = (enableJITServerPerCompConn && !details.isJitDumpMethod()) ? NULL
@@ -3143,7 +3129,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    std::vector<J9Class *> ramClassChain;
    std::vector<J9Class *> uncachedRAMClasses;
    std::vector<JITServerHelpers::ClassInfoTuple> uncachedClassInfos;
-   if (aotCacheStore)
+   if (aotCacheStore || aotCacheLoad)
       {
       classChain = compiler->fej9vm()->sharedCache()->rememberClass(clazz);
       if (classChain)
@@ -3157,9 +3143,14 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Failed to get defining class chain for method %s",
                                         compiler->signature());
+         if (aotCacheLoad)
+            deserializer->incNumCacheBypasses();
          aotCacheStore = false;
+         aotCacheLoad = false;
          }
       }
+
+   std::vector<uintptr_t> newKnownIds = deserializer ? deserializer->getNewKnownIds() : std::vector<uintptr_t>();
 
    // TODO: make this a synchronized region to avoid bad_alloc exceptions
    compInfo->getSequencingMonitor()->enter();
@@ -3215,8 +3206,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          persistentInfo->getClientUID(), seqNo, lastCriticalSeqNo, method, clazz, *entry->_optimizationPlan,
          detailsStr, details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
          recompMethodInfoStr, chtableUpdates.first, chtableUpdates.second, useAotCompilation,
-         TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), methodIndex,
-         classChain, ramClassChain, uncachedRAMClasses, uncachedClassInfos
+         TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheLoad, methodIndex,
+         classChain, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds
       );
 
       JITServer::MessageType response;
@@ -3249,6 +3240,42 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          methodsRequiringTrampolines = std::get<11>(recv);
 
          updateCompThreadActivationPolicy(compInfoPT, nextMemoryState, nextActiveThreadState);
+
+         if (aotCacheLoad)
+            deserializer->incNumCacheMisses();
+         }
+      else if (JITServer::MessageType::AOTCache_serializedAOTMethod == response)
+         {
+         auto recv = client->getRecvData<std::string, std::vector<std::string>, TR_OptimizationPlan,
+                                         JITServer::ServerMemoryState, JITServer::ServerActiveThreadsState>();
+         auto &methodStr = std::get<0>(recv);
+         auto &records = std::get<1>(recv);
+         modifiedOptPlan = std::get<2>(recv);
+         JITServer::ServerMemoryState nextMemoryState = std::get<3>(recv);
+         JITServer::ServerActiveThreadsState nextActiveThreadState = std::get<4>(recv);
+
+         updateCompThreadActivationPolicy(compInfoPT, nextMemoryState, nextActiveThreadState);
+
+         auto method = SerializedAOTMethod::get(methodStr);
+         bool usesSVM = false;
+         if (deserializer->deserialize(method, records, compiler, usesSVM))
+            {
+            compiler->setDeserializedAOTMethod(true);
+            compiler->setDeserializedAOTMethodUsingSVM(usesSVM);
+            statusCode = compilationOK;
+            codeCacheStr = std::string((const char *)method->code(), method->codeSize());
+            dataCacheStr = std::string((const char *)method->data(), method->dataSize());
+            // Remaining values are already set to empty defaults
+            }
+         else
+            {
+            entry->_compErrCode = aotCacheDeserializationFailure;
+            entry->_doNotLoadFromJITServerAOTCache = true;
+            if (entry->_compilationAttemptsLeft > 0)
+               entry->_tryCompilingAgain = true;
+            compiler->failCompilation<J9::AOTCacheDeserializationFailure>(
+               "Failed to deserialize AOT cache method %s", compiler->signature());
+            }
          }
       else if (JITServer::MessageType::jitDumpPrintIL == response)
          {
@@ -3404,6 +3431,10 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
 
       compiler->failCompilation<JITServer::StreamMessageTypeMismatch>(e.what());
       }
+   catch (const J9::AOTCacheDeserializationFailure &e)
+      {
+      throw;
+      }
    catch (...)
       {
       if (!details.isJitDumpMethod())
@@ -3494,7 +3525,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
                }
             }
 
-         if (!compiler->getOption(TR_DisableCHOpts) && !useAotCompilation)
+         if (!compiler->getOption(TR_DisableCHOpts) && !useAotCompilation && !compiler->isDeserializedAOTMethod())
             {
             TR::ClassTableCriticalSection commit(compiler->fe());
 

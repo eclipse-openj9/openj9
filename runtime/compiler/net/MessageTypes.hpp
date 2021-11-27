@@ -31,6 +31,7 @@ enum MessageType : uint16_t
    {
    compilationCode, // Send the compiled code back to the client
    compilationFailure,
+   AOTCache_serializedAOTMethod,// Final response to a compilation request that was an AOT cache hit
    mirrorResolvedJ9Method,
    get_params_to_construct_TR_j9method,
    getUnloadedClassRangesAndCHTable,
@@ -287,6 +288,7 @@ static const char *messageNames[] =
    {
    "compilationCode",
    "compilationFailure",
+   "AOTCache_serializedAOTMethod",
    "mirrorResolvedJ9Method",
    "get_params_to_construct_TR_j9method",
    "getUnloadedClassRangesAndCHTable",
