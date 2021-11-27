@@ -32,7 +32,6 @@
 #include "runtime/IProfiler.hpp"
 #include "runtime/J9Profiler.hpp"
 #if defined(J9VM_OPT_JITSERVER)
-#include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/Listener.hpp"
 #endif /* J9VM_OPT_JITSERVER */
 #include "runtime/codertinit.hpp"
@@ -371,19 +370,17 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             TR_J9SharedCache *sharedCache = new (PERSISTENT_NEW) TR_J9SharedCache((TR_J9VMBase *)feWithoutThread);
             if (sharedCache != NULL)
                {
-               TR_PersistentMemory * persistentMemory = (TR_PersistentMemory *)(vm->jitConfig->scratchSegment);
+               TR_PersistentMemory *persistentMemory = (TR_PersistentMemory *)(vm->jitConfig->scratchSegment);
                TR_PersistentClassLoaderTable *loaderTable = persistentMemory->getPersistentInfo()->getPersistentClassLoaderTable();
                sharedCache->setPersistentClassLoaderTable(loaderTable);
                loaderTable->setSharedCache(sharedCache);
-#if defined(J9VM_OPT_JITSERVER)
-               if (auto deserializer = getCompilationInfo(vm->jitConfig)->getJITServerAOTDeserializer())
-                  deserializer->setSharedCache(sharedCache);
-#endif /* defined(J9VM_OPT_JITSERVER) */
                }
             }
          else
-#endif
+#endif /* defined(J9VM_OPT_SHARED_CLASSES) */
+            {
             TR::Options::setSharedClassCache(false);
+            }
 
          if (!isAOT)
             {

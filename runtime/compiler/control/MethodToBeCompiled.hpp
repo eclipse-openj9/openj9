@@ -147,15 +147,17 @@ struct TR_MethodToBeCompiled
    uint8_t                _jitStateWhenQueued;
 
 #if defined(J9VM_OPT_JITSERVER)
-   bool                     _remoteCompReq; // Comp request should be sent remotely to JITServer
-   JITServer::ServerStream *_stream; // A non-NULL field denotes an out-of-process compilation request
-   TR_Hotness               _origOptLevel; // Cache original optLevel when transforming a
-                                           // remote sync compilation to a local cheap one
-   bool                     _shouldUpgradeOutOfProcessCompilation; // Flag used to determine whether a cold local
-                                                                   // compilation should be upgraded by LPQ
+   // Comp request should be sent remotely to JITServer
+   bool _remoteCompReq;
+   // A non-NULL field denotes an out-of-process compilation request
+   JITServer::ServerStream *_stream;
+   // Cache original optLevel when transforming a remote sync compilation to a local cheap one
+   TR_Hotness _origOptLevel;
+   // Flag used to determine whether a cold local compilation should be upgraded by LPQ
+   bool _shouldUpgradeOutOfProcessCompilation;
+   // Set at the client after a failed AOT deserialization or load to bypass AOT cache on the next compilation attempt
+   bool _doNotLoadFromJITServerAOTCache;
 #endif /* defined(J9VM_OPT_JITSERVER) */
    }; // TR_MethodToBeCompiled
 
-
 #endif // METHODTOBECOMPILED_HPP
-

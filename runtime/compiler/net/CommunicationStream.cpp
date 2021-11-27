@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,12 @@
 
 namespace JITServer
 {
+
 uint32_t CommunicationStream::CONFIGURATION_FLAGS = 0;
-#ifdef MESSAGE_SIZE_STATS
-TR_Stats JITServer::CommunicationStream::collectMsgStat[];
-#endif
+
+#if defined(MESSAGE_SIZE_STATS)
+TR_Stats JITServer::CommunicationStream::msgSizeStats[];
+#endif /* defined(MESSAGE_SIZE_STATS) */
 
 void
 CommunicationStream::initConfigurationFlags()
@@ -80,9 +82,9 @@ CommunicationStream::readMessage2(Message &msg)
    msg.deserialize();
 
    // collect message size
-#ifdef MESSAGE_SIZE_STATS
-   collectMsgStat[int(msg.type())].update(serializedSize);
-#endif
+#if defined(MESSAGE_SIZE_STATS)
+   msgSizeStats[int(msg.type())].update(serializedSize);
+#endif /* defined(MESSAGE_SIZE_STATS) */
    }
 
 void
@@ -133,9 +135,9 @@ CommunicationStream::readMessage(Message &msg)
    // rebuild the message
    msg.deserialize();
 
-#ifdef MESSAGE_SIZE_STATS
-   collectMsgStat[int(msg.type())].update(serializedSize);
-#endif
+#if defined(MESSAGE_SIZE_STATS)
+   msgSizeStats[int(msg.type())].update(serializedSize);
+#endif /* defined(MESSAGE_SIZE_STATS) */
    }
 
 void

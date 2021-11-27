@@ -30,6 +30,7 @@
 #include "infra/Statistics.hpp"
 #include "net/CommunicationStream.hpp"
 #include "OMR/Bytes.hpp"// for OMR::alignNoCheck()
+#include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/JITServerSharedROMClassCache.hpp"
 #include "romclasswalk.h"
 #include "util_api.h"// for allSlotsInROMClassDo()
@@ -403,32 +404,53 @@ JITServerHelpers::insertIntoOOSequenceEntryList(ClientSessionData *clientData, T
 void
 JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
-   unsigned totalMsgCount = 0;
+   uint32_t totalMsgCount = 0;
+#ifdef MESSAGE_SIZE_STATS
+   uint64_t totalMsgSize = 0;
+#endif // defined(MESSAGE_SIZE_STATS)
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+
    j9tty_printf(PORTLIB, "JITServer Message Type Statistics:\n");
    j9tty_printf(PORTLIB, "Type# #called");
 #ifdef MESSAGE_SIZE_STATS
    j9tty_printf(PORTLIB, "\t\tMax\t\tMin\t\tMean\t\tStdDev\t\tSum");
 #endif // defined(MESSAGE_SIZE_STATS)
    j9tty_printf(PORTLIB, "\t\tTypeName\n");
+
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       for (int i = 0; i < JITServer::MessageType_MAXTYPE; ++i)
          {
-         if (JITServerHelpers::serverMsgTypeCount[i] > 0)
+         if (serverMsgTypeCount[i])
             {
-            j9tty_printf(PORTLIB, "#%04d %7u", i, JITServerHelpers::serverMsgTypeCount[i]);
+            j9tty_printf(PORTLIB, "#%04d %7u", i, serverMsgTypeCount[i]);
 #ifdef MESSAGE_SIZE_STATS
-            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(),
-                     JITServer::CommunicationStream::collectMsgStat[i].minVal(), JITServer::CommunicationStream::collectMsgStat[i].mean(),
-                     JITServer::CommunicationStream::collectMsgStat[i].stddev(), JITServer::CommunicationStream::collectMsgStat[i].sum());
+            auto &stat = JITServer::CommunicationStream::msgSizeStats[i];
+            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f",
+                         stat.maxVal(), stat.minVal(), stat.mean(), stat.stddev(), stat.sum());
+            totalMsgSize += stat.sum();
 #endif // defined(MESSAGE_SIZE_STATS)
             j9tty_printf(PORTLIB, "\t\t%s\n", JITServer::messageNames[i]);
-            totalMsgCount += JITServerHelpers::serverMsgTypeCount[i];
+            totalMsgCount += serverMsgTypeCount[i];
             }
          }
-      if (JITServerHelpers::serverMsgTypeCount[0])
-         j9tty_printf(PORTLIB, "Total number of messages: %d. Average number of messages per compilation:%f\n", totalMsgCount, totalMsgCount/float(JITServerHelpers::serverMsgTypeCount[0]));
+      j9tty_printf(PORTLIB, "Total number of messages: %u\n", totalMsgCount);
+#ifdef MESSAGE_SIZE_STATS
+      j9tty_printf(PORTLIB, "Total amount of data received: %llu bytes\n", (unsigned long long)totalMsgSize);
+#endif // defined(MESSAGE_SIZE_STATS)
+
+      uint32_t numCompilations = serverMsgTypeCount[JITServer::MessageType::compilationCode];
+      if (numCompilations)
+         j9tty_printf(PORTLIB, "Average number of messages per compilation: %f\n",
+                      totalMsgCount / float(numCompilations));
+
+      if (auto deserializer = compInfo->getJITServerAOTDeserializer())
+         {
+         uint32_t numDeserializedMethods = deserializer->getNumDeserializedMethods();
+         if (numDeserializedMethods)
+            j9tty_printf(PORTLIB, "Average number of messages per compilation request (including AOT cache hits): %f\n",
+                         totalMsgCount / float(numCompilations + numDeserializedMethods));
+         }
       }
    else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
@@ -437,18 +459,32 @@ JITServerHelpers::printJITServerMsgStats(J9JITConfig *jitConfig, TR::Compilation
 #ifdef MESSAGE_SIZE_STATS
       for (int i = 0; i < JITServer::MessageType_MAXTYPE; ++i)
          {
-         if (JITServer::CommunicationStream::collectMsgStat[i].samples() > 0)
+         auto &stat = JITServer::CommunicationStream::msgSizeStats[i];
+         if (stat.samples())
             {
-            j9tty_printf(PORTLIB, "#%04d %7u", i, JITServer::CommunicationStream::collectMsgStat[i].samples());
-            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f", JITServer::CommunicationStream::collectMsgStat[i].maxVal(),
-                     JITServer::CommunicationStream::collectMsgStat[i].minVal(), JITServer::CommunicationStream::collectMsgStat[i].mean(),
-                     JITServer::CommunicationStream::collectMsgStat[i].stddev(), JITServer::CommunicationStream::collectMsgStat[i].sum());
-
+            j9tty_printf(PORTLIB, "#%04d %7u", i, stat.samples());
+            j9tty_printf(PORTLIB, "\t%f\t%f\t%f\t%f\t%f",
+                         stat.maxVal(), stat.minVal(), stat.mean(), stat.stddev(), stat.sum());
             j9tty_printf(PORTLIB, "\t\t%s\n", JITServer::messageNames[i]);
-            totalMsgCount += JITServer::CommunicationStream::collectMsgStat[i].samples();
+            totalMsgCount += stat.samples();
+            totalMsgSize += stat.sum();
             }
          }
       j9tty_printf(PORTLIB, "Total number of messages: %u\n", totalMsgCount);
+      j9tty_printf(PORTLIB, "Total amount of data received: %llu bytes\n", (unsigned long long)totalMsgSize);
+
+      uint32_t numCompilations = JITServer::CommunicationStream::msgSizeStats[JITServer::MessageType::compilationCode].samples();
+      if (numCompilations)
+         j9tty_printf(PORTLIB, "Average number of messages per compilation: %f\n",
+                      totalMsgCount, totalMsgCount / float(numCompilations));
+
+      if (auto aotCacheMap = compInfo->getJITServerAOTCacheMap())
+         {
+         uint32_t numDeserializedMethods = aotCacheMap->getNumDeserializedMethods();
+         if (numDeserializedMethods)
+            j9tty_printf(PORTLIB, "Average number of messages per compilation request (including AOT cache hits): %f\n",
+                         totalMsgCount / float(numCompilations + numDeserializedMethods));
+         }
 #endif // defined(MESSAGE_SIZE_STATS)
       }
    }

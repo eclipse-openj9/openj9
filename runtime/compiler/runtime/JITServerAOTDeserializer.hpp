@@ -57,12 +57,10 @@ public:
    JITServerAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable);
    ~JITServerAOTDeserializer();
 
-   void setSharedCache(TR_J9SharedCache *sharedCache) { _sharedCache = sharedCache; }
-
    // Deserializes in place a serialized AOT method received from JITServer. Returns true on success.
    // Caches new serialization records and adds their IDs to the set of new known IDs.
    bool deserialize(SerializedAOTMethod *method, const std::vector<std::string> &records,
-                    TR::Compilation *comp);
+                    TR::Compilation *comp, bool &usesSVM);
 
    // Invalidation functions called from class and class loader unload JIT hooks to invalidate RAMClass
    // and class loader pointers cached by the deserializer. Note that cached SCC offsets stay valid.
@@ -78,6 +76,12 @@ public:
    // the next compilation request, so that the server can update its set of known IDs for this client.
    // This function returns the list of IDs cached since the last call, and clears the set of new known IDs.
    std::vector<uintptr_t/*idAndType*/> getNewKnownIds();
+
+   void incNumCacheBypasses() { ++_numCacheBypasses; }
+   void incNumCacheMisses() { ++_numCacheMisses; }
+   size_t getNumDeserializedMethods() const { return _numDeserializedMethods; }
+
+   void printStats(FILE *f) const;
 
 private:
    struct ClassLoaderEntry
@@ -127,10 +131,10 @@ private:
 
    bool deserializationFailure(const SerializedAOTMethod *method, TR::Compilation *comp, bool wasReset);
    // Returns false on failure
-   bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset);
+   bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM);
 
    TR_PersistentClassLoaderTable *const _loaderTable;
-   TR_J9SharedCache *_sharedCache;
+   TR_J9SharedCache *const _sharedCache;
 
    //NOTE: Locking hierarchy used in this class follows cycle-free dependency order
    // between serialization record types and guarantees that there are no deadlocks:
@@ -162,6 +166,15 @@ private:
 
    volatile bool _resetInProgress;
    TR::Monitor *const _resetMonitor;
+
+   // Statistics
+   size_t _numCacheBypasses;
+   size_t _numCacheHits;
+   size_t _numCacheMisses;
+   size_t _numDeserializedMethods;
+   size_t _numDeserializationFailures;
+   size_t _numClassSizeMismatches;
+   size_t _numClassHashMismatches;
    };
 
 

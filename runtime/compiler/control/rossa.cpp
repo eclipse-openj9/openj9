@@ -217,11 +217,12 @@ char *compilationErrorNames[]={
    "compilationAotRecompQueuedFlagReloFailure", //59
    "compilationAOTValidateOSRFailure", //60
 #if defined(J9VM_OPT_JITSERVER)
-   "compilationStreamFailure", //compilationFirstJITServerFailure=61
-   "compilationStreamLostMessage", // compilationFirstJITServerFailure+1
-   "compilationStreamMessageTypeMismatch", //compilationFirstJITServerFailure+2
-   "compilationStreamVersionIncompatible", //compilationFirstJITServerFailure+3
-   "compilationStreamInterrupted", //compilationFirstJITServerFailure+4
+   "compilationStreamFailure", // compilationFirstJITServerFailure = 61
+   "compilationStreamLostMessage", // 62
+   "compilationStreamMessageTypeMismatch", // 63
+   "compilationStreamVersionIncompatible", // 64
+   "compilationStreamInterrupted", // 65
+   "aotCacheDeserializationFailure", // 66
 #endif /* defined(J9VM_OPT_JITSERVER) */
    "compilationMaxError",
 };
@@ -1790,14 +1791,6 @@ onLoadInternal(
          return -1;
 
       JITServer::CommunicationStream::initConfigurationFlags();
-
-      if (compInfo->getPersistentInfo()->getJITServerUseAOTCache())
-         {
-         auto deserializer = new (PERSISTENT_NEW) JITServerAOTDeserializer(loaderTable);
-         if (!deserializer)
-            return -1;
-         compInfo->setJITServerAOTDeserializer(deserializer);
-         }
       }
 #endif // J9VM_OPT_JITSERVER
 
@@ -1929,10 +1922,10 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
    if (vm->isAOT_DEPRECATED_DO_NOT_USE() || (jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
       return 0;
 
-
+   TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
 #if defined(J9VM_OPT_JITSERVER)
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
-#endif
+   if (persistentInfo->getRemoteCompilationMode() != JITServer::SERVER)
+#endif /* defined(J9VM_OPT_JITSERVER) */
       {
       /* jit specific helpers */
       initializeJitRuntimeHelperTable(TR::Compiler->target.isSMP());
@@ -1941,8 +1934,8 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 #if defined(TR_TARGET_POWER)
    if (TR::Compiler->target.cpu.isPower())
       {
-      void  * tocBase = ppcPicTrampInit(vm, compInfo->getPersistentInfo());
-      if ( tocBase == reinterpret_cast<void *>(0x1) )
+      void *tocBase = ppcPicTrampInit(vm, persistentInfo);
+      if (tocBase == reinterpret_cast<void *>(0x1))
          {
          printf("<JIT: Cannot allocate TableOfConstants\n");
          return -1; // fail the JVM
@@ -1961,9 +1954,9 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       bool validateSCC = true;
 
 #if defined(J9VM_OPT_JITSERVER)
-      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
          validateSCC = false;
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
       if (validateSCC)
          {
@@ -2004,27 +1997,46 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
 #if defined(J9VM_OPT_JITSERVER)
-         if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+         if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
             {
             fprintf(stderr, "Error: -Xaot:nostore option is not compatible with JITServer mode.");
             return -1;
             }
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
          }
       else if ((javaVM->sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_AOT) == 0)
          {
          TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
 #if defined(J9VM_OPT_JITSERVER)
-         if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+         if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
             {
             fprintf(stderr, "Error: -Xnoaot option must not be specified for JITServer.");
             return -1;
             }
-#endif
+#endif /* defined(J9VM_OPT_JITSERVER) */
          }
       }
-#endif
+#endif /* defined(J9VM_OPT_SHARED_CLASSES) */
+
+#if defined(J9VM_OPT_JITSERVER)
+   // Create AOT deserializer at the client if using JITServer with AOT cache
+   if ((persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT) && persistentInfo->getJITServerUseAOTCache())
+      {
+      if (TR::Options::sharedClassCache())
+         {
+         auto deserializer = new (PERSISTENT_NEW) JITServerAOTDeserializer(persistentInfo->getPersistentClassLoaderTable());
+         if (!deserializer)
+            return -1;
+         compInfo->setJITServerAOTDeserializer(deserializer);
+         }
+      else
+         {
+         fprintf(stderr, "Disabling JITServer AOT cache since AOT compilation is disabled\n");
+         persistentInfo->setJITServerUseAOTCache(false);
+         }
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    /* If the JVM is in CRIU mode and checkpointing is allowed, then the JIT should be
@@ -2058,7 +2070,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 
    // For RI enabled we may want to start as off and only enable when there is
    // compilation pressure
-   if (compInfo->getPersistentInfo()->isRuntimeInstrumentationEnabled() &&
+   if (persistentInfo->isRuntimeInstrumentationEnabled() &&
        TR::Options::getCmdLineOptions()->getOption(TR_UseRIOnlyForLargeQSZ))
       {
       TR_HWProfiler *hwProfiler = compInfo->getHWProfiler();
