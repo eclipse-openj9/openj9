@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2020 IBM Corp. and others
+ * Copyright (c) 2009, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package openj9.internal.tools.attach.target;
 
 import java.io.ByteArrayInputStream;
@@ -73,18 +72,18 @@ public class IPC {
 	 * Prefixes and names for Diagnostics properties
 	 */
 	public static final String INCOMPATIBLE_JAVA_VERSION = "OPENJ9_INCOMPATIBLE_JAVA_VERSION"; //$NON-NLS-1$
-	public final static String PROPERTY_DIAGNOSTICS_ERROR = OPENJ9_DIAGNOSTICS_PREFIX + "error"; //$NON-NLS-1$
-	public final static String PROPERTY_DIAGNOSTICS_ERRORTYPE = OPENJ9_DIAGNOSTICS_PREFIX + "errortype"; //$NON-NLS-1$
-	public final static String PROPERTY_DIAGNOSTICS_ERRORMSG = OPENJ9_DIAGNOSTICS_PREFIX + "errormsg"; //$NON-NLS-1$
+	public static final String PROPERTY_DIAGNOSTICS_ERROR = OPENJ9_DIAGNOSTICS_PREFIX + "error"; //$NON-NLS-1$
+	public static final String PROPERTY_DIAGNOSTICS_ERRORTYPE = OPENJ9_DIAGNOSTICS_PREFIX + "errortype"; //$NON-NLS-1$
+	public static final String PROPERTY_DIAGNOSTICS_ERRORMSG = OPENJ9_DIAGNOSTICS_PREFIX + "errormsg"; //$NON-NLS-1$
 	/**
 	 * True if operating system is Windows.
 	 */
-	public final static boolean isWindows;
+	public static final boolean isWindows;
 
 	/**
 	 * True if operating system is z/OS.
 	 */
-	public final static boolean isZOS;
+	public static final boolean isZOS;
 
 	static {
 		String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
@@ -100,17 +99,17 @@ public class IPC {
 		isZOS = tempIsZos;
 		isWindows = tempIsWindows;
 	}
-	
+
 	private static Random randomGen; /* Cleanup. this is used by multiple threads */
-	
+
 	/* loggingStatus may be seen to be LOGGING_ENABLED before logStream is initialized,
 	 * so use logStream inside a synchronized (IPC.accessorMutex) block.
 	 */
-	static  PrintStream logStream;
-	
-	/* loggingStatus is set at initialization time to LOGGING_DISABLED or LOGGING_ENABLED 
+	static PrintStream logStream;
+
+	/* loggingStatus is set at initialization time to LOGGING_DISABLED or LOGGING_ENABLED
 	 * and not changed thereafter.
-	 * This can be safely tested by any thread against LOGGING_DISABLED.  If it is not equal, then 
+	 * This can be safely tested by any thread against LOGGING_DISABLED.  If it is not equal, then
 	 * isLoggingEnabled() will check the actual status in a thread-safe manner.
 	 */
 	static int loggingStatus = LOGGING_UNKNOWN; /* set at initialization time and not changed */
@@ -131,7 +130,7 @@ public class IPC {
 	 * @return result of chown() operation.
 	 */
 	static native int chownFileToTargetUid(String path, long uid);
-	
+
 	/**
 	 * Create a directory and set the permissions on it.
 	 * @param absolutePath directory
@@ -163,7 +162,7 @@ public class IPC {
 		if ((0 != myUid) && (fileOwner != myUid)) {
 			logMessage("Wrong permissions or ownership for ", filePath); //$NON-NLS-1$
 			/*[MSG "K0803", "File {0} is owned by {1}, should be owned by current user"]*/
-			throw new IOException(com.ibm.oti.util.Msg.getString("K0803", filePath, Long.valueOf(fileOwner)));//$NON-NLS-1$
+			throw new IOException(com.ibm.oti.util.Msg.getString("K0803", filePath, Long.valueOf(fileOwner))); //$NON-NLS-1$
 		}
 		if (!isWindows) {
 			try {
@@ -175,14 +174,11 @@ public class IPC {
 					final String permissionString = Files.getPosixFilePermissions(Paths.get(filePath), LinkOption.NOFOLLOW_LINKS).toString();
 					logMessage("Wrong permissions: " + permissionString + " for ", filePath); //$NON-NLS-1$ //$NON-NLS-2$
 					/*[MSG "K0805", "{0} has permissions {1}, should have owner access only"]*/
-					throw new IOException(com.ibm.oti.util.Msg.getString("K0805", filePath, permissionString));//$NON-NLS-1$
+					throw new IOException(com.ibm.oti.util.Msg.getString("K0805", filePath, permissionString)); //$NON-NLS-1$
 				}
 			} catch (UnsupportedOperationException e) {
-				String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
-				if ((null != osName) && !osName.startsWith("Windows")) { //$NON-NLS-1$
-					/*[MSG "K0806", "Cannot verify permissions {0}"]*/
-					throw new IOException(com.ibm.oti.util.Msg.getString("K0806", filePath), e); //$NON-NLS-1$
-				}
+				/*[MSG "K0806", "Cannot verify permissions {0}"]*/
+				throw new IOException(com.ibm.oti.util.Msg.getString("K0806", filePath), e); //$NON-NLS-1$
 			}
 		}
 	}
@@ -193,7 +189,7 @@ public class IPC {
 	 * @param SemaphoreName key used to identify the semaphore
 	 * @return non-zero on failure
 	 */
-	native static int openSemaphore(String ctrlDir, String SemaphoreName, boolean global);
+	static native int openSemaphore(String ctrlDir, String SemaphoreName, boolean global);
 
 	/**
 	 * wait for a post on the semaphore for this VM. Use notify() to do the post
@@ -209,7 +205,7 @@ public class IPC {
 	 * @param global open the semaphore in the global namespace (Windows only)
 	 * @return 0 on success
 	 */
-	native static int notifyVm(String ctrlDir, String semaphoreName,
+	static native int notifyVm(String ctrlDir, String semaphoreName,
 			int numberOfTargets, boolean global);
 
 	/**
@@ -249,7 +245,7 @@ public class IPC {
 	 * @note A batch process runs as the default UID if it has no USS segment.
 	 */
 	static native boolean isUsingDefaultUid();
-	
+
 	/**
 	 * @return OS process ID
 	 */
@@ -258,14 +254,14 @@ public class IPC {
 
 	/**
 	 * @param pid process ID
-	 * @return true if process exists 
+	 * @return true if process exists
 	 * Error conditions are ignored.
 	 */
 	public static boolean processExists(long pid) {
 		int rc = processExistsImpl(pid);
 		return (rc > 0);
 	}
-	
+
 	/**
 	 * Check if attach API initialization has enabled logging.
 	 * Logging is enabled or disabled once, and remains enabled or disabled for the duration of the process.
@@ -278,11 +274,11 @@ public class IPC {
 		} else if (LOGGING_ENABLED == loggingStatus) {
 			result = true;
 		} else synchronized (accessorMutex) {
-			/* 
-			 * We may be initializing.  If so, wait until initialization is complete.  
+			/*
+			 * We may be initializing.  If so, wait until initialization is complete.
 			 * Otherwise, assume logging is disabled.
 			 */
-			result = (LOGGING_ENABLED == loggingStatus);			
+			result = (LOGGING_ENABLED == loggingStatus);
 		}
 		return result;
 	}
@@ -294,7 +290,7 @@ public class IPC {
 	 * If the file exists, delete it.
 	 * @param path file system path
 	 * @param mode file access permissions (posix format) for the new file
-	 * @throws IOException if the file exists and cannot be removed, or 
+	 * @throws IOException if the file exists and cannot be removed, or
 	 * a new file cannot be created with the specified permission
 	 */
 	static void createNewFileWithPermissions(File theFile, int perms) throws IOException {
@@ -321,7 +317,7 @@ public class IPC {
 	/**
 	 * Get the system temporary directory: /tmp on all but Windows, C:\Documents
 	 * and Settings\<userid>\Local Settings\Temp
-	 * 
+	 *
 	 * @return directory path name. If the result is null, use the
 	 *         java.io.tmpdir property.
 	 */
@@ -341,7 +337,7 @@ public class IPC {
 	static private native String getTempDirImpl();
 
 	/**
-	 * Create a Random object if it does not exist. 
+	 * Create a Random object if it does not exist.
 	 * generate a random number based on the current time.
 	 * @return random int
 	 */
@@ -353,7 +349,7 @@ public class IPC {
 			return randomGen.nextInt();
 		}
 	}
-	
+
 	/**
 	 * Create a truly random string of hexadecimal characters with 64 bits of entropy.
 	 * This may be slow.
@@ -373,7 +369,7 @@ public class IPC {
 	static native void tracepoint(int statusCode, String message);
 	/**
 	 * Print a message prefixed with the current time to the log file.
-	 * Calls to this method on the success path for normal VM operation are already protected 
+	 * Calls to this method on the success path for normal VM operation are already protected
 	 * by a test on loggingEnabled for performance reasons.
 	 * @param msg message to print
 	 */
@@ -385,7 +381,7 @@ public class IPC {
 
 	/**
 	 * convenience method for messages with two strings.  Avoids creating extra strings for the normal (logging disabled) case.
-	 * Calls to this method on the success path for normal VM operation are already protected 
+	 * Calls to this method on the success path for normal VM operation are already protected
 	 * by a test on loggingEnabled for performance reasons.
 	 * @param string1 first argument
 	 * @param string2 concatenated to second argument
@@ -398,7 +394,7 @@ public class IPC {
 
 	/**
 	 * convenience method for messages with an integer.  Avoids creating extra strings for the normal (logging disabled) case.
-	 * Calls to this method on the success path for normal VM operation are already protected 
+	 * Calls to this method on the success path for normal VM operation are already protected
 	 * by a test on loggingEnabled for performance reasons.
 	 * @param string1 first argument
 	 * @param int1 concatenated to second argument
@@ -411,7 +407,7 @@ public class IPC {
 
 	/**
 	 * convenience method for messages with a string, then an integer then a string.  Avoids creating extra strings for the normal (logging disabled) case.
-	 * Calls to this method on the success path for normal VM operation are already protected 
+	 * Calls to this method on the success path for normal VM operation are already protected
 	 * by a test on loggingEnabled for performance reasons.
 	 * @param string1 first string in the message
 	 * @param int1 concatenated to second argument
@@ -425,7 +421,7 @@ public class IPC {
 
 	/**
 	 * convenience method for messages with an integer then two strings.  Avoids creating extra strings for the normal (logging disabled) case.
-	 * Calls to this method on the success path for normal VM operation are already protected 
+	 * Calls to this method on the success path for normal VM operation are already protected
 	 * by a test on loggingEnabled for performance reasons.
 	 * @param string1 first string in the message
 	 * @param int1 concatenated to second argument
@@ -508,7 +504,7 @@ public class IPC {
 		log.print(Thread.currentThread().getName());
 		log.print("]: "); //$NON-NLS-1$
 	}
-	
+
 	static final class syncObject {
 		/* empty */
 	}
@@ -523,7 +519,7 @@ public class IPC {
 
 	/**
 	 * Send a properties file as a stream of bytes
-	 * 
+	 *
 	 * @param props     Properties file
 	 * @param outStream destination of the bytes
 	 * @throws IOException on communication error
@@ -546,7 +542,7 @@ public class IPC {
 	 */
 	public static Properties receiveProperties(InputStream inStream, boolean requireNull)
 			throws IOException {
-		byte msgBuff[] = AttachmentConnection.streamReceiveBytes(inStream, 0, requireNull);
+		byte[] msgBuff = AttachmentConnection.streamReceiveBytes(inStream, 0, requireNull);
 		if (isLoggingEnabled()) {
 			String propsString = new String(msgBuff, StandardCharsets.UTF_8);
 			logMessage("Received properties file:", propsString); //$NON-NLS-1$
