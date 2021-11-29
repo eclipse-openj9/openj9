@@ -166,5 +166,5 @@ jlong JNICALL
 Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class(JNIEnv *env, jclass unused, jlong j9clazz)
 {
 	J9Class *clazz = (J9Class *)(IDATA)j9clazz;
-	return (jlong)(IDATA)clazz->ramConstantPool;
+	return *(jlong *)&clazz->ramConstantPool;
 }

@@ -48,6 +48,12 @@ static SunReflectCPResult
 getRAMConstantRefAndType(J9VMThread *vmThread, jobject constantPoolOop, jint cpIndex, UDATA *cpType, J9RAMConstantRef **ramConstantRef)
 {
 	J9ConstantPool *ramConstantPool = J9CONSTANTPOOL_FROMCPINTERNALCONSTANTPOOL(vmThread, constantPoolOop);
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		if (J9_ARE_ANY_BITS_SET((UDATA)ramConstantPool, 0x80000000)) {
+			printf("Pointer value is invalid\n");
+			Assert_JCL_true(J9_ARE_NO_BITS_SET((UDATA)ramConstantPool, (UDATA)0xFFFFFFFF << 32));
+		}
+	}
 	J9Class *ramClass = ramConstantPool->ramClass;
 	J9ROMClass *romClass = ramClass->romClass;
 	SunReflectCPResult result = CP_INDEX_OUT_OF_BOUNDS_EXCEPTION;
@@ -77,6 +83,12 @@ static SunReflectCPResult
 getROMCPItemAndType(J9VMThread *vmThread, jobject constantPoolOop, jint cpIndex, UDATA *cpType, J9ROMConstantPoolItem **romCPItem)
 {
 	J9ConstantPool *ramConstantPool = J9CONSTANTPOOL_FROMCPINTERNALCONSTANTPOOL(vmThread, constantPoolOop);
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		if (J9_ARE_ANY_BITS_SET((UDATA)ramConstantPool, 0x80000000)) {
+			printf("Pointer value is invalid\n");
+			Assert_JCL_true(J9_ARE_NO_BITS_SET((UDATA)ramConstantPool, (UDATA)0xFFFFFFFF << 32));
+		}
+	}
 	J9Class *ramClass = ramConstantPool->ramClass;
 	J9ROMClass *romClass = ramClass->romClass;
 	SunReflectCPResult result = CP_INDEX_OUT_OF_BOUNDS_EXCEPTION;

@@ -3353,7 +3353,7 @@ private AnnotationCache getAnnotationCache() {
 			long ramCPAddr = 0;
 			if (VM.FJ9OBJECT_SIZE == 4) {
 				/* Compressed object refs */
-				ramCPAddr = unsafe.getInt(annotationsData, offset);
+				ramCPAddr = Integer.toUnsignedLong(unsafe.getInt(annotationsData, offset));
 			} else {
 				ramCPAddr = unsafe.getLong(annotationsData, offset);
 			}

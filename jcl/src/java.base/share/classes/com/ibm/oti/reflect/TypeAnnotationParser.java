@@ -109,7 +109,7 @@ public class TypeAnnotationParser {
 		long ramCPAddr = 0;
 		if (VM.FJ9OBJECT_SIZE == 4) {
 			/* Compressed object refs */
-			ramCPAddr = Unsafe.getUnsafe().getInt(attr, offset);
+			ramCPAddr = Integer.toUnsignedLong(Unsafe.getUnsafe().getInt(attr, offset));
 		} else {
 			ramCPAddr = Unsafe.getUnsafe().getLong(attr, offset);
 		}
@@ -129,7 +129,7 @@ public class TypeAnnotationParser {
 		long ramCPAddr = 0;
 		if (VM.FJ9OBJECT_SIZE == 4) {
 			/* Compressed object refs */
-			ramCPAddr = Unsafe.getUnsafe().getInt(attr, offset);
+			ramCPAddr = Integer.toUnsignedLong(Unsafe.getUnsafe().getInt(attr, offset));
 		} else {
 			ramCPAddr = Unsafe.getUnsafe().getLong(attr, offset);
 		}
