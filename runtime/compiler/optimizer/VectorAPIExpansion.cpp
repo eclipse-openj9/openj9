@@ -125,7 +125,7 @@ TR_VectorAPIExpansion::alias(TR::Node *node1, TR::Node *node2)
       _aliasTable[id2]._aliases = new (comp()->trStackMemory()) TR_BitVector(symRefCount, comp()->trMemory(), stackAlloc);
 
    if (_trace)
-      traceMsg(comp(), "%s aliasing symref #%d to symref #%d\n", OPT_DETAILS_VECTOR, id1, id2);
+      traceMsg(comp(), "%s aliasing symref #%d to symref #%d (nodes %p %p)\n", OPT_DETAILS_VECTOR, id1, id2, node1, node2);
 
    _aliasTable[id1]._aliases->set(id2);
    _aliasTable[id2]._aliases->set(id1);
@@ -1111,11 +1111,9 @@ TR::Node *TR_VectorAPIExpansion::addHandler(TR_VectorAPIExpansion *opt, TR::Tree
    if (opt->_trace)
       traceMsg(comp, "addHandler for node %p\n", node);
 
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Node *secondChild = node->getSecondChild();
    TR::ILOpCodes scalarOpCode = ILOpcodeFromVectorAPIOpcode(VECTOR_OP_ADD, elementType);
 
-   return transformBinary(opt, treeTop, node, elementType, vectorLength, mode, firstChild, secondChild, scalarOpCode);
+   return transformNary(opt, treeTop, node, elementType, vectorLength, mode, scalarOpCode, 0, 2);
 }
 
 
@@ -1285,8 +1283,22 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
    }
 
 
+TR::Node *TR_VectorAPIExpansion::unaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                        TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+   {
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 1);
+   }
+
 TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                         TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+   {
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 2);
+   }
+
+
+TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                      TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
+                                                      int32_t numChildren)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -1327,14 +1339,7 @@ TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *o
       return node;
       }
 
-
-   if (opt->_trace)
-      traceMsg(comp, "binaryIntrinsicHandler for node %p\n", node);
-
-   TR::Node *firstChild = node->getChild(4);
-   TR::Node *secondChild = node->getChild(5);
-
-   return transformBinary(opt, treeTop, node, elementType, vectorLength, mode, firstChild, secondChild, scalarOpCode);
+   return transformNary(opt, treeTop, node, elementType, vectorLength, mode, scalarOpCode, 4, numChildren);
    }
 
 
@@ -1421,7 +1426,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorO
    switch (vectorOpCode)
       {
       case VECTOR_OP_ABS:
-         return TR::BadILOp;
+         return TR::ILOpCode::absOpCode(elementType);
       case VECTOR_OP_NEG:
          return TR::ILOpCode::negateOpCode(elementType);
       case VECTOR_OP_SQRT:
@@ -1454,12 +1459,21 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorO
    return TR::BadILOp;
    }
 
-TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                 TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
-                                                 TR::Node *firstChild, TR::Node *secondChild,
-                                                 TR::ILOpCodes scalarOpCode)
+TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                               TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
+                                               TR::ILOpCodes scalarOpCode, int32_t firstOperand, int32_t numOperands)
    {
    TR::Compilation *comp = opt->comp();
+
+   // Since we are modifying node's children in place
+   // it's better to save the original ones
+   TR_ASSERT_FATAL(numOperands <= _maxNumberOperands, "number of operands exceeds %d\n", _maxNumberOperands);
+
+   TR::Node* operands[_maxNumberOperands];
+   for (int32_t i = 0; i < numOperands; i++)
+      {
+      operands[i] = node->getChild(firstOperand + i);
+      }
 
    if (mode == doScalarization)
       {
@@ -1468,28 +1482,38 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
       int32_t elementSize = OMR::DataType::getSize(elementType);
       int32_t numLanes = vectorLength/8/elementSize;
 
-      if (firstChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, firstChild, elementType, vectorLength, mode);
-      if (secondChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, secondChild, elementType, vectorLength, mode);
+      for (int32_t i = 0; i < numOperands; i++)
+         {
+         if (operands[i]->getOpCodeValue() == TR::aload)
+            aloadHandler(opt, treeTop, operands[i], elementType, vectorLength, mode);
+         }
 
-      node->setAndIncChild(0, firstChild);
-      node->setAndIncChild(1, secondChild);
-      node->setNumChildren(2);
+      for (int32_t i = 0; i < numOperands; i++)
+         {
+         node->setAndIncChild(i, operands[i]);
+         }
+      node->setNumChildren(numOperands);
       TR::Node::recreate(node, scalarOpCode);
 
       for (int32_t i = 1; i < numLanes; i++)
          {
-         TR::Node *newAddNode = TR::Node::create(node, scalarOpCode, 2);
-         addScalarNode(opt, node, numLanes, i, newAddNode);
-         newAddNode->setAndIncChild(0, getScalarNode(opt, firstChild, i));
-         newAddNode->setAndIncChild(1, getScalarNode(opt, secondChild, i));
+         TR::Node *newNode = TR::Node::create(node, scalarOpCode, numOperands);
+         addScalarNode(opt, node, numLanes, i, newNode);
+         for (int32_t j = 0; j < numOperands; j++)
+            {
+            newNode->setAndIncChild(j, getScalarNode(opt, operands[j], i));
+            }
          }
       }
    else if (mode == doVectorization)
       {
       TR::DataType vectorType = OMR::DataType(elementType).scalarToVector();
 
-      if (firstChild->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, firstChild, vectorType);
-      if (secondChild->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, secondChild, vectorType);
+      for (int32_t i = 0; i < numOperands; i++)
+         {
+         if (operands[i]->getOpCodeValue() == TR::aload)
+            vectorizeLoadOrStore(opt, operands[i], vectorType);
+         }
 
       TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOpCode);
 
@@ -1498,9 +1522,11 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
       if (vectorOpCode != TR::BadILOp && !useVcall)
          {
          anchorOldChildren(opt, treeTop, node);
-         node->setAndIncChild(0, firstChild);
-         node->setAndIncChild(1, secondChild);
-         node->setNumChildren(2);
+         for (int32_t i = 0; i < numOperands; i++)
+            {
+            node->setAndIncChild(i, operands[i]);
+            }
+         node->setNumChildren(numOperands);
          TR::Node::recreate(node, vectorOpCode);
          }
       else
@@ -1521,6 +1547,7 @@ TR_VectorAPIExpansion::methodTable[] =
    {storeIntrinsicHandler, TR::NoType, Unknown, {Unknown, elementType, numLanes, Unknown, Unknown, Vector}}, // jdk_internal_vm_vector_VectorSupport_store
    {binaryIntrinsicHandler,TR::NoType, Vector,  {Unknown, Unknown, elementType, numLanes, Vector, Vector}},  // jdk_internal_vm_vector_VectorSupport_binaryOp
    {broadcastCoercedIntrinsicHandler,TR::NoType, Vector, {Unknown, elementType, numLanes, Unknown, Unknown, Unknown}},  // jdk_internal_vm_vector_VectorSupport_broadcastCoerced
+   {unaryIntrinsicHandler,TR::NoType, Vector,  {Unknown, Unknown, elementType, numLanes, Vector}},  // jdk_internal_vm_vector_VectorSupport_unaryOp
 
    {unsupportedHandler /*fromArrayHandler*/,      TR::Float,  Vector,  {Species}}, // jdk_incubator_vector_FloatVector_fromArray,
    {unsupportedHandler /*intoArrayHandler*/,      TR::Float,  Unknown, {Vector}},  // jdk_incubator_vector_FloatVector_intoArray,
