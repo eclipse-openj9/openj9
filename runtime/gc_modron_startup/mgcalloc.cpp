@@ -105,7 +105,7 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 	
 	if(!traceObjectCheck(vmThread)){
 		allocateFlags |= OMR_GC_ALLOCATE_OBJECT_NO_GC;
-		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassEnsureHashed)) {
+		if (J9CLASS_IS_ENSUREHASHED(clazz)) {
 			allocateFlags |= OMR_GC_ALLOCATE_OBJECT_HASHED;
 		}
 		MM_MixedObjectAllocationModel mixedOAM(env, clazz, allocateFlags);
@@ -406,7 +406,7 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 	 * with a replaced class, update to the current version and allocate that.
 	 */
 	clazz = J9_CURRENT_CLASS(clazz);
-	if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassEnsureHashed)) {
+	if (J9CLASS_IS_ENSUREHASHED(clazz)) {
 		allocateFlags |= OMR_GC_ALLOCATE_OBJECT_HASHED;
 	}
 	MM_MixedObjectAllocationModel mixedOAM(env, clazz, allocateFlags);

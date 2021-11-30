@@ -393,7 +393,7 @@ public:
 		/* Initialize the object */
 		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
 			J9ObjectCompressed *objectHeader = (J9ObjectCompressed*) instance;
-			if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassEnsureHashed)) {
+			if (J9CLASS_IS_ENSUREHASHED(clazz)) {
 				objectHeader->clazz = (uint32_t)(uintptr_t)clazz | (uint32_t)OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS;
 			} else {
 				objectHeader->clazz = (uint32_t)(uintptr_t)clazz;
@@ -403,7 +403,7 @@ public:
 			}
 		} else {
 			J9ObjectFull *objectHeader = (J9ObjectFull*) instance;
-			if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassEnsureHashed)) {
+			if (J9CLASS_IS_ENSUREHASHED(clazz)) {
 				objectHeader->clazz = (uintptr_t)clazz | (uintptr_t)OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS;
 			} else {
 				objectHeader->clazz = (uintptr_t)clazz;
