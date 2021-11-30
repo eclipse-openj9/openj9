@@ -945,7 +945,7 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStringForPrivateBase,  offsetof(TR_JitPrivateConfig,rtLogFileName), 0, "P%s"},
    {"rtResolve",          "D\ttreat all data references as unresolved", SET_JITCONFIG_RUNTIME_FLAG(J9JIT_RUNTIME_RESOLVE) },
    {"safeReservePhysicalMemoryValue=",    "C<nnn>\tsafe buffer value before we risk running out of physical memory, in KB",
-        TR::Options::setStaticNumericKBAdjusted, (intptr_t)&TR::Options::_safeReservePhysicalMemoryValue, 0, "F%d (KB)"},
+        TR::Options::setStaticNumericKBAdjusted, (intptr_t)&TR::Options::_safeReservePhysicalMemoryValue, 0, "F%d (bytes)"},
    {"sampleDontSwitchToProfilingThreshold=", "R<nnn>\tThe maximum number of global samples taken during a sample interval for which the method is denied swithing to profiling",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_sampleDontSwitchToProfilingThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"sampleThresholdVariationAllowance=",  "R<nnn>\tThe percentage that we add or subtract from"
