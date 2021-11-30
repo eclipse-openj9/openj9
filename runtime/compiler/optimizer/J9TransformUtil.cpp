@@ -187,6 +187,72 @@ static bool isFieldOfJavaObject(TR::SymbolReference *symRef, TR::Compilation *co
    return false;
    }
 
+static bool isNullValueAtAddress(TR::Compilation *comp, TR::DataType loadType, uintptr_t fieldAddress, TR::Symbol *field)
+   {
+   TR_J9VMBase *fej9 = comp->fej9();
+
+   switch (loadType)
+      {
+      case TR::Int8:
+         {
+         int8_t value = *(int8_t*)fieldAddress;
+         if (value == 0)
+            return true;
+         }
+         break;
+      case TR::Int16:
+         {
+         int16_t value = *(int16_t*)fieldAddress;
+         if (value == 0)
+            return true;
+         }
+         break;
+      case TR::Int32:
+         {
+         int32_t value = *(int32_t*)fieldAddress;
+         if (value == 0)
+            return true;
+         }
+         break;
+      case TR::Int64:
+         {
+         int64_t value = *(int64_t*)fieldAddress;
+         if (value == 0)
+            return true;
+         }
+         break;
+      case TR::Float:
+         {
+         float value = *(float*)fieldAddress;
+         // This will not fold -0.0 but will fold NaN
+         if (value == 0.0)
+            return true;
+         }
+         break;
+     case TR::Double:
+        {
+        double value = *(double*)fieldAddress;
+        // This will not fold -0.0 but will fold NaN
+        if (value == 0.0)
+           return true;
+        }
+        break;
+     case TR::Address:
+        {
+        TR_ASSERT_FATAL(field->isCollectedReference(), "Expecting a collectable reference\n");
+        uintptr_t value = fej9->getReferenceFieldAtAddress((uintptr_t)fieldAddress);
+        if (value == 0)
+           return true;
+        }
+        break;
+     default:
+        TR_ASSERT_FATAL(false, "Unknown type of field being dereferenced\n");
+        break;
+     }
+
+   return false;
+   }
+
 bool J9::TransformUtil::avoidFoldingInstanceField(
    uintptr_t object,
    TR::Symbol *field,
@@ -212,52 +278,10 @@ bool J9::TransformUtil::avoidFoldingInstanceField(
    if (fej9->isStable(cpIndex, owningMethod, comp) && !field->isFinal())
       {
       uintptr_t fieldAddress = object + fieldOffset;
-
       TR::DataType loadType = field->getDataType();
-      switch (loadType)
-         {
-         case TR::Int32:
-            {
-            int32_t value = *(int32_t*)fieldAddress;
-            if (value == 0)
-               return true;
-            }
-            break;
-         case TR::Int64:
-            {
-            int64_t value = *(int64_t*)fieldAddress;
-            if (value == 0)
-               return true;
-            }
-            break;
-         case TR::Float:
-            {
-            float value = *(float*)fieldAddress;
-            // This will not fold -0.0 but will fold NaN
-            if (value == 0.0)
-               return true;
-            }
-            break;
-         case TR::Double:
-            {
-            double value = *(double*)fieldAddress;
-            // This will not fold -0.0 but will fold NaN
-            if (value == 0.0)
-               return true;
-            }
-            break;
-         case TR::Address:
-            {
-            TR_ASSERT_FATAL(field->isCollectedReference(), "Expecting a collectable reference\n");
-            uintptr_t value = fej9->getReferenceFieldAtAddress((uintptr_t)fieldAddress);
-            if (value == 0)
-               return true;
-            }
-            break;
-         default:
-            TR_ASSERT_FATAL(false, "Unknown type of field being dereferenced\n");
-            break;
-         }
+
+      if (isNullValueAtAddress(comp, loadType, fieldAddress, field))
+         return true;
       }
 
    switch (field->getRecognizedField())
@@ -347,7 +371,25 @@ static bool isArrayWithConstantElements(TR::SymbolReference *symRef, TR::Compila
    return false;
    }
 
-static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::Compilation *comp)
+static int32_t isArrayWithStableElements(TR::SymbolReference *symRef, TR::Compilation *comp)
+   {
+   TR_J9VMBase *fej9 = comp->fej9();
+   if (fej9->isStable(symRef->getCPIndex(), symRef->getOwningMethod(comp), comp))
+      {
+      int32_t signatureLength = 0;
+      char *signature = symRef->getOwningMethod(comp)->classSignatureOfFieldOrStatic(symRef->getCPIndex(), signatureLength);
+      // Support only one dimension for now (rank 1)
+      if (signature && signature[0] == '[')
+         {
+         traceMsg(comp, "Stable array: signature %.*s\n", signatureLength, signature);
+         return 1;
+         }
+      }
+   return 0;
+   }
+
+
+static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, bool isStableArrayElement, TR::Compilation *comp)
    {
    // Return true only if loading the given field from the given struct will
    // itself produce a verifiable value.  (Primitives are trivially verifiable.)
@@ -384,7 +426,7 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::C
       TR_YesNoMaybe objectContainsField = fej9->isInstanceOf(objectClass, fieldClass, true);
       return objectContainsField == TR_yes;
       }
-   else if (comp->getSymRefTab()->isImmutableArrayShadow(field))
+   else if (comp->getSymRefTab()->isImmutableArrayShadow(field) || isStableArrayElement)
       {
       TR_OpaqueClassBlock *arrayClass = fej9->getObjectClass((uintptr_t)curStruct);
       if (!fej9->isClassArray(arrayClass) ||
@@ -393,6 +435,13 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::C
           (!field->getSymbol()->isCollectedReference() &&
           fej9->isReferenceArray(arrayClass)))
          return false;
+
+      if (isStableArrayElement && fej9->isPrimitiveArray(arrayClass))
+         {
+         if (TR::Compiler->om.getArrayElementWidthInBytes(comp, (uintptr_t)curStruct) != field->getSymbol()->getSize())
+            return false;
+         }
+
 
       return true;
       }
@@ -440,7 +489,7 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, TR::C
  * The concepts of "verified" and "verifiable" are used here, they're explained in
  * J9::TransformUtil::transformIndirectLoadChainImpl
  */
-static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode, TR::Node *curNode, TR::Compilation *comp)
+static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode, bool isBaseStableArray, TR::Node *curNode, TR::Compilation *comp)
    {
    if (baseNode == curNode)
       {
@@ -461,6 +510,9 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
       if (!addressChildNode->getOpCode().hasSymbolReference())
          return NULL;
 
+      if (isBaseStableArray)
+         TR_ASSERT_FATAL(addressChildNode == baseNode, "We should have only one level of indirection for stable arrays\n");
+
       // Use uintptr_t for pointer arithmetic operations and to save type conversions
       uintptr_t curStruct = 0;
       if (addressChildNode == baseNode)
@@ -473,7 +525,7 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
          {
          TR::SymbolReference *addressChildSymRef = addressChildNode->getSymbolReference();
          // Get the address of struct containing current field and dereference it
-         void* addressChildAddress = dereferenceStructPointerChain(baseStruct, baseNode, addressChildNode, comp);
+         void* addressChildAddress = dereferenceStructPointerChain(baseStruct, baseNode, false, addressChildNode, comp);
 
          if (addressChildAddress == NULL)
             {
@@ -495,7 +547,7 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
       // Get the field address of curNode
       if (curStruct)
          {
-         if (verifyFieldAccess((void*)curStruct, symRef, comp))
+         if (verifyFieldAccess((void*)curStruct, symRef, isBaseStableArray, comp))
             {
             uintptr_t fieldAddress = 0;
             // The offset of a java field is in its symRef
@@ -516,7 +568,8 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
 
                fieldAddress = curStruct + symRef->getOffset();
                }
-            else if (comp->getSymRefTab()->isImmutableArrayShadow(symRef))
+            else if (comp->getSymRefTab()->isImmutableArrayShadow(symRef) ||
+                     isBaseStableArray)
                {
                TR::Node* offsetNode = curNode->getFirstChild()->getSecondChild();
                if (!offsetNode->getOpCode().isLoadConst())
@@ -541,6 +594,15 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
                   }
 
                fieldAddress = TR::Compiler->om.getAddressOfElement(comp, curStruct, offset);
+
+               if (!comp->getSymRefTab()->isImmutableArrayShadow(symRef))
+                  {
+                  // if stable array, check that we are loading from the beginning of an element that it's not Null
+                  // size of the element was checked in verifyFieldAccess
+                  if (fieldAddress % symRef->getSymbol()->getSize() != 0 ||
+                      isNullValueAtAddress(comp, symRef->getSymbol()->getDataType(), fieldAddress, symRef->getSymbol()))
+                     return NULL;
+                  }
                }
             else
                {
@@ -1230,7 +1292,7 @@ J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node 
       {
       baseAddress = *baseReferenceLocation;
       }
-   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)baseAddress, removedNode);
+   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)baseAddress, false, removedNode);
    return result;
    }
 
@@ -1256,7 +1318,7 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::VMAccessCriticalSection transformIndirectLoadChain(comp->fej9());
-   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)comp->getKnownObjectTable()->getPointer(baseKnownObject), removedNode);
+   bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)comp->getKnownObjectTable()->getPointer(baseKnownObject), comp->getKnownObjectTable()->isArrayWithStableElements(baseKnownObject), removedNode);
    return result;
    }
 
@@ -1324,7 +1386,7 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
  *
  */
 bool
-J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, void *baseAddress, TR::Node **removedNode)
+J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, void *baseAddress, bool isBaseStableArray, TR::Node **removedNode)
    {
    TR_J9VMBase *fej9 = comp->fej9();
 
@@ -1338,6 +1400,9 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
       }
 
    TR::SymbolReference *symRef = node->getSymbolReference();
+
+   if (isBaseStableArray && !symRef->getSymbol()->isArrayShadowSymbol())
+      return false;
 
    if (symRef->hasKnownObjectIndex())
       return false;
@@ -1370,7 +1435,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
          return false;
       }
 
-   if (!fej9->canDereferenceAtCompileTime(symRef, comp))
+   if (!isBaseStableArray && !fej9->canDereferenceAtCompileTime(symRef, comp))
       {
       if (comp->getOption(TR_TraceOptDetails))
          {
@@ -1380,7 +1445,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
       }
 
    // Dereference the chain starting from baseAddress and get the field address
-   void *fieldAddress = dereferenceStructPointerChain(baseAddress, baseExpression, node, comp);
+   void *fieldAddress = dereferenceStructPointerChain(baseAddress, baseExpression, isBaseStableArray, node, comp);
    if (!fieldAddress)
       {
       if (comp->getOption(TR_TraceOptDetails))
@@ -1393,6 +1458,9 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
    // The last step in the dereference chain is not necessarily an address.
    // Determine what it is and transform node appropriately.
    //
+   if (isBaseStableArray && comp->getOption(TR_TraceOptDetails))
+      traceMsg(comp, "Transforming a load from stable array %p\n", node);
+
    TR::DataType loadType = node->getDataType();
    switch (loadType)
       {
@@ -1478,12 +1546,20 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
             if (value)
                {
                TR::SymbolReference *improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, &value, isArrayWithConstantElements(symRef, comp));
-               if (  improvedSymRef->hasKnownObjectIndex()
+               int32_t stableArrayRank = isArrayWithStableElements(symRef, comp);
+
+               if (improvedSymRef->hasKnownObjectIndex()
                   && performTransformation(comp, "O^O transformIndirectLoadChain: %s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), value))
                   {
                   node->setSymbolReference(improvedSymRef);
                   node->setIsNull(false);
                   node->setIsNonNull(true);
+
+                  if (stableArrayRank > 0)
+                     {
+                     TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+                     knot->addStableArray(improvedSymRef->getKnownObjectIndex(), stableArrayRank);
+                     }
                   }
                else
                   {
