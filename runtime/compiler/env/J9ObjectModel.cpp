@@ -99,6 +99,8 @@ J9::ObjectModel::initialize()
       // JIT treats satb_and_oldcheck same as satb
       _writeBarrierType = gc_modron_wrtbar_satb;
       }
+
+   _objectAlignmentInBytes = objectAlignmentInBytes();
    }
 
 
