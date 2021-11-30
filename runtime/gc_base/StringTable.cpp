@@ -555,6 +555,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	bool translateSlashes = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT);
 	bool anonClassName = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME);
 	bool internString = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_INTERN);
+	UDATA unicodeLength = 0;
 
 	Trc_MM_createJavaLangString_Entry(vmThread, length, data, stringFlags);
 
@@ -568,13 +569,14 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		/* Currently, the only users of isASCII when isUnicode is true are also gated by compressStrings, so
 		 * don't bother computing isASCII if compression is off.
 		 */
+		unicodeLength = length / 2;
 		if (compressStrings) {
 			U_16 *unicodeData = (U_16*)data;
-			for (UDATA i = 0; i < length; ++i) {
+			for (UDATA i = 0; i < unicodeLength; ++i) {
 				if (unicodeData[i] > 0x7F) {
 					isASCII = false;
 					if (J2SE_VERSION(vm) >= J2SE_V17) {
-						for (UDATA j = i; j < length; ++j) {
+						for (UDATA j = i; j < unicodeLength; ++j) {
 							if (unicodeData[j] > 0xFF) {
 								isASCIIorLatin1 = false;
 								break;
@@ -635,7 +637,6 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	}
 
 	if (NULL == result) {
-		UDATA unicodeLength = 0;
 		UDATA allocateFlags = J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_INSTRUMENTABLE)
 				? J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE
 				: J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
@@ -650,9 +651,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			goto nomem;
 		}
 
-		if (isUnicode) {
-			unicodeLength = length / 2;
-		} else {
+		if (!isUnicode) {
 			if (isASCII) {
 				unicodeLength = length;
 			} else {
