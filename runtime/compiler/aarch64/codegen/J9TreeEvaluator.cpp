@@ -1424,7 +1424,7 @@ generateLockwordAddressLookup(TR::CodeGenerator *cg, TR::Node *node, TR::Registe
          }
       generateLabelInstruction(cg, TR::InstOpCode::label, node, monitorLookupCacheLabel);
       static const uint32_t maskWidth = populationCount(J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE - 1);
-      uint32_t shiftAmount = trailingZeroes(TR::Compiler->om.objectAlignmentInBytes()); // shift amount
+      uint32_t shiftAmount = trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes()); // shift amount
       generateUBFXInstruction(cg, node, tempReg, objReg, shiftAmount, maskWidth, true);
 
 #ifdef OMR_GC_FULL_POINTERS
@@ -2658,7 +2658,7 @@ genHeapAlloc(TR::Node *node, TR::CodeGenerator *cg, bool isVariableLen, uint32_t
 
       // calculate variable size, rounding up if necessary to a intptr_t multiple boundary
       //
-      static const int32_t objectAlignmentInBytes = TR::Compiler->om.objectAlignmentInBytes();
+      static const int32_t objectAlignmentInBytes = TR::Compiler->om.getObjectAlignmentInBytes();
       bool headerAligned = (allocSize % objectAlignmentInBytes) == 0;
       // zero indicates no rounding is necessary
       const int32_t round = ((elementSize >= objectAlignmentInBytes) && headerAligned) ? 0 : objectAlignmentInBytes;
@@ -3252,7 +3252,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    TR::Instruction *firstInstructionAfterClassAndLengthRegsAreReady = cg->getAppendInstruction();
    // 2. Calculate allocation size
-   int32_t allocateSize = isVariableLength ? headerSize : (objectSize + TR::Compiler->om.objectAlignmentInBytes() - 1) & (-TR::Compiler->om.objectAlignmentInBytes());
+   int32_t allocateSize = isVariableLength ? headerSize : (objectSize + TR::Compiler->om.getObjectAlignmentInBytes() - 1) & (-TR::Compiler->om.getObjectAlignmentInBytes());
 
    // 3. Allocate registers
    TR::Register *resultReg = cg->allocateRegister();

@@ -2489,10 +2489,10 @@ TR_J9VMBase::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassB
       J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(opclazz);
       UDATA hotFieldsWordValue = 0x1; // mark for alignment
 
-      TR_ASSERT(0==(alignFromStart % TR::Compiler->om.objectAlignmentInBytes()), "alignment undershot should be multiple of %d bytes", TR::Compiler->om.objectAlignmentInBytes());
+      TR_ASSERT(0==(alignFromStart % TR::Compiler->om.getObjectAlignmentInBytes()), "alignment undershot should be multiple of %d bytes", TR::Compiler->om.getObjectAlignmentInBytes());
       TR_ASSERT((alignFromStart < 128), "alignment undershot should be less than 128 (124 max)");
 
-      hotFieldsWordValue |= (((alignFromStart & 0x7f)/TR::Compiler->om.objectAlignmentInBytes()) << 1);
+      hotFieldsWordValue |= (((alignFromStart & 0x7f)/TR::Compiler->om.getObjectAlignmentInBytes()) << 1);
 
       //printf("Class %p, hotFieldsWordValue %p\n", opclazz,  hotFieldsWordValue);
 
