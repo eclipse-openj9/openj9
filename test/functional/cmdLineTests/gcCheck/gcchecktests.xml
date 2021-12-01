@@ -40,6 +40,7 @@
   <exec command="rm -f $DUMPFILE$" />
   <command>$EXE$ -Xmx256m $CP$ $XDUMP$ $PROGRAM$</command>
   <output regex="no" type="success">System dump written</output>
+  <output regex="no" type="required">GCCheck Main class executed successfully</output>
  </test>
 
  <test id="Run gccheck">
