@@ -9439,11 +9439,12 @@ TR::CompilationInfoPerThreadBase::compile(
          _compInfo.getHWProfiler()->registerRecords(metaData, compiler);
          }
 
+      TR_CHTable *chTable = compiler->getCHTable();
+      if (chTable && !chTable->canSkipCommit(compiler))
          {
          TR::ClassTableCriticalSection chTableCommit(&vm);
          TR_ASSERT(!chTableCommit.acquiredVMAccess(), "We should have already acquired VM access at this point.");
-         TR_CHTable *chTable = compiler->getCHTable();
-         if (chTable && chTable->commit(compiler) == false)
+         if (chTable->commit(compiler) == false)
             {
             // If we created a TR_PersistentMethodInfo, fix the next compilation level
             // because if we retry the compilation we will fail an assume later on

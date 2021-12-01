@@ -215,11 +215,11 @@ class TR_PatchNOPedGuardSiteOnMethodBreakPoint : public TR::PatchNOPedGuardSite
                        uint8_t *location, uint8_t *destination)
       : TR::PatchNOPedGuardSite(pm, (uintptr_t)j9method, RuntimeAssumptionOnMethodBreakPoint, location, destination) {}
 
-   public: 
+   public:
    static TR_PatchNOPedGuardSiteOnMethodBreakPoint *make(
       TR_FrontEnd *fe, TR_PersistentMemory * pm, TR_OpaqueMethodBlock *j9method, uint8_t *location, uint8_t *destination,
       OMR::RuntimeAssumption **sentinel);
- 
+
    virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnMethodBreakPoint; }
    };
 
@@ -406,6 +406,8 @@ class TR_CHTable
    bool recompileOnMethodOverride(TR::Compilation *c, TR_ResolvedMethod *method);
 
    void cleanupNewlyExtendedInfo(TR::Compilation *comp);
+
+   bool canSkipCommit(TR::Compilation *comp);
 
    // Commit the CHTable into the persistent table.  This method must be called
    // with the class table mutex in hand.
