@@ -250,6 +250,16 @@ void TR_CHTable::cleanupNewlyExtendedInfo(TR::Compilation *comp)
       }
    }
 
+
+bool TR_CHTable::canSkipCommit(TR::Compilation *comp)
+   {
+   return comp->compileRelocatableCode() ||
+         (comp->getVirtualGuards().empty() &&
+          comp->getSideEffectGuardPatchSites()->empty() &&
+          !_preXMethods && !_classes && !_classesThatShouldNotBeNewlyExtended);
+   }
+
+
 // Returning false here will fail this compilation!
 //
 bool TR_CHTable::commit(TR::Compilation *comp)
@@ -260,14 +270,11 @@ bool TR_CHTable::commit(TR::Compilation *comp)
       return true; // Handled in outOfProcessCompilationEnd instead
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   if (canSkipCommit(comp))
+      return true;
 
    TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
    TR::list<TR_VirtualGuardSite*> *sideEffectPatchSites = comp->getSideEffectGuardPatchSites();
-
-   if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
-      return true;
-   if (vguards.empty() && sideEffectPatchSites->empty() && !_preXMethods && !_classes && !_classesThatShouldNotBeNewlyExtended)
-      return true;
 
    cleanupNewlyExtendedInfo(comp);
    if (comp->getFailCHTableCommit())
@@ -953,7 +960,7 @@ CollectImplementors::visitSubclass(TR_PersistentClassInfo *cl)
    return true;
    }
 
-bool 
+bool
 CollectImplementors::addImplementor(TR_ResolvedMethod *implementor)
    {
    TR_ASSERT_FATAL(_count < _maxCount, "Max implementor count exceeded: _maxCount = %d, _count = %d", _maxCount, _count);
