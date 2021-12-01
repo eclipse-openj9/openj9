@@ -1,8 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +20,7 @@ package com.ibm.oti.shared;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
 
 /**
  * SharedDataHelperFactory provides an interface used to create SharedDataHelpers.
@@ -31,18 +30,20 @@ package com.ibm.oti.shared;
 public interface SharedDataHelperFactory {
 
 	/**
-	 * Return a SharedDataHelper for a given ClassLoader.<p>
-	 * Creates a new SharedDataHelper if one cannot be found,
-	 *   otherwise if a SharedDataHelper already exists for the ClassLoader, the existing Helper is returned. <br>
-	 * Returns null if a SecurityManager is installed and there is no SharedClassPermission for the ClassLoader specified.
-	 * <p>
+	 * Return a SharedDataHelper for a given ClassLoader.
+	 *
+	 * <p>Creates a new SharedDataHelper if one cannot be found, otherwise
+	 * if a SharedDataHelper already exists for the ClassLoader, the
+	 * existing Helper is returned.
+	 *
+	 * <p>Returns null if a SecurityManager is installed and there is no
+	 * SharedClassPermission for the ClassLoader specified.
+	 *
 	 * @see SharedDataHelper
 	 *
-	 * @param 		owner ClassLoader.
-	 * 					The ClassLoader which owns the SharedDataHelper
+	 * @param owner the ClassLoader which owns the SharedDataHelper
 	 *
-	 * @return		SharedDataHelper.
-	 * 					A new or existing SharedDataHelper
+	 * @return SharedDataHelper a new or existing SharedDataHelper
 	 */
 	public SharedDataHelper getDataHelper(ClassLoader owner);
 }

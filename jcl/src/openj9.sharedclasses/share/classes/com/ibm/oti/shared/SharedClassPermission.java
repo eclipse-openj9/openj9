@@ -1,13 +1,6 @@
 /*[INCLUDE-IF SharedClasses]*/
-package com.ibm.oti.shared;
-
-import java.security.BasicPermission;
-import java.security.Permission;
-import java.security.PermissionCollection;
-import java.util.StringTokenizer;
-
 /*******************************************************************************
- * Copyright (c) 1998, 2021 IBM Corp. and others
+ * Copyright (c) 1998, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,29 +20,39 @@ import java.util.StringTokenizer;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.shared;
+
+import java.security.BasicPermission;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.util.StringTokenizer;
 
 /**
  * SharedClassPermission provides security permission to govern ClassLoader access to the shared class cache.
- * <p>
- * <b>Usage:</b> To grant permission to a ClassLoader, add permission in the java.policy file.<br> 
- * For example, com.ibm.oti.shared.SharedClassPermission "classloaders.myClassLoader", "read,write";
- * <p>
- * "read" allows a ClassLoader to load classes from the shared cache.<br>
- * "write" allows a ClassLoader to add classes to the shared cache.
+ *
+ * <p><b>Usage:</b>
+ * To grant permission to a ClassLoader, add permission in the <code>java.policy</code> file.
+ * For example,
+ * <pre><code>  com.ibm.oti.shared.SharedClassPermission "classloaders.myClassLoader", "read,write";</code></pre>
+ *
+ * Possible actions are:
+ * <ul>
+ * <li>"read" allows a ClassLoader to load classes from the shared cache</li>
+ * <li>"write" allows a ClassLoader to add classes to the shared cache</li>
+ * </ul>
  */
 public class SharedClassPermission extends BasicPermission {
 
 	private static final long serialVersionUID = -3867544018716468265L;
 
-	transient private boolean read, write;
-	
+	private transient boolean read;
+	private transient boolean write;
+
 	/**
 	 * Constructs a new instance of this class.
-	 * <p>
-	 * @param		loader java.lang.ClassLoader.
-	 *					The ClassLoader requiring the permission.
-	 * @param		actions java.lang.String.
-	 *					The actions which are applicable to it.
+	 *
+	 * @param loader ClassLoader the ClassLoader requiring the permission
+	 * @param actions String the actions which are applicable to it
 	 */
 	public SharedClassPermission(ClassLoader loader, String actions) {
 		this(loader.getClass().getName(), actions);
@@ -57,11 +60,9 @@ public class SharedClassPermission extends BasicPermission {
 
 	/**
 	 * Constructs a new instance of this class.
-	 * <p>
-	 * @param		classLoaderClassName java.lang.String.
-	 *					The className of the ClassLoader requiring the permission.
-	 * @param		actions java.lang.String.
-	 *					The actions which are applicable to it.
+	 *
+	 * @param classLoaderClassName String the name of the ClassLoader class requiring the permission
+	 * @param actions String the actions which are applicable to it
 	 */
 	public SharedClassPermission(String classLoaderClassName, String actions) {
 		super(classLoaderClassName);
@@ -69,33 +70,34 @@ public class SharedClassPermission extends BasicPermission {
 	}
 
 	private void decodeActions(String actions) {
-		StringTokenizer tokenizer =
-			new StringTokenizer(actions.toLowerCase(), " \t\n\r,"); //$NON-NLS-1$
+		StringTokenizer tokenizer = new StringTokenizer(actions.toLowerCase(), " \t\n\r,"); //$NON-NLS-1$
 		while (tokenizer.hasMoreTokens()) {
 			String token = tokenizer.nextToken();
-			if (token.equals("read")) //$NON-NLS-1$
+			if (token.equals("read")) { //$NON-NLS-1$
 				read = true;
-			else if (token.equals("write")) //$NON-NLS-1$
+			} else if (token.equals("write")) { //$NON-NLS-1$
 				write = true;
-			else
+			} else {
 				throw new IllegalArgumentException();
+			}
 		}
-		if (!read && !write) throw new IllegalArgumentException();
+		if (!read && !write) {
+			throw new IllegalArgumentException();
+		}
 	}
 
 	/**
 	 * Compares the argument to the receiver, and answers <code>true</code>
 	 * if they represent the <em>same</em> object using a class
-	 * specific comparison. In this case, the receiver must be
-	 * for the same property as the argument, and must have the
-	 * same actions.
-	 * <p>
-	 * @param		o		The object to compare with this object
-	 * @return		<code>true</code>
-	 *					If the object is the same as this object
-	 *				<code>false</code>
-	 *					If it is different from this object
-	 * @see			#hashCode
+	 * specific comparison.
+	 *
+	 * <p>In this case, the receiver must be for the same property as the argument,
+	 * and must have the same actions.
+	 *
+	 * @param o the object to compare with this object
+	 * @return boolean <code>true</code> if the object is the same as this object,
+	 *                 <code>false</code> if it is different from this object
+	 * @see #hashCode
 	 */
 	@Override
 	public boolean equals(Object o) {
@@ -108,27 +110,27 @@ public class SharedClassPermission extends BasicPermission {
 
 	/**
 	 * Answers a new PermissionCollection for holding permissions
-	 * of this class. Answer null if any permission collection can
-	 * be used.
-	 * <p>
-	 * @return		A new PermissionCollection or null
+	 * of this class.
 	 *
-	 * @see			java.security.PermissionCollection
+	 * @return a new PermissionCollection
+	 *
+	 * @see java.security.PermissionCollection
 	 */
 	@Override
+	@SuppressWarnings("deprecation")
 	public PermissionCollection newPermissionCollection() {
 		return new SharedClassPermissionCollection();
 	}
 
 	/**
-	 * Answers an integer hash code for the receiver. Any two 
-	 * objects which answer <code>true</code> when passed to 
-	 * <code>equals</code> must answer the same value for this
-	 * method.
-	 * <p>
-	 * @return		The receiver's hash
+	 * Answers the integer hash code for the receiver.
 	 *
-	 * @see			#equals
+	 * <p>Any two objects which answer <code>true</code> when passed to
+	 * <code>equals</code> must answer the same value for this method.
+	 *
+	 * @return the receiver's hash code
+	 *
+	 * @see #equals
 	 */
 	@Override
 	public int hashCode() {
@@ -137,58 +139,55 @@ public class SharedClassPermission extends BasicPermission {
 
 	/**
 	 * Answers the actions associated with the receiver.
-	 * The result will be either "read", "write", or 
-	 * "read,write".
-	 * <p>
-	 * @return		String.
-	 *					The actions associated with the receiver.
+	 *
+	 * <p>The result will be either "read", "write", or "read,write".
+	 *
+	 * @return String the actions associated with the receiver
 	 */
 	@Override
 	public String getActions() {
 		return read ? (write ? "read,write" : "read") : "write"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
-/*  Truth table for implies method:
- * 
- * 	property				implies
- *	p1 read		p1 write 	p2 read		p2 write	result
- *	0			0			0			0			0
- *	0			0			0			1			0
- *	0			0			1			0			0
- *	0			0			1			1			0
- *	0			1			0			0			1
- *	0			1			0			1			1
- *	0			1			1			0			0
- *	0			1			1			1			0
- *	1			0			0			0			1
- *	1			0			0			1			0
- *	1			0			1			0			1
- *	1			0			1			1			0
- *	1			1			0			0			1
- *	1			1			0			1			1
- *	1			1			1			0			1
- *	1			1			1			1			1
- */	
+	/*  Truth table for implies method:
+	 *
+	 * 	property				implies
+	 *	p1 read		p1 write 	p2 read		p2 write	result
+	 *	0			0			0			0			0
+	 *	0			0			0			1			0
+	 *	0			0			1			0			0
+	 *	0			0			1			1			0
+	 *	0			1			0			0			1
+	 *	0			1			0			1			1
+	 *	0			1			1			0			0
+	 *	0			1			1			1			0
+	 *	1			0			0			0			1
+	 *	1			0			0			1			0
+	 *	1			0			1			0			1
+	 *	1			0			1			1			0
+	 *	1			1			0			0			1
+	 *	1			1			0			1			1
+	 *	1			1			1			0			1
+	 *	1			1			1			1			1
+	 */
 	/**
 	 * Indicates whether the argument permission is implied
 	 * by the receiver.
-	 * <p>
-	 * @return		boolean
-	 *					<code>true</code> if the argument permission
-	 *					is implied by the receiver,
-	 *					and <code>false</code> if it is not.
-	 * @param		permission java.security.Permission.
-	 *					The permission to check
+	 *
+	 * @return boolean <code>true</code> if the argument permission is implied
+	 *     by the receiver, and <code>false</code> if it is not
+	 * @param permission Permission the permission to check
 	 */
 	@Override
 	public boolean implies(Permission permission) {
 		if (super.implies(permission)) {
 			SharedClassPermission pp = (SharedClassPermission) permission;
-			boolean result = (read && write) || 
-							(write && !pp.read) || 
+			boolean result = (read && write) ||
+							(write && !pp.read) ||
 							(read && !pp.write);
 			return result;
 		}
 		return false;
 	}
+
 }
