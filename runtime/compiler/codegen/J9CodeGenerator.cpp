@@ -840,19 +840,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       }
 
    // J9
-   //
-   // if we found this iterator method inlined in a scorching method
-   // we should attempt to prefetch where it's used for performance
-   // structure is needed to determine the loop size to use proper prefetch stride
-   if (!self()->shouldBuildStructure() &&
-      (self()->comp()->getMethodHotness() >= scorching) &&
-      !tt->getEnclosingBlock()->isCold() &&
-      strstr(fej9->sampleSignature(node->getOwningMethod(), 0, 0, self()->trMemory()),"java/util/TreeMap$UnboundedValueIterator.next()"))
-      {
-      self()->setShouldBuildStructure();
-      }
-
-   // J9
    if (node->getOpCode().isCall() &&
        node->isUnsafePutOrderedCall() &&
        node->isDontInlinePutOrderedCall())

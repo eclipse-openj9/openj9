@@ -132,11 +132,11 @@ J9::MethodSymbol::isPureFunction()
 
 /**
  * Returns true if the function call will not yield to OSR point.
- * 
+ *
  * An example of kind of function which can go in the list would be recognized calls with
- * NOP calls or the one that are guaranteed to be inlined by codegenerator. 
+ * NOP calls or the one that are guaranteed to be inlined by codegenerator.
  */
-bool 
+bool
 J9::MethodSymbol::functionCallDoesNotYieldOSR()
    {
    switch(self()->getRecognizedMethod())
@@ -145,7 +145,7 @@ J9::MethodSymbol::functionCallDoesNotYieldOSR()
       case TR::java_nio_Bits_keepAlive:
          return true;
       default:
-         return OMR::MethodSymbolConnector::functionCallDoesNotYieldOSR(); 
+         return OMR::MethodSymbolConnector::functionCallDoesNotYieldOSR();
       }
    return false;
    }
@@ -201,7 +201,6 @@ static TR::RecognizedMethod canSkipNullChecks[] =
    TR::java_math_BigDecimal_longString1C,
    TR::java_math_BigDecimal_longString2,
    TR::java_util_EnumMap__nec_,
-   TR::java_util_TreeMapUnboundedValueIterator_next,
    TR::java_util_TreeMapSubMap_setFirstKey,
    TR::java_util_TreeMapSubMap_setLastKey,
    TR::java_nio_Bits_getCharB,
@@ -293,7 +292,6 @@ static TR::RecognizedMethod canSkipBoundChecks[] =
    TR::java_util_TreeMap_rbInsert,
    TR::java_math_BigDecimal_longString1C,
    TR::java_math_BigDecimal_longString2,
-   TR::java_util_TreeMapUnboundedValueIterator_next,
    TR::java_util_TreeMapSubMap_setFirstKey,
    TR::java_util_TreeMapSubMap_setLastKey,
    TR::java_util_HashMap_get,
@@ -417,7 +415,6 @@ static TR::RecognizedMethod canSkipArrayStoreChecks[] =
    TR::java_util_Vector_contains,
    TR::java_util_Vector_subList,
    TR::java_util_TreeMap_rbInsert,
-   TR::java_util_TreeMapUnboundedValueIterator_next,
    TR::java_util_TreeMapSubMap_setLastKey,
    TR::java_util_TreeMapSubMap_setFirstKey,
    TR::java_util_concurrent_ConcurrentHashMap_addCount,

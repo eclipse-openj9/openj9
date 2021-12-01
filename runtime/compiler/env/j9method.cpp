@@ -2116,12 +2116,6 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
-   static X TreeMapUnboundedValueIteratorMethods[] =
-      {
-      {x(TR::java_util_TreeMapUnboundedValueIterator_next,   "next",      "()Ljava/lang/Object;")},
-      {  TR::unknownMethod}
-      };
-
    static X HashMapMethods[] =
       {
       {x(TR::java_util_HashMap_rehash,                "rehash",           "()V")},
@@ -4168,7 +4162,6 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class40[] =
       {
-      { "java/util/TreeMap$UnboundedValueIterator", TreeMapUnboundedValueIteratorMethods },
       { "com/ibm/dataaccess/ByteArrayUnmarshaller", DataAccessByteArrayUnmarshallerMethods },
       { "com/ibm/jit/crypto/JITFullHardwareDigest", CryptoDigestMethods },
       { "com/ibm/jit/crypto/JITAESCryptInHardware", XPCryptoMethods },
