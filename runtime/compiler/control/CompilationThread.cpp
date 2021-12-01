@@ -4626,12 +4626,48 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          }
       }
 
-   for (prev = NULL, cur = _methodQueue; cur; prev = cur, cur = cur->_next)
+   J9Method *method = details.getMethod();
+
+   // Ordinary, non-JNI methods that are interpreted have their 'j9method->extra' field
+   // set to J9_JIT_QUEUED_FOR_COMPILATION when they are added to the queue
+   // Thus, we can skip searching the queue if j9method->extra has another value
+   // However, sync compilations do not set method->extra to J9_JIT_QUEUED_FOR_COMPILATION
+   bool skipSearchingForDuplicates = false;
+   static char *disableSkipSearching = feGetEnv("TR_DisableSkipSearchingForRequestDuplicates");
+   if (!disableSkipSearching &&
+       pc == 0 && // Interpreted methods
+       details.isOrdinaryMethod() &&
+       !isJNINative(method) &&
+       !(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative) &&
+       getJ9MethodVMExtra(method) != J9_JIT_QUEUED_FOR_COMPILATION)
       {
-      numEntries++;
-      queueWeight += cur->_weight;
-      if (cur->getMethodDetails().sameAs(details, fe))
-         break;
+      skipSearchingForDuplicates = true;
+      }
+
+   if (skipSearchingForDuplicates)
+      {
+      // In this case we only have to scan the synchronous requests in the queue
+      for (prev = NULL, cur = _methodQueue; cur; prev = cur, cur = cur->_next)
+         {
+         // Stop the search when we finished with sync entries
+         if (cur->_priority < CP_SYNC_MIN)
+            {
+            cur = NULL; // signal that we din't find the entry
+            break;
+            }
+         if (cur->getMethodDetails().sameAs(details, fe))
+            break;
+         }
+      }
+   else // Scan the entire queue
+      {
+      for (prev = NULL, cur = _methodQueue; cur; prev = cur, cur = cur->_next)
+         {
+         numEntries++;
+         queueWeight += cur->_weight;
+         if (cur->getMethodDetails().sameAs(details, fe))
+            break;
+         }
       }
 
    // NOTE: we do not need to search the methodPool since we cannot reach here if an entry
@@ -4683,20 +4719,23 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
    //
    else
       {
-      if (queueWeight != _queueWeight) //QW
+      // If we skipped searching, we cannot do the validation checks
+      if (!skipSearchingForDuplicates)
          {
-         if (TR::Options::isAnyVerboseOptionSet())
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Discrepancy for queue weight while adding to queue: computed=%u recorded=%u\n", queueWeight, _queueWeight);
-         // correction
-         _queueWeight = queueWeight;
+         if (queueWeight != _queueWeight) //QW
+            {
+            if (TR::Options::isAnyVerboseOptionSet())
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Discrepancy for queue weight while adding to queue: computed=%u recorded=%u\n", queueWeight, _queueWeight);
+            // correction
+            _queueWeight = queueWeight;
+            }
+         if (numEntries != _numQueuedMethods)
+            {
+            if (TR::Options::isAnyVerboseOptionSet())
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Discrepancy for queue size while adding to queue: Before adding numEntries=%d  _numQueuedMethods=%d\n", numEntries, _numQueuedMethods);
+            TR_ASSERT(false, "Discrepancy for queue size while adding to queue");
+            }
          }
-      if (numEntries != _numQueuedMethods)
-         {
-         if (TR::Options::isAnyVerboseOptionSet())
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Discrepancy for queue size while adding to queue: Before adding numEntries=%d  _numQueuedMethods=%d\n", numEntries, _numQueuedMethods);
-         TR_ASSERT(false, "Discrepancy for queue size while adding to queue");
-         }
-
       cur = getCompilationQueueEntry();
       if (cur == NULL)  // Memory Allocation Failure.
          return NULL;
@@ -4735,9 +4774,8 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          }
       else if (details.isOrdinaryMethod()) // ordinary interpreted methods
          {
-         J9Method *method = details.getMethod();
          isJNINativeMethodRequest = isJNINative(method);
-         if (method && async
+         if (async
             && (getInvocationCount(method) == 0)           // this will filter out JNI natives
             && !(J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative)) // Never change the extra field of a native method
             {
@@ -4753,7 +4791,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
       incrementMethodQueueSize(); // one more method added to the queue
       *queued = true; // set the flag that we added a new request to the queue
 
-      Trc_JIT_CompRequest(vmThread, details.getMethod(), pc, !async, optimizationPlan->getOptLevel(), (int)priority, _numQueuedMethods);
+      Trc_JIT_CompRequest(vmThread, method, pc, !async, optimizationPlan->getOptLevel(), (int)priority, _numQueuedMethods);
 
       // Increase the queue weight
       uint8_t entryWeight; // must be less than 256
@@ -4766,7 +4804,6 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          // Compilation may be downgraded to cold during classLoadPhase
          // While we cannot anticipate that classLoadPhase will last till the method
          // is extracted from the queue, this is the best estimate
-         J9Method *method = details.getMethod();
          if (TR::CompilationInfo::isJSR292(method))
             {
             entryWeight = (uint32_t)TR::Options::_weightOfJSR292;
