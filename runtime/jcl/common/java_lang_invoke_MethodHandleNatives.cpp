@@ -1507,27 +1507,27 @@ Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass cl
 					vmindex = ((J9JNIFieldID*)vmindex)->offset;
 					target = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, membernameObject);
 				} else {
-					J9JNIMethodID *methodID = (J9JNIMethodID*)vmindex;
-					if (J9_ARE_ANY_BITS_SET(methodID->vTableIndex, J9_JNI_MID_INTERFACE)) {
-						/* vmindex points to an iTable index. */
-						vmindex = methodID->vTableIndex & ~J9_JNI_MID_INTERFACE;
-					} else if (0 == methodID->vTableIndex) {
-						jint refKind = (flags >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK;
-						if ((MH_REF_INVOKEVIRTUAL == refKind) || (MH_REF_INVOKEINTERFACE == refKind)) {
+					jint refKind = (flags >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK;
+					if ((MH_REF_INVOKEVIRTUAL == refKind) || (MH_REF_INVOKEINTERFACE == refKind)) {
+						J9JNIMethodID *methodID = (J9JNIMethodID*)vmindex;
+						if (J9_ARE_ANY_BITS_SET(methodID->vTableIndex, J9_JNI_MID_INTERFACE)) {
+							/* vmindex points to an iTable index. */
+							vmindex = (jlong)(methodID->vTableIndex & ~J9_JNI_MID_INTERFACE);
+						} else if (0 == methodID->vTableIndex) {
 							/* initializeMethodID will set J9JNIMethodID->vTableIndex to 0 for private interface
 							 * methods and j.l.Object methods. Reference implementation (RI) expects vmindex to
 							 * be 0 in such cases.
 							 */
 							vmindex = 0;
 						} else {
-							/* RI expects direct invocation, i.e. !invokevirtual and !invokeinterface ref kinds,
-							 * to have a negative vmindex.
-							 */
-							vmindex = -1;
+							/* vmindex points to a vTable index. */
+							vmindex = (jlong)methodID->vTableIndex;
 						}
 					} else {
-						/* vmindex points to a vTable index. */
-						vmindex = methodID->vTableIndex;
+						/* RI expects direct invocation, i.e. !invokevirtual and !invokeinterface ref kinds,
+						 * to have a negative vmindex.
+						 */
+						vmindex = -1;
 					}
 					target = membernameObject;
 				}
