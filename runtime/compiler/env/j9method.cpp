@@ -3310,13 +3310,6 @@ void TR_ResolvedJ9Method::construct()
       { TR::unknownMethod}
       };
 
-   static X SubMapMethods[] =
-      {
-      {x(TR::java_util_TreeMapSubMap_setLastKey,      "setLastKey",      "()V")},
-      {x(TR::java_util_TreeMapSubMap_setFirstKey,     "setFirstKey",     "()V")},
-      {  TR::unknownMethod}
-      };
-
    static X VMInternalsMethods[] =
       {
       {x(TR::java_lang_Class_newInstanceImpl,      "newInstanceImpl",      "(Ljava/lang/Class;)Ljava/lang/Object;")},
@@ -4022,7 +4015,6 @@ void TR_ResolvedJ9Method::construct()
    static Y class24[] =
       {
       { "java/lang/reflect/Method", MethodMethods },
-      { "java/util/TreeMap$SubMap", SubMapMethods },
       { "sun/nio/cs/UTF_8$Decoder", EncodeMethods },
       { "sun/nio/cs/UTF_8$Encoder", EncodeMethods },
       { "sun/nio/cs/UTF16_Encoder", EncodeMethods },

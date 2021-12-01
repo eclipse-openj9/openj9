@@ -324,8 +324,6 @@
    java_util_EnumMap_typeCheck,
    java_util_EnumMap__init_, // <init> constructors
    java_util_EnumMap__nec_, // other methods
-   java_util_TreeMapSubMap_setLastKey,
-   java_util_TreeMapSubMap_setFirstKey,
    java_util_HashMap_rehash,
    java_util_HashMap_analyzeMap,
    java_util_HashMap_calculateCapacity,
