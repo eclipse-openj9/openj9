@@ -2,7 +2,7 @@
 package com.ibm.oti.reflect;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2021 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,6 @@ import jdk.internal.reflect.ConstantPool;
 /*[ELSE]*/
 import sun.reflect.ConstantPool;
 /*[ENDIF]*/
-import com.ibm.oti.vm.VM;
 
 public class AnnotationParser {
 
@@ -74,7 +73,6 @@ public class AnnotationParser {
 		if (elementValueData == null) return null;
 		ByteBuffer buf = ByteBuffer.wrap(elementValueData);
 		Class clazz = method.getDeclaringClass();
-		Object internalConstantPool = VM.getVMLangAccess().getInternalConstantPoolFromClass(clazz);
 		
 		/* The AnnotationParser boxes primitive return types */
 		Class returnType = method.getReturnType();
@@ -97,15 +95,14 @@ public class AnnotationParser {
 				returnType = Double.class;
 			}
 		}
-		return sun.reflect.annotation.AnnotationParser.parseMemberValue(returnType, buf, getConstantPool(internalConstantPool), clazz);
+		return sun.reflect.annotation.AnnotationParser.parseMemberValue(returnType, buf, getConstantPool(clazz), clazz);
 	}
 
 	public static Annotation[] parseAnnotations(byte[] annotationsData, Class clazz) {
-		Object internalConstantPool = VM.getVMLangAccess().getInternalConstantPoolFromClass(clazz);
 		return sun.reflect.annotation.AnnotationParser.toArray(
 				sun.reflect.annotation.AnnotationParser.parseAnnotations(
 						annotationsData,
-						getConstantPool(internalConstantPool),
+						getConstantPool(clazz),
 						clazz));
 	}
 
@@ -115,7 +112,7 @@ public class AnnotationParser {
 	private static native byte[] getParameterAnnotationsData(Constructor constructor);
 	private static native byte[] getParameterAnnotationsData(Method method);
 	private static native byte[] getDefaultValueData(Method method);
-	static native ConstantPool getConstantPool(Object internalConstantPool);
+	static native ConstantPool getConstantPool(Class clazz);
 	private static native byte[] getAnnotationsDataImpl(java.lang.Class clazz);
 
 	private static Annotation[][] parseParameterAnnotations(byte[] annotationsData, Class<?> declaringClass, int parametersCount) {
@@ -126,7 +123,6 @@ public class AnnotationParser {
 			}
 			return annotations;
 		}
-		Object internalConstantPool = VM.getVMLangAccess().getInternalConstantPoolFromClass(declaringClass);
-		return sun.reflect.annotation.AnnotationParser.parseParameterAnnotations(annotationsData, getConstantPool(internalConstantPool), declaringClass);
+		return sun.reflect.annotation.AnnotationParser.parseParameterAnnotations(annotationsData, getConstantPool(declaringClass), declaringClass);
 	}
 }
