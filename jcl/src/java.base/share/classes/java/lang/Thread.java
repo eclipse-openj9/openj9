@@ -26,12 +26,14 @@ import java.util.Map;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[IF Sidecar18-SE-OpenJ9]*/
+import jdk.internal.misc.TerminatingThreadLocal;
+/*[ENDIF] Sidecar18-SE-OpenJ9 */
 import sun.security.util.SecurityConstants;
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 import java.io.FileDescriptor;
 import java.nio.charset.Charset;
 import java.util.Properties;
-import jdk.internal.misc.TerminatingThreadLocal;
 import jdk.internal.reflect.CallerSensitive;
 /*[ELSE] JAVA_SPEC_VERSION >= 11 */
 import sun.reflect.CallerSensitive;
@@ -1574,11 +1576,11 @@ void cleanup() {
 	deadInterrupt = interrupted();
 /*[ENDIF] JAVA_SPEC_VERSION >= 14 */
 
-/*[IF JAVA_SPEC_VERSION >= 11]*/
-	if (threadLocals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
+/*[IF Sidecar18-SE-OpenJ9]*/
+	if ((threadLocals != null) && TerminatingThreadLocal.REGISTRY.isPresent()) {
 		TerminatingThreadLocal.threadTerminated();
 	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+/*[ENDIF] Sidecar18-SE-OpenJ9 */
 
 	/*[PR 97317]*/
 	group = null;
