@@ -1210,6 +1210,13 @@ Java_com_ibm_lang_management_internal_JvmCpuMonitor_getThreadCategoryImpl(JNIEnv
  */
 jint JNICALL
 Java_com_ibm_oti_vm_VM_markCurrentThreadAsSystemImpl(JNIEnv *env);
+/**
+ * Gets the J9ConstantPool address from a J9Class address
+ * @param j9clazz J9Class address
+ * @return Address of J9ConstantPool
+ */
+jlong JNICALL
+Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class(JNIEnv *env, jclass unused, jlong j9clazz);
 
 #if JAVA_SPEC_VERSION >= 16
 jboolean JNICALL
