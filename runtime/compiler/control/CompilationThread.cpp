@@ -5854,6 +5854,35 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
                *compErrCode = compilationInProgress;
             return 0; // mark that compilation is not yet done
             }
+         // When the compilation queue is very large, it may be better to postpone
+         // the asynchronous compilations by replenishing the invocation counter.
+         // This avoids the overhead associated with searching the right place to
+         // insert into the compilation queue (which is a priority queue)
+         if (getMethodQueueSize() >= TR::Options::_qszLimit &&
+             oldStartPC == 0 && // Only look at interpreted methods
+             details.isOrdinaryMethod()) // Do not apply this optimization to DLT
+            {
+            J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+            if (!(romMethod->modifiers & J9AccNative)) // We are not allowed to change the invocation count for native methods
+               {
+               int32_t newCount = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR_DEFAULT_INITIAL_BCOUNT : TR_DEFAULT_INITIAL_COUNT;
+               bool success = TR::CompilationInfo::replenishInvocationCountIfExpired(method, newCount);
+               if (success)
+                  {
+                  if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+                     {
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Reencoding count=%d for j9m=%p because Q_SZ is too large", newCount, method);
+                     }
+                  // Release the compilation lock and return
+                  debugPrint(vmThread, "\tapplication thread releasing compilation monitor - comp.req. in progress\n");
+                  debugPrint(vmThread, "-CM\n");
+                  releaseCompMonitor(vmThread);
+                  if (compErrCode)
+                     *compErrCode = compilationNotNeeded;
+                  return 0; // mark that compilation is not yet done
+                  }
+               }
+            }
          }
       }
    else

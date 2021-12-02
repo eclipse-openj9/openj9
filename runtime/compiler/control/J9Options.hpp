@@ -100,7 +100,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static int32_t _veryHighActiveThreadThreshold;
    static int32_t getVeryHighActiveThreadThreshold() {return _veryHighActiveThreadThreshold;}
-   
+
    static int32_t _maxCheckcastProfiledClassTests;
    static int32_t getCheckcastMaxProfiledClassTests() {return _maxCheckcastProfiledClassTests;}
 
@@ -252,6 +252,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _qsziThresholdToDowngradeDuringCLP;
    static int32_t _qszThresholdToDowngradeOptLevelDuringStartup;
    static int32_t _cpuUtilThresholdForStarvation;
+   static int32_t _qszLimit; // maximum size of the compilation queue
    static int32_t _compPriorityQSZThreshold;
    static int32_t _GCRQueuedThresholdForCounting; // if too many GCR are queued we stop counting
    static int32_t _minimumSuperclassArraySize; //size of the minimum superclass array

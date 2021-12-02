@@ -178,6 +178,7 @@ int32_t J9::Options::_qszThresholdToDowngradeOptLevel = -1; // not yet set
 int32_t J9::Options::_qsziThresholdToDowngradeDuringCLP = 0; // -1 or 0 disables the feature and reverts to old behavior
 int32_t J9::Options::_qszThresholdToDowngradeOptLevelDuringStartup = 100000; // a large number disables the feature
 int32_t J9::Options::_cpuUtilThresholdForStarvation = 25; // 25%
+int32_t J9::Options::_qszLimit = 5000; // when limit is reached the JIT will postpone new compilation requests
 
 // If too many GCR are queued we stop counting.
 // Use a large value to disable the feature. 400 is a good default
@@ -725,6 +726,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
    {"compilationPriorityQSZThreshold=", "M<nnn>\tCompilation queue size threshold when priority of post-profiling"
                                "compilation requests is increased",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_compPriorityQSZThreshold , 0, "F%d", NOT_IN_SUBSET},
+   {"compilationQueueSizeLimit=", "R<nnn>\tWhen limit is reached, first-time compilations are postponed by replenishing the invocation count",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_qszLimit, 0, "F%d", NOT_IN_SUBSET},
    {"compilationThreadAffinityMask=", "M<nnn>\taffinity mask for compilation threads. Use hexa without 0x",
         TR::Options::setStaticHexadecimal, (intptr_t)&TR::Options::_compThreadAffinityMask, 0, "F%d", NOT_IN_SUBSET},
    {"compilationYieldStatsHeartbeatPeriod=", "M<nnn>\tperiodically print stats about compilation yield points "
