@@ -85,6 +85,7 @@
 #define J9ClassRequiresPrePadding 0x20000
 #define J9ClassIsValueBased 0x40000
 #define J9ClassHasIdentity 0x80000
+#define J9ClassEnsureHashed 0x100000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -3224,6 +3225,9 @@ typedef struct J9Class {
 #define J9CLASS_PREPADDING_SIZE(clazz) 0
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
+/* For the following, J9_ARE_ANY_BITS_SET fails on zOS, currently under investigation. Issue: #14043 */
+#define J9CLASS_IS_ENSUREHASHED(clazz) (J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassEnsureHashed))
+
 typedef struct J9ArrayClass {
 	UDATA eyecatcher;
 	struct J9ROMClass* romClass;
@@ -5582,6 +5586,7 @@ typedef struct J9JavaVM {
 	struct J9Pool *cifArgumentTypesCache;
 	omrthread_monitor_t cifArgumentTypesCacheMutex;
 #endif /* JAVA_SPEC_VERSION >= 16 */
+	struct J9HashTable* ensureHashedClasses;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 package java.lang;
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,14 +23,14 @@ package java.lang;
  *******************************************************************************/
 
 /**
- * Represents the internal J9Class
- * 
+ * Represents the internal J9ConstantPool
+ *
  */
-final class InternalRamClass {
+final class InternalConstantPool {
 	@SuppressWarnings("unused")
 	private final long vmref;
-	
-	public InternalRamClass(long addr) {
+
+	public InternalConstantPool(long addr) {
 		vmref = addr;
 	}
 }
