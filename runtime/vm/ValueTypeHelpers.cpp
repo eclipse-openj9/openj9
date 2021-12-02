@@ -118,7 +118,7 @@ isNameOrSignatureQtype(J9UTF8 *utfWrapper)
 BOOLEAN
 isClassRefQtype(J9Class *cpContextClass, U_16 cpIndex)
 {
-	return VM_ValueTypeHelpers::isClassRefQtype((J9ConstantPool *) cpContextClass->ramConstantPool, cpIndex);
+	return VM_ValueTypeHelpers::isClassRefQtype(cpContextClass->ramConstantPool, cpIndex);
 }
 
 UDATA
@@ -245,6 +245,5 @@ areValueTypesEnabled(J9JavaVM *vm)
 {
 	return J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA);
 }
-
 
 } /* extern "C" */

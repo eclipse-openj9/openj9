@@ -1046,7 +1046,7 @@ found:
 			/* Default Method conflict */
 			J9Method *defaultMethod = (J9Method*)(temp & ~DEFAULT_CONFLICT_METHOD_ID_TAG);
 			conflictMethodPtr->bytecodes = (U_8*)(J9_ROM_METHOD_FROM_RAM_METHOD(defaultMethod) + 1);
-			conflictMethodPtr->constantPool = (J9ConstantPool *)ramClass->ramConstantPool;
+			conflictMethodPtr->constantPool = ramClass->ramConstantPool;
 			conflictMethodPtr->methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT);
 			conflictMethodPtr->extra = (void *)((UDATA)defaultMethod | J9_STARTPC_NOT_TRANSLATED);
 			vTableMethod = conflictMethodPtr;
@@ -2873,7 +2873,7 @@ fail:
 				}
 				ramClass->superclasses = (J9Class **) allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address;
 				ramClass->ramStatics = allocationRequests[RAM_STATICS_FRAGMENT].address;
-				ramClass->ramConstantPool = allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].address;
+				ramClass->ramConstantPool = (J9ConstantPool *) allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].address;
 				ramClass->callSites = (j9object_t *) allocationRequests[RAM_CALL_SITES_FRAGMENT].address;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 				ramClass->invokeCache = (j9object_t *) allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].address;
@@ -2923,7 +2923,7 @@ fail:
 
 		/* initialize RAM Class */
 		{
-			J9ConstantPool *ramConstantPool = (J9ConstantPool *) (ramClass->ramConstantPool);
+			J9ConstantPool *ramConstantPool = ramClass->ramConstantPool;
 			UDATA ramConstantPoolCount = romClass->ramConstantPoolCount * 2; /* 2 slots per CP entry */
 			U_32 tempClassDepthAndFlags = 0;
 			UDATA iTableMethodCount = 0;
