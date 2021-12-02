@@ -393,13 +393,21 @@ public:
 		/* Initialize the object */
 		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
 			J9ObjectCompressed *objectHeader = (J9ObjectCompressed*) instance;
-			objectHeader->clazz = (uint32_t)(uintptr_t)clazz;
+			if (J9CLASS_IS_ENSUREHASHED(clazz)) {
+				objectHeader->clazz = (uint32_t)(uintptr_t)clazz | (uint32_t)OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS;
+			} else {
+				objectHeader->clazz = (uint32_t)(uintptr_t)clazz;
+			}
 			if (initializeSlots) {
 				memset(objectHeader + 1, 0, dataSize);
 			}
 		} else {
 			J9ObjectFull *objectHeader = (J9ObjectFull*) instance;
-			objectHeader->clazz = (uintptr_t)clazz;
+			if (J9CLASS_IS_ENSUREHASHED(clazz)) {
+				objectHeader->clazz = (uintptr_t)clazz | (uintptr_t)OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS;
+			} else {
+				objectHeader->clazz = (uintptr_t)clazz;
+			}
 			if (initializeSlots) {
 				memset(objectHeader + 1, 0, dataSize);
 			}
