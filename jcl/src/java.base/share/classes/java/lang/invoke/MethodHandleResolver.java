@@ -59,49 +59,49 @@ final class MethodHandleResolver {
 	/*
 	 * Return the result of J9_CP_TYPE(J9Class->romClass->cpShapeDescription, index)
 	 */
-	private static final native int getCPTypeAt(Object internalConstantPool, int index);
+	private static final native int getCPTypeAt(Object internalRamClass, int index);
 
 	/*
 	 * sun.reflect.ConstantPool doesn't have a getMethodTypeAt method.  This is the 
 	 * equivalent for MethodType.
 	 */
-	private static final native MethodType getCPMethodTypeAt(Object internalConstantPool, int index);
+	private static final native MethodType getCPMethodTypeAt(Object internalRamClass, int index);
 
 	/*
 	 * sun.reflect.ConstantPool doesn't have a getMethodHandleAt method.  This is the 
 	 * equivalent for MethodHandle.
 	 */
-	private static final native MethodHandle getCPMethodHandleAt(Object internalConstantPool, int index);
+	private static final native MethodHandle getCPMethodHandleAt(Object internalRamClass, int index);
 
 	
 	/**
 	 * Get the class name from a constant pool class element, which is located
-	 * at the specified <i>index</i> in <i>internalConstantPool</i>.
+	 * at the specified <i>index</i> in <i>clazz</i>'s constant pool.
 	 * 
-	 * @param   internalConstantPool the constant pool as an InternalConstantPool object
-	 * @param   index the constant pool index
+	 * @param   an instance of class - its constant pool is accessed
+	 * @param   the constant pool index
 	 * 
 	 * @return  instance of String which contains the class name or NULL in
 	 *          case of error
 	 * 
-	 * @throws  NullPointerException if <i>internalConstantPool</i> is null
+	 * @throws  NullPointerException if <i>clazz</i> is null
 	 * @throws  IllegalArgumentException if <i>index</i> has wrong constant pool type
 	 */
-	private static final native String getCPClassNameAt(Object internalConstantPool, int index);
+	private static final native String getCPClassNameAt(Class<?> clazz, int index);
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 	/*
 	 * sun.reflect.ConstantPool doesn't have a getConstantDynamicAt method.  This is the 
 	 * equivalent for ConstantDynamic.
 	 */
-	private static final native Object getCPConstantDynamicAt(Object internalConstantPool, int index);
+	private static final native Object getCPConstantDynamicAt(Object internalRamClass, int index);
 
 	@SuppressWarnings("unused")
 	private static final Object resolveConstantDynamic(long j9class, String name, String fieldDescriptor, long bsmData) throws Throwable {
 		Object result = null;
 
 		VMLangAccess access = VM.getVMLangAccess();
-		Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class);
+		Object internalRamClass = access.createInternalRamClass(j9class);
 		Class<?> classObject = getClassFromJ9Class(j9class);
 
 		Class<?> typeClass = fromFieldDescriptorString(fieldDescriptor, access.getClassloader(classObject));
@@ -110,7 +110,7 @@ final class MethodHandleResolver {
 		int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 		long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
 
-		MethodHandle bsm = getCPMethodHandleAt(internalConstantPool, bsmIndex);
+		MethodHandle bsm = getCPMethodHandleAt(internalRamClass, bsmIndex);
 		if (null == bsm) {
 			/*[MSG "K05cd", "unable to resolve 'bootstrap_method_ref' in '{0}' at index {1}"]*/
 			throw new NullPointerException(Msg.getString("K05cd", classObject.toString(), bsmIndex)); //$NON-NLS-1$
@@ -131,7 +131,7 @@ final class MethodHandleResolver {
 /*[IF OPENJDK_METHODHANDLES]*/
 		Object[] staticArgs = new Object[bsmArgCount];
 		for (int i = 0; i < bsmArgCount; i++) {
-			staticArgs[i] = getAdditionalBsmArg(access, internalConstantPool, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
+			staticArgs[i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
 		}
 /*[ELSE] OPENJDK_METHODHANDLES*/
 		Object[] staticArgs = new Object[BSM_OPTIONAL_ARGUMENTS_START_INDEX + bsmArgCount];
@@ -140,7 +140,7 @@ final class MethodHandleResolver {
 		staticArgs[BSM_NAME_ARGUMENT_INDEX] = name;
 		staticArgs[BSM_TYPE_ARGUMENT_INDEX] = typeClass;
 		for (int i = 0; i < bsmArgCount; i++) {
-			staticArgs[BSM_OPTIONAL_ARGUMENTS_START_INDEX + i] = getAdditionalBsmArg(access, internalConstantPool, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
+			staticArgs[BSM_OPTIONAL_ARGUMENTS_START_INDEX + i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
 		}
 /*[ENDIF] OPENJDK_METHODHANDLES*/
 
@@ -227,7 +227,7 @@ final class MethodHandleResolver {
 	private static final Object resolveInvokeDynamic(long j9class, String name, String methodDescriptor, long bsmData) throws Throwable {
 /*[IF OPENJDK_METHODHANDLES]*/
 		VMLangAccess access = VM.getVMLangAccess();
-		Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class);
+		Object internalRamClass = access.createInternalRamClass(j9class);
 		Class<?> classObject = getClassFromJ9Class(j9class);
 
 		MethodType type = MethodTypeHelper.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
@@ -237,7 +237,7 @@ final class MethodHandleResolver {
 		int bsmIndex = UNSAFE.getShort(bsmData);
 		int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 		long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
-		MethodHandle bsm = getCPMethodHandleAt(internalConstantPool, bsmIndex);
+		MethodHandle bsm = getCPMethodHandleAt(internalRamClass, bsmIndex);
 		if (null == bsm) {
 			/*[MSG "K05cd", "unable to resolve 'bootstrap_method_ref' in '{0}' at index {1}"]*/
 			throw new NullPointerException(Msg.getString("K05cd", classObject.toString(), bsmIndex)); //$NON-NLS-1$
@@ -247,7 +247,7 @@ final class MethodHandleResolver {
 		/* Static optional arguments */
 		int bsmTypeArgCount = bsm.type().parameterCount();
 		for (int i = 0; i < bsmArgCount; i++) {
-			staticArgs[i] = getAdditionalBsmArg(access, internalConstantPool, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
+			staticArgs[i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
 		}
 
 		Object[] appendixResult = new Object[1];
@@ -278,7 +278,7 @@ final class MethodHandleResolver {
 		try {
 /*[ENDIF] JAVA_SPEC_VERSION < 11 */
 			VMLangAccess access = VM.getVMLangAccess();
-			Object internalConstantPool = access.getInternalConstantPoolFromJ9Class(j9class);
+			Object internalRamClass = access.createInternalRamClass(j9class);
 			Class<?> classObject = getClassFromJ9Class(j9class);
 			
 			type = MethodTypeHelper.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
@@ -293,7 +293,7 @@ final class MethodHandleResolver {
 			int bsmIndex = UNSAFE.getShort(bsmData);
 			int bsmArgCount = UNSAFE.getShort(bsmData + BSM_ARGUMENT_COUNT_OFFSET);
 			long bsmArgs = bsmData + BSM_ARGUMENTS_OFFSET;
-			MethodHandle bsm = getCPMethodHandleAt(internalConstantPool, bsmIndex);
+			MethodHandle bsm = getCPMethodHandleAt(internalRamClass, bsmIndex);
 			if (null == bsm) {
 				/*[MSG "K05cd", "unable to resolve 'bootstrap_method_ref' in '{0}' at index {1}"]*/
 				throw new NullPointerException(Msg.getString("K05cd", classObject.toString(), bsmIndex)); //$NON-NLS-1$
@@ -307,7 +307,7 @@ final class MethodHandleResolver {
 			/* Static optional arguments */
 			int bsmTypeArgCount = bsm.type().parameterCount();
 			for (int i = 0; i < bsmArgCount; i++) {
-				staticArgs[BSM_OPTIONAL_ARGUMENTS_START_INDEX + i] = getAdditionalBsmArg(access, internalConstantPool, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
+				staticArgs[BSM_OPTIONAL_ARGUMENTS_START_INDEX + i] = getAdditionalBsmArg(access, internalRamClass, classObject, bsm, bsmArgs, bsmTypeArgCount, i);
 			}
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
@@ -536,7 +536,7 @@ final class MethodHandleResolver {
 	/**
 	 * Retrieve a static argument of the bootstrap method at argIndex from constant pool
 	 * @param access
-	 * @param internalConstantPool
+	 * @param internalRamClass
 	 * @param classObject RAM class object
 	 * @param bsm bootstrap method
 	 * @param bsmArgs starting address of bootstrap arguments in the RAM class call site
@@ -546,27 +546,27 @@ final class MethodHandleResolver {
 	 * @return additional argument from the constant pool
 	 * @throws Throwable any throwable will be handled by the caller
 	 */
-	private static final Object getAdditionalBsmArg(VMLangAccess access, Object internalConstantPool, Class<?> classObject, MethodHandle bsm, long bsmArgs, int bsmTypeArgCount, int argIndex) throws Throwable {
+	private static final Object getAdditionalBsmArg(VMLangAccess access, Object internalRamClass, Class<?> classObject, MethodHandle bsm, long bsmArgs, int bsmTypeArgCount, int argIndex) throws Throwable {
 		/* Check if we need to treat the last parameter specially when handling primitives.
 		 * The type of the varargs array will determine how primitive ints from the constantpool
 		 * get boxed: {Boolean, Byte, Short, Character or Integer}.
 		 */ 
 		boolean treatLastArgAsVarargs = bsm.isVarargsCollector();
 
-		/* The ConstantPool natives expect an InternalConstantPool to extract the j9constantpool
-		 * from.
-		 */
-		ConstantPool cp = access.getConstantPool(internalConstantPool);
+		/* internalRamClass is not a j.l.Class object but the ConstantPool natives know how to
+		* get the internal constantPool from the j9class
+		*/
+		ConstantPool cp = access.getConstantPool(internalRamClass);
 
 		int staticArgIndex = BSM_OPTIONAL_ARGUMENTS_START_INDEX + argIndex;
 		short index = UNSAFE.getShort(bsmArgs + (argIndex * BSM_ARGUMENT_SIZE));
-		int cpType = getCPTypeAt(internalConstantPool, index);
+		int cpType = getCPTypeAt(internalRamClass, index);
 		Object cpEntry = null;
 		switch (cpType) {
 		case 1:
 			cpEntry = cp.getClassAt(index);
 			if (cpEntry == null) {
-				throw throwNoClassDefFoundError(internalConstantPool, index);
+				throw throwNoClassDefFoundError(classObject, index);
 			}
 			break;
 		case 2:
@@ -609,14 +609,14 @@ final class MethodHandleResolver {
 			cpEntry = cp.getDoubleAt(index);
 			break;
 		case 13:
-			cpEntry = getCPMethodTypeAt(internalConstantPool, index);
+			cpEntry = getCPMethodTypeAt(internalRamClass, index);
 			break;
 		case 14:
-			cpEntry = getCPMethodHandleAt(internalConstantPool, index);
+			cpEntry = getCPMethodHandleAt(internalRamClass, index);
 			break;
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 		case 17:
-			cpEntry = getCPConstantDynamicAt(internalConstantPool, index);
+			cpEntry = getCPConstantDynamicAt(internalRamClass, index);
 			break;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		default:
@@ -629,19 +629,19 @@ final class MethodHandleResolver {
 	
 	/**
 	 * Retrieve the class name of the constant pool class element located at the specified
-	 * index in internalConstantPool. Then, throw a NoClassDefFoundError with the cause
+	 * index in clazz's constant pool. Then, throw a NoClassDefFoundError with the cause
 	 * set as ClassNotFoundException. The message of NoClassDefFoundError and 
 	 * ClassNotFoundException contains the name of the class, which couldn't be found.
 	 * 
-	 * @param   internalConstantPool the constant pool as an InternalConstantPool object
-	 * @param   index the integer value of the constant pool index
+	 * @param   an instance of Class - its constant pool is accessed
+	 * @param   integer value of the constant pool index
 	 * 
 	 * @return  Throwable to prevent any fall through case
 	 * 
 	 * @throws  NoClassDefFoundError with the cause set as ClassNotFoundException
 	 */
-	private static final Throwable throwNoClassDefFoundError(Object internalConstantPool, int index) {
-		String className = getCPClassNameAt(internalConstantPool, index);
+	private static final Throwable throwNoClassDefFoundError(Class<?> clazz, int index) {
+		String className = getCPClassNameAt(clazz, index);
 		NoClassDefFoundError noClassDefFoundError = new NoClassDefFoundError(className);
 		noClassDefFoundError.initCause(new ClassNotFoundException(className));
 		throw noClassDefFoundError;	
