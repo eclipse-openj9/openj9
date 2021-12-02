@@ -2110,12 +2110,6 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
-   static X TreeMapMethods[] =
-      {
-      {x(TR::java_util_TreeMap_rbInsert,     "rbInsert",           "(Ljava/lang/Object;)Ljava/util/TreeMap$Entry;")},
-      {  TR::unknownMethod}
-      };
-
    static X HashMapMethods[] =
       {
       {x(TR::java_util_HashMap_rehash,                "rehash",           "()V")},
@@ -3948,7 +3942,6 @@ void TR_ResolvedJ9Method::construct()
       { "com/ibm/oti/vm/VM", otivmMethods },
       { "java/lang/Integer", IntegerMethods },
       { "java/lang/Boolean", BooleanMethods },
-      { "java/util/TreeMap", TreeMapMethods },
       { "java/util/HashMap", HashMapMethods },
       { 0 }
       };

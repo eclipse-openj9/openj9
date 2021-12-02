@@ -318,7 +318,6 @@
    java_util_Vector_addElement,
    java_util_Vector_contains,
    java_util_Vector_subList,
-   java_util_TreeMap_rbInsert,
    java_util_TreeMap_all,
    java_util_EnumMap_put, // put and putAll
    java_util_EnumMap_typeCheck,
