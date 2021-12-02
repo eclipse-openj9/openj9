@@ -41,5 +41,7 @@ class Main {
 				e.printStackTrace();
 			}
 		}
+
+		System.out.println("GCCheck Main class executed successfully");
 	}
 }
