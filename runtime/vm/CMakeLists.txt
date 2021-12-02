@@ -193,9 +193,14 @@ set(interpreter_sources
 	BytecodeInterpreterFull.cpp
 	DebugBytecodeInterpreterCompressed.cpp
 	DebugBytecodeInterpreterFull.cpp
-	MHInterpreterCompressed.cpp
-	MHInterpreterFull.cpp
 )
+
+if(J9VM_OPT_METHOD_HANDLE)
+	list(APPEND interpreter_sources
+		MHInterpreterCompressed.cpp
+		MHInterpreterFull.cpp
+	)
+endif()
 
 j9vm_add_library(j9vm SHARED
 	OUTPUT_NAME j9vm${J9VM_VERSION_SUFFIX}

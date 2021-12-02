@@ -21,7 +21,6 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
-
 	<exports group="all">
 		<export name="trace">
 			<include-if condition="spec.flags.J9VM_INTERP_TRACING"/>
@@ -105,6 +104,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			</makefilestub>
 			<makefilestub data="UMA_OBJECTS:=$(filter-out criuhelpers$(UMA_DOT_O),$(UMA_OBJECTS))">
 				<exclude-if condition="spec.flags.opt_criuSupport"/>
+			</makefilestub>
+			<makefilestub data="UMA_OBJECTS:=$(filter-out MHInterpreterCompressed$(UMA_DOT_O) MHInterpreterFull$(UMA_DOT_O),$(UMA_OBJECTS))">
+				<exclude-if condition="spec.flags.opt_methodHandle"/>
 			</makefilestub>
 		</makefilestubs>
 		<vpaths>
