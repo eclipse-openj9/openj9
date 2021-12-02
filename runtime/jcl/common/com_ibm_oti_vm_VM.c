@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,4 +155,16 @@ Java_com_ibm_oti_vm_VM_markCurrentThreadAsSystemImpl(JNIEnv *env)
 	rc = (jint) omrthread_set_category(vmThread->osThread, J9THREAD_CATEGORY_SYSTEM_THREAD, J9THREAD_TYPE_SET_CREATE);
 
 	return rc;
+}
+
+/**
+ * Gets the J9ConstantPool address from a J9Class address
+ * @param j9clazz J9Class address
+ * @return address of J9ConstantPool
+ */
+jlong JNICALL
+Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class(JNIEnv *env, jclass unused, jlong j9clazz)
+{
+	J9Class *clazz = (J9Class *)(IDATA)j9clazz;
+	return *(jlong *)&clazz->ramConstantPool;
 }

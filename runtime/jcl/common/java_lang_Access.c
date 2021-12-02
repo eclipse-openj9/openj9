@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2014 IBM Corp. and others
+ * Copyright (c) 1998, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,7 +32,7 @@
  *
  * @param env				The current thread.
  * @param unusedClass		See note above - this parameter should not be used.
- * @param classToIntrospect	The Class instance the ConstantPool should represent.
+ * @param classToIntrospect	The Class or InternalConstantPool instance the ConstantPool should represent.
  *
  * @return a ConstantPool object reference or NULL on error.
  */
@@ -42,6 +42,10 @@ Java_java_lang_Access_getConstantPool(JNIEnv *env, jclass unusedClass, jobject c
 	jclass sun_reflect_ConstantPool = JCL_CACHE_GET(env,CLS_sun_reflect_ConstantPool);
 	jfieldID constantPoolOop;
 	jobject constantPool;
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFunctions = vmThread->javaVM->internalVMFunctions;
+	J9MemoryManagerFunctions *gcFunctions = vmThread->javaVM->memoryManagerFunctions;
+	j9object_t classObject = NULL;
 
 	/* lazy-initialize the cached field IDs */
 	if (NULL == sun_reflect_ConstantPool) {
@@ -56,6 +60,25 @@ Java_java_lang_Access_getConstantPool(JNIEnv *env, jclass unusedClass, jobject c
 	if (NULL == constantPool) {
 		return NULL;
 	}
+
+	/* if this method is called with java/lang/Class, allocate an InternalConstantPool and store the J9ConstantPool */
+	vmFunctions->internalEnterVMFromJNI(vmThread);
+	classObject = J9_JNI_UNWRAP_REFERENCE(classToIntrospect);
+	if (J9VMJAVALANGCLASS_OR_NULL(vmThread->javaVM) == J9OBJECT_CLAZZ(vmThread, classObject)) {
+		J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, classObject);
+		J9ConstantPool *constantPool = (J9ConstantPool *)clazz->ramConstantPool;
+		J9Class *internalConstantPool = J9VMJAVALANGINTERNALCONSTANTPOOL_OR_NULL(vmThread->javaVM);
+		Assert_JCL_notNull(internalConstantPool);
+		j9object_t internalConstantPoolObject = gcFunctions->J9AllocateObject(vmThread, internalConstantPool, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+		if (NULL == internalConstantPoolObject) {
+			vmFunctions->setHeapOutOfMemoryError(vmThread);
+			vmFunctions->internalExitVMToJNI(vmThread);
+			return NULL;
+		}
+		J9VMJAVALANGINTERNALCONSTANTPOOL_SET_VMREF(vmThread, internalConstantPoolObject, constantPool);
+		classToIntrospect = vmFunctions->j9jni_createLocalRef(env, internalConstantPoolObject);
+	}
+	vmFunctions->internalExitVMToJNI(vmThread);
 
 	/* and set the private constantPoolOop member */
 	constantPoolOop = JCL_CACHE_GET(env, FID_sun_reflect_ConstantPool_constantPoolOop);
