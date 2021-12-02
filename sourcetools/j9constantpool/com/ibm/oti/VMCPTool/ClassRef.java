@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,9 +26,10 @@ import java.io.PrintWriter;
 import org.w3c.dom.Element;
 
 public class ClassRef extends PrimaryItem implements Constants {
-	private static class Alias extends PrimaryItem.Alias {
+
+	private static final class Alias extends PrimaryItem.Alias {
 		final J9UTF8 name;
-		
+
 		Alias(VersionRange[] versions, String[] flags, J9UTF8 name) {
 			super(versions, flags);
 			this.name = name;
@@ -45,7 +46,7 @@ public class ClassRef extends PrimaryItem implements Constants {
 		void write(ConstantPoolStream ds) {
 			ds.alignTo(4);
 			ds.markClass();
-			ds.writeInt( ds.getOffset(name) - ds.getOffset() );
+			ds.writeInt(ds.getOffset(name) - ds.getOffset());
 
 			Main.JCLRuntimeFlag flag;
 			if (flags.length == 0) {
@@ -55,7 +56,7 @@ public class ClassRef extends PrimaryItem implements Constants {
 					System.err.println("Error: tool cannot handle complex flag expressions");
 					System.exit(-1);
 				}
-				flag = Main.getRuntimeFlag( flags[0] );
+				flag = Main.getRuntimeFlag(flags[0]);
 			}
 			ds.writeInt(flag.value);
 		}
@@ -70,7 +71,7 @@ public class ClassRef extends PrimaryItem implements Constants {
 			}
 		});
 	}
-	
+
 	protected String cMacroName() {
 		char[] buf = ((Alias) primary).name.data.toCharArray();
 		int j = 0;
@@ -83,14 +84,14 @@ public class ClassRef extends PrimaryItem implements Constants {
 		return new String(buf, 0, j).toUpperCase();
 	}
 
-	public void writeMacros(ConstantPool pool, PrintWriter out) {	
+	public void writeMacros(ConstantPool pool, PrintWriter out) {
 		super.writeMacros(pool, out);
-		
+
 		String macroName = cMacroName();
 		out.println("#define J9VM" + macroName + "(vm) J9VMCONSTANTPOOL_CLASS_AT(vm, J9VMCONSTANTPOOL_" + macroName + ")");
 		out.println("#define J9VM" + macroName + "_OR_NULL(vm) (J9VMCONSTANTPOOL_CLASSREF_AT(vm, J9VMCONSTANTPOOL_" + macroName + ")->value)");
 	}
-	
+
 	public String getClassName() {
 		return ((Alias) primary).name.data;
 	}
@@ -98,5 +99,5 @@ public class ClassRef extends PrimaryItem implements Constants {
 	public String commentText() {
 		return "ClassRef[" + getClassName() + "]";
 	}
-	
+
 }

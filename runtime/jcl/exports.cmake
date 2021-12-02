@@ -335,7 +335,6 @@ omr_add_exports(jclse
 	Java_java_lang_Class_isClassADeclaredClass
 	Java_java_lang_Class_isClassAnEnclosedClass
 	Java_java_lang_Class_isCircularDeclaringClass
-	Java_java_lang_Class_getRecordComponentsImpl
 	Java_java_lang_Class_permittedSubclassesImpl
 	Java_java_lang_Compiler_commandImpl
 	Java_java_lang_Compiler_compileClassImpl
@@ -595,6 +594,7 @@ endif()
 # java 15+
 if(NOT JAVA_SPEC_VERSION LESS 15)
 	omr_add_exports(jclse
+		Java_java_lang_Class_getRecordComponentsImpl
 		Java_java_lang_Class_isHiddenImpl
 		Java_java_lang_ClassLoader_defineClassImpl1
 	)

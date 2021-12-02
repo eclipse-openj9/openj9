@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -159,17 +159,6 @@ private:
 	}
 
 	/**
-	 * Fetch the filterPosition field from the j.l.i.MethodHandle.
-	 * @param methodHandle[in] A MethodHandle object
-	 * @return The filterPosition field from the j.l.i.MethodHandle.
-	 */
-	VMINLINE U_32
-	getMethodHandleFilterPosition(j9object_t methodHandle) const
-	{
-		return (U_32)J9VMJAVALANGINVOKEFILTERARGUMENTSWITHCOMBINERHANDLE_FILTERPOSITION(_currentThread, methodHandle);
-	}
-
-	/**
 	 * Fetch the foldPosition field from the j.l.i.MethodHandle.
 	 * @param methodHandle[in] A MethodHandle object
 	 * @return The foldPosition field from the j.l.i.MethodHandle.
@@ -189,12 +178,6 @@ private:
 	getCombinerHandleForFold(j9object_t methodHandle) const
 	{
 		return J9VMJAVALANGINVOKEFOLDHANDLE_COMBINER(_currentThread, methodHandle);
-	}
-
-	VMINLINE j9object_t
-	getCombinerHandleForFilter(j9object_t methodHandle) const
-	{
-		return J9VMJAVALANGINVOKEFILTERARGUMENTSWITHCOMBINERHANDLE_COMBINER(_currentThread, methodHandle);
 	}
 
 	/**
@@ -375,7 +358,7 @@ foundITable:
 	/**
 	 * @brief Call class initializer <clinit> if the class is not already initialized.
 	 * @param methodHandle[in] The MethodHandle describing the stack
-	 * @return 
+	 * @return
 	 */
 	VMINLINE j9object_t
 	initializeClassIfNeeded(j9object_t methodHandle)
@@ -448,7 +431,7 @@ foundITable:
 			break;
 		}
 	}
-	
+
 	/**
 	 * @brief Convert argument or return type from J9Class to J9NativeTypeCode
 	 * @param type[in] The pointer to the J9Class of the type
@@ -543,28 +526,11 @@ foundITable:
 
 	/**
 	* @brief
-	* Perform argument filtering for filterArgumentsWithCombiner.
-	* @param methodHandle
-	* @return j9object_t The target MethodHandle with argument filtered by combinerHandle
-	*/
-	j9object_t
-	filterArgumentsWithCombiner(j9object_t methodHandle);
-
-	/**
-	* @brief
 	* Insert the return value of combinerHandle to the argument list of foldHandle.
 	* @return j9object_t The target MethodHandle  (the one to execute foldHandle)
 	*/
 	j9object_t
 	insertReturnValueForFoldArguments();
-
-	/**
-	* @brief
-	* Insert the return value of combinerHandle to the argument list of the methodHandle.
-	* @return j9object_t The target MethodHandle
-	*/
-	j9object_t
-	replaceReturnValueForFilterArgumentsWithCombiner();
 
 	/**
 	* @brief
@@ -635,7 +601,7 @@ foundITable:
 #ifdef J9VM_OPT_PANAMA
 	VMINLINE VM_BytecodeAction
 	runNativeMethodHandle(j9object_t methodHandle);
-	
+
 	VMINLINE FFI_Return
 	callFunctionFromNativeMethodHandle(void * nativeMethodStartAddress, UDATA *javaArgs, U_8 *returnType, j9object_t methodHandle);
 
@@ -686,7 +652,8 @@ public:
 			, _vm(_currentThread->javaVM)
 			, _objectAllocate(objectAllocate)
 			, _objectAccessBarrier(objectAccessBarrier)
-	{ };
+	{
+	}
 };
 
 #endif /* MHINTERPRETER_HPP_ */

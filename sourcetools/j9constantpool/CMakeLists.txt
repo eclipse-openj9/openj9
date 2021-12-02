@@ -34,13 +34,12 @@ else()
 	set(CYGWIN_CP)
 endif()
 
-
 add_jar(j9vmcp
 	SOURCES
 		com/ibm/oti/VMCPTool/ClassRef.java
 		com/ibm/oti/VMCPTool/CmakeFlagInfo.java
-		com/ibm/oti/VMCPTool/ConstantPoolItem.java
 		com/ibm/oti/VMCPTool/ConstantPool.java
+		com/ibm/oti/VMCPTool/ConstantPoolItem.java
 		com/ibm/oti/VMCPTool/ConstantPoolStream.java
 		com/ibm/oti/VMCPTool/Constants.java
 		com/ibm/oti/VMCPTool/FieldRef.java

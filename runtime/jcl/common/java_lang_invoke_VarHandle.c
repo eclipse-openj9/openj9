@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@
 #include "j9vmconstantpool.h"
 #include "j9jclnls.h"
 
-#if defined(J9VM_OPT_METHOD_HANDLE)
+#if defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11)
 static BOOLEAN
 accessCheckFieldType(J9VMThread *currentThread, J9Class* lookupClass, J9Class* type, J9UTF8 *lookupSig)
 {
@@ -163,7 +163,7 @@ Java_java_lang_invoke_FieldVarHandle_unreflectField(JNIEnv *env, jobject handle,
 	vmFuncs->internalExitVMToJNI(vmThread);
 	return fieldOffset;
 }
-#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11) */
 
 jobject JNICALL
 Java_java_lang_invoke_VarHandle_get(JNIEnv *env, jobject handle, jobject args)

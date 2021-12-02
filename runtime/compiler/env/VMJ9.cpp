@@ -4015,7 +4015,9 @@ TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol
       {
       case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
       case TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc:
+#if defined(J9VM_OPT_METHOD_HANDLE)
       case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
       case TR::Symbol::Java_lang_invoke_MethodHandleImpl_LoopClauses_clauses:
          {
          return true;
@@ -5306,7 +5308,13 @@ TR_J9VMBase::getStringFieldByName(TR::Compilation * comp, TR::SymbolReference * 
    TR::Symbol::RecognizedField   field = fieldRef->getSymbol()->getRecognizedField();
 
    if (field == TR::Symbol::Java_lang_String_count)
+      {
+#if JAVA_SPEC_VERSION == 8
       pResult = (U_8*)string + J9VMJAVALANGSTRING_COUNT_OFFSET(vmThread());
+#else /* JAVA_SPEC_VERSION == 8 */
+      return false;
+#endif /* JAVA_SPEC_VERSION == 8 */
+      }
    else if (field == TR::Symbol::Java_lang_String_hashCode)
       {
       if (J9VMJAVALANGSTRING_HASH(vmThread(), string) == 0)
@@ -5511,7 +5519,12 @@ TR_J9VMBase::getStringUTF8(uintptr_t objectPointer, char *buffer, intptr_t buffe
 uint32_t
 TR_J9VMBase::getVarHandleHandleTableOffset(TR::Compilation * comp)
    {
+#if defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11)
    return uint32_t(J9VMJAVALANGINVOKEVARHANDLE_HANDLETABLE_OFFSET(vmThread()));
+#else /* defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11) */
+   Assert_JIT_unreachable();
+   return 0;
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) && (JAVA_SPEC_VERSION >= 11) */
    }
 
 // set a 32 bit field that will be printed if the VM crashes

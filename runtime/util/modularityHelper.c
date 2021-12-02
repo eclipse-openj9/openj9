@@ -24,6 +24,8 @@
 #include "j9protos.h"
 #include "ut_j9util.h"
 
+#if JAVA_SPEC_VERSION >= 11
+
 static J9Package* hashPackageTableAtWithUTF8Name(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *packageName);
 static BOOLEAN isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Module *fromModule, J9Package *j9package, J9Module *toModule, BOOLEAN toUnnamed);
 
@@ -243,3 +245,5 @@ isPackageExportedToModuleWithName(J9VMThread *currentThread, J9Module *fromModul
 {
 	return isPackageExportedToModuleHelper(currentThread, fromModule, getPackageDefinitionWithName(currentThread, fromModule, packageName, len, errCode), toModule, toUnnamed);
 }
+
+#endif /* JAVA_SPEC_VERSION >= 11 */

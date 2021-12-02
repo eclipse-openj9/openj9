@@ -54,7 +54,6 @@ defaultMethodConflictExceptionMessage(J9VMThread *currentThread, J9Class *target
 static J9Method *
 searchClassForMethodCommon(J9Class * clazz, U_8 * name, UDATA nameLength, U_8 * sig, UDATA sigLength, BOOLEAN partialMatch);
 static J9Method* javaResolveInterfaceMethods(J9VMThread *currentThread, J9Class *targetClass, J9ROMNameAndSignature *nameAndSig, J9Class *senderClass, UDATA lookupOptions, J9InterfaceResolveData *data);
-static char* getModuleNameUTF(J9VMThread *currentThread, j9object_t moduleObject, char *buffer, UDATA bufferLength);
 
 /**
  * Search method in target class
@@ -988,6 +987,7 @@ defaultMethodConflictExceptionMessage(J9VMThread *currentThread, J9Class *target
 	return buf;
 }
 
+#if JAVA_SPEC_VERSION >= 11
 /**
  * Get Module Name
  *
@@ -1000,7 +1000,7 @@ defaultMethodConflictExceptionMessage(J9VMThread *currentThread, J9Class *target
  *
  * @return a char pointer to the module name
  */
-static char*
+static char *
 getModuleNameUTF(J9VMThread *currentThread, j9object_t	moduleObject, char *buffer, UDATA bufferLength)
 {
 	J9JavaVM const * const vm = currentThread->javaVM;
@@ -1014,13 +1014,14 @@ getModuleNameUTF(J9VMThread *currentThread, j9object_t	moduleObject, char *buffe
 		Assert_VM_true(bufferLength >= 128);
 		j9str_printf(PORTLIB, buffer, bufferLength, "%s0x%p", UNNAMED_MODULE, moduleObject);
 		nameBuffer = buffer;
-#undef	UNNAMED_MODULE
+#undef UNNAMED_MODULE
 	} else {
 		nameBuffer = copyStringToUTF8WithMemAlloc(
 			currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, buffer, bufferLength, NULL);
 	}
 	return nameBuffer;
 }
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 /**
  * illegalModuleAccessMessage
@@ -1052,7 +1053,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 	char *destModuleMsg = NULL;
 	char packageNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *packageNameMsg = NULL;
-	
+
 	PORT_ACCESS_FROM_VMC(currentThread);
 	Trc_VM_illegalAccessMessage_Entry(currentThread, J9UTF8_LENGTH(senderClassNameUTF), J9UTF8_DATA(senderClassNameUTF),
 			J9UTF8_LENGTH(targetClassNameUTF), J9UTF8_DATA(targetClassNameUTF), badMemberModifier);
@@ -1127,9 +1128,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 					J9UTF8_LENGTH(nestHostNameUTF),
 					J9UTF8_DATA(nestHostNameUTF));
 		}
-	} else
-#endif /* JAVA_SPEC_VERSION >= 11 */
-	if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR != errorType) {
+	} else if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR != errorType) {
 		/* illegal module access */
 		j9object_t srcModuleObject = J9VMJAVALANGCLASS_MODULE(currentThread, senderClass->classObject);
 		j9object_t destModuleObject = J9VMJAVALANGCLASS_MODULE(currentThread, targetClass->classObject);
@@ -1212,7 +1211,9 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 				}
 			}
 		}
-	} else {
+	} else
+#endif /* JAVA_SPEC_VERSION >= 11 */
+	{
 		/* illegal non-module access */
 		if (badMemberModifier == -1) { /* visibility failed from Class level */
 			errorMsg = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,

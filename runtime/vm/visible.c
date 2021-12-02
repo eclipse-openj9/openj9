@@ -31,6 +31,7 @@
 #include "j9protos.h"
 #include "j9vmnls.h"
 
+#if JAVA_SPEC_VERSION >= 11
 IDATA
 checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomClass, J9Module* srcModule, J9ROMClass* destRomClass, J9Module* destModule, UDATA destPackageID, UDATA lookupOptions)
 {
@@ -68,6 +69,7 @@ checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomCla
 	return result;
 }
 
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 /**
  * Check visibility from sourceClass to destClass with modifiers specified
@@ -87,7 +89,9 @@ IDATA
 checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destClass, UDATA modifiers, UDATA lookupOptions)
 {
 	UDATA result = J9_VISIBILITY_ALLOWED;
+#if JAVA_SPEC_VERSION >= 11
 	J9JavaVM * const vm = currentThread->javaVM;
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	Trc_VM_checkVisibility_Entry(currentThread, sourceClass, destClass, modifiers);
 	sourceClass = J9_CURRENT_CLASS(sourceClass);
@@ -100,9 +104,9 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 	if (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(sourceClass)) {
 		if ( modifiers & J9AccPublic ) {
 			/* Public */
+#if JAVA_SPEC_VERSION >= 11
 			if (J9_ARE_NO_BITS_SET(lookupOptions, J9_LOOK_NO_MODULE_CHECKS)
 				&& (sourceClass != destClass)
-				&& (J2SE_VERSION(vm) >= J2SE_V11) 
 				&& J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)
 				&& !J9ROMCLASS_IS_PRIMITIVE_TYPE(destClass->romClass)
 			) {
@@ -111,6 +115,7 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 
 				result = checkModuleAccess(currentThread, vm, sourceClass->romClass, srcModule, destClass->romClass, destModule, destClass->packageID, lookupOptions );
 			}
+#endif /* JAVA_SPEC_VERSION >= 11 */
 		} else if (modifiers & J9AccPrivate) {
 			/* Private */
 			if (sourceClass != destClass) {
@@ -340,7 +345,7 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 					J9SRP *nestMembers = J9ROMCLASS_NESTMEMBERS(nestHost->romClass);
 					U_16 nestMemberCount = nestHost->romClass->nestMemberCount;
 					U_16 i = 0;
-	
+
 					result = J9_VISIBILITY_NEST_MEMBER_NOT_CLAIMED_ERROR;
 					for (i = 0; i < nestMemberCount; i++) {
 						J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8*);
@@ -386,4 +391,5 @@ loadAndVerifyNestHost(J9VMThread *vmThread, J9Class *clazz, UDATA options)
 done:
 	return result;
 }
+
 #endif /* JAVA_SPEC_VERSION >= 11 */

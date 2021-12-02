@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,6 +96,8 @@ public abstract class PrimaryItem {
 
 		protected static final VersionRange[] ALL = new VersionRange[] { new VersionRange(0, Integer.MAX_VALUE) };
 
+		protected static final VersionRange[] NONE = new VersionRange[] { new VersionRange(0, -1) };
+
 		private static final Pattern PATTERN = Pattern.compile("(\\d+)(-(\\d*))?");
 
 		protected static VersionRange parse(String rangeText) {
@@ -148,7 +150,6 @@ public abstract class PrimaryItem {
 
 		final VersionRange[] versions;
 		final String[] flags;
-		static final Alias DEFAULT = new Alias(null, null);
 
 		Alias(VersionRange[] versions, String[] flags) {
 			this.versions = versions;
@@ -176,7 +177,7 @@ public abstract class PrimaryItem {
 			}
 			return false;
 		}
-		
+
 		private boolean hasFlag(Set<String> flags) {
 			for (String s : this.flags) {
 				if (flags.contains(s)) {
@@ -186,16 +187,16 @@ public abstract class PrimaryItem {
 			return false;
 		}
 	}
-	
+
 	protected static class AliasWithClass extends Alias {
 		final ClassRef classRef;
 		private boolean classIncluded;
-		
+
 		AliasWithClass(VersionRange[] versions, String[] flags, ClassRef classRef) {
 			super(versions, flags);
 			this.classRef = classRef;
 		}
-		
+
 		boolean checkClassForWriteSecondary(ConstantPoolStream ds) {
 			if (!classIncluded) {
 				super.writeSecondaryItems(ds);
@@ -211,10 +212,10 @@ public abstract class PrimaryItem {
 			return classIncluded;
 		}
 	}
-	
+
 	private static Alias[] aliases(Element e, String nodeName, Alias proto, Alias.Factory factory) {
 		NodeList nodes = e.getChildNodes();
-		List<Alias> list = new ArrayList<Alias>();
+		List<Alias> list = new ArrayList<>();
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE && nodeName.equals(node.getNodeName())) {
@@ -223,37 +224,37 @@ public abstract class PrimaryItem {
 		}
 		return list.toArray(new Alias[list.size()]);
 	}
-	
-	Alias alias(ConstantPoolStream ds) {
-		// Look for an alias that explicitly supports the version and a flag
+
+	Alias alias(int version, Set<String> flags) {
+		// Look for an alias that explicitly supports the version and a flag.
 		for (Alias alias : aliases) {
-			if (alias.matchesVersion(ds.version) && alias.hasFlag(ds.flags)) {
+			if (alias.matchesVersion(version) && alias.hasFlag(flags)) {
 				return alias;
 			}
 		}
 
-		// Look for an alias that explicitly supports either the version or a flag
+		// Look for an alias that explicitly supports either the version or a flag.
 		for (Alias alias : aliases) {
-			// Check if the alias explicitly supports the version and has no flags
-			if (alias.matchesVersion(ds.version) && alias.flags.length == 0) {
-				// Check that the primary alias supports a flag
-				if (primary.hasFlag(ds.flags) || primary.flags.length == 0) {
+			// Check if the alias explicitly supports the version and has no flags.
+			if (alias.matchesVersion(version) && alias.flags.length == 0) {
+				// Check that the primary alias supports a flag.
+				if (primary.hasFlag(flags) || primary.flags.length == 0) {
 					return alias;
 				}
 			}
-			// Check if the alias implicitly supports the version and has a flag
-			if (alias.versions.length == 0 && alias.hasFlag(ds.flags)) {
-				// Check that the primary alias supports the version
-				if (primary.matchesVersion(ds.version) || primary.versions.length == 0) {
+			// Check if the alias implicitly supports the version and has a flag.
+			if (alias.versions.length == 0 && alias.hasFlag(flags)) {
+				// Check that the primary alias supports the version.
+				if (primary.matchesVersion(version) || primary.versions.length == 0) {
 					return alias;
 				}
 			}
 		}
 
-		// Check that the primary alias supports the version and flags
-		if (primary.matchesVersion(ds.version) || primary.versions.length == 0) {
-			if (primary.hasFlag(ds.flags) || primary.flags.length == 0) {
-				// Look for an alias that implicitly supports the version and flags
+		// Check that the primary alias supports the version and flags.
+		if (primary.matchesVersion(version) || primary.versions.length == 0) {
+			if (primary.hasFlag(flags) || primary.flags.length == 0) {
+				// Look for an alias that implicitly supports the version and flags.
 				for (Alias alias : aliases) {
 					if (alias.versions.length == 0 && alias.flags.length == 0) {
 						return alias;
@@ -264,8 +265,12 @@ public abstract class PrimaryItem {
 			}
 		}
 
-		// Return a default alias
-		return Alias.DEFAULT;
+		// This item is not applicable to the current configuration.
+		return null;
+	}
+
+	Alias alias(ConstantPoolStream ds) {
+		return alias(ds.version, ds.flags);
 	}
 
 	public void write(ConstantPoolStream ds) {

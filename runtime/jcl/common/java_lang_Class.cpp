@@ -1181,11 +1181,13 @@ done:
 	return result;
 }
 
+#if JAVA_SPEC_VERSION >= 14
 jarray JNICALL
 Java_java_lang_Class_getRecordComponentsImpl(JNIEnv *env, jobject cls)
 {
 	return getRecordComponentsHelper(env, cls);
 }
+#endif /* JAVA_SPEC_VERSION >= 14 */
 
 jarray JNICALL
 Java_java_lang_Class_permittedSubclassesImpl(JNIEnv *env, jobject cls)

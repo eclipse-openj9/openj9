@@ -455,6 +455,7 @@ initializeROMClasses(J9JavaVM *vm);
 
 /* ------------------- visible.c ----------------- */
 
+#if JAVA_SPEC_VERSION >= 11
 /**
  * Check module access from srcModule to destModule.
  *
@@ -487,6 +488,7 @@ initializeROMClasses(J9JavaVM *vm);
 
 IDATA
 checkModuleAccess(J9VMThread *currentThread, J9JavaVM* vm, J9ROMClass* srcRomClass, J9Module* srcModule, J9ROMClass* destRomClass, J9Module* destModule, UDATA destPackageID, UDATA lookupOptions);
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 /* ------------------- guardedstorage.c ----------------- */
 
