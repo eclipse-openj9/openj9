@@ -74,6 +74,7 @@ javaOffloadSwitchOnWithReason(J9VMThread *currentThread, UDATA reason)
 		if (0 == currentThread->javaOffloadState) {
 			vm->javaOffloadSwitchOnWithReasonFunc(currentThread, reason);
 		}
+		Assert_VM_unequal(currentThread->javaOffloadState & J9_JNI_OFFLOAD_MAX_VALUE, J9_JNI_OFFLOAD_MAX_VALUE);
 		currentThread->javaOffloadState += 1;
 	}
 }

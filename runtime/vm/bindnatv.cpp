@@ -1121,11 +1121,13 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 		if ((NULL != nativeLibrary) && (0 != nativeLibrary->doSwitching)) {
 			cpFlags |= J9_STARTPC_NATIVE_REQUIRES_SWITCHING;
-			if (nativeLibrary->doSwitching & J9_NATIVE_LIBRARY_SWITCH_JDBC) {
-				J9Class* ramClass;
-				
-				ramClass = J9_CLASS_FROM_METHOD(nativeMethod);
-				ramClass->classDepthAndFlags |= J9AccClassHasJDBCNatives;
+			if (J9_ARE_ANY_BITS_SET(nativeLibrary->doSwitching, J9_NATIVE_LIBRARY_SWITCH_JDBC | J9_NATIVE_LIBRARY_SWITCH_WITH_SUBTASKS)) {
+				J9Class *ramClass = J9_CLASS_FROM_METHOD(nativeMethod);
+				if (J9_ARE_ANY_BITS_SET(nativeLibrary->doSwitching, J9_NATIVE_LIBRARY_SWITCH_JDBC)) {
+					ramClass->classDepthAndFlags |= J9AccClassHasJDBCNatives;
+				} else {
+					ramClass->classFlags |= J9ClassHasOffloadAllowSubtasksNatives;
+				}
 			}
 		}
 #endif
