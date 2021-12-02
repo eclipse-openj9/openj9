@@ -100,9 +100,6 @@ struct TR_SignatureCountPair
    int32_t count;
 };
 
-#ifndef J9_INVOCATION_COUNT_MASK
-#define J9_INVOCATION_COUNT_MASK                   0x00000000FFFFFFFF
-#endif
 
 class TR_LowPriorityCompQueue
    {
@@ -514,6 +511,8 @@ public:
       return (((uintptr_t)method->constantPool) & J9_STARTPC_JNI_NATIVE) != 0;
       }
 
+   static const intptr_t J9_INVOCATION_COUNT_MASK = 0xffffffff;
+
    static int32_t getInvocationCount(J9Method *method)
       {
 #if defined(J9VM_OPT_JITSERVER)
@@ -600,8 +599,6 @@ public:
       TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(J9VM_OPT_JITSERVER) */
       intptr_t oldValue = (intptr_t)method->extra;
-      //intptr_t newValue = oldValue & (intptr_t)~J9_INVOCATION_COUNT_MASK;
-      //newValue |= (intptr_t)value;
       intptr_t newValue = (intptr_t)value;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
       }
@@ -643,6 +640,25 @@ public:
             dltHT->adjustStoredCounterForMethod(method, oldCount - newCount);
          }
       return success;
+      }
+   // If the invocation count is 0, set it to the value indicated by newCount
+   static bool replenishInvocationCountIfExpired(J9Method *method, int32_t newCount)
+      {
+      intptr_t oldMethodExtra = (intptr_t) method->extra;
+      if ((oldMethodExtra & J9_STARTPC_NOT_TRANSLATED) == 0)
+         return false; // Do not touch compiled methods
+
+      int32_t oldCount = (int32_t)oldMethodExtra;
+      if (oldCount < 0)
+         return false; // Do not touch uncountable methods
+      oldCount >>= 1; // Eliminate the J9_STARTPC_NOT_TRANSLATED bit
+      if (oldCount != 0)
+         return false; // Only replenish invocation count if it expired
+      // Prepare the new method->extra
+      intptr_t oldMethodExtraUpperPart = oldMethodExtra & (~J9_INVOCATION_COUNT_MASK);
+      newCount = (newCount << 1) | J9_STARTPC_NOT_TRANSLATED;
+      intptr_t newMethodExtra = oldMethodExtraUpperPart | newCount;
+      return setJ9MethodExtraAtomic(method, oldMethodExtra, newMethodExtra);
       }
    static void setInitialInvocationCountUnsynchronized(J9Method *method, int32_t value)
       {
@@ -726,12 +742,12 @@ public:
     *    Stops a compilation thread by issuing an interruption request at the threads next yield point and by changing
     *    its state to signal termination. Note that there can be a delay between making this request and the thread
     *    state changing to `COMPTHREAD_STOPPED`.
-    * 
+    *
     * \param compInfoPT
     *    The thread to be stopped.
     */
    void stopCompilationThread(CompilationInfoPerThread* compInfoPT);
-   
+
    void suspendCompilationThread();
    void resumeCompilationThread();
    void purgeMethodQueue(TR_CompilationErrorCode errorCode);
